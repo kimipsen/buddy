@@ -1,4 +1,4 @@
 Example: Frontend task with Planning Mode and signals preference.
 
 Prompt:
-"Planning Mode: I want to add a data-driven list component in Angular v22 that fetches items from `/api/items`, uses signals for state, and supports pagination and filtering. Provide a short plan, the component code (standalone), a service using `HttpClient` with RxJS/observables as needed, and unit tests. Prefer signals and reactive patterns throughout."
+"Planning Mode: I want to add a data-driven list component in Angular v22 that fetches items from `/api/items`, uses signals for state, supports pagination and filtering, and uses TailwindCSS for layout and styling. Provide a short plan, the component code (standalone) with Tailwind utility classes, a service using `HttpClient` with RxJS/observables as needed, unit tests, and brief Tailwind integration steps for Angular v22. Prefer signals and reactive patterns throughout."

@@ -1,0 +1,15 @@
+<div class="p-4">
+  <div *ngIf="loading()" class="text-center py-4">Loading...</div>
+
+  <ul class="space-y-2">
+    <li *ngFor="let item of items()" class="p-4 rounded border bg-white shadow-sm">
+      <h3 class="text-lg font-semibold">{{ item.title }}</h3>
+      <p class="text-sm text-gray-600">{{ item.description }}</p>
+    </li>
+  </ul>
+
+  <div class="flex justify-between mt-4">
+    <button (click)="prevPage()" class="px-4 py-2 bg-gray-200 rounded">Previous</button>
+    <button (click)="nextPage()" class="px-4 py-2 bg-blue-600 text-white rounded">Next</button>
+  </div>
+</div>

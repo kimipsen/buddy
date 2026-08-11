@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "author": "devcontainer-user",
   "description": "Codex skill tuned for frontend development with Angular v22 and reactive/signals-first guidance",
-  "tags": ["codex","angular","frontend","signals","reactive"],
+  "tags": ["codex","angular","frontend","signals","reactive","tailwind"],
   "frameworks": ["angular@22"],
-  "preferences": ["signals","reactive-programming" ]
+  "preferences": ["signals","reactive-programming","tailwindcss" ]
 }
