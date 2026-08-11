@@ -1,0 +1,11 @@
+Example: Add component-level frontend documentation
+
+Prompt:
+"Planning Mode: Document the new `ItemCard` Angular v22 standalone component. Include:
+- Purpose and where to use it
+- Inputs/Outputs (props/events) and types
+- Accessibility notes
+- Tailwind utility classes used and Storybook story snippet
+- Example usage in a parent component
+
+Produce: a `docs/components/ItemCard.md` file, a Storybook story snippet, and a suggested git commit message and PR description."

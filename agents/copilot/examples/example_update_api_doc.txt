@@ -1,0 +1,4 @@
+Example: Update backend API docs from controller changes
+
+Prompt:
+"Planning Mode: I changed the OrdersController to return a 202 for async creation and added a `correlationId` header. Update the OpenAPI fragment, regenerate the API markdown at `docs/api/orders.md`, and produce a changelog entry. Show the minimal patch to apply and the commit message."

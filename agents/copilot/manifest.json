@@ -1,0 +1,8 @@
+{
+  "name": "copilot-docs-skill",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Skill for GitHub Copilot to create and maintain frontend and backend documentation",
+  "tags": ["copilot","docs","markdown","frontend","backend","api","adr"],
+  "preferences": ["markdown","openapi","storybook","toc"]
+}
