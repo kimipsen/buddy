@@ -12,8 +12,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<OrderDbContext>(opt => opt.UseNpgsql(conn));
-builder.Services.AddSingleton<IEventStore>(sp => new PostgresEventStore(conn));
+builder.Services.AddDbContext<Project.Infrastructure.Persistence.OrderDbContext>(opt => opt.UseNpgsql(conn));
+builder.Services.AddSingleton<Project.Infrastructure.EventSourcing.IEventTypeMapper>(sp => new Project.Infrastructure.EventSourcing.ReflectionEventTypeMapper());
+builder.Services.AddSingleton<Project.Infrastructure.EventSourcing.IEventStore>(sp => new Project.Infrastructure.EventSourcing.Postgres.PostgresEventStore(conn, sp.GetRequiredService<Project.Infrastructure.EventSourcing.IEventTypeMapper>()));
 
 var app = builder.Build();
 

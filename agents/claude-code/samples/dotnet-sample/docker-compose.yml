@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:19
+    environment:
+      POSTGRES_USER: kim
+      POSTGRES_PASSWORD: kim
+      POSTGRES_DB: kim
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

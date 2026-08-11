@@ -13,12 +13,5 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="../OrderId.cs" />
-    <Compile Include="../OrderEvents.cs" />
-    <Compile Include="../OrderAggregate.cs" />
-    <Compile Include="../IEventStore.cs" />
-    <Compile Include="../PostgresEventStore.cs" />
-    <Compile Include="../OrderDbContext.cs" />
-  </ItemGroup>
+  
 </Project>
