@@ -9,10 +9,18 @@ namespace Project.Infrastructure.EventSourcing.Postgres;
 public class PostgresEventStore : IEventStore
 {
     private readonly string _connectionString;
+    private readonly Dictionary<string, System.Type> _typeMap;
 
     public PostgresEventStore(string connectionString)
     {
         _connectionString = connectionString;
+        // Register known event types here. In a real app, use reflection or a DI-registered mapper.
+        _typeMap = new Dictionary<string, System.Type>
+        {
+            { "OrderCreated", typeof(Project.Domain.Orders.Events.OrderCreated) },
+            { "ItemAdded", typeof(Project.Domain.Orders.Events.ItemAdded) },
+            { "OrderCompleted", typeof(Project.Domain.Orders.Events.OrderCompleted) }
+        };
     }
 
     public async Task AppendEventsAsync(string streamName, IEnumerable<object> events, Guid expectedVersion = default)
@@ -47,10 +55,27 @@ public class PostgresEventStore : IEventStore
         await using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            var type = reader.GetString(0);
+            var typeName = reader.GetString(0);
             var payload = reader.GetString(1);
-            // deserialization needs type mapping; returning raw payloads as JsonElement is an option
-            list.Add(payload);
+
+            if (_typeMap.TryGetValue(typeName, out var t))
+            {
+                try
+                {
+                    var obj = JsonSerializer.Deserialize(payload, t);
+                    if (obj != null) list.Add(obj);
+                    else list.Add(payload);
+                }
+                catch
+                {
+                    list.Add(payload);
+                }
+            }
+            else
+            {
+                // Unknown type: return raw JSON payload
+                list.Add(payload);
+            }
         }
         return list;
     }

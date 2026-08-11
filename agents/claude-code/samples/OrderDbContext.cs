@@ -26,5 +26,5 @@ public class OrderDbContext : DbContext
 public class OrderReadModel
 {
     public OrderId Id { get; set; }
-    public string Title { get; set; }
+    public string? Title { get; set; }
 }
