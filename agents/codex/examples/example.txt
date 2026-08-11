@@ -1,0 +1,4 @@
+Example: Ask the Codex agent to generate a client function.
+
+Prompt:
+"Generate a Python function to fetch paginated API results and return a combined list."

@@ -1,0 +1,7 @@
+{
+  "name": "github-pilot-skill",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Minimal manifest for the GitHub Pilot skill",
+  "tags": ["github","pilot","pr","review"]
+}

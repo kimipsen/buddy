@@ -1,0 +1,7 @@
+{
+  "name": "claude-code-skill",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Minimal manifest for the Claude Code skill",
+  "tags": ["claude","code","refactor"]
+}

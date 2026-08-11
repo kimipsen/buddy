@@ -1,0 +1,4 @@
+Example: Ask the agent to generate a PR summary and checklist.
+
+Prompt:
+"Create a PR description summarizing the change and a reviewer checklist for a breaking API change."

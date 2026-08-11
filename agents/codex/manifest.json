@@ -1,0 +1,7 @@
+{
+  "name": "codex-skill",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Minimal manifest for the Codex skill",
+  "tags": ["codex","code","generate"]
+}
