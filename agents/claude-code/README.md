@@ -1,9 +1,11 @@
-Claude Code Skill
+Claude Backend Skill
 
-This folder contains skill metadata for the Claude Code agent.
+This directory contains templates and guidance for backend development with .NET (screaming-architecture), event sourcing, EF Core, and PostgreSQL.
 
 Files:
-- `SKILL.md` — human-readable skill description
-- `manifest.json` — machine-readable metadata
+- `SKILL.md` — high-level rules and output format (Planning Mode, ID-type preference, event sourcing, schemas)
+- `manifest.json` — skill metadata and preferences
+- `examples/` — example prompts to drive reproducible outputs
+- `samples/` — small code templates (value types, aggregate, DbContext, event store notes)
 
-Usage: Adapt templates to your agent runtime.
+Use these templates as starting points; adapt names and namespaces to your project.

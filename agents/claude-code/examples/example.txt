@@ -1,4 +1,4 @@
-Example: Use this skill to ask the Claude Code agent to summarize a module.
+Example: Backend task with Planning Mode and domain-first guidance.
 
 Prompt:
-"Summarize the responsibilities and key functions in src/utils/helpers.ts"
+"Planning Mode: I'm building an `Order` aggregate for a .NET 10 backend using screaming-architecture and event sourcing. Use PostgreSQL 19 and EF Core for read models. Create a domain `OrderId` value type (GUID-backed), define events (`OrderCreated`, `ItemAdded`), an event-sourced `Order` aggregate, a simple `IEventStore` interface, and an `OrderDbContext` configured to use the `orders` schema. Provide a concise plan, code files with namespaces and file paths, EF Core mapping notes, and tests. Prefer custom ID types and avoid primitive obsession." 

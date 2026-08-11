@@ -1,7 +1,9 @@
 {
-  "name": "claude-code-skill",
-  "version": "0.1.0",
+  "name": "claude-backend-skill",
+  "version": "0.2.0",
   "author": "devcontainer-user",
-  "description": "Minimal manifest for the Claude Code skill",
-  "tags": ["claude","code","refactor"]
+  "description": "Claude skill tuned for .NET backend development: screaming-architecture, event sourcing, EF Core, PostgreSQL",
+  "tags": ["claude","dotnet","backend","event-sourcing","efcore","postgresql"],
+  "frameworks": ["dotnet@10"],
+  "preferences": ["event-sourcing","custom-id-types","screaming-architecture","postgresql@19"]
 }
