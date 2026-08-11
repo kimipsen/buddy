@@ -2,8 +2,9 @@ Migrations and local Postgres (Postgres 19)
 
 1. Start local Postgres via Docker Compose:
 
+docker compose up -d
 ```bash
-cd agents/claude-code/samples/dotnet-sample
+cd .claude/claude-code/samples/dotnet-sample
 docker compose up -d
 ```
 
