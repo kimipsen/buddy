@@ -17,7 +17,10 @@ public class OrdersController : ControllerBase
     {
         var id = OrderId.New();
         var order = Order.Create(id);
-        await _store.AppendEventsAsync($"order-{id}", order.GetChanges());
+        // Persist the case records, not the union values: the store derives its event_type
+        // discriminator from GetType().Name, and a union is a value type whose boxed name is
+        // always "OrderEvent".
+        await _store.AppendEventsAsync($"order-{id}", order.GetChanges().Select(e => e.Payload));
         return Ok(new { id = id.ToString() });
     }
 }

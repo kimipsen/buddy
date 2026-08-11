@@ -17,9 +17,9 @@ public class PostgresEventStore : IEventStore
         // Register known event types here. In a real app, use reflection or a DI-registered mapper.
         _typeMap = new Dictionary<string, System.Type>
         {
-            { "OrderCreated", typeof(Project.Domain.Orders.Events.OrderCreated) },
-            { "ItemAdded", typeof(Project.Domain.Orders.Events.ItemAdded) },
-            { "OrderCompleted", typeof(Project.Domain.Orders.Events.OrderCompleted) }
+            { "OrderCreated", typeof(Project.Domain.Orders.Events.OrderEvent.OrderCreated) },
+            { "ItemAdded", typeof(Project.Domain.Orders.Events.OrderEvent.ItemAdded) },
+            { "OrderCompleted", typeof(Project.Domain.Orders.Events.OrderEvent.OrderCompleted) }
         };
     }
 
