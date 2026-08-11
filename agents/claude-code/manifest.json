@@ -4,6 +4,6 @@
   "author": "devcontainer-user",
   "description": "Claude skill tuned for .NET backend development: screaming-architecture, event sourcing, EF Core, PostgreSQL",
   "tags": ["claude","dotnet","backend","event-sourcing","efcore","postgresql"],
-  "frameworks": ["dotnet@10"],
+  "frameworks": ["dotnet@11"],
   "preferences": ["event-sourcing","custom-id-types","screaming-architecture","postgresql@19"]
 }

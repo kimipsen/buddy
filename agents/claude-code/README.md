@@ -1,6 +1,6 @@
 Claude Backend Skill
 
-This directory contains templates and guidance for backend development with .NET (screaming-architecture), event sourcing, EF Core, and PostgreSQL.
+This directory contains templates and guidance for backend development with .NET (screaming-architecture), event sourcing, EF Core, and PostgreSQL. Prefer targeting .NET 11 and model domain events as discriminated unions (sealed record hierarchies) rather than marker interfaces.
 
 Files:
 - `SKILL.md` — high-level rules and output format (Planning Mode, ID-type preference, event sourcing, schemas)

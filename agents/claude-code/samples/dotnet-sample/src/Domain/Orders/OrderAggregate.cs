@@ -7,13 +7,13 @@ namespace Project.Domain.Orders;
 
 public class Order
 {
-    private readonly List<IOrderEvent> _changes = new();
+    private readonly List<Project.Domain.Orders.Events.OrderEvent> _changes = new();
     public OrderId Id { get; private set; }
     public bool IsCompleted { get; private set; }
 
-    public IEnumerable<IOrderEvent> GetChanges() => _changes.AsEnumerable();
+    public IEnumerable<Project.Domain.Orders.Events.OrderEvent> GetChanges() => _changes.AsEnumerable();
 
-    private void Apply(IOrderEvent @event)
+    private void Apply(Project.Domain.Orders.Events.OrderEvent @event)
     {
         switch (@event)
         {
@@ -30,7 +30,7 @@ public class Order
         }
     }
 
-    private void Raise(IOrderEvent @event)
+    private void Raise(Project.Domain.Orders.Events.OrderEvent @event)
     {
         Apply(@event);
         _changes.Add(@event);
@@ -55,7 +55,7 @@ public class Order
         Raise(new OrderCompleted(Id, DateTime.UtcNow));
     }
 
-    public void LoadsFrom(IEnumerable<IOrderEvent> events)
+    public void LoadsFrom(IEnumerable<Project.Domain.Orders.Events.OrderEvent> events)
     {
         foreach (var e in events) Apply(e);
     }
