@@ -1,7 +1,9 @@
 {
-  "name": "codex-skill",
-  "version": "0.1.0",
+  "name": "codex-frontend-skill",
+  "version": "0.2.0",
   "author": "devcontainer-user",
-  "description": "Minimal manifest for the Codex skill",
-  "tags": ["codex","code","generate"]
+  "description": "Codex skill tuned for frontend development with Angular v22 and reactive/signals-first guidance",
+  "tags": ["codex","angular","frontend","signals","reactive"],
+  "frameworks": ["angular@22"],
+  "preferences": ["signals","reactive-programming" ]
 }
