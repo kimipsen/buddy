@@ -1,5 +1,5 @@
 {
-  "name": "claude-backend-skill",
+  "name": "claude-backend",
   "version": "0.2.0",
   "author": "devcontainer-user",
   "description": "Claude skill tuned for .NET backend development: screaming-architecture, event sourcing, EF Core, PostgreSQL",
