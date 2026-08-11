@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/dotnet:2-11.0-resolute
+FROM mcr.microsoft.com/devcontainers/dotnet:2-11.0-preview-resolute
 
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
