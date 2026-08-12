@@ -31,7 +31,7 @@ public sealed class UserService(IUserEventStore events)
                 principal.FindFirstValue("name"),
                 DateTimeOffset.UtcNow);
 
-            await events.AppendAsync(keycloakSubject, [(UserEvent)created], cancellationToken);
+            await events.AppendAsync(keycloakSubject, [created], cancellationToken);
 
             return Rehydrate([created])!;
         }
