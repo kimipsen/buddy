@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p .claude/skills)",
+      "Bash(git mv *)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(timeout 300 dotnet build -v q --nologo)",
+      "Bash(cp src/Domain/Orders/OrderEvents.cs /tmp/claude-1000/-workspaces-kim/c54d10c3-fc3e-40e1-899f-34f94c1503b9/scratchpad/OrderEvents.bak)",
+      "Bash(python3 -)",
+      "Bash(python3 - *)"
+    ],
+    "additionalDirectories": [
+      "/workspaces/kim/.claude/skills/claude-backend/samples/dotnet-sample/src/Domain/Orders"
+    ]
+  }
+}

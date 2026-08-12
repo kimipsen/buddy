@@ -11,7 +11,11 @@
 		"ghcr.io/helpers4/devcontainer/claude-dev:1": {},
 		// "ghcr.io/devcontainer-config/features/dot-config:4": {},
 		"ghcr.io/sliekens/devcontainer-features/codex:1": {},
-		"ghcr.io/rosstaco/devcontainer-features/copilot-persistence:1": {}
+		"ghcr.io/rosstaco/devcontainer-features/copilot-persistence:1": {},
+		"ghcr.io/devcontainers/features/node:2": {
+			"version": "lts",
+			"npmVersion": "lts"
+		}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
