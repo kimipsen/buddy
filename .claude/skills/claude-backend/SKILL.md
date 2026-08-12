@@ -7,6 +7,8 @@ description: .NET backend development with screaming architecture (domain-first)
 
 Purpose: Assist backend development for .NET services with a focus on "screaming architecture" (domain-first), event sourcing, EF Core and PostgreSQL.
 
+Project layout requirement: place backend source code and related artifacts under `src/backend/` in the repository (for example `src/backend/Domain`, `src/backend/Infrastructure`, `src/backend/Web`).
+
 Behavioral rules:
 - Start in "Planning Mode": always provide a short plan (assumptions, steps, required files, and trade-offs) before producing code.
 - Prefer domain-specific types over primitives: create small, explicit value types for identifiers and other domain concepts (example: `public readonly record struct OrderId(Guid Value);`). When generating identifiers (GUIDs) in .NET, prefer UUIDv7 (time-ordered) for better indexing and ordering semantics — use `Guid.CreateVersion7()` rather than `Guid.NewGuid()`.

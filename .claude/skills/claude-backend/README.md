@@ -10,4 +10,7 @@ Files:
 - `examples/` — example prompts to drive reproducible outputs
 - `samples/` — small code templates (value types, aggregate, DbContext, event store notes)
 
+Project layout:
+- Place backend source and artifacts under `src/backend/` (for example `src/backend/Domain`, `src/backend/Infrastructure`, `src/backend/Web`). The `samples/dotnet-sample/` demonstrates the recommended structure under `src/` which can be mapped into `src/backend/` for real projects.
+
 Use these templates as starting points; adapt names and namespaces to your project.

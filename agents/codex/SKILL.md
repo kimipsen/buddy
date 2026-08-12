@@ -1,6 +1,7 @@
 # Codex Skill — Frontend Development (Angular)
 
 Purpose: Assist frontend development tasks with a focus on Angular (v22).
+Project layout requirement: place all frontend source and assets produced by this skill under `src/frontend/` in the repository (e.g., `src/frontend/components`, `src/frontend/services`, `src/frontend/docs`).
 
 Behavioral rules:
 - ALWAYS start in "Planning Mode": before producing code, output a concise plan with steps, trade-offs, and required inputs (files, framework versions, constraints).

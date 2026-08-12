@@ -7,6 +7,9 @@ Key behaviors:
 - Plans must include visual artifacts: provide a wireframe and a mockup/screenshot (as image files or inline SVG/mermaid), with file paths, alt text, and a short caption.
 - Prefer TailwindCSS for styling and layout. When producing implementations, include a brief Tailwind setup or integration note for Angular v22 and use Tailwind utility classes in examples.
 
+Project layout:
+- Place all generated frontend source and assets under `src/frontend/` (for example `src/frontend/components`, `src/frontend/services`, `src/frontend/docs`).
+
 Files:
 - `SKILL.md` — skill rules, planning-mode requirement, and output format guidance
 - `manifest.json` — metadata including framework and preferences
