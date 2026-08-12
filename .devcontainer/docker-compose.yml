@@ -26,13 +26,36 @@ services:
       # PostgreSQL 18+ images store data in a major-version subdirectory, so the
       # mount belongs at /var/lib/postgresql, not /var/lib/postgresql/data.
       - postgres-data:/var/lib/postgresql
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: postgres
+    # Credentials live in .devcontainer/.env (gitignored). See .env.example.
+    env_file:
+      - .env
+    networks:
+      - buddy_network
       
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    restart: unless-stopped
+    # Credentials live in .devcontainer/.env (gitignored). See .env.example.
+    env_file:
+      - .env
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_PORT: 5432
+    command: start-dev
+    depends_on:
+      - db
+    ports:
+      - 9080:8080
+    networks:
+      - buddy_network
+
 volumes:
   postgres-data:
+
+networks:
+  buddy_network:
+    driver: bridge

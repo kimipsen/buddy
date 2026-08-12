@@ -28,6 +28,11 @@
       "resolved": "ghcr.io/helpers4/devcontainer/claude-dev@sha256:105e6e3b6511f18111d21a0546f5d11eca1176d0e45290f89e64134f00652904",
       "integrity": "sha256:105e6e3b6511f18111d21a0546f5d11eca1176d0e45290f89e64134f00652904"
     },
+    "ghcr.io/nlstn/devcontainer-features/psql:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/nlstn/devcontainer-features/psql@sha256:2260e43f5a282ba5ad54c6c4148baeedcc923ecb0936cd09c8f5de2bf3b8806c",
+      "integrity": "sha256:2260e43f5a282ba5ad54c6c4148baeedcc923ecb0936cd09c8f5de2bf3b8806c"
+    },
     "ghcr.io/rosstaco/devcontainer-features/copilot-persistence:1": {
       "version": "1.1.0",
       "resolved": "ghcr.io/rosstaco/devcontainer-features/copilot-persistence@sha256:6dd5cd9b007544b542d8aa71c09e5076ac0b81cae293ba59a8fb78c26119a610",
