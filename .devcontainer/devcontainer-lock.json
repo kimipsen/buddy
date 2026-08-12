@@ -1,5 +1,10 @@
 {
   "features": {
+    "ghcr.io/devcontainers-extra/features/claude-code:2": {
+      "version": "2.0.3",
+      "resolved": "ghcr.io/devcontainers-extra/features/claude-code@sha256:e119fb3524e9e55d47b84ee32b20085dbeae66f08d8e298e59c57a94f02d5b35",
+      "integrity": "sha256:e119fb3524e9e55d47b84ee32b20085dbeae66f08d8e298e59c57a94f02d5b35"
+    },
     "ghcr.io/devcontainers-extra/features/go-task:1": {
       "version": "1.0.6",
       "resolved": "ghcr.io/devcontainers-extra/features/go-task@sha256:4d1db153919976cadd3209ca05d655a761a01707767716994dad677b4538dc1b",
@@ -27,11 +32,6 @@
       "version": "1.0.0",
       "resolved": "ghcr.io/flexwie/devcontainer-features/op@sha256:68098ff0ac2447bcf0eeee7ac19123bd0375fd43330ee3c9ca4dee510b74c6d3",
       "integrity": "sha256:68098ff0ac2447bcf0eeee7ac19123bd0375fd43330ee3c9ca4dee510b74c6d3"
-    },
-    "ghcr.io/helpers4/devcontainer/claude-dev:1": {
-      "version": "1.0.5",
-      "resolved": "ghcr.io/helpers4/devcontainer/claude-dev@sha256:105e6e3b6511f18111d21a0546f5d11eca1176d0e45290f89e64134f00652904",
-      "integrity": "sha256:105e6e3b6511f18111d21a0546f5d11eca1176d0e45290f89e64134f00652904"
     },
     "ghcr.io/nlstn/devcontainer-features/psql:1": {
       "version": "1.0.0",
