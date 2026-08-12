@@ -45,6 +45,7 @@ services:
       KC_DB: postgres
       KC_DB_URL_HOST: db
       KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak
     command: start-dev
     depends_on:
       - db

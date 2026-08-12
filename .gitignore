@@ -487,4 +487,9 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
+# .net application settings
 appsettings.*.json
+
+# Task setup
+[Tt]askfile.yml
+[Tt]askfile.yaml
