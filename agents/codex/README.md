@@ -10,6 +10,9 @@ Key behaviors:
 Project layout:
 - Place all generated frontend source and assets under `src/frontend/` (for example `src/frontend/components`, `src/frontend/services`, `src/frontend/docs`).
 
+Secrets and configuration:
+- Use `.env` files for local development secrets. Never commit `.env`; include a tracked `.env.example` with placeholders. Prefer server-side secret storage and inject secrets into CI/CD or deployment environments rather than exposing them to client-side code.
+
 Files:
 - `SKILL.md` — skill rules, planning-mode requirement, and output format guidance
 - `manifest.json` — metadata including framework and preferences

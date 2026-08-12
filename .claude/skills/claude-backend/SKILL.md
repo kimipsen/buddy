@@ -28,6 +28,9 @@ Usage:
 	4. Tests — suggested unit/integration tests and commands to run them.
 	5. Notes — trade-offs, backwards-compatibility, and next steps (e.g., extracting microservices).
 
+Secrets handling:
+- Store secrets and sensitive configuration in a `.env` file for local development (for example `src/backend/.env`). **Do not commit** the `.env` file to source control; include a tracked `src/backend/.env.example` with placeholder values. Generated code should read secrets from environment variables (e.g., `Environment.GetEnvironmentVariable("MY_CONN")`) or via the configuration providers (`Configuration["My:Conn"]`). In documentation, call out secure deployment practices: inject secrets via CI/CD, cloud secret stores (Key Vault, Secrets Manager), or platform-managed app settings.
+
 Capabilities:
 - Generate .NET 11 code for domain models, value types, event-sourced aggregates, event store adapters, and EF Core DbContexts mapped to a domain-specific schema.
 - Provide sample tests, EF Core entity mappings, and sample migrations for PostgreSQL 19 (including storing event payloads as JSONB).

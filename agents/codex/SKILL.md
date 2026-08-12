@@ -32,4 +32,8 @@ Output format guidance:
 - Section 3 — "Tests": example tests and commands to run them.
 - Section 4 — "Notes": trade-offs and compatibility notes (including Tailwind/Angular integration considerations).
 
+Secrets handling:
+- **Use `.env` files** to store any secrets or credentials used during development or in examples. Do not commit `.env` to source control; provide a `.env.example` with placeholder values instead. For frontend code, prefer keeping real secrets on the backend and only expose non-sensitive config to the client; if a build-time value is required, document how to inject it during the build (e.g., environment variables or Angular file replacements).
+- When producing code that reads secrets, include example code that reads from environment variables (or a `dotenv` loader for local development) and include a short note on secure deployment (CI secret injection, cloud KMS/secret-store, or app settings).
+
 Tags: codex, angular, frontend, signals, reactive, planning

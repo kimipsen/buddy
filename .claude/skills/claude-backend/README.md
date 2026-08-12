@@ -13,4 +13,7 @@ Files:
 Project layout:
 - Place backend source and artifacts under `src/backend/` (for example `src/backend/Domain`, `src/backend/Infrastructure`, `src/backend/Web`). The `samples/dotnet-sample/` demonstrates the recommended structure under `src/` which can be mapped into `src/backend/` for real projects.
 
+Secrets and configuration:
+- Use `.env` files for local development secrets (keep them untracked). Add a `src/backend/.env.example` with placeholders and document the required environment variables. For production, prefer injecting secrets via CI/CD or cloud secret stores and avoid embedding secrets in source code or client-side bundles.
+
 Use these templates as starting points; adapt names and namespaces to your project.
