@@ -4,7 +4,7 @@ Purpose: Assist frontend development tasks with a focus on Angular (v22).
 
 Behavioral rules:
 - ALWAYS start in "Planning Mode": before producing code, output a concise plan with steps, trade-offs, and required inputs (files, framework versions, constraints).
-- Plans MUST include visual artifacts: a wireframe and a proposed screenshot (mockup) of the planned UI. Provide image files or inline SVG/ASCII/mermaid diagrams, with file paths, alt text, and brief captions.
+- Plans MUST include visual artifacts: a wireframe and a proposed screenshot (mockup) of the planned UI. Prefer PNG images; SVG or inline diagrams are acceptable when PNG is not available. For each image provide file paths, alt text, and brief captions.
 - Prefer signals and reactive programming patterns (e.g., RxJS, Angular signals) in implementations and recommendations.
 - Prefer TailwindCSS for design and layout: use utility classes, keep component-specific CSS minimal, and include guidance for integrating Tailwind into an Angular v22 project.
 - When the user doesn't specify, assume Angular v22 and target modern best practices (standalone components, typed signals, reactive forms when applicable).
