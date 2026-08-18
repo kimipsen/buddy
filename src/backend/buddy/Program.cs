@@ -1,8 +1,14 @@
 using buddy.Features.Users;
+using buddy.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new StronglyTypedIdJsonConverterFactory());
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
