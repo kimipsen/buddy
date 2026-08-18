@@ -1,11 +1,16 @@
 using System.Text.Json;
+using buddy.Serialization;
 
 namespace buddy.Features.Users;
 
 public sealed class FileUserEventStore(IConfiguration configuration) : IUserEventStore
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new StronglyTypedIdJsonConverterFactory() }
+    };
     private readonly string _filePath = configuration["EventStore:FilePath"] ?? "data/user-events.jsonl";
 
     public async Task<IReadOnlyCollection<UserEvent>> ReadAsync(string keycloakSubject, CancellationToken cancellationToken)
