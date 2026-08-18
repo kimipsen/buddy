@@ -6,8 +6,15 @@ namespace buddy.Features.Users;
 
 public static class UsersFeature
 {
+    public const string OpenApiDocumentName = "users";
+
     public static IServiceCollection AddUsersFeature(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOpenApi(OpenApiDocumentName, options =>
+        {
+            options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
+        });
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -33,7 +40,12 @@ public static class UsersFeature
 
     public static IEndpointRouteBuilder MapUsersFeature(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/users/me", async (
+        var users = endpoints.MapGroup("/users")
+            .WithTags("Users")
+            .RequireAuthorization()
+            .WithGroupName(OpenApiDocumentName);
+        
+        users.MapGet("/me", async (
             ClaimsPrincipal principal,
             UserService users,
             CancellationToken cancellationToken) =>
@@ -45,9 +57,8 @@ public static class UsersFeature
                 user.KeycloakSubject,
                 user.Email,
                 user.UserName,
-                user.DisplayName));
+                user.Name));
         })
-        .RequireAuthorization()
         .WithName("GetCurrentUser");
 
         return endpoints;

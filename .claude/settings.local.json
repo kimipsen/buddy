@@ -9,7 +9,25 @@
       "Bash(cp src/Domain/Orders/OrderEvents.cs /tmp/claude-1000/-workspaces-kim/c54d10c3-fc3e-40e1-899f-34f94c1503b9/scratchpad/OrderEvents.bak)",
       "Bash(python3 -)",
       "Bash(python3 - *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(getent hosts *)",
+      "Bash(curl -s -o /dev/null -w \"keycloak:8080 -> %{http_code}\\\\n\" http://keycloak:8080/)",
+      "Bash(curl -s -o /dev/null -w \"localhost:8080 -> %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(curl -s http://keycloak:8080/realms/buddy/.well-known/openid-configuration)",
+      "Bash(python3 -c ' *)",
+      "Bash(xargs -I{} sh -c 'echo === {} ===; cat {}')",
+      "Bash(dotnet build *)",
+      "Bash(cat /tmp/buddy-run.log)",
+      "Read(//tmp/**)",
+      "Bash(curl -s http://localhost:5193/openapi/v1.json)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:5193/openapi/users.json)",
+      "Bash(curl -sv http://localhost:5193/openapi/v1.json)",
+      "Bash(curl -sk https://localhost:7076/openapi/v1.json)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\('paths',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(curl -sk https://localhost:7076/openapi/users.json)",
+      "Bash(pkill -f \"dotnet.*buddy.dll\")",
+      "Bash(kill 6228)"
     ],
     "additionalDirectories": [
       "/workspaces/kim/.claude/skills/claude-backend/samples/dotnet-sample/src/Domain/Orders"

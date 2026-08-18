@@ -15,6 +15,7 @@ services:
       - db
       - rabbitmq
       - redis
+      - mailpit
     networks:
       - buddy_network
     # Provide credentials and RabbitMQ connection info to the app from the shared .env
@@ -28,6 +29,10 @@ services:
       REDIS__HOST: redis
       REDIS__PORT: "6379"
       REDIS__PASSWORD: ${REDIS_PASSWORD}
+      MAIL__HOST: mailpit
+      MAIL__PORT: "1025"
+      MAIL__USERNAME: ${MAILPIT_USERNAME}
+      MAIL__PASSWORD: ${MAILPIT_PASSWORD}
     
     # Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
     # user: root
@@ -113,10 +118,30 @@ services:
     networks:
       - buddy_network
 
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    # Mailpit settings can be controlled via .env (optional).
+    env_file:
+      - .env
+    ports:
+      - 2025:1025   # SMTP
+      - 9025:8025   # Web UI
+    volumes:
+        - mailpit-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8025 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - buddy_network
+
 volumes:
   postgres-data:
   rabbitmq-data:
   redis-data:
+  mailpit-data:
 
 networks:
   buddy_network:

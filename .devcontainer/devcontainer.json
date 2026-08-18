@@ -23,7 +23,9 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "SonarSource.sonarlint-vscode"
+                "SonarSource.sonarlint-vscode",
+                "cweijan.vscode-redis-client",
+                "humao.rest-client"
             ]
         }
     }
@@ -35,7 +37,7 @@
 	// "customizations": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [5000, 5001, 5432],
+	// "forwardPorts": [500PackageVersion0, 5001, 5432],
 	// "portsAttributes": {
 	//		"5001": {
 	//			"protocol": "https"

@@ -9,7 +9,7 @@ public sealed class UserService(IUserEventStore events)
     public async Task<User> GetOrCreateFromClaimsAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
     {
         var keycloakSubject = principal.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? principal.FindFirstValue("sub")
+            ?? principal.FindFirstValue(Claims.KeycloakSubject)
             ?? throw new UnauthorizedAccessException("Authenticated user is missing the Keycloak subject claim.");
 
         await _creationGate.WaitAsync(cancellationToken);
@@ -23,12 +23,20 @@ public sealed class UserService(IUserEventStore events)
                 return existingUser;
             }
 
+            var emailIsVerified = principal.FindFirstValue(Claims.EmailVerified) is { } emailVerifiedClaim
+                && bool.TryParse(emailVerifiedClaim, out var emailVerified)
+                && emailVerified;
+
+            var emailClaim = principal.FindFirstValue(ClaimTypes.Email) ?? principal.FindFirstValue(Claims.Email);
+
             var created = new UserCreated(
-                Guid.NewGuid(),
+                UserId.New(),
                 keycloakSubject,
-                principal.FindFirstValue(ClaimTypes.Email) ?? principal.FindFirstValue("email"),
-                principal.FindFirstValue("preferred_username"),
-                principal.FindFirstValue("name"),
+                emailIsVerified
+                    ? Email.Verified(emailClaim ?? "")
+                    : Email.Unverified(emailClaim ?? ""),
+                principal.FindFirstValue(Claims.PreferredUsername),
+                Name.New(principal.FindFirstValue(Claims.GivenName) ?? "", principal.FindFirstValue(Claims.FamilyName) ?? ""),
                 DateTimeOffset.UtcNow);
 
             await events.AppendAsync(keycloakSubject, [created], cancellationToken);
@@ -54,7 +62,7 @@ public sealed class UserService(IUserEventStore events)
                     created.KeycloakSubject,
                     created.Email,
                     created.UserName,
-                    created.DisplayName),
+                    created.Name),
                 _ => user
             };
         }
