@@ -1,12 +1,25 @@
 using System.Security.Claims;
+using buddy.Serialization;
+using JasperFx.Events;
+using Marten;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Weasel.Core;
 
 namespace buddy.Features.Users;
 
 public static class UsersFeature
 {
     public const string OpenApiDocumentName = "users";
+
+    private static readonly Type[] EventTypes =
+    [
+        typeof(UserCreated),
+        typeof(UserDeleted),
+        typeof(NameUpdated),
+        typeof(EmailUpdated),
+        typeof(EmailVerified)
+    ];
 
     public static IServiceCollection AddUsersFeature(this IServiceCollection services, IConfiguration configuration)
     {
@@ -32,8 +45,23 @@ public static class UsersFeature
             });
 
         services.AddAuthorization();
-        services.AddSingleton<IUserEventStore, FileUserEventStore>();
-        services.AddSingleton<UserService>();
+
+        services.AddMartenStore<IUsersStore>(options =>
+        {
+            options.Connection(configuration.GetConnectionString("Postgres")
+                ?? throw new InvalidOperationException("Missing required configuration 'ConnectionStrings:Postgres'."));
+
+            options.DatabaseSchemaName = "users";
+            options.Events.StreamIdentity = StreamIdentity.AsGuid;
+            options.Events.AddEventTypes(EventTypes);
+
+            options.UseSystemTextJsonForSerialization(
+                enumStorage: EnumStorage.AsString,
+                configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+        });
+
+        services.AddSingleton<IUserEventStore, MartenUserEventStore>();
+        services.AddScoped<UserService>();
 
         return services;
     }
@@ -52,6 +80,11 @@ public static class UsersFeature
         {
             var user = await users.GetOrCreateFromClaimsAsync(principal, cancellationToken);
 
+            if (user.IsDeleted)
+            {
+                return Results.NotFound();
+            }
+
             return Results.Ok(new UserResponse(
                 user.Id,
                 user.KeycloakSubject,
@@ -60,6 +93,28 @@ public static class UsersFeature
                 user.Name));
         })
         .WithName("GetCurrentUser");
+
+        users.MapGet("/me/events", async (
+            ClaimsPrincipal principal,
+            UserService users,
+            CancellationToken cancellationToken) =>
+        {
+            var userEvents = await users.GetEventsFromClaimsAsync(principal, cancellationToken);
+
+            return Results.Ok(userEvents.Select(e => new UserEventResponse(e.EventType, e.Value!)));
+        })
+        .WithName("GetCurrentUserEvents");
+
+        users.MapDelete("/me", async (
+            ClaimsPrincipal principal,
+            UserService users,
+            CancellationToken cancellationToken) =>
+        {
+            await users.DeleteFromClaimsAsync(principal, cancellationToken);
+
+            return Results.NoContent();
+        })
+        .WithName("DeleteCurrentUser");
 
         return endpoints;
     }

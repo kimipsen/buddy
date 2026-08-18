@@ -2,7 +2,8 @@ namespace buddy.Features.Users;
 
 public sealed record User(
     UserId Id,
-    string KeycloakSubject,
+    KeycloakSubject KeycloakSubject,
     Email Email,
     string? UserName,
-    Name Name);
+    Name Name,
+    bool IsDeleted = false);

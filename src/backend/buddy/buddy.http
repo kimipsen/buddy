@@ -28,3 +28,13 @@ Authorization: Bearer {{login.response.body.$.access_token}}
 Accept: application/json
 
 ###
+
+GET {{buddy_HostAddress}}/users/me/events
+Authorization: Bearer {{login.response.body.$.access_token}}
+Accept: application/json
+
+###
+
+DELETE {{buddy_HostAddress}}/users/me
+Authorization: Bearer {{login.response.body.$.access_token}}
+
