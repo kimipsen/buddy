@@ -31,3 +31,10 @@ public static class GetCurrentUserEndpoint
         return users;
     }
 }
+
+public sealed record UserResponse(
+    UserId Id,
+    KeycloakSubject KeycloakSubject,
+    Email Email,
+    string? UserName,
+    Name Name);

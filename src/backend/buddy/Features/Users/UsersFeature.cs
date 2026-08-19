@@ -1,4 +1,5 @@
 using System.Security.Claims;
+
 using buddy.Serialization;
 using JasperFx.Events;
 using Marten;

@@ -24,3 +24,5 @@ public static class GetUserEventsHandler
 }
 
 public sealed record UserEventsPage(IReadOnlyCollection<UserEvent> Events, long? NextVersion);
+
+public sealed record UserEventResponse(string Type, object Data);

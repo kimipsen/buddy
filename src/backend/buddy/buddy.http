@@ -35,6 +35,12 @@ Accept: application/json
 
 ###
 
+GET {{buddy_HostAddress}}/users/me/events?pageSize=1&cursor=AQAAAAAAAAA=
+Authorization: Bearer {{login.response.body.$.access_token}}
+Accept: application/json
+
+###
+
 DELETE {{buddy_HostAddress}}/users/me
 Authorization: Bearer {{login.response.body.$.access_token}}
 

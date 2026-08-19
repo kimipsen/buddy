@@ -22,6 +22,9 @@ public sealed record User(
                     created.Email,
                     created.UserName,
                     created.Name),
+                NameUpdated nameUpdated => user! with { Name = nameUpdated.After },
+                EmailUpdated emailUpdated => user! with { Email = emailUpdated.After },
+                EmailVerified => user! with { Email = user!.Email with { IsVerified = true } },
                 UserDeleted => user! with { IsDeleted = true },
                 _ => user
             };
