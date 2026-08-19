@@ -11,9 +11,8 @@ public sealed record CreateItem(
     string Title,
     Icon Icon,
     Color Color,
-    DateTimeOffset? StartsAt,
-    DateTimeOffset? EndsAt,
-    DateTimeOffset? DueAt,
+    Period? Period,
+    DueDate? DueDate,
     RecurrenceRule? Recurrence)
 {
     public static CreateItem FromClaims(
@@ -23,11 +22,10 @@ public sealed record CreateItem(
         string title,
         Icon icon,
         Color color,
-        DateTimeOffset? startsAt,
-        DateTimeOffset? endsAt,
-        DateTimeOffset? dueAt,
+        Period? period,
+        DueDate? dueDate,
         RecurrenceRule? recurrence) =>
-        new(principal.GetKeycloakSubject(), calendarId, kind, title, icon, color, startsAt, endsAt, dueAt, recurrence);
+        new(principal.GetKeycloakSubject(), calendarId, kind, title, icon, color, period, dueDate, recurrence);
 }
 
 public sealed record CreateItemResult(CalendarItem? Item, CalendarAccess Access, string? ValidationError = null);

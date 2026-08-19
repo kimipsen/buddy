@@ -24,9 +24,8 @@ public static class CreateItemEndpoint
                 request.Title,
                 new Icon(request.Icon),
                 new Color(request.Color),
-                request.StartsAt,
-                request.EndsAt,
-                request.DueAt,
+                request.Period,
+                request.DueDate,
                 request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null);
 
             var result = await bus.InvokeAsync<CreateItemResult>(command, cancellationToken);
@@ -49,16 +48,15 @@ public static class CreateItemEndpoint
     }
 }
 
-public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int IntervalCount, DateTimeOffset? Until);
+public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until);
 
 public sealed record CreateItemRequest(
     CalendarItemKind Kind,
     string Title,
     string Icon,
     string Color,
-    DateTimeOffset? StartsAt,
-    DateTimeOffset? EndsAt,
-    DateTimeOffset? DueAt,
+    Period? Period,
+    DueDate? DueDate,
     RecurrenceRuleRequest? Recurrence);
 
 public sealed record CalendarItemResponse(
@@ -68,10 +66,11 @@ public sealed record CalendarItemResponse(
     string Title,
     string Icon,
     string Color,
-    DateTimeOffset? StartsAt,
-    DateTimeOffset? EndsAt,
-    DateTimeOffset? DueAt,
-    RecurrenceRuleRequest? Recurrence)
+    Period? Period,
+    DueDate? DueDate,
+    RecurrenceRuleRequest? Recurrence,
+    Guid CreatedBy,
+    Guid LastModifiedBy)
 {
     public static CalendarItemResponse FromItem(CalendarItem item) => new(
         item.Id,
@@ -80,8 +79,9 @@ public sealed record CalendarItemResponse(
         item.Title,
         item.Icon.Value,
         item.Color.Value,
-        item.StartsAt,
-        item.EndsAt,
-        item.DueAt,
-        item.Recurrence is { } r ? new RecurrenceRuleRequest(r.Frequency, r.IntervalCount, r.Until) : null);
+        item.Period,
+        item.DueDate,
+        item.Recurrence is { } r ? new RecurrenceRuleRequest(r.Frequency, r.IntervalCount, r.Until) : null,
+        item.CreatedBy.Value,
+        item.LastModifiedBy.Value);
 }

@@ -47,9 +47,9 @@ public static class UpdateItemRecurrenceHandler
 
         await items.AppendAsync(
             command.ItemId,
-            [new RecurrenceUpdated(command.ItemId, item.Recurrence, command.Recurrence, DateTimeOffset.UtcNow)],
+            [new RecurrenceUpdated(command.ItemId, item.Recurrence, command.Recurrence, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return new UpdateItemResult(item with { Recurrence = command.Recurrence }, CalendarAccess.Allowed);
+        return new UpdateItemResult(item with { Recurrence = command.Recurrence, LastModifiedBy = userId }, CalendarAccess.Allowed);
     }
 }

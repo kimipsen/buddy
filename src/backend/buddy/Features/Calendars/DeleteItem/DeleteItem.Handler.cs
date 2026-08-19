@@ -35,7 +35,7 @@ public static class DeleteItemHandler
             return CalendarAccess.NotFound;
         }
 
-        await items.AppendAsync(command.ItemId, [new ItemDeleted(command.ItemId, DateTimeOffset.UtcNow)], cancellationToken);
+        await items.AppendAsync(command.ItemId, [new ItemDeleted(command.ItemId, userId, DateTimeOffset.UtcNow)], cancellationToken);
 
         return CalendarAccess.Allowed;
     }

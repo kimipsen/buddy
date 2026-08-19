@@ -43,8 +43,8 @@ public static class UpdateItemDetailsHandler
             return new UpdateItemResult(item, CalendarAccess.Allowed);
         }
 
-        await items.AppendAsync(command.ItemId, [new ItemDetailsUpdated(command.ItemId, before, after, DateTimeOffset.UtcNow)], cancellationToken);
+        await items.AppendAsync(command.ItemId, [new ItemDetailsUpdated(command.ItemId, before, after, userId, DateTimeOffset.UtcNow)], cancellationToken);
 
-        return new UpdateItemResult(item with { Title = command.Title, Icon = command.Icon, Color = command.Color }, CalendarAccess.Allowed);
+        return new UpdateItemResult(item with { Title = command.Title, Icon = command.Icon, Color = command.Color, LastModifiedBy = userId }, CalendarAccess.Allowed);
     }
 }

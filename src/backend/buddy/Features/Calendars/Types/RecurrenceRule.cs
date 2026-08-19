@@ -8,4 +8,4 @@ public enum RecurrenceFrequency
     Yearly
 }
 
-public sealed record RecurrenceRule(RecurrenceFrequency Frequency, int IntervalCount, DateTimeOffset? Until = null);
+public sealed record RecurrenceRule(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until = null);

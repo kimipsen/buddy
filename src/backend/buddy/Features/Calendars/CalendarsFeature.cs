@@ -77,6 +77,7 @@ public static class CalendarsFeature
         calendars.MapRemoveMember();
         calendars.MapCreateItem();
         calendars.MapListItems();
+        calendars.MapListOccurrences();
         calendars.MapUpdateItemDetails();
         calendars.MapRescheduleItem();
         calendars.MapUpdateItemRecurrence();

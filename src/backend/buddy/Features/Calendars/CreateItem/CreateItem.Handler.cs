@@ -38,26 +38,26 @@ public static class CreateItemHandler
 
         if (command.Kind == CalendarItemKind.Event)
         {
-            if (command.StartsAt is null || command.EndsAt is null)
+            if (command.Period is null)
             {
                 return new CreateItemResult(null, CalendarAccess.Allowed, "An event requires both a start and an end time.");
             }
 
-            if (command.EndsAt <= command.StartsAt)
+            if (command.Period.EndsAt.Date.ToDateTime(command.Period.EndsAt.Time) <= command.Period.StartsAt.Date.ToDateTime(command.Period.StartsAt.Time))
             {
                 return new CreateItemResult(null, CalendarAccess.Allowed, "An event's end time must be after its start time.");
             }
 
-            created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.StartsAt.Value, command.EndsAt.Value, command.Recurrence, now);
+            created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.Period, command.Recurrence, now);
         }
         else
         {
-            if (command.DueAt is null)
+            if (command.DueDate is null)
             {
                 return new CreateItemResult(null, CalendarAccess.Allowed, "A task requires a due date.");
             }
 
-            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.DueAt.Value, command.Recurrence, now);
+            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.DueDate, command.Recurrence, now);
         }
 
         var events = await items.CreateAsync(itemId, [created], cancellationToken);

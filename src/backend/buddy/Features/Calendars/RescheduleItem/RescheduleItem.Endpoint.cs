@@ -22,9 +22,8 @@ public static class RescheduleItemEndpoint
                 principal,
                 new CalendarId(calendarId),
                 new CalendarItemId(itemId),
-                request.StartsAt,
-                request.EndsAt,
-                request.DueAt);
+                request.Period,
+                request.DueDate);
 
             var result = await bus.InvokeAsync<UpdateItemResult>(command, cancellationToken);
 
@@ -46,4 +45,4 @@ public static class RescheduleItemEndpoint
     }
 }
 
-public sealed record RescheduleItemRequest(DateTimeOffset? StartsAt, DateTimeOffset? EndsAt, DateTimeOffset? DueAt);
+public sealed record RescheduleItemRequest(Period? Period, DueDate? DueDate);

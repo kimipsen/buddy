@@ -7,6 +7,7 @@ namespace buddy.Features.Calendars;
 public sealed record Calendar(
     CalendarId Id,
     string Name,
+    TimeZoneId TimeZoneId,
     ImmutableDictionary<UserId, CalendarRole> Members,
     bool IsDeleted = false)
 {
@@ -29,6 +30,7 @@ public sealed record Calendar(
                 CalendarCreated created => new Calendar(
                     created.CalendarId,
                     created.Name,
+                    created.TimeZoneId,
                     ImmutableDictionary<UserId, CalendarRole>.Empty.Add(created.OwnerId, CalendarRole.Owner)),
                 MemberRoleGranted granted => calendar! with { Members = calendar!.Members.SetItem(granted.MemberId, granted.Role) },
                 MemberRoleRevoked revoked => calendar! with { Members = calendar!.Members.Remove(revoked.MemberId) },

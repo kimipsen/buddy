@@ -29,7 +29,7 @@ public union CalendarEvent(
     };
 }
 
-public sealed record CalendarCreated(CalendarId CalendarId, UserId OwnerId, string Name, DateTimeOffset OccurredAt);
+public sealed record CalendarCreated(CalendarId CalendarId, UserId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
 
 public sealed record CalendarDeleted(CalendarId CalendarId, UserId DeletedBy, DateTimeOffset OccurredAt);
 

@@ -39,34 +39,34 @@ public static class RescheduleItemHandler
 
         if (item.Kind == CalendarItemKind.Event)
         {
-            if (command.StartsAt is null || command.EndsAt is null)
+            if (command.Period is null)
             {
                 return new UpdateItemResult(null, CalendarAccess.Allowed, "An event requires both a start and an end time.");
             }
 
-            if (command.EndsAt <= command.StartsAt)
+            if (command.Period.EndsAt.Date.ToDateTime(command.Period.EndsAt.Time) <= command.Period.StartsAt.Date.ToDateTime(command.Period.StartsAt.Time))
             {
                 return new UpdateItemResult(null, CalendarAccess.Allowed, "An event's end time must be after its start time.");
             }
 
             await items.AppendAsync(
                 command.ItemId,
-                [new EventRescheduled(command.ItemId, item.StartsAt!.Value, item.EndsAt!.Value, command.StartsAt.Value, command.EndsAt.Value, now)],
+                [new EventRescheduled(command.ItemId, item.Period!, command.Period, userId, now)],
                 cancellationToken);
 
-            return new UpdateItemResult(item with { StartsAt = command.StartsAt, EndsAt = command.EndsAt }, CalendarAccess.Allowed);
+            return new UpdateItemResult(item with { Period = command.Period, LastModifiedBy = userId }, CalendarAccess.Allowed);
         }
 
-        if (command.DueAt is null)
+        if (command.DueDate is null)
         {
             return new UpdateItemResult(null, CalendarAccess.Allowed, "A task requires a due date.");
         }
 
         await items.AppendAsync(
             command.ItemId,
-            [new TaskRescheduled(command.ItemId, item.DueAt!.Value, command.DueAt.Value, now)],
+            [new TaskRescheduled(command.ItemId, item.DueDate!, command.DueDate, userId, now)],
             cancellationToken);
 
-        return new UpdateItemResult(item with { DueAt = command.DueAt }, CalendarAccess.Allowed);
+        return new UpdateItemResult(item with { DueDate = command.DueDate, LastModifiedBy = userId }, CalendarAccess.Allowed);
     }
 }

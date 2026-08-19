@@ -43,8 +43,7 @@ public sealed record EventItemCreated(
     string Title,
     Icon Icon,
     Color Color,
-    DateTimeOffset StartsAt,
-    DateTimeOffset EndsAt,
+    Period Period,
     RecurrenceRule? Recurrence,
     DateTimeOffset OccurredAt);
 
@@ -55,22 +54,16 @@ public sealed record TaskItemCreated(
     string Title,
     Icon Icon,
     Color Color,
-    DateTimeOffset DueAt,
+    DueDate DueDate,
     RecurrenceRule? Recurrence,
     DateTimeOffset OccurredAt);
 
-public sealed record ItemDetailsUpdated(CalendarItemId Id, ItemDetails Before, ItemDetails After, DateTimeOffset OccurredAt);
+public sealed record ItemDetailsUpdated(CalendarItemId Id, ItemDetails Before, ItemDetails After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
-public sealed record EventRescheduled(
-    CalendarItemId Id,
-    DateTimeOffset BeforeStartsAt,
-    DateTimeOffset BeforeEndsAt,
-    DateTimeOffset AfterStartsAt,
-    DateTimeOffset AfterEndsAt,
-    DateTimeOffset OccurredAt);
+public sealed record EventRescheduled(CalendarItemId Id, Period Before, Period After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
-public sealed record TaskRescheduled(CalendarItemId Id, DateTimeOffset BeforeDueAt, DateTimeOffset AfterDueAt, DateTimeOffset OccurredAt);
+public sealed record TaskRescheduled(CalendarItemId Id, DueDate Before, DueDate After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
-public sealed record RecurrenceUpdated(CalendarItemId Id, RecurrenceRule? Before, RecurrenceRule? After, DateTimeOffset OccurredAt);
+public sealed record RecurrenceUpdated(CalendarItemId Id, RecurrenceRule? Before, RecurrenceRule? After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
-public sealed record ItemDeleted(CalendarItemId Id, DateTimeOffset OccurredAt);
+public sealed record ItemDeleted(CalendarItemId Id, UserId ModifiedBy, DateTimeOffset OccurredAt);
