@@ -27,7 +27,9 @@ public static class CalendarsFeature
         typeof(EventRescheduled),
         typeof(TaskRescheduled),
         typeof(RecurrenceUpdated),
-        typeof(ItemDeleted)
+        typeof(ItemDeleted),
+        typeof(IcalTokenIssued),
+        typeof(IcalTokenRevoked)
     ];
 
     public static IServiceCollection AddCalendarsFeature(this IServiceCollection services, IConfiguration configuration)
@@ -82,6 +84,10 @@ public static class CalendarsFeature
         calendars.MapRescheduleItem();
         calendars.MapUpdateItemRecurrence();
         calendars.MapDeleteItem();
+        calendars.MapCreateIcalToken();
+        calendars.MapListIcalTokens();
+        calendars.MapRevokeIcalToken();
+        calendars.MapGetIcalFeed();
 
         return endpoints;
     }

@@ -8,9 +8,7 @@ public static class ResendEmailVerificationHandler
 
     public static async Task<ResendEmailVerificationResult> Handle(ResendEmailVerification command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
     {
-        var userId = await events.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return ResendEmailVerificationResult.UserNotFound;
         }

@@ -5,13 +5,14 @@ using buddy.Features.Users;
 namespace buddy.Features.Calendars;
 
 public sealed record CreateItem(
-    KeycloakSubject Subject,
+    UserId? UserId,
     CalendarId CalendarId,
     CalendarItemKind Kind,
     string Title,
     Icon Icon,
     Color Color,
-    Period? Period,
+    StartsAt? StartsAt,
+    EndsAt? EndsAt,
     DueDate? DueDate,
     RecurrenceRule? Recurrence)
 {
@@ -22,10 +23,11 @@ public sealed record CreateItem(
         string title,
         Icon icon,
         Color color,
-        Period? period,
+        StartsAt? startsAt,
+        EndsAt? endsAt,
         DueDate? dueDate,
         RecurrenceRule? recurrence) =>
-        new(principal.GetKeycloakSubject(), calendarId, kind, title, icon, color, period, dueDate, recurrence);
+        new(principal.GetUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, recurrence);
 }
 
 public sealed record CreateItemResult(CalendarItem? Item, CalendarAccess Access, string? ValidationError = null);

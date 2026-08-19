@@ -4,16 +4,14 @@ namespace buddy.Features.Calendars;
 
 public static class CreateCalendarHandler
 {
-    public static async Task<CreateCalendarResult> Handle(CreateCalendar command, IUserEventStore users, ICalendarEventStore calendars, CancellationToken cancellationToken)
+    public static async Task<CreateCalendarResult> Handle(CreateCalendar command, ICalendarEventStore calendars, CancellationToken cancellationToken)
     {
         if (!TimeZoneResolution.IsValid(command.TimeZoneId))
         {
             return new CreateCalendarResult(null, ValidationError: $"'{command.TimeZoneId.Value}' is not a recognized IANA time zone identifier.");
         }
 
-        var ownerId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (ownerId is null)
+        if (command.UserId is not { } ownerId)
         {
             return new CreateCalendarResult(null, Unauthenticated: true);
         }

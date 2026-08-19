@@ -4,7 +4,7 @@ namespace buddy.Features.Calendars;
 
 public static class SetMemberRoleHandler
 {
-    public static async Task<CalendarAccess> Handle(SetMemberRole command, IUserEventStore users, ICalendarEventStore calendars, CancellationToken cancellationToken)
+    public static async Task<CalendarAccess> Handle(SetMemberRole command, ICalendarEventStore calendars, CancellationToken cancellationToken)
     {
         if (command.Role == CalendarRole.Owner)
         {
@@ -12,9 +12,7 @@ public static class SetMemberRoleHandler
             return CalendarAccess.Forbidden;
         }
 
-        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return CalendarAccess.NotFound;
         }

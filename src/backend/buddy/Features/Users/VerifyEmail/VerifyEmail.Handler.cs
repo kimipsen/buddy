@@ -7,9 +7,7 @@ public static class VerifyEmailHandler
 {
     public static async Task<VerifyEmailOutcome> Handle(VerifyEmail command, IUserEventStore events, CancellationToken cancellationToken)
     {
-        var userId = await events.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return new VerifyEmailOutcome(VerifyEmailResult.UserNotFound, null);
         }

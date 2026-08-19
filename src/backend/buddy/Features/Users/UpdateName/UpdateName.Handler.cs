@@ -4,9 +4,7 @@ public static class UpdateNameHandler
 {
     public static async Task<User?> Handle(UpdateName command, IUserEventStore events, CancellationToken cancellationToken)
     {
-        var userId = await events.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return null;
         }

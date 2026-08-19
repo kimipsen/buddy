@@ -6,6 +6,7 @@ using JasperFx.Events;
 
 using Marten;
 
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -58,6 +59,7 @@ public static class UsersFeature
             });
 
         services.AddAuthorization();
+        services.AddTransient<IClaimsTransformation, UserIdClaimsTransformation>();
 
         services.AddMartenStore<IUsersStore>(serviceProvider =>
         {

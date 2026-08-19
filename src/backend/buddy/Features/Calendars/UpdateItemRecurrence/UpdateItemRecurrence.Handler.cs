@@ -6,7 +6,6 @@ public static class UpdateItemRecurrenceHandler
 {
     public static async Task<UpdateItemResult> Handle(
         UpdateItemRecurrence command,
-        IUserEventStore users,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         CancellationToken cancellationToken)
@@ -16,9 +15,7 @@ public static class UpdateItemRecurrenceHandler
             return new UpdateItemResult(null, CalendarAccess.Allowed, "Recurrence interval count must be at least 1.");
         }
 
-        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return new UpdateItemResult(null, CalendarAccess.NotFound);
         }

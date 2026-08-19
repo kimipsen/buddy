@@ -6,14 +6,11 @@ public static class DeleteItemHandler
 {
     public static async Task<CalendarAccess> Handle(
         DeleteItem command,
-        IUserEventStore users,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         CancellationToken cancellationToken)
     {
-        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return CalendarAccess.NotFound;
         }

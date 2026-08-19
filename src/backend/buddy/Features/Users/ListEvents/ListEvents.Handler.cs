@@ -4,9 +4,7 @@ public static class GetUserEventsHandler
 {
     public static async Task<UserEventsPage> Handle(GetUserEvents query, IUserEventStore events, CancellationToken cancellationToken)
     {
-        var userId = await events.FindUserIdAsync(query.Subject, cancellationToken);
-
-        if (userId is null)
+        if (query.UserId is not { } userId)
         {
             return new UserEventsPage([], null, null);
         }

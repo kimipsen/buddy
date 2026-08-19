@@ -4,11 +4,9 @@ namespace buddy.Features.Calendars;
 
 public static class RemoveMemberHandler
 {
-    public static async Task<CalendarAccess> Handle(RemoveMember command, IUserEventStore users, ICalendarEventStore calendars, CancellationToken cancellationToken)
+    public static async Task<CalendarAccess> Handle(RemoveMember command, ICalendarEventStore calendars, CancellationToken cancellationToken)
     {
-        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return CalendarAccess.NotFound;
         }

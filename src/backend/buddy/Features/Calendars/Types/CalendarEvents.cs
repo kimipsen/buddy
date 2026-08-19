@@ -6,7 +6,9 @@ public union CalendarEvent(
     CalendarCreated,
     CalendarDeleted,
     MemberRoleGranted,
-    MemberRoleRevoked
+    MemberRoleRevoked,
+    IcalTokenIssued,
+    IcalTokenRevoked
 )
 {
     public static CalendarEvent FromPayload(object payload) => payload switch
@@ -15,6 +17,8 @@ public union CalendarEvent(
         CalendarDeleted e => e,
         MemberRoleGranted e => e,
         MemberRoleRevoked e => e,
+        IcalTokenIssued e => e,
+        IcalTokenRevoked e => e,
         _ => throw new ArgumentException($"Unknown calendar event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -26,6 +30,8 @@ public union CalendarEvent(
         CalendarDeleted => nameof(CalendarDeleted),
         MemberRoleGranted => nameof(MemberRoleGranted),
         MemberRoleRevoked => nameof(MemberRoleRevoked),
+        IcalTokenIssued => nameof(IcalTokenIssued),
+        IcalTokenRevoked => nameof(IcalTokenRevoked),
     };
 }
 
@@ -37,3 +43,10 @@ public sealed record CalendarDeleted(CalendarId CalendarId, UserId DeletedBy, Da
 public sealed record MemberRoleGranted(CalendarId CalendarId, UserId MemberId, CalendarRole Role, UserId GrantedBy, DateTimeOffset OccurredAt);
 
 public sealed record MemberRoleRevoked(CalendarId CalendarId, UserId MemberId, UserId RevokedBy, DateTimeOffset OccurredAt);
+
+// TokenHash is a SHA-256 hash of the plaintext token, never the token itself -- same reasoning as
+// User's EmailVerificationRequested: the event stream is append-only, so a bare secret in it
+// could never be revoked or purged.
+public sealed record IcalTokenIssued(CalendarId CalendarId, IcalTokenId TokenId, string TokenHash, UserId IssuedBy, DateTimeOffset OccurredAt);
+
+public sealed record IcalTokenRevoked(CalendarId CalendarId, IcalTokenId TokenId, UserId RevokedBy, DateTimeOffset OccurredAt);

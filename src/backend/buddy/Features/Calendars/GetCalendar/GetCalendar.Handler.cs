@@ -4,11 +4,9 @@ namespace buddy.Features.Calendars;
 
 public static class GetCalendarHandler
 {
-    public static async Task<GetCalendarResult> Handle(GetCalendar query, IUserEventStore users, ICalendarEventStore calendars, CancellationToken cancellationToken)
+    public static async Task<GetCalendarResult> Handle(GetCalendar query, ICalendarEventStore calendars, CancellationToken cancellationToken)
     {
-        var userId = await users.FindUserIdAsync(query.Subject, cancellationToken);
-
-        if (userId is null)
+        if (query.UserId is not { } userId)
         {
             return new GetCalendarResult(null, CalendarAccess.NotFound);
         }

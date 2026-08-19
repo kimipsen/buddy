@@ -10,8 +10,8 @@ public sealed record EventsPageRequest(long? AfterVersion, long? BeforeVersion, 
     public const int MaxPageSize = 200;
 }
 
-public sealed record GetUserEvents(KeycloakSubject Subject, EventsPageRequest Page)
+public sealed record GetUserEvents(UserId? UserId, EventsPageRequest Page)
 {
     public static GetUserEvents FromClaims(ClaimsPrincipal principal, EventsPageRequest page) =>
-        new(principal.GetKeycloakSubject(), page);
+        new(principal.GetUserId(), page);
 }

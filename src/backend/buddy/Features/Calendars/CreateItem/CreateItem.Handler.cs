@@ -6,7 +6,6 @@ public static class CreateItemHandler
 {
     public static async Task<CreateItemResult> Handle(
         CreateItem command,
-        IUserEventStore users,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         CancellationToken cancellationToken)
@@ -16,9 +15,7 @@ public static class CreateItemHandler
             return new CreateItemResult(null, CalendarAccess.Allowed, "Recurrence interval count must be at least 1.");
         }
 
-        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return new CreateItemResult(null, CalendarAccess.NotFound);
         }
@@ -38,17 +35,17 @@ public static class CreateItemHandler
 
         if (command.Kind == CalendarItemKind.Event)
         {
-            if (command.Period is null)
+            if (command.StartsAt is null || command.EndsAt is null)
             {
                 return new CreateItemResult(null, CalendarAccess.Allowed, "An event requires both a start and an end time.");
             }
 
-            if (command.Period.EndsAt.Date.ToDateTime(command.Period.EndsAt.Time) <= command.Period.StartsAt.Date.ToDateTime(command.Period.StartsAt.Time))
+            if (!Period.TryCreate(command.StartsAt, command.EndsAt, out var period))
             {
                 return new CreateItemResult(null, CalendarAccess.Allowed, "An event's end time must be after its start time.");
             }
 
-            created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.Period, command.Recurrence, now);
+            created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, period!, command.Recurrence, now);
         }
         else
         {

@@ -6,14 +6,11 @@ public static class ListItemsHandler
 {
     public static async Task<ListItemsResult> Handle(
         ListItems query,
-        IUserEventStore users,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         CancellationToken cancellationToken)
     {
-        var userId = await users.FindUserIdAsync(query.Subject, cancellationToken);
-
-        if (userId is null)
+        if (query.UserId is not { } userId)
         {
             return new ListItemsResult([], CalendarAccess.NotFound);
         }

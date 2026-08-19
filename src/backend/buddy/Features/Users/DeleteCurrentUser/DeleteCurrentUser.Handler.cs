@@ -4,9 +4,7 @@ public static class DeleteUserHandler
 {
     public static async Task Handle(DeleteUser command, IUserEventStore events, CancellationToken cancellationToken)
     {
-        var userId = await events.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return;
         }

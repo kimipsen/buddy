@@ -6,14 +6,11 @@ public static class RescheduleItemHandler
 {
     public static async Task<UpdateItemResult> Handle(
         RescheduleItem command,
-        IUserEventStore users,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         CancellationToken cancellationToken)
     {
-        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return new UpdateItemResult(null, CalendarAccess.NotFound);
         }
@@ -39,22 +36,22 @@ public static class RescheduleItemHandler
 
         if (item.Kind == CalendarItemKind.Event)
         {
-            if (command.Period is null)
+            if (command.StartsAt is null || command.EndsAt is null)
             {
                 return new UpdateItemResult(null, CalendarAccess.Allowed, "An event requires both a start and an end time.");
             }
 
-            if (command.Period.EndsAt.Date.ToDateTime(command.Period.EndsAt.Time) <= command.Period.StartsAt.Date.ToDateTime(command.Period.StartsAt.Time))
+            if (!Period.TryCreate(command.StartsAt, command.EndsAt, out var period))
             {
                 return new UpdateItemResult(null, CalendarAccess.Allowed, "An event's end time must be after its start time.");
             }
 
             await items.AppendAsync(
                 command.ItemId,
-                [new EventRescheduled(command.ItemId, item.Period!, command.Period, userId, now)],
+                [new EventRescheduled(command.ItemId, item.Period!, period!, userId, now)],
                 cancellationToken);
 
-            return new UpdateItemResult(item with { Period = command.Period, LastModifiedBy = userId }, CalendarAccess.Allowed);
+            return new UpdateItemResult(item with { Period = period, LastModifiedBy = userId }, CalendarAccess.Allowed);
         }
 
         if (command.DueDate is null)

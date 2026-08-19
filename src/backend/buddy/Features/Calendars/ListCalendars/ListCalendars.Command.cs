@@ -4,7 +4,7 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
-public sealed record ListCalendars(KeycloakSubject Subject)
+public sealed record ListCalendars(UserId? UserId)
 {
-    public static ListCalendars FromClaims(ClaimsPrincipal principal) => new(principal.GetKeycloakSubject());
+    public static ListCalendars FromClaims(ClaimsPrincipal principal) => new(principal.GetUserId());
 }

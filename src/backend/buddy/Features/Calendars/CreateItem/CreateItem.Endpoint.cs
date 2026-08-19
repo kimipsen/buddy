@@ -24,7 +24,8 @@ public static class CreateItemEndpoint
                 request.Title,
                 new Icon(request.Icon),
                 new Color(request.Color),
-                request.Period,
+                request.StartsAt,
+                request.EndsAt,
                 request.DueDate,
                 request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null);
 
@@ -55,7 +56,8 @@ public sealed record CreateItemRequest(
     string Title,
     string Icon,
     string Color,
-    Period? Period,
+    StartsAt? StartsAt,
+    EndsAt? EndsAt,
     DueDate? DueDate,
     RecurrenceRuleRequest? Recurrence);
 

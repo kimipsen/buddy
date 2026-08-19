@@ -6,14 +6,11 @@ public static class UpdateItemDetailsHandler
 {
     public static async Task<UpdateItemResult> Handle(
         UpdateItemDetails command,
-        IUserEventStore users,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         CancellationToken cancellationToken)
     {
-        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
-
-        if (userId is null)
+        if (command.UserId is not { } userId)
         {
             return new UpdateItemResult(null, CalendarAccess.NotFound);
         }
