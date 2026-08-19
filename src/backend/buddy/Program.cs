@@ -1,7 +1,10 @@
 using buddy.Features.Users;
 using buddy.Serialization;
+using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseWolverine();
 
 // Add services to the container.
 builder.Services.ConfigureHttpJsonOptions(options =>

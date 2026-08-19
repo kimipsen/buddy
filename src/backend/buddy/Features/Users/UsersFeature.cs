@@ -5,6 +5,7 @@ using Marten;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Weasel.Core;
+using Wolverine;
 
 namespace buddy.Features.Users;
 
@@ -61,7 +62,6 @@ public static class UsersFeature
         });
 
         services.AddSingleton<IUserEventStore, MartenUserEventStore>();
-        services.AddScoped<UserService>();
 
         return services;
     }
@@ -75,10 +75,10 @@ public static class UsersFeature
         
         users.MapGet("/me", async (
             ClaimsPrincipal principal,
-            UserService users,
+            IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var user = await users.GetOrCreateFromClaimsAsync(principal, cancellationToken);
+            var user = await bus.InvokeAsync<User>(GetOrCreateUser.FromClaims(principal), cancellationToken);
 
             if (user.IsDeleted)
             {
@@ -96,10 +96,10 @@ public static class UsersFeature
 
         users.MapGet("/me/events", async (
             ClaimsPrincipal principal,
-            UserService users,
+            IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var userEvents = await users.GetEventsFromClaimsAsync(principal, cancellationToken);
+            var userEvents = await bus.InvokeAsync<IReadOnlyCollection<UserEvent>>(GetUserEvents.FromClaims(principal), cancellationToken);
 
             return Results.Ok(userEvents.Select(e => new UserEventResponse(e.EventType, e.Value!)));
         })
@@ -107,10 +107,10 @@ public static class UsersFeature
 
         users.MapDelete("/me", async (
             ClaimsPrincipal principal,
-            UserService users,
+            IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            await users.DeleteFromClaimsAsync(principal, cancellationToken);
+            await bus.InvokeAsync(DeleteUser.FromClaims(principal), cancellationToken);
 
             return Results.NoContent();
         })
