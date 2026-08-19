@@ -48,4 +48,6 @@ namespace buddy.Features.Users
 
     public sealed record EmailVerified(UserId UserId, DateTimeOffset OccurredAt);
 
+    public sealed record UserEventEntry(long Version, UserEvent Event);
+
 }
