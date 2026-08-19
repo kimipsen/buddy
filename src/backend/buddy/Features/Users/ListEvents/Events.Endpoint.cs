@@ -17,21 +17,24 @@ public static class ListUserEventsEndpoint
             int? pageSize,
             CancellationToken cancellationToken) =>
         {
-            if (!Cursor.TryDecode(cursor, out var afterVersion))
+            if (!Cursor.TryDecode(cursor, out var decoded))
             {
                 return TypedResults.BadRequest($"The '{nameof(cursor)}' query parameter is not a valid pagination cursor.");
             }
 
             var command = GetUserEvents.FromClaims(
                 principal,
-                afterVersion,
-                Math.Clamp(pageSize ?? GetUserEvents.DefaultPageSize, 1, GetUserEvents.MaxPageSize));
+                new EventsPageRequest(
+                    AfterVersion: decoded.Direction == CursorDirection.After ? decoded.Version : null,
+                    BeforeVersion: decoded.Direction == CursorDirection.Before ? decoded.Version : null,
+                    PageSize: Math.Clamp(pageSize ?? EventsPageRequest.DefaultPageSize, 1, EventsPageRequest.MaxPageSize)));
 
             var page = await bus.InvokeAsync<UserEventsPage>(command, cancellationToken);
 
             return TypedResults.Ok(new UserEventsPageResponse(
                 [.. page.Events.Select(e => new UserEventResponse(e.EventType, e.Value!))],
-                page.NextVersion is { } nextVersion ? Cursor.Encode(nextVersion) : null));
+                page.PreviousCursor,
+                page.NextCursor));
         })
         .WithName("GetCurrentUserEvents");
 
@@ -39,4 +42,4 @@ public static class ListUserEventsEndpoint
     }
 }
 
-public sealed record UserEventsPageResponse(IReadOnlyCollection<UserEventResponse> Items, string? NextCursor);
+public sealed record UserEventsPageResponse(IReadOnlyCollection<UserEventResponse> Items, string? PreviousCursor, string? NextCursor);

@@ -21,15 +21,31 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
         return [.. events.Select(e => UserEvent.FromPayload(e.Data))];
     }
 
-    public async Task<IReadOnlyCollection<UserEventEntry>> ReadPageAsync(UserId userId, long afterVersion, int pageSize, CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<UserEventEntry>> ReadForwardAsync(UserId userId, long afterVersion, int take, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();
 
         var events = await session.Events.QueryAllRawEvents()
             .Where(e => e.StreamId == userId.Value && e.Version > afterVersion)
             .OrderBy(e => e.Version)
-            .Take(pageSize)
+            .Take(take)
             .ToListAsync(cancellationToken);
+
+        return [.. events.Select(e => new UserEventEntry(e.Version, UserEvent.FromPayload(e.Data)))];
+    }
+
+    public async Task<IReadOnlyCollection<UserEventEntry>> ReadBackwardAsync(UserId userId, long beforeVersion, int take, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        var events = await session.Events.QueryAllRawEvents()
+            .Where(e => e.StreamId == userId.Value && e.Version < beforeVersion)
+            .OrderByDescending(e => e.Version)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+
+        // Normalize back to ascending order so callers never need to know this was fetched in reverse.
+        events.Reverse();
 
         return [.. events.Select(e => new UserEventEntry(e.Version, UserEvent.FromPayload(e.Data)))];
     }

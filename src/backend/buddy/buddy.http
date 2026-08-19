@@ -35,7 +35,22 @@ Accept: application/json
 
 ###
 
-GET {{buddy_HostAddress}}/users/me/events?pageSize=1&cursor=AQAAAAAAAAA=
+# @name eventsPage1
+GET {{buddy_HostAddress}}/users/me/events?pageSize=1
+Authorization: Bearer {{login.response.body.$.access_token}}
+Accept: application/json
+
+###
+
+# @name eventsPage2
+GET {{buddy_HostAddress}}/users/me/events?pageSize=1&cursor={{eventsPage1.response.body.$.nextCursor}}
+Authorization: Bearer {{login.response.body.$.access_token}}
+Accept: application/json
+
+###
+
+# Paging backwards from page 2's previousCursor should land back on page 1's items.
+GET {{buddy_HostAddress}}/users/me/events?pageSize=1&cursor={{eventsPage2.response.body.$.previousCursor}}
 Authorization: Bearer {{login.response.body.$.access_token}}
 Accept: application/json
 
@@ -69,14 +84,14 @@ Authorization: Bearer {{login.response.body.$.access_token}}
 
 ###
 
-# Token comes from the LoggingEmailSender's log output until a real provider is wired in.
+# Token comes from the message received in Mailpit (http://localhost:9025).
 POST {{buddy_HostAddress}}/users/me/email/verify
 Authorization: Bearer {{login.response.body.$.access_token}}
 Content-Type: application/json
 Accept: application/json
 
 {
-  "token": "REPLACE_WITH_TOKEN_FROM_LOG"
+  "token": "SdGdZbQXIMpvMsc5Hfa8apDGqBY5wHoW_ONxt5oakbQ"
 }
 
 ###

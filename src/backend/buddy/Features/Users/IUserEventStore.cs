@@ -6,7 +6,10 @@ public interface IUserEventStore
 
     Task<IReadOnlyCollection<UserEvent>> ReadAsync(UserId userId, CancellationToken cancellationToken);
 
-    Task<IReadOnlyCollection<UserEventEntry>> ReadPageAsync(UserId userId, long afterVersion, int pageSize, CancellationToken cancellationToken);
+    // Both return entries in ascending version order.
+    Task<IReadOnlyCollection<UserEventEntry>> ReadForwardAsync(UserId userId, long afterVersion, int take, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<UserEventEntry>> ReadBackwardAsync(UserId userId, long beforeVersion, int take, CancellationToken cancellationToken);
 
     Task<IReadOnlyCollection<UserEvent>> CreateAsync(KeycloakSubject keycloakSubject, UserId userId, IReadOnlyCollection<UserEvent> events, CancellationToken cancellationToken);
 
