@@ -24,12 +24,7 @@ public static class VerifyEmailEndpoint
                 VerifyEmailResult.UserNotFound => TypedResults.NotFound(),
                 VerifyEmailResult.InvalidToken => TypedResults.BadRequest("The verification token is invalid."),
                 VerifyEmailResult.Expired => TypedResults.BadRequest("The verification token has expired."),
-                _ => TypedResults.Ok(new UserResponse(
-                    outcome.User!.Id,
-                    outcome.User.KeycloakSubject,
-                    outcome.User.Email,
-                    outcome.User.UserName,
-                    outcome.User.Name))
+                _ => TypedResults.Ok(UserResponse.FromUser(outcome.User!))
             };
         })
         .WithName("VerifyCurrentEmail");

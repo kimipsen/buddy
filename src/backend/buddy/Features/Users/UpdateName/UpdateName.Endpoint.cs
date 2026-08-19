@@ -25,12 +25,7 @@ public static class UpdateCurrentNameEndpoint
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok(new UserResponse(
-                user.Id,
-                user.KeycloakSubject,
-                user.Email,
-                user.UserName,
-                user.Name));
+            return TypedResults.Ok(UserResponse.FromUser(user));
         })
         .WithName("UpdateCurrentName");
 

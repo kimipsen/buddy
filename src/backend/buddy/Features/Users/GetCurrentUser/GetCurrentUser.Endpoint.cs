@@ -22,12 +22,7 @@ public static class GetCurrentUserEndpoint
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok(new UserResponse(
-                user.Id,
-                user.KeycloakSubject,
-                user.Email,
-                user.UserName,
-                user.Name));
+            return TypedResults.Ok(UserResponse.FromUser(user));
         })
         .WithName("GetCurrentUser");
 
@@ -37,7 +32,13 @@ public static class GetCurrentUserEndpoint
 
 public sealed record UserResponse(
     UserId Id,
-    KeycloakSubject KeycloakSubject,
     Email Email,
     string? UserName,
-    Name Name);
+    Name Name)
+{
+    public static UserResponse FromUser(User user) => new(
+        user.Id,
+        user.Email,
+        user.UserName,
+        user.Name);
+};
