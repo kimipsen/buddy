@@ -1,4 +1,5 @@
 using JasperFx;
+
 using Marten;
 
 namespace buddy.Features.Users;

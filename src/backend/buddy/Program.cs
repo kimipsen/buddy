@@ -1,6 +1,7 @@
 using buddy.Email;
 using buddy.Features.Users;
 using buddy.Serialization;
+
 using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);

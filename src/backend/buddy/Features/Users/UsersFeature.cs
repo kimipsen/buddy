@@ -1,11 +1,15 @@
 using System.Security.Claims;
 
 using buddy.Serialization;
+
 using JasperFx.Events;
+
 using Marten;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+
 using Weasel.Core;
 
 namespace buddy.Features.Users;
