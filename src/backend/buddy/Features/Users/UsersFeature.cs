@@ -5,7 +5,6 @@ using Marten;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Weasel.Core;
-using Wolverine;
 
 namespace buddy.Features.Users;
 
@@ -72,49 +71,10 @@ public static class UsersFeature
             .WithTags("Users")
             .RequireAuthorization()
             .WithGroupName(OpenApiDocumentName);
-        
-        users.MapGet("/me", async (
-            ClaimsPrincipal principal,
-            IMessageBus bus,
-            CancellationToken cancellationToken) =>
-        {
-            var user = await bus.InvokeAsync<User>(GetOrCreateUser.FromClaims(principal), cancellationToken);
 
-            if (user.IsDeleted)
-            {
-                return Results.NotFound();
-            }
-
-            return Results.Ok(new UserResponse(
-                user.Id,
-                user.KeycloakSubject,
-                user.Email,
-                user.UserName,
-                user.Name));
-        })
-        .WithName("GetCurrentUser");
-
-        users.MapGet("/me/events", async (
-            ClaimsPrincipal principal,
-            IMessageBus bus,
-            CancellationToken cancellationToken) =>
-        {
-            var userEvents = await bus.InvokeAsync<IReadOnlyCollection<UserEvent>>(GetUserEvents.FromClaims(principal), cancellationToken);
-
-            return Results.Ok(userEvents.Select(e => new UserEventResponse(e.EventType, e.Value!)));
-        })
-        .WithName("GetCurrentUserEvents");
-
-        users.MapDelete("/me", async (
-            ClaimsPrincipal principal,
-            IMessageBus bus,
-            CancellationToken cancellationToken) =>
-        {
-            await bus.InvokeAsync(DeleteUser.FromClaims(principal), cancellationToken);
-
-            return Results.NoContent();
-        })
-        .WithName("DeleteCurrentUser");
+        users.MapGetCurrentUser();
+        users.MapListCurrentUserEvents();
+        users.MapDeleteCurrentUser();
 
         return endpoints;
     }

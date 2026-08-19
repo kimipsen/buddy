@@ -20,13 +20,3 @@ public sealed record GetOrCreateUser(KeycloakSubject Subject, string? Email, boo
             Name.New(principal.FindFirstValue(Claims.GivenName) ?? "", principal.FindFirstValue(Claims.FamilyName) ?? ""));
     }
 }
-
-public sealed record GetUserEvents(KeycloakSubject Subject)
-{
-    public static GetUserEvents FromClaims(ClaimsPrincipal principal) => new(principal.GetKeycloakSubject());
-}
-
-public sealed record DeleteUser(KeycloakSubject Subject)
-{
-    public static DeleteUser FromClaims(ClaimsPrincipal principal) => new(principal.GetKeycloakSubject());
-}
