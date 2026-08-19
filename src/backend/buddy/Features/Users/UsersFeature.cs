@@ -4,6 +4,7 @@ using buddy.Serialization;
 using JasperFx.Events;
 using Marten;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Weasel.Core;
 
@@ -30,29 +31,36 @@ public static class UsersFeature
             options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
         });
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                var keycloak = configuration.GetSection("Authentication:Keycloak");
+        services.Configure<KeycloakOptions>(configuration.GetSection(KeycloakOptions.SectionName));
+        services.Configure<PostgresOptions>(configuration.GetSection(PostgresOptions.SectionName));
 
-                options.Authority = keycloak["Authority"];
-                options.Audience = keycloak["Audience"];
-                options.RequireHttpsMetadata = keycloak.GetValue("RequireHttpsMetadata", true);
-                options.TokenValidationParameters = new TokenValidationParameters
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer();
+
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptionsMonitor<KeycloakOptions>>((jwtBearerOptions, keycloakOptions) =>
+            {
+                var keycloak = keycloakOptions.CurrentValue;
+
+                jwtBearerOptions.Authority = keycloak.Authority;
+                jwtBearerOptions.Audience = keycloak.Audience;
+                jwtBearerOptions.RequireHttpsMetadata = keycloak.RequireHttpsMetadata;
+                jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
                 {
                     NameClaimType = "preferred_username",
                     RoleClaimType = ClaimTypes.Role,
-                    ValidateAudience = !string.IsNullOrWhiteSpace(options.Audience)
+                    ValidateAudience = !string.IsNullOrWhiteSpace(keycloak.Audience)
                 };
             });
 
         services.AddAuthorization();
 
-        services.AddMartenStore<IUsersStore>(options =>
+        services.AddMartenStore<IUsersStore>(serviceProvider =>
         {
-            options.Connection(configuration.GetConnectionString("Postgres")
-                ?? throw new InvalidOperationException("Missing required configuration 'ConnectionStrings:Postgres'."));
+            var postgres = serviceProvider.GetRequiredService<IOptionsMonitor<PostgresOptions>>().CurrentValue;
 
+            var options = new StoreOptions();
+            options.Connection(postgres.Postgres);
             options.DatabaseSchemaName = "users";
             options.Events.StreamIdentity = StreamIdentity.AsGuid;
             options.Events.AddEventTypes(EventTypes);
@@ -60,6 +68,8 @@ public static class UsersFeature
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
                 configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+
+            return options;
         });
 
         services.AddSingleton<IUserEventStore, MartenUserEventStore>();
