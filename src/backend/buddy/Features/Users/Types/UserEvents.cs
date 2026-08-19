@@ -5,6 +5,7 @@ namespace buddy.Features.Users
         UserDeleted,
         NameUpdated,
         EmailUpdated,
+        EmailVerificationRequested,
         EmailVerified
     )
     {
@@ -16,6 +17,7 @@ namespace buddy.Features.Users
             UserDeleted e => e,
             NameUpdated e => e,
             EmailUpdated e => e,
+            EmailVerificationRequested e => e,
             EmailVerified e => e,
             _ => throw new ArgumentException($"Unknown user event payload: {payload.GetType().Name}", nameof(payload)),
         };
@@ -28,6 +30,7 @@ namespace buddy.Features.Users
             UserDeleted => nameof(UserDeleted),
             NameUpdated => nameof(NameUpdated),
             EmailUpdated => nameof(EmailUpdated),
+            EmailVerificationRequested => nameof(EmailVerificationRequested),
             EmailVerified => nameof(EmailVerified),
         };
     }
@@ -45,6 +48,11 @@ namespace buddy.Features.Users
     public sealed record NameUpdated(UserId UserId, Name Before, Name After, DateTimeOffset OccurredAt);
 
     public sealed record EmailUpdated(UserId UserId, Email Before, Email After, DateTimeOffset OccurredAt);
+
+    // TokenHash is a SHA-256 hash of the plaintext token, never the token itself -- the event
+    // stream is append-only and gets backed up/replicated, so a bare secret in it could never
+    // be revoked or purged. The plaintext is only ever held in memory long enough to email it.
+    public sealed record EmailVerificationRequested(UserId UserId, string TokenHash, DateTimeOffset ExpiresAt, DateTimeOffset OccurredAt);
 
     public sealed record EmailVerified(UserId UserId, DateTimeOffset OccurredAt);
 

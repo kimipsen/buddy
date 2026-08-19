@@ -19,6 +19,7 @@ public static class UsersFeature
         typeof(UserDeleted),
         typeof(NameUpdated),
         typeof(EmailUpdated),
+        typeof(EmailVerificationRequested),
         typeof(EmailVerified)
     ];
 
@@ -75,6 +76,10 @@ public static class UsersFeature
 
         users.MapGetCurrentUser();
         users.MapListCurrentUserEvents();
+        users.MapUpdateCurrentName();
+        users.MapUpdateCurrentEmail();
+        users.MapResendCurrentEmailVerification();
+        users.MapVerifyCurrentEmail();
         users.MapDeleteCurrentUser();
 
         return endpoints;

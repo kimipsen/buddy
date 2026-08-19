@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Wolverine;
 
 namespace buddy.Features.Users;
@@ -7,7 +8,7 @@ public static class GetCurrentUserEndpoint
 {
     public static RouteGroupBuilder MapGetCurrentUser(this RouteGroupBuilder users)
     {
-        users.MapGet("/me", async (
+        users.MapGet("/me", async Task<Results<Ok<UserResponse>, NotFound>> (
             ClaimsPrincipal principal,
             IMessageBus bus,
             CancellationToken cancellationToken) =>
@@ -16,10 +17,10 @@ public static class GetCurrentUserEndpoint
 
             if (user.IsDeleted)
             {
-                return Results.NotFound();
+                return TypedResults.NotFound();
             }
 
-            return Results.Ok(new UserResponse(
+            return TypedResults.Ok(new UserResponse(
                 user.Id,
                 user.KeycloakSubject,
                 user.Email,

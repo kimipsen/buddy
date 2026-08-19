@@ -41,6 +41,46 @@ Accept: application/json
 
 ###
 
+PATCH {{buddy_HostAddress}}/users/me/name
+Authorization: Bearer {{login.response.body.$.access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "givenName": "Kim",
+  "familyName": "Ipsen"
+}
+
+###
+
+PATCH {{buddy_HostAddress}}/users/me/email
+Authorization: Bearer {{login.response.body.$.access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "kim.ipsen@knowit.dk"
+}
+
+###
+
+POST {{buddy_HostAddress}}/users/me/email/verify/resend
+Authorization: Bearer {{login.response.body.$.access_token}}
+
+###
+
+# Token comes from the LoggingEmailSender's log output until a real provider is wired in.
+POST {{buddy_HostAddress}}/users/me/email/verify
+Authorization: Bearer {{login.response.body.$.access_token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "token": "REPLACE_WITH_TOKEN_FROM_LOG"
+}
+
+###
+
 DELETE {{buddy_HostAddress}}/users/me
 Authorization: Bearer {{login.response.body.$.access_token}}
 

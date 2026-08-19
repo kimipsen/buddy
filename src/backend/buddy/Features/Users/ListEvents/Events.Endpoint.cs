@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using Microsoft.AspNetCore.Http.HttpResults;
+
 using Wolverine;
 
 namespace buddy.Features.Users;
@@ -8,7 +10,7 @@ public static class ListUserEventsEndpoint
 {
     public static RouteGroupBuilder MapListCurrentUserEvents(this RouteGroupBuilder users)
     {
-        users.MapGet("/me/events", async (
+        users.MapGet("/me/events", async Task<Results<Ok<UserEventsPageResponse>, BadRequest<string>>> (
             ClaimsPrincipal principal,
             IMessageBus bus,
             string? cursor,
@@ -17,7 +19,7 @@ public static class ListUserEventsEndpoint
         {
             if (!Cursor.TryDecode(cursor, out var afterVersion))
             {
-                return Results.BadRequest($"The '{nameof(cursor)}' query parameter is not a valid pagination cursor.");
+                return TypedResults.BadRequest($"The '{nameof(cursor)}' query parameter is not a valid pagination cursor.");
             }
 
             var command = GetUserEvents.FromClaims(
@@ -27,7 +29,7 @@ public static class ListUserEventsEndpoint
 
             var page = await bus.InvokeAsync<UserEventsPage>(command, cancellationToken);
 
-            return Results.Ok(new UserEventsPageResponse(
+            return TypedResults.Ok(new UserEventsPageResponse(
                 [.. page.Events.Select(e => new UserEventResponse(e.EventType, e.Value!))],
                 page.NextVersion is { } nextVersion ? Cursor.Encode(nextVersion) : null));
         })

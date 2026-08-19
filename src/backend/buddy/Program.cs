@@ -1,3 +1,4 @@
+using buddy.Email;
 using buddy.Features.Users;
 using buddy.Serialization;
 using Wolverine;
@@ -17,6 +18,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.ShouldInclude = api => api.GroupName is null;
 });
+builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
 
 var app = builder.Build();

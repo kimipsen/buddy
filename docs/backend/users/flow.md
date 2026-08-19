@@ -10,6 +10,7 @@ sequenceDiagram
     participant API as Buddy API
     participant Users as Users feature
     participant Store as User event store
+    participant Email as Email sender
 
     User->>App: Open app
     App->>Keycloak: Start login
@@ -23,7 +24,11 @@ sequenceDiagram
         Store-->>Users: No user events
         Users->>Users: Build UserCreated from token claims
         Users->>Store: Append UserCreated event
-        Users->>Users: Rehydrate user from UserCreated
+        opt Email is unverified
+            Users->>Store: Append EmailVerificationRequested event
+            Users->>Email: Send verification email
+        end
+        Users->>Users: Rehydrate user from initial events
         Users-->>API: Created local user
         API-->>App: 200 OK with user profile
     else Returning user
@@ -42,6 +47,10 @@ All users endpoints require a bearer token issued by the configured Keycloak aut
 | --- | --- | --- |
 | `GET` | `/users/me` | Gets or creates the local user for the authenticated Keycloak subject. Returns `404 Not Found` when the user has been deleted. |
 | `GET` | `/users/me/events` | Returns a page of the persisted event history for the authenticated subject, oldest first. Accepts optional `cursor` and `pageSize` (default 50, max 200) query parameters; an unknown subject has an empty event history. |
+| `PATCH` | `/users/me/name` | Updates the authenticated user's given and family name. Returns the updated profile, or `404 Not Found` when no local user exists. |
+| `PATCH` | `/users/me/email` | Updates the authenticated user's email and starts email verification. Returns the updated profile, or `404 Not Found` when no local user exists. |
+| `POST` | `/users/me/email/verify/resend` | Sends another verification email for an unverified address. Returns `204 No Content`, `404 Not Found`, or `409 Conflict` when the address is already verified or still within the resend cooldown. |
+| `POST` | `/users/me/email/verify` | Verifies the email using the submitted token. Returns the updated profile, `404 Not Found`, or `400 Bad Request` for an invalid or expired token. |
 | `DELETE` | `/users/me` | Appends `UserDeleted` for an existing, active user. Repeating the request is a no-op and returns `204 No Content`. |
 
 The API passes work to Wolverine handlers rather than accessing the event store directly from the endpoint. The handlers are responsible for looking up the user stream, creating or rehydrating the aggregate, and appending deletion events.
@@ -54,9 +63,10 @@ The user stream currently supports these event types:
 - `UserDeleted`
 - `NameUpdated`
 - `EmailUpdated`
+- `EmailVerificationRequested`
 - `EmailVerified`
 
-The user profile is built from `UserCreated`; `UserDeleted` marks the rehydrated user as deleted. The other event types are registered for persistence and are returned by the event-history endpoint.
+The user profile is built from `UserCreated`; `UserDeleted` marks the rehydrated user as deleted. Updating an email appends `EmailUpdated` and starts a new verification request. Verification requests store only a hash of the token in the event stream; the plaintext token is sent through the configured email sender. `EmailVerified` clears the pending verification state. All event types are registered for persistence and are returned by the event-history endpoint.
 
 ### Event-history pagination
 
