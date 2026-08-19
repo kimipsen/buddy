@@ -1,4 +1,5 @@
 using buddy.Email;
+using buddy.Features.Calendars;
 using buddy.Features.Users;
 using buddy.Serialization;
 
@@ -21,6 +22,7 @@ builder.Services.AddOpenApi(options =>
 });
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
+builder.Services.AddCalendarsFeature(builder.Configuration);
 
 var app = builder.Build();
 
@@ -35,5 +37,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUsersFeature();
+app.MapCalendarsFeature();
 
 app.Run();

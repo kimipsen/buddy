@@ -1,0 +1,55 @@
+using buddy.Features.Users;
+
+namespace buddy.Features.Calendars;
+
+public static class UpdateItemRecurrenceHandler
+{
+    public static async Task<UpdateItemResult> Handle(
+        UpdateItemRecurrence command,
+        IUserEventStore users,
+        ICalendarEventStore calendars,
+        ICalendarItemEventStore items,
+        CancellationToken cancellationToken)
+    {
+        if (command.Recurrence is { IntervalCount: < 1 })
+        {
+            return new UpdateItemResult(null, CalendarAccess.Allowed, "Recurrence interval count must be at least 1.");
+        }
+
+        var userId = await users.FindUserIdAsync(command.Subject, cancellationToken);
+
+        if (userId is null)
+        {
+            return new UpdateItemResult(null, CalendarAccess.NotFound);
+        }
+
+        var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
+        var calendar = Calendar.Rehydrate(calendarEvents);
+        var access = CalendarAuthorization.CheckContribute(calendar, userId);
+
+        if (access != CalendarAccess.Allowed)
+        {
+            return new UpdateItemResult(null, access);
+        }
+
+        var itemEvents = await items.ReadAsync(command.ItemId, cancellationToken);
+        var item = CalendarItem.Rehydrate(itemEvents);
+
+        if (item is null || item.IsDeleted || item.CalendarId != command.CalendarId)
+        {
+            return new UpdateItemResult(null, CalendarAccess.NotFound);
+        }
+
+        if (item.Recurrence == command.Recurrence)
+        {
+            return new UpdateItemResult(item, CalendarAccess.Allowed);
+        }
+
+        await items.AppendAsync(
+            command.ItemId,
+            [new RecurrenceUpdated(command.ItemId, item.Recurrence, command.Recurrence, DateTimeOffset.UtcNow)],
+            cancellationToken);
+
+        return new UpdateItemResult(item with { Recurrence = command.Recurrence }, CalendarAccess.Allowed);
+    }
+}
