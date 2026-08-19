@@ -496,3 +496,4 @@ appsettings.*.json
 
 # Temporary content
 .temp/
+dotnet/
