@@ -68,11 +68,15 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             {
                 case MemberRoleGranted granted:
                     // The calendar's name never changes, so any existing membership document for
-                    // this calendar (there's always at least the owner's) already has it cached.
+                    // this calendar already has it cached -- except a group-owned calendar has no
+                    // membership document until its first explicit grant, so fall back to the
+                    // GroupOwnedCalendarDocument written at creation for that case.
                     var name = await session.Query<CalendarMembershipDocument>()
                         .Where(d => d.CalendarId == calendarId.Value)
                         .Select(d => d.CalendarName)
-                        .FirstAsync(cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken)
+                        ?? (await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken))?.CalendarName
+                        ?? throw new InvalidOperationException($"No membership or group-owned document found for calendar '{calendarId.Value}'.");
 
                     session.Store(new CalendarMembershipDocument(
                         CalendarMembershipDocument.BuildId(calendarId.Value, granted.MemberId.Value),

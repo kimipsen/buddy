@@ -41,7 +41,10 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             .WithEnvironment("KEYCLOAK_ADMIN", "admin")
             .WithEnvironment("KEYCLOAK_ADMIN_PASSWORD", "admin")
             .WithCommand("start-dev", "--import-realm")
-            .WithResourceMapping(realmImportPath, "/opt/keycloak/data/import/buddy-test-realm.json")
+            // WithResourceMapping treats the target as a directory and keeps the source file's own
+            // name (TestRealm.json) -- it does not rename to a target basename. Point it at the
+            // import directory itself; Keycloak's dir importer picks up any *.json file inside.
+            .WithResourceMapping(realmImportPath, "/opt/keycloak/data/import")
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .UntilHttpRequestIsSucceeded(r => r
