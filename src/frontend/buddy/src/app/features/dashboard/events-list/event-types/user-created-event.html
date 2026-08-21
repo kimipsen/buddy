@@ -1,0 +1,5 @@
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Account created</p>
+<p class="mt-1 text-sm font-medium">
+  {{ data().name.givenName }} {{ data().name.familyName }} ({{ data().email.value }}) joined via Keycloak.
+</p>
+<p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | date: 'medium' }}</p>

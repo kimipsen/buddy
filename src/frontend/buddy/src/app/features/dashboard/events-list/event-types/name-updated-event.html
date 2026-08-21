@@ -1,0 +1,5 @@
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Name updated</p>
+<p class="mt-1 text-sm font-medium">
+  {{ data().before.givenName }} {{ data().before.familyName }} &rarr; {{ data().after.givenName }} {{ data().after.familyName }}
+</p>
+<p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | date: 'medium' }}</p>

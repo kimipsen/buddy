@@ -9,7 +9,7 @@ export interface UserEventItem {
   data: Record<string, unknown>;
 }
 
-interface UserEventsPageResponse {
+export interface UserEventsPage {
   items: UserEventItem[];
   previousCursor: string | null;
   nextCursor: string | null;
@@ -20,11 +20,16 @@ export class UserEventsService {
   private readonly http = inject(HttpClient);
   private readonly runtimeConfig = inject(RuntimeConfigService);
 
-  async listCurrentUserEvents(): Promise<UserEventItem[]> {
-    const response = await firstValueFrom(
-      this.http.get<UserEventsPageResponse>(`${this.runtimeConfig.apiBaseUrl}/users/me/events`)
-    );
+  async listCurrentUserEvents(cursor: string | null, pageSize: number): Promise<UserEventsPage> {
+    const params: Record<string, string> = { pageSize: pageSize.toString() };
 
-    return response.items;
+    if (cursor) {
+      params['cursor'] = cursor;
+    }
+
+    return firstValueFrom(
+      this.http.get<UserEventsPage>(`${this.runtimeConfig.apiBaseUrl}/users/me/events`, { params })
+    );
   }
 }
+
