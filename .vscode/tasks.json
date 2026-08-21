@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "ng serve",
       "type": "npm",
       "script": "start",
       "isBackground": true,
@@ -12,15 +13,20 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": {
-            "regexp": "Changes detected"
+            "regexp": "Building|Changes detected"
           },
           "endsPattern": {
-            "regexp": "bundle generation (complete|failed)"
+            "regexp": "Local: +http://localhost:4200/"
           }
         }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
       }
     },
     {
+      "label": "ng test",
       "type": "npm",
       "script": "test",
       "isBackground": true,

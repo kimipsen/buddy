@@ -1,0 +1,9 @@
+{
+  "keycloak": {
+    "authority": "http://localhost:9080",
+    "realm": "buddy",
+    "clientId": "buddy-frontend",
+    "redirectPath": "/dashboard"
+  },
+  "apiBaseUrl": "https://localhost:7076"
+}

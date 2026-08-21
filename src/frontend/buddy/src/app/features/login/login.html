@@ -1,0 +1,49 @@
+<main class="min-h-dvh bg-slate-950 text-white">
+  <section class="grid min-h-dvh grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
+    <div class="flex min-h-[42rem] flex-col justify-between px-6 py-6 sm:px-10 lg:px-14">
+      <header class="flex items-center gap-3">
+        <span class="grid size-10 place-items-center rounded-lg bg-emerald-400 font-semibold text-slate-950">B</span>
+        <span class="text-lg font-semibold tracking-normal">Buddy</span>
+      </header>
+
+      <div class="max-w-xl py-16">
+        <p class="mb-5 text-sm font-medium uppercase tracking-[0.18em] text-emerald-300">Secure workspace</p>
+        <h1 class="text-4xl font-semibold leading-tight tracking-normal sm:text-5xl">
+          Sign in to pick up your work.
+        </h1>
+        <p class="mt-6 max-w-lg text-base leading-7 text-slate-300">
+          Buddy uses Keycloak for authentication, so your organization controls identity, access,
+          and session policy from one trusted place.
+        </p>
+      </div>
+
+      <p class="text-sm text-slate-500">Protected by your Keycloak realm.</p>
+    </div>
+
+    <div class="flex items-center bg-slate-100 px-6 py-10 text-slate-950 sm:px-10 lg:px-14">
+      <div class="w-full max-w-md">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-950/10 sm:p-8">
+          <div class="mb-8">
+            <h2 class="text-2xl font-semibold tracking-normal">Welcome back</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-600">
+              Continue with your enterprise account to access your dashboard.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            (click)="signIn()"
+          >
+            <span class="size-2 rounded-full bg-emerald-400"></span>
+            Sign in with Keycloak
+          </button>
+
+          <div class="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+            Your browser will be redirected to Keycloak, then returned to Buddy after a successful sign in.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

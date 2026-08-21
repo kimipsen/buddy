@@ -54,7 +54,8 @@ public static class UsersFeature
                 {
                     NameClaimType = "preferred_username",
                     RoleClaimType = ClaimTypes.Role,
-                    ValidateAudience = !string.IsNullOrWhiteSpace(keycloak.Audience)
+                    ValidateAudience = !string.IsNullOrWhiteSpace(keycloak.Audience),
+                    ValidIssuer = keycloak.ValidIssuer ?? keycloak.Authority
                 };
             });
 
