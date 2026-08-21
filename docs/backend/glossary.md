@@ -16,6 +16,46 @@ The unique identifier for an item that belongs to a calendar. A calendar item is
 ### IcalTokenId
 The unique identifier for an iCalendar subscription token issued for a calendar. The token is used to access the calendar feed without requiring a user session.
 
+## User domain
+
+### User
+The local user aggregate created from a Keycloak identity. A user has a stable identity, profile data, email state, and optional verification metadata. The aggregate is rebuilt from its event stream when requests arrive.
+
+### KeycloakSubject
+The subject claim from Keycloak used as the stable external identity for a local user. This is the value that links a user session to the correct user aggregate.
+
+### Email
+The user’s email address and verification state.
+
+Properties:
+- Value: the email address itself
+- IsVerified: whether the current address has been verified
+
+The project uses a separate verification flow and clears pending verification state whenever the email changes.
+
+### Name
+The user’s profile name, consisting of:
+- GivenName
+- FamilyName
+
+### UserCreated
+The event that creates the local user record from the Keycloak claims and the initial profile data.
+
+### UserDeleted
+The event that marks the user as deleted. The user aggregate remains in the stream, but it is treated as deleted when rehydrated.
+
+### NameUpdated
+The event that changes the user’s name.
+
+### EmailUpdated
+The event that changes the user’s email address.
+
+### EmailVerificationRequested
+The event that stores a hash of the verification token plus its expiry time. The plaintext token is sent by email and never kept in the event stream.
+
+### EmailVerified
+The event that marks the email address as verified and clears the pending verification state.
+
 ## Calendar domain
 
 ### Calendar

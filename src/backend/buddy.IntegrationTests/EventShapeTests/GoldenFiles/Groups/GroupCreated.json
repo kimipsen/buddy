@@ -1,0 +1,11 @@
+{
+  "GroupId": "00000000-0000-0000-0000-000000000010",
+  "OwnerId": "00000000-0000-0000-0000-000000000001",
+  "Name": "Engineering",
+  "CalendarPermissionPolicy": {
+    "Owner": "Owner",
+    "Admin": "Contributor",
+    "Member": "Viewer"
+  },
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+}

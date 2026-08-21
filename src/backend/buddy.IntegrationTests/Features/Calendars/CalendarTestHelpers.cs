@@ -1,0 +1,71 @@
+using Alba;
+
+using buddy.Features.Calendars;
+using buddy.IntegrationTests.Fixtures;
+
+namespace buddy.IntegrationTests.Features.Calendars;
+
+internal static class CalendarTestHelpers
+{
+    public const string DefaultTimeZone = "Europe/Copenhagen";
+
+    public static async Task<Guid> CreateCalendarAsync(BuddyApiFixture fixture, string ownerToken, string name, Guid? groupId = null)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            _.Post.Json(new { Name = name, TimeZoneId = DefaultTimeZone, GroupId = groupId }).ToUrl("/calendars/");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<CalendarResponseDto>().Id;
+    }
+
+    public static async Task<CalendarResponseDto> GetCalendarAsync(BuddyApiFixture fixture, string token, Guid calendarId)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/calendars/{calendarId}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<CalendarResponseDto>();
+    }
+
+    public static async Task<CalendarItemDto?> CreateEventAsync(
+        BuddyApiFixture fixture, string token, Guid calendarId, string title = "Standup",
+        DateOnly? date = null, int expectedStatus = 200)
+    {
+        var day = date ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new
+            {
+                Kind = CalendarItemKind.Event,
+                Title = title,
+                Icon = "calendar",
+                Color = "#00ff00",
+                StartsAt = new { Date = day, Time = new TimeOnly(9, 0) },
+                EndsAt = new { Date = day, Time = new TimeOnly(9, 30) }
+            }).ToUrl($"/calendars/{calendarId}/items");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        return expectedStatus == 200 ? response.ReadAsJson<CalendarItemDto>() : null;
+    }
+
+    public static async Task<IcalTokenResponseDto> CreateIcalTokenAsync(BuddyApiFixture fixture, string ownerToken, Guid calendarId)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            _.Post.Url($"/calendars/{calendarId}/ical-tokens");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<IcalTokenResponseDto>();
+    }
+}

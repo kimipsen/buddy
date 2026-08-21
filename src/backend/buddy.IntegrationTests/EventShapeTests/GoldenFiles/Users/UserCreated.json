@@ -1,0 +1,14 @@
+{
+  "UserId": "00000000-0000-0000-0000-000000000001",
+  "KeycloakSubject": "keycloak-subject-123",
+  "Email": {
+    "Value": "alice@buddy.test",
+    "IsVerified": false
+  },
+  "UserName": "alice",
+  "Name": {
+    "GivenName": "Alice",
+    "FamilyName": "Anderson"
+  },
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+}

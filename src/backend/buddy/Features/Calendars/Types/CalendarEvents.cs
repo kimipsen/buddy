@@ -1,9 +1,11 @@
+using buddy.Features.Groups;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
 public union CalendarEvent(
     CalendarCreated,
+    CalendarCreatedForGroup,
     CalendarDeleted,
     MemberRoleGranted,
     MemberRoleRevoked,
@@ -14,6 +16,7 @@ public union CalendarEvent(
     public static CalendarEvent FromPayload(object payload) => payload switch
     {
         CalendarCreated e => e,
+        CalendarCreatedForGroup e => e,
         CalendarDeleted e => e,
         MemberRoleGranted e => e,
         MemberRoleRevoked e => e,
@@ -27,6 +30,7 @@ public union CalendarEvent(
     public string EventType => this switch
     {
         CalendarCreated => nameof(CalendarCreated),
+        CalendarCreatedForGroup => nameof(CalendarCreatedForGroup),
         CalendarDeleted => nameof(CalendarDeleted),
         MemberRoleGranted => nameof(MemberRoleGranted),
         MemberRoleRevoked => nameof(MemberRoleRevoked),
@@ -36,6 +40,11 @@ public union CalendarEvent(
 }
 
 public sealed record CalendarCreated(CalendarId CalendarId, UserId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
+
+// Additive sibling to CalendarCreated, used only when a calendar is created for a group instead
+// of a user. CalendarCreated itself is never modified -- old streams are read exactly as stored,
+// with no upcasting. See docs/backend/analysis/group-owned-calendars-and-permissions.md.
+public sealed record CalendarCreatedForGroup(CalendarId CalendarId, GroupId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
 
 public sealed record CalendarDeleted(CalendarId CalendarId, UserId DeletedBy, DateTimeOffset OccurredAt);
 

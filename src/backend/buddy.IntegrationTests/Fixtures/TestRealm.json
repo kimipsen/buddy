@@ -1,0 +1,61 @@
+{
+  "realm": "buddy-test",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "clients": [
+    {
+      "clientId": "buddy-api",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "defaultClientScopes": ["profile", "email", "roles"],
+      "protocolMappers": [
+        {
+          "name": "audience-buddy-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "buddy-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "alice@buddy.test",
+      "firstName": "Alice",
+      "lastName": "Anderson",
+      "credentials": [{ "type": "password", "value": "alice-test-pw", "temporary": false }]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "bob@buddy.test",
+      "firstName": "Bob",
+      "lastName": "Brown",
+      "credentials": [{ "type": "password", "value": "bob-test-pw", "temporary": false }]
+    },
+    {
+      "username": "carol",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "carol@buddy.test",
+      "firstName": "Carol",
+      "lastName": "Clarke",
+      "credentials": [{ "type": "password", "value": "carol-test-pw", "temporary": false }]
+    }
+  ]
+}

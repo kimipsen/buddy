@@ -1,0 +1,12 @@
+{
+  "UserId": "00000000-0000-0000-0000-000000000001",
+  "Before": {
+    "Value": "alice@buddy.test",
+    "IsVerified": true
+  },
+  "After": {
+    "Value": "alice2@buddy.test",
+    "IsVerified": false
+  },
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+}

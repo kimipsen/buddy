@@ -1,3 +1,4 @@
+using buddy.Features.Groups;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -11,4 +12,6 @@ public interface ICalendarEventStore
     Task AppendAsync(CalendarId calendarId, IReadOnlyCollection<CalendarEvent> events, CancellationToken cancellationToken);
 
     Task<IReadOnlyCollection<CalendarMembershipDocument>> ListForUserAsync(UserId userId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<GroupOwnedCalendarDocument>> ListOwnedByGroupsAsync(IReadOnlyCollection<GroupId> groupIds, CancellationToken cancellationToken);
 }

@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="buddy/buddy.csproj" />
+  <Project Path="buddy.IntegrationTests/buddy.IntegrationTests.csproj" />
 </Solution>

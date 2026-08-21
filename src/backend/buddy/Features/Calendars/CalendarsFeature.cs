@@ -18,6 +18,7 @@ public static class CalendarsFeature
     private static readonly Type[] EventTypes =
     [
         typeof(CalendarCreated),
+        typeof(CalendarCreatedForGroup),
         typeof(CalendarDeleted),
         typeof(MemberRoleGranted),
         typeof(MemberRoleRevoked),

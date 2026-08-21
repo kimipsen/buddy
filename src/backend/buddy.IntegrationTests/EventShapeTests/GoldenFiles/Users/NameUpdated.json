@@ -1,0 +1,12 @@
+{
+  "UserId": "00000000-0000-0000-0000-000000000001",
+  "Before": {
+    "GivenName": "Alice",
+    "FamilyName": "Anderson"
+  },
+  "After": {
+    "GivenName": "Ally",
+    "FamilyName": "Anderson"
+  },
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+}

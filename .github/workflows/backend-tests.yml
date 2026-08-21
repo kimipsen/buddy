@@ -1,0 +1,33 @@
+name: Backend tests
+
+on:
+  pull_request:
+    paths:
+      - "src/backend/**"
+      - ".github/workflows/backend-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/backend/**"
+      - ".github/workflows/backend-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "11.0.x"
+          dotnet-quality: "preview"
+
+      - name: Restore
+        run: dotnet restore src/backend/backend.slnx
+
+      - name: Build
+        run: dotnet build src/backend/backend.slnx --no-restore --configuration Release
+
+      # Testcontainers needs a Docker daemon, which the ubuntu-latest runner provides natively.
+      - name: Test
+        run: dotnet test src/backend/backend.slnx --no-build --configuration Release --logger "console;verbosity=normal"

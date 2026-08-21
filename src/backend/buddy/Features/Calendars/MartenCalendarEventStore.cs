@@ -1,3 +1,4 @@
+using buddy.Features.Groups;
 using buddy.Features.Users;
 
 using Marten;
@@ -16,23 +17,31 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
 
     public async Task<IReadOnlyCollection<CalendarEvent>> CreateAsync(CalendarId calendarId, IReadOnlyCollection<CalendarEvent> events, CancellationToken cancellationToken)
     {
-        if (events.FirstOrDefault() is not CalendarCreated created)
-        {
-            throw new InvalidOperationException("The first event of a new calendar stream must be CalendarCreated.");
-        }
-
         var payloads = events
             .Select(e => e.Value ?? throw new InvalidOperationException("Cannot persist an empty calendar event."))
             .ToArray();
 
         await using var session = store.LightweightSession();
         session.Events.StartStream(calendarId.Value, payloads);
-        session.Store(new CalendarMembershipDocument(
-            CalendarMembershipDocument.BuildId(calendarId.Value, created.OwnerId.Value),
-            calendarId.Value,
-            created.OwnerId.Value,
-            CalendarRole.Owner,
-            created.Name));
+
+        switch (events.FirstOrDefault())
+        {
+            case CalendarCreated created:
+                session.Store(new CalendarMembershipDocument(
+                    CalendarMembershipDocument.BuildId(calendarId.Value, created.OwnerId.Value),
+                    calendarId.Value,
+                    created.OwnerId.Value,
+                    CalendarRole.Owner,
+                    created.Name));
+                break;
+
+            case CalendarCreatedForGroup created:
+                session.Store(new GroupOwnedCalendarDocument(calendarId.Value, created.OwnerId.Value, created.Name));
+                break;
+
+            default:
+                throw new InvalidOperationException("The first event of a new calendar stream must be CalendarCreated or CalendarCreatedForGroup.");
+        }
 
         await session.SaveChangesAsync(cancellationToken);
 
@@ -86,6 +95,14 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
                     {
                         session.Delete(member);
                     }
+
+                    // A no-op for a user-owned calendar -- only group-owned calendars have one of these.
+                    var groupOwned = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken);
+
+                    if (groupOwned is not null)
+                    {
+                        session.Delete(groupOwned);
+                    }
                     break;
             }
         }
@@ -99,6 +116,21 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
 
         return await session.Query<CalendarMembershipDocument>()
             .Where(d => d.UserId == userId.Value)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<GroupOwnedCalendarDocument>> ListOwnedByGroupsAsync(IReadOnlyCollection<GroupId> groupIds, CancellationToken cancellationToken)
+    {
+        if (groupIds.Count == 0)
+        {
+            return [];
+        }
+
+        await using var session = store.QuerySession();
+        var groupIdValues = groupIds.Select(g => g.Value).ToArray();
+
+        return await session.Query<GroupOwnedCalendarDocument>()
+            .Where(d => groupIdValues.Contains(d.GroupId))
             .ToListAsync(cancellationToken);
     }
 }

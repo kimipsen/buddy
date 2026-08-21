@@ -1,0 +1,15 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000030",
+  "Before": {
+    "Title": "Standup",
+    "Icon": "calendar",
+    "Color": "#00ff00"
+  },
+  "After": {
+    "Title": "Renamed",
+    "Icon": "star",
+    "Color": "#123456"
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+}

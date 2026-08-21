@@ -1,0 +1,40 @@
+namespace buddy.Features.Groups;
+
+public static class SetGroupMemberRoleHandler
+{
+    public static async Task<GroupAccess> Handle(SetGroupMemberRole command, IGroupEventStore groups, CancellationToken cancellationToken)
+    {
+        if (command.Role == GroupRole.Owner)
+        {
+            // Ownership is assigned only at creation and never granted through this endpoint.
+            return GroupAccess.Forbidden;
+        }
+
+        if (command.UserId is not { } userId)
+        {
+            return GroupAccess.NotFound;
+        }
+
+        var events = await groups.ReadAsync(command.GroupId, cancellationToken);
+        var group = Group.Rehydrate(events);
+        var access = GroupAuthorization.CheckManage(group, userId);
+
+        if (access != GroupAccess.Allowed)
+        {
+            return access;
+        }
+
+        if (command.MemberId == userId)
+        {
+            // The owner's own role can't be changed through this endpoint either.
+            return GroupAccess.Forbidden;
+        }
+
+        await groups.AppendAsync(
+            command.GroupId,
+            [new GroupMemberRoleGranted(command.GroupId, command.MemberId, command.Role, userId, DateTimeOffset.UtcNow)],
+            cancellationToken);
+
+        return GroupAccess.Allowed;
+    }
+}

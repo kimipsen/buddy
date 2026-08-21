@@ -1,10 +1,11 @@
+using buddy.Features.Groups;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
 public static class CreateIcalTokenHandler
 {
-    public static async Task<CreateIcalTokenResult> Handle(CreateIcalToken command, ICalendarEventStore calendars, CancellationToken cancellationToken)
+    public static async Task<CreateIcalTokenResult> Handle(CreateIcalToken command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
@@ -13,7 +14,7 @@ public static class CreateIcalTokenHandler
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(events);
-        var access = CalendarAuthorization.CheckOwner(calendar, userId);
+        var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

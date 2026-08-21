@@ -10,18 +10,11 @@ public sealed record Calendar(
     CalendarId Id,
     string Name,
     TimeZoneId TimeZoneId,
+    CalendarOwner Owner,
     ImmutableDictionary<UserId, CalendarRole> Members,
     ImmutableDictionary<IcalTokenId, IcalTokenInfo> Tokens,
     bool IsDeleted = false)
 {
-    public bool CanView(UserId userId) => !IsDeleted && Members.ContainsKey(userId);
-
-    public bool CanContribute(UserId userId) =>
-        !IsDeleted && Members.TryGetValue(userId, out var role) && role is CalendarRole.Owner or CalendarRole.Contributor;
-
-    public bool IsOwner(UserId userId) =>
-        !IsDeleted && Members.TryGetValue(userId, out var role) && role == CalendarRole.Owner;
-
     // Constant-time per candidate, mirroring VerifyEmailHandler's token comparison -- the caller
     // supplies an already-hashed value so the plaintext token is never compared or logged here.
     public IcalTokenId? FindMatchingToken(string submittedTokenHash)
@@ -56,7 +49,15 @@ public sealed record Calendar(
                     created.CalendarId,
                     created.Name,
                     created.TimeZoneId,
+                    new CalendarOwner.User(created.OwnerId),
                     ImmutableDictionary<UserId, CalendarRole>.Empty.Add(created.OwnerId, CalendarRole.Owner),
+                    ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
+                CalendarCreatedForGroup created => new Calendar(
+                    created.CalendarId,
+                    created.Name,
+                    created.TimeZoneId,
+                    new CalendarOwner.Group(created.OwnerId),
+                    ImmutableDictionary<UserId, CalendarRole>.Empty,
                     ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
                 MemberRoleGranted granted => calendar! with { Members = calendar!.Members.SetItem(granted.MemberId, granted.Role) },
                 MemberRoleRevoked revoked => calendar! with { Members = calendar!.Members.Remove(revoked.MemberId) },
