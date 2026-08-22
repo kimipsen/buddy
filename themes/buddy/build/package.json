@@ -1,0 +1,12 @@
+{
+  "name": "buddy-keycloak-theme",
+  "private": true,
+  "scripts": {
+    "build": "tailwindcss -i ./input.css -o ../login/resources/css/buddy-overrides.css --minify",
+    "watch": "tailwindcss -i ./input.css -o ../login/resources/css/buddy-overrides.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.12",
+    "tailwindcss": "^4.1.12"
+  }
+}

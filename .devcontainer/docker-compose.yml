@@ -67,11 +67,17 @@ services:
       KC_DB_URL_HOST: db
       KC_DB_URL_PORT: 5432
       KC_DB_URL_DATABASE: keycloak
+      # Disable theme caching so edits under themes/buddy show up without a restart.
+      KC_SPI_THEME_STATIC_MAX_AGE: "-1"
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
     command: start-dev
     depends_on:
       - db
     ports:
       - 9080:8080
+    volumes:
+      - ../themes/buddy:/opt/keycloak/themes/buddy
     networks:
       - buddy_network
 

@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/*
+ * Restyles Keycloak's inherited "keycloak" theme (PatternFly/Bootstrap based)
+ * to match the Buddy app's visual language, targeting the real selectors and
+ * theme.properties class hooks from Keycloak 21's base/keycloak login theme.
+ * Structural layout (grids, spacing scaffolding, icon fonts) is left to the
+ * inherited css/login.css; this file only overrides color, radius, shadow,
+ * and typography.
+ */
+
+body {
+  @apply font-sans text-slate-950;
+}
+
+.login-pf-page {
+  @apply flex min-h-screen items-center justify-center bg-slate-100 px-6 py-10;
+}
+
+#kc-header-wrapper {
+  @apply mb-8 flex items-center justify-center gap-3;
+}
+
+.buddy-logo-badge {
+  @apply grid size-10 shrink-0 place-items-center rounded-lg bg-emerald-400 font-semibold text-slate-950;
+}
+
+.buddy-logo-wordmark {
+  @apply text-lg font-semibold text-slate-950;
+}
+
+.card-pf {
+  @apply w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-950/10 sm:p-8;
+}
+
+#kc-page-title {
+  @apply mb-2 text-2xl font-semibold text-slate-950;
+}
+
+.instruction {
+  @apply mt-2 text-sm leading-6 text-slate-600;
+}
+
+.form-group {
+  @apply mb-4;
+}
+
+.pf-c-form__label,
+.pf-c-form__label-text {
+  @apply mb-1.5 block text-sm font-medium text-slate-700;
+}
+
+.pf-c-form-control,
+input.pf-c-form-control,
+textarea.pf-c-form-control {
+  @apply block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500;
+}
+
+.pf-c-form__helper-text.pf-m-error {
+  @apply mt-1.5 block text-sm text-red-600;
+}
+
+.checkbox label {
+  @apply flex items-center gap-2 text-sm font-normal text-slate-700;
+}
+
+#kc-form-options {
+  @apply text-sm text-slate-600;
+}
+
+#kc-form-options a,
+#kc-registration-container a,
+#kc-info-wrapper a,
+.card-pf a {
+  @apply text-emerald-700 hover:text-emerald-800 hover:underline;
+}
+
+#kc-registration-container {
+  @apply mt-6 text-center text-sm text-slate-600;
+}
+
+.pf-c-button {
+  @apply inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2;
+}
+
+.pf-c-button.pf-m-primary {
+  @apply bg-slate-950 text-white hover:bg-slate-800;
+}
+
+.pf-c-button.pf-m-control {
+  @apply border border-slate-300 bg-white text-slate-700 hover:border-slate-400;
+}
+
+.pf-c-alert {
+  @apply mb-6 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm leading-6;
+}
+
+.pf-c-alert.pf-m-danger {
+  @apply border-red-200 bg-red-50 text-red-700;
+}
+
+.pf-c-alert.pf-m-success {
+  @apply border-emerald-200 bg-emerald-50 text-emerald-700;
+}
+
+.pf-c-alert.pf-m-warning {
+  @apply border-amber-200 bg-amber-50 text-amber-700;
+}
+
+.pf-c-alert.pf-m-info {
+  @apply border-slate-200 bg-slate-50 text-slate-700;
+}
+
+#kc-social-providers {
+  @apply mt-6 border-t border-slate-200 pt-6;
+}
+
+#kc-social-providers h4 {
+  @apply mb-3 text-sm font-medium text-slate-700;
+}
