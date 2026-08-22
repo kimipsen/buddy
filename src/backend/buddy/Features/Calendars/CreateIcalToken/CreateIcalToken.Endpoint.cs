@@ -28,7 +28,10 @@ public static class CreateIcalTokenEndpoint
                     issued.Token,
                     $"/calendars/{calendarId}/ical/{issued.Token}")),
                 Result<IssuedIcalToken>.Forbidden => TypedResults.Forbid(),
-                _ => TypedResults.NotFound(),
+                Result<IssuedIcalToken>.NotFound => TypedResults.NotFound(),
+                // CreateIcalTokenHandler never produces Validation -- there's no BadRequest in
+                // this route's declared results, so this collapses to NotFound like the others.
+                Result<IssuedIcalToken>.Validation => TypedResults.NotFound(),
             };
         })
         .WithName("CreateCalendarIcalToken");

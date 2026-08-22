@@ -38,7 +38,7 @@ public static class ListOccurrencesHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.NotFound();
+            return access.ToDeniedResult<IReadOnlyCollection<CalendarItemOccurrence>>();
         }
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, query.From, query.To, items, cancellationToken);

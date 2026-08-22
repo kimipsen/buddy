@@ -1,3 +1,6 @@
+using System.Diagnostics;
+
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -11,6 +14,19 @@ public enum CalendarAccess
     NotFound,
     // The caller can see the calendar but lacks the permission tier the operation requires.
     Forbidden
+}
+
+public static class CalendarAccessExtensions
+{
+    // Maps a denied CalendarAccess to the matching Result<T> failure. Callers must already know
+    // access isn't Allowed -- see every CheckView/CheckContribute/CheckOwner call site.
+    public static Result<T> ToDeniedResult<T>(this CalendarAccess access) => access switch
+    {
+        CalendarAccess.Forbidden => new Result<T>.Forbidden(),
+        CalendarAccess.NotFound => new Result<T>.NotFound(),
+        CalendarAccess.Allowed => throw new UnreachableException("ToDeniedResult called with CalendarAccess.Allowed."),
+        _ => throw new UnreachableException($"Unrecognized CalendarAccess value: {access}."),
+    };
 }
 
 // Resolves a user's effective CalendarRole on a calendar. For a user-owned calendar this only

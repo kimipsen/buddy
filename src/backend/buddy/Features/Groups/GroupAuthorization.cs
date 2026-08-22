@@ -1,3 +1,6 @@
+using System.Diagnostics;
+
+using buddy.Common;
 using buddy.Features.Users;
 
 namespace buddy.Features.Groups;
@@ -10,6 +13,19 @@ public enum GroupAccess
     NotFound,
     // The caller can see the group but lacks the permission tier the operation requires.
     Forbidden
+}
+
+public static class GroupAccessExtensions
+{
+    // Maps a denied GroupAccess to the matching Result<T> failure. Callers must already know
+    // access isn't Allowed -- see every CheckView/CheckManage/CheckOwner call site.
+    public static Result<T> ToDeniedResult<T>(this GroupAccess access) => access switch
+    {
+        GroupAccess.Forbidden => new Result<T>.Forbidden(),
+        GroupAccess.NotFound => new Result<T>.NotFound(),
+        GroupAccess.Allowed => throw new UnreachableException("ToDeniedResult called with GroupAccess.Allowed."),
+        _ => throw new UnreachableException($"Unrecognized GroupAccess value: {access}."),
+    };
 }
 
 public static class GroupAuthorization

@@ -20,12 +20,15 @@ public static class GetCalendarEndpoint
         {
             var result = await bus.InvokeAsync<Result<Calendar>>(GetCalendar.FromClaims(principal, new CalendarId(calendarId)), cancellationToken);
 
-            if (result is not Result<Calendar>.Success(var calendar))
+            return result switch
             {
-                return TypedResults.NotFound();
-            }
-
-            return TypedResults.Ok(CalendarResponse.FromCalendar(calendar));
+                Result<Calendar>.Success(var calendar) => TypedResults.Ok(CalendarResponse.FromCalendar(calendar)),
+                Result<Calendar>.NotFound => TypedResults.NotFound(),
+                // CheckView never returns Forbidden or Validation, so these are unreachable today
+                // -- collapsed to NotFound since this route declares no other status for them.
+                Result<Calendar>.Forbidden => TypedResults.NotFound(),
+                Result<Calendar>.Validation => TypedResults.NotFound(),
+            };
         })
         .WithName("GetCalendar");
 

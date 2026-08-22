@@ -25,7 +25,7 @@ public static class SetMemberRoleHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access == CalendarAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
+            return access.ToDeniedResult<Unit>();
         }
 
         if (command.MemberId == userId)

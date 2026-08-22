@@ -23,7 +23,7 @@ public static class SetGroupMemberRoleHandler
 
         if (access != GroupAccess.Allowed)
         {
-            return access == GroupAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
+            return access.ToDeniedResult<Unit>();
         }
 
         if (command.MemberId == userId)

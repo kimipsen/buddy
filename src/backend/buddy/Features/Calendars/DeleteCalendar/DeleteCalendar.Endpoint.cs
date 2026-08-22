@@ -24,7 +24,10 @@ public static class DeleteCalendarEndpoint
             {
                 Result<Unit>.Success => TypedResults.NoContent(),
                 Result<Unit>.Forbidden => TypedResults.Forbid(),
-                _ => TypedResults.NotFound(),
+                Result<Unit>.NotFound => TypedResults.NotFound(),
+                // DeleteCalendarHandler never produces Validation -- there's no BadRequest in
+                // this route's declared results, so this collapses to NotFound like the others.
+                Result<Unit>.Validation => TypedResults.NotFound(),
             };
         })
         .WithName("DeleteCalendar");

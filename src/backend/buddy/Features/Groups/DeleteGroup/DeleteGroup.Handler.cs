@@ -25,7 +25,7 @@ public static class DeleteGroupHandler
 
         if (access != GroupAccess.Allowed)
         {
-            return access == GroupAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
+            return access.ToDeniedResult<Unit>();
         }
 
         await groups.AppendAsync(command.GroupId, [new GroupDeleted(command.GroupId, userId, DateTimeOffset.UtcNow)], cancellationToken);

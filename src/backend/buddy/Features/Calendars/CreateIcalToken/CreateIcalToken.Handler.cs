@@ -19,7 +19,7 @@ public static class CreateIcalTokenHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access == CalendarAccess.Forbidden ? new Result<IssuedIcalToken>.Forbidden() : new Result<IssuedIcalToken>.NotFound();
+            return access.ToDeniedResult<IssuedIcalToken>();
         }
 
         var (token, hash) = IcalToken.Generate();

@@ -15,6 +15,6 @@ public static class GetGroupHandler
         var group = Group.Rehydrate(events);
         var access = GroupAuthorization.CheckView(group, userId);
 
-        return access == GroupAccess.Allowed ? new Result<Group>.Success(group!) : new Result<Group>.NotFound();
+        return access == GroupAccess.Allowed ? new Result<Group>.Success(group!) : access.ToDeniedResult<Group>();
     }
 }

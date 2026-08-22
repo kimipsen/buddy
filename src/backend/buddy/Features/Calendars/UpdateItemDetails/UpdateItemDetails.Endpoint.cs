@@ -34,7 +34,10 @@ public static class UpdateItemDetailsEndpoint
             {
                 Result<CalendarItem>.Success(var item) => TypedResults.Ok(CalendarItemResponse.FromItem(item)),
                 Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
-                _ => TypedResults.NotFound(),
+                Result<CalendarItem>.NotFound => TypedResults.NotFound(),
+                // UpdateItemDetailsHandler never produces Validation -- there's no BadRequest in
+                // this route's declared results, so this collapses to NotFound like the others.
+                Result<CalendarItem>.Validation => TypedResults.NotFound(),
             };
         })
         .WithName("UpdateCalendarItemDetails");

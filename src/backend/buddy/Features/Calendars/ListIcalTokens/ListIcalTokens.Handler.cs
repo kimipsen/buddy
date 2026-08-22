@@ -19,7 +19,7 @@ public static class ListIcalTokensHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access == CalendarAccess.Forbidden ? new Result<IReadOnlyCollection<IcalTokenSummary>>.Forbidden() : new Result<IReadOnlyCollection<IcalTokenSummary>>.NotFound();
+            return access.ToDeniedResult<IReadOnlyCollection<IcalTokenSummary>>();
         }
 
         var tokens = calendar!.Tokens

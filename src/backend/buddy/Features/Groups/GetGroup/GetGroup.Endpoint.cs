@@ -21,12 +21,15 @@ public static class GetGroupEndpoint
         {
             var result = await bus.InvokeAsync<Result<Group>>(GetGroup.FromClaims(principal, new GroupId(groupId)), cancellationToken);
 
-            if (result is not Result<Group>.Success(var group))
+            return result switch
             {
-                return TypedResults.NotFound();
-            }
-
-            return TypedResults.Ok(GroupResponse.FromGroup(group));
+                Result<Group>.Success(var group) => TypedResults.Ok(GroupResponse.FromGroup(group)),
+                Result<Group>.NotFound => TypedResults.NotFound(),
+                // CheckView never returns Forbidden or Validation, so these are unreachable today
+                // -- collapsed to NotFound since this route declares no other status for them.
+                Result<Group>.Forbidden => TypedResults.NotFound(),
+                Result<Group>.Validation => TypedResults.NotFound(),
+            };
         })
         .WithName("GetGroup");
 

@@ -27,7 +27,10 @@ public static class ListOccurrencesEndpoint
             {
                 Result<IReadOnlyCollection<CalendarItemOccurrence>>.Success(var occurrences) => TypedResults.Ok(occurrences),
                 Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation(var message) => TypedResults.BadRequest(message),
-                _ => TypedResults.NotFound(),
+                Result<IReadOnlyCollection<CalendarItemOccurrence>>.NotFound => TypedResults.NotFound(),
+                // CheckView never returns Forbidden, so this is unreachable today -- there's no
+                // ForbidHttpResult in this route's declared results, so it collapses to NotFound.
+                Result<IReadOnlyCollection<CalendarItemOccurrence>>.Forbidden => TypedResults.NotFound(),
             };
         })
         .WithName("ListCalendarOccurrences");

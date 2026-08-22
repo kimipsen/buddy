@@ -25,7 +25,10 @@ public static class VerifyEmailEndpoint
             {
                 Result<User>.Success(var user) => TypedResults.Ok(UserResponse.FromUser(user)),
                 Result<User>.Validation(var message) => TypedResults.BadRequest(message),
-                _ => TypedResults.NotFound(),
+                Result<User>.NotFound => TypedResults.NotFound(),
+                // VerifyEmailHandler never produces Forbidden -- collapsed to NotFound since this
+                // route declares no other status for it.
+                Result<User>.Forbidden => TypedResults.NotFound(),
             };
         })
         .WithName("VerifyCurrentEmail");

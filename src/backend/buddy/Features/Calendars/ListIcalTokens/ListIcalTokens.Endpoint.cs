@@ -25,7 +25,10 @@ public static class ListIcalTokensEndpoint
             {
                 Result<IReadOnlyCollection<IcalTokenSummary>>.Success(var tokens) => TypedResults.Ok(tokens),
                 Result<IReadOnlyCollection<IcalTokenSummary>>.Forbidden => TypedResults.Forbid(),
-                _ => TypedResults.NotFound(),
+                Result<IReadOnlyCollection<IcalTokenSummary>>.NotFound => TypedResults.NotFound(),
+                // ListIcalTokensHandler never produces Validation -- there's no BadRequest in
+                // this route's declared results, so this collapses to NotFound like the others.
+                Result<IReadOnlyCollection<IcalTokenSummary>>.Validation => TypedResults.NotFound(),
             };
         })
         .WithName("ListCalendarIcalTokens");

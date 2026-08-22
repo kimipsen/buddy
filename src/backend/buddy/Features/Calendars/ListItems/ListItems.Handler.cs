@@ -24,7 +24,7 @@ public static class ListItemsHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new Result<IReadOnlyCollection<CalendarItem>>.NotFound();
+            return access.ToDeniedResult<IReadOnlyCollection<CalendarItem>>();
         }
 
         var itemIds = await items.ListIdsForCalendarAsync(query.CalendarId, cancellationToken);

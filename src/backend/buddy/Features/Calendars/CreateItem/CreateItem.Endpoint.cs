@@ -38,7 +38,7 @@ public static class CreateItemEndpoint
                 Result<CalendarItem>.Success(var item) => TypedResults.Ok(CalendarItemResponse.FromItem(item)),
                 Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
                 Result<CalendarItem>.Validation(var message) => TypedResults.BadRequest(message),
-                _ => TypedResults.NotFound(),
+                Result<CalendarItem>.NotFound => TypedResults.NotFound(),
             };
         })
         .WithName("CreateCalendarItem");

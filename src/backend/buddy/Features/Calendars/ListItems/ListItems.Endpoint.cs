@@ -20,12 +20,16 @@ public static class ListItemsEndpoint
         {
             var result = await bus.InvokeAsync<Result<IReadOnlyCollection<CalendarItem>>>(ListItems.FromClaims(principal, new CalendarId(calendarId)), cancellationToken);
 
-            if (result is not Result<IReadOnlyCollection<CalendarItem>>.Success(var items))
+            return result switch
             {
-                return TypedResults.NotFound();
-            }
-
-            return TypedResults.Ok<IReadOnlyCollection<CalendarItemResponse>>([.. items.Select(CalendarItemResponse.FromItem)]);
+                Result<IReadOnlyCollection<CalendarItem>>.Success(var items) =>
+                    TypedResults.Ok<IReadOnlyCollection<CalendarItemResponse>>([.. items.Select(CalendarItemResponse.FromItem)]),
+                Result<IReadOnlyCollection<CalendarItem>>.NotFound => TypedResults.NotFound(),
+                // CheckView never returns Forbidden or Validation, so these are unreachable today
+                // -- collapsed to NotFound since this route declares no other status for them.
+                Result<IReadOnlyCollection<CalendarItem>>.Forbidden => TypedResults.NotFound(),
+                Result<IReadOnlyCollection<CalendarItem>>.Validation => TypedResults.NotFound(),
+            };
         })
         .WithName("ListCalendarItems");
 

@@ -22,12 +22,15 @@ public static class UpdateCurrentNameEndpoint
 
             var result = await bus.InvokeAsync<Result<User>>(command, cancellationToken);
 
-            if (result is not Result<User>.Success(var user))
+            return result switch
             {
-                return TypedResults.NotFound();
-            }
-
-            return TypedResults.Ok(UserResponse.FromUser(user));
+                Result<User>.Success(var user) => TypedResults.Ok(UserResponse.FromUser(user)),
+                Result<User>.NotFound => TypedResults.NotFound(),
+                // UpdateNameHandler never produces Forbidden or Validation -- collapsed to
+                // NotFound since this route declares no other status for them.
+                Result<User>.Forbidden => TypedResults.NotFound(),
+                Result<User>.Validation => TypedResults.NotFound(),
+            };
         })
         .WithName("UpdateCurrentName");
 

@@ -19,7 +19,7 @@ public static class DeleteCalendarHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access == CalendarAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
+            return access.ToDeniedResult<Unit>();
         }
 
         await calendars.AppendAsync(command.CalendarId, [new CalendarDeleted(command.CalendarId, userId, DateTimeOffset.UtcNow)], cancellationToken);

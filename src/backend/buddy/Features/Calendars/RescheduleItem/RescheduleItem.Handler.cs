@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
@@ -24,7 +26,7 @@ public static class RescheduleItemHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access == CalendarAccess.Forbidden ? new Result<CalendarItem>.Forbidden() : new Result<CalendarItem>.NotFound();
+            return access.ToDeniedResult<CalendarItem>();
         }
 
         var itemEvents = await items.ReadAsync(command.ItemId, cancellationToken);
@@ -46,9 +48,13 @@ public static class RescheduleItemHandler
 
             var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt);
 
-            if (periodResult is not Result<Period>.Success(var period))
+            if (periodResult is not PeriodValidationResult.Valid(var period))
             {
-                return new Result<CalendarItem>.Validation(periodResult is Result<Period>.Validation(var message) ? message : "Invalid period.");
+                return new Result<CalendarItem>.Validation(periodResult switch
+                {
+                    PeriodValidationResult.Invalid(var message) => message,
+                    PeriodValidationResult.Valid => throw new UnreachableException("Already excluded by the enclosing check."),
+                });
             }
 
             await items.AppendAsync(

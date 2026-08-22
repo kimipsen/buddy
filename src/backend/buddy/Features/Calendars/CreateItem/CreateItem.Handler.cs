@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
@@ -29,7 +31,7 @@ public static class CreateItemHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access == CalendarAccess.Forbidden ? new Result<CalendarItem>.Forbidden() : new Result<CalendarItem>.NotFound();
+            return access.ToDeniedResult<CalendarItem>();
         }
 
         var itemId = CalendarItemId.New();
@@ -45,9 +47,13 @@ public static class CreateItemHandler
 
             var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt);
 
-            if (periodResult is not Result<Period>.Success(var period))
+            if (periodResult is not PeriodValidationResult.Valid(var period))
             {
-                return new Result<CalendarItem>.Validation(periodResult is Result<Period>.Validation(var message) ? message : "Invalid period.");
+                return new Result<CalendarItem>.Validation(periodResult switch
+                {
+                    PeriodValidationResult.Invalid(var message) => message,
+                    PeriodValidationResult.Valid => throw new UnreachableException("Already excluded by the enclosing check."),
+                });
             }
 
             created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, period, command.Recurrence, now);

@@ -33,7 +33,10 @@ public static class SetGroupMemberRoleEndpoint
             {
                 Result<Unit>.Success => TypedResults.NoContent(),
                 Result<Unit>.Forbidden => TypedResults.Forbid(),
-                _ => TypedResults.NotFound(),
+                Result<Unit>.NotFound => TypedResults.NotFound(),
+                // SetGroupMemberRoleHandler never produces Validation, but BadRequest is already
+                // part of this route's declared results (used above), so map it there if it ever did.
+                Result<Unit>.Validation(var message) => TypedResults.BadRequest(message),
             };
         })
         .WithName("SetGroupMemberRole");

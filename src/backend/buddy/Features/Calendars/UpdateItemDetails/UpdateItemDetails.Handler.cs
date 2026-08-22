@@ -24,7 +24,7 @@ public static class UpdateItemDetailsHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access == CalendarAccess.Forbidden ? new Result<CalendarItem>.Forbidden() : new Result<CalendarItem>.NotFound();
+            return access.ToDeniedResult<CalendarItem>();
         }
 
         var itemEvents = await items.ReadAsync(command.ItemId, cancellationToken);
