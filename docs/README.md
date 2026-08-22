@@ -13,6 +13,10 @@ This folder contains the project-level documentation for Buddy.
 - [Glossary](backend/glossary.md)
 - [HTTP status code semantics](backend/http-status-codes.md)
 
+## Frontend
+
+- [Frontend overview](frontend/README.md)
+
 ## Backend design analysis
 
 - [Group-owned calendars and permissions](backend/analysis/group-owned-calendars-and-permissions.md)

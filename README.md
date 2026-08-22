@@ -27,6 +27,8 @@ docs/
 
 - [Backend documentation](docs/backend/README.md) — domain glossary, user
   flows, HTTP semantics, and design analysis documents.
+- [Frontend documentation](docs/frontend/README.md) — Angular app shell,
+  auth flow, feature layout, and current product status.
 - [src/backend/buddy](src/backend/buddy) — the API implementation.
 - [src/frontend/buddy](src/frontend/buddy) — the Angular frontend.
 - [docs/README.md](docs/README.md) — the documentation landing page.
