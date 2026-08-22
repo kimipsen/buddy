@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "npm test -- --watch=false"
+  },
+  "coverageAnalysis": "off",
+  "concurrency": 4,
+  "checkers": ["typescript"],
+  "typescriptChecker": {
+    "prioritizePerformanceOverAccuracy": true
+  },
+  "mutate": ["src/app/**/*.ts", "!src/app/**/*.spec.ts"],
+  "reporters": ["progress", "clear-text", "html"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "tempDirName": ".stryker-tmp",
+  "cleanTempDir": true
+}

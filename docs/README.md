@@ -21,6 +21,7 @@ This folder contains the project-level documentation for Buddy.
 
 - [Group-owned calendars and permissions](backend/analysis/group-owned-calendars-and-permissions.md)
 - [Integration testing strategy](backend/analysis/integration-testing-strategy.md)
+- [Mutation testing strategy](backend/analysis/mutation-testing-strategy.md)
 - [Child accounts and guardian/parent roles](backend/analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](backend/analysis/medicine-schedules.md)
 

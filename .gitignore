@@ -497,3 +497,6 @@ appsettings.*.json
 # Temporary content
 .temp/
 dotnet/
+
+# Stryker.NET mutation testing output
+StrykerOutput/

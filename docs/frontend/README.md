@@ -103,3 +103,36 @@ npm start
 ```
 
 The app runs by default on the Angular dev server at http://localhost:4200/.
+
+## Testing
+
+Unit tests run through Angular's `@angular/build:unit-test` builder (Vitest under the hood):
+
+```bash
+cd src/frontend/buddy
+npm test
+```
+
+### Mutation testing
+
+StrykerJS is wired up (`stryker.conf.json`) to check that the unit test suite actually catches
+regressions, not just that it runs. Angular 22's new test builder wraps Vitest internally rather
+than exposing a standalone `vitest.config.ts`, so Stryker drives it through its built-in command
+test runner (`npm test -- --watch=false`) instead of the `@stryker-mutator/vitest-runner` plugin —
+treating `ng test` as a black-box pass/fail command avoids having to reimplement the builder's
+internal Vitest wiring (jsdom, zone.js, Angular template compilation) in a separate config file.
+The TypeScript checker (`checkers: ["typescript"]`) still runs ahead of the test command to skip
+mutants that don't compile, without needing the Vitest API integration.
+
+`concurrency` is capped at `4` in the checked-in config — each mutant reruns a full `ng test`
+build, and higher concurrency was observed to cause build contention and false timeouts in this
+devcontainer. Raise it if your machine handles more parallel builds comfortably.
+
+```bash
+cd src/frontend/buddy
+npm run test:mutation
+```
+
+The html report is written to `reports/mutation/index.html` (git-ignored). As of this setup only
+`app.spec.ts` exists, so most mutants will report as uncovered rather than killed — that's an
+honest signal of how much of the app still needs unit tests, not a tooling problem.

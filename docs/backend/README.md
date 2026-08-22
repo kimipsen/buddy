@@ -20,6 +20,7 @@ model or permissions logic.
 
 - [Group-owned calendars and permissions](analysis/group-owned-calendars-and-permissions.md)
 - [Integration testing strategy](analysis/integration-testing-strategy.md)
+- [Mutation testing strategy](analysis/mutation-testing-strategy.md)
 - [Child accounts and guardian/parent roles](analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](analysis/medicine-schedules.md)
 

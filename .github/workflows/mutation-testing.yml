@@ -1,0 +1,67 @@
+name: Mutation testing
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "11.0.x"
+          dotnet-quality: "preview"
+
+      - name: Restore
+        run: dotnet restore src/backend/backend.slnx
+
+      - name: Restore local tools
+        working-directory: src/backend
+        run: dotnet tool restore
+
+      # Testcontainers needs a Docker daemon, which the ubuntu-latest runner provides natively.
+      # This is a slow, thorough check (every mutant reruns the real integration suite against
+      # Postgres/Keycloak/mailpit; a full run can take multiple hours) -- see
+      # docs/backend/analysis/mutation-testing-strategy.md. To scope a run to one feature, edit
+      # the "mutate" array in stryker-config.json rather than passing --mutate here -- Stryker.NET
+      # does not honor the CLI flag when the config file also sets "mutate".
+      - name: Run Stryker.NET
+        working-directory: src/backend/buddy.IntegrationTests
+        run: dotnet tool run dotnet-stryker
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-mutation-report
+          path: src/backend/buddy.IntegrationTests/StrykerOutput/**/reports/*.html
+          if-no-files-found: ignore
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: src/frontend/buddy/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/frontend/buddy
+        run: npm ci
+
+      - name: Run StrykerJS
+        working-directory: src/frontend/buddy
+        run: npm run test:mutation
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-mutation-report
+          path: src/frontend/buddy/reports/mutation
+          if-no-files-found: ignore
