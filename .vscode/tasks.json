@@ -6,6 +6,7 @@
       "label": "ng serve",
       "type": "npm",
       "script": "start",
+      "path": "src/frontend/buddy",
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
@@ -29,6 +30,7 @@
       "label": "ng test",
       "type": "npm",
       "script": "test",
+      "path": "src/frontend/buddy",
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
