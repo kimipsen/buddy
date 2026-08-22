@@ -21,6 +21,8 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 {
     private const string RealmName = "buddy-test";
     private const string Audience = "buddy-api";
+    private const string AdminClientId = "buddy-admin-cli";
+    private const string AdminClientSecret = "buddy-admin-cli-test-secret";
 
     private PostgreSqlContainer _postgres = null!;
     private IContainer _keycloak = null!;
@@ -64,10 +66,13 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             _keycloak.StartAsync(),
             _mailpit.StartAsync());
 
-        var keycloakAuthority = $"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}/realms/{RealmName}";
+        var keycloakBaseUrl = $"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}";
+        var keycloakAuthority = $"{keycloakBaseUrl}/realms/{RealmName}";
         var mailpitHttpPort = _mailpit.GetMappedPublicPort(8025);
 
         _mailpitClient = new HttpClient { BaseAddress = new Uri($"http://{_mailpit.Hostname}:{mailpitHttpPort}") };
+
+        var adminClientSecret = await SetUpKeycloakAdminServiceAccountAsync(keycloakBaseUrl);
 
         var configOverrides = new Dictionary<string, string?>
         {
@@ -75,6 +80,11 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["Authentication:Keycloak:Authority"] = keycloakAuthority,
             ["Authentication:Keycloak:Audience"] = Audience,
             ["Authentication:Keycloak:RequireHttpsMetadata"] = "false",
+            ["Authentication:KeycloakAdmin:Realm"] = RealmName,
+            ["Authentication:KeycloakAdmin:TokenEndpoint"] = $"{keycloakBaseUrl}/realms/master/protocol/openid-connect/token",
+            ["Authentication:KeycloakAdmin:AdminBaseUrl"] = $"{keycloakBaseUrl}/admin/realms/{RealmName}",
+            ["Authentication:KeycloakAdmin:ClientId"] = AdminClientId,
+            ["Authentication:KeycloakAdmin:ClientSecret"] = adminClientSecret,
             ["Mail:Host"] = _mailpit.Hostname,
             ["Mail:Port"] = _mailpit.GetMappedPublicPort(1025).ToString()
         };
@@ -181,6 +191,35 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         return new TestUser(username, password, email);
     }
 
+    // A child provisioned via POST /users/me/children gets a temporary password with a pending
+    // UPDATE_PASSWORD required action, which blocks direct-grant login until it's completed -- not
+    // something the direct-grant flow itself can satisfy. This mirrors what the child's own device
+    // would do on first login (set a permanent password), using the master-realm admin-cli
+    // already used elsewhere in this fixture, so tests can then log in as the child normally.
+    public async Task SetPermanentPasswordAsync(string username, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var adminToken = await GetAdminTokenAsync(cancellationToken);
+
+        using var client = new HttpClient
+        {
+            BaseAddress = new Uri($"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}")
+        };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var users = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/users?username={Uri.EscapeDataString(username)}&exact=true", cancellationToken);
+        var userId = users.EnumerateArray().First().GetProperty("id").GetString()
+            ?? throw new InvalidOperationException($"Keycloak has no user named '{username}' in realm '{RealmName}'.");
+
+        var response = await client.PutAsJsonAsync($"/admin/realms/{RealmName}/users/{userId}/reset-password", new
+        {
+            type = "password",
+            value = newPassword,
+            temporary = false
+        }, cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+    }
+
     private async Task<string> GetAdminTokenAsync(CancellationToken cancellationToken)
     {
         using var client = new HttpClient();
@@ -199,6 +238,52 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
         return payload.GetProperty("access_token").GetString()
             ?? throw new InvalidOperationException("Keycloak admin token response had no access_token.");
+    }
+
+    // Production's IKeycloakAdminClient authenticates as a confidential client's service account
+    // via client-credentials, then calls the buddy realm's Admin API -- nothing like that exists in
+    // the built-in master/admin-cli setup GetAdminTokenAsync uses, so this creates the equivalent
+    // for tests: a new client in the master realm (Keycloak's own convention for cross-realm admin
+    // access), granted the master realm's auto-generated "{realm}-realm" client's manage-users role
+    // -- the same composite Keycloak creates for every realm to let a master-realm principal manage
+    // just that realm, without needing global superadmin rights.
+    private async Task<string> SetUpKeycloakAdminServiceAccountAsync(string keycloakBaseUrl)
+    {
+        var adminToken = await GetAdminTokenAsync(CancellationToken.None);
+
+        using var client = new HttpClient { BaseAddress = new Uri(keycloakBaseUrl) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var createResponse = await client.PostAsJsonAsync("/admin/realms/master/clients", new
+        {
+            clientId = AdminClientId,
+            enabled = true,
+            publicClient = false,
+            serviceAccountsEnabled = true,
+            protocol = "openid-connect",
+            secret = AdminClientSecret
+        });
+        createResponse.EnsureSuccessStatusCode();
+
+        var clientDbId = createResponse.Headers.Location?.Segments[^1]
+            ?? throw new InvalidOperationException("Keycloak did not return a Location header for the created admin client.");
+
+        var serviceAccountUser = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/master/clients/{clientDbId}/service-account-user");
+        var serviceAccountUserId = serviceAccountUser.GetProperty("id").GetString()
+            ?? throw new InvalidOperationException("Keycloak did not return an id for the admin client's service account user.");
+
+        var realmManagementClients = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/master/clients?clientId={RealmName}-realm");
+        var realmManagementClientDbId = realmManagementClients.EnumerateArray().First().GetProperty("id").GetString()
+            ?? throw new InvalidOperationException($"Keycloak has no '{RealmName}-realm' client in the master realm.");
+
+        var manageUsersRole = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/master/clients/{realmManagementClientDbId}/roles/manage-users");
+
+        var assignResponse = await client.PostAsJsonAsync(
+            $"/admin/realms/master/users/{serviceAccountUserId}/role-mappings/clients/{realmManagementClientDbId}",
+            new[] { manageUsersRole });
+        assignResponse.EnsureSuccessStatusCode();
+
+        return AdminClientSecret;
     }
 
     public async Task<JsonElement[]> GetMailpitMessagesToAsync(string emailAddress, CancellationToken cancellationToken = default)

@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Features.Groups;
+using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -15,6 +16,7 @@ public static class ListOccurrencesHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         if (query.To < query.From)
@@ -34,7 +36,7 @@ public static class ListOccurrencesHandler
 
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
-        var access = await CalendarAuthorization.CheckView(calendar, userId, groups, cancellationToken);
+        var access = await CalendarAuthorization.CheckView(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

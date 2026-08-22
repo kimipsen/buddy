@@ -137,4 +137,19 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             .Where(d => groupIdValues.Contains(d.GroupId))
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyCollection<CalendarMembershipDocument>> ListOwnedByUsersAsync(IReadOnlyCollection<UserId> userIds, CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+        {
+            return [];
+        }
+
+        await using var session = store.QuerySession();
+        var userIdValues = userIds.Select(u => u.Value).ToArray();
+
+        return await session.Query<CalendarMembershipDocument>()
+            .Where(d => userIdValues.Contains(d.UserId) && d.Role == CalendarRole.Owner)
+            .ToListAsync(cancellationToken);
+    }
 }

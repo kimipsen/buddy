@@ -1,6 +1,7 @@
 using buddy.Email;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
+using buddy.Features.Guardians;
 using buddy.Features.Users;
 using buddy.Serialization;
 
@@ -8,7 +9,14 @@ using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseWolverine();
+builder.Host.UseWolverine(opts =>
+{
+    // IKeycloakAdminClient is registered via AddHttpClient<TClient, TImpl>(), which wires it up
+    // through HttpClientFactory's internal "opaque" lambda factory -- Wolverine can't inline that
+    // into generated constructor code, so it needs the explicit service-location opt-in below
+    // (the rest of each handler's dependencies still get the faster constructor-inlined codegen).
+    opts.CodeGeneration.AlwaysUseServiceLocationFor<IKeycloakAdminClient>();
+});
 
 // Add services to the container.
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -33,6 +41,7 @@ builder.Services.AddOpenApi(options =>
 });
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
+builder.Services.AddGuardiansFeature(builder.Configuration);
 builder.Services.AddGroupsFeature(builder.Configuration);
 builder.Services.AddCalendarsFeature(builder.Configuration);
 
@@ -55,6 +64,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUsersFeature();
+app.MapGuardiansFeature();
 app.MapGroupsFeature();
 app.MapCalendarsFeature();
 

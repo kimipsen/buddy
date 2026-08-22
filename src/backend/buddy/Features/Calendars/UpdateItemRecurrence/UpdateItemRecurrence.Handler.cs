@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Features.Groups;
+using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -11,6 +12,7 @@ public static class UpdateItemRecurrenceHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         if (command.Recurrence is { IntervalCount: < 1 })
@@ -25,7 +27,7 @@ public static class UpdateItemRecurrenceHandler
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

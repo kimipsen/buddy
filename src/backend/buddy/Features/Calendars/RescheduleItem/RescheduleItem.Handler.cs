@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using buddy.Common;
 using buddy.Features.Groups;
+using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -13,6 +14,7 @@ public static class RescheduleItemHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
+        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
@@ -22,7 +24,7 @@ public static class RescheduleItemHandler
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

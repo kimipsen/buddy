@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth.guard';
-import { Dashboard } from './features/dashboard/dashboard';
+import { roleRedirectGuard } from './core/role.guard';
 import { Login } from './features/login/login';
 
 export const routes: Routes = [
@@ -10,17 +10,23 @@ export const routes: Routes = [
     component: Login
   },
   {
-    path: 'dashboard',
-    component: Dashboard,
-    canActivate: [authGuard]
+    path: 'guardian',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/guardian/guardian.routes').then((m) => m.GUARDIAN_ROUTES)
+  },
+  {
+    path: 'child',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/child/child.routes').then((m) => m.CHILD_ROUTES)
   },
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'dashboard'
+    canActivate: [authGuard, roleRedirectGuard],
+    children: []
   },
   {
     path: '**',
-    redirectTo: 'dashboard'
+    redirectTo: ''
   }
 ];

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Features.Guardians;
 using buddy.Serialization;
 
 using JasperFx.Events;
@@ -26,7 +27,15 @@ public static class UsersFeature
         typeof(NameUpdated),
         typeof(EmailUpdated),
         typeof(EmailVerificationRequested),
-        typeof(EmailVerified)
+        typeof(EmailVerified),
+        // GuardianLink's stream lives in this same store/schema so a child User and its first
+        // GuardianLink can be created atomically -- see MartenGuardianLinkEventStore and
+        // docs/backend/analysis/child-accounts-and-guardian-roles.md. A Marten store needs every
+        // CLR event type registered for any stream it will contain, regardless of which feature
+        // folder declares the type.
+        typeof(GuardianLinked),
+        typeof(GuardianKindChanged),
+        typeof(GuardianRevoked)
     ];
 
     public static IServiceCollection AddUsersFeature(this IServiceCollection services, IConfiguration configuration)

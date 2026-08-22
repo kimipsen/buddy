@@ -1,12 +1,13 @@
 using buddy.Common;
 using buddy.Features.Groups;
+using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
 public static class SetMemberRoleHandler
 {
-    public static async Task<Result<Unit>> Handle(SetMemberRole command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(SetMemberRole command, ICalendarEventStore calendars, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
         if (command.Role == CalendarRole.Owner)
         {
@@ -21,7 +22,7 @@ public static class SetMemberRoleHandler
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(events);
-        var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, cancellationToken);
+        var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {
