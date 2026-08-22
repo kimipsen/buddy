@@ -5,7 +5,11 @@ This folder contains the project-level documentation for Buddy.
 ## Start here
 
 - [Backend overview](backend/README.md)
-- [User flow](backend/users/flow.md)
+- [Users flow](backend/users/flow.md)
+- [Calendars flow](backend/calendars/flow.md)
+- [Groups flow](backend/groups/flow.md)
+- [Guardians flow](backend/guardians/flow.md)
+- [Medicines flow](backend/medicines/flow.md)
 - [Glossary](backend/glossary.md)
 - [HTTP status code semantics](backend/http-status-codes.md)
 

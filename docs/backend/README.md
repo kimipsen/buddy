@@ -5,6 +5,10 @@ Backend documentation for the Buddy API.
 ## Start here
 
 - [Users flow](users/flow.md)
+- [Calendars flow](calendars/flow.md)
+- [Groups flow](groups/flow.md)
+- [Guardians flow](guardians/flow.md)
+- [Medicines flow](medicines/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
 
