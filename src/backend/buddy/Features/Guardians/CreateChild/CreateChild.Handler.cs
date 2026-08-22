@@ -15,19 +15,32 @@ public static class CreateChildHandler
             return new CreateChildOutcome.Unauthenticated();
         }
 
-        var provisioned = await keycloak.CreateChildUserAsync(command.Name, cancellationToken);
+        var provisioning = await keycloak.CreateChildUserAsync(
+            command.GivenName,
+            command.FamilyName,
+            command.Username,
+            cancellationToken);
+
+        if (provisioning is KeycloakCreateUserResult.UsernameUnavailable)
+        {
+            return new CreateChildOutcome.UsernameUnavailable();
+        }
+
+        var provisioned = provisioning switch
+        {
+            KeycloakCreateUserResult.Success(var user) => user,
+            KeycloakCreateUserResult.UsernameUnavailable => throw new InvalidOperationException("Username availability changed while creating the Keycloak user."),
+        };
 
         var now = DateTimeOffset.UtcNow;
         var childId = UserId.New();
         var linkId = GuardianLinkId.New();
 
-        // No family name is collected at provisioning time (the guardian only supplies a display
-        // name) -- the guardian can fill it in later via UpdateName, same as any other User field.
         // Email.Unverified("") reuses the existing "no email" convention GetOrCreateUserHandler
         // already produces for any OIDC principal with no email claim -- no schema change needed.
         // Fully qualified: unqualified "Email" here would resolve to the sibling "buddy.Email"
         // namespace (enclosing-namespace lookup wins over the using for buddy.Features.Users).
-        var userCreated = new UserCreated(childId, provisioned.Subject, buddy.Features.Users.Email.Unverified(""), null, Name.New(command.Name, ""), now);
+        var userCreated = new UserCreated(childId, provisioned.Subject, buddy.Features.Users.Email.Unverified(""), provisioned.Username, Name.New(command.GivenName, command.FamilyName), now);
         var guardianLinked = new GuardianLinked(linkId, childId, guardianId, command.Kind, now);
 
         var (userEvents, guardianEvents) = await guardianLinks.CreateChildAndLinkAsync(

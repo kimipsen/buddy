@@ -6,12 +6,13 @@ namespace buddy.IntegrationTests.Features.Guardians;
 
 internal static class GuardianTestHelpers
 {
-    public static async Task<ChildResponseDto> CreateChildAsync(BuddyApiFixture fixture, string guardianToken, string name = "Alex")
+    public static async Task<ChildResponseDto> CreateChildAsync(BuddyApiFixture fixture, string guardianToken, string givenName = "Alex", string familyName = "Anderson", string? username = null)
     {
+        username ??= $"child.{Guid.CreateVersion7():N}";
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Post.Json(new { Name = name }).ToUrl("/users/me/children/");
+            _.Post.Json(new { GivenName = givenName, FamilyName = familyName, Username = username }).ToUrl("/users/me/children/");
             _.StatusCodeShouldBeOk();
         });
 

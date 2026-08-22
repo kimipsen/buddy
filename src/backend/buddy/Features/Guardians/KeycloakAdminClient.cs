@@ -11,15 +11,15 @@ namespace buddy.Features.Guardians;
 
 public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<KeycloakAdminOptions> options) : IKeycloakAdminClient
 {
-    public async Task<KeycloakProvisionedUser> CreateChildUserAsync(string displayName, CancellationToken cancellationToken)
+    public async Task<KeycloakCreateUserResult> CreateChildUserAsync(
+        string givenName,
+        string familyName,
+        string username,
+        CancellationToken cancellationToken)
     {
         var admin = options.CurrentValue;
         var token = await GetServiceAccountTokenAsync(admin, cancellationToken);
 
-        // Keycloak requires a username even though the child has no email; it's an opaque handle,
-        // never shown to anyone, so a random one is fine -- the guardian identifies the child by
-        // Name on our own User aggregate, not by this Keycloak username.
-        var username = $"child.{Guid.NewGuid():N}";
         var temporaryPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(18));
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{admin.AdminBaseUrl}/users")
@@ -28,7 +28,8 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
             {
                 username,
                 enabled = true,
-                firstName = displayName,
+                firstName = givenName,
+                lastName = familyName,
                 requiredActions = new[] { "UPDATE_PASSWORD" },
                 credentials = new[]
                 {
@@ -39,13 +40,19 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            return new KeycloakCreateUserResult.UsernameUnavailable();
+        }
+
         response.EnsureSuccessStatusCode();
 
         var location = response.Headers.Location
             ?? throw new InvalidOperationException("Keycloak did not return a Location header for the created user.");
         var subject = location.Segments[^1];
 
-        return new KeycloakProvisionedUser(new KeycloakSubject(subject), username, temporaryPassword);
+        return new KeycloakCreateUserResult.Success(
+            new KeycloakProvisionedUser(new KeycloakSubject(subject), username, temporaryPassword));
     }
 
     // Client-credentials grant for this confidential client's own service account -- the

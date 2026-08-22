@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../core/auth.service';
@@ -30,7 +31,9 @@ export class GuardianDashboard implements OnInit {
   protected readonly childrenLoading = signal(true);
   protected readonly childrenError = signal<string | null>(null);
 
-  protected readonly newChildName = signal('');
+  protected readonly newChildGivenName = signal('');
+  protected readonly newChildFamilyName = signal('');
+  protected readonly newChildUsername = signal('');
   protected readonly addingChild = signal(false);
   protected readonly addChildError = signal<string | null>(null);
   protected readonly lastCreatedChild = signal<CreateChildResult | null>(null);
@@ -40,9 +43,11 @@ export class GuardianDashboard implements OnInit {
   }
 
   protected async addChild(): Promise<void> {
-    const name = this.newChildName().trim();
+    const givenName = this.newChildGivenName().trim();
+    const familyName = this.newChildFamilyName().trim();
+    const username = this.newChildUsername().trim();
 
-    if (!name) {
+    if (!givenName || !familyName || !username) {
       return;
     }
 
@@ -50,12 +55,16 @@ export class GuardianDashboard implements OnInit {
     this.addChildError.set(null);
 
     try {
-      const created = await this.guardians.createChild(name);
+      const created = await this.guardians.createChild({ givenName, familyName, username });
       this.lastCreatedChild.set(created);
-      this.newChildName.set('');
+      this.newChildGivenName.set('');
+      this.newChildFamilyName.set('');
+      this.newChildUsername.set('');
       await this.loadChildren();
-    } catch {
-      this.addChildError.set('Unable to create the child account.');
+    } catch (error) {
+      this.addChildError.set(error instanceof HttpErrorResponse && error.status === 409
+        ? 'That username is already in use. Choose another one.'
+        : 'Unable to create the child account.');
     } finally {
       this.addingChild.set(false);
     }

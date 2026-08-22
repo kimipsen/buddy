@@ -12,13 +12,25 @@ public static class CreateChildEndpoint
 {
     public static RouteGroupBuilder MapCreateChild(this RouteGroupBuilder children)
     {
-        children.MapPost("/", async Task<Results<Ok<ChildResponse>, UnauthorizedHttpResult>> (
+        children.MapPost("/", async Task<Results<Ok<ChildResponse>, UnauthorizedHttpResult, Conflict<string>, BadRequest<string>>> (
             ClaimsPrincipal principal,
             CreateChildRequest request,
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var command = CreateChild.FromClaims(principal, request.Name, request.Kind);
+            if (string.IsNullOrWhiteSpace(request.GivenName)
+                || string.IsNullOrWhiteSpace(request.FamilyName)
+                || string.IsNullOrWhiteSpace(request.Username))
+            {
+                return TypedResults.BadRequest("GivenName, FamilyName, and Username are required.");
+            }
+
+            var command = CreateChild.FromClaims(
+                principal,
+                request.GivenName.Trim(),
+                request.FamilyName.Trim(),
+                request.Username.Trim(),
+                request.Kind);
             var result = await bus.InvokeAsync<CreateChildOutcome>(command, cancellationToken);
 
             return result switch
@@ -26,6 +38,7 @@ public static class CreateChildEndpoint
                 CreateChildOutcome.Success(var child, var link, var username, var temporaryPassword) =>
                     TypedResults.Ok(ChildResponse.FromChild(child, link, username, temporaryPassword)),
                 CreateChildOutcome.Unauthenticated => TypedResults.Unauthorized(),
+                CreateChildOutcome.UsernameUnavailable => TypedResults.Conflict("That username is already in use."),
             };
         })
         .WithName("CreateChild");
@@ -34,7 +47,7 @@ public static class CreateChildEndpoint
     }
 }
 
-public sealed record CreateChildRequest(string Name, GuardianKind Kind = GuardianKind.Guardian);
+public sealed record CreateChildRequest(string GivenName, string FamilyName, string Username, GuardianKind Kind = GuardianKind.Guardian);
 
 // Username and TemporaryPassword are shown exactly once, in this response -- neither is persisted
 // or retrievable again (see the doc's "guardian is given the credential out of band"). The child

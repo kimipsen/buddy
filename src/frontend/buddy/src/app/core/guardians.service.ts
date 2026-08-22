@@ -28,7 +28,14 @@ export interface GuardianSummary {
 }
 
 export interface CreateChildResult extends ChildSummary {
+  username: string;
   temporaryPassword: string;
+}
+
+export interface CreateChildRequest {
+  givenName: string;
+  familyName: string;
+  username: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -45,9 +52,9 @@ export class GuardiansService {
     return firstValueFrom(this.http.get<GuardianSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/guardians`));
   }
 
-  createChild(name: string): Promise<CreateChildResult> {
+  createChild(request: CreateChildRequest): Promise<CreateChildResult> {
     return firstValueFrom(
-      this.http.post<CreateChildResult>(`${this.runtimeConfig.apiBaseUrl}/users/me/children`, { name })
+      this.http.post<CreateChildResult>(`${this.runtimeConfig.apiBaseUrl}/users/me/children`, request)
     );
   }
 
