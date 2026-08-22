@@ -1,0 +1,42 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Create a medicine schedule for a child (guardian only)
+
+POST {{buddy_HostAddress}}/medicines/children/{{childId}}/schedules
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Amoxicillin",
+  "Dosage": "5 ml",
+  "Icon": "pill",
+  "Color": "#ff8800",
+  "Times": ["08:00:00", "20:00:00"],
+  "StartDate": "2025-06-01",
+  "EndDate": "2025-06-10"
+}
+
+###
+
+# List a child's medicine schedules (guardian only)
+GET {{buddy_HostAddress}}/medicines/children/{{childId}}/schedules
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# List a child's doses in a date range (child or guardian)
+GET {{buddy_HostAddress}}/medicines/children/{{childId}}/doses?from=2025-06-01&to=2025-06-01
+Authorization: Bearer {{childToken}}
+
+###
+
+# Mark a dose taken (child or guardian)
+PUT {{buddy_HostAddress}}/medicines/children/{{childId}}/doses/{{medicineId}}?date=2025-06-01&time=08:00:00
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+
+{
+  "Status": "Taken"
+}
+
+###

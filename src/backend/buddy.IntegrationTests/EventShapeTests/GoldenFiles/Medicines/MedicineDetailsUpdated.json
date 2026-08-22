@@ -1,0 +1,17 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000050",
+  "Before": {
+    "Name": "Amoxicillin",
+    "Dosage": "5 ml",
+    "Icon": "pill",
+    "Color": "#ff8800"
+  },
+  "After": {
+    "Name": "Amoxicillin",
+    "Dosage": "10 ml",
+    "Icon": "pill",
+    "Color": "#ff8800"
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}
