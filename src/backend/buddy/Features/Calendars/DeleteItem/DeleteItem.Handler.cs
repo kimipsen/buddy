@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class DeleteItemHandler
 {
-    public static async Task<CalendarAccess> Handle(
+    public static async Task<Result<Unit>> Handle(
         DeleteItem command,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -14,7 +15,7 @@ public static class DeleteItemHandler
     {
         if (command.UserId is not { } userId)
         {
-            return CalendarAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -23,7 +24,7 @@ public static class DeleteItemHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access;
+            return access == CalendarAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
         }
 
         var itemEvents = await items.ReadAsync(command.ItemId, cancellationToken);
@@ -31,11 +32,11 @@ public static class DeleteItemHandler
 
         if (item is null || item.IsDeleted || item.CalendarId != command.CalendarId)
         {
-            return CalendarAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         await items.AppendAsync(command.ItemId, [new ItemDeleted(command.ItemId, userId, DateTimeOffset.UtcNow)], cancellationToken);
 
-        return CalendarAccess.Allowed;
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

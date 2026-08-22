@@ -8,5 +8,3 @@ public sealed record GetCalendar(UserId? UserId, CalendarId CalendarId)
 {
     public static GetCalendar FromClaims(ClaimsPrincipal principal, CalendarId calendarId) => new(principal.GetUserId(), calendarId);
 }
-
-public sealed record GetCalendarResult(Calendar? Calendar, CalendarAccess Access);

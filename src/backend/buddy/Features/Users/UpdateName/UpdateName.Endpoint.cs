@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -18,9 +20,9 @@ public static class UpdateCurrentNameEndpoint
         {
             var command = UpdateName.FromClaims(principal, Name.New(request.GivenName, request.FamilyName));
 
-            var user = await bus.InvokeAsync<User?>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<User>>(command, cancellationToken);
 
-            if (user is null)
+            if (result is not Result<User>.Success(var user))
             {
                 return TypedResults.NotFound();
             }

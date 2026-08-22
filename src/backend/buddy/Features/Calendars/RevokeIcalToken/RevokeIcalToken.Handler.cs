@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,11 +6,11 @@ namespace buddy.Features.Calendars;
 
 public static class RevokeIcalTokenHandler
 {
-    public static async Task<CalendarAccess> Handle(RevokeIcalToken command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RevokeIcalToken command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return CalendarAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -18,12 +19,12 @@ public static class RevokeIcalTokenHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access;
+            return access == CalendarAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
         }
 
         if (!calendar!.Tokens.ContainsKey(command.TokenId))
         {
-            return CalendarAccess.Allowed;
+            return new Result<Unit>.Success(Unit.Value);
         }
 
         await calendars.AppendAsync(
@@ -31,6 +32,6 @@ public static class RevokeIcalTokenHandler
             [new IcalTokenRevoked(command.CalendarId, command.TokenId, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return CalendarAccess.Allowed;
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

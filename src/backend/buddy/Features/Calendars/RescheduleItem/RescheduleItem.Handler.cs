@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class RescheduleItemHandler
 {
-    public static async Task<UpdateItemResult> Handle(
+    public static async Task<Result<CalendarItem>> Handle(
         RescheduleItem command,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -14,7 +15,7 @@ public static class RescheduleItemHandler
     {
         if (command.UserId is not { } userId)
         {
-            return new UpdateItemResult(null, CalendarAccess.NotFound);
+            return new Result<CalendarItem>.NotFound();
         }
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -23,7 +24,7 @@ public static class RescheduleItemHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new UpdateItemResult(null, access);
+            return access == CalendarAccess.Forbidden ? new Result<CalendarItem>.Forbidden() : new Result<CalendarItem>.NotFound();
         }
 
         var itemEvents = await items.ReadAsync(command.ItemId, cancellationToken);
@@ -31,7 +32,7 @@ public static class RescheduleItemHandler
 
         if (item is null || item.IsDeleted || item.CalendarId != command.CalendarId)
         {
-            return new UpdateItemResult(null, CalendarAccess.NotFound);
+            return new Result<CalendarItem>.NotFound();
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -40,25 +41,27 @@ public static class RescheduleItemHandler
         {
             if (command.StartsAt is null || command.EndsAt is null)
             {
-                return new UpdateItemResult(null, CalendarAccess.Allowed, "An event requires both a start and an end time.");
+                return new Result<CalendarItem>.Validation("An event requires both a start and an end time.");
             }
 
-            if (!Period.TryCreate(command.StartsAt, command.EndsAt, out var period))
+            var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt);
+
+            if (periodResult is not Result<Period>.Success(var period))
             {
-                return new UpdateItemResult(null, CalendarAccess.Allowed, "An event's end time must be after its start time.");
+                return new Result<CalendarItem>.Validation(periodResult is Result<Period>.Validation(var message) ? message : "Invalid period.");
             }
 
             await items.AppendAsync(
                 command.ItemId,
-                [new EventRescheduled(command.ItemId, item.Period!, period!, userId, now)],
+                [new EventRescheduled(command.ItemId, item.Period!, period, userId, now)],
                 cancellationToken);
 
-            return new UpdateItemResult(item with { Period = period, LastModifiedBy = userId }, CalendarAccess.Allowed);
+            return new Result<CalendarItem>.Success(item with { Period = period, LastModifiedBy = userId });
         }
 
         if (command.DueDate is null)
         {
-            return new UpdateItemResult(null, CalendarAccess.Allowed, "A task requires a due date.");
+            return new Result<CalendarItem>.Validation("A task requires a due date.");
         }
 
         await items.AppendAsync(
@@ -66,6 +69,6 @@ public static class RescheduleItemHandler
             [new TaskRescheduled(command.ItemId, item.DueDate!, command.DueDate, userId, now)],
             cancellationToken);
 
-        return new UpdateItemResult(item with { DueDate = command.DueDate, LastModifiedBy = userId }, CalendarAccess.Allowed);
+        return new Result<CalendarItem>.Success(item with { DueDate = command.DueDate, LastModifiedBy = userId });
     }
 }

@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -16,14 +18,14 @@ public static class GetCalendarEndpoint
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var result = await bus.InvokeAsync<GetCalendarResult>(GetCalendar.FromClaims(principal, new CalendarId(calendarId)), cancellationToken);
+            var result = await bus.InvokeAsync<Result<Calendar>>(GetCalendar.FromClaims(principal, new CalendarId(calendarId)), cancellationToken);
 
-            if (result.Calendar is null)
+            if (result is not Result<Calendar>.Success(var calendar))
             {
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok(CalendarResponse.FromCalendar(result.Calendar));
+            return TypedResults.Ok(CalendarResponse.FromCalendar(calendar));
         })
         .WithName("GetCalendar");
 

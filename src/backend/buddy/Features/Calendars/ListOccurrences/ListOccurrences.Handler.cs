@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -9,7 +10,7 @@ public static class ListOccurrencesHandler
     // calendar has.
     public const int MaxRangeDays = 366;
 
-    public static async Task<ListOccurrencesResult> Handle(
+    public static async Task<Result<IReadOnlyCollection<CalendarItemOccurrence>>> Handle(
         ListOccurrences query,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -18,17 +19,17 @@ public static class ListOccurrencesHandler
     {
         if (query.To < query.From)
         {
-            return new ListOccurrencesResult([], CalendarAccess.Allowed, "'to' must not be before 'from'.");
+            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation("'to' must not be before 'from'.");
         }
 
         if (query.To.DayNumber - query.From.DayNumber > MaxRangeDays)
         {
-            return new ListOccurrencesResult([], CalendarAccess.Allowed, $"The requested range cannot exceed {MaxRangeDays} days.");
+            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation($"The requested range cannot exceed {MaxRangeDays} days.");
         }
 
         if (query.UserId is not { } userId)
         {
-            return new ListOccurrencesResult([], CalendarAccess.NotFound);
+            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.NotFound();
         }
 
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
@@ -37,11 +38,11 @@ public static class ListOccurrencesHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new ListOccurrencesResult([], access);
+            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.NotFound();
         }
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, query.From, query.To, items, cancellationToken);
 
-        return new ListOccurrencesResult(occurrences, CalendarAccess.Allowed);
+        return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Success(occurrences);
     }
 }

@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -18,12 +20,12 @@ public static class DeleteItemEndpoint
             CancellationToken cancellationToken) =>
         {
             var command = DeleteItem.FromClaims(principal, new CalendarId(calendarId), new CalendarItemId(itemId));
-            var access = await bus.InvokeAsync<CalendarAccess>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
 
-            return access switch
+            return result switch
             {
-                CalendarAccess.Allowed => TypedResults.NoContent(),
-                CalendarAccess.Forbidden => TypedResults.Forbid(),
+                Result<Unit>.Success => TypedResults.NoContent(),
+                Result<Unit>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

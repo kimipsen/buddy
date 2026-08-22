@@ -1,12 +1,14 @@
+using buddy.Common;
+
 namespace buddy.Features.Groups;
 
 public static class UpdateCalendarPermissionPolicyHandler
 {
-    public static async Task<GroupAccess> Handle(UpdateCalendarPermissionPolicy command, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(UpdateCalendarPermissionPolicy command, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return GroupAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
@@ -15,7 +17,7 @@ public static class UpdateCalendarPermissionPolicyHandler
 
         if (access != GroupAccess.Allowed)
         {
-            return access;
+            return access == GroupAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
         }
 
         await groups.AppendAsync(
@@ -23,6 +25,6 @@ public static class UpdateCalendarPermissionPolicyHandler
             [new GroupCalendarPolicyUpdated(command.GroupId, command.Policy, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return GroupAccess.Allowed;
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

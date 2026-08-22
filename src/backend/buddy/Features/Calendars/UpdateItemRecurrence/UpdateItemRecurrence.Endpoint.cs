@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -20,17 +22,13 @@ public static class UpdateItemRecurrenceEndpoint
         {
             var recurrence = request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null;
             var command = UpdateItemRecurrence.FromClaims(principal, new CalendarId(calendarId), new CalendarItemId(itemId), recurrence);
-            var result = await bus.InvokeAsync<UpdateItemResult>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
-            if (result.ValidationError is not null)
+            return result switch
             {
-                return TypedResults.BadRequest(result.ValidationError);
-            }
-
-            return result.Access switch
-            {
-                CalendarAccess.Allowed => TypedResults.Ok(CalendarItemResponse.FromItem(result.Item!)),
-                CalendarAccess.Forbidden => TypedResults.Forbid(),
+                Result<CalendarItem>.Success(var item) => TypedResults.Ok(CalendarItemResponse.FromItem(item)),
+                Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
+                Result<CalendarItem>.Validation(var message) => TypedResults.BadRequest(message),
                 _ => TypedResults.NotFound(),
             };
         })

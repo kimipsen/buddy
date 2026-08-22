@@ -9,5 +9,3 @@ public sealed record ListOccurrences(UserId? UserId, CalendarId CalendarId, Date
     public static ListOccurrences FromClaims(ClaimsPrincipal principal, CalendarId calendarId, DateOnly from, DateOnly to) =>
         new(principal.GetUserId(), calendarId, from, to);
 }
-
-public sealed record ListOccurrencesResult(IReadOnlyCollection<CalendarItemOccurrence> Occurrences, CalendarAccess Access, string? ValidationError = null);

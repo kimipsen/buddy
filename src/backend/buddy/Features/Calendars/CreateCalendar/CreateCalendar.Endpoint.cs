@@ -20,24 +20,15 @@ public static class CreateCalendarEndpoint
         {
             var groupId = request.GroupId is { } value ? new GroupId(value) : (GroupId?)null;
             var command = CreateCalendar.FromClaims(principal, request.Name, new TimeZoneId(request.TimeZoneId), groupId);
-            var result = await bus.InvokeAsync<CreateCalendarResult>(command, cancellationToken);
+            var result = await bus.InvokeAsync<CreateCalendarOutcome>(command, cancellationToken);
 
-            if (result.Unauthenticated)
+            return result switch
             {
-                return TypedResults.Unauthorized();
-            }
-
-            if (result.Forbidden)
-            {
-                return TypedResults.Forbid();
-            }
-
-            if (result.ValidationError is not null)
-            {
-                return TypedResults.BadRequest(result.ValidationError);
-            }
-
-            return TypedResults.Ok(CalendarResponse.FromCalendar(result.Calendar!));
+                CreateCalendarOutcome.Success(var calendar) => TypedResults.Ok(CalendarResponse.FromCalendar(calendar)),
+                CreateCalendarOutcome.Unauthenticated => TypedResults.Unauthorized(),
+                CreateCalendarOutcome.Forbidden => TypedResults.Forbid(),
+                CreateCalendarOutcome.Validation(var message) => TypedResults.BadRequest(message),
+            };
         })
         .WithName("CreateCalendar");
 

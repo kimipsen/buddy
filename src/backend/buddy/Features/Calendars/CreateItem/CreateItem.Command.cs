@@ -29,5 +29,3 @@ public sealed record CreateItem(
         RecurrenceRule? recurrence) =>
         new(principal.GetUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, recurrence);
 }
-
-public sealed record CreateItemResult(CalendarItem? Item, CalendarAccess Access, string? ValidationError = null);

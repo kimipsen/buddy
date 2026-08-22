@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,11 +6,11 @@ namespace buddy.Features.Calendars;
 
 public static class CreateIcalTokenHandler
 {
-    public static async Task<CreateIcalTokenResult> Handle(CreateIcalToken command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<IssuedIcalToken>> Handle(CreateIcalToken command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return new CreateIcalTokenResult(null, null, CalendarAccess.NotFound);
+            return new Result<IssuedIcalToken>.NotFound();
         }
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -18,7 +19,7 @@ public static class CreateIcalTokenHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new CreateIcalTokenResult(null, null, access);
+            return access == CalendarAccess.Forbidden ? new Result<IssuedIcalToken>.Forbidden() : new Result<IssuedIcalToken>.NotFound();
         }
 
         var (token, hash) = IcalToken.Generate();
@@ -29,6 +30,6 @@ public static class CreateIcalTokenHandler
             [new IcalTokenIssued(command.CalendarId, tokenId, hash, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return new CreateIcalTokenResult(tokenId, token, CalendarAccess.Allowed);
+        return new Result<IssuedIcalToken>.Success(new IssuedIcalToken(tokenId, token));
     }
 }

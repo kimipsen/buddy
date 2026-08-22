@@ -12,3 +12,4 @@ Project documentation lives here.
 
 - [Group-owned calendars and permissions](backend/analysis/group-owned-calendars-and-permissions.md)
 - [Integration testing strategy](backend/analysis/integration-testing-strategy.md)
+- [Child accounts and guardian/parent roles](backend/analysis/child-accounts-and-guardian-roles.md)

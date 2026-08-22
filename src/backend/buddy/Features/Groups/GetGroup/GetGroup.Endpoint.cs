@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Common;
 using buddy.Features.Calendars;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -18,14 +19,14 @@ public static class GetGroupEndpoint
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var result = await bus.InvokeAsync<GetGroupResult>(GetGroup.FromClaims(principal, new GroupId(groupId)), cancellationToken);
+            var result = await bus.InvokeAsync<Result<Group>>(GetGroup.FromClaims(principal, new GroupId(groupId)), cancellationToken);
 
-            if (result.Group is null)
+            if (result is not Result<Group>.Success(var group))
             {
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok(GroupResponse.FromGroup(result.Group));
+            return TypedResults.Ok(GroupResponse.FromGroup(group));
         })
         .WithName("GetGroup");
 

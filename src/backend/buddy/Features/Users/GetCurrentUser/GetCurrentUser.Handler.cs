@@ -1,17 +1,20 @@
+using buddy.Common;
 using buddy.Email;
 
 namespace buddy.Features.Users;
 
 public static class GetOrCreateUserHandler
 {
-    public static async Task<User> Handle(GetOrCreateUser command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(GetOrCreateUser command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
     {
         var userId = await events.FindUserIdAsync(command.Subject, cancellationToken);
 
         if (userId is not null)
         {
             var existingEvents = await events.ReadAsync(userId, cancellationToken);
-            return User.Rehydrate(existingEvents)!;
+            var existingUser = User.Rehydrate(existingEvents)!;
+
+            return existingUser.IsDeleted ? new Result<User>.NotFound() : new Result<User>.Success(existingUser);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -39,6 +42,6 @@ public static class GetOrCreateUserHandler
             await emailSender.SendEmailVerificationAsync(user.Email.Value, verificationToken, cancellationToken);
         }
 
-        return user;
+        return new Result<User>.Success(user);
     }
 }

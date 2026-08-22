@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -17,12 +19,12 @@ public static class ListIcalTokensEndpoint
             CancellationToken cancellationToken) =>
         {
             var query = ListIcalTokens.FromClaims(principal, new CalendarId(calendarId));
-            var result = await bus.InvokeAsync<ListIcalTokensResult>(query, cancellationToken);
+            var result = await bus.InvokeAsync<Result<IReadOnlyCollection<IcalTokenSummary>>>(query, cancellationToken);
 
-            return result.Access switch
+            return result switch
             {
-                CalendarAccess.Allowed => TypedResults.Ok(result.Tokens),
-                CalendarAccess.Forbidden => TypedResults.Forbid(),
+                Result<IReadOnlyCollection<IcalTokenSummary>>.Success(var tokens) => TypedResults.Ok(tokens),
+                Result<IReadOnlyCollection<IcalTokenSummary>>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

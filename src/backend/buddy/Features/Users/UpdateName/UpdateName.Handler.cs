@@ -1,12 +1,14 @@
+using buddy.Common;
+
 namespace buddy.Features.Users;
 
 public static class UpdateNameHandler
 {
-    public static async Task<User?> Handle(UpdateName command, IUserEventStore events, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(UpdateName command, IUserEventStore events, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return null;
+            return new Result<User>.NotFound();
         }
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);
@@ -14,17 +16,17 @@ public static class UpdateNameHandler
 
         if (user is null || user.IsDeleted)
         {
-            return null;
+            return new Result<User>.NotFound();
         }
 
         if (user.Name == command.Name)
         {
-            return user;
+            return new Result<User>.Success(user);
         }
 
         var nameUpdated = new NameUpdated(userId, user.Name, command.Name, DateTimeOffset.UtcNow);
         await events.AppendAsync(userId, [nameUpdated], cancellationToken);
 
-        return user with { Name = command.Name };
+        return new Result<User>.Success(user with { Name = command.Name });
     }
 }

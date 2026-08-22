@@ -1,9 +1,9 @@
 {
   "name": "claude-backend",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "devcontainer-user",
   "description": "Claude skill tuned for .NET backend development: screaming-architecture, event sourcing, EF Core, PostgreSQL",
   "tags": ["claude","dotnet","backend","event-sourcing","efcore","postgresql"],
   "frameworks": ["dotnet@11"],
-  "preferences": ["event-sourcing","custom-id-types","screaming-architecture","postgresql@19","uuidv7"]
+  "preferences": ["event-sourcing","custom-id-types","screaming-architecture","postgresql@19","uuidv7","result-pattern"]
 }

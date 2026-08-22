@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,11 +6,11 @@ namespace buddy.Features.Calendars;
 
 public static class ListIcalTokensHandler
 {
-    public static async Task<ListIcalTokensResult> Handle(ListIcalTokens query, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<IReadOnlyCollection<IcalTokenSummary>>> Handle(ListIcalTokens query, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (query.UserId is not { } userId)
         {
-            return new ListIcalTokensResult([], CalendarAccess.NotFound);
+            return new Result<IReadOnlyCollection<IcalTokenSummary>>.NotFound();
         }
 
         var events = await calendars.ReadAsync(query.CalendarId, cancellationToken);
@@ -18,13 +19,13 @@ public static class ListIcalTokensHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new ListIcalTokensResult([], access);
+            return access == CalendarAccess.Forbidden ? new Result<IReadOnlyCollection<IcalTokenSummary>>.Forbidden() : new Result<IReadOnlyCollection<IcalTokenSummary>>.NotFound();
         }
 
         var tokens = calendar!.Tokens
             .Select(kv => new IcalTokenSummary(kv.Key.Value, kv.Value.IssuedAt))
             .ToArray();
 
-        return new ListIcalTokensResult(tokens, CalendarAccess.Allowed);
+        return new Result<IReadOnlyCollection<IcalTokenSummary>>.Success(tokens);
     }
 }

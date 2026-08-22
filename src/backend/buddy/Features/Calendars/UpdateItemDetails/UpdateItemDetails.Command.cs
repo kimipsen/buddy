@@ -9,5 +9,3 @@ public sealed record UpdateItemDetails(UserId? UserId, CalendarId CalendarId, Ca
     public static UpdateItemDetails FromClaims(ClaimsPrincipal principal, CalendarId calendarId, CalendarItemId itemId, string title, Icon icon, Color color) =>
         new(principal.GetUserId(), calendarId, itemId, title, icon, color);
 }
-
-public sealed record UpdateItemResult(CalendarItem? Item, CalendarAccess Access, string? ValidationError = null);

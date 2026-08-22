@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Common;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -26,12 +27,12 @@ public static class SetGroupMemberRoleEndpoint
             }
 
             var command = SetGroupMemberRole.FromClaims(principal, new GroupId(groupId), new UserId(memberId), request.Role);
-            var access = await bus.InvokeAsync<GroupAccess>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
 
-            return access switch
+            return result switch
             {
-                GroupAccess.Allowed => TypedResults.NoContent(),
-                GroupAccess.Forbidden => TypedResults.Forbid(),
+                Result<Unit>.Success => TypedResults.NoContent(),
+                Result<Unit>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

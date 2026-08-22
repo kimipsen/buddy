@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -16,14 +18,14 @@ public static class ListItemsEndpoint
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var result = await bus.InvokeAsync<ListItemsResult>(ListItems.FromClaims(principal, new CalendarId(calendarId)), cancellationToken);
+            var result = await bus.InvokeAsync<Result<IReadOnlyCollection<CalendarItem>>>(ListItems.FromClaims(principal, new CalendarId(calendarId)), cancellationToken);
 
-            if (result.Access != CalendarAccess.Allowed)
+            if (result is not Result<IReadOnlyCollection<CalendarItem>>.Success(var items))
             {
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok<IReadOnlyCollection<CalendarItemResponse>>([.. result.Items.Select(CalendarItemResponse.FromItem)]);
+            return TypedResults.Ok<IReadOnlyCollection<CalendarItemResponse>>([.. items.Select(CalendarItemResponse.FromItem)]);
         })
         .WithName("ListCalendarItems");
 

@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,17 +6,17 @@ namespace buddy.Features.Calendars;
 
 public static class SetMemberRoleHandler
 {
-    public static async Task<CalendarAccess> Handle(SetMemberRole command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(SetMemberRole command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.Role == CalendarRole.Owner)
         {
             // Ownership is assigned only at creation and never granted through this endpoint.
-            return CalendarAccess.Forbidden;
+            return new Result<Unit>.Forbidden();
         }
 
         if (command.UserId is not { } userId)
         {
-            return CalendarAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -24,13 +25,13 @@ public static class SetMemberRoleHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access;
+            return access == CalendarAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
         }
 
         if (command.MemberId == userId)
         {
             // The owner's own role can't be changed through this endpoint either.
-            return CalendarAccess.Forbidden;
+            return new Result<Unit>.Forbidden();
         }
 
         await calendars.AppendAsync(
@@ -38,6 +39,6 @@ public static class SetMemberRoleHandler
             [new MemberRoleGranted(command.CalendarId, command.MemberId, command.Role, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return CalendarAccess.Allowed;
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

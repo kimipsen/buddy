@@ -17,14 +17,13 @@ public static class CreateGroupEndpoint
             CancellationToken cancellationToken) =>
         {
             var command = CreateGroup.FromClaims(principal, request.Name);
-            var result = await bus.InvokeAsync<CreateGroupResult>(command, cancellationToken);
+            var result = await bus.InvokeAsync<CreateGroupOutcome>(command, cancellationToken);
 
-            if (result.Unauthenticated)
+            return result switch
             {
-                return TypedResults.Unauthorized();
-            }
-
-            return TypedResults.Ok(GroupResponse.FromGroup(result.Group!));
+                CreateGroupOutcome.Success(var group) => TypedResults.Ok(GroupResponse.FromGroup(group)),
+                CreateGroupOutcome.Unauthenticated => TypedResults.Unauthorized(),
+            };
         })
         .WithName("CreateGroup");
 

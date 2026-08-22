@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -17,14 +19,13 @@ public static class VerifyEmailEndpoint
             CancellationToken cancellationToken) =>
         {
             var command = VerifyEmail.FromClaims(principal, request.Token);
-            var outcome = await bus.InvokeAsync<VerifyEmailOutcome>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<User>>(command, cancellationToken);
 
-            return outcome.Result switch
+            return result switch
             {
-                VerifyEmailResult.UserNotFound => TypedResults.NotFound(),
-                VerifyEmailResult.InvalidToken => TypedResults.BadRequest("The verification token is invalid."),
-                VerifyEmailResult.Expired => TypedResults.BadRequest("The verification token has expired."),
-                _ => TypedResults.Ok(UserResponse.FromUser(outcome.User!))
+                Result<User>.Success(var user) => TypedResults.Ok(UserResponse.FromUser(user)),
+                Result<User>.Validation(var message) => TypedResults.BadRequest(message),
+                _ => TypedResults.NotFound(),
             };
         })
         .WithName("VerifyCurrentEmail");

@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class UpdateItemDetailsHandler
 {
-    public static async Task<UpdateItemResult> Handle(
+    public static async Task<Result<CalendarItem>> Handle(
         UpdateItemDetails command,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -14,7 +15,7 @@ public static class UpdateItemDetailsHandler
     {
         if (command.UserId is not { } userId)
         {
-            return new UpdateItemResult(null, CalendarAccess.NotFound);
+            return new Result<CalendarItem>.NotFound();
         }
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -23,7 +24,7 @@ public static class UpdateItemDetailsHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new UpdateItemResult(null, access);
+            return access == CalendarAccess.Forbidden ? new Result<CalendarItem>.Forbidden() : new Result<CalendarItem>.NotFound();
         }
 
         var itemEvents = await items.ReadAsync(command.ItemId, cancellationToken);
@@ -31,7 +32,7 @@ public static class UpdateItemDetailsHandler
 
         if (item is null || item.IsDeleted || item.CalendarId != command.CalendarId)
         {
-            return new UpdateItemResult(null, CalendarAccess.NotFound);
+            return new Result<CalendarItem>.NotFound();
         }
 
         var before = new ItemDetails(item.Title, item.Icon, item.Color);
@@ -39,11 +40,11 @@ public static class UpdateItemDetailsHandler
 
         if (before == after)
         {
-            return new UpdateItemResult(item, CalendarAccess.Allowed);
+            return new Result<CalendarItem>.Success(item);
         }
 
         await items.AppendAsync(command.ItemId, [new ItemDetailsUpdated(command.ItemId, before, after, userId, DateTimeOffset.UtcNow)], cancellationToken);
 
-        return new UpdateItemResult(item with { Title = command.Title, Icon = command.Icon, Color = command.Color, LastModifiedBy = userId }, CalendarAccess.Allowed);
+        return new Result<CalendarItem>.Success(item with { Title = command.Title, Icon = command.Icon, Color = command.Color, LastModifiedBy = userId });
     }
 }

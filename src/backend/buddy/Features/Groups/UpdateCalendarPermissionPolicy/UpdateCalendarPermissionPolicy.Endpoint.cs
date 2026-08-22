@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
 
+using buddy.Common;
 using buddy.Features.Calendars;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -30,12 +31,12 @@ public static class UpdateCalendarPermissionPolicyEndpoint
 
             var policy = request.Policy.ToImmutableDictionary();
             var command = UpdateCalendarPermissionPolicy.FromClaims(principal, new GroupId(groupId), policy);
-            var access = await bus.InvokeAsync<GroupAccess>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
 
-            return access switch
+            return result switch
             {
-                GroupAccess.Allowed => TypedResults.NoContent(),
-                GroupAccess.Forbidden => TypedResults.Forbid(),
+                Result<Unit>.Success => TypedResults.NoContent(),
+                Result<Unit>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

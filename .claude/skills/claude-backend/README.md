@@ -1,6 +1,6 @@
 Claude Backend Skill
 
-This directory contains templates and guidance for backend development with .NET (screaming-architecture), event sourcing, EF Core, and PostgreSQL. Prefer targeting .NET 11 and model domain events as native C# discriminated unions (`union` with nested `sealed record` cases) rather than marker interfaces or an abstract base record. Unions are a preview language feature, so the sample sets `<LangVersion>preview</LangVersion>`.
+This directory contains templates and guidance for backend development with .NET (screaming-architecture), event sourcing, EF Core, and PostgreSQL. Prefer targeting .NET 11 and model domain events as native C# discriminated unions (`union` with nested `sealed record` cases) rather than marker interfaces or an abstract base record. Unions are a preview language feature, so the sample sets `<LangVersion>preview</LangVersion>`. For expected, recoverable failures (business-rule violations, validation, not-found), prefer returning `Result`/`Result<T>` (see `samples/Result.cs`) over throwing; reserve exceptions for programmer errors, corrupt data, and infrastructure failures.
 
 It lives at `.claude/skills/claude-backend/`, which is where Claude Code discovers project skills. Claude Code loads it automatically when a task matches the `description` in `SKILL.md`'s frontmatter; you can also invoke it explicitly with `/claude-backend`.
 

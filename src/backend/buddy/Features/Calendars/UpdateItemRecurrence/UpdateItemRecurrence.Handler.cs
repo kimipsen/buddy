@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class UpdateItemRecurrenceHandler
 {
-    public static async Task<UpdateItemResult> Handle(
+    public static async Task<Result<CalendarItem>> Handle(
         UpdateItemRecurrence command,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -14,12 +15,12 @@ public static class UpdateItemRecurrenceHandler
     {
         if (command.Recurrence is { IntervalCount: < 1 })
         {
-            return new UpdateItemResult(null, CalendarAccess.Allowed, "Recurrence interval count must be at least 1.");
+            return new Result<CalendarItem>.Validation("Recurrence interval count must be at least 1.");
         }
 
         if (command.UserId is not { } userId)
         {
-            return new UpdateItemResult(null, CalendarAccess.NotFound);
+            return new Result<CalendarItem>.NotFound();
         }
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -28,7 +29,7 @@ public static class UpdateItemRecurrenceHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new UpdateItemResult(null, access);
+            return access == CalendarAccess.Forbidden ? new Result<CalendarItem>.Forbidden() : new Result<CalendarItem>.NotFound();
         }
 
         var itemEvents = await items.ReadAsync(command.ItemId, cancellationToken);
@@ -36,12 +37,12 @@ public static class UpdateItemRecurrenceHandler
 
         if (item is null || item.IsDeleted || item.CalendarId != command.CalendarId)
         {
-            return new UpdateItemResult(null, CalendarAccess.NotFound);
+            return new Result<CalendarItem>.NotFound();
         }
 
         if (item.Recurrence == command.Recurrence)
         {
-            return new UpdateItemResult(item, CalendarAccess.Allowed);
+            return new Result<CalendarItem>.Success(item);
         }
 
         await items.AppendAsync(
@@ -49,6 +50,6 @@ public static class UpdateItemRecurrenceHandler
             [new RecurrenceUpdated(command.ItemId, item.Recurrence, command.Recurrence, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return new UpdateItemResult(item with { Recurrence = command.Recurrence, LastModifiedBy = userId }, CalendarAccess.Allowed);
+        return new Result<CalendarItem>.Success(item with { Recurrence = command.Recurrence, LastModifiedBy = userId });
     }
 }

@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class CreateItemHandler
 {
-    public static async Task<CreateItemResult> Handle(
+    public static async Task<Result<CalendarItem>> Handle(
         CreateItem command,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -14,12 +15,12 @@ public static class CreateItemHandler
     {
         if (command.Recurrence is { IntervalCount: < 1 })
         {
-            return new CreateItemResult(null, CalendarAccess.Allowed, "Recurrence interval count must be at least 1.");
+            return new Result<CalendarItem>.Validation("Recurrence interval count must be at least 1.");
         }
 
         if (command.UserId is not { } userId)
         {
-            return new CreateItemResult(null, CalendarAccess.NotFound);
+            return new Result<CalendarItem>.NotFound();
         }
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -28,7 +29,7 @@ public static class CreateItemHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new CreateItemResult(null, access);
+            return access == CalendarAccess.Forbidden ? new Result<CalendarItem>.Forbidden() : new Result<CalendarItem>.NotFound();
         }
 
         var itemId = CalendarItemId.New();
@@ -39,21 +40,23 @@ public static class CreateItemHandler
         {
             if (command.StartsAt is null || command.EndsAt is null)
             {
-                return new CreateItemResult(null, CalendarAccess.Allowed, "An event requires both a start and an end time.");
+                return new Result<CalendarItem>.Validation("An event requires both a start and an end time.");
             }
 
-            if (!Period.TryCreate(command.StartsAt, command.EndsAt, out var period))
+            var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt);
+
+            if (periodResult is not Result<Period>.Success(var period))
             {
-                return new CreateItemResult(null, CalendarAccess.Allowed, "An event's end time must be after its start time.");
+                return new Result<CalendarItem>.Validation(periodResult is Result<Period>.Validation(var message) ? message : "Invalid period.");
             }
 
-            created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, period!, command.Recurrence, now);
+            created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, period, command.Recurrence, now);
         }
         else
         {
             if (command.DueDate is null)
             {
-                return new CreateItemResult(null, CalendarAccess.Allowed, "A task requires a due date.");
+                return new Result<CalendarItem>.Validation("A task requires a due date.");
             }
 
             created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.DueDate, command.Recurrence, now);
@@ -61,6 +64,6 @@ public static class CreateItemHandler
 
         var events = await items.CreateAsync(itemId, [created], cancellationToken);
 
-        return new CreateItemResult(CalendarItem.Rehydrate(events), CalendarAccess.Allowed);
+        return new Result<CalendarItem>.Success(CalendarItem.Rehydrate(events)!);
     }
 }

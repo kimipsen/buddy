@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,11 +6,11 @@ namespace buddy.Features.Calendars;
 
 public static class RemoveMemberHandler
 {
-    public static async Task<CalendarAccess> Handle(RemoveMember command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RemoveMember command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return CalendarAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
@@ -18,18 +19,18 @@ public static class RemoveMemberHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return access;
+            return access == CalendarAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
         }
 
         if (command.MemberId == userId)
         {
             // The owner can't remove themselves -- deleting the calendar is the only way to end it.
-            return CalendarAccess.Forbidden;
+            return new Result<Unit>.Forbidden();
         }
 
         if (!calendar!.Members.ContainsKey(command.MemberId))
         {
-            return CalendarAccess.Allowed;
+            return new Result<Unit>.Success(Unit.Value);
         }
 
         await calendars.AppendAsync(
@@ -37,6 +38,6 @@ public static class RemoveMemberHandler
             [new MemberRoleRevoked(command.CalendarId, command.MemberId, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return CalendarAccess.Allowed;
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

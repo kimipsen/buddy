@@ -8,5 +8,3 @@ public sealed record ListItems(UserId? UserId, CalendarId CalendarId)
 {
     public static ListItems FromClaims(ClaimsPrincipal principal, CalendarId calendarId) => new(principal.GetUserId(), calendarId);
 }
-
-public sealed record ListItemsResult(IReadOnlyCollection<CalendarItem> Items, CalendarAccess Access);

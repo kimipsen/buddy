@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -17,15 +19,15 @@ public static class CreateIcalTokenEndpoint
             CancellationToken cancellationToken) =>
         {
             var command = CreateIcalToken.FromClaims(principal, new CalendarId(calendarId));
-            var result = await bus.InvokeAsync<CreateIcalTokenResult>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<IssuedIcalToken>>(command, cancellationToken);
 
-            return result.Access switch
+            return result switch
             {
-                CalendarAccess.Allowed => TypedResults.Ok(new IcalTokenResponse(
-                    result.TokenId!.Value,
-                    result.Token!,
-                    $"/calendars/{calendarId}/ical/{result.Token}")),
-                CalendarAccess.Forbidden => TypedResults.Forbid(),
+                Result<IssuedIcalToken>.Success(var issued) => TypedResults.Ok(new IcalTokenResponse(
+                    issued.TokenId.Value,
+                    issued.Token,
+                    $"/calendars/{calendarId}/ical/{issued.Token}")),
+                Result<IssuedIcalToken>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

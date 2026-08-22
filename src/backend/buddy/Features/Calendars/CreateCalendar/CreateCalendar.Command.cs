@@ -11,4 +11,13 @@ public sealed record CreateCalendar(UserId? UserId, string Name, TimeZoneId Time
         new(principal.GetUserId(), name, timeZoneId, groupId);
 }
 
-public sealed record CreateCalendarResult(Calendar? Calendar, bool Unauthenticated = false, bool Forbidden = false, string? ValidationError = null);
+// Distinct from the shared Result<T>: unlike every other calendar endpoint, there's no existing
+// resource here to hide behind an ambiguous 404, so an unauthenticated caller genuinely gets a 401
+// rather than collapsing into NotFound.
+public union CreateCalendarOutcome(CreateCalendarOutcome.Success, CreateCalendarOutcome.Unauthenticated, CreateCalendarOutcome.Forbidden, CreateCalendarOutcome.Validation)
+{
+    public sealed record Success(Calendar Calendar);
+    public sealed record Unauthenticated;
+    public sealed record Forbidden;
+    public sealed record Validation(string Message);
+}

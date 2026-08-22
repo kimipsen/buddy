@@ -9,4 +9,5 @@ public sealed record CreateIcalToken(UserId? UserId, CalendarId CalendarId)
     public static CreateIcalToken FromClaims(ClaimsPrincipal principal, CalendarId calendarId) => new(principal.GetUserId(), calendarId);
 }
 
-public sealed record CreateIcalTokenResult(IcalTokenId? TokenId, string? Token, CalendarAccess Access);
+// Token is the plaintext subscription secret -- returned exactly once, on creation, and never again.
+public sealed record IssuedIcalToken(IcalTokenId TokenId, string Token);

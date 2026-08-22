@@ -9,5 +9,3 @@ public sealed record GetGroup(UserId? UserId, GroupId GroupId)
     public static GetGroup FromClaims(ClaimsPrincipal principal, GroupId groupId) =>
         new(principal.GetUserId(), groupId);
 }
-
-public sealed record GetGroupResult(Group? Group, GroupAccess Access);

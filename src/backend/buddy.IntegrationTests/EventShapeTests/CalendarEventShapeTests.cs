@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Users;
@@ -20,7 +21,9 @@ public sealed class CalendarEventShapeTests
     private static readonly StartsAt FixedStartsAt = new(new DateOnly(2025, 6, 1), new TimeOnly(9, 0));
     private static readonly EndsAt FixedEndsAt = new(new DateOnly(2025, 6, 1), new TimeOnly(9, 30));
     private static readonly DueDate FixedDueDate = new(new DateOnly(2025, 6, 1), new TimeOnly(17, 0));
-    private static readonly Period FixedPeriod = Period.TryCreate(FixedStartsAt, FixedEndsAt, out var period) ? period! : throw new InvalidOperationException();
+    private static readonly Period FixedPeriod = Period.TryCreate(FixedStartsAt, FixedEndsAt) is Result<Period>.Success(var period)
+        ? period
+        : throw new InvalidOperationException();
 
     // -- Calendar-level events (ICalendarEventStore / MartenCalendarEventStore) --
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Project.Domain.Common;
 using Project.Domain.Orders.Events;
 
 namespace Project.Domain.Orders;
@@ -39,10 +40,13 @@ public class Order
         return o;
     }
 
-    public void AddItem(Guid itemId, int quantity)
+    // Adding an item to a completed order is an expected business-rule violation, not a
+    // programmer error, so it's reported as a failed Result rather than thrown.
+    public Result AddItem(Guid itemId, int quantity)
     {
-        if (IsCompleted) throw new InvalidOperationException("Cannot add item to completed order");
+        if (IsCompleted) return Result.Failure("Cannot add item to completed order");
         Raise(new OrderEvent.ItemAdded(Id, itemId, quantity, DateTime.UtcNow));
+        return Result.Success();
     }
 
     public void Complete()

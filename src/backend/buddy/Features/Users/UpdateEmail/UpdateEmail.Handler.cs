@@ -1,14 +1,15 @@
+using buddy.Common;
 using buddy.Email;
 
 namespace buddy.Features.Users;
 
 public static class UpdateEmailHandler
 {
-    public static async Task<User?> Handle(UpdateEmail command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(UpdateEmail command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return null;
+            return new Result<User>.NotFound();
         }
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);
@@ -16,12 +17,12 @@ public static class UpdateEmailHandler
 
         if (user is null || user.IsDeleted)
         {
-            return null;
+            return new Result<User>.NotFound();
         }
 
         if (user.Email.Value == command.Value)
         {
-            return user;
+            return new Result<User>.Success(user);
         }
 
         // A verification against the old address says nothing about the new one, so
@@ -46,6 +47,6 @@ public static class UpdateEmailHandler
 
         await emailSender.SendEmailVerificationAsync(newEmail.Value, token, cancellationToken);
 
-        return updated;
+        return new Result<User>.Success(updated);
     }
 }

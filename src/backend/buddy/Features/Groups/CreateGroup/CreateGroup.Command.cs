@@ -10,4 +10,10 @@ public sealed record CreateGroup(UserId? UserId, string Name)
         new(principal.GetUserId(), name);
 }
 
-public sealed record CreateGroupResult(Group? Group, bool Unauthenticated = false);
+// Distinct from the shared Result<T>: same reasoning as CreateCalendarOutcome -- there's no
+// existing resource here to hide behind an ambiguous 404, so an unauthenticated caller gets a 401.
+public union CreateGroupOutcome(CreateGroupOutcome.Success, CreateGroupOutcome.Unauthenticated)
+{
+    public sealed record Success(Group Group);
+    public sealed record Unauthenticated;
+}

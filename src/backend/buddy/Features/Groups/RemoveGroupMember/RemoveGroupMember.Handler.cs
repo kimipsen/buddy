@@ -1,12 +1,14 @@
+using buddy.Common;
+
 namespace buddy.Features.Groups;
 
 public static class RemoveGroupMemberHandler
 {
-    public static async Task<GroupAccess> Handle(RemoveGroupMember command, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RemoveGroupMember command, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return GroupAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
@@ -15,18 +17,18 @@ public static class RemoveGroupMemberHandler
 
         if (access != GroupAccess.Allowed)
         {
-            return access;
+            return access == GroupAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
         }
 
         if (command.MemberId == userId)
         {
             // The owner can't remove themselves -- deleting the group is the only way to end it.
-            return GroupAccess.Forbidden;
+            return new Result<Unit>.Forbidden();
         }
 
         if (!group!.Members.ContainsKey(command.MemberId))
         {
-            return GroupAccess.Allowed;
+            return new Result<Unit>.Success(Unit.Value);
         }
 
         await groups.AppendAsync(
@@ -34,6 +36,6 @@ public static class RemoveGroupMemberHandler
             [new GroupMemberRoleRevoked(command.GroupId, command.MemberId, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
 
-        return GroupAccess.Allowed;
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -5,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class ListItemsHandler
 {
-    public static async Task<ListItemsResult> Handle(
+    public static async Task<Result<IReadOnlyCollection<CalendarItem>>> Handle(
         ListItems query,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -14,7 +15,7 @@ public static class ListItemsHandler
     {
         if (query.UserId is not { } userId)
         {
-            return new ListItemsResult([], CalendarAccess.NotFound);
+            return new Result<IReadOnlyCollection<CalendarItem>>.NotFound();
         }
 
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
@@ -23,7 +24,7 @@ public static class ListItemsHandler
 
         if (access != CalendarAccess.Allowed)
         {
-            return new ListItemsResult([], access);
+            return new Result<IReadOnlyCollection<CalendarItem>>.NotFound();
         }
 
         var itemIds = await items.ListIdsForCalendarAsync(query.CalendarId, cancellationToken);
@@ -41,6 +42,6 @@ public static class ListItemsHandler
 
         loaded.Sort((a, b) => a.ScheduleKey.CompareTo(b.ScheduleKey));
 
-        return new ListItemsResult(loaded, CalendarAccess.Allowed);
+        return new Result<IReadOnlyCollection<CalendarItem>>.Success(loaded);
     }
 }

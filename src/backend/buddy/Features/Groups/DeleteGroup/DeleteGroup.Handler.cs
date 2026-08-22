@@ -1,3 +1,4 @@
+using buddy.Common;
 using buddy.Features.Calendars;
 
 namespace buddy.Features.Groups;
@@ -11,11 +12,11 @@ public static class DeleteGroupHandler
     // atomicity here: CalendarAuthorization's resolution already treats a deleted/unresolvable
     // group as "no access" for everyone, so nobody retains access via this group in the window
     // between GroupDeleted and its calendars being individually marked deleted.
-    public static async Task<GroupAccess> Handle(DeleteGroup command, IGroupEventStore groups, ICalendarEventStore calendars, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(DeleteGroup command, IGroupEventStore groups, ICalendarEventStore calendars, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return GroupAccess.NotFound;
+            return new Result<Unit>.NotFound();
         }
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
@@ -24,7 +25,7 @@ public static class DeleteGroupHandler
 
         if (access != GroupAccess.Allowed)
         {
-            return access;
+            return access == GroupAccess.Forbidden ? new Result<Unit>.Forbidden() : new Result<Unit>.NotFound();
         }
 
         await groups.AppendAsync(command.GroupId, [new GroupDeleted(command.GroupId, userId, DateTimeOffset.UtcNow)], cancellationToken);
@@ -37,6 +38,6 @@ public static class DeleteGroupHandler
             await calendars.AppendAsync(calendarId, [new CalendarDeleted(calendarId, userId, DateTimeOffset.UtcNow)], cancellationToken);
         }
 
-        return GroupAccess.Allowed;
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

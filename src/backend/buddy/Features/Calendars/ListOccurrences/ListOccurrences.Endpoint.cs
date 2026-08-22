@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -19,19 +21,14 @@ public static class ListOccurrencesEndpoint
             CancellationToken cancellationToken) =>
         {
             var query = ListOccurrences.FromClaims(principal, new CalendarId(calendarId), from, to);
-            var result = await bus.InvokeAsync<ListOccurrencesResult>(query, cancellationToken);
+            var result = await bus.InvokeAsync<Result<IReadOnlyCollection<CalendarItemOccurrence>>>(query, cancellationToken);
 
-            if (result.ValidationError is not null)
+            return result switch
             {
-                return TypedResults.BadRequest(result.ValidationError);
-            }
-
-            if (result.Access != CalendarAccess.Allowed)
-            {
-                return TypedResults.NotFound();
-            }
-
-            return TypedResults.Ok(result.Occurrences);
+                Result<IReadOnlyCollection<CalendarItemOccurrence>>.Success(var occurrences) => TypedResults.Ok(occurrences),
+                Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation(var message) => TypedResults.BadRequest(message),
+                _ => TypedResults.NotFound(),
+            };
         })
         .WithName("ListCalendarOccurrences");
 

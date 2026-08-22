@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -17,12 +19,12 @@ public static class DeleteGroupEndpoint
             CancellationToken cancellationToken) =>
         {
             var command = DeleteGroup.FromClaims(principal, new GroupId(groupId));
-            var access = await bus.InvokeAsync<GroupAccess>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
 
-            return access switch
+            return result switch
             {
-                GroupAccess.Allowed => TypedResults.NoContent(),
-                GroupAccess.Forbidden => TypedResults.Forbid(),
+                Result<Unit>.Success => TypedResults.NoContent(),
+                Result<Unit>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

@@ -1,3 +1,5 @@
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -15,14 +17,14 @@ public static class GetIcalFeedEndpoint
             CancellationToken cancellationToken) =>
         {
             var query = new GetIcalFeed(new CalendarId(calendarId), token);
-            var result = await bus.InvokeAsync<GetIcalFeedResult>(query, cancellationToken);
+            var result = await bus.InvokeAsync<Result<string>>(query, cancellationToken);
 
-            if (result.IcsContent is null)
+            if (result is not Result<string>.Success(var icsContent))
             {
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Text(result.IcsContent, "text/calendar");
+            return TypedResults.Text(icsContent, "text/calendar");
         })
         .AllowAnonymous()
         .WithName("GetCalendarIcalFeed");

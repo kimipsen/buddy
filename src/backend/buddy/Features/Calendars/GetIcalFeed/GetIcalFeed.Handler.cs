@@ -1,3 +1,5 @@
+using buddy.Common;
+
 namespace buddy.Features.Calendars;
 
 public static class GetIcalFeedHandler
@@ -8,7 +10,7 @@ public static class GetIcalFeedHandler
     private static readonly TimeSpan LookBehind = TimeSpan.FromDays(90);
     private static readonly TimeSpan LookAhead = TimeSpan.FromDays(365);
 
-    public static async Task<GetIcalFeedResult> Handle(
+    public static async Task<Result<string>> Handle(
         GetIcalFeed query,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
@@ -21,12 +23,12 @@ public static class GetIcalFeedHandler
         // wrong/revoked -- an anonymous request can't distinguish which, by design.
         if (calendar is null)
         {
-            return new GetIcalFeedResult(null);
+            return new Result<string>.NotFound();
         }
 
         if (calendar.FindMatchingToken(IcalToken.Hash(query.Token)) is null)
         {
-            return new GetIcalFeedResult(null);
+            return new Result<string>.NotFound();
         }
 
         var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
@@ -35,6 +37,6 @@ public static class GetIcalFeedHandler
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, from, to, items, cancellationToken);
 
-        return new GetIcalFeedResult(IcalFeedWriter.Write(calendar.Name, occurrences));
+        return new Result<string>.Success(IcalFeedWriter.Write(calendar.Name, occurrences));
     }
 }

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Common;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -26,12 +27,12 @@ public static class SetMemberRoleEndpoint
             }
 
             var command = SetMemberRole.FromClaims(principal, new CalendarId(calendarId), new UserId(memberId), request.Role);
-            var access = await bus.InvokeAsync<CalendarAccess>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
 
-            return access switch
+            return result switch
             {
-                CalendarAccess.Allowed => TypedResults.NoContent(),
-                CalendarAccess.Forbidden => TypedResults.Forbid(),
+                Result<Unit>.Success => TypedResults.NoContent(),
+                Result<Unit>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

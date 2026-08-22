@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -15,9 +17,9 @@ public static class GetCurrentUserEndpoint
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var user = await bus.InvokeAsync<User>(GetOrCreateUser.FromClaims(principal), cancellationToken);
+            var result = await bus.InvokeAsync<Result<User>>(GetOrCreateUser.FromClaims(principal), cancellationToken);
 
-            if (user.IsDeleted)
+            if (result is not Result<User>.Success(var user))
             {
                 return TypedResults.NotFound();
             }

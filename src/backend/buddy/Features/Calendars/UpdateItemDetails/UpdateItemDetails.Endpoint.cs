@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using buddy.Common;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 using Wolverine;
@@ -26,12 +28,12 @@ public static class UpdateItemDetailsEndpoint
                 new Icon(request.Icon),
                 new Color(request.Color));
 
-            var result = await bus.InvokeAsync<UpdateItemResult>(command, cancellationToken);
+            var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
-            return result.Access switch
+            return result switch
             {
-                CalendarAccess.Allowed => TypedResults.Ok(CalendarItemResponse.FromItem(result.Item!)),
-                CalendarAccess.Forbidden => TypedResults.Forbid(),
+                Result<CalendarItem>.Success(var item) => TypedResults.Ok(CalendarItemResponse.FromItem(item)),
+                Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
                 _ => TypedResults.NotFound(),
             };
         })

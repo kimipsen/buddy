@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 
+using buddy.Common;
+
 namespace buddy.Features.Calendars;
 
 public sealed record Period
@@ -19,16 +21,10 @@ public sealed record Period
     }
 
     // The only way to construct a Period from new input -- guarantees StartsAt is always before
-    // EndsAt for every instance that exists anywhere in the system.
-    public static bool TryCreate(StartsAt startsAt, EndsAt endsAt, out Period? period)
-    {
-        if (endsAt.Date.ToDateTime(endsAt.Time) <= startsAt.Date.ToDateTime(startsAt.Time))
-        {
-            period = null;
-            return false;
-        }
-
-        period = new Period(startsAt, endsAt);
-        return true;
-    }
+    // EndsAt for every instance that exists anywhere in the system. The error message lives here,
+    // not at each call site, so every caller reports the same wording for the same violation.
+    public static Result<Period> TryCreate(StartsAt startsAt, EndsAt endsAt) =>
+        endsAt.Date.ToDateTime(endsAt.Time) <= startsAt.Date.ToDateTime(startsAt.Time)
+            ? new Result<Period>.Validation("An event's end time must be after its start time.")
+            : new Result<Period>.Success(new Period(startsAt, endsAt));
 }

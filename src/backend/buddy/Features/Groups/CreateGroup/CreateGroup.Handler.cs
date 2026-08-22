@@ -14,11 +14,11 @@ public static class CreateGroupHandler
         .Add(GroupRole.Admin, CalendarRole.Contributor)
         .Add(GroupRole.Member, CalendarRole.Viewer);
 
-    public static async Task<CreateGroupResult> Handle(CreateGroup command, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<CreateGroupOutcome> Handle(CreateGroup command, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } ownerId)
         {
-            return new CreateGroupResult(null, Unauthenticated: true);
+            return new CreateGroupOutcome.Unauthenticated();
         }
 
         var groupId = GroupId.New();
@@ -26,6 +26,6 @@ public static class CreateGroupHandler
 
         var events = await groups.CreateAsync(groupId, [created], cancellationToken);
 
-        return new CreateGroupResult(Group.Rehydrate(events));
+        return new CreateGroupOutcome.Success(Group.Rehydrate(events)!);
     }
 }
