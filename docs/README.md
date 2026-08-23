@@ -17,6 +17,7 @@ This folder contains the project-level documentation for Buddy.
 ## Frontend
 
 - [Frontend overview](frontend/README.md)
+- [Installing Buddy on a kid's iPad](frontend/analysis/ipad-installation.md)
 
 ## Backend design analysis
 

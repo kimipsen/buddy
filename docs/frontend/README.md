@@ -92,6 +92,11 @@ The frontend is in an early product-shell stage. The screens are built as functi
 
 The next major frontend work should be the concrete scheduling views for calendars, recurring tasks, and child medication dose tracking.
 
+## Design analysis
+
+- [Installing Buddy on a kid's iPad](analysis/ipad-installation.md) — PWA vs. native install
+  options, push notification support, and pricing
+
 ## Local development
 
 From the frontend app folder:
