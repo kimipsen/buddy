@@ -1,18 +1,22 @@
 # Buddy
 
-Buddy is a scheduling and routine-support tool for parents and guardians of
-children with ADHD. It gives families a shared calendar for events, tasks,
-and daily routines, so a guardian can plan structure and support for a child
-who benefits from clear, predictable schedules, while the child can also see
-and interact with their own day in a way that suits them.
+Buddy is a family coordination tool for parents and guardians of children with
+ADHD. It provides shared calendars, medication tracking with dose status, and
+family meal planning—all designed around the core insight that kids with ADHD
+often struggle less with knowing *what* to do than with keeping track of
+*when* and *what's next*. Guardians can plan structure and daily routines
+(schedules, medications, meals), while children see a personalized day view
+that helps them stay on track.
 
 ## Why Buddy
 
-Kids with ADHD often struggle less with knowing what to do than with keeping
-track of when and what is next. Buddy is built around that problem: shared
-calendars, recurring routines, and simple task and event tracking that a
-parent or guardian sets up and a child can follow, with the guardian able to
-see and adjust things as needed.
+The challenge isn't usually knowing "I need to take this medicine" or "we're
+eating dinner"—it's remembering when, and then actually doing it. Buddy is
+built around that reality: shared calendars for events and tasks, structured
+medication schedules with daily dose tracking, and a family meal library so
+guardians can plan meals once and have them show up for every child. The child
+gets a clear, interactive view of their day; the guardian gets visibility and
+the ability to adjust plans in real time.
 
 ## Repository structure
 
