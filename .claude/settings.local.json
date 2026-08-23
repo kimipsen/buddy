@@ -27,7 +27,15 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\('paths',{}\\).keys\\(\\)\\)\\)\")",
       "Bash(curl -sk https://localhost:7076/openapi/users.json)",
       "Bash(pkill -f \"dotnet.*buddy.dll\")",
-      "Bash(kill 6228)"
+      "Bash(kill 6228)",
+      "Bash(npx ng *)",
+      "Bash(grep -n \"^\\\\s*[a-zA-Z0-9_:-]*:$\" /workspaces/kim/taskfile.yml)",
+      "Bash(command -v chromium-cli)",
+      "Bash(find / -maxdepth 6 -iname \"chromium-cli*\")",
+      "Read(//tmp/claude-1000/bundled-skills/**)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(curl -s http://localhost:4300)",
+      "Bash(curl -s http://localhost:4300/config/runtime-config.json)"
     ],
     "additionalDirectories": [
       "/workspaces/kim/.claude/skills/claude-backend/samples/dotnet-sample/src/Domain/Orders"

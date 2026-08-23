@@ -1,0 +1,73 @@
+<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h3 class="mb-5 text-lg font-semibold tracking-normal">Your profile</h3>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500">Loading your profile…</p>
+  } @else if (loadError()) {
+    <p class="text-sm text-red-600">{{ loadError() }}</p>
+  } @else {
+    <div class="space-y-6">
+      <form class="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" (ngSubmit)="saveName()">
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Given name</span>
+          <input
+            type="text"
+            name="givenName"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            [ngModel]="givenName()"
+            (ngModelChange)="givenName.set($event); nameSaved.set(false)"
+          />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Family name</span>
+          <input
+            type="text"
+            name="familyName"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            [ngModel]="familyName()"
+            (ngModelChange)="familyName.set($event); nameSaved.set(false)"
+          />
+        </label>
+        <button
+          type="submit"
+          class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+          [disabled]="savingName() || !givenName().trim() || !familyName().trim()"
+        >
+          Save name
+        </button>
+      </form>
+
+      @if (nameError()) {
+        <p class="text-sm text-red-600">{{ nameError() }}</p>
+      } @else if (nameSaved()) {
+        <p class="text-sm text-emerald-700">Name updated.</p>
+      }
+
+      <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveEmail()">
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Email</span>
+          <input
+            type="email"
+            name="email"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event); emailSaved.set(false)"
+          />
+        </label>
+        <button
+          type="submit"
+          class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+          [disabled]="savingEmail() || !email().trim() || email().trim() === currentEmail()"
+        >
+          Save email
+        </button>
+      </form>
+
+      @if (emailError()) {
+        <p class="text-sm text-red-600">{{ emailError() }}</p>
+      } @else if (emailSaved()) {
+        <p class="text-sm text-emerald-700">Email updated. Check your inbox to verify it.</p>
+      }
+    </div>
+  }
+</section>

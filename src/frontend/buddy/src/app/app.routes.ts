@@ -22,7 +22,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    canActivate: [authGuard, roleRedirectGuard],
+    canActivate: [roleRedirectGuard],
     children: []
   },
   {

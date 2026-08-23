@@ -22,7 +22,10 @@ export class AccountService {
       return resolved;
     }
 
-    this.pendingResolution ??= this.loadRole();
+    this.pendingResolution ??= this.loadRole().catch((error: unknown) => {
+      this.pendingResolution = null;
+      throw error;
+    });
 
     return this.pendingResolution;
   }

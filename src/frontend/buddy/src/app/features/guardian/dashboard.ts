@@ -1,90 +1,13 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
+import { Component } from '@angular/core';
 
-import { AuthService } from '../../core/auth.service';
-import { ChildSummary, CreateChildResult, GuardiansService } from '../../core/guardians.service';
-import { EventsList } from './events-list/events-list';
+import { ChildrenOverview } from './children-overview/children-overview';
+import { EventsToday } from './events-today/events-today';
+import { MealplanToday } from './mealplan-today/mealplan-today';
+import { TasksToday } from './tasks-today/tasks-today';
 
 @Component({
   selector: 'app-guardian-dashboard',
-  imports: [EventsList, FormsModule],
+  imports: [ChildrenOverview, MealplanToday, TasksToday, EventsToday],
   templateUrl: './dashboard.html'
 })
-export class GuardianDashboard implements OnInit {
-  private readonly auth = inject(AuthService);
-  private readonly guardians = inject(GuardiansService);
-
-  protected readonly stats = [
-    { label: 'Active tasks', value: '18', trend: '+4 this week' },
-    { label: 'Open requests', value: '7', trend: '2 need review' },
-    { label: 'Team notes', value: '24', trend: '6 new today' }
-  ];
-
-  protected readonly activity = [
-    'Project kickoff checklist updated',
-    'Access request routed for approval',
-    'Weekly dashboard snapshot prepared'
-  ];
-
-  protected readonly children = signal<ChildSummary[]>([]);
-  protected readonly childrenLoading = signal(true);
-  protected readonly childrenError = signal<string | null>(null);
-
-  protected readonly newChildGivenName = signal('');
-  protected readonly newChildFamilyName = signal('');
-  protected readonly newChildUsername = signal('');
-  protected readonly addingChild = signal(false);
-  protected readonly addChildError = signal<string | null>(null);
-  protected readonly lastCreatedChild = signal<CreateChildResult | null>(null);
-
-  ngOnInit(): void {
-    void this.loadChildren();
-  }
-
-  protected async addChild(): Promise<void> {
-    const givenName = this.newChildGivenName().trim();
-    const familyName = this.newChildFamilyName().trim();
-    const username = this.newChildUsername().trim();
-
-    if (!givenName || !familyName || !username) {
-      return;
-    }
-
-    this.addingChild.set(true);
-    this.addChildError.set(null);
-
-    try {
-      const created = await this.guardians.createChild({ givenName, familyName, username });
-      this.lastCreatedChild.set(created);
-      this.newChildGivenName.set('');
-      this.newChildFamilyName.set('');
-      this.newChildUsername.set('');
-      await this.loadChildren();
-    } catch (error) {
-      this.addChildError.set(error instanceof HttpErrorResponse && error.status === 409
-        ? 'That username is already in use. Choose another one.'
-        : 'Unable to create the child account.');
-    } finally {
-      this.addingChild.set(false);
-    }
-  }
-
-  protected logout(): void {
-    this.auth.logout();
-  }
-
-  private async loadChildren(): Promise<void> {
-    this.childrenLoading.set(true);
-    this.childrenError.set(null);
-
-    try {
-      this.children.set(await this.guardians.listMyChildren());
-    } catch {
-      this.childrenError.set('Unable to load children.');
-    } finally {
-      this.childrenLoading.set(false);
-    }
-  }
-}
-
+export class GuardianDashboard {}

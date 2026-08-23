@@ -1,0 +1,42 @@
+<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h3 class="mb-5 text-lg font-semibold tracking-normal">Groups</h3>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500">Loading groups…</p>
+  } @else if (error()) {
+    <p class="text-sm text-red-600">{{ error() }}</p>
+  } @else if (items().length === 0) {
+    <p class="text-sm text-slate-500">No groups yet. Create one below.</p>
+  } @else {
+    <ul class="space-y-3">
+      @for (group of items(); track group.id) {
+        <li class="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
+          <span class="text-sm font-medium">{{ group.name }}</span>
+          <span class="text-xs font-semibold text-slate-500">{{ roleLabels[group.role] }}</span>
+        </li>
+      }
+    </ul>
+  }
+
+  <form class="mt-5 grid gap-3 sm:grid-cols-2" (ngSubmit)="createGroup()">
+    <input
+      type="text"
+      name="groupName"
+      placeholder="Group name"
+      class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [ngModel]="newGroupName()"
+      (ngModelChange)="newGroupName.set($event)"
+    />
+    <button
+      type="submit"
+      class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+      [disabled]="creating() || !newGroupName().trim()"
+    >
+      Add group
+    </button>
+  </form>
+
+  @if (createError()) {
+    <p class="mt-3 text-sm text-red-600">{{ createError() }}</p>
+  }
+</section>

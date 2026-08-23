@@ -1,0 +1,51 @@
+<section class="rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
+  <h3 class="mb-2 text-lg font-semibold tracking-normal text-red-900">Danger zone</h3>
+  <p class="mb-4 text-sm leading-6 text-red-800">
+    Deleting your account removes your access permanently. This cannot be undone.
+  </p>
+
+  <button
+    type="button"
+    class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
+    (click)="openConfirm()"
+  >
+    Delete my account
+  </button>
+</section>
+
+@if (confirmOpen()) {
+  <div class="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/50 px-4" (click)="closeConfirm()">
+    <div
+      class="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h4 class="text-lg font-semibold tracking-normal text-slate-950">Delete your account?</h4>
+      <p class="mt-2 text-sm leading-6 text-slate-600">
+        This permanently deletes your account and cannot be undone. You'll be signed out immediately.
+      </p>
+
+      @if (error()) {
+        <p class="mt-3 text-sm text-red-600">{{ error() }}</p>
+      }
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50"
+          [disabled]="deleting()"
+          (click)="closeConfirm()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+          [disabled]="deleting()"
+          (click)="confirmDelete()"
+        >
+          {{ deleting() ? 'Deleting…' : 'Yes, delete my account' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
