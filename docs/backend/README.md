@@ -23,6 +23,7 @@ model or permissions logic.
 - [Mutation testing strategy](analysis/mutation-testing-strategy.md)
 - [Child accounts and guardian/parent roles](analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](analysis/medicine-schedules.md)
+- [Meal plans](analysis/mealplans.md)
 
 ## Current focus areas
 
