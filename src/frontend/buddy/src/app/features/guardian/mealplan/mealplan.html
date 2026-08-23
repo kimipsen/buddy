@@ -1,0 +1,18 @@
+<section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
+  <a routerLink="/guardian" class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-950">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+    </svg>
+    Back to dashboard
+  </a>
+
+  <div class="mb-8">
+    <p class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700">Meal planner</p>
+    <h2 class="mt-2 text-3xl font-semibold tracking-normal">Plan the week's meals.</h2>
+  </div>
+
+  <div class="space-y-6">
+    <app-manage-meals class="block" />
+    <app-assign-mealplan class="block" />
+  </div>
+</section>

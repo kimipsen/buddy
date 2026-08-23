@@ -1,0 +1,45 @@
+<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h3 class="mb-5 text-lg font-semibold tracking-normal">This week's plan</h3>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500">Loading the meal plan…</p>
+  } @else if (!hasChildren()) {
+    <p class="text-sm text-slate-500">Link a child from Settings before planning meals.</p>
+  } @else if (meals().length === 0) {
+    <p class="text-sm text-slate-500">Add a meal below before you can plan a week.</p>
+  } @else {
+    @if (error()) {
+      <p class="mb-3 text-sm text-red-600">{{ error() }}</p>
+    }
+
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[640px] border-separate border-spacing-2">
+        <thead>
+          <tr>
+            <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"></th>
+            @for (slot of slots; track slot) {
+              <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{{ slotLabels[slot] }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (day of days; track day.date) {
+            <tr>
+              <th class="whitespace-nowrap pr-2 text-left text-sm font-semibold text-slate-700">{{ day.label }}</th>
+              @for (slot of slots; track slot) {
+                <td>
+                  <app-meal-picker
+                    [meals]="meals()"
+                    [mealId]="mealIdFor(day.date, slot)"
+                    [disabled]="savingKey() === key(day.date, slot)"
+                    (mealIdChange)="onSlotChange(day.date, slot, $event)"
+                  />
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

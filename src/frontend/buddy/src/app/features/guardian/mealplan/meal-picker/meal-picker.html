@@ -1,0 +1,47 @@
+<div class="relative">
+  <input
+    type="text"
+    class="w-full min-w-[9rem] rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+    placeholder="Not planned"
+    autocomplete="off"
+    [value]="displayValue()"
+    [disabled]="disabled()"
+    (focus)="openDropdown()"
+    (input)="onQueryInput($event)"
+    (keydown.escape)="closeDropdown()"
+    (keydown.enter)="selectFirstMatch()"
+  />
+
+  @if (open()) {
+    <div class="fixed inset-0 z-10" (click)="closeDropdown()"></div>
+
+    <ul class="absolute z-20 mt-1 max-h-56 w-full min-w-[12rem] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+      <li>
+        <button
+          type="button"
+          class="block w-full px-3 py-1.5 text-left text-sm text-slate-500 hover:bg-slate-100"
+          (click)="selectMeal(null)"
+        >
+          Not planned
+        </button>
+      </li>
+
+      @for (meal of filteredMeals(); track meal.id) {
+        <li>
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            (click)="selectMeal(meal)"
+          >
+            <span class="text-base leading-none">{{ meal.icon }}</span>
+            {{ meal.name }}
+          </button>
+        </li>
+      }
+
+      @if (filteredMeals().length === 0) {
+        <li class="px-3 py-1.5 text-sm text-slate-400">No meals match.</li>
+      }
+    </ul>
+  }
+</div>

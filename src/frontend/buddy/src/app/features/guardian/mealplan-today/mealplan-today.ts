@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { GuardiansService } from '../../../core/guardians.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
@@ -21,6 +22,7 @@ function todayIsoDate(): string {
 
 @Component({
   selector: 'app-mealplan-today',
+  imports: [RouterLink],
   templateUrl: './mealplan-today.html'
 })
 export class MealplanToday implements OnInit {
