@@ -2,6 +2,7 @@ using buddy.Email;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
+using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Users;
 using buddy.Serialization;
@@ -46,6 +47,7 @@ builder.Services.AddGuardiansFeature(builder.Configuration);
 builder.Services.AddGroupsFeature(builder.Configuration);
 builder.Services.AddCalendarsFeature(builder.Configuration);
 builder.Services.AddMedicinesFeature(builder.Configuration);
+builder.Services.AddMealplansFeature(builder.Configuration);
 
 var app = builder.Build();
 
@@ -70,5 +72,6 @@ app.MapGuardiansFeature();
 app.MapGroupsFeature();
 app.MapCalendarsFeature();
 app.MapMedicinesFeature();
+app.MapMealplansFeature();
 
 app.Run();

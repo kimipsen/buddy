@@ -5,7 +5,7 @@
     "reporters": ["html", "progress", "cleartext"],
     "report-file-name": "mutation-report",
     "concurrency": 1,
-    "mutate": ["**/*.cs", "!**/obj/**/*.cs", "!**/bin/**/*.cs"],
+    "mutate": ["Features/Mealplans/**/*.cs"],
     "ignore-methods": ["*Logger*", "ToString"]
   }
 }

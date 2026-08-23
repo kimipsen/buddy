@@ -1,6 +1,6 @@
 # Meal Plans
 
-Status: Proposed (not yet implemented)
+Status: Implemented
 
 ## Context
 
@@ -74,36 +74,81 @@ Reasoning:
   future entries; a guardian assigns each date/slot explicitly), which makes
   `MealPlan` simpler than `MedicineSchedule`, not more complex.
 
+## Question 3: sharing a `Meal`/`MealPlan` across siblings
+
+The first version of this design scoped `Meal` and `MealPlan` to a single
+`ChildId`, deferring sibling sharing as an open question. That turned out to
+be wrong for the actual ask: a guardian should never have to recreate "Tacos"
+or re-assign Tuesday's dinner once per child — one family, one meal library,
+one plan.
+
+**Decision: `Meal` and `MealPlan` carry no `ChildId` at all. Sibling sharing
+is resolved entirely at read time, from the existing `GuardianLink` graph,
+by a new `MealFamilyResolution` helper** — not by introducing a
+`Family`/`Household` aggregate.
+
+Reasoning:
+
+- There is still no `Family` aggregate anywhere in this codebase, and adding
+  one purely to group children would be exactly the kind of speculative
+  structural change the rest of this codebase avoids. The data needed to
+  answer "who are this child's siblings" already exists: `GuardianLink`
+  connects guardians and children, and two children are siblings if they
+  share at least one active guardian.
+  `IGuardianLinkEventStore.ListForChildAsync`/`ListForGuardianAsync`
+  ([IGuardianLinkEventStore.cs](../../../src/backend/buddy/Features/Guardians/IGuardianLinkEventStore.cs))
+  already provide exactly those two lookups, built for `ListMyChildren`.
+- Each `Meal`/`MealPlan` is still created and indexed under whichever single
+  `ChildId` the guardian happened to be acting through
+  (`MealIndexDocument`/`MealPlanIndexDocument`, unchanged) — sharing doesn't
+  require writing extra index rows at creation time. `ResolveFamilyMealIdsAsync`
+  widens a `ListMeals`/membership lookup to every sibling's index rows, and
+  `ResolveFamilyMealPlanIdAsync` returns whichever sibling already has a
+  `MealPlanId`, if any. This means whichever sibling a guardian happens to
+  create the family's first meal for is an implementation detail, not
+  something the guardian has to get right.
+- Recomputing the family on every call (never persisted) matches the
+  "recomputed, not persisted" contract `MealPlanExpansion` and
+  `MedicineDoseExpansion` already have for occurrences — no new caching or
+  invalidation problem introduced.
+- A consequence, not a separate design choice: since a `Meal` is now shared,
+  a single `Rating` field can't hold "the child's opinion" any more — see the
+  `Meal` shape below.
+
+`MealFamilyResolution.ResolveFamilyAsync` walks one level: child C's
+guardians, and every other child of each of those guardians. It does not
+transitively expand further (e.g. it won't pull in a guardian's *other*
+co-parent's unrelated children two hops away) — deliberately, to avoid a
+blended-family edge case silently merging unrelated households' meal plans.
+
 ## Domain model
 
-### `Meal` (new aggregate, one per child, reusable across that child's plan)
+### `Meal` (new aggregate, shared by every child in its family)
 
 ```
 Meal(
     MealId Id,
-    UserId ChildId,
     UserId CreatedBy,
     string Name,
     string? Description,
     Icon Icon,
     Color Color,
     bool IsArchived,
-    MealRating? Rating,
+    ImmutableDictionary<UserId, MealRating> Ratings,
     UserId LastModifiedBy)
 ```
 
+- No `ChildId`: a `Meal` isn't owned by one child, so there's no single
+  field to hold — see "Question 3" above.
 - `Icon`/`Color` reuse the existing `Calendars` value types
   ([Icon.cs](../../../src/backend/buddy/Features/Calendars/Types/Icon.cs),
   [Color.cs](../../../src/backend/buddy/Features/Calendars/Types/Color.cs)),
   same reasoning as `Medicines` reusing them — visual consistency, no reason
   to fork a second representation.
-- `Meal` is scoped to a single `ChildId`, not shared across siblings. A
-  two-kid household with the same taco recipe creates two `Meal`s. This is a
-  deliberate v1 simplification — see "Remaining open questions."
 - `IsArchived` is a soft-delete flag (mirrors `MedicineSchedule.IsStopped`):
   an archived `Meal` can no longer be newly assigned to a plan slot, but
-  existing `MealPlan` assignments referencing it, and its `Rating`, remain
-  fully readable.
+  existing `MealPlan` assignments referencing it, and every child's
+  `Ratings` entry, remain fully readable.
 
 ### `MealRating`
 
@@ -111,10 +156,12 @@ Meal(
 MealRating(int Stars, string? Comment, DateTimeOffset RatedAt)
 ```
 
-`Stars` is a 1–5 rating. Only one `MealRating` is held per `Meal` — it is the
-child's current opinion, not a history of every time they were asked. Full
-history still exists in the event stream (`MealRated` events), so "did their
-opinion change over time" is answerable later without designing for it now.
+`Stars` is a 1–5 rating. `Meal.Ratings` holds at most one `MealRating` per
+*child*, keyed by that child's `UserId` — each sibling has their own opinion
+of a shared dish, so Alice loving Tacos and Bob hating them are both
+first-class, simultaneously. Each entry is still the child's *current*
+opinion, not a history of every time they were asked; full history exists in
+the event stream (`MealRated` events per child).
 
 ### `Meal` events
 
@@ -125,6 +172,8 @@ Following the existing `Before`/`After` convention for edits
 ```
 MealCreated(MealId, UserId ChildId, UserId CreatedBy, string Name, string? Description,
     Icon, Color, DateTimeOffset OccurredAt)
+    // ChildId records which child the creating guardian was acting through -- needed to
+    // seed the meal's first MealIndexDocument row, but not projected onto Meal itself.
 
 MealDetailsUpdated(MealId, MealDetails Before, MealDetails After, UserId ModifiedBy, DateTimeOffset OccurredAt)
     // MealDetails = (string Name, string? Description, Icon, Color)
@@ -132,7 +181,9 @@ MealDetailsUpdated(MealId, MealDetails Before, MealDetails After, UserId Modifie
 MealArchived(MealId, UserId ModifiedBy, DateTimeOffset OccurredAt)
     // soft "delete" -- same shape as MedicineScheduleStopped / ItemDeleted
 
-MealRated(MealId, MealRating? Before, MealRating After, UserId RatedBy, DateTimeOffset OccurredAt)
+MealRated(MealId, UserId ChildId, MealRating? Before, MealRating After, DateTimeOffset OccurredAt)
+    // ChildId is both the rating's subject and its actor -- only that child can ever
+    // rate for themself (see Authorization), so there's no separate "RatedBy" to carry.
 ```
 
 `MealRated` is the only event a child (rather than a guardian) ever appends —
@@ -140,18 +191,20 @@ see "Authorization" below. There is no separate "unrate" event; a child
 re-rating simply appends another `MealRated` with a new `After`, same as
 `DoseStatusChanged` doubling as both mark and undo.
 
-### `MealPlan` (new aggregate, one singleton stream per child)
+### `MealPlan` (new aggregate, one singleton stream per family)
 
 ```
 MealPlan(
     MealPlanId Id,
-    UserId ChildId,
     ImmutableDictionary<(DateOnly Date, MealSlot Slot), MealPlanAssignment> Assignments)
 
 MealPlanAssignment(MealId MealId, UserId AssignedBy, string? Notes)
 
 enum MealSlot { Breakfast, Lunch, Dinner, Snack }
 ```
+
+No `ChildId` on the aggregate, for the same reason as `Meal` — see
+"Question 3."
 
 `Assignments` only ever holds slots a guardian actually filled — an
 unassigned `(Date, Slot)` simply has no key, exactly like `DoseLog` only
@@ -163,6 +216,8 @@ slot anywhere in the model.
 
 ```
 MealPlanCreated(MealPlanId, UserId ChildId, DateTimeOffset OccurredAt)
+    // ChildId records which child the creating guardian was acting through -- needed to
+    // seed the plan's first MealPlanIndexDocument row, but not projected onto MealPlan.
 
 MealAssignedToSlot(MealPlanId, DateOnly Date, MealSlot Slot, MealId MealId, UserId AssignedBy,
     string? Notes, MealPlanAssignment? Before, DateTimeOffset OccurredAt)
@@ -172,11 +227,11 @@ MealSlotCleared(MealPlanId, DateOnly Date, MealSlot Slot, MealPlanAssignment Bef
 ```
 
 `MealPlanCreated` is appended lazily by the first `AssignMealToSlot` call for
-a child who has no `MealPlan` stream yet (`CreateAsync` if none exists, else
+a family with no `MealPlan` stream yet (`CreateAsync` if none exists, else
 `AppendAsync`), rather than being provisioned as part of `CreateChild`. This
 keeps `Mealplans` decoupled from `Guardians` the same way `Medicines` never
-hooks into child creation either — a child with no meal plan yet is simply a
-child with no stream, not a special state to handle.
+hooks into child creation either — a family with no meal plan yet is simply
+no stream, not a special state to handle.
 
 ### Rehydration
 
@@ -184,7 +239,8 @@ Both aggregates fold their stream the same way `MedicineSchedule.Rehydrate`
 does: the `*Created` event seeds the record, each subsequent event applies a
 `with` update. `MealAssignedToSlot`/`MealSlotCleared` upsert/remove
 `Assignments[(Date, Slot)]`, keeping the dictionary sparse. `MealRated`
-replaces `Meal.Rating` with `After`.
+upserts `Ratings[ChildId]` with `After`, leaving every other child's entry
+untouched.
 
 ## Read models
 
@@ -193,12 +249,18 @@ maintained index documents, same pattern as `MedicineIndexDocument`
 ([MedicineIndexDocument.cs](../../../src/backend/buddy/Features/Medicines/Types/MedicineIndexDocument.cs)):
 
 ```
-MealIndexDocument(Guid Id, Guid ChildId, bool IsArchived)
-    // "which Meal streams belong to child X" -- for the meal picker / library list
+MealIndexDocument(Guid Id, Guid ChildId)
+    // "which Meal streams belong to child X" -- for the meal picker / library list.
+    // Carries no "archived" flag, for the same reason MedicineIndexDocument carries
+    // no "stopped" flag: an archived Meal still belongs in ListMeals (a guardian's
+    // library, including retired dishes), so nothing is ever removed from this index.
 
-MealPlanIndexDocument(Guid MealPlanId, Guid ChildId)
+MealPlanIndexDocument(Guid Id, Guid ChildId)
     // "what is child X's MealPlan stream ID" -- one row per child, written once
-    // on MealPlanCreated
+    // on MealPlanCreated. The identity property must be literally named Id --
+    // Marten's document identity convention requires it (a lesson learned the
+    // implementation's first test run, which failed with "No closed-shape id
+    // strategy is registered" until the field was renamed from MealPlanId).
 ```
 
 An alternative considered and rejected for `MealPlanIndexDocument`: deriving
@@ -211,7 +273,33 @@ inconsistency for a lookup that costs nothing extra to just index normally.
 
 Both documents are written in the same `SaveChangesAsync` as their triggering
 event append — the existing maintained-inline-projection pattern, never a
-separate write or async projection.
+separate write or async projection. They are still written under a single
+`ChildId` each, exactly as before `MealFamilyResolution` existed — sibling
+sharing is entirely a read-time concern (see "Question 3"), so no extra index
+rows are written per sibling at creation time.
+
+## Family resolution
+
+`MealFamilyResolution` (new, `Features/Mealplans/MealFamilyResolution.cs`) is
+the one place that walks the `GuardianLink` graph to answer "who's in this
+child's family," and every read/write path that needs to look beyond a
+single `ChildId`'s own index rows goes through it rather than querying
+`GuardianLinkDocument` directly:
+
+- `ResolveFamilyAsync(childId)` — child + every child sharing at least one
+  active guardian with them.
+- `ResolveFamilyMealIdsAsync(childId)` — unions `MealIndexDocument` lookups
+  across the whole family; backs `ListMeals` and every "does this `MealId`
+  belong to this family" membership check (`UpdateMealDetails`,
+  `ArchiveMeal`, `RateMeal`, `AssignMealToSlot`).
+- `ResolveFamilyMealPlanIdAsync(childId)` — returns whichever family member
+  already has a `MealPlanId`, if any; backs `ListMealPlan`,
+  `AssignMealToSlot`'s "join or create" branch, and `ClearMealSlot`.
+
+Nothing here is cached — each call re-walks `ListForChildAsync`/
+`ListForGuardianAsync` fresh, so a newly added sibling (or a revoked
+`GuardianLink`) is reflected immediately on the next request, with no
+backfill or invalidation step needed anywhere.
 
 ## Authorization
 
@@ -221,7 +309,10 @@ no group ownership, exactly two principals — reusing the existing
 `GuardianLink` machinery (`guardians.FindActiveLinkAsync(childId, callerId,
 ...)`, [CalendarAuthorization.cs](../../../src/backend/buddy/Features/Calendars/CalendarAuthorization.cs)-style)
 with no new authorization document needed. Both `Meal` and `MealPlan` share
-one resolver, since they're always accessed for the same `ChildId`.
+one resolver, since access is always checked against the specific `ChildId`
+in the URL — sharing a `Meal`/`MealPlan` across siblings (see "Question 3")
+changes which *data* a request can see, not who's allowed to call the
+endpoint for a given child.
 
 | Tier | Who | Actions |
 |---|---|---|
@@ -253,14 +344,14 @@ Resolution:
 
 | Slice | Tier | Notes |
 |---|---|---|
-| `CreateMeal` | Manage | `Name`, `Description?`, `Icon`, `Color` |
-| `UpdateMealDetails` | Manage | Name/Description/Icon/Color — emits `MealDetailsUpdated` |
-| `ArchiveMeal` | Manage | Soft-delete — emits `MealArchived` |
-| `ListMeals` | Manage or Rate | A child's meal library via `MealIndexDocument`, each with its current `Rating` |
-| `RateMeal` | Rate | `Stars` (1–5), `Comment?` — emits `MealRated` |
-| `AssignMealToSlot` | Manage | `Date`, `Slot`, `MealId` (must not be archived), `Notes?` — emits `MealAssignedToSlot` |
-| `ClearMealSlot` | Manage | `Date`, `Slot` — emits `MealSlotCleared` |
-| `ListMealPlan` | Manage or Rate | `[from, to]` date range → assignments joined with meal name/icon/color — the child-facing read surface, analogous to `ListTodaysDoses` |
+| `CreateMeal` | Manage | `Name`, `Description?`, `Icon`, `Color` — indexed under the URL's `ChildId`, visible to their whole family on the next read |
+| `UpdateMealDetails` | Manage | Name/Description/Icon/Color — emits `MealDetailsUpdated`; `MealId` must resolve within the URL child's family (`ResolveFamilyMealIdsAsync`) |
+| `ArchiveMeal` | Manage | Soft-delete — emits `MealArchived`; same family-membership check |
+| `ListMeals` | Manage or Rate | The whole family's meal library via `ResolveFamilyMealIdsAsync`, each with every sibling's `Ratings` entry |
+| `RateMeal` | Rate | `Stars` (1–5), `Comment?` — emits `MealRated` keyed by the calling child; same family-membership check |
+| `AssignMealToSlot` | Manage | `Date`, `Slot`, `MealId` (must not be archived, must resolve within the family), `Notes?` — emits `MealAssignedToSlot` on the family's one shared `MealPlan` |
+| `ClearMealSlot` | Manage | `Date`, `Slot` — emits `MealSlotCleared` on the family's shared `MealPlan` |
+| `ListMealPlan` | Manage or Rate | `[from, to]` date range → the family's shared assignments joined with meal name/icon/color and the *viewing* child's own rating — the child-facing read surface, analogous to `ListTodaysDoses` |
 
 ## Failure and edge-case behavior
 
@@ -274,6 +365,9 @@ Resolution:
 | Child rates an archived `Meal` | Allowed — an opinion of the dish doesn't depend on whether it's still in active rotation |
 | `Meal` referenced by a plan assignment is later archived | Existing assignments still resolve and display fine; only new assignments are blocked |
 | Child has no guardian at all | Cannot happen for `Meal`/`MealPlan` creation (Manage tier requires a `GuardianLink`), so both always have at least one guardian by construction |
+| A child's guardian creates a meal/plan entry, then a sibling is added later | The new sibling sees the shared library/plan immediately on their next request — `MealFamilyResolution` recomputes the family fresh every call, no backfill step needed |
+| Two children share a guardian but not the *same* meal (e.g. only one has ever eaten it) | Still shared — sharing is family-wide once a `Meal` exists, not opt-in per sibling; each child's own `Ratings` entry (or lack of one) reflects whether they've actually tried it |
+| A child whose only guardian is unrelated to another family | Never sees that family's meals/plan — `ResolveFamilyAsync` only widens through *shared* active guardians, confirmed by `MealFamilySharingTests` |
 
 ## Decisions made
 
@@ -281,25 +375,26 @@ Resolution:
 |---|---|
 | Extend `CalendarItem`, or new feature | New feature, `Features/Mealplans` — mirrors the `Medicines` precedent for the same reasons |
 | One aggregate or two | Two — `Meal` (reusable, rated) and `MealPlan` (per-child dated slot assignments) — different edit lifetimes and authors |
-| Meal scope | Per-child, not per-family/household — no `Family` aggregate exists; sharing across siblings deferred (see open questions) |
+| Meal/plan scope | Family-wide, not per-child — no `Family` aggregate exists, so sharing is resolved at read time from the `GuardianLink` graph via `MealFamilyResolution`, one level (shared active guardians), not transitively |
 | Slot model | `MealSlot { Breakfast, Lunch, Dinner, Snack }`, sparse dictionary on `MealPlan` — no slot is required, which is what makes "usually just dinner" work with no special-casing |
 | Recurrence | None — every assignment is explicit; no auto-repeating template in v1 (see open questions) |
 | Who can write meals/plan | Guardian (Manage tier) only, never the child |
 | Who can rate | Child (Rate tier) only, never a guardian — including on the child's behalf |
-| Where the rating lives | On `Meal` itself (current opinion), not per plan occurrence — full history still exists via `MealRated` events |
+| Where the rating lives | On `Meal` itself, one entry per child (current opinion), not per plan occurrence — full history still exists via `MealRated` events |
 | `MealPlan` provisioning | Lazy: first `AssignMealToSlot` creates the stream if it doesn't exist yet; not hooked into `CreateChild` |
 | New read models needed | `MealIndexDocument` (list a child's meals) and `MealPlanIndexDocument` (resolve a child's `MealPlanId`) — same maintained-inline-projection pattern used everywhere else |
 | Does a meal plan show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface (`ListMealPlan`), not merged into `CalendarItemOccurrence`, matching the `Medicines` precedent |
 
 ## Remaining open questions
 
-- **Sharing a `Meal` across siblings.** v1 scopes `Meal` per `ChildId`; a
-  two-kid household duplicates "Tacos" once per child. If guardians want one
-  shared library, that needs either a `Family`/`Household` grouping concept
-  (which doesn't exist anywhere in this codebase today) or a looser
-  visibility rule based on co-guardianship — deferred until there's a
-  concrete need, same "wait for a second caller" reasoning `Medicines` used
-  for not widening `RecurrenceRule`.
+- **Blended families / half-siblings.** `MealFamilyResolution` widens through
+  any *shared* active guardian, one level deep. Two children who each share
+  exactly one guardian with a third child, but not with each other, are not
+  currently merged into one family (deliberately — see "Question 3") — but a
+  guardian who co-parents children from two different partners will see
+  those two households' meals/plans merged into one, since both count as
+  "this guardian's children." No concrete need for finer-grained household
+  boundaries has come up yet; revisit if it does.
 - **Recurring templates.** "Tacos every Tuesday" currently means manually
   assigning Tacos to every Tuesday. An auto-repeating assignment (mirroring
   `RecurrenceRule` or `MedicineSchedule.Times`) is a natural v2 if guardians
@@ -328,29 +423,38 @@ flowchart TB
 
         subgraph Aggregates["Event-sourced aggregates"]
             Guardian["User (guardian)"]
-            Child["User (child)"]
+            Alice["User (child: Alice)"]
+            Bob["User (child: Bob, Alice's sibling)"]
             Link["GuardianLink\n(existing)"]
-            MealAgg["Meal\nChildId, Name, Description, Icon, Color\nIsArchived, Rating: MealRating?"]
-            Plan["MealPlan\nChildId\nAssignments: (Date,Slot) -> MealPlanAssignment"]
+            MealAgg["Meal (shared, no ChildId)\nName, Description, Icon, Color, IsArchived\nRatings: ChildId -> MealRating"]
+            Plan["MealPlan (shared, no ChildId)\nAssignments: (Date,Slot) -> MealPlanAssignment"]
         end
 
-        Resolver["MealplanAuthorization\n1. caller == ChildId -> Rate tier\n2. active GuardianLink -> Manage tier\n3. else NotFound"]
+        AuthResolver["MealplanAuthorization\n1. caller == URL ChildId -> Rate tier\n2. active GuardianLink to URL ChildId -> Manage tier\n3. else NotFound"]
 
-        MealIndex["MealIndexDocument\n(Id, ChildId, IsArchived)\nfor ListMeals"]
-        PlanIndex["MealPlanIndexDocument\n(MealPlanId, ChildId)\nresolves the child's plan stream"]
+        FamilyResolver["MealFamilyResolution\nResolveFamilyAsync: child + every child\nsharing an active guardian\nResolveFamilyMealIdsAsync / ResolveFamilyMealPlanIdAsync:\nwiden an index lookup across that family"]
+
+        MealIndex["MealIndexDocument\n(Id, ChildId)\none row per meal, indexed under\nwhichever child it was created for"]
+        PlanIndex["MealPlanIndexDocument\n(Id, ChildId)\none row per family, indexed under\nwhichever child it was created for"]
 
         Guardian -- "GuardianLinked (existing)" --> Link
-        Guardian -- "Create/Edit/Archive (Manage)" --> MealAgg
-        Guardian -- "Assign/Clear slot (Manage)" --> Plan
-        Child -- "RateMeal (Rate)" --> MealAgg
-        Child -- "owns" --> MealAgg
-        Child -- "owns" --> Plan
+        Guardian -- "owns" --> Alice
+        Guardian -- "owns" --> Bob
+        Guardian -- "Create meal via Alice's URL (Manage)" --> MealAgg
+        Guardian -- "Assign/Clear slot via Alice's URL (Manage)" --> Plan
+        Alice -- "RateMeal (Rate)" --> MealAgg
+        Bob -- "RateMeal (Rate), independently" --> MealAgg
 
-        MealAgg -. "indexed by ChildId" .-> MealIndex
-        Plan -. "indexed by ChildId" .-> PlanIndex
+        MealAgg -. "indexed once, under Alice" .-> MealIndex
+        Plan -. "indexed once, under Alice" .-> PlanIndex
         Plan -- "MealId reference" --> MealAgg
-        Link -. "FindActiveLinkAsync (existing)" .-> Resolver
-        Resolver --> Outcome["Allowed(tier) / Forbidden / NotFound"]
+
+        Link -. "ListForChildAsync / ListForGuardianAsync (existing)" .-> FamilyResolver
+        FamilyResolver -- "Bob's ListMeals/ListMealPlan widens\nto Alice's index rows too" --> MealIndex
+        FamilyResolver --> PlanIndex
+
+        Link -. "FindActiveLinkAsync (existing)" .-> AuthResolver
+        AuthResolver --> Outcome["Allowed(tier) / Forbidden / NotFound"]
 
         Plan --> ChildView["Child home / calendar\n(ListMealPlan, merged client-side\nwith Calendar.ListOccurrences)"]
     end

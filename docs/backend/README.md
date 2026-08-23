@@ -9,6 +9,7 @@ Backend documentation for the Buddy API.
 - [Groups flow](groups/flow.md)
 - [Guardians flow](guardians/flow.md)
 - [Medicines flow](medicines/flow.md)
+- [Mealplans flow](mealplans/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
 

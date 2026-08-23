@@ -1,0 +1,58 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Create a reusable meal for a child (guardian only)
+
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Tacos",
+  "Description": "Ground beef, tortillas, salsa",
+  "Icon": "taco",
+  "Color": "#ffaa00"
+}
+
+###
+
+# List a child's meal library (guardian or child)
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# The child rates a meal (child only)
+PUT {{buddy_HostAddress}}/mealplans/children/{{childId}}/meals/{{mealId}}/rating
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+
+{
+  "Stars": 5,
+  "Comment": "Loved it!"
+}
+
+###
+
+# Assign a meal to a slot on the plan (guardian only)
+PUT {{buddy_HostAddress}}/mealplans/children/{{childId}}/plan?date=2025-06-01&slot=Dinner
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "MealId": "{{mealId}}",
+  "Notes": "No cilantro"
+}
+
+###
+
+# List a child's plan in a date range (guardian or child)
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/plan?from=2025-06-01&to=2025-06-07
+Authorization: Bearer {{childToken}}
+
+###
+
+# Clear a planned slot (guardian only)
+DELETE {{buddy_HostAddress}}/mealplans/children/{{childId}}/plan?date=2025-06-01&slot=Dinner
+Authorization: Bearer {{guardianToken}}
+
+###
