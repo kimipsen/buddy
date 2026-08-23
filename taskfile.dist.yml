@@ -6,8 +6,11 @@ vars:
   GREETING: Hello, world!
 
 tasks:
-  default:
-    desc: Print a greeting message
+  deploy:
+    desc: Build and (re)start the production stack (deploy/docker-compose.prod.yml)
+    dir: deploy
+    preconditions:
+      - sh: test -f .env
+        msg: "deploy/.env not found — copy deploy/.env.example to deploy/.env and fill in real values first."
     cmds:
-      - echo "{{.GREETING}}"
-    silent: true
+      - docker compose -f docker-compose.prod.yml up -d --build
