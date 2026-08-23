@@ -1,0 +1,99 @@
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - buddy_network
+    depends_on:
+      - api
+      - keycloak
+      - frontend
+
+  frontend:
+    build:
+      context: ../src/frontend/buddy
+      args:
+        API_BASE_URL: "https://${API_DOMAIN}"
+        KEYCLOAK_AUTHORITY: "https://${AUTH_DOMAIN}"
+    restart: unless-stopped
+    networks:
+      - buddy_network
+
+  api:
+    build:
+      context: ../src/backend
+      dockerfile: buddy/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Postgres: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Authentication__Keycloak__Authority: "http://keycloak:8080/realms/buddy"
+      Authentication__Keycloak__ValidIssuer: "https://${AUTH_DOMAIN}/realms/buddy"
+      Authentication__Keycloak__Audience: "buddy-api"
+      Authentication__Keycloak__RequireHttpsMetadata: "false"
+      Authentication__KeycloakAdmin__TokenEndpoint: "http://keycloak:8080/realms/master/protocol/openid-connect/token"
+      Authentication__KeycloakAdmin__AdminBaseUrl: "http://keycloak:8080/admin/realms/buddy"
+      Authentication__KeycloakAdmin__ClientId: "buddy-admin-cli"
+      Authentication__KeycloakAdmin__ClientSecret: "${KEYCLOAK_ADMIN_CLI_SECRET}"
+      Cors__AllowedOrigins__0: "https://${APP_DOMAIN}"
+    depends_on:
+      - db
+      - keycloak
+    networks:
+      - buddy_network
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql:ro
+    networks:
+      - buddy_network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    restart: unless-stopped
+    command: start --optimized
+    env_file:
+      - .env
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_PORT: "5432"
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HOSTNAME: "${AUTH_DOMAIN}"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ../themes/buddy:/opt/keycloak/themes/buddy:ro
+    depends_on:
+      - db
+    networks:
+      - buddy_network
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  buddy_network:
+    driver: bridge

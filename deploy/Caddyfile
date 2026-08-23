@@ -1,0 +1,11 @@
+{$API_DOMAIN} {
+	reverse_proxy api:8080
+}
+
+{$AUTH_DOMAIN} {
+	reverse_proxy keycloak:8080
+}
+
+{$APP_DOMAIN} {
+	reverse_proxy frontend:80
+}
