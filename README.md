@@ -52,12 +52,20 @@ docs/
 - **Medicine schedule** — a proposed child-facing medication routine with
   daily dose times, dose tracking, and per-dose `Taken` / `Skipped` states.
   See [Medicine schedules](docs/backend/analysis/medicine-schedules.md).
+- **Meal plan** — a family meal library and daily slot assignments for
+  breakfast, lunch, dinner, and snacks, with meal rating and archival
+  functionality.
 
 ## Documentation map
 
 ### Backend docs
 
 - [Users flow](docs/backend/users/flow.md)
+- [Calendars flow](docs/backend/calendars/flow.md)
+- [Groups flow](docs/backend/groups/flow.md)
+- [Guardians flow](docs/backend/guardians/flow.md)
+- [Medicines flow](docs/backend/medicines/flow.md)
+- [Mealplans flow](docs/backend/mealplans/flow.md)
 - [Glossary](docs/backend/glossary.md)
 - [HTTP status code semantics](docs/backend/http-status-codes.md)
 
@@ -67,6 +75,7 @@ docs/
 - [Integration testing strategy](docs/backend/analysis/integration-testing-strategy.md)
 - [Child accounts and guardian/parent roles](docs/backend/analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](docs/backend/analysis/medicine-schedules.md)
+- [Meal plans](docs/backend/analysis/mealplans.md)
 
 ## Getting started
 

@@ -10,6 +10,7 @@ This folder contains the project-level documentation for Buddy.
 - [Groups flow](backend/groups/flow.md)
 - [Guardians flow](backend/guardians/flow.md)
 - [Medicines flow](backend/medicines/flow.md)
+- [Mealplans flow](backend/mealplans/flow.md)
 - [Glossary](backend/glossary.md)
 - [HTTP status code semantics](backend/http-status-codes.md)
 
@@ -24,6 +25,12 @@ This folder contains the project-level documentation for Buddy.
 - [Mutation testing strategy](backend/analysis/mutation-testing-strategy.md)
 - [Child accounts and guardian/parent roles](backend/analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](backend/analysis/medicine-schedules.md)
+- [Meal plans](backend/analysis/mealplans.md)
+
+## Deployment
+
+- [Deploying to Oracle Cloud](../deploy/README.md) — production stack setup
+  with Docker, Keycloak, PostgreSQL, and Caddy on an Always Free VM.
 
 ## Scope
 

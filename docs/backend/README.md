@@ -28,8 +28,13 @@ model or permissions logic.
 
 ## Current focus areas
 
-The backend is centered on a few core concepts: user identity and guardian
-relationships, shared calendar permissions, event-sourced aggregates, and the
-proposed medicine schedule feature for child routines. If you are making a
-behavioral or authorization change, check the relevant analysis document before
-changing the implementation.
+The backend is centered on core concepts including:
+
+- user identity and guardian relationships
+- shared calendar permissions
+- event-sourced aggregates
+- medicine schedules for child routines
+- meal planning and family meal libraries
+
+If you are making a behavioral or authorization change, check the relevant
+analysis document or flow doc before changing the implementation.
