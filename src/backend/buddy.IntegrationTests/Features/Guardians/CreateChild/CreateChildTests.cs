@@ -27,6 +27,9 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
         Assert.Equal(GuardianKind.Guardian, child.Kind);
         Assert.Equal("alex.anderson", child.Username);
         Assert.False(string.IsNullOrWhiteSpace(child.TemporaryPassword));
+
+        var assignedRoles = await fixture.GetAssignedRealmRoleNamesAsync(child.Username);
+        Assert.Contains("buddy-child", assignedRoles);
     }
 
     [Fact]

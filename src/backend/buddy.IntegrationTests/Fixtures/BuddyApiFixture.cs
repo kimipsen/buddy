@@ -220,6 +220,27 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         response.EnsureSuccessStatusCode();
     }
 
+    // Verifies role assignment actually happened (KeycloakAdminClient.AssignChildRoleAsync) by
+    // reading the user's realm role mappings back from the Admin API, rather than just trusting
+    // that provisioning didn't throw.
+    public async Task<string[]> GetAssignedRealmRoleNamesAsync(string username, CancellationToken cancellationToken = default)
+    {
+        var adminToken = await GetAdminTokenAsync(cancellationToken);
+
+        using var client = new HttpClient
+        {
+            BaseAddress = new Uri($"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}")
+        };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var users = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/users?username={Uri.EscapeDataString(username)}&exact=true", cancellationToken);
+        var userId = users.EnumerateArray().First().GetProperty("id").GetString()
+            ?? throw new InvalidOperationException($"Keycloak has no user named '{username}' in realm '{RealmName}'.");
+
+        var roles = await client.GetFromJsonAsync<JsonElement[]>($"/admin/realms/{RealmName}/users/{userId}/role-mappings/realm", cancellationToken) ?? [];
+        return [.. roles.Select(role => role.GetProperty("name").GetString()!)];
+    }
+
     private async Task<string> GetAdminTokenAsync(CancellationToken cancellationToken)
     {
         using var client = new HttpClient();

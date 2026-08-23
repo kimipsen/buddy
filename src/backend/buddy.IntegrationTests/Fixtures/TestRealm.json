@@ -3,6 +3,11 @@
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "buddy-child" }
+    ]
+  },
   "clients": [
     {
       "clientId": "buddy-api",

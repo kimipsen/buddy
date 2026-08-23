@@ -6,9 +6,10 @@ public interface IKeycloakAdminClient
 {
     // Creates a Keycloak user with no email (see the analysis doc's "no email required" decision --
     // GetOrCreateUserHandler's existing `?? ""` convention already represents "no email" on User) and
-    // a one-time temporary password the guardian is shown once. Returns the new user's `sub` --
-    // Keycloak stays the only source of new sub values, same invariant as the existing lazy-
-    // materialization flow.
+    // a one-time temporary password the guardian is shown once. Also assigns the "buddy-child" realm
+    // role so child accounts are distinguishable in Keycloak itself, not just in this app's own
+    // GuardianLink aggregate. Returns the new user's `sub` -- Keycloak stays the only source of new
+    // sub values, same invariant as the existing lazy-materialization flow.
     Task<KeycloakCreateUserResult> CreateChildUserAsync(
         string givenName,
         string familyName,
