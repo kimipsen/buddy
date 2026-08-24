@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
 
 import { Meal } from '../../../../core/mealplans.service';
 
@@ -13,8 +13,11 @@ export class MealPicker {
 
   readonly mealIdChange = output<string>();
 
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
+
   protected readonly open = signal(false);
   protected readonly query = signal('');
+  protected readonly dropdownStyle = signal<Record<string, string>>({});
 
   protected readonly selectedMeal = computed(() => this.meals().find((meal) => meal.id === this.mealId()) ?? null);
 
@@ -44,6 +47,14 @@ export class MealPicker {
 
     this.query.set('');
     this.open.set(true);
+
+    const rect = this.elementRef.nativeElement.getBoundingClientRect();
+    this.dropdownStyle.set({
+      position: 'fixed',
+      top: `${rect.bottom + 4}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`
+    });
   }
 
   protected closeDropdown(): void {
