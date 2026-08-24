@@ -144,6 +144,8 @@ The main remaining product work is to deepen the child-facing experience and con
 
 - [Installing Buddy on a kid's iPad](analysis/ipad-installation.md) — PWA vs. native install
   options, push notification support, and pricing
+- [A single-day dashboard for the child home screen](analysis/child-day-dashboard.md) — layout
+  options for today's meal plan, medicine, and tasks on the child home screen
 
 ## Local development
 
