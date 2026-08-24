@@ -37,6 +37,19 @@
         <option [value]="timeZoneId">{{ timeZoneId }}</option>
       }
     </select>
+    @if (manageableGroups().length > 0) {
+      <select
+        name="calendarGroupId"
+        class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="newCalendarGroupId()"
+        (ngModelChange)="newCalendarGroupId.set($event)"
+      >
+        <option value="">{{ 'admin.manageCalendars.ownerPersonalOption' | translate }}</option>
+        @for (group of manageableGroups(); track group.id) {
+          <option [value]="group.id">{{ group.name }}</option>
+        }
+      </select>
+    }
     <button
       type="submit"
       class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"

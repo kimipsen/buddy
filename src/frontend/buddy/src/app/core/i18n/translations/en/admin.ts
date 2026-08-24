@@ -27,6 +27,28 @@ export const admin = {
       sendError: 'Unable to send the invite. The email may already be a member, or an invite was already sent recently.',
       cancelButton: 'Cancel',
       cancelError: 'Unable to cancel the invite.'
+    },
+    policy: {
+      title: 'Calendar permissions',
+      showButton: 'Calendar permissions',
+      hideButton: 'Close',
+      loading: 'Loading permissions…',
+      loadError: 'Unable to load calendar permissions.',
+      saveButton: 'Save permissions',
+      saveError: 'Unable to save calendar permissions.'
+    },
+    mealplanPolicy: {
+      title: 'Meal plan permissions',
+      showButton: 'Meal plan permissions',
+      hideButton: 'Close',
+      loading: 'Loading permissions…',
+      loadError: 'Unable to load meal plan permissions.',
+      saveButton: 'Save permissions',
+      saveError: 'Unable to save meal plan permissions.',
+      tiers: {
+        none: 'No access',
+        manage: 'Full access'
+      }
     }
   },
   manageChildren: {
@@ -63,7 +85,8 @@ export const admin = {
       owner: 'Owner',
       contributor: 'Contributor',
       viewer: 'Viewer'
-    }
+    },
+    ownerPersonalOption: 'Personal (only you)'
   },
   deleteAccount: {
     title: 'Danger zone',

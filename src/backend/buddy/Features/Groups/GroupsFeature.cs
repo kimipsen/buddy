@@ -22,6 +22,7 @@ public static class GroupsFeature
         typeof(GroupMemberRoleGranted),
         typeof(GroupMemberRoleRevoked),
         typeof(GroupCalendarPolicyUpdated),
+        typeof(GroupMealplanPolicyUpdated),
         typeof(GroupDeleted),
         typeof(GroupInviteCreated),
         typeof(GroupInviteAccepted),
@@ -72,6 +73,7 @@ public static class GroupsFeature
         groups.MapSetGroupMemberRole();
         groups.MapRemoveGroupMember();
         groups.MapUpdateCalendarPermissionPolicy();
+        groups.MapUpdateMealplanPermissionPolicy();
         groups.MapDeleteGroup();
         groups.MapInviteToGroup();
         groups.MapListGroupInvites();

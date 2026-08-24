@@ -303,6 +303,13 @@ backfill or invalidation step needed anywhere.
 
 ## Authorization
 
+> **Update:** [group-owned-mealplans.md](group-owned-mealplans.md) adds a
+> second, fully additive resolution path so a family can share its
+> `MealPlan` with a group. It does not change anything below — the
+> `ChildId`/`GuardianLink` resolution described here is still exactly how
+> the family/child axis works; a group is a separate, independent grant on
+> top of it, resolved by a different authorizer entirely.
+
 Same narrower two-tier shape as `MedicineSchedule`
 ([medicine-schedules.md](medicine-schedules.md#authorization)) — no members,
 no group ownership, exactly two principals — reusing the existing

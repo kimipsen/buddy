@@ -23,7 +23,9 @@ public static class MealplansFeature
         typeof(MealRated),
         typeof(MealPlanCreated),
         typeof(MealAssignedToSlot),
-        typeof(MealSlotCleared)
+        typeof(MealSlotCleared),
+        typeof(MealPlanSharedWithGroup),
+        typeof(MealPlanUnsharedFromGroup)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -75,6 +77,21 @@ public static class MealplansFeature
         mealplans.MapAssignMealToSlot();
         mealplans.MapClearMealSlot();
         mealplans.MapListMealPlan();
+
+        mealplans.MapShareMealPlanWithGroup();
+        mealplans.MapUnshareMealPlanFromGroup();
+        mealplans.MapGetSharedGroup();
+
+        // Group-keyed siblings of the routes above -- see
+        // docs/backend/analysis/group-owned-mealplans.md. RateMeal has no group-keyed sibling:
+        // rating stays exclusively the child's own tier.
+        mealplans.MapListMealPlanForGroup();
+        mealplans.MapAssignMealToSlotForGroup();
+        mealplans.MapClearMealSlotForGroup();
+        mealplans.MapListMealsForGroup();
+        mealplans.MapCreateMealForGroup();
+        mealplans.MapUpdateMealDetailsForGroup();
+        mealplans.MapArchiveMealForGroup();
 
         return endpoints;
     }

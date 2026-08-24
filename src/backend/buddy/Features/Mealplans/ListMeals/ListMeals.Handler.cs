@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
 
@@ -23,7 +24,18 @@ public static class ListMealsHandler
             return access.ToDeniedResult<IReadOnlyCollection<Meal>>();
         }
 
-        var mealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(query.ChildId, guardians, meals, cancellationToken);
+        var loaded = await LoadFamilyMealsAsync(query.ChildId, meals, guardians, cancellationToken);
+
+        return new Result<IReadOnlyCollection<Meal>>.Success(loaded);
+    }
+
+    // Shared with ListMealsForGroupHandler, which resolves its own AnchorChildId through a
+    // group's MealplanPermissionPolicy instead of MealplanAuthorization -- everything past
+    // authorization is identical (see docs/backend/analysis/group-owned-mealplans.md).
+    internal static async Task<IReadOnlyCollection<Meal>> LoadFamilyMealsAsync(
+        UserId childId, IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    {
+        var mealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(childId, guardians, meals, cancellationToken);
         var loaded = new List<Meal>(mealIds.Count);
 
         foreach (var mealId in mealIds)
@@ -40,6 +52,6 @@ public static class ListMealsHandler
 
         loaded.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
 
-        return new Result<IReadOnlyCollection<Meal>>.Success(loaded);
+        return loaded;
     }
 }

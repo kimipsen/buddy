@@ -1,9 +1,8 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { MealplansService } from '../../../../core/mealplans.service';
+import { MealplanScope, MealplansService } from '../../../../core/mealplans.service';
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
@@ -13,13 +12,11 @@ const PAGE_SIZE = 5;
   imports: [FormsModule, TranslatePipe],
   templateUrl: './manage-meals.html'
 })
-export class ManageMeals implements OnInit {
-  private readonly guardians = inject(GuardiansService);
+export class ManageMeals {
   private readonly mealplans = inject(MealplansService);
 
-  private childId: string | null = null;
+  readonly scope = input.required<MealplanScope>();
 
-  protected readonly hasChildren = signal(true);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
@@ -44,8 +41,10 @@ export class ManageMeals implements OnInit {
 
   protected readonly archivingMealId = signal<string | null>(null);
 
-  ngOnInit(): void {
-    void this.load();
+  constructor() {
+    effect(() => {
+      void this.load(this.scope());
+    });
   }
 
   protected previousPage(): void {
@@ -61,7 +60,7 @@ export class ManageMeals implements OnInit {
     const icon = this.newMealIcon().trim();
     const color = this.newMealColor().trim();
 
-    if (!this.childId || !name || !icon || !color) {
+    if (!name || !icon || !color) {
       return;
     }
 
@@ -69,7 +68,7 @@ export class ManageMeals implements OnInit {
     this.createError.set(null);
 
     try {
-      await this.mealplans.createMeal(this.childId, {
+      await this.mealplans.createMeal(this.scope(), {
         name,
         description: this.newMealDescription().trim() || null,
         icon,
@@ -89,15 +88,11 @@ export class ManageMeals implements OnInit {
   }
 
   protected async archiveMeal(mealId: string): Promise<void> {
-    if (!this.childId) {
-      return;
-    }
-
     this.archivingMealId.set(mealId);
     this.error.set(null);
 
     try {
-      await this.mealplans.archiveMeal(this.childId, mealId);
+      await this.mealplans.archiveMeal(this.scope(), mealId);
     } catch {
       this.error.set('mealplan.manageMeals.archiveError');
     } finally {
@@ -105,21 +100,12 @@ export class ManageMeals implements OnInit {
     }
   }
 
-  private async load(): Promise<void> {
+  private async load(scope: MealplanScope): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
-      const children = await this.guardians.listMyChildren();
-
-      if (children.length === 0) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-      this.childId = children[0].id;
-      await this.mealplans.listMeals(this.childId);
+      await this.mealplans.listMeals(scope);
     } catch {
       this.error.set('mealplan.manageMeals.loadError');
     } finally {

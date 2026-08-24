@@ -2,6 +2,20 @@ export const mealplan = {
   backToDashboard: 'Tilbage til oversigt',
   eyebrow: 'Madplan',
   title: 'Planlæg ugens måltider.',
+  loadError: 'Kunne ikke indlæse madplanen.',
+  scope: {
+    myFamily: 'Min familie'
+  },
+  sharing: {
+    title: 'Del med en gruppe',
+    selectGroupPlaceholder: 'Vælg en gruppe…',
+    shareButton: 'Del',
+    unshareButton: 'Stop deling',
+    currentlySharedWith: 'Delt med {name}.',
+    noGroups: 'Opret en gruppe, eller bliv administrator af en, for at dele denne madplan.',
+    shareError: 'Kunne ikke dele madplanen med den gruppe.',
+    unshareError: 'Kunne ikke stoppe deling af madplanen.'
+  },
   manageMeals: {
     title: 'Måltider',
     loading: 'Indlæser måltider…',

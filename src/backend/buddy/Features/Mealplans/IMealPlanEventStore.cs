@@ -1,3 +1,4 @@
+using buddy.Features.Groups;
 using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
@@ -13,4 +14,8 @@ public interface IMealPlanEventStore
     // A MealPlan is a 1:1 singleton per child, provisioned lazily -- null means the child has no
     // plan stream yet (nothing has ever been assigned).
     Task<MealPlanId?> FindIdForChildAsync(UserId childId, CancellationToken cancellationToken);
+
+    // Resolves which plan (and its anchor child) a group currently has Manage-tier access to, if
+    // any -- see docs/backend/analysis/group-owned-mealplans.md.
+    Task<GroupSharedMealPlanDocument?> FindGroupSharedAsync(GroupId groupId, CancellationToken cancellationToken);
 }

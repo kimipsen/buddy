@@ -9,6 +9,18 @@ import { RuntimeConfigService } from './runtime-config.service';
 // doubles as display order.
 export type MealSlot = 0 | 1 | 2 | 3;
 
+// MealplanAccessTier values match the backend's enum ordinals: 0 = None, 1 = Rate, 2 = Manage.
+// Only None/Manage are ever meaningful as a group's MealplanPermissionPolicy value -- Rate is the
+// child's own tier and is rejected by the backend if submitted here.
+export type MealplanAccessTier = 0 | 1 | 2;
+
+// A family's plan is always addressed by childId; a plan the family has shared with a group is
+// additionally reachable by groupId, resolving transparently to the same underlying plan and
+// meal library (see docs/backend/analysis/group-owned-mealplans.md). Every read/write method
+// below takes a scope instead of a bare childId so callers don't need to know which URL family
+// backs a given scope.
+export type MealplanScope = { kind: 'family'; childId: string } | { kind: 'group'; groupId: string; groupName: string };
+
 export interface MealRating {
   stars: number;
   comment: string | null;
@@ -35,8 +47,8 @@ export interface MealRatingSummary {
 }
 
 // A Meal is shared by every child in its family (see MealFamilyResolution) -- it's scoped by
-// childId in the URL only because the API needs some child to resolve the family through, not
-// because the meal belongs to that child.
+// childId/groupId in the URL only to resolve which family's library to read, not because the
+// meal belongs to that child or group.
 export interface Meal {
   id: string;
   name: string;
@@ -67,64 +79,65 @@ export class MealplansService {
   private readonly mealsState = signal<Meal[]>([]);
   readonly meals = this.mealsState.asReadonly();
 
-  listMealPlan(childId: string, from: string, to: string): Promise<MealPlanEntry[]> {
-    return firstValueFrom(
-      this.http.get<MealPlanEntry[]>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan`, {
-        params: { from, to }
-      })
-    );
+  private base(scope: MealplanScope): string {
+    return scope.kind === 'family'
+      ? `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${scope.childId}`
+      : `${this.runtimeConfig.apiBaseUrl}/mealplans/groups/${scope.groupId}`;
   }
 
-  async listMeals(childId: string): Promise<Meal[]> {
-    const meals = await firstValueFrom(
-      this.http.get<Meal[]>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals`)
-    );
+  listMealPlan(scope: MealplanScope, from: string, to: string): Promise<MealPlanEntry[]> {
+    return firstValueFrom(this.http.get<MealPlanEntry[]>(`${this.base(scope)}/plan`, { params: { from, to } }));
+  }
+
+  async listMeals(scope: MealplanScope): Promise<Meal[]> {
+    const meals = await firstValueFrom(this.http.get<Meal[]>(`${this.base(scope)}/meals`));
     this.mealsState.set(meals);
     return meals;
   }
 
-  async createMeal(childId: string, request: MealDetails): Promise<Meal> {
-    const meal = await firstValueFrom(
-      this.http.post<Meal>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals`, request)
-    );
+  async createMeal(scope: MealplanScope, request: MealDetails): Promise<Meal> {
+    const meal = await firstValueFrom(this.http.post<Meal>(`${this.base(scope)}/meals`, request));
     this.mealsState.update((current) => [...current, meal]);
     return meal;
   }
 
-  async updateMealDetails(childId: string, mealId: string, request: MealDetails): Promise<Meal> {
-    const meal = await firstValueFrom(
-      this.http.patch<Meal>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}/details`, request)
-    );
+  async updateMealDetails(scope: MealplanScope, mealId: string, request: MealDetails): Promise<Meal> {
+    const meal = await firstValueFrom(this.http.patch<Meal>(`${this.base(scope)}/meals/${mealId}/details`, request));
     this.mealsState.update((current) => current.map((existing) => (existing.id === meal.id ? meal : existing)));
     return meal;
   }
 
-  async archiveMeal(childId: string, mealId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}`)
-    );
+  async archiveMeal(scope: MealplanScope, mealId: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.base(scope)}/meals/${mealId}`));
     this.mealsState.update((current) => current.filter((meal) => meal.id !== mealId));
   }
 
-  assignMealToSlot(
-    childId: string,
-    date: string,
-    slot: MealSlot,
-    mealId: string,
-    notes?: string | null
-  ): Promise<MealPlanEntry> {
+  assignMealToSlot(scope: MealplanScope, date: string, slot: MealSlot, mealId: string, notes?: string | null): Promise<MealPlanEntry> {
     return firstValueFrom(
-      this.http.put<MealPlanEntry>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan`, { mealId, notes }, {
-        params: { date, slot: String(slot) }
-      })
+      this.http.put<MealPlanEntry>(`${this.base(scope)}/plan`, { mealId, notes }, { params: { date, slot: String(slot) } })
     );
   }
 
-  clearMealSlot(childId: string, date: string, slot: MealSlot): Promise<void> {
+  clearMealSlot(scope: MealplanScope, date: string, slot: MealSlot): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.base(scope)}/plan`, { params: { date, slot: String(slot) } }));
+  }
+
+  // Sharing is always a family-side action (only a guardian, via CheckManage, can decide to share
+  // or unshare their child's plan) -- these two and getSharedGroup are never scope-based.
+  shareWithGroup(childId: string, groupId: string): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups/${groupId}`, {}));
+  }
+
+  unshareFromGroup(childId: string, groupId: string): Promise<void> {
     return firstValueFrom(
-      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan`, {
-        params: { date, slot: String(slot) }
-      })
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups/${groupId}`)
     );
+  }
+
+  async getSharedGroupId(childId: string): Promise<string | null> {
+    const response = await firstValueFrom(
+      this.http.get<{ groupId: string | null }>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups`)
+    );
+    return response.groupId;
   }
 }

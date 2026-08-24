@@ -1,3 +1,4 @@
+using buddy.Features.Groups;
 using buddy.Features.Users;
 
 using Marten;
@@ -30,6 +31,14 @@ public sealed class MartenMealPlanEventStore(IMealplansStore store) : IMealPlanE
         session.Events.StartStream(id.Value, payloads);
         session.Store(new MealPlanIndexDocument(id.Value, childId.Value));
 
+        // Lazy creation can bundle a share into the same batch (e.g. sharing a family's very
+        // first, still-empty plan) -- apply any document side effects for every event in the
+        // batch, not just the first, the same way AppendAsync does.
+        foreach (var @event in events)
+        {
+            ApplyGroupSharingDocumentEffects(session, id, @event);
+        }
+
         await session.SaveChangesAsync(cancellationToken);
 
         return events;
@@ -49,6 +58,11 @@ public sealed class MartenMealPlanEventStore(IMealplansStore store) : IMealPlanE
         await using var session = store.LightweightSession();
         session.Events.Append(id.Value, payloads);
 
+        foreach (var @event in events)
+        {
+            ApplyGroupSharingDocumentEffects(session, id, @event);
+        }
+
         await session.SaveChangesAsync(cancellationToken);
     }
 
@@ -61,5 +75,30 @@ public sealed class MartenMealPlanEventStore(IMealplansStore store) : IMealPlanE
             .FirstOrDefaultAsync(cancellationToken);
 
         return doc is null ? null : new MealPlanId(doc.Id);
+    }
+
+    public async Task<GroupSharedMealPlanDocument?> FindGroupSharedAsync(GroupId groupId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        return await session.Query<GroupSharedMealPlanDocument>()
+            .Where(d => d.GroupId == groupId.Value)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    // Id is the MealPlanId itself, so re-sharing with a different group is a plain upsert
+    // (session.Store overwrites the row) -- see GroupSharedMealPlanDocument.
+    private static void ApplyGroupSharingDocumentEffects(IDocumentSession session, MealPlanId id, MealPlanEvent @event)
+    {
+        switch (@event)
+        {
+            case MealPlanSharedWithGroup shared:
+                session.Store(new GroupSharedMealPlanDocument(id.Value, shared.GroupId.Value, shared.AnchorChildId.Value));
+                break;
+
+            case MealPlanUnsharedFromGroup:
+                session.Delete<GroupSharedMealPlanDocument>(id.Value);
+                break;
+        }
     }
 }

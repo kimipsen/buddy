@@ -3,8 +3,6 @@
 
   @if (loading()) {
     <p class="text-sm text-slate-500">{{ 'mealplan.manageMeals.loading' | translate }}</p>
-  } @else if (!hasChildren()) {
-    <p class="text-sm text-slate-500">{{ 'mealplan.manageMeals.noChildren' | translate }}</p>
   } @else {
     @if (error(); as message) {
       <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>

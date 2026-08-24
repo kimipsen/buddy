@@ -2,6 +2,20 @@ export const mealplan = {
   backToDashboard: 'Back to dashboard',
   eyebrow: 'Meal planner',
   title: "Plan the week's meals.",
+  loadError: 'Unable to load the meal plan.',
+  scope: {
+    myFamily: 'My family'
+  },
+  sharing: {
+    title: 'Share with a group',
+    selectGroupPlaceholder: 'Choose a group…',
+    shareButton: 'Share',
+    unshareButton: 'Stop sharing',
+    currentlySharedWith: 'Shared with {name}.',
+    noGroups: 'Create a group, or become an admin of one, to share this meal plan.',
+    shareError: 'Unable to share the meal plan with that group.',
+    unshareError: 'Unable to stop sharing the meal plan.'
+  },
   manageMeals: {
     title: 'Meals',
     loading: 'Loading meals…',

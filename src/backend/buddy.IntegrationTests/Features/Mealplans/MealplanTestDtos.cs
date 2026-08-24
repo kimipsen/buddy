@@ -20,6 +20,8 @@ internal sealed record MealDto(
     Guid CreatedBy,
     Guid LastModifiedBy);
 
+internal sealed record SharedGroupResponseDto(Guid? GroupId);
+
 internal sealed record MealPlanEntryDto(
     DateOnly Date,
     MealSlot Slot,

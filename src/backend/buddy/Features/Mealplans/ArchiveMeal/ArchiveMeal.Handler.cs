@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
 
@@ -23,7 +24,15 @@ public static class ArchiveMealHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        var events = await meals.ReadAsync(command.MealId, cancellationToken);
+        return await ArchiveForChildAsync(command.ChildId, command.MealId, userId, meals, guardians, cancellationToken);
+    }
+
+    // Shared with ArchiveMealForGroupHandler -- see CreateMealHandler.CreateForChildAsync for the
+    // same pattern and rationale.
+    internal static async Task<Result<Unit>> ArchiveForChildAsync(
+        UserId childId, MealId mealId, UserId modifiedBy, IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    {
+        var events = await meals.ReadAsync(mealId, cancellationToken);
         var meal = Meal.Rehydrate(events);
 
         if (meal is null || meal.IsArchived)
@@ -31,14 +40,14 @@ public static class ArchiveMealHandler
             return new Result<Unit>.NotFound();
         }
 
-        var familyMealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(command.ChildId, guardians, meals, cancellationToken);
+        var familyMealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(childId, guardians, meals, cancellationToken);
 
-        if (!familyMealIds.Contains(command.MealId))
+        if (!familyMealIds.Contains(mealId))
         {
             return new Result<Unit>.NotFound();
         }
 
-        await meals.AppendAsync(command.MealId, [new MealArchived(command.MealId, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await meals.AppendAsync(mealId, [new MealArchived(mealId, modifiedBy, DateTimeOffset.UtcNow)], cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

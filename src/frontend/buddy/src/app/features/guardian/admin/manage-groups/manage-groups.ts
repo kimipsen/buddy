@@ -1,8 +1,18 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { CalendarRole } from '../../../../core/calendars.service';
+import {
+  CalendarPermissionPolicy,
+  GroupInvite,
+  GroupRole,
+  GroupRoleName,
+  GroupSummary,
+  GroupsService,
+  MealplanPermissionPolicy
+} from '../../../../core/groups.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { GroupInvite, GroupRole, GroupSummary, GroupsService } from '../../../../core/groups.service';
+import { MealplanAccessTier } from '../../../../core/mealplans.service';
 
 const ROLE_LABELS: Record<number, string> = {
   0: 'admin.manageGroups.roles.owner',
@@ -14,6 +24,31 @@ const ROLE_LABELS: Record<number, string> = {
 // InviteToGroup rejection of GroupRole.Owner).
 const INVITABLE_ROLES: GroupRole[] = [1, 2];
 
+const CALENDAR_ROLE_LABELS: Record<CalendarRole, string> = {
+  0: 'admin.manageCalendars.roles.owner',
+  1: 'admin.manageCalendars.roles.contributor',
+  2: 'admin.manageCalendars.roles.viewer'
+};
+
+const CALENDAR_ROLES: CalendarRole[] = [0, 1, 2];
+
+// Pairs each policy dictionary key (a GroupRole name string, per the backend's enum-dictionary-key
+// serialization) with its numeric GroupRole ordinal so rows can reuse the existing ROLE_LABELS map.
+const POLICY_ROWS: { key: GroupRoleName; role: GroupRole }[] = [
+  { key: 'Owner', role: 0 },
+  { key: 'Admin', role: 1 },
+  { key: 'Member', role: 2 }
+];
+
+// Only None (0) and Manage (2) are ever valid group-policy values for meal plans -- Rate (1) is
+// the child's own tier and is rejected by the backend, so it's never offered here.
+const MEALPLAN_TIER_LABELS: Record<number, string> = {
+  0: 'admin.manageGroups.mealplanPolicy.tiers.none',
+  2: 'admin.manageGroups.mealplanPolicy.tiers.manage'
+};
+
+const MEALPLAN_TIERS: MealplanAccessTier[] = [0, 2];
+
 @Component({
   selector: 'app-manage-groups',
   imports: [FormsModule, TranslatePipe],
@@ -24,6 +59,11 @@ export class ManageGroups implements OnInit {
 
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly invitableRoles = INVITABLE_ROLES;
+  protected readonly calendarRoleLabels = CALENDAR_ROLE_LABELS;
+  protected readonly calendarRoles = CALENDAR_ROLES;
+  protected readonly policyRows = POLICY_ROWS;
+  protected readonly mealplanTierLabels = MEALPLAN_TIER_LABELS;
+  protected readonly mealplanTiers = MEALPLAN_TIERS;
 
   protected readonly items = signal<GroupSummary[]>([]);
   protected readonly loading = signal(true);
@@ -44,6 +84,20 @@ export class ManageGroups implements OnInit {
   protected readonly inviteError = signal<string | null>(null);
 
   protected readonly revokingInviteId = signal<string | null>(null);
+
+  protected readonly expandedPolicyGroupId = signal<string | null>(null);
+  protected readonly policyDraft = signal<CalendarPermissionPolicy | null>(null);
+  protected readonly policyLoading = signal(false);
+  protected readonly policyLoadError = signal<string | null>(null);
+  protected readonly policySaving = signal(false);
+  protected readonly policySaveError = signal<string | null>(null);
+
+  protected readonly expandedMealplanPolicyGroupId = signal<string | null>(null);
+  protected readonly mealplanPolicyDraft = signal<MealplanPermissionPolicy | null>(null);
+  protected readonly mealplanPolicyLoading = signal(false);
+  protected readonly mealplanPolicyLoadError = signal<string | null>(null);
+  protected readonly mealplanPolicySaving = signal(false);
+  protected readonly mealplanPolicySaveError = signal<string | null>(null);
 
   ngOnInit(): void {
     void this.loadGroups();
@@ -124,6 +178,116 @@ export class ManageGroups implements OnInit {
 
   protected invitesFor(groupId: string): GroupInvite[] {
     return this.invitesByGroupId()[groupId] ?? [];
+  }
+
+  protected togglePolicyPanel(groupId: string): void {
+    if (this.expandedPolicyGroupId() === groupId) {
+      this.expandedPolicyGroupId.set(null);
+      this.policyDraft.set(null);
+      return;
+    }
+
+    this.expandedPolicyGroupId.set(groupId);
+    this.policyLoadError.set(null);
+    this.policySaveError.set(null);
+    void this.loadPolicy(groupId);
+  }
+
+  protected setDraftRole(roleKey: GroupRoleName, calendarRole: CalendarRole): void {
+    const draft = this.policyDraft();
+
+    if (!draft) {
+      return;
+    }
+
+    this.policyDraft.set({ ...draft, [roleKey]: calendarRole });
+  }
+
+  protected async savePolicy(groupId: string): Promise<void> {
+    const draft = this.policyDraft();
+
+    if (!draft) {
+      return;
+    }
+
+    this.policySaving.set(true);
+    this.policySaveError.set(null);
+
+    try {
+      await this.groups.updateCalendarPermissionPolicy(groupId, draft);
+    } catch {
+      this.policySaveError.set('admin.manageGroups.policy.saveError');
+    } finally {
+      this.policySaving.set(false);
+    }
+  }
+
+  private async loadPolicy(groupId: string): Promise<void> {
+    this.policyLoading.set(true);
+
+    try {
+      const group = await this.groups.getGroup(groupId);
+      this.policyDraft.set({ ...group.calendarPermissionPolicy });
+    } catch {
+      this.policyLoadError.set('admin.manageGroups.policy.loadError');
+    } finally {
+      this.policyLoading.set(false);
+    }
+  }
+
+  protected toggleMealplanPolicyPanel(groupId: string): void {
+    if (this.expandedMealplanPolicyGroupId() === groupId) {
+      this.expandedMealplanPolicyGroupId.set(null);
+      this.mealplanPolicyDraft.set(null);
+      return;
+    }
+
+    this.expandedMealplanPolicyGroupId.set(groupId);
+    this.mealplanPolicyLoadError.set(null);
+    this.mealplanPolicySaveError.set(null);
+    void this.loadMealplanPolicy(groupId);
+  }
+
+  protected setMealplanDraftTier(roleKey: GroupRoleName, tier: MealplanAccessTier): void {
+    const draft = this.mealplanPolicyDraft();
+
+    if (!draft) {
+      return;
+    }
+
+    this.mealplanPolicyDraft.set({ ...draft, [roleKey]: tier });
+  }
+
+  protected async saveMealplanPolicy(groupId: string): Promise<void> {
+    const draft = this.mealplanPolicyDraft();
+
+    if (!draft) {
+      return;
+    }
+
+    this.mealplanPolicySaving.set(true);
+    this.mealplanPolicySaveError.set(null);
+
+    try {
+      await this.groups.updateMealplanPermissionPolicy(groupId, draft);
+    } catch {
+      this.mealplanPolicySaveError.set('admin.manageGroups.mealplanPolicy.saveError');
+    } finally {
+      this.mealplanPolicySaving.set(false);
+    }
+  }
+
+  private async loadMealplanPolicy(groupId: string): Promise<void> {
+    this.mealplanPolicyLoading.set(true);
+
+    try {
+      const group = await this.groups.getGroup(groupId);
+      this.mealplanPolicyDraft.set({ ...group.mealplanPermissionPolicy });
+    } catch {
+      this.mealplanPolicyLoadError.set('admin.manageGroups.mealplanPolicy.loadError');
+    } finally {
+      this.mealplanPolicyLoading.set(false);
+    }
   }
 
   private async loadInvites(groupId: string): Promise<void> {

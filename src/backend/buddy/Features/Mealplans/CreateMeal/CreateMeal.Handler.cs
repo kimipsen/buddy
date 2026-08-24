@@ -1,5 +1,7 @@
 using buddy.Common;
+using buddy.Features.Calendars;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
 
@@ -28,13 +30,26 @@ public static class CreateMealHandler
             return access.ToDeniedResult<Meal>();
         }
 
+        var meal = await CreateForChildAsync(command.ChildId, userId, command.Name, command.Description, command.Icon, command.Color, meals, cancellationToken);
+
+        return new Result<Meal>.Success(meal);
+    }
+
+    // Shared with CreateMealForGroupHandler, which resolves its own AnchorChildId/actingUserId
+    // through a group's MealplanPermissionPolicy instead of MealplanAuthorization -- everything
+    // past authorization is identical (see docs/backend/analysis/group-owned-mealplans.md). The
+    // new meal is indexed under childId regardless of which route created it, same as any
+    // guardian-created meal.
+    internal static async Task<Meal> CreateForChildAsync(
+        UserId childId, UserId createdBy, string name, string? description, Icon icon, Color color, IMealEventStore meals, CancellationToken cancellationToken)
+    {
         var mealId = MealId.New();
         var now = DateTimeOffset.UtcNow;
 
-        var created = new MealCreated(mealId, command.ChildId, userId, command.Name, command.Description, command.Icon, command.Color, now);
+        var created = new MealCreated(mealId, childId, createdBy, name, description, icon, color, now);
 
         var events = await meals.CreateAsync(mealId, [created], cancellationToken);
 
-        return new Result<Meal>.Success(Meal.Rehydrate(events)!);
+        return Meal.Rehydrate(events)!;
     }
 }

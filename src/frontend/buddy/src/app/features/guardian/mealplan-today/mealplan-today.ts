@@ -51,7 +51,7 @@ export class MealplanToday implements OnInit {
       this.hasChildren.set(true);
 
       const today = todayIsoDate();
-      const entries = await this.mealplans.listMealPlan(children[0].id, today, today);
+      const entries = await this.mealplans.listMealPlan({ kind: 'family', childId: children[0].id }, today, today);
       const bySlot: Partial<Record<MealSlot, MealPlanEntry>> = {};
 
       for (const entry of entries) {

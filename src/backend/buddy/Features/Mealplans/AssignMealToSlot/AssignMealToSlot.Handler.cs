@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
 
@@ -24,7 +25,16 @@ public static class AssignMealToSlotHandler
             return access.ToDeniedResult<MealPlanEntry>();
         }
 
-        var mealEvents = await meals.ReadAsync(command.MealId, cancellationToken);
+        return await AssignForChildAsync(command.ChildId, command.Date, command.Slot, command.MealId, command.Notes, userId, mealPlans, meals, guardians, cancellationToken);
+    }
+
+    // Shared with AssignMealToSlotForGroupHandler -- see CreateMealHandler.CreateForChildAsync
+    // for the same pattern and rationale.
+    internal static async Task<Result<MealPlanEntry>> AssignForChildAsync(
+        UserId childId, DateOnly date, MealSlot slot, MealId mealId, string? notes, UserId assignedBy,
+        IMealPlanEventStore mealPlans, IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    {
+        var mealEvents = await meals.ReadAsync(mealId, cancellationToken);
         var meal = Meal.Rehydrate(mealEvents);
 
         if (meal is null)
@@ -32,9 +42,9 @@ public static class AssignMealToSlotHandler
             return new Result<MealPlanEntry>.NotFound();
         }
 
-        var familyMealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(command.ChildId, guardians, meals, cancellationToken);
+        var familyMealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(childId, guardians, meals, cancellationToken);
 
-        if (!familyMealIds.Contains(command.MealId))
+        if (!familyMealIds.Contains(mealId))
         {
             return new Result<MealPlanEntry>.NotFound();
         }
@@ -44,10 +54,10 @@ public static class AssignMealToSlotHandler
             return new Result<MealPlanEntry>.Validation("Cannot assign an archived meal.");
         }
 
-        var after = new MealPlanAssignment(command.MealId, userId, command.Notes);
+        var after = new MealPlanAssignment(mealId, assignedBy, notes);
         var now = DateTimeOffset.UtcNow;
 
-        var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(command.ChildId, guardians, mealPlans, cancellationToken);
+        var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(childId, guardians, mealPlans, cancellationToken);
 
         if (mealPlanId is null)
         {
@@ -56,8 +66,8 @@ public static class AssignMealToSlotHandler
             await mealPlans.CreateAsync(
                 newId,
                 [
-                    new MealPlanCreated(newId, command.ChildId, now),
-                    new MealAssignedToSlot(newId, command.Date, command.Slot, Before: null, after, now)
+                    new MealPlanCreated(newId, childId, now),
+                    new MealAssignedToSlot(newId, date, slot, Before: null, after, now)
                 ],
                 cancellationToken);
         }
@@ -65,16 +75,16 @@ public static class AssignMealToSlotHandler
         {
             var planEvents = await mealPlans.ReadAsync(mealPlanId, cancellationToken);
             var plan = MealPlan.Rehydrate(planEvents)!;
-            var before = plan.Assignments.GetValueOrDefault((command.Date, command.Slot));
+            var before = plan.Assignments.GetValueOrDefault((date, slot));
 
             if (before is null || before.MealId != after.MealId || before.Notes != after.Notes)
             {
-                await mealPlans.AppendAsync(mealPlanId, [new MealAssignedToSlot(mealPlanId, command.Date, command.Slot, before, after, now)], cancellationToken);
+                await mealPlans.AppendAsync(mealPlanId, [new MealAssignedToSlot(mealPlanId, date, slot, before, after, now)], cancellationToken);
             }
         }
 
         return new Result<MealPlanEntry>.Success(new MealPlanEntry(
-            command.Date, command.Slot, meal.Id, meal.Name, meal.Icon.Value, meal.Color.Value,
-            meal.Ratings.GetValueOrDefault(command.ChildId), command.Notes, userId.Value));
+            date, slot, meal.Id, meal.Name, meal.Icon.Value, meal.Color.Value,
+            meal.Ratings.GetValueOrDefault(childId), notes, assignedBy.Value));
     }
 }

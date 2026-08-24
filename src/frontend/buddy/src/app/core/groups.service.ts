@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { CalendarRole } from './calendars.service';
+import { MealplanAccessTier } from './mealplans.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // GroupRole values match the backend's GroupRole enum ordinals (no string enum converter is
@@ -12,6 +14,30 @@ export interface GroupSummary {
   id: string;
   name: string;
   role: GroupRole;
+}
+
+export interface GroupMember {
+  userId: string;
+  role: GroupRole;
+}
+
+// Unlike GroupRole itself, dictionary KEYS of type GroupRole serialize as the enum's member name
+// (System.Text.Json's built-in behavior for enum dictionary keys), not its numeric ordinal --
+// so this policy's keys are string role names, while CalendarRole values stay numeric.
+export type GroupRoleName = 'Owner' | 'Admin' | 'Member';
+
+export const GROUP_ROLE_NAMES: readonly GroupRoleName[] = ['Owner', 'Admin', 'Member'];
+
+export type CalendarPermissionPolicy = Record<GroupRoleName, CalendarRole>;
+
+export type MealplanPermissionPolicy = Record<GroupRoleName, MealplanAccessTier>;
+
+export interface GroupDetail {
+  id: string;
+  name: string;
+  members: GroupMember[];
+  calendarPermissionPolicy: CalendarPermissionPolicy;
+  mealplanPermissionPolicy: MealplanPermissionPolicy;
 }
 
 export interface CreateGroupRequest {
@@ -58,6 +84,22 @@ export class GroupsService {
 
   revokeInvite(groupId: string, inviteId: string): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites/${inviteId}`));
+  }
+
+  getGroup(groupId: string): Promise<GroupDetail> {
+    return firstValueFrom(this.http.get<GroupDetail>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}`));
+  }
+
+  updateCalendarPermissionPolicy(groupId: string, policy: CalendarPermissionPolicy): Promise<void> {
+    return firstValueFrom(
+      this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/calendar-permission-policy`, { policy })
+    );
+  }
+
+  updateMealplanPermissionPolicy(groupId: string, policy: MealplanPermissionPolicy): Promise<void> {
+    return firstValueFrom(
+      this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/mealplan-permission-policy`, { policy })
+    );
   }
 
   previewInvite(token: string): Promise<GroupInvitePreview> {

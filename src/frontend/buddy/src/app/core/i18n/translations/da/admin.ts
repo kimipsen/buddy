@@ -27,6 +27,28 @@ export const admin = {
       sendError: 'Kunne ikke sende invitationen. E-mailen er muligvis allerede medlem, eller en invitation blev allerede sendt for nylig.',
       cancelButton: 'Annuller',
       cancelError: 'Kunne ikke annullere invitationen.'
+    },
+    policy: {
+      title: 'Kalendertilladelser',
+      showButton: 'Kalendertilladelser',
+      hideButton: 'Luk',
+      loading: 'Indlæser tilladelser…',
+      loadError: 'Kunne ikke indlæse kalendertilladelser.',
+      saveButton: 'Gem tilladelser',
+      saveError: 'Kunne ikke gemme kalendertilladelser.'
+    },
+    mealplanPolicy: {
+      title: 'Måltidsplan-tilladelser',
+      showButton: 'Måltidsplan-tilladelser',
+      hideButton: 'Luk',
+      loading: 'Indlæser tilladelser…',
+      loadError: 'Kunne ikke indlæse måltidsplan-tilladelser.',
+      saveButton: 'Gem tilladelser',
+      saveError: 'Kunne ikke gemme måltidsplan-tilladelser.',
+      tiers: {
+        none: 'Ingen adgang',
+        manage: 'Fuld adgang'
+      }
     }
   },
   manageChildren: {
@@ -63,7 +85,8 @@ export const admin = {
       owner: 'Ejer',
       contributor: 'Bidragyder',
       viewer: 'Læser'
-    }
+    },
+    ownerPersonalOption: 'Personlig (kun dig)'
   },
   deleteAccount: {
     title: 'Faresone',

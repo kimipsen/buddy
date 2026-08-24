@@ -1,10 +1,9 @@
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 
 import { toIsoDate } from '../../../../core/date-utils';
-import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { MealPlanEntry, MealSlot, MealplansService } from '../../../../core/mealplans.service';
+import { MealPlanEntry, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
 import { MealPicker } from '../meal-picker/meal-picker';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
@@ -45,17 +44,15 @@ function buildDays(): PlannerDay[] {
   imports: [MealPicker, TranslatePipe, CdkDrag, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup],
   templateUrl: './assign-mealplan.html'
 })
-export class AssignMealplan implements OnInit {
-  private readonly guardians = inject(GuardiansService);
+export class AssignMealplan {
   private readonly mealplans = inject(MealplansService);
 
-  private childId: string | null = null;
+  readonly scope = input.required<MealplanScope>();
 
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
   protected readonly days = buildDays();
 
-  protected readonly hasChildren = signal(true);
   // Reads straight from the shared service state, so adding a meal in the meal library on the
   // same page shows up here immediately without a manual refetch.
   protected readonly meals = computed(() => this.mealplans.meals().filter((meal) => !meal.isArchived));
@@ -64,8 +61,10 @@ export class AssignMealplan implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly savingKey = signal<string | null>(null);
 
-  ngOnInit(): void {
-    void this.load();
+  constructor() {
+    effect(() => {
+      void this.load(this.scope());
+    });
   }
 
   protected key(date: string, slot: MealSlot): string {
@@ -81,20 +80,17 @@ export class AssignMealplan implements OnInit {
   }
 
   protected async onSlotChange(date: string, slot: MealSlot, mealId: string): Promise<void> {
-    if (!this.childId) {
-      return;
-    }
-
+    const scope = this.scope();
     const key = this.key(date, slot);
     this.savingKey.set(key);
     this.error.set(null);
 
     try {
       if (mealId) {
-        const entry = await this.mealplans.assignMealToSlot(this.childId, date, slot, mealId);
+        const entry = await this.mealplans.assignMealToSlot(scope, date, slot, mealId);
         this.entriesByKey.update((current) => ({ ...current, [key]: entry }));
       } else {
-        await this.mealplans.clearMealSlot(this.childId, date, slot);
+        await this.mealplans.clearMealSlot(scope, date, slot);
         this.entriesByKey.update((current) => {
           const next = { ...current };
           delete next[key];
@@ -111,10 +107,7 @@ export class AssignMealplan implements OnInit {
   // Dragging a meal onto an empty cell moves it; dragging it onto an occupied cell swaps the two,
   // since "move this to another day" and "switch these two around" are the same gesture to a user.
   protected async onMealDrop(event: CdkDragDrop<SlotRef>): Promise<void> {
-    if (!this.childId) {
-      return;
-    }
-
+    const scope = this.scope();
     const source = event.item.data as SlotRef;
     const target = event.container.data;
 
@@ -137,14 +130,14 @@ export class AssignMealplan implements OnInit {
 
     try {
       if (targetMealId) {
-        // Sequential, not Promise.all: both writes land on the same child's single mealplan
-        // event stream, and appending to it concurrently from two requests causes contention.
-        const targetEntry = await this.mealplans.assignMealToSlot(this.childId, target.date, target.slot, sourceMealId);
-        const sourceEntry = await this.mealplans.assignMealToSlot(this.childId, source.date, source.slot, targetMealId);
+        // Sequential, not Promise.all: both writes land on the same plan's single event stream,
+        // and appending to it concurrently from two requests causes contention.
+        const targetEntry = await this.mealplans.assignMealToSlot(scope, target.date, target.slot, sourceMealId);
+        const sourceEntry = await this.mealplans.assignMealToSlot(scope, source.date, source.slot, targetMealId);
         this.entriesByKey.update((current) => ({ ...current, [targetKey]: targetEntry, [sourceKey]: sourceEntry }));
       } else {
-        const targetEntry = await this.mealplans.assignMealToSlot(this.childId, target.date, target.slot, sourceMealId);
-        await this.mealplans.clearMealSlot(this.childId, source.date, source.slot);
+        const targetEntry = await this.mealplans.assignMealToSlot(scope, target.date, target.slot, sourceMealId);
+        await this.mealplans.clearMealSlot(scope, source.date, source.slot);
         this.entriesByKey.update((current) => {
           const next = { ...current, [targetKey]: targetEntry };
           delete next[sourceKey];
@@ -158,24 +151,15 @@ export class AssignMealplan implements OnInit {
     }
   }
 
-  private async load(): Promise<void> {
+  private async load(scope: MealplanScope): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
+    this.entriesByKey.set({});
 
     try {
-      const children = await this.guardians.listMyChildren();
-
-      if (children.length === 0) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-      this.childId = children[0].id;
-
       const [, entries] = await Promise.all([
-        this.mealplans.listMeals(this.childId),
-        this.mealplans.listMealPlan(this.childId, this.days[0].date, this.days[this.days.length - 1].date)
+        this.mealplans.listMeals(scope),
+        this.mealplans.listMealPlan(scope, this.days[0].date, this.days.at(-1)!.date)
       ]);
 
       const byKey: Partial<Record<string, MealPlanEntry>> = {};

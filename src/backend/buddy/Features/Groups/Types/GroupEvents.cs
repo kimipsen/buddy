@@ -1,4 +1,5 @@
 using buddy.Features.Calendars;
+using buddy.Features.Mealplans;
 using buddy.Features.Users;
 
 using System.Collections.Immutable;
@@ -10,6 +11,7 @@ public union GroupEvent(
     GroupMemberRoleGranted,
     GroupMemberRoleRevoked,
     GroupCalendarPolicyUpdated,
+    GroupMealplanPolicyUpdated,
     GroupDeleted,
     GroupInviteCreated,
     GroupInviteAccepted,
@@ -22,6 +24,7 @@ public union GroupEvent(
         GroupMemberRoleGranted e => e,
         GroupMemberRoleRevoked e => e,
         GroupCalendarPolicyUpdated e => e,
+        GroupMealplanPolicyUpdated e => e,
         GroupDeleted e => e,
         GroupInviteCreated e => e,
         GroupInviteAccepted e => e,
@@ -37,6 +40,7 @@ public union GroupEvent(
         GroupMemberRoleGranted => nameof(GroupMemberRoleGranted),
         GroupMemberRoleRevoked => nameof(GroupMemberRoleRevoked),
         GroupCalendarPolicyUpdated => nameof(GroupCalendarPolicyUpdated),
+        GroupMealplanPolicyUpdated => nameof(GroupMealplanPolicyUpdated),
         GroupDeleted => nameof(GroupDeleted),
         GroupInviteCreated => nameof(GroupInviteCreated),
         GroupInviteAccepted => nameof(GroupInviteAccepted),
@@ -59,6 +63,15 @@ public sealed record GroupMemberRoleRevoked(GroupId GroupId, UserId MemberId, Us
 // Full replace, not a partial patch -- every role must be present for CalendarAuthorization's
 // resolution to have something to look up (a role missing here fails closed, never open).
 public sealed record GroupCalendarPolicyUpdated(GroupId GroupId, ImmutableDictionary<GroupRole, CalendarRole> Policy, UserId UpdatedBy, DateTimeOffset OccurredAt);
+
+// Full replace, same rule as GroupCalendarPolicyUpdated -- every role must be present. Only
+// MealplanAccessTier.None/Manage are ever valid values here (validated at the API boundary); Rate
+// is reserved for a child's own tier and is never a meaningful group-policy target (see
+// docs/backend/analysis/group-owned-mealplans.md). Appended a second time, right after
+// GroupCreated in the same transaction, for every newly created group -- GroupCreated itself is
+// already shipped and cannot gain a required field retroactively, so a pre-existing group has no
+// entry here until one is set explicitly, which fails closed rather than guessing a default.
+public sealed record GroupMealplanPolicyUpdated(GroupId GroupId, ImmutableDictionary<GroupRole, MealplanAccessTier> Policy, UserId UpdatedBy, DateTimeOffset OccurredAt);
 
 // Recorded on the group's own stream (rather than a separate invite aggregate) so an invite's
 // lifecycle is part of the same history as the membership it leads to. None of the three invite
