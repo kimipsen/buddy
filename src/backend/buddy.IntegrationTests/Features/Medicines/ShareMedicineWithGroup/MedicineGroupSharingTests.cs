@@ -50,7 +50,9 @@ public sealed class MedicineGroupSharingTests(BuddyApiFixture fixture)
             _.Get.Url($"/medicines/children/{child.Id}/group-share");
             _.StatusCodeShouldBeOk();
         });
-        Assert.Equal(groupId, sharedGroupResponse.ReadAsJson<SharedMedicineGroupResponseDto>().GroupId);
+        var sharedGroupDto = sharedGroupResponse.ReadAsJson<SharedMedicineGroupResponseDto>();
+        Assert.Equal(groupId, sharedGroupDto.GroupId);
+        Assert.Equal("Co-parents", sharedGroupDto.GroupName);
 
         // A default-policy Admin gets Manage tier the instant they're granted the role -- no
         // separate opt-in needed.

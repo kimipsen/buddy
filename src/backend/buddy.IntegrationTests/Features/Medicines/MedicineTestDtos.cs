@@ -29,4 +29,4 @@ internal sealed record MedicineDoseOccurrenceDto(
     TimeOnly Time,
     DoseStatus Status);
 
-internal sealed record SharedMedicineGroupResponseDto(Guid? GroupId);
+internal sealed record SharedMedicineGroupResponseDto(Guid? GroupId, string? GroupName);

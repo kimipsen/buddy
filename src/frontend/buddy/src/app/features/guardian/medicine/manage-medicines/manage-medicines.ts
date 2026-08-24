@@ -50,6 +50,7 @@ export class ManageMedicines implements OnInit {
 
   protected readonly manageableGroups = signal<GroupSummary[]>([]);
   protected readonly sharedGroupId = signal<string | null>(null);
+  protected readonly sharedGroupName = signal<string | null>(null);
   protected readonly shareTargetGroupId = signal('');
   protected readonly sharing = signal(false);
   protected readonly shareError = signal<string | null>(null);
@@ -64,15 +65,12 @@ export class ManageMedicines implements OnInit {
     await this.loadSharing(childId);
   }
 
-  protected nameForGroup(groupId: string): string {
-    return this.manageableGroups().find((group) => group.id === groupId)?.name ?? groupId;
-  }
-
   protected async shareWithGroup(): Promise<void> {
     const childId = this.selectedChildId();
     const groupId = this.shareTargetGroupId();
+    const groupName = this.manageableGroups().find((group) => group.id === groupId)?.name;
 
-    if (!childId || !groupId) {
+    if (!childId || !groupId || !groupName) {
       return;
     }
 
@@ -82,6 +80,7 @@ export class ManageMedicines implements OnInit {
     try {
       await this.medicines.shareWithGroup(childId, groupId);
       this.sharedGroupId.set(groupId);
+      this.sharedGroupName.set(groupName);
       this.shareTargetGroupId.set('');
     } catch {
       this.shareError.set('medicine.manageMedicines.sharing.shareError');
@@ -104,6 +103,7 @@ export class ManageMedicines implements OnInit {
     try {
       await this.medicines.unshareFromGroup(childId, groupId);
       this.sharedGroupId.set(null);
+      this.sharedGroupName.set(null);
     } catch {
       this.shareError.set('medicine.manageMedicines.sharing.unshareError');
     } finally {
@@ -227,15 +227,17 @@ export class ManageMedicines implements OnInit {
 
   private async loadSharing(childId: string): Promise<void> {
     try {
-      const [groups, sharedGroupId] = await Promise.all([this.groupsService.listMyGroups(), this.medicines.getSharedGroupId(childId)]);
+      const [groups, sharedGroup] = await Promise.all([this.groupsService.listMyGroups(), this.medicines.getSharedGroup(childId)]);
 
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
       // backend's two-sided consent for ShareMedicineWithGroup.
       this.manageableGroups.set(groups.filter((g) => g.role === 0 || g.role === 1));
-      this.sharedGroupId.set(sharedGroupId);
+      this.sharedGroupId.set(sharedGroup?.groupId ?? null);
+      this.sharedGroupName.set(sharedGroup?.groupName ?? null);
     } catch {
       this.manageableGroups.set([]);
       this.sharedGroupId.set(null);
+      this.sharedGroupName.set(null);
     }
   }
 }

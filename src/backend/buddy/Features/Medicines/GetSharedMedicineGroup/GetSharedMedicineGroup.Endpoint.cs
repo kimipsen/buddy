@@ -21,16 +21,16 @@ public static class GetSharedMedicineGroupEndpoint
             CancellationToken cancellationToken) =>
         {
             var query = GetSharedMedicineGroup.FromClaims(principal, new UserId(childId));
-            var result = await bus.InvokeAsync<Result<GroupId?>>(query, cancellationToken);
+            var result = await bus.InvokeAsync<Result<SharedMedicineGroup?>>(query, cancellationToken);
 
             return result switch
             {
-                Result<GroupId?>.Success(var groupId) => TypedResults.Ok(new SharedMedicineGroupResponse(groupId?.Value)),
-                Result<GroupId?>.Forbidden => TypedResults.Forbid(),
-                Result<GroupId?>.NotFound => TypedResults.NotFound(),
+                Result<SharedMedicineGroup?>.Success(var group) => TypedResults.Ok(new SharedMedicineGroupResponse(group?.Id.Value, group?.Name)),
+                Result<SharedMedicineGroup?>.Forbidden => TypedResults.Forbid(),
+                Result<SharedMedicineGroup?>.NotFound => TypedResults.NotFound(),
                 // GetSharedMedicineGroupHandler never produces Validation -- there's no
                 // BadRequest in this route's declared results, so this collapses to NotFound.
-                Result<GroupId?>.Validation => TypedResults.NotFound(),
+                Result<SharedMedicineGroup?>.Validation => TypedResults.NotFound(),
             };
         })
         .WithName("GetSharedMedicineGroup");
@@ -39,4 +39,4 @@ public static class GetSharedMedicineGroupEndpoint
     }
 }
 
-public sealed record SharedMedicineGroupResponse(Guid? GroupId);
+public sealed record SharedMedicineGroupResponse(Guid? GroupId, string? GroupName);

@@ -20,7 +20,7 @@ internal sealed record MealDto(
     Guid CreatedBy,
     Guid LastModifiedBy);
 
-internal sealed record SharedGroupResponseDto(Guid? GroupId);
+internal sealed record SharedGroupResponseDto(Guid? GroupId, string? GroupName);
 
 internal sealed record MealPlanEntryDto(
     DateOnly Date,

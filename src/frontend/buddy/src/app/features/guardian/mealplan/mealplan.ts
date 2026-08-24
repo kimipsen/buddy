@@ -41,6 +41,7 @@ export class GuardianMealplan implements OnInit {
   // Sharing controls -- family scope only, since only a guardian can decide to share/unshare.
   protected readonly manageableGroups = signal<GroupSummary[]>([]);
   protected readonly sharedGroupId = signal<string | null>(null);
+  protected readonly sharedGroupName = signal<string | null>(null);
   protected readonly shareTargetGroupId = signal('');
   protected readonly sharing = signal(false);
   protected readonly shareError = signal<string | null>(null);
@@ -57,14 +58,6 @@ export class GuardianMealplan implements OnInit {
     return scope.accessTier !== MANAGE;
   }
 
-  protected nameForGroup(groupId: string): string {
-    return (
-      this.manageableGroups().find((group) => group.id === groupId)?.name ??
-      this.groupScopes().find((scope) => scope.groupId === groupId)?.groupName ??
-      groupId
-    );
-  }
-
   protected isSelected(scope: MealplanScope): boolean {
     const current = this.selectedScope();
 
@@ -79,8 +72,9 @@ export class GuardianMealplan implements OnInit {
 
   protected async shareWithGroup(): Promise<void> {
     const groupId = this.shareTargetGroupId();
+    const groupName = this.manageableGroups().find((group) => group.id === groupId)?.name;
 
-    if (!this.familyChildId || !groupId) {
+    if (!this.familyChildId || !groupId || !groupName) {
       return;
     }
 
@@ -90,6 +84,7 @@ export class GuardianMealplan implements OnInit {
     try {
       await this.mealplans.shareWithGroup(this.familyChildId, groupId);
       this.sharedGroupId.set(groupId);
+      this.sharedGroupName.set(groupName);
       this.shareTargetGroupId.set('');
       await this.loadGroupScopes();
     } catch {
@@ -112,6 +107,7 @@ export class GuardianMealplan implements OnInit {
     try {
       await this.mealplans.unshareFromGroup(this.familyChildId, groupId);
       this.sharedGroupId.set(null);
+      this.sharedGroupName.set(null);
 
       const current = this.selectedScope();
       if (current?.kind === 'group' && current.groupId === groupId) {
@@ -145,15 +141,16 @@ export class GuardianMealplan implements OnInit {
       this.familyScope.set(familyScope);
       this.selectedScope.set(familyScope);
 
-      const [groups, sharedGroupId] = await Promise.all([
+      const [groups, sharedGroup] = await Promise.all([
         this.groupsService.listMyGroups(),
-        this.mealplans.getSharedGroupId(children[0].id)
+        this.mealplans.getSharedGroup(children[0].id)
       ]);
 
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
       // backend's own gate.
       this.manageableGroups.set(groups.filter((g) => g.role === 0 || g.role === 1));
-      this.sharedGroupId.set(sharedGroupId);
+      this.sharedGroupId.set(sharedGroup?.groupId ?? null);
+      this.sharedGroupName.set(sharedGroup?.groupName ?? null);
 
       await this.loadGroupScopesFrom(groups);
     } catch {

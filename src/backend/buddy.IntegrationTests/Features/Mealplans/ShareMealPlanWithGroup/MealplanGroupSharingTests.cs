@@ -62,7 +62,9 @@ public sealed class MealplanGroupSharingTests(BuddyApiFixture fixture)
             _.Get.Url($"/mealplans/children/{child.Id}/plan/groups");
             _.StatusCodeShouldBeOk();
         });
-        Assert.Equal(groupId, sharedGroupResponse.ReadAsJson<SharedGroupResponseDto>().GroupId);
+        var sharedGroupDto = sharedGroupResponse.ReadAsJson<SharedGroupResponseDto>();
+        Assert.Equal(groupId, sharedGroupDto.GroupId);
+        Assert.Equal("Co-parents", sharedGroupDto.GroupName);
 
         // A default-policy Admin gets Manage tier the instant they're granted the role -- no
         // separate opt-in needed.

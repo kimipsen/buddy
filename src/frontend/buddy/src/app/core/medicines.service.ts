@@ -130,10 +130,12 @@ export class MedicinesService {
     );
   }
 
-  async getSharedGroupId(childId: string): Promise<string | null> {
+  async getSharedGroup(childId: string): Promise<{ groupId: string; groupName: string } | null> {
     const response = await firstValueFrom(
-      this.http.get<{ groupId: string | null }>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share`)
+      this.http.get<{ groupId: string | null; groupName: string | null }>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share`
+      )
     );
-    return response.groupId;
+    return response.groupId && response.groupName ? { groupId: response.groupId, groupName: response.groupName } : null;
   }
 }
