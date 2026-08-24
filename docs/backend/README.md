@@ -19,6 +19,7 @@ These documents capture the domain decisions that are easy to lose during
 implementation and are therefore worth reading before changing the backend
 model or permissions logic.
 
+- [Aggregate roots and their relationships](analysis/aggregate-roots.md)
 - [Group-owned calendars and permissions](analysis/group-owned-calendars-and-permissions.md)
 - [Integration testing strategy](analysis/integration-testing-strategy.md)
 - [Mutation testing strategy](analysis/mutation-testing-strategy.md)
