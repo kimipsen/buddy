@@ -8,7 +8,7 @@ This glossary reflects the vocabulary used in the Buddy backend, especially the 
 A stable identity for a user, derived from the authenticated Keycloak subject. The users feature uses the subject as the local user identity and stores the user as an event-sourced aggregate.
 
 ### CalendarId
-The unique identifier for a calendar. Calendars are created by a user, can have members, and are stored as event-sourced aggregates.
+The unique identifier for a calendar. A calendar is always owned by a group, can have members, and is stored as an event-sourced aggregate. Calendars created before group-only ownership was introduced can still be owned directly by a user; no new calendar can be.
 
 ### CalendarItemId
 The unique identifier for an item that belongs to a calendar. A calendar item is either an event or a task.
@@ -59,7 +59,7 @@ The event that marks the email address as verified and clears the pending verifi
 ## Calendar domain
 
 ### Calendar
-A Calendar represents a named scheduling container with a time zone and a set of members. Each calendar has an owner and can also grant roles to other users.
+A Calendar represents a named scheduling container with a time zone and a set of members. Each calendar has an owner (always a group) and can also grant roles to other users directly, which override the group's role-derived defaults.
 
 The aggregate stores:
 - the calendar name
@@ -172,7 +172,7 @@ The process of rebuilding the latest aggregate state by replaying all relevant e
 ## Common terms in the project
 
 ### Owner
-The user who created the calendar. The owner is the only role assigned automatically by `CalendarCreated`.
+The group that owns the calendar. A group's Owner (the guardian who created it) resolves to `CalendarRole.Owner` by default through `CalendarPermissionPolicy`. Calendars created before group-only ownership was introduced can still be owned directly by a user, seeded as `CalendarRole.Owner` in `Members`.
 
 ### Member
 Any user with a role in a calendar, such as owner, contributor, or viewer.

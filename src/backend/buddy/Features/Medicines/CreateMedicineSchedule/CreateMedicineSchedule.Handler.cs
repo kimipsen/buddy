@@ -1,5 +1,7 @@
 using buddy.Common;
+using buddy.Features.Calendars;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 
 namespace buddy.Features.Medicines;
 
@@ -38,15 +40,36 @@ public static class CreateMedicineScheduleHandler
             return access.ToDeniedResult<MedicineSchedule>();
         }
 
+        var schedule = await CreateForChildAsync(
+            command.ChildId, userId, command.Name, command.Dosage, command.Icon, command.Color, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
+
+        return new Result<MedicineSchedule>.Success(schedule);
+    }
+
+    // Shared with CreateMedicineScheduleForGroupHandler, which resolves its own acting guardian
+    // through a group's MedicinePermissionPolicy instead of MedicineAuthorization -- everything
+    // past authorization is identical (see CreateMealHandler.CreateForChildAsync for the same
+    // pattern in Mealplans).
+    internal static async Task<MedicineSchedule> CreateForChildAsync(
+        UserId childId,
+        UserId createdBy,
+        string name,
+        string dosage,
+        Icon icon,
+        Color color,
+        IReadOnlyList<TimeOnly> times,
+        DateOnly startDate,
+        DateOnly? endDate,
+        IMedicineEventStore medicines,
+        CancellationToken cancellationToken)
+    {
         var medicineId = MedicineId.New();
         var now = DateTimeOffset.UtcNow;
 
-        var created = new MedicineScheduleCreated(
-            medicineId, command.ChildId, userId, command.Name, command.Dosage, command.Icon, command.Color,
-            command.Times, command.StartDate, command.EndDate, now);
+        var created = new MedicineScheduleCreated(medicineId, childId, createdBy, name, dosage, icon, color, times, startDate, endDate, now);
 
         var events = await medicines.CreateAsync(medicineId, [created], cancellationToken);
 
-        return new Result<MedicineSchedule>.Success(MedicineSchedule.Rehydrate(events)!);
+        return MedicineSchedule.Rehydrate(events)!;
     }
 }

@@ -18,6 +18,7 @@ public static class GuardiansFeature
         services.Configure<KeycloakAdminOptions>(configuration.GetSection(KeycloakAdminOptions.SectionName));
 
         services.AddSingleton<IGuardianLinkEventStore, MartenGuardianLinkEventStore>();
+        services.AddSingleton<IGuardianInviteEventStore, MartenGuardianInviteEventStore>();
         services.AddHttpClient<IKeycloakAdminClient, KeycloakAdminClient>();
 
         return services;
@@ -33,6 +34,9 @@ public static class GuardiansFeature
         children.MapCreateChild();
         children.MapListMyChildren();
         children.MapRevokeGuardianLink();
+        children.MapInviteGuardian();
+        children.MapListGuardianInvites();
+        children.MapRevokeGuardianInvite();
 
         var guardians = endpoints.MapGroup("/users/me/guardians")
             .WithTags("Guardians")
@@ -40,6 +44,16 @@ public static class GuardiansFeature
             .WithGroupName(OpenApiDocumentName);
 
         guardians.MapListMyGuardians();
+
+        // A separate route group, the same reason Groups splits off "/invites": PreviewGuardianInvite
+        // must stay reachable by an unauthenticated caller who only has the token from an email
+        // link, while AcceptGuardianInvite needs auth applied only to itself.
+        var guardianInvites = endpoints.MapGroup("/guardian-invites")
+            .WithTags("Guardians")
+            .WithGroupName(OpenApiDocumentName);
+
+        guardianInvites.MapPreviewGuardianInvite();
+        guardianInvites.MapAcceptGuardianInvite();
 
         return endpoints;
     }

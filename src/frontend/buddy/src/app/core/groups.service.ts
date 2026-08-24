@@ -86,6 +86,13 @@ export class GroupsService {
     return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites/${inviteId}`));
   }
 
+  // Adds a child the caller guards directly as a Member -- no invite/accept step, since a
+  // guardian already has authority over their own child (mirrors CreateChild's direct-provision
+  // pattern rather than InviteToGroup's email-based flow).
+  addChildToGroup(groupId: string, childId: string): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/children/${childId}`, {}));
+  }
+
   getGroup(groupId: string): Promise<GroupDetail> {
     return firstValueFrom(this.http.get<GroupDetail>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}`));
   }

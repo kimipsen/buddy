@@ -13,6 +13,16 @@ export const medicine = {
     cancel: 'Cancel',
     stop: 'Stop',
     stopError: 'Unable to stop this medicine schedule.',
+    sharing: {
+      title: 'Share with a group',
+      sharedWith: 'Shared with',
+      unshareButton: 'Unshare',
+      unshareError: 'Unable to unshare from this group.',
+      selectPlaceholder: 'Choose a group',
+      shareButton: 'Share',
+      shareError: 'Unable to share with this group.',
+      noGroups: 'You need a group you manage before you can share this child’s medicine schedules.'
+    },
     scheduleRange: {
       ongoing: 'from {startDate} (ongoing)',
       withEnd: 'from {startDate} to {endDate}'

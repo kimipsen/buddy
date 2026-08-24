@@ -3,6 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 
 import { AccountService } from './account.service';
 import { AuthService } from './auth.service';
+import { takePendingGuardianInviteToken } from './pending-guardian-invite-token';
 import { takePendingInviteToken } from './pending-invite-token';
 import { takePendingVerifyEmailToken } from './pending-verify-email-token';
 import { UsersService } from './users.service';
@@ -43,6 +44,13 @@ export const roleRedirectGuard: CanActivateFn = async () => {
 
   if (pendingInviteToken) {
     return router.createUrlTree(['/invite', pendingInviteToken]);
+  }
+
+  // Same stand-in as above, for a guardian-invite link followed while logged out.
+  const pendingGuardianInviteToken = takePendingGuardianInviteToken();
+
+  if (pendingGuardianInviteToken) {
+    return router.createUrlTree(['/guardian-invite', pendingGuardianInviteToken]);
   }
 
   // Same stand-in as above, for a user who followed a "verify your email" link while logged out.

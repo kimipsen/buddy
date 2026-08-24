@@ -2,6 +2,7 @@ using System.Security.Claims;
 
 using buddy.Common;
 using buddy.Features.Calendars;
+using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -45,12 +46,14 @@ public sealed record GroupResponse(
     string Name,
     IReadOnlyCollection<GroupMemberResponse> Members,
     IReadOnlyDictionary<GroupRole, CalendarRole> CalendarPermissionPolicy,
-    IReadOnlyDictionary<GroupRole, MealplanAccessTier> MealplanPermissionPolicy)
+    IReadOnlyDictionary<GroupRole, MealplanAccessTier> MealplanPermissionPolicy,
+    IReadOnlyDictionary<GroupRole, MedicineAccessTier> MedicinePermissionPolicy)
 {
     public static GroupResponse FromGroup(Group group) => new(
         group.Id,
         group.Name,
         [.. group.Members.Select(m => new GroupMemberResponse(m.Key.Value, m.Value))],
         group.CalendarPermissionPolicy,
-        group.MealplanPermissionPolicy);
+        group.MealplanPermissionPolicy,
+        group.MedicinePermissionPolicy);
 }

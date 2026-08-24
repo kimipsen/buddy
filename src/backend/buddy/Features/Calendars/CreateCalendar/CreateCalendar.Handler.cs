@@ -17,24 +17,19 @@ public static class CreateCalendarHandler
             return new CreateCalendarOutcome.Unauthenticated();
         }
 
+        var group = Group.Rehydrate(await groups.ReadAsync(command.GroupId, cancellationToken));
+
+        // A missing/unmanaged GroupId (including an omitted one, which binds to an empty Guid)
+        // collapses into the same Forbidden this already returned for "not a manager of this
+        // group" -- there's no separate NotFound case on this outcome, since unlike every other
+        // calendar endpoint there's no existing resource yet to hide behind an ambiguous 404.
+        if (GroupAuthorization.CheckManage(group, ownerId) != GroupAccess.Allowed)
+        {
+            return new CreateCalendarOutcome.Forbidden();
+        }
+
         var calendarId = CalendarId.New();
-        CalendarEvent created;
-
-        if (command.GroupId is { } groupId)
-        {
-            var group = Group.Rehydrate(await groups.ReadAsync(groupId, cancellationToken));
-
-            if (GroupAuthorization.CheckManage(group, ownerId) != GroupAccess.Allowed)
-            {
-                return new CreateCalendarOutcome.Forbidden();
-            }
-
-            created = new CalendarCreatedForGroup(calendarId, groupId, command.Name, command.TimeZoneId, DateTimeOffset.UtcNow);
-        }
-        else
-        {
-            created = new CalendarCreated(calendarId, ownerId, command.Name, command.TimeZoneId, DateTimeOffset.UtcNow);
-        }
+        CalendarEvent created = new CalendarCreatedForGroup(calendarId, command.GroupId, command.Name, command.TimeZoneId, DateTimeOffset.UtcNow);
 
         var events = await calendars.CreateAsync(calendarId, [created], cancellationToken);
 

@@ -25,6 +25,16 @@ public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options) : IEma
             cancellationToken);
     }
 
+    public Task SendGuardianInviteEmailAsync(string emailAddress, string childGivenName, string token, CancellationToken cancellationToken)
+    {
+        var link = BuildLink("guardian-invite", token);
+        return SendAsync(
+            emailAddress,
+            $"You've been invited to help manage {childGivenName}'s account",
+            $"You've been invited to help manage {childGivenName}'s account. Click the link below to accept:\n\n{link}",
+            cancellationToken);
+    }
+
     private string BuildLink(string path, string token) =>
         $"{options.CurrentValue.FrontendBaseUrl.TrimEnd('/')}/{path}/{Uri.EscapeDataString(token)}";
 

@@ -84,6 +84,9 @@ sequenceDiagram
 | `PATCH` | `/groups/{groupId}/members/{memberId}` | Sets a member role such as owner, admin, or member. |
 | `DELETE` | `/groups/{groupId}/members/{memberId}` | Removes a user from the group. |
 | `PATCH` | `/groups/{groupId}/calendar-permission-policy` | Updates how group roles map to calendar permissions. |
+| `PUT` | `/groups/{groupId}/mealplan-permission-policy` | Updates how group roles map to meal-plan access tiers. |
+| `PUT` | `/groups/{groupId}/medicine-permission-policy` | Updates how group roles map to medicine access tiers. |
+| `PUT` | `/groups/{groupId}/children/{childId}` | An active guardian of `childId` adds them directly as a Member -- no invite/accept step (see below). |
 | `DELETE` | `/groups/{groupId}` | Deletes the group when the caller is authorized. |
 | `POST` | `/groups/{groupId}/invites` | Owner/admin invites a guardian by email; sends a token via email. |
 | `GET` | `/groups/{groupId}/invites` | Lists pending invites for the group (owner/admin only). |
@@ -115,5 +118,7 @@ Group membership is not just a list of names. The group aggregate carries role t
 ## Inviting a guardian by email
 
 Groups can only be joined by invite -- there is no directory of guardians to browse and no way to add someone by a raw user id (see [child-accounts-and-guardian-roles.md](../analysis/child-accounts-and-guardian-roles.md) for why this codebase deliberately has no "look up a user by email" capability). `InviteToGroup` never resolves the invited email to a `UserId`: it records the email on `GroupInviteCreated` and emails a bearer token, the same shape as `EmailVerificationToken`. `AcceptGroupInvite` is the only place an invite is ever matched to a real account, and it does so by comparing the *authenticated caller's own* verified email against the invite -- a self-scoped check, not a lookup of someone else. This means an invite to an email with no account, or a typo, has no immediate feedback at invite time; it simply sits pending until it expires (7 days).
+
+**Children are the one deliberate exception.** `AddChildToGroup` (`PUT /groups/{groupId}/children/{childId}`) adds a child directly, skipping the invite/accept step entirely, provided the caller both manages the group (Owner/Admin) *and* has an active `GuardianLink` to that exact child -- the same two-sided-consent shape `ShareMealPlanWithGroup` already uses. This isn't an account-enumeration risk the way a raw `SetGroupMemberRole` on an arbitrary adult would be: a guardian already has full authority over their own child (the same authority `CreateChild` exercises), so there is nothing to "look up." The child is always granted `GroupRole.Member`, never Owner/Admin.
 
 The invite's full lifecycle -- sent, accepted, revoked -- lives entirely on the Group stream via `GroupInviteCreated`/`GroupInviteAccepted`/`GroupInviteRevoked`; it is not duplicated onto either party's User stream. The personal "recent events" feed in the frontend only ever reads a user's own User stream, so a group invite doesn't currently appear there -- surfacing it would mean a group-scoped history view reading the Group stream instead, which doesn't exist yet.

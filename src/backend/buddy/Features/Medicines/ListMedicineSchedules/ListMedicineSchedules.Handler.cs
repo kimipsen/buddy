@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 
 namespace buddy.Features.Medicines;
 
@@ -23,7 +24,16 @@ public static class ListMedicineSchedulesHandler
             return access.ToDeniedResult<IReadOnlyCollection<MedicineSchedule>>();
         }
 
-        var medicineIds = await medicines.ListIdsForChildAsync(query.ChildId, cancellationToken);
+        var loaded = await ListForChildAsync(query.ChildId, medicines, cancellationToken);
+
+        return new Result<IReadOnlyCollection<MedicineSchedule>>.Success(loaded);
+    }
+
+    // Shared with ListMedicineSchedulesForGroupHandler -- everything past authorization is
+    // identical.
+    internal static async Task<IReadOnlyCollection<MedicineSchedule>> ListForChildAsync(UserId childId, IMedicineEventStore medicines, CancellationToken cancellationToken)
+    {
+        var medicineIds = await medicines.ListIdsForChildAsync(childId, cancellationToken);
         var loaded = new List<MedicineSchedule>(medicineIds.Count);
 
         foreach (var medicineId in medicineIds)
@@ -40,6 +50,6 @@ public static class ListMedicineSchedulesHandler
 
         loaded.Sort((a, b) => a.StartDate.CompareTo(b.StartDate));
 
-        return new Result<IReadOnlyCollection<MedicineSchedule>>.Success(loaded);
+        return loaded;
     }
 }

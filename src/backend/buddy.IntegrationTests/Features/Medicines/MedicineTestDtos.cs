@@ -28,3 +28,5 @@ internal sealed record MedicineDoseOccurrenceDto(
     DateOnly Date,
     TimeOnly Time,
     DoseStatus Status);
+
+internal sealed record SharedMedicineGroupResponseDto(Guid? GroupId);

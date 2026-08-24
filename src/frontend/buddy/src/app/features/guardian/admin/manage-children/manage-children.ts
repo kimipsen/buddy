@@ -3,7 +3,20 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { ChildSummary, CreateChildResult, GuardiansService } from '../../../../core/guardians.service';
+import {
+  ChildSummary,
+  CreateChildResult,
+  GuardianInvite,
+  GuardianKind,
+  GuardiansService
+} from '../../../../core/guardians.service';
+
+const INVITABLE_KINDS: GuardianKind[] = [0, 1];
+
+const KIND_LABELS: Record<GuardianKind, string> = {
+  0: 'admin.manageChildren.invite.kinds.parent',
+  1: 'admin.manageChildren.invite.kinds.guardian'
+};
 
 @Component({
   selector: 'app-manage-children',
@@ -12,6 +25,9 @@ import { ChildSummary, CreateChildResult, GuardiansService } from '../../../../c
 })
 export class ManageChildren implements OnInit {
   private readonly guardians = inject(GuardiansService);
+
+  protected readonly invitableKinds = INVITABLE_KINDS;
+  protected readonly kindLabels = KIND_LABELS;
 
   protected readonly children = signal<ChildSummary[]>([]);
   protected readonly childrenLoading = signal(true);
@@ -29,6 +45,18 @@ export class ManageChildren implements OnInit {
   protected readonly revokeError = signal<string | null>(null);
 
   protected readonly passwordCopied = signal(false);
+
+  protected readonly expandedInviteChildId = signal<string | null>(null);
+  protected readonly invitesByChildId = signal<Record<string, GuardianInvite[]>>({});
+  protected readonly invitesLoading = signal<string | null>(null);
+  protected readonly invitesError = signal<string | null>(null);
+
+  protected readonly inviteEmail = signal('');
+  protected readonly inviteKind = signal<GuardianKind>(0);
+  protected readonly inviting = signal(false);
+  protected readonly inviteError = signal<string | null>(null);
+
+  protected readonly revokingInviteId = signal<string | null>(null);
 
   ngOnInit(): void {
     void this.loadChildren();
@@ -84,6 +112,72 @@ export class ManageChildren implements OnInit {
       this.revokeError.set('admin.manageChildren.revokeError');
     } finally {
       this.revokingChildId.set(null);
+    }
+  }
+
+  protected toggleInvitePanel(childId: string): void {
+    if (this.expandedInviteChildId() === childId) {
+      this.expandedInviteChildId.set(null);
+      return;
+    }
+
+    this.expandedInviteChildId.set(childId);
+    this.inviteEmail.set('');
+    this.inviteKind.set(0);
+    this.inviteError.set(null);
+    void this.loadInvites(childId);
+  }
+
+  protected invitesFor(childId: string): GuardianInvite[] {
+    return this.invitesByChildId()[childId] ?? [];
+  }
+
+  protected async sendGuardianInvite(childId: string): Promise<void> {
+    const email = this.inviteEmail().trim();
+
+    if (!email) {
+      return;
+    }
+
+    this.inviting.set(true);
+    this.inviteError.set(null);
+
+    try {
+      await this.guardians.inviteGuardian(childId, { email, kind: this.inviteKind() });
+      this.inviteEmail.set('');
+      await this.loadInvites(childId);
+    } catch {
+      this.inviteError.set('admin.manageChildren.invite.sendError');
+    } finally {
+      this.inviting.set(false);
+    }
+  }
+
+  protected async revokeGuardianInvite(childId: string, inviteId: string): Promise<void> {
+    this.revokingInviteId.set(inviteId);
+    this.invitesError.set(null);
+
+    try {
+      await this.guardians.revokeGuardianInvite(childId, inviteId);
+      await this.loadInvites(childId);
+    } catch {
+      this.invitesError.set('admin.manageChildren.invite.cancelError');
+    } finally {
+      this.revokingInviteId.set(null);
+    }
+  }
+
+  private async loadInvites(childId: string): Promise<void> {
+    this.invitesLoading.set(childId);
+    this.invitesError.set(null);
+
+    try {
+      const invites = await this.guardians.listGuardianInvites(childId);
+      this.invitesByChildId.update((byChildId) => ({ ...byChildId, [childId]: invites }));
+    } catch {
+      this.invitesError.set('admin.manageChildren.invite.loadError');
+    } finally {
+      this.invitesLoading.set(null);
     }
   }
 

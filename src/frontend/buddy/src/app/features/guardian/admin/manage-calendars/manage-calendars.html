@@ -18,46 +18,47 @@
     </ul>
   }
 
-  <form class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" (ngSubmit)="createCalendar()">
-    <input
-      type="text"
-      name="calendarName"
-      placeholder="{{ 'admin.manageCalendars.namePlaceholder' | translate }}"
-      class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      [ngModel]="newCalendarName()"
-      (ngModelChange)="newCalendarName.set($event)"
-    />
-    <select
-      name="calendarTimeZoneId"
-      class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      [ngModel]="newCalendarTimeZoneId()"
-      (ngModelChange)="newCalendarTimeZoneId.set($event)"
-    >
-      @for (timeZoneId of timeZoneIds; track timeZoneId) {
-        <option [value]="timeZoneId">{{ timeZoneId }}</option>
-      }
-    </select>
-    @if (manageableGroups().length > 0) {
+  @if (manageableGroups().length === 0) {
+    <p class="mt-5 text-sm text-slate-500">{{ 'admin.manageCalendars.needsGroupHint' | translate }}</p>
+  } @else {
+    <form class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" (ngSubmit)="createCalendar()">
+      <input
+        type="text"
+        name="calendarName"
+        placeholder="{{ 'admin.manageCalendars.namePlaceholder' | translate }}"
+        class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="newCalendarName()"
+        (ngModelChange)="newCalendarName.set($event)"
+      />
+      <select
+        name="calendarTimeZoneId"
+        class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="newCalendarTimeZoneId()"
+        (ngModelChange)="newCalendarTimeZoneId.set($event)"
+      >
+        @for (timeZoneId of timeZoneIds; track timeZoneId) {
+          <option [value]="timeZoneId">{{ timeZoneId }}</option>
+        }
+      </select>
       <select
         name="calendarGroupId"
         class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         [ngModel]="newCalendarGroupId()"
         (ngModelChange)="newCalendarGroupId.set($event)"
       >
-        <option value="">{{ 'admin.manageCalendars.ownerPersonalOption' | translate }}</option>
         @for (group of manageableGroups(); track group.id) {
           <option [value]="group.id">{{ group.name }}</option>
         }
       </select>
-    }
-    <button
-      type="submit"
-      class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
-      [disabled]="creating() || !newCalendarName().trim() || !newCalendarTimeZoneId().trim()"
-    >
-      {{ 'admin.manageCalendars.addButton' | translate }}
-    </button>
-  </form>
+      <button
+        type="submit"
+        class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+        [disabled]="creating() || !newCalendarName().trim() || !newCalendarTimeZoneId().trim() || !newCalendarGroupId()"
+      >
+        {{ 'admin.manageCalendars.addButton' | translate }}
+      </button>
+    </form>
+  }
 
   @if (createError(); as message) {
     <p class="mt-3 text-sm text-red-600">{{ message | translate }}</p>

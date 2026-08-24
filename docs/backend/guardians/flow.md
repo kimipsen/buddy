@@ -15,7 +15,7 @@ sequenceDiagram
     App->>API: POST /users/me/children
     API->>Guardians: CreateChild command
     Guardians->>Keycloak: Create child user in Keycloak
-    Guardians->>Store: Append GuardianLinkCreated + child account metadata
+    Guardians->>Store: Append GuardianLinked + child account metadata
     Store-->>Guardians: Link and child record
     Guardians-->>API: Child response with temp password
     API-->>App: 200 OK
@@ -38,7 +38,7 @@ sequenceDiagram
     Guardian->>App: Revoke access
     App->>API: DELETE /users/me/children/{childId}/guardian-link
     API->>Guardians: RevokeGuardianLink command
-    Guardians->>Store: Append GuardianLinkRevoked
+    Guardians->>Store: Append GuardianRevoked
     Guardians-->>API: 204 No Content
     API-->>App: 204 No Content
 ```
@@ -51,6 +51,11 @@ sequenceDiagram
 | `GET` | `/users/me/children` | Lists the current guardian's child accounts. |
 | `DELETE` | `/users/me/children/{childId}/guardian-link` | Revokes the guardian-child relationship. |
 | `GET` | `/users/me/guardians` | Lists guardians linked to the current authenticated user. |
+| `POST` | `/users/me/children/{childId}/guardian-invites` | An active guardian invites another adult, by email, to co-manage this child. |
+| `GET` | `/users/me/children/{childId}/guardian-invites` | Lists this child's pending guardian invites. |
+| `DELETE` | `/users/me/children/{childId}/guardian-invites/{inviteId}` | Revokes a pending guardian invite. |
+| `GET` | `/guardian-invites/{token}/preview` | Unauthenticated preview of who a guardian-invite link is for. |
+| `POST` | `/guardian-invites/{token}/accept` | Authenticated; accepts an invite and creates a new `GuardianLink`. |
 
 ## Core lifecycle
 
@@ -64,6 +69,12 @@ This feature is key because it defines who can act on behalf of a child in other
 - A child may have multiple guardian links, but the active relationship is the thing used by authorization.
 - Guardian access is intentionally narrower than full administrative access; it is scoped to the guardian-child relationship and the permissions granted by that relation.
 - The feature also supports read-model queries that allow the API to answer "what children do I manage?" and "who manages me?" without rehydrating the full user graph each time.
+
+## Inviting a co-guardian
+
+`CreateChild` only ever produces the *first* `GuardianLink` for a new child. To bring in a second adult (a co-parent, grandparent, etc.) for a child that already exists, any active guardian can invite one by email via `InviteGuardian`, mirroring the Groups feature's invite/accept/revoke triad: a token is emailed (never the raw token stored, only its hash), the invite lives on its own dedicated event stream (there's no pre-existing aggregate to attach it to, unlike a `Group`), and `AcceptGuardianInvite` requires the accepting caller's own verified email to match the invite before it appends a new `GuardianLinked` event. The inviter chooses the `GuardianKind` (Parent/Guardian) up front; it carries straight through to the resulting link and, as elsewhere in this feature, never gates access.
+
+Because "family" for shared meal plans (and any future guardian-derived calendar access) is resolved transitively from the live `GuardianLink` graph, accepting an invite immediately widens the new guardian's own other children into this child's shared family too — a direct consequence of the existing authority model, not a separate feature to build.
 
 ## Related behavior
 

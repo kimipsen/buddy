@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 
 using buddy.Features.Calendars;
+using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
 using buddy.Features.Users;
 
@@ -12,6 +13,7 @@ public sealed record Group(
     ImmutableDictionary<UserId, GroupRole> Members,
     ImmutableDictionary<GroupRole, CalendarRole> CalendarPermissionPolicy,
     ImmutableDictionary<GroupRole, MealplanAccessTier> MealplanPermissionPolicy,
+    ImmutableDictionary<GroupRole, MedicineAccessTier> MedicinePermissionPolicy,
     bool IsDeleted = false)
 {
     public static Group? Rehydrate(IEnumerable<GroupEvent> events)
@@ -32,11 +34,13 @@ public sealed record Group(
                     created.Name,
                     ImmutableDictionary<UserId, GroupRole>.Empty.Add(created.OwnerId, GroupRole.Owner),
                     created.CalendarPermissionPolicy,
-                    ImmutableDictionary<GroupRole, MealplanAccessTier>.Empty),
+                    ImmutableDictionary<GroupRole, MealplanAccessTier>.Empty,
+                    ImmutableDictionary<GroupRole, MedicineAccessTier>.Empty),
                 GroupMemberRoleGranted granted => group! with { Members = group!.Members.SetItem(granted.MemberId, granted.Role) },
                 GroupMemberRoleRevoked revoked => group! with { Members = group!.Members.Remove(revoked.MemberId) },
                 GroupCalendarPolicyUpdated updated => group! with { CalendarPermissionPolicy = updated.Policy },
                 GroupMealplanPolicyUpdated updated => group! with { MealplanPermissionPolicy = updated.Policy },
+                GroupMedicinePolicyUpdated updated => group! with { MedicinePermissionPolicy = updated.Policy },
                 GroupDeleted => group! with { IsDeleted = true },
                 _ => group
             };

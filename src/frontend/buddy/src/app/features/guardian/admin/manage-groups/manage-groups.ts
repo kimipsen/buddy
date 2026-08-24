@@ -5,12 +5,14 @@ import { CalendarRole } from '../../../../core/calendars.service';
 import {
   CalendarPermissionPolicy,
   GroupInvite,
+  GroupMember,
   GroupRole,
   GroupRoleName,
   GroupSummary,
   GroupsService,
   MealplanPermissionPolicy
 } from '../../../../core/groups.service';
+import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealplanAccessTier } from '../../../../core/mealplans.service';
 
@@ -57,6 +59,7 @@ const MEALPLAN_TIERS: MealplanAccessTier[] = [0, 3, 2];
 })
 export class ManageGroups implements OnInit {
   private readonly groups = inject(GroupsService);
+  private readonly guardians = inject(GuardiansService);
 
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly invitableRoles = INVITABLE_ROLES;
@@ -86,6 +89,16 @@ export class ManageGroups implements OnInit {
 
   protected readonly revokingInviteId = signal<string | null>(null);
 
+  protected readonly myChildren = signal<ChildSummary[]>([]);
+  protected readonly expandedChildrenGroupId = signal<string | null>(null);
+  protected readonly membersByGroupId = signal<Record<string, GroupMember[]>>({});
+  protected readonly membersLoading = signal<string | null>(null);
+  protected readonly membersError = signal<string | null>(null);
+
+  protected readonly selectedChildId = signal('');
+  protected readonly addingChild = signal(false);
+  protected readonly addChildError = signal<string | null>(null);
+
   protected readonly expandedPolicyGroupId = signal<string | null>(null);
   protected readonly policyDraft = signal<CalendarPermissionPolicy | null>(null);
   protected readonly policyLoading = signal(false);
@@ -102,6 +115,7 @@ export class ManageGroups implements OnInit {
 
   ngOnInit(): void {
     void this.loadGroups();
+    void this.loadMyChildren();
   }
 
   protected canManage(group: GroupSummary): boolean {
@@ -179,6 +193,71 @@ export class ManageGroups implements OnInit {
 
   protected invitesFor(groupId: string): GroupInvite[] {
     return this.invitesByGroupId()[groupId] ?? [];
+  }
+
+  protected toggleChildrenPanel(groupId: string): void {
+    if (this.expandedChildrenGroupId() === groupId) {
+      this.expandedChildrenGroupId.set(null);
+      return;
+    }
+
+    this.expandedChildrenGroupId.set(groupId);
+    this.selectedChildId.set('');
+    this.addChildError.set(null);
+    void this.loadMembers(groupId);
+  }
+
+  protected availableChildrenFor(groupId: string): ChildSummary[] {
+    const memberIds = new Set(this.membersFor(groupId).map((m) => m.userId));
+    return this.myChildren().filter((child) => !memberIds.has(child.id));
+  }
+
+  protected membersFor(groupId: string): GroupMember[] {
+    return this.membersByGroupId()[groupId] ?? [];
+  }
+
+  protected async addChild(groupId: string): Promise<void> {
+    const childId = this.selectedChildId();
+
+    if (!childId) {
+      return;
+    }
+
+    this.addingChild.set(true);
+    this.addChildError.set(null);
+
+    try {
+      await this.groups.addChildToGroup(groupId, childId);
+      this.selectedChildId.set('');
+      await this.loadMembers(groupId);
+    } catch {
+      this.addChildError.set('admin.manageGroups.children.addError');
+    } finally {
+      this.addingChild.set(false);
+    }
+  }
+
+  private async loadMembers(groupId: string): Promise<void> {
+    this.membersLoading.set(groupId);
+    this.membersError.set(null);
+
+    try {
+      const group = await this.groups.getGroup(groupId);
+      this.membersByGroupId.update((byGroupId) => ({ ...byGroupId, [groupId]: group.members }));
+    } catch {
+      this.membersError.set('admin.manageGroups.children.loadError');
+    } finally {
+      this.membersLoading.set(null);
+    }
+  }
+
+  private async loadMyChildren(): Promise<void> {
+    try {
+      this.myChildren.set(await this.guardians.listMyChildren());
+    } catch {
+      // The children panel simply shows no candidates if this fails -- manage-children already
+      // surfaces a dedicated load error for the guardian's own children list.
+    }
   }
 
   protected togglePolicyPanel(groupId: string): void {

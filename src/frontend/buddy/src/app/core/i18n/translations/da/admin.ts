@@ -28,6 +28,17 @@ export const admin = {
       cancelButton: 'Annuller',
       cancelError: 'Kunne ikke annullere invitationen.'
     },
+    children: {
+      showButton: 'Tilføj et barn',
+      hideButton: 'Luk',
+      title: 'Tilføj et barn',
+      loading: 'Indlæser medlemmer…',
+      loadError: 'Kunne ikke indlæse gruppens medlemmer.',
+      empty: 'Alle dine børn er allerede i denne gruppe.',
+      selectPlaceholder: 'Vælg et barn',
+      addButton: 'Tilføj til gruppe',
+      addError: 'Kunne ikke tilføje barnet til gruppen.'
+    },
     policy: {
       title: 'Kalendertilladelser',
       showButton: 'Kalendertilladelser',
@@ -72,7 +83,24 @@ export const admin = {
     createdMessage: '{name} blev oprettet.',
     temporaryPasswordLabel: 'Midlertidig adgangskode (vises kun én gang):',
     copy: 'Kopiér',
-    copied: 'Kopieret!'
+    copied: 'Kopieret!',
+    invite: {
+      showButton: 'Inviter en medforælder',
+      hideButton: 'Luk',
+      pendingTitle: 'Afventende invitationer',
+      pendingEmpty: 'Ingen afventende invitationer.',
+      loading: 'Indlæser invitationer…',
+      loadError: 'Kunne ikke indlæse invitationer.',
+      emailPlaceholder: 'E-mailadresse',
+      sendButton: 'Send invitation',
+      sendError: 'Kunne ikke sende invitationen. Der er for nylig sendt en invitation til denne adresse.',
+      cancelButton: 'Annuller',
+      cancelError: 'Kunne ikke annullere invitationen.',
+      kinds: {
+        parent: 'Forælder',
+        guardian: 'Værge'
+      }
+    }
   },
   manageCalendars: {
     title: 'Kalendere',
@@ -87,7 +115,7 @@ export const admin = {
       contributor: 'Bidragyder',
       viewer: 'Læser'
     },
-    ownerPersonalOption: 'Personlig (kun dig)'
+    needsGroupHint: 'Du skal have en gruppe, før du kan tilføje en kalender. Opret en under Grupper først.'
   },
   deleteAccount: {
     title: 'Faresone',

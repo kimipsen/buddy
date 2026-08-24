@@ -1,6 +1,6 @@
 # Medicine Schedules
 
-Status: Proposed (not yet implemented)
+Status: Implemented
 
 ## Context
 
@@ -247,6 +247,24 @@ A Manage-tier action attempted by the child collapses to `Forbidden` (they
 can view/mark, so the schedule isn't hidden from them — they just can't
 edit it), matching how `CalendarAccess.Forbidden` is used today for "can
 see, can't do this."
+
+### Group sharing (added later, additive)
+
+The narrow two-principal model above still describes the child/guardian
+axis exactly as built. A second, independent axis was added afterward,
+mirroring [group-owned-mealplans.md](group-owned-mealplans.md): a guardian
+can share a child's medicine schedules with a group via a new per-child
+`MedicineSharing` singleton (`Types/MedicineSharing.cs`, lazily created,
+holding only `SharedWithGroupId: GroupId?`) and a matching
+`Group.MedicinePermissionPolicy: GroupRole -> MedicineAccessTier`. Unlike
+Mealplan's group axis, there is no read-only tier — `MedicinePermissionPolicy`
+only ever holds `None`/`Manage`, so group access is all-or-nothing. And
+unlike Mealplan's anchor-child resolution (one group ↔ one family), every
+group-keyed medicine route still names the child explicitly in its route
+(`/medicines/groups/{groupId}/children/{childId}/...`), since a group can
+have several children's medicine independently shared with it — `MedicineGroupAccess`
+only confirms that the named child is actually shared with that group, it
+never resolves "the" child from the group alone.
 
 ## Command slices (`Features/Medicines/`, same vertical-slice shape as `Calendars`)
 

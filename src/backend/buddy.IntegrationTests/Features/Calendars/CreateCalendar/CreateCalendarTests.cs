@@ -15,25 +15,19 @@ namespace buddy.IntegrationTests.Features.Calendars.CreateCalendar;
 public sealed class CreateCalendarTests(BuddyApiFixture fixture)
 {
     [Fact]
-    [CoversEndpoint("CreateCalendar")]
-    public async Task Creating_a_personal_calendar_makes_the_caller_its_owner()
+    public async Task Omitting_the_group_is_rejected()
     {
-        var (_, token, userId) = await fixture.CreateAuthenticatedUserAsync();
+        // GroupId is required -- a calendar is always group-owned now. An omitted GroupId binds
+        // to an empty Guid, which resolves to no group at all, collapsing into the same Forbidden
+        // "not a manager of this group" already returns for any other unmanaged group.
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
 
-        var response = await fixture.Host.Scenario(_ =>
+        await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Post.Json(new { Name = "Personal", TimeZoneId = CalendarTestHelpers.DefaultTimeZone }).ToUrl("/calendars/");
-            _.StatusCodeShouldBeOk();
+            _.Post.Json(new { Name = "No group", TimeZoneId = CalendarTestHelpers.DefaultTimeZone }).ToUrl("/calendars/");
+            _.StatusCodeShouldBe(403);
         });
-
-        var body = response.ReadAsJson<CalendarResponseDto>();
-
-        Assert.Equal("Personal", body.Name);
-        Assert.Equal(CalendarTestHelpers.DefaultTimeZone, body.TimeZoneId);
-        var owner = Assert.Single(body.Members);
-        Assert.Equal(userId, owner.UserId);
-        Assert.Equal(CalendarRole.Owner, owner.Role);
     }
 
     [Fact]
@@ -50,6 +44,7 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    [CoversEndpoint("CreateCalendar")]
     public async Task A_group_admin_can_create_a_calendar_owned_by_the_group()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
@@ -64,6 +59,10 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
 
         var body = response.ReadAsJson<CalendarResponseDto>();
         Assert.Equal("Team Calendar", body.Name);
+        // Unlike a legacy personally-owned calendar (which seeded the owner into Members),
+        // a group-owned calendar starts with no explicit grants at all -- the group's Owner
+        // resolves to CalendarRole.Owner through the default CalendarPermissionPolicy instead.
+        Assert.Empty(body.Members);
     }
 
     [Fact]

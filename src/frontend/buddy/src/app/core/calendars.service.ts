@@ -21,7 +21,8 @@ export interface CalendarSummary {
 export interface CreateCalendarRequest {
   name: string;
   timeZoneId: string;
-  groupId?: string;
+  // Required -- a calendar is always group-owned now, there's no personal-calendar option.
+  groupId: string;
 }
 
 export interface CalendarItemOccurrence {

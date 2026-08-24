@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 
 namespace buddy.Features.Medicines;
 
@@ -33,24 +34,34 @@ public static class RescheduleMedicineHandler
             return access.ToDeniedResult<MedicineSchedule>();
         }
 
-        var events = await medicines.ReadAsync(command.MedicineId, cancellationToken);
+        var result = await RescheduleForChildAsync(command.ChildId, command.MedicineId, userId, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
+
+        return result is null ? new Result<MedicineSchedule>.NotFound() : new Result<MedicineSchedule>.Success(result);
+    }
+
+    // Shared with RescheduleMedicineForGroupHandler -- everything past authorization is
+    // identical. Null means no matching, non-stopped schedule for this child.
+    internal static async Task<MedicineSchedule?> RescheduleForChildAsync(
+        UserId childId, MedicineId medicineId, UserId modifiedBy, IReadOnlyList<TimeOnly> times, DateOnly startDate, DateOnly? endDate, IMedicineEventStore medicines, CancellationToken cancellationToken)
+    {
+        var events = await medicines.ReadAsync(medicineId, cancellationToken);
         var schedule = MedicineSchedule.Rehydrate(events);
 
-        if (schedule is null || schedule.IsStopped || schedule.ChildId != command.ChildId)
+        if (schedule is null || schedule.IsStopped || schedule.ChildId != childId)
         {
-            return new Result<MedicineSchedule>.NotFound();
+            return null;
         }
 
         var before = new MedicineWindow(schedule.Times, schedule.StartDate, schedule.EndDate);
-        var after = new MedicineWindow(command.Times, command.StartDate, command.EndDate);
+        var after = new MedicineWindow(times, startDate, endDate);
 
         if (before == after)
         {
-            return new Result<MedicineSchedule>.Success(schedule);
+            return schedule;
         }
 
-        await medicines.AppendAsync(command.MedicineId, [new MedicineScheduleRescheduled(command.MedicineId, before, after, userId, DateTimeOffset.UtcNow)], cancellationToken);
+        await medicines.AppendAsync(medicineId, [new MedicineScheduleRescheduled(medicineId, before, after, modifiedBy, DateTimeOffset.UtcNow)], cancellationToken);
 
-        return new Result<MedicineSchedule>.Success(schedule with { Times = command.Times, StartDate = command.StartDate, EndDate = command.EndDate, LastModifiedBy = userId });
+        return schedule with { Times = times, StartDate = startDate, EndDate = endDate, LastModifiedBy = modifiedBy };
     }
 }

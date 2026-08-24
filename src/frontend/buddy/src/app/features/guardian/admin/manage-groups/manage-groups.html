@@ -26,6 +26,13 @@
                 <button
                   type="button"
                   class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  (click)="toggleChildrenPanel(group.id)"
+                >
+                  {{ (expandedChildrenGroupId() === group.id ? 'admin.manageGroups.children.hideButton' : 'admin.manageGroups.children.showButton') | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
                   (click)="togglePolicyPanel(group.id)"
                 >
                   {{ (expandedPolicyGroupId() === group.id ? 'admin.manageGroups.policy.hideButton' : 'admin.manageGroups.policy.showButton') | translate }}
@@ -103,6 +110,45 @@
               </form>
 
               @if (inviteError(); as message) {
+                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+              }
+            </div>
+          }
+
+          @if (expandedChildrenGroupId() === group.id) {
+            <div class="mt-4 border-t border-slate-200 pt-4">
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'admin.manageGroups.children.title' | translate }}</h4>
+
+              @if (membersLoading() === group.id) {
+                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.children.loading' | translate }}</p>
+              } @else if (membersError(); as message) {
+                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+              } @else if (availableChildrenFor(group.id).length === 0) {
+                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.children.empty' | translate }}</p>
+              } @else {
+                <form class="mt-2 grid gap-3 sm:grid-cols-[1fr_auto]" (ngSubmit)="addChild(group.id)">
+                  <select
+                    name="selectedChild"
+                    class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    [ngModel]="selectedChildId()"
+                    (ngModelChange)="selectedChildId.set($event)"
+                  >
+                    <option value="" disabled>{{ 'admin.manageGroups.children.selectPlaceholder' | translate }}</option>
+                    @for (child of availableChildrenFor(group.id); track child.id) {
+                      <option [ngValue]="child.id">{{ child.name.givenName }} {{ child.name.familyName }}</option>
+                    }
+                  </select>
+                  <button
+                    type="submit"
+                    class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                    [disabled]="addingChild() || !selectedChildId()"
+                  >
+                    {{ 'admin.manageGroups.children.addButton' | translate }}
+                  </button>
+                </form>
+              }
+
+              @if (addChildError(); as message) {
                 <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
               }
             </div>

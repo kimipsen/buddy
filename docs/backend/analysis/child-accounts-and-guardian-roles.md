@@ -1,6 +1,6 @@
 # Child Accounts and Guardian/Parent Roles
 
-Status: Proposed (not yet implemented)
+Status: Implemented
 
 ## Context
 
@@ -185,6 +185,33 @@ pattern and fits the target persona — a parent onboarding a young child), and
 treat Option B as a later addition for older children/teens who prefer to
 manage their own credentials while still being linked by an invite code.
 Both options terminate in the same place: a `GuardianLinked` event.
+
+### Inviting a co-guardian to an existing child (implemented)
+
+Neither option above covers a third, distinct case: an *existing* guardian
+wants to bring in a second adult (a co-parent, grandparent, etc.) to help
+manage a child they already guard. This has since shipped as
+`InviteGuardian`/`AcceptGuardianInvite`/`RevokeGuardianInvite`/
+`PreviewGuardianInvite` under `Features/Guardians/`, mirroring the
+Groups invite/accept/revoke triad (`InviteToGroup`/`AcceptGroupInvite`/
+`RevokeGroupInvite`) almost exactly: the invite lives on its own dedicated,
+event-sourced stream (a `GuardianInvite`) rather than the child's `User`
+stream or the `GuardianLink` it leads to, since neither pre-exists the
+invite the way a `Group` pre-exists a member invite. The `GuardianKind`
+(Parent/Guardian) is chosen by the inviter and carried straight through to
+the resulting `GuardianLinked` event, unchanged from how `CreateChild`
+already produces one.
+
+Any *active* guardian of the child may invite or revoke — there is no
+Owner/Admin-style split, because `GuardianKind` never gates access (see
+above). One consequence worth calling out explicitly rather than treating
+as a surprise: because `MealFamilyResolution` (and any future calendar
+equivalent) derives "family" transitively from the live `GuardianLink`
+graph with no separate registration step, accepting an invite immediately
+widens the new guardian's *other* children into this child's shared
+meal-family too. This is the same authority model `CreateChild` already
+has — it just wasn't previously reachable via an invite from someone other
+than the child's own first guardian.
 
 ### The "no email" case is already partly handled — by an empty-string sentinel
 

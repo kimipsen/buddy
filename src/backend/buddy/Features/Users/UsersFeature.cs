@@ -37,7 +37,12 @@ public static class UsersFeature
         // folder declares the type.
         typeof(GuardianLinked),
         typeof(GuardianKindChanged),
-        typeof(GuardianRevoked)
+        typeof(GuardianRevoked),
+        // A guardian invite's own stream lives in this same store for the same reason
+        // GuardianLink's does -- see MartenGuardianInviteEventStore.
+        typeof(GuardianInviteCreated),
+        typeof(GuardianInviteAccepted),
+        typeof(GuardianInviteRevoked)
     ];
 
     public static IServiceCollection AddUsersFeature(this IServiceCollection services, IConfiguration configuration)

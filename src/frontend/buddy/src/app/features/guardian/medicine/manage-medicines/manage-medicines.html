@@ -20,6 +20,52 @@
   } @else if (!hasChildren()) {
     <p class="text-sm text-slate-500">{{ 'medicine.manageMedicines.noChildrenLinked' | translate }}</p>
   } @else {
+    <div class="mb-5 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+      <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'medicine.manageMedicines.sharing.title' | translate }}</h4>
+
+      @if (sharedGroupId(); as groupId) {
+        <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <span class="text-sm">{{ 'medicine.manageMedicines.sharing.sharedWith' | translate }} <strong>{{ nameForGroup(groupId) }}</strong></span>
+          <button
+            type="button"
+            class="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+            [disabled]="sharing()"
+            (click)="unshareFromGroup()"
+          >
+            {{ 'medicine.manageMedicines.sharing.unshareButton' | translate }}
+          </button>
+        </div>
+      } @else if (manageableGroups().length === 0) {
+        <p class="mt-2 text-sm text-slate-500">{{ 'medicine.manageMedicines.sharing.noGroups' | translate }}</p>
+      } @else {
+        <div class="mt-2 flex flex-wrap items-center gap-3">
+          <select
+            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            [ngModel]="shareTargetGroupId()"
+            (ngModelChange)="shareTargetGroupId.set($event)"
+          >
+            <option value="" disabled>{{ 'medicine.manageMedicines.sharing.selectPlaceholder' | translate }}</option>
+            @for (group of manageableGroups(); track group.id) {
+              <option [value]="group.id">{{ group.name }}</option>
+            }
+          </select>
+          <button
+            type="button"
+            class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+            [disabled]="sharing() || !shareTargetGroupId()"
+            (click)="shareWithGroup()"
+          >
+            {{ 'medicine.manageMedicines.sharing.shareButton' | translate }}
+          </button>
+        </div>
+      }
+
+      @if (shareError(); as message) {
+        <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+      }
+    </div>
+
+
     @if (error(); as message) {
       <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>
     }

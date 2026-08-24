@@ -117,4 +117,23 @@ export class MedicinesService {
       )
     );
   }
+
+  // Sharing is always a guardian-side action (only a guardian, via CheckManage, can decide to
+  // share or unshare a child's medicine schedules) -- mirrors MealplansService's equivalent.
+  shareWithGroup(childId: string, groupId: string): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share/${groupId}`, {}));
+  }
+
+  unshareFromGroup(childId: string, groupId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share/${groupId}`)
+    );
+  }
+
+  async getSharedGroupId(childId: string): Promise<string | null> {
+    const response = await firstValueFrom(
+      this.http.get<{ groupId: string | null }>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share`)
+    );
+    return response.groupId;
+  }
 }

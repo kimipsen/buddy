@@ -28,6 +28,17 @@ export const admin = {
       cancelButton: 'Cancel',
       cancelError: 'Unable to cancel the invite.'
     },
+    children: {
+      showButton: 'Add a child',
+      hideButton: 'Close',
+      title: 'Add a child',
+      loading: 'Loading members…',
+      loadError: 'Unable to load group members.',
+      empty: 'All of your children are already in this group.',
+      selectPlaceholder: 'Choose a child',
+      addButton: 'Add to group',
+      addError: 'Unable to add this child to the group.'
+    },
     policy: {
       title: 'Calendar permissions',
       showButton: 'Calendar permissions',
@@ -72,7 +83,24 @@ export const admin = {
     createdMessage: '{name} was created.',
     temporaryPasswordLabel: 'Temporary password (shown once):',
     copy: 'Copy',
-    copied: 'Copied!'
+    copied: 'Copied!',
+    invite: {
+      showButton: 'Invite a co-guardian',
+      hideButton: 'Close',
+      pendingTitle: 'Pending invites',
+      pendingEmpty: 'No pending invites.',
+      loading: 'Loading invites…',
+      loadError: 'Unable to load invites.',
+      emailPlaceholder: 'Email address',
+      sendButton: 'Send invite',
+      sendError: 'Unable to send the invite. An invite was already sent to this address recently.',
+      cancelButton: 'Cancel',
+      cancelError: 'Unable to cancel the invite.',
+      kinds: {
+        parent: 'Parent',
+        guardian: 'Guardian'
+      }
+    }
   },
   manageCalendars: {
     title: 'Calendars',
@@ -87,7 +115,7 @@ export const admin = {
       contributor: 'Contributor',
       viewer: 'Viewer'
     },
-    ownerPersonalOption: 'Personal (only you)'
+    needsGroupHint: 'You need a group before you can add a calendar. Create one under Groups first.'
   },
   deleteAccount: {
     title: 'Danger zone',

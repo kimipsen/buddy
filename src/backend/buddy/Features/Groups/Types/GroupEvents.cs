@@ -1,4 +1,5 @@
 using buddy.Features.Calendars;
+using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
 using buddy.Features.Users;
 
@@ -12,6 +13,7 @@ public union GroupEvent(
     GroupMemberRoleRevoked,
     GroupCalendarPolicyUpdated,
     GroupMealplanPolicyUpdated,
+    GroupMedicinePolicyUpdated,
     GroupDeleted,
     GroupInviteCreated,
     GroupInviteAccepted,
@@ -25,6 +27,7 @@ public union GroupEvent(
         GroupMemberRoleRevoked e => e,
         GroupCalendarPolicyUpdated e => e,
         GroupMealplanPolicyUpdated e => e,
+        GroupMedicinePolicyUpdated e => e,
         GroupDeleted e => e,
         GroupInviteCreated e => e,
         GroupInviteAccepted e => e,
@@ -41,6 +44,7 @@ public union GroupEvent(
         GroupMemberRoleRevoked => nameof(GroupMemberRoleRevoked),
         GroupCalendarPolicyUpdated => nameof(GroupCalendarPolicyUpdated),
         GroupMealplanPolicyUpdated => nameof(GroupMealplanPolicyUpdated),
+        GroupMedicinePolicyUpdated => nameof(GroupMedicinePolicyUpdated),
         GroupDeleted => nameof(GroupDeleted),
         GroupInviteCreated => nameof(GroupInviteCreated),
         GroupInviteAccepted => nameof(GroupInviteAccepted),
@@ -72,6 +76,14 @@ public sealed record GroupCalendarPolicyUpdated(GroupId GroupId, ImmutableDictio
 // already shipped and cannot gain a required field retroactively, so a pre-existing group has no
 // entry here until one is set explicitly, which fails closed rather than guessing a default.
 public sealed record GroupMealplanPolicyUpdated(GroupId GroupId, ImmutableDictionary<GroupRole, MealplanAccessTier> Policy, UserId UpdatedBy, DateTimeOffset OccurredAt);
+
+// Full replace, same rule as GroupMealplanPolicyUpdated -- every role must be present. Only
+// MedicineAccessTier.None/Manage are ever valid values here; Mark is the two-principal
+// (child/guardian) tier and is never a meaningful group-policy target, the same way Rate is
+// excluded from MealplanPermissionPolicy (see docs/backend/analysis/medicine-schedules.md).
+// Appended a second time, right after GroupCreated in the same transaction, for the same reason
+// GroupMealplanPolicyUpdated is.
+public sealed record GroupMedicinePolicyUpdated(GroupId GroupId, ImmutableDictionary<GroupRole, MedicineAccessTier> Policy, UserId UpdatedBy, DateTimeOffset OccurredAt);
 
 // Recorded on the group's own stream (rather than a separate invite aggregate) so an invite's
 // lifecycle is part of the same history as the membership it leads to. None of the three invite

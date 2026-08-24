@@ -1,6 +1,7 @@
 using Alba;
 
 using buddy.Features.Calendars;
+using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Fixtures;
 
 namespace buddy.IntegrationTests.Features.Calendars;
@@ -9,12 +10,20 @@ internal static class CalendarTestHelpers
 {
     public const string DefaultTimeZone = "Europe/Copenhagen";
 
+    // GroupId is required by CreateCalendar; when a test doesn't care which group owns the
+    // calendar (most of them -- they're really testing calendar behavior, not group ownership),
+    // this transparently stands up a throwaway group with ownerToken as its Owner. The group's
+    // default CalendarPermissionPolicy maps GroupRole.Owner -> CalendarRole.Owner, so ownerToken
+    // resolves to CalendarRole.Owner exactly as it did for a pre-refactor personally-owned
+    // calendar -- every existing call site keeps working unchanged.
     public static async Task<Guid> CreateCalendarAsync(BuddyApiFixture fixture, string ownerToken, string name, Guid? groupId = null)
     {
+        var resolvedGroupId = groupId ?? await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, $"{name} group");
+
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
-            _.Post.Json(new { Name = name, TimeZoneId = DefaultTimeZone, GroupId = groupId }).ToUrl("/calendars/");
+            _.Post.Json(new { Name = name, TimeZoneId = DefaultTimeZone, GroupId = resolvedGroupId }).ToUrl("/calendars/");
             _.StatusCodeShouldBeOk();
         });
 

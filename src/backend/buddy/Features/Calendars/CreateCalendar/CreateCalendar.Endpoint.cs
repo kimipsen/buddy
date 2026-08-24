@@ -18,8 +18,7 @@ public static class CreateCalendarEndpoint
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var groupId = request.GroupId is { } value ? new GroupId(value) : (GroupId?)null;
-            var command = CreateCalendar.FromClaims(principal, request.Name, new TimeZoneId(request.TimeZoneId), groupId);
+            var command = CreateCalendar.FromClaims(principal, request.Name, new TimeZoneId(request.TimeZoneId), new GroupId(request.GroupId));
             var result = await bus.InvokeAsync<CreateCalendarOutcome>(command, cancellationToken);
 
             return result switch
@@ -36,4 +35,4 @@ public static class CreateCalendarEndpoint
     }
 }
 
-public sealed record CreateCalendarRequest(string Name, string TimeZoneId, Guid? GroupId = null);
+public sealed record CreateCalendarRequest(string Name, string TimeZoneId, Guid GroupId);

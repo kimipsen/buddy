@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 
 using buddy.Features.Calendars;
+using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
 
 namespace buddy.Features.Groups;
@@ -23,6 +24,14 @@ public static class CreateGroupHandler
         .Add(GroupRole.Admin, MealplanAccessTier.Manage)
         .Add(GroupRole.Member, MealplanAccessTier.None);
 
+    // Same conservative shape as DefaultMealplanPolicy, for the same reason: medicine dosage and
+    // adherence data is at least as sensitive as a child's meal ratings, so a regular Member gets
+    // no access until an Owner/Admin deliberately opts them in.
+    private static readonly ImmutableDictionary<GroupRole, MedicineAccessTier> DefaultMedicinePolicy = ImmutableDictionary<GroupRole, MedicineAccessTier>.Empty
+        .Add(GroupRole.Owner, MedicineAccessTier.Manage)
+        .Add(GroupRole.Admin, MedicineAccessTier.Manage)
+        .Add(GroupRole.Member, MedicineAccessTier.None);
+
     public static async Task<CreateGroupOutcome> Handle(CreateGroup command, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } ownerId)
@@ -33,12 +42,13 @@ public static class CreateGroupHandler
         var groupId = GroupId.New();
         var now = DateTimeOffset.UtcNow;
         var created = new GroupCreated(groupId, ownerId, command.Name, DefaultCalendarPolicy, now);
-        // GroupCreated can't carry MealplanPermissionPolicy directly -- it already shipped before
-        // this policy existed -- so every newly created group gets an explicit default via a
-        // second event, appended in the same transaction.
+        // GroupCreated can't carry MealplanPermissionPolicy/MedicinePermissionPolicy directly --
+        // it already shipped before either policy existed -- so every newly created group gets
+        // explicit defaults via two more events, appended in the same transaction.
         var mealplanPolicySet = new GroupMealplanPolicyUpdated(groupId, DefaultMealplanPolicy, ownerId, now);
+        var medicinePolicySet = new GroupMedicinePolicyUpdated(groupId, DefaultMedicinePolicy, ownerId, now);
 
-        var events = await groups.CreateAsync(groupId, [created, mealplanPolicySet], cancellationToken);
+        var events = await groups.CreateAsync(groupId, [created, mealplanPolicySet, medicinePolicySet], cancellationToken);
 
         return new CreateGroupOutcome.Success(Group.Rehydrate(events)!);
     }

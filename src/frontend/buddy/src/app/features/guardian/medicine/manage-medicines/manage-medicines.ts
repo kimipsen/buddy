@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { todayIsoDate } from '../../../../core/date-utils';
+import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MedicineSchedule, MedicinesService } from '../../../../core/medicines.service';
@@ -24,6 +25,7 @@ function withoutSeconds(time: string): string {
 export class ManageMedicines implements OnInit {
   private readonly guardians = inject(GuardiansService);
   private readonly medicines = inject(MedicinesService);
+  private readonly groupsService = inject(GroupsService);
 
   protected readonly hasChildren = signal(true);
   protected readonly children = signal<ChildSummary[]>([]);
@@ -46,6 +48,12 @@ export class ManageMedicines implements OnInit {
   protected readonly stoppingScheduleId = signal<string | null>(null);
   protected readonly confirmingStopScheduleId = signal<string | null>(null);
 
+  protected readonly manageableGroups = signal<GroupSummary[]>([]);
+  protected readonly sharedGroupId = signal<string | null>(null);
+  protected readonly shareTargetGroupId = signal('');
+  protected readonly sharing = signal(false);
+  protected readonly shareError = signal<string | null>(null);
+
   ngOnInit(): void {
     void this.loadChildren();
   }
@@ -53,6 +61,54 @@ export class ManageMedicines implements OnInit {
   protected async onChildChange(childId: string): Promise<void> {
     this.selectedChildId.set(childId);
     await this.loadSchedules(childId);
+    await this.loadSharing(childId);
+  }
+
+  protected nameForGroup(groupId: string): string {
+    return this.manageableGroups().find((group) => group.id === groupId)?.name ?? groupId;
+  }
+
+  protected async shareWithGroup(): Promise<void> {
+    const childId = this.selectedChildId();
+    const groupId = this.shareTargetGroupId();
+
+    if (!childId || !groupId) {
+      return;
+    }
+
+    this.sharing.set(true);
+    this.shareError.set(null);
+
+    try {
+      await this.medicines.shareWithGroup(childId, groupId);
+      this.sharedGroupId.set(groupId);
+      this.shareTargetGroupId.set('');
+    } catch {
+      this.shareError.set('medicine.manageMedicines.sharing.shareError');
+    } finally {
+      this.sharing.set(false);
+    }
+  }
+
+  protected async unshareFromGroup(): Promise<void> {
+    const childId = this.selectedChildId();
+    const groupId = this.sharedGroupId();
+
+    if (!childId || !groupId) {
+      return;
+    }
+
+    this.sharing.set(true);
+    this.shareError.set(null);
+
+    try {
+      await this.medicines.unshareFromGroup(childId, groupId);
+      this.sharedGroupId.set(null);
+    } catch {
+      this.shareError.set('medicine.manageMedicines.sharing.unshareError');
+    } finally {
+      this.sharing.set(false);
+    }
   }
 
   protected addTimeField(): void {
@@ -157,7 +213,7 @@ export class ManageMedicines implements OnInit {
       this.hasChildren.set(true);
       this.children.set(children);
       this.selectedChildId.set(children[0].id);
-      await this.loadSchedules(children[0].id);
+      await Promise.all([this.loadSchedules(children[0].id), this.loadSharing(children[0].id)]);
     } catch {
       this.error.set('medicine.manageMedicines.loadError');
     } finally {
@@ -167,5 +223,19 @@ export class ManageMedicines implements OnInit {
 
   private async loadSchedules(childId: string): Promise<void> {
     this.schedules.set((await this.medicines.listSchedules(childId)).filter((schedule) => !schedule.isStopped));
+  }
+
+  private async loadSharing(childId: string): Promise<void> {
+    try {
+      const [groups, sharedGroupId] = await Promise.all([this.groupsService.listMyGroups(), this.medicines.getSharedGroupId(childId)]);
+
+      // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
+      // backend's two-sided consent for ShareMedicineWithGroup.
+      this.manageableGroups.set(groups.filter((g) => g.role === 0 || g.role === 1));
+      this.sharedGroupId.set(sharedGroupId);
+    } catch {
+      this.manageableGroups.set([]);
+      this.sharedGroupId.set(null);
+    }
   }
 }

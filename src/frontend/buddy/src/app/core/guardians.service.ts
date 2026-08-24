@@ -38,6 +38,24 @@ export interface CreateChildRequest {
   username: string;
 }
 
+export interface GuardianInvite {
+  id: string;
+  email: string;
+  kind: GuardianKind;
+  invitedAt: string;
+  expiresAt: string;
+}
+
+export interface InviteGuardianRequest {
+  email: string;
+  kind: GuardianKind;
+}
+
+export interface GuardianInvitePreview {
+  childGivenName: string;
+  kind: GuardianKind;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GuardiansService {
   private readonly http = inject(HttpClient);
@@ -62,5 +80,31 @@ export class GuardiansService {
     return firstValueFrom(
       this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardian-link`)
     );
+  }
+
+  listGuardianInvites(childId: string): Promise<GuardianInvite[]> {
+    return firstValueFrom(
+      this.http.get<GuardianInvite[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardian-invites`)
+    );
+  }
+
+  inviteGuardian(childId: string, request: InviteGuardianRequest): Promise<GuardianInvite> {
+    return firstValueFrom(
+      this.http.post<GuardianInvite>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardian-invites`, request)
+    );
+  }
+
+  revokeGuardianInvite(childId: string, inviteId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardian-invites/${inviteId}`)
+    );
+  }
+
+  previewGuardianInvite(token: string): Promise<GuardianInvitePreview> {
+    return firstValueFrom(this.http.get<GuardianInvitePreview>(`${this.runtimeConfig.apiBaseUrl}/guardian-invites/${token}/preview`));
+  }
+
+  acceptGuardianInvite(token: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.runtimeConfig.apiBaseUrl}/guardian-invites/${token}/accept`, {}));
   }
 }

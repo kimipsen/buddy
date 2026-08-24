@@ -1,10 +1,15 @@
+using System.Text.RegularExpressions;
+
 using Alba;
 
+using buddy.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
+
+using Xunit;
 
 namespace buddy.IntegrationTests.Features.Guardians;
 
-internal static class GuardianTestHelpers
+internal static partial class GuardianTestHelpers
 {
     public static async Task<ChildResponseDto> CreateChildAsync(BuddyApiFixture fixture, string guardianToken, string givenName = "Alex", string familyName = "Anderson", string? username = null)
     {
@@ -29,4 +34,31 @@ internal static class GuardianTestHelpers
 
         return await fixture.GetAccessTokenAsync(child.Username, permanentPassword);
     }
+
+    public static async Task<GuardianInviteResponseDto> InviteGuardianAsync(BuddyApiFixture fixture, string guardianToken, Guid childId, string email, GuardianKind kind)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Email = email, Kind = kind }).ToUrl($"/users/me/children/{childId}/guardian-invites");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<GuardianInviteResponseDto>();
+    }
+
+    public static async Task<string> ReadGuardianInviteTokenAsync(BuddyApiFixture fixture, string emailAddress)
+    {
+        var messages = await fixture.GetMailpitMessagesToAsync(emailAddress);
+        Assert.NotEmpty(messages);
+
+        var text = await fixture.GetMailpitMessageTextAsync(messages[0].GetProperty("ID").GetString()!);
+        var match = InviteTokenPattern().Match(text);
+
+        Assert.True(match.Success, $"Could not find a guardian invite token in email body: {text}");
+        return match.Groups[1].Value;
+    }
+
+    [GeneratedRegex(@"/guardian-invite/(\S+)")]
+    private static partial Regex InviteTokenPattern();
 }

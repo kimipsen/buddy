@@ -21,7 +21,9 @@ public static class MedicinesFeature
         typeof(MedicineDetailsUpdated),
         typeof(MedicineScheduleRescheduled),
         typeof(MedicineScheduleStopped),
-        typeof(DoseStatusChanged)
+        typeof(DoseStatusChanged),
+        typeof(MedicineSharedWithGroup),
+        typeof(MedicineUnsharedFromGroup)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -53,6 +55,7 @@ public static class MedicinesFeature
         });
 
         services.AddSingleton<IMedicineEventStore, MartenMedicineEventStore>();
+        services.AddSingleton<IMedicineSharingEventStore, MartenMedicineSharingEventStore>();
 
         return services;
     }
@@ -71,6 +74,18 @@ public static class MedicinesFeature
         medicines.MapListMedicineSchedules();
         medicines.MapListTodaysDoses();
         medicines.MapSetDoseStatus();
+
+        medicines.MapShareMedicineWithGroup();
+        medicines.MapUnshareMedicineFromGroup();
+        medicines.MapGetSharedMedicineGroup();
+
+        medicines.MapCreateMedicineScheduleForGroup();
+        medicines.MapUpdateMedicineDetailsForGroup();
+        medicines.MapRescheduleMedicineForGroup();
+        medicines.MapStopMedicineScheduleForGroup();
+        medicines.MapListMedicineSchedulesForGroup();
+        medicines.MapListTodaysDosesForGroup();
+        medicines.MapSetDoseStatusForGroup();
 
         return endpoints;
     }

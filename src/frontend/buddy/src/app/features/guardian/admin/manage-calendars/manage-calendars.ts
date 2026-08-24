@@ -33,7 +33,8 @@ export class ManageCalendars implements OnInit {
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
 
-  // '' means "personal calendar" -- the sentinel maps to createCalendar's optional groupId.
+  // A calendar is always group-owned -- this stays empty (and the create form disabled) until
+  // a manageable group is loaded and selected below.
   protected readonly newCalendarGroupId = signal('');
   protected readonly manageableGroups = signal<GroupSummary[]>([]);
 
@@ -45,8 +46,9 @@ export class ManageCalendars implements OnInit {
   protected async createCalendar(): Promise<void> {
     const name = this.newCalendarName().trim();
     const timeZoneId = this.newCalendarTimeZoneId().trim();
+    const groupId = this.newCalendarGroupId();
 
-    if (!name || !timeZoneId) {
+    if (!name || !timeZoneId || !groupId) {
       return;
     }
 
@@ -54,10 +56,8 @@ export class ManageCalendars implements OnInit {
     this.createError.set(null);
 
     try {
-      const groupId = this.newCalendarGroupId() || undefined;
       await this.calendars.createCalendar({ name, timeZoneId, groupId });
       this.newCalendarName.set('');
-      this.newCalendarGroupId.set('');
       await this.loadCalendars();
     } catch {
       this.createError.set('admin.manageCalendars.createError');
@@ -71,9 +71,13 @@ export class ManageCalendars implements OnInit {
       const groups = await this.groupsService.listMyGroups();
       // Group-owned calendar creation is gated on GroupAuthorization.CheckManage server-side,
       // which only Owners (0) and Admins (1) satisfy.
-      this.manageableGroups.set(groups.filter((group) => group.role === 0 || group.role === 1));
+      const manageable = groups.filter((group) => group.role === 0 || group.role === 1);
+      this.manageableGroups.set(manageable);
+
+      if (!this.newCalendarGroupId() && manageable.length > 0) {
+        this.newCalendarGroupId.set(manageable[0].id);
+      }
     } catch {
-      // Non-fatal: the create form still works for personal calendars if this fails.
       this.manageableGroups.set([]);
     }
   }

@@ -13,6 +13,16 @@ export const medicine = {
     cancel: 'Annuller',
     stop: 'Stop',
     stopError: 'Kunne ikke stoppe denne medicinplan.',
+    sharing: {
+      title: 'Del med en gruppe',
+      sharedWith: 'Delt med',
+      unshareButton: 'Fjern deling',
+      unshareError: 'Kunne ikke fjerne delingen med denne gruppe.',
+      selectPlaceholder: 'Vælg en gruppe',
+      shareButton: 'Del',
+      shareError: 'Kunne ikke dele med denne gruppe.',
+      noGroups: 'Du skal have en gruppe, du administrerer, før du kan dele dette barns medicinplaner.'
+    },
     scheduleRange: {
       ongoing: 'fra {startDate} (løbende)',
       withEnd: 'fra {startDate} til {endDate}'
