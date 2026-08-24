@@ -61,4 +61,14 @@ public sealed class UserEventShapeTests
     public void LanguageUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new LanguageUpdated(FixedUserId, Language.New("en"), Language.New("da"), FixedInstant),
         "Users/LanguageUpdated.json");
+
+    [Fact]
+    public void GroupInvitationSent() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new GroupInvitationSent(FixedUserId, Guid.Parse("00000000-0000-0000-0000-000000000010"), "Engineering", "invitee@buddy.test", FixedInstant),
+        "Users/GroupInvitationSent.json");
+
+    [Fact]
+    public void GroupMembershipJoined() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new GroupMembershipJoined(FixedUserId, Guid.Parse("00000000-0000-0000-0000-000000000010"), "Engineering", FixedInstant),
+        "Users/GroupMembershipJoined.json");
 }

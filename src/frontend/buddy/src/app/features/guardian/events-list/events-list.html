@@ -39,6 +39,12 @@
             @case ('LanguageUpdated') {
               <app-language-updated-event [data]="$any(event.data)" />
             }
+            @case ('GroupInvitationSent') {
+              <app-group-invitation-sent-event [data]="$any(event.data)" />
+            }
+            @case ('GroupMembershipJoined') {
+              <app-group-membership-joined-event [data]="$any(event.data)" />
+            }
             @default {
               <app-unknown-event [type]="event.type" [data]="event.data" />
             }

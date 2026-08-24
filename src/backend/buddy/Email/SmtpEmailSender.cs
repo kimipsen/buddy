@@ -9,15 +9,25 @@ namespace buddy.Email;
 
 public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options) : IEmailSender
 {
-    public async Task SendEmailVerificationAsync(string emailAddress, string token, CancellationToken cancellationToken)
+    public Task SendEmailVerificationAsync(string emailAddress, string token, CancellationToken cancellationToken) =>
+        SendAsync(emailAddress, "Verify your email address", $"Your verification token is: {token}", cancellationToken);
+
+    public Task SendGroupInviteEmailAsync(string emailAddress, string groupName, string token, CancellationToken cancellationToken) =>
+        SendAsync(
+            emailAddress,
+            $"You've been invited to join {groupName}",
+            $"You've been invited to join the group \"{groupName}\". Your invite token is: {token}",
+            cancellationToken);
+
+    private async Task SendAsync(string emailAddress, string subject, string body, CancellationToken cancellationToken)
     {
         var mail = options.CurrentValue;
 
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(mail.FromName ?? mail.FromAddress, mail.FromAddress));
         message.To.Add(MailboxAddress.Parse(emailAddress));
-        message.Subject = "Verify your email address";
-        message.Body = new TextPart("plain") { Text = $"Your verification token is: {token}" };
+        message.Subject = subject;
+        message.Body = new TextPart("plain") { Text = body };
 
         using var client = new SmtpClient();
 

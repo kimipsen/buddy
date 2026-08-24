@@ -10,7 +10,10 @@ public union GroupEvent(
     GroupMemberRoleGranted,
     GroupMemberRoleRevoked,
     GroupCalendarPolicyUpdated,
-    GroupDeleted
+    GroupDeleted,
+    GroupInviteCreated,
+    GroupInviteAccepted,
+    GroupInviteRevoked
 )
 {
     public static GroupEvent FromPayload(object payload) => payload switch
@@ -20,6 +23,9 @@ public union GroupEvent(
         GroupMemberRoleRevoked e => e,
         GroupCalendarPolicyUpdated e => e,
         GroupDeleted e => e,
+        GroupInviteCreated e => e,
+        GroupInviteAccepted e => e,
+        GroupInviteRevoked e => e,
         _ => throw new ArgumentException($"Unknown group event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -32,6 +38,9 @@ public union GroupEvent(
         GroupMemberRoleRevoked => nameof(GroupMemberRoleRevoked),
         GroupCalendarPolicyUpdated => nameof(GroupCalendarPolicyUpdated),
         GroupDeleted => nameof(GroupDeleted),
+        GroupInviteCreated => nameof(GroupInviteCreated),
+        GroupInviteAccepted => nameof(GroupInviteAccepted),
+        GroupInviteRevoked => nameof(GroupInviteRevoked),
     };
 }
 
@@ -50,3 +59,24 @@ public sealed record GroupMemberRoleRevoked(GroupId GroupId, UserId MemberId, Us
 // Full replace, not a partial patch -- every role must be present for CalendarAuthorization's
 // resolution to have something to look up (a role missing here fails closed, never open).
 public sealed record GroupCalendarPolicyUpdated(GroupId GroupId, ImmutableDictionary<GroupRole, CalendarRole> Policy, UserId UpdatedBy, DateTimeOffset OccurredAt);
+
+// Recorded on the group's own stream (rather than a separate invite aggregate) so an invite's
+// lifecycle is part of the same history as the membership it leads to. None of the three invite
+// events touch Group.Members directly -- only the GroupMemberRoleGranted appended alongside
+// GroupInviteAccepted does that -- so Group.Rehydrate has no case for them and falls through to
+// its default arm; they exist purely to drive the GroupInviteDocument read model.
+//
+// InvitedEmail is deliberately never resolved to a UserId at invite time -- this codebase has no
+// "look up a user by email" capability anywhere, by design, to avoid an account-enumeration
+// surface (see docs/backend/analysis/child-accounts-and-guardian-roles.md). AcceptGroupInvite
+// instead compares the *authenticated caller's own* email against InvitedEmail -- a self-scoped
+// check, not a lookup of someone else.
+//
+// TokenHash is a SHA-256 hash of the plaintext token, never the token itself -- same reasoning as
+// EmailVerificationRequested: the event stream is append-only, so a bare secret in it could never
+// be revoked or purged.
+public sealed record GroupInviteCreated(GroupId GroupId, Guid InviteId, string InvitedEmail, GroupRole Role, UserId InvitedBy, string TokenHash, DateTimeOffset ExpiresAt, DateTimeOffset OccurredAt);
+
+public sealed record GroupInviteAccepted(GroupId GroupId, Guid InviteId, UserId AcceptedBy, DateTimeOffset OccurredAt);
+
+public sealed record GroupInviteRevoked(GroupId GroupId, Guid InviteId, UserId RevokedBy, DateTimeOffset OccurredAt);

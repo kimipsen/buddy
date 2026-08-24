@@ -3,6 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 
 import { AccountService } from './account.service';
 import { AuthService } from './auth.service';
+import { takePendingInviteToken } from './pending-invite-token';
 import { UsersService } from './users.service';
 
 // Completes login and sends the user to the UI tree matching their role -- always redirects,
@@ -31,6 +32,16 @@ export const roleRedirectGuard: CanActivateFn = async () => {
     await users.ensureCurrentUser();
   } catch {
     // Ignored -- see comment above.
+  }
+
+  // A guardian who wasn't logged in yet when they opened a group-invite link gets sent through
+  // login and would otherwise land on the normal role-based home route, losing the invite. See
+  // pending-invite-token.ts for why this app needs its own narrow stand-in rather than a general
+  // return-url mechanism.
+  const pendingInviteToken = takePendingInviteToken();
+
+  if (pendingInviteToken) {
+    return router.createUrlTree(['/invite', pendingInviteToken]);
   }
 
   const role = await account.resolveRole();

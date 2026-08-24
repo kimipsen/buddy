@@ -14,6 +14,19 @@ export const admin = {
       owner: 'Owner',
       admin: 'Admin',
       member: 'Member'
+    },
+    invite: {
+      showButton: 'Invite',
+      hideButton: 'Close',
+      pendingTitle: 'Pending invites',
+      pendingEmpty: 'No pending invites.',
+      loading: 'Loading invites…',
+      loadError: 'Unable to load invites.',
+      emailPlaceholder: 'Email address',
+      sendButton: 'Send invite',
+      sendError: 'Unable to send the invite. The email may already be a member, or an invite was already sent recently.',
+      cancelButton: 'Cancel',
+      cancelError: 'Unable to cancel the invite.'
     }
   },
   manageChildren: {

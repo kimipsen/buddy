@@ -2,12 +2,19 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth.guard';
 import { roleRedirectGuard } from './core/role.guard';
+import { AcceptInvite } from './features/invite/accept-invite';
 import { Login } from './features/login/login';
 
 export const routes: Routes = [
   {
     path: 'login',
     component: Login
+  },
+  {
+    // Not behind authGuard -- reachable while logged out so the invite preview and "log in to
+    // accept" prompt both work; see pending-invite-token.ts for how login then returns here.
+    path: 'invite/:token',
+    component: AcceptInvite
   },
   {
     path: 'guardian',

@@ -1,0 +1,10 @@
+{
+  "GroupId": "00000000-0000-0000-0000-000000000010",
+  "InviteId": "00000000-0000-0000-0000-000000000020",
+  "InvitedEmail": "invitee@buddy.test",
+  "Role": "Member",
+  "InvitedBy": "00000000-0000-0000-0000-000000000001",
+  "TokenHash": "deadbeef",
+  "ExpiresAt": "2025-01-08T12:00:00+00:00",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

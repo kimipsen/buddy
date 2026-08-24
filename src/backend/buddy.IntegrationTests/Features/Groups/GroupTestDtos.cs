@@ -12,3 +12,7 @@ internal sealed record GroupResponseDto(Guid Id, string Name, IReadOnlyCollectio
 internal sealed record GroupMemberDto(Guid UserId, GroupRole Role);
 
 internal sealed record GroupSummaryDto(Guid Id, string Name, GroupRole Role);
+
+internal sealed record GroupInviteResponseDto(Guid Id, string Email, GroupRole Role, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt);
+
+internal sealed record GroupInvitePreviewResponseDto(string GroupName);

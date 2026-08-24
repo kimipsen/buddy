@@ -14,6 +14,19 @@ export const admin = {
       owner: 'Ejer',
       admin: 'Administrator',
       member: 'Medlem'
+    },
+    invite: {
+      showButton: 'Inviter',
+      hideButton: 'Luk',
+      pendingTitle: 'Afventende invitationer',
+      pendingEmpty: 'Ingen afventende invitationer.',
+      loading: 'Indlæser invitationer…',
+      loadError: 'Kunne ikke indlæse invitationer.',
+      emailPlaceholder: 'E-mailadresse',
+      sendButton: 'Send invitation',
+      sendError: 'Kunne ikke sende invitationen. E-mailen er muligvis allerede medlem, eller en invitation blev allerede sendt for nylig.',
+      cancelButton: 'Annuller',
+      cancelError: 'Kunne ikke annullere invitationen.'
     }
   },
   manageChildren: {

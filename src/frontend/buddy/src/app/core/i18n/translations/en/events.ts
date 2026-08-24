@@ -40,6 +40,14 @@ export const events = {
     languageUpdated: {
       title: 'Language updated',
       description: 'Language changed from {before} to {after}.'
+    },
+    groupInvitationSent: {
+      title: 'Group invite sent',
+      description: 'Invited {email} to join {groupName}.'
+    },
+    groupMembershipJoined: {
+      title: 'Joined a group',
+      description: 'Joined {groupName}.'
     }
   }
 };

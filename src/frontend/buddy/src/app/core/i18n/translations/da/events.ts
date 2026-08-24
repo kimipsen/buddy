@@ -40,6 +40,14 @@ export const events = {
     languageUpdated: {
       title: 'Sprog opdateret',
       description: 'Sprog ændret fra {before} til {after}.'
+    },
+    groupInvitationSent: {
+      title: 'Gruppeinvitation sendt',
+      description: 'Inviterede {email} til at deltage i {groupName}.'
+    },
+    groupMembershipJoined: {
+      title: 'Deltog i en gruppe',
+      description: 'Deltog i {groupName}.'
     }
   }
 };

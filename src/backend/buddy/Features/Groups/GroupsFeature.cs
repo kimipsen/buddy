@@ -22,7 +22,10 @@ public static class GroupsFeature
         typeof(GroupMemberRoleGranted),
         typeof(GroupMemberRoleRevoked),
         typeof(GroupCalendarPolicyUpdated),
-        typeof(GroupDeleted)
+        typeof(GroupDeleted),
+        typeof(GroupInviteCreated),
+        typeof(GroupInviteAccepted),
+        typeof(GroupInviteRevoked)
     ];
 
     public static IServiceCollection AddGroupsFeature(this IServiceCollection services, IConfiguration configuration)
@@ -70,6 +73,20 @@ public static class GroupsFeature
         groups.MapRemoveGroupMember();
         groups.MapUpdateCalendarPermissionPolicy();
         groups.MapDeleteGroup();
+        groups.MapInviteToGroup();
+        groups.MapListGroupInvites();
+        groups.MapRevokeGroupInvite();
+
+        // A separate route group: PreviewGroupInvite must stay reachable by an unauthenticated
+        // caller who has only the token from an email link (so the app can show "You've been
+        // invited to X" before forcing a login), while AcceptGroupInvite needs auth applied only
+        // to itself rather than inheriting "/groups"'s blanket RequireAuthorization().
+        var invites = endpoints.MapGroup("/invites")
+            .WithTags("Groups")
+            .WithGroupName(OpenApiDocumentName);
+
+        invites.MapPreviewGroupInvite();
+        invites.MapAcceptGroupInvite();
 
         return endpoints;
     }

@@ -10,9 +10,89 @@
   } @else {
     <ul class="space-y-3">
       @for (group of items(); track group.id) {
-        <li class="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
-          <span class="text-sm font-medium">{{ group.name }}</span>
-          <span class="text-xs font-semibold text-slate-500">{{ roleLabels[group.role] | translate }}</span>
+        <li class="rounded-lg border border-slate-200 px-4 py-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium">{{ group.name }}</span>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-semibold text-slate-500">{{ roleLabels[group.role] | translate }}</span>
+              @if (canManage(group)) {
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  (click)="toggleInvitePanel(group.id)"
+                >
+                  {{ (expandedGroupId() === group.id ? 'admin.manageGroups.invite.hideButton' : 'admin.manageGroups.invite.showButton') | translate }}
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (expandedGroupId() === group.id) {
+            <div class="mt-4 border-t border-slate-200 pt-4">
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'admin.manageGroups.invite.pendingTitle' | translate }}</h4>
+
+              @if (invitesLoading() === group.id) {
+                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.invite.loading' | translate }}</p>
+              } @else if (invitesFor(group.id).length === 0) {
+                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.invite.pendingEmpty' | translate }}</p>
+              } @else {
+                <ul class="mt-2 space-y-2">
+                  @for (invite of invitesFor(group.id); track invite.id) {
+                    <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                      <span class="text-sm">{{ invite.email }}</span>
+                      <div class="flex items-center gap-3">
+                        <span class="text-xs font-semibold text-slate-500">{{ roleLabels[invite.role] | translate }}</span>
+                        <button
+                          type="button"
+                          class="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                          [disabled]="revokingInviteId() === invite.id"
+                          (click)="revokeInvite(group.id, invite.id)"
+                        >
+                          {{ 'admin.manageGroups.invite.cancelButton' | translate }}
+                        </button>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (invitesError(); as message) {
+                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+              }
+
+              <form class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_auto]" (ngSubmit)="sendInvite(group.id)">
+                <input
+                  type="email"
+                  name="inviteEmail"
+                  placeholder="{{ 'admin.manageGroups.invite.emailPlaceholder' | translate }}"
+                  class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  [ngModel]="inviteEmail()"
+                  (ngModelChange)="inviteEmail.set($event)"
+                />
+                <select
+                  name="inviteRole"
+                  class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  [ngModel]="inviteRole()"
+                  (ngModelChange)="inviteRole.set($event)"
+                >
+                  @for (role of invitableRoles; track role) {
+                    <option [ngValue]="role">{{ roleLabels[role] | translate }}</option>
+                  }
+                </select>
+                <button
+                  type="submit"
+                  class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  [disabled]="inviting() || !inviteEmail().trim()"
+                >
+                  {{ 'admin.manageGroups.invite.sendButton' | translate }}
+                </button>
+              </form>
+
+              @if (inviteError(); as message) {
+                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+              }
+            </div>
+          }
         </li>
       }
     </ul>

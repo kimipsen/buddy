@@ -85,6 +85,41 @@ public sealed class MartenGroupEventStore(IGroupsStore store) : IGroupEventStore
                         session.Delete(member);
                     }
                     break;
+
+                case GroupInviteCreated created:
+                    var groupName = await session.Query<GroupMembershipDocument>()
+                        .Where(d => d.GroupId == groupId.Value)
+                        .Select(d => d.GroupName)
+                        .FirstAsync(cancellationToken);
+
+                    session.Store(new GroupInviteDocument(
+                        created.InviteId,
+                        groupId.Value,
+                        groupName,
+                        created.InvitedEmail,
+                        created.Role,
+                        created.InvitedBy.Value,
+                        created.TokenHash,
+                        created.OccurredAt,
+                        created.ExpiresAt,
+                        GroupInviteStatus.Pending));
+                    break;
+
+                case GroupInviteAccepted accepted:
+                    var acceptedInvite = await session.LoadAsync<GroupInviteDocument>(accepted.InviteId, cancellationToken);
+                    if (acceptedInvite is not null)
+                    {
+                        session.Store(acceptedInvite with { Status = GroupInviteStatus.Accepted });
+                    }
+                    break;
+
+                case GroupInviteRevoked revoked:
+                    var revokedInvite = await session.LoadAsync<GroupInviteDocument>(revoked.InviteId, cancellationToken);
+                    if (revokedInvite is not null)
+                    {
+                        session.Store(revokedInvite with { Status = GroupInviteStatus.Revoked });
+                    }
+                    break;
             }
         }
 
@@ -98,5 +133,40 @@ public sealed class MartenGroupEventStore(IGroupsStore store) : IGroupEventStore
         return await session.Query<GroupMembershipDocument>()
             .Where(d => d.UserId == userId.Value)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<GroupInviteDocument>> ListPendingInvitesAsync(GroupId groupId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        return await session.Query<GroupInviteDocument>()
+            .Where(d => d.GroupId == groupId.Value && d.Status == GroupInviteStatus.Pending)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<GroupInviteDocument?> FindInviteAsync(Guid inviteId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        return await session.LoadAsync<GroupInviteDocument>(inviteId, cancellationToken);
+    }
+
+    public async Task<GroupInviteDocument?> FindPendingInviteAsync(GroupId groupId, string normalizedEmail, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        return await session.Query<GroupInviteDocument>()
+            .Where(d => d.GroupId == groupId.Value && d.InvitedEmail == normalizedEmail && d.Status == GroupInviteStatus.Pending)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<GroupInviteDocument?> FindInviteByTokenAsync(string token, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var tokenHash = GroupInviteToken.Hash(token);
+
+        return await session.Query<GroupInviteDocument>()
+            .Where(d => d.TokenHash == tokenHash)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

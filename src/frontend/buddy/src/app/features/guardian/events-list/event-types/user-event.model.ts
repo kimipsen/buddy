@@ -60,3 +60,18 @@ export interface LanguageUpdatedData {
   after: string;
   occurredAt: string;
 }
+
+export interface GroupInvitationSentData {
+  userId: string;
+  groupId: string;
+  groupName: string;
+  invitedEmail: string;
+  occurredAt: string;
+}
+
+export interface GroupMembershipJoinedData {
+  userId: string;
+  groupId: string;
+  groupName: string;
+  occurredAt: string;
+}

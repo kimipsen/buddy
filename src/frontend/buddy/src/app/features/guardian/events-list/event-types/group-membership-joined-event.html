@@ -1,0 +1,5 @@
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'events.types.groupMembershipJoined.title' | translate }}</p>
+<p class="mt-1 text-sm font-medium">
+  {{ 'events.types.groupMembershipJoined.description' | translate: { groupName: data().groupName } }}
+</p>
+<p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | userDate: 'medium' }}</p>

@@ -18,6 +18,23 @@ export interface CreateGroupRequest {
   name: string;
 }
 
+export interface InviteToGroupRequest {
+  email: string;
+  role: GroupRole;
+}
+
+export interface GroupInvite {
+  id: string;
+  email: string;
+  role: GroupRole;
+  invitedAt: string;
+  expiresAt: string;
+}
+
+export interface GroupInvitePreview {
+  groupName: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GroupsService {
   private readonly http = inject(HttpClient);
@@ -29,5 +46,25 @@ export class GroupsService {
 
   createGroup(request: CreateGroupRequest): Promise<GroupSummary> {
     return firstValueFrom(this.http.post<GroupSummary>(`${this.runtimeConfig.apiBaseUrl}/groups`, request));
+  }
+
+  listInvites(groupId: string): Promise<GroupInvite[]> {
+    return firstValueFrom(this.http.get<GroupInvite[]>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`));
+  }
+
+  inviteToGroup(groupId: string, request: InviteToGroupRequest): Promise<GroupInvite> {
+    return firstValueFrom(this.http.post<GroupInvite>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`, request));
+  }
+
+  revokeInvite(groupId: string, inviteId: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites/${inviteId}`));
+  }
+
+  previewInvite(token: string): Promise<GroupInvitePreview> {
+    return firstValueFrom(this.http.get<GroupInvitePreview>(`${this.runtimeConfig.apiBaseUrl}/invites/${token}/preview`));
+  }
+
+  acceptInvite(token: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.runtimeConfig.apiBaseUrl}/invites/${token}/accept`, {}));
   }
 }
