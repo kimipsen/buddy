@@ -27,6 +27,7 @@ model or permissions logic.
 - [Medicine schedules](analysis/medicine-schedules.md)
 - [Meal plans](analysis/mealplans.md)
 - [Group-shared meal plans](analysis/group-owned-mealplans.md)
+- [Pickup and drop-off schedules](analysis/pickup-schedules.md)
 
 ## Current focus areas
 

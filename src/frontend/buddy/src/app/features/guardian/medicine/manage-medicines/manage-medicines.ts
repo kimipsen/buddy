@@ -213,7 +213,8 @@ export class ManageMedicines implements OnInit {
       this.hasChildren.set(true);
       this.children.set(children);
       this.selectedChildId.set(children[0].id);
-      await Promise.all([this.loadSchedules(children[0].id), this.loadSharing(children[0].id)]);
+      await this.loadSchedules(children[0].id);
+      await this.loadSharing(children[0].id);
     } catch {
       this.error.set('medicine.manageMedicines.loadError');
     } finally {
