@@ -3,6 +3,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 
 import { toIsoDate } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { MealPlanEntry, MealplanAccessTier, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
 import { MealPicker } from '../meal-picker/meal-picker';
 
@@ -27,7 +28,7 @@ interface SlotRef {
   slot: MealSlot;
 }
 
-function buildDays(): PlannerDay[] {
+function buildDays(locale: string): PlannerDay[] {
   const today = new Date();
 
   return Array.from({ length: DAYS_AHEAD }, (_, offset) => {
@@ -35,7 +36,7 @@ function buildDays(): PlannerDay[] {
 
     return {
       date: toIsoDate(date),
-      label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
     };
   });
 }
@@ -47,6 +48,7 @@ function buildDays(): PlannerDay[] {
 })
 export class AssignMealplan {
   private readonly mealplans = inject(MealplansService);
+  private readonly translation = inject(TranslationService);
 
   readonly scope = input.required<MealplanScope>();
 
@@ -59,7 +61,7 @@ export class AssignMealplan {
 
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
-  protected readonly days = buildDays();
+  protected readonly days = computed(() => buildDays(this.translation.language()));
 
   // Reads straight from the shared service state, so adding a meal in the meal library on the
   // same page shows up here immediately without a manual refetch.
@@ -175,7 +177,7 @@ export class AssignMealplan {
     try {
       const [, entries] = await Promise.all([
         this.mealplans.listMeals(scope),
-        this.mealplans.listMealPlan(scope, this.days[0].date, this.days.at(-1)!.date)
+        this.mealplans.listMealPlan(scope, this.days()[0].date, this.days().at(-1)!.date)
       ]);
 
       const byKey: Partial<Record<string, MealPlanEntry>> = {};

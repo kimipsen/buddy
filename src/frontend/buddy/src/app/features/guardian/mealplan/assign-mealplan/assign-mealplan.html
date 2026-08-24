@@ -25,7 +25,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (day of days; track day.date) {
+          @for (day of days(); track day.date) {
             <tr>
               <th class="whitespace-nowrap pr-2 text-left text-sm font-semibold text-slate-700">{{ day.label }}</th>
               @for (slot of slots; track slot) {

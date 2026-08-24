@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 
+import { TranslationService } from './i18n/translation.service';
 import { UsersService } from './users.service';
 
 export type UserDateFormat = 'medium' | 'shortTime';
@@ -11,6 +12,7 @@ export type UserDateFormat = 'medium' | 'shortTime';
 @Pipe({ name: 'userDate', pure: false })
 export class UserDatePipe implements PipeTransform {
   private readonly users = inject(UsersService);
+  private readonly translation = inject(TranslationService);
 
   transform(value: string | number | Date | null | undefined, format: UserDateFormat = 'medium'): string {
     if (value === null || value === undefined || value === '') {
@@ -23,6 +25,6 @@ export class UserDatePipe implements PipeTransform {
     const options: Intl.DateTimeFormatOptions =
       format === 'shortTime' ? { timeStyle: 'short', timeZone } : { dateStyle: 'medium', timeStyle: 'medium', timeZone };
 
-    return new Intl.DateTimeFormat(undefined, options).format(date);
+    return new Intl.DateTimeFormat(this.translation.language(), options).format(date);
   }
 }
