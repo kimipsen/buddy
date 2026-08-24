@@ -22,4 +22,8 @@ public sealed class MailOptions
     public required string FromAddress { get; init; }
 
     public string? FromName { get; init; }
+
+    // Base origin of the deployed frontend, used to build the clickable links sent in
+    // verification and invite emails (e.g. "{FrontendBaseUrl}/invite/{token}"). No trailing slash.
+    public required string FrontendBaseUrl { get; init; }
 }

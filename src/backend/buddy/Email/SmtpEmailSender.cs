@@ -9,15 +9,24 @@ namespace buddy.Email;
 
 public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options) : IEmailSender
 {
-    public Task SendEmailVerificationAsync(string emailAddress, string token, CancellationToken cancellationToken) =>
-        SendAsync(emailAddress, "Verify your email address", $"Your verification token is: {token}", cancellationToken);
+    public Task SendEmailVerificationAsync(string emailAddress, string token, CancellationToken cancellationToken)
+    {
+        var link = BuildLink("verify-email", token);
+        return SendAsync(emailAddress, "Verify your email address", $"Verify your email address by clicking the link below:\n\n{link}", cancellationToken);
+    }
 
-    public Task SendGroupInviteEmailAsync(string emailAddress, string groupName, string token, CancellationToken cancellationToken) =>
-        SendAsync(
+    public Task SendGroupInviteEmailAsync(string emailAddress, string groupName, string token, CancellationToken cancellationToken)
+    {
+        var link = BuildLink("invite", token);
+        return SendAsync(
             emailAddress,
             $"You've been invited to join {groupName}",
-            $"You've been invited to join the group \"{groupName}\". Your invite token is: {token}",
+            $"You've been invited to join the group \"{groupName}\". Click the link below to accept:\n\n{link}",
             cancellationToken);
+    }
+
+    private string BuildLink(string path, string token) =>
+        $"{options.CurrentValue.FrontendBaseUrl.TrimEnd('/')}/{path}/{Uri.EscapeDataString(token)}";
 
     private async Task SendAsync(string emailAddress, string subject, string body, CancellationToken cancellationToken)
     {

@@ -9,5 +9,6 @@ import { mealplan } from './mealplan';
 import { medicine } from './medicine';
 import { profile } from './profile';
 import { shell } from './shell';
+import { verifyEmail } from './verify-email';
 
-export const da = { admin, child, common, dashboard, events, invite, login, mealplan, medicine, profile, shell };
+export const da = { admin, child, common, dashboard, events, invite, login, mealplan, medicine, profile, shell, verifyEmail };

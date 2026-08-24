@@ -47,6 +47,7 @@ services:
       Authentication__KeycloakAdmin__ClientId: "buddy-admin-cli"
       Authentication__KeycloakAdmin__ClientSecret: "${KEYCLOAK_ADMIN_CLI_SECRET}"
       Cors__AllowedOrigins__0: "https://${APP_DOMAIN}"
+      Mail__FrontendBaseUrl: "https://${APP_DOMAIN}"
     depends_on:
       - db
       - keycloak

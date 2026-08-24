@@ -68,6 +68,14 @@ export class UsersService {
     return updated;
   }
 
+  async verifyEmail(token: string): Promise<CurrentUser> {
+    const updated = await firstValueFrom(
+      this.http.post<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/email/verify`, { token })
+    );
+    this.currentUserPromise = Promise.resolve(updated);
+    return updated;
+  }
+
   async updateTimeZone(timeZoneId: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
       this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/timezone`, { timeZoneId })

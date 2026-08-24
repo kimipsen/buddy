@@ -4,6 +4,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AccountService } from './account.service';
 import { AuthService } from './auth.service';
 import { takePendingInviteToken } from './pending-invite-token';
+import { takePendingVerifyEmailToken } from './pending-verify-email-token';
 import { UsersService } from './users.service';
 
 // Completes login and sends the user to the UI tree matching their role -- always redirects,
@@ -42,6 +43,13 @@ export const roleRedirectGuard: CanActivateFn = async () => {
 
   if (pendingInviteToken) {
     return router.createUrlTree(['/invite', pendingInviteToken]);
+  }
+
+  // Same stand-in as above, for a user who followed a "verify your email" link while logged out.
+  const pendingVerifyEmailToken = takePendingVerifyEmailToken();
+
+  if (pendingVerifyEmailToken) {
+    return router.createUrlTree(['/verify-email', pendingVerifyEmailToken]);
   }
 
   const role = await account.resolveRole();
