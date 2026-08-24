@@ -1,10 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { UsersService } from '../../../../core/users.service';
 
 @Component({
   selector: 'app-delete-account',
+  imports: [TranslatePipe],
   templateUrl: './delete-account.html'
 })
 export class DeleteAccount {
@@ -36,7 +38,7 @@ export class DeleteAccount {
       await this.users.deleteCurrentUser();
       this.auth.logout();
     } catch {
-      this.error.set('Unable to delete your account.');
+      this.error.set('admin.deleteAccount.error');
       this.deleting.set(false);
     }
   }

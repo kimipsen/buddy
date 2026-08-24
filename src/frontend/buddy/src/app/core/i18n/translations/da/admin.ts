@@ -1,0 +1,66 @@
+export const admin = {
+  eyebrow: 'Indstillinger',
+  title: 'Administrer din husstand.',
+  backToDashboard: 'Tilbage til oversigt',
+  manageGroups: {
+    title: 'Grupper',
+    loading: 'Indlæser grupper…',
+    loadError: 'Kunne ikke indlæse grupper.',
+    empty: 'Ingen grupper endnu. Opret en nedenfor.',
+    namePlaceholder: 'Gruppenavn',
+    addButton: 'Tilføj gruppe',
+    createError: 'Kunne ikke oprette gruppen.',
+    roles: {
+      owner: 'Ejer',
+      admin: 'Administrator',
+      member: 'Medlem'
+    }
+  },
+  manageChildren: {
+    title: 'Børn',
+    loading: 'Indlæser børn…',
+    loadError: 'Kunne ikke indlæse børn.',
+    empty: 'Ingen børn tilknyttet endnu. Tilføj et nedenfor.',
+    removeConfirmPrompt: 'Fjern dette barn?',
+    confirm: 'Bekræft',
+    cancel: 'Annuller',
+    linkedBadge: 'Tilknyttet',
+    remove: 'Fjern',
+    revokeError: 'Kunne ikke fjerne dette barn.',
+    givenNamePlaceholder: 'Fornavn',
+    familyNamePlaceholder: 'Efternavn',
+    usernamePlaceholder: 'Login-brugernavn',
+    addButton: 'Tilføj barn',
+    usernameTakenError: 'Det brugernavn er allerede i brug. Vælg et andet.',
+    addError: 'Kunne ikke oprette barnets konto.',
+    createdMessage: '{name} blev oprettet.',
+    temporaryPasswordLabel: 'Midlertidig adgangskode (vises kun én gang):',
+    copy: 'Kopiér',
+    copied: 'Kopieret!'
+  },
+  manageCalendars: {
+    title: 'Kalendere',
+    loading: 'Indlæser kalendere…',
+    loadError: 'Kunne ikke indlæse kalendere.',
+    empty: 'Ingen kalendere endnu. Opret en nedenfor.',
+    namePlaceholder: 'Kalendernavn',
+    addButton: 'Tilføj kalender',
+    createError: 'Kunne ikke oprette kalenderen.',
+    roles: {
+      owner: 'Ejer',
+      contributor: 'Bidragyder',
+      viewer: 'Læser'
+    }
+  },
+  deleteAccount: {
+    title: 'Faresone',
+    description: 'Sletning af din konto fjerner din adgang permanent. Dette kan ikke fortrydes.',
+    deleteButton: 'Slet min konto',
+    confirmTitle: 'Slet din konto?',
+    confirmDescription: 'Dette sletter din konto permanent og kan ikke fortrydes. Du bliver logget ud med det samme.',
+    cancel: 'Annuller',
+    confirmButton: 'Ja, slet min konto',
+    deletingButton: 'Sletter…',
+    error: 'Kunne ikke slette din konto.'
+  }
+};

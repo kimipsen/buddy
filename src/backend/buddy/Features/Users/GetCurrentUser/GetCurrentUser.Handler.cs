@@ -27,6 +27,13 @@ public static class GetOrCreateUserHandler
         List<UserEvent> initialEvents = [created];
         string? verificationToken = null;
 
+        var detectedLanguage = SupportedLanguages.ResolveFromAcceptLanguageHeader(command.AcceptLanguageHeader);
+
+        if (detectedLanguage != SupportedLanguages.Default)
+        {
+            initialEvents.Add(new LanguageUpdated(created.UserId, SupportedLanguages.Default, detectedLanguage, now));
+        }
+
         if (!email.IsVerified && !string.IsNullOrWhiteSpace(email.Value))
         {
             var (token, hash, expiresAt) = EmailVerificationToken.Generate(now);

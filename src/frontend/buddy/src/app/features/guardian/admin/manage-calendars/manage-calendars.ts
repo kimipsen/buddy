@@ -1,18 +1,19 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
 import { browserTimeZoneId, listTimeZoneIds } from '../../../../core/date-utils';
 
 const ROLE_LABELS: Record<number, string> = {
-  0: 'Owner',
-  1: 'Contributor',
-  2: 'Viewer'
+  0: 'admin.manageCalendars.roles.owner',
+  1: 'admin.manageCalendars.roles.contributor',
+  2: 'admin.manageCalendars.roles.viewer'
 };
 
 @Component({
   selector: 'app-manage-calendars',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './manage-calendars.html'
 })
 export class ManageCalendars implements OnInit {
@@ -50,7 +51,7 @@ export class ManageCalendars implements OnInit {
       this.newCalendarName.set('');
       await this.loadCalendars();
     } catch {
-      this.createError.set('Unable to create the calendar.');
+      this.createError.set('admin.manageCalendars.createError');
     } finally {
       this.creating.set(false);
     }
@@ -63,7 +64,7 @@ export class ManageCalendars implements OnInit {
     try {
       this.items.set(await this.calendars.listMyCalendars());
     } catch {
-      this.error.set('Unable to load calendars.');
+      this.error.set('admin.manageCalendars.loadError');
     } finally {
       this.loading.set(false);
     }

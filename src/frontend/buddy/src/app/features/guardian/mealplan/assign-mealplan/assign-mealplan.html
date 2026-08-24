@@ -1,15 +1,15 @@
 <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-  <h3 class="mb-5 text-lg font-semibold tracking-normal">This week's plan</h3>
+  <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'mealplan.assign.title' | translate }}</h3>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">Loading the meal plan…</p>
+    <p class="text-sm text-slate-500">{{ 'mealplan.assign.loading' | translate }}</p>
   } @else if (!hasChildren()) {
-    <p class="text-sm text-slate-500">Link a child from Settings before planning meals.</p>
+    <p class="text-sm text-slate-500">{{ 'mealplan.assign.noChildren' | translate }}</p>
   } @else if (meals().length === 0) {
-    <p class="text-sm text-slate-500">Add a meal below before you can plan a week.</p>
+    <p class="text-sm text-slate-500">{{ 'mealplan.assign.noMeals' | translate }}</p>
   } @else {
-    @if (error()) {
-      <p class="mb-3 text-sm text-red-600">{{ error() }}</p>
+    @if (error(); as message) {
+      <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>
     }
 
     <div class="overflow-x-auto">
@@ -18,7 +18,7 @@
           <tr>
             <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"></th>
             @for (slot of slots; track slot) {
-              <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{{ slotLabels[slot] }}</th>
+              <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{{ slotLabels[slot] | translate }}</th>
             }
           </tr>
         </thead>

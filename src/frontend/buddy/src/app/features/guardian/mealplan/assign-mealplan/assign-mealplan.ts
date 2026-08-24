@@ -2,14 +2,15 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { toIsoDate } from '../../../../core/date-utils';
 import { GuardiansService } from '../../../../core/guardians.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../../core/mealplans.service';
 import { MealPicker } from '../meal-picker/meal-picker';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'Breakfast',
-  1: 'Lunch',
-  2: 'Dinner',
-  3: 'Snack'
+  0: 'mealplan.slots.breakfast',
+  1: 'mealplan.slots.lunch',
+  2: 'mealplan.slots.dinner',
+  3: 'mealplan.slots.snack'
 };
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
@@ -35,7 +36,7 @@ function buildDays(): PlannerDay[] {
 
 @Component({
   selector: 'app-assign-mealplan',
-  imports: [MealPicker],
+  imports: [MealPicker, TranslatePipe],
   templateUrl: './assign-mealplan.html'
 })
 export class AssignMealplan implements OnInit {
@@ -91,7 +92,7 @@ export class AssignMealplan implements OnInit {
         });
       }
     } catch {
-      this.error.set('Unable to update the meal plan. Please try again.');
+      this.error.set('mealplan.assign.updateError');
     } finally {
       this.savingKey.set(null);
     }
@@ -125,7 +126,7 @@ export class AssignMealplan implements OnInit {
 
       this.entriesByKey.set(byKey);
     } catch {
-      this.error.set('Unable to load the meal plan.');
+      this.error.set('mealplan.assign.loadError');
     } finally {
       this.loading.set(false);
     }

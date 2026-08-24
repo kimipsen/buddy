@@ -1,17 +1,17 @@
 <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-  <h3 class="mb-5 text-lg font-semibold tracking-normal">Today’s tasks</h3>
+  <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'dashboard.tasks.title' | translate }}</h3>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">Loading tasks…</p>
-  } @else if (error()) {
-    <p class="text-sm text-red-600">{{ error() }}</p>
+    <p class="text-sm text-slate-500">{{ 'dashboard.tasks.loading' | translate }}</p>
+  } @else if (error(); as message) {
+    <p class="text-sm text-red-600">{{ message | translate }}</p>
   } @else if (overdue().length === 0 && dueToday().length === 0) {
-    <p class="text-sm text-slate-500">No tasks due today.</p>
+    <p class="text-sm text-slate-500">{{ 'dashboard.tasks.empty' | translate }}</p>
   } @else {
     <div class="space-y-4">
       @if (overdue().length > 0) {
         <div>
-          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600">Overdue</p>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600">{{ 'dashboard.tasks.overdue' | translate }}</p>
           <ul class="space-y-2">
             @for (task of overdue(); track task.itemId) {
               <li class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium">
@@ -25,7 +25,7 @@
 
       @if (dueToday().length > 0) {
         <div>
-          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Due today</p>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ 'dashboard.tasks.dueToday' | translate }}</p>
           <ul class="space-y-2">
             @for (task of dueToday(); track task.itemId) {
               <li class="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium">

@@ -1,11 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 const TASK_KIND = 1;
 
 @Component({
   selector: 'app-tasks-today',
+  imports: [TranslatePipe],
   templateUrl: './tasks-today.html'
 })
 export class TasksToday implements OnInit {
@@ -32,7 +34,7 @@ export class TasksToday implements OnInit {
       this.overdue.set(tasks.filter((task) => task.dueAt !== null && new Date(task.dueAt).getTime() < now));
       this.dueToday.set(tasks.filter((task) => task.dueAt === null || new Date(task.dueAt).getTime() >= now));
     } catch {
-      this.error.set('Unable to load today’s tasks.');
+      this.error.set('dashboard.tasks.loadError');
     } finally {
       this.loading.set(false);
     }

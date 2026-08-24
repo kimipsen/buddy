@@ -9,7 +9,8 @@ namespace buddy.Features.Users
         EmailUpdated,
         EmailVerificationRequested,
         EmailVerified,
-        TimeZoneUpdated
+        TimeZoneUpdated,
+        LanguageUpdated
     )
     {
         // Marten hands back the deserialized concrete event object when reading a stream; case
@@ -23,6 +24,7 @@ namespace buddy.Features.Users
             EmailVerificationRequested e => e,
             EmailVerified e => e,
             TimeZoneUpdated e => e,
+            LanguageUpdated e => e,
             _ => throw new ArgumentException($"Unknown user event payload: {payload.GetType().Name}", nameof(payload)),
         };
 
@@ -37,6 +39,7 @@ namespace buddy.Features.Users
             EmailVerificationRequested => nameof(EmailVerificationRequested),
             EmailVerified => nameof(EmailVerified),
             TimeZoneUpdated => nameof(TimeZoneUpdated),
+            LanguageUpdated => nameof(LanguageUpdated),
         };
     }
 
@@ -65,6 +68,12 @@ namespace buddy.Features.Users
     // implicitly defaults to UTC (see User.Rehydrate), the same "sparse log" convention Medicines'
     // DoseLog already uses, so this stays additive over the existing UserCreated event shape.
     public sealed record TimeZoneUpdated(UserId UserId, TimeZoneId Before, TimeZoneId After, DateTimeOffset OccurredAt);
+
+    // No initial value is captured on UserCreated -- a user with no LanguageUpdated event yet
+    // implicitly defaults to English (see User.Rehydrate). GetOrCreateUserHandler appends one
+    // right after UserCreated when the browser's Accept-Language header resolves to a different
+    // supported language, the same way it conditionally appends EmailVerificationRequested.
+    public sealed record LanguageUpdated(UserId UserId, Language Before, Language After, DateTimeOffset OccurredAt);
 
     public sealed record UserEventEntry(long Version, UserEvent Event);
 

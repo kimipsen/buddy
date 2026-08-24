@@ -1,3 +1,5 @@
-<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Email updated</p>
-<p class="mt-1 text-sm font-medium">{{ data().before.value }} &rarr; {{ data().after.value }}</p>
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'events.types.emailUpdated.title' | translate }}</p>
+<p class="mt-1 text-sm font-medium">
+  {{ 'events.types.emailUpdated.description' | translate: { before: data().before.value, after: data().after.value } }}
+</p>
 <p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | userDate: 'medium' }}</p>

@@ -3,20 +3,21 @@ import { RouterLink } from '@angular/router';
 
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'Breakfast',
-  1: 'Lunch',
-  2: 'Dinner',
-  3: 'Snack'
+  0: 'dashboard.mealplan.slots.breakfast',
+  1: 'dashboard.mealplan.slots.lunch',
+  2: 'dashboard.mealplan.slots.dinner',
+  3: 'dashboard.mealplan.slots.snack'
 };
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
 
 @Component({
   selector: 'app-mealplan-today',
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './mealplan-today.html'
 })
 export class MealplanToday implements OnInit {
@@ -59,7 +60,7 @@ export class MealplanToday implements OnInit {
 
       this.entriesBySlot.set(bySlot);
     } catch {
-      this.error.set('Unable to load today’s meal plan.');
+      this.error.set('dashboard.mealplan.loadError');
     } finally {
       this.loading.set(false);
     }

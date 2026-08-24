@@ -1,12 +1,12 @@
 <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-  <h3 class="mb-5 text-lg font-semibold tracking-normal">Today’s events</h3>
+  <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'dashboard.events.title' | translate }}</h3>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">Loading events…</p>
-  } @else if (error()) {
-    <p class="text-sm text-red-600">{{ error() }}</p>
+    <p class="text-sm text-slate-500">{{ 'dashboard.events.loading' | translate }}</p>
+  } @else if (error(); as message) {
+    <p class="text-sm text-red-600">{{ message | translate }}</p>
   } @else if (events().length === 0) {
-    <p class="text-sm text-slate-500">Nothing else on the calendar today.</p>
+    <p class="text-sm text-slate-500">{{ 'dashboard.events.empty' | translate }}</p>
   } @else {
     <ul class="space-y-2">
       @for (event of events(); track event.itemId) {

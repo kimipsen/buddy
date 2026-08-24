@@ -1,15 +1,15 @@
 <section class="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
   <div class="mb-5 flex items-center justify-between">
-    <h3 class="text-lg font-semibold tracking-normal">Recent events</h3>
-    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Live</span>
+    <h3 class="text-lg font-semibold tracking-normal">{{ 'events.list.title' | translate }}</h3>
+    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{{ 'events.list.liveBadge' | translate }}</span>
   </div>
 
   @if (eventsLoading()) {
-    <p class="text-sm text-slate-500">Loading events...</p>
-  } @else if (eventsError()) {
-    <p class="text-sm text-red-600">{{ eventsError() }}</p>
+    <p class="text-sm text-slate-500">{{ 'events.list.loading' | translate }}</p>
+  } @else if (eventsError(); as message) {
+    <p class="text-sm text-red-600">{{ message | translate }}</p>
   } @else if (events().length === 0) {
-    <p class="text-sm text-slate-500">No events yet.</p>
+    <p class="text-sm text-slate-500">{{ 'events.list.empty' | translate }}</p>
   } @else {
     <div class="space-y-3">
       @for (event of events(); track $index) {
@@ -48,7 +48,7 @@
         [disabled]="!hasPreviousPage()"
         (click)="previousPage()"
       >
-        Previous
+        {{ 'events.list.previous' | translate }}
       </button>
       <button
         type="button"
@@ -56,7 +56,7 @@
         [disabled]="!hasNextPage()"
         (click)="nextPage()"
       >
-        Next
+        {{ 'events.list.next' | translate }}
       </button>
     </div>
   }

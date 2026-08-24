@@ -15,10 +15,12 @@ public static class GetCurrentUserEndpoint
     {
         users.MapGet("/me", async Task<Results<Ok<UserResponse>, NotFound>> (
             ClaimsPrincipal principal,
+            HttpContext httpContext,
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var result = await bus.InvokeAsync<Result<User>>(GetOrCreateUser.FromClaims(principal), cancellationToken);
+            var acceptLanguage = httpContext.Request.Headers["Accept-Language"].ToString();
+            var result = await bus.InvokeAsync<Result<User>>(GetOrCreateUser.FromClaims(principal, acceptLanguage), cancellationToken);
 
             return result switch
             {
@@ -41,12 +43,14 @@ public sealed record UserResponse(
     Email Email,
     string? UserName,
     Name Name,
-    TimeZoneId TimeZoneId)
+    TimeZoneId TimeZoneId,
+    Language Language)
 {
     public static UserResponse FromUser(User user) => new(
         user.Id,
         user.Email,
         user.UserName,
         user.Name,
-        user.ResolvedTimeZoneId);
+        user.ResolvedTimeZoneId,
+        user.ResolvedLanguage);
 };

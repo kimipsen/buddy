@@ -1,9 +1,11 @@
 import { Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { Meal } from '../../../../core/mealplans.service';
 
 @Component({
   selector: 'app-meal-picker',
+  imports: [TranslatePipe],
   templateUrl: './meal-picker.html'
 })
 export class MealPicker {

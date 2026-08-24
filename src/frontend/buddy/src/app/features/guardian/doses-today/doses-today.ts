@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 
 const PENDING: DoseStatus = 0;
@@ -13,7 +14,7 @@ type DoseRow = MedicineDoseOccurrence & { childId: string; childName: string };
 
 @Component({
   selector: 'app-doses-today',
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './doses-today.html'
 })
 export class DosesToday implements OnInit {
@@ -50,7 +51,7 @@ export class DosesToday implements OnInit {
         current.map((row) => (this.key(row) === key ? { ...row, status: updated.status } : row))
       );
     } catch {
-      this.error.set('Unable to update this dose.');
+      this.error.set('dashboard.doses.updateError');
     } finally {
       this.savingKey.set(null);
     }
@@ -85,7 +86,7 @@ export class DosesToday implements OnInit {
 
       this.doses.set(perChild.flat().sort((a, b) => a.time.localeCompare(b.time)));
     } catch {
-      this.error.set('Unable to load today’s medicine doses.');
+      this.error.set('dashboard.doses.loadError');
     } finally {
       this.loading.set(false);
     }

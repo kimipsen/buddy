@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { todayIsoDate } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MedicineSchedule, MedicinesService } from '../../../../core/medicines.service';
 
 const DEFAULT_COLOR = '#f43f5e';
@@ -17,7 +18,7 @@ function withoutSeconds(time: string): string {
 
 @Component({
   selector: 'app-manage-medicines',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './manage-medicines.html'
 })
 export class ManageMedicines implements OnInit {
@@ -101,7 +102,7 @@ export class ManageMedicines implements OnInit {
       this.newEndDate.set('');
       await this.loadSchedules(childId);
     } catch {
-      this.createError.set('Unable to create the medicine schedule.');
+      this.createError.set('medicine.manageMedicines.form.createError');
     } finally {
       this.creating.set(false);
     }
@@ -131,7 +132,7 @@ export class ManageMedicines implements OnInit {
       this.confirmingStopScheduleId.set(null);
       await this.loadSchedules(childId);
     } catch {
-      this.error.set('Unable to stop this medicine schedule.');
+      this.error.set('medicine.manageMedicines.stopError');
     } finally {
       this.stoppingScheduleId.set(null);
     }
@@ -158,7 +159,7 @@ export class ManageMedicines implements OnInit {
       this.selectedChildId.set(children[0].id);
       await this.loadSchedules(children[0].id);
     } catch {
-      this.error.set('Unable to load children.');
+      this.error.set('medicine.manageMedicines.loadError');
     } finally {
       this.loading.set(false);
     }

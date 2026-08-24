@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { GuardiansService } from '../../../../core/guardians.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealplansService } from '../../../../core/mealplans.service';
 
 const DEFAULT_COLOR = '#10b981';
@@ -9,7 +10,7 @@ const PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-manage-meals',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './manage-meals.html'
 })
 export class ManageMeals implements OnInit {
@@ -81,7 +82,7 @@ export class ManageMeals implements OnInit {
       // Jump to the last page so the newly created meal (appended at the end) is visible.
       this.currentPage.set(this.totalPages() - 1);
     } catch {
-      this.createError.set('Unable to create the meal.');
+      this.createError.set('mealplan.manageMeals.createError');
     } finally {
       this.creating.set(false);
     }
@@ -98,7 +99,7 @@ export class ManageMeals implements OnInit {
     try {
       await this.mealplans.archiveMeal(this.childId, mealId);
     } catch {
-      this.error.set('Unable to archive this meal.');
+      this.error.set('mealplan.manageMeals.archiveError');
     } finally {
       this.archivingMealId.set(null);
     }
@@ -120,7 +121,7 @@ export class ManageMeals implements OnInit {
       this.childId = children[0].id;
       await this.mealplans.listMeals(this.childId);
     } catch {
-      this.error.set('Unable to load meals.');
+      this.error.set('mealplan.manageMeals.loadError');
     } finally {
       this.loading.set(false);
     }

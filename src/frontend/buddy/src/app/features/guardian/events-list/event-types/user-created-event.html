@@ -1,5 +1,9 @@
-<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Account created</p>
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'events.types.userCreated.title' | translate }}</p>
 <p class="mt-1 text-sm font-medium">
-  {{ data().name.givenName }} {{ data().name.familyName }} ({{ data().email.value }}) joined via Keycloak.
+  {{
+    'events.types.userCreated.description'
+      | translate
+        : { name: data().name.givenName + ' ' + data().name.familyName, email: data().email.value }
+  }}
 </p>
 <p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | userDate: 'medium' }}</p>

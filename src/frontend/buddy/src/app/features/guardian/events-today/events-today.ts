@@ -1,13 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 
 const EVENT_KIND = 0;
 
 @Component({
   selector: 'app-events-today',
-  imports: [UserDatePipe],
+  imports: [UserDatePipe, TranslatePipe],
   templateUrl: './events-today.html'
 })
 export class EventsToday implements OnInit {
@@ -34,7 +35,7 @@ export class EventsToday implements OnInit {
           .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''))
       );
     } catch {
-      this.error.set('Unable to load today’s events.');
+      this.error.set('dashboard.events.loadError');
     } finally {
       this.loading.set(false);
     }

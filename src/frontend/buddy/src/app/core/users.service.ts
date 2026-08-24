@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { Language } from './i18n/language';
+import { TranslationService } from './i18n/translation.service';
 import { PersonName } from './guardians.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -16,12 +18,14 @@ export interface CurrentUser {
   userName: string | null;
   name: PersonName;
   timeZoneId: string;
+  language: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class UsersService {
   private readonly http = inject(HttpClient);
   private readonly runtimeConfig = inject(RuntimeConfigService);
+  private readonly i18n = inject(TranslationService);
 
   private currentUserPromise: Promise<CurrentUser> | null = null;
 
@@ -41,6 +45,7 @@ export class UsersService {
     this.currentUserPromise ??= firstValueFrom(this.http.get<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me`)).then(
       (user) => {
         this.timeZoneState.set(user.timeZoneId);
+        this.i18n.setLanguageFromServer(user.language);
         return user;
       }
     );
@@ -69,6 +74,15 @@ export class UsersService {
     );
     this.currentUserPromise = Promise.resolve(updated);
     this.timeZoneState.set(updated.timeZoneId);
+    return updated;
+  }
+
+  async updateLanguage(language: Language): Promise<CurrentUser> {
+    const updated = await firstValueFrom(
+      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/language`, { language })
+    );
+    this.currentUserPromise = Promise.resolve(updated);
+    this.i18n.setLanguageFromServer(updated.language);
     return updated;
   }
 

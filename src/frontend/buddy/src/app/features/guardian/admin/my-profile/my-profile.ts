@@ -3,17 +3,21 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { listTimeZoneIds } from '../../../../core/date-utils';
+import { LANGUAGE_NAMES, Language, SUPPORTED_LANGUAGES, isSupportedLanguage } from '../../../../core/i18n/language';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { CurrentUser, UsersService } from '../../../../core/users.service';
 
 @Component({
   selector: 'app-my-profile',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './my-profile.html'
 })
 export class MyProfile implements OnInit {
   private readonly users = inject(UsersService);
 
   protected readonly timeZoneIds = listTimeZoneIds();
+  protected readonly languages = SUPPORTED_LANGUAGES;
+  protected readonly languageNames = LANGUAGE_NAMES;
 
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
@@ -36,6 +40,12 @@ export class MyProfile implements OnInit {
   protected readonly timeZoneError = signal<string | null>(null);
   protected readonly timeZoneSaved = signal(false);
 
+  protected readonly language = signal<Language>('en');
+  protected readonly currentLanguage = signal<Language | null>(null);
+  protected readonly savingLanguage = signal(false);
+  protected readonly languageError = signal<string | null>(null);
+  protected readonly languageSaved = signal(false);
+
   ngOnInit(): void {
     void this.loadProfile();
   }
@@ -56,7 +66,7 @@ export class MyProfile implements OnInit {
       await this.users.updateName(givenName, familyName);
       this.nameSaved.set(true);
     } catch {
-      this.nameError.set('Unable to update your name.');
+      this.nameError.set('profile.name.error');
     } finally {
       this.savingName.set(false);
     }
@@ -79,9 +89,7 @@ export class MyProfile implements OnInit {
       this.emailSaved.set(true);
     } catch (error) {
       this.emailError.set(
-        error instanceof HttpErrorResponse && typeof error.error === 'string'
-          ? error.error
-          : 'Unable to update your email.'
+        error instanceof HttpErrorResponse && typeof error.error === 'string' ? error.error : 'profile.email.error'
       );
     } finally {
       this.savingEmail.set(false);
@@ -105,12 +113,34 @@ export class MyProfile implements OnInit {
       this.timeZoneSaved.set(true);
     } catch (error) {
       this.timeZoneError.set(
-        error instanceof HttpErrorResponse && typeof error.error === 'string'
-          ? error.error
-          : 'Unable to update your time zone.'
+        error instanceof HttpErrorResponse && typeof error.error === 'string' ? error.error : 'profile.timeZone.error'
       );
     } finally {
       this.savingTimeZone.set(false);
+    }
+  }
+
+  protected async saveLanguage(): Promise<void> {
+    const language = this.language();
+
+    if (!isSupportedLanguage(language)) {
+      return;
+    }
+
+    this.savingLanguage.set(true);
+    this.languageError.set(null);
+    this.languageSaved.set(false);
+
+    try {
+      const updated = await this.users.updateLanguage(language);
+      this.currentLanguage.set(isSupportedLanguage(updated.language) ? updated.language : 'en');
+      this.languageSaved.set(true);
+    } catch (error) {
+      this.languageError.set(
+        error instanceof HttpErrorResponse && typeof error.error === 'string' ? error.error : 'profile.language.error'
+      );
+    } finally {
+      this.savingLanguage.set(false);
     }
   }
 
@@ -121,7 +151,7 @@ export class MyProfile implements OnInit {
     try {
       this.applyCurrentUser(await this.users.ensureCurrentUser());
     } catch {
-      this.loadError.set('Unable to load your profile.');
+      this.loadError.set('profile.loadError');
     } finally {
       this.loading.set(false);
     }
@@ -134,5 +164,9 @@ export class MyProfile implements OnInit {
     this.currentEmail.set(user.email.value);
     this.timeZoneId.set(user.timeZoneId);
     this.currentTimeZoneId.set(user.timeZoneId);
+
+    const language = isSupportedLanguage(user.language) ? user.language : 'en';
+    this.language.set(language);
+    this.currentLanguage.set(language);
   }
 }

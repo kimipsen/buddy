@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { UserEventItem, UserEventsService } from '../../../core/user-events.service';
 import { EmailUpdatedEvent } from './event-types/email-updated-event';
 import { EmailVerificationRequestedEvent } from './event-types/email-verification-requested-event';
@@ -20,7 +21,8 @@ const EVENTS_PAGE_SIZE = 5;
     EmailUpdatedEvent,
     EmailVerificationRequestedEvent,
     EmailVerifiedEvent,
-    UnknownEvent
+    UnknownEvent,
+    TranslatePipe
   ],
   templateUrl: './events-list.html'
 })
@@ -62,7 +64,7 @@ export class EventsList implements OnInit {
       this.hasPreviousPage.set(pageIndex > 0);
       this.hasNextPage.set(page.nextCursor !== null);
     } catch {
-      this.eventsError.set('Unable to load recent events.');
+      this.eventsError.set('events.list.loadError');
     } finally {
       this.eventsLoading.set(false);
     }

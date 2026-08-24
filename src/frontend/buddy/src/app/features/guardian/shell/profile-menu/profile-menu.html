@@ -9,7 +9,7 @@
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-5">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0" />
     </svg>
-    <span class="sr-only">Open account menu</span>
+    <span class="sr-only">{{ 'shell.menu.openLabel' | translate }}</span>
   </button>
 
   @if (open()) {
@@ -21,28 +21,28 @@
         class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
         (click)="close()"
       >
-        Meal planner
+        {{ 'shell.menu.mealPlanner' | translate }}
       </a>
       <a
         routerLink="/guardian/medicine"
         class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
         (click)="close()"
       >
-        Medicine
+        {{ 'shell.menu.medicine' | translate }}
       </a>
       <a
         routerLink="/guardian/admin"
         class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
         (click)="close()"
       >
-        Settings
+        {{ 'shell.menu.settings' | translate }}
       </a>
       <button
         type="button"
         class="block w-full px-4 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
         (click)="logout()"
       >
-        Sign out
+        {{ 'shell.menu.signOut' | translate }}
       </button>
     </div>
   }

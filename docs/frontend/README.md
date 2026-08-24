@@ -79,6 +79,29 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `GuardiansService` calls the backend guardian endpoints
 - `AuthInterceptor` attaches the access token to outgoing requests
 - `UserEventsService` is available for future user event stream integration
+- `TranslationService` resolves the UI's current language (see Localization below)
+
+## Localization (i18n)
+
+The app supports English and Danish. Static UI text is a translation key resolved through
+[`TranslationService`](../../src/frontend/buddy/src/app/core/i18n/translation.service.ts) and the
+`translate` pipe, e.g. `{{ 'profile.title' | translate }}`, rather than a hardcoded string.
+Dictionaries live under `src/frontend/buddy/src/app/core/i18n/translations/{en,da}/`, one file per
+feature area, merged in that language's `index.ts`; `translations/index.ts` types `da` against
+`typeof en` so a missing or extra key in either language fails the build instead of silently
+falling back to the raw key at runtime.
+
+The current language is a signal seeded from the browser's own language (`detectBrowserLanguage`
+in `core/i18n/language.ts`) so the pre-auth login screen renders sensibly before any user is
+known. Once `UsersService.ensureCurrentUser()` resolves, it's replaced with the signed-in user's
+saved `language` from `GET /users/me` — itself defaulted from the browser's `Accept-Language`
+header the first time that user's backend account was created (see
+[docs/backend/users/flow.md](../backend/users/flow.md)), and changeable afterward from the
+profile page (`PATCH /users/me/language`). A dynamic status/error message (e.g. "Name updated.")
+is stored as a translation key on its signal rather than as literal text, and interpolated through
+the pipe in the template using Angular's `as` narrowing, e.g. `@if (error(); as message) { {{
+message | translate }} }` — a raw backend validation message (not a static UI string) is passed
+through untranslated instead.
 
 ## Current status
 

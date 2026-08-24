@@ -2,9 +2,9 @@ using System.Security.Claims;
 
 namespace buddy.Features.Users;
 
-public sealed record GetOrCreateUser(KeycloakSubject Subject, string? Email, bool EmailVerified, string? UserName, Name Name)
+public sealed record GetOrCreateUser(KeycloakSubject Subject, string? Email, bool EmailVerified, string? UserName, Name Name, string? AcceptLanguageHeader)
 {
-    public static GetOrCreateUser FromClaims(ClaimsPrincipal principal)
+    public static GetOrCreateUser FromClaims(ClaimsPrincipal principal, string? acceptLanguageHeader)
     {
         var emailVerified = principal.FindFirstValue(Claims.EmailVerified) is { } emailVerifiedClaim
             && bool.TryParse(emailVerifiedClaim, out var verified)
@@ -17,6 +17,7 @@ public sealed record GetOrCreateUser(KeycloakSubject Subject, string? Email, boo
             email,
             emailVerified,
             principal.FindFirstValue(Claims.PreferredUsername),
-            Name.New(principal.FindFirstValue(Claims.GivenName) ?? "", principal.FindFirstValue(Claims.FamilyName) ?? ""));
+            Name.New(principal.FindFirstValue(Claims.GivenName) ?? "", principal.FindFirstValue(Claims.FamilyName) ?? ""),
+            acceptLanguageHeader);
     }
 }

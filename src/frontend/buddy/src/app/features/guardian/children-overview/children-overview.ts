@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-children-overview',
+  imports: [TranslatePipe],
   templateUrl: './children-overview.html'
 })
 export class ChildrenOverview implements OnInit {
@@ -24,7 +26,7 @@ export class ChildrenOverview implements OnInit {
     try {
       this.children.set(await this.guardians.listMyChildren());
     } catch {
-      this.error.set('Unable to load children.');
+      this.error.set('dashboard.children.loadError');
     } finally {
       this.loading.set(false);
     }

@@ -2,11 +2,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ChildSummary, CreateChildResult, GuardiansService } from '../../../../core/guardians.service';
 
 @Component({
   selector: 'app-manage-children',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './manage-children.html'
 })
 export class ManageChildren implements OnInit {
@@ -55,8 +56,8 @@ export class ManageChildren implements OnInit {
       await this.loadChildren();
     } catch (error) {
       this.addChildError.set(error instanceof HttpErrorResponse && error.status === 409
-        ? 'That username is already in use. Choose another one.'
-        : 'Unable to create the child account.');
+        ? 'admin.manageChildren.usernameTakenError'
+        : 'admin.manageChildren.addError');
     } finally {
       this.addingChild.set(false);
     }
@@ -80,7 +81,7 @@ export class ManageChildren implements OnInit {
       this.confirmingRevokeChildId.set(null);
       await this.loadChildren();
     } catch {
-      this.revokeError.set('Unable to remove this child.');
+      this.revokeError.set('admin.manageChildren.revokeError');
     } finally {
       this.revokingChildId.set(null);
     }
@@ -102,7 +103,7 @@ export class ManageChildren implements OnInit {
     try {
       this.children.set(await this.guardians.listMyChildren());
     } catch {
-      this.childrenError.set('Unable to load children.');
+      this.childrenError.set('admin.manageChildren.loadError');
     } finally {
       this.childrenLoading.set(false);
     }

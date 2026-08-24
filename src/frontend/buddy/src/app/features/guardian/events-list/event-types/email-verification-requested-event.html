@@ -1,3 +1,6 @@
-<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Email verification requested</p>
-<p class="mt-1 text-sm font-medium">A verification link was sent, expiring {{ data().expiresAt | userDate: 'medium' }}.</p>
+@let expiresAt = data().expiresAt | userDate: 'medium';
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'events.types.emailVerificationRequested.title' | translate }}</p>
+<p class="mt-1 text-sm font-medium">
+  {{ 'events.types.emailVerificationRequested.description' | translate: { expiresAt } }}
+</p>
 <p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | userDate: 'medium' }}</p>

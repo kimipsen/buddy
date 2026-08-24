@@ -56,4 +56,9 @@ public sealed class UserEventShapeTests
     public void TimeZoneUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new TimeZoneUpdated(FixedUserId, TimeZoneId.New("UTC"), TimeZoneId.New("Europe/Copenhagen"), FixedInstant),
         "Users/TimeZoneUpdated.json");
+
+    [Fact]
+    public void LanguageUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new LanguageUpdated(FixedUserId, Language.New("en"), Language.New("da"), FixedInstant),
+        "Users/LanguageUpdated.json");
 }
