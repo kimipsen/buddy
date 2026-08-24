@@ -25,6 +25,7 @@ model or permissions logic.
 - [Child accounts and guardian/parent roles](analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](analysis/medicine-schedules.md)
 - [Meal plans](analysis/mealplans.md)
+- [Group-shared meal plans](analysis/group-owned-mealplans.md)
 
 ## Current focus areas
 

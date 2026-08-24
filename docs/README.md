@@ -27,6 +27,8 @@ This folder contains the project-level documentation for Buddy.
 - [Child accounts and guardian/parent roles](backend/analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](backend/analysis/medicine-schedules.md)
 - [Meal plans](backend/analysis/mealplans.md)
+- [Group-shared meal plans](backend/analysis/group-owned-mealplans.md)
+- [Meal plans](backend/analysis/mealplans.md)
 
 ## Deployment
 

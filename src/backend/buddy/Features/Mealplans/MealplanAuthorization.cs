@@ -6,18 +6,27 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
 
-// Unlike CalendarAccess, neither Meal nor MealPlan has Members/Group-derived roles -- exactly two
-// principals ever apply (see docs/backend/analysis/mealplans.md#authorization). Unlike
-// MedicineAccessTier, the two tiers here are asymmetric in a different way: the child can view
-// and rate but never write the plan or a meal's details, and a guardian can view and write
-// everything except a Rating.
+// Unlike CalendarAccess, neither Meal nor MealPlan has Members/Group-derived roles on the
+// family/child axis -- exactly two principals ever apply there (see
+// docs/backend/analysis/mealplans.md#authorization). Unlike MedicineAccessTier, those two tiers
+// are asymmetric in a different way: the child can view and rate but never write the plan or a
+// meal's details, and a guardian can view and write everything except a Rating.
+//
+// View exists purely for the second, additive axis -- a group a family has chosen to share its
+// plan with (see docs/backend/analysis/group-owned-mealplans.md). The family/child resolution
+// below (ResolveTier) never produces it -- only Rate or Manage. View and Manage are the two
+// meaningful values a group's MealplanPermissionPolicy can hold; Rate is rejected there since
+// it's the child's own tier, never a group member's.
 public enum MealplanAccessTier
 {
     None,
-    // The child themself only: view meals/plan, rate a meal.
+    // The child themself only: view meals/plan, rate a meal. Never a valid group-policy value.
     Rate,
     // An active guardian only: view meals/plan, create/edit/archive meals, assign/clear plan slots.
-    Manage
+    Manage,
+    // A group member whose MealplanPermissionPolicy entry is View: can see the shared plan and
+    // meal library, but cannot create/edit/archive meals or assign/clear plan slots.
+    View
 }
 
 public enum MealplanAccess

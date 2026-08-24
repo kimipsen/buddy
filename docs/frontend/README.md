@@ -23,6 +23,8 @@ The app is bootstrapped in [src/frontend/buddy/src/app/app.config.ts](../../src/
 The top-level route setup is in [src/frontend/buddy/src/app/app.routes.ts](../../src/frontend/buddy/src/app/app.routes.ts). It divides the app into:
 
 - `/login` for unauthenticated users
+- `/invite/:token` for viewing and accepting group invitations, including the logged-out preview path
+- `/verify-email/:token` for completing email verification, including the logged-out verification path
 - `/guardian` for guardian dashboard screens
 - `/child` for child-focused screens
 - root redirect logic based on resolved role
@@ -40,7 +42,7 @@ The actual role is derived from guardian relationships, not from a stored role f
 
 ## Feature layout
 
-The Angular app currently has two main feature areas:
+The Angular app currently has guardian, child, login, invitation, and email-verification feature areas.
 
 ### Guardian feature
 
@@ -51,9 +53,19 @@ Current responsibilities:
 - display a dashboard shell
 - list linked children
 - create child accounts and capture the one-time temporary password
+- show today's events, tasks, and medicine doses
+- manage meals and assign them to shared meal-plan slots
+- manage calendars, groups, children, and the current profile from the admin area
 - sign out of the current session
 
 The route definition is in [src/frontend/buddy/src/app/features/guardian/guardian.routes.ts](../../src/frontend/buddy/src/app/features/guardian/guardian.routes.ts).
+
+The guardian routes currently include:
+
+- `/guardian` — dashboard and today's operational summary
+- `/guardian/mealplan` — meal library and meal-plan assignment
+- `/guardian/medicine` — medicine schedule management
+- `/guardian/admin` — profile, child, calendar, group, event-history, and account administration
 
 ### Child feature
 
@@ -62,6 +74,7 @@ The child-facing area is implemented in [src/frontend/buddy/src/app/features/chi
 Current responsibilities:
 
 - display the child home screen
+- show the child's day view, including events, tasks, and doses when available
 - show guardian links when available
 - provide the child-specific entry route
 
@@ -71,12 +84,20 @@ The route definition is in [src/frontend/buddy/src/app/features/child/child.rout
 
 The login screen is in [src/frontend/buddy/src/app/features/login](../../src/frontend/buddy/src/app/features/login). It starts the Keycloak redirect flow and keeps the sign-in UX cleanly separated from the rest of the app.
 
+### Invitation and email verification features
+
+The invitation flow is in [src/frontend/buddy/src/app/features/invite](../../src/frontend/buddy/src/app/features/invite). It supports a public invitation preview and returns the user to the invitation after login so the invitation can be accepted in an authenticated session.
+
+The email verification flow is in [src/frontend/buddy/src/app/features/verify-email](../../src/frontend/buddy/src/app/features/verify-email). It uses the same public-route pattern: a user can open a verification link while logged out, sign in if needed, and return to the pending token.
+
 ## Shared services
 
 The shared domain services live under [src/frontend/buddy/src/app/core](../../src/frontend/buddy/src/app/core):
 
 - `AccountService` resolves whether the user is a guardian or child
 - `GuardiansService` calls the backend guardian endpoints
+- `MealplansService` calls meal-library, meal-plan, rating, and group-sharing endpoints
+- `UsersService` loads the current profile, language, and email-verification state
 - `AuthInterceptor` attaches the access token to outgoing requests
 - `UserEventsService` is available for future user event stream integration
 - `TranslationService` resolves the UI's current language (see Localization below)
@@ -105,15 +126,19 @@ through untranslated instead.
 
 ## Current status
 
-The frontend is in an early product-shell stage. The screens are built as functional route shells rather than a complete scheduling UI. The core pieces already in place are:
+The frontend is an actively developed product shell with working domain workflows. The core pieces already in place are:
 
 - Keycloak authentication and token lifecycle
 - route guards and role-based redirecting
 - guardian-child provisioning flow
 - child/guardian role separation
-- placeholder guardian and child dashboard layouts
+- email verification and invitation return flows
+- English and Danish localization
+- guardian meal planning, meal ratings, and group-shared meal-plan access
+- medicine schedule management and today's dose views
+- profile, calendar, group, child, and account administration
 
-The next major frontend work should be the concrete scheduling views for calendars, recurring tasks, and child medication dose tracking.
+The main remaining product work is to deepen the child-facing experience and connect the existing calendar and routine data into a richer personalized daily view.
 
 ## Design analysis
 

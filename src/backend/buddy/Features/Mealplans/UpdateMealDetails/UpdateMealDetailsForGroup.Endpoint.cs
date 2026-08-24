@@ -14,7 +14,7 @@ public static class UpdateMealDetailsForGroupEndpoint
 {
     public static RouteGroupBuilder MapUpdateMealDetailsForGroup(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapPatch("/groups/{groupId:guid}/meals/{mealId:guid}/details", async Task<Results<Ok<MealResponse>, NotFound, BadRequest<string>>> (
+        mealplans.MapPatch("/groups/{groupId:guid}/meals/{mealId:guid}/details", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             Guid mealId,
@@ -38,9 +38,8 @@ public static class UpdateMealDetailsForGroupEndpoint
                 Result<Meal>.Success(var meal) => TypedResults.Ok(MealResponse.FromMeal(meal)),
                 Result<Meal>.Validation(var message) => TypedResults.BadRequest(message),
                 Result<Meal>.NotFound => TypedResults.NotFound(),
-                // MealplanGroupAuthorization never produces Forbidden -- there's no
-                // ForbidHttpResult in this route's declared results, so it collapses to NotFound.
-                Result<Meal>.Forbidden => TypedResults.NotFound(),
+                // Reachable for a caller whose group policy grants View but not Manage.
+                Result<Meal>.Forbidden => TypedResults.Forbid(),
             };
         })
         .WithName("UpdateMealDetailsForGroup");

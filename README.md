@@ -80,6 +80,7 @@ docs/
 - [Child accounts and guardian/parent roles](docs/backend/analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](docs/backend/analysis/medicine-schedules.md)
 - [Meal plans](docs/backend/analysis/mealplans.md)
+- [Group-shared meal plans](docs/backend/analysis/group-owned-mealplans.md)
 
 ## Getting started
 

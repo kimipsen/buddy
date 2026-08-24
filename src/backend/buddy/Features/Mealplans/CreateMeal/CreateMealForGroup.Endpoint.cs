@@ -14,7 +14,7 @@ public static class CreateMealForGroupEndpoint
 {
     public static RouteGroupBuilder MapCreateMealForGroup(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapPost("/groups/{groupId:guid}/meals", async Task<Results<Ok<MealResponse>, NotFound, BadRequest<string>>> (
+        mealplans.MapPost("/groups/{groupId:guid}/meals", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             CreateMealRequest request,
@@ -36,9 +36,8 @@ public static class CreateMealForGroupEndpoint
                 Result<Meal>.Success(var meal) => TypedResults.Ok(MealResponse.FromMeal(meal)),
                 Result<Meal>.Validation(var message) => TypedResults.BadRequest(message),
                 Result<Meal>.NotFound => TypedResults.NotFound(),
-                // MealplanGroupAuthorization never produces Forbidden -- there's no
-                // ForbidHttpResult in this route's declared results, so it collapses to NotFound.
-                Result<Meal>.Forbidden => TypedResults.NotFound(),
+                // Reachable for a caller whose group policy grants View but not Manage.
+                Result<Meal>.Forbidden => TypedResults.Forbid(),
             };
         })
         .WithName("CreateMealForGroup");

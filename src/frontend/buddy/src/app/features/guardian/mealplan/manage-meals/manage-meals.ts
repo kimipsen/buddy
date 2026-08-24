@@ -2,10 +2,11 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { MealplanScope, MealplansService } from '../../../../core/mealplans.service';
+import { MealplanAccessTier, MealplanScope, MealplansService } from '../../../../core/mealplans.service';
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
+const MANAGE: MealplanAccessTier = 2;
 
 @Component({
   selector: 'app-manage-meals',
@@ -16,6 +17,13 @@ export class ManageMeals {
   private readonly mealplans = inject(MealplansService);
 
   readonly scope = input.required<MealplanScope>();
+
+  // A group scope with a View (not Manage) tier is read-only -- the backend rejects every write
+  // with 403 regardless, but the UI hides those controls rather than letting the user hit them.
+  protected readonly readOnly = computed(() => {
+    const scope = this.scope();
+    return scope.kind === 'group' && scope.accessTier !== MANAGE;
+  });
 
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);

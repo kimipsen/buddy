@@ -13,7 +13,7 @@ public static class ArchiveMealForGroupEndpoint
 {
     public static RouteGroupBuilder MapArchiveMealForGroup(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapDelete("/groups/{groupId:guid}/meals/{mealId:guid}", async Task<Results<NoContent, NotFound>> (
+        mealplans.MapDelete("/groups/{groupId:guid}/meals/{mealId:guid}", async Task<Results<NoContent, NotFound, ForbidHttpResult>> (
             ClaimsPrincipal principal,
             Guid groupId,
             Guid mealId,
@@ -27,10 +27,11 @@ public static class ArchiveMealForGroupEndpoint
             {
                 Result<Unit>.Success => TypedResults.NoContent(),
                 Result<Unit>.NotFound => TypedResults.NotFound(),
-                // MealplanGroupAuthorization never produces Forbidden/Validation -- there's no
-                // ForbidHttpResult/BadRequest in this route's declared results, so both collapse
-                // to NotFound like ArchiveMeal's own child-keyed route does.
-                Result<Unit>.Forbidden => TypedResults.NotFound(),
+                // Reachable for a caller whose group policy grants View but not Manage.
+                Result<Unit>.Forbidden => TypedResults.Forbid(),
+                // MealplanGroupAuthorization never produces Validation -- there's no BadRequest
+                // in this route's declared results, so it collapses to NotFound like
+                // ArchiveMeal's own child-keyed route does.
                 Result<Unit>.Validation => TypedResults.NotFound(),
             };
         })

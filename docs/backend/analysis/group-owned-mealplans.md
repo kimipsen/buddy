@@ -1,6 +1,6 @@
 # Sharing a Family's Meal Plan with a Group
 
-Status: Proposed (not yet implemented)
+Status: Implemented
 
 ## Context
 
@@ -98,10 +98,12 @@ Group(
 ```
 
 `MealplanPermissionPolicy` reuses the existing `MealplanAccessTier` enum
-(`None | Rate | Manage`) rather than inventing a new one. In practice only
-two values are ever meaningful here: **`Manage`** (full read/write on the
-shared plan and its family's meal library, same as a guardian) or **`None`**
-(no access at all). `Rate` is reserved for the child themself
+(`None | Rate | Manage | View`) rather than inventing a new one. Three
+values are meaningful for a group policy: **`Manage`** (full read/write on
+the shared plan and its family's meal library, same as a guardian),
+**`View`** (read-only: see the shared plan and meal library, but cannot
+create/edit/archive meals or assign/clear plan slots), or **`None`** (no
+access at all). `Rate` is reserved for the child themself
 (`MealplanAuthorization.CheckRate`) and is never a valid group-policy value
 — see validation below.
 
@@ -141,36 +143,49 @@ moment they join. Fully editable afterward, like Calendar's policy.
 ### `MealplanGroupAuthorization` (new)
 
 ```
+CheckView(GroupId, UserId callerId, IGroupEventStore groups, ct) -> MealplanAccess
 CheckManage(GroupId, UserId callerId, IGroupEventStore groups, ct) -> MealplanAccess
 ```
 
-Loads `Group`, and returns `Allowed` only if the caller has a `GroupRole` in
-`Group.Members` **and** `MealplanPermissionPolicy[role] == Manage`
-(`TryGetValue`, never `GetValueOrDefault` — a missing entry fails closed,
-same rule `CalendarAuthorization.ResolveRole` already applies). Every other
-case — not a member, deleted group, policy entry missing, or policy entry is
-`None`/`Rate` — collapses to `NotFound`. There is no `Forbidden` outcome
-here: unlike `Calendar`'s three tiers, there is no partial/lesser access a
-group member could have and be shown "you can see this exists but can't
-open it" for — `None` and no relationship are the same observable state.
+Both load `Group` and resolve the caller's tier the same way: the caller
+must have a `GroupRole` in `Group.Members`, and that role must have an
+entry in `MealplanPermissionPolicy` (`TryGetValue`, never
+`GetValueOrDefault` — a missing entry fails closed, same rule
+`CalendarAuthorization.ResolveRole` already applies; a resolved `Rate` is
+also treated as `None`, defensively, even though validation should never
+let it into the policy in the first place).
+
+- `CheckView` returns `Allowed` for either `View` or `Manage`, `NotFound`
+  for `None`/no relationship. There is no `Forbidden` outcome for viewing —
+  a caller either has some access or none; there's no partial/lesser view
+  state to distinguish.
+- `CheckManage` returns `Allowed` only for `Manage`, `Forbidden` for `View`
+  (a real, reachable outcome now: the caller can see the plan exists, just
+  can't write to it), and `NotFound` for `None`/no relationship.
 
 ### `MealplanGroupAccess` (new) — resolving *which* plan
 
 ```
+ResolveViewAsync(GroupId, UserId? callerId, IGroupEventStore groups, IMealPlanEventStore mealPlans, ct)
 ResolveManageAsync(GroupId, UserId? callerId, IGroupEventStore groups, IMealPlanEventStore mealPlans, ct)
     -> Result<(MealPlanId, UserId AnchorChildId)>
 ```
 
-1. `MealplanGroupAuthorization.CheckManage` — deny if not allowed.
+Both follow the same three steps, differing only in which
+`MealplanGroupAuthorization` check they call:
+
+1. `CheckView`/`CheckManage` — deny if not allowed.
 2. Look up `GroupSharedMealPlanDocument` by `GroupId` (new read model, below)
    — `NotFound` if nothing is currently shared with this group.
 3. Return the resolved `MealPlanId` and `AnchorChildId`.
 
-Every new group-keyed handler (below) calls this once, then proceeds with
-the **exact same core logic** the child-keyed handler already uses,
-parametrized by `AnchorChildId` instead of the URL's `ChildId` — each
+Every new group-keyed handler (below) calls one of these once, then
+proceeds with the **exact same core logic** the child-keyed handler already
+uses, parametrized by `AnchorChildId` instead of the URL's `ChildId` — each
 existing handler's post-authorization body is extracted into an internal
-static method so both entry points share it verbatim. This means:
+static method so both entry points share it verbatim. Read-only handlers
+(`ListMealPlanForGroup`, `ListMealsForGroup`) call `ResolveViewAsync`;
+every write handler calls `ResolveManageAsync`. This means:
 
 - Zero behavior change and zero added cost for the existing
   `/mealplans/children/{childId}/...` routes — they still call
@@ -180,6 +195,9 @@ static method so both entry points share it verbatim. This means:
   shared family's plan and meal library — including meals created via the
   group route, which are indexed under `AnchorChildId` like any other meal
   and are visible to the family and the group alike from then on.
+- A group member with `View`-tier access can read everything a `Manage`
+  member can, but every write route returns `403 Forbidden` for them, not
+  `404` — they know the plan exists, they just can't change it.
 
 ## New read model
 
@@ -204,14 +222,14 @@ overwrites the row), and unsharing deletes it. Written/deleted by
 | `ShareMealPlanWithGroup` | `Features/Mealplans` | Caller must have `Manage` tier on `ChildId` (existing `MealplanAuthorization.CheckManage`) **and** `GroupRole.Owner`/`Admin` on the target group (`GroupAuthorization.CheckManage`) | Sharing is a two-sided decision — the family's guardian and the group's management both consent, mirroring `CreateCalendar`'s group-owned path. Creates the plan lazily if the family has none yet (same lazy-creation contract `AssignMealToSlot` already has). Emits `MealPlanSharedWithGroup` |
 | `UnshareMealPlanFromGroup` | `Features/Mealplans` | Only `Manage` tier on `ChildId` -- deliberately *not* also gated on group management, so a guardian can always cut off a share regardless of their standing in the group | Idempotent no-op if the plan isn't currently shared with that exact group (same idempotent-clear precedent as `ClearMealSlot`) |
 | `GetSharedGroup` | `Features/Mealplans` | `Manage` tier on `ChildId` | The only read path for "is this family's plan currently shared, and with which group" -- needed by the frontend to render current sharing status; returns `null` if there's no plan yet or it isn't shared |
-| `UpdateMealplanPermissionPolicy` | `Features/Groups` | `GroupAuthorization.CheckManage` | Mirrors `UpdateCalendarPermissionPolicy` exactly: full-map replace, validated to include all three `GroupRole`s, and additionally rejects `MealplanAccessTier.Rate` as an invalid policy value (only `None`/`Manage` are meaningful here) |
-| `ListMealPlanForGroup` | `Features/Mealplans` | `MealplanGroupAccess.ResolveManageAsync` | Delegates straight into `MealPlanExpansion.ExpandAsync(anchorChildId, ...)`, unchanged — a group member's "own rating" is simply absent (they're not a child), which degrades correctly with no special-casing |
-| `ListMealsForGroup` | `Features/Mealplans` | same | Shares `ListMealsHandler`'s extracted core logic |
-| `CreateMealForGroup` | `Features/Mealplans` | same | New meals are indexed under `AnchorChildId`, same as any guardian-created meal |
-| `UpdateMealDetailsForGroup` | `Features/Mealplans` | same | |
-| `ArchiveMealForGroup` | `Features/Mealplans` | same | |
-| `AssignMealToSlotForGroup` | `Features/Mealplans` | same | |
-| `ClearMealSlotForGroup` | `Features/Mealplans` | same | |
+| `UpdateMealplanPermissionPolicy` | `Features/Groups` | `GroupAuthorization.CheckManage` | Mirrors `UpdateCalendarPermissionPolicy` exactly: full-map replace, validated to include all three `GroupRole`s, and additionally rejects `MealplanAccessTier.Rate` as an invalid policy value (`None`/`View`/`Manage` are the three meaningful values here) |
+| `ListMealPlanForGroup` | `Features/Mealplans` | `MealplanGroupAccess.ResolveViewAsync` (`View` or `Manage`) | Delegates straight into `MealPlanExpansion.ExpandAsync(anchorChildId, ...)`, unchanged — a group member's "own rating" is simply absent (they're not a child), which degrades correctly with no special-casing |
+| `ListMealsForGroup` | `Features/Mealplans` | `ResolveViewAsync` | Shares `ListMealsHandler`'s extracted core logic |
+| `CreateMealForGroup` | `Features/Mealplans` | `MealplanGroupAccess.ResolveManageAsync` (`Manage` only) | New meals are indexed under `AnchorChildId`, same as any guardian-created meal |
+| `UpdateMealDetailsForGroup` | `Features/Mealplans` | `ResolveManageAsync` | |
+| `ArchiveMealForGroup` | `Features/Mealplans` | `ResolveManageAsync` | |
+| `AssignMealToSlotForGroup` | `Features/Mealplans` | `ResolveManageAsync` | |
+| `ClearMealSlotForGroup` | `Features/Mealplans` | `ResolveManageAsync` | |
 
 `RateMeal` gets **no** group-keyed sibling — rating stays exclusively the
 child's own action, per the existing, unmodified `CheckRate` tier. A group
@@ -260,7 +278,8 @@ textually separate at the routing layer, not just in handler code.
 |---|---|
 | `MealPlan`/`Meal` gain an owner union like `Calendar`'s | No — `MealPlan` gains one optional additive field (`SharedWithGroupId`); `Meal` is unchanged, reached transitively via the plan's `AnchorChildId` |
 | Does group-derived access replace or narrow the family/guardian path | Neither — fully additive, two independent resolution paths, existing `MealplanAuthorization` untouched |
-| `MealplanPermissionPolicy` value type | Reuses `MealplanAccessTier`, but only `None`/`Manage` are valid group-policy values; `Rate` is rejected by validation |
+| `MealplanPermissionPolicy` value type | Reuses `MealplanAccessTier`; `None`/`View`/`Manage` are valid group-policy values, `Rate` is rejected by validation |
+| Read-only group access | `View` tier: full read access (plan + meal library) via `ResolveViewAsync`, `403 Forbidden` (not `404`) on every write route |
 | Default policy on `GroupCreated` | `Owner -> Manage, Admin -> Manage, Member -> None` — more conservative than Calendar's default given meal-plan data sensitivity |
 | How many groups can one plan be shared with at once | One — a single nullable field/row, not a set. Re-sharing overwrites |
 | Route shape for group access | Parallel `/mealplans/groups/{groupId}/...` routes, mirroring the child-keyed ones, sharing extracted handler logic rather than a unified/parameterized route |
@@ -303,7 +322,7 @@ flowchart TB
         end
 
         subgraph New["New, additive"]
-            Group["Group\n+ MealplanPermissionPolicy:\nGroupRole -> MealplanAccessTier\n(None | Manage only)"]
+            Group["Group\n+ MealplanPermissionPolicy:\nGroupRole -> MealplanAccessTier\n(None | View | Manage)"]
             GroupAuth["MealplanGroupAuthorization\nGroupId/callerId only"]
             GroupAccessResolver["MealplanGroupAccess\nGroupId -> (MealPlanId, AnchorChildId)"]
             SharedDoc["GroupSharedMealPlanDocument\n(Id=MealPlanId, GroupId, AnchorChildId)"]

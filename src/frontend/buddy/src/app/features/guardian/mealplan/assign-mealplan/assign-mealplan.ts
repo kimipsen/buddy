@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 
 import { toIsoDate } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { MealPlanEntry, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
+import { MealPlanEntry, MealplanAccessTier, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
 import { MealPicker } from '../meal-picker/meal-picker';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
@@ -15,6 +15,7 @@ const SLOT_LABELS: Record<MealSlot, string> = {
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
 const DAYS_AHEAD = 7;
+const MANAGE: MealplanAccessTier = 2;
 
 interface PlannerDay {
   date: string;
@@ -49,6 +50,13 @@ export class AssignMealplan {
 
   readonly scope = input.required<MealplanScope>();
 
+  // A group scope with a View (not Manage) tier is read-only -- the backend rejects every write
+  // with 403 regardless, but the UI disables those controls rather than letting the user hit them.
+  protected readonly readOnly = computed(() => {
+    const scope = this.scope();
+    return scope.kind === 'group' && scope.accessTier !== MANAGE;
+  });
+
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
   protected readonly days = buildDays();
@@ -80,6 +88,10 @@ export class AssignMealplan {
   }
 
   protected async onSlotChange(date: string, slot: MealSlot, mealId: string): Promise<void> {
+    if (this.readOnly()) {
+      return;
+    }
+
     const scope = this.scope();
     const key = this.key(date, slot);
     this.savingKey.set(key);
@@ -107,6 +119,10 @@ export class AssignMealplan {
   // Dragging a meal onto an empty cell moves it; dragging it onto an occupied cell swaps the two,
   // since "move this to another day" and "switch these two around" are the same gesture to a user.
   protected async onMealDrop(event: CdkDragDrop<SlotRef>): Promise<void> {
+    if (this.readOnly()) {
+      return;
+    }
+
     const scope = this.scope();
     const source = event.item.data as SlotRef;
     const target = event.container.data;

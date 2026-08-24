@@ -9,17 +9,21 @@ import { RuntimeConfigService } from './runtime-config.service';
 // doubles as display order.
 export type MealSlot = 0 | 1 | 2 | 3;
 
-// MealplanAccessTier values match the backend's enum ordinals: 0 = None, 1 = Rate, 2 = Manage.
-// Only None/Manage are ever meaningful as a group's MealplanPermissionPolicy value -- Rate is the
-// child's own tier and is rejected by the backend if submitted here.
-export type MealplanAccessTier = 0 | 1 | 2;
+// MealplanAccessTier values match the backend's enum ordinals: 0 = None, 1 = Rate, 2 = Manage,
+// 3 = View. None/View/Manage are the three meaningful values for a group's
+// MealplanPermissionPolicy -- Rate is the child's own tier and is rejected by the backend if
+// submitted here.
+export type MealplanAccessTier = 0 | 1 | 2 | 3;
 
 // A family's plan is always addressed by childId; a plan the family has shared with a group is
 // additionally reachable by groupId, resolving transparently to the same underlying plan and
 // meal library (see docs/backend/analysis/group-owned-mealplans.md). Every read/write method
 // below takes a scope instead of a bare childId so callers don't need to know which URL family
-// backs a given scope.
-export type MealplanScope = { kind: 'family'; childId: string } | { kind: 'group'; groupId: string; groupName: string };
+// backs a given scope. A group scope carries its resolved accessTier (View or Manage) so
+// components can gate write UI without a separate lookup.
+export type MealplanScope =
+  | { kind: 'family'; childId: string }
+  | { kind: 'group'; groupId: string; groupName: string; accessTier: MealplanAccessTier };
 
 export interface MealRating {
   stars: number;

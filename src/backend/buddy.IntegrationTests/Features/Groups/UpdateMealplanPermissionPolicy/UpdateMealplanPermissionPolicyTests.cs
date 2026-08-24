@@ -39,6 +39,31 @@ public sealed class UpdateMealplanPermissionPolicyTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task The_view_tier_is_accepted_as_a_valid_policy_value()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Team");
+
+        var policy = new Dictionary<GroupRole, MealplanAccessTier>
+        {
+            [GroupRole.Owner] = MealplanAccessTier.Manage,
+            [GroupRole.Admin] = MealplanAccessTier.View,
+            [GroupRole.Member] = MealplanAccessTier.View
+        };
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            _.Put.Json(new { Policy = policy }).ToUrl($"/groups/{groupId}/mealplan-permission-policy");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var group = await GroupTestHelpers.GetGroupAsync(fixture, ownerToken, groupId);
+        Assert.Equal(MealplanAccessTier.View, group.MealplanPermissionPolicy[GroupRole.Admin]);
+        Assert.Equal(MealplanAccessTier.View, group.MealplanPermissionPolicy[GroupRole.Member]);
+    }
+
+    [Fact]
     public async Task A_new_group_defaults_owner_and_admin_to_manage_and_member_to_none()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();

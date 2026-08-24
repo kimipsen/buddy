@@ -4,7 +4,8 @@ export const mealplan = {
   title: "Plan the week's meals.",
   loadError: 'Unable to load the meal plan.',
   scope: {
-    myFamily: 'My family'
+    myFamily: 'My family',
+    readOnlyBadge: 'read only'
   },
   sharing: {
     title: 'Share with a group',
@@ -21,6 +22,7 @@ export const mealplan = {
     loading: 'Loading meals…',
     noChildren: 'Link a child from Settings before defining meals.',
     empty: 'No meals yet. Add one below.',
+    readOnly: "You have read-only access to this group's meal library.",
     archive: 'Archive',
     previous: 'Previous',
     next: 'Next',
@@ -38,6 +40,7 @@ export const mealplan = {
     loading: 'Loading the meal plan…',
     noChildren: 'Link a child from Settings before planning meals.',
     noMeals: 'Add a meal below before you can plan a week.',
+    readOnly: 'You have read-only access to this plan.',
     loadError: 'Unable to load the meal plan.',
     updateError: 'Unable to update the meal plan. Please try again.',
     dragHint: 'Drag to move or swap with another day or meal'

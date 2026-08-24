@@ -47,6 +47,7 @@ export const admin = {
       saveError: 'Unable to save meal plan permissions.',
       tiers: {
         none: 'No access',
+        view: 'Read only',
         manage: 'Full access'
       }
     }

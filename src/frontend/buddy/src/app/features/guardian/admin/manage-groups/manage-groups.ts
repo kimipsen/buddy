@@ -40,14 +40,15 @@ const POLICY_ROWS: { key: GroupRoleName; role: GroupRole }[] = [
   { key: 'Member', role: 2 }
 ];
 
-// Only None (0) and Manage (2) are ever valid group-policy values for meal plans -- Rate (1) is
-// the child's own tier and is rejected by the backend, so it's never offered here.
+// None (0), Manage (2), and View (3) are the three valid group-policy values for meal plans --
+// Rate (1) is the child's own tier and is rejected by the backend, so it's never offered here.
 const MEALPLAN_TIER_LABELS: Record<number, string> = {
   0: 'admin.manageGroups.mealplanPolicy.tiers.none',
-  2: 'admin.manageGroups.mealplanPolicy.tiers.manage'
+  2: 'admin.manageGroups.mealplanPolicy.tiers.manage',
+  3: 'admin.manageGroups.mealplanPolicy.tiers.view'
 };
 
-const MEALPLAN_TIERS: MealplanAccessTier[] = [0, 2];
+const MEALPLAN_TIERS: MealplanAccessTier[] = [0, 3, 2];
 
 @Component({
   selector: 'app-manage-groups',

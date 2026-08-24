@@ -10,6 +10,10 @@
       <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>
     }
 
+    @if (readOnly()) {
+      <p class="mb-3 text-xs font-medium text-slate-500">{{ 'mealplan.assign.readOnly' | translate }}</p>
+    }
+
     <div class="overflow-x-auto">
       <table cdkDropListGroup class="w-full min-w-[640px] border-separate border-spacing-2">
         <thead>
@@ -36,23 +40,25 @@
                     <app-meal-picker
                       [meals]="meals()"
                       [mealId]="mealIdFor(day.date, slot)"
-                      [disabled]="savingKey() === key(day.date, slot)"
+                      [disabled]="readOnly() || savingKey() === key(day.date, slot)"
                       (mealIdChange)="onSlotChange(day.date, slot, $event)"
                     />
                     @if (entryFor(day.date, slot); as entry) {
                       <div
                         cdkDrag
                         [cdkDragData]="{ date: day.date, slot: slot }"
-                        [cdkDragDisabled]="savingKey() !== null"
+                        [cdkDragDisabled]="readOnly() || savingKey() !== null"
                         class="pointer-events-none absolute inset-0"
                       >
-                        <div
-                          cdkDragHandle
-                          class="pointer-events-auto absolute inset-y-0 right-1.5 flex cursor-grab items-center text-slate-400 hover:text-slate-600"
-                          [title]="'mealplan.assign.dragHint' | translate"
-                        >
-                          <span aria-hidden="true">⠿</span>
-                        </div>
+                        @if (!readOnly()) {
+                          <div
+                            cdkDragHandle
+                            class="pointer-events-auto absolute inset-y-0 right-1.5 flex cursor-grab items-center text-slate-400 hover:text-slate-600"
+                            [title]="'mealplan.assign.dragHint' | translate"
+                          >
+                            <span aria-hidden="true">⠿</span>
+                          </div>
+                        }
                         <div *cdkDragPreview class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm shadow-lg">
                           <span class="text-base leading-none">{{ entry.icon }}</span>
                           {{ entry.mealName }}

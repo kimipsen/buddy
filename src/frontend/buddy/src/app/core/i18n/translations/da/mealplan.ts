@@ -4,7 +4,8 @@ export const mealplan = {
   title: 'Planlæg ugens måltider.',
   loadError: 'Kunne ikke indlæse madplanen.',
   scope: {
-    myFamily: 'Min familie'
+    myFamily: 'Min familie',
+    readOnlyBadge: 'kun læsning'
   },
   sharing: {
     title: 'Del med en gruppe',
@@ -21,6 +22,7 @@ export const mealplan = {
     loading: 'Indlæser måltider…',
     noChildren: 'Tilknyt et barn under Indstillinger, før du kan oprette måltider.',
     empty: 'Ingen måltider endnu. Tilføj et herunder.',
+    readOnly: 'Du har kun læseadgang til denne gruppes måltidsbibliotek.',
     archive: 'Arkiver',
     previous: 'Forrige',
     next: 'Næste',
@@ -38,6 +40,7 @@ export const mealplan = {
     loading: 'Indlæser madplanen…',
     noChildren: 'Tilknyt et barn under Indstillinger, før du kan planlægge måltider.',
     noMeals: 'Tilføj et måltid herunder, før du kan planlægge en uge.',
+    readOnly: 'Du har kun læseadgang til denne plan.',
     loadError: 'Kunne ikke indlæse madplanen.',
     updateError: 'Kunne ikke opdatere madplanen. Prøv igen.',
     dragHint: 'Træk for at flytte eller bytte med en anden dag eller et andet måltid'

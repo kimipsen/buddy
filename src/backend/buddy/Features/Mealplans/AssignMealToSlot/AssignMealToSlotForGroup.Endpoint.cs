@@ -13,7 +13,7 @@ public static class AssignMealToSlotForGroupEndpoint
 {
     public static RouteGroupBuilder MapAssignMealToSlotForGroup(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapPut("/groups/{groupId:guid}/plan", async Task<Results<Ok<MealPlanEntry>, NotFound, BadRequest<string>>> (
+        mealplans.MapPut("/groups/{groupId:guid}/plan", async Task<Results<Ok<MealPlanEntry>, NotFound, ForbidHttpResult, BadRequest<string>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             DateOnly date,
@@ -30,9 +30,8 @@ public static class AssignMealToSlotForGroupEndpoint
                 Result<MealPlanEntry>.Success(var entry) => TypedResults.Ok(entry),
                 Result<MealPlanEntry>.Validation(var message) => TypedResults.BadRequest(message),
                 Result<MealPlanEntry>.NotFound => TypedResults.NotFound(),
-                // MealplanGroupAuthorization never produces Forbidden -- there's no
-                // ForbidHttpResult in this route's declared results, so it collapses to NotFound.
-                Result<MealPlanEntry>.Forbidden => TypedResults.NotFound(),
+                // Reachable for a caller whose group policy grants View but not Manage.
+                Result<MealPlanEntry>.Forbidden => TypedResults.Forbid(),
             };
         })
         .WithName("AssignMealToSlotForGroup");

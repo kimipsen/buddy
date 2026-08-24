@@ -14,7 +14,7 @@ public static class ListMealsForGroupHandler
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
-        var resolved = await MealplanGroupAccess.ResolveManageAsync(query.GroupId, query.UserId, groups, mealPlans, cancellationToken);
+        var resolved = await MealplanGroupAccess.ResolveViewAsync(query.GroupId, query.UserId, groups, mealPlans, cancellationToken);
 
         if (resolved is not Result<MealplanGroupAccess.Resolved>.Success(var access))
         {

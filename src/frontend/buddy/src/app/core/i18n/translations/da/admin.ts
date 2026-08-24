@@ -47,6 +47,7 @@ export const admin = {
       saveError: 'Kunne ikke gemme måltidsplan-tilladelser.',
       tiers: {
         none: 'Ingen adgang',
+        view: 'Kun læsning',
         manage: 'Fuld adgang'
       }
     }

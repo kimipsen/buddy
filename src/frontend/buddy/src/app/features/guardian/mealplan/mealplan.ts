@@ -6,12 +6,13 @@ import { GroupRoleName, GROUP_ROLE_NAMES, GroupSummary, GroupsService } from '..
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MealplanAccessTier, MealplanScope, MealplansService } from '../../../core/mealplans.service';
-
-const MANAGE: MealplanAccessTier = 2;
-
-type GroupMealplanScope = Extract<MealplanScope, { kind: 'group' }>;
 import { AssignMealplan } from './assign-mealplan/assign-mealplan';
 import { ManageMeals } from './manage-meals/manage-meals';
+
+const MANAGE: MealplanAccessTier = 2;
+const VIEW: MealplanAccessTier = 3;
+
+type GroupMealplanScope = Extract<MealplanScope, { kind: 'group' }>;
 
 @Component({
   selector: 'app-guardian-mealplan',
@@ -29,10 +30,11 @@ export class GuardianMealplan implements OnInit {
 
   private familyChildId: string | null = null;
   protected readonly familyScope = signal<MealplanScope | null>(null);
-  // Groups the guardian's own GroupRole maps to Manage tier for via MealplanPermissionPolicy --
-  // shown as switchable scopes regardless of whether a plan has actually been shared with them
-  // yet (there's no "list my shared plans" endpoint; ManageMeals/AssignMealplan surface their own
-  // error state if a group turns out to have no shared plan).
+  // Groups the guardian's own GroupRole maps to View or Manage tier for via
+  // MealplanPermissionPolicy -- shown as switchable scopes regardless of whether a plan has
+  // actually been shared with them yet (there's no "list my shared plans" endpoint;
+  // ManageMeals/AssignMealplan surface their own error state if a group turns out to have no
+  // shared plan).
   protected readonly groupScopes = signal<GroupMealplanScope[]>([]);
   protected readonly selectedScope = signal<MealplanScope | null>(null);
 
@@ -49,6 +51,10 @@ export class GuardianMealplan implements OnInit {
 
   protected selectScope(scope: MealplanScope): void {
     this.selectedScope.set(scope);
+  }
+
+  protected isReadOnlyGroupScope(scope: GroupMealplanScope): boolean {
+    return scope.accessTier !== MANAGE;
   }
 
   protected nameForGroup(groupId: string): string {
@@ -178,9 +184,10 @@ export class GuardianMealplan implements OnInit {
     groups.forEach((group, index) => {
       const detail = details[index];
       const roleName: GroupRoleName = GROUP_ROLE_NAMES[group.role];
+      const accessTier = detail?.mealplanPermissionPolicy[roleName];
 
-      if (detail?.mealplanPermissionPolicy[roleName] === MANAGE) {
-        scopes.push({ kind: 'group', groupId: group.id, groupName: group.name });
+      if (accessTier === MANAGE || accessTier === VIEW) {
+        scopes.push({ kind: 'group', groupId: group.id, groupName: group.name, accessTier });
       }
     });
 

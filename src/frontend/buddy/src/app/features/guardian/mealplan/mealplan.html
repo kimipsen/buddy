@@ -40,6 +40,9 @@
             (click)="selectScope(scope)"
           >
             {{ scope.groupName }}
+            @if (isReadOnlyGroupScope(scope)) {
+              <span class="ml-1 opacity-70">({{ 'mealplan.scope.readOnlyBadge' | translate }})</span>
+            }
           </button>
         }
       </div>
