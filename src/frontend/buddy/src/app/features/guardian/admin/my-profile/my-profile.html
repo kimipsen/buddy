@@ -31,7 +31,12 @@
         <button
           type="submit"
           class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
-          [disabled]="savingName() || !givenName().trim() || !familyName().trim()"
+          [disabled]="
+            savingName() ||
+            !givenName().trim() ||
+            !familyName().trim() ||
+            (givenName().trim() === currentGivenName() && familyName().trim() === currentFamilyName())
+          "
         >
           {{ 'profile.name.save' | translate }}
         </button>

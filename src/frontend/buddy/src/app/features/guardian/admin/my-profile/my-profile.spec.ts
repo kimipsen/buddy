@@ -17,6 +17,7 @@ describe('MyProfile', () => {
   async function setup() {
     const usersServiceStub: Partial<UsersService> = {
       ensureCurrentUser: () => Promise.resolve(currentUser),
+      updateName: vi.fn(),
       updateTimeZone: vi.fn(),
       updateLanguage: vi.fn()
     };
@@ -41,6 +42,25 @@ describe('MyProfile', () => {
       (button) => button.type === 'submit' && button.textContent?.includes(textFragment)
     );
   }
+
+  it('keeps the save name button disabled until a field actually changes', async () => {
+    const { compiled } = await setup();
+
+    expect(findSaveButton(compiled, 'name')?.disabled).toBe(true);
+  });
+
+  it('enables the save name button once a field changes', async () => {
+    const { fixture, compiled } = await setup();
+    const givenNameInput = compiled.querySelector<HTMLInputElement>('input[name="givenName"]');
+
+    givenNameInput!.value = 'Alicia';
+    givenNameInput!.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(findSaveButton(compiled, 'name')?.disabled).toBe(false);
+  });
 
   it('enables the save time zone button once the dropdown value changes', async () => {
     const { fixture, compiled } = await setup();

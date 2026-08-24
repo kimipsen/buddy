@@ -25,6 +25,8 @@ export class MyProfile implements OnInit {
 
   protected readonly givenName = signal('');
   protected readonly familyName = signal('');
+  protected readonly currentGivenName = signal('');
+  protected readonly currentFamilyName = signal('');
   protected readonly savingName = signal(false);
   protected readonly nameError = signal<string | null>(null);
   protected readonly nameSaved = signal(false);
@@ -63,7 +65,9 @@ export class MyProfile implements OnInit {
     this.nameSaved.set(false);
 
     try {
-      await this.users.updateName(givenName, familyName);
+      const updated = await this.users.updateName(givenName, familyName);
+      this.currentGivenName.set(updated.name.givenName);
+      this.currentFamilyName.set(updated.name.familyName);
       this.nameSaved.set(true);
     } catch {
       this.nameError.set('profile.name.error');
@@ -160,6 +164,8 @@ export class MyProfile implements OnInit {
   private applyCurrentUser(user: CurrentUser): void {
     this.givenName.set(user.name.givenName);
     this.familyName.set(user.name.familyName);
+    this.currentGivenName.set(user.name.givenName);
+    this.currentFamilyName.set(user.name.familyName);
     this.email.set(user.email.value);
     this.currentEmail.set(user.email.value);
     this.timeZoneId.set(user.timeZoneId);
