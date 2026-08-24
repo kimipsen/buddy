@@ -115,7 +115,15 @@ export const admin = {
       contributor: 'Bidragyder',
       viewer: 'Læser'
     },
-    needsGroupHint: 'Du skal have en gruppe, før du kan tilføje en kalender. Opret en under Grupper først.'
+    needsGroupHint: 'Du skal have en gruppe, før du kan tilføje en kalender. Opret en under Grupper først.',
+    move: {
+      showButton: 'Flyt til gruppe',
+      hideButton: 'Luk',
+      selectPlaceholder: 'Vælg en gruppe',
+      confirmButton: 'Flyt',
+      noGroups: 'Du skal have en anden gruppe, du administrerer, før du kan flytte denne kalender.',
+      error: 'Kunne ikke flytte denne kalender. Du administrerer muligvis ikke modtagergruppen.'
+    }
   },
   deleteAccount: {
     title: 'Faresone',

@@ -172,7 +172,7 @@ The process of rebuilding the latest aggregate state by replaying all relevant e
 ## Common terms in the project
 
 ### Owner
-The group that owns the calendar. A group's Owner (the guardian who created it) resolves to `CalendarRole.Owner` by default through `CalendarPermissionPolicy`. Calendars created before group-only ownership was introduced can still be owned directly by a user, seeded as `CalendarRole.Owner` in `Members`.
+The group that owns the calendar. A group's Owner (the guardian who created it) resolves to `CalendarRole.Owner` by default through `CalendarPermissionPolicy`. Calendars created before group-only ownership was introduced can still be owned directly by a user, seeded as `CalendarRole.Owner` in `Members`. Ownership can be changed afterward via `TransferCalendarToGroup` -- the one exception to it otherwise being fixed at creation.
 
 ### Member
 Any user with a role in a calendar, such as owner, contributor, or viewer.

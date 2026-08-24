@@ -38,6 +38,11 @@ export class ManageCalendars implements OnInit {
   protected readonly newCalendarGroupId = signal('');
   protected readonly manageableGroups = signal<GroupSummary[]>([]);
 
+  protected readonly movingCalendarId = signal<string | null>(null);
+  protected readonly moveTargetGroupId = signal('');
+  protected readonly moving = signal(false);
+  protected readonly moveError = signal<string | null>(null);
+
   ngOnInit(): void {
     void this.loadCalendars();
     void this.loadManageableGroups();
@@ -63,6 +68,38 @@ export class ManageCalendars implements OnInit {
       this.createError.set('admin.manageCalendars.createError');
     } finally {
       this.creating.set(false);
+    }
+  }
+
+  protected startMove(calendarId: string): void {
+    if (this.movingCalendarId() === calendarId) {
+      this.movingCalendarId.set(null);
+      return;
+    }
+
+    this.movingCalendarId.set(calendarId);
+    this.moveTargetGroupId.set('');
+    this.moveError.set(null);
+  }
+
+  protected async confirmMove(calendarId: string): Promise<void> {
+    const groupId = this.moveTargetGroupId();
+
+    if (!groupId) {
+      return;
+    }
+
+    this.moving.set(true);
+    this.moveError.set(null);
+
+    try {
+      await this.calendars.transferToGroup(calendarId, groupId);
+      this.movingCalendarId.set(null);
+      await this.loadCalendars();
+    } catch {
+      this.moveError.set('admin.manageCalendars.move.error');
+    } finally {
+      this.moving.set(false);
     }
   }
 

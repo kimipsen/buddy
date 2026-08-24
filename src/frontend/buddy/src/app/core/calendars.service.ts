@@ -55,6 +55,13 @@ export class CalendarsService {
     return firstValueFrom(this.http.post<CalendarSummary>(`${this.runtimeConfig.apiBaseUrl}/calendars`, request));
   }
 
+  // Moves an already-existing calendar to a different group -- the one exception to ownership
+  // otherwise being fixed at creation. Requires the caller to own the calendar and manage the
+  // destination group (two-sided consent, gated server-side).
+  transferToGroup(calendarId: string, groupId: string): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/group/${groupId}`, {}));
+  }
+
   listOccurrences(calendarId: string, from: string, to: string): Promise<CalendarItemOccurrence[]> {
     return firstValueFrom(
       this.http.get<CalendarItemOccurrence[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/occurrences`, {

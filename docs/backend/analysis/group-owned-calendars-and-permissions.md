@@ -311,11 +311,19 @@ are unambiguously user-owned by virtue of which event type they are.
 
 ## Remaining open questions
 
-- Whether `CreateCalendar` should accept an existing group at creation time
-  only, or also support converting an existing user-owned calendar into a
-  group-owned one later (today's model treats ownership as permanently
-  fixed at creation, so the default assumption is: no conversion, only
-  chosen at creation).
+- ~~Whether `CreateCalendar` should accept an existing group at creation
+  time only, or also support converting an existing user-owned calendar
+  into a group-owned one later~~ -- resolved: `CreateCalendar` now requires
+  a group at creation (there is no personal-calendar path for new
+  calendars at all), and `TransferCalendarToGroup` (`Features/Calendars/
+  TransferCalendarToGroup/`) covers the "move it later" case for any
+  calendar, personal or group-owned. This is the one deliberate exception
+  to "ownership is fixed at creation" elsewhere in this doc: gated by
+  `CheckOwner` on the calendar plus `GroupAuthorization.CheckManage` on the
+  destination group (two-sided consent, the same shape `ShareMealPlanWithGroup`
+  uses), and `Calendar.Members` is left untouched by a transfer since
+  explicit per-user grants are independent of whichever group currently owns
+  the calendar.
 
 ## Diagram
 

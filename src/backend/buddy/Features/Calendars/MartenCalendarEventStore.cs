@@ -67,27 +67,26 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             switch (@event)
             {
                 case MemberRoleGranted granted:
-                    // The calendar's name never changes, so any existing membership document for
-                    // this calendar already has it cached -- except a group-owned calendar has no
-                    // membership document until its first explicit grant, so fall back to the
-                    // GroupOwnedCalendarDocument written at creation for that case.
-                    var name = await session.Query<CalendarMembershipDocument>()
-                        .Where(d => d.CalendarId == calendarId.Value)
-                        .Select(d => d.CalendarName)
-                        .FirstOrDefaultAsync(cancellationToken)
-                        ?? (await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken))?.CalendarName
-                        ?? throw new InvalidOperationException($"No membership or group-owned document found for calendar '{calendarId.Value}'.");
+                    var grantedName = await ResolveCalendarNameAsync(session, calendarId, cancellationToken);
 
                     session.Store(new CalendarMembershipDocument(
                         CalendarMembershipDocument.BuildId(calendarId.Value, granted.MemberId.Value),
                         calendarId.Value,
                         granted.MemberId.Value,
                         granted.Role,
-                        name));
+                        grantedName));
                     break;
 
                 case MemberRoleRevoked revoked:
                     session.Delete<CalendarMembershipDocument>(CalendarMembershipDocument.BuildId(calendarId.Value, revoked.MemberId.Value));
+                    break;
+
+                case CalendarTransferredToGroup transferred:
+                    // Upserts the same row (Id = calendarId) with the new GroupId -- whether the
+                    // calendar was previously personal (no row yet) or owned by a different
+                    // group (row already exists), this is the only write needed either way.
+                    var transferredName = await ResolveCalendarNameAsync(session, calendarId, cancellationToken);
+                    session.Store(new GroupOwnedCalendarDocument(calendarId.Value, transferred.NewGroupId.Value, transferredName));
                     break;
 
                 case CalendarDeleted:
@@ -113,6 +112,18 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
 
         await session.SaveChangesAsync(cancellationToken);
     }
+
+    // The calendar's name never changes, so any existing membership document for this calendar
+    // already has it cached -- except a group-owned calendar has no membership document until
+    // its first explicit grant, so fall back to the GroupOwnedCalendarDocument written at
+    // creation (or a prior transfer) for that case.
+    private static async Task<string> ResolveCalendarNameAsync(IDocumentSession session, CalendarId calendarId, CancellationToken cancellationToken) =>
+        await session.Query<CalendarMembershipDocument>()
+            .Where(d => d.CalendarId == calendarId.Value)
+            .Select(d => d.CalendarName)
+            .FirstOrDefaultAsync(cancellationToken)
+        ?? (await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken))?.CalendarName
+        ?? throw new InvalidOperationException($"No membership or group-owned document found for calendar '{calendarId.Value}'.");
 
     public async Task<IReadOnlyCollection<CalendarMembershipDocument>> ListForUserAsync(UserId userId, CancellationToken cancellationToken)
     {

@@ -59,6 +59,7 @@ public sealed record Calendar(
                     new CalendarOwner.Group(created.OwnerId),
                     ImmutableDictionary<UserId, CalendarRole>.Empty,
                     ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
+                CalendarTransferredToGroup transferred => calendar! with { Owner = new CalendarOwner.Group(transferred.NewGroupId) },
                 MemberRoleGranted granted => calendar! with { Members = calendar!.Members.SetItem(granted.MemberId, granted.Role) },
                 MemberRoleRevoked revoked => calendar! with { Members = calendar!.Members.Remove(revoked.MemberId) },
                 IcalTokenIssued issued => calendar! with { Tokens = calendar!.Tokens.SetItem(issued.TokenId, new IcalTokenInfo(issued.TokenHash, issued.OccurredAt)) },

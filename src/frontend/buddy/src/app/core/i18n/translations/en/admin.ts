@@ -115,7 +115,15 @@ export const admin = {
       contributor: 'Contributor',
       viewer: 'Viewer'
     },
-    needsGroupHint: 'You need a group before you can add a calendar. Create one under Groups first.'
+    needsGroupHint: 'You need a group before you can add a calendar. Create one under Groups first.',
+    move: {
+      showButton: 'Move to group',
+      hideButton: 'Close',
+      selectPlaceholder: 'Choose a group',
+      confirmButton: 'Move',
+      noGroups: 'You need another group you manage before you can move this calendar.',
+      error: 'Unable to move this calendar. You may not manage the destination group.'
+    }
   },
   deleteAccount: {
     title: 'Danger zone',

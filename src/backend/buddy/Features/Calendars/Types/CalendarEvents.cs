@@ -6,6 +6,7 @@ namespace buddy.Features.Calendars;
 public union CalendarEvent(
     CalendarCreated,
     CalendarCreatedForGroup,
+    CalendarTransferredToGroup,
     CalendarDeleted,
     MemberRoleGranted,
     MemberRoleRevoked,
@@ -17,6 +18,7 @@ public union CalendarEvent(
     {
         CalendarCreated e => e,
         CalendarCreatedForGroup e => e,
+        CalendarTransferredToGroup e => e,
         CalendarDeleted e => e,
         MemberRoleGranted e => e,
         MemberRoleRevoked e => e,
@@ -31,6 +33,7 @@ public union CalendarEvent(
     {
         CalendarCreated => nameof(CalendarCreated),
         CalendarCreatedForGroup => nameof(CalendarCreatedForGroup),
+        CalendarTransferredToGroup => nameof(CalendarTransferredToGroup),
         CalendarDeleted => nameof(CalendarDeleted),
         MemberRoleGranted => nameof(MemberRoleGranted),
         MemberRoleRevoked => nameof(MemberRoleRevoked),
@@ -45,6 +48,15 @@ public sealed record CalendarCreated(CalendarId CalendarId, UserId OwnerId, stri
 // of a user. CalendarCreated itself is never modified -- old streams are read exactly as stored,
 // with no upcasting. See docs/backend/analysis/group-owned-calendars-and-permissions.md.
 public sealed record CalendarCreatedForGroup(CalendarId CalendarId, GroupId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
+
+// The one exception to "ownership is fixed at creation, never transferred" -- a calendar's
+// owning group can be changed afterward (e.g. moving a legacy personally-owned calendar into a
+// group, or moving it from one group to another), gated by CheckOwner on the calendar itself and
+// GroupAuthorization.CheckManage on NewGroupId (two-sided consent, the same shape
+// ShareMealPlanWithGroup/ShareMedicineWithGroup already use). Calendar.Members is untouched by a
+// transfer -- explicit per-user grants always win over the owning group's policy regardless of
+// which group that is, so nobody's access silently changes just because ownership moved.
+public sealed record CalendarTransferredToGroup(CalendarId CalendarId, GroupId NewGroupId, UserId TransferredBy, DateTimeOffset OccurredAt);
 
 public sealed record CalendarDeleted(CalendarId CalendarId, UserId DeletedBy, DateTimeOffset OccurredAt);
 
