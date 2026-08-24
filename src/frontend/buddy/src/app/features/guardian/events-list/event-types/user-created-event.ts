@@ -1,11 +1,11 @@
-import { DatePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 
+import { UserDatePipe } from '../../../../core/user-date.pipe';
 import { UserCreatedData } from './user-event.model';
 
 @Component({
   selector: 'app-user-created-event',
-  imports: [DatePipe],
+  imports: [UserDatePipe],
   templateUrl: './user-created-event.html'
 })
 export class UserCreatedEvent {

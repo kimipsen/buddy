@@ -1,3 +1,4 @@
+using buddy.Features.Calendars;
 using buddy.Features.Users;
 
 using Xunit;
@@ -50,4 +51,9 @@ public sealed class UserEventShapeTests
     public void EmailVerified() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new EmailVerified(FixedUserId, FixedInstant),
         "Users/EmailVerified.json");
+
+    [Fact]
+    public void TimeZoneUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new TimeZoneUpdated(FixedUserId, TimeZoneId.New("UTC"), TimeZoneId.New("Europe/Copenhagen"), FixedInstant),
+        "Users/TimeZoneUpdated.json");
 }

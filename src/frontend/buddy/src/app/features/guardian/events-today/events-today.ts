@@ -1,13 +1,13 @@
-import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
+import { UserDatePipe } from '../../../core/user-date.pipe';
 
 const EVENT_KIND = 0;
 
 @Component({
   selector: 'app-events-today',
-  imports: [DatePipe],
+  imports: [UserDatePipe],
   templateUrl: './events-today.html'
 })
 export class EventsToday implements OnInit {

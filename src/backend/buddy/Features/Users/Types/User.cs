@@ -1,3 +1,5 @@
+using buddy.Features.Calendars;
+
 namespace buddy.Features.Users;
 
 public sealed record User(
@@ -9,8 +11,12 @@ public sealed record User(
     bool IsDeleted = false,
     string? EmailVerificationTokenHash = null,
     DateTimeOffset? EmailVerificationRequestedAt = null,
-    DateTimeOffset? EmailVerificationExpiresAt = null)
+    DateTimeOffset? EmailVerificationExpiresAt = null,
+    // No TimeZoneUpdated event yet implicitly means UTC -- see the comment on that event.
+    TimeZoneId? TimeZoneId = null)
 {
+    public TimeZoneId ResolvedTimeZoneId => TimeZoneId ?? Calendars.TimeZoneId.New("UTC");
+
     public static User? Rehydrate(IEnumerable<UserEvent> events)
     {
         User? user = null;
@@ -26,6 +32,7 @@ public sealed record User(
                     created.UserName,
                     created.Name),
                 NameUpdated nameUpdated => user! with { Name = nameUpdated.After },
+                TimeZoneUpdated timeZoneUpdated => user! with { TimeZoneId = timeZoneUpdated.After },
                 // A new address is never covered by a verification of the old one, so any
                 // pending verification for the old address is cleared here too.
                 EmailUpdated emailUpdated => user! with

@@ -2,14 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
+import { browserTimeZoneId, listTimeZoneIds } from '../../../../core/date-utils';
 
 const ROLE_LABELS: Record<number, string> = {
   0: 'Owner',
   1: 'Contributor',
   2: 'Viewer'
 };
-
-const TIME_ZONE_IDS = Intl.supportedValuesOf('timeZone').sort((a, b) => a.localeCompare(b));
 
 @Component({
   selector: 'app-manage-calendars',
@@ -20,14 +19,14 @@ export class ManageCalendars implements OnInit {
   private readonly calendars = inject(CalendarsService);
 
   protected readonly roleLabels = ROLE_LABELS;
-  protected readonly timeZoneIds = TIME_ZONE_IDS;
+  protected readonly timeZoneIds = listTimeZoneIds();
 
   protected readonly items = signal<CalendarSummary[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
   protected readonly newCalendarName = signal('');
-  protected readonly newCalendarTimeZoneId = signal(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  protected readonly newCalendarTimeZoneId = signal(browserTimeZoneId());
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
 

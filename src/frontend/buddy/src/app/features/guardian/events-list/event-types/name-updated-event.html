@@ -2,4 +2,4 @@
 <p class="mt-1 text-sm font-medium">
   {{ data().before.givenName }} {{ data().before.familyName }} &rarr; {{ data().after.givenName }} {{ data().after.familyName }}
 </p>
-<p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | date: 'medium' }}</p>
+<p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | userDate: 'medium' }}</p>

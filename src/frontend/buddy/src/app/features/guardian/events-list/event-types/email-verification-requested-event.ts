@@ -1,11 +1,11 @@
-import { DatePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 
+import { UserDatePipe } from '../../../../core/user-date.pipe';
 import { EmailVerificationRequestedData } from './user-event.model';
 
 @Component({
   selector: 'app-email-verification-requested-event',
-  imports: [DatePipe],
+  imports: [UserDatePipe],
   templateUrl: './email-verification-requested-event.html'
 })
 export class EmailVerificationRequestedEvent {

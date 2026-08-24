@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { todayIsoDate } from './date-utils';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // CalendarRole/CalendarItemKind values match the backend's enum ordinals (no string enum
@@ -37,13 +38,6 @@ export interface CalendarItemOccurrence {
 }
 
 export type CalendarOccurrence = CalendarItemOccurrence & { calendarId: string };
-
-function todayIsoDate(): string {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${now.getFullYear()}-${month}-${day}`;
-}
 
 @Injectable({ providedIn: 'root' })
 export class CalendarsService {

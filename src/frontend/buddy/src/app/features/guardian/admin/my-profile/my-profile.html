@@ -68,6 +68,34 @@
       } @else if (emailSaved()) {
         <p class="text-sm text-emerald-700">Email updated. Check your inbox to verify it.</p>
       }
+
+      <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveTimeZone()">
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Time zone</span>
+          <select
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            [ngModel]="timeZoneId()"
+            (ngModelChange)="timeZoneId.set($event); timeZoneSaved.set(false)"
+          >
+            @for (zoneId of timeZoneIds; track zoneId) {
+              <option [value]="zoneId">{{ zoneId }}</option>
+            }
+          </select>
+        </label>
+        <button
+          type="submit"
+          class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+          [disabled]="savingTimeZone() || !timeZoneId() || timeZoneId() === currentTimeZoneId()"
+        >
+          Save time zone
+        </button>
+      </form>
+
+      @if (timeZoneError()) {
+        <p class="text-sm text-red-600">{{ timeZoneError() }}</p>
+      } @else if (timeZoneSaved()) {
+        <p class="text-sm text-emerald-700">Time zone updated. Timestamps across the app now use it.</p>
+      }
     </div>
   }
 </section>

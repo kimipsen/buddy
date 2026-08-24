@@ -14,7 +14,7 @@
           <span class="text-lg leading-none">{{ event.icon }}</span>
           <span class="font-medium">{{ event.title }}</span>
           @if (event.startsAt) {
-            <span class="ml-auto text-xs font-semibold text-slate-500">{{ event.startsAt | date: 'shortTime' }}</span>
+            <span class="ml-auto text-xs font-semibold text-slate-500">{{ event.startsAt | userDate: 'shortTime' }}</span>
           }
         </li>
       }

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 
@@ -12,13 +13,6 @@ const SLOT_LABELS: Record<MealSlot, string> = {
 };
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
-
-function todayIsoDate(): string {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${now.getFullYear()}-${month}-${day}`;
-}
 
 @Component({
   selector: 'app-mealplan-today',

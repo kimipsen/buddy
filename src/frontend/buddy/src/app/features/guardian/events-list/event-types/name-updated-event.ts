@@ -1,11 +1,11 @@
-import { DatePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 
+import { UserDatePipe } from '../../../../core/user-date.pipe';
 import { NameUpdatedData } from './user-event.model';
 
 @Component({
   selector: 'app-name-updated-event',
-  imports: [DatePipe],
+  imports: [UserDatePipe],
   templateUrl: './name-updated-event.html'
 })
 export class NameUpdatedEvent {

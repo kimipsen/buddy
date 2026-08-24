@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
+import { toIsoDate } from '../../../../core/date-utils';
 import { GuardiansService } from '../../../../core/guardians.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../../core/mealplans.service';
 import { MealPicker } from '../meal-picker/meal-picker';
@@ -17,12 +18,6 @@ const DAYS_AHEAD = 7;
 interface PlannerDay {
   date: string;
   label: string;
-}
-
-function toIsoDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 function buildDays(): PlannerDay[] {

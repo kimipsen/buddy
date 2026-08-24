@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { PersonName } from './guardians.service';
@@ -15,6 +15,7 @@ export interface CurrentUser {
   email: Email;
   userName: string | null;
   name: PersonName;
+  timeZoneId: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +25,11 @@ export class UsersService {
 
   private currentUserPromise: Promise<CurrentUser> | null = null;
 
+  // Defaults to UTC until the current user resolves (see ensureCurrentUser) -- read by the
+  // UserDatePipe so every timestamp in the app renders in the signed-in user's own time zone.
+  private readonly timeZoneState = signal('UTC');
+  readonly timeZoneId = this.timeZoneState.asReadonly();
+
   /**
    * Resolves the authenticated Keycloak subject to a backend user, creating one on first login.
    * Every other endpoint tolerates an unprovisioned caller by degrading silently (e.g. empty
@@ -32,7 +38,12 @@ export class UsersService {
    * repeated calls (e.g. from a route guard firing on every navigation) only hit the network once.
    */
   ensureCurrentUser(): Promise<CurrentUser> {
-    this.currentUserPromise ??= firstValueFrom(this.http.get<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me`));
+    this.currentUserPromise ??= firstValueFrom(this.http.get<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me`)).then(
+      (user) => {
+        this.timeZoneState.set(user.timeZoneId);
+        return user;
+      }
+    );
     return this.currentUserPromise;
   }
 
@@ -49,6 +60,15 @@ export class UsersService {
       this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/email`, { email })
     );
     this.currentUserPromise = Promise.resolve(updated);
+    return updated;
+  }
+
+  async updateTimeZone(timeZoneId: string): Promise<CurrentUser> {
+    const updated = await firstValueFrom(
+      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/timezone`, { timeZoneId })
+    );
+    this.currentUserPromise = Promise.resolve(updated);
+    this.timeZoneState.set(updated.timeZoneId);
     return updated;
   }
 

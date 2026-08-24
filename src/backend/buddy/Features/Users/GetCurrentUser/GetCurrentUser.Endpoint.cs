@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Features.Calendars;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -39,11 +40,13 @@ public sealed record UserResponse(
     UserId Id,
     Email Email,
     string? UserName,
-    Name Name)
+    Name Name,
+    TimeZoneId TimeZoneId)
 {
     public static UserResponse FromUser(User user) => new(
         user.Id,
         user.Email,
         user.UserName,
-        user.Name);
+        user.Name,
+        user.ResolvedTimeZoneId);
 };

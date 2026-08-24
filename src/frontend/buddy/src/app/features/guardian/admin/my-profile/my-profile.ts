@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { listTimeZoneIds } from '../../../../core/date-utils';
 import { CurrentUser, UsersService } from '../../../../core/users.service';
 
 @Component({
@@ -11,6 +12,8 @@ import { CurrentUser, UsersService } from '../../../../core/users.service';
 })
 export class MyProfile implements OnInit {
   private readonly users = inject(UsersService);
+
+  protected readonly timeZoneIds = listTimeZoneIds();
 
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
@@ -26,6 +29,12 @@ export class MyProfile implements OnInit {
   protected readonly savingEmail = signal(false);
   protected readonly emailError = signal<string | null>(null);
   protected readonly emailSaved = signal(false);
+
+  protected readonly timeZoneId = signal('UTC');
+  protected readonly currentTimeZoneId = signal<string | null>(null);
+  protected readonly savingTimeZone = signal(false);
+  protected readonly timeZoneError = signal<string | null>(null);
+  protected readonly timeZoneSaved = signal(false);
 
   ngOnInit(): void {
     void this.loadProfile();
@@ -79,6 +88,32 @@ export class MyProfile implements OnInit {
     }
   }
 
+  protected async saveTimeZone(): Promise<void> {
+    const timeZoneId = this.timeZoneId();
+
+    if (!timeZoneId) {
+      return;
+    }
+
+    this.savingTimeZone.set(true);
+    this.timeZoneError.set(null);
+    this.timeZoneSaved.set(false);
+
+    try {
+      const updated = await this.users.updateTimeZone(timeZoneId);
+      this.currentTimeZoneId.set(updated.timeZoneId);
+      this.timeZoneSaved.set(true);
+    } catch (error) {
+      this.timeZoneError.set(
+        error instanceof HttpErrorResponse && typeof error.error === 'string'
+          ? error.error
+          : 'Unable to update your time zone.'
+      );
+    } finally {
+      this.savingTimeZone.set(false);
+    }
+  }
+
   private async loadProfile(): Promise<void> {
     this.loading.set(true);
     this.loadError.set(null);
@@ -97,5 +132,7 @@ export class MyProfile implements OnInit {
     this.familyName.set(user.name.familyName);
     this.email.set(user.email.value);
     this.currentEmail.set(user.email.value);
+    this.timeZoneId.set(user.timeZoneId);
+    this.currentTimeZoneId.set(user.timeZoneId);
   }
 }

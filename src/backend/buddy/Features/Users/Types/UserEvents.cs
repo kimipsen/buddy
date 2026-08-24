@@ -1,12 +1,15 @@
 namespace buddy.Features.Users
 {
+    using buddy.Features.Calendars;
+
     public union UserEvent(
         UserCreated,
         UserDeleted,
         NameUpdated,
         EmailUpdated,
         EmailVerificationRequested,
-        EmailVerified
+        EmailVerified,
+        TimeZoneUpdated
     )
     {
         // Marten hands back the deserialized concrete event object when reading a stream; case
@@ -19,6 +22,7 @@ namespace buddy.Features.Users
             EmailUpdated e => e,
             EmailVerificationRequested e => e,
             EmailVerified e => e,
+            TimeZoneUpdated e => e,
             _ => throw new ArgumentException($"Unknown user event payload: {payload.GetType().Name}", nameof(payload)),
         };
 
@@ -32,6 +36,7 @@ namespace buddy.Features.Users
             EmailUpdated => nameof(EmailUpdated),
             EmailVerificationRequested => nameof(EmailVerificationRequested),
             EmailVerified => nameof(EmailVerified),
+            TimeZoneUpdated => nameof(TimeZoneUpdated),
         };
     }
 
@@ -55,6 +60,11 @@ namespace buddy.Features.Users
     public sealed record EmailVerificationRequested(UserId UserId, string TokenHash, DateTimeOffset ExpiresAt, DateTimeOffset OccurredAt);
 
     public sealed record EmailVerified(UserId UserId, DateTimeOffset OccurredAt);
+
+    // No initial value is captured on UserCreated -- a user with no TimeZoneUpdated event yet
+    // implicitly defaults to UTC (see User.Rehydrate), the same "sparse log" convention Medicines'
+    // DoseLog already uses, so this stays additive over the existing UserCreated event shape.
+    public sealed record TimeZoneUpdated(UserId UserId, TimeZoneId Before, TimeZoneId After, DateTimeOffset OccurredAt);
 
     public sealed record UserEventEntry(long Version, UserEvent Event);
 
