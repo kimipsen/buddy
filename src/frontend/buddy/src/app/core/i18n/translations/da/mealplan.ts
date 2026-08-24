@@ -25,7 +25,8 @@ export const mealplan = {
     noChildren: 'Tilknyt et barn under Indstillinger, før du kan planlægge måltider.',
     noMeals: 'Tilføj et måltid herunder, før du kan planlægge en uge.',
     loadError: 'Kunne ikke indlæse madplanen.',
-    updateError: 'Kunne ikke opdatere madplanen. Prøv igen.'
+    updateError: 'Kunne ikke opdatere madplanen. Prøv igen.',
+    dragHint: 'Træk for at flytte eller bytte med en anden dag eller et andet måltid'
   },
   slots: {
     breakfast: 'Morgenmad',

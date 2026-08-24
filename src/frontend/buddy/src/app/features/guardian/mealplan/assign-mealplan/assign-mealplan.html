@@ -13,7 +13,7 @@
     }
 
     <div class="overflow-x-auto">
-      <table class="w-full min-w-[640px] border-separate border-spacing-2">
+      <table cdkDropListGroup class="w-full min-w-[640px] border-separate border-spacing-2">
         <thead>
           <tr>
             <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"></th>
@@ -28,12 +28,40 @@
               <th class="whitespace-nowrap pr-2 text-left text-sm font-semibold text-slate-700">{{ day.label }}</th>
               @for (slot of slots; track slot) {
                 <td>
-                  <app-meal-picker
-                    [meals]="meals()"
-                    [mealId]="mealIdFor(day.date, slot)"
-                    [disabled]="savingKey() === key(day.date, slot)"
-                    (mealIdChange)="onSlotChange(day.date, slot, $event)"
-                  />
+                  <div
+                    cdkDropList
+                    [id]="key(day.date, slot)"
+                    [cdkDropListData]="{ date: day.date, slot: slot }"
+                    (cdkDropListDropped)="onMealDrop($event)"
+                    class="relative"
+                  >
+                    <app-meal-picker
+                      [meals]="meals()"
+                      [mealId]="mealIdFor(day.date, slot)"
+                      [disabled]="savingKey() === key(day.date, slot)"
+                      (mealIdChange)="onSlotChange(day.date, slot, $event)"
+                    />
+                    @if (entryFor(day.date, slot); as entry) {
+                      <div
+                        cdkDrag
+                        [cdkDragData]="{ date: day.date, slot: slot }"
+                        [cdkDragDisabled]="savingKey() !== null"
+                        class="pointer-events-none absolute inset-0"
+                      >
+                        <div
+                          cdkDragHandle
+                          class="pointer-events-auto absolute inset-y-0 right-1.5 flex cursor-grab items-center text-slate-400 hover:text-slate-600"
+                          [title]="'mealplan.assign.dragHint' | translate"
+                        >
+                          <span aria-hidden="true">⠿</span>
+                        </div>
+                        <div *cdkDragPreview class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm shadow-lg">
+                          <span class="text-base leading-none">{{ entry.icon }}</span>
+                          {{ entry.mealName }}
+                        </div>
+                      </div>
+                    }
+                  </div>
                 </td>
               }
             </tr>

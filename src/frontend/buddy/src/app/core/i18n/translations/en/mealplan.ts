@@ -25,7 +25,8 @@ export const mealplan = {
     noChildren: 'Link a child from Settings before planning meals.',
     noMeals: 'Add a meal below before you can plan a week.',
     loadError: 'Unable to load the meal plan.',
-    updateError: 'Unable to update the meal plan. Please try again.'
+    updateError: 'Unable to update the meal plan. Please try again.',
+    dragHint: 'Drag to move or swap with another day or meal'
   },
   slots: {
     breakfast: 'Breakfast',

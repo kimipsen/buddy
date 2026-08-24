@@ -1,3 +1,4 @@
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { toIsoDate } from '../../../../core/date-utils';
@@ -21,6 +22,11 @@ interface PlannerDay {
   label: string;
 }
 
+interface SlotRef {
+  date: string;
+  slot: MealSlot;
+}
+
 function buildDays(): PlannerDay[] {
   const today = new Date();
 
@@ -36,7 +42,7 @@ function buildDays(): PlannerDay[] {
 
 @Component({
   selector: 'app-assign-mealplan',
-  imports: [MealPicker, TranslatePipe],
+  imports: [MealPicker, TranslatePipe, CdkDrag, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup],
   templateUrl: './assign-mealplan.html'
 })
 export class AssignMealplan implements OnInit {
@@ -70,6 +76,10 @@ export class AssignMealplan implements OnInit {
     return this.entriesByKey()[this.key(date, slot)]?.mealId ?? '';
   }
 
+  protected entryFor(date: string, slot: MealSlot): MealPlanEntry | undefined {
+    return this.entriesByKey()[this.key(date, slot)];
+  }
+
   protected async onSlotChange(date: string, slot: MealSlot, mealId: string): Promise<void> {
     if (!this.childId) {
       return;
@@ -88,6 +98,56 @@ export class AssignMealplan implements OnInit {
         this.entriesByKey.update((current) => {
           const next = { ...current };
           delete next[key];
+          return next;
+        });
+      }
+    } catch {
+      this.error.set('mealplan.assign.updateError');
+    } finally {
+      this.savingKey.set(null);
+    }
+  }
+
+  // Dragging a meal onto an empty cell moves it; dragging it onto an occupied cell swaps the two,
+  // since "move this to another day" and "switch these two around" are the same gesture to a user.
+  protected async onMealDrop(event: CdkDragDrop<SlotRef>): Promise<void> {
+    if (!this.childId) {
+      return;
+    }
+
+    const source = event.item.data as SlotRef;
+    const target = event.container.data;
+
+    if (source.date === target.date && source.slot === target.slot) {
+      return;
+    }
+
+    const sourceMealId = this.mealIdFor(source.date, source.slot);
+
+    if (!sourceMealId) {
+      return;
+    }
+
+    const targetMealId = this.mealIdFor(target.date, target.slot);
+    const sourceKey = this.key(source.date, source.slot);
+    const targetKey = this.key(target.date, target.slot);
+
+    this.savingKey.set(sourceKey);
+    this.error.set(null);
+
+    try {
+      if (targetMealId) {
+        // Sequential, not Promise.all: both writes land on the same child's single mealplan
+        // event stream, and appending to it concurrently from two requests causes contention.
+        const targetEntry = await this.mealplans.assignMealToSlot(this.childId, target.date, target.slot, sourceMealId);
+        const sourceEntry = await this.mealplans.assignMealToSlot(this.childId, source.date, source.slot, targetMealId);
+        this.entriesByKey.update((current) => ({ ...current, [targetKey]: targetEntry, [sourceKey]: sourceEntry }));
+      } else {
+        const targetEntry = await this.mealplans.assignMealToSlot(this.childId, target.date, target.slot, sourceMealId);
+        await this.mealplans.clearMealSlot(this.childId, source.date, source.slot);
+        this.entriesByKey.update((current) => {
+          const next = { ...current, [targetKey]: targetEntry };
+          delete next[sourceKey];
           return next;
         });
       }
