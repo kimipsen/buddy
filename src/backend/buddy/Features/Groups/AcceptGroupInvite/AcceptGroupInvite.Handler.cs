@@ -61,10 +61,6 @@ public static class AcceptGroupInviteHandler
             ],
             cancellationToken);
 
-        // Best-effort history entry on the accepter's own stream -- see the comment on
-        // GroupMembershipJoined for why this isn't transactional with the append above.
-        await users.AppendAsync(userId, [new GroupMembershipJoined(userId, groupId.Value, group.Name, now)], cancellationToken);
-
         return new Result<Unit>.Success(Unit.Value);
     }
 }

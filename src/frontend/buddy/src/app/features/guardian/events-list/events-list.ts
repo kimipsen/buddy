@@ -5,8 +5,6 @@ import { UserEventItem, UserEventsService } from '../../../core/user-events.serv
 import { EmailUpdatedEvent } from './event-types/email-updated-event';
 import { EmailVerificationRequestedEvent } from './event-types/email-verification-requested-event';
 import { EmailVerifiedEvent } from './event-types/email-verified-event';
-import { GroupInvitationSentEvent } from './event-types/group-invitation-sent-event';
-import { GroupMembershipJoinedEvent } from './event-types/group-membership-joined-event';
 import { LanguageUpdatedEvent } from './event-types/language-updated-event';
 import { NameUpdatedEvent } from './event-types/name-updated-event';
 import { TimeZoneUpdatedEvent } from './event-types/timezone-updated-event';
@@ -27,8 +25,6 @@ const EVENTS_PAGE_SIZE = 5;
     EmailVerifiedEvent,
     TimeZoneUpdatedEvent,
     LanguageUpdatedEvent,
-    GroupInvitationSentEvent,
-    GroupMembershipJoinedEvent,
     UnknownEvent,
     TranslatePipe
   ],

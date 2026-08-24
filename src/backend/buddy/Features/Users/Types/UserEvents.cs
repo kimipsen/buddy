@@ -10,9 +10,7 @@ namespace buddy.Features.Users
         EmailVerificationRequested,
         EmailVerified,
         TimeZoneUpdated,
-        LanguageUpdated,
-        GroupInvitationSent,
-        GroupMembershipJoined
+        LanguageUpdated
     )
     {
         // Marten hands back the deserialized concrete event object when reading a stream; case
@@ -27,8 +25,6 @@ namespace buddy.Features.Users
             EmailVerified e => e,
             TimeZoneUpdated e => e,
             LanguageUpdated e => e,
-            GroupInvitationSent e => e,
-            GroupMembershipJoined e => e,
             _ => throw new ArgumentException($"Unknown user event payload: {payload.GetType().Name}", nameof(payload)),
         };
 
@@ -44,8 +40,6 @@ namespace buddy.Features.Users
             EmailVerified => nameof(EmailVerified),
             TimeZoneUpdated => nameof(TimeZoneUpdated),
             LanguageUpdated => nameof(LanguageUpdated),
-            GroupInvitationSent => nameof(GroupInvitationSent),
-            GroupMembershipJoined => nameof(GroupMembershipJoined),
         };
     }
 
@@ -80,18 +74,6 @@ namespace buddy.Features.Users
     // right after UserCreated when the browser's Accept-Language header resolves to a different
     // supported language, the same way it conditionally appends EmailVerificationRequested.
     public sealed record LanguageUpdated(UserId UserId, Language Before, Language After, DateTimeOffset OccurredAt);
-
-    // The two halves of a group invite's history, each recorded on the acting person's own
-    // stream rather than on the other party's -- appending to someone else's stream from this
-    // handler would be a cross-store write with no transactional guarantee (see
-    // docs/backend/analysis/child-accounts-and-guardian-roles.md's discussion of the same
-    // limitation for GuardianLink). Neither event is reflected in User.Rehydrate; they exist
-    // purely so InviteToGroup/AcceptGroupInvite show up in the acting user's own event history,
-    // the same "notification-only" role GroupInviteCreated/Accepted/Revoked play on the Group
-    // stream.
-    public sealed record GroupInvitationSent(UserId UserId, Guid GroupId, string GroupName, string InvitedEmail, DateTimeOffset OccurredAt);
-
-    public sealed record GroupMembershipJoined(UserId UserId, Guid GroupId, string GroupName, DateTimeOffset OccurredAt);
 
     public sealed record UserEventEntry(long Version, UserEvent Event);
 

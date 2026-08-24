@@ -1,6 +1,5 @@
 using buddy.Common;
 using buddy.Email;
-using buddy.Features.Users;
 
 namespace buddy.Features.Groups;
 
@@ -13,7 +12,6 @@ public static class InviteToGroupHandler
     public static async Task<Result<GroupInviteSummary>> Handle(
         InviteToGroup command,
         IGroupEventStore groups,
-        IUserEventStore users,
         IEmailSender emailSender,
         CancellationToken cancellationToken)
     {
@@ -58,12 +56,7 @@ public static class InviteToGroupHandler
             [new GroupInviteCreated(command.GroupId, inviteId, normalizedEmail, command.Role, userId, hash, expiresAt, now)],
             cancellationToken);
 
-        // Best-effort history entry on the inviter's own stream -- a separate store/schema from
-        // Groups, so this isn't transactional with the append above (see the comment on
-        // GroupInvitationSent).
-        await users.AppendAsync(userId, [new GroupInvitationSent(userId, command.GroupId.Value, group!.Name, normalizedEmail, now)], cancellationToken);
-
-        await emailSender.SendGroupInviteEmailAsync(normalizedEmail, group.Name, token, cancellationToken);
+        await emailSender.SendGroupInviteEmailAsync(normalizedEmail, group!.Name, token, cancellationToken);
 
         return new Result<GroupInviteSummary>.Success(new GroupInviteSummary(inviteId, normalizedEmail, command.Role, now, expiresAt));
     }
