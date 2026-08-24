@@ -33,6 +33,12 @@
             @case ('EmailVerified') {
               <app-email-verified-event [data]="$any(event.data)" />
             }
+            @case ('TimeZoneUpdated') {
+              <app-timezone-updated-event [data]="$any(event.data)" />
+            }
+            @case ('LanguageUpdated') {
+              <app-language-updated-event [data]="$any(event.data)" />
+            }
             @default {
               <app-unknown-event [type]="event.type" [data]="event.data" />
             }

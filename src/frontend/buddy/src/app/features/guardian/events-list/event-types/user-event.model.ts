@@ -46,3 +46,17 @@ export interface EmailVerifiedData {
   userId: string;
   occurredAt: string;
 }
+
+export interface TimeZoneUpdatedData {
+  userId: string;
+  before: string;
+  after: string;
+  occurredAt: string;
+}
+
+export interface LanguageUpdatedData {
+  userId: string;
+  before: string;
+  after: string;
+  occurredAt: string;
+}

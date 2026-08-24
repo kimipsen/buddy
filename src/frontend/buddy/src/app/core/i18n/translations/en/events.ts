@@ -32,6 +32,14 @@ export const events = {
     emailVerified: {
       title: 'Email verified',
       description: 'The email address was verified.'
+    },
+    timeZoneUpdated: {
+      title: 'Time zone updated',
+      description: 'Time zone changed from {before} to {after}.'
+    },
+    languageUpdated: {
+      title: 'Language updated',
+      description: 'Language changed from {before} to {after}.'
     }
   }
 };

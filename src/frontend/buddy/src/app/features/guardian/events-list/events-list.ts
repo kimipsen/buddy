@@ -5,7 +5,9 @@ import { UserEventItem, UserEventsService } from '../../../core/user-events.serv
 import { EmailUpdatedEvent } from './event-types/email-updated-event';
 import { EmailVerificationRequestedEvent } from './event-types/email-verification-requested-event';
 import { EmailVerifiedEvent } from './event-types/email-verified-event';
+import { LanguageUpdatedEvent } from './event-types/language-updated-event';
 import { NameUpdatedEvent } from './event-types/name-updated-event';
+import { TimeZoneUpdatedEvent } from './event-types/timezone-updated-event';
 import { UnknownEvent } from './event-types/unknown-event';
 import { UserCreatedEvent } from './event-types/user-created-event';
 import { UserDeletedEvent } from './event-types/user-deleted-event';
@@ -21,6 +23,8 @@ const EVENTS_PAGE_SIZE = 5;
     EmailUpdatedEvent,
     EmailVerificationRequestedEvent,
     EmailVerifiedEvent,
+    TimeZoneUpdatedEvent,
+    LanguageUpdatedEvent,
     UnknownEvent,
     TranslatePipe
   ],

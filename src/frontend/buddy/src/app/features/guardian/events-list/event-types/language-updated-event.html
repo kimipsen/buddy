@@ -1,0 +1,5 @@
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'events.types.languageUpdated.title' | translate }}</p>
+<p class="mt-1 text-sm font-medium">
+  {{ 'events.types.languageUpdated.description' | translate: { before: languageName(data().before), after: languageName(data().after) } }}
+</p>
+<p class="mt-1 text-xs text-slate-500">{{ data().occurredAt | userDate: 'medium' }}</p>
