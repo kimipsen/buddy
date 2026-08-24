@@ -32,7 +32,8 @@
 				"Angular.ng-template"
 			]
 		}
-	}
+	},
+	"forwardPorts": [4200, 5193, 7076]
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 	// Configure tool-specific properties.
