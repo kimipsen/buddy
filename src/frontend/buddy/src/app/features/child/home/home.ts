@@ -25,6 +25,7 @@ const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
 };
 
 const MEAL_SLOTS: MealSlot[] = [0, 1, 2, 3];
+const STARS = [1, 2, 3, 4, 5];
 
 const GUARDIAN: PickupAssigneeKind = 0;
 const SELF_ESCORT: PickupAssigneeKind = 1;
@@ -60,11 +61,19 @@ export class ChildHome implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
+  protected readonly stars = STARS;
   protected readonly entriesBySlot = signal<Partial<Record<MealSlot, MealPlanEntry>>>({});
   // Only meals actually planned today, in slot order -- unlike the guardian widget, this skips
   // "not planned" filler rows entirely (see the "if any" layout decision in
   // docs/frontend/analysis/child-day-dashboard.md).
   protected readonly mealsToShow = computed(() => MEAL_SLOTS.map((slot) => this.entriesBySlot()[slot]).filter((entry) => entry !== undefined));
+
+  // Rating today's meals right away (rather than only from the past-weeks planner) so the child
+  // doesn't have to remember how a meal was by the time they'd next see it there.
+  protected readonly savingSlot = signal<MealSlot | null>(null);
+  protected readonly editingSlot = signal<MealSlot | null>(null);
+  protected readonly commentDraft = signal('');
+  private childId: string | null = null;
 
   protected readonly pending = PENDING;
   protected readonly taken = TAKEN;
@@ -168,11 +177,72 @@ export class ChildHome implements OnInit {
   private async loadDashboard(): Promise<void> {
     try {
       const me = await this.users.ensureCurrentUser();
+      this.childId = me.id;
       const today = todayIsoDate();
 
       await Promise.all([this.loadMeals(me.id, today), this.loadDoses(me.id, today), this.loadTasks()]);
     } catch {
       this.error.set('child.home.loadError');
+    }
+  }
+
+  protected isEditing(entry: MealPlanEntry): boolean {
+    return this.editingSlot() === entry.slot;
+  }
+
+  protected startEditing(entry: MealPlanEntry): void {
+    this.editingSlot.set(entry.slot);
+    this.commentDraft.set(entry.rating?.comment ?? '');
+  }
+
+  protected cancelEditing(): void {
+    this.editingSlot.set(null);
+    this.commentDraft.set('');
+  }
+
+  protected setComment(value: string): void {
+    this.commentDraft.set(value);
+  }
+
+  // Tapping a star rates immediately with whatever comment is already on file -- a quick
+  // reaction shouldn't require opening the comment form first.
+  protected async rate(entry: MealPlanEntry, starCount: number): Promise<void> {
+    await this.submitRating(entry, starCount, entry.rating?.comment ?? null);
+  }
+
+  protected async saveComment(entry: MealPlanEntry): Promise<void> {
+    const starCount = entry.rating?.stars ?? STARS[STARS.length - 1];
+    await this.submitRating(entry, starCount, this.commentDraft().trim() || null);
+    this.cancelEditing();
+  }
+
+  private async submitRating(entry: MealPlanEntry, starCount: number, comment: string | null): Promise<void> {
+    if (!this.childId) {
+      return;
+    }
+
+    this.savingSlot.set(entry.slot);
+    this.error.set(null);
+
+    try {
+      const meal = await this.mealplans.rateMeal(this.childId, entry.mealId, starCount, comment);
+      const myRating = meal.ratings.find((rating) => rating.childId === this.childId) ?? null;
+
+      this.entriesBySlot.update((current) => {
+        const next = { ...current };
+
+        for (const [slot, existing] of Object.entries(next)) {
+          if (existing?.mealId === entry.mealId) {
+            next[Number(slot) as MealSlot] = { ...existing, rating: myRating };
+          }
+        }
+
+        return next;
+      });
+    } catch {
+      this.error.set('child.mealplan.rateError');
+    } finally {
+      this.savingSlot.set(null);
     }
   }
 
