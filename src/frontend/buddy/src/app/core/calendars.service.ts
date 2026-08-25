@@ -106,6 +106,10 @@ export class CalendarsService {
     return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/group/${groupId}`, {}));
   }
 
+  deleteCalendar(calendarId: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}`));
+  }
+
   listOccurrences(calendarId: string, from: string, to: string): Promise<CalendarItemOccurrence[]> {
     return firstValueFrom(
       this.http.get<CalendarItemOccurrence[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/occurrences`, {

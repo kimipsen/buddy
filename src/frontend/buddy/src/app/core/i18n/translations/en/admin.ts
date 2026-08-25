@@ -127,6 +127,13 @@ export const admin = {
       confirmButton: 'Move',
       noGroups: 'You need another group you manage before you can move this calendar.',
       error: 'Unable to move this calendar. You may not manage the destination group.'
+    },
+    delete: {
+      button: 'Delete',
+      confirmPrompt: 'Delete this calendar? This cannot be undone.',
+      confirmButton: 'Confirm',
+      cancelButton: 'Cancel',
+      error: 'Unable to delete this calendar.'
     }
   },
   deleteAccount: {

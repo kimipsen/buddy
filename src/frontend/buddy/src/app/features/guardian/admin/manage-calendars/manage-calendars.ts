@@ -43,6 +43,10 @@ export class ManageCalendars implements OnInit {
   protected readonly moving = signal(false);
   protected readonly moveError = signal<string | null>(null);
 
+  protected readonly confirmingDeleteCalendarId = signal<string | null>(null);
+  protected readonly deletingCalendarId = signal<string | null>(null);
+  protected readonly deleteError = signal<string | null>(null);
+
   ngOnInit(): void {
     void this.loadCalendars();
     void this.loadManageableGroups();
@@ -72,6 +76,8 @@ export class ManageCalendars implements OnInit {
   }
 
   protected startMove(calendarId: string): void {
+    this.confirmingDeleteCalendarId.set(null);
+
     if (this.movingCalendarId() === calendarId) {
       this.movingCalendarId.set(null);
       return;
@@ -100,6 +106,31 @@ export class ManageCalendars implements OnInit {
       this.moveError.set('admin.manageCalendars.move.error');
     } finally {
       this.moving.set(false);
+    }
+  }
+
+  protected requestDelete(calendarId: string): void {
+    this.movingCalendarId.set(null);
+    this.deleteError.set(null);
+    this.confirmingDeleteCalendarId.set(calendarId);
+  }
+
+  protected cancelDelete(): void {
+    this.confirmingDeleteCalendarId.set(null);
+  }
+
+  protected async confirmDelete(calendarId: string): Promise<void> {
+    this.deletingCalendarId.set(calendarId);
+    this.deleteError.set(null);
+
+    try {
+      await this.calendars.deleteCalendar(calendarId);
+      this.confirmingDeleteCalendarId.set(null);
+      await this.loadCalendars();
+    } catch {
+      this.deleteError.set('admin.manageCalendars.delete.error');
+    } finally {
+      this.deletingCalendarId.set(null);
     }
   }
 

@@ -127,6 +127,13 @@ export const admin = {
       confirmButton: 'Flyt',
       noGroups: 'Du skal have en anden gruppe, du administrerer, før du kan flytte denne kalender.',
       error: 'Kunne ikke flytte denne kalender. Du administrerer muligvis ikke modtagergruppen.'
+    },
+    delete: {
+      button: 'Slet',
+      confirmPrompt: 'Slet denne kalender? Dette kan ikke fortrydes.',
+      confirmButton: 'Bekræft',
+      cancelButton: 'Annuller',
+      error: 'Kunne ikke slette denne kalender.'
     }
   },
   deleteAccount: {
