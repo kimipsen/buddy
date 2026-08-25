@@ -1,6 +1,6 @@
 # Groups and Group-Owned Calendar Permissions
 
-Status: Proposed (not yet implemented)
+Status: Implemented
 
 ## Context
 

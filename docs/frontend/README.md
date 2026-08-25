@@ -55,6 +55,8 @@ Current responsibilities:
 - create child accounts and capture the one-time temporary password
 - show today's events, tasks, and medicine doses
 - manage meals and assign them to shared meal-plan slots
+- browse a weekly agenda and create events/tasks across every calendar they can contribute to,
+  personal or group-owned
 - manage calendars, groups, children, and the current profile from the admin area
 - sign out of the current session
 
@@ -65,6 +67,7 @@ The guardian routes currently include:
 - `/guardian` — dashboard and today's operational summary
 - `/guardian/mealplan` — meal library and meal-plan assignment
 - `/guardian/medicine` — medicine schedule management
+- `/guardian/calendar` — weekly agenda across every accessible calendar, plus event/task creation
 - `/guardian/admin` — profile, child, calendar, group, event-history, and account administration
 
 ### Child feature
@@ -136,9 +139,14 @@ The frontend is an actively developed product shell with working domain workflow
 - English and Danish localization
 - guardian meal planning, meal ratings, and group-shared meal-plan access
 - medicine schedule management and today's dose views
+- a guardian-facing weekly calendar agenda and event/task creation across personal and
+  group-owned calendars
 - profile, calendar, group, child, and account administration
 
-The main remaining product work is to deepen the child-facing experience and connect the existing calendar and routine data into a richer personalized daily view.
+The main remaining product work is to deepen the child-facing experience — including whether
+children get their own calendar agenda/creation UI, an open question noted in
+[Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md)
+— and connect the existing routine data into a richer personalized daily view.
 
 ## Design analysis
 
@@ -149,6 +157,9 @@ The main remaining product work is to deepen the child-facing experience and con
 - [Historical meal plans and children's ratings](analysis/mealplan-history-and-ratings.md) — what's
   needed to browse past meal-plan weeks and surface children's ratings, given the backend already
   supports both
+- [Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md) —
+  what's needed to create events and browse an agenda merged across personal and group calendars,
+  given the backend already supports both
 
 ## Local development
 

@@ -5,6 +5,7 @@ export const shell = {
     openLabel: 'Åbn kontomenu',
     mealPlanner: 'Madplan',
     medicine: 'Medicin',
+    calendar: 'Kalender',
     settings: 'Indstillinger',
     signOut: 'Log ud'
   }
