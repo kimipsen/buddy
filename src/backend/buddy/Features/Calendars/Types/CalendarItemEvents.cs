@@ -9,6 +9,7 @@ public union CalendarItemEvent(
     EventRescheduled,
     TaskRescheduled,
     RecurrenceUpdated,
+    TaskCompletionChanged,
     ItemDeleted
 )
 {
@@ -20,6 +21,7 @@ public union CalendarItemEvent(
         EventRescheduled e => e,
         TaskRescheduled e => e,
         RecurrenceUpdated e => e,
+        TaskCompletionChanged e => e,
         ItemDeleted e => e,
         _ => throw new ArgumentException($"Unknown calendar item event payload: {payload.GetType().Name}", nameof(payload)),
     };
@@ -32,6 +34,7 @@ public union CalendarItemEvent(
         EventRescheduled => nameof(EventRescheduled),
         TaskRescheduled => nameof(TaskRescheduled),
         RecurrenceUpdated => nameof(RecurrenceUpdated),
+        TaskCompletionChanged => nameof(TaskCompletionChanged),
         ItemDeleted => nameof(ItemDeleted),
     };
 }
@@ -65,5 +68,10 @@ public sealed record EventRescheduled(CalendarItemId Id, Period Before, Period A
 public sealed record TaskRescheduled(CalendarItemId Id, DueDate Before, DueDate After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
 public sealed record RecurrenceUpdated(CalendarItemId Id, RecurrenceRule? Before, RecurrenceRule? After, UserId ModifiedBy, DateTimeOffset OccurredAt);
+
+// OccurrenceDate keys a single occurrence of a (possibly recurring) task, mirroring
+// MedicineSchedule.DoseLog's per-occurrence keying -- completing today's instance of a daily task
+// must not mark every future occurrence complete too.
+public sealed record TaskCompletionChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
 public sealed record ItemDeleted(CalendarItemId Id, UserId ModifiedBy, DateTimeOffset OccurredAt);

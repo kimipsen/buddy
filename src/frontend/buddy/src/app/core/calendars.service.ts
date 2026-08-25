@@ -34,8 +34,15 @@ export interface CalendarItemOccurrence {
   startsAt: string | null;
   endsAt: string | null;
   dueAt: string | null;
+  isCompleted: boolean;
   createdBy: string;
   lastModifiedBy: string;
+}
+
+export interface TaskCompletion {
+  itemId: string;
+  occurrenceDate: string;
+  isCompleted: boolean;
 }
 
 export type CalendarOccurrence = CalendarItemOccurrence & { calendarId: string };
@@ -66,6 +73,15 @@ export class CalendarsService {
     return firstValueFrom(
       this.http.get<CalendarItemOccurrence[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/occurrences`, {
         params: { from, to }
+      })
+    );
+  }
+
+  setTaskCompletion(calendarId: string, itemId: string, date: string, isCompleted: boolean): Promise<TaskCompletion> {
+    return firstValueFrom(
+      this.http.patch<TaskCompletion>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/completion`, {
+        date,
+        isCompleted
       })
     );
   }

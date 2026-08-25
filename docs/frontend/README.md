@@ -146,6 +146,9 @@ The main remaining product work is to deepen the child-facing experience and con
   options, push notification support, and pricing
 - [A single-day dashboard for the child home screen](analysis/child-day-dashboard.md) — layout
   options for today's meal plan, medicine, and tasks on the child home screen
+- [Historical meal plans and children's ratings](analysis/mealplan-history-and-ratings.md) — what's
+  needed to browse past meal-plan weeks and surface children's ratings, given the backend already
+  supports both
 
 ## Local development
 

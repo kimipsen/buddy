@@ -12,5 +12,6 @@ public sealed record CalendarItemOccurrence(
     DateTimeOffset? StartsAt,
     DateTimeOffset? EndsAt,
     DateTimeOffset? DueAt,
+    bool IsCompleted,
     Guid CreatedBy,
     Guid LastModifiedBy);

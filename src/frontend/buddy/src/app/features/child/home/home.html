@@ -14,38 +14,159 @@
     </button>
   </header>
 
-  <section class="mx-auto max-w-3xl px-6 py-6 sm:px-8">
-    @if (todaysPickups().length > 0) {
-      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
-        <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.pickup.title' | translate }}</h2>
-        <ul class="mt-4 space-y-3">
-          @for (occurrence of todaysPickups(); track occurrence.slot) {
-            <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
-              <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ slotLabels[occurrence.slot] | translate }}</span>
-              <span class="flex items-center gap-2 text-lg font-semibold">
-                @switch (occurrence.kind) {
-                  @case (guardianKind) {
-                    <span aria-hidden="true">👤</span>
-                    {{ assigneeName(occurrence) ?? ('child.home.pickup.kind.guardian' | translate) }}
-                  }
-                  @case (selfEscortKind) {
-                    <span aria-hidden="true">🚶</span>
-                    {{ 'child.home.pickup.kind.selfEscort' | translate }}
-                  }
-                  @case (siblingKind) {
-                    <span aria-hidden="true">🧒</span>
-                    {{ 'child.home.pickup.kind.sibling' | translate }}
-                  }
-                  @case (playdateKind) {
-                    <span aria-hidden="true">🎉</span>
-                    {{ occurrence.playdateHostName }}
-                  }
+  <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
+    @if (error(); as message) {
+      <p class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700">{{ message | translate }}</p>
+    }
+
+    @if (hasAnything()) {
+      <!-- Meals -->
+      @if (mealsToShow().length > 0) {
+        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.mealsTitle' | translate }}</h2>
+          <ul class="mt-4 space-y-3">
+            @for (entry of mealsToShow(); track entry.slot) {
+              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+                <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ mealSlotLabels[entry.slot] | translate }}</span>
+                <span class="flex items-center gap-2 text-lg font-semibold">
+                  <span aria-hidden="true">{{ entry.icon }}</span>
+                  {{ entry.mealName }}
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Medicine -->
+      @if (doses().length > 0) {
+        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.medicineTitle' | translate }}</h2>
+          <ul class="mt-4 space-y-3">
+            @for (dose of doses(); track doseKey(dose)) {
+              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+                <span class="flex items-center gap-2 text-lg font-semibold">
+                  <span class="inline-block size-3 rounded-full" [style.background-color]="dose.color"></span>
+                  <span aria-hidden="true">{{ dose.icon }}</span>
+                  {{ dose.name }}
+                  <span class="text-sm font-normal text-slate-500">{{ dose.time.slice(0, 5) }}</span>
+                </span>
+
+                @if (dose.status === pending) {
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="rounded-2xl bg-emerald-600 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      (click)="setDoseStatus(dose, taken)"
+                    >
+                      {{ 'child.home.medicine.markTaken' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-2xl border-2 border-slate-300 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-400 disabled:opacity-50"
+                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      (click)="setDoseStatus(dose, skipped)"
+                    >
+                      {{ 'child.home.medicine.skip' | translate }}
+                    </button>
+                  </div>
+                } @else if (dose.status === taken) {
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-full bg-emerald-100 px-4 py-2 text-base font-bold text-emerald-800">{{ 'child.home.medicine.taken' | translate }}</span>
+                    <button
+                      type="button"
+                      class="text-sm font-semibold text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      (click)="setDoseStatus(dose, pending)"
+                    >
+                      {{ 'child.home.medicine.undo' | translate }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-full bg-slate-200 px-4 py-2 text-base font-bold text-slate-600">{{ 'child.home.medicine.skipped' | translate }}</span>
+                    <button
+                      type="button"
+                      class="text-sm font-semibold text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      (click)="setDoseStatus(dose, pending)"
+                    >
+                      {{ 'child.home.medicine.undo' | translate }}
+                    </button>
+                  </div>
                 }
-              </span>
-            </li>
-          }
-        </ul>
-      </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Tasks -->
+      @if (tasks().length > 0) {
+        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.tasksTitle' | translate }}</h2>
+          <ul class="mt-4 space-y-3">
+            @for (task of tasks(); track task.itemId) {
+              <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+                <button
+                  type="button"
+                  class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
+                  [class.border-emerald-400]="task.isCompleted"
+                  [class.bg-emerald-400]="task.isCompleted"
+                  [class.text-white]="task.isCompleted"
+                  [class.border-slate-300]="!task.isCompleted"
+                  [disabled]="savingTaskId() === task.itemId"
+                  [attr.aria-label]="(task.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
+                  (click)="toggleTask(task)"
+                >
+                  @if (task.isCompleted) {
+                    ✓
+                  }
+                </button>
+                <span class="flex items-center gap-2 text-lg font-semibold" [class.line-through]="task.isCompleted" [class.text-slate-400]="task.isCompleted">
+                  <span aria-hidden="true">{{ task.icon }}</span>
+                  {{ task.title }}
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Pickup & drop-off -->
+      @if (todaysPickups().length > 0) {
+        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.pickup.title' | translate }}</h2>
+          <ul class="mt-4 space-y-3">
+            @for (occurrence of todaysPickups(); track occurrence.slot) {
+              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+                <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ pickupSlotLabels[occurrence.slot] | translate }}</span>
+                <span class="flex items-center gap-2 text-lg font-semibold">
+                  @switch (occurrence.kind) {
+                    @case (guardianKind) {
+                      <span aria-hidden="true">👤</span>
+                      {{ assigneeName(occurrence) ?? ('child.home.pickup.kind.guardian' | translate) }}
+                    }
+                    @case (selfEscortKind) {
+                      <span aria-hidden="true">🚶</span>
+                      {{ 'child.home.pickup.kind.selfEscort' | translate }}
+                    }
+                    @case (siblingKind) {
+                      <span aria-hidden="true">🧒</span>
+                      {{ 'child.home.pickup.kind.sibling' | translate }}
+                    }
+                    @case (playdateKind) {
+                      <span aria-hidden="true">🎉</span>
+                      {{ occurrence.playdateHostName }}
+                    }
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     } @else {
       <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
         <p class="text-5xl">🗓️</p>
@@ -57,7 +178,7 @@
     }
 
     @if (!loading() && guardianList().length > 0) {
-      <div class="mt-8">
+      <div>
         <h3 class="text-lg font-bold tracking-normal text-slate-700">{{ 'child.home.guardiansTitle' | translate }}</h3>
         <ul class="mt-3 flex flex-wrap gap-3">
           @for (guardian of guardianList(); track guardian.id) {

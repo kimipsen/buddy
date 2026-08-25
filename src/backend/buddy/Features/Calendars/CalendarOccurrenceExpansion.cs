@@ -53,7 +53,7 @@ public static class CalendarOccurrenceExpansion
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon.Value, item.Color.Value,
-                startsAt, endsAt, null, item.CreatedBy.Value, item.LastModifiedBy.Value));
+                startsAt, endsAt, null, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value));
         }
     }
 
@@ -64,10 +64,11 @@ public static class CalendarOccurrenceExpansion
         foreach (var date in RecurrenceExpansion.ExpandDates(due.Date, item.Recurrence, from, to))
         {
             var dueAt = TimeZoneResolution.ResolveInstant(zoneId, date.ToDateTime(due.Time));
+            var isCompleted = item.CompletionLog.GetValueOrDefault(date, false);
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon.Value, item.Color.Value,
-                null, null, dueAt, item.CreatedBy.Value, item.LastModifiedBy.Value));
+                null, null, dueAt, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value));
         }
     }
 }

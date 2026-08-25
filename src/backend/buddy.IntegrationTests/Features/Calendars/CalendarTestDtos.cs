@@ -29,3 +29,18 @@ internal sealed record CalendarItemDto(
 internal sealed record IcalTokenResponseDto(Guid TokenId, string Token, string SubscriptionPath);
 
 internal sealed record IcalTokenSummaryDto(Guid TokenId, DateTimeOffset IssuedAt);
+
+internal sealed record TaskCompletionResponseDto(Guid ItemId, DateOnly OccurrenceDate, bool IsCompleted);
+
+internal sealed record CalendarItemOccurrenceDto(
+    Guid ItemId,
+    CalendarItemKind Kind,
+    string Title,
+    string Icon,
+    string Color,
+    DateTimeOffset? StartsAt,
+    DateTimeOffset? EndsAt,
+    DateTimeOffset? DueAt,
+    bool IsCompleted,
+    Guid CreatedBy,
+    Guid LastModifiedBy);

@@ -29,6 +29,7 @@ public static class CalendarsFeature
         typeof(EventRescheduled),
         typeof(TaskRescheduled),
         typeof(RecurrenceUpdated),
+        typeof(TaskCompletionChanged),
         typeof(ItemDeleted),
         typeof(IcalTokenIssued),
         typeof(IcalTokenRevoked)
@@ -86,6 +87,7 @@ public static class CalendarsFeature
         calendars.MapUpdateItemDetails();
         calendars.MapRescheduleItem();
         calendars.MapUpdateItemRecurrence();
+        calendars.MapSetTaskCompletion();
         calendars.MapDeleteItem();
         calendars.MapCreateIcalToken();
         calendars.MapListIcalTokens();

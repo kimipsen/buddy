@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -13,6 +15,7 @@ public sealed record CalendarItem(
     Period? Period,
     DueDate? DueDate,
     RecurrenceRule? Recurrence,
+    ImmutableDictionary<DateOnly, bool> CompletionLog,
     UserId LastModifiedBy,
     bool IsDeleted = false)
 {
@@ -43,6 +46,7 @@ public sealed record CalendarItem(
                     created.Period,
                     null,
                     created.Recurrence,
+                    ImmutableDictionary<DateOnly, bool>.Empty,
                     created.CreatedBy),
                 TaskItemCreated created => new CalendarItem(
                     created.Id,
@@ -55,11 +59,21 @@ public sealed record CalendarItem(
                     null,
                     created.DueDate,
                     created.Recurrence,
+                    ImmutableDictionary<DateOnly, bool>.Empty,
                     created.CreatedBy),
                 ItemDetailsUpdated updated => item! with { Title = updated.After.Title, Icon = updated.After.Icon, Color = updated.After.Color, LastModifiedBy = updated.ModifiedBy },
                 EventRescheduled rescheduled => item! with { Period = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
                 TaskRescheduled rescheduled => item! with { DueDate = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
                 RecurrenceUpdated recurrence => item! with { Recurrence = recurrence.After, LastModifiedBy = recurrence.ModifiedBy },
+                // Sparse log, same rule as MedicineSchedule.DoseLog: "not completed" is the
+                // implicit default, so a not-completed entry is removed rather than stored.
+                TaskCompletionChanged completion => item! with
+                {
+                    CompletionLog = completion.After
+                        ? item!.CompletionLog.SetItem(completion.OccurrenceDate, true)
+                        : item!.CompletionLog.Remove(completion.OccurrenceDate),
+                    LastModifiedBy = completion.ModifiedBy
+                },
                 ItemDeleted deleted => item! with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },
                 _ => item
             };

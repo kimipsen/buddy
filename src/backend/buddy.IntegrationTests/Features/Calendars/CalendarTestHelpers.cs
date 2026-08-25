@@ -66,6 +66,30 @@ internal static class CalendarTestHelpers
         return expectedStatus == 200 ? response.ReadAsJson<CalendarItemDto>() : null;
     }
 
+    public static async Task<CalendarItemDto?> CreateTaskAsync(
+        BuddyApiFixture fixture, string token, Guid calendarId, string title = "File taxes",
+        DateOnly? dueDate = null, RecurrenceRuleRequest? recurrence = null, int expectedStatus = 200)
+    {
+        var day = dueDate ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new
+            {
+                Kind = CalendarItemKind.Task,
+                Title = title,
+                Icon = "task",
+                Color = "#ff0000",
+                DueDate = new { Date = day, Time = new TimeOnly(17, 0) },
+                Recurrence = recurrence
+            }).ToUrl($"/calendars/{calendarId}/items");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        return expectedStatus == 200 ? response.ReadAsJson<CalendarItemDto>() : null;
+    }
+
     public static async Task<IcalTokenResponseDto> CreateIcalTokenAsync(BuddyApiFixture fixture, string ownerToken, Guid calendarId)
     {
         var response = await fixture.Host.Scenario(_ =>
