@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
 import { CalendarItemKind, CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
 import { todayIsoDate } from '../../../core/date-utils';
-import { GuardianSummary, GuardiansService } from '../../../core/guardians.service';
+import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
@@ -54,6 +54,7 @@ export class ChildHome implements OnInit {
   protected readonly pickupSlotLabels = PICKUP_SLOT_LABELS;
 
   protected readonly guardianList = signal<GuardianSummary[]>([]);
+  protected readonly siblingList = signal<SiblingSummary[]>([]);
   protected readonly todaysPickups = signal<PickupOccurrence[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -82,6 +83,7 @@ export class ChildHome implements OnInit {
 
   ngOnInit(): void {
     void this.loadGuardians();
+    void this.loadSiblings();
     void this.loadTodaysPickups();
     void this.loadDashboard();
   }
@@ -93,6 +95,10 @@ export class ChildHome implements OnInit {
   protected assigneeName(occurrence: PickupOccurrence): string | null {
     if (occurrence.kind === this.guardianKind) {
       return this.guardianList().find((guardian) => guardian.id === occurrence.guardianId)?.name.givenName ?? null;
+    }
+
+    if (occurrence.kind === this.siblingKind) {
+      return this.siblingList().find((sibling) => sibling.id === occurrence.siblingChildId)?.name.givenName ?? null;
     }
 
     return null;
@@ -138,6 +144,14 @@ export class ChildHome implements OnInit {
       this.guardianList.set(await this.guardians.listMyGuardians());
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private async loadSiblings(): Promise<void> {
+    try {
+      this.siblingList.set(await this.guardians.listMySiblings());
+    } catch {
+      this.siblingList.set([]);
     }
   }
 

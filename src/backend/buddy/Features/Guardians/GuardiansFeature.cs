@@ -47,6 +47,13 @@ public static class GuardiansFeature
 
         guardians.MapListMyGuardians();
 
+        var siblings = endpoints.MapGroup("/users/me/siblings")
+            .WithTags("Guardians")
+            .RequireAuthorization()
+            .WithGroupName(OpenApiDocumentName);
+
+        siblings.MapListMySiblings();
+
         // A separate route group, the same reason Groups splits off "/invites": PreviewGuardianInvite
         // must stay reachable by an unauthenticated caller who only has the token from an email
         // link, while AcceptGuardianInvite needs auth applied only to itself.

@@ -162,7 +162,7 @@
                     }
                     @case (siblingKind) {
                       <span aria-hidden="true">🧒</span>
-                      {{ 'child.home.pickup.kind.sibling' | translate }}
+                      {{ assigneeName(occurrence) ?? ('child.home.pickup.kind.sibling' | translate) }}
                     }
                     @case (playdateKind) {
                       <span aria-hidden="true">🎉</span>

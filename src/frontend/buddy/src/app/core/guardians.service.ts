@@ -28,6 +28,11 @@ export interface GuardianSummary {
   kind: GuardianKind;
 }
 
+export interface SiblingSummary {
+  id: string;
+  name: PersonName;
+}
+
 export interface CreateChildResult extends ChildSummary {
   username: string;
   temporaryPassword: string;
@@ -78,6 +83,12 @@ export class GuardiansService {
     return firstValueFrom(
       this.http.get<GuardianSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardians`)
     );
+  }
+
+  // The calling child's own siblings (other children sharing at least one of their guardians) --
+  // used to show a sibling's name for a pickup/drop-off assignment instead of just "a sibling".
+  listMySiblings(): Promise<SiblingSummary[]> {
+    return firstValueFrom(this.http.get<SiblingSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/siblings`));
   }
 
   createChild(request: CreateChildRequest): Promise<CreateChildResult> {
