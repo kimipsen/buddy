@@ -15,13 +15,46 @@
   </header>
 
   <section class="mx-auto max-w-3xl px-6 py-6 sm:px-8">
-    <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
-      <p class="text-5xl">🗓️</p>
-      <h2 class="mt-4 text-2xl font-bold tracking-normal">{{ 'child.home.emptyTitle' | translate }}</h2>
-      <p class="mt-2 text-lg leading-7 text-slate-600">
-        {{ 'child.home.emptySubtitle' | translate }}
-      </p>
-    </div>
+    @if (todaysPickups().length > 0) {
+      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+        <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.pickup.title' | translate }}</h2>
+        <ul class="mt-4 space-y-3">
+          @for (occurrence of todaysPickups(); track occurrence.slot) {
+            <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+              <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ slotLabels[occurrence.slot] | translate }}</span>
+              <span class="flex items-center gap-2 text-lg font-semibold">
+                @switch (occurrence.kind) {
+                  @case (guardianKind) {
+                    <span aria-hidden="true">👤</span>
+                    {{ assigneeName(occurrence) ?? ('child.home.pickup.kind.guardian' | translate) }}
+                  }
+                  @case (selfEscortKind) {
+                    <span aria-hidden="true">🚶</span>
+                    {{ 'child.home.pickup.kind.selfEscort' | translate }}
+                  }
+                  @case (siblingKind) {
+                    <span aria-hidden="true">🧒</span>
+                    {{ 'child.home.pickup.kind.sibling' | translate }}
+                  }
+                  @case (playdateKind) {
+                    <span aria-hidden="true">🎉</span>
+                    {{ occurrence.playdateHostName }}
+                  }
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+    } @else {
+      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
+        <p class="text-5xl">🗓️</p>
+        <h2 class="mt-4 text-2xl font-bold tracking-normal">{{ 'child.home.emptyTitle' | translate }}</h2>
+        <p class="mt-2 text-lg leading-7 text-slate-600">
+          {{ 'child.home.emptySubtitle' | translate }}
+        </p>
+      </div>
+    }
 
     @if (!loading() && guardianList().length > 0) {
       <div class="mt-8">

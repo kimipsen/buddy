@@ -1,0 +1,149 @@
+@if (editing()) {
+  <div class="w-56 space-y-2 rounded-lg border border-emerald-300 bg-white p-3 text-left shadow-lg">
+    <select
+      class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [ngModel]="kind()"
+      (ngModelChange)="kind.set($event)"
+    >
+      <option [ngValue]="guardianKind">{{ 'pickup.cell.kind.guardian' | translate }}</option>
+      <option [ngValue]="selfEscortKind">{{ 'pickup.cell.kind.selfEscort' | translate }}</option>
+      <option [ngValue]="siblingKind">{{ 'pickup.cell.kind.sibling' | translate }}</option>
+      <option [ngValue]="playdateKind">{{ 'pickup.cell.kind.playdate' | translate }}</option>
+    </select>
+
+    @if (kind() === guardianKind) {
+      <select
+        class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="guardianId()"
+        (ngModelChange)="guardianId.set($event)"
+      >
+        <option value="" disabled>{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}</option>
+        @for (guardian of guardians(); track guardian.id) {
+          <option [value]="guardian.id">{{ guardian.name.givenName }}</option>
+        }
+      </select>
+    }
+
+    @if (kind() === siblingKind) {
+      <select
+        class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="siblingChildId()"
+        (ngModelChange)="siblingChildId.set($event)"
+      >
+        <option value="" disabled>{{ 'pickup.cell.selectSiblingPlaceholder' | translate }}</option>
+        @for (sibling of siblings(); track sibling.id) {
+          <option [value]="sibling.id">{{ sibling.name.givenName }}</option>
+        }
+      </select>
+      @if (siblings().length === 0) {
+        <p class="text-xs text-slate-400">{{ 'pickup.cell.noSiblings' | translate }}</p>
+      }
+    }
+
+    @if (kind() === playdateKind) {
+      <input
+        type="text"
+        [placeholder]="'pickup.cell.playdateHostPlaceholder' | translate"
+        class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="playdateHostName()"
+        (ngModelChange)="playdateHostName.set($event)"
+      />
+      <input
+        type="text"
+        [placeholder]="'pickup.cell.playdateLocationPlaceholder' | translate"
+        class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="playdateLocation()"
+        (ngModelChange)="playdateLocation.set($event)"
+      />
+      <input
+        type="text"
+        [placeholder]="'pickup.cell.playdateContactPlaceholder' | translate"
+        class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        [ngModel]="playdateContactInfo()"
+        (ngModelChange)="playdateContactInfo.set($event)"
+      />
+    }
+
+    <input
+      type="time"
+      class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [ngModel]="time()"
+      (ngModelChange)="time.set($event)"
+    />
+    <input
+      type="text"
+      [placeholder]="'pickup.cell.notesPlaceholder' | translate"
+      class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [ngModel]="notes()"
+      (ngModelChange)="notes.set($event)"
+    />
+
+    <div class="flex items-center justify-between pt-1">
+      <button
+        type="button"
+        class="text-xs font-semibold text-slate-500 hover:text-slate-700"
+        (click)="cancelEditing()"
+      >
+        {{ 'pickup.cell.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+        [disabled]="!canSave()"
+        (click)="save()"
+      >
+        {{ 'pickup.cell.save' | translate }}
+      </button>
+    </div>
+  </div>
+} @else if (occurrence(); as occurrence) {
+  <button
+    type="button"
+    class="flex w-full min-w-[9rem] flex-col items-start gap-0.5 rounded-lg border border-slate-200 px-2 py-1.5 text-left text-sm hover:border-slate-300 disabled:opacity-50"
+    [disabled]="disabled() || saving()"
+    (click)="startEditing()"
+  >
+    <span class="flex items-center gap-1.5 font-medium">
+      @switch (occurrence.kind) {
+        @case (guardianKind) {
+          <span aria-hidden="true">👤</span>
+          {{ summaryGuardianName() ?? ('pickup.cell.kind.guardian' | translate) }}
+        }
+        @case (selfEscortKind) {
+          <span aria-hidden="true">🚶</span>
+          {{ 'pickup.cell.kind.selfEscort' | translate }}
+        }
+        @case (siblingKind) {
+          <span aria-hidden="true">🧒</span>
+          {{ summarySiblingName() ?? ('pickup.cell.kind.sibling' | translate) }}
+        }
+        @case (playdateKind) {
+          <span aria-hidden="true">🎉</span>
+          {{ occurrence.playdateHostName }}
+        }
+      }
+    </span>
+    @if (occurrence.time) {
+      <span class="text-xs text-slate-500">{{ occurrence.time.slice(0, 5) }}</span>
+    }
+  </button>
+  @if (!disabled()) {
+    <button
+      type="button"
+      class="mt-1 text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+      [disabled]="saving()"
+      (click)="clearAssignment()"
+    >
+      {{ 'pickup.cell.clear' | translate }}
+    </button>
+  }
+} @else {
+  <button
+    type="button"
+    class="w-full rounded-lg border border-dashed border-slate-300 px-2 py-1.5 text-left text-sm text-slate-400 hover:border-slate-400 hover:text-slate-600 disabled:opacity-50"
+    [disabled]="disabled() || saving()"
+    (click)="startEditing()"
+  >
+    {{ 'pickup.cell.notPlanned' | translate }}
+  </button>
+}

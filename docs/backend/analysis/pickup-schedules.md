@@ -1,6 +1,6 @@
 # Pickup and Drop-off Schedules
 
-Status: Proposed
+Status: Implemented
 
 ## Context
 
@@ -72,43 +72,65 @@ today — call `ListPickupSchedule` once per child and render the results
 side by side — not a reason to merge the schedules into one backend
 aggregate.
 
-## Question 3: modeling "who" — a union, not an enum
+## Question 3: modeling "who" — a flat `Kind` discriminator, not a union
 
-**Decision: `PickupAssignee` is a closed union of four cases, mirroring
-`CalendarOwner`'s union-of-records shape
+**Decision: a flat `PickupAssigneeKind` enum plus per-case optional fields on
+`PickupAssignment`, not a closed union.**
+
+A closed union of four cases, mirroring `CalendarOwner`'s union-of-records
+shape
 ([CalendarOwner.cs](../../../src/backend/buddy/Features/Calendars/Types/CalendarOwner.cs)),
-not a plain enum with a separate nullable "target" field.**
-
-A flat `enum AssigneeKind { Guardian, SelfEscort, Sibling, Playdate }` plus
-loose optional fields (`GuardianId?`, `SiblingChildId?`, `PlaydateHostName?`)
-would let a `Guardian`-kind assignment carry a stray `PlaydateHostName`, or a
-`SelfEscort` carry a `SiblingChildId` — combinations that are meaningless and
-would need defensive validation everywhere they're read. A union makes the
-illegal states unrepresentable: each case only has the fields it actually
-needs.
+was the first design here, on the reasoning that it makes illegal
+combinations unrepresentable (a `Guardian` case can't carry a stray
+`PlaydateHostName`, etc.). **That was implemented, then reverted after it
+failed to round-trip through JSON**: `PickupAssignment` is embedded in
+`PickupAssigned`/`PickupCleared`, which Marten persists and replays as JSON,
+and `Guardian`/`Sibling`/`Playdate` all serialize as a plain JSON object with
+no type discriminator — confirmed experimentally, System.Text.Json's union
+converter throws `JsonException: "JSON value type is ambiguous for union
+type... because multiple case types can use this value type. Specify a
+custom type classifier"` when deserializing any of them back. A fix exists
+(.NET 11's `[JsonUnion(TypeClassifier = ...)]` with a hand-written
+`JsonTypeClassifierFactory` reading the raw `Utf8JsonReader`), but it has no
+precedent anywhere in this codebase, is low-level enough to get subtly wrong,
+and getting it wrong here means Marten silently failing to replay history —
+too much risk for what a flat record already solves cleanly. `CalendarOwner`
+never hit this because it's never embedded in an event; it's aggregate-only
+state, folded fresh from plain-`UserId`/`GroupId` event fields on every
+`Rehydrate`.
 
 ```
-public union PickupAssignee(
-    PickupAssignee.Guardian,
-    PickupAssignee.SelfEscort,
-    PickupAssignee.Sibling,
-    PickupAssignee.Playdate)
-{
-    public sealed record Guardian(UserId GuardianId);
-    public sealed record SelfEscort;
-    public sealed record Sibling(UserId SiblingChildId);
-    public sealed record Playdate(string HostName, string? Location, string? ContactInfo);
-}
+public enum PickupAssigneeKind { Guardian, SelfEscort, Sibling, Playdate }
+
+PickupAssignment(
+    PickupAssigneeKind Kind,
+    UserId? GuardianId,
+    UserId? SiblingChildId,
+    string? PlaydateHostName,
+    string? PlaydateLocation,
+    string? PlaydateContactInfo,
+    TimeOnly? Time,
+    UserId AssignedBy,
+    string? Notes)
 ```
+
+This is the same flattening this codebase already applies at every
+request/response boundary (`MedicineScheduleResponse` flattening `Icon`/
+`Color` to plain strings) — extended here to the persisted event shape too,
+since a union field turned out not to be safe there. Nothing stops a caller
+constructing an inconsistent combination (e.g. `Kind: Guardian` with no
+`GuardianId`) directly on the record; `AssignPickupHandler.ValidateFields`
+is the only guard, enforced once at write time, the same way other
+handlers in this codebase validate their commands' fields:
 
 - **`Guardian`** — a specific guardian of the child handles this slot
-  themself. Validated at write time (see "Command slices") to actually be an
+  themself. `GuardianId` is validated at write time to actually be an
   active guardian of `ChildId`, via the existing
   `IGuardianLinkEventStore.FindActiveLinkAsync`
   ([IGuardianLinkEventStore.cs](../../../src/backend/buddy/Features/Guardians/IGuardianLinkEventStore.cs)) —
   the same check `MedicineAuthorization`/`MealplanAuthorization` already run
   for the *caller*, reused here to validate the *target*.
-- **`SelfEscort`** — the child goes by themself. Carries no data; its
+- **`SelfEscort`** — the child goes by themself. No other field is set; its
   presence as an explicit assignment (rather than the slot simply being
   unassigned) is the point — it lets a guardian record "I've deliberately
   decided this needs no escort" as distinct from "I haven't planned this
@@ -127,12 +149,13 @@ public union PickupAssignee(
   "siblings of X" check, that's the point to extract a shared helper into
   `Features/Guardians` — not before.
 - **`Playdate`** — the child is collected by someone outside the family and
-  the app's user model entirely (a friend's parent). `HostName` is required
-  free text (there is no `User`/`GuardianLink` to point at — the host isn't
-  a Buddy account), `Location`/`ContactInfo` are optional free text. This is
-  intentionally as unstructured as `MealRating.Comment` — inventing a
-  "guest contact" sub-aggregate for a field nothing else needs would be
-  speculative generalization ahead of an actual second use case.
+  the app's user model entirely (a friend's parent). `PlaydateHostName` is
+  required free text (there is no `User`/`GuardianLink` to point at — the
+  host isn't a Buddy account), `PlaydateLocation`/`PlaydateContactInfo` are
+  optional free text. This is intentionally as unstructured as
+  `MealRating.Comment` — inventing a "guest contact" sub-aggregate for a
+  field nothing else needs would be speculative generalization ahead of an
+  actual second use case.
 
 Nothing in the schema restricts `Playdate` (or any other case) to the
 `PickUp` slot specifically — see "Failure and edge-case behavior" for why
@@ -148,10 +171,10 @@ PickupSchedule(
     UserId ChildId,
     ImmutableDictionary<(DateOnly Date, PickupSlot Slot), PickupAssignment> Assignments)
 
-PickupAssignment(PickupAssignee Assignee, TimeOnly? Time, UserId AssignedBy, string? Notes)
-
 enum PickupSlot { DropOff, PickUp }
 ```
+
+`PickupAssignment` is the flat record from Question 3 above.
 
 - `Assignments` only ever holds slots a guardian has actually filled in —
   the same sparse-dictionary contract `MealPlan.Assignments` and
@@ -168,8 +191,6 @@ enum PickupSlot { DropOff, PickUp }
   meaningful (the slot enum already conveys "morning" vs. "afternoon" on
   its own).
 
-### `PickupAssignee` — see Question 3 above.
-
 ### Events
 
 Following the existing `Before`/`After` convention for mutations
@@ -181,8 +202,8 @@ PickupScheduleCreated(PickupScheduleId, UserId ChildId, DateTimeOffset OccurredA
     // Lazily appended by the first AssignPickup call for a child with no stream yet,
     // exactly as MealPlanCreated is -- not provisioned as part of CreateChild.
 
-PickupAssigned(PickupScheduleId, DateOnly Date, PickupSlot Slot, PickupAssignee Assignee,
-    TimeOnly? Time, UserId AssignedBy, string? Notes, PickupAssignment? Before, DateTimeOffset OccurredAt)
+PickupAssigned(PickupScheduleId, DateOnly Date, PickupSlot Slot, PickupAssignment? Before,
+    PickupAssignment After, DateTimeOffset OccurredAt)
 
 PickupCleared(PickupScheduleId, DateOnly Date, PickupSlot Slot, PickupAssignment Before,
     UserId ModifiedBy, DateTimeOffset OccurredAt)
@@ -221,22 +242,32 @@ everywhere else.
 
 A new static helper, `PickupScheduleExpansion`, deliberately parallel to
 `MealPlanExpansion`/`MedicineDoseExpansion`: given a `ChildId` and
-`[from, to]`, for every date in range and both `PickupSlot` values, look up
-`Assignments[(Date, Slot)]` and — for `Guardian`/`Sibling` cases — join in
-the referenced `User`'s display name (via the existing `Users` feature
-lookup), producing:
+`[from, to]`, emits one `PickupOccurrence` for every assigned `(Date, Slot)`
+in range — `PickupAssignment` plus the `Date`/`Slot` it's keyed by, with its
+`UserId?` fields unwrapped to raw `Guid?` the same way
+`MedicineScheduleResponse` unwraps `Icon`/`Color`:
 
 ```
-PickupOccurrence(DateOnly Date, PickupSlot Slot, PickupAssignee? Assignee, TimeOnly? Time, string? Notes)
+PickupOccurrence(DateOnly Date, PickupSlot Slot, PickupAssigneeKind Kind, Guid? GuardianId,
+    Guid? SiblingChildId, string? PlaydateHostName, string? PlaydateLocation, string? PlaydateContactInfo,
+    TimeOnly? Time, string? Notes, Guid AssignedBy)
 ```
 
-`Assignee` is `null` for a date/slot with no assignment yet — there is no
-default to fall back to (unlike `DoseStatus.Pending`, "unplanned" is a
-distinct, displayable state a guardian's UI should surface as "not yet
-planned," not silently treated as any particular arrangement). Nothing here
-is persisted or cached; it's recomputed from current aggregate state on
-every call, the same explicit, already-accepted tradeoff described in
+Only assigned slots are represented — a date/slot absent from a
+`ListPickupSchedule` response is unplanned, the same sparse read convention
+`MealPlanExpansion` already uses (it only emits filled `(Date, Slot)` pairs,
+never a placeholder for an empty one). This still gets a guardian's UI "not
+yet planned" for free: `SelfEscort` is a *present* entry with
+`Kind: SelfEscort`, distinct from a date/slot missing from the response
+entirely. Nothing here is persisted or cached; it's recomputed from current
+aggregate state on every call, the same explicit, already-accepted tradeoff
+described in
 [group-owned-calendars-and-permissions.md](group-owned-calendars-and-permissions.md#aggregate-loading-and-performance--operational-contract).
+No cross-feature join to `Users` for a display name — `GuardianId`/
+`SiblingChildId` are returned as raw ids, resolved against the guardian/
+sibling lists the frontend already has from `ListMyGuardians`/
+`ListMyChildren`, the same way `MealFamilyResolution` avoids re-deriving
+data another endpoint already provides.
 
 Same stance as both precedents on time zones: no resolution performed here.
 `Time` (where present) is treated as the child's own local wall-clock value,
@@ -253,7 +284,7 @@ with no new authorization document needed:
 
 | Tier | Who | Actions |
 |---|---|---|
-| **Manage** | An active guardian of `ChildId` only | Assign/clear a slot for any date, with any `PickupAssignee`; view the schedule |
+| **Manage** | An active guardian of `ChildId` only | Assign/clear a slot for any date, with any `PickupAssigneeKind`; view the schedule |
 | **View** | The child (`ChildId` itself) only | View the schedule — who's picking them up and when |
 
 Unlike `MedicineSchedule`'s Mark tier, the child has no write action here at
@@ -284,7 +315,7 @@ can see the schedule, they just can't change it, matching how
 
 | Slice | Tier | Notes |
 |---|---|---|
-| `AssignPickup` | Manage | `Date`, `Slot`, `Assignee` (one of the four `PickupAssignee` cases), `Time?`, `Notes?`. Creates the stream lazily if the child has none yet (same lazy-creation contract `AssignMealToSlot` has). Validates the assignee: `Guardian.GuardianId` must be an active guardian of `ChildId`; `Sibling.SiblingChildId` must share an active guardian with `ChildId`; `SelfEscort`/`Playdate` need no relationship check. Emits `PickupAssigned` |
+| `AssignPickup` | Manage | `Date`, `Slot`, `Kind` plus that kind's fields (`GuardianId`, `SiblingChildId`, or `PlaydateHostName`/`PlaydateLocation`/`PlaydateContactInfo`), `Time?`, `Notes?`. Creates the stream lazily if the child has none yet (same lazy-creation contract `AssignMealToSlot` has). Validates the fields the request's `Kind` needs are present, then the relationship: `GuardianId` must be an active guardian of `ChildId`; `SiblingChildId` must share an active guardian with `ChildId`; `SelfEscort`/`Playdate` need no relationship check. Emits `PickupAssigned` |
 | `ClearPickup` | Manage | `Date`, `Slot` — idempotent no-op if the slot has no assignment (`Success`, no event), same rule `ClearMealSlot` uses. Emits `PickupCleared` |
 | `ListPickupSchedule` | Manage or View | `[from, to]` date range → `PickupScheduleExpansion.ExpandAsync`, the read surface for both the guardian's weekly planning grid and the child's own "who's picking me up" view |
 
@@ -296,12 +327,16 @@ assignee" — the guardian and sibling pickers reuse the existing
 ## Routes
 
 ```
-POST   /pickups/children/{childId}/assignments        AssignPickup
-DELETE /pickups/children/{childId}/assignments         ClearPickup   (Date, Slot as query params)
-GET    /pickups/children/{childId}/schedule            ListPickupSchedule
+PUT    /pickups/children/{childId}/assignments        AssignPickup   (date, slot as query params)
+DELETE /pickups/children/{childId}/assignments        ClearPickup    (date, slot as query params)
+GET    /pickups/children/{childId}/schedule           ListPickupSchedule
 ```
 
-Mirrors `/medicines/children/{childId}/...`
+`AssignPickup`/`ClearPickup` use `PUT`/`DELETE` with `date`/`slot` as query
+parameters, mirroring `AssignMealToSlot`/`ClearMealSlot`'s exact shape
+(`PUT`/`DELETE /mealplans/children/{childId}/plan?date=...&slot=...`) —
+both are upserts on one addressable slot, not a collection append. This
+otherwise mirrors `/medicines/children/{childId}/...`
 ([MedicinesFeature.cs](../../../src/backend/buddy/Features/Medicines/MedicinesFeature.cs))
 and `/mealplans/children/{childId}/plan`
 ([group-owned-mealplans.md](group-owned-mealplans.md#routes))'s shape.
@@ -310,8 +345,8 @@ and `/mealplans/children/{childId}/plan`
 
 | Case | Behavior |
 |---|---|
-| Slot has no assignment yet | `PickupOccurrence.Assignee` is `null` — distinct from `SelfEscort`, which is an explicit, deliberate choice. The frontend should render these differently ("not planned" vs. "goes alone") |
-| Guardian assigns a `Playdate` to `DropOff` | Allowed — nothing in the domain restricts any `PickupAssignee` case to a particular slot. `PickUp`-for-playdates is the expected common case (collected from school by a friend's parent), but "dropped off directly at a playdate instead of home" is a real, if rarer, use of `DropOff`; special-casing it away would add a rule nobody asked for |
+| Slot has no assignment yet | No `PickupOccurrence` is returned for that `(Date, Slot)` — distinct from `Kind: SelfEscort`, which is a present entry. The frontend should render these differently ("not planned" vs. "goes alone") |
+| Guardian assigns a `Playdate` to `DropOff` | Allowed — nothing in the domain restricts any `PickupAssigneeKind` to a particular slot. `PickUp`-for-playdates is the expected common case (collected from school by a friend's parent), but "dropped off directly at a playdate instead of home" is a real, if rarer, use of `DropOff`; special-casing it away would add a rule nobody asked for |
 | `Guardian` assignee's `GuardianId` is later revoked (`GuardianRevoked`) | The existing assignment is left as-is — event-sourced history isn't rewritten — but the revoked guardian can no longer manage the schedule at all (drops to `NotFound`), and a guardian re-editing that slot will see the stale name/relationship when resolving display data, same as any other stale reference in this codebase |
 | `Sibling` assignee's `SiblingChildId` stops sharing an active guardian with `ChildId` (e.g. a `GuardianLink` is revoked) | Existing assignments referencing them are untouched (history isn't rewritten); a *new* assignment naming that child as `Sibling` would fail validation from that point on |
 | Clearing a slot that has no assignment | Idempotent no-op (`Success`, no event appended), same as `ClearMealSlot` |
@@ -325,7 +360,7 @@ and `/mealplans/children/{childId}/plan`
 |---|---|
 | Extend `CalendarItem`, or new feature | New feature, `Features/Pickups` — mirrors the `Medicines`/`Mealplans` precedent |
 | Scope: per-child or family-wide | Per child, like `MedicineSchedule` — pickup arrangements vary independently per child even within one family; the `Sibling` assignee covers the one genuinely cross-child case without needing a family-wide aggregate |
-| How "who" is modeled | A closed `PickupAssignee` union (`Guardian`, `SelfEscort`, `Sibling`, `Playdate`), mirroring `CalendarOwner`'s union-of-records shape — makes invalid field combinations unrepresentable |
+| How "who" is modeled | A flat `PickupAssigneeKind` enum (`Guardian`, `SelfEscort`, `Sibling`, `Playdate`) plus per-case optional fields on `PickupAssignment` — a closed union was tried first and reverted after failing to round-trip through JSON once embedded in a persisted event (see Question 3) |
 | Slot model | Fixed two-value `PickupSlot { DropOff, PickUp }`, mirroring `MealSlot`'s fixed-slot approach — covers the twice-daily school run; more slots per day is a v2 gap (see open questions) |
 | Recurrence | None — every assignment is explicit, per date, same v1 stance `MealPlan` takes; no auto-repeating weekly template |
 | Validating a `Sibling` assignee | A small local check against `IGuardianLinkEventStore` inside `Pickups`, not a dependency on `Mealplans.MealFamilyResolution` — keeps the vertical slice boundary intact |
@@ -359,8 +394,8 @@ and `/mealplans/children/{childId}/plan`
   guardian who's a member of a shared group, rather than free text)? Left as
   free text for v1 since a playdate host frequently isn't a Buddy user at
   all; if a large share of playdates turn out to be with other Buddy
-  families, a `PlaydateAssignee` case that optionally carries a `UserId`
-  alongside the free-text fields would be a natural additive change — not
+  families, an additional optional `PlaydateGuardianId: UserId?` field
+  alongside the free-text ones would be a natural additive change — not
   worth the extra complexity until that's observed.
 - **A minimum age/eligibility gate on `SelfEscort`.** Nothing here checks
   whether a child is "old enough" for self-escort — it's presented as a
@@ -388,7 +423,7 @@ flowchart TB
             Child["User (child, ChildId)"]
             Sibling["User (child: sibling)"]
             Link["GuardianLink\n(existing)"]
-            Schedule["PickupSchedule\nChildId\nAssignments: (Date,Slot) -> PickupAssignment\nAssignee: Guardian | SelfEscort | Sibling | Playdate"]
+            Schedule["PickupSchedule\nChildId\nAssignments: (Date,Slot) -> PickupAssignment\nKind: Guardian | SelfEscort | Sibling | Playdate\n+ per-Kind optional fields"]
         end
 
         Resolver["PickupAuthorization\n1. caller == ChildId -> View tier\n2. active GuardianLink -> Manage tier (subsumes View)\n3. else NotFound"]
@@ -401,9 +436,9 @@ flowchart TB
         Guardian -- "AssignPickup / ClearPickup (Manage)" --> Schedule
         Child -- "ListPickupSchedule (View)" --> Schedule
 
-        Schedule -. "Assignee: Guardian(UserId)" .-> Guardian
-        Schedule -. "Assignee: Sibling(UserId), validated shares an active guardian" .-> Sibling
-        Schedule -. "Assignee: Playdate(free text) -- no User reference" .-> Schedule
+        Schedule -. "Kind: Guardian, GuardianId" .-> Guardian
+        Schedule -. "Kind: Sibling, SiblingChildId, validated shares an active guardian" .-> Sibling
+        Schedule -. "Kind: Playdate, free-text fields -- no User reference" .-> Schedule
 
         Schedule -. "indexed by ChildId" .-> Index
         Schedule --> Expansion

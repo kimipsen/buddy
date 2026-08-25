@@ -49,5 +49,22 @@ export const dashboard = {
     taken: 'Taget',
     skipped: 'Sprunget over',
     undo: 'Fortryd'
+  },
+  pickup: {
+    title: 'Dagens afhentning & aflevering',
+    manageLink: 'Planlæg afhentning →',
+    loading: 'Indlæser dagens plan…',
+    loadError: 'Kunne ikke indlæse dagens afhentningsplan.',
+    noChildren: 'Tilknyt et barn under Indstillinger for at planlægge deres afhentning.',
+    empty: 'Intet planlagt for i dag.',
+    slots: {
+      dropOff: 'Aflevering',
+      pickUp: 'Afhentning'
+    },
+    kind: {
+      guardian: 'En voksen',
+      selfEscort: 'Går selv',
+      sibling: 'En søskende'
+    }
   }
 };

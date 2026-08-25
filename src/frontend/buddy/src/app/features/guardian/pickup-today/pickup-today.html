@@ -1,0 +1,47 @@
+<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <div class="mb-5 flex items-center justify-between">
+    <h3 class="text-lg font-semibold tracking-normal">{{ 'dashboard.pickup.title' | translate }}</h3>
+    <a routerLink="/guardian/pickup" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800">{{ 'dashboard.pickup.manageLink' | translate }}</a>
+  </div>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500">{{ 'dashboard.pickup.loading' | translate }}</p>
+  } @else if (error(); as message) {
+    <p class="text-sm text-red-600">{{ message | translate }}</p>
+  } @else if (!hasChildren()) {
+    <p class="text-sm text-slate-500">{{ 'dashboard.pickup.noChildren' | translate }}</p>
+  } @else if (rows().length === 0) {
+    <p class="text-sm text-slate-500">{{ 'dashboard.pickup.empty' | translate }}</p>
+  } @else {
+    <ul class="space-y-3">
+      @for (row of rows(); track row.childId + row.slot) {
+        <li class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-4 py-3">
+          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {{ slotLabels[row.slot] | translate }}
+            @if (multipleChildren()) { · {{ row.childName }} }
+          </span>
+          <span class="flex items-center gap-2 text-sm font-medium">
+            @switch (row.kind) {
+              @case (guardianKind) {
+                <span aria-hidden="true">👤</span>
+                {{ assigneeName(row) ?? ('dashboard.pickup.kind.guardian' | translate) }}
+              }
+              @case (selfEscortKind) {
+                <span aria-hidden="true">🚶</span>
+                {{ 'dashboard.pickup.kind.selfEscort' | translate }}
+              }
+              @case (siblingKind) {
+                <span aria-hidden="true">🧒</span>
+                {{ 'dashboard.pickup.kind.sibling' | translate }}
+              }
+              @case (playdateKind) {
+                <span aria-hidden="true">🎉</span>
+                {{ row.playdateHostName }}
+              }
+            }
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</section>

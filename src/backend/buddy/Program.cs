@@ -4,6 +4,7 @@ using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
+using buddy.Features.Pickups;
 using buddy.Features.Users;
 using buddy.Serialization;
 
@@ -48,6 +49,7 @@ builder.Services.AddGroupsFeature(builder.Configuration);
 builder.Services.AddCalendarsFeature(builder.Configuration);
 builder.Services.AddMedicinesFeature(builder.Configuration);
 builder.Services.AddMealplansFeature(builder.Configuration);
+builder.Services.AddPickupsFeature(builder.Configuration);
 
 var app = builder.Build();
 
@@ -73,5 +75,6 @@ app.MapGroupsFeature();
 app.MapCalendarsFeature();
 app.MapMedicinesFeature();
 app.MapMealplansFeature();
+app.MapPickupsFeature();
 
 app.Run();

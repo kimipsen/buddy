@@ -33,6 +33,7 @@ public static class GuardiansFeature
 
         children.MapCreateChild();
         children.MapListMyChildren();
+        children.MapListChildGuardians();
         children.MapRevokeGuardianLink();
         children.MapInviteGuardian();
         children.MapListGuardianInvites();

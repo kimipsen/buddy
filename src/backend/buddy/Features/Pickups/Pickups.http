@@ -1,0 +1,61 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Assign Monday's drop-off to a guardian (guardian only)
+
+PUT {{buddy_HostAddress}}/pickups/children/{{childId}}/assignments?date=2025-06-02&slot=DropOff
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Kind": "Guardian",
+  "GuardianId": "{{guardianId}}"
+}
+
+###
+
+# Assign Monday's pickup to self-escort (guardian only)
+PUT {{buddy_HostAddress}}/pickups/children/{{childId}}/assignments?date=2025-06-02&slot=PickUp
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Kind": "SelfEscort"
+}
+
+###
+
+# Assign Tuesday's pickup to a sibling escort (guardian only)
+PUT {{buddy_HostAddress}}/pickups/children/{{childId}}/assignments?date=2025-06-03&slot=PickUp
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Kind": "Sibling",
+  "SiblingChildId": "{{siblingChildId}}"
+}
+
+###
+
+# Assign Wednesday's pickup to a playdate (guardian only)
+PUT {{buddy_HostAddress}}/pickups/children/{{childId}}/assignments?date=2025-06-04&slot=PickUp
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Kind": "Playdate",
+  "PlaydateHostName": "Mia's mom",
+  "PlaydateLocation": "Mia's house",
+  "PlaydateContactInfo": "+45 12 34 56 78"
+}
+
+###
+
+# Clear a slot (guardian only)
+DELETE {{buddy_HostAddress}}/pickups/children/{{childId}}/assignments?date=2025-06-04&slot=PickUp
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# List a child's pickup schedule in a date range (child or guardian)
+GET {{buddy_HostAddress}}/pickups/children/{{childId}}/schedule?from=2025-06-02&to=2025-06-06
+Authorization: Bearer {{childToken}}

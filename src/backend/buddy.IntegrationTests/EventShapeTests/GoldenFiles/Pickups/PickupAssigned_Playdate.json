@@ -1,0 +1,18 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000070",
+  "Date": "2025-06-01",
+  "Slot": "PickUp",
+  "Before": null,
+  "After": {
+    "Kind": "Playdate",
+    "GuardianId": null,
+    "SiblingChildId": null,
+    "PlaydateHostName": "Mia's mom",
+    "PlaydateLocation": "Mia's house",
+    "PlaydateContactInfo": "+45 12 34 56 78",
+    "Time": null,
+    "AssignedBy": "00000000-0000-0000-0000-000000000001",
+    "Notes": null
+  },
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

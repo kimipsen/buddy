@@ -1,0 +1,18 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000070",
+  "Date": "2025-06-01",
+  "Slot": "DropOff",
+  "Before": null,
+  "After": {
+    "Kind": "Guardian",
+    "GuardianId": "00000000-0000-0000-0000-000000000001",
+    "SiblingChildId": null,
+    "PlaydateHostName": null,
+    "PlaydateLocation": null,
+    "PlaydateContactInfo": null,
+    "Time": "08:00:00",
+    "AssignedBy": "00000000-0000-0000-0000-000000000001",
+    "Notes": "Bring an umbrella"
+  },
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

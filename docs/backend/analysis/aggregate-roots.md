@@ -5,7 +5,7 @@ they reference each other. There is no shared `AggregateRoot` base type or
 marker interface — each aggregate is a `sealed record` in a
 `Features/<Feature>/Types/` folder with a
 `static X? Rehydrate(IEnumerable<XEvent> events)` factory that folds its
-event stream into current state. The eight below were found by grepping for
+event stream into current state. The nine below were found by grepping for
 that convention.
 
 An arrow means the aggregate at the tail stores the id of the aggregate at
@@ -29,6 +29,7 @@ flowchart TB
         MealPlan["MealPlan\nMealPlanId(Guid)"]
         Meal["Meal\nMealId(Guid)"]
         MedicineSchedule["MedicineSchedule\nMedicineId(Guid)"]
+        PickupSchedule["PickupSchedule\nPickupScheduleId(Guid)"]
     end
 
     GuardianLink -- "guardianId, childId : UserId" --> User
@@ -46,9 +47,12 @@ flowchart TB
     MealPlan -- "assignedBy" --> User
     Meal -- "createdBy / lastModifiedBy / ratings" --> User
     MedicineSchedule -- "childId (stored), createdBy" --> User
+    PickupSchedule -- "childId (stored)" --> User
+    PickupSchedule -- "assignments: guardianId / siblingChildId / assignedBy" --> User
 
     GuardianLink -. "family resolved at read time" .-> MealPlan
     GuardianLink -. "family resolved at read time" .-> Meal
+    GuardianLink -. "sibling relationship validated at write time" .-> PickupSchedule
 ```
 
 ## Notes
@@ -61,9 +65,12 @@ flowchart TB
   deliberately carry no `ChildId` — a meal plan is shared across siblings,
   and "which family" is resolved at read time from the `GuardianLink` graph
   via `MealFamilyResolution` (see [mealplans.md](mealplans.md)).
-  `MedicineSchedule` makes the opposite choice and stores `ChildId` directly,
-  because a medicine schedule belongs to exactly one child and isn't
-  family-shared.
+  `MedicineSchedule` and `PickupSchedule` make the opposite choice and store
+  `ChildId` directly, because each belongs to exactly one child and isn't
+  family-shared — `PickupSchedule` still reaches across to a sibling via a
+  plain `UserId` in an assignment, validated (not resolved) against
+  `GuardianLink` at write time (see
+  [pickup-schedules.md](pickup-schedules.md)).
 
 ## Reference
 
@@ -77,3 +84,4 @@ flowchart TB
 | MealPlan | `Features/Mealplans/Types/MealPlan.cs` | `MealPlanId(Guid)` | `assignments` → Meal; `sharedWithGroupId` → Group; `assignedBy` → User |
 | Meal | `Features/Mealplans/Types/Meal.cs` | `MealId(Guid)` | `createdBy` / `lastModifiedBy` → User; `ratings` (keys) → User |
 | MedicineSchedule | `Features/Medicines/Types/MedicineSchedule.cs` | `MedicineId(Guid)` | `childId`, `createdBy` / `lastModifiedBy` → User |
+| PickupSchedule | `Features/Pickups/Types/PickupSchedule.cs` | `PickupScheduleId(Guid)` | `childId` → User; assignments' `guardianId` / `siblingChildId` / `assignedBy` → User |

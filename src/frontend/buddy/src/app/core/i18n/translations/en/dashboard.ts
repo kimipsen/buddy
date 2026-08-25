@@ -49,5 +49,22 @@ export const dashboard = {
     taken: 'Taken',
     skipped: 'Skipped',
     undo: 'Undo'
+  },
+  pickup: {
+    title: 'Today’s pickup & drop-off',
+    manageLink: 'Plan pickups →',
+    loading: 'Loading today’s schedule…',
+    loadError: 'Unable to load today’s pickup schedule.',
+    noChildren: 'Link a child from Settings to plan their pickups.',
+    empty: 'Nothing planned for today.',
+    slots: {
+      dropOff: 'Drop-off',
+      pickUp: 'Pickup'
+    },
+    kind: {
+      guardian: 'A guardian',
+      selfEscort: 'Goes alone',
+      sibling: 'A sibling'
+    }
   }
 };

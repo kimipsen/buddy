@@ -1,0 +1,18 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000070",
+  "Date": "2025-06-01",
+  "Slot": "PickUp",
+  "Before": null,
+  "After": {
+    "Kind": "Sibling",
+    "GuardianId": null,
+    "SiblingChildId": "00000000-0000-0000-0000-000000000004",
+    "PlaydateHostName": null,
+    "PlaydateLocation": null,
+    "PlaydateContactInfo": null,
+    "Time": null,
+    "AssignedBy": "00000000-0000-0000-0000-000000000001",
+    "Notes": null
+  },
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

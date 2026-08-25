@@ -70,6 +70,15 @@ export class GuardiansService {
     return firstValueFrom(this.http.get<GuardianSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/guardians`));
   }
 
+  // Unlike listMyGuardians (which only answers "who are the caller's own guardians", i.e. caller
+  // is the child), this answers "who are this child's guardians", as one of them -- e.g. a
+  // co-parent -- needed for the Pickups "assign a guardian" picker.
+  listChildGuardians(childId: string): Promise<GuardianSummary[]> {
+    return firstValueFrom(
+      this.http.get<GuardianSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardians`)
+    );
+  }
+
   createChild(request: CreateChildRequest): Promise<CreateChildResult> {
     return firstValueFrom(
       this.http.post<CreateChildResult>(`${this.runtimeConfig.apiBaseUrl}/users/me/children`, request)
