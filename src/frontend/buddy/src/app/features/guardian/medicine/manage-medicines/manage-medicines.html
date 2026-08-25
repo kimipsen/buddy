@@ -202,6 +202,7 @@
           <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ 'medicine.manageMedicines.form.startDateLabel' | translate }}</span>
           <input
             type="date"
+            name="medicineStartDate"
             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             [ngModel]="newStartDate()"
             (ngModelChange)="newStartDate.set($event)"
@@ -211,6 +212,7 @@
           <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ 'medicine.manageMedicines.form.endDateLabel' | translate }}</span>
           <input
             type="date"
+            name="medicineEndDate"
             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             [ngModel]="newEndDate()"
             (ngModelChange)="newEndDate.set($event)"
