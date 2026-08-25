@@ -10,6 +10,13 @@ export const calendar = {
     previousWeek: 'Previous week',
     nextWeek: 'Next week',
     taskUpdateError: 'Unable to update this task.',
+    delete: {
+      button: 'Delete',
+      confirmPrompt: 'Delete this?',
+      confirmButton: 'Confirm',
+      cancelButton: 'Cancel',
+      error: 'Unable to delete this item.'
+    },
     filter: {
       title: 'Calendars'
     },

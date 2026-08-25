@@ -118,19 +118,28 @@ export class CalendarsService {
     );
   }
 
-  createItem(calendarId: string, request: CreateItemRequest): Promise<CalendarItemResponse> {
-    return firstValueFrom(
+  async createItem(calendarId: string, request: CreateItemRequest): Promise<CalendarItemResponse> {
+    const created = await firstValueFrom(
       this.http.post<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items`, request)
     );
+    this.todayCache = null;
+    return created;
   }
 
-  setTaskCompletion(calendarId: string, itemId: string, date: string, isCompleted: boolean): Promise<TaskCompletion> {
-    return firstValueFrom(
+  async deleteItem(calendarId: string, itemId: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}`));
+    this.todayCache = null;
+  }
+
+  async setTaskCompletion(calendarId: string, itemId: string, date: string, isCompleted: boolean): Promise<TaskCompletion> {
+    const completion = await firstValueFrom(
       this.http.patch<TaskCompletion>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/completion`, {
         date,
         isCompleted
       })
     );
+    this.todayCache = null;
+    return completion;
   }
 
   /**

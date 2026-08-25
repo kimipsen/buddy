@@ -10,6 +10,13 @@ export const calendar = {
     previousWeek: 'Forrige uge',
     nextWeek: 'Næste uge',
     taskUpdateError: 'Kunne ikke opdatere denne opgave.',
+    delete: {
+      button: 'Slet',
+      confirmPrompt: 'Slet denne?',
+      confirmButton: 'Bekræft',
+      cancelButton: 'Annuller',
+      error: 'Kunne ikke slette dette element.'
+    },
     filter: {
       title: 'Kalendere'
     },

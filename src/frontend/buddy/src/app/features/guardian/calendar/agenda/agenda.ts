@@ -85,6 +85,8 @@ export class CalendarAgenda {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly savingTaskId = signal<string | null>(null);
+  protected readonly confirmingDeleteItemId = signal<string | null>(null);
+  protected readonly deletingItemId = signal<string | null>(null);
 
   protected readonly occurrencesByDate = computed(() => {
     const hidden = this.hiddenCalendarIds();
@@ -207,6 +209,30 @@ export class CalendarAgenda {
       this.error.set('calendar.agenda.taskUpdateError');
     } finally {
       this.savingTaskId.set(null);
+    }
+  }
+
+  protected requestDeleteItem(itemId: string): void {
+    this.error.set(null);
+    this.confirmingDeleteItemId.set(itemId);
+  }
+
+  protected cancelDeleteItem(): void {
+    this.confirmingDeleteItemId.set(null);
+  }
+
+  protected async confirmDeleteItem(occurrence: CalendarOccurrence): Promise<void> {
+    this.deletingItemId.set(occurrence.itemId);
+    this.error.set(null);
+
+    try {
+      await this.calendars.deleteItem(occurrence.calendarId, occurrence.itemId);
+      this.confirmingDeleteItemId.set(null);
+      this.occurrences.update((current) => current.filter((existing) => existing.itemId !== occurrence.itemId));
+    } catch {
+      this.error.set('calendar.agenda.delete.error');
+    } finally {
+      this.deletingItemId.set(null);
     }
   }
 
