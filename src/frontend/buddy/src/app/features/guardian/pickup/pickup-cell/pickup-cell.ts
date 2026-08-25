@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AssignPickupRequest, PickupAssigneeKind, PickupOccurrence } from '../../../../core/pickups.service';
+import { TimeOfDayPipe } from '../../../../core/time-of-day.pipe';
+import { TimeSelect } from '../../../../shared/time-select/time-select';
 
 const GUARDIAN: PickupAssigneeKind = 0;
 const SELF_ESCORT: PickupAssigneeKind = 1;
@@ -15,7 +17,7 @@ const PLAYDATE: PickupAssigneeKind = 3;
 // manage-medicines.ts's inline confirm/cancel pattern), so editing happens in place the same way.
 @Component({
   selector: 'app-pickup-cell',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, TimeOfDayPipe, TimeSelect],
   templateUrl: './pickup-cell.html'
 })
 export class PickupCell {

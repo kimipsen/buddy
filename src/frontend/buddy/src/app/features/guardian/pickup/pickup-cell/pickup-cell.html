@@ -64,12 +64,7 @@
       />
     }
 
-    <input
-      type="time"
-      class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      [ngModel]="time()"
-      (ngModelChange)="time.set($event)"
-    />
+    <app-time-select [value]="time()" (valueChange)="time.set($event)" />
     <input
       type="text"
       [placeholder]="'pickup.cell.notesPlaceholder' | translate"
@@ -124,7 +119,7 @@
       }
     </span>
     @if (occurrence.time) {
-      <span class="text-xs text-slate-500">{{ occurrence.time.slice(0, 5) }}</span>
+      <span class="text-xs text-slate-500">{{ occurrence.time | timeOfDay }}</span>
     }
   </button>
   @if (!disabled()) {
