@@ -6,6 +6,7 @@ export const child = {
     emptySubtitle: 'Your events and tasks will show up here once a calendar is shared with you.',
     guardiansTitle: 'Your guardians',
     mealsTitle: 'Meals today',
+    mealplanLink: 'See past meals & rate them',
     medicineTitle: 'Medicine today',
     tasksTitle: 'Tasks today',
     loadError: 'Something went wrong. Try again in a bit.',
@@ -33,5 +34,21 @@ export const child = {
         sibling: 'A sibling'
       }
     }
+  },
+  mealplan: {
+    back: 'Back',
+    title: 'My meals',
+    previousWeek: '← Previous week',
+    nextWeek: 'Next week →',
+    loading: 'Loading your meals…',
+    loadError: 'Something went wrong loading your meals. Try again in a bit.',
+    rateError: 'Unable to save your rating. Try again.',
+    emptyTitle: 'No meals planned for this week',
+    starLabel: 'Rate {count} star',
+    addNote: 'Add a note',
+    editNote: 'Edit note',
+    notePlaceholder: 'What did you think?',
+    cancel: 'Cancel',
+    save: 'Save'
   }
 };

@@ -43,7 +43,10 @@ export const mealplan = {
     readOnly: 'You have read-only access to this plan.',
     loadError: 'Unable to load the meal plan.',
     updateError: 'Unable to update the meal plan. Please try again.',
-    dragHint: 'Drag to move or swap with another day or meal'
+    dragHint: 'Drag to move or swap with another day or meal',
+    previousWeek: '← Previous week',
+    nextWeek: 'Next week →',
+    pastDay: '(past)'
   },
   slots: {
     breakfast: 'Breakfast',

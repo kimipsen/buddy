@@ -41,6 +41,7 @@ export interface MealPlanEntry {
   rating: MealRating | null;
   notes: string | null;
   assignedBy: string;
+  allRatings: MealRatingSummary[];
 }
 
 export interface MealRatingSummary {
@@ -91,6 +92,14 @@ export class MealplansService {
 
   listMealPlan(scope: MealplanScope, from: string, to: string): Promise<MealPlanEntry[]> {
     return firstValueFrom(this.http.get<MealPlanEntry[]>(`${this.base(scope)}/plan`, { params: { from, to } }));
+  }
+
+  // Always a family-side, child-only action -- only the child themself may rate their own meals
+  // (MealplanAuthorization.CheckRate), so this is never called with a group scope.
+  rateMeal(childId: string, mealId: string, stars: number, comment?: string | null): Promise<Meal> {
+    return firstValueFrom(
+      this.http.put<Meal>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}/rating`, { stars, comment })
+    );
   }
 
   async listMeals(scope: MealplanScope): Promise<Meal[]> {

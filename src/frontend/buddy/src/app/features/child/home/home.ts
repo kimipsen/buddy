@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth.service';
 import { CalendarItemKind, CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
@@ -34,7 +35,7 @@ const PICKUP_SLOT_LABELS = { 0: 'child.home.pickup.slots.dropOff', 1: 'child.hom
 
 @Component({
   selector: 'app-child-home',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, RouterLink],
   templateUrl: './home.html'
 })
 export class ChildHome implements OnInit {

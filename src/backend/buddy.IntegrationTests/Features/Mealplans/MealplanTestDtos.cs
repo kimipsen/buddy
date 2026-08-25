@@ -31,4 +31,5 @@ internal sealed record MealPlanEntryDto(
     string Color,
     MealRatingDto? Rating,
     string? Notes,
-    Guid AssignedBy);
+    Guid AssignedBy,
+    IReadOnlyList<MealRatingEntryDto> AllRatings);

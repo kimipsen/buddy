@@ -12,4 +12,5 @@ public sealed record MealPlanEntry(
     string Color,
     MealRating? Rating,
     string? Notes,
-    Guid AssignedBy);
+    Guid AssignedBy,
+    IReadOnlyList<MealPlanEntryRating> AllRatings);

@@ -1,5 +1,23 @@
 <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-  <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'mealplan.assign.title' | translate }}</h3>
+  <div class="mb-5 flex items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">{{ 'mealplan.assign.title' | translate }}</h3>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        (click)="previousWeek()"
+      >
+        {{ 'mealplan.assign.previousWeek' | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        (click)="nextWeek()"
+      >
+        {{ 'mealplan.assign.nextWeek' | translate }}
+      </button>
+    </div>
+  </div>
 
   @if (loading()) {
     <p class="text-sm text-slate-500">{{ 'mealplan.assign.loading' | translate }}</p>
@@ -27,7 +45,12 @@
         <tbody>
           @for (day of days(); track day.date) {
             <tr>
-              <th class="whitespace-nowrap pr-2 text-left text-sm font-semibold text-slate-700">{{ day.label }}</th>
+              <th class="whitespace-nowrap pr-2 text-left text-sm font-semibold text-slate-700">
+                {{ day.label }}
+                @if (isPastDay(day.date)) {
+                  <span class="ml-1 text-xs font-medium text-slate-400">{{ 'mealplan.assign.pastDay' | translate }}</span>
+                }
+              </th>
               @for (slot of slots; track slot) {
                 <td>
                   <div
@@ -40,17 +63,17 @@
                     <app-meal-picker
                       [meals]="meals()"
                       [mealId]="mealIdFor(day.date, slot)"
-                      [disabled]="readOnly() || savingKey() === key(day.date, slot)"
+                      [disabled]="readOnly() || isPastDay(day.date) || savingKey() === key(day.date, slot)"
                       (mealIdChange)="onSlotChange(day.date, slot, $event)"
                     />
                     @if (entryFor(day.date, slot); as entry) {
                       <div
                         cdkDrag
                         [cdkDragData]="{ date: day.date, slot: slot }"
-                        [cdkDragDisabled]="readOnly() || savingKey() !== null"
+                        [cdkDragDisabled]="readOnly() || isPastDay(day.date) || savingKey() !== null"
                         class="pointer-events-none absolute inset-0"
                       >
-                        @if (!readOnly()) {
+                        @if (!readOnly() && !isPastDay(day.date)) {
                           <div
                             cdkDragHandle
                             class="pointer-events-auto absolute inset-y-0 right-1.5 flex cursor-grab items-center text-slate-400 hover:text-slate-600"
@@ -66,6 +89,22 @@
                       </div>
                     }
                   </div>
+
+                  @if (ratingsFor(day.date, slot); as ratings) {
+                    @if (ratings.length > 0) {
+                      <ul class="mt-1 space-y-0.5">
+                        @for (rating of ratings; track rating.childName) {
+                          <li class="text-xs text-slate-500">
+                            <span class="font-medium">{{ rating.childName }}:</span>
+                            <span aria-hidden="true">{{ starDisplay(rating.stars) }}</span>
+                            @if (rating.comment) {
+                              <span class="italic">“{{ rating.comment }}”</span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    }
+                  }
                 </td>
               }
             </tr>

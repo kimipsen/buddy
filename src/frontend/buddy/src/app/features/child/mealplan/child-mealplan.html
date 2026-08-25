@@ -1,0 +1,124 @@
+<main class="min-h-dvh bg-amber-50 text-slate-950">
+  <header class="flex items-center justify-between px-6 py-5 sm:px-8">
+    <div class="flex items-center gap-3">
+      <a routerLink="/child" class="text-base font-semibold text-emerald-700 hover:text-emerald-800">← {{ 'child.mealplan.back' | translate }}</a>
+      <h1 class="text-2xl font-bold tracking-normal">{{ 'child.mealplan.title' | translate }}</h1>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-2xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+        (click)="previousWeek()"
+      >
+        {{ 'child.mealplan.previousWeek' | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-2xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+        (click)="nextWeek()"
+      >
+        {{ 'child.mealplan.nextWeek' | translate }}
+      </button>
+    </div>
+  </header>
+
+  <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
+    @if (error(); as message) {
+      <p class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700">{{ message | translate }}</p>
+    }
+
+    @if (loading()) {
+      <p class="text-lg font-semibold text-slate-500">{{ 'child.mealplan.loading' | translate }}</p>
+    } @else if (hasAnyEntries()) {
+      @for (day of days(); track day.date) {
+        @if (entriesForDay(day.date).length > 0) {
+          <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+            <h2 class="text-xl font-bold tracking-normal">{{ day.label }}</h2>
+            <ul class="mt-4 space-y-4">
+              @for (entry of entriesForDay(day.date); track entry.slot) {
+                <li class="rounded-2xl border-2 border-slate-200 px-4 py-3">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ slotLabels[entry.slot] | translate }}</span>
+                    <span class="flex items-center gap-2 text-lg font-semibold">
+                      <span aria-hidden="true">{{ entry.icon }}</span>
+                      {{ entry.mealName }}
+                    </span>
+                  </div>
+
+                  @if (canRate(entry)) {
+                    <div class="mt-3 flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-1">
+                        @for (starCount of stars; track starCount) {
+                          <button
+                            type="button"
+                            class="text-2xl leading-none disabled:opacity-50"
+                            [class.text-amber-400]="entry.rating !== null && starCount <= entry.rating.stars"
+                            [class.text-slate-300]="entry.rating === null || starCount > entry.rating.stars"
+                            [disabled]="savingKey() === key(entry.date, entry.slot)"
+                            [attr.aria-label]="'child.mealplan.starLabel' | translate: { count: starCount }"
+                            (click)="rate(entry, starCount)"
+                          >
+                            ★
+                          </button>
+                        }
+                      </div>
+
+                      <button
+                        type="button"
+                        class="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                        (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)"
+                      >
+                        {{ (entry.rating?.comment ? 'child.mealplan.editNote' : 'child.mealplan.addNote') | translate }}
+                      </button>
+                    </div>
+
+                    @if (isEditing(entry)) {
+                      <div class="mt-3 space-y-2">
+                        <label class="sr-only" [attr.for]="'mealNote-' + key(entry.date, entry.slot)">
+                          {{ 'child.mealplan.notePlaceholder' | translate }}
+                        </label>
+                        <textarea
+                          [id]="'mealNote-' + key(entry.date, entry.slot)"
+                          class="w-full rounded-xl border-2 border-slate-200 p-3 text-base focus:border-emerald-400 focus:outline-none"
+                          rows="2"
+                          [placeholder]="'child.mealplan.notePlaceholder' | translate"
+                          [value]="commentDraft()"
+                          (input)="setComment($any($event.target).value)"
+                        ></textarea>
+                        <div class="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            class="rounded-2xl border-2 border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-400"
+                            (click)="cancelEditing()"
+                          >
+                            {{ 'child.mealplan.cancel' | translate }}
+                          </button>
+                          <button
+                            type="button"
+                            class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                            [disabled]="savingKey() === key(entry.date, entry.slot)"
+                            (click)="saveComment(entry)"
+                          >
+                            {{ 'child.mealplan.save' | translate }}
+                          </button>
+                        </div>
+                      </div>
+                    } @else if (entry.rating?.comment; as comment) {
+                      <p class="mt-2 text-base italic text-slate-600">“{{ comment }}”</p>
+                    }
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    } @else {
+      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
+        <p class="text-5xl">🍽️</p>
+        <h2 class="mt-4 text-2xl font-bold tracking-normal">{{ 'child.mealplan.emptyTitle' | translate }}</h2>
+      </div>
+    }
+  </section>
+</main>

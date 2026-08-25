@@ -43,7 +43,10 @@ export const mealplan = {
     readOnly: 'Du har kun læseadgang til denne plan.',
     loadError: 'Kunne ikke indlæse madplanen.',
     updateError: 'Kunne ikke opdatere madplanen. Prøv igen.',
-    dragHint: 'Træk for at flytte eller bytte med en anden dag eller et andet måltid'
+    dragHint: 'Træk for at flytte eller bytte med en anden dag eller et andet måltid',
+    previousWeek: '← Forrige uge',
+    nextWeek: 'Næste uge →',
+    pastDay: '(tidligere)'
   },
   slots: {
     breakfast: 'Morgenmad',

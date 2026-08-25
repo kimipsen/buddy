@@ -57,11 +57,14 @@ public static class MealPlanExpansion
                 mealsById[assignment.MealId] = meal;
             }
 
-            // The viewing child's own rating, not every sibling's -- a personalized "do YOU like
-            // tonight's dinner" for the calendar view (see MealResponse.Ratings for the full list).
+            // Rating is the viewing child's own opinion, for a personalized "do YOU like tonight's
+            // dinner" in the calendar view; AllRatings carries every sibling's, for a guardian
+            // comparing reactions across a shared meal (see MealResponse.Ratings for the same data
+            // in the meal-library view).
             entries.Add(new MealPlanEntry(
                 date, slot, meal.Id, meal.Name, meal.Icon.Value, meal.Color.Value, meal.Ratings.GetValueOrDefault(childId),
-                assignment.Notes, assignment.AssignedBy.Value));
+                assignment.Notes, assignment.AssignedBy.Value,
+                [.. meal.Ratings.Select(pair => new MealPlanEntryRating(pair.Key, pair.Value.Stars, pair.Value.Comment, pair.Value.RatedAt))]));
         }
 
         entries.Sort((a, b) =>

@@ -85,6 +85,7 @@ public static class AssignMealToSlotHandler
 
         return new Result<MealPlanEntry>.Success(new MealPlanEntry(
             date, slot, meal.Id, meal.Name, meal.Icon.Value, meal.Color.Value,
-            meal.Ratings.GetValueOrDefault(childId), notes, assignedBy.Value));
+            meal.Ratings.GetValueOrDefault(childId), notes, assignedBy.Value,
+            [.. meal.Ratings.Select(pair => new MealPlanEntryRating(pair.Key, pair.Value.Stars, pair.Value.Comment, pair.Value.RatedAt))]));
     }
 }

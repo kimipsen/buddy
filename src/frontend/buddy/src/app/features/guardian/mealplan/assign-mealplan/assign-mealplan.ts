@@ -1,7 +1,8 @@
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 
-import { toIsoDate } from '../../../../core/date-utils';
+import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
+import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { MealPlanEntry, MealplanAccessTier, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
@@ -28,11 +29,25 @@ interface SlotRef {
   slot: MealSlot;
 }
 
-function buildDays(locale: string): PlannerDay[] {
-  const today = new Date();
+interface NamedRating {
+  childName: string;
+  stars: number;
+  comment: string | null;
+}
+
+// Parsed as local-timezone components rather than `new Date(isoDate)` -- the latter parses an
+// unqualified "YYYY-MM-DD" as UTC midnight, which can land on the wrong calendar day once
+// formatted back in a timezone behind UTC.
+function parseIsoDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
+  const anchor = parseIsoDate(anchorIsoDate);
 
   return Array.from({ length: DAYS_AHEAD }, (_, offset) => {
-    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+    const date = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offset);
 
     return {
       date: toIsoDate(date),
@@ -48,6 +63,7 @@ function buildDays(locale: string): PlannerDay[] {
 })
 export class AssignMealplan {
   private readonly mealplans = inject(MealplansService);
+  private readonly guardians = inject(GuardiansService);
   private readonly translation = inject(TranslationService);
 
   readonly scope = input.required<MealplanScope>();
@@ -61,7 +77,8 @@ export class AssignMealplan {
 
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
-  protected readonly days = computed(() => buildDays(this.translation.language()));
+  protected readonly anchorDate = signal(todayIsoDate());
+  protected readonly days = computed(() => buildDays(this.anchorDate(), this.translation.language()));
 
   // Reads straight from the shared service state, so adding a meal in the meal library on the
   // same page shows up here immediately without a manual refetch.
@@ -71,14 +88,53 @@ export class AssignMealplan {
   protected readonly error = signal<string | null>(null);
   protected readonly savingKey = signal<string | null>(null);
 
+  // "My children" resolves independently of which scope is currently selected -- it's used only
+  // to label sibling ratings by name, not to determine which plan is being viewed. Loaded once.
+  private readonly childNamesById = signal<Record<string, string>>({});
+
   constructor() {
     effect(() => {
+      // Read anchorDate() here (not just inside load()) so the effect re-runs when the visible
+      // week changes, not only when the scope does.
+      this.anchorDate();
       void this.load(this.scope());
     });
+
+    void this.loadChildNames();
+  }
+
+  private async loadChildNames(): Promise<void> {
+    try {
+      const children: ChildSummary[] = await this.guardians.listMyChildren();
+      this.childNamesById.set(Object.fromEntries(children.map((child) => [child.id, child.name.givenName])));
+    } catch {
+      // Sibling names are a nice-to-have on the historical ratings view -- if this fails, ratings
+      // still render (see ratingsFor), just without a resolvable name.
+    }
+  }
+
+  protected previousWeek(): void {
+    this.shiftWeek(-DAYS_AHEAD);
+  }
+
+  protected nextWeek(): void {
+    this.shiftWeek(DAYS_AHEAD);
+  }
+
+  private shiftWeek(offsetDays: number): void {
+    const anchor = parseIsoDate(this.anchorDate());
+    const shifted = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offsetDays);
+    this.anchorDate.set(toIsoDate(shifted));
   }
 
   protected key(date: string, slot: MealSlot): string {
     return `${date}|${slot}`;
+  }
+
+  // A day that has already happened is a record of what was actually planned, not something to
+  // keep editing -- the write controls are disabled for it regardless of the scope's access tier.
+  protected isPastDay(date: string): boolean {
+    return date < todayIsoDate();
   }
 
   protected mealIdFor(date: string, slot: MealSlot): string {
@@ -89,8 +145,35 @@ export class AssignMealplan {
     return this.entriesByKey()[this.key(date, slot)];
   }
 
+  protected starDisplay(stars: number): string {
+    return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+  }
+
+  // Only meaningful for a past day in the family's own scope -- a group-shared plan is viewed by
+  // people outside that family, who have no "my children" list to resolve names against, so it
+  // falls back to showing nothing extra there rather than an unresolved id.
+  protected ratingsFor(date: string, slot: MealSlot): NamedRating[] {
+    if (this.scope().kind !== 'family' || !this.isPastDay(date)) {
+      return [];
+    }
+
+    const entry = this.entryFor(date, slot);
+
+    if (!entry || entry.allRatings.length === 0) {
+      return [];
+    }
+
+    const names = this.childNamesById();
+
+    return entry.allRatings.map((rating) => ({
+      childName: names[rating.childId] ?? rating.childId,
+      stars: rating.stars,
+      comment: rating.comment
+    }));
+  }
+
   protected async onSlotChange(date: string, slot: MealSlot, mealId: string): Promise<void> {
-    if (this.readOnly()) {
+    if (this.readOnly() || this.isPastDay(date)) {
       return;
     }
 
@@ -130,6 +213,10 @@ export class AssignMealplan {
     const target = event.container.data;
 
     if (source.date === target.date && source.slot === target.slot) {
+      return;
+    }
+
+    if (this.isPastDay(source.date) || this.isPastDay(target.date)) {
       return;
     }
 
