@@ -18,6 +18,7 @@ export interface ChildSummary {
   name: PersonName;
   guardianLinkId: string;
   kind: GuardianKind;
+  language: string;
 }
 
 export interface GuardianSummary {
@@ -88,6 +89,12 @@ export class GuardiansService {
   revokeChild(childId: string): Promise<void> {
     return firstValueFrom(
       this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardian-link`)
+    );
+  }
+
+  updateChildLanguage(childId: string, language: string): Promise<ChildSummary> {
+    return firstValueFrom(
+      this.http.patch<ChildSummary>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/language`, { language })
     );
   }
 

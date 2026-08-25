@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, isSupportedLanguage } from '../../../../core/i18n/language';
 import {
   ChildSummary,
   CreateChildResult,
@@ -28,6 +29,8 @@ export class ManageChildren implements OnInit {
 
   protected readonly invitableKinds = INVITABLE_KINDS;
   protected readonly kindLabels = KIND_LABELS;
+  protected readonly languages = SUPPORTED_LANGUAGES;
+  protected readonly languageNames = LANGUAGE_NAMES;
 
   protected readonly children = signal<ChildSummary[]>([]);
   protected readonly childrenLoading = signal(true);
@@ -43,6 +46,9 @@ export class ManageChildren implements OnInit {
   protected readonly revokingChildId = signal<string | null>(null);
   protected readonly confirmingRevokeChildId = signal<string | null>(null);
   protected readonly revokeError = signal<string | null>(null);
+
+  protected readonly savingLanguageChildId = signal<string | null>(null);
+  protected readonly languageErrorByChildId = signal<Record<string, string | null>>({});
 
   protected readonly passwordCopied = signal(false);
 
@@ -112,6 +118,28 @@ export class ManageChildren implements OnInit {
       this.revokeError.set('admin.manageChildren.revokeError');
     } finally {
       this.revokingChildId.set(null);
+    }
+  }
+
+  protected languageErrorFor(childId: string): string | null {
+    return this.languageErrorByChildId()[childId] ?? null;
+  }
+
+  protected async changeLanguage(childId: string, language: string): Promise<void> {
+    if (!isSupportedLanguage(language)) {
+      return;
+    }
+
+    this.savingLanguageChildId.set(childId);
+    this.languageErrorByChildId.update((byChildId) => ({ ...byChildId, [childId]: null }));
+
+    try {
+      const updated = await this.guardians.updateChildLanguage(childId, language);
+      this.children.update((list) => list.map((child) => (child.id === childId ? updated : child)));
+    } catch {
+      this.languageErrorByChildId.update((byChildId) => ({ ...byChildId, [childId]: 'admin.manageChildren.language.error' }));
+    } finally {
+      this.savingLanguageChildId.set(null);
     }
   }
 

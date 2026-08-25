@@ -74,6 +74,10 @@ export const admin = {
     linkedBadge: 'Tilknyttet',
     remove: 'Fjern',
     revokeError: 'Kunne ikke fjerne dette barn.',
+    language: {
+      label: 'Sprog',
+      error: 'Kunne ikke opdatere barnets sprog.'
+    },
     givenNamePlaceholder: 'Fornavn',
     familyNamePlaceholder: 'Efternavn',
     usernamePlaceholder: 'Login-brugernavn',

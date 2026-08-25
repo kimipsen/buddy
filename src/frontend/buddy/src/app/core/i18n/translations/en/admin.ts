@@ -74,6 +74,10 @@ export const admin = {
     linkedBadge: 'Linked',
     remove: 'Remove',
     revokeError: 'Unable to remove this child.',
+    language: {
+      label: 'Language',
+      error: 'Unable to update this child\'s language.'
+    },
     givenNamePlaceholder: 'Given name',
     familyNamePlaceholder: 'Family name',
     usernamePlaceholder: 'Login username',

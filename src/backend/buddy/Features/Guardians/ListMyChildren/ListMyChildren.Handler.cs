@@ -21,7 +21,7 @@ public static class ListMyChildrenHandler
 
             if (User.Rehydrate(childEvents) is { IsDeleted: false } child)
             {
-                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind));
+                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.ResolvedLanguage));
             }
         }
 
@@ -29,4 +29,4 @@ public static class ListMyChildrenHandler
     }
 }
 
-public sealed record ChildSummary(UserId Id, Name Name, GuardianLinkId GuardianLinkId, GuardianKind Kind);
+public sealed record ChildSummary(UserId Id, Name Name, GuardianLinkId GuardianLinkId, GuardianKind Kind, Language Language);

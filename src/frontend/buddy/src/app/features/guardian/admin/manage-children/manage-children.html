@@ -12,47 +12,68 @@
   } @else {
     <ul class="space-y-3">
       @for (child of children(); track child.id) {
-        <li class="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
-          <span class="text-sm font-medium">{{ child.name.givenName }} {{ child.name.familyName }}</span>
+        <li class="rounded-lg border border-slate-200 px-4 py-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="text-sm font-medium">{{ child.name.givenName }} {{ child.name.familyName }}</span>
+              <label class="flex items-center gap-1.5 text-xs text-slate-500">
+                {{ 'admin.manageChildren.language.label' | translate }}
+                <select
+                  class="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+                  [ngModel]="child.language"
+                  [disabled]="savingLanguageChildId() === child.id"
+                  (ngModelChange)="changeLanguage(child.id, $event)"
+                >
+                  @for (language of languages; track language) {
+                    <option [value]="language">{{ languageNames[language] }}</option>
+                  }
+                </select>
+              </label>
+            </div>
 
-          @if (confirmingRevokeChildId() === child.id) {
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-slate-500">{{ 'admin.manageChildren.removeConfirmPrompt' | translate }}</span>
-              <button
-                type="button"
-                class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-                [disabled]="revokingChildId() === child.id"
-                (click)="confirmRevoke(child.id)"
-              >
-                {{ 'admin.manageChildren.confirm' | translate }}
-              </button>
-              <button
-                type="button"
-                class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
-                [disabled]="revokingChildId() === child.id"
-                (click)="cancelRevoke()"
-              >
-                {{ 'admin.manageChildren.cancel' | translate }}
-              </button>
-            </div>
-          } @else {
-            <div class="flex items-center gap-3">
-              <span class="text-xs font-semibold text-slate-500">{{ 'admin.manageChildren.linkedBadge' | translate }}</span>
-              <button
-                type="button"
-                class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
-                (click)="toggleInvitePanel(child.id)"
-              >
-                {{ (expandedInviteChildId() === child.id ? 'admin.manageChildren.invite.hideButton' : 'admin.manageChildren.invite.showButton') | translate }}
-              </button>
-              <button
-                type="button"
-                class="text-xs font-semibold text-red-600 hover:text-red-700"
-                (click)="requestRevoke(child.id)"
-              >
-                {{ 'admin.manageChildren.remove' | translate }}
-              </button>
-            </div>
+            @if (confirmingRevokeChildId() === child.id) {
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500">{{ 'admin.manageChildren.removeConfirmPrompt' | translate }}</span>
+                <button
+                  type="button"
+                  class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                  [disabled]="revokingChildId() === child.id"
+                  (click)="confirmRevoke(child.id)"
+                >
+                  {{ 'admin.manageChildren.confirm' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                  [disabled]="revokingChildId() === child.id"
+                  (click)="cancelRevoke()"
+                >
+                  {{ 'admin.manageChildren.cancel' | translate }}
+                </button>
+              </div>
+            } @else {
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold text-slate-500">{{ 'admin.manageChildren.linkedBadge' | translate }}</span>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  (click)="toggleInvitePanel(child.id)"
+                >
+                  {{ (expandedInviteChildId() === child.id ? 'admin.manageChildren.invite.hideButton' : 'admin.manageChildren.invite.showButton') | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-red-600 hover:text-red-700"
+                  (click)="requestRevoke(child.id)"
+                >
+                  {{ 'admin.manageChildren.remove' | translate }}
+                </button>
+              </div>
+            }
+          </div>
+
+          @if (languageErrorFor(child.id); as message) {
+            <p class="mt-1.5 text-xs text-red-600">{{ message | translate }}</p>
           }
         </li>
 
