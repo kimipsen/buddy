@@ -134,6 +134,23 @@ export const admin = {
       confirmButton: 'Bekræft',
       cancelButton: 'Annuller',
       error: 'Kunne ikke slette denne kalender.'
+    },
+    ical: {
+      showButton: 'Abonnement',
+      hideButton: 'Luk',
+      description: 'Generer et privat link til at abonnere på denne kalender i en ekstern kalenderapp (f.eks. Google Kalender, Apple Kalender, Outlook).',
+      loading: 'Indlæser links…',
+      loadError: 'Kunne ikke indlæse abonnementslinks.',
+      empty: 'Ingen abonnementslinks endnu.',
+      issuedOn: 'Oprettet',
+      createButton: 'Generer nyt link',
+      creating: 'Genererer…',
+      createError: 'Kunne ikke generere et abonnementslink.',
+      newUrlHint: 'Kopier dette link nu -- det vises ikke igen.',
+      copyButton: 'Kopiér',
+      copiedButton: 'Kopieret',
+      revokeButton: 'Tilbagekald',
+      revokeError: 'Kunne ikke tilbagekalde dette link.'
     }
   },
   deleteAccount: {

@@ -21,6 +21,18 @@ export interface CalendarSummary {
   role: CalendarRole;
 }
 
+export interface IcalTokenSummary {
+  tokenId: string;
+  issuedAt: string;
+}
+
+// Returned exactly once, at creation -- the plaintext token is never retrievable again after this.
+export interface IssuedIcalToken {
+  tokenId: string;
+  token: string;
+  subscriptionPath: string;
+}
+
 export interface CreateCalendarRequest {
   name: string;
   timeZoneId: string;
@@ -125,6 +137,24 @@ export class CalendarsService {
 
   deleteCalendar(calendarId: string): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}`));
+  }
+
+  listIcalTokens(calendarId: string): Promise<IcalTokenSummary[]> {
+    return firstValueFrom(this.http.get<IcalTokenSummary[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`));
+  }
+
+  createIcalToken(calendarId: string): Promise<IssuedIcalToken> {
+    return firstValueFrom(this.http.post<IssuedIcalToken>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`, {}));
+  }
+
+  revokeIcalToken(calendarId: string, tokenId: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens/${tokenId}`));
+  }
+
+  // subscriptionPath is relative, in the same style as every other endpoint path on this
+  // service -- prefix with apiBaseUrl to get the URL a calendar app can subscribe to.
+  icalFeedUrl(subscriptionPath: string): string {
+    return `${this.runtimeConfig.apiBaseUrl}${subscriptionPath}`;
   }
 
   listOccurrences(calendarId: string, from: string, to: string): Promise<CalendarItemOccurrence[]> {

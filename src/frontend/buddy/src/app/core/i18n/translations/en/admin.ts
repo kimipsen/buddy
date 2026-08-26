@@ -134,6 +134,23 @@ export const admin = {
       confirmButton: 'Confirm',
       cancelButton: 'Cancel',
       error: 'Unable to delete this calendar.'
+    },
+    ical: {
+      showButton: 'Subscribe',
+      hideButton: 'Close',
+      description: 'Generate a private link to subscribe to this calendar in an external calendar app (e.g. Google Calendar, Apple Calendar, Outlook).',
+      loading: 'Loading links…',
+      loadError: 'Unable to load subscription links.',
+      empty: 'No subscription links yet.',
+      issuedOn: 'Created',
+      createButton: 'Generate new link',
+      creating: 'Generating…',
+      createError: 'Unable to generate a subscription link.',
+      newUrlHint: 'Copy this link now -- it will not be shown again.',
+      copyButton: 'Copy',
+      copiedButton: 'Copied',
+      revokeButton: 'Revoke',
+      revokeError: 'Unable to revoke this link.'
     }
   },
   deleteAccount: {

@@ -1,7 +1,8 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
+import { CalendarSummary, CalendarsService, IcalTokenSummary } from '../../../../core/calendars.service';
 import { browserTimeZoneId, listTimeZoneIds } from '../../../../core/date-utils';
 import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -14,7 +15,7 @@ const ROLE_LABELS: Record<number, string> = {
 
 @Component({
   selector: 'app-manage-calendars',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './manage-calendars.html'
 })
 export class ManageCalendars implements OnInit {
@@ -47,6 +48,18 @@ export class ManageCalendars implements OnInit {
   protected readonly deletingCalendarId = signal<string | null>(null);
   protected readonly deleteError = signal<string | null>(null);
 
+  protected readonly icalCalendarId = signal<string | null>(null);
+  protected readonly icalTokens = signal<IcalTokenSummary[]>([]);
+  protected readonly icalLoading = signal(false);
+  protected readonly icalError = signal<string | null>(null);
+  protected readonly icalCreating = signal(false);
+  protected readonly icalCreateError = signal<string | null>(null);
+  protected readonly icalRevokingTokenId = signal<string | null>(null);
+  // The plaintext URL is only ever available right after creation -- once this panel closes or a
+  // new token is issued, it's gone from the client just like it's gone from the server.
+  protected readonly newIcalUrl = signal<string | null>(null);
+  protected readonly icalCopied = signal(false);
+
   ngOnInit(): void {
     void this.loadCalendars();
     void this.loadManageableGroups();
@@ -77,6 +90,7 @@ export class ManageCalendars implements OnInit {
 
   protected startMove(calendarId: string): void {
     this.confirmingDeleteCalendarId.set(null);
+    this.icalCalendarId.set(null);
 
     if (this.movingCalendarId() === calendarId) {
       this.movingCalendarId.set(null);
@@ -111,6 +125,7 @@ export class ManageCalendars implements OnInit {
 
   protected requestDelete(calendarId: string): void {
     this.movingCalendarId.set(null);
+    this.icalCalendarId.set(null);
     this.deleteError.set(null);
     this.confirmingDeleteCalendarId.set(calendarId);
   }
@@ -131,6 +146,74 @@ export class ManageCalendars implements OnInit {
       this.deleteError.set('admin.manageCalendars.delete.error');
     } finally {
       this.deletingCalendarId.set(null);
+    }
+  }
+
+  protected toggleIcal(calendarId: string): void {
+    this.movingCalendarId.set(null);
+    this.confirmingDeleteCalendarId.set(null);
+
+    if (this.icalCalendarId() === calendarId) {
+      this.icalCalendarId.set(null);
+      return;
+    }
+
+    this.icalCalendarId.set(calendarId);
+    this.newIcalUrl.set(null);
+    this.icalCreateError.set(null);
+    void this.loadIcalTokens(calendarId);
+  }
+
+  protected async createIcalToken(calendarId: string): Promise<void> {
+    this.icalCreating.set(true);
+    this.icalCreateError.set(null);
+    this.newIcalUrl.set(null);
+    this.icalCopied.set(false);
+
+    try {
+      const issued = await this.calendars.createIcalToken(calendarId);
+      this.newIcalUrl.set(this.calendars.icalFeedUrl(issued.subscriptionPath));
+      await this.loadIcalTokens(calendarId);
+    } catch {
+      this.icalCreateError.set('admin.manageCalendars.ical.createError');
+    } finally {
+      this.icalCreating.set(false);
+    }
+  }
+
+  protected async revokeIcalToken(calendarId: string, tokenId: string): Promise<void> {
+    this.icalRevokingTokenId.set(tokenId);
+    this.icalError.set(null);
+
+    try {
+      await this.calendars.revokeIcalToken(calendarId, tokenId);
+      await this.loadIcalTokens(calendarId);
+    } catch {
+      this.icalError.set('admin.manageCalendars.ical.revokeError');
+    } finally {
+      this.icalRevokingTokenId.set(null);
+    }
+  }
+
+  protected async copyIcalUrl(url: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(url);
+      this.icalCopied.set(true);
+    } catch {
+      this.icalCopied.set(false);
+    }
+  }
+
+  private async loadIcalTokens(calendarId: string): Promise<void> {
+    this.icalLoading.set(true);
+    this.icalError.set(null);
+
+    try {
+      this.icalTokens.set(await this.calendars.listIcalTokens(calendarId));
+    } catch {
+      this.icalError.set('admin.manageCalendars.ical.loadError');
+    } finally {
+      this.icalLoading.set(false);
     }
   }
 

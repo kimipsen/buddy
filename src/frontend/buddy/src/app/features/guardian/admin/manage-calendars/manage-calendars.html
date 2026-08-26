@@ -41,6 +41,13 @@
                   <button
                     type="button"
                     class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                    (click)="toggleIcal(calendar.id)"
+                  >
+                    {{ (icalCalendarId() === calendar.id ? 'admin.manageCalendars.ical.hideButton' : 'admin.manageCalendars.ical.showButton') | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
                     (click)="startMove(calendar.id)"
                   >
                     {{ (movingCalendarId() === calendar.id ? 'admin.manageCalendars.move.hideButton' : 'admin.manageCalendars.move.showButton') | translate }}
@@ -85,6 +92,66 @@
               }
 
               @if (moveError(); as message) {
+                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+              }
+            </div>
+          }
+
+          @if (icalCalendarId() === calendar.id) {
+            <div class="mt-3 border-t border-slate-200 pt-3">
+              <p class="text-xs text-slate-500">{{ 'admin.manageCalendars.ical.description' | translate }}</p>
+
+              @if (icalLoading()) {
+                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageCalendars.ical.loading' | translate }}</p>
+              } @else if (icalTokens().length > 0) {
+                <ul class="mt-2 space-y-2">
+                  @for (token of icalTokens(); track token.tokenId) {
+                    <li class="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                      <span class="text-slate-600">{{ 'admin.manageCalendars.ical.issuedOn' | translate }} {{ token.issuedAt | date: 'mediumDate' }}</span>
+                      <button
+                        type="button"
+                        class="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                        [disabled]="icalRevokingTokenId() === token.tokenId"
+                        (click)="revokeIcalToken(calendar.id, token.tokenId)"
+                      >
+                        {{ 'admin.manageCalendars.ical.revokeButton' | translate }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageCalendars.ical.empty' | translate }}</p>
+              }
+
+              @if (newIcalUrl(); as url) {
+                <div class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
+                  <p class="font-medium">{{ 'admin.manageCalendars.ical.newUrlHint' | translate }}</p>
+                  <p class="mt-1 flex flex-wrap items-center gap-2">
+                    <span class="break-all font-mono text-xs">{{ url }}</span>
+                    <button
+                      type="button"
+                      class="shrink-0 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-800 transition hover:border-emerald-400"
+                      (click)="copyIcalUrl(url)"
+                    >
+                      {{ (icalCopied() ? 'admin.manageCalendars.ical.copiedButton' : 'admin.manageCalendars.ical.copyButton') | translate }}
+                    </button>
+                  </p>
+                </div>
+              }
+
+              <button
+                type="button"
+                class="mt-3 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50"
+                [disabled]="icalCreating()"
+                (click)="createIcalToken(calendar.id)"
+              >
+                {{ (icalCreating() ? 'admin.manageCalendars.ical.creating' : 'admin.manageCalendars.ical.createButton') | translate }}
+              </button>
+
+              @if (icalCreateError(); as message) {
+                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+              }
+              @if (icalError(); as message) {
                 <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
               }
             </div>
