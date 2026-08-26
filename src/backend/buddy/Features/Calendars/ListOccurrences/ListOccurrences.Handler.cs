@@ -45,6 +45,11 @@ public static class ListOccurrencesHandler
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, calendar.Icon, query.From, query.To, items, cancellationToken);
 
+        if (await ChildVisibility.IsChildAsync(userId, guardians, cancellationToken))
+        {
+            occurrences = ChildVisibility.FilterForChild(occurrences, userId);
+        }
+
         return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Success(occurrences);
     }
 }

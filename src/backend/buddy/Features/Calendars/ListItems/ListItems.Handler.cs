@@ -44,6 +44,11 @@ public static class ListItemsHandler
 
         loaded.Sort((a, b) => a.ScheduleKey.CompareTo(b.ScheduleKey));
 
+        if (await ChildVisibility.IsChildAsync(userId, guardians, cancellationToken))
+        {
+            return new Result<IReadOnlyCollection<CalendarItem>>.Success(ChildVisibility.FilterForChild(loaded, userId));
+        }
+
         return new Result<IReadOnlyCollection<CalendarItem>>.Success(loaded);
     }
 }
