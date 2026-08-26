@@ -74,11 +74,35 @@ already have to for in-flight request state (a different kind of transient
 state that genuinely does need to live in the parent, since it gates which
 button is disabled).
 
+## Guardian visibility
+
+Guardians see each linked child's star count as a small `✨ N stars` pill on
+the existing children list
+([children-overview.html](../../../src/frontend/buddy/src/app/features/guardian/children-overview/children-overview.html)),
+next to the "Linked" badge already there — not a new widget, since the
+guardian dashboard already has exactly one place that lists "my children,"
+and progress is a fact about a child, not a "today" occurrence like the
+other `-today` widgets on that dashboard. Backed by a new
+`GET /progress/children/{childId}` endpoint
+([GetChildProgress.Handler.cs](../../../src/backend/buddy/Features/Progress/GetChildProgress/GetChildProgress.Handler.cs)),
+authorized the same way `MedicineAuthorization` already gates a guardian
+viewing a child's medicine schedules — self, or an active `GuardianLink`,
+else `NotFound`. A child with zero stars shows no pill at all (the same
+"omit the empty state" convention `hasAnything()`/`mealsToShow()` already
+use elsewhere on this dashboard), rather than a discouraging `✨ 0 stars`.
+
+Each child's progress is fetched independently after the children list
+loads, so one child's fetch failing doesn't blank out the whole widget or
+block the (more important) name/linked-status list from rendering — the
+same best-effort shape `tasks-today` already uses for its own secondary
+lookup (assignee names).
+
 ## Deliberate boundaries
 
 - No reward catalog or redemption UI — Phase 3 in the backend doc, blocked
   on the same open product questions (real-world vs. cosmetic rewards).
-- No guardian-facing progress view or per-child on/off toggle.
+- No per-child on/off toggle for gamification, and no way for a guardian to
+  manually adjust a child's stars.
 - No sibling comparison of any kind — the badge only ever renders the
   signed-in child's own `GET /progress/me` response.
 - No dose-related stars shown, since the backend doesn't award any for

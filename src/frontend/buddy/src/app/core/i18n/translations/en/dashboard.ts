@@ -6,7 +6,8 @@ export const dashboard = {
     loading: 'Loading children…',
     loadError: 'Unable to load children.',
     empty: 'No children linked yet. Add one from Settings.',
-    linkedBadge: 'Linked'
+    linkedBadge: 'Linked',
+    starCount: '{count} stars'
   },
   tasks: {
     title: 'Today’s tasks',

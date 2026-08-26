@@ -17,4 +17,8 @@ export class ProgressService {
   getMyProgress(): Promise<ProgressSummary> {
     return firstValueFrom(this.http.get<ProgressSummary>(`${this.runtimeConfig.apiBaseUrl}/progress/me`));
   }
+
+  getChildProgress(childId: string): Promise<ProgressSummary> {
+    return firstValueFrom(this.http.get<ProgressSummary>(`${this.runtimeConfig.apiBaseUrl}/progress/children/${childId}`));
+  }
 }

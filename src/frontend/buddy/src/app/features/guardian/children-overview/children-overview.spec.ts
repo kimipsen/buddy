@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
+import { ProgressService } from '../../../core/progress.service';
 import { ChildrenOverview } from './children-overview';
 
 describe('ChildrenOverview', () => {
@@ -18,6 +19,7 @@ describe('ChildrenOverview', () => {
 
   interface Stubs {
     guardians?: Partial<GuardiansService>;
+    progress?: Partial<ProgressService>;
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -25,15 +27,22 @@ describe('ChildrenOverview', () => {
       listMyChildren: vi.fn(async () => []),
       ...stubs.guardians
     };
+    const progressStub: Partial<ProgressService> = {
+      getChildProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [] })),
+      ...stubs.progress
+    };
 
     await TestBed.configureTestingModule({
       imports: [ChildrenOverview],
-      providers: [{ provide: GuardiansService, useValue: guardiansStub }]
+      providers: [
+        { provide: GuardiansService, useValue: guardiansStub },
+        { provide: ProgressService, useValue: progressStub }
+      ]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ChildrenOverview);
 
-    return { fixture, guardians: guardiansStub };
+    return { fixture, guardians: guardiansStub, progress: progressStub };
   }
 
   // loadChildren chains an await on the stubbed service call before the signals driving the

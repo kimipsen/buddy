@@ -6,7 +6,8 @@ export const dashboard = {
     loading: 'Indlæser børn…',
     loadError: 'Kunne ikke indlæse børn.',
     empty: 'Ingen børn tilknyttet endnu. Tilføj et under Indstillinger.',
-    linkedBadge: 'Tilknyttet'
+    linkedBadge: 'Tilknyttet',
+    starCount: '{count} stjerner'
   },
   tasks: {
     title: 'Dagens opgaver',

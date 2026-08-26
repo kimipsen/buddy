@@ -65,6 +65,7 @@ public static class ProgressFeature
             .WithGroupName(OpenApiDocumentName);
 
         progress.MapGetMyProgress();
+        progress.MapGetChildProgress();
 
         return endpoints;
     }
