@@ -11,5 +11,6 @@
     "IsAllDay": true
   },
   "Recurrence": null,
-  "OccurredAt": "2025-01-01T12:00:00+00:00"
+  "OccurredAt": "2025-01-01T12:00:00+00:00",
+  "AssignedTo": null
 }

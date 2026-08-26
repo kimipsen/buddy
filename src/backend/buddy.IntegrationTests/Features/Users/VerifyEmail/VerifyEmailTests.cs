@@ -72,7 +72,7 @@ public sealed partial class VerifyEmailTests(BuddyApiFixture fixture)
         return match.Groups[1].Value;
     }
 
-    [GeneratedRegex(@"verification token is:\s*(\S+)")]
+    [GeneratedRegex(@"verify-email/(\S+)")]
     private static partial Regex TokenPattern();
 
     private sealed record EmailResponseEnvelope(EmailResponse Email);
