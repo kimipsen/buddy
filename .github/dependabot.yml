@@ -10,6 +10,16 @@ updates:
         patterns:
           - "*"
 
+  # Dev container features
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      devcontainer-features:
+        patterns:
+          - "*"
+
   # .NET backend (buddy + buddy.IntegrationTests share backend.slnx)
   - package-ecosystem: "nuget"
     directory: "/src/backend"
