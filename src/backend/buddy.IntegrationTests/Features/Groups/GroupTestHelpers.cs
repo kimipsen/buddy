@@ -47,6 +47,21 @@ internal static partial class GroupTestHelpers
         return response.ReadAsJson<GroupInviteResponseDto>();
     }
 
+    // Invite + accept in one call, for tests that just need a second member in the group and don't
+    // care about the invite flow itself.
+    public static async Task AddMemberAsync(BuddyApiFixture fixture, string ownerToken, Guid groupId, string inviteeToken, string inviteeEmail, GroupRole role)
+    {
+        await InviteToGroupAsync(fixture, ownerToken, groupId, inviteeEmail, role);
+        var token = await ReadInviteTokenAsync(fixture, inviteeEmail);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/invites/{token}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+    }
+
     public static async Task<string> ReadInviteTokenAsync(BuddyApiFixture fixture, string emailAddress)
     {
         var messages = await fixture.GetMailpitMessagesToAsync(emailAddress);
@@ -59,6 +74,8 @@ internal static partial class GroupTestHelpers
         return match.Groups[1].Value;
     }
 
-    [GeneratedRegex(@"invite token is:\s*(\S+)")]
+    // Matches the token off the end of SmtpEmailSender's "http://.../invite/{token}" link -- the
+    // email body no longer spells out "invite token is:" (see SendGroupInviteEmailAsync).
+    [GeneratedRegex(@"/invite/(\S+)")]
     private static partial Regex InviteTokenPattern();
 }

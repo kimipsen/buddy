@@ -43,6 +43,8 @@ export const calendar = {
       endTimeLabel: 'End time',
       dueDateLabel: 'Due date',
       dueTimeLabel: 'Due time',
+      assigneeLabel: 'Assign to',
+      assigneeUnassigned: 'Nobody',
       repeat: {
         label: 'Repeat',
         none: 'Does not repeat',

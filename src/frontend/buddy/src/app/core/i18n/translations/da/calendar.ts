@@ -43,6 +43,8 @@ export const calendar = {
       endTimeLabel: 'Sluttid',
       dueDateLabel: 'Forfaldsdato',
       dueTimeLabel: 'Forfaldstid',
+      assigneeLabel: 'Tildel til',
+      assigneeUnassigned: 'Ingen',
       repeat: {
         label: 'Gentag',
         none: 'Gentages ikke',

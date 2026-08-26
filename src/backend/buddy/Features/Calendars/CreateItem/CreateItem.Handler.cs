@@ -36,6 +36,21 @@ public static class CreateItemHandler
             return access.ToDeniedResult<CalendarItem>();
         }
 
+        if (command.AssignedTo is { } assignedTo)
+        {
+            if (command.Kind == CalendarItemKind.Event)
+            {
+                return new Result<CalendarItem>.Validation("Only a task can be assigned to someone.");
+            }
+
+            var assigneeAccess = await CalendarAuthorization.CheckView(calendar, assignedTo, groups, guardians, cancellationToken);
+
+            if (assigneeAccess != CalendarAccess.Allowed)
+            {
+                return new Result<CalendarItem>.Validation("The assigned person doesn't have access to this calendar.");
+            }
+        }
+
         var itemId = CalendarItemId.New();
         var now = DateTimeOffset.UtcNow;
         CalendarItemEvent created;
@@ -69,7 +84,7 @@ public static class CreateItemHandler
 
             var dueDate = command.DueDate with { IsAllDay = command.IsAllDay };
 
-            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, dueDate, command.Recurrence, now);
+            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, dueDate, command.Recurrence, now, command.AssignedTo);
         }
 
         var events = await items.CreateAsync(itemId, [created], cancellationToken);

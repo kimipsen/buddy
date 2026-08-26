@@ -59,7 +59,8 @@ public sealed record TaskItemCreated(
     Color Color,
     DueDate DueDate,
     RecurrenceRule? Recurrence,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    UserId? AssignedTo = null);
 
 public sealed record ItemDetailsUpdated(CalendarItemId Id, ItemDetails Before, ItemDetails After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 

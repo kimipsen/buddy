@@ -70,7 +70,8 @@ internal static class CalendarTestHelpers
 
     public static async Task<CalendarItemDto?> CreateTaskAsync(
         BuddyApiFixture fixture, string token, Guid calendarId, string title = "File taxes",
-        DateOnly? dueDate = null, RecurrenceRuleRequest? recurrence = null, int expectedStatus = 200, bool isAllDay = false)
+        DateOnly? dueDate = null, RecurrenceRuleRequest? recurrence = null, int expectedStatus = 200, bool isAllDay = false,
+        Guid? assignedTo = null)
     {
         var day = dueDate ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
 
@@ -85,12 +86,25 @@ internal static class CalendarTestHelpers
                 Color = "#ff0000",
                 DueDate = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(17, 0) },
                 IsAllDay = isAllDay,
-                Recurrence = recurrence
+                Recurrence = recurrence,
+                AssignedTo = assignedTo
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(expectedStatus);
         });
 
         return expectedStatus == 200 ? response.ReadAsJson<CalendarItemDto>() : null;
+    }
+
+    public static async Task<AssignableMemberDto[]> ListAssignableMembersAsync(BuddyApiFixture fixture, string token, Guid calendarId, int expectedStatus = 200)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/calendars/{calendarId}/assignable-members");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        return expectedStatus == 200 ? response.ReadAsJson<AssignableMemberDto[]>() : [];
     }
 
     public static async Task<IcalTokenResponseDto> CreateIcalTokenAsync(BuddyApiFixture fixture, string ownerToken, Guid calendarId)

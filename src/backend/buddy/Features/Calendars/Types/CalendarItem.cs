@@ -20,6 +20,8 @@ public sealed record CalendarItem(
     RecurrenceRule? Recurrence,
     ImmutableDictionary<DateOnly, bool> CompletionLog,
     UserId LastModifiedBy,
+    // Only ever set for a Task -- an Event has no assignee. Null means unassigned.
+    UserId? AssignedTo = null,
     bool IsDeleted = false)
 {
     // Sort key for calendar listings: an event sorts by its own start, a task by its due date.
@@ -63,7 +65,8 @@ public sealed record CalendarItem(
                     created.DueDate,
                     created.Recurrence,
                     ImmutableDictionary<DateOnly, bool>.Empty,
-                    created.CreatedBy),
+                    created.CreatedBy,
+                    created.AssignedTo),
                 ItemDetailsUpdated updated => item! with { Title = updated.After.Title, Icon = updated.After.Icon, Color = updated.After.Color, LastModifiedBy = updated.ModifiedBy },
                 EventRescheduled rescheduled => item! with { Period = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
                 TaskRescheduled rescheduled => item! with { DueDate = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },

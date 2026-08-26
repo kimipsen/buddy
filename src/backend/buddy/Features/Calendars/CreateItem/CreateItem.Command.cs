@@ -15,7 +15,8 @@ public sealed record CreateItem(
     EndsAt? EndsAt,
     DueDate? DueDate,
     bool IsAllDay,
-    RecurrenceRule? Recurrence)
+    RecurrenceRule? Recurrence,
+    UserId? AssignedTo = null)
 {
     public static CreateItem FromClaims(
         ClaimsPrincipal principal,
@@ -28,6 +29,7 @@ public sealed record CreateItem(
         EndsAt? endsAt,
         DueDate? dueDate,
         bool isAllDay,
-        RecurrenceRule? recurrence) =>
-        new(principal.GetUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, isAllDay, recurrence);
+        RecurrenceRule? recurrence,
+        UserId? assignedTo) =>
+        new(principal.GetUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, isAllDay, recurrence, assignedTo);
 }

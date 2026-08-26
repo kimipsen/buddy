@@ -176,6 +176,9 @@
                           {{ occurrence.title }}
                         </span>
                         <span class="text-xs text-slate-400">{{ occurrence.calendarName }}</span>
+                        @if (occurrence.kind === taskKind && assigneeNameFor(occurrence.assignedTo); as assigneeName) {
+                          <span class="text-xs text-slate-400">→ {{ assigneeName }}</span>
+                        }
 
                         <div class="ml-auto flex items-center gap-2">
                           @if (confirmingDeleteItemId() === occurrence.itemId) {
@@ -349,6 +352,23 @@
             </div>
           }
         </div>
+
+        <label class="block sm:w-1/2">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {{ 'calendar.agenda.form.assigneeLabel' | translate }}
+          </span>
+          <select
+            name="itemAssignee"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            [ngModel]="newAssignedTo()"
+            (ngModelChange)="newAssignedTo.set($event)"
+          >
+            <option value="">{{ 'calendar.agenda.form.assigneeUnassigned' | translate }}</option>
+            @for (member of assignableMembers(); track member.userId) {
+              <option [value]="member.userId">{{ member.givenName }} {{ member.familyName }}</option>
+            }
+          </select>
+        </label>
       }
 
       <div class="grid gap-3 sm:grid-cols-3">

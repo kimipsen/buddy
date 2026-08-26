@@ -71,6 +71,16 @@ export interface CreateItemRequest {
   // When true, the time-of-day in startsAt/endsAt/dueDate is a sentinel and should be ignored.
   isAllDay: boolean;
   recurrence: RecurrenceRuleRequest | null;
+  // Only meaningful for a Task -- ignored for an Event. Null means unassigned.
+  assignedTo: string | null;
+}
+
+// Someone who could be assigned a task on a calendar: an explicit per-calendar grant, or -- for a
+// group-owned calendar -- any member of that group.
+export interface AssignableMember {
+  userId: string;
+  givenName: string;
+  familyName: string;
 }
 
 export interface UpdateItemDetailsRequest {
@@ -98,6 +108,7 @@ export interface CalendarItemResponse {
   color: string;
   createdBy: string;
   lastModifiedBy: string;
+  assignedTo: string | null;
 }
 
 export interface CalendarItemOccurrence {
@@ -116,6 +127,7 @@ export interface CalendarItemOccurrence {
   isCompleted: boolean;
   createdBy: string;
   lastModifiedBy: string;
+  assignedTo: string | null;
 }
 
 export interface TaskCompletion {
@@ -183,6 +195,10 @@ export class CalendarsService {
         params: { from, to }
       })
     );
+  }
+
+  listAssignableMembers(calendarId: string): Promise<AssignableMember[]> {
+    return firstValueFrom(this.http.get<AssignableMember[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/assignable-members`));
   }
 
   async createItem(calendarId: string, request: CreateItemRequest): Promise<CalendarItemResponse> {

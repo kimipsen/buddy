@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -30,7 +31,8 @@ public static class CreateItemEndpoint
                 request.EndsAt,
                 request.DueDate,
                 request.IsAllDay,
-                request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null);
+                request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null,
+                request.AssignedTo is { } assignedTo ? new UserId(assignedTo) : null);
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
@@ -59,7 +61,9 @@ public sealed record CreateItemRequest(
     EndsAt? EndsAt,
     DueDate? DueDate,
     bool IsAllDay,
-    RecurrenceRuleRequest? Recurrence);
+    RecurrenceRuleRequest? Recurrence,
+    // Only meaningful for a Task -- ignored for an Event. Null means unassigned.
+    Guid? AssignedTo = null);
 
 // Icon is null when the item has no override -- it inherits the owning calendar's icon. This
 // mirrors CalendarItem.Icon exactly (no calendar lookup happens here); the resolved/effective
@@ -75,7 +79,8 @@ public sealed record CalendarItemResponse(
     DueDate? DueDate,
     RecurrenceRuleRequest? Recurrence,
     Guid CreatedBy,
-    Guid LastModifiedBy)
+    Guid LastModifiedBy,
+    Guid? AssignedTo)
 {
     public static CalendarItemResponse FromItem(CalendarItem item) => new(
         item.Id,
@@ -88,5 +93,6 @@ public sealed record CalendarItemResponse(
         item.DueDate,
         item.Recurrence is { } r ? new RecurrenceRuleRequest(r.Frequency, r.IntervalCount, r.Until) : null,
         item.CreatedBy.Value,
-        item.LastModifiedBy.Value);
+        item.LastModifiedBy.Value,
+        item.AssignedTo?.Value);
 }

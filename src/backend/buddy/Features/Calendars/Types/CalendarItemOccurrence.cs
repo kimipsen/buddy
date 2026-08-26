@@ -19,4 +19,5 @@ public sealed record CalendarItemOccurrence(
     bool IsAllDay,
     bool IsCompleted,
     Guid CreatedBy,
-    Guid LastModifiedBy);
+    Guid LastModifiedBy,
+    Guid? AssignedTo);

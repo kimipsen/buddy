@@ -1,7 +1,9 @@
 using Alba;
 
 using buddy.Features.Calendars;
+using buddy.Features.Groups;
 using buddy.IntegrationTests.Features.Calendars;
+using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -141,5 +143,53 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var (_, outsiderToken, _) = await fixture.CreateAuthenticatedUserAsync();
 
         await CalendarTestHelpers.CreateEventAsync(fixture, outsiderToken, calendarId, expectedStatus: 404);
+    }
+
+    [Fact]
+    public async Task A_task_can_be_assigned_to_a_fellow_group_member()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Household");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Shared", groupId);
+        var (member, memberToken, memberId) = await fixture.CreateAuthenticatedUserAsync();
+        await GroupTestHelpers.AddMemberAsync(fixture, ownerToken, groupId, memberToken, member.Email, GroupRole.Member);
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(fixture, ownerToken, calendarId, assignedTo: memberId);
+
+        Assert.NotNull(item);
+        Assert.Equal(memberId, item.AssignedTo);
+    }
+
+    [Fact]
+    public async Task Assigning_a_task_to_someone_without_calendar_access_is_rejected()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Shared");
+        var (_, _, outsiderId) = await fixture.CreateAuthenticatedUserAsync();
+
+        await CalendarTestHelpers.CreateTaskAsync(fixture, ownerToken, calendarId, assignedTo: outsiderId, expectedStatus: 400);
+    }
+
+    [Fact]
+    public async Task An_event_cannot_be_assigned_to_someone()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Shared");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            _.Post.Json(new
+            {
+                Kind = CalendarItemKind.Event,
+                Title = "Standup",
+                Icon = "calendar",
+                Color = "#00ff00",
+                StartsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 0) },
+                EndsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 30) },
+                AssignedTo = Guid.NewGuid()
+            }).ToUrl($"/calendars/{calendarId}/items");
+            _.StatusCodeShouldBe(400);
+        });
     }
 }

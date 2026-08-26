@@ -26,7 +26,10 @@ internal sealed record CalendarItemDto(
     DueDate? DueDate,
     RecurrenceRuleDto? Recurrence,
     Guid CreatedBy,
-    Guid LastModifiedBy);
+    Guid LastModifiedBy,
+    Guid? AssignedTo);
+
+internal sealed record AssignableMemberDto(Guid UserId, string GivenName, string FamilyName);
 
 internal sealed record IcalTokenResponseDto(Guid TokenId, string Token, string SubscriptionPath);
 
@@ -47,4 +50,5 @@ internal sealed record CalendarItemOccurrenceDto(
     bool IsAllDay,
     bool IsCompleted,
     Guid CreatedBy,
-    Guid LastModifiedBy);
+    Guid LastModifiedBy,
+    Guid? AssignedTo);

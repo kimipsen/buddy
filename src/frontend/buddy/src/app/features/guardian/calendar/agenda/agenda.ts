@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
+  AssignableMember,
   CalendarItemKind,
   CalendarOccurrence,
   CalendarSummary,
@@ -165,8 +166,14 @@ export class CalendarAgenda {
   protected readonly newRepeat = signal<RecurrenceFrequency | null>(null);
   protected readonly newIntervalCount = signal(1);
   protected readonly newUntil = signal('');
+  protected readonly newAssignedTo = signal('');
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
+
+  protected readonly assignableMembers = signal<AssignableMember[]>([]);
+  // Merged across every calendar the guardian has assigned members for, keyed by userId -- used to
+  // label an occurrence's assignee in the agenda list, not just the picker on the create form.
+  private readonly memberNamesById = signal<Record<string, string>>({});
 
   protected readonly canSubmit = computed(() => {
     if (!this.newCalendarId() || !this.newTitle().trim() || !this.newColor().trim()) {
@@ -184,6 +191,15 @@ export class CalendarAgenda {
       // visible week changes -- same pattern as assign-mealplan.ts.
       this.anchorDate();
       void this.loadWeek();
+    });
+
+    effect(() => {
+      // The assignable set is per-calendar (group membership differs by calendar), so a previous
+      // selection may no longer be valid once the calendar changes -- clear it here rather than
+      // in resetForm(), which only runs after a successful submit.
+      const calendarId = this.newCalendarId();
+      this.newAssignedTo.set('');
+      void this.loadAssignableMembers(calendarId);
     });
   }
 
@@ -210,6 +226,33 @@ export class CalendarAgenda {
   // for the brief window before myCalendars() has loaded.
   protected calendarIconFor(calendarId: string): string {
     return this.myCalendars().find((calendar) => calendar.id === calendarId)?.icon ?? '📅';
+  }
+
+  // Best-effort: resolves an assignee's name for display in the agenda list. Falls back to null
+  // (rendered as nothing) for an occurrence whose calendar the guardian can only view, since
+  // listAssignableMembers -- and so this name -- is only fetched for calendars they contribute to.
+  protected assigneeNameFor(userId: string | null): string | null {
+    return userId ? (this.memberNamesById()[userId] ?? null) : null;
+  }
+
+  private async loadAssignableMembers(calendarId: string): Promise<void> {
+    if (!calendarId) {
+      this.assignableMembers.set([]);
+      return;
+    }
+
+    try {
+      const members = await this.calendars.listAssignableMembers(calendarId);
+      this.assignableMembers.set(members);
+      this.memberNamesById.update((current) => ({
+        ...current,
+        ...Object.fromEntries(members.map((member) => [member.userId, `${member.givenName} ${member.familyName}`.trim()]))
+      }));
+    } catch {
+      // The assignee picker is a nice-to-have on the create form -- if this fails, task creation
+      // still works, just without the option to assign it to someone.
+      this.assignableMembers.set([]);
+    }
   }
 
   protected isCalendarHidden(calendarId: string): boolean {
@@ -385,7 +428,8 @@ export class CalendarAgenda {
         endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
         dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
         isAllDay,
-        recurrence: this.buildRecurrence()
+        recurrence: this.buildRecurrence(),
+        assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null
       });
 
       this.resetForm();
@@ -425,6 +469,7 @@ export class CalendarAgenda {
     this.newRepeat.set(null);
     this.newIntervalCount.set(1);
     this.newUntil.set('');
+    this.newAssignedTo.set('');
   }
 
   private async loadWeek(): Promise<void> {
