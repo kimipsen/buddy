@@ -23,7 +23,11 @@ public static class SetTaskCompletionHandler
         var calendar = Calendar.Rehydrate(calendarEvents);
         var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
-        if (access != CalendarAccess.Allowed)
+        // NotFound (no resolved role at all) is still denied outright -- only a Forbidden (a
+        // resolved role below Contributor, e.g. the Viewer tier a child gets by default under
+        // CreateGroupHandler.DefaultCalendarPolicy) gets the chance to fall through to the
+        // self-completion check below.
+        if (access == CalendarAccess.NotFound)
         {
             return access.ToDeniedResult<CalendarItem>();
         }
@@ -39,6 +43,16 @@ public static class SetTaskCompletionHandler
         if (item.Kind != CalendarItemKind.Task)
         {
             return new Result<CalendarItem>.Validation("Only a task can be marked complete.");
+        }
+
+        // A Viewer can still toggle completion on a task assigned specifically to them: marking
+        // your own chore done is narrower than the general "create/edit any item" contributor
+        // right, so it shouldn't require the group to grant that just for this.
+        var isSelfCompletingOwnTask = item.AssignedTo == userId;
+
+        if (access != CalendarAccess.Allowed && !isSelfCompletingOwnTask)
+        {
+            return access.ToDeniedResult<CalendarItem>();
         }
 
         var before = item.CompletionLog.GetValueOrDefault(command.OccurrenceDate, false);

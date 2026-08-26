@@ -2,6 +2,8 @@ using Alba;
 
 using buddy.Features.Calendars;
 using buddy.IntegrationTests.Features.Calendars;
+using buddy.IntegrationTests.Features.Groups;
+using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -109,6 +111,84 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
             _.Patch.Json(new { Date = task.DueDate!.Date, IsCompleted = true })
                 .ToUrl($"/calendars/{calendarId}/items/{task.Id}/completion");
             _.StatusCodeShouldBe(404);
+        });
+    }
+
+    [Fact]
+    public async Task A_child_with_only_viewer_access_can_complete_their_own_assigned_task()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, guardianToken, "Family");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, guardianToken, "Family", groupId);
+
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/groups/{groupId}/children/{child.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, guardianToken, calendarId, assignedTo: child.Id);
+        Assert.NotNull(task);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Patch.Json(new { Date = task.DueDate!.Date, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{task.Id}/completion");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.True(response.ReadAsJson<TaskCompletionResponseDto>().IsCompleted);
+    }
+
+    [Fact]
+    public async Task A_child_with_only_viewer_access_cannot_complete_an_unassigned_or_sibling_task()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, guardianToken, "Family");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, guardianToken, "Family", groupId);
+
+        var childA = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childB = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Sam");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/groups/{groupId}/children/{childA.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/groups/{groupId}/children/{childB.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var childAToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, childA);
+        var unassignedTask = await CalendarTestHelpers.CreateTaskAsync(fixture, guardianToken, calendarId);
+        var siblingTask = await CalendarTestHelpers.CreateTaskAsync(fixture, guardianToken, calendarId, assignedTo: childB.Id);
+        Assert.NotNull(unassignedTask);
+        Assert.NotNull(siblingTask);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childAToken}");
+            _.Patch.Json(new { Date = unassignedTask.DueDate!.Date, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{unassignedTask.Id}/completion");
+            _.StatusCodeShouldBe(403);
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childAToken}");
+            _.Patch.Json(new { Date = siblingTask.DueDate!.Date, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{siblingTask.Id}/completion");
+            _.StatusCodeShouldBe(403);
         });
     }
 }
