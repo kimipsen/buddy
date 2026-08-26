@@ -26,3 +26,9 @@ export function browserTimeZoneId(): string {
 export function toIsoDateInTimeZone(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
+
+// Companion to toIsoDateInTimeZone -- resolves a "HH:mm" (24-hour) wall-clock time in a specific
+// IANA time zone, the shape app-time-select and the reschedule/create item APIs use.
+export function toTimeInTimeZone(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+}

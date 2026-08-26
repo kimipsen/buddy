@@ -17,6 +17,12 @@ export const calendar = {
       cancelButton: 'Annuller',
       error: 'Kunne ikke slette dette element.'
     },
+    edit: {
+      button: 'Rediger',
+      saveButton: 'Gem',
+      cancelButton: 'Annuller',
+      error: 'Kunne ikke opdatere dette element. Kontrollér oplysningerne, og prøv igen.'
+    },
     filter: {
       title: 'Kalendere'
     },

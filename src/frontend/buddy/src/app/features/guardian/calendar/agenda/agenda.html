@@ -48,65 +48,174 @@
               <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ day.label }}</p>
               <ul class="space-y-2">
                 @for (occurrence of occurrencesFor(day.date); track occurrence.itemId) {
-                  <li class="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-sm">
-                    <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="occurrence.color"></span>
-                    <span class="text-lg leading-none">{{ occurrence.icon }}</span>
+                  <li class="rounded-lg border border-slate-200 px-4 py-3 text-sm">
+                    @if (editingItemId() === occurrence.itemId) {
+                      <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
+                        <div class="grid gap-3 sm:grid-cols-[1fr_5rem_4rem]">
+                          <input
+                            type="text"
+                            name="editTitle"
+                            [placeholder]="'calendar.agenda.form.titlePlaceholder' | translate"
+                            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            [ngModel]="editTitle()"
+                            (ngModelChange)="editTitle.set($event)"
+                          />
+                          <input
+                            type="text"
+                            name="editIcon"
+                            [placeholder]="'calendar.agenda.form.iconPlaceholder' | translate"
+                            class="rounded-lg border border-slate-300 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            [ngModel]="editIcon()"
+                            (ngModelChange)="editIcon.set($event)"
+                          />
+                          <input
+                            type="color"
+                            name="editColor"
+                            class="h-full w-full rounded-lg border border-slate-300 p-1"
+                            [ngModel]="editColor()"
+                            (ngModelChange)="editColor.set($event)"
+                          />
+                        </div>
 
-                    @if (occurrence.kind === taskKind) {
-                      <input
-                        type="checkbox"
-                        [checked]="occurrence.isCompleted"
-                        [disabled]="savingTaskId() === occurrence.itemId"
-                        (change)="toggleTaskCompletion(occurrence)"
-                      />
-                    }
-
-                    <span class="font-medium" [class.line-through]="occurrence.kind === taskKind && occurrence.isCompleted">
-                      {{ occurrence.title }}
-                    </span>
-                    <span class="text-xs text-slate-400">{{ occurrence.calendarName }}</span>
-
-                    <div class="ml-auto flex items-center gap-2">
-                      @if (confirmingDeleteItemId() === occurrence.itemId) {
-                        <span class="whitespace-nowrap text-xs text-slate-500">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
-                        <button
-                          type="button"
-                          class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-                          [disabled]="deletingItemId() === occurrence.itemId"
-                          (click)="confirmDeleteItem(occurrence)"
-                        >
-                          {{ 'calendar.agenda.delete.confirmButton' | translate }}
-                        </button>
-                        <button
-                          type="button"
-                          class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
-                          [disabled]="deletingItemId() === occurrence.itemId"
-                          (click)="cancelDeleteItem()"
-                        >
-                          {{ 'calendar.agenda.delete.cancelButton' | translate }}
-                        </button>
-                      } @else {
-                        @if (occurrence.startsAt) {
-                          <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
-                            {{ occurrence.startsAt | userDate: 'shortTime' }}
-                            @if (occurrence.endsAt) {
-                              – {{ occurrence.endsAt | userDate: 'shortTime' }}
-                            }
-                          </span>
-                        } @else if (occurrence.dueAt) {
-                          <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
-                            {{ occurrence.dueAt | userDate: 'shortTime' }}
-                          </span>
+                        @if (occurrence.kind === eventKind) {
+                          <div class="grid gap-3 sm:grid-cols-2">
+                            <div class="grid grid-cols-[1fr_auto] gap-2">
+                              <div>
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  {{ 'calendar.agenda.form.startDateLabel' | translate }}
+                                </span>
+                                <app-date-select [value]="editStartDate()" (valueChange)="editStartDate.set($event)" />
+                              </div>
+                              <div>
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  {{ 'calendar.agenda.form.startTimeLabel' | translate }}
+                                </span>
+                                <app-time-select [value]="editStartTime()" (valueChange)="editStartTime.set($event)" />
+                              </div>
+                            </div>
+                            <div class="grid grid-cols-[1fr_auto] gap-2">
+                              <div>
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  {{ 'calendar.agenda.form.endDateLabel' | translate }}
+                                </span>
+                                <app-date-select [value]="editEndDate()" (valueChange)="editEndDate.set($event)" />
+                              </div>
+                              <div>
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  {{ 'calendar.agenda.form.endTimeLabel' | translate }}
+                                </span>
+                                <app-time-select [value]="editEndTime()" (valueChange)="editEndTime.set($event)" />
+                              </div>
+                            </div>
+                          </div>
+                        } @else {
+                          <div class="grid grid-cols-[1fr_auto] gap-2 sm:w-1/2">
+                            <div>
+                              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {{ 'calendar.agenda.form.dueDateLabel' | translate }}
+                              </span>
+                              <app-date-select [value]="editDueDate()" (valueChange)="editDueDate.set($event)" />
+                            </div>
+                            <div>
+                              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
+                              </span>
+                              <app-time-select [value]="editDueTime()" (valueChange)="editDueTime.set($event)" />
+                            </div>
+                          </div>
                         }
-                        <button
-                          type="button"
-                          class="text-xs font-semibold text-red-600 hover:text-red-700"
-                          (click)="requestDeleteItem(occurrence.itemId)"
-                        >
-                          {{ 'calendar.agenda.delete.button' | translate }}
-                        </button>
-                      }
-                    </div>
+
+                        <div class="flex items-center gap-2">
+                          <button
+                            type="submit"
+                            class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                            [disabled]="saving() || !canSubmitEdit()"
+                          >
+                            {{ 'calendar.agenda.edit.saveButton' | translate }}
+                          </button>
+                          <button
+                            type="button"
+                            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                            [disabled]="saving()"
+                            (click)="cancelEditItem()"
+                          >
+                            {{ 'calendar.agenda.edit.cancelButton' | translate }}
+                          </button>
+                        </div>
+
+                        @if (editError(); as message) {
+                          <p class="text-xs text-red-600">{{ message | translate }}</p>
+                        }
+                      </form>
+                    } @else {
+                      <div class="flex items-center gap-3">
+                        <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="occurrence.color"></span>
+                        <span class="text-lg leading-none">{{ occurrence.icon }}</span>
+
+                        @if (occurrence.kind === taskKind) {
+                          <input
+                            type="checkbox"
+                            [checked]="occurrence.isCompleted"
+                            [disabled]="savingTaskId() === occurrence.itemId"
+                            (change)="toggleTaskCompletion(occurrence)"
+                          />
+                        }
+
+                        <span class="font-medium" [class.line-through]="occurrence.kind === taskKind && occurrence.isCompleted">
+                          {{ occurrence.title }}
+                        </span>
+                        <span class="text-xs text-slate-400">{{ occurrence.calendarName }}</span>
+
+                        <div class="ml-auto flex items-center gap-2">
+                          @if (confirmingDeleteItemId() === occurrence.itemId) {
+                            <span class="whitespace-nowrap text-xs text-slate-500">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
+                            <button
+                              type="button"
+                              class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                              [disabled]="deletingItemId() === occurrence.itemId"
+                              (click)="confirmDeleteItem(occurrence)"
+                            >
+                              {{ 'calendar.agenda.delete.confirmButton' | translate }}
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                              [disabled]="deletingItemId() === occurrence.itemId"
+                              (click)="cancelDeleteItem()"
+                            >
+                              {{ 'calendar.agenda.delete.cancelButton' | translate }}
+                            </button>
+                          } @else {
+                            @if (occurrence.startsAt) {
+                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
+                                {{ occurrence.startsAt | userDate: 'shortTime' }}
+                                @if (occurrence.endsAt) {
+                                  – {{ occurrence.endsAt | userDate: 'shortTime' }}
+                                }
+                              </span>
+                            } @else if (occurrence.dueAt) {
+                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
+                                {{ occurrence.dueAt | userDate: 'shortTime' }}
+                              </span>
+                            }
+                            <button
+                              type="button"
+                              class="text-xs font-semibold text-slate-600 hover:text-slate-800"
+                              (click)="startEditItem(occurrence)"
+                            >
+                              {{ 'calendar.agenda.edit.button' | translate }}
+                            </button>
+                            <button
+                              type="button"
+                              class="text-xs font-semibold text-red-600 hover:text-red-700"
+                              (click)="requestDeleteItem(occurrence.itemId)"
+                            >
+                              {{ 'calendar.agenda.delete.button' | translate }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
                   </li>
                 }
               </ul>
@@ -171,18 +280,12 @@
       @if (newKind() === eventKind) {
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="grid grid-cols-[1fr_auto] gap-2">
-            <label class="block">
+            <div>
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {{ 'calendar.agenda.form.startDateLabel' | translate }}
               </span>
-              <input
-                type="date"
-                name="itemStartDate"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                [ngModel]="newStartDate()"
-                (ngModelChange)="newStartDate.set($event)"
-              />
-            </label>
+              <app-date-select [value]="newStartDate()" (valueChange)="newStartDate.set($event)" />
+            </div>
             <div>
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {{ 'calendar.agenda.form.startTimeLabel' | translate }}
@@ -191,18 +294,12 @@
             </div>
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-2">
-            <label class="block">
+            <div>
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {{ 'calendar.agenda.form.endDateLabel' | translate }}
               </span>
-              <input
-                type="date"
-                name="itemEndDate"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                [ngModel]="newEndDate()"
-                (ngModelChange)="newEndDate.set($event)"
-              />
-            </label>
+              <app-date-select [value]="newEndDate()" (valueChange)="newEndDate.set($event)" />
+            </div>
             <div>
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {{ 'calendar.agenda.form.endTimeLabel' | translate }}
@@ -213,18 +310,12 @@
         </div>
       } @else {
         <div class="grid grid-cols-[1fr_auto] gap-2 sm:w-1/2">
-          <label class="block">
+          <div>
             <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
               {{ 'calendar.agenda.form.dueDateLabel' | translate }}
             </span>
-            <input
-              type="date"
-              name="itemDueDate"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              [ngModel]="newDueDate()"
-              (ngModelChange)="newDueDate.set($event)"
-            />
-          </label>
+            <app-date-select [value]="newDueDate()" (valueChange)="newDueDate.set($event)" />
+          </div>
           <div>
             <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
               {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
@@ -267,18 +358,12 @@
               (ngModelChange)="newIntervalCount.set($event)"
             />
           </label>
-          <label class="block">
+          <div>
             <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
               {{ 'calendar.agenda.form.repeat.untilLabel' | translate }}
             </span>
-            <input
-              type="date"
-              name="itemUntil"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              [ngModel]="newUntil()"
-              (ngModelChange)="newUntil.set($event)"
-            />
-          </label>
+            <app-date-select [value]="newUntil()" (valueChange)="newUntil.set($event)" />
+          </div>
         }
       </div>
 

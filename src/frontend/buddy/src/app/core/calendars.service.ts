@@ -51,6 +51,19 @@ export interface CreateItemRequest {
   recurrence: RecurrenceRuleRequest | null;
 }
 
+export interface UpdateItemDetailsRequest {
+  title: string;
+  icon: string;
+  color: string;
+}
+
+export interface RescheduleItemRequest {
+  // Same Event-vs-Task invariant as CreateItemRequest -- exactly one pair is set.
+  startsAt: DatePart | null;
+  endsAt: DatePart | null;
+  dueDate: DatePart | null;
+}
+
 export interface CalendarItemResponse {
   id: string;
   calendarId: string;
@@ -124,6 +137,22 @@ export class CalendarsService {
     );
     this.todayCache = null;
     return created;
+  }
+
+  async updateItemDetails(calendarId: string, itemId: string, request: UpdateItemDetailsRequest): Promise<CalendarItemResponse> {
+    const updated = await firstValueFrom(
+      this.http.patch<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/details`, request)
+    );
+    this.todayCache = null;
+    return updated;
+  }
+
+  async rescheduleItem(calendarId: string, itemId: string, request: RescheduleItemRequest): Promise<CalendarItemResponse> {
+    const updated = await firstValueFrom(
+      this.http.patch<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/schedule`, request)
+    );
+    this.todayCache = null;
+    return updated;
   }
 
   async deleteItem(calendarId: string, itemId: string): Promise<void> {

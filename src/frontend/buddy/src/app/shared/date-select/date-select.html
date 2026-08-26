@@ -1,0 +1,42 @@
+<div class="flex items-center gap-1">
+  @for (part of format().order; track part; let index = $index, last = $last) {
+    @switch (part) {
+      @case ('day') {
+        <select
+          class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          [ngModel]="day()"
+          (ngModelChange)="setDay($event)"
+        >
+          <option [ngValue]="null" disabled>--</option>
+          @for (dayOption of dayOptions; track dayOption) {
+            <option [ngValue]="dayOption">{{ pad2(dayOption) }}</option>
+          }
+        </select>
+      }
+      @case ('month') {
+        <select
+          class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          [ngModel]="month()"
+          (ngModelChange)="setMonth($event)"
+        >
+          <option [ngValue]="null" disabled>--</option>
+          @for (monthOption of monthOptions; track monthOption) {
+            <option [ngValue]="monthOption">{{ monthNames()[monthOption - 1] }}</option>
+          }
+        </select>
+      }
+      @case ('year') {
+        <input
+          type="number"
+          placeholder="yyyy"
+          class="w-[4.5rem] rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          [ngModel]="year()"
+          (ngModelChange)="setYear($event)"
+        />
+      }
+    }
+    @if (!last) {
+      <span class="text-slate-400">{{ separatorAt(index) }}</span>
+    }
+  }
+</div>

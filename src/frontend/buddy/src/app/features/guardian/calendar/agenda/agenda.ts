@@ -10,11 +10,12 @@ import {
   RecurrenceFrequency,
   RecurrenceRuleRequest
 } from '../../../../core/calendars.service';
-import { toIsoDate, todayIsoDate, toIsoDateInTimeZone } from '../../../../core/date-utils';
+import { toIsoDate, todayIsoDate, toIsoDateInTimeZone, toTimeInTimeZone } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
+import { DateSelect } from '../../../../shared/date-select/date-select';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 
 const DAYS_AHEAD = 7;
@@ -63,7 +64,7 @@ function toDatePart(date: string, time: string): DatePart {
 
 @Component({
   selector: 'app-calendar-agenda',
-  imports: [FormsModule, TranslatePipe, UserDatePipe, TimeSelect],
+  imports: [FormsModule, TranslatePipe, UserDatePipe, DateSelect, TimeSelect],
   templateUrl: './agenda.html'
 })
 export class CalendarAgenda {
@@ -87,6 +88,30 @@ export class CalendarAgenda {
   protected readonly savingTaskId = signal<string | null>(null);
   protected readonly confirmingDeleteItemId = signal<string | null>(null);
   protected readonly deletingItemId = signal<string | null>(null);
+
+  protected readonly editingItemId = signal<string | null>(null);
+  protected readonly editTitle = signal('');
+  protected readonly editIcon = signal('');
+  protected readonly editColor = signal('');
+  protected readonly editStartDate = signal('');
+  protected readonly editStartTime = signal('');
+  protected readonly editEndDate = signal('');
+  protected readonly editEndTime = signal('');
+  protected readonly editDueDate = signal('');
+  protected readonly editDueTime = signal('');
+  protected readonly editingKind = signal<CalendarItemKind>(EVENT_KIND);
+  protected readonly saving = signal(false);
+  protected readonly editError = signal<string | null>(null);
+
+  protected readonly canSubmitEdit = computed(() => {
+    if (!this.editTitle().trim() || !this.editIcon().trim() || !this.editColor().trim()) {
+      return false;
+    }
+
+    return this.editingKind() === EVENT_KIND
+      ? this.editStartDate().trim() !== '' && this.editEndDate().trim() !== ''
+      : this.editDueDate().trim() !== '';
+  });
 
   protected readonly occurrencesByDate = computed(() => {
     const hidden = this.hiddenCalendarIds();
@@ -214,6 +239,7 @@ export class CalendarAgenda {
 
   protected requestDeleteItem(itemId: string): void {
     this.error.set(null);
+    this.editingItemId.set(null);
     this.confirmingDeleteItemId.set(itemId);
   }
 
@@ -233,6 +259,73 @@ export class CalendarAgenda {
       this.error.set('calendar.agenda.delete.error');
     } finally {
       this.deletingItemId.set(null);
+    }
+  }
+
+  protected startEditItem(occurrence: CalendarOccurrence): void {
+    this.error.set(null);
+    this.confirmingDeleteItemId.set(null);
+    this.editError.set(null);
+    this.editingItemId.set(occurrence.itemId);
+    this.editingKind.set(occurrence.kind);
+    this.editTitle.set(occurrence.title);
+    this.editIcon.set(occurrence.icon);
+    this.editColor.set(occurrence.color);
+
+    const timeZoneId = this.users.timeZoneId();
+
+    if (occurrence.startsAt) {
+      const startsAt = new Date(occurrence.startsAt);
+      this.editStartDate.set(toIsoDateInTimeZone(startsAt, timeZoneId));
+      this.editStartTime.set(toTimeInTimeZone(startsAt, timeZoneId));
+    }
+
+    if (occurrence.endsAt) {
+      const endsAt = new Date(occurrence.endsAt);
+      this.editEndDate.set(toIsoDateInTimeZone(endsAt, timeZoneId));
+      this.editEndTime.set(toTimeInTimeZone(endsAt, timeZoneId));
+    }
+
+    if (occurrence.dueAt) {
+      const dueAt = new Date(occurrence.dueAt);
+      this.editDueDate.set(toIsoDateInTimeZone(dueAt, timeZoneId));
+      this.editDueTime.set(toTimeInTimeZone(dueAt, timeZoneId));
+    }
+  }
+
+  protected cancelEditItem(): void {
+    this.editingItemId.set(null);
+  }
+
+  // A recurring item's schedule is anchored on the item itself (see StartsAt.cs), not per
+  // occurrence -- rescheduling here shifts the whole series, matching RescheduleItemHandler.
+  protected async saveEditItem(occurrence: CalendarOccurrence): Promise<void> {
+    if (!this.canSubmitEdit()) {
+      return;
+    }
+
+    const kind = this.editingKind();
+    const title = this.editTitle().trim();
+    const icon = this.editIcon().trim();
+    const color = this.editColor().trim();
+
+    this.saving.set(true);
+    this.editError.set(null);
+
+    try {
+      await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, { title, icon, color });
+      await this.calendars.rescheduleItem(occurrence.calendarId, occurrence.itemId, {
+        startsAt: kind === EVENT_KIND ? toDatePart(this.editStartDate(), this.editStartTime()) : null,
+        endsAt: kind === EVENT_KIND ? toDatePart(this.editEndDate(), this.editEndTime()) : null,
+        dueDate: kind === TASK_KIND ? toDatePart(this.editDueDate(), this.editDueTime()) : null
+      });
+
+      this.editingItemId.set(null);
+      await this.loadWeek();
+    } catch {
+      this.editError.set('calendar.agenda.edit.error');
+    } finally {
+      this.saving.set(false);
     }
   }
 

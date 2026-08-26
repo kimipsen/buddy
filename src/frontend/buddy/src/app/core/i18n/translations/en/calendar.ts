@@ -17,6 +17,12 @@ export const calendar = {
       cancelButton: 'Cancel',
       error: 'Unable to delete this item.'
     },
+    edit: {
+      button: 'Edit',
+      saveButton: 'Save',
+      cancelButton: 'Cancel',
+      error: 'Unable to update this item. Check the details and try again.'
+    },
     filter: {
       title: 'Calendars'
     },
