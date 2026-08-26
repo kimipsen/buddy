@@ -31,9 +31,11 @@ export class TasksToday implements OnInit {
       const occurrences = await this.calendars.listTodayOccurrences();
       const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
       const now = Date.now();
+      const isOverdue = (task: CalendarOccurrence) =>
+        !task.isAllDay && task.dueAt !== null && new Date(task.dueAt).getTime() < now;
 
-      this.overdue.set(tasks.filter((task) => task.dueAt !== null && new Date(task.dueAt).getTime() < now));
-      this.dueToday.set(tasks.filter((task) => task.dueAt === null || new Date(task.dueAt).getTime() >= now));
+      this.overdue.set(tasks.filter(isOverdue));
+      this.dueToday.set(tasks.filter((task) => !isOverdue(task)));
     } catch {
       this.error.set('dashboard.tasks.loadError');
     } finally {

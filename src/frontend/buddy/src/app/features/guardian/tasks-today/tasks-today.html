@@ -15,8 +15,9 @@
           <ul class="space-y-2">
             @for (task of overdue(); track task.itemId) {
               <li class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium">
+                <input type="checkbox" [checked]="task.isCompleted" [attr.aria-label]="task.title" disabled />
                 <span class="text-lg leading-none">{{ task.icon }}</span>
-                {{ task.title }}
+                <span [class.line-through]="task.isCompleted">{{ task.title }}</span>
               </li>
             }
           </ul>
@@ -29,8 +30,9 @@
           <ul class="space-y-2">
             @for (task of dueToday(); track task.itemId) {
               <li class="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium">
+                <input type="checkbox" [checked]="task.isCompleted" [attr.aria-label]="task.title" disabled />
                 <span class="text-lg leading-none">{{ task.icon }}</span>
-                {{ task.title }}
+                <span [class.line-through]="task.isCompleted">{{ task.title }}</span>
               </li>
             }
           </ul>
