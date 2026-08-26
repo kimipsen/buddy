@@ -9,8 +9,10 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
+import { ProgressService, ProgressSummary } from '../../../core/progress.service';
 import { UsersService } from '../../../core/users.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
+import { ProgressBadge } from '../../../shared/progress-badge/progress-badge';
 
 const TASK_KIND: CalendarItemKind = 1;
 
@@ -37,7 +39,7 @@ const PICKUP_SLOT_LABELS = { 0: 'child.home.pickup.slots.dropOff', 1: 'child.hom
 
 @Component({
   selector: 'app-child-home',
-  imports: [TranslatePipe, RouterLink, LoadingSpinner],
+  imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge],
   templateUrl: './home.html'
 })
 export class ChildHome implements OnInit {
@@ -48,6 +50,7 @@ export class ChildHome implements OnInit {
   private readonly mealplans = inject(MealplansService);
   private readonly medicines = inject(MedicinesService);
   private readonly calendars = inject(CalendarsService);
+  private readonly progressService = inject(ProgressService);
 
   protected readonly guardianKind = GUARDIAN;
   protected readonly selfEscortKind = SELF_ESCORT;
@@ -89,6 +92,8 @@ export class ChildHome implements OnInit {
   protected readonly tasks = signal<CalendarOccurrence[]>([]);
   protected readonly savingTaskId = signal<string | null>(null);
 
+  protected readonly progress = signal<ProgressSummary>({ totalStars: 0, unlockedMilestones: [] });
+
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
   // shouldn't render four empty-state messages back to back.
   protected readonly hasAnything = computed(
@@ -98,6 +103,7 @@ export class ChildHome implements OnInit {
   ngOnInit(): void {
     void this.loadGuardians();
     void this.loadSiblings();
+    void this.loadProgress();
     void Promise.all([this.loadTodaysPickups(), this.loadDashboard()]).finally(() => this.contentLoading.set(false));
   }
 
@@ -143,10 +149,24 @@ export class ChildHome implements OnInit {
     try {
       await this.calendars.setTaskCompletion(task.calendarId, task.itemId, todayIsoDate(), isCompleted);
       this.tasks.update((current) => current.map((existing) => (existing.itemId === task.itemId ? { ...existing, isCompleted } : existing)));
+
+      // The backend awards/revokes a star as part of the same request that just completed above
+      // (see SetTaskCompletionHandler), so re-reading progress now already reflects it -- no
+      // local point math to duplicate or get out of sync with milestone thresholds.
+      void this.loadProgress();
     } catch {
       this.error.set('child.home.loadError');
     } finally {
       this.savingTaskId.set(null);
+    }
+  }
+
+  private async loadProgress(): Promise<void> {
+    try {
+      this.progress.set(await this.progressService.getMyProgress());
+    } catch {
+      // Progress is a supplementary widget, not core dashboard data -- a failed load just means
+      // no badge shows, the same non-blocking treatment as loadSiblings().
     }
   }
 

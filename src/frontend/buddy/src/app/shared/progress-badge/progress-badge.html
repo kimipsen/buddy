@@ -1,0 +1,13 @@
+<div
+  class="flex items-center gap-3 rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 shadow-sm transition"
+  [class.animate-bounce]="celebrating()"
+>
+  <span class="text-3xl" aria-hidden="true">{{ stage() }}</span>
+  <div class="flex flex-col">
+    <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ 'child.home.progress.title' | translate }}</span>
+    <span class="flex items-center gap-1 text-lg font-bold text-slate-900">
+      <span aria-hidden="true">✨</span>
+      {{ 'child.home.progress.starCount' | translate: { count: totalStars() } }}
+    </span>
+  </div>
+</div>

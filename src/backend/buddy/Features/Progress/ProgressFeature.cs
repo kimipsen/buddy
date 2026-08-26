@@ -11,11 +11,13 @@ using Weasel.Core;
 
 namespace buddy.Features.Progress;
 
-// No MapProgressFeature yet -- this feature has no HTTP endpoints of its own. It's driven
-// entirely by explicit calls from other features' handlers (see RecordStarChange). A read
-// endpoint for the child dashboard is Phase 2 frontend work, not sketched here.
+// RecordStarChange (see that folder) has no endpoint of its own -- it's only ever called
+// explicitly from other features' handlers, never over HTTP. GetMyProgress is the one read
+// endpoint this feature needs so the child dashboard has something to show.
 public static class ProgressFeature
 {
+    public const string OpenApiDocumentName = "progress";
+
     private static readonly Type[] EventTypes =
     [
         typeof(ProgressStarted),
@@ -26,6 +28,11 @@ public static class ProgressFeature
 
     public static IServiceCollection AddProgressFeature(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOpenApi(OpenApiDocumentName, options =>
+        {
+            options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
+        });
+
         services.Configure<PostgresOptions>(configuration.GetSection(PostgresOptions.SectionName));
 
         services.AddMartenStore<IProgressStore>(serviceProvider =>
@@ -48,5 +55,17 @@ public static class ProgressFeature
         services.AddSingleton<IProgressEventStore, MartenProgressEventStore>();
 
         return services;
+    }
+
+    public static IEndpointRouteBuilder MapProgressFeature(this IEndpointRouteBuilder endpoints)
+    {
+        var progress = endpoints.MapGroup("/progress")
+            .WithTags("Progress")
+            .RequireAuthorization()
+            .WithGroupName(OpenApiDocumentName);
+
+        progress.MapGetMyProgress();
+
+        return endpoints;
     }
 }

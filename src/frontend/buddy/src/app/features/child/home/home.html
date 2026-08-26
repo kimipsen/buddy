@@ -15,6 +15,8 @@
   </header>
 
   <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
+    <app-progress-badge class="block" [totalStars]="progress().totalStars" [unlockedMilestones]="progress().unlockedMilestones" />
+
     <a
       routerLink="/child/mealplan"
       class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-700 transition hover:border-emerald-300"

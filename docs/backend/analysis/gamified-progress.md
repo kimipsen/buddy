@@ -1,6 +1,9 @@
 # Gamified Progress for Children's Tasks
 
-Status: Proposed
+Status: Sketch implemented for tasks (`Features/Progress/`, wired into
+`SetTaskCompletionHandler`, plus a `GET /progress/me` read endpoint and a
+child-dashboard widget). Doses, reward redemption, and guardian controls
+remain unimplemented -- see open questions.
 
 ## Context
 
@@ -67,15 +70,21 @@ instead of one:
 **Decision: `SetTaskCompletionHandler` (and, if/when doses are in scope,
 `SetDoseStatusHandler`) call into Progress's command explicitly, after their
 own event has already been appended — not before, and not in the same
-session.** Concretely, after `SetTaskCompletionHandler` appends
-`TaskCompletionChanged`, it calls a new internal command (sketched below) with
-the item's `AssignedTo` child, the occurrence date, and the new completion
-state. If that second call fails, the task completion itself has already
-succeeded and is not rolled back — the child's checkmark is correct, and
-their star count is simply stale until the next successful completion
-retries the same idempotent transition (see "Idempotency" below), the same
-"recoverable, visible gap" reasoning the `GuardianLink` doc already accepted
-for a failed second write.
+session.** This is now implemented, not just proposed: after
+`SetTaskCompletionHandler` appends `TaskCompletionChanged`, it calls
+`RecordStarChange` via `IMessageBus.InvokeAsync` (only when `item.AssignedTo`
+is set — an unassigned task has no child to award), wrapped in a `try/catch`
+that deliberately swallows a failure rather than logging or rethrowing (this
+codebase has no `ILogger` usage in any handler today, so adding one only for
+this call site would be a new cross-cutting concern for a single call site,
+not a reuse of an existing pattern). If that second call fails, the task
+completion itself has already succeeded and is not rolled back — the
+child's checkmark is correct, and their star count is simply stale until the
+next successful completion retries the same idempotent transition (see
+"Idempotency" below), the same "recoverable, visible gap" reasoning the
+`GuardianLink` doc already accepted for a failed second write.
+`SetDoseStatusHandler` has deliberately **not** received the same call yet —
+see the open question on dose gamification below.
 
 The alternative — an async projection subscribed to the Calendars and
 Medicines event stores — was considered and rejected for v1: it would be the

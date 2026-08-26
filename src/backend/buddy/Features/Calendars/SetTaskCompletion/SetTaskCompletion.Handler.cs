@@ -1,6 +1,9 @@
 using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
+using buddy.Features.Progress;
+
+using Wolverine;
 
 namespace buddy.Features.Calendars;
 
@@ -12,6 +15,7 @@ public static class SetTaskCompletionHandler
         ICalendarItemEventStore items,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        IMessageBus bus,
         CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
@@ -65,6 +69,22 @@ public static class SetTaskCompletionHandler
         var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow);
 
         await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
+
+        // Explicit cross-feature call, not a transaction with the append above -- see
+        // docs/backend/analysis/gamified-progress.md. The task completion itself has already
+        // succeeded by this point; a failure here just leaves the child's star count stale until
+        // the next successful, idempotent completion change catches it up.
+        if (item.AssignedTo is { } childId)
+        {
+            try
+            {
+                await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted), cancellationToken);
+            }
+            catch
+            {
+                // Deliberately swallowed -- see the comment above.
+            }
+        }
 
         return new Result<CalendarItem>.Success(CalendarItem.Rehydrate([.. itemEvents, completionChanged])!);
     }

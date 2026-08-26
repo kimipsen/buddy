@@ -22,6 +22,10 @@ export const child = {
       markNotDone: 'Marker som ikke klar',
       done: 'Klaret!'
     },
+    progress: {
+      title: 'Dine point',
+      starCount: '{count} stjerner'
+    },
     pickup: {
       title: 'Dagens afhentning & aflevering',
       slots: {

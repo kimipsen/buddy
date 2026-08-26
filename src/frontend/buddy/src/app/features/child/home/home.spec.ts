@@ -9,6 +9,7 @@ import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core
 import { MealPlanEntry, MealplansService } from '../../../core/mealplans.service';
 import { MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupOccurrence, PickupsService } from '../../../core/pickups.service';
+import { ProgressService } from '../../../core/progress.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildHome } from './home';
 
@@ -48,6 +49,7 @@ describe('ChildHome', () => {
     mealplans?: Partial<MealplansService>;
     medicines?: Partial<MedicinesService>;
     calendars?: Partial<CalendarsService>;
+    progress?: Partial<ProgressService>;
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -74,6 +76,10 @@ describe('ChildHome', () => {
       setTaskCompletion: vi.fn(),
       ...stubs.calendars
     };
+    const progressStub: Partial<ProgressService> = {
+      getMyProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [] })),
+      ...stubs.progress
+    };
 
     await TestBed.configureTestingModule({
       imports: [ChildHome],
@@ -85,7 +91,8 @@ describe('ChildHome', () => {
         { provide: UsersService, useValue: usersStub },
         { provide: MealplansService, useValue: mealplansStub },
         { provide: MedicinesService, useValue: medicinesStub },
-        { provide: CalendarsService, useValue: calendarsStub }
+        { provide: CalendarsService, useValue: calendarsStub },
+        { provide: ProgressService, useValue: progressStub }
       ]
     }).compileComponents();
 
@@ -99,7 +106,8 @@ describe('ChildHome', () => {
       users: usersStub,
       mealplans: mealplansStub,
       medicines: medicinesStub,
-      calendars: calendarsStub
+      calendars: calendarsStub,
+      progress: progressStub
     };
   }
 
