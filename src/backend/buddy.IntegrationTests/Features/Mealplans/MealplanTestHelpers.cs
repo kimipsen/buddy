@@ -23,4 +23,16 @@ internal static class MealplanTestHelpers
 
         return expectedStatus == 200 ? response.ReadAsJson<MealDto>() : null;
     }
+
+    public static async Task<MealPlanIcalTokenResponseDto> CreateIcalTokenAsync(BuddyApiFixture fixture, string guardianToken, Guid childId)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Url($"/mealplans/children/{childId}/ical-tokens");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<MealPlanIcalTokenResponseDto>();
+    }
 }

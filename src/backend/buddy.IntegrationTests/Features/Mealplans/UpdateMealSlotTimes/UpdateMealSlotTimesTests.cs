@@ -1,0 +1,70 @@
+using Alba;
+
+using buddy.IntegrationTests.Features.Guardians;
+using buddy.IntegrationTests.Features.Mealplans;
+using buddy.IntegrationTests.Fixtures;
+using buddy.IntegrationTests.Meta;
+
+using Xunit;
+
+namespace buddy.IntegrationTests.Features.Mealplans.UpdateMealSlotTimes;
+
+[Collection(BuddyApiCollection.Name)]
+public sealed class UpdateMealSlotTimesTests(BuddyApiFixture fixture)
+{
+    [Fact]
+    [CoversEndpoint("UpdateMealSlotTimes")]
+    public async Task A_guardian_can_configure_a_slot_time_and_it_shows_up_in_the_feed()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id, new CreateMealOptions(Name: "Lasagna"));
+        Assert.NotNull(meal);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { MealId = meal.Id, Notes = (string?)null })
+                .ToUrl($"/mealplans/children/{child.Id}/plan")
+                .QueryString("date", $"{today:yyyy-MM-dd}")
+                .QueryString("slot", "Dinner");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { Times = new Dictionary<string, string> { ["Dinner"] = "19:30:00" } })
+                .ToUrl($"/mealplans/children/{child.Id}/slot-times");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var issued = await MealplanTestHelpers.CreateIcalTokenAsync(fixture, guardianToken, child.Id);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.Get.Url(issued.SubscriptionPath);
+            _.StatusCodeShouldBeOk();
+        });
+
+        var ics = response.ReadAsText();
+        Assert.Contains($"DTSTART:{today:yyyyMMdd}T193000", ics);
+    }
+
+    [Fact]
+    public async Task The_child_cannot_configure_slot_times()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Times = new Dictionary<string, string> { ["Breakfast"] = "07:30:00" } })
+                .ToUrl($"/mealplans/children/{child.Id}/slot-times");
+            _.StatusCodeShouldBe(403);
+        });
+    }
+}

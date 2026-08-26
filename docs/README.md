@@ -36,6 +36,7 @@ This folder contains the project-level documentation for Buddy.
 - [Medicine schedules](backend/analysis/medicine-schedules.md)
 - [Meal plans](backend/analysis/mealplans.md)
 - [Group-shared meal plans](backend/analysis/group-owned-mealplans.md)
+- [Meal plan iCal feed](backend/analysis/mealplan-ical-feed.md)
 - [Pickup and drop-off schedules](backend/analysis/pickup-schedules.md)
 - [Guardian-managed child language](backend/analysis/child-language-settings.md)
 

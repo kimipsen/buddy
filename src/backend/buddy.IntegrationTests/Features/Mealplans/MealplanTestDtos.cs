@@ -33,3 +33,7 @@ internal sealed record MealPlanEntryDto(
     string? Notes,
     Guid AssignedBy,
     IReadOnlyList<MealRatingEntryDto> AllRatings);
+
+internal sealed record MealPlanIcalTokenResponseDto(Guid TokenId, string Token, string SubscriptionPath);
+
+internal sealed record MealPlanIcalTokenSummaryDto(Guid TokenId, DateTimeOffset IssuedAt);

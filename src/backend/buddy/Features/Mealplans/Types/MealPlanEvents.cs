@@ -8,7 +8,10 @@ public union MealPlanEvent(
     MealAssignedToSlot,
     MealSlotCleared,
     MealPlanSharedWithGroup,
-    MealPlanUnsharedFromGroup
+    MealPlanUnsharedFromGroup,
+    MealPlanSlotTimeSet,
+    MealPlanIcalTokenIssued,
+    MealPlanIcalTokenRevoked
 )
 {
     public static MealPlanEvent FromPayload(object payload) => payload switch
@@ -18,6 +21,9 @@ public union MealPlanEvent(
         MealSlotCleared e => e,
         MealPlanSharedWithGroup e => e,
         MealPlanUnsharedFromGroup e => e,
+        MealPlanSlotTimeSet e => e,
+        MealPlanIcalTokenIssued e => e,
+        MealPlanIcalTokenRevoked e => e,
         _ => throw new ArgumentException($"Unknown meal plan event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -28,6 +34,9 @@ public union MealPlanEvent(
         MealSlotCleared => nameof(MealSlotCleared),
         MealPlanSharedWithGroup => nameof(MealPlanSharedWithGroup),
         MealPlanUnsharedFromGroup => nameof(MealPlanUnsharedFromGroup),
+        MealPlanSlotTimeSet => nameof(MealPlanSlotTimeSet),
+        MealPlanIcalTokenIssued => nameof(MealPlanIcalTokenIssued),
+        MealPlanIcalTokenRevoked => nameof(MealPlanIcalTokenRevoked),
     };
 }
 
@@ -55,3 +64,15 @@ public sealed record MealSlotCleared(MealPlanId Id, DateOnly Date, MealSlot Slot
 public sealed record MealPlanSharedWithGroup(MealPlanId Id, GroupId GroupId, UserId AnchorChildId, UserId SharedBy, DateTimeOffset OccurredAt);
 
 public sealed record MealPlanUnsharedFromGroup(MealPlanId Id, GroupId GroupId, UserId UnsharedBy, DateTimeOffset OccurredAt);
+
+// One slot per event, the same granularity MealAssignedToSlot already uses for one date/slot at a
+// time -- see docs/backend/analysis/mealplan-ical-feed.md. A slot with no MealPlanSlotTimeSet in
+// its stream falls back to MealSlotDefaultTimes, so this is never appended on plan creation.
+public sealed record MealPlanSlotTimeSet(MealPlanId Id, MealSlot Slot, TimeOnly Time, UserId ModifiedBy, DateTimeOffset OccurredAt);
+
+// Mirrors Calendars' IcalTokenIssued/IcalTokenRevoked (CalendarEvents.cs) -- see
+// docs/backend/analysis/mealplan-ical-feed.md for why this is a feature-local duplicate rather than
+// a shared type.
+public sealed record MealPlanIcalTokenIssued(MealPlanId Id, IcalTokenId TokenId, string Hash, UserId IssuedBy, DateTimeOffset OccurredAt);
+
+public sealed record MealPlanIcalTokenRevoked(MealPlanId Id, IcalTokenId TokenId, UserId RevokedBy, DateTimeOffset OccurredAt);

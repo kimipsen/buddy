@@ -25,7 +25,10 @@ public static class MealplansFeature
         typeof(MealAssignedToSlot),
         typeof(MealSlotCleared),
         typeof(MealPlanSharedWithGroup),
-        typeof(MealPlanUnsharedFromGroup)
+        typeof(MealPlanUnsharedFromGroup),
+        typeof(MealPlanSlotTimeSet),
+        typeof(MealPlanIcalTokenIssued),
+        typeof(MealPlanIcalTokenRevoked)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -77,6 +80,12 @@ public static class MealplansFeature
         mealplans.MapAssignMealToSlot();
         mealplans.MapClearMealSlot();
         mealplans.MapListMealPlan();
+
+        mealplans.MapUpdateMealSlotTimes();
+        mealplans.MapCreateMealPlanIcalToken();
+        mealplans.MapListMealPlanIcalTokens();
+        mealplans.MapRevokeMealPlanIcalToken();
+        mealplans.MapGetMealPlanIcalFeed();
 
         mealplans.MapShareMealPlanWithGroup();
         mealplans.MapUnshareMealPlanFromGroup();

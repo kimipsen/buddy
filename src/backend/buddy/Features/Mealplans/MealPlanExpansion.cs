@@ -31,6 +31,23 @@ public static class MealPlanExpansion
             return [];
         }
 
+        return await ExpandFromPlanAsync(plan, from, to, meals, childId, cancellationToken);
+    }
+
+    // Split out of ExpandAsync so a caller that already has a rehydrated MealPlan in hand -- e.g.
+    // GetMealPlanIcalFeedHandler, which rehydrates the plan to check the feed token before it can
+    // even know which entries to expand -- doesn't need a second resolve-by-childId round trip.
+    // viewerId is null for a caller with no single "viewing child" (the anonymous iCal feed serves
+    // the whole family at once), in which case Rating is left null on every entry -- AllRatings
+    // still carries every sibling's rating regardless.
+    public static async Task<IReadOnlyCollection<MealPlanEntry>> ExpandFromPlanAsync(
+        MealPlan plan,
+        DateOnly from,
+        DateOnly to,
+        IMealEventStore meals,
+        UserId? viewerId,
+        CancellationToken cancellationToken)
+    {
         var mealsById = new Dictionary<MealId, Meal>();
         var entries = new List<MealPlanEntry>();
 
@@ -62,7 +79,8 @@ public static class MealPlanExpansion
             // comparing reactions across a shared meal (see MealResponse.Ratings for the same data
             // in the meal-library view).
             entries.Add(new MealPlanEntry(
-                date, slot, meal.Id, meal.Name, meal.Icon.Value, meal.Color.Value, meal.Ratings.GetValueOrDefault(childId),
+                date, slot, meal.Id, meal.Name, meal.Icon.Value, meal.Color.Value,
+                viewerId is { } viewer ? meal.Ratings.GetValueOrDefault(viewer) : null,
                 assignment.Notes, assignment.AssignedBy.Value,
                 [.. meal.Ratings.Select(pair => new MealPlanEntryRating(pair.Key, pair.Value.Stars, pair.Value.Comment, pair.Value.RatedAt))]));
         }
