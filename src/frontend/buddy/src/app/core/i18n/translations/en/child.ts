@@ -9,6 +9,7 @@ export const child = {
     mealplanLink: 'See past meals & rate them',
     medicineTitle: 'Medicine today',
     tasksTitle: 'Tasks today',
+    eventsTitle: 'Events today',
     loadError: 'Something went wrong. Try again in a bit.',
     medicine: {
       markTaken: 'Taken',
@@ -21,6 +22,9 @@ export const child = {
       markDone: 'Mark done',
       markNotDone: 'Mark not done',
       done: 'Done!'
+    },
+    events: {
+      allDay: 'All day'
     },
     progress: {
       title: 'Your progress',

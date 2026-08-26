@@ -80,9 +80,12 @@ paths, with the backend-provided effective role controlling the UI.
 
 ## What remains deferred
 
-There is no `/child/calendar` route. The child home shows today's tasks and can
-toggle task completion, but children do not get the guardian's week agenda or
-item creation form.
+There is no `/child/calendar` route yet. The child home shows today's tasks
+and events and can toggle task completion (see [A single-day dashboard for
+the child home screen](child-day-dashboard.md)), but children do not get the
+guardian's week agenda or item creation form. A concrete implementation plan
+for that route exists at [Child calendar agenda implementation
+plan](child-calendar-agenda-plan.md); it has not been built yet.
 
 That remains a product decision rather than a missing backend primitive. A
 child with a contributor-capable calendar role could already be authorized by

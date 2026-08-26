@@ -29,7 +29,7 @@ loads today's domain data from existing services:
 - `MealplansService.listMealPlan()` for the child's family plan;
 - `MedicinesService.listDoses()` for today's dose occurrences;
 - `PickupsService.listSchedule()` for today's pickup/drop-off assignments;
-- `CalendarsService.listTodayOccurrences()` filtered to tasks;
+- `CalendarsService.listTodayOccurrences()`, split into tasks and events;
 - `GuardiansService.listMyGuardians()` and `listMySiblings()` for relationship
   summaries and pickup assignee names.
 
@@ -80,6 +80,20 @@ This closes the blocker recorded in the original analysis. `CalendarItem` now
 has a per-occurrence completion operation in the backend and the child can use
 it through the existing calendar authorization model.
 
+## Events
+
+Calendar occurrences are also filtered to events (the complement of the Tasks
+filter above) and sorted by start time, with all-day/undated events last. This
+reuses the same `listTodayOccurrences()` call already made for tasks — no
+extra request. Events are read-only here (no completion concept applies to an
+event); `ChildVisibility.FilterForChild` on the backend already returns every
+event on an accessible calendar, unlike tasks which are trimmed to the
+child's own assignments.
+
+This section is the "today" half of showing the child their calendars. The
+multi-day browsing half is deliberately deferred — see
+[Child calendar agenda implementation plan](child-calendar-agenda-plan.md).
+
 ## Interaction and state
 
 Each mutation has a narrow saving key (`MealSlot`, medicine/date/time key, or
@@ -101,6 +115,7 @@ The dashboard remains today-only:
 - no per-section empty-state cards.
 
 Historical meal browsing has its own route, and guardian calendar/pickup editing
-have their own routes. Whether children should receive a full calendar agenda
-remains the open product question documented in
+have their own routes. A full multi-day calendar agenda for children is
+planned but not yet built — see [Child calendar agenda implementation
+plan](child-calendar-agenda-plan.md) and the broader open questions in
 [Creating events and seeing them across every accessible calendar](calendar-agenda-and-event-creation.md).

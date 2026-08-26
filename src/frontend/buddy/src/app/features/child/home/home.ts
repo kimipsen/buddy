@@ -10,10 +10,12 @@ import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealpla
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
+import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { ProgressBadge } from '../../../shared/progress-badge/progress-badge';
 
+const EVENT_KIND: CalendarItemKind = 0;
 const TASK_KIND: CalendarItemKind = 1;
 
 const PENDING: DoseStatus = 0;
@@ -39,7 +41,7 @@ const PICKUP_SLOT_LABELS = { 0: 'child.home.pickup.slots.dropOff', 1: 'child.hom
 
 @Component({
   selector: 'app-child-home',
-  imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge],
+  imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge, UserDatePipe],
   templateUrl: './home.html'
 })
 export class ChildHome implements OnInit {
@@ -92,12 +94,19 @@ export class ChildHome implements OnInit {
   protected readonly tasks = signal<CalendarOccurrence[]>([]);
   protected readonly savingTaskId = signal<string | null>(null);
 
+  protected readonly events = signal<CalendarOccurrence[]>([]);
+
   protected readonly progress = signal<ProgressSummary>({ totalStars: 0, unlockedMilestones: [] });
 
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
-  // shouldn't render four empty-state messages back to back.
+  // shouldn't render five empty-state messages back to back.
   protected readonly hasAnything = computed(
-    () => this.todaysPickups().length > 0 || this.mealsToShow().length > 0 || this.doses().length > 0 || this.tasks().length > 0
+    () =>
+      this.todaysPickups().length > 0 ||
+      this.mealsToShow().length > 0 ||
+      this.doses().length > 0 ||
+      this.tasks().length > 0 ||
+      this.events().length > 0
   );
 
   ngOnInit(): void {
@@ -204,7 +213,7 @@ export class ChildHome implements OnInit {
       this.childId = me.id;
       const today = todayIsoDate();
 
-      await Promise.all([this.loadMeals(me.id, today), this.loadDoses(me.id, today), this.loadTasks()]);
+      await Promise.all([this.loadMeals(me.id, today), this.loadDoses(me.id, today), this.loadCalendarOccurrences()]);
     } catch {
       this.error.set('child.home.loadError');
     }
@@ -286,8 +295,9 @@ export class ChildHome implements OnInit {
     this.doses.set([...occurrences].sort((a, b) => a.time.localeCompare(b.time)));
   }
 
-  private async loadTasks(): Promise<void> {
+  private async loadCalendarOccurrences(): Promise<void> {
     const occurrences = await this.calendars.listTodayOccurrences();
+
     const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
 
     tasks.sort((a, b) => {
@@ -299,5 +309,17 @@ export class ChildHome implements OnInit {
     });
 
     this.tasks.set(tasks);
+
+    const events = occurrences.filter((occurrence) => occurrence.kind === EVENT_KIND);
+
+    events.sort((a, b) => {
+      if (a.startsAt === null) {
+        return b.startsAt === null ? 0 : 1;
+      }
+
+      return b.startsAt === null ? -1 : a.startsAt.localeCompare(b.startsAt);
+    });
+
+    this.events.set(events);
   }
 }

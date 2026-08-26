@@ -9,6 +9,7 @@ export const child = {
     mealplanLink: 'Se tidligere måltider & bedøm dem',
     medicineTitle: 'Medicin i dag',
     tasksTitle: 'Opgaver i dag',
+    eventsTitle: 'Begivenheder i dag',
     loadError: 'Der gik noget galt. Prøv igen om lidt.',
     medicine: {
       markTaken: 'Taget',
@@ -21,6 +22,9 @@ export const child = {
       markDone: 'Marker som klar',
       markNotDone: 'Marker som ikke klar',
       done: 'Klaret!'
+    },
+    events: {
+      allDay: 'Hele dagen'
     },
     progress: {
       title: 'Dine point',

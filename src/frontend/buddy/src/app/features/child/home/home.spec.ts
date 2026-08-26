@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
@@ -60,7 +61,11 @@ describe('ChildHome', () => {
       ...stubs.guardians
     };
     const pickupsStub: Partial<PickupsService> = { listSchedule: vi.fn(async () => []), ...stubs.pickups };
-    const usersStub: Partial<UsersService> = { ensureCurrentUser: vi.fn(async () => currentUser), ...stubs.users };
+    const usersStub: Partial<UsersService> = {
+      ensureCurrentUser: vi.fn(async () => currentUser),
+      timeZoneId: signal('UTC').asReadonly(),
+      ...stubs.users
+    };
     const mealplansStub: Partial<MealplansService> = {
       listMealPlan: vi.fn(async () => []),
       rateMeal: vi.fn(),
@@ -279,6 +284,35 @@ describe('ChildHome', () => {
 
     expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true);
     expect(findButtonByAriaLabel(compiled, 'Mark not done')).toBeTruthy();
+  });
+
+  it('shows today\'s events including their time', async () => {
+    const event: CalendarOccurrence = {
+      itemId: 'event-1',
+      kind: 0,
+      title: 'Soccer practice',
+      icon: '⚽',
+      iconOverride: null,
+      color: '#00f',
+      startsAt: `${today}T16:00:00Z`,
+      endsAt: `${today}T17:00:00Z`,
+      dueAt: null,
+      isAllDay: false,
+      isCompleted: false,
+      createdBy: 'guardian-1',
+      lastModifiedBy: 'guardian-1',
+      assignedTo: null,
+      calendarId: 'cal-1',
+      calendarName: 'Home'
+    };
+
+    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [event]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Events today');
+    expect(compiled.textContent).toContain('Soccer practice');
+    expect(compiled.textContent).toContain('4:00');
   });
 
   it('resolves the assignee name for a guardian pickup occurrence', async () => {
