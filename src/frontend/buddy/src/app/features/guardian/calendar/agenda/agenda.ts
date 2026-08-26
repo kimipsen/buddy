@@ -148,7 +148,14 @@ export class CalendarAgenda {
     return byDate;
   });
 
-  protected readonly hasAnyVisibleOccurrence = computed(() => Object.values(this.occurrencesByDate()).some((list) => list.length > 0));
+  // Checked against the currently displayed `days()`, not every key `occurrencesByDate()` happens
+  // to hold -- `occurrences()` can briefly retain items from an out-of-range fetch (e.g. stale data
+  // while navigating between weeks), which would otherwise suppress the empty state without any
+  // occurrence actually being rendered.
+  protected readonly hasAnyVisibleOccurrence = computed(() => {
+    const byDate = this.occurrencesByDate();
+    return this.days().some((day) => (byDate[day.date] ?? []).length > 0);
+  });
 
   protected readonly newCalendarId = signal('');
   protected readonly newKind = signal<CalendarItemKind>(EVENT_KIND);

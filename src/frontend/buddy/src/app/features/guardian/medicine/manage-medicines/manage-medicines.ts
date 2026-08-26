@@ -172,6 +172,7 @@ export class ManageMedicines implements OnInit {
 
   protected cancelStop(): void {
     this.confirmingStopScheduleId.set(null);
+    this.error.set(null);
   }
 
   protected async confirmStop(scheduleId: string): Promise<void> {

@@ -329,18 +329,14 @@ describe('TimeSelect', () => {
     });
 
     it('ends up on the correct final value once a fresh selection follows a malformed initial value', async () => {
-      // A malformed `value` (e.g. `"garbage"`) parses into an hour of NaN and a *minute of
-      // `undefined`, rather than the `null` a normally-cleared value produces. `emitIfComplete`'s
-      // guard only checks `=== null`, so picking just the hour here does not skip past an
-      // incomplete selection the way it does from a clean/empty starting state -- it emits early,
-      // with a stray "undefined" minute. Once the minute is actually picked, the final emission is
-      // correct regardless. This test pins today's real behavior (including the premature emit) so
-      // a future guard fix is a deliberate, visible change here rather than a silent one.
+      // A malformed `value` (e.g. `"garbage"`) is now rejected by `parseHhMm` and treated like an
+      // empty value (both hour and minute cleared to `null`), so picking just the hour still
+      // doesn't emit -- only once the minute is also picked does a real "HH:mm" go out.
       const { compiled, onValueChange } = await setup({ language: 'da', value: 'garbage' });
 
       const [hourSelect, minuteSelect] = selects(compiled);
       selectByLabel(hourSelect, '08');
-      expect(onValueChange).toHaveBeenLastCalledWith('08:undefined');
+      expect(onValueChange).not.toHaveBeenCalled();
 
       selectByLabel(minuteSelect, '30');
       expect(onValueChange).toHaveBeenLastCalledWith('08:30');

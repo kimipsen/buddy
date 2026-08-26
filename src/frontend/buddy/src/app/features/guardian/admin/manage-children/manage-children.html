@@ -21,7 +21,7 @@
                 <select
                   class="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                   [ngModel]="child.language"
-                  [disabled]="savingLanguageChildId() === child.id"
+                  [attr.disabled]="savingLanguageChildId() === child.id ? true : null"
                   (ngModelChange)="changeLanguage(child.id, $event)"
                 >
                   @for (language of languages; track language) {

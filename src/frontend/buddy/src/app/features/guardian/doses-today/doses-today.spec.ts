@@ -266,13 +266,7 @@ describe('DosesToday', () => {
     expect(compiled.textContent).toContain('Taken');
   });
 
-  // Surprising behavior (pinned, not silently worked around): unlike tasks-today.html -- where
-  // the error message and the task list render from independent @if blocks, so a failed toggle
-  // still leaves the list visible -- doses-today.html's error branch is part of a single
-  // @if/@else-if chain (loading / error / no-children / empty / list). So once setStatus fails
-  // and sets error(), the whole dose list (including the dose that failed to update) disappears
-  // behind the error message rather than staying visible alongside it.
-  it('replaces the dose list with the error message when updating a dose fails', async () => {
+  it('keeps the dose list visible alongside the error message when updating a dose fails', async () => {
     const pendingDose = dose({ medicineId: 'med-5', name: 'Still pending', status: 0 });
     const setDoseStatus = vi.fn(async () => Promise.reject(new Error('boom')));
 
@@ -286,6 +280,6 @@ describe('DosesToday', () => {
     await settle(fixture);
 
     expect(compiled.textContent).toContain('Unable to update this dose.');
-    expect(compiled.textContent).not.toContain('Still pending');
+    expect(compiled.textContent).toContain('Still pending');
   });
 });

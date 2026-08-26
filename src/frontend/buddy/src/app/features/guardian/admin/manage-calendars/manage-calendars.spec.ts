@@ -306,26 +306,29 @@ describe('ManageCalendars', () => {
     expect(listMyCalendars).toHaveBeenCalledTimes(2);
   });
 
-  it('BUG: the default time zone (browserTimeZoneId()) can be absent from the dropdown\'s own option list, yet is still submitted as-is', async () => {
+  it('falls back to a real dropdown option when the detected browser time zone is not one of listTimeZoneIds()', async () => {
     // In this environment browserTimeZoneId() resolves to 'UTC' (Intl.DateTimeFormat().resolvedOptions().timeZone),
     // but listTimeZoneIds() is built from Intl.supportedValuesOf('timeZone'), which does not include the
-    // 'UTC' alias -- only IANA zone names like 'Etc/UTC'. The <select> is bound via [ngModel]="newCalendarTimeZoneId()"
-    // with no <option value="UTC">, so nothing in the dropdown actually renders as selected even though the
-    // component still holds and submits 'UTC' as the create request's timeZoneId, sight unseen by the guardian.
+    // 'UTC' alias -- only IANA zone names like 'Etc/UTC'. resolveDefaultTimeZoneId() now falls back to the
+    // first listed zone in that case, so the pre-selected value is always one the <select> actually has an
+    // <option> for.
     const detectedTimeZone = browserTimeZoneId();
     const { fixture, calendars } = await setup();
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const optionValues = Array.from(timeZoneSelect(compiled).querySelectorAll('option')).map((option) => option.value);
+    const select = timeZoneSelect(compiled);
+    const optionValues = Array.from(select.querySelectorAll('option')).map((option) => option.value);
     expect(optionValues).not.toContain(detectedTimeZone);
+    expect(optionValues).toContain(select.value);
 
     setInputValue(nameInput(compiled), 'Home Calendar');
     await settle(fixture);
     createForm(compiled).dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(calendars.createCalendar).toHaveBeenCalledWith(expect.objectContaining({ timeZoneId: detectedTimeZone }));
+    expect(calendars.createCalendar).toHaveBeenCalledWith(expect.objectContaining({ timeZoneId: select.value }));
+    expect(calendars.createCalendar).not.toHaveBeenCalledWith(expect.objectContaining({ timeZoneId: detectedTimeZone }));
   });
 
   it('submits a null icon when the icon field is cleared', async () => {

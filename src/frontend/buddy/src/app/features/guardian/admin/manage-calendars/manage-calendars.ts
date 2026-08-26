@@ -16,6 +16,16 @@ const ROLE_LABELS: Record<number, string> = {
 // Matches the backend's Calendar.DefaultIcon -- what a new calendar gets if this field is left as-is.
 const DEFAULT_ICON = '📅';
 
+// browserTimeZoneId() (Intl.DateTimeFormat().resolvedOptions().timeZone) can resolve to an alias
+// like "UTC" that Intl.supportedValuesOf('timeZone') -- and so `timeZoneIds` -- does not include
+// (it only lists canonical IANA names like "Etc/UTC"). Falling back to the first listed zone keeps
+// the pre-selected value one the <select> actually has an <option> for, rather than silently
+// submitting a value the guardian never saw selected.
+function resolveDefaultTimeZoneId(candidates: readonly string[]): string {
+  const browserZone = browserTimeZoneId();
+  return candidates.includes(browserZone) ? browserZone : (candidates[0] ?? browserZone);
+}
+
 @Component({
   selector: 'app-manage-calendars',
   imports: [FormsModule, DatePipe, TranslatePipe],
@@ -34,7 +44,7 @@ export class ManageCalendars implements OnInit {
 
   protected readonly newCalendarName = signal('');
   protected readonly newCalendarIcon = signal(DEFAULT_ICON);
-  protected readonly newCalendarTimeZoneId = signal(browserTimeZoneId());
+  protected readonly newCalendarTimeZoneId = signal(resolveDefaultTimeZoneId(this.timeZoneIds));
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
 

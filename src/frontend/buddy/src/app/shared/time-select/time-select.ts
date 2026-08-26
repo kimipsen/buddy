@@ -22,6 +22,24 @@ function pad2(value: number): string {
   return String(value).padStart(2, '0');
 }
 
+// Guards against a malformed `value` input (not just an empty string) -- e.g. "value.split(':')"
+// on a string with no colon yields an array too short to destructure a minute out of, which
+// previously left `minute` as `undefined` rather than `null` and slipped past the `emitIfComplete`
+// null-check, emitting things like "08:undefined".
+function parseHhMm(value: string): { hour24: number; minute: number } | null {
+  if (!value) {
+    return null;
+  }
+
+  const [hour24, minute] = value.split(':').map(Number);
+
+  if (!Number.isInteger(hour24) || !Number.isInteger(minute) || hour24 < 0 || hour24 > 23 || minute < 0 || minute > 59) {
+    return null;
+  }
+
+  return { hour24, minute };
+}
+
 // Danish uses a 24-hour clock, English a 12-hour one with AM/PM -- native <input type="time">
 // renders that split based on the browser's/OS's own locale, not the app's selected language (see
 // TranslationService), so this picker is built from plain <select>s instead to guarantee it always
@@ -71,18 +89,19 @@ export class TimeSelect {
   }
 
   private applyValue(value: string): void {
-    if (!value) {
+    const parsed = parseHhMm(value);
+
+    if (!parsed) {
       this.hour.set(null);
       this.minute.set(null);
       this.period.set('AM');
       return;
     }
 
-    const [hour24, minute] = value.split(':').map(Number);
-    const { hour, period } = this.is24Hour() ? { hour: hour24, period: this.period() } : from12Hour(hour24);
+    const { hour, period } = this.is24Hour() ? { hour: parsed.hour24, period: this.period() } : from12Hour(parsed.hour24);
 
     this.hour.set(hour);
-    this.minute.set(minute);
+    this.minute.set(parsed.minute);
     this.period.set(period);
   }
 
@@ -90,7 +109,7 @@ export class TimeSelect {
     const hour = this.hour();
     const minute = this.minute();
 
-    if (hour === null || minute === null) {
+    if (hour == null || minute == null) {
       return;
     }
 

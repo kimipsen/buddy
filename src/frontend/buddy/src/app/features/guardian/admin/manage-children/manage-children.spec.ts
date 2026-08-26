@@ -493,20 +493,12 @@ describe('ManageChildren', () => {
     expect(childRow(compiled, 'Sam Kid').textContent).not.toContain('Unable to update this child\'s language.');
   });
 
-  // BUG PIN: the template binds both [ngModel] and [disabled] on this <select>
-  // (manage-children.html's language select), and savingLanguageChildId() genuinely does flip to
-  // the child's id the instant changeLanguage() runs (verified directly against the component
-  // instance's signal). But the rendered .disabled DOM property never follows it -- not even after
-  // several extra detectChanges() passes. Isolated repro (a two-line standalone component with the
-  // same [ngModel]+[disabled] shape, no service/GuardiansService involved at all) reproduces this
-  // identically, regardless of attribute order: Angular's SelectControlValueAccessor keeps
-  // resyncing the native `disabled` property from the (always-enabled) implicit form control on
-  // every change-detection pass, silently overriding the separate [disabled] binding. Net effect:
-  // a guardian can currently mash the language dropdown mid-save; nothing in the UI stops them.
-  // Pinning the real (broken) behavior here rather than the intended one -- fixing it means adding
-  // [attr.disabled] or gating via the control itself in manage-children.html, out of scope for this
-  // spec-only task.
-  it('does not actually disable the language select while the change is in flight (binding is inert alongside ngModel)', async () => {
+  // manage-children.html previously bound [disabled] on this <select> alongside [ngModel], which
+  // Angular's SelectControlValueAccessor silently overrode back to enabled on every change-detection
+  // pass (a documented ngModel+[disabled] quirk on native <select>s). Switched to [attr.disabled],
+  // which sets the DOM attribute directly rather than going through the value accessor's disabled
+  // resync, so it now actually reflects savingLanguageChildId().
+  it('disables the language select while the change is in flight, and re-enables it once it settles', async () => {
     const { promise, resolve } = deferred<ChildSummary>();
     const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildLanguage: vi.fn(() => promise) } });
     await settle(fixture);
@@ -518,10 +510,12 @@ describe('ManageChildren', () => {
     fixture.detectChanges();
     fixture.detectChanges();
 
-    expect(select.disabled).toBe(false);
+    expect(select.disabled).toBe(true);
 
     resolve(child({ language: 'da' }));
     await settle(fixture);
+
+    expect(select.disabled).toBe(false);
   });
 
   // ----- Guardian invite panel -----

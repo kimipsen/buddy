@@ -270,14 +270,7 @@ describe('CalendarAgenda', () => {
     expect(compiled.textContent).not.toContain('Today only');
   });
 
-  // Real bug, pinned rather than worked around: hasAnyVisibleOccurrence is computed from
-  // occurrencesByDate(), which buckets every occurrence in occurrences() by its own date --
-  // regardless of whether that date is one of the seven currently displayed days() -- and never
-  // checks against occurrencesFor(). So an occurrence whose date has scrolled out of view (e.g. a
-  // stale item still sitting in the signal from a moment ago, or a backend response that doesn't
-  // strictly honor the requested range) keeps hasAnyVisibleOccurrence() true, and the "Nothing
-  // planned this week." empty state never appears -- even though no day section renders anything.
-  it('BUG: the empty state stays hidden when occurrences() holds only out-of-range items, rendering a silent blank agenda', async () => {
+  it('shows the empty state when occurrences() holds only out-of-range items (e.g. stale data after navigating)', async () => {
     const fixedToday = occurrence({ itemId: 'today-item', title: 'Today only' });
     const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [fixedToday]) } });
     await settle(fixture);
@@ -286,10 +279,8 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    // Nothing is actually rendered for any day...
     expect(compiled.textContent).not.toContain('Today only');
-    // ...yet the empty-state fallback message is incorrectly suppressed too.
-    expect(compiled.textContent).not.toContain('Nothing planned this week.');
+    expect(compiled.textContent).toContain('Nothing planned this week.');
   });
 
   // ----- Calendar visibility filter -----

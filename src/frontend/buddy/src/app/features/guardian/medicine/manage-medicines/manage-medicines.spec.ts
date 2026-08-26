@@ -318,10 +318,7 @@ describe('ManageMedicines', () => {
       expect(findButtonByText(compiled, 'Confirm')?.disabled).toBe(false);
     });
 
-    // Pins real (if slightly surprising) behavior: cancelStop() only clears
-    // confirmingStopScheduleId, not the error signal -- so an error from a previous failed
-    // attempt keeps showing until requestStop() (clicking "Stop" again) explicitly clears it.
-    it('leaves a prior stop error visible after Cancel, until Stop is pressed again', async () => {
+    it('clears a prior stop error on Cancel', async () => {
       const stopSchedule = vi.fn(async () => Promise.reject(new Error('boom')));
       const { fixture } = await setup({ medicines: { listSchedules: vi.fn(async () => [schedule({ id: 'med-1' })]), stopSchedule } });
       await settle(fixture);
@@ -335,13 +332,8 @@ describe('ManageMedicines', () => {
 
       findButtonByText(compiled, 'Cancel')!.click();
       fixture.detectChanges();
-      expect(compiled.textContent).toContain('Unable to stop this medicine schedule.');
-      expect(compiled.textContent).not.toContain('Stop this schedule?');
-
-      findButtonByText(compiled, 'Stop')!.click();
-      fixture.detectChanges();
       expect(compiled.textContent).not.toContain('Unable to stop this medicine schedule.');
-      expect(compiled.textContent).toContain('Stop this schedule?');
+      expect(compiled.textContent).not.toContain('Stop this schedule?');
     });
   });
 
