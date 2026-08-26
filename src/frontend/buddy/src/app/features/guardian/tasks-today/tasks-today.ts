@@ -2,12 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const TASK_KIND = 1;
 
 @Component({
   selector: 'app-tasks-today',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, LoadingSpinner],
   templateUrl: './tasks-today.html'
 })
 export class TasksToday implements OnInit {

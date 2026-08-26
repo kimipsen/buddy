@@ -5,6 +5,7 @@ import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
+import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const PENDING: DoseStatus = 0;
 const TAKEN: DoseStatus = 1;
@@ -14,7 +15,7 @@ type DoseRow = MedicineDoseOccurrence & { childId: string; childName: string };
 
 @Component({
   selector: 'app-doses-today',
-  imports: [RouterLink, TranslatePipe],
+  imports: [RouterLink, TranslatePipe, LoadingSpinner],
   templateUrl: './doses-today.html'
 })
 export class DosesToday implements OnInit {

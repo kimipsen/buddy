@@ -3,12 +3,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { UserDatePipe } from '../../../core/user-date.pipe';
+import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const EVENT_KIND = 0;
 
 @Component({
   selector: 'app-events-today',
-  imports: [UserDatePipe, TranslatePipe],
+  imports: [UserDatePipe, TranslatePipe, LoadingSpinner],
   templateUrl: './events-today.html'
 })
 export class EventsToday implements OnInit {

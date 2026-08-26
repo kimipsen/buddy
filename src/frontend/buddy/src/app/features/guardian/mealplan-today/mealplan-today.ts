@@ -5,6 +5,7 @@ import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
+import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   0: 'dashboard.mealplan.slots.breakfast',
@@ -17,7 +18,7 @@ const SLOTS: MealSlot[] = [0, 1, 2, 3];
 
 @Component({
   selector: 'app-mealplan-today',
-  imports: [RouterLink, TranslatePipe],
+  imports: [RouterLink, TranslatePipe, LoadingSpinner],
   templateUrl: './mealplan-today.html'
 })
 export class MealplanToday implements OnInit {

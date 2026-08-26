@@ -2,7 +2,7 @@
   <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'dashboard.tasks.title' | translate }}</h3>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">{{ 'dashboard.tasks.loading' | translate }}</p>
+    <app-loading-spinner [label]="'dashboard.tasks.loading' | translate" />
   } @else if (error(); as message) {
     <p class="text-sm text-red-600">{{ message | translate }}</p>
   } @else if (overdue().length === 0 && dueToday().length === 0) {

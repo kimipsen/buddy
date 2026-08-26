@@ -27,7 +27,11 @@
       <p class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700">{{ message | translate }}</p>
     }
 
-    @if (hasAnything()) {
+    @if (contentLoading()) {
+      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
+        <app-loading-spinner [label]="'common.loading' | translate" />
+      </div>
+    } @else if (hasAnything()) {
       <!-- Meals -->
       @if (mealsToShow().length > 0) {
         <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">

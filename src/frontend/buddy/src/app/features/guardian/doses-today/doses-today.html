@@ -5,7 +5,7 @@
   </div>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">{{ 'dashboard.doses.loading' | translate }}</p>
+    <app-loading-spinner [label]="'dashboard.doses.loading' | translate" />
   } @else if (error(); as message) {
     <p class="text-sm text-red-600">{{ message | translate }}</p>
   } @else if (!hasChildren()) {

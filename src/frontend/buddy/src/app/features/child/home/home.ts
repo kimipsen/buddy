@@ -10,6 +10,7 @@ import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealpla
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
 import { UsersService } from '../../../core/users.service';
+import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const TASK_KIND: CalendarItemKind = 1;
 
@@ -36,7 +37,7 @@ const PICKUP_SLOT_LABELS = { 0: 'child.home.pickup.slots.dropOff', 1: 'child.hom
 
 @Component({
   selector: 'app-child-home',
-  imports: [TranslatePipe, RouterLink],
+  imports: [TranslatePipe, RouterLink, LoadingSpinner],
   templateUrl: './home.html'
 })
 export class ChildHome implements OnInit {
@@ -59,6 +60,10 @@ export class ChildHome implements OnInit {
   protected readonly todaysPickups = signal<PickupOccurrence[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+
+  // Pickups, meals, doses, and tasks all feed hasAnything() -- until every one of them has
+  // loaded, a light day and a still-loading day would render the same empty-state card.
+  protected readonly contentLoading = signal(true);
 
   protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
   protected readonly stars = STARS;
@@ -93,8 +98,7 @@ export class ChildHome implements OnInit {
   ngOnInit(): void {
     void this.loadGuardians();
     void this.loadSiblings();
-    void this.loadTodaysPickups();
-    void this.loadDashboard();
+    void Promise.all([this.loadTodaysPickups(), this.loadDashboard()]).finally(() => this.contentLoading.set(false));
   }
 
   protected logout(): void {

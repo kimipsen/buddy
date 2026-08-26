@@ -1,0 +1,6 @@
+<div class="flex items-center justify-center gap-3 py-6 text-slate-500" role="status">
+  <span class="size-6 shrink-0 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600" aria-hidden="true"></span>
+  @if (label(); as text) {
+    <span class="text-sm font-medium">{{ text }}</span>
+  }
+</div>

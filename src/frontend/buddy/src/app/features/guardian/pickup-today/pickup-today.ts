@@ -5,6 +5,7 @@ import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
+import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const GUARDIAN: PickupAssigneeKind = 0;
 const SELF_ESCORT: PickupAssigneeKind = 1;
@@ -17,7 +18,7 @@ type PickupRow = PickupOccurrence & { childId: string; childName: string };
 
 @Component({
   selector: 'app-pickup-today',
-  imports: [RouterLink, TranslatePipe],
+  imports: [RouterLink, TranslatePipe, LoadingSpinner],
   templateUrl: './pickup-today.html'
 })
 export class PickupToday implements OnInit {

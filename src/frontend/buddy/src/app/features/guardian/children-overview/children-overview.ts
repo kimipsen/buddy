@@ -2,10 +2,11 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 @Component({
   selector: 'app-children-overview',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, LoadingSpinner],
   templateUrl: './children-overview.html'
 })
 export class ChildrenOverview implements OnInit {
