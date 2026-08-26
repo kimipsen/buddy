@@ -154,13 +154,13 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
 
         if (membership is not null)
         {
-            return (membership.CalendarName, membership.Icon);
+            return (membership.CalendarName, membership.Icon ?? Calendar.DefaultIcon.Value);
         }
 
         var groupOwned = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken)
             ?? throw new InvalidOperationException($"No membership or group-owned document found for calendar '{calendarId.Value}'.");
 
-        return (groupOwned.CalendarName, groupOwned.Icon);
+        return (groupOwned.CalendarName, groupOwned.Icon ?? Calendar.DefaultIcon.Value);
     }
 
     public async Task<IReadOnlyCollection<CalendarMembershipDocument>> ListForUserAsync(UserId userId, CancellationToken cancellationToken)
