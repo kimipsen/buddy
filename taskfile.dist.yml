@@ -6,6 +6,24 @@ vars:
   GREETING: Hello, world!
 
 tasks:
+  test:
+    desc: Run all tests (backend, then frontend)
+    cmds:
+      - task: test:backend
+      - task: test:frontend
+
+  test:backend:
+    desc: Run backend tests
+    dir: src/backend
+    cmds:
+      - dotnet test backend.slnx
+
+  test:frontend:
+    desc: Run frontend tests
+    dir: src/frontend/buddy
+    cmds:
+      - npm test
+
   deploy:
     desc: Build and (re)start the production stack (deploy/docker-compose.prod.yml)
     dir: deploy
