@@ -8,6 +8,7 @@ public static class CalendarOccurrenceExpansion
     public static async Task<IReadOnlyCollection<CalendarItemOccurrence>> ExpandAsync(
         CalendarId calendarId,
         TimeZoneId zoneId,
+        Icon calendarIcon,
         DateOnly from,
         DateOnly to,
         ICalendarItemEventStore items,
@@ -27,11 +28,11 @@ public static class CalendarOccurrenceExpansion
 
             if (item.Kind == CalendarItemKind.Event)
             {
-                AddEventOccurrences(item, zoneId, from, to, occurrences);
+                AddEventOccurrences(item, zoneId, calendarIcon, from, to, occurrences);
             }
             else
             {
-                AddTaskOccurrences(item, zoneId, from, to, occurrences);
+                AddTaskOccurrences(item, zoneId, calendarIcon, from, to, occurrences);
             }
         }
 
@@ -40,7 +41,7 @@ public static class CalendarOccurrenceExpansion
         return occurrences;
     }
 
-    private static void AddEventOccurrences(CalendarItem item, TimeZoneId zoneId, DateOnly from, DateOnly to, List<CalendarItemOccurrence> occurrences)
+    private static void AddEventOccurrences(CalendarItem item, TimeZoneId zoneId, Icon calendarIcon, DateOnly from, DateOnly to, List<CalendarItemOccurrence> occurrences)
     {
         var period = item.Period!;
         var duration = period.EndsAt.Date.ToDateTime(period.EndsAt.Time) - period.StartsAt.Date.ToDateTime(period.StartsAt.Time);
@@ -52,12 +53,12 @@ public static class CalendarOccurrenceExpansion
             var endsAt = TimeZoneResolution.ResolveInstant(zoneId, startLocal + duration);
 
             occurrences.Add(new CalendarItemOccurrence(
-                item.Id, item.Kind, item.Title, item.Icon.Value, item.Color.Value,
+                item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
                 startsAt, endsAt, null, period.IsAllDay, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value));
         }
     }
 
-    private static void AddTaskOccurrences(CalendarItem item, TimeZoneId zoneId, DateOnly from, DateOnly to, List<CalendarItemOccurrence> occurrences)
+    private static void AddTaskOccurrences(CalendarItem item, TimeZoneId zoneId, Icon calendarIcon, DateOnly from, DateOnly to, List<CalendarItemOccurrence> occurrences)
     {
         var due = item.DueDate!;
 
@@ -67,7 +68,7 @@ public static class CalendarOccurrenceExpansion
             var isCompleted = item.CompletionLog.GetValueOrDefault(date, false);
 
             occurrences.Add(new CalendarItemOccurrence(
-                item.Id, item.Kind, item.Title, item.Icon.Value, item.Color.Value,
+                item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
                 null, null, dueAt, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value));
         }
     }

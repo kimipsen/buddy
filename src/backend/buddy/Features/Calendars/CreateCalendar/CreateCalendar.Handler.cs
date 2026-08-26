@@ -12,6 +12,11 @@ public static class CreateCalendarHandler
             return new CreateCalendarOutcome.Validation($"'{command.TimeZoneId.Value}' is not a recognized IANA time zone identifier.");
         }
 
+        if (command.Icon is { Value: var iconValue } && string.IsNullOrWhiteSpace(iconValue))
+        {
+            return new CreateCalendarOutcome.Validation("Icon must not be empty.");
+        }
+
         if (command.UserId is not { } ownerId)
         {
             return new CreateCalendarOutcome.Unauthenticated();
@@ -29,9 +34,16 @@ public static class CreateCalendarHandler
         }
 
         var calendarId = CalendarId.New();
-        CalendarEvent created = new CalendarCreatedForGroup(calendarId, command.GroupId, command.Name, command.TimeZoneId, DateTimeOffset.UtcNow);
+        var now = DateTimeOffset.UtcNow;
+        CalendarEvent created = new CalendarCreatedForGroup(calendarId, command.GroupId, command.Name, command.TimeZoneId, now);
 
-        var events = await calendars.CreateAsync(calendarId, [created], cancellationToken);
+        // Appended atomically alongside CalendarCreatedForGroup rather than via a separate
+        // UpdateCalendarIcon call, so creating a calendar with a custom icon stays one request.
+        var initialEvents = command.Icon is { } icon && icon != Calendar.DefaultIcon
+            ? (CalendarEvent[])[created, new CalendarIconChanged(calendarId, icon, ownerId, now)]
+            : [created];
+
+        var events = await calendars.CreateAsync(calendarId, initialEvents, cancellationToken);
 
         return new CreateCalendarOutcome.Success(Calendar.Rehydrate(events)!);
     }

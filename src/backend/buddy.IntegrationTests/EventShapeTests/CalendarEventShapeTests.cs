@@ -46,6 +46,11 @@ public sealed class CalendarEventShapeTests
         "Calendars/CalendarCreatedForGroup.json");
 
     [Fact]
+    public void CalendarIconChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new CalendarIconChanged(FixedCalendarId, Icon.New("star"), FixedUserId, FixedInstant),
+        "Calendars/CalendarIconChanged.json");
+
+    [Fact]
     public void CalendarDeleted() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new CalendarDeleted(FixedCalendarId, FixedUserId, FixedInstant),
         "Calendars/CalendarDeleted.json");

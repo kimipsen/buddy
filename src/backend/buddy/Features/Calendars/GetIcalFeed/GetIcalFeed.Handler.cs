@@ -35,7 +35,7 @@ public static class GetIcalFeedHandler
         var from = today.AddDays(-LookBehind.Days);
         var to = today.AddDays(LookAhead.Days);
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, from, to, items, cancellationToken);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, calendar.Icon, from, to, items, cancellationToken);
 
         return new Result<string>.Success(IcalFeedWriter.Write(calendar.Name, occurrences));
     }

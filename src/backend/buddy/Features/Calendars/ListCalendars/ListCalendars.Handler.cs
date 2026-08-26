@@ -80,7 +80,7 @@ public static class ListCalendarsHandler
             }
 
             derived.Add(new CalendarMembershipDocument(
-                CalendarMembershipDocument.BuildId(owned.Id, userId.Value), owned.Id, userId.Value, role, owned.CalendarName));
+                CalendarMembershipDocument.BuildId(owned.Id, userId.Value), owned.Id, userId.Value, role, owned.CalendarName, owned.Icon));
         }
 
         return derived;

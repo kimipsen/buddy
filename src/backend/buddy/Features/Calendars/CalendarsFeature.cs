@@ -19,6 +19,7 @@ public static class CalendarsFeature
     [
         typeof(CalendarCreated),
         typeof(CalendarCreatedForGroup),
+        typeof(CalendarIconChanged),
         typeof(CalendarTransferredToGroup),
         typeof(CalendarDeleted),
         typeof(MemberRoleGranted),
@@ -76,6 +77,7 @@ public static class CalendarsFeature
 
         calendars.MapCreateCalendar();
         calendars.MapGetCalendar();
+        calendars.MapUpdateCalendarIcon();
         calendars.MapListCalendars();
         calendars.MapDeleteCalendar();
         calendars.MapTransferCalendarToGroup();

@@ -112,6 +112,7 @@ export const admin = {
     loadError: 'Unable to load calendars.',
     empty: 'No calendars yet. Create one below.',
     namePlaceholder: 'Calendar name',
+    iconPlaceholder: 'Icon',
     addButton: 'Add calendar',
     createError: 'Unable to create the calendar.',
     roles: {
@@ -134,6 +135,12 @@ export const admin = {
       confirmButton: 'Confirm',
       cancelButton: 'Cancel',
       error: 'Unable to delete this calendar.'
+    },
+    editIcon: {
+      showButton: 'Change icon',
+      hideButton: 'Close',
+      confirmButton: 'Save',
+      error: 'Unable to change this calendar\'s icon.'
     },
     ical: {
       showButton: 'Subscribe',

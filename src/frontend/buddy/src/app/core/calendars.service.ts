@@ -18,6 +18,7 @@ export type RecurrenceFrequency = 0 | 1 | 2 | 3;
 export interface CalendarSummary {
   id: string;
   name: string;
+  icon: string;
   role: CalendarRole;
 }
 
@@ -38,6 +39,12 @@ export interface CreateCalendarRequest {
   timeZoneId: string;
   // Required -- a calendar is always group-owned now, there's no personal-calendar option.
   groupId: string;
+  // Omitted/null falls back to the backend's default icon.
+  icon?: string | null;
+}
+
+export interface UpdateCalendarIconRequest {
+  icon: string;
 }
 
 export interface DatePart {
@@ -54,7 +61,8 @@ export interface RecurrenceRuleRequest {
 export interface CreateItemRequest {
   kind: CalendarItemKind;
   title: string;
-  icon: string;
+  // null means "inherit the owning calendar's icon" -- the item stores no override.
+  icon: string | null;
   color: string;
   // Event requires startsAt+endsAt; task requires dueDate -- the other pair stays null.
   startsAt: DatePart | null;
@@ -67,7 +75,8 @@ export interface CreateItemRequest {
 
 export interface UpdateItemDetailsRequest {
   title: string;
-  icon: string;
+  // null clears any override, reverting to the owning calendar's icon.
+  icon: string | null;
   color: string;
 }
 
@@ -84,7 +93,8 @@ export interface CalendarItemResponse {
   calendarId: string;
   kind: CalendarItemKind;
   title: string;
-  icon: string;
+  // Raw override -- null if the item inherits the owning calendar's icon.
+  icon: string | null;
   color: string;
   createdBy: string;
   lastModifiedBy: string;
@@ -94,7 +104,10 @@ export interface CalendarItemOccurrence {
   itemId: string;
   kind: CalendarItemKind;
   title: string;
+  // Always resolved: the item's own override, or the owning calendar's icon when it has none.
   icon: string;
+  // Raw override -- null if this occurrence's icon came from the calendar's default.
+  iconOverride: string | null;
   color: string;
   startsAt: string | null;
   endsAt: string | null;
@@ -126,6 +139,13 @@ export class CalendarsService {
 
   createCalendar(request: CreateCalendarRequest): Promise<CalendarSummary> {
     return firstValueFrom(this.http.post<CalendarSummary>(`${this.runtimeConfig.apiBaseUrl}/calendars`, request));
+  }
+
+  // Owner-only -- the calendar's icon is the one detail that can change after creation today.
+  updateCalendarIcon(calendarId: string, icon: string): Promise<void> {
+    return firstValueFrom(
+      this.http.patch<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/icon`, { icon } satisfies UpdateCalendarIconRequest)
+    );
   }
 
   // Moves an already-existing calendar to a different group -- the one exception to ownership

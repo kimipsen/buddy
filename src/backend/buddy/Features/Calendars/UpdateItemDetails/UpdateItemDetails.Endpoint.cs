@@ -25,7 +25,7 @@ public static class UpdateItemDetailsEndpoint
                 new CalendarId(calendarId),
                 new CalendarItemId(itemId),
                 request.Title,
-                new Icon(request.Icon),
+                request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
                 new Color(request.Color));
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
@@ -46,4 +46,4 @@ public static class UpdateItemDetailsEndpoint
     }
 }
 
-public sealed record UpdateItemDetailsRequest(string Title, string Icon, string Color);
+public sealed record UpdateItemDetailsRequest(string Title, string? Icon, string Color);

@@ -43,7 +43,7 @@ public static class ListOccurrencesHandler
             return access.ToDeniedResult<IReadOnlyCollection<CalendarItemOccurrence>>();
         }
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, query.From, query.To, items, cancellationToken);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, calendar.Icon, query.From, query.To, items, cancellationToken);
 
         return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Success(occurrences);
     }

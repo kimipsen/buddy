@@ -13,6 +13,9 @@ const ROLE_LABELS: Record<number, string> = {
   2: 'admin.manageCalendars.roles.viewer'
 };
 
+// Matches the backend's Calendar.DefaultIcon -- what a new calendar gets if this field is left as-is.
+const DEFAULT_ICON = '📅';
+
 @Component({
   selector: 'app-manage-calendars',
   imports: [FormsModule, DatePipe, TranslatePipe],
@@ -30,6 +33,7 @@ export class ManageCalendars implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly newCalendarName = signal('');
+  protected readonly newCalendarIcon = signal(DEFAULT_ICON);
   protected readonly newCalendarTimeZoneId = signal(browserTimeZoneId());
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
@@ -43,6 +47,11 @@ export class ManageCalendars implements OnInit {
   protected readonly moveTargetGroupId = signal('');
   protected readonly moving = signal(false);
   protected readonly moveError = signal<string | null>(null);
+
+  protected readonly editingIconCalendarId = signal<string | null>(null);
+  protected readonly editIconValue = signal('');
+  protected readonly updatingIcon = signal(false);
+  protected readonly editIconError = signal<string | null>(null);
 
   protected readonly confirmingDeleteCalendarId = signal<string | null>(null);
   protected readonly deletingCalendarId = signal<string | null>(null);
@@ -69,6 +78,7 @@ export class ManageCalendars implements OnInit {
     const name = this.newCalendarName().trim();
     const timeZoneId = this.newCalendarTimeZoneId().trim();
     const groupId = this.newCalendarGroupId();
+    const icon = this.newCalendarIcon().trim() || null;
 
     if (!name || !timeZoneId || !groupId) {
       return;
@@ -78,8 +88,9 @@ export class ManageCalendars implements OnInit {
     this.createError.set(null);
 
     try {
-      await this.calendars.createCalendar({ name, timeZoneId, groupId });
+      await this.calendars.createCalendar({ name, timeZoneId, groupId, icon });
       this.newCalendarName.set('');
+      this.newCalendarIcon.set(DEFAULT_ICON);
       await this.loadCalendars();
     } catch {
       this.createError.set('admin.manageCalendars.createError');
@@ -91,6 +102,7 @@ export class ManageCalendars implements OnInit {
   protected startMove(calendarId: string): void {
     this.confirmingDeleteCalendarId.set(null);
     this.icalCalendarId.set(null);
+    this.editingIconCalendarId.set(null);
 
     if (this.movingCalendarId() === calendarId) {
       this.movingCalendarId.set(null);
@@ -100,6 +112,46 @@ export class ManageCalendars implements OnInit {
     this.movingCalendarId.set(calendarId);
     this.moveTargetGroupId.set('');
     this.moveError.set(null);
+  }
+
+  protected startEditIcon(calendar: CalendarSummary): void {
+    this.movingCalendarId.set(null);
+    this.confirmingDeleteCalendarId.set(null);
+    this.icalCalendarId.set(null);
+
+    if (this.editingIconCalendarId() === calendar.id) {
+      this.editingIconCalendarId.set(null);
+      return;
+    }
+
+    this.editingIconCalendarId.set(calendar.id);
+    this.editIconValue.set(calendar.icon);
+    this.editIconError.set(null);
+  }
+
+  protected cancelEditIcon(): void {
+    this.editingIconCalendarId.set(null);
+  }
+
+  protected async confirmEditIcon(calendarId: string): Promise<void> {
+    const icon = this.editIconValue().trim();
+
+    if (!icon) {
+      return;
+    }
+
+    this.updatingIcon.set(true);
+    this.editIconError.set(null);
+
+    try {
+      await this.calendars.updateCalendarIcon(calendarId, icon);
+      this.editingIconCalendarId.set(null);
+      await this.loadCalendars();
+    } catch {
+      this.editIconError.set('admin.manageCalendars.editIcon.error');
+    } finally {
+      this.updatingIcon.set(false);
+    }
   }
 
   protected async confirmMove(calendarId: string): Promise<void> {
@@ -126,6 +178,7 @@ export class ManageCalendars implements OnInit {
   protected requestDelete(calendarId: string): void {
     this.movingCalendarId.set(null);
     this.icalCalendarId.set(null);
+    this.editingIconCalendarId.set(null);
     this.deleteError.set(null);
     this.confirmingDeleteCalendarId.set(calendarId);
   }
@@ -152,6 +205,7 @@ export class ManageCalendars implements OnInit {
   protected toggleIcal(calendarId: string): void {
     this.movingCalendarId.set(null);
     this.confirmingDeleteCalendarId.set(null);
+    this.editingIconCalendarId.set(null);
 
     if (this.icalCalendarId() === calendarId) {
       this.icalCalendarId.set(null);

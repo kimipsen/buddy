@@ -4,13 +4,16 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
+// Icon is null when the item has no override -- it inherits the owning Calendar's Icon. Resolving
+// that fallback is a rendering concern, not this aggregate's: see CalendarOccurrenceExpansion,
+// the one place effective icon is computed, shared by ListOccurrences and the ical feed.
 public sealed record CalendarItem(
     CalendarItemId Id,
     CalendarId CalendarId,
     UserId CreatedBy,
     CalendarItemKind Kind,
     string Title,
-    Icon Icon,
+    Icon? Icon,
     Color Color,
     Period? Period,
     DueDate? DueDate,

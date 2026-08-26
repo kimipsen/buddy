@@ -38,11 +38,12 @@ public static class GetCalendarEndpoint
 
 public sealed record CalendarMemberResponse(Guid UserId, CalendarRole Role);
 
-public sealed record CalendarResponse(CalendarId Id, string Name, string TimeZoneId, IReadOnlyCollection<CalendarMemberResponse> Members)
+public sealed record CalendarResponse(CalendarId Id, string Name, string Icon, string TimeZoneId, IReadOnlyCollection<CalendarMemberResponse> Members)
 {
     public static CalendarResponse FromCalendar(Calendar calendar) => new(
         calendar.Id,
         calendar.Name,
+        calendar.Icon.Value,
         calendar.TimeZoneId.Value,
         [.. calendar.Members.Select(m => new CalendarMemberResponse(m.Key.Value, m.Value))]);
 }

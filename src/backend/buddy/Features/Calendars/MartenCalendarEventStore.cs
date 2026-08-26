@@ -24,6 +24,11 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
         await using var session = store.LightweightSession();
         session.Events.StartStream(calendarId.Value, payloads);
 
+        // A CalendarIconChanged appended in the same initial batch (CreateCalendarHandler does
+        // this when the caller specifies a custom icon at creation) overrides the default before
+        // the very first document is written -- there's no window where a stale icon is cached.
+        var icon = events.Select(e => e.Value).OfType<CalendarIconChanged>().FirstOrDefault()?.Icon.Value ?? Calendar.DefaultIcon.Value;
+
         switch (events.FirstOrDefault())
         {
             case CalendarCreated created:
@@ -32,11 +37,12 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
                     calendarId.Value,
                     created.OwnerId.Value,
                     CalendarRole.Owner,
-                    created.Name));
+                    created.Name,
+                    icon));
                 break;
 
             case CalendarCreatedForGroup created:
-                session.Store(new GroupOwnedCalendarDocument(calendarId.Value, created.OwnerId.Value, created.Name));
+                session.Store(new GroupOwnedCalendarDocument(calendarId.Value, created.OwnerId.Value, created.Name, icon));
                 break;
 
             default:
@@ -67,14 +73,15 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             switch (@event)
             {
                 case MemberRoleGranted granted:
-                    var grantedName = await ResolveCalendarNameAsync(session, calendarId, cancellationToken);
+                    var (grantedName, grantedIcon) = await ResolveCalendarNameAndIconAsync(session, calendarId, cancellationToken);
 
                     session.Store(new CalendarMembershipDocument(
                         CalendarMembershipDocument.BuildId(calendarId.Value, granted.MemberId.Value),
                         calendarId.Value,
                         granted.MemberId.Value,
                         granted.Role,
-                        grantedName));
+                        grantedName,
+                        grantedIcon));
                     break;
 
                 case MemberRoleRevoked revoked:
@@ -85,8 +92,26 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
                     // Upserts the same row (Id = calendarId) with the new GroupId -- whether the
                     // calendar was previously personal (no row yet) or owned by a different
                     // group (row already exists), this is the only write needed either way.
-                    var transferredName = await ResolveCalendarNameAsync(session, calendarId, cancellationToken);
-                    session.Store(new GroupOwnedCalendarDocument(calendarId.Value, transferred.NewGroupId.Value, transferredName));
+                    var (transferredName, transferredIcon) = await ResolveCalendarNameAndIconAsync(session, calendarId, cancellationToken);
+                    session.Store(new GroupOwnedCalendarDocument(calendarId.Value, transferred.NewGroupId.Value, transferredName, transferredIcon));
+                    break;
+
+                case CalendarIconChanged changed:
+                    var membershipRows = await session.Query<CalendarMembershipDocument>()
+                        .Where(d => d.CalendarId == calendarId.Value)
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var row in membershipRows)
+                    {
+                        session.Store(row with { Icon = changed.Icon.Value });
+                    }
+
+                    var groupOwnedRow = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken);
+
+                    if (groupOwnedRow is not null)
+                    {
+                        session.Store(groupOwnedRow with { Icon = changed.Icon.Value });
+                    }
                     break;
 
                 case CalendarDeleted:
@@ -116,14 +141,27 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
     // The calendar's name never changes, so any existing membership document for this calendar
     // already has it cached -- except a group-owned calendar has no membership document until
     // its first explicit grant, so fall back to the GroupOwnedCalendarDocument written at
-    // creation (or a prior transfer) for that case.
-    private static async Task<string> ResolveCalendarNameAsync(IDocumentSession session, CalendarId calendarId, CancellationToken cancellationToken) =>
-        await session.Query<CalendarMembershipDocument>()
+    // creation (or a prior transfer) for that case. Icon is fetched from the same row for the
+    // same reason (one lookup instead of two), even though -- unlike name -- it can change; the
+    // row read here is always current since CalendarIconChanged updates it in the same AppendAsync
+    // pass any icon-changing event would.
+    private static async Task<(string Name, string Icon)> ResolveCalendarNameAndIconAsync(IDocumentSession session, CalendarId calendarId, CancellationToken cancellationToken)
+    {
+        var membership = await session.Query<CalendarMembershipDocument>()
             .Where(d => d.CalendarId == calendarId.Value)
-            .Select(d => d.CalendarName)
-            .FirstOrDefaultAsync(cancellationToken)
-        ?? (await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken))?.CalendarName
-        ?? throw new InvalidOperationException($"No membership or group-owned document found for calendar '{calendarId.Value}'.");
+            .Select(d => new { d.CalendarName, d.Icon })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (membership is not null)
+        {
+            return (membership.CalendarName, membership.Icon);
+        }
+
+        var groupOwned = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken)
+            ?? throw new InvalidOperationException($"No membership or group-owned document found for calendar '{calendarId.Value}'.");
+
+        return (groupOwned.CalendarName, groupOwned.Icon);
+    }
 
     public async Task<IReadOnlyCollection<CalendarMembershipDocument>> ListForUserAsync(UserId userId, CancellationToken cancellationToken)
     {

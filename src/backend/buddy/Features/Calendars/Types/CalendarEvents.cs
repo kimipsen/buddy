@@ -6,6 +6,7 @@ namespace buddy.Features.Calendars;
 public union CalendarEvent(
     CalendarCreated,
     CalendarCreatedForGroup,
+    CalendarIconChanged,
     CalendarTransferredToGroup,
     CalendarDeleted,
     MemberRoleGranted,
@@ -18,6 +19,7 @@ public union CalendarEvent(
     {
         CalendarCreated e => e,
         CalendarCreatedForGroup e => e,
+        CalendarIconChanged e => e,
         CalendarTransferredToGroup e => e,
         CalendarDeleted e => e,
         MemberRoleGranted e => e,
@@ -33,6 +35,7 @@ public union CalendarEvent(
     {
         CalendarCreated => nameof(CalendarCreated),
         CalendarCreatedForGroup => nameof(CalendarCreatedForGroup),
+        CalendarIconChanged => nameof(CalendarIconChanged),
         CalendarTransferredToGroup => nameof(CalendarTransferredToGroup),
         CalendarDeleted => nameof(CalendarDeleted),
         MemberRoleGranted => nameof(MemberRoleGranted),
@@ -48,6 +51,11 @@ public sealed record CalendarCreated(CalendarId CalendarId, UserId OwnerId, stri
 // of a user. CalendarCreated itself is never modified -- old streams are read exactly as stored,
 // with no upcasting. See docs/backend/analysis/group-owned-calendars-and-permissions.md.
 public sealed record CalendarCreatedForGroup(CalendarId CalendarId, GroupId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
+
+// Icon is the only calendar-level detail that can change after creation today -- Name and
+// TimeZoneId remain fixed. See Calendar.DefaultIcon for the value assumed until this event first
+// appears in a calendar's stream.
+public sealed record CalendarIconChanged(CalendarId CalendarId, Icon Icon, UserId ChangedBy, DateTimeOffset OccurredAt);
 
 // The one exception to "ownership is fixed at creation, never transferred" -- a calendar's
 // owning group can be changed afterward (e.g. moving a legacy personally-owned calendar into a

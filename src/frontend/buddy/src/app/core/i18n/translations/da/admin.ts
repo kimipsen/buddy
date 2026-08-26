@@ -112,6 +112,7 @@ export const admin = {
     loadError: 'Kunne ikke indlæse kalendere.',
     empty: 'Ingen kalendere endnu. Opret en nedenfor.',
     namePlaceholder: 'Kalendernavn',
+    iconPlaceholder: 'Ikon',
     addButton: 'Tilføj kalender',
     createError: 'Kunne ikke oprette kalenderen.',
     roles: {
@@ -134,6 +135,12 @@ export const admin = {
       confirmButton: 'Bekræft',
       cancelButton: 'Annuller',
       error: 'Kunne ikke slette denne kalender.'
+    },
+    editIcon: {
+      showButton: 'Skift ikon',
+      hideButton: 'Luk',
+      confirmButton: 'Gem',
+      error: 'Kunne ikke skifte ikon for denne kalender.'
     },
     ical: {
       showButton: 'Abonnement',

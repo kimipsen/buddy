@@ -63,7 +63,7 @@
                           <input
                             type="text"
                             name="editIcon"
-                            [placeholder]="'calendar.agenda.form.iconPlaceholder' | translate"
+                            [placeholder]="calendarIconFor(occurrence.calendarId)"
                             class="rounded-lg border border-slate-300 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             [ngModel]="editIcon()"
                             (ngModelChange)="editIcon.set($event)"
@@ -278,7 +278,7 @@
         <input
           type="text"
           name="itemIcon"
-          [placeholder]="'calendar.agenda.form.iconPlaceholder' | translate"
+          [placeholder]="newCalendarId() ? calendarIconFor(newCalendarId()) : ('calendar.agenda.form.iconPlaceholder' | translate)"
           class="rounded-lg border border-slate-300 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
           [ngModel]="newIcon()"
           (ngModelChange)="newIcon.set($event)"

@@ -18,7 +18,7 @@ public static class ListCalendarsEndpoint
             var memberships = await bus.InvokeAsync<IReadOnlyCollection<CalendarMembershipDocument>>(ListCalendars.FromClaims(principal), cancellationToken);
 
             return TypedResults.Ok<IReadOnlyCollection<CalendarSummaryResponse>>(
-                [.. memberships.Select(m => new CalendarSummaryResponse(new CalendarId(m.CalendarId), m.CalendarName, m.Role))]);
+                [.. memberships.Select(m => new CalendarSummaryResponse(new CalendarId(m.CalendarId), m.CalendarName, m.Icon, m.Role))]);
         })
         .WithName("ListCalendars");
 
@@ -26,4 +26,4 @@ public static class ListCalendarsEndpoint
     }
 }
 
-public sealed record CalendarSummaryResponse(CalendarId Id, string Name, CalendarRole Role);
+public sealed record CalendarSummaryResponse(CalendarId Id, string Name, string Icon, CalendarRole Role);

@@ -24,7 +24,7 @@ public static class CreateItemEndpoint
                 new CalendarId(calendarId),
                 request.Kind,
                 request.Title,
-                new Icon(request.Icon),
+                request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
                 new Color(request.Color),
                 request.StartsAt,
                 request.EndsAt,
@@ -53,7 +53,7 @@ public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int In
 public sealed record CreateItemRequest(
     CalendarItemKind Kind,
     string Title,
-    string Icon,
+    string? Icon,
     string Color,
     StartsAt? StartsAt,
     EndsAt? EndsAt,
@@ -61,12 +61,15 @@ public sealed record CreateItemRequest(
     bool IsAllDay,
     RecurrenceRuleRequest? Recurrence);
 
+// Icon is null when the item has no override -- it inherits the owning calendar's icon. This
+// mirrors CalendarItem.Icon exactly (no calendar lookup happens here); the resolved/effective
+// icon is only exposed on CalendarItemOccurrence, the rendering-ready projection.
 public sealed record CalendarItemResponse(
     CalendarItemId Id,
     CalendarId CalendarId,
     CalendarItemKind Kind,
     string Title,
-    string Icon,
+    string? Icon,
     string Color,
     Period? Period,
     DueDate? DueDate,
@@ -79,7 +82,7 @@ public sealed record CalendarItemResponse(
         item.CalendarId,
         item.Kind,
         item.Title,
-        item.Icon.Value,
+        item.Icon?.Value,
         item.Color.Value,
         item.Period,
         item.DueDate,

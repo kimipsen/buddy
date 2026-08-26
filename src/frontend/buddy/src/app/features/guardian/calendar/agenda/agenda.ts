@@ -23,7 +23,6 @@ const EVENT_KIND: CalendarItemKind = 0;
 const TASK_KIND: CalendarItemKind = 1;
 // Owner (0) or Contributor (1) -- the same tiers CalendarAuthorization.CheckContribute accepts.
 const MAX_CONTRIBUTE_ROLE = 1;
-const DEFAULT_ICON = '📅';
 const DEFAULT_COLOR = '#f43f5e';
 
 interface AgendaDay {
@@ -113,7 +112,7 @@ export class CalendarAgenda {
   protected readonly editError = signal<string | null>(null);
 
   protected readonly canSubmitEdit = computed(() => {
-    if (!this.editTitle().trim() || !this.editIcon().trim() || !this.editColor().trim()) {
+    if (!this.editTitle().trim() || !this.editColor().trim()) {
       return false;
     }
 
@@ -153,7 +152,8 @@ export class CalendarAgenda {
   protected readonly newCalendarId = signal('');
   protected readonly newKind = signal<CalendarItemKind>(EVENT_KIND);
   protected readonly newTitle = signal('');
-  protected readonly newIcon = signal(DEFAULT_ICON);
+  // Empty means "inherit the selected calendar's icon" -- see calendarIconFor().
+  protected readonly newIcon = signal('');
   protected readonly newColor = signal(DEFAULT_COLOR);
   protected readonly newStartDate = signal(todayIsoDate());
   protected readonly newStartTime = signal('09:00');
@@ -169,7 +169,7 @@ export class CalendarAgenda {
   protected readonly createError = signal<string | null>(null);
 
   protected readonly canSubmit = computed(() => {
-    if (!this.newCalendarId() || !this.newTitle().trim() || !this.newIcon().trim() || !this.newColor().trim()) {
+    if (!this.newCalendarId() || !this.newTitle().trim() || !this.newColor().trim()) {
       return false;
     }
 
@@ -203,6 +203,13 @@ export class CalendarAgenda {
 
   protected occurrencesFor(date: string): CalendarOccurrence[] {
     return this.occurrencesByDate()[date] ?? [];
+  }
+
+  // What a blank icon input resolves to -- shown as its placeholder so leaving it empty visibly
+  // means "use the calendar's icon". Falls back to the backend's own default (Calendar.DefaultIcon)
+  // for the brief window before myCalendars() has loaded.
+  protected calendarIconFor(calendarId: string): string {
+    return this.myCalendars().find((calendar) => calendar.id === calendarId)?.icon ?? '📅';
   }
 
   protected isCalendarHidden(calendarId: string): boolean {
@@ -279,7 +286,7 @@ export class CalendarAgenda {
     this.editingItemId.set(occurrence.itemId);
     this.editingKind.set(occurrence.kind);
     this.editTitle.set(occurrence.title);
-    this.editIcon.set(occurrence.icon);
+    this.editIcon.set(occurrence.iconOverride ?? '');
     this.editColor.set(occurrence.color);
     this.editIsAllDay.set(occurrence.isAllDay);
 
@@ -333,7 +340,7 @@ export class CalendarAgenda {
     const dueTime = isAllDay ? '00:00' : this.editDueTime();
 
     try {
-      await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, { title, icon, color });
+      await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, { title, icon: icon || null, color });
       await this.calendars.rescheduleItem(occurrence.calendarId, occurrence.itemId, {
         startsAt: kind === EVENT_KIND ? toDatePart(this.editStartDate(), startTime) : null,
         endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
@@ -372,7 +379,7 @@ export class CalendarAgenda {
       await this.calendars.createItem(calendarId, {
         kind,
         title: this.newTitle().trim(),
-        icon: this.newIcon().trim(),
+        icon: this.newIcon().trim() || null,
         color: this.newColor().trim(),
         startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), startTime) : null,
         endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
@@ -406,7 +413,7 @@ export class CalendarAgenda {
 
   private resetForm(): void {
     this.newTitle.set('');
-    this.newIcon.set(DEFAULT_ICON);
+    this.newIcon.set('');
     this.newColor.set(DEFAULT_COLOR);
     this.newStartDate.set(todayIsoDate());
     this.newStartTime.set('09:00');
