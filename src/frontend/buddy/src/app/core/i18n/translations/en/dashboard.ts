@@ -12,6 +12,7 @@ export const dashboard = {
     title: 'Today’s tasks',
     loading: 'Loading tasks…',
     loadError: 'Unable to load today’s tasks.',
+    taskUpdateError: 'Unable to update this task.',
     empty: 'No tasks due today.',
     overdue: 'Overdue',
     dueToday: 'Due today'

@@ -12,6 +12,7 @@ export const dashboard = {
     title: 'Dagens opgaver',
     loading: 'Indlæser opgaver…',
     loadError: 'Kunne ikke indlæse dagens opgaver.',
+    taskUpdateError: 'Kunne ikke opdatere denne opgave.',
     empty: 'Ingen opgaver forfalder i dag.',
     overdue: 'Forsinket',
     dueToday: 'Forfalder i dag'

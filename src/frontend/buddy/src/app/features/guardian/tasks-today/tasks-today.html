@@ -3,41 +3,65 @@
 
   @if (loading()) {
     <app-loading-spinner [label]="'dashboard.tasks.loading' | translate" />
-  } @else if (error(); as message) {
-    <p class="text-sm text-red-600">{{ message | translate }}</p>
-  } @else if (overdue().length === 0 && dueToday().length === 0) {
-    <p class="text-sm text-slate-500">{{ 'dashboard.tasks.empty' | translate }}</p>
   } @else {
-    <div class="space-y-4">
-      @if (overdue().length > 0) {
-        <div>
-          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600">{{ 'dashboard.tasks.overdue' | translate }}</p>
-          <ul class="space-y-2">
-            @for (task of overdue(); track task.itemId) {
-              <li class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium">
-                <input type="checkbox" [checked]="task.isCompleted" [attr.aria-label]="task.title" disabled />
-                <span class="text-lg leading-none">{{ task.icon }}</span>
-                <span [class.line-through]="task.isCompleted">{{ task.title }}</span>
-              </li>
-            }
-          </ul>
-        </div>
-      }
+    @if (error(); as message) {
+      <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>
+    }
 
-      @if (dueToday().length > 0) {
-        <div>
-          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ 'dashboard.tasks.dueToday' | translate }}</p>
-          <ul class="space-y-2">
-            @for (task of dueToday(); track task.itemId) {
-              <li class="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium">
-                <input type="checkbox" [checked]="task.isCompleted" [attr.aria-label]="task.title" disabled />
-                <span class="text-lg leading-none">{{ task.icon }}</span>
-                <span [class.line-through]="task.isCompleted">{{ task.title }}</span>
-              </li>
-            }
-          </ul>
-        </div>
+    @if (overdue().length === 0 && dueToday().length === 0) {
+      @if (!error()) {
+        <p class="text-sm text-slate-500">{{ 'dashboard.tasks.empty' | translate }}</p>
       }
-    </div>
+    } @else {
+      <div class="space-y-4">
+        @if (overdue().length > 0) {
+          <div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600">{{ 'dashboard.tasks.overdue' | translate }}</p>
+            <ul class="space-y-2">
+              @for (task of overdue(); track task.itemId) {
+                <li class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    [checked]="task.isCompleted"
+                    [attr.aria-label]="task.title"
+                    [disabled]="!canToggle(task) || savingTaskId() === task.itemId"
+                    (change)="toggleTask(task)"
+                  />
+                  <span class="text-lg leading-none">{{ task.icon }}</span>
+                  <span [class.line-through]="task.isCompleted">{{ task.title }}</span>
+                  @if (assigneeNameFor(task); as assigneeName) {
+                    <span class="text-xs text-slate-400">→ {{ assigneeName }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (dueToday().length > 0) {
+          <div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ 'dashboard.tasks.dueToday' | translate }}</p>
+            <ul class="space-y-2">
+              @for (task of dueToday(); track task.itemId) {
+                <li class="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    [checked]="task.isCompleted"
+                    [attr.aria-label]="task.title"
+                    [disabled]="!canToggle(task) || savingTaskId() === task.itemId"
+                    (change)="toggleTask(task)"
+                  />
+                  <span class="text-lg leading-none">{{ task.icon }}</span>
+                  <span [class.line-through]="task.isCompleted">{{ task.title }}</span>
+                  @if (assigneeNameFor(task); as assigneeName) {
+                    <span class="text-xs text-slate-400">→ {{ assigneeName }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    }
   }
 </section>
