@@ -1,0 +1,57 @@
+version: 2
+updates:
+  # GitHub Actions used in workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # .NET backend (buddy + buddy.IntegrationTests share backend.slnx)
+  - package-ecosystem: "nuget"
+    directory: "/src/backend"
+    schedule:
+      interval: "weekly"
+    groups:
+      backend-dependencies:
+        patterns:
+          - "*"
+
+  # Angular frontend
+  - package-ecosystem: "npm"
+    directory: "/src/frontend/buddy"
+    schedule:
+      interval: "weekly"
+    groups:
+      frontend-dependencies:
+        patterns:
+          - "*"
+
+  # Keycloak theme build tooling
+  - package-ecosystem: "npm"
+    directory: "/themes/buddy/build"
+    schedule:
+      interval: "weekly"
+    groups:
+      theme-build-dependencies:
+        patterns:
+          - "*"
+
+  # Container base images
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker"
+    directory: "/src/backend/buddy"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker"
+    directory: "/src/frontend/buddy"
+    schedule:
+      interval: "weekly"
