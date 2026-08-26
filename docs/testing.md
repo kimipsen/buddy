@@ -30,6 +30,37 @@ The HTML mutation report is written to
 [frontend overview](frontend/README.md#mutation-testing) for configuration and
 resource considerations.
 
+### Waiting for async work in component tests
+
+The frontend has no `zone.js` dependency and runs zoneless. Component tests
+that use `fixture.whenStable()` to wait for a component's `ngOnInit` (or a
+click handler) to finish its async work will find that it resolves
+immediately and does nothing, because `ApplicationRef`'s stability tracking
+only waits on `PendingTasks` entries -- things like in-flight `HttpClient`
+requests -- and a plain `Promise` returned by a stubbed/mocked service is
+never registered as one. Tests built against `provideHttpClient` +
+`HttpTestingController` are unaffected, since `HttpClient` registers a
+pending task per request; this only bites tests that stub the service layer
+directly (the pattern used throughout this app's component specs).
+
+The fix used across the child feature specs
+([home.spec.ts](../src/frontend/buddy/src/app/features/child/home/home.spec.ts),
+[child-mealplan.spec.ts](../src/frontend/buddy/src/app/features/child/mealplan/child-mealplan.spec.ts))
+is a macrotask flush instead of `whenStable()`:
+
+```ts
+async function settle(fixture: ComponentFixture<unknown>) {
+  fixture.detectChanges();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  fixture.detectChanges();
+}
+```
+
+A `setTimeout` callback only runs after the microtask queue is fully drained,
+so this reliably flushes any depth of chained `await`s in a mocked service
+call (including a `Promise.all` of several mocked calls), as long as nothing
+in that chain schedules a further macrotask itself.
+
 ## Backend
 
 Build the complete backend solution:
