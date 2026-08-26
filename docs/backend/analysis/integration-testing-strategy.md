@@ -1,11 +1,10 @@
 # Integration testing strategy
 
-Buddy had no automated tests before this. This document covers the integration test suite added
-across the whole backend (Users, Groups, Calendars) and, just as importantly, the mechanism for
-keeping that coverage from silently rotting as the feature set grows. Status: implemented —
-`src/backend/buddy.IntegrationTests` exists with full endpoint coverage, event-shape tests, and
-the coverage guard described below all wired up and passing where this environment can run them
-(see "Verification status" at the end).
+Buddy had no automated tests before this work began. This implemented decision
+record describes the integration suite that now covers Users, Guardians,
+Groups, Calendars, Medicines, Mealplans, and Pickups, plus the mechanisms that
+keep endpoint and persisted-event coverage from silently rotting as the feature
+set grows. See “Verification status” for the latest recorded run.
 
 ## Goals
 
@@ -48,10 +47,18 @@ buddy.IntegrationTests/
       CreateCalendar/CreateCalendarTests.cs
       CalendarAuthorizationTests.cs   # cross-cutting role/permission matrix
       ...
+    Guardians/
+    Medicines/
+    Mealplans/
+    Pickups/
   EventShapeTests/
     UserEventShapeTests.cs
     CalendarEventShapeTests.cs
     GroupEventShapeTests.cs
+    GuardianEventShapeTests.cs
+    MedicineEventShapeTests.cs
+    MealplanEventShapeTests.cs
+    PickupEventShapeTests.cs
   Meta/
     EndpointCoverageTests.cs   # the drift guard, see "Keeping tests updated"
 ```
@@ -86,8 +93,8 @@ One `BuddyApiFixture : IAsyncLifetime`, shared across the whole run via
 per test class would dominate wall-clock time, so every test class shares one instance:
 
 1. Start a `PostgreSqlContainer` (Testcontainers.PostgreSql), one database, one connection
-   string handed to every feature's `PostgresOptions` (Users/Groups/Calendars already each get
-   their own Marten schema within one database — that isolation is already correct for this).
+  string handed to every feature's `PostgresOptions` (each feature uses its
+  own Marten schema within the shared database).
 2. Start the Keycloak container with `TestRealm.json` imported
    (`--import-realm`, file mounted at `/opt/keycloak/data/import/`). The realm defines a single
    `buddy-api` public client with the direct-grant (resource owner password) flow enabled and an
@@ -118,7 +125,7 @@ other.
 
 ## What to cover
 
-For each feature (Users, Groups, Calendars), per endpoint:
+For each feature, per endpoint:
 
 - Happy path (201/200 + response shape).
 - The 401 (no/invalid token) and — where relevant — 403/404 (`CalendarAccess.Forbidden` /
@@ -147,13 +154,12 @@ effectively a durable contract — Marten replays it from the stream forever. A 
 renames a property or changes an enum's serialization can compile fine and pass every behavioral
 test while quietly breaking replay of existing history.
 
-Add one golden-file test per event type, per feature (`UserEventShapeTests`,
-`CalendarEventShapeTests`, `GroupEventShapeTests`): serialize a fixed instance of each event
-through the feature's actual `System.Text.Json` configuration (same converters as
-`CalendarsFeature.AddCalendarsFeature`, etc.) and compare against a checked-in JSON file. A
-change to the file only happens when someone deliberately updates it, which makes an
-accidental breaking change to a persisted event visible in the PR diff instead of invisible
-until a production replay fails.
+Add one golden-file test per persisted event shape. The current suite covers
+Users, Guardians, Groups, Calendars/CalendarItems, Medicines, Mealplans, and
+Pickups. Each test serializes a fixed event through the feature's actual
+`System.Text.Json` configuration and compares it with checked-in JSON. A file
+changes only when someone deliberately accepts the persisted contract change,
+making an accidental replay break visible in the diff.
 
 ## Keeping tests updated
 
@@ -162,9 +168,8 @@ without noticing, add one mechanical guard rather than relying on convention alo
 
 **`Meta/EndpointCoverageTests.cs`** — a single test that:
 
-1. Reflects over the running `WebApplication`'s `EndpointDataSource` to list every mapped route
-   (`{HttpMethod} {RoutePattern}`), for endpoints that carry a `[WithName]`/route metadata under
-   `/users`, `/groups`, `/calendars`.
+1. Reflects over the running `WebApplication`'s `EndpointDataSource` to list
+  every endpoint carrying `.WithName(...)` metadata.
 2. Reflects over the `buddy.IntegrationTests` assembly for test classes/methods carrying a
    matching marker (simplest option: a `[CoversEndpoint("CreateCalendar")]` attribute on the
    `[Fact]`, matched against the `.WithName("CreateCalendar")` already set on every endpoint in
@@ -187,35 +192,41 @@ Delivered in this order, matching the original plan:
 
 1. **Scaffold** — `buddy.IntegrationTests` added to `backend.slnx`, `BuddyApiFixture` with all
    three containers, `GetCurrentUserTests` as the first smoke test.
-2. **Users** — all 7 endpoints covered, including the email verification end-to-end flow through
-   real mailpit messages.
-3. **Groups** — all 7 endpoints covered.
-4. **Calendars** — all 17 endpoints covered, plus `CalendarAuthorizationTests` (explicit grant
-   beats group-derived role, group-member fallback to the policy, group-deletion cascade) and
-   the iCal feed round-trip.
-5. **Event-shape tests** — one golden-file test per event type (6 Users + 5 Groups + 14
-   Calendars/CalendarItem = 25 total), golden files under `EventShapeTests/GoldenFiles/`.
-6. **`EndpointCoverageTests`** turned on — all 31 mapped endpoints (`.WithName(...)` values) have
-   a matching `[CoversEndpoint("...")]`, verified with no gaps and no stale names.
+2. **Users, Groups, and Calendars** — initial endpoint coverage, email
+  verification through Mailpit, calendar authorization matrices, and the iCal
+  feed round-trip.
+3. **Guardians** — child provisioning, relationship and invitation lifecycles,
+  sibling discovery, and guardian-managed child language.
+4. **Medicines, Mealplans, and Pickups** — child/guardian authorization,
+  assignment/status lifecycles, validation, and group-sharing routes where
+  supported.
+5. **Event-shape tests** — golden-file checks expanded with every event-sourced
+  feature. The current source contains 54 event-shape facts.
+6. **`EndpointCoverageTests`** — every named endpoint must have a matching
+  `[CoversEndpoint("...")]`, and every marker must still identify a mapped
+  endpoint. The current source contains 94 unique coverage markers; the test
+  enforces the invariant when that number changes.
 
 ## Verification status
 
-This environment has network access (so NuGet restore works) but no Docker daemon, so the
-Testcontainers-backed suite could not actually be executed here. What was verified directly:
+The source-derived inventory above was refreshed on 2026-08-26. Run the full
+suite with Docker available to verify PostgreSQL, Keycloak, Mailpit, Alba host
+wiring, endpoint coverage, and event shapes together:
 
-- `dotnet build src/backend/backend.slnx` (Debug and Release) succeeds with zero warnings
-  (`TreatWarningsAsErrors` is on for this repo) across both projects.
-- The 25 event-shape tests need no containers at all and were run for real with
-  `dotnet test --filter FullyQualifiedName~EventShapeTests` — all pass; the golden files were
-  generated from that run's actual serialized output, not hand-written.
-- The container-backed tests were confirmed to reach `Testcontainers`' Docker-availability check
-  and fail there (`dotnet test` reports the same "cannot connect to the Docker daemon" error for
-  all 76 of them) — i.e. everything up to and including container startup is exercised; the
-  Keycloak realm import, Alba host wiring, and the endpoints' actual behavior are not yet
-  confirmed to work end-to-end. Run the suite in the devcontainer or in CI (where Docker is
-  available) to get a real pass/fail signal, and fix forward from there — the realm JSON in
-  particular (audience mapper, default client scopes) is the piece most likely to need a
-  small correction on first real run.
+```bash
+dotnet test src/backend/backend.slnx --configuration Release
+```
+
+For a fast container-free persisted-contract check, run:
+
+```bash
+dotnet test src/backend/backend.slnx \
+  --filter FullyQualifiedName~EventShapeTests
+```
+
+The latest full-suite result should be recorded here only after the command
+completes; endpoint and event-shape totals are secondary to the mechanical
+guards and should be regenerated rather than copied forward.
 
 ## Open follow-ups (not blocking the above)
 

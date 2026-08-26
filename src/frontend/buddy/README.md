@@ -1,59 +1,105 @@
-# Buddy
+# Buddy frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.3.
+The Buddy frontend is an Angular 22 single-page application for guardian and
+child workflows. It uses standalone components, signals, Tailwind CSS, typed
+English/Danish translation dictionaries, and runtime configuration for the API
+and Keycloak.
 
-## Development server
+For feature architecture and route descriptions, see the
+[frontend documentation](../../../docs/frontend/README.md).
 
-To start a local development server, run:
+## Prerequisites
 
-```bash
-ng serve
-```
+The supported environment is the repository's VS Code development container;
+see the [development container guide](../../../.devcontainer/README.md). It
+provides the Node and Angular toolchain and starts the API's PostgreSQL,
+Keycloak, and Mailpit services.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+For development outside the container, use Node 22 and npm 11. The exact npm
+version is declared by `packageManager` in `package.json`. The API and a
+configured `buddy` Keycloak realm must be running before authenticated flows
+can work.
 
-## Code scaffolding
+## Install and run
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+From this directory:
 
 ```bash
-ng build
+npm install
+npm start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+The Angular development server listens on `http://localhost:4200` and reloads
+when source files change.
 
-## Running unit tests
+Runtime endpoints are read from
+[`public/config/runtime-config.json`](public/config/runtime-config.json). The
+checked-in development values use:
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+- Keycloak at `http://localhost:9080`, realm `buddy`, client
+  `buddy-frontend`;
+- Buddy API at `https://localhost:7076`.
+
+If local ports or authorities change, update the runtime config rather than
+hardcoding endpoints in services. Values shipped to the browser are public
+configuration and must never contain secrets.
+
+## Build
+
+Create the production build with:
 
 ```bash
-ng test
+npm run build
 ```
 
-## Running end-to-end tests
+`angular.json` uses the production configuration by default. Browser artifacts
+are written under `dist/buddy/browser/` and are served by Caddy in the
+production image.
 
-For end-to-end (e2e) testing, run:
+For a continuous development build without the dev server:
 
 ```bash
-ng e2e
+npm run watch
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Tests
 
-## Additional Resources
+Run the Vitest-backed Angular unit suite once:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```bash
+npm test -- --watch=false
+```
+
+Run mutation testing with StrykerJS:
+
+```bash
+npm run test:mutation
+```
+
+The mutation report is written to `reports/mutation/index.html`. The repository
+does not currently configure an end-to-end browser test runner, so there is no
+supported `ng e2e` command.
+
+See the repository [testing guide](../../../docs/testing.md) for backend and CI
+commands.
+
+## Localization
+
+Static UI text is stored by feature under
+`src/app/core/i18n/translations/{en,da}/`. Add the same key to both languages;
+the Danish dictionary is type-checked against the English dictionary so drift
+fails the TypeScript build. Components resolve keys through `TranslatePipe`
+rather than embedding user-facing strings.
+
+## Project layout
+
+- `src/app/core/` — authentication, runtime configuration, domain HTTP services,
+  dates, time display, and localization.
+- `src/app/features/guardian/` — guardian dashboard, mealplan, medicine,
+  pickup, calendar, and administration routes.
+- `src/app/features/child/` — child day view and mealplan/rating route.
+- `src/app/shared/` — reusable date and time controls.
+- `public/config/` — browser-visible runtime configuration.
+
+Generate new Angular artifacts only when they fit this feature-first layout;
+generic CLI scaffolding paths often need moving and cleanup afterward.

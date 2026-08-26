@@ -1,95 +1,106 @@
 # A single-day dashboard for the child home screen
 
-The child-facing home screen
-([features/child/home](../../../src/frontend/buddy/src/app/features/child/home)) is currently a
-placeholder: it shows the child's guardians and an empty "🗓️ no plan yet" card, with no real data
-wired in. This document analyzes what a simple, single-day dashboard should look like there —
-today's meal plan, today's medicine, and today's tasks, laid out for a child with ADHD who needs
-"what's happening today" to be immediately scannable, not a calendar to navigate. Status: analysis
-only — nothing here is implemented yet.
+Status: Implemented
 
-## What already exists to build on
+The child home at `/child` is a focused view of today rather than a calendar to
+navigate. It combines planned meals, medicine doses, pickup/drop-off
+assignments, and tasks in separate sections, then shows the child's guardian
+and sibling relationships. This page preserves the design rationale and records
+how the shipped dashboard evolved from it.
 
-The guardian dashboard already solves the "one child, today's data" problem three times over, in
-[features/guardian](../../../src/frontend/buddy/src/app/features/guardian):
+## Design outcome
 
-- `mealplan-today` — today's meal-plan entries, grouped by slot
-- `doses-today` — today's medicine doses, with a tap-to-mark-taken/skipped control
-- `tasks-today` — today's tasks, split into overdue and due-today
+The implemented screen follows the recommended “render each domain if it has
+content” approach instead of merging unrelated items into one timeline.
+Meals use named slots, medicine doses use exact local times, pickups use two
+responsibility slots, and tasks use due times. Keeping those shapes separate
+makes each action and state easier to scan.
 
-Each follows the same shape: a `loading`/`error`/data signal trio, populated in `ngOnInit`, backed
-by a service call scoped to one child and one date
-(`todayIsoDate()` from [core/date-utils.ts](../../../src/frontend/buddy/src/app/core/date-utils.ts)).
-The guardian versions loop over every linked child (`GuardiansService.listMyChildren()`); the child
-dashboard doesn't need that loop — there's exactly one relevant child, the signed-in user. Their own
-id is already resolved on every login via `UsersService.ensureCurrentUser()`
-([core/users.service.ts](../../../src/frontend/buddy/src/app/core/users.service.ts)), so no new
-"who am I" plumbing is needed.
+A section with no rows is omitted. Only when meals, doses, pickups, and tasks
+are all empty does the page show the single nothing-to-show state. This avoids
+stacking four empty cards on a quiet day.
 
-This means most of the child dashboard is a **recomposition problem, not a new-data problem**: same
-three service calls, same today-only scope, restyled for a kid instead of a parent.
+## Data loading
 
-## Layout options considered
+[`ChildHome`](../../../src/frontend/buddy/src/app/features/child/home/home.ts)
+resolves the signed-in user through `UsersService.ensureCurrentUser()` and
+loads today's domain data from existing services:
 
-| Option | What it looks like | Read on sight? | Build cost |
-|---|---|---|---|
-| One merged timeline | Every meal, dose, and task interleaved in time order | Harder — three different item shapes (a slot, an exact time, a due time) sharing one line each | Higher — needs a shared row renderer for dissimilar data |
-| Three "if any" sections (recommended) | A meals block, a medicine block, a tasks block, each only rendered when it has content | Easier — one icon, one purpose, one action per block | Lower — each block is a light restyle of an existing widget |
-| Guardian-style multi-child grid | Same as the guardian dashboard, one row per child | Not applicable — there's only ever one child here | N/A, ruled out immediately |
+- `MealplansService.listMealPlan()` for the child's family plan;
+- `MedicinesService.listDoses()` for today's dose occurrences;
+- `PickupsService.listSchedule()` for today's pickup/drop-off assignments;
+- `CalendarsService.listTodayOccurrences()` filtered to tasks;
+- `GuardiansService.listMyGuardians()` and `listMySiblings()` for relationship
+  summaries and pickup assignee names.
 
-**Recommendation: three sections, not a merged timeline.** Interleaving meals, doses, and tasks by
-time forces a child to parse three different row shapes in one list to find the thing they care
-about right now. Three big, icon-led, single-purpose blocks — 🍽️ meals, 💊 medicine, ✅ tasks — are
-easier to scan and match how the guardian widgets already present the same data. A section is
-skipped entirely when it has no data today, so a light day doesn't show three empty-state cards —
-matching "keep it simple": nothing to look at except what's actually happening.
+These requests do not require a child picker because the route always acts as
+the authenticated child. The sections maintain independent signals, while a
+shared translated error state reports failed actions or dashboard loading.
 
-## Section-by-section design
+## Meals and ratings
 
-**Meals** — `MealplansService.listMealPlan({ kind: 'family', childId: myId }, today, today)`
-([core/mealplans.service.ts](../../../src/frontend/buddy/src/app/core/mealplans.service.ts)),
-grouped by the same `SLOT_LABELS`/`SLOTS` ordering `mealplan-today.ts` already uses (breakfast →
-lunch → dinner → snack). View-only — a child can already view their own family's plan
-(`MealplanAuthorization.CheckView` treats the child themself as always allowed), and rating a meal
-is a separate existing flow, not part of this dashboard.
+Planned meals are displayed in breakfast, lunch, dinner, and snack order. Empty
+slots are skipped rather than rendered as “not planned” filler.
 
-**Medicine** — `MedicinesService.listDoses(myId, today, today)`
-([core/medicines.service.ts](../../../src/frontend/buddy/src/app/core/medicines.service.ts)),
-sorted by time. Each row is a large tap target cycling Pending → Taken (Skipped as a secondary,
-less prominent action), calling the existing `setDoseStatus` — the backend already allows a child
-to mark their own dose (`MedicineAuthorization.CheckMark` treats `callerId == childId` as allowed
-today, no backend change needed). Optimistic update on tap, same map-by-key pattern
-`doses-today.ts` uses, so the row flips state immediately instead of waiting on the round trip.
+The original analysis treated ratings as a separate future flow. The shipped
+home screen supports them directly: tapping a star submits the rating
+immediately while preserving any existing comment, and a separate comment
+editor lets the child update text. A successful response updates every visible
+slot that references the same meal. The full current/history workflow also
+exists at `/child/mealplan`.
 
-**Tasks** — `CalendarsService.listTodayOccurrences()`
-([core/calendars.service.ts](../../../src/frontend/buddy/src/app/core/calendars.service.ts)),
-filtered to `kind === Task`, sorted by due time (undated tasks last). This is the one section that
-**cannot be purely a restyle**: `CalendarItem` has no completion concept anywhere in the domain
-today — no `IsCompleted`, no mark-done event, nothing (confirmed by grep across
-[Features/Calendars](../../../src/backend/buddy/Features/Calendars)). A tap-to-complete checkbox —
-the actual payoff of a task list for a kid — needs a small backend addition first: a per-occurrence
-completion flag on `CalendarItem`, the same shape `MedicineSchedule.DoseLog` already uses for
-per-occurrence dose status, exposed through a new `setTaskCompletion` method alongside the existing
-`setDoseStatus`. That backend piece is out of scope for this document (frontend analysis only) —
-noted here only because it gates whether the tasks section ships as tap-to-complete or read-only on
-day one.
+## Medicine doses
 
-One caveat worth checking before relying on tap-to-complete: whichever authorization tier gates it
-determines whether every child can actually use it, or only children whose family calendar setup
-happens to grant them write access. Worth confirming against how a real family's calendar sharing
-is actually configured, not assumed.
+Doses are sorted by time and show `Pending`, `Taken`, or `Skipped`. The child can
+change their own dose status through `MedicinesService.setDoseStatus()`. The row
+is updated from the returned occurrence and disabled while that dose request is
+active.
 
-## What doesn't change
+Medicine remains a separate domain from calendar items. The dashboard composes
+the results at presentation time rather than projecting doses into a calendar.
 
-No navigation is added — no previous/next day, no week view. This is a "what's happening right
-now" screen, matching "keep the daily information in focus," not a calendar browser. The existing
-header, sign-out button, and guardian list stay; only the empty "no plan yet" card is replaced —
-and only shown when all three sections are empty, not per-section.
+## Pickup and drop-off
 
-## Recommendation
+Today's assigned `DropOff` and `PickUp` occurrences are read-only for the
+child. Guardian and sibling IDs are resolved against the relationship lists;
+self-escort and playdate use their own display variants. Missing occurrences do
+not render a placeholder row.
 
-Ship the three-section layout, reusing the existing meal-plan and medicine services as-is (both
-already fully support the child viewing and, for medicine, acting on their own data). Treat the
-tasks section's completion checkbox as the one piece with a real dependency — either hold the whole
-dashboard for the small `CalendarItem` completion addition, or ship tasks read-only first and add
-the checkbox as a fast follow once that backend piece lands.
+The guardian editing workflow is documented in
+[Pickup planning and daily views](pickup-planning-and-daily-views.md).
+
+## Tasks
+
+Calendar occurrences are filtered to tasks and sorted by due time, with undated
+tasks last. Task completion is implemented: toggling a row calls
+`CalendarsService.setTaskCompletion()` for today's occurrence and updates the
+local result after the server succeeds.
+
+This closes the blocker recorded in the original analysis. `CalendarItem` now
+has a per-occurrence completion operation in the backend and the child can use
+it through the existing calendar authorization model.
+
+## Interaction and state
+
+Each mutation has a narrow saving key (`MealSlot`, medicine/date/time key, or
+calendar item ID), so unrelated controls remain usable while a request is in
+flight. Failed operations leave server-backed data unchanged and surface the
+translated error state.
+
+Static copy is translated in English and Danish. Domain times are local
+wall-clock values and use the application's locale-aware display conventions.
+
+## Deliberate boundaries
+
+The dashboard remains today-only:
+
+- no previous/next day navigation;
+- no merged chronological timeline;
+- no event creation or full child calendar agenda;
+- no pickup editing by the child;
+- no per-section empty-state cards.
+
+Historical meal browsing has its own route, and guardian calendar/pickup editing
+have their own routes. Whether children should receive a full calendar agenda
+remains the open product question documented in
+[Creating events and seeing them across every accessible calendar](calendar-agenda-and-event-creation.md).

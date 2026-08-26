@@ -55,6 +55,7 @@ Current responsibilities:
 - create child accounts and capture the one-time temporary password
 - show today's events, tasks, and medicine doses
 - manage meals and assign them to shared meal-plan slots
+- manage pickup and drop-off assignments for linked children
 - browse a weekly agenda and create events/tasks across every calendar they can contribute to,
   personal or group-owned
 - manage calendars, groups, children, and the current profile from the admin area
@@ -67,6 +68,7 @@ The guardian routes currently include:
 - `/guardian` — dashboard and today's operational summary
 - `/guardian/mealplan` — meal library and meal-plan assignment
 - `/guardian/medicine` — medicine schedule management
+- `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/calendar` — weekly agenda across every accessible calendar, plus event/task creation
 - `/guardian/admin` — profile, child, calendar, group, event-history, and account administration
 
@@ -77,11 +79,18 @@ The child-facing area is implemented in [src/frontend/buddy/src/app/features/chi
 Current responsibilities:
 
 - display the child home screen
-- show the child's day view, including events, tasks, and doses when available
+- show the child's day view, including meals and ratings, medicine doses,
+  pickup/drop-off assignments, and tasks when available
+- let the child browse current and previous meal-plan weeks and rate meals
 - show guardian links when available
 - provide the child-specific entry route
 
 The route definition is in [src/frontend/buddy/src/app/features/child/child.routes.ts](../../src/frontend/buddy/src/app/features/child/child.routes.ts).
+
+The child routes currently include:
+
+- `/child` — today's operational view and relationship summaries
+- `/child/mealplan` — current/historical meal plans and the child's own ratings
 
 ### Login feature
 
@@ -98,8 +107,13 @@ The email verification flow is in [src/frontend/buddy/src/app/features/verify-em
 The shared domain services live under [src/frontend/buddy/src/app/core](../../src/frontend/buddy/src/app/core):
 
 - `AccountService` resolves whether the user is a guardian or child
+- `CalendarsService` lists accessible calendars and occurrences and manages
+  calendar items and task completion
+- `GroupsService` manages group membership, invitations, and sharing policies
 - `GuardiansService` calls the backend guardian endpoints
 - `MealplansService` calls meal-library, meal-plan, rating, and group-sharing endpoints
+- `MedicinesService` manages medicine schedules, dose status, and group sharing
+- `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
 - `UsersService` loads the current profile, language, and email-verification state
 - `AuthInterceptor` attaches the access token to outgoing requests
 - `UserEventsService` is available for future user event stream integration
@@ -139,14 +153,18 @@ The frontend is an actively developed product shell with working domain workflow
 - English and Danish localization
 - guardian meal planning, meal ratings, and group-shared meal-plan access
 - medicine schedule management and today's dose views
+- guardian pickup/drop-off planning plus guardian and child today views
 - a guardian-facing weekly calendar agenda and event/task creation across personal and
   group-owned calendars
+- a child-facing daily dashboard with meals and ratings, medicine doses,
+  pickup/drop-off assignments, and completable tasks
 - profile, calendar, group, child, and account administration
 
-The main remaining product work is to deepen the child-facing experience — including whether
-children get their own calendar agenda/creation UI, an open question noted in
-[Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md)
-— and connect the existing routine data into a richer personalized daily view.
+The primary unresolved frontend product question is whether children should
+receive their own calendar agenda and creation UI, as noted in
+[Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md).
+The current child home deliberately keeps routines in separate, scannable
+sections rather than merging them into a full calendar timeline.
 
 ## Design analysis
 
@@ -155,15 +173,16 @@ children get their own calendar agenda/creation UI, an open question noted in
 - [A single-day dashboard for the child home screen](analysis/child-day-dashboard.md) — layout
   options for today's meal plan, medicine, and tasks on the child home screen
 - [Historical meal plans and children's ratings](analysis/mealplan-history-and-ratings.md) — what's
-  needed to browse past meal-plan weeks and surface children's ratings, given the backend already
-  supports both
+  implemented for browsing past meal-plan weeks and surfacing children's ratings
 - [Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md) —
-  what's needed to create events and browse an agenda merged across personal and group calendars,
-  given the backend already supports both
+  implemented guardian agenda/event workflow and the remaining child-access decision
+- [Pickup planning and daily views](analysis/pickup-planning-and-daily-views.md) — implemented
+  guardian planner, guardian dashboard summary, and child read-only view
 
 ## Local development
 
-From the frontend app folder:
+Use the [development container guide](../../.devcontainer/README.md) for local
+PostgreSQL, Keycloak, API, and certificate setup. From the frontend app folder:
 
 ```bash
 cd src/frontend/buddy
@@ -202,6 +221,8 @@ cd src/frontend/buddy
 npm run test:mutation
 ```
 
-The html report is written to `reports/mutation/index.html` (git-ignored). As of this setup only
-`app.spec.ts` exists, so most mutants will report as uncovered rather than killed — that's an
-honest signal of how much of the app still needs unit tests, not a tooling problem.
+The HTML report is written to `reports/mutation/index.html` (git-ignored).
+Coverage is still intentionally small: the current suite contains the app
+shell spec and a profile-management spec, so many mutants can report as
+uncovered rather than killed. That is a test-coverage signal, not a tooling
+failure.

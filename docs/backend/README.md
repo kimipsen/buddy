@@ -10,6 +10,7 @@ Backend documentation for the Buddy API.
 - [Guardians flow](guardians/flow.md)
 - [Medicines flow](medicines/flow.md)
 - [Mealplans flow](mealplans/flow.md)
+- [Pickups flow](pickups/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
 
@@ -39,6 +40,7 @@ The backend is centered on core concepts including:
 - event-sourced aggregates
 - medicine schedules for child routines
 - meal planning and family meal libraries
+- pickup and drop-off scheduling
 
 If you are making a behavioral or authorization change, check the relevant
 analysis document or flow doc before changing the implementation.

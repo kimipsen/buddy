@@ -3,9 +3,11 @@
 This document defines how Buddy backend endpoints should use HTTP status codes.
 
 Scope:
-- REST endpoints in the `users` and `calendars` API groups
+- REST endpoints across the `users`, `guardians`, `groups`, `calendars`,
+   `medicines`, `mealplans`, and `pickups` API groups
 - authenticated endpoints using bearer tokens
-- command-style operations (create, update, delete, verify, resend)
+- query and command operations, including create, update, delete, verify, and
+   resend
 
 ## Principles
 
