@@ -7,6 +7,7 @@ export const child = {
     guardiansTitle: 'Your guardians',
     mealsTitle: 'Meals today',
     mealplanLink: 'See past meals & rate them',
+    calendarLink: 'See your full calendar',
     medicineTitle: 'Medicine today',
     tasksTitle: 'Tasks today',
     eventsTitle: 'Events today',
@@ -58,5 +59,21 @@ export const child = {
     notePlaceholder: 'What did you think?',
     cancel: 'Cancel',
     save: 'Save'
+  },
+  calendar: {
+    back: 'Back',
+    title: 'My calendar',
+    previousWeek: '← Previous week',
+    nextWeek: 'Next week →',
+    loading: 'Loading your calendar…',
+    loadError: 'Something went wrong loading your calendar. Try again in a bit.',
+    taskUpdateError: 'Something went wrong updating that task. Try again in a bit.',
+    emptyTitle: 'Nothing planned this week',
+    filterTitle: 'Calendars',
+    allDay: 'All day',
+    tasks: {
+      markDone: 'Mark done',
+      markNotDone: 'Mark not done'
+    }
   }
 };

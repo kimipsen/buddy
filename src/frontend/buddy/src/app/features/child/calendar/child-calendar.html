@@ -1,0 +1,109 @@
+<main class="min-h-dvh bg-amber-50 text-slate-950">
+  <header class="flex items-center justify-between px-6 py-5 sm:px-8">
+    <div class="flex items-center gap-3">
+      <a routerLink="/child" class="text-base font-semibold text-emerald-700 hover:text-emerald-800">← {{ 'child.calendar.back' | translate }}</a>
+      <h1 class="text-2xl font-bold tracking-normal">{{ 'child.calendar.title' | translate }}</h1>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-2xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+        (click)="previousWeek()"
+      >
+        {{ 'child.calendar.previousWeek' | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-2xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+        (click)="nextWeek()"
+      >
+        {{ 'child.calendar.nextWeek' | translate }}
+      </button>
+    </div>
+  </header>
+
+  <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
+    @if (error(); as message) {
+      <p class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700">{{ message | translate }}</p>
+    }
+
+    @if (myCalendars().length > 1) {
+      <div class="flex flex-wrap items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-3">
+        <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ 'child.calendar.filterTitle' | translate }}</span>
+        @for (calendar of myCalendars(); track calendar.id) {
+          <label class="flex items-center gap-2 text-base font-semibold">
+            <input type="checkbox" [checked]="!isCalendarHidden(calendar.id)" (change)="toggleCalendarVisibility(calendar.id)" />
+            <span aria-hidden="true">{{ calendar.icon }}</span>
+            {{ calendar.name }}
+          </label>
+        }
+      </div>
+    }
+
+    @if (loading()) {
+      <p class="text-lg font-semibold text-slate-500">{{ 'child.calendar.loading' | translate }}</p>
+    } @else if (hasAnyVisibleOccurrence()) {
+      @for (day of days(); track day.date) {
+        @if (occurrencesFor(day.date).length > 0) {
+          <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+            <h2 class="text-xl font-bold tracking-normal">{{ day.label }}</h2>
+            <ul class="mt-4 space-y-3">
+              @for (occurrence of occurrencesFor(day.date); track occurrence.itemId) {
+                <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+                  @if (occurrence.kind === taskKind) {
+                    <button
+                      type="button"
+                      class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
+                      [class.border-emerald-400]="occurrence.isCompleted"
+                      [class.bg-emerald-400]="occurrence.isCompleted"
+                      [class.text-white]="occurrence.isCompleted"
+                      [class.border-slate-300]="!occurrence.isCompleted"
+                      [disabled]="savingTaskId() === occurrence.itemId"
+                      [attr.aria-label]="(occurrence.isCompleted ? 'child.calendar.tasks.markNotDone' : 'child.calendar.tasks.markDone') | translate"
+                      (click)="toggleTask(occurrence)"
+                    >
+                      @if (occurrence.isCompleted) {
+                        ✓
+                      }
+                    </button>
+                  } @else {
+                    <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="occurrence.color"></span>
+                  }
+
+                  <span
+                    class="flex flex-1 items-center gap-2 text-lg font-semibold"
+                    [class.line-through]="occurrence.kind === taskKind && occurrence.isCompleted"
+                    [class.text-slate-400]="occurrence.kind === taskKind && occurrence.isCompleted"
+                  >
+                    <span aria-hidden="true">{{ occurrence.icon }}</span>
+                    {{ occurrence.title }}
+                    <span class="text-sm font-normal text-slate-400">{{ occurrence.calendarName }}</span>
+                  </span>
+
+                  @if (occurrence.isAllDay) {
+                    <span class="whitespace-nowrap text-sm font-semibold text-slate-500">{{ 'child.calendar.allDay' | translate }}</span>
+                  } @else if (occurrence.startsAt) {
+                    <span class="whitespace-nowrap text-sm font-semibold text-slate-500">
+                      {{ occurrence.startsAt | userDate: 'shortTime' }}
+                      @if (occurrence.endsAt) {
+                        – {{ occurrence.endsAt | userDate: 'shortTime' }}
+                      }
+                    </span>
+                  } @else if (occurrence.dueAt) {
+                    <span class="whitespace-nowrap text-sm font-semibold text-slate-500">{{ occurrence.dueAt | userDate: 'shortTime' }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    } @else {
+      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
+        <p class="text-5xl">🗓️</p>
+        <h2 class="mt-4 text-2xl font-bold tracking-normal">{{ 'child.calendar.emptyTitle' | translate }}</h2>
+      </div>
+    }
+  </section>
+</main>

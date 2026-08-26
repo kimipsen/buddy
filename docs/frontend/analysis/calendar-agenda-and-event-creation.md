@@ -1,6 +1,6 @@
 # Creating events and seeing them across every accessible calendar
 
-Status: Guardian workflow implemented; child calendar access remains deferred.
+Status: Guardian workflow implemented; child calendar access implemented (view + task completion only) at `/child/calendar`.
 
 The original requirement was to let a user create events in calendars they can
 contribute to and browse occurrences from every calendar they can access,
@@ -78,25 +78,20 @@ Explicit grants continue to override group-derived policy. A calendar can
 therefore appear once even if the user reaches it through multiple access
 paths, with the backend-provided effective role controlling the UI.
 
-## What remains deferred
+## Child calendar access
 
-There is no `/child/calendar` route yet. The child home shows today's tasks
-and events and can toggle task completion (see [A single-day dashboard for
-the child home screen](child-day-dashboard.md)), but children do not get the
-guardian's week agenda or item creation form. A concrete implementation plan
-for that route exists at [Child calendar agenda implementation
-plan](child-calendar-agenda-plan.md); it has not been built yet.
+`/child/calendar` (`ChildCalendar`, see [Child calendar agenda implementation
+plan](child-calendar-agenda-plan.md)) gives the child a read-only week agenda:
+merged occurrences across every calendar they already have access to, a
+per-calendar show/hide filter, and task completion — no item creation, editing,
+rescheduling, or deletion. The child home continues to show today's tasks and
+events on its own dashboard (see [A single-day dashboard for the child home
+screen](child-day-dashboard.md)); the new route is the "see more" destination
+linked from there.
 
-That remains a product decision rather than a missing backend primitive. A
-child with a contributor-capable calendar role could already be authorized by
-the calendar model, but the product must decide:
-
-- whether children should browse a full agenda or retain the focused daily
-  dashboard;
-- whether they may create/edit items or only view and complete tasks;
-- how calendar membership should be granted to a child in normal family setup;
-- whether a child agenda should merge calendars or emphasize one personal
-  schedule.
-
-The current implementation deliberately resolves the guardian requirement
-without pre-empting those child-experience decisions.
+This deliberately does not touch calendar-level authorization: a child sees
+exactly the calendars they could already reach through explicit membership or
+group membership, same as the dashboard. Whether children should ever
+automatically see a guardian's personal calendars (mirroring the guardian's
+automatic access to a child-owned calendar) remains an open, separate product
+decision — see the scope note in the implementation plan.

@@ -315,6 +315,15 @@ describe('ChildHome', () => {
     expect(compiled.textContent).toContain('4:00');
   });
 
+  it('links to the full child calendar', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const link = Array.from(compiled.querySelectorAll('a')).find((anchor) => anchor.getAttribute('href') === '/child/calendar');
+    expect(link).toBeTruthy();
+  });
+
   it('resolves the assignee name for a guardian pickup occurrence', async () => {
     const guardianList: GuardianSummary[] = [{ id: 'guardian-1', name: { givenName: 'Gina', familyName: 'G' }, guardianLinkId: 'link-1', kind: 0 }];
     const occurrence: PickupOccurrence = {

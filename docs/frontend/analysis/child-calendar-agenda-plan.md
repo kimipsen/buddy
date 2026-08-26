@@ -1,9 +1,11 @@
 # Child calendar agenda (`/child/calendar`) — implementation plan
 
-Status: Planned, not started. This is the second phase of "show the child
-their calendars"; phase one (today's events on the dashboard) is implemented
-and documented in [A single-day dashboard for the child home
-screen](child-day-dashboard.md).
+Status: Implemented. This is the second phase of "show the child their
+calendars"; phase one (today's events on the dashboard) is documented in [A
+single-day dashboard for the child home screen](child-day-dashboard.md). The
+plan below is kept as a record of the design decisions — read it alongside
+[`ChildCalendar`](../../../src/frontend/buddy/src/app/features/child/calendar/child-calendar.ts)
+(`/child/calendar`) for how they were actually resolved.
 
 ## Goal
 
@@ -42,6 +44,11 @@ and should be settled (even briefly, with the requester) before writing code:
    rolling 7-day window from an adjustable anchor date
    (`DAYS_AHEAD = 7` in `agenda.ts`). Recommendation: reuse the same window
    unchanged rather than inventing new pagination.
+
+**Resolved as implemented**: all three recommendations were taken as-is —
+view + task completion only, one merged agenda with a per-calendar filter
+(shown only when more than one calendar is accessible), and the same 7-day
+window starting on today.
 
 ## Backend
 

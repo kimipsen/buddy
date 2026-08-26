@@ -7,6 +7,7 @@ export const child = {
     guardiansTitle: 'Dine voksne',
     mealsTitle: 'Måltider i dag',
     mealplanLink: 'Se tidligere måltider & bedøm dem',
+    calendarLink: 'Se hele din kalender',
     medicineTitle: 'Medicin i dag',
     tasksTitle: 'Opgaver i dag',
     eventsTitle: 'Begivenheder i dag',
@@ -58,5 +59,21 @@ export const child = {
     notePlaceholder: 'Hvad syntes du?',
     cancel: 'Annuller',
     save: 'Gem'
+  },
+  calendar: {
+    back: 'Tilbage',
+    title: 'Min kalender',
+    previousWeek: '← Forrige uge',
+    nextWeek: 'Næste uge →',
+    loading: 'Indlæser din kalender…',
+    loadError: 'Der gik noget galt med at indlæse din kalender. Prøv igen om lidt.',
+    taskUpdateError: 'Der gik noget galt med at opdatere opgaven. Prøv igen om lidt.',
+    emptyTitle: 'Intet planlagt denne uge',
+    filterTitle: 'Kalendere',
+    allDay: 'Hele dagen',
+    tasks: {
+      markDone: 'Marker som klar',
+      markNotDone: 'Marker som ikke klar'
+    }
   }
 };

@@ -91,7 +91,7 @@ event on an accessible calendar, unlike tasks which are trimmed to the
 child's own assignments.
 
 This section is the "today" half of showing the child their calendars. The
-multi-day browsing half is deliberately deferred — see
+multi-day browsing half is implemented separately at `/child/calendar` — see
 [Child calendar agenda implementation plan](child-calendar-agenda-plan.md).
 
 ## Interaction and state
@@ -115,7 +115,7 @@ The dashboard remains today-only:
 - no per-section empty-state cards.
 
 Historical meal browsing has its own route, and guardian calendar/pickup editing
-have their own routes. A full multi-day calendar agenda for children is
-planned but not yet built — see [Child calendar agenda implementation
-plan](child-calendar-agenda-plan.md) and the broader open questions in
+have their own routes. A full multi-day calendar agenda for children now
+exists at `/child/calendar` — see [Child calendar agenda implementation
+plan](child-calendar-agenda-plan.md) and the broader context in
 [Creating events and seeing them across every accessible calendar](calendar-agenda-and-event-creation.md).

@@ -17,13 +17,23 @@
   <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
     <app-progress-badge class="block" [totalStars]="progress().totalStars" [unlockedMilestones]="progress().unlockedMilestones" />
 
-    <a
-      routerLink="/child/mealplan"
-      class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-700 transition hover:border-emerald-300"
-    >
-      <span aria-hidden="true">🍽️</span>
-      {{ 'child.home.mealplanLink' | translate }}
-    </a>
+    <div class="flex flex-wrap gap-3">
+      <a
+        routerLink="/child/mealplan"
+        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-700 transition hover:border-emerald-300"
+      >
+        <span aria-hidden="true">🍽️</span>
+        {{ 'child.home.mealplanLink' | translate }}
+      </a>
+
+      <a
+        routerLink="/child/calendar"
+        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-700 transition hover:border-emerald-300"
+      >
+        <span aria-hidden="true">🗓️</span>
+        {{ 'child.home.calendarLink' | translate }}
+      </a>
+    </div>
 
     @if (error(); as message) {
       <p class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700">{{ message | translate }}</p>
