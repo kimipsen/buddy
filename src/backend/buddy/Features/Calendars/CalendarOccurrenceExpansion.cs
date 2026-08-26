@@ -53,7 +53,7 @@ public static class CalendarOccurrenceExpansion
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon.Value, item.Color.Value,
-                startsAt, endsAt, null, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value));
+                startsAt, endsAt, null, period.IsAllDay, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value));
         }
     }
 
@@ -68,7 +68,7 @@ public static class CalendarOccurrenceExpansion
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon.Value, item.Color.Value,
-                null, null, dueAt, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value));
+                null, null, dueAt, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value));
         }
     }
 }

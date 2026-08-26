@@ -8,23 +8,31 @@ public sealed record Period
 
     public EndsAt EndsAt { get; }
 
+    // True when this Period represents whole calendar day(s) rather than a specific time range --
+    // StartsAt/EndsAt still carry concrete Date+Time values (by convention, local midnight), but
+    // callers that render or export the schedule should ignore the time-of-day and treat EndsAt.Date
+    // as exclusive (see CalendarOccurrenceExpansion and IcalFeedWriter).
+    public bool IsAllDay { get; }
+
     // JsonConstructor lets System.Text.Json (Marten's event serializer) use this constructor to
     // deserialize a Period read back from the event store without re-running TryCreate's check --
-    // correctly so, since a persisted Period was already validated at write time.
+    // correctly so, since a persisted Period was already validated at write time. IsAllDay defaults
+    // to false so events persisted before this property existed still deserialize.
     [JsonConstructor]
-    private Period(StartsAt startsAt, EndsAt endsAt)
+    private Period(StartsAt startsAt, EndsAt endsAt, bool isAllDay = false)
     {
         StartsAt = startsAt;
         EndsAt = endsAt;
+        IsAllDay = isAllDay;
     }
 
     // The only way to construct a Period from new input -- guarantees StartsAt is always before
     // EndsAt for every instance that exists anywhere in the system. The error message lives here,
     // not at each call site, so every caller reports the same wording for the same violation.
-    public static PeriodValidationResult TryCreate(StartsAt startsAt, EndsAt endsAt) =>
+    public static PeriodValidationResult TryCreate(StartsAt startsAt, EndsAt endsAt, bool isAllDay = false) =>
         endsAt.Date.ToDateTime(endsAt.Time) <= startsAt.Date.ToDateTime(startsAt.Time)
             ? new PeriodValidationResult.Invalid("An event's end time must be after its start time.")
-            : new PeriodValidationResult.Valid(new Period(startsAt, endsAt));
+            : new PeriodValidationResult.Valid(new Period(startsAt, endsAt, isAllDay));
 }
 
 // Period.TryCreate only ever succeeds or fails validation -- there's no NotFound/Forbidden concept

@@ -39,6 +39,14 @@ function parseIsoDate(isoDate: string): Date {
   return new Date(year, month - 1, day);
 }
 
+// All-day events are entered/displayed as an inclusive end date (see docs/backend/analysis/
+// calendar-all-day-items.md) but stored with the exclusive EndsAt the backend already expects --
+// this converts between the two at the form boundary, in either direction.
+function addDaysIso(isoDate: string, days: number): string {
+  const date = parseIsoDate(isoDate);
+  return toIsoDate(new Date(date.getFullYear(), date.getMonth(), date.getDate() + days));
+}
+
 function buildDays(anchorIsoDate: string, locale: string): AgendaDay[] {
   const anchor = parseIsoDate(anchorIsoDate);
 
@@ -99,6 +107,7 @@ export class CalendarAgenda {
   protected readonly editEndTime = signal('');
   protected readonly editDueDate = signal('');
   protected readonly editDueTime = signal('');
+  protected readonly editIsAllDay = signal(false);
   protected readonly editingKind = signal<CalendarItemKind>(EVENT_KIND);
   protected readonly saving = signal(false);
   protected readonly editError = signal<string | null>(null);
@@ -152,6 +161,7 @@ export class CalendarAgenda {
   protected readonly newEndTime = signal('10:00');
   protected readonly newDueDate = signal(todayIsoDate());
   protected readonly newDueTime = signal('09:00');
+  protected readonly newIsAllDay = signal(false);
   protected readonly newRepeat = signal<RecurrenceFrequency | null>(null);
   protected readonly newIntervalCount = signal(1);
   protected readonly newUntil = signal('');
@@ -271,6 +281,7 @@ export class CalendarAgenda {
     this.editTitle.set(occurrence.title);
     this.editIcon.set(occurrence.icon);
     this.editColor.set(occurrence.color);
+    this.editIsAllDay.set(occurrence.isAllDay);
 
     const timeZoneId = this.users.timeZoneId();
 
@@ -282,7 +293,9 @@ export class CalendarAgenda {
 
     if (occurrence.endsAt) {
       const endsAt = new Date(occurrence.endsAt);
-      this.editEndDate.set(toIsoDateInTimeZone(endsAt, timeZoneId));
+      const endDate = toIsoDateInTimeZone(endsAt, timeZoneId);
+      // Stored EndsAt is exclusive for an all-day event -- show the last inclusive day instead.
+      this.editEndDate.set(occurrence.isAllDay ? addDaysIso(endDate, -1) : endDate);
       this.editEndTime.set(toTimeInTimeZone(endsAt, timeZoneId));
     }
 
@@ -308,16 +321,24 @@ export class CalendarAgenda {
     const title = this.editTitle().trim();
     const icon = this.editIcon().trim();
     const color = this.editColor().trim();
+    const isAllDay = this.editIsAllDay();
 
     this.saving.set(true);
     this.editError.set(null);
 
+    // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
+    const startTime = isAllDay ? '00:00' : this.editStartTime();
+    const endTime = isAllDay ? '00:00' : this.editEndTime();
+    const endDate = isAllDay ? addDaysIso(this.editEndDate(), 1) : this.editEndDate();
+    const dueTime = isAllDay ? '00:00' : this.editDueTime();
+
     try {
       await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, { title, icon, color });
       await this.calendars.rescheduleItem(occurrence.calendarId, occurrence.itemId, {
-        startsAt: kind === EVENT_KIND ? toDatePart(this.editStartDate(), this.editStartTime()) : null,
-        endsAt: kind === EVENT_KIND ? toDatePart(this.editEndDate(), this.editEndTime()) : null,
-        dueDate: kind === TASK_KIND ? toDatePart(this.editDueDate(), this.editDueTime()) : null
+        startsAt: kind === EVENT_KIND ? toDatePart(this.editStartDate(), startTime) : null,
+        endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
+        dueDate: kind === TASK_KIND ? toDatePart(this.editDueDate(), dueTime) : null,
+        isAllDay
       });
 
       this.editingItemId.set(null);
@@ -336,9 +357,16 @@ export class CalendarAgenda {
 
     const calendarId = this.newCalendarId();
     const kind = this.newKind();
+    const isAllDay = this.newIsAllDay();
 
     this.creating.set(true);
     this.createError.set(null);
+
+    // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
+    const startTime = isAllDay ? '00:00' : this.newStartTime();
+    const endTime = isAllDay ? '00:00' : this.newEndTime();
+    const endDate = isAllDay ? addDaysIso(this.newEndDate(), 1) : this.newEndDate();
+    const dueTime = isAllDay ? '00:00' : this.newDueTime();
 
     try {
       await this.calendars.createItem(calendarId, {
@@ -346,9 +374,10 @@ export class CalendarAgenda {
         title: this.newTitle().trim(),
         icon: this.newIcon().trim(),
         color: this.newColor().trim(),
-        startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), this.newStartTime()) : null,
-        endsAt: kind === EVENT_KIND ? toDatePart(this.newEndDate(), this.newEndTime()) : null,
-        dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), this.newDueTime()) : null,
+        startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), startTime) : null,
+        endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
+        dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
+        isAllDay,
         recurrence: this.buildRecurrence()
       });
 
@@ -385,6 +414,7 @@ export class CalendarAgenda {
     this.newEndTime.set('10:00');
     this.newDueDate.set(todayIsoDate());
     this.newDueTime.set('09:00');
+    this.newIsAllDay.set(false);
     this.newRepeat.set(null);
     this.newIntervalCount.set(1);
     this.newUntil.set('');

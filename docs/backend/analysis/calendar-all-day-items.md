@@ -1,6 +1,6 @@
 # All-Day Calendar Items
 
-Status: Proposed
+Status: Implemented
 
 ## Context
 
@@ -164,10 +164,21 @@ component — `date-select`/`time-select` are reused as-is, just conditionally s
 | Multi-day all-day event UI | Inclusive end date in the UI, converted to the existing exclusive `EndsAt` at the API boundary |
 | Where duration/occurrence-expansion logic changes | Nowhere — the exclusive-end convention keeps `AddEventOccurrences`'s existing duration formula correct unchanged |
 
+## Resolved during implementation
+
+- **`Ical.Net` date-only API (v5.2.3, confirmed via reflection).** `CalDateTime` has a
+  `CalDateTime(DateOnly date)` constructor that produces a date-only value (`HasTime = false`).
+  `CalendarEvent.IsAllDay` is a **read-only, computed** property — it's derived from `DtStart`
+  having no time component, not something to set directly. `Todo` has no `IsAllDay` property at
+  all; setting `Due` to a date-only `CalDateTime` is sufficient for it to serialize as
+  `DUE;VALUE=DATE:...`. `IcalFeedWriter.cs` uses the occurrence's local date
+  (`DateOnly.FromDateTime(occurrence.StartsAt.Value.DateTime)`, not `.UtcDateTime`) when building
+  these — safe because `TimeZoneResolution.ResolveInstant` constructs the `DateTimeOffset` as
+  `new DateTimeOffset(local, offset)`, so `.DateTime` returns the original local wall-clock value
+  unchanged, not a UTC-shifted one.
+
 ## Open questions
 
-- **Exact `Ical.Net` API for a date-only `CalDateTime`.** Needs confirming against the referenced
-  package version at implementation time (see "iCal feed" above) — doesn't change the design.
 - **Recurring all-day items.** An all-day item that also repeats (e.g. "every year, all day") needs
   no special-casing beyond what's described here — `RecurrenceExpansion` operates on dates, and
   `IsAllDay` is a property of the item's `Period`/`DueDate`, reused unchanged across every expanded

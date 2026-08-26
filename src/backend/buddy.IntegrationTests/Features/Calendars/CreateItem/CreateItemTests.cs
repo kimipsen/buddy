@@ -28,6 +28,47 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Can_create_an_all_day_event_spanning_multiple_days()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var start = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new
+            {
+                Kind = CalendarItemKind.Event,
+                Title = "Trip",
+                Icon = "calendar",
+                Color = "#00ff00",
+                StartsAt = new { Date = start, Time = TimeOnly.MinValue },
+                EndsAt = new { Date = start.AddDays(3), Time = TimeOnly.MinValue },
+                IsAllDay = true
+            }).ToUrl($"/calendars/{calendarId}/items");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var item = response.ReadAsJson<CalendarItemDto>();
+        Assert.True(item.Period!.IsAllDay);
+        Assert.Equal(start, item.Period.StartsAt.Date);
+        Assert.Equal(start.AddDays(3), item.Period.EndsAt.Date);
+    }
+
+    [Fact]
+    public async Task Can_create_an_all_day_task()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, "Anniversary", isAllDay: true);
+
+        Assert.NotNull(item);
+        Assert.True(item.DueDate!.IsAllDay);
+    }
+
+    [Fact]
     public async Task Can_create_a_task_item_with_a_due_date()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();

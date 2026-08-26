@@ -10,6 +10,7 @@ export const calendar = {
     previousWeek: 'Forrige uge',
     nextWeek: 'Næste uge',
     taskUpdateError: 'Kunne ikke opdatere denne opgave.',
+    allDay: 'Hele dagen',
     delete: {
       button: 'Slet',
       confirmPrompt: 'Slet denne?',
@@ -35,6 +36,7 @@ export const calendar = {
         event: 'Begivenhed',
         task: 'Opgave'
       },
+      allDayLabel: 'Hele dagen',
       startDateLabel: 'Startdato',
       startTimeLabel: 'Starttid',
       endDateLabel: 'Slutdato',

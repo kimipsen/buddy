@@ -44,9 +44,10 @@ internal static class CalendarTestHelpers
 
     public static async Task<CalendarItemDto?> CreateEventAsync(
         BuddyApiFixture fixture, string token, Guid calendarId, string title = "Standup",
-        DateOnly? date = null, int expectedStatus = 200)
+        DateOnly? date = null, int expectedStatus = 200, bool isAllDay = false)
     {
         var day = date ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var endDay = isAllDay ? day.AddDays(1) : day;
 
         var response = await fixture.Host.Scenario(_ =>
         {
@@ -57,8 +58,9 @@ internal static class CalendarTestHelpers
                 Title = title,
                 Icon = "calendar",
                 Color = "#00ff00",
-                StartsAt = new { Date = day, Time = new TimeOnly(9, 0) },
-                EndsAt = new { Date = day, Time = new TimeOnly(9, 30) }
+                StartsAt = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 0) },
+                EndsAt = new { Date = endDay, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 30) },
+                IsAllDay = isAllDay
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(expectedStatus);
         });
@@ -68,7 +70,7 @@ internal static class CalendarTestHelpers
 
     public static async Task<CalendarItemDto?> CreateTaskAsync(
         BuddyApiFixture fixture, string token, Guid calendarId, string title = "File taxes",
-        DateOnly? dueDate = null, RecurrenceRuleRequest? recurrence = null, int expectedStatus = 200)
+        DateOnly? dueDate = null, RecurrenceRuleRequest? recurrence = null, int expectedStatus = 200, bool isAllDay = false)
     {
         var day = dueDate ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
 
@@ -81,7 +83,8 @@ internal static class CalendarTestHelpers
                 Title = title,
                 Icon = "task",
                 Color = "#ff0000",
-                DueDate = new { Date = day, Time = new TimeOnly(17, 0) },
+                DueDate = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(17, 0) },
+                IsAllDay = isAllDay,
                 Recurrence = recurrence
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(expectedStatus);

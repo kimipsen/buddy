@@ -2,20 +2,20 @@
   "Id": "00000000-0000-0000-0000-000000000030",
   "CalendarId": "00000000-0000-0000-0000-000000000020",
   "CreatedBy": "00000000-0000-0000-0000-000000000001",
-  "Title": "Standup",
+  "Title": "Trip",
   "Icon": "calendar",
   "Color": "#00ff00",
   "Period": {
     "StartsAt": {
       "Date": "2025-06-01",
-      "Time": "09:00:00"
+      "Time": "00:00:00"
     },
     "EndsAt": {
-      "Date": "2025-06-01",
-      "Time": "09:30:00"
+      "Date": "2025-06-02",
+      "Time": "00:00:00"
     },
-    "IsAllDay": false
+    "IsAllDay": true
   },
   "Recurrence": null,
-  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
 }

@@ -48,6 +48,8 @@ export interface CreateItemRequest {
   startsAt: DatePart | null;
   endsAt: DatePart | null;
   dueDate: DatePart | null;
+  // When true, the time-of-day in startsAt/endsAt/dueDate is a sentinel and should be ignored.
+  isAllDay: boolean;
   recurrence: RecurrenceRuleRequest | null;
 }
 
@@ -62,6 +64,7 @@ export interface RescheduleItemRequest {
   startsAt: DatePart | null;
   endsAt: DatePart | null;
   dueDate: DatePart | null;
+  isAllDay: boolean;
 }
 
 export interface CalendarItemResponse {
@@ -84,6 +87,7 @@ export interface CalendarItemOccurrence {
   startsAt: string | null;
   endsAt: string | null;
   dueAt: string | null;
+  isAllDay: boolean;
   isCompleted: boolean;
   createdBy: string;
   lastModifiedBy: string;

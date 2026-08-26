@@ -14,6 +14,7 @@ public sealed record CreateItem(
     StartsAt? StartsAt,
     EndsAt? EndsAt,
     DueDate? DueDate,
+    bool IsAllDay,
     RecurrenceRule? Recurrence)
 {
     public static CreateItem FromClaims(
@@ -26,6 +27,7 @@ public sealed record CreateItem(
         StartsAt? startsAt,
         EndsAt? endsAt,
         DueDate? dueDate,
+        bool isAllDay,
         RecurrenceRule? recurrence) =>
-        new(principal.GetUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, recurrence);
+        new(principal.GetUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, isAllDay, recurrence);
 }

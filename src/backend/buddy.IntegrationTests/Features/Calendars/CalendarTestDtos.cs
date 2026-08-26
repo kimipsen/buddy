@@ -41,6 +41,7 @@ internal sealed record CalendarItemOccurrenceDto(
     DateTimeOffset? StartsAt,
     DateTimeOffset? EndsAt,
     DateTimeOffset? DueAt,
+    bool IsAllDay,
     bool IsCompleted,
     Guid CreatedBy,
     Guid LastModifiedBy);

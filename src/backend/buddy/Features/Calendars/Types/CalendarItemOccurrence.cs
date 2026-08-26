@@ -12,6 +12,7 @@ public sealed record CalendarItemOccurrence(
     DateTimeOffset? StartsAt,
     DateTimeOffset? EndsAt,
     DateTimeOffset? DueAt,
+    bool IsAllDay,
     bool IsCompleted,
     Guid CreatedBy,
     Guid LastModifiedBy);

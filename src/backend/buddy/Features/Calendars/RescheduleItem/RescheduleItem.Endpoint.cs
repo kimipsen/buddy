@@ -26,7 +26,8 @@ public static class RescheduleItemEndpoint
                 new CalendarItemId(itemId),
                 request.StartsAt,
                 request.EndsAt,
-                request.DueDate);
+                request.DueDate,
+                request.IsAllDay);
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
@@ -44,4 +45,4 @@ public static class RescheduleItemEndpoint
     }
 }
 
-public sealed record RescheduleItemRequest(StartsAt? StartsAt, EndsAt? EndsAt, DueDate? DueDate);
+public sealed record RescheduleItemRequest(StartsAt? StartsAt, EndsAt? EndsAt, DueDate? DueDate, bool IsAllDay);

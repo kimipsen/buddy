@@ -26,8 +26,16 @@ public static class IcalFeedWriter
                 {
                     Uid = BuildUid(occurrence.ItemId, occurrence.StartsAt!.Value),
                     Summary = occurrence.Title,
-                    DtStart = new CalDateTime(occurrence.StartsAt.Value.UtcDateTime, "UTC"),
-                    DtEnd = new CalDateTime(occurrence.EndsAt!.Value.UtcDateTime, "UTC"),
+                    // An all-day event is written with date-only (VALUE=DATE) start/end -- the
+                    // occurrence's own local date, not UtcDateTime, so the day doesn't shift across a
+                    // UTC boundary. CalendarEvent.IsAllDay is computed from DtStart/DtEnd having no
+                    // time component, so nothing else needs to be set for it to read as all-day.
+                    DtStart = occurrence.IsAllDay
+                        ? new CalDateTime(DateOnly.FromDateTime(occurrence.StartsAt.Value.DateTime))
+                        : new CalDateTime(occurrence.StartsAt.Value.UtcDateTime, "UTC"),
+                    DtEnd = occurrence.IsAllDay
+                        ? new CalDateTime(DateOnly.FromDateTime(occurrence.EndsAt!.Value.DateTime))
+                        : new CalDateTime(occurrence.EndsAt!.Value.UtcDateTime, "UTC"),
                     DtStamp = stamp,
                 });
             }
@@ -37,7 +45,9 @@ public static class IcalFeedWriter
                 {
                     Uid = BuildUid(occurrence.ItemId, occurrence.DueAt!.Value),
                     Summary = occurrence.Title,
-                    Due = new CalDateTime(occurrence.DueAt!.Value.UtcDateTime, "UTC"),
+                    Due = occurrence.IsAllDay
+                        ? new CalDateTime(DateOnly.FromDateTime(occurrence.DueAt!.Value.DateTime))
+                        : new CalDateTime(occurrence.DueAt!.Value.UtcDateTime, "UTC"),
                     DtStamp = stamp,
                 });
             }

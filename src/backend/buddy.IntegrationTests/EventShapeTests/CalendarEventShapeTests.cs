@@ -24,6 +24,15 @@ public sealed class CalendarEventShapeTests
         ? period
         : throw new InvalidOperationException();
 
+    // All-day: StartsAt/EndsAt at local midnight, EndsAt.Date exclusive (see
+    // docs/backend/analysis/calendar-all-day-items.md) -- a single all-day day on 2025-06-01.
+    private static readonly StartsAt FixedAllDayStartsAt = new(new DateOnly(2025, 6, 1), TimeOnly.MinValue);
+    private static readonly EndsAt FixedAllDayEndsAt = new(new DateOnly(2025, 6, 2), TimeOnly.MinValue);
+    private static readonly DueDate FixedAllDayDueDate = new(new DateOnly(2025, 6, 1), TimeOnly.MinValue, IsAllDay: true);
+    private static readonly Period FixedAllDayPeriod = Period.TryCreate(FixedAllDayStartsAt, FixedAllDayEndsAt, isAllDay: true) is PeriodValidationResult.Valid(var allDayPeriod)
+        ? allDayPeriod
+        : throw new InvalidOperationException();
+
     // -- Calendar-level events (ICalendarEventStore / MartenCalendarEventStore) --
 
     [Fact]
@@ -69,9 +78,19 @@ public sealed class CalendarEventShapeTests
         "Calendars/EventItemCreated.json");
 
     [Fact]
+    public void EventItemCreated_AllDay() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new EventItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Trip", Icon.New("calendar"), Color.New("#00ff00"), FixedAllDayPeriod, null, FixedInstant),
+        "Calendars/EventItemCreated_AllDay.json");
+
+    [Fact]
     public void TaskItemCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "File taxes", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant),
         "Calendars/TaskItemCreated.json");
+
+    [Fact]
+    public void TaskItemCreated_AllDay() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, null, FixedInstant),
+        "Calendars/TaskItemCreated_AllDay.json");
 
     [Fact]
     public void ItemDetailsUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(

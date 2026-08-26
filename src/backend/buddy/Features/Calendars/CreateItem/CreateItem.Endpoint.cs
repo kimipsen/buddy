@@ -29,6 +29,7 @@ public static class CreateItemEndpoint
                 request.StartsAt,
                 request.EndsAt,
                 request.DueDate,
+                request.IsAllDay,
                 request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null);
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
@@ -57,6 +58,7 @@ public sealed record CreateItemRequest(
     StartsAt? StartsAt,
     EndsAt? EndsAt,
     DueDate? DueDate,
+    bool IsAllDay,
     RecurrenceRuleRequest? Recurrence);
 
 public sealed record CalendarItemResponse(

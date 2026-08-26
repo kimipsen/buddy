@@ -32,6 +32,26 @@ public sealed class GetIcalFeedTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_all_day_event_is_written_with_a_date_only_value()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, "All Day Feed Event", isAllDay: true);
+        var issued = await CalendarTestHelpers.CreateIcalTokenAsync(fixture, token, calendarId);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.Get.Url($"/calendars/{calendarId}/ical/{issued.Token}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var ics = response.ReadAsText();
+        Assert.Contains("All Day Feed Event", ics);
+        Assert.Contains("DTSTART;VALUE=DATE:", ics);
+        Assert.Contains("DTEND;VALUE=DATE:", ics);
+    }
+
+    [Fact]
     public async Task An_invalid_token_returns_not_found()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();

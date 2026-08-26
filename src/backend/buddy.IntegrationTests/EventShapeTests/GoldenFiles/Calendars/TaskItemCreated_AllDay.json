@@ -2,14 +2,14 @@
   "Id": "00000000-0000-0000-0000-000000000030",
   "CalendarId": "00000000-0000-0000-0000-000000000020",
   "CreatedBy": "00000000-0000-0000-0000-000000000001",
-  "Title": "File taxes",
+  "Title": "Anniversary",
   "Icon": "task",
   "Color": "#ff0000",
   "DueDate": {
     "Date": "2025-06-01",
-    "Time": "17:00:00",
-    "IsAllDay": false
+    "Time": "00:00:00",
+    "IsAllDay": true
   },
   "Recurrence": null,
-  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
 }

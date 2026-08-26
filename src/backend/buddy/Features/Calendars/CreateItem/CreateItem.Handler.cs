@@ -47,7 +47,7 @@ public static class CreateItemHandler
                 return new Result<CalendarItem>.Validation("An event requires both a start and an end time.");
             }
 
-            var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt);
+            var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt, command.IsAllDay);
 
             if (periodResult is not PeriodValidationResult.Valid(var period))
             {
@@ -67,7 +67,9 @@ public static class CreateItemHandler
                 return new Result<CalendarItem>.Validation("A task requires a due date.");
             }
 
-            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.DueDate, command.Recurrence, now);
+            var dueDate = command.DueDate with { IsAllDay = command.IsAllDay };
+
+            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, dueDate, command.Recurrence, now);
         }
 
         var events = await items.CreateAsync(itemId, [created], cancellationToken);

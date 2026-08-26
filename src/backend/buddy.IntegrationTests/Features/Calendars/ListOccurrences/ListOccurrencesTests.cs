@@ -30,6 +30,26 @@ public sealed class ListOccurrencesTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_all_day_event_occurrence_reports_IsAllDay()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, "Trip", today.AddDays(2), isAllDay: true);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/calendars/{calendarId}/occurrences?from={today:yyyy-MM-dd}&to={today.AddDays(7):yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var occurrences = response.ReadAsJson<CalendarItemOccurrenceDto[]>();
+        Assert.Contains(occurrences, o => o.Title == "Trip" && o.IsAllDay);
+    }
+
+    [Fact]
     public async Task Rejects_a_range_where_to_is_before_from()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();

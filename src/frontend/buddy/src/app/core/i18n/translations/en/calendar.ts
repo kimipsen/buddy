@@ -10,6 +10,7 @@ export const calendar = {
     previousWeek: 'Previous week',
     nextWeek: 'Next week',
     taskUpdateError: 'Unable to update this task.',
+    allDay: 'All day',
     delete: {
       button: 'Delete',
       confirmPrompt: 'Delete this?',
@@ -35,6 +36,7 @@ export const calendar = {
         event: 'Event',
         task: 'Task'
       },
+      allDayLabel: 'All day',
       startDateLabel: 'Start date',
       startTimeLabel: 'Start time',
       endDateLabel: 'End date',

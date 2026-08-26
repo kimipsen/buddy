@@ -48,7 +48,7 @@ public static class RescheduleItemHandler
                 return new Result<CalendarItem>.Validation("An event requires both a start and an end time.");
             }
 
-            var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt);
+            var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt, command.IsAllDay);
 
             if (periodResult is not PeriodValidationResult.Valid(var period))
             {
@@ -72,11 +72,13 @@ public static class RescheduleItemHandler
             return new Result<CalendarItem>.Validation("A task requires a due date.");
         }
 
+        var dueDate = command.DueDate with { IsAllDay = command.IsAllDay };
+
         await items.AppendAsync(
             command.ItemId,
-            [new TaskRescheduled(command.ItemId, item.DueDate!, command.DueDate, userId, now)],
+            [new TaskRescheduled(command.ItemId, item.DueDate!, dueDate, userId, now)],
             cancellationToken);
 
-        return new Result<CalendarItem>.Success(item with { DueDate = command.DueDate, LastModifiedBy = userId });
+        return new Result<CalendarItem>.Success(item with { DueDate = dueDate, LastModifiedBy = userId });
     }
 }

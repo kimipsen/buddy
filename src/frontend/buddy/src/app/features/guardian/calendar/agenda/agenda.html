@@ -77,6 +77,11 @@
                           />
                         </div>
 
+                        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                          <input type="checkbox" [checked]="editIsAllDay()" (change)="editIsAllDay.set(!editIsAllDay())" />
+                          {{ 'calendar.agenda.form.allDayLabel' | translate }}
+                        </label>
+
                         @if (occurrence.kind === eventKind) {
                           <div class="grid gap-3 sm:grid-cols-2">
                             <div class="grid grid-cols-[1fr_auto] gap-2">
@@ -86,12 +91,14 @@
                                 </span>
                                 <app-date-select [value]="editStartDate()" (valueChange)="editStartDate.set($event)" />
                               </div>
-                              <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  {{ 'calendar.agenda.form.startTimeLabel' | translate }}
-                                </span>
-                                <app-time-select [value]="editStartTime()" (valueChange)="editStartTime.set($event)" />
-                              </div>
+                              @if (!editIsAllDay()) {
+                                <div>
+                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    {{ 'calendar.agenda.form.startTimeLabel' | translate }}
+                                  </span>
+                                  <app-time-select [value]="editStartTime()" (valueChange)="editStartTime.set($event)" />
+                                </div>
+                              }
                             </div>
                             <div class="grid grid-cols-[1fr_auto] gap-2">
                               <div>
@@ -100,12 +107,14 @@
                                 </span>
                                 <app-date-select [value]="editEndDate()" (valueChange)="editEndDate.set($event)" />
                               </div>
-                              <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  {{ 'calendar.agenda.form.endTimeLabel' | translate }}
-                                </span>
-                                <app-time-select [value]="editEndTime()" (valueChange)="editEndTime.set($event)" />
-                              </div>
+                              @if (!editIsAllDay()) {
+                                <div>
+                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    {{ 'calendar.agenda.form.endTimeLabel' | translate }}
+                                  </span>
+                                  <app-time-select [value]="editEndTime()" (valueChange)="editEndTime.set($event)" />
+                                </div>
+                              }
                             </div>
                           </div>
                         } @else {
@@ -116,12 +125,14 @@
                               </span>
                               <app-date-select [value]="editDueDate()" (valueChange)="editDueDate.set($event)" />
                             </div>
-                            <div>
-                              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
-                              </span>
-                              <app-time-select [value]="editDueTime()" (valueChange)="editDueTime.set($event)" />
-                            </div>
+                            @if (!editIsAllDay()) {
+                              <div>
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
+                                </span>
+                                <app-time-select [value]="editDueTime()" (valueChange)="editDueTime.set($event)" />
+                              </div>
+                            }
                           </div>
                         }
 
@@ -186,7 +197,11 @@
                               {{ 'calendar.agenda.delete.cancelButton' | translate }}
                             </button>
                           } @else {
-                            @if (occurrence.startsAt) {
+                            @if (occurrence.isAllDay) {
+                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
+                                {{ 'calendar.agenda.allDay' | translate }}
+                              </span>
+                            } @else if (occurrence.startsAt) {
                               <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
                                 {{ occurrence.startsAt | userDate: 'shortTime' }}
                                 @if (occurrence.endsAt) {
@@ -277,6 +292,11 @@
         />
       </div>
 
+      <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+        <input type="checkbox" [checked]="newIsAllDay()" (change)="newIsAllDay.set(!newIsAllDay())" />
+        {{ 'calendar.agenda.form.allDayLabel' | translate }}
+      </label>
+
       @if (newKind() === eventKind) {
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="grid grid-cols-[1fr_auto] gap-2">
@@ -286,12 +306,14 @@
               </span>
               <app-date-select [value]="newStartDate()" (valueChange)="newStartDate.set($event)" />
             </div>
-            <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                {{ 'calendar.agenda.form.startTimeLabel' | translate }}
-              </span>
-              <app-time-select [value]="newStartTime()" (valueChange)="newStartTime.set($event)" />
-            </div>
+            @if (!newIsAllDay()) {
+              <div>
+                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {{ 'calendar.agenda.form.startTimeLabel' | translate }}
+                </span>
+                <app-time-select [value]="newStartTime()" (valueChange)="newStartTime.set($event)" />
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-2">
             <div>
@@ -300,12 +322,14 @@
               </span>
               <app-date-select [value]="newEndDate()" (valueChange)="newEndDate.set($event)" />
             </div>
-            <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                {{ 'calendar.agenda.form.endTimeLabel' | translate }}
-              </span>
-              <app-time-select [value]="newEndTime()" (valueChange)="newEndTime.set($event)" />
-            </div>
+            @if (!newIsAllDay()) {
+              <div>
+                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {{ 'calendar.agenda.form.endTimeLabel' | translate }}
+                </span>
+                <app-time-select [value]="newEndTime()" (valueChange)="newEndTime.set($event)" />
+              </div>
+            }
           </div>
         </div>
       } @else {
@@ -316,12 +340,14 @@
             </span>
             <app-date-select [value]="newDueDate()" (valueChange)="newDueDate.set($event)" />
           </div>
-          <div>
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
-            </span>
-            <app-time-select [value]="newDueTime()" (valueChange)="newDueTime.set($event)" />
-          </div>
+          @if (!newIsAllDay()) {
+            <div>
+              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
+              </span>
+              <app-time-select [value]="newDueTime()" (valueChange)="newDueTime.set($event)" />
+            </div>
+          }
         </div>
       }
 

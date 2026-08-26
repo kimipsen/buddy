@@ -8,7 +8,8 @@
     "EndsAt": {
       "Date": "2025-06-01",
       "Time": "09:30:00"
-    }
+    },
+    "IsAllDay": false
   },
   "After": {
     "StartsAt": {
@@ -18,7 +19,8 @@
     "EndsAt": {
       "Date": "2025-06-01",
       "Time": "09:30:00"
-    }
+    },
+    "IsAllDay": false
   },
   "ModifiedBy": "00000000-0000-0000-0000-000000000001",
   "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
