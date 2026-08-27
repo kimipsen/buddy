@@ -11,13 +11,24 @@ import {
   RecurrenceFrequency,
   RecurrenceRuleRequest
 } from '../../../../core/calendars.service';
-import { toIsoDate, todayIsoDate, toIsoDateInTimeZone, toTimeInTimeZone } from '../../../../core/date-utils';
+import {
+  addDaysIso,
+  buildDateRangeIso,
+  buildMonthGridIso,
+  parseIsoDate,
+  shiftMonthIso,
+  startOfWeekIso,
+  toIsoDateInTimeZone,
+  toTimeInTimeZone,
+  todayIsoDate
+} from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
+import { MonthGrid } from './month-grid/month-grid';
 
 const DAYS_AHEAD = 7;
 const EVENT_KIND: CalendarItemKind = 0;
@@ -26,38 +37,44 @@ const TASK_KIND: CalendarItemKind = 1;
 const MAX_CONTRIBUTE_ROLE = 1;
 const DEFAULT_COLOR = '#f43f5e';
 
-interface AgendaDay {
+export interface AgendaDay {
   date: string;
   label: string;
+  // Only meaningful for month-grid days -- undefined everywhere else.
+  isCurrentMonth?: boolean;
 }
 
-// Parsed as local-timezone components rather than `new Date(isoDate)` -- the latter parses an
-// unqualified "YYYY-MM-DD" as UTC midnight, which can land on the wrong calendar day once
-// formatted back in a timezone behind UTC. Mirrors assign-mealplan.ts's identical helper.
-function parseIsoDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return new Date(year, month - 1, day);
+export type ViewMode = 'day' | 'workweek' | 'week' | 'month';
+
+const WORKWEEK_DAYS = 5;
+
+function labeledDay(isoDate: string, locale: string): AgendaDay {
+  return {
+    date: isoDate,
+    label: parseIsoDate(isoDate).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
+  };
 }
 
-// All-day events are entered/displayed as an inclusive end date (see docs/backend/analysis/
-// calendar-all-day-items.md) but stored with the exclusive EndsAt the backend already expects --
-// this converts between the two at the form boundary, in either direction.
-function addDaysIso(isoDate: string, days: number): string {
-  const date = parseIsoDate(isoDate);
-  return toIsoDate(new Date(date.getFullYear(), date.getMonth(), date.getDate() + days));
+function buildLabeledDays(startIsoDate: string, dayCount: number, locale: string): AgendaDay[] {
+  return buildDateRangeIso(startIsoDate, dayCount).map((date) => labeledDay(date, locale));
 }
 
+// Rolling window from the anchor date, unchanged from the screen's original (and still default)
+// behavior -- deliberately not Monday-aligned, see docs/frontend/analysis/
+// guardian-full-calendar-views.md's "Scope decision" for why Week keeps this instead of matching
+// Work week/Month's calendar-aligned windowing.
 function buildDays(anchorIsoDate: string, locale: string): AgendaDay[] {
-  const anchor = parseIsoDate(anchorIsoDate);
+  return buildLabeledDays(anchorIsoDate, DAYS_AHEAD, locale);
+}
 
-  return Array.from({ length: DAYS_AHEAD }, (_, offset) => {
-    const date = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offset);
+function buildMonthDays(anchorIsoDate: string, locale: string): AgendaDay[] {
+  const anchorMonth = parseIsoDate(anchorIsoDate).getMonth();
 
-    return {
-      date: toIsoDate(date),
-      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
-    };
-  });
+  return buildMonthGridIso(anchorIsoDate).map((date) => ({
+    date,
+    label: String(parseIsoDate(date).getDate()),
+    isCurrentMonth: parseIsoDate(date).getMonth() === anchorMonth
+  }));
 }
 
 // Exactly one of startsAt/dueAt is ever set per the backend's Event-vs-Task invariant.
@@ -72,7 +89,7 @@ function toDatePart(date: string, time: string): DatePart {
 
 @Component({
   selector: 'app-calendar-agenda',
-  imports: [FormsModule, TranslatePipe, UserDatePipe, DateSelect, TimeSelect],
+  imports: [FormsModule, TranslatePipe, UserDatePipe, DateSelect, TimeSelect, MonthGrid],
   templateUrl: './agenda.html'
 })
 export class CalendarAgenda {
@@ -82,9 +99,77 @@ export class CalendarAgenda {
 
   protected readonly eventKind = EVENT_KIND;
   protected readonly taskKind = TASK_KIND;
+  protected readonly today = todayIsoDate();
 
   protected readonly anchorDate = signal(todayIsoDate());
-  protected readonly days = computed(() => buildDays(this.anchorDate(), this.translation.language()));
+  protected readonly viewMode = signal<ViewMode>('week');
+  protected readonly viewModes: readonly ViewMode[] = ['day', 'workweek', 'week', 'month'];
+
+  // The rendered day list for Day/Work week/Week, and the full month grid (including
+  // leading/trailing days from adjacent months) for Month -- also the sole source of the fetch
+  // range in loadWeek() below, which just reads the first/last date here regardless of mode.
+  protected readonly days = computed(() => {
+    const anchor = this.anchorDate();
+    const locale = this.translation.language();
+
+    switch (this.viewMode()) {
+      case 'day':
+        return buildLabeledDays(anchor, 1, locale);
+      case 'workweek':
+        return buildLabeledDays(startOfWeekIso(anchor), WORKWEEK_DAYS, locale);
+      case 'week':
+        return buildDays(anchor, locale);
+      case 'month':
+        return buildMonthDays(anchor, locale);
+    }
+  });
+
+  // Mon-Sun headers for the month grid, computed once here since MonthGrid has no locale of its
+  // own -- the first seven days() entries in month mode are always a complete Monday-start week.
+  protected readonly weekdayLabels = computed(() => {
+    if (this.viewMode() !== 'month') {
+      return [];
+    }
+
+    const locale = this.translation.language();
+    return this.days()
+      .slice(0, 7)
+      .map((day) => parseIsoDate(day.date).toLocaleDateString(locale, { weekday: 'short' }));
+  });
+
+  protected readonly viewTitle = computed(() => {
+    switch (this.viewMode()) {
+      case 'day':
+        return this.translation.translate('calendar.agenda.dayTitle', {
+          date: parseIsoDate(this.anchorDate()).toLocaleDateString(this.translation.language(), {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric'
+          })
+        });
+      case 'workweek':
+        return this.translation.translate('calendar.agenda.workweekTitle');
+      case 'week':
+        // Unchanged from the screen's original single view -- see the "Scope decision" note in
+        // docs/frontend/analysis/guardian-full-calendar-views.md.
+        return this.translation.translate('calendar.agenda.title');
+      case 'month':
+        return this.translation.translate('calendar.agenda.monthTitle', {
+          month: parseIsoDate(this.anchorDate()).toLocaleDateString(this.translation.language(), {
+            month: 'long',
+            year: 'numeric'
+          })
+        });
+    }
+  });
+
+  protected readonly previousLabelKey = computed(
+    () => ({ day: 'calendar.agenda.previousDay', workweek: 'calendar.agenda.previousWeek', week: 'calendar.agenda.previousWeek', month: 'calendar.agenda.previousMonth' })[this.viewMode()]
+  );
+
+  protected readonly nextLabelKey = computed(
+    () => ({ day: 'calendar.agenda.nextDay', workweek: 'calendar.agenda.nextWeek', week: 'calendar.agenda.nextWeek', month: 'calendar.agenda.nextMonth' })[this.viewMode()]
+  );
 
   protected readonly myCalendars = signal<CalendarSummary[]>([]);
   protected readonly eligibleCalendars = computed(() => this.myCalendars().filter((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE));
@@ -194,9 +279,11 @@ export class CalendarAgenda {
 
   constructor() {
     effect(() => {
-      // Read anchorDate() here (not just inside loadWeek()) so the effect re-runs when the
-      // visible week changes -- same pattern as assign-mealplan.ts.
+      // Read anchorDate()/viewMode() here (not just inside loadWeek()) so the effect re-runs
+      // whenever the visible range changes, in either dimension -- same pattern as
+      // assign-mealplan.ts.
       this.anchorDate();
+      this.viewMode();
       void this.loadWeek();
     });
 
@@ -210,22 +297,54 @@ export class CalendarAgenda {
     });
   }
 
-  protected previousWeek(): void {
-    this.shiftWeek(-DAYS_AHEAD);
+  protected setViewMode(mode: ViewMode): void {
+    this.viewMode.set(mode);
   }
 
-  protected nextWeek(): void {
-    this.shiftWeek(DAYS_AHEAD);
+  protected viewModeLabelKey(mode: ViewMode): string {
+    return { day: 'calendar.agenda.view.day', workweek: 'calendar.agenda.view.workweek', week: 'calendar.agenda.view.week', month: 'calendar.agenda.view.month' }[mode];
   }
 
-  private shiftWeek(offsetDays: number): void {
-    const anchor = parseIsoDate(this.anchorDate());
-    const shifted = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offsetDays);
-    this.anchorDate.set(toIsoDate(shifted));
+  protected goToToday(): void {
+    this.anchorDate.set(todayIsoDate());
+  }
+
+  protected previousPeriod(): void {
+    this.shiftPeriod(-1);
+  }
+
+  protected nextPeriod(): void {
+    this.shiftPeriod(1);
+  }
+
+  private shiftPeriod(direction: 1 | -1): void {
+    switch (this.viewMode()) {
+      case 'day':
+        this.anchorDate.set(addDaysIso(this.anchorDate(), direction));
+        return;
+      case 'workweek':
+        this.anchorDate.set(addDaysIso(this.anchorDate(), direction * 7));
+        return;
+      case 'week':
+        // Unchanged from the screen's original single view -- shifts the rolling window by
+        // exactly DAYS_AHEAD, same as the original shiftWeek(±DAYS_AHEAD).
+        this.anchorDate.set(addDaysIso(this.anchorDate(), direction * DAYS_AHEAD));
+        return;
+      case 'month':
+        this.anchorDate.set(shiftMonthIso(this.anchorDate(), direction));
+        return;
+    }
   }
 
   protected occurrencesFor(date: string): CalendarOccurrence[] {
     return this.occurrencesByDate()[date] ?? [];
+  }
+
+  // Month view is overview/navigation only (see the "Rendering" section in docs/frontend/analysis/
+  // guardian-full-calendar-views.md) -- picking a day there always drills into Day view for it.
+  protected onMonthDaySelected(date: string): void {
+    this.anchorDate.set(date);
+    this.viewMode.set('day');
   }
 
   // What a blank icon input resolves to -- shown as its placeholder so leaving it empty visibly

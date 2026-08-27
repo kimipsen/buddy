@@ -1,20 +1,42 @@
 <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-    <h3 class="text-lg font-semibold tracking-normal">{{ 'calendar.agenda.title' | translate }}</h3>
-    <div class="flex items-center gap-2">
+    <h3 class="text-lg font-semibold tracking-normal">{{ viewTitle() }}</h3>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex overflow-hidden rounded-md border border-slate-300">
+        @for (mode of viewModes; track mode) {
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm font-medium transition"
+            [class.bg-slate-950]="viewMode() === mode"
+            [class.text-white]="viewMode() === mode"
+            [class.text-slate-600]="viewMode() !== mode"
+            [class.hover:bg-slate-100]="viewMode() !== mode"
+            (click)="setViewMode(mode)"
+          >
+            {{ viewModeLabelKey(mode) | translate }}
+          </button>
+        }
+      </div>
       <button
         type="button"
         class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
-        (click)="previousWeek()"
+        (click)="goToToday()"
       >
-        {{ 'calendar.agenda.previousWeek' | translate }}
+        {{ 'calendar.agenda.today' | translate }}
       </button>
       <button
         type="button"
         class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
-        (click)="nextWeek()"
+        (click)="previousPeriod()"
       >
-        {{ 'calendar.agenda.nextWeek' | translate }}
+        {{ previousLabelKey() | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        (click)="nextPeriod()"
+      >
+        {{ nextLabelKey() | translate }}
       </button>
     </div>
   </div>
@@ -38,7 +60,15 @@
       </div>
     }
 
-    @if (!hasAnyVisibleOccurrence()) {
+    @if (viewMode() === 'month') {
+      <app-month-grid
+        [days]="days()"
+        [weekdayLabels]="weekdayLabels()"
+        [occurrencesByDate]="occurrencesByDate()"
+        [today]="today"
+        (daySelected)="onMonthDaySelected($event)"
+      />
+    } @else if (!hasAnyVisibleOccurrence()) {
       <p class="text-sm text-slate-500">{{ 'calendar.agenda.empty' | translate }}</p>
     } @else {
       <div class="space-y-4">

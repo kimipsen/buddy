@@ -8,6 +8,55 @@ export function todayIsoDate(): string {
   return toIsoDate(new Date());
 }
 
+// Parsed as local-timezone components rather than `new Date(isoDate)` -- the latter parses an
+// unqualified "YYYY-MM-DD" as UTC midnight, which can land on the wrong calendar day once
+// formatted back in a timezone behind UTC.
+export function parseIsoDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+export function addDaysIso(isoDate: string, days: number): string {
+  const date = parseIsoDate(isoDate);
+  return toIsoDate(new Date(date.getFullYear(), date.getMonth(), date.getDate() + days));
+}
+
+// Monday of the week containing isoDate -- getDay() is 0 (Sun) through 6 (Sat); shifting back by
+// (day + 6) % 7 walks to the preceding Monday (0 for a Monday itself).
+export function startOfWeekIso(isoDate: string): string {
+  const offset = (parseIsoDate(isoDate).getDay() + 6) % 7;
+  return addDaysIso(isoDate, -offset);
+}
+
+export function startOfMonthIso(isoDate: string): string {
+  const date = parseIsoDate(isoDate);
+  return toIsoDate(new Date(date.getFullYear(), date.getMonth(), 1));
+}
+
+// Adds a whole number of months, clamping the day-of-month into the target month (e.g. Jan 31 + 1
+// month lands on the last day of February, not March 3rd).
+export function shiftMonthIso(isoDate: string, months: number): string {
+  const date = parseIsoDate(isoDate);
+  const target = new Date(date.getFullYear(), date.getMonth() + months, 1);
+  const lastDayOfTargetMonth = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  return toIsoDate(new Date(target.getFullYear(), target.getMonth(), Math.min(date.getDate(), lastDayOfTargetMonth)));
+}
+
+export function buildDateRangeIso(startIsoDate: string, dayCount: number): string[] {
+  return Array.from({ length: dayCount }, (_, offset) => addDaysIso(startIsoDate, offset));
+}
+
+// Every Monday-start week that intersects the calendar month containing isoDate, including the
+// leading/trailing days from the previous/next month needed to fill complete rows -- a 4-, 5-, or
+// 6-row grid depending on the month, not a fixed 42-cell grid.
+export function buildMonthGridIso(isoDate: string): string[] {
+  const gridStart = startOfWeekIso(startOfMonthIso(isoDate));
+  const lastOfMonth = addDaysIso(shiftMonthIso(startOfMonthIso(isoDate), 1), -1);
+  const gridEnd = addDaysIso(startOfWeekIso(lastOfMonth), 6);
+  const totalDays = Math.round((parseIsoDate(gridEnd).getTime() - parseIsoDate(gridStart).getTime()) / 86_400_000) + 1;
+  return buildDateRangeIso(gridStart, totalDays);
+}
+
 const TIME_ZONE_IDS = Intl.supportedValuesOf('timeZone').sort((a, b) => a.localeCompare(b));
 
 export function listTimeZoneIds(): readonly string[] {

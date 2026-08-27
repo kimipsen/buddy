@@ -1,6 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { browserTimeZoneId, listTimeZoneIds, toIsoDate, toIsoDateInTimeZone, todayIsoDate, toTimeInTimeZone } from './date-utils';
+import {
+  addDaysIso,
+  browserTimeZoneId,
+  buildDateRangeIso,
+  buildMonthGridIso,
+  listTimeZoneIds,
+  parseIsoDate,
+  shiftMonthIso,
+  startOfMonthIso,
+  startOfWeekIso,
+  toIsoDate,
+  toIsoDateInTimeZone,
+  todayIsoDate,
+  toTimeInTimeZone
+} from './date-utils';
 
 describe('toIsoDate', () => {
   it('formats a local date as yyyy-MM-dd', () => {
@@ -110,5 +124,101 @@ describe('toTimeInTimeZone', () => {
 
   it('renders midnight as 00:00 rather than 24:00', () => {
     expect(toTimeInTimeZone(new Date('2024-01-01T00:07:00Z'), 'UTC')).toBe('00:07');
+  });
+});
+
+describe('parseIsoDate', () => {
+  it('parses as local-timezone components, not a UTC instant', () => {
+    const date = parseIsoDate('2024-03-05');
+    expect(date.getFullYear()).toBe(2024);
+    expect(date.getMonth()).toBe(2);
+    expect(date.getDate()).toBe(5);
+  });
+});
+
+describe('addDaysIso', () => {
+  it('adds a positive number of days, crossing a month boundary', () => {
+    expect(addDaysIso('2024-01-30', 3)).toBe('2024-02-02');
+  });
+
+  it('subtracts days with a negative offset, crossing a year boundary', () => {
+    expect(addDaysIso('2024-01-01', -1)).toBe('2023-12-31');
+  });
+
+  it('is a no-op for a zero offset', () => {
+    expect(addDaysIso('2024-06-15', 0)).toBe('2024-06-15');
+  });
+});
+
+describe('startOfWeekIso', () => {
+  it('returns the same date when given a Monday', () => {
+    expect(startOfWeekIso('2024-06-17')).toBe('2024-06-17');
+  });
+
+  it('walks back to Monday from a mid-week date', () => {
+    expect(startOfWeekIso('2024-06-20')).toBe('2024-06-17');
+  });
+
+  it('walks back to Monday from a Sunday, without overshooting to the following week', () => {
+    expect(startOfWeekIso('2024-06-23')).toBe('2024-06-17');
+  });
+
+  it('crosses a month boundary when the containing week starts in the previous month', () => {
+    expect(startOfWeekIso('2024-07-02')).toBe('2024-07-01');
+    expect(startOfWeekIso('2024-06-01')).toBe('2024-05-27');
+  });
+});
+
+describe('startOfMonthIso', () => {
+  it('returns the 1st of the month for any day within it', () => {
+    expect(startOfMonthIso('2024-06-17')).toBe('2024-06-01');
+    expect(startOfMonthIso('2024-06-30')).toBe('2024-06-01');
+  });
+});
+
+describe('shiftMonthIso', () => {
+  it('moves forward a whole number of months', () => {
+    expect(shiftMonthIso('2024-06-15', 1)).toBe('2024-07-15');
+  });
+
+  it('moves backward a whole number of months, crossing a year boundary', () => {
+    expect(shiftMonthIso('2024-01-15', -1)).toBe('2023-12-15');
+  });
+
+  it('clamps the day-of-month into a shorter target month', () => {
+    expect(shiftMonthIso('2024-01-31', 1)).toBe('2024-02-29'); // 2024 is a leap year
+    expect(shiftMonthIso('2024-03-31', -1)).toBe('2024-02-29');
+  });
+});
+
+describe('buildDateRangeIso', () => {
+  it('returns dayCount consecutive dates starting at startIsoDate', () => {
+    expect(buildDateRangeIso('2024-06-28', 5)).toEqual(['2024-06-28', '2024-06-29', '2024-06-30', '2024-07-01', '2024-07-02']);
+  });
+
+  it('returns a single-element array for a dayCount of 1', () => {
+    expect(buildDateRangeIso('2024-06-28', 1)).toEqual(['2024-06-28']);
+  });
+});
+
+describe('buildMonthGridIso', () => {
+  it('starts on the Monday of the week containing the 1st and ends on the Sunday of the week containing the last day', () => {
+    // June 2024: the 1st is a Saturday, the 30th is a Sunday.
+    const grid = buildMonthGridIso('2024-06-15');
+    expect(grid[0]).toBe('2024-05-27');
+    expect(grid.at(-1)).toBe('2024-06-30');
+    expect(grid.length % 7).toBe(0);
+  });
+
+  it('produces a 5-row grid for a month that starts and ends mid-week', () => {
+    // February 2024 (leap year): the 1st is a Thursday, the 29th is a Thursday.
+    const grid = buildMonthGridIso('2024-02-10');
+    expect(grid.length).toBe(35);
+    expect(grid[0]).toBe('2024-01-29');
+    expect(grid.at(-1)).toBe('2024-03-03');
+  });
+
+  it('is independent of which day within the month the anchor is', () => {
+    expect(buildMonthGridIso('2024-06-01')).toEqual(buildMonthGridIso('2024-06-30'));
   });
 });

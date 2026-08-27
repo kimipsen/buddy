@@ -9,6 +9,23 @@ export const calendar = {
     empty: 'Nothing planned this week.',
     previousWeek: 'Previous week',
     nextWeek: 'Next week',
+    today: 'Today',
+    previousDay: 'Previous day',
+    nextDay: 'Next day',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    dayTitle: '{date}',
+    workweekTitle: 'Work week',
+    monthTitle: '{month}',
+    view: {
+      day: 'Day',
+      workweek: 'Work week',
+      week: 'Week',
+      month: 'Month'
+    },
+    monthGrid: {
+      moreLabel: '+{count} more'
+    },
     taskUpdateError: 'Unable to update this task.',
     allDay: 'All day',
     delete: {

@@ -9,6 +9,23 @@ export const calendar = {
     empty: 'Intet planlagt denne uge.',
     previousWeek: 'Forrige uge',
     nextWeek: 'Næste uge',
+    today: 'I dag',
+    previousDay: 'Forrige dag',
+    nextDay: 'Næste dag',
+    previousMonth: 'Forrige måned',
+    nextMonth: 'Næste måned',
+    dayTitle: '{date}',
+    workweekTitle: 'Arbejdsuge',
+    monthTitle: '{month}',
+    view: {
+      day: 'Dag',
+      workweek: 'Arbejdsuge',
+      week: 'Uge',
+      month: 'Måned'
+    },
+    monthGrid: {
+      moreLabel: '+{count} mere'
+    },
     taskUpdateError: 'Kunne ikke opdatere denne opgave.',
     allDay: 'Hele dagen',
     delete: {

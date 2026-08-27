@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   AssignableMember,
@@ -14,6 +14,13 @@ import { CalendarAgenda } from './agenda';
 
 describe('CalendarAgenda', () => {
   const today = todayIsoDate();
+
+  // Only the "View modes" tests below fix the system clock (via vi.useFakeTimers/setSystemTime) to
+  // get a deterministic day-of-week for Work week/Month grid math -- reset it unconditionally so a
+  // later, unrelated test never inherits a mocked "now".
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   // Mirrors agenda.ts's own local-date arithmetic (parseIsoDate + toIsoDate) so expectations don't
   // depend on the host machine's time zone -- both this helper and the component read local Date
@@ -797,6 +804,119 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Sam Kid');
+  });
+
+  // ----- View modes -----
+
+  it('defaults to Week, requesting the same range as before this feature existed', async () => {
+    const { fixture, calendars } = await setup();
+    await settle(fixture);
+
+    expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith(today, addDays(today, 6));
+  });
+
+  it('switching to Day requests just the anchor date, and Previous/Next day shift by one day', async () => {
+    const { fixture, calendars } = await setup();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Day')!.click();
+    await settle(fixture);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(today, today);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Next day')!.click();
+    await settle(fixture);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(addDays(today, 1), addDays(today, 1));
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Previous day')!.click();
+    await settle(fixture);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(today, today);
+  });
+
+  it('switching to Work week requests Monday through Friday of the anchor\'s week', async () => {
+    // 2024-06-20 is a Thursday -- its Monday is 2024-06-17, its Friday 2024-06-21.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2024, 5, 20));
+    const thursday = todayIsoDate();
+    const { fixture, calendars } = await setup();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Work week')!.click();
+    await settle(fixture);
+
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-17', '2024-06-21');
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Next week')!.click();
+    await settle(fixture);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-24', '2024-06-28');
+
+    expect(thursday).toBe('2024-06-20');
+  });
+
+  it('switching to Month requests the full Monday-start grid, including padding days from adjacent months', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2024, 5, 15)); // June 2024: 1st is a Saturday, 30th a Sunday
+    const { fixture, calendars } = await setup();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Month')!.click();
+    await settle(fixture);
+
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-05-27', '2024-06-30');
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Next month')!.click();
+    await settle(fixture);
+    // July 2024: 1st is a Monday, 31st a Wednesday -- grid still pads out to a full last week.
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-07-01', '2024-08-04');
+  });
+
+  it('renders the month grid instead of the day list while in Month view', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2024, 5, 15));
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Month')!.click();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-month-grid')).toBeTruthy();
+  });
+
+  it('"Today" jumps the anchor back to today without changing the current view mode', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2024, 5, 15));
+    const { fixture, calendars } = await setup();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Day')!.click();
+    await settle(fixture);
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Next day')!.click();
+    await settle(fixture);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-16', '2024-06-16');
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Today')!.click();
+    await settle(fixture);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-15', '2024-06-15');
+  });
+
+  it('selecting a day in the month grid switches to Day view for that date', async () => {
+    // June 2024's grid pads with May 27-31 only (June 30 is already a Sunday, so no trailing
+    // padding) -- "10" is therefore an unambiguous day-of-month label to click on.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2024, 5, 15));
+    const { fixture, calendars } = await setup();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Month')!.click();
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, '10')!.click();
+    await settle(fixture);
+
+    // Back to a day-list render (no more app-month-grid), and the fetch range narrows to that day.
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-month-grid')).toBeNull();
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-10', '2024-06-10');
   });
 
   it('shows no assignee text for a task assigned to a member the guardian cannot resolve', async () => {
