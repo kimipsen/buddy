@@ -165,4 +165,72 @@ describe('EventsToday', () => {
 
     expect(calendars.listTodayOccurrences).toHaveBeenCalledTimes(1);
   });
+
+  it('marks an event whose end time has passed as done', async () => {
+    const past = occurrence({
+      itemId: 'past',
+      title: 'Morning meeting',
+      startsAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    });
+
+    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [past]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Morning meeting'));
+    expect(item?.querySelector('.line-through')?.textContent).toContain('Morning meeting');
+    expect(item?.textContent).toContain('✓');
+  });
+
+  it('does not mark an upcoming event as done', async () => {
+    const upcoming = occurrence({
+      itemId: 'upcoming',
+      title: 'Afternoon meeting',
+      startsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
+    });
+
+    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [upcoming]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Afternoon meeting'));
+    expect(item?.querySelector('.line-through')).toBeFalsy();
+  });
+
+  it('shows a progress fill for an event that is currently in progress', async () => {
+    const ongoing = occurrence({
+      itemId: 'ongoing',
+      title: 'Team standup',
+      startsAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    });
+
+    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [ongoing]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Team standup'));
+    expect(item?.style.background).toContain('linear-gradient');
+    expect(item?.querySelector('.line-through')).toBeFalsy();
+  });
+
+  it('never marks an all-day event as done or in progress, regardless of the time', async () => {
+    const allDay = occurrence({
+      itemId: 'all-day',
+      title: 'School holiday',
+      isAllDay: true,
+      startsAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    });
+
+    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [allDay]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('School holiday'));
+    expect(item?.querySelector('.line-through')).toBeFalsy();
+    expect(item?.style.background).toBeFalsy();
+  });
 });

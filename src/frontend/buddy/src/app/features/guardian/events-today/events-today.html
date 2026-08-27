@@ -5,14 +5,22 @@
     <app-loading-spinner [label]="'dashboard.events.loading' | translate" />
   } @else if (error(); as message) {
     <p class="text-sm text-red-600">{{ message | translate }}</p>
-  } @else if (events().length === 0) {
+  } @else if (eventsView().length === 0) {
     <p class="text-sm text-slate-500">{{ 'dashboard.events.empty' | translate }}</p>
   } @else {
     <ul class="space-y-2">
-      @for (event of events(); track event.itemId) {
-        <li class="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-sm">
+      @for (event of eventsView(); track event.itemId) {
+        <li
+          class="flex items-center gap-3 overflow-hidden rounded-lg border border-slate-200 px-4 py-3 text-sm"
+          [style.background]="event.isOngoing ? eventProgressBackground(event.progressPercent) : null"
+        >
           <span class="text-lg leading-none">{{ event.icon }}</span>
-          <span class="font-medium">{{ event.title }}</span>
+          <span class="font-medium" [class.line-through]="event.isPast" [class.text-slate-400]="event.isPast">
+            {{ event.title }}
+            @if (event.isPast) {
+              <span aria-hidden="true">✓</span>
+            }
+          </span>
           <span class="text-xs text-slate-400">{{ event.calendarName }}</span>
           @if (event.startsAt) {
             <span class="ml-auto text-xs font-semibold text-slate-500">{{ event.startsAt | userDate: 'shortTime' }}</span>
