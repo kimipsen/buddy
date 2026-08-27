@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Features.TaskLibrary;
 
 namespace buddy.Features.Calendars;
 
@@ -14,6 +15,7 @@ public static class GetIcalFeedHandler
         GetIcalFeed query,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
+        ITaskTemplateEventStore templates,
         CancellationToken cancellationToken)
     {
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
@@ -35,7 +37,7 @@ public static class GetIcalFeedHandler
         var from = today.AddDays(-LookBehind.Days);
         var to = today.AddDays(LookAhead.Days);
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, calendar.Icon, from, to, items, cancellationToken);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, calendar.Icon, from, to, items, templates, cancellationToken);
 
         return new Result<string>.Success(IcalFeedWriter.Write(calendar.Name, occurrences));
     }

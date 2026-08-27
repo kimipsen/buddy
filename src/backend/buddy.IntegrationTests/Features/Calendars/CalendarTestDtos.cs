@@ -51,4 +51,6 @@ internal sealed record CalendarItemOccurrenceDto(
     bool IsCompleted,
     Guid CreatedBy,
     Guid LastModifiedBy,
-    Guid? AssignedTo);
+    Guid? AssignedTo,
+    string? ParentTitle,
+    Guid? SubtaskId);

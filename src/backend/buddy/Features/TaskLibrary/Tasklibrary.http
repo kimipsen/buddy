@@ -1,0 +1,84 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Create a reusable task template for a child (guardian only)
+
+POST {{buddy_HostAddress}}/task-templates/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Morning routine",
+  "Icon": "sunrise",
+  "Color": "#ffaa00"
+}
+
+###
+
+# List a child's task template library (guardian or child)
+GET {{buddy_HostAddress}}/task-templates/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Update a template's name/icon/color (guardian only)
+PATCH {{buddy_HostAddress}}/task-templates/{{templateId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Morning routine (weekdays)",
+  "Icon": "sunrise",
+  "Color": "#ffaa00"
+}
+
+###
+
+# Add a subtask to a template (guardian only)
+POST {{buddy_HostAddress}}/task-templates/{{templateId}}/subtasks
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Title": "Brush teeth",
+  "Icon": "toothbrush",
+  "Duration": "00:02:00",
+  "Position": null
+}
+
+###
+
+# Update a subtask (guardian only)
+PATCH {{buddy_HostAddress}}/task-templates/{{templateId}}/subtasks/{{subtaskId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Title": "Brush teeth thoroughly",
+  "Icon": "toothbrush",
+  "Duration": "00:03:00"
+}
+
+###
+
+# Reorder a template's subtasks (guardian only)
+PUT {{buddy_HostAddress}}/task-templates/{{templateId}}/subtasks/order
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "NewOrder": ["{{subtaskId2}}", "{{subtaskId}}"]
+}
+
+###
+
+# Remove a subtask (guardian only)
+DELETE {{buddy_HostAddress}}/task-templates/{{templateId}}/subtasks/{{subtaskId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Archive a template (guardian only) -- soft "delete", stays in the library
+DELETE {{buddy_HostAddress}}/task-templates/{{templateId}}
+Authorization: Bearer {{guardianToken}}
+
+###

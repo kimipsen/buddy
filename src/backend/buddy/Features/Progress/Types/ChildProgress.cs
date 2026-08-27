@@ -9,7 +9,7 @@ public sealed record ChildProgress(
     ProgressId Id,
     UserId ChildId,
     int TotalStars,
-    ImmutableHashSet<(CalendarItemId ItemId, DateOnly OccurrenceDate)> AwardedOccurrences,
+    ImmutableHashSet<(CalendarItemId ItemId, DateOnly OccurrenceDate, Guid? SubtaskId)> AwardedOccurrences,
     ImmutableHashSet<int> UnlockedMilestones)
 {
     public static ChildProgress? Rehydrate(IEnumerable<ProgressEvent> events)
@@ -24,17 +24,17 @@ public sealed record ChildProgress(
                     started.Id,
                     started.ChildId,
                     0,
-                    ImmutableHashSet<(CalendarItemId, DateOnly)>.Empty,
+                    ImmutableHashSet<(CalendarItemId, DateOnly, Guid?)>.Empty,
                     ImmutableHashSet<int>.Empty),
                 StarAwarded awarded => progress! with
                 {
                     TotalStars = progress!.TotalStars + 1,
-                    AwardedOccurrences = progress!.AwardedOccurrences.Add((awarded.SourceItemId, awarded.OccurrenceDate))
+                    AwardedOccurrences = progress!.AwardedOccurrences.Add((awarded.SourceItemId, awarded.OccurrenceDate, awarded.SubtaskId))
                 },
                 StarRevoked revoked => progress! with
                 {
                     TotalStars = progress!.TotalStars - 1,
-                    AwardedOccurrences = progress!.AwardedOccurrences.Remove((revoked.SourceItemId, revoked.OccurrenceDate))
+                    AwardedOccurrences = progress!.AwardedOccurrences.Remove((revoked.SourceItemId, revoked.OccurrenceDate, revoked.SubtaskId))
                 },
                 MilestoneUnlocked milestone => progress! with
                 {

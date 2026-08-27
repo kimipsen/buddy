@@ -60,7 +60,12 @@ public sealed record TaskItemCreated(
     DueDate DueDate,
     RecurrenceRule? Recurrence,
     DateTimeOffset OccurredAt,
-    UserId? AssignedTo = null);
+    UserId? AssignedTo = null,
+    // The TaskLibrary template this item was scheduled from (see ScheduleTaskFromTemplate), if
+    // any -- a raw Guid, not TaskLibrary's TaskTemplateId type (see CalendarItem.TaskTemplateId).
+    // Defaults to null so events persisted before this property existed still deserialize -- same
+    // technique as Period.IsAllDay/DueDate.IsAllDay.
+    Guid? TaskTemplateId = null);
 
 public sealed record ItemDetailsUpdated(CalendarItemId Id, ItemDetails Before, ItemDetails After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
@@ -72,7 +77,9 @@ public sealed record RecurrenceUpdated(CalendarItemId Id, RecurrenceRule? Before
 
 // OccurrenceDate keys a single occurrence of a (possibly recurring) task, mirroring
 // MedicineSchedule.DoseLog's per-occurrence keying -- completing today's instance of a daily task
-// must not mark every future occurrence complete too.
-public sealed record TaskCompletionChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt);
+// must not mark every future occurrence complete too. SubtaskId additionally keys a single
+// subtask within a template-scheduled task's occurrence -- null for a plain (non-template) task,
+// defaulting to null so events persisted before this property existed still deserialize.
+public sealed record TaskCompletionChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt, Guid? SubtaskId = null);
 
 public sealed record ItemDeleted(CalendarItemId Id, UserId ModifiedBy, DateTimeOffset OccurredAt);

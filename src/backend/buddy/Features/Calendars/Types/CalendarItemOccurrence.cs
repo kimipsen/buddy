@@ -20,4 +20,13 @@ public sealed record CalendarItemOccurrence(
     bool IsCompleted,
     Guid CreatedBy,
     Guid LastModifiedBy,
-    Guid? AssignedTo);
+    Guid? AssignedTo,
+    // The parent item's own Title, set only when this occurrence is one subtask of a
+    // template-scheduled task (Title above is the subtask's own title in that case) -- lets the
+    // frontend group a routine's subtask occurrences under their shared parent. Null for every
+    // other occurrence. Additive trailing field: never persisted, so there's no golden-file/replay
+    // concern, only "don't break existing JSON consumers", which a new optional field doesn't.
+    string? ParentTitle = null,
+    // The subtask's own id, set only for a template-scheduled task's per-subtask occurrence --
+    // required by SetTaskCompletion to target the right subtask. Null otherwise.
+    Guid? SubtaskId = null);

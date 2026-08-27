@@ -4,6 +4,7 @@ using buddy.Features.Calendars;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
+using buddy.IntegrationTests.Features.TaskLibrary;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -211,6 +212,115 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
             _.Patch.Json(new { Date = siblingTask.DueDate!.Date, IsCompleted = true })
                 .ToUrl($"/calendars/{calendarId}/items/{siblingTask.Id}/completion");
             _.StatusCodeShouldBe(403);
+        });
+    }
+
+    private async Task<(Guid CalendarId, Guid ChildId, string GuardianToken, Guid ItemId, Guid FirstSubtaskId, Guid SecondSubtaskId, DateOnly StartDate)> ScheduleTemplateTaskAsync()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, guardianToken, "Family");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, guardianToken, "Family", groupId);
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/groups/{groupId}/children/{child.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(template);
+        await TaskLibraryTestHelpers.AddSubtaskAsync(fixture, guardianToken, template.Id, new AddSubtaskOptions("Brush teeth", "toothbrush", "00:10:00"));
+        await TaskLibraryTestHelpers.AddSubtaskAsync(fixture, guardianToken, template.Id, new AddSubtaskOptions("Get dressed", "shirt", "00:15:00"));
+
+        var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var item = await CalendarTestHelpers.ScheduleTaskFromTemplateAsync(
+            fixture, guardianToken, calendarId, template.Id, "Morning routine", startDate, new TimeOnly(7, 0), assignedTo: child.Id);
+        Assert.NotNull(item);
+
+        var occurrencesResponse = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/calendars/{calendarId}/occurrences?from={startDate:yyyy-MM-dd}&to={startDate:yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var occurrences = occurrencesResponse.ReadAsJson<CalendarItemOccurrenceDto[]>().OrderBy(o => o.StartsAt).ToArray();
+        Assert.Equal(2, occurrences.Length);
+
+        return (calendarId, child.Id, guardianToken, item.Id, occurrences[0].SubtaskId!.Value, occurrences[1].SubtaskId!.Value, startDate);
+    }
+
+    [Fact]
+    public async Task Completing_one_subtask_of_a_template_scheduled_task_does_not_complete_its_sibling()
+    {
+        var (calendarId, _, guardianToken, itemId, firstSubtaskId, secondSubtaskId, startDate) = await ScheduleTemplateTaskAsync();
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Date = startDate, IsCompleted = true, SubtaskId = firstSubtaskId })
+                .ToUrl($"/calendars/{calendarId}/items/{itemId}/completion");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/calendars/{calendarId}/occurrences?from={startDate:yyyy-MM-dd}&to={startDate:yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var occurrences = response.ReadAsJson<CalendarItemOccurrenceDto[]>().ToDictionary(o => o.SubtaskId!.Value);
+
+        Assert.True(occurrences[firstSubtaskId].IsCompleted);
+        Assert.False(occurrences[secondSubtaskId].IsCompleted);
+    }
+
+    [Fact]
+    public async Task A_stale_subtask_id_is_rejected()
+    {
+        var (calendarId, _, guardianToken, itemId, _, _, startDate) = await ScheduleTemplateTaskAsync();
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Date = startDate, IsCompleted = true, SubtaskId = Guid.CreateVersion7() })
+                .ToUrl($"/calendars/{calendarId}/items/{itemId}/completion");
+            _.StatusCodeShouldBe(404);
+        });
+    }
+
+    [Fact]
+    public async Task Completing_a_template_scheduled_task_without_a_subtask_id_is_rejected()
+    {
+        var (calendarId, _, guardianToken, itemId, _, _, startDate) = await ScheduleTemplateTaskAsync();
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Date = startDate, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{itemId}/completion");
+            _.StatusCodeShouldBe(400);
+        });
+    }
+
+    [Fact]
+    public async Task Completing_a_plain_task_with_a_subtask_id_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var dueDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, dueDate: dueDate);
+        Assert.NotNull(task);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Date = dueDate, IsCompleted = true, SubtaskId = Guid.CreateVersion7() })
+                .ToUrl($"/calendars/{calendarId}/items/{task.Id}/completion");
+            _.StatusCodeShouldBe(400);
         });
     }
 }

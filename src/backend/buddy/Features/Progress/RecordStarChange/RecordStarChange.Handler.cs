@@ -11,7 +11,7 @@ public static class RecordStarChangeHandler
         var existingEvents = await progress.ReadAsync(id, cancellationToken);
         var current = ChildProgress.Rehydrate(existingEvents);
 
-        var occurrence = (command.ItemId, command.OccurrenceDate);
+        var occurrence = (command.ItemId, command.OccurrenceDate, command.SubtaskId);
         var alreadyAwarded = current?.AwardedOccurrences.Contains(occurrence) ?? false;
 
         // Mirrors SetTaskCompletionHandler's own before == after guard -- nothing changed for
@@ -31,7 +31,7 @@ public static class RecordStarChangeHandler
 
         if (command.IsCompleted)
         {
-            newEvents.Add(new StarAwarded(id, command.ItemId, command.OccurrenceDate, now));
+            newEvents.Add(new StarAwarded(id, command.ItemId, command.OccurrenceDate, now, command.SubtaskId));
 
             var totalAfter = (current?.TotalStars ?? 0) + 1;
             var alreadyUnlocked = current?.UnlockedMilestones ?? System.Collections.Immutable.ImmutableHashSet<int>.Empty;
@@ -44,7 +44,7 @@ public static class RecordStarChangeHandler
         }
         else
         {
-            newEvents.Add(new StarRevoked(id, command.ItemId, command.OccurrenceDate, now));
+            newEvents.Add(new StarRevoked(id, command.ItemId, command.OccurrenceDate, now, command.SubtaskId));
         }
 
         if (current is null)

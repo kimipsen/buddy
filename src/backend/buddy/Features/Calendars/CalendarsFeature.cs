@@ -84,6 +84,7 @@ public static class CalendarsFeature
         calendars.MapSetMemberRole();
         calendars.MapRemoveMember();
         calendars.MapCreateItem();
+        calendars.MapScheduleTaskFromTemplate();
         calendars.MapListItems();
         calendars.MapListOccurrences();
         calendars.MapListAssignableMembers();

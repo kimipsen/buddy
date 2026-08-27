@@ -98,6 +98,13 @@ public sealed class CalendarEventShapeTests
         "Calendars/TaskItemCreated_AllDay.json");
 
     [Fact]
+    public void TaskItemCreated_FromTemplate() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new TaskItemCreated(
+            FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant,
+            AssignedTo: OtherUserId, TaskTemplateId: Guid.Parse("00000000-0000-0000-0000-000000000050")),
+        "Calendars/TaskItemCreated_FromTemplate.json");
+
+    [Fact]
     public void ItemDetailsUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new ItemDetailsUpdated(
             FixedItemId,
@@ -126,6 +133,13 @@ public sealed class CalendarEventShapeTests
     public void TaskCompletionChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new TaskCompletionChanged(FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant),
         "Calendars/TaskCompletionChanged.json");
+
+    [Fact]
+    public void TaskCompletionChanged_ForSubtask() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new TaskCompletionChanged(
+            FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant,
+            SubtaskId: Guid.Parse("00000000-0000-0000-0000-000000000060")),
+        "Calendars/TaskCompletionChanged_ForSubtask.json");
 
     [Fact]
     public void ItemDeleted() => EventShapeTestSupport.AssertMatchesGoldenFile(

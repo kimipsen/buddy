@@ -3,6 +3,7 @@ using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Progress;
+using buddy.Features.TaskLibrary;
 
 using Wolverine;
 
@@ -14,6 +15,7 @@ public static class SetTaskCompletionHandler
         SetTaskCompletion command,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
+        ITaskTemplateEventStore templates,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         IMessageBus bus,
@@ -50,6 +52,33 @@ public static class SetTaskCompletionHandler
             return new Result<CalendarItem>.Validation(ValidationProblem.Of("Only a task can be marked complete."));
         }
 
+        // The two completion modes never mix: a template-scheduled task always requires a
+        // SubtaskId (its occurrences complete independently -- see CalendarOccurrenceExpansion),
+        // a plain task never accepts one.
+        if (item.TaskTemplateId is not null && command.SubtaskId is null)
+        {
+            return new Result<CalendarItem>.Validation(ValidationProblem.Of("A subtask id is required to complete a template-scheduled task."));
+        }
+
+        if (item.TaskTemplateId is null && command.SubtaskId is not null)
+        {
+            return new Result<CalendarItem>.Validation(ValidationProblem.Of("A subtask id is only valid for a template-scheduled task."));
+        }
+
+        if (item.TaskTemplateId is { } rawTemplateId && command.SubtaskId is { } subtaskId)
+        {
+            var templateEvents = await templates.ReadAsync(new TaskTemplateId(rawTemplateId), cancellationToken);
+            var template = TaskTemplate.Rehydrate(templateEvents);
+
+            // Reject a stale id from an out-of-date client (a subtask removed, or the whole
+            // template hard-deleted, since the template's last fetch) rather than silently writing
+            // a phantom completion entry for a subtask that no longer exists.
+            if (template is null || !template.Subtasks.Any(s => s.Id.Value == subtaskId))
+            {
+                return new Result<CalendarItem>.NotFound();
+            }
+        }
+
         // A Viewer can still toggle completion on a task assigned specifically to them: marking
         // your own chore done is narrower than the general "create/edit any item" contributor
         // right, so it shouldn't require the group to grant that just for this.
@@ -71,14 +100,14 @@ public static class SetTaskCompletionHandler
             }
         }
 
-        var before = item.CompletionLog.GetValueOrDefault(command.OccurrenceDate, false);
+        var before = item.CompletionLog.GetValueOrDefault((command.OccurrenceDate, command.SubtaskId), false);
 
         if (before == command.IsCompleted)
         {
             return new Result<CalendarItem>.Success(item);
         }
 
-        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow);
+        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow, command.SubtaskId);
 
         await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
 
@@ -90,7 +119,7 @@ public static class SetTaskCompletionHandler
         {
             try
             {
-                await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted), cancellationToken);
+                await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted, command.SubtaskId), cancellationToken);
             }
             catch
             {

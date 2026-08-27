@@ -95,6 +95,34 @@ internal static class CalendarTestHelpers
         return expectedStatus == 200 ? response.ReadAsJson<CalendarItemDto>() : null;
     }
 
+    public static async Task<CalendarItemDto?> ScheduleTaskFromTemplateAsync(
+        BuddyApiFixture fixture, string token, Guid calendarId, Guid taskTemplateId, string title = "Morning routine",
+        DateOnly? startDate = null, TimeOnly? startTime = null, RecurrenceRuleRequest? recurrence = null,
+        Guid? assignedTo = null, int expectedStatus = 200)
+    {
+        var day = startDate ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var time = startTime ?? new TimeOnly(7, 0);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new
+            {
+                TaskTemplateId = taskTemplateId,
+                StartDate = day,
+                StartTime = time,
+                Recurrence = recurrence,
+                AssignedTo = assignedTo,
+                Title = title,
+                Icon = "task",
+                Color = "#ff0000"
+            }).ToUrl($"/calendars/{calendarId}/items/from-template");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        return expectedStatus == 200 ? response.ReadAsJson<CalendarItemDto>() : null;
+    }
+
     public static async Task<AssignableMemberDto[]> ListAssignableMembersAsync(BuddyApiFixture fixture, string token, Guid calendarId, int expectedStatus = 200)
     {
         var response = await fixture.Host.Scenario(_ =>

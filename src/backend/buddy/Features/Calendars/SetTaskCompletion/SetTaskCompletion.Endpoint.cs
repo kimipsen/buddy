@@ -26,14 +26,15 @@ public static class SetTaskCompletionEndpoint
                 new CalendarId(calendarId),
                 new CalendarItemId(itemId),
                 request.Date,
-                request.IsCompleted);
+                request.IsCompleted,
+                request.SubtaskId);
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
             return result switch
             {
                 Result<CalendarItem>.Success(var item) => TypedResults.Ok(new TaskCompletionResponse(
-                    item.Id, request.Date, item.CompletionLog.GetValueOrDefault(request.Date, false))),
+                    item.Id, request.Date, item.CompletionLog.GetValueOrDefault((request.Date, request.SubtaskId), false))),
                 Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
                 Result<CalendarItem>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<CalendarItem>.NotFound => TypedResults.NotFound(),
@@ -45,6 +46,8 @@ public static class SetTaskCompletionEndpoint
     }
 }
 
-public sealed record SetTaskCompletionRequest(DateOnly Date, bool IsCompleted);
+// SubtaskId is required to complete one subtask of a template-scheduled task, and must be omitted
+// (null) for a plain task -- see SetTaskCompletionHandler.
+public sealed record SetTaskCompletionRequest(DateOnly Date, bool IsCompleted, Guid? SubtaskId = null);
 
 public sealed record TaskCompletionResponse(CalendarItemId ItemId, DateOnly OccurrenceDate, bool IsCompleted);

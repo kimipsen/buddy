@@ -2,6 +2,7 @@ using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
+using buddy.Features.TaskLibrary;
 using buddy.Features.Users;
 
 using FluentValidation;
@@ -19,6 +20,7 @@ public static class ListOccurrencesHandler
         IValidator<ListOccurrences> validator,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
+        ITaskTemplateEventStore templates,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
@@ -42,7 +44,7 @@ public static class ListOccurrencesHandler
             return access.ToDeniedResult<IReadOnlyCollection<CalendarItemOccurrence>>();
         }
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, calendar.Icon, query.From, query.To, items, cancellationToken);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, calendar.Icon, query.From, query.To, items, templates, cancellationToken);
 
         if (await ChildVisibility.IsChildAsync(userId, guardians, cancellationToken))
         {

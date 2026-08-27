@@ -18,11 +18,17 @@ public sealed record CalendarItem(
     Period? Period,
     DueDate? DueDate,
     RecurrenceRule? Recurrence,
-    ImmutableDictionary<DateOnly, bool> CompletionLog,
+    ImmutableDictionary<(DateOnly OccurrenceDate, Guid? SubtaskId), bool> CompletionLog,
     UserId LastModifiedBy,
     // Only ever set for a Task -- an Event has no assignee. Null means unassigned.
     UserId? AssignedTo = null,
-    bool IsDeleted = false)
+    bool IsDeleted = false,
+    // Only ever set for a Task, and only when it was scheduled from a TaskLibrary template (see
+    // Features/Calendars/ScheduleTaskFromTemplate). A raw Guid, not TaskLibrary's TaskTemplateId
+    // type -- Calendars must not take a compile dependency on TaskLibrary's types, the same
+    // one-way discipline Mealplans keeps with Calendars' own Icon/Color (Mealplans references
+    // them, Calendars never references anything of Mealplans').
+    Guid? TaskTemplateId = null)
 {
     // Sort key for calendar listings: an event sorts by its own start, a task by its due date.
     // A plain local DateTime is fine here -- it's only used to order items within one calendar,
@@ -51,7 +57,7 @@ public sealed record CalendarItem(
                     created.Period,
                     null,
                     created.Recurrence,
-                    ImmutableDictionary<DateOnly, bool>.Empty,
+                    ImmutableDictionary<(DateOnly, Guid?), bool>.Empty,
                     created.CreatedBy),
                 TaskItemCreated created => new CalendarItem(
                     created.Id,
@@ -64,20 +70,24 @@ public sealed record CalendarItem(
                     null,
                     created.DueDate,
                     created.Recurrence,
-                    ImmutableDictionary<DateOnly, bool>.Empty,
+                    ImmutableDictionary<(DateOnly, Guid?), bool>.Empty,
                     created.CreatedBy,
-                    created.AssignedTo),
+                    created.AssignedTo,
+                    IsDeleted: false,
+                    created.TaskTemplateId),
                 ItemDetailsUpdated updated => item! with { Title = updated.After.Title, Icon = updated.After.Icon, Color = updated.After.Color, LastModifiedBy = updated.ModifiedBy },
                 EventRescheduled rescheduled => item! with { Period = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
                 TaskRescheduled rescheduled => item! with { DueDate = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
                 RecurrenceUpdated recurrence => item! with { Recurrence = recurrence.After, LastModifiedBy = recurrence.ModifiedBy },
                 // Sparse log, same rule as MedicineSchedule.DoseLog: "not completed" is the
-                // implicit default, so a not-completed entry is removed rather than stored.
+                // implicit default, so a not-completed entry is removed rather than stored. Keyed
+                // by (OccurrenceDate, SubtaskId) so a template-scheduled task's subtasks complete
+                // independently; a plain non-template task always keys as (date, null).
                 TaskCompletionChanged completion => item! with
                 {
                     CompletionLog = completion.After
-                        ? item!.CompletionLog.SetItem(completion.OccurrenceDate, true)
-                        : item!.CompletionLog.Remove(completion.OccurrenceDate),
+                        ? item!.CompletionLog.SetItem((completion.OccurrenceDate, completion.SubtaskId), true)
+                        : item!.CompletionLog.Remove((completion.OccurrenceDate, completion.SubtaskId)),
                     LastModifiedBy = completion.ModifiedBy
                 },
                 ItemDeleted deleted => item! with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },

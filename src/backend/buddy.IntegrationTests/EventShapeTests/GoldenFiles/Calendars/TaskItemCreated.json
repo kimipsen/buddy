@@ -12,5 +12,6 @@
   },
   "Recurrence": null,
   "OccurredAt": "2025-01-01T12:00:00+00:00",
-  "AssignedTo": null
+  "AssignedTo": null,
+  "TaskTemplateId": null
 }

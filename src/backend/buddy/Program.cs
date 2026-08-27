@@ -6,6 +6,7 @@ using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Pickups;
 using buddy.Features.Progress;
+using buddy.Features.TaskLibrary;
 using buddy.Features.Users;
 using buddy.Serialization;
 
@@ -50,6 +51,11 @@ builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
 builder.Services.AddGuardiansFeature(builder.Configuration);
 builder.Services.AddGroupsFeature(builder.Configuration);
+// TaskLibrary has no dependency on Calendars yet (this is only step 1 of the Task Library plan),
+// but is registered before it in anticipation of a later step where Calendars depends on
+// TaskLibrary to schedule templates -- same ordering discipline as Guardians before the features
+// that need IGuardianLinkEventStore.
+builder.Services.AddTaskLibraryFeature(builder.Configuration);
 builder.Services.AddCalendarsFeature(builder.Configuration);
 builder.Services.AddMedicinesFeature(builder.Configuration);
 builder.Services.AddMealplansFeature(builder.Configuration);
@@ -77,6 +83,7 @@ app.UseAuthorization();
 app.MapUsersFeature();
 app.MapGuardiansFeature();
 app.MapGroupsFeature();
+app.MapTaskLibraryFeature();
 app.MapCalendarsFeature();
 app.MapMedicinesFeature();
 app.MapMealplansFeature();
