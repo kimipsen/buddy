@@ -6,7 +6,7 @@ import { CalendarItemKind, CalendarOccurrence, CalendarsService } from '../../..
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { occurrenceKey } from '../../../core/task-run';
+import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
@@ -106,6 +106,12 @@ export class ChildHome implements OnInit, OnDestroy {
   protected readonly tasks = signal<CalendarOccurrence[]>([]);
   protected readonly savingTaskId = signal<string | null>(null);
 
+  // Folds today's flat task occurrences into agenda rows so a template-scheduled task's subtasks
+  // (e.g. "brush teeth", "put on pajamas") render nested under their parent's title (e.g. "go to
+  // bed") instead of as unrelated, unlabeled checklist items -- mirrors the child calendar's
+  // identical grouping (see core/task-run.ts).
+  protected readonly groupedTasks = computed<AgendaEntry[]>(() => groupTaskRuns(this.tasks()));
+
   protected readonly events = signal<CalendarOccurrence[]>([]);
 
   // Ticks on an interval (rather than reading Date.now() directly in the template) so the
@@ -169,6 +175,10 @@ export class ChildHome implements OnInit, OnDestroy {
   // alone is no longer sufficient once a run can produce more than one occurrence per item.
   protected keyFor(task: CalendarOccurrence): string {
     return occurrenceKey(task);
+  }
+
+  protected isRun(entry: AgendaEntry): boolean {
+    return isTaskRun(entry);
   }
 
   protected async setDoseStatus(dose: MedicineDoseOccurrence, status: DoseStatus): Promise<void> {

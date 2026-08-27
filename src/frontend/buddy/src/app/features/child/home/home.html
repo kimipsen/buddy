@@ -188,28 +188,67 @@
         <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
           <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.tasksTitle' | translate }}</h2>
           <ul class="mt-4 space-y-3">
-            @for (task of tasks(); track keyFor(task)) {
-              <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
-                <button
-                  type="button"
-                  class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
-                  [class.border-emerald-400]="task.isCompleted"
-                  [class.bg-emerald-400]="task.isCompleted"
-                  [class.text-white]="task.isCompleted"
-                  [class.border-slate-300]="!task.isCompleted"
-                  [disabled]="savingTaskId() === keyFor(task)"
-                  [attr.aria-label]="(task.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
-                  (click)="toggleTask(task)"
-                >
-                  @if (task.isCompleted) {
-                    ✓
-                  }
-                </button>
-                <span class="flex items-center gap-2 text-lg font-semibold" [class.line-through]="task.isCompleted" [class.text-slate-400]="task.isCompleted">
-                  <span aria-hidden="true">{{ task.icon }}</span>
-                  {{ task.title }}
-                </span>
-              </li>
+            @for (entry of groupedTasks(); track entry.itemId) {
+              @if (isRun(entry)) {
+                @let run = $any(entry);
+                <li class="rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="mb-3 flex items-center gap-2 text-lg font-semibold">
+                    <span aria-hidden="true">{{ run.icon }}</span>
+                    {{ run.parentTitle }}
+                  </div>
+                  <ul class="ml-2 space-y-2 border-l-2 border-slate-200 pl-3">
+                    @for (subtask of run.subtasks; track keyFor(subtask)) {
+                      <li class="flex items-center gap-3">
+                        <button
+                          type="button"
+                          class="grid size-9 shrink-0 place-items-center rounded-lg border-2 text-base font-bold transition disabled:opacity-50"
+                          [class.border-emerald-400]="subtask.isCompleted"
+                          [class.bg-emerald-400]="subtask.isCompleted"
+                          [class.text-white]="subtask.isCompleted"
+                          [class.border-slate-300]="!subtask.isCompleted"
+                          [disabled]="savingTaskId() === keyFor(subtask)"
+                          [attr.aria-label]="(subtask.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
+                          (click)="toggleTask(subtask)"
+                        >
+                          @if (subtask.isCompleted) {
+                            ✓
+                          }
+                        </button>
+                        <span
+                          class="flex-1 text-base font-semibold"
+                          [class.line-through]="subtask.isCompleted"
+                          [class.text-slate-400]="subtask.isCompleted"
+                        >
+                          {{ subtask.title }}
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                </li>
+              } @else {
+                @let task = $any(entry);
+                <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+                  <button
+                    type="button"
+                    class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
+                    [class.border-emerald-400]="task.isCompleted"
+                    [class.bg-emerald-400]="task.isCompleted"
+                    [class.text-white]="task.isCompleted"
+                    [class.border-slate-300]="!task.isCompleted"
+                    [disabled]="savingTaskId() === keyFor(task)"
+                    [attr.aria-label]="(task.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
+                    (click)="toggleTask(task)"
+                  >
+                    @if (task.isCompleted) {
+                      ✓
+                    }
+                  </button>
+                  <span class="flex items-center gap-2 text-lg font-semibold" [class.line-through]="task.isCompleted" [class.text-slate-400]="task.isCompleted">
+                    <span aria-hidden="true">{{ task.icon }}</span>
+                    {{ task.title }}
+                  </span>
+                </li>
+              }
             }
           </ul>
         </div>

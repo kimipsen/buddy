@@ -333,6 +333,41 @@ describe('ChildHome', () => {
     expect(doneCount).toBe(1);
   });
 
+  it('groups a template-scheduled run\'s subtasks under their parent task\'s title', async () => {
+    function subtask(subtaskId: string, title: string): CalendarOccurrence {
+      return {
+        itemId: 'run-1',
+        kind: 1,
+        title,
+        icon: '🧹',
+        iconOverride: null,
+        color: '#000',
+        startsAt: null,
+        endsAt: null,
+        dueAt: null,
+        isAllDay: false,
+        isCompleted: false,
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        assignedTo: 'child-1',
+        calendarId: 'cal-1',
+        calendarName: 'Home',
+        parentTitle: 'Go to bed',
+        subtaskId
+      };
+    }
+
+    const subtasks = [subtask('sub-1', 'Brush teeth'), subtask('sub-2', 'Put on pajamas')];
+
+    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => subtasks) } });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Go to bed');
+    expect(text).toContain('Brush teeth');
+    expect(text).toContain('Put on pajamas');
+  });
+
   it('shows today\'s events including their time', async () => {
     const event: CalendarOccurrence = {
       itemId: 'event-1',
