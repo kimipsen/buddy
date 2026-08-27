@@ -96,6 +96,9 @@ through with a checkmark, and ongoing events (started but not yet ended) get
 a background gradient that fills left-to-right as the event progresses,
 computed from elapsed time over the event's duration. All-day/undated events
 have no start/end to measure against and are never marked past or ongoing.
+[`EventsToday`](../../../src/frontend/buddy/src/app/features/guardian/events-today/events-today.ts)
+on the guardian dashboard applies the same past/ongoing/progress derivation to
+its list of today's events.
 
 This section is the "today" half of showing the child their calendars. The
 multi-day browsing half is implemented separately at `/child/calendar` — see
