@@ -1,6 +1,6 @@
 # Backend Glossary
 
-This glossary reflects the vocabulary used in the Buddy backend, especially the calendar and user features. The definitions below are based on the actual domain types and event streams used by the application.
+This glossary reflects the vocabulary used in the Buddy backend, especially the calendar, task-library, and user features. The definitions below are based on the actual domain types and event streams used by the application.
 
 ## Core identities
 
@@ -12,6 +12,12 @@ The unique identifier for a calendar. A calendar is always owned by a group, can
 
 ### CalendarItemId
 The unique identifier for an item that belongs to a calendar. A calendar item is either an event or a task.
+
+### TaskTemplateId
+The unique identifier for a reusable task template in a family's task library.
+
+### SubtaskId
+The unique identifier for a subtask within a task template. It is also used to identify which subtask occurrence is being marked complete after the template is scheduled.
 
 ### IcalTokenId
 The unique identifier for an iCalendar subscription token issued for a calendar. The token is used to access the calendar feed without requiring a user session.
@@ -144,8 +150,58 @@ A calendar item whose schedule is represented by a `Period`. It can be repeated 
 ### Task item
 A calendar item whose schedule is represented by a `DueDate`. It can also repeat using a `RecurrenceRule`.
 
+A task can be assigned to a calendar member. A task scheduled from a task template also retains the template identifier used to expand the task into its subtasks.
+
+### Template-scheduled task
+A calendar task created from a `TaskTemplate`. It has a specific start date and time, can recur, and expands into one occurrence per subtask in template order. Each subtask starts after the durations of the preceding subtasks have elapsed.
+
+The calendar item keeps a reference to the template rather than copying its subtasks. Current template details are therefore used whenever occurrences are expanded. Archiving the template prevents new tasks from being scheduled from it but does not stop existing scheduled tasks from expanding.
+
+### Task completion
+Completion state is recorded per occurrence date. A plain task has one completion state for each date; a template-scheduled task has a separate completion state for each subtask and date.
+
+A calendar contributor can change task completion. A viewer can also change completion for a task assigned to them. Future occurrences cannot be marked complete.
+
 ### Item deleted
 A calendar item can be soft-deleted by appending an `ItemDeleted` event. The aggregate remains in the stream, but the item is marked as deleted when rehydrated.
+
+## Task library domain
+
+### Task library
+A family-shared collection of reusable task templates. A child can view the library resolved for them, while an active guardian can create, edit, reorder, and archive its templates and subtasks.
+
+There is no persisted family or household aggregate. The family is resolved from active guardian links: children who share at least one active guardian share the same task templates.
+
+### TaskTemplate
+An event-sourced reusable routine made up of an ordered list of subtasks. A template has a name, icon, color, creator, last modifier, and archived state. It is indexed under the child the guardian acted on behalf of when creating it, but it is shared with the child's resolved family rather than owned by that child alone.
+
+### TaskTemplateDetails
+The editable top-level metadata of a task template: name, icon, and color.
+
+### Subtask
+One ordered step in a task template. A subtask has a title, an optional icon, and a duration. When its icon is omitted, a scheduled occurrence falls back to the calendar item's icon and then to the calendar's icon.
+
+### TotalDuration
+The sum of all subtask durations in a task template.
+
+### Archived task template
+A task template that remains visible in the task library but cannot be used to schedule a new calendar task. Archiving is a soft-delete operation; existing scheduled tasks continue to use the template.
+
+### TaskLibraryAccessTier
+The level of task-library access resolved for a caller.
+
+Values:
+- None: the caller has no relationship to the child.
+- View: the caller is the child and can view the family task library.
+- Manage: the caller is an active guardian and can view and modify the family task library.
+
+### TaskLibraryAccess
+The outcome of a task-library permission check.
+
+Values:
+- Allowed: the caller has the required access tier.
+- NotFound: the caller has no relationship to the child.
+- Forbidden: the caller has some access but not the tier required for the requested action.
 
 ## Subscription and feed terms
 
@@ -158,13 +214,13 @@ The exported calendar feed generated from a calendar and its recurring items. Th
 ## Event-sourced concepts
 
 ### Event stream
-An append-only sequence of domain events that represents the current state of an aggregate. The project stores calendar and user state by rehydrating from events.
+An append-only sequence of domain events that represents the current state of an aggregate. The project stores calendar, task-template, and user state by rehydrating from events.
 
 ### Aggregate
-A domain object rebuilt from its event stream, such as a user, calendar, or calendar item.
+A domain object rebuilt from its event stream, such as a user, calendar, calendar item, or task template.
 
 ### Event
-An immutable message describing a state change. The project names events such as `CalendarCreated`, `MemberRoleGranted`, `ItemDetailsUpdated`, and `TaskRescheduled`.
+An immutable message describing a state change. The project names events such as `CalendarCreated`, `MemberRoleGranted`, `ItemDetailsUpdated`, `TaskRescheduled`, and `SubtaskAdded`.
 
 ### Rehydration
 The process of rebuilding the latest aggregate state by replaying all relevant events in order.
