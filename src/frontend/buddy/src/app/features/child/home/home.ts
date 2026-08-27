@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth.service';
@@ -39,12 +39,23 @@ const PLAYDATE: PickupAssigneeKind = 3;
 
 const PICKUP_SLOT_LABELS = { 0: 'child.home.pickup.slots.dropOff', 1: 'child.home.pickup.slots.pickUp' } as const;
 
+export interface EventView extends CalendarOccurrence {
+  isPast: boolean;
+  isOngoing: boolean;
+  progressPercent: number;
+}
+
+// How often the ongoing-event progress fill and past/done state are recomputed. A minute is
+// frequent enough that the fill visibly creeps forward without re-rendering the list every
+// few seconds for what's a purely cosmetic indicator.
+const NOW_REFRESH_INTERVAL_MS = 60_000;
+
 @Component({
   selector: 'app-child-home',
   imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge, UserDatePipe],
   templateUrl: './home.html'
 })
-export class ChildHome implements OnInit {
+export class ChildHome implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly guardians = inject(GuardiansService);
   private readonly pickups = inject(PickupsService);
@@ -96,6 +107,17 @@ export class ChildHome implements OnInit {
 
   protected readonly events = signal<CalendarOccurrence[]>([]);
 
+  // Ticks on an interval (rather than reading Date.now() directly in the template) so the
+  // ongoing-event progress fill and past/done state actually update while the dashboard sits
+  // open, instead of only reflecting "now" at the moment the page loaded.
+  private readonly now = signal(Date.now());
+  private nowIntervalId: ReturnType<typeof setInterval> | undefined;
+
+  protected readonly eventsView = computed<EventView[]>(() => {
+    const nowMs = this.now();
+    return this.events().map((event) => ({ ...event, ...this.eventProgress(event, nowMs) }));
+  });
+
   protected readonly progress = signal<ProgressSummary>({ totalStars: 0, unlockedMilestones: [] });
 
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
@@ -114,6 +136,11 @@ export class ChildHome implements OnInit {
     void this.loadSiblings();
     void this.loadProgress();
     void Promise.all([this.loadTodaysPickups(), this.loadDashboard()]).finally(() => this.contentLoading.set(false));
+    this.nowIntervalId = setInterval(() => this.now.set(Date.now()), NOW_REFRESH_INTERVAL_MS);
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.nowIntervalId);
   }
 
   protected logout(): void {
@@ -321,5 +348,34 @@ export class ChildHome implements OnInit {
     });
 
     this.events.set(events);
+  }
+
+  // All-day events have no startsAt/endsAt to measure against, so they never read as past or
+  // ongoing here -- they stay "current" for the whole day, same as their allDay badge implies.
+  private eventProgress(event: CalendarOccurrence, nowMs: number): { isPast: boolean; isOngoing: boolean; progressPercent: number } {
+    if (event.isAllDay || event.startsAt === null) {
+      return { isPast: false, isOngoing: false, progressPercent: 0 };
+    }
+
+    const startMs = new Date(event.startsAt).getTime();
+    const endMs = event.endsAt !== null ? new Date(event.endsAt).getTime() : startMs;
+
+    if (nowMs >= endMs) {
+      return { isPast: true, isOngoing: false, progressPercent: 100 };
+    }
+
+    if (nowMs < startMs) {
+      return { isPast: false, isOngoing: false, progressPercent: 0 };
+    }
+
+    const progressPercent = endMs > startMs ? ((nowMs - startMs) / (endMs - startMs)) * 100 : 100;
+    return { isPast: false, isOngoing: true, progressPercent };
+  }
+
+  // A gradient rather than a separate overlay element -- the card's own background fills in from
+  // the left as the event progresses, so it reads as darkening in place like a progress bar.
+  protected eventProgressBackground(progressPercent: number): string {
+    const clamped = Math.min(100, Math.max(0, progressPercent));
+    return `linear-gradient(to right, rgb(203 213 225) ${clamped}%, transparent ${clamped}%)`;
   }
 }
