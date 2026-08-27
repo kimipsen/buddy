@@ -131,6 +131,18 @@ schema.
 
 Run tests using the [testing guide](../docs/testing.md).
 
+## Git hooks: AI-assisted documentation sync
+
+A `post-commit` hook can ask an AI agent (Claude, Codex, or GitHub Copilot) to
+update `docs/` and `README.md` after each commit. It's opt-in per clone:
+
+```bash
+task hooks:install AGENT=claude   # or: codex, copilot
+```
+
+See [.devcontainer/git-hooks/README.md](git-hooks/README.md) for how it
+works, requirements, and how to skip it for a single commit.
+
 ## Troubleshooting
 
 - **Keycloak reports that database `keycloak` does not exist:** complete the

@@ -6,6 +6,29 @@ vars:
   GREETING: Hello, world!
 
 tasks:
+  hooks:install:
+    desc: 'Install the AI documentation-sync git hook. Usage: task hooks:install AGENT=claude|codex|copilot'
+    vars:
+      RESOLVED_AGENT: '{{.AGENT | default "claude"}}'
+    preconditions:
+      - sh: 'case "{{.RESOLVED_AGENT}}" in claude|codex|copilot) exit 0 ;; *) exit 1 ;; esac'
+        msg: 'AGENT must be one of: claude, codex, copilot (got "{{.RESOLVED_AGENT}}")'
+    cmds:
+      - git config core.hooksPath .devcontainer/git-hooks
+      - git config hooks.doc-agent "{{.RESOLVED_AGENT}}"
+      - |
+        if ! command -v "{{.RESOLVED_AGENT}}" >/dev/null 2>&1; then
+          echo "Warning: '{{.RESOLVED_AGENT}}' was not found on PATH — install/authenticate it before committing." >&2
+        fi
+      - echo "Installed git hooks (core.hooksPath=.devcontainer/git-hooks, doc-agent={{.RESOLVED_AGENT}})."
+
+  hooks:uninstall:
+    desc: Remove the AI documentation-sync git hook configuration
+    cmds:
+      - git config --unset core.hooksPath || true
+      - git config --unset hooks.doc-agent || true
+      - echo "Removed git hook configuration."
+
   test:
     desc: Run all tests (backend, then frontend)
     cmds:

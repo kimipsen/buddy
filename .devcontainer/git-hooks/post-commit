@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Installed via `task hooks:install AGENT=<claude|codex|copilot>`, which sets
+# core.hooksPath=.devcontainer/git-hooks and hooks.doc-agent=<agent>.
+set -euo pipefail
+
+hook_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/doc-agent.sh
+source "$hook_dir/lib/doc-agent.sh"
+
+doc_agent_run
