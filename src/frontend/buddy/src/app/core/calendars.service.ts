@@ -164,6 +164,11 @@ export interface CalendarItemOccurrence {
   // required by setTaskCompletion to target the right subtask. Null otherwise. Optional for the
   // same back-compat reason as parentTitle.
   subtaskId?: string | null;
+  // The parent item's own effective icon, set alongside parentTitle -- icon above is the
+  // *subtask's* own icon (which can legitimately differ between sibling subtasks), so it's the
+  // wrong value for a grouped run's header. Null for every other occurrence. Optional for the
+  // same back-compat reason as parentTitle.
+  parentIcon?: string | null;
 }
 
 export interface TaskCompletion {

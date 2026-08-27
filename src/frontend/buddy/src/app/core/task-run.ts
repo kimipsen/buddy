@@ -60,7 +60,9 @@ export function groupTaskRuns(occurrences: CalendarOccurrence[]): AgendaEntry[] 
         calendarId: occurrence.calendarId,
         calendarName: occurrence.calendarName,
         color: occurrence.color,
-        icon: occurrence.icon,
+        // The parent's own effective icon, not the (possibly subtask-specific) icon of whichever
+        // subtask happens to appear first -- see CalendarItemOccurrence.parentIcon.
+        icon: occurrence.parentIcon ?? occurrence.icon,
         subtasks: []
       };
       runsByKey.set(key, run);

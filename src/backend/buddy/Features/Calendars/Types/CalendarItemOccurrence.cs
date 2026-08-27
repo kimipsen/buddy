@@ -29,4 +29,10 @@ public sealed record CalendarItemOccurrence(
     string? ParentTitle = null,
     // The subtask's own id, set only for a template-scheduled task's per-subtask occurrence --
     // required by SetTaskCompletion to target the right subtask. Null otherwise.
-    Guid? SubtaskId = null);
+    Guid? SubtaskId = null,
+    // The parent item's own effective icon (its override, or the calendar's default when it has
+    // none) -- set alongside ParentTitle, for the same reason: Icon above is the *subtask's* own
+    // icon (falling back to the parent's, then the calendar's), which can legitimately differ
+    // between sibling subtasks, so it's the wrong value for the group's own header. Null for every
+    // other occurrence.
+    string? ParentIcon = null);

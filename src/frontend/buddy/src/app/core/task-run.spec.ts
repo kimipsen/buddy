@@ -24,6 +24,7 @@ describe('task-run', () => {
       calendarName: 'Home',
       parentTitle: null,
       subtaskId: null,
+      parentIcon: null,
       ...overrides
     };
   }
@@ -80,6 +81,43 @@ describe('task-run', () => {
       expect(run.itemId).toBe('run-1');
       expect(run.parentTitle).toBe('Morning routine');
       expect(run.subtasks).toEqual([subtask1, subtask2, subtask3]);
+    });
+
+    it("uses the parent item's own icon for the run, not the first subtask's icon", () => {
+      const subtask1 = occurrence({
+        itemId: 'run-1',
+        subtaskId: 'sub-1',
+        parentTitle: 'Morning routine',
+        icon: '🪥',
+        parentIcon: '🌞'
+      });
+      const subtask2 = occurrence({
+        itemId: 'run-1',
+        subtaskId: 'sub-2',
+        parentTitle: 'Morning routine',
+        icon: '👕',
+        parentIcon: '🌞'
+      });
+
+      const entries = groupTaskRuns([subtask1, subtask2]);
+
+      const run = entries[0] as TaskRun;
+      expect(run.icon).toBe('🌞');
+    });
+
+    it('falls back to the first subtask icon when parentIcon is absent', () => {
+      const subtask = occurrence({
+        itemId: 'run-1',
+        subtaskId: 'sub-1',
+        parentTitle: 'Morning routine',
+        icon: '🪥',
+        parentIcon: undefined
+      });
+
+      const entries = groupTaskRuns([subtask]);
+
+      const run = entries[0] as TaskRun;
+      expect(run.icon).toBe('🪥');
     });
 
     it('keeps a run and an unrelated ordinary occurrence as separate entries, in encounter order', () => {

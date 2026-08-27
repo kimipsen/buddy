@@ -119,7 +119,7 @@ public static class CalendarOccurrenceExpansion
                 occurrences.Add(new CalendarItemOccurrence(
                     item.Id, item.Kind, subtask.Title, subtask.Icon?.Value ?? item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
                     startsAt, endsAt, startsAt, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value, item.AssignedTo?.Value,
-                    ParentTitle: item.Title, SubtaskId: subtask.Id.Value));
+                    ParentTitle: item.Title, SubtaskId: subtask.Id.Value, ParentIcon: item.Icon?.Value ?? calendarIcon.Value));
 
                 offset += subtask.Duration;
             }

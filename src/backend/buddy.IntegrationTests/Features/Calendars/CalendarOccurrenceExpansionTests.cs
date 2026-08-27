@@ -57,6 +57,41 @@ public sealed class CalendarOccurrenceExpansionTests
         Assert.Equal(ordered[0].StartsAt, ordered[0].DueAt);
     }
 
+    // ParentIcon must read off the parent item (falling back to the calendar), never the
+    // subtask's own icon -- a routine's subtasks can each carry a distinct icon (e.g. a toothbrush
+    // for "brush teeth"), which would be the wrong value for the group's own header.
+    [Fact]
+    public async Task ParentIcon_is_the_items_own_icon_not_the_subtasks()
+    {
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var itemCreated = new TaskItemCreated(
+            FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("moon"), Color.New("#ff0000"), due, null, DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, itemCreated);
+
+        var subtask = new SubtaskAdded(FixedTemplateId, new Subtask(SubtaskId.New(), "Brush teeth", Icon.New("toothbrush"), TimeSpan.FromMinutes(10)), int.MaxValue, FixedUserId, DateTimeOffset.UtcNow);
+        var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), subtask);
+
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+
+        var occurrence = Assert.Single(occurrences);
+        Assert.Equal("toothbrush", occurrence.Icon);
+        Assert.Equal("moon", occurrence.ParentIcon);
+    }
+
+    [Fact]
+    public async Task ParentIcon_falls_back_to_the_calendars_icon_when_the_item_has_no_override()
+    {
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
+        var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10)));
+
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+
+        Assert.Equal(CalendarIcon.Value, Assert.Single(occurrences).ParentIcon);
+    }
+
     [Fact]
     public async Task Editing_a_subtasks_duration_changes_future_expansion_without_re_scheduling()
     {

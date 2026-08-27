@@ -126,6 +126,7 @@
                               [disabled]="savingTaskId() === keyFor(subtask) || (!subtask.isCompleted && !canCompleteTask(subtask))"
                               (change)="toggleTaskCompletion(subtask)"
                             />
+                            <span class="text-sm leading-none">{{ subtask.icon }}</span>
                             <span [class.line-through]="subtask.isCompleted">{{ subtask.title }}</span>
                             @if (subtask.startsAt) {
                               <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500">

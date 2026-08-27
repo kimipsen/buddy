@@ -78,10 +78,11 @@
                             }
                           </button>
                           <span
-                            class="flex-1 text-base font-semibold"
+                            class="flex flex-1 items-center gap-2 text-base font-semibold"
                             [class.line-through]="subtask.isCompleted"
                             [class.text-slate-400]="subtask.isCompleted"
                           >
+                            <span aria-hidden="true">{{ subtask.icon }}</span>
                             {{ subtask.title }}
                           </span>
                           @if (subtask.startsAt) {
