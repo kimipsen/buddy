@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Common;
 using buddy.Features.Groups;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -12,10 +13,11 @@ public static class CreateCalendarEndpoint
 {
     public static RouteGroupBuilder MapCreateCalendar(this RouteGroupBuilder calendars)
     {
-        calendars.MapPost("/", async Task<Results<Ok<CalendarResponse>, UnauthorizedHttpResult, ForbidHttpResult, BadRequest<string>>> (
+        calendars.MapPost("/", async Task<Results<Ok<CalendarResponse>, UnauthorizedHttpResult, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             CreateCalendarRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = CreateCalendar.FromClaims(
@@ -31,7 +33,7 @@ public static class CreateCalendarEndpoint
                 CreateCalendarOutcome.Success(var calendar) => TypedResults.Ok(CalendarResponse.FromCalendar(calendar)),
                 CreateCalendarOutcome.Unauthenticated => TypedResults.Unauthorized(),
                 CreateCalendarOutcome.Forbidden => TypedResults.Forbid(),
-                CreateCalendarOutcome.Validation(var message) => TypedResults.BadRequest(message),
+                CreateCalendarOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("CreateCalendar");

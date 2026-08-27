@@ -14,13 +14,14 @@ public static class ListTodaysDosesForGroupEndpoint
 {
     public static RouteGroupBuilder MapListTodaysDosesForGroup(this RouteGroupBuilder medicines)
     {
-        medicines.MapGet("/groups/{groupId:guid}/children/{childId:guid}/doses", async Task<Results<Ok<IReadOnlyCollection<MedicineDoseOccurrence>>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        medicines.MapGet("/groups/{groupId:guid}/children/{childId:guid}/doses", async Task<Results<Ok<IReadOnlyCollection<MedicineDoseOccurrence>>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             Guid childId,
             DateOnly from,
             DateOnly to,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var query = ListTodaysDosesForGroup.FromClaims(principal, new GroupId(groupId), new UserId(childId), from, to);
@@ -29,7 +30,7 @@ public static class ListTodaysDosesForGroupEndpoint
             return result switch
             {
                 Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Success(var occurrences) => TypedResults.Ok(occurrences),
-                Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<IReadOnlyCollection<MedicineDoseOccurrence>>.NotFound => TypedResults.NotFound(),
                 // Reachable for a caller whose group policy resolves to no access at all.
                 Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Forbidden => TypedResults.Forbid(),

@@ -1,23 +1,31 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Calendars;
 
 public static class UpdateCalendarIconHandler
 {
     public static async Task<Result<Calendar>> Handle(
-        UpdateCalendarIcon command, ICalendarEventStore calendars, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+        UpdateCalendarIcon command,
+        IValidator<UpdateCalendarIcon> validator,
+        ICalendarEventStore calendars,
+        IGroupEventStore groups,
+        IGuardianLinkEventStore guardians,
+        CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<Calendar>.Validation(problem);
+        }
+
         if (command.UserId is not { } userId)
         {
             return new Result<Calendar>.NotFound();
-        }
-
-        if (string.IsNullOrWhiteSpace(command.Icon.Value))
-        {
-            return new Result<Calendar>.Validation("Icon must not be empty.");
         }
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);

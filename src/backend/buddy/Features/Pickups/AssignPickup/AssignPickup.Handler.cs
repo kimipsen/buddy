@@ -1,8 +1,9 @@
-using System.Diagnostics;
-
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Pickups;
 
@@ -10,10 +11,16 @@ public static class AssignPickupHandler
 {
     public static async Task<Result<PickupOccurrence>> Handle(
         AssignPickup command,
+        IValidator<AssignPickup> validator,
         IPickupScheduleEventStore pickups,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<PickupOccurrence>.Validation(problem);
+        }
+
         if (command.UserId is not { } userId)
         {
             return new Result<PickupOccurrence>.NotFound();
@@ -26,14 +33,9 @@ public static class AssignPickupHandler
             return access.ToDeniedResult<PickupOccurrence>();
         }
 
-        if (ValidateFields(command) is { } fieldError)
-        {
-            return new Result<PickupOccurrence>.Validation(fieldError);
-        }
-
         if (await ValidateRelationshipAsync(command, guardians, cancellationToken) is { } relationshipError)
         {
-            return new Result<PickupOccurrence>.Validation(relationshipError);
+            return new Result<PickupOccurrence>.Validation(ValidationProblem.Of(relationshipError));
         }
 
         var after = new PickupAssignment(
@@ -75,24 +77,6 @@ public static class AssignPickupHandler
 
         return new Result<PickupOccurrence>.Success(PickupOccurrence.FromAssignment(command.Date, command.Slot, after));
     }
-
-    // Structural validation: does the request carry the fields its own Kind needs, and none it
-    // doesn't. Relationship validation (is GuardianId actually a guardian, is SiblingChildId
-    // actually a sibling) needs async lookups and happens separately below.
-    private static string? ValidateFields(AssignPickup command) => command.Kind switch
-    {
-        PickupAssigneeKind.Guardian => command.GuardianId is null
-            ? "A guardian assignee requires guardianId."
-            : null,
-        PickupAssigneeKind.SelfEscort => null,
-        PickupAssigneeKind.Sibling => command.SiblingChildId is null
-            ? "A sibling assignee requires siblingChildId."
-            : null,
-        PickupAssigneeKind.Playdate => string.IsNullOrWhiteSpace(command.PlaydateHostName)
-            ? "A playdate assignee requires playdateHostName."
-            : null,
-        _ => throw new UnreachableException($"Unrecognized PickupAssigneeKind value: {command.Kind}."),
-    };
 
     // Returns a validation message, or null if the assignee is acceptable. Deliberately a small
     // local check against IGuardianLinkEventStore rather than a dependency on Mealplans'

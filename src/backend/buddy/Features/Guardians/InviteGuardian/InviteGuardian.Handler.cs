@@ -1,4 +1,6 @@
 using buddy.Common;
+using buddy.Common.RateLimiting;
+using buddy.Common.Validation;
 using buddy.Email;
 using buddy.Features.Users;
 
@@ -6,9 +8,6 @@ namespace buddy.Features.Guardians;
 
 public static class InviteGuardianHandler
 {
-    // Mirrors InviteToGroupHandler.ResendCooldown.
-    public static readonly TimeSpan ResendCooldown = TimeSpan.FromMinutes(1);
-
     public static async Task<Result<GuardianInviteSummary>> Handle(
         InviteGuardian command,
         IGuardianLinkEventStore guardianLinks,
@@ -44,9 +43,9 @@ public static class InviteGuardianHandler
         var now = DateTimeOffset.UtcNow;
         var existingInvite = await invites.FindPendingInviteAsync(command.ChildId, normalizedEmail, cancellationToken);
 
-        if (existingInvite is not null && now - existingInvite.CreatedAt < ResendCooldown)
+        if (ResendCooldown.IsActive(existingInvite?.CreatedAt, now))
         {
-            return new Result<GuardianInviteSummary>.Validation("An invite was already sent recently. Try again in a minute.");
+            return new Result<GuardianInviteSummary>.Validation(ValidationProblem.Of("An invite was already sent recently. Try again in a minute."));
         }
 
         var inviteId = existingInvite is null ? GuardianInviteId.New() : new GuardianInviteId(existingInvite.Id);

@@ -14,11 +14,12 @@ public static class CreateMealEndpoint
 {
     public static RouteGroupBuilder MapCreateMeal(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapPost("/children/{childId:guid}/meals", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        mealplans.MapPost("/children/{childId:guid}/meals", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             CreateMealRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = CreateMeal.FromClaims(
@@ -35,7 +36,7 @@ public static class CreateMealEndpoint
             {
                 Result<Meal>.Success(var meal) => TypedResults.Ok(MealResponse.FromMeal(meal)),
                 Result<Meal>.Forbidden => TypedResults.Forbid(),
-                Result<Meal>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<Meal>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<Meal>.NotFound => TypedResults.NotFound(),
             };
         })

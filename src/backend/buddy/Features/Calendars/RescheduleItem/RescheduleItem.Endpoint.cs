@@ -12,12 +12,13 @@ public static class RescheduleItemEndpoint
 {
     public static RouteGroupBuilder MapRescheduleItem(this RouteGroupBuilder calendars)
     {
-        calendars.MapPatch("/{calendarId:guid}/items/{itemId:guid}/schedule", async Task<Results<Ok<CalendarItemResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        calendars.MapPatch("/{calendarId:guid}/items/{itemId:guid}/schedule", async Task<Results<Ok<CalendarItemResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid calendarId,
             Guid itemId,
             RescheduleItemRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = RescheduleItem.FromClaims(
@@ -35,7 +36,7 @@ public static class RescheduleItemEndpoint
             {
                 Result<CalendarItem>.Success(var item) => TypedResults.Ok(CalendarItemResponse.FromItem(item)),
                 Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
-                Result<CalendarItem>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<CalendarItem>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<CalendarItem>.NotFound => TypedResults.NotFound(),
             };
         })

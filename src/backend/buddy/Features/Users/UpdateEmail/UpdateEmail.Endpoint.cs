@@ -12,17 +12,13 @@ public static class UpdateCurrentEmailEndpoint
 {
     public static RouteGroupBuilder MapUpdateCurrentEmail(this RouteGroupBuilder users)
     {
-        users.MapPatch("/me/email", async Task<Results<Ok<UserResponse>, BadRequest<string>, NotFound>> (
+        users.MapPatch("/me/email", async Task<Results<Ok<UserResponse>, BadRequest<ErrorEnvelope>, NotFound>> (
             ClaimsPrincipal principal,
             UpdateEmailRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            if (string.IsNullOrWhiteSpace(request.Email))
-            {
-                return TypedResults.BadRequest($"The '{nameof(request.Email)}' field is required.");
-            }
-
             var command = UpdateEmail.FromClaims(principal, request.Email);
 
             var result = await bus.InvokeAsync<Result<User>>(command, cancellationToken);
@@ -34,9 +30,7 @@ public static class UpdateCurrentEmailEndpoint
                 // UpdateEmailHandler never produces Forbidden -- collapsed to NotFound since this
                 // route declares no other status for it.
                 Result<User>.Forbidden => TypedResults.NotFound(),
-                // UpdateEmailHandler never produces Validation, but BadRequest is already part of
-                // this route's declared results (used above), so map it there if it ever did.
-                Result<User>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<User>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("UpdateCurrentEmail");

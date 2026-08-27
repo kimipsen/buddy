@@ -1,6 +1,9 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
+
+using FluentValidation;
 
 namespace buddy.Features.Mealplans;
 
@@ -8,15 +11,16 @@ public static class CreateMealForGroupHandler
 {
     public static async Task<Result<Meal>> Handle(
         CreateMealForGroup command,
+        IValidator<CreateMealForGroup> validator,
         IMealEventStore meals,
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(command.Name))
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<Meal>.Validation("A meal requires a name.");
+            return new Result<Meal>.Validation(problem);
         }
 
         var resolved = await MealplanGroupAccess.ResolveManageAsync(command.GroupId, command.UserId, groups, mealPlans, cancellationToken);

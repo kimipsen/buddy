@@ -154,10 +154,13 @@ Typical Buddy use:
 Use for semantically invalid payloads when syntax is correct.
 
 Typical Buddy use:
-- optional alternative to `400` for detailed domain validation failures
+- not used in this project
 
-Team rule:
-- choose one style (`400` or `422`) for validation and apply consistently
+Team rule (resolved):
+- `400` is used uniformly for all validation failures, structural and
+  semantic alike — see the [validation rules analysis](analysis/validation-rules.md).
+  `422` is not used anywhere; this keeps the status-code decision independent
+  of *why* a request was rejected.
 
 ### 429 Too Many Requests
 Use when request rate exceeds limits.
@@ -274,9 +277,13 @@ Use this checklist whenever endpoint contracts change.
 - OpenAPI docs: confirm endpoint response metadata in generated OpenAPI matches this guide.
 - Review trigger: for each PR touching endpoint files, update this document in the same PR.
 
-## Error Response Shape (Recommended)
+## Error Response Shape (Implemented)
 
-Use a consistent error envelope across endpoints:
+Every `400` produced by a `Result<T>.Validation` (or feature-specific outcome
+union's `Validation` case) renders through this envelope
+(`buddy.Common.ErrorEnvelope` / `ValidationProblemExtensions.ToEnvelope`,
+built from FluentValidation's `ValidationResult` via
+`buddy.Common.Validation.ValidationProblem`):
 
 ```json
 {
@@ -289,4 +296,9 @@ Use a consistent error envelope across endpoints:
 }
 ```
 
-Consistency matters more than exact field names. Keep the schema stable for clients.
+`details` keys are field names as FluentValidation derives them from the
+command's property names (or `""` for a general, non-field-specific error,
+e.g. a resend-cooldown rejection). `requestId` is `HttpContext.TraceIdentifier`.
+`NotFound`/`Forbidden` outcomes are unaffected — they keep their existing,
+endpoint-specific mappings (some deliberately collapse `Forbidden` into `404`
+for privacy). Keep the schema stable for clients.

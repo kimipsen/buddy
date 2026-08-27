@@ -1,13 +1,21 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Guardians;
 
 public static class UpdateChildLanguageHandler
 {
     public static async Task<Result<ChildSummary>> Handle(
-        UpdateChildLanguage command, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
+        UpdateChildLanguage command, IValidator<UpdateChildLanguage> validator, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<ChildSummary>.Validation(problem);
+        }
+
         if (command.GuardianId is not { } guardianId)
         {
             return new Result<ChildSummary>.NotFound();
@@ -20,11 +28,6 @@ public static class UpdateChildLanguageHandler
         if (link is null)
         {
             return new Result<ChildSummary>.NotFound();
-        }
-
-        if (!SupportedLanguages.IsValid(command.Language))
-        {
-            return new Result<ChildSummary>.Validation($"'{command.Language.Value}' is not a supported language.");
         }
 
         var existingEvents = await users.ReadAsync(command.ChildId, cancellationToken);

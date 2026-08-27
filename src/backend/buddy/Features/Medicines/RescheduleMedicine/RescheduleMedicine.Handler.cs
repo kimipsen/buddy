@@ -1,6 +1,9 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Medicines;
 
@@ -8,18 +11,14 @@ public static class RescheduleMedicineHandler
 {
     public static async Task<Result<MedicineSchedule>> Handle(
         RescheduleMedicine command,
+        IValidator<RescheduleMedicine> validator,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.Times.Count == 0)
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<MedicineSchedule>.Validation("A medicine schedule requires at least one dose time.");
-        }
-
-        if (command.EndDate is { } end && end < command.StartDate)
-        {
-            return new Result<MedicineSchedule>.Validation("The end date cannot be before the start date.");
+            return new Result<MedicineSchedule>.Validation(problem);
         }
 
         if (command.UserId is not { } userId)

@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Medicines;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -14,18 +15,19 @@ public static class UpdateMedicinePermissionPolicyEndpoint
 {
     public static RouteGroupBuilder MapUpdateMedicinePermissionPolicy(this RouteGroupBuilder groups)
     {
-        groups.MapPut("/{groupId:guid}/medicine-permission-policy", async Task<Results<NoContent, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        groups.MapPut("/{groupId:guid}/medicine-permission-policy", async Task<Results<NoContent, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             UpdateMedicinePermissionPolicyRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             foreach (var role in Enum.GetValues<GroupRole>())
             {
                 if (!request.Policy.ContainsKey(role))
                 {
-                    return TypedResults.BadRequest($"The policy must include an entry for every group role; '{role}' is missing.");
+                    return TypedResults.BadRequest(buddy.Common.Validation.ValidationProblem.Of($"The policy must include an entry for every group role; '{role}' is missing.").ToEnvelope(httpContext));
                 }
             }
 
@@ -36,7 +38,7 @@ public static class UpdateMedicinePermissionPolicyEndpoint
             {
                 if (tier == MedicineAccessTier.Mark)
                 {
-                    return TypedResults.BadRequest($"'{tier}' is not a valid medicine permission for group role '{role}'.");
+                    return TypedResults.BadRequest(buddy.Common.Validation.ValidationProblem.Of($"'{tier}' is not a valid medicine permission for group role '{role}'.").ToEnvelope(httpContext));
                 }
             }
 
@@ -52,7 +54,7 @@ public static class UpdateMedicinePermissionPolicyEndpoint
                 // UpdateMedicinePermissionPolicyHandler never produces Validation, but
                 // BadRequest is already part of this route's declared results (used above), so
                 // map it there if it ever did.
-                Result<Unit>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<Unit>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("UpdateGroupMedicinePermissionPolicy");

@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Progress;
@@ -46,7 +47,7 @@ public static class SetTaskCompletionHandler
 
         if (item.Kind != CalendarItemKind.Task)
         {
-            return new Result<CalendarItem>.Validation("Only a task can be marked complete.");
+            return new Result<CalendarItem>.Validation(ValidationProblem.Of("Only a task can be marked complete."));
         }
 
         // A Viewer can still toggle completion on a task assigned specifically to them: marking
@@ -66,7 +67,7 @@ public static class SetTaskCompletionHandler
 
             if (command.OccurrenceDate > today)
             {
-                return new Result<CalendarItem>.Validation("Cannot mark a future occurrence as complete.");
+                return new Result<CalendarItem>.Validation(ValidationProblem.Of("Cannot mark a future occurrence as complete."));
             }
         }
 

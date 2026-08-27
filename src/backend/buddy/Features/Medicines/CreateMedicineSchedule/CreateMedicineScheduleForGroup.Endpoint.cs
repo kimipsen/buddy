@@ -15,12 +15,13 @@ public static class CreateMedicineScheduleForGroupEndpoint
 {
     public static RouteGroupBuilder MapCreateMedicineScheduleForGroup(this RouteGroupBuilder medicines)
     {
-        medicines.MapPost("/groups/{groupId:guid}/children/{childId:guid}/schedules", async Task<Results<Ok<MedicineScheduleResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        medicines.MapPost("/groups/{groupId:guid}/children/{childId:guid}/schedules", async Task<Results<Ok<MedicineScheduleResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             Guid childId,
             CreateMedicineScheduleRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = CreateMedicineScheduleForGroup.FromClaims(
@@ -40,7 +41,7 @@ public static class CreateMedicineScheduleForGroupEndpoint
             return result switch
             {
                 Result<MedicineSchedule>.Success(var schedule) => TypedResults.Ok(MedicineScheduleResponse.FromSchedule(schedule)),
-                Result<MedicineSchedule>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<MedicineSchedule>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<MedicineSchedule>.NotFound => TypedResults.NotFound(),
                 // Reachable for a caller whose group policy resolves to no access at all --
                 // MedicineGroupAccess only ever grants or withholds Manage, never a lesser tier.

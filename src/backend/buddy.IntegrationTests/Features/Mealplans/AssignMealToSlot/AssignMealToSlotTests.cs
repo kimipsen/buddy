@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.Mealplans;
@@ -222,7 +223,9 @@ public sealed class AssignMealToSlotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Equal("Cannot assign an archived meal.", response.ReadAsJson<string>());
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["Cannot assign an archived meal."], error.Details[""]);
     }
 
     [Fact]

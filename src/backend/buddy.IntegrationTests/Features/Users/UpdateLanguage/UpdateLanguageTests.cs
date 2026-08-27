@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -33,12 +34,16 @@ public sealed class UpdateLanguageTests(BuddyApiFixture fixture)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Patch.Json(new { Language = "fr" }).ToUrl("/users/me/language");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Language", error.Details.Keys);
     }
 
     [Fact]

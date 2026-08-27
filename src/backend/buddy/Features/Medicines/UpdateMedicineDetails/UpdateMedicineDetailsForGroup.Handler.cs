@@ -1,5 +1,8 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
+
+using FluentValidation;
 
 namespace buddy.Features.Medicines;
 
@@ -7,14 +10,15 @@ public static class UpdateMedicineDetailsForGroupHandler
 {
     public static async Task<Result<MedicineSchedule>> Handle(
         UpdateMedicineDetailsForGroup command,
+        IValidator<UpdateMedicineDetailsForGroup> validator,
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(command.Name))
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<MedicineSchedule>.Validation("A medicine schedule requires a name.");
+            return new Result<MedicineSchedule>.Validation(problem);
         }
 
         var resolved = await MedicineGroupAccess.ResolveAsync(command.GroupId, command.ChildId, command.UserId, groups, sharing, cancellationToken);

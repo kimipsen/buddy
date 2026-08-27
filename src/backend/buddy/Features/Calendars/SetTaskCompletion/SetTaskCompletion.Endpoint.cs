@@ -12,12 +12,13 @@ public static class SetTaskCompletionEndpoint
 {
     public static RouteGroupBuilder MapSetTaskCompletion(this RouteGroupBuilder calendars)
     {
-        calendars.MapPatch("/{calendarId:guid}/items/{itemId:guid}/completion", async Task<Results<Ok<TaskCompletionResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        calendars.MapPatch("/{calendarId:guid}/items/{itemId:guid}/completion", async Task<Results<Ok<TaskCompletionResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid calendarId,
             Guid itemId,
             SetTaskCompletionRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = SetTaskCompletion.FromClaims(
@@ -34,7 +35,7 @@ public static class SetTaskCompletionEndpoint
                 Result<CalendarItem>.Success(var item) => TypedResults.Ok(new TaskCompletionResponse(
                     item.Id, request.Date, item.CompletionLog.GetValueOrDefault(request.Date, false))),
                 Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
-                Result<CalendarItem>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<CalendarItem>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<CalendarItem>.NotFound => TypedResults.NotFound(),
             };
         })

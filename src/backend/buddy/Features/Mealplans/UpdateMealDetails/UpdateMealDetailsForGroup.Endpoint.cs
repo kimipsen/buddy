@@ -14,12 +14,13 @@ public static class UpdateMealDetailsForGroupEndpoint
 {
     public static RouteGroupBuilder MapUpdateMealDetailsForGroup(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapPatch("/groups/{groupId:guid}/meals/{mealId:guid}/details", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        mealplans.MapPatch("/groups/{groupId:guid}/meals/{mealId:guid}/details", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             Guid mealId,
             UpdateMealDetailsRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = UpdateMealDetailsForGroup.FromClaims(
@@ -36,7 +37,7 @@ public static class UpdateMealDetailsForGroupEndpoint
             return result switch
             {
                 Result<Meal>.Success(var meal) => TypedResults.Ok(MealResponse.FromMeal(meal)),
-                Result<Meal>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<Meal>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<Meal>.NotFound => TypedResults.NotFound(),
                 // Reachable for a caller whose group policy grants View but not Manage.
                 Result<Meal>.Forbidden => TypedResults.Forbid(),

@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.Mealplans;
@@ -155,7 +156,9 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Equal("'to' must not be before 'from'.", response.ReadAsJson<string>());
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["'to' must not be before 'from'."], error.Details["To"]);
     }
 
     [Fact]
@@ -172,7 +175,9 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Equal($"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days.", response.ReadAsJson<string>());
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal([$"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days."], error.Details["To"]);
     }
 
     [Fact]

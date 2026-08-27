@@ -13,13 +13,14 @@ public static class AssignMealToSlotEndpoint
 {
     public static RouteGroupBuilder MapAssignMealToSlot(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapPut("/children/{childId:guid}/plan", async Task<Results<Ok<MealPlanEntry>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        mealplans.MapPut("/children/{childId:guid}/plan", async Task<Results<Ok<MealPlanEntry>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             DateOnly date,
             MealSlot slot,
             AssignMealToSlotRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = AssignMealToSlot.FromClaims(principal, new UserId(childId), date, slot, new MealId(request.MealId), request.Notes);
@@ -29,7 +30,7 @@ public static class AssignMealToSlotEndpoint
             {
                 Result<MealPlanEntry>.Success(var entry) => TypedResults.Ok(entry),
                 Result<MealPlanEntry>.Forbidden => TypedResults.Forbid(),
-                Result<MealPlanEntry>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<MealPlanEntry>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<MealPlanEntry>.NotFound => TypedResults.NotFound(),
             };
         })

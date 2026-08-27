@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -38,12 +39,33 @@ public sealed class UpdateEmailTests(BuddyApiFixture fixture)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Patch.Json(new { Email = "" }).ToUrl("/users/me/email");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Value", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task Rejects_a_malformed_email()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Email = "not-an-email" }).ToUrl("/users/me/email");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Value", error.Details.Keys);
     }
 
     private sealed record EmailResponseEnvelope(EmailResponse Email);

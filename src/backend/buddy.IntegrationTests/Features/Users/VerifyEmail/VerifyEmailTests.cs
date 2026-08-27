@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -52,12 +53,16 @@ public sealed partial class VerifyEmailTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Json(new { Token = "not-the-real-token" }).ToUrl("/users/me/email/verify");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["The verification token is invalid."], error.Details[""]);
     }
 
     private async Task<string> ReadVerificationTokenAsync(string emailAddress)

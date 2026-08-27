@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Fixtures;
@@ -52,7 +53,9 @@ public sealed class RateMealTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Equal("Stars must be between 1 and 5.", response.ReadAsJson<string>());
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["Stars must be between 1 and 5."], error.Details["Stars"]);
     }
 
     [Fact]

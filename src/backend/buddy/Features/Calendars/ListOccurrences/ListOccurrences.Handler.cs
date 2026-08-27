@@ -1,7 +1,10 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Calendars;
 
@@ -13,20 +16,16 @@ public static class ListOccurrencesHandler
 
     public static async Task<Result<IReadOnlyCollection<CalendarItemOccurrence>>> Handle(
         ListOccurrences query,
+        IValidator<ListOccurrences> validator,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.To < query.From)
+        if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
         {
-            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation("'to' must not be before 'from'.");
-        }
-
-        if (query.To.DayNumber - query.From.DayNumber > MaxRangeDays)
-        {
-            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation($"The requested range cannot exceed {MaxRangeDays} days.");
+            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation(problem);
         }
 
         if (query.UserId is not { } userId)

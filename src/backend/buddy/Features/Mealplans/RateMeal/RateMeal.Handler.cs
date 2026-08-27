@@ -1,5 +1,8 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Guardians;
+
+using FluentValidation;
 
 namespace buddy.Features.Mealplans;
 
@@ -7,13 +10,14 @@ public static class RateMealHandler
 {
     public static async Task<Result<Meal>> Handle(
         RateMeal command,
+        IValidator<RateMeal> validator,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.Stars is < 1 or > 5)
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<Meal>.Validation("Stars must be between 1 and 5.");
+            return new Result<Meal>.Validation(problem);
         }
 
         if (command.UserId is not { } userId)

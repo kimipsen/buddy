@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Fixtures;
@@ -73,7 +74,9 @@ public sealed class UpdateMealDetailsTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Equal("A meal requires a name.", response.ReadAsJson<string>());
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Name", error.Details.Keys);
     }
 
     [Fact]

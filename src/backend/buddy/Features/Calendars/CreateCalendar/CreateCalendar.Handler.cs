@@ -1,20 +1,23 @@
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Calendars;
 
 public static class CreateCalendarHandler
 {
-    public static async Task<CreateCalendarOutcome> Handle(CreateCalendar command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<CreateCalendarOutcome> Handle(
+        CreateCalendar command,
+        IValidator<CreateCalendar> validator,
+        ICalendarEventStore calendars,
+        IGroupEventStore groups,
+        CancellationToken cancellationToken)
     {
-        if (!TimeZoneResolution.IsValid(command.TimeZoneId))
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new CreateCalendarOutcome.Validation($"'{command.TimeZoneId.Value}' is not a recognized IANA time zone identifier.");
-        }
-
-        if (command.Icon is { Value: var iconValue } && string.IsNullOrWhiteSpace(iconValue))
-        {
-            return new CreateCalendarOutcome.Validation("Icon must not be empty.");
+            return new CreateCalendarOutcome.Validation(problem);
         }
 
         if (command.UserId is not { } ownerId)

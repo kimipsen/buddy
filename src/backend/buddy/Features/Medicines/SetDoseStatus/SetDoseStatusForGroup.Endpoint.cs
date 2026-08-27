@@ -14,7 +14,7 @@ public static class SetDoseStatusForGroupEndpoint
 {
     public static RouteGroupBuilder MapSetDoseStatusForGroup(this RouteGroupBuilder medicines)
     {
-        medicines.MapPut("/groups/{groupId:guid}/children/{childId:guid}/doses/{medicineId:guid}", async Task<Results<Ok<MedicineDoseOccurrence>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        medicines.MapPut("/groups/{groupId:guid}/children/{childId:guid}/doses/{medicineId:guid}", async Task<Results<Ok<MedicineDoseOccurrence>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             Guid childId,
@@ -23,6 +23,7 @@ public static class SetDoseStatusForGroupEndpoint
             TimeOnly time,
             SetDoseStatusRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = SetDoseStatusForGroup.FromClaims(principal, new GroupId(groupId), new UserId(childId), new MedicineId(medicineId), date, time, request.Status);
@@ -32,7 +33,7 @@ public static class SetDoseStatusForGroupEndpoint
             {
                 Result<MedicineDoseOccurrence>.Success(var occurrence) => TypedResults.Ok(occurrence),
                 Result<MedicineDoseOccurrence>.Forbidden => TypedResults.Forbid(),
-                Result<MedicineDoseOccurrence>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<MedicineDoseOccurrence>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<MedicineDoseOccurrence>.NotFound => TypedResults.NotFound(),
             };
         })

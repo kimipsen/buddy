@@ -1,7 +1,10 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Calendars;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Medicines;
 
@@ -9,13 +12,14 @@ public static class UpdateMedicineDetailsHandler
 {
     public static async Task<Result<MedicineSchedule>> Handle(
         UpdateMedicineDetails command,
+        IValidator<UpdateMedicineDetails> validator,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(command.Name))
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<MedicineSchedule>.Validation("A medicine schedule requires a name.");
+            return new Result<MedicineSchedule>.Validation(problem);
         }
 
         if (command.UserId is not { } userId)

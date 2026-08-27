@@ -12,11 +12,12 @@ public static class UpdateCalendarIconEndpoint
 {
     public static RouteGroupBuilder MapUpdateCalendarIcon(this RouteGroupBuilder calendars)
     {
-        calendars.MapPatch("/{calendarId:guid}/icon", async Task<Results<Ok<CalendarResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        calendars.MapPatch("/{calendarId:guid}/icon", async Task<Results<Ok<CalendarResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid calendarId,
             UpdateCalendarIconRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = UpdateCalendarIcon.FromClaims(principal, new CalendarId(calendarId), new Icon(request.Icon));
@@ -27,7 +28,7 @@ public static class UpdateCalendarIconEndpoint
                 Result<Calendar>.Success(var calendar) => TypedResults.Ok(CalendarResponse.FromCalendar(calendar)),
                 Result<Calendar>.Forbidden => TypedResults.Forbid(),
                 Result<Calendar>.NotFound => TypedResults.NotFound(),
-                Result<Calendar>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<Calendar>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("UpdateCalendarIcon");

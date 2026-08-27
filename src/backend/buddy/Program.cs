@@ -9,6 +9,8 @@ using buddy.Features.Progress;
 using buddy.Features.Users;
 using buddy.Serialization;
 
+using FluentValidation;
+
 using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +45,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.ShouldInclude = api => api.GroupName is null;
 });
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
 builder.Services.AddGuardiansFeature(builder.Configuration);

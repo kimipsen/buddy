@@ -1,14 +1,22 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Calendars;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Guardians;
 
 public static class UpdateChildTimeZoneHandler
 {
     public static async Task<Result<ChildSummary>> Handle(
-        UpdateChildTimeZone command, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
+        UpdateChildTimeZone command, IValidator<UpdateChildTimeZone> validator, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<ChildSummary>.Validation(problem);
+        }
+
         if (command.GuardianId is not { } guardianId)
         {
             return new Result<ChildSummary>.NotFound();
@@ -21,11 +29,6 @@ public static class UpdateChildTimeZoneHandler
         if (link is null)
         {
             return new Result<ChildSummary>.NotFound();
-        }
-
-        if (!TimeZoneResolution.IsValid(command.TimeZoneId))
-        {
-            return new Result<ChildSummary>.Validation($"'{command.TimeZoneId.Value}' is not a recognized IANA time zone identifier.");
         }
 
         var existingEvents = await users.ReadAsync(command.ChildId, cancellationToken);

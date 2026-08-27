@@ -1,14 +1,12 @@
 using buddy.Common;
+using buddy.Common.RateLimiting;
+using buddy.Common.Validation;
 using buddy.Email;
 
 namespace buddy.Features.Groups;
 
 public static class InviteToGroupHandler
 {
-    // Mirrors ResendEmailVerificationHandler.ResendCooldown -- kept feature-local rather than
-    // shared, consistent with how Users/Groups already don't reach into each other's handlers.
-    public static readonly TimeSpan ResendCooldown = TimeSpan.FromMinutes(1);
-
     public static async Task<Result<GroupInviteSummary>> Handle(
         InviteToGroup command,
         IGroupEventStore groups,
@@ -43,9 +41,9 @@ public static class InviteToGroupHandler
         var now = DateTimeOffset.UtcNow;
         var existingInvite = await groups.FindPendingInviteAsync(command.GroupId, normalizedEmail, cancellationToken);
 
-        if (existingInvite is not null && now - existingInvite.CreatedAt < ResendCooldown)
+        if (ResendCooldown.IsActive(existingInvite?.CreatedAt, now))
         {
-            return new Result<GroupInviteSummary>.Validation("An invite was already sent recently. Try again in a minute.");
+            return new Result<GroupInviteSummary>.Validation(ValidationProblem.Of("An invite was already sent recently. Try again in a minute."));
         }
 
         var inviteId = existingInvite?.Id ?? Guid.CreateVersion7();

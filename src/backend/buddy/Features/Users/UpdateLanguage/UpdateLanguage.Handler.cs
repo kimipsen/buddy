@@ -1,19 +1,26 @@
 using buddy.Common;
+using buddy.Common.Validation;
+
+using FluentValidation;
 
 namespace buddy.Features.Users;
 
 public static class UpdateLanguageHandler
 {
-    public static async Task<Result<User>> Handle(UpdateLanguage command, IUserEventStore events, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(
+        UpdateLanguage command,
+        IValidator<UpdateLanguage> validator,
+        IUserEventStore events,
+        CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<User>.Validation(problem);
+        }
+
         if (command.UserId is not { } userId)
         {
             return new Result<User>.NotFound();
-        }
-
-        if (!SupportedLanguages.IsValid(command.Language))
-        {
-            return new Result<User>.Validation($"'{command.Language.Value}' is not a supported language.");
         }
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);

@@ -13,17 +13,13 @@ public static class UpdateCurrentTimeZoneEndpoint
 {
     public static RouteGroupBuilder MapUpdateCurrentTimeZone(this RouteGroupBuilder users)
     {
-        users.MapPatch("/me/timezone", async Task<Results<Ok<UserResponse>, BadRequest<string>, NotFound>> (
+        users.MapPatch("/me/timezone", async Task<Results<Ok<UserResponse>, BadRequest<ErrorEnvelope>, NotFound>> (
             ClaimsPrincipal principal,
             UpdateTimeZoneRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            if (string.IsNullOrWhiteSpace(request.TimeZoneId))
-            {
-                return TypedResults.BadRequest($"The '{nameof(request.TimeZoneId)}' field is required.");
-            }
-
             var command = UpdateTimeZone.FromClaims(principal, new TimeZoneId(request.TimeZoneId));
 
             var result = await bus.InvokeAsync<Result<User>>(command, cancellationToken);
@@ -32,7 +28,7 @@ public static class UpdateCurrentTimeZoneEndpoint
             {
                 Result<User>.Success(var user) => TypedResults.Ok(UserResponse.FromUser(user)),
                 Result<User>.NotFound => TypedResults.NotFound(),
-                Result<User>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<User>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 // UpdateTimeZoneHandler never produces Forbidden -- collapsed to NotFound since
                 // this route declares no other status for it.
                 Result<User>.Forbidden => TypedResults.NotFound(),

@@ -1,4 +1,7 @@
+using buddy.Common.Validation;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Guardians;
 
@@ -6,10 +9,16 @@ public static class CreateChildHandler
 {
     public static async Task<CreateChildOutcome> Handle(
         CreateChild command,
+        IValidator<CreateChild> validator,
         IKeycloakAdminClient keycloak,
         IGuardianLinkEventStore guardianLinks,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new CreateChildOutcome.Validation(problem);
+        }
+
         if (command.GuardianId is not { } guardianId)
         {
             return new CreateChildOutcome.Unauthenticated();

@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Guardians;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
@@ -46,6 +47,24 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
                 .ToUrl("/users/me/children/");
             _.StatusCodeShouldBe(409);
         });
+    }
+
+    [Fact]
+    public async Task Rejects_a_blank_given_name()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { GivenName = "   ", FamilyName = "Child", Username = "blank-given-name" })
+                .ToUrl("/users/me/children/");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("GivenName", error.Details.Keys);
     }
 
     [Fact]

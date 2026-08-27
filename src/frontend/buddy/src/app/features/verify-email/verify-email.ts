@@ -43,9 +43,11 @@ export class VerifyEmail implements OnInit {
       await this.users.verifyEmail(this.token);
       this.verified.set(true);
     } catch (error) {
+      // The backend's validation failures now come back as a structured envelope
+      // ({ code, message, details, requestId }), not a bare string body.
       this.verifyError.set(
-        error instanceof HttpErrorResponse && typeof error.error === 'string'
-          ? error.error
+        error instanceof HttpErrorResponse && error.error && typeof error.error === 'object' && 'message' in error.error
+          ? String(error.error.message)
           : 'verifyEmail.error'
       );
     } finally {

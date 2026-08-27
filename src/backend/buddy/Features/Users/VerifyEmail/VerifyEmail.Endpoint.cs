@@ -12,10 +12,11 @@ public static class VerifyEmailEndpoint
 {
     public static RouteGroupBuilder MapVerifyCurrentEmail(this RouteGroupBuilder users)
     {
-        users.MapPost("/me/email/verify", async Task<Results<Ok<UserResponse>, BadRequest<string>, NotFound>> (
+        users.MapPost("/me/email/verify", async Task<Results<Ok<UserResponse>, BadRequest<ErrorEnvelope>, NotFound>> (
             ClaimsPrincipal principal,
             VerifyEmailRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = VerifyEmail.FromClaims(principal, request.Token);
@@ -24,7 +25,7 @@ public static class VerifyEmailEndpoint
             return result switch
             {
                 Result<User>.Success(var user) => TypedResults.Ok(UserResponse.FromUser(user)),
-                Result<User>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<User>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<User>.NotFound => TypedResults.NotFound(),
                 // VerifyEmailHandler never produces Forbidden -- collapsed to NotFound since this
                 // route declares no other status for it.

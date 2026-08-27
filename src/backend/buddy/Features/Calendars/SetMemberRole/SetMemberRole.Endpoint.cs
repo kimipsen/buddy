@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -13,17 +14,18 @@ public static class SetMemberRoleEndpoint
 {
     public static RouteGroupBuilder MapSetMemberRole(this RouteGroupBuilder calendars)
     {
-        calendars.MapPut("/{calendarId:guid}/members/{memberId:guid}", async Task<Results<NoContent, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        calendars.MapPut("/{calendarId:guid}/members/{memberId:guid}", async Task<Results<NoContent, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid calendarId,
             Guid memberId,
             SetMemberRoleRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             if (request.Role == CalendarRole.Owner)
             {
-                return TypedResults.BadRequest("Ownership cannot be granted through this endpoint.");
+                return TypedResults.BadRequest(buddy.Common.Validation.ValidationProblem.Of("Ownership cannot be granted through this endpoint.").ToEnvelope(httpContext));
             }
 
             var command = SetMemberRole.FromClaims(principal, new CalendarId(calendarId), new UserId(memberId), request.Role);
@@ -36,7 +38,7 @@ public static class SetMemberRoleEndpoint
                 Result<Unit>.NotFound => TypedResults.NotFound(),
                 // SetMemberRoleHandler never produces Validation, but BadRequest is already part
                 // of this route's declared results (used above), so map it there if it ever did.
-                Result<Unit>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<Unit>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("SetCalendarMemberRole");

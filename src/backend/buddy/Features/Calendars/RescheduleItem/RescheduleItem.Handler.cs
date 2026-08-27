@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
@@ -45,18 +46,18 @@ public static class RescheduleItemHandler
         {
             if (command.StartsAt is null || command.EndsAt is null)
             {
-                return new Result<CalendarItem>.Validation("An event requires both a start and an end time.");
+                return new Result<CalendarItem>.Validation(ValidationProblem.Of("An event requires both a start and an end time."));
             }
 
             var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt, command.IsAllDay);
 
             if (periodResult is not PeriodValidationResult.Valid(var period))
             {
-                return new Result<CalendarItem>.Validation(periodResult switch
+                return new Result<CalendarItem>.Validation(ValidationProblem.Of(periodResult switch
                 {
                     PeriodValidationResult.Invalid(var message) => message,
                     PeriodValidationResult.Valid => throw new UnreachableException("Already excluded by the enclosing check."),
-                });
+                }));
             }
 
             await items.AppendAsync(
@@ -69,7 +70,7 @@ public static class RescheduleItemHandler
 
         if (command.DueDate is null)
         {
-            return new Result<CalendarItem>.Validation("A task requires a due date.");
+            return new Result<CalendarItem>.Validation(ValidationProblem.Of("A task requires a due date."));
         }
 
         var dueDate = command.DueDate with { IsAllDay = command.IsAllDay };

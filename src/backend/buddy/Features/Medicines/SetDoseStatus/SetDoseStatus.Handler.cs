@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
 
@@ -41,7 +42,11 @@ public static class SetDoseStatusHandler
 
         if (!schedule.Times.Contains(time))
         {
-            return new Result<MedicineDoseOccurrence>.Validation("This medicine has no dose scheduled at that time.");
+            // A structural require-a-name/Must-style check would run before the store read this
+            // needs to happen against (schedule.Times) -- state-dependent, so it stays here as
+            // handler code rather than moving into a validator (see InviteGuardian/InviteToGroup's
+            // resend-cooldown check for the same reasoning).
+            return new Result<MedicineDoseOccurrence>.Validation(ValidationProblem.Of("This medicine has no dose scheduled at that time."));
         }
 
         var before = schedule.DoseLog.GetValueOrDefault((date, time), DoseStatus.Pending);

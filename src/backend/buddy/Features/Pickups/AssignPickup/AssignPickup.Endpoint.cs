@@ -13,13 +13,14 @@ public static class AssignPickupEndpoint
 {
     public static RouteGroupBuilder MapAssignPickup(this RouteGroupBuilder pickups)
     {
-        pickups.MapPut("/children/{childId:guid}/assignments", async Task<Results<Ok<PickupOccurrence>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        pickups.MapPut("/children/{childId:guid}/assignments", async Task<Results<Ok<PickupOccurrence>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             DateOnly date,
             PickupSlot slot,
             AssignPickupRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = AssignPickup.FromClaims(
@@ -42,7 +43,7 @@ public static class AssignPickupEndpoint
             {
                 Result<PickupOccurrence>.Success(var occurrence) => TypedResults.Ok(occurrence),
                 Result<PickupOccurrence>.Forbidden => TypedResults.Forbid(),
-                Result<PickupOccurrence>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<PickupOccurrence>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<PickupOccurrence>.NotFound => TypedResults.NotFound(),
             };
         })

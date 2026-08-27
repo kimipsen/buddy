@@ -15,6 +15,14 @@ import { CurrentUser, UsersService } from '../../../../core/users.service';
 export class MyProfile implements OnInit {
   private readonly users = inject(UsersService);
 
+  // The backend's validation failures now come back as a structured envelope
+  // ({ code, message, details, requestId }), not a bare string body.
+  private apiErrorMessage(error: unknown, fallback: string): string {
+    return error instanceof HttpErrorResponse && error.error && typeof error.error === 'object' && 'message' in error.error
+      ? String(error.error.message)
+      : fallback;
+  }
+
   protected readonly timeZoneIds = listTimeZoneIds();
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly languageNames = LANGUAGE_NAMES;
@@ -92,9 +100,7 @@ export class MyProfile implements OnInit {
       this.currentEmail.set(updated.email.value);
       this.emailSaved.set(true);
     } catch (error) {
-      this.emailError.set(
-        error instanceof HttpErrorResponse && typeof error.error === 'string' ? error.error : 'profile.email.error'
-      );
+      this.emailError.set(this.apiErrorMessage(error, 'profile.email.error'));
     } finally {
       this.savingEmail.set(false);
     }
@@ -116,9 +122,7 @@ export class MyProfile implements OnInit {
       this.currentTimeZoneId.set(updated.timeZoneId);
       this.timeZoneSaved.set(true);
     } catch (error) {
-      this.timeZoneError.set(
-        error instanceof HttpErrorResponse && typeof error.error === 'string' ? error.error : 'profile.timeZone.error'
-      );
+      this.timeZoneError.set(this.apiErrorMessage(error, 'profile.timeZone.error'));
     } finally {
       this.savingTimeZone.set(false);
     }
@@ -140,9 +144,7 @@ export class MyProfile implements OnInit {
       this.currentLanguage.set(isSupportedLanguage(updated.language) ? updated.language : 'en');
       this.languageSaved.set(true);
     } catch (error) {
-      this.languageError.set(
-        error instanceof HttpErrorResponse && typeof error.error === 'string' ? error.error : 'profile.language.error'
-      );
+      this.languageError.set(this.apiErrorMessage(error, 'profile.language.error'));
     } finally {
       this.savingLanguage.set(false);
     }

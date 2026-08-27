@@ -13,7 +13,7 @@ public static class SetDoseStatusEndpoint
 {
     public static RouteGroupBuilder MapSetDoseStatus(this RouteGroupBuilder medicines)
     {
-        medicines.MapPut("/children/{childId:guid}/doses/{medicineId:guid}", async Task<Results<Ok<MedicineDoseOccurrence>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        medicines.MapPut("/children/{childId:guid}/doses/{medicineId:guid}", async Task<Results<Ok<MedicineDoseOccurrence>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             Guid medicineId,
@@ -21,6 +21,7 @@ public static class SetDoseStatusEndpoint
             TimeOnly time,
             SetDoseStatusRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = SetDoseStatus.FromClaims(principal, new UserId(childId), new MedicineId(medicineId), date, time, request.Status);
@@ -30,7 +31,7 @@ public static class SetDoseStatusEndpoint
             {
                 Result<MedicineDoseOccurrence>.Success(var occurrence) => TypedResults.Ok(occurrence),
                 Result<MedicineDoseOccurrence>.Forbidden => TypedResults.Forbid(),
-                Result<MedicineDoseOccurrence>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<MedicineDoseOccurrence>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<MedicineDoseOccurrence>.NotFound => TypedResults.NotFound(),
             };
         })

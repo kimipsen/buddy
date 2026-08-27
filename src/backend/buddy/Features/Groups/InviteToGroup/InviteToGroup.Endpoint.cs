@@ -12,11 +12,12 @@ public static class InviteToGroupEndpoint
 {
     public static RouteGroupBuilder MapInviteToGroup(this RouteGroupBuilder groups)
     {
-        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<GroupInviteResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<GroupInviteResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             InviteToGroupRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = InviteToGroup.FromClaims(principal, new GroupId(groupId), request.Email, request.Role);
@@ -27,7 +28,7 @@ public static class InviteToGroupEndpoint
                 Result<GroupInviteSummary>.Success(var invite) => TypedResults.Ok(GroupInviteResponse.FromSummary(invite)),
                 Result<GroupInviteSummary>.Forbidden => TypedResults.Forbid(),
                 Result<GroupInviteSummary>.NotFound => TypedResults.NotFound(),
-                Result<GroupInviteSummary>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<GroupInviteSummary>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("InviteToGroup");

@@ -1,6 +1,9 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Mealplans;
 
@@ -8,11 +11,17 @@ public static class AssignMealToSlotHandler
 {
     public static async Task<Result<MealPlanEntry>> Handle(
         AssignMealToSlot command,
+        IValidator<AssignMealToSlot> validator,
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<MealPlanEntry>.Validation(problem);
+        }
+
         if (command.UserId is not { } userId)
         {
             return new Result<MealPlanEntry>.NotFound();
@@ -51,7 +60,10 @@ public static class AssignMealToSlotHandler
 
         if (meal.IsArchived)
         {
-            return new Result<MealPlanEntry>.Validation("Cannot assign an archived meal.");
+            // State-dependent (needs the loaded Meal aggregate), so this stays as handler code
+            // rather than a FluentValidation rule -- see AssignPickup.ValidateRelationshipAsync
+            // for the same reasoning.
+            return new Result<MealPlanEntry>.Validation(ValidationProblem.Of("Cannot assign an archived meal."));
         }
 
         var after = new MealPlanAssignment(mealId, assignedBy, notes);

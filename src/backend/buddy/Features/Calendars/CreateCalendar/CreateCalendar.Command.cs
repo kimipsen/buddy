@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -22,5 +23,5 @@ public union CreateCalendarOutcome(CreateCalendarOutcome.Success, CreateCalendar
     public sealed record Success(Calendar Calendar);
     public sealed record Unauthenticated;
     public sealed record Forbidden;
-    public sealed record Validation(string Message);
+    public sealed record Validation(ValidationProblem Problem);
 }

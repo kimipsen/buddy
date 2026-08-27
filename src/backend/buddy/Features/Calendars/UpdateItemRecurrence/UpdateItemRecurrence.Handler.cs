@@ -1,7 +1,10 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Calendars;
 
@@ -9,15 +12,16 @@ public static class UpdateItemRecurrenceHandler
 {
     public static async Task<Result<CalendarItem>> Handle(
         UpdateItemRecurrence command,
+        IValidator<UpdateItemRecurrence> validator,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.Recurrence is { IntervalCount: < 1 })
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<CalendarItem>.Validation("Recurrence interval count must be at least 1.");
+            return new Result<CalendarItem>.Validation(problem);
         }
 
         if (command.UserId is not { } userId)

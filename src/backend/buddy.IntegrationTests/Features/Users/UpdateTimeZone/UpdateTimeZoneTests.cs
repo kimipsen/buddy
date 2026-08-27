@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -33,12 +34,16 @@ public sealed class UpdateTimeZoneTests(BuddyApiFixture fixture)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Patch.Json(new { TimeZoneId = "Not/A_Zone" }).ToUrl("/users/me/timezone");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("TimeZoneId", error.Details.Keys);
     }
 
     [Fact]

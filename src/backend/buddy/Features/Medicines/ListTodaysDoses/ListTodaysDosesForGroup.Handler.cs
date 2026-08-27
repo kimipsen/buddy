@@ -1,5 +1,8 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
+
+using FluentValidation;
 
 namespace buddy.Features.Medicines;
 
@@ -7,19 +10,15 @@ public static class ListTodaysDosesForGroupHandler
 {
     public static async Task<Result<IReadOnlyCollection<MedicineDoseOccurrence>>> Handle(
         ListTodaysDosesForGroup query,
+        IValidator<ListTodaysDosesForGroup> validator,
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
-        if (query.To < query.From)
+        if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
         {
-            return new Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Validation("'to' must not be before 'from'.");
-        }
-
-        if (query.To.DayNumber - query.From.DayNumber > ListTodaysDosesHandler.MaxRangeDays)
-        {
-            return new Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Validation($"The requested range cannot exceed {ListTodaysDosesHandler.MaxRangeDays} days.");
+            return new Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Validation(problem);
         }
 
         var resolved = await MedicineGroupAccess.ResolveAsync(query.GroupId, query.ChildId, query.UserId, groups, sharing, cancellationToken);

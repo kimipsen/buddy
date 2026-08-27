@@ -1,5 +1,8 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
+
+using FluentValidation;
 
 namespace buddy.Features.Medicines;
 
@@ -7,19 +10,15 @@ public static class RescheduleMedicineForGroupHandler
 {
     public static async Task<Result<MedicineSchedule>> Handle(
         RescheduleMedicineForGroup command,
+        IValidator<RescheduleMedicineForGroup> validator,
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
-        if (command.Times.Count == 0)
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<MedicineSchedule>.Validation("A medicine schedule requires at least one dose time.");
-        }
-
-        if (command.EndDate is { } end && end < command.StartDate)
-        {
-            return new Result<MedicineSchedule>.Validation("The end date cannot be before the start date.");
+            return new Result<MedicineSchedule>.Validation(problem);
         }
 
         var resolved = await MedicineGroupAccess.ResolveAsync(command.GroupId, command.ChildId, command.UserId, groups, sharing, cancellationToken);

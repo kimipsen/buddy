@@ -1,5 +1,8 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Guardians;
+
+using FluentValidation;
 
 namespace buddy.Features.Pickups;
 
@@ -11,18 +14,14 @@ public static class ListPickupScheduleHandler
 
     public static async Task<Result<IReadOnlyCollection<PickupOccurrence>>> Handle(
         ListPickupSchedule query,
+        IValidator<ListPickupSchedule> validator,
         IPickupScheduleEventStore pickups,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.To < query.From)
+        if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
         {
-            return new Result<IReadOnlyCollection<PickupOccurrence>>.Validation("'to' must not be before 'from'.");
-        }
-
-        if (query.To.DayNumber - query.From.DayNumber > MaxRangeDays)
-        {
-            return new Result<IReadOnlyCollection<PickupOccurrence>>.Validation($"The requested range cannot exceed {MaxRangeDays} days.");
+            return new Result<IReadOnlyCollection<PickupOccurrence>>.Validation(problem);
         }
 
         if (query.UserId is not { } userId)

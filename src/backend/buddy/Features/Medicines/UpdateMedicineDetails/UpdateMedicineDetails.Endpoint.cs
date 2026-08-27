@@ -14,12 +14,13 @@ public static class UpdateMedicineDetailsEndpoint
 {
     public static RouteGroupBuilder MapUpdateMedicineDetails(this RouteGroupBuilder medicines)
     {
-        medicines.MapPatch("/children/{childId:guid}/schedules/{medicineId:guid}/details", async Task<Results<Ok<MedicineScheduleResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        medicines.MapPatch("/children/{childId:guid}/schedules/{medicineId:guid}/details", async Task<Results<Ok<MedicineScheduleResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             Guid medicineId,
             UpdateMedicineDetailsRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = UpdateMedicineDetails.FromClaims(
@@ -37,7 +38,7 @@ public static class UpdateMedicineDetailsEndpoint
             {
                 Result<MedicineSchedule>.Success(var schedule) => TypedResults.Ok(MedicineScheduleResponse.FromSchedule(schedule)),
                 Result<MedicineSchedule>.Forbidden => TypedResults.Forbid(),
-                Result<MedicineSchedule>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<MedicineSchedule>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<MedicineSchedule>.NotFound => TypedResults.NotFound(),
             };
         })

@@ -1,6 +1,12 @@
 # Validation Rules
 
-Status: Analysis — awaiting decision
+Status: Implemented
+
+Both tracks below were adopted together rather than Track A alone: the team
+chose to adopt FluentValidation for command validation *and* build the
+structured error envelope, combined into one coherent change (see the
+implementation plan this analysis fed into, summarized in the "Recommendation"
+section's Track A/Track B split — both were done).
 
 ## Context
 

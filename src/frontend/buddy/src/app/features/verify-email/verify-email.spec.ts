@@ -218,8 +218,11 @@ describe('VerifyEmail', () => {
       expect(text(fixture)).not.toContain('Your email address is verified.');
     });
 
-    it('shows the raw backend error message verbatim for an HttpErrorResponse with a string body', async () => {
-      const serverError = new HttpErrorResponse({ error: 'This verification link has already been used.', status: 400 });
+    it('shows the backend validation message verbatim for an HttpErrorResponse with a structured error envelope body', async () => {
+      const serverError = new HttpErrorResponse({
+        error: { code: 'validation_error', message: 'This verification link has already been used.', details: {}, requestId: 'abc' },
+        status: 400
+      });
       const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) } });
       await settle(fixture);
 
@@ -230,7 +233,18 @@ describe('VerifyEmail', () => {
       expect(text(fixture)).not.toContain('Unable to verify this email. The link may have expired or already been used.');
     });
 
-    it('falls back to the generic error message when the HttpErrorResponse body is not a string', async () => {
+    it('falls back to the generic error message for an HttpErrorResponse with a plain string body', async () => {
+      const serverError = new HttpErrorResponse({ error: 'This verification link has already been used.', status: 400 });
+      const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) } });
+      await settle(fixture);
+
+      findButton(fixture, 'Verify email')!.click();
+      await settle(fixture);
+
+      expect(text(fixture)).toContain('Unable to verify this email. The link may have expired or already been used.');
+    });
+
+    it('falls back to the generic error message when the HttpErrorResponse body is an object with no message', async () => {
       const serverError = new HttpErrorResponse({ error: { code: 'TOKEN_EXPIRED' }, status: 400 });
       const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) } });
       await settle(fixture);

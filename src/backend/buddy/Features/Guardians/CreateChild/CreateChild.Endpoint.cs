@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Common;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -12,19 +13,13 @@ public static class CreateChildEndpoint
 {
     public static RouteGroupBuilder MapCreateChild(this RouteGroupBuilder children)
     {
-        children.MapPost("/", async Task<Results<Ok<ChildResponse>, UnauthorizedHttpResult, Conflict<string>, BadRequest<string>>> (
+        children.MapPost("/", async Task<Results<Ok<ChildResponse>, UnauthorizedHttpResult, Conflict<string>, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             CreateChildRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            if (string.IsNullOrWhiteSpace(request.GivenName)
-                || string.IsNullOrWhiteSpace(request.FamilyName)
-                || string.IsNullOrWhiteSpace(request.Username))
-            {
-                return TypedResults.BadRequest("GivenName, FamilyName, and Username are required.");
-            }
-
             var command = CreateChild.FromClaims(
                 principal,
                 request.GivenName.Trim(),
@@ -39,6 +34,7 @@ public static class CreateChildEndpoint
                     TypedResults.Ok(ChildResponse.FromChild(child, link, username, temporaryPassword)),
                 CreateChildOutcome.Unauthenticated => TypedResults.Unauthorized(),
                 CreateChildOutcome.UsernameUnavailable => TypedResults.Conflict("That username is already in use."),
+                CreateChildOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("CreateChild");

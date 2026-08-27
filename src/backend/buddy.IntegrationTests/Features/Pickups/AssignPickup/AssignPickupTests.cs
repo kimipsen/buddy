@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Pickups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
@@ -162,7 +163,9 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Equal("guardianId is not an active guardian of this child.", response.ReadAsJson<string>());
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["guardianId is not an active guardian of this child."], error.Details[""]);
     }
 
     [Fact]
@@ -184,7 +187,9 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(400);
         });
 
-        Assert.Equal("siblingChildId does not share an active guardian with this child.", response.ReadAsJson<string>());
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["siblingChildId does not share an active guardian with this child."], error.Details[""]);
     }
 
     [Fact]

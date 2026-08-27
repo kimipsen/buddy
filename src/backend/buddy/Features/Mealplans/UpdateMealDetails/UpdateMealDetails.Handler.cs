@@ -1,7 +1,10 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Calendars;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
+
+using FluentValidation;
 
 namespace buddy.Features.Mealplans;
 
@@ -9,13 +12,14 @@ public static class UpdateMealDetailsHandler
 {
     public static async Task<Result<Meal>> Handle(
         UpdateMealDetails command,
+        IValidator<UpdateMealDetails> validator,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(command.Name))
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<Meal>.Validation("A meal requires a name.");
+            return new Result<Meal>.Validation(problem);
         }
 
         if (command.UserId is not { } userId)

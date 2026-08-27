@@ -13,11 +13,12 @@ public static class CreateItemEndpoint
 {
     public static RouteGroupBuilder MapCreateItem(this RouteGroupBuilder calendars)
     {
-        calendars.MapPost("/{calendarId:guid}/items", async Task<Results<Ok<CalendarItemResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        calendars.MapPost("/{calendarId:guid}/items", async Task<Results<Ok<CalendarItemResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid calendarId,
             CreateItemRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = CreateItem.FromClaims(
@@ -40,7 +41,7 @@ public static class CreateItemEndpoint
             {
                 Result<CalendarItem>.Success(var item) => TypedResults.Ok(CalendarItemResponse.FromItem(item)),
                 Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
-                Result<CalendarItem>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<CalendarItem>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<CalendarItem>.NotFound => TypedResults.NotFound(),
             };
         })

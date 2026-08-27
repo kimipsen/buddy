@@ -1,6 +1,9 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
+
+using FluentValidation;
 
 namespace buddy.Features.Mealplans;
 
@@ -8,20 +11,16 @@ public static class ListMealPlanForGroupHandler
 {
     public static async Task<Result<IReadOnlyCollection<MealPlanEntry>>> Handle(
         ListMealPlanForGroup query,
+        IValidator<ListMealPlanForGroup> validator,
         IMealPlanEventStore mealPlans,
         IMealEventStore meals,
         IGuardianLinkEventStore guardians,
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
-        if (query.To < query.From)
+        if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
         {
-            return new Result<IReadOnlyCollection<MealPlanEntry>>.Validation("'to' must not be before 'from'.");
-        }
-
-        if (query.To.DayNumber - query.From.DayNumber > ListMealPlanHandler.MaxRangeDays)
-        {
-            return new Result<IReadOnlyCollection<MealPlanEntry>>.Validation($"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days.");
+            return new Result<IReadOnlyCollection<MealPlanEntry>>.Validation(problem);
         }
 
         var resolved = await MealplanGroupAccess.ResolveViewAsync(query.GroupId, query.UserId, groups, mealPlans, cancellationToken);

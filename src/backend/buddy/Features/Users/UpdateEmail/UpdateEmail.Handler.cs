@@ -1,12 +1,25 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Email;
+
+using FluentValidation;
 
 namespace buddy.Features.Users;
 
 public static class UpdateEmailHandler
 {
-    public static async Task<Result<User>> Handle(UpdateEmail command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(
+        UpdateEmail command,
+        IValidator<UpdateEmail> validator,
+        IUserEventStore events,
+        IEmailSender emailSender,
+        CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<User>.Validation(problem);
+        }
+
         if (command.UserId is not { } userId)
         {
             return new Result<User>.NotFound();

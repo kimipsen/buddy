@@ -14,11 +14,12 @@ public static class CreateMealForGroupEndpoint
 {
     public static RouteGroupBuilder MapCreateMealForGroup(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapPost("/groups/{groupId:guid}/meals", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<string>>> (
+        mealplans.MapPost("/groups/{groupId:guid}/meals", async Task<Results<Ok<MealResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             CreateMealRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = CreateMealForGroup.FromClaims(
@@ -34,7 +35,7 @@ public static class CreateMealForGroupEndpoint
             return result switch
             {
                 Result<Meal>.Success(var meal) => TypedResults.Ok(MealResponse.FromMeal(meal)),
-                Result<Meal>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<Meal>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<Meal>.NotFound => TypedResults.NotFound(),
                 // Reachable for a caller whose group policy grants View but not Manage.
                 Result<Meal>.Forbidden => TypedResults.Forbid(),

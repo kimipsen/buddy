@@ -13,12 +13,13 @@ public static class ListPickupScheduleEndpoint
 {
     public static RouteGroupBuilder MapListPickupSchedule(this RouteGroupBuilder pickups)
     {
-        pickups.MapGet("/children/{childId:guid}/schedule", async Task<Results<Ok<IReadOnlyCollection<PickupOccurrence>>, NotFound, BadRequest<string>>> (
+        pickups.MapGet("/children/{childId:guid}/schedule", async Task<Results<Ok<IReadOnlyCollection<PickupOccurrence>>, NotFound, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             DateOnly from,
             DateOnly to,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var query = ListPickupSchedule.FromClaims(principal, new UserId(childId), from, to);
@@ -27,7 +28,7 @@ public static class ListPickupScheduleEndpoint
             return result switch
             {
                 Result<IReadOnlyCollection<PickupOccurrence>>.Success(var occurrences) => TypedResults.Ok(occurrences),
-                Result<IReadOnlyCollection<PickupOccurrence>>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<IReadOnlyCollection<PickupOccurrence>>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 Result<IReadOnlyCollection<PickupOccurrence>>.NotFound => TypedResults.NotFound(),
                 // CheckView never returns Forbidden, so this is unreachable today -- there's no
                 // ForbidHttpResult in this route's declared results, so it collapses to NotFound.

@@ -13,11 +13,12 @@ public static class InviteGuardianEndpoint
 {
     public static RouteGroupBuilder MapInviteGuardian(this RouteGroupBuilder children)
     {
-        children.MapPost("/{childId:guid}/guardian-invites", async Task<Results<Ok<GuardianInviteResponse>, NotFound, BadRequest<string>>> (
+        children.MapPost("/{childId:guid}/guardian-invites", async Task<Results<Ok<GuardianInviteResponse>, NotFound, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             InviteGuardianRequest request,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = InviteGuardian.FromClaims(principal, new UserId(childId), request.Email, request.Kind);
@@ -27,7 +28,7 @@ public static class InviteGuardianEndpoint
             {
                 Result<GuardianInviteSummary>.Success(var invite) => TypedResults.Ok(GuardianInviteResponse.FromSummary(invite)),
                 Result<GuardianInviteSummary>.NotFound => TypedResults.NotFound(),
-                Result<GuardianInviteSummary>.Validation(var message) => TypedResults.BadRequest(message),
+                Result<GuardianInviteSummary>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
                 // InviteGuardianHandler never produces Forbidden -- there's no ForbidHttpResult
                 // in this route's declared results, so this collapses to NotFound.
                 Result<GuardianInviteSummary>.Forbidden => TypedResults.NotFound(),
