@@ -76,6 +76,11 @@ tasks last. Task completion is implemented: toggling a row calls
 `CalendarsService.setTaskCompletion()` for today's occurrence and updates the
 local result after the server succeeds.
 
+A template-scheduled task's occurrences are grouped by `itemId` via
+`groupTaskRuns()` (`core/task-run.ts`) so its subtasks render nested under the
+parent task's title instead of as separate, unlabeled checklist rows — the
+same grouping the child and guardian calendar agendas already use.
+
 This closes the blocker recorded in the original analysis. `CalendarItem` now
 has a per-occurrence completion operation in the backend and the child can use
 it through the existing calendar authorization model.
