@@ -101,9 +101,27 @@ describe('ChildrenOverview', () => {
     expect(compiled.textContent).toContain('Sam Kid');
     expect(compiled.textContent).toContain('Alex Kid');
 
-    const badges = compiled.querySelectorAll('li span:last-child');
+    // Direct-child combinators, not a bare `span:last-child` -- the wrapper span around the
+    // badges is itself a last-child of <li>, and (see the next test) the "Linked" span can have a
+    // star-badge sibling before it, so an unscoped selector matches extra spans it shouldn't.
+    const badges = compiled.querySelectorAll('li > span:last-child > span:last-child');
     expect(badges.length).toBe(2);
     badges.forEach((badge) => expect(badge.textContent).toContain('Linked'));
+  });
+
+  it('shows exactly one linked badge per child even when a star badge renders alongside it', async () => {
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+      progress: { getChildProgress: vi.fn(async () => ({ totalStars: 3, unlockedMilestones: [] })) }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('3');
+
+    const badges = compiled.querySelectorAll('li > span:last-child > span:last-child');
+    expect(badges).toHaveLength(1);
+    expect(badges[0].textContent).toContain('Linked');
   });
 
   it('does not show the empty state or an error once children load successfully', async () => {
