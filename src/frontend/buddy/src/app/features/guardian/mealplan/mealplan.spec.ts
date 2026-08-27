@@ -14,7 +14,8 @@ describe('GuardianMealplan', () => {
     name: { givenName: 'Kim', familyName: 'Kid' },
     guardianLinkId: 'link-1',
     kind: 0,
-    language: 'en'
+    language: 'en',
+    timeZoneId: 'UTC'
   };
 
   function groupSummary(overrides: Partial<GroupSummary> = {}): GroupSummary {

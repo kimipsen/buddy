@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { listTimeZoneIds } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, isSupportedLanguage } from '../../../../core/i18n/language';
 import {
@@ -31,6 +32,7 @@ export class ManageChildren implements OnInit {
   protected readonly kindLabels = KIND_LABELS;
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly languageNames = LANGUAGE_NAMES;
+  protected readonly timeZoneIds = listTimeZoneIds();
 
   protected readonly children = signal<ChildSummary[]>([]);
   protected readonly childrenLoading = signal(true);
@@ -49,6 +51,9 @@ export class ManageChildren implements OnInit {
 
   protected readonly savingLanguageChildId = signal<string | null>(null);
   protected readonly languageErrorByChildId = signal<Record<string, string | null>>({});
+
+  protected readonly savingTimeZoneChildId = signal<string | null>(null);
+  protected readonly timeZoneErrorByChildId = signal<Record<string, string | null>>({});
 
   protected readonly passwordCopied = signal(false);
 
@@ -140,6 +145,28 @@ export class ManageChildren implements OnInit {
       this.languageErrorByChildId.update((byChildId) => ({ ...byChildId, [childId]: 'admin.manageChildren.language.error' }));
     } finally {
       this.savingLanguageChildId.set(null);
+    }
+  }
+
+  protected timeZoneErrorFor(childId: string): string | null {
+    return this.timeZoneErrorByChildId()[childId] ?? null;
+  }
+
+  protected async changeTimeZone(childId: string, timeZoneId: string): Promise<void> {
+    if (!timeZoneId) {
+      return;
+    }
+
+    this.savingTimeZoneChildId.set(childId);
+    this.timeZoneErrorByChildId.update((byChildId) => ({ ...byChildId, [childId]: null }));
+
+    try {
+      const updated = await this.guardians.updateChildTimeZone(childId, timeZoneId);
+      this.children.update((list) => list.map((child) => (child.id === childId ? updated : child)));
+    } catch {
+      this.timeZoneErrorByChildId.update((byChildId) => ({ ...byChildId, [childId]: 'admin.manageChildren.timeZone.error' }));
+    } finally {
+      this.savingTimeZoneChildId.set(null);
     }
   }
 

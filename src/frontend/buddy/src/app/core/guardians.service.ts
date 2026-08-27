@@ -19,6 +19,7 @@ export interface ChildSummary {
   guardianLinkId: string;
   kind: GuardianKind;
   language: string;
+  timeZoneId: string;
 }
 
 export interface GuardianSummary {
@@ -106,6 +107,12 @@ export class GuardiansService {
   updateChildLanguage(childId: string, language: string): Promise<ChildSummary> {
     return firstValueFrom(
       this.http.patch<ChildSummary>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/language`, { language })
+    );
+  }
+
+  updateChildTimeZone(childId: string, timeZoneId: string): Promise<ChildSummary> {
+    return firstValueFrom(
+      this.http.patch<ChildSummary>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/timezone`, { timeZoneId })
     );
   }
 

@@ -78,6 +78,10 @@ export const admin = {
       label: 'Sprog',
       error: 'Kunne ikke opdatere barnets sprog.'
     },
+    timeZone: {
+      label: 'Tidszone',
+      error: 'Kunne ikke opdatere barnets tidszone.'
+    },
     givenNamePlaceholder: 'Fornavn',
     familyNamePlaceholder: 'Efternavn',
     usernamePlaceholder: 'Login-brugernavn',

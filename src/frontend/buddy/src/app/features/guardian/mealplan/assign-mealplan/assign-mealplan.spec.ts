@@ -390,7 +390,7 @@ describe('AssignMealplan', () => {
   describe('sibling ratings on past days', () => {
     it("resolves a rating's child name for a past day in family scope", async () => {
       const children: ChildSummary[] = [
-        { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en' }
+        { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC' }
       ];
 
       const { fixture } = await setup({

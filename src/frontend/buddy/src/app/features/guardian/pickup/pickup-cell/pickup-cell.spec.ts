@@ -11,7 +11,7 @@ describe('PickupCell', () => {
   }
 
   function sibling(id: string, givenName: string): ChildSummary {
-    return { id, name: { givenName, familyName: 'Kid' }, guardianLinkId: `link-${id}`, kind: 0, language: 'en' };
+    return { id, name: { givenName, familyName: 'Kid' }, guardianLinkId: `link-${id}`, kind: 0, language: 'en', timeZoneId: 'UTC' };
   }
 
   function occurrence(overrides: Partial<PickupOccurrence> = {}): PickupOccurrence {

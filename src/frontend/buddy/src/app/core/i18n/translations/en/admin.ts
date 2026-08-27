@@ -78,6 +78,10 @@ export const admin = {
       label: 'Language',
       error: 'Unable to update this child\'s language.'
     },
+    timeZone: {
+      label: 'Time zone',
+      error: 'Unable to update this child\'s time zone.'
+    },
     givenNamePlaceholder: 'Given name',
     familyNamePlaceholder: 'Family name',
     usernamePlaceholder: 'Login username',

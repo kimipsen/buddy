@@ -12,7 +12,7 @@ describe('ManageMedicines', () => {
   const DEFAULT_COLOR = '#f43f5e';
 
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
-    return { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', ...overrides };
+    return { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC', ...overrides };
   }
 
   function schedule(overrides: Partial<MedicineSchedule> = {}): MedicineSchedule {

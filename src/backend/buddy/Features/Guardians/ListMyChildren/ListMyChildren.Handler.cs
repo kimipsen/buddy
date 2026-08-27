@@ -1,3 +1,4 @@
+using buddy.Features.Calendars;
 using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
@@ -21,7 +22,7 @@ public static class ListMyChildrenHandler
 
             if (User.Rehydrate(childEvents) is { IsDeleted: false } child)
             {
-                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.ResolvedLanguage));
+                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.ResolvedLanguage, child.ResolvedTimeZoneId));
             }
         }
 
@@ -29,4 +30,4 @@ public static class ListMyChildrenHandler
     }
 }
 
-public sealed record ChildSummary(UserId Id, Name Name, GuardianLinkId GuardianLinkId, GuardianKind Kind, Language Language);
+public sealed record ChildSummary(UserId Id, Name Name, GuardianLinkId GuardianLinkId, GuardianKind Kind, Language Language, TimeZoneId TimeZoneId);

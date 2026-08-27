@@ -17,6 +17,7 @@ describe('DosesToday', () => {
       guardianLinkId: 'link-1',
       kind: 0,
       language: 'en',
+      timeZoneId: 'UTC',
       ...overrides
     };
   }

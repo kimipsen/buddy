@@ -38,6 +38,7 @@ describe('ManageGroups', () => {
       guardianLinkId: 'link-1',
       kind: 1,
       language: 'en',
+      timeZoneId: 'UTC',
       ...overrides
     };
   }

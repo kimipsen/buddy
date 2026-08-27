@@ -1,12 +1,13 @@
 using buddy.Common;
+using buddy.Features.Calendars;
 using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
 
-public static class UpdateChildLanguageHandler
+public static class UpdateChildTimeZoneHandler
 {
     public static async Task<Result<ChildSummary>> Handle(
-        UpdateChildLanguage command, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
+        UpdateChildTimeZone command, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
     {
         if (command.GuardianId is not { } guardianId)
         {
@@ -22,9 +23,9 @@ public static class UpdateChildLanguageHandler
             return new Result<ChildSummary>.NotFound();
         }
 
-        if (!SupportedLanguages.IsValid(command.Language))
+        if (!TimeZoneResolution.IsValid(command.TimeZoneId))
         {
-            return new Result<ChildSummary>.Validation($"'{command.Language.Value}' is not a supported language.");
+            return new Result<ChildSummary>.Validation($"'{command.TimeZoneId.Value}' is not a recognized IANA time zone identifier.");
         }
 
         var existingEvents = await users.ReadAsync(command.ChildId, cancellationToken);
@@ -35,11 +36,11 @@ public static class UpdateChildLanguageHandler
             return new Result<ChildSummary>.NotFound();
         }
 
-        if (child.ResolvedLanguage != command.Language)
+        if (child.ResolvedTimeZoneId != command.TimeZoneId)
         {
-            var languageUpdated = new LanguageUpdated(command.ChildId, child.ResolvedLanguage, command.Language, DateTimeOffset.UtcNow);
-            await users.AppendAsync(command.ChildId, [languageUpdated], cancellationToken);
-            child = child with { Language = command.Language };
+            var timeZoneUpdated = new TimeZoneUpdated(command.ChildId, child.ResolvedTimeZoneId, command.TimeZoneId, DateTimeOffset.UtcNow);
+            await users.AppendAsync(command.ChildId, [timeZoneUpdated], cancellationToken);
+            child = child with { TimeZoneId = command.TimeZoneId };
         }
 
         return new Result<ChildSummary>.Success(new ChildSummary(

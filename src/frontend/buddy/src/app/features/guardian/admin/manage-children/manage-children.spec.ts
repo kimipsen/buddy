@@ -13,6 +13,7 @@ describe('ManageChildren', () => {
       guardianLinkId: 'link-1',
       kind: 0,
       language: 'en',
+      timeZoneId: 'UTC',
       ...overrides
     };
   }
@@ -35,6 +36,7 @@ describe('ManageChildren', () => {
       guardianLinkId: 'link-new',
       kind: 0,
       language: 'en',
+      timeZoneId: 'UTC',
       username: 'ada.kid',
       temporaryPassword: 'temp-pass-123',
       ...overrides
@@ -51,6 +53,7 @@ describe('ManageChildren', () => {
       createChild: vi.fn(async () => createdChild()),
       revokeChild: vi.fn(async () => undefined),
       updateChildLanguage: vi.fn(async (childId: string, language: string) => child({ id: childId, language })),
+      updateChildTimeZone: vi.fn(async (childId: string, timeZoneId: string) => child({ id: childId, timeZoneId })),
       listGuardianInvites: vi.fn(async () => []),
       inviteGuardian: vi.fn(async () => invite()),
       revokeGuardianInvite: vi.fn(async () => undefined),
@@ -101,6 +104,14 @@ describe('ManageChildren', () => {
   // Locates the child's primary <li> (name, language select, remove/invite-toggle buttons) by the
   // full name shown in its first <span>. The invite panel for that child renders as a *separate*
   // sibling <li>, not nested inside this one.
+  function childLanguageSelect(compiled: HTMLElement, fullName: string): HTMLSelectElement {
+    return childRow(compiled, fullName).querySelectorAll<HTMLSelectElement>('select')[0];
+  }
+
+  function childTimeZoneSelect(compiled: HTMLElement, fullName: string): HTMLSelectElement {
+    return childRow(compiled, fullName).querySelectorAll<HTMLSelectElement>('select')[1];
+  }
+
   function childRow(compiled: HTMLElement, fullName: string): HTMLElement {
     const row = Array.from(compiled.querySelectorAll('li')).find((li) => li.querySelector('span')?.textContent?.trim() === fullName);
     if (!row) {
@@ -196,8 +207,8 @@ describe('ManageChildren', () => {
     expect(compiled.textContent).toContain('Sam Kid');
     expect(compiled.textContent).toContain('Ada Kid');
 
-    const samSelect = childRow(compiled, 'Sam Kid').querySelector<HTMLSelectElement>('select')!;
-    const adaSelect = childRow(compiled, 'Ada Kid').querySelector<HTMLSelectElement>('select')!;
+    const samSelect = childLanguageSelect(compiled, 'Sam Kid');
+    const adaSelect = childLanguageSelect(compiled, 'Ada Kid');
     expect(samSelect.value).toBe('en');
     expect(adaSelect.value).toBe('da');
   });
@@ -440,13 +451,13 @@ describe('ManageChildren', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const select = childRow(compiled, 'Sam Kid').querySelector<HTMLSelectElement>('select')!;
+    const select = childLanguageSelect(compiled, 'Sam Kid');
     select.value = 'da';
     select.dispatchEvent(new Event('change'));
     await settle(fixture);
 
     expect(guardians.updateChildLanguage).toHaveBeenCalledWith('child-1', 'da');
-    expect(childRow(compiled, 'Sam Kid').querySelector<HTMLSelectElement>('select')!.value).toBe('da');
+    expect(childLanguageSelect(compiled, 'Sam Kid').value).toBe('da');
   });
 
   it('shows a per-child language error without affecting other children', async () => {
@@ -461,7 +472,7 @@ describe('ManageChildren', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const samSelect = childRow(compiled, 'Sam Kid').querySelector<HTMLSelectElement>('select')!;
+    const samSelect = childLanguageSelect(compiled, 'Sam Kid');
     samSelect.value = 'da';
     samSelect.dispatchEvent(new Event('change'));
     await settle(fixture);
@@ -481,7 +492,7 @@ describe('ManageChildren', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const select = childRow(compiled, 'Sam Kid').querySelector<HTMLSelectElement>('select')!;
+    const select = childLanguageSelect(compiled, 'Sam Kid');
     select.value = 'da';
     select.dispatchEvent(new Event('change'));
     await settle(fixture);
@@ -504,7 +515,7 @@ describe('ManageChildren', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const select = childRow(compiled, 'Sam Kid').querySelector<HTMLSelectElement>('select')!;
+    const select = childLanguageSelect(compiled, 'Sam Kid');
     select.value = 'da';
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
@@ -513,6 +524,79 @@ describe('ManageChildren', () => {
     expect(select.disabled).toBe(true);
 
     resolve(child({ language: 'da' }));
+    await settle(fixture);
+
+    expect(select.disabled).toBe(false);
+  });
+
+  // ----- Time zone change flow -----
+
+  it('renders each child with its current time zone selected', async () => {
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, timeZoneId: 'America/New_York' }),
+      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' }, timeZoneId: 'Europe/Copenhagen' })
+    ];
+    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => children) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(childTimeZoneSelect(compiled, 'Sam Kid').value).toBe('America/New_York');
+    expect(childTimeZoneSelect(compiled, 'Ada Kid').value).toBe('Europe/Copenhagen');
+  });
+
+  it('changes a child\'s time zone and reflects the updated value', async () => {
+    const updateChildTimeZone = vi.fn(async () => child({ timeZoneId: 'Europe/Copenhagen' }));
+    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildTimeZone } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const select = childTimeZoneSelect(compiled, 'Sam Kid');
+    select.value = 'Europe/Copenhagen';
+    select.dispatchEvent(new Event('change'));
+    await settle(fixture);
+
+    expect(guardians.updateChildTimeZone).toHaveBeenCalledWith('child-1', 'Europe/Copenhagen');
+    expect(childTimeZoneSelect(compiled, 'Sam Kid').value).toBe('Europe/Copenhagen');
+  });
+
+  it('shows a per-child time zone error without affecting other children', async () => {
+    const children = [child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }), child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } })];
+    const updateChildTimeZone = vi.fn(async (childId: string) => {
+      if (childId === 'child-1') {
+        return Promise.reject(new Error('boom'));
+      }
+      return child({ id: childId, timeZoneId: 'Europe/Copenhagen' });
+    });
+    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => children), updateChildTimeZone } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const samSelect = childTimeZoneSelect(compiled, 'Sam Kid');
+    samSelect.value = 'Europe/Copenhagen';
+    samSelect.dispatchEvent(new Event('change'));
+    await settle(fixture);
+
+    const samRow = childRow(compiled, 'Sam Kid');
+    const adaRow = childRow(compiled, 'Ada Kid');
+    expect(samRow.textContent).toContain('Unable to update this child\'s time zone.');
+    expect(adaRow.textContent).not.toContain('Unable to update this child\'s time zone.');
+  });
+
+  it('disables the time zone select while the change is in flight, and re-enables it once it settles', async () => {
+    const { promise, resolve } = deferred<ChildSummary>();
+    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildTimeZone: vi.fn(() => promise) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const select = childTimeZoneSelect(compiled, 'Sam Kid');
+    select.value = 'Europe/Copenhagen';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    fixture.detectChanges();
+
+    expect(select.disabled).toBe(true);
+
+    resolve(child({ timeZoneId: 'Europe/Copenhagen' }));
     await settle(fixture);
 
     expect(select.disabled).toBe(false);

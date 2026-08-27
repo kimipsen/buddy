@@ -12,7 +12,8 @@ describe('MealplanToday', () => {
     name: { givenName: 'Sam', familyName: 'Kid' },
     guardianLinkId: 'link-1',
     kind: 0,
-    language: 'en'
+    language: 'en',
+    timeZoneId: 'UTC'
   };
 
   function entry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {

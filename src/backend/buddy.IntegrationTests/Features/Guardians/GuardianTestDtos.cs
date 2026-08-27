@@ -9,7 +9,7 @@ internal sealed record NameDto(string GivenName, string FamilyName);
 
 internal sealed record ChildResponseDto(Guid Id, NameDto Name, Guid GuardianLinkId, GuardianKind Kind, string Username, string TemporaryPassword);
 
-internal sealed record ChildSummaryDto(Guid Id, NameDto Name, Guid GuardianLinkId, GuardianKind Kind, string Language);
+internal sealed record ChildSummaryDto(Guid Id, NameDto Name, Guid GuardianLinkId, GuardianKind Kind, string Language, string TimeZoneId);
 
 internal sealed record GuardianSummaryDto(Guid Id, NameDto Name, Guid GuardianLinkId, GuardianKind Kind);
 

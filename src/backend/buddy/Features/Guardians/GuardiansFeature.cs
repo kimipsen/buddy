@@ -36,6 +36,7 @@ public static class GuardiansFeature
         children.MapListChildGuardians();
         children.MapRevokeGuardianLink();
         children.MapUpdateChildLanguage();
+        children.MapUpdateChildTimeZone();
         children.MapInviteGuardian();
         children.MapListGuardianInvites();
         children.MapRevokeGuardianInvite();

@@ -1,0 +1,78 @@
+using Alba;
+
+using buddy.IntegrationTests.Features.Guardians;
+using buddy.IntegrationTests.Fixtures;
+using buddy.IntegrationTests.Meta;
+
+using Xunit;
+
+namespace buddy.IntegrationTests.Features.Guardians.UpdateChildTimeZone;
+
+[Collection(BuddyApiCollection.Name)]
+public sealed class UpdateChildTimeZoneTests(BuddyApiFixture fixture)
+{
+    [Fact]
+    [CoversEndpoint("UpdateChildTimeZone")]
+    public async Task Updates_the_childs_time_zone()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { TimeZoneId = "Europe/Copenhagen" }).ToUrl($"/users/me/children/{child.Id}/timezone");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal("Europe/Copenhagen", response.ReadAsJson<ChildSummaryDto>().TimeZoneId);
+
+        var listResponse = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url("/users/me/children/");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal("Europe/Copenhagen", Assert.Single(listResponse.ReadAsJson<ChildSummaryDto[]>()).TimeZoneId);
+    }
+
+    [Fact]
+    public async Task Rejects_an_unrecognized_time_zone()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { TimeZoneId = "Not/AZone" }).ToUrl($"/users/me/children/{child.Id}/timezone");
+            _.StatusCodeShouldBe(400);
+        });
+    }
+
+    [Fact]
+    public async Task Returns_not_found_for_a_child_the_caller_does_not_guard()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var (_, otherGuardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var otherChild = await GuardianTestHelpers.CreateChildAsync(fixture, otherGuardianToken, "Sam");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { TimeZoneId = "Europe/Copenhagen" }).ToUrl($"/users/me/children/{otherChild.Id}/timezone");
+            _.StatusCodeShouldBe(404);
+        });
+    }
+
+    [Fact]
+    public async Task Requires_authentication()
+    {
+        await fixture.Host.Scenario(_ =>
+        {
+            _.Patch.Json(new { TimeZoneId = "Europe/Copenhagen" }).ToUrl($"/users/me/children/{Guid.NewGuid()}/timezone");
+            _.StatusCodeShouldBe(401);
+        });
+    }
+}

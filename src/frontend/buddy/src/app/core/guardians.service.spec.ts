@@ -42,7 +42,7 @@ describe('GuardiansService', () => {
   describe('listMyChildren', () => {
     it('GETs the caller’s children and resolves them', async () => {
       const children: ChildSummary[] = [
-        { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en' }
+        { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC' }
       ];
 
       const promise = service.listMyChildren();
@@ -154,6 +154,7 @@ describe('GuardiansService', () => {
         guardianLinkId: 'link-3',
         kind: 0,
         language: 'en',
+        timeZoneId: 'UTC',
         username: 'sam.kid',
         temporaryPassword: 'temp-pass-123'
       };
@@ -206,7 +207,8 @@ describe('GuardiansService', () => {
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
         kind: 0,
-        language: 'da'
+        language: 'da',
+        timeZoneId: 'UTC'
       };
 
       const promise = service.updateChildLanguage('child-1', 'da');
@@ -223,6 +225,37 @@ describe('GuardiansService', () => {
       const promise = service.updateChildLanguage('child-1', 'xx');
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/language`);
+      req.flush('invalid', { status: 400, statusText: 'Bad Request' });
+
+      await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
+    });
+  });
+
+  describe('updateChildTimeZone', () => {
+    it('PATCHes the time zone and resolves the updated child', async () => {
+      const updated: ChildSummary = {
+        id: 'child-1',
+        name: { givenName: 'Sam', familyName: 'Kid' },
+        guardianLinkId: 'link-1',
+        kind: 0,
+        language: 'en',
+        timeZoneId: 'Europe/Copenhagen'
+      };
+
+      const promise = service.updateChildTimeZone('child-1', 'Europe/Copenhagen');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/timezone`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ timeZoneId: 'Europe/Copenhagen' });
+      req.flush(updated);
+
+      await expect(promise).resolves.toEqual(updated);
+    });
+
+    it('rejects on an unrecognized time zone', async () => {
+      const promise = service.updateChildTimeZone('child-1', 'Not/AZone');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/timezone`);
       req.flush('invalid', { status: 400, statusText: 'Bad Request' });
 
       await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
