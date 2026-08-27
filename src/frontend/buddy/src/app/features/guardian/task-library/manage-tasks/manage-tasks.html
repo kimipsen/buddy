@@ -31,27 +31,34 @@
         @for (template of templates(); track template.id) {
           <li class="rounded-lg border border-slate-200" [class.opacity-60]="template.isArchived">
             @if (editingTemplateId() === template.id) {
+              <!--
+                Plain [value]/(input) rather than this file's usual [ngModel]/(ngModelChange):
+                this form (unlike the always-present create-template form) is only mounted once
+                editingTemplateId() flips true, and NgModel's onChange wiring isn't reliably ready
+                for a keystroke dispatched in the same tick a freshly-toggled @if mounts it, which
+                dropped edits silently. A native input listener has no such registration delay.
+              -->
               <form class="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_4rem_3rem_auto_auto]" (ngSubmit)="saveTemplate(template.id)">
                 <input
                   type="text"
                   name="editTemplateName"
                   class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  [ngModel]="editTemplateName()"
-                  (ngModelChange)="editTemplateName.set($event)"
+                  [value]="editTemplateName()"
+                  (input)="editTemplateName.set($any($event.target).value)"
                 />
                 <input
                   type="text"
                   name="editTemplateIcon"
                   class="rounded-lg border border-slate-300 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  [ngModel]="editTemplateIcon()"
-                  (ngModelChange)="editTemplateIcon.set($event)"
+                  [value]="editTemplateIcon()"
+                  (input)="editTemplateIcon.set($any($event.target).value)"
                 />
                 <input
                   type="color"
                   name="editTemplateColor"
                   class="h-full w-full rounded-lg border border-slate-300 p-1"
-                  [ngModel]="editTemplateColor()"
-                  (ngModelChange)="editTemplateColor.set($event)"
+                  [value]="editTemplateColor()"
+                  (input)="editTemplateColor.set($any($event.target).value)"
                 />
                 <button
                   type="submit"
