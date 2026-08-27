@@ -43,7 +43,8 @@ The screen supports:
   date;
 - editing details, schedule, and recurrence through the corresponding backend
   operations;
-- task completion from the agenda;
+- task completion from the agenda, with the checkbox disabled for occurrences
+  due on a future day (the backend rejects marking those complete);
 - deletion with confirmation.
 
 Calendar administration remains separate under `/guardian/admin`. Creating or

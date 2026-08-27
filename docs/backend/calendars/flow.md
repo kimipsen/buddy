@@ -58,6 +58,7 @@ sequenceDiagram
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/details` | Updates an item's name, description, or visual metadata. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/schedule` | Reschedules an item or changes time/date placement. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings. |
+| `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a task occurrence complete or incomplete; rejects marking a future occurrence complete. |
 | `DELETE` | `/calendars/{calendarId}/items/{itemId}` | Soft-deletes an item. |
 | `POST` | `/calendars/{calendarId}/ical-tokens` | Creates an iCal feed token. |
 | `GET` | `/calendars/{calendarId}/ical-tokens` | Lists active iCal token metadata. |
@@ -83,6 +84,7 @@ Calendar access is resolved against the calendar's member list and, where releva
 - `MemberRoleRevoked`
 - `EventItemCreated`
 - `TaskItemCreated`
+- `TaskCompletionChanged`
 - `ItemDetailsUpdated`
 - `EventRescheduled`
 - `TaskRescheduled`
