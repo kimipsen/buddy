@@ -495,7 +495,10 @@ export class CalendarAgenda {
     this.confirmingDeleteItemId.set(null);
   }
 
-  protected async confirmDeleteItem(occurrence: CalendarOccurrence): Promise<void> {
+  // Accepts anything carrying itemId/calendarId -- both a single CalendarOccurrence and a
+  // TaskRun (the grouped view of a template-scheduled item's subtask occurrences) qualify, since
+  // deleting always targets the whole scheduled item, never an individual subtask.
+  protected async confirmDeleteItem(occurrence: Pick<CalendarOccurrence, 'itemId' | 'calendarId'>): Promise<void> {
     this.deletingItemId.set(occurrence.itemId);
     this.error.set(null);
 

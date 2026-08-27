@@ -86,6 +86,36 @@
                         <span class="text-lg leading-none">{{ run.icon }}</span>
                         <span class="font-semibold">{{ run.parentTitle }}</span>
                         <span class="text-xs text-slate-400">{{ run.calendarName }}</span>
+
+                        <div class="ml-auto flex items-center gap-2">
+                          @if (confirmingDeleteItemId() === run.itemId) {
+                            <span class="whitespace-nowrap text-xs text-slate-500">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
+                            <button
+                              type="button"
+                              class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                              [disabled]="deletingItemId() === run.itemId"
+                              (click)="confirmDeleteItem(run)"
+                            >
+                              {{ 'calendar.agenda.delete.confirmButton' | translate }}
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                              [disabled]="deletingItemId() === run.itemId"
+                              (click)="cancelDeleteItem()"
+                            >
+                              {{ 'calendar.agenda.delete.cancelButton' | translate }}
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="text-xs font-semibold text-red-600 hover:text-red-700"
+                              (click)="requestDeleteItem(run.itemId)"
+                            >
+                              {{ 'calendar.agenda.delete.button' | translate }}
+                            </button>
+                          }
+                        </div>
                       </div>
                       <ul class="ml-4 space-y-1.5 border-l-2 border-slate-200 pl-3">
                         @for (subtask of run.subtasks; track keyFor(subtask)) {

@@ -1066,6 +1066,31 @@ describe('CalendarAgenda', () => {
       expect(afterToggle[1].checked).toBe(false);
       expect(afterToggle[2].checked).toBe(false);
     });
+
+    it('can delete a template-scheduled run from its grouped block, same confirm flow as a plain item', async () => {
+      const subtasks = [
+        subtaskOccurrence({ subtaskId: 'sub-1', title: 'Brush teeth', dueAt: `${today}T08:00:00Z`, calendarId: 'cal-1' }),
+        subtaskOccurrence({ subtaskId: 'sub-2', title: 'Get dressed', dueAt: `${today}T08:10:00Z`, calendarId: 'cal-1' })
+      ];
+
+      const { fixture, calendars } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => subtasks) } });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Morning routine');
+      findButtonByText(compiled, 'Delete')!.click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Delete this?');
+      findButtonByText(compiled, 'Confirm')!.click();
+      await settle(fixture);
+
+      // Deleting a run targets the whole scheduled item (run-1) by its itemId/calendarId --
+      // never a single subtask -- exactly like deleting a plain occurrence.
+      expect(calendars.deleteItem).toHaveBeenCalledWith('cal-1', 'run-1');
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Morning routine');
+    });
   });
 
   // ----- Template-mode task creation -----
