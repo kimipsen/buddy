@@ -18,7 +18,7 @@ internal sealed record GroupResponseDto(
     Dictionary<GroupRole, MealplanAccessTier> MealplanPermissionPolicy,
     Dictionary<GroupRole, MedicineAccessTier> MedicinePermissionPolicy);
 
-internal sealed record GroupMemberDto(Guid UserId, GroupRole Role);
+internal sealed record GroupMemberDto(Guid UserId, string GivenName, string FamilyName, GroupRole Role, bool IsChild);
 
 internal sealed record GroupSummaryDto(Guid Id, string Name, GroupRole Role);
 

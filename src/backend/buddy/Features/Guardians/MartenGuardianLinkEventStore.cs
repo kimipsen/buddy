@@ -74,6 +74,25 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<UserId>> FilterChildrenAsync(IReadOnlyCollection<UserId> userIds, CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+        {
+            return [];
+        }
+
+        await using var session = store.QuerySession();
+        var ids = userIds.Select(id => id.Value).ToArray();
+
+        var childIds = await session.Query<GuardianLinkDocument>()
+            .Where(d => ids.Contains(d.ChildId) && !d.IsRevoked)
+            .Select(d => d.ChildId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return [.. childIds.Select(id => new UserId(id))];
+    }
+
     public async Task<(IReadOnlyCollection<UserEvent> UserEvents, IReadOnlyCollection<GuardianEvent> GuardianEvents)> CreateChildAndLinkAsync(
         KeycloakSubject childSubject,
         UserId childId,

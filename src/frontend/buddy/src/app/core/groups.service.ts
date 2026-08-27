@@ -18,7 +18,10 @@ export interface GroupSummary {
 
 export interface GroupMember {
   userId: string;
+  givenName: string;
+  familyName: string;
   role: GroupRole;
+  isChild: boolean;
 }
 
 // Unlike GroupRole itself, dictionary KEYS of type GroupRole serialize as the enum's member name

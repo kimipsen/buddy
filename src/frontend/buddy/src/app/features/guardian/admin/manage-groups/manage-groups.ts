@@ -91,6 +91,7 @@ export class ManageGroups implements OnInit {
 
   protected readonly myChildren = signal<ChildSummary[]>([]);
   protected readonly expandedChildrenGroupId = signal<string | null>(null);
+  protected readonly expandedMembersGroupId = signal<string | null>(null);
   protected readonly membersByGroupId = signal<Record<string, GroupMember[]>>({});
   protected readonly membersLoading = signal<string | null>(null);
   protected readonly membersError = signal<string | null>(null);
@@ -214,6 +215,24 @@ export class ManageGroups implements OnInit {
 
   protected membersFor(groupId: string): GroupMember[] {
     return this.membersByGroupId()[groupId] ?? [];
+  }
+
+  protected guardianMembersFor(groupId: string): GroupMember[] {
+    return this.membersFor(groupId).filter((m) => !m.isChild);
+  }
+
+  protected childMembersFor(groupId: string): GroupMember[] {
+    return this.membersFor(groupId).filter((m) => m.isChild);
+  }
+
+  protected toggleMembersPanel(groupId: string): void {
+    if (this.expandedMembersGroupId() === groupId) {
+      this.expandedMembersGroupId.set(null);
+      return;
+    }
+
+    this.expandedMembersGroupId.set(groupId);
+    void this.loadMembers(groupId);
   }
 
   protected async addChild(groupId: string): Promise<void> {

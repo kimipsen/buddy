@@ -14,6 +14,6 @@ public sealed record CreateGroup(UserId? UserId, string Name)
 // existing resource here to hide behind an ambiguous 404, so an unauthenticated caller gets a 401.
 public union CreateGroupOutcome(CreateGroupOutcome.Success, CreateGroupOutcome.Unauthenticated)
 {
-    public sealed record Success(Group Group);
+    public sealed record Success(GroupWithMemberDetails Group);
     public sealed record Unauthenticated;
 }

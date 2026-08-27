@@ -28,6 +28,16 @@ export const admin = {
       cancelButton: 'Annuller',
       cancelError: 'Kunne ikke annullere invitationen.'
     },
+    members: {
+      showButton: 'Medlemmer',
+      hideButton: 'Luk',
+      title: 'Medlemmer',
+      loading: 'Indlæser medlemmer…',
+      loadError: 'Kunne ikke indlæse gruppens medlemmer.',
+      empty: 'Denne gruppe har endnu ingen medlemmer.',
+      guardiansTitle: 'Værger',
+      childrenTitle: 'Børn'
+    },
     children: {
       showButton: 'Tilføj et barn',
       hideButton: 'Luk',

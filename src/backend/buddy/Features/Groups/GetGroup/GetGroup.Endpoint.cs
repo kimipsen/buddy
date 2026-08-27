@@ -21,16 +21,16 @@ public static class GetGroupEndpoint
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
-            var result = await bus.InvokeAsync<Result<Group>>(GetGroup.FromClaims(principal, new GroupId(groupId)), cancellationToken);
+            var result = await bus.InvokeAsync<Result<GroupWithMemberDetails>>(GetGroup.FromClaims(principal, new GroupId(groupId)), cancellationToken);
 
             return result switch
             {
-                Result<Group>.Success(var group) => TypedResults.Ok(GroupResponse.FromGroup(group)),
-                Result<Group>.NotFound => TypedResults.NotFound(),
+                Result<GroupWithMemberDetails>.Success(var details) => TypedResults.Ok(GroupResponse.FromGroup(details)),
+                Result<GroupWithMemberDetails>.NotFound => TypedResults.NotFound(),
                 // CheckView never returns Forbidden or Validation, so these are unreachable today
                 // -- collapsed to NotFound since this route declares no other status for them.
-                Result<Group>.Forbidden => TypedResults.NotFound(),
-                Result<Group>.Validation => TypedResults.NotFound(),
+                Result<GroupWithMemberDetails>.Forbidden => TypedResults.NotFound(),
+                Result<GroupWithMemberDetails>.Validation => TypedResults.NotFound(),
             };
         })
         .WithName("GetGroup");
@@ -39,7 +39,7 @@ public static class GetGroupEndpoint
     }
 }
 
-public sealed record GroupMemberResponse(Guid UserId, GroupRole Role);
+public sealed record GroupMemberResponse(Guid UserId, string GivenName, string FamilyName, GroupRole Role, bool IsChild);
 
 public sealed record GroupResponse(
     GroupId Id,
@@ -49,11 +49,11 @@ public sealed record GroupResponse(
     IReadOnlyDictionary<GroupRole, MealplanAccessTier> MealplanPermissionPolicy,
     IReadOnlyDictionary<GroupRole, MedicineAccessTier> MedicinePermissionPolicy)
 {
-    public static GroupResponse FromGroup(Group group) => new(
-        group.Id,
-        group.Name,
-        [.. group.Members.Select(m => new GroupMemberResponse(m.Key.Value, m.Value))],
-        group.CalendarPermissionPolicy,
-        group.MealplanPermissionPolicy,
-        group.MedicinePermissionPolicy);
+    public static GroupResponse FromGroup(GroupWithMemberDetails details) => new(
+        details.Group.Id,
+        details.Group.Name,
+        [.. details.Members.Select(m => new GroupMemberResponse(m.UserId.Value, m.Name.GivenName, m.Name.FamilyName, m.Role, m.IsChild))],
+        details.Group.CalendarPermissionPolicy,
+        details.Group.MealplanPermissionPolicy,
+        details.Group.MedicinePermissionPolicy);
 }

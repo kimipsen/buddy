@@ -28,6 +28,16 @@ export const admin = {
       cancelButton: 'Cancel',
       cancelError: 'Unable to cancel the invite.'
     },
+    members: {
+      showButton: 'Members',
+      hideButton: 'Close',
+      title: 'Members',
+      loading: 'Loading members…',
+      loadError: 'Unable to load group members.',
+      empty: 'This group has no members yet.',
+      guardiansTitle: 'Guardians',
+      childrenTitle: 'Children'
+    },
     children: {
       showButton: 'Add a child',
       hideButton: 'Close',

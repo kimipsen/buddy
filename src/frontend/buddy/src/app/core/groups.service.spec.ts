@@ -189,7 +189,7 @@ describe('GroupsService', () => {
       const detail: GroupDetail = {
         id: 'group-1',
         name: 'Home',
-        members: [{ userId: 'user-1', role: 0 }],
+        members: [{ userId: 'user-1', givenName: 'Jamie', familyName: 'Adult', role: 0, isChild: false }],
         calendarPermissionPolicy: { Owner: 2, Admin: 2, Member: 1 },
         mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 }
       };

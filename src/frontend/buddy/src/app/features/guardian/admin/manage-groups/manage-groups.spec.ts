@@ -5,6 +5,7 @@ import {
   CalendarPermissionPolicy,
   GroupDetail,
   GroupInvite,
+  GroupMember,
   GroupSummary,
   GroupsService,
   MealplanPermissionPolicy
@@ -29,6 +30,10 @@ describe('ManageGroups', () => {
       expiresAt: '2026-08-08T00:00:00Z',
       ...overrides
     };
+  }
+
+  function member(overrides: Partial<GroupMember> = {}): GroupMember {
+    return { userId: 'member-1', givenName: 'Sam', familyName: 'Kid', role: 2, isChild: false, ...overrides };
   }
 
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
@@ -446,12 +451,88 @@ describe('ManageGroups', () => {
     await settle(fixture);
   });
 
+  // ----- Members panel -----
+
+  it('is available to a plain member, not just owners/admins', async () => {
+    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByText(compiled, 'Members')).toBeTruthy();
+  });
+
+  it('shows the empty-members message when a group has no members', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Members')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('This group has no members yet.');
+  });
+
+  it('lists guardians and children under separate headings, each with name and role', async () => {
+    const { fixture } = await setup({
+      groups: {
+        getGroup: vi.fn(async () =>
+          groupDetail({
+            members: [
+              member({ userId: 'owner-1', givenName: 'Jamie', familyName: 'Adult', role: 0, isChild: false }),
+              member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', role: 2, isChild: true })
+            ]
+          })
+        )
+      }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Members')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Guardians');
+    expect(compiled.textContent).toContain('Jamie Adult');
+    expect(compiled.textContent).toContain('Children');
+    expect(compiled.textContent).toContain('Sam Kid');
+  });
+
+  it('shows an error when loading the members panel fails', async () => {
+    const { fixture } = await setup({ groups: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Members')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Unable to load group members.');
+  });
+
+  it('collapses the members panel on a second click without reloading', async () => {
+    const getGroup = vi.fn(async () => groupDetail({ members: [member()] }));
+    const { fixture } = await setup({ groups: { getGroup } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const toggle = findButtonByText(compiled, 'Members')!;
+    toggle.click();
+    await settle(fixture);
+    expect(getGroup).toHaveBeenCalledTimes(1);
+    expect(compiled.textContent).toContain('Sam Kid');
+
+    findButtonByText(compiled, 'Close')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Sam Kid');
+    expect(getGroup).toHaveBeenCalledTimes(1);
+  });
+
   // ----- Children / members flow -----
 
   it('shows the empty-candidates message when every child is already a member', async () => {
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
-      groups: { getGroup: vi.fn(async () => groupDetail({ members: [{ userId: 'child-1', role: 2 }] })) }
+      groups: { getGroup: vi.fn(async () => groupDetail({ members: [member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', isChild: true })] })) }
     });
     await settle(fixture);
 
@@ -470,7 +551,7 @@ describe('ManageGroups', () => {
           child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } })
         ])
       },
-      groups: { getGroup: vi.fn(async () => groupDetail({ members: [{ userId: 'child-1', role: 2 }] })) }
+      groups: { getGroup: vi.fn(async () => groupDetail({ members: [member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', isChild: true })] })) }
     });
     await settle(fixture);
 

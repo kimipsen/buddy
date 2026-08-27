@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
 
 using buddy.Features.Calendars;
+using buddy.Features.Guardians;
 using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
+using buddy.Features.Users;
 
 namespace buddy.Features.Groups;
 
@@ -32,7 +34,12 @@ public static class CreateGroupHandler
         .Add(GroupRole.Admin, MedicineAccessTier.Manage)
         .Add(GroupRole.Member, MedicineAccessTier.None);
 
-    public static async Task<CreateGroupOutcome> Handle(CreateGroup command, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<CreateGroupOutcome> Handle(
+        CreateGroup command,
+        IGroupEventStore groups,
+        IGuardianLinkEventStore guardians,
+        IUserEventStore users,
+        CancellationToken cancellationToken)
     {
         if (command.UserId is not { } ownerId)
         {
@@ -49,7 +56,9 @@ public static class CreateGroupHandler
         var medicinePolicySet = new GroupMedicinePolicyUpdated(groupId, DefaultMedicinePolicy, ownerId, now);
 
         var events = await groups.CreateAsync(groupId, [created, mealplanPolicySet, medicinePolicySet], cancellationToken);
+        var group = Group.Rehydrate(events)!;
+        var members = await GroupMemberResolver.ResolveAsync(group, guardians, users, cancellationToken);
 
-        return new CreateGroupOutcome.Success(Group.Rehydrate(events)!);
+        return new CreateGroupOutcome.Success(new GroupWithMemberDetails(group, members));
     }
 }
