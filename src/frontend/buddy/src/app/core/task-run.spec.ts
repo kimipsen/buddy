@@ -126,22 +126,32 @@ describe('task-run', () => {
 
   describe('occurrenceKey', () => {
     it('keys a plain occurrence (no subtaskId) by its itemId alone', () => {
-      expect(occurrenceKey({ itemId: 'item-1', subtaskId: null })).toBe('item-1:');
-      expect(occurrenceKey({ itemId: 'item-1', subtaskId: undefined })).toBe('item-1:');
+      const base = { startsAt: '2026-08-27T08:00:00Z', dueAt: null };
+      expect(occurrenceKey({ itemId: 'item-1', subtaskId: null, ...base })).toBe('item-1::2026-08-27');
+      expect(occurrenceKey({ itemId: 'item-1', subtaskId: undefined, ...base })).toBe('item-1::2026-08-27');
     });
 
     it('gives two subtask occurrences sharing an itemId distinct keys', () => {
-      const keyA = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-1' });
-      const keyB = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-2' });
+      const base = { startsAt: '2026-08-27T08:00:00Z', dueAt: null };
+      const keyA = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-1', ...base });
+      const keyB = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-2', ...base });
 
       expect(keyA).not.toBe(keyB);
     });
 
     it('gives the same occurrence the same key on repeated calls', () => {
-      const a = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-1' });
-      const b = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-1' });
+      const base = { itemId: 'run-1', subtaskId: 'sub-1', startsAt: '2026-08-27T08:00:00Z', dueAt: null };
+      const a = occurrenceKey(base);
+      const b = occurrenceKey(base);
 
       expect(a).toBe(b);
+    });
+
+    it('gives two occurrences of the same recurring item on different days distinct keys', () => {
+      const day1 = { itemId: 'recurring-1', subtaskId: null, startsAt: '2026-08-27T08:00:00Z', dueAt: null };
+      const day2 = { itemId: 'recurring-1', subtaskId: null, startsAt: '2026-08-28T08:00:00Z', dueAt: null };
+
+      expect(occurrenceKey(day1)).not.toBe(occurrenceKey(day2));
     });
   });
 });

@@ -30,7 +30,7 @@ export function isTaskRun(entry: AgendaEntry): entry is TaskRun {
 // they're stored against -- slicing is enough here, no timezone conversion needed, since this is
 // only used to keep two occurrences of the same *recurring* template-scheduled item (same itemId,
 // different calendar day) from being folded into a single run.
-function dateKeyOf(occurrence: CalendarOccurrence): string {
+function dateKeyOf(occurrence: Pick<CalendarOccurrence, 'startsAt' | 'dueAt'>): string {
   return (occurrence.startsAt ?? occurrence.dueAt ?? '').slice(0, 10);
 }
 
@@ -79,6 +79,12 @@ export function groupTaskRuns(occurrences: CalendarOccurrence[]): AgendaEntry[] 
 // existed) makes completing one subtask visually toggle every sibling subtask sharing that
 // itemId -- this is the fix for that. subtaskId is undefined/null for a plain (non-template) task,
 // so its key reduces to `${itemId}:`, distinct per itemId exactly as before.
-export function occurrenceKey(occurrence: Pick<CalendarOccurrence, 'itemId' | 'subtaskId'>): string {
-  return `${occurrence.itemId}:${occurrence.subtaskId ?? ''}`;
+//
+// The date suffix (via dateKeyOf) matters once a caller's in-memory occurrence array can span more
+// than one calendar day -- a week/workweek view, for instance. Without it, a recurring item's
+// itemId (and, for a plain recurring task, empty subtaskId) repeats once per day it occurs, so the
+// optimistic "mark done" update below -- which patches every occurrence whose key matches -- would
+// flip every day's occurrence of that item at once instead of just the one that was toggled.
+export function occurrenceKey(occurrence: Pick<CalendarOccurrence, 'itemId' | 'subtaskId' | 'startsAt' | 'dueAt'>): string {
+  return `${occurrence.itemId}:${occurrence.subtaskId ?? ''}:${dateKeyOf(occurrence)}`;
 }
