@@ -90,6 +90,13 @@ event); `ChildVisibility.FilterForChild` on the backend already returns every
 event on an accessible calendar, unlike tasks which are trimmed to the
 child's own assignments.
 
+Each event is also given a derived view state, recomputed once a minute
+against the current time: past events (already ended) are shown struck
+through with a checkmark, and ongoing events (started but not yet ended) get
+a background gradient that fills left-to-right as the event progresses,
+computed from elapsed time over the event's duration. All-day/undated events
+have no start/end to measure against and are never marked past or ongoing.
+
 This section is the "today" half of showing the child their calendars. The
 multi-day browsing half is implemented separately at `/child/calendar` — see
 [Child calendar agenda implementation plan](child-calendar-agenda-plan.md).
