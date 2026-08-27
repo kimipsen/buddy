@@ -42,6 +42,7 @@ This folder contains the project-level documentation for Buddy.
 - [Meal plan iCal feed](backend/analysis/mealplan-ical-feed.md)
 - [Pickup and drop-off schedules](backend/analysis/pickup-schedules.md)
 - [Guardian-managed child language](backend/analysis/child-language-settings.md)
+- [Guardian-managed child time zone](backend/analysis/child-timezone-settings.md)
 - [Gamified progress](backend/analysis/gamified-progress.md)
 
 ## Deployment

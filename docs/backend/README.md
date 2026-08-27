@@ -32,6 +32,7 @@ model or permissions logic.
 - [Meal plan iCal feed](analysis/mealplan-ical-feed.md)
 - [Pickup and drop-off schedules](analysis/pickup-schedules.md)
 - [Guardian-managed child language](analysis/child-language-settings.md)
+- [Guardian-managed child time zone](analysis/child-timezone-settings.md)
 - [Gamified progress](analysis/gamified-progress.md)
 
 ## Current focus areas
