@@ -21,7 +21,8 @@
 		},
 		"ghcr.io/nlstn/devcontainer-features/psql:1": {},
 		"ghcr.io/devcontainers-extra/features/go-task:1": {},
-		"ghcr.io/devcontainers-extra/features/angular-cli:2": {}
+		"ghcr.io/devcontainers-extra/features/angular-cli:2": {},
+		"ghcr.io/devcontainers/features/copilot-cli:1": {}
 	},
 	"customizations": {
 		"vscode": {
