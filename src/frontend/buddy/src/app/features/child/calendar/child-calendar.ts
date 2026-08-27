@@ -132,6 +132,14 @@ export class ChildCalendar {
     return this.occurrencesByDate()[date] ?? [];
   }
 
+  // Mirrors the backend's SetTaskCompletionHandler rejection of future OccurrenceDates -- this is
+  // just the UI affordance so a child never sees an actionable checkbox for a day that hasn't
+  // arrived yet, not the source of truth.
+  protected canCompleteTask(occurrence: CalendarOccurrence): boolean {
+    const instant = instantFor(occurrence);
+    return !!instant && toIsoDateInTimeZone(instant, this.users.timeZoneId()) <= todayIsoDate();
+  }
+
   protected isCalendarHidden(calendarId: string): boolean {
     return this.hiddenCalendarIds().has(calendarId);
   }
@@ -157,8 +165,13 @@ export class ChildCalendar {
       return;
     }
 
-    const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
     const isCompleted = !occurrence.isCompleted;
+
+    if (isCompleted && !this.canCompleteTask(occurrence)) {
+      return;
+    }
+
+    const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
 
     this.savingTaskId.set(occurrence.itemId);
 

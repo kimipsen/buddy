@@ -159,6 +159,30 @@ describe('ChildCalendar', () => {
     expect(findButtonByAriaLabel(compiled, 'Mark not done')).toBeTruthy();
   });
 
+  it('disables the completion toggle for a task due on a future day', async () => {
+    const tomorrow = addDays(today, 1);
+    const task = occurrence({
+      itemId: 'task-1',
+      kind: 1,
+      title: 'Feed the cat',
+      startsAt: null,
+      endsAt: null,
+      dueAt: `${tomorrow}T17:00:00Z`
+    });
+
+    const { fixture, calendars } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [task]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const button = findButtonByAriaLabel(compiled, 'Mark done');
+    expect(button?.disabled).toBe(true);
+
+    button?.click();
+    await settle(fixture);
+
+    expect(calendars.setTaskCompletion).not.toHaveBeenCalled();
+  });
+
   it('renders "All day" instead of a time range for an all-day occurrence', async () => {
     const allDay = occurrence({ itemId: 'all-day', title: 'Field trip', isAllDay: true });
     const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [allDay]) } });

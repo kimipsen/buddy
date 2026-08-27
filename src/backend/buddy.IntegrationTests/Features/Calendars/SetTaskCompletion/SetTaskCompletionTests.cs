@@ -20,7 +20,8 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
-        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId);
+        var dueDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, dueDate: dueDate);
         Assert.NotNull(task);
 
         var response = await fixture.Host.Scenario(_ =>
@@ -50,7 +51,7 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
-        var firstDue = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var firstDue = DateOnly.FromDateTime(DateTime.UtcNow);
         var task = await CalendarTestHelpers.CreateTaskAsync(
             fixture, token, calendarId, dueDate: firstDue,
             recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, null));
@@ -77,6 +78,26 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
 
         Assert.True(byDate[firstDue].IsCompleted);
         Assert.False(byDate[secondDue].IsCompleted);
+    }
+
+    [Fact]
+    public async Task Marking_a_future_occurrence_complete_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var futureDue = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var task = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, dueDate: futureDue,
+            recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, null));
+        Assert.NotNull(task);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Date = futureDue, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{task.Id}/completion");
+            _.StatusCodeShouldBe(400);
+        });
     }
 
     [Fact]
@@ -131,7 +152,8 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
         });
 
         var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
-        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, guardianToken, calendarId, assignedTo: child.Id);
+        var task = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, guardianToken, calendarId, dueDate: DateOnly.FromDateTime(DateTime.UtcNow), assignedTo: child.Id);
         Assert.NotNull(task);
 
         var response = await fixture.Host.Scenario(_ =>

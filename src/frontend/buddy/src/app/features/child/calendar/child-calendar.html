@@ -59,7 +59,7 @@
                       [class.bg-emerald-400]="occurrence.isCompleted"
                       [class.text-white]="occurrence.isCompleted"
                       [class.border-slate-300]="!occurrence.isCompleted"
-                      [disabled]="savingTaskId() === occurrence.itemId"
+                      [disabled]="savingTaskId() === occurrence.itemId || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
                       [attr.aria-label]="(occurrence.isCompleted ? 'child.calendar.tasks.markNotDone' : 'child.calendar.tasks.markDone') | translate"
                       (click)="toggleTask(occurrence)"
                     >

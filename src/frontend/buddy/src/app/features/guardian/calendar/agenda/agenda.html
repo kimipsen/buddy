@@ -197,7 +197,7 @@
                           <input
                             type="checkbox"
                             [checked]="occurrence.isCompleted"
-                            [disabled]="savingTaskId() === occurrence.itemId"
+                            [disabled]="savingTaskId() === occurrence.itemId || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
                             (change)="toggleTaskCompletion(occurrence)"
                           />
                         }

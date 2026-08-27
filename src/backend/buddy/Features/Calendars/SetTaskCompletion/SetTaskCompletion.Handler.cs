@@ -59,6 +59,17 @@ public static class SetTaskCompletionHandler
             return access.ToDeniedResult<CalendarItem>();
         }
 
+        if (command.IsCompleted)
+        {
+            var zone = TimeZoneInfo.FindSystemTimeZoneById(calendar!.TimeZoneId.Value);
+            var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, zone).Date);
+
+            if (command.OccurrenceDate > today)
+            {
+                return new Result<CalendarItem>.Validation("Cannot mark a future occurrence as complete.");
+            }
+        }
+
         var before = item.CompletionLog.GetValueOrDefault(command.OccurrenceDate, false);
 
         if (before == command.IsCompleted)

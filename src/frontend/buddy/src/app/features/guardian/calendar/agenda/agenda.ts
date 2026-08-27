@@ -399,6 +399,14 @@ export class CalendarAgenda {
     });
   }
 
+  // Mirrors the backend's SetTaskCompletionHandler rejection of future OccurrenceDates -- this is
+  // just the UI affordance so a guardian never sees an actionable checkbox for a day that hasn't
+  // arrived yet, not the source of truth.
+  protected canCompleteTask(occurrence: CalendarOccurrence): boolean {
+    const instant = instantFor(occurrence);
+    return !!instant && toIsoDateInTimeZone(instant, this.users.timeZoneId()) <= todayIsoDate();
+  }
+
   protected async toggleTaskCompletion(occurrence: CalendarOccurrence): Promise<void> {
     const instant = instantFor(occurrence);
 
@@ -406,8 +414,13 @@ export class CalendarAgenda {
       return;
     }
 
-    const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
     const isCompleted = !occurrence.isCompleted;
+
+    if (isCompleted && !this.canCompleteTask(occurrence)) {
+      return;
+    }
+
+    const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
 
     this.savingTaskId.set(occurrence.itemId);
 

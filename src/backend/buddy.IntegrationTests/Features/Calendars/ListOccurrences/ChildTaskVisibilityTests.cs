@@ -65,7 +65,7 @@ public sealed class ChildTaskVisibilityTests(BuddyApiFixture fixture)
         var childA = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
         await AddChildToGroupAsync(fixture, guardianToken, groupId, childA.Id);
 
-        var due = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var due = DateOnly.FromDateTime(DateTime.UtcNow);
         var assigned = await CalendarTestHelpers.CreateTaskAsync(fixture, guardianToken, calendarId, "Alex's chore", due, assignedTo: childA.Id);
         await CalendarTestHelpers.CreateTaskAsync(fixture, guardianToken, calendarId, "Unassigned chore", due);
 

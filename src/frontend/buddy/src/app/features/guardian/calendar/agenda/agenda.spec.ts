@@ -365,6 +365,22 @@ describe('CalendarAgenda', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(true);
   });
 
+  it('disables the completion checkbox for a task due on a future day', async () => {
+    const tomorrow = addDays(today, 1);
+    const task = occurrence({ itemId: 'task-1', kind: 1, title: 'Feed cat', startsAt: null, endsAt: null, dueAt: `${tomorrow}T09:00:00Z` });
+    const { fixture, calendars } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [task]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const checkbox = compiled.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+    expect(checkbox.disabled).toBe(true);
+
+    checkbox.dispatchEvent(new Event('change'));
+    await settle(fixture);
+
+    expect(calendars.setTaskCompletion).not.toHaveBeenCalled();
+  });
+
   it('shows an error and leaves completion unchanged when toggling a task fails', async () => {
     const task = occurrence({ itemId: 'task-1', kind: 1, title: 'Feed cat', startsAt: null, endsAt: null, dueAt: `${today}T09:00:00Z` });
     const { fixture } = await setup({
