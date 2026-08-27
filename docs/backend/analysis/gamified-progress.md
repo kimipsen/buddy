@@ -109,7 +109,7 @@ ChildProgress(
     ProgressId Id,               // ProgressId.Value == ChildId.Value -- see below
     UserId ChildId,
     int TotalStars,
-    ImmutableHashSet<(CalendarItemId ItemId, DateOnly OccurrenceDate)> AwardedOccurrences,
+    ImmutableHashSet<(CalendarItemId ItemId, DateOnly OccurrenceDate, Guid? SubtaskId)> AwardedOccurrences,
     ImmutableHashSet<int> UnlockedMilestones)
 ```
 
@@ -137,16 +137,19 @@ fires on a real `false→true` or `true→false` transition, and already carries
 both `Before` and `After`. Progress mirrors that exactly rather than
 inventing a separate "undo" event: `AwardedOccurrences` is a sparse set (the
 same pattern `CompletionLog`/`DoseLog` already use for sparse per-occurrence
-state) — a `false→true` transition awards a star only if that occurrence
-isn't already in the set; a `true→false` transition (the child un-checking a
-task, whether by misclick or genuine backtrack) revokes it by removing the
-occurrence and decrementing `TotalStars`. This is *not* framed as a penalty
-in the data model — it's the same correction semantics as any other toggle
-in this codebase (e.g. `DoseStatusChanged`'s `After: Pending` "undo," per
-its own comment) — but it does mean a child could watch a star count go
-down if they toggle a task off after earning a milestone from it. Whether
-that's acceptable UX or needs a grace window (e.g. only revoke same-day) is
-a product decision, not modeled yet — see open questions.
+state), keyed by item, occurrence date, and optional subtask. A plain task
+uses a null subtask ID; each subtask in a template-scheduled task can
+therefore earn and revoke its own star independently. A `false→true`
+transition awards a star only if that key isn't already in the set; a
+`true→false` transition (the child un-checking a task, whether by misclick or
+genuine backtrack) revokes it by removing the key and decrementing
+`TotalStars`. This is *not* framed as a penalty in the data model — it's the
+same correction semantics as any other toggle in this codebase (e.g.
+`DoseStatusChanged`'s `After: Pending` "undo," per its own comment) — but it
+does mean a child could watch a star count go down if they toggle a task off
+after earning a milestone from it. Whether that's acceptable UX or needs a
+grace window (e.g. only revoke same-day) is a product decision, not modeled
+yet — see open questions.
 
 ### Milestones
 

@@ -33,6 +33,13 @@ sequenceDiagram
     Calendars-->>API: Item response
     API-->>App: 200 OK
 
+    User->>App: Schedule a reusable task routine
+    App->>API: POST /calendars/{calendarId}/items/from-template
+    API->>Calendars: ScheduleTaskFromTemplate command
+    Calendars->>Store: Append TaskItemCreated with a template reference
+    Calendars-->>API: Item response
+    API-->>App: 200 OK
+
     User->>App: View agenda for a date range
     App->>API: GET /calendars/{calendarId}/occurrences?from=...&to=...
     API->>Calendars: ListOccurrences query
@@ -53,12 +60,13 @@ sequenceDiagram
 | `PATCH` | `/calendars/{calendarId}/members/{memberId}` | Grants or revokes a member role on the calendar. |
 | `DELETE` | `/calendars/{calendarId}/members/{memberId}` | Removes a member from the calendar. |
 | `POST` | `/calendars/{calendarId}/items` | Creates an event or task item. |
+| `POST` | `/calendars/{calendarId}/items/from-template` | Schedules a non-empty, active family task template at a specific time. |
 | `GET` | `/calendars/{calendarId}/items` | Lists items in a calendar. |
-| `GET` | `/calendars/{calendarId}/occurrences` | Recomputes occurrences for a date range from the current recurrence state. |
+| `GET` | `/calendars/{calendarId}/occurrences` | Recomputes occurrences for a date range; template tasks produce one timed occurrence per current subtask. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/details` | Updates an item's name, description, or visual metadata. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/schedule` | Reschedules an item or changes time/date placement. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings. |
-| `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a task occurrence complete or incomplete; rejects marking a future occurrence complete. |
+| `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a task occurrence complete or incomplete; template tasks require a subtask ID and track each subtask independently. Rejects marking a future occurrence complete. |
 | `DELETE` | `/calendars/{calendarId}/items/{itemId}` | Soft-deletes an item. |
 | `POST` | `/calendars/{calendarId}/ical-tokens` | Creates an iCal feed token. |
 | `GET` | `/calendars/{calendarId}/ical-tokens` | Lists active iCal token metadata. |
@@ -68,6 +76,12 @@ sequenceDiagram
 ## Core lifecycle
 
 The aggregate is event-sourced and uses a sparse stream of calendar mutations. The create flow appends a `CalendarCreated` or `CalendarCreatedForGroup` event, then later event and task endpoints append item-creation events such as `EventItemCreated` or `TaskItemCreated`.
+
+A task scheduled from the Task Library stores a template reference rather than
+a copy of its subtasks. Occurrence and iCal reads load the template's current
+ordered subtasks and expand each one into a consecutive timed occurrence. An
+archived template cannot be scheduled again, but existing scheduled items keep
+expanding; edits to the template also affect those existing items.
 
 The read model for listing belongs to the calendar index: the API loads calendar membership and permissions to decide whether the current principal can view or mutate the calendar. When a caller asks for occurrences, the system rehydrates the relevant aggregate and expands the calendar graph into a date-window view rather than persisting every computed occurrence.
 
