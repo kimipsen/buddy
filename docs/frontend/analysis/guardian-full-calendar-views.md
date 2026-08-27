@@ -1,6 +1,6 @@
 # Day / work week / week / month views for the guardian calendar
 
-Status: Planned, implementation follows this doc in the same change.
+Status: Implemented.
 
 ## Goal
 

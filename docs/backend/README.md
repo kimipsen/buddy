@@ -22,14 +22,17 @@ model or permissions logic.
 
 - [Aggregate roots and their relationships](analysis/aggregate-roots.md)
 - [Group-owned calendars and permissions](analysis/group-owned-calendars-and-permissions.md)
+- [All-day calendar items](analysis/calendar-all-day-items.md)
 - [Integration testing strategy](analysis/integration-testing-strategy.md)
 - [Mutation testing strategy](analysis/mutation-testing-strategy.md)
 - [Child accounts and guardian/parent roles](analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](analysis/medicine-schedules.md)
 - [Meal plans](analysis/mealplans.md)
 - [Group-shared meal plans](analysis/group-owned-mealplans.md)
+- [Meal plan iCal feed](analysis/mealplan-ical-feed.md)
 - [Pickup and drop-off schedules](analysis/pickup-schedules.md)
 - [Guardian-managed child language](analysis/child-language-settings.md)
+- [Gamified progress](analysis/gamified-progress.md)
 
 ## Current focus areas
 

@@ -56,8 +56,8 @@ Current responsibilities:
 - show today's events, tasks, and medicine doses
 - manage meals and assign them to shared meal-plan slots
 - manage pickup and drop-off assignments for linked children
-- browse a weekly agenda and create events/tasks across every calendar they can contribute to,
-  personal or group-owned
+- browse day, work-week, rolling-week, and month calendar views and create events/tasks across
+  every calendar they can contribute to, personal or group-owned
 - manage calendars, groups, children, and the current profile from the admin area
 - sign out of the current session
 
@@ -69,7 +69,8 @@ The guardian routes currently include:
 - `/guardian/mealplan` — meal library and meal-plan assignment
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
-- `/guardian/calendar` — weekly agenda across every accessible calendar, plus event/task creation
+- `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
+  calendar, plus event/task creation
 - `/guardian/admin` — profile, child, calendar, group, event-history, and account administration
 
 ### Child feature
@@ -91,6 +92,7 @@ The child routes currently include:
 
 - `/child` — today's operational view and relationship summaries
 - `/child/mealplan` — current/historical meal plans and the child's own ratings
+- `/child/calendar` — read-only seven-day agenda across accessible calendars
 
 ### Login feature
 
@@ -154,17 +156,16 @@ The frontend is an actively developed product shell with working domain workflow
 - guardian meal planning, meal ratings, and group-shared meal-plan access
 - medicine schedule management and today's dose views
 - guardian pickup/drop-off planning plus guardian and child today views
-- a guardian-facing weekly calendar agenda and event/task creation across personal and
-  group-owned calendars
+- guardian-facing day, work-week, rolling-week, and month calendar views with event/task creation
+  across personal and group-owned calendars
 - a child-facing daily dashboard with meals and ratings, medicine doses,
   pickup/drop-off assignments, and completable tasks
+- a child-facing read-only seven-day calendar agenda
 - profile, calendar, group, child, and account administration
 
-The primary unresolved frontend product question is whether children should
-receive their own calendar agenda and creation UI, as noted in
-[Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md).
-The current child home deliberately keeps routines in separate, scannable
-sections rather than merging them into a full calendar timeline.
+Children have a read-only calendar agenda; event and task creation remains a guardian workflow.
+The child home keeps routines in separate, scannable sections rather than merging them into a
+full calendar timeline.
 
 ## Design analysis
 
@@ -175,7 +176,13 @@ sections rather than merging them into a full calendar timeline.
 - [Historical meal plans and children's ratings](analysis/mealplan-history-and-ratings.md) — what's
   implemented for browsing past meal-plan weeks and surfacing children's ratings
 - [Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md) —
-  implemented guardian agenda/event workflow and the remaining child-access decision
+  implemented guardian agenda/event workflow and child read-only access
+- [Child calendar agenda](analysis/child-calendar-agenda-plan.md) — implemented read-only
+  seven-day child calendar
+- [Guardian calendar views](analysis/guardian-full-calendar-views.md) — implemented day,
+  work-week, rolling-week, and month navigation
+- [Child progress and rewards](analysis/child-progress-and-rewards.md) — implemented progress
+  summary and reward sketch
 - [Pickup planning and daily views](analysis/pickup-planning-and-daily-views.md) — implemented
   guardian planner, guardian dashboard summary, and child read-only view
 

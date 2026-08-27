@@ -23,6 +23,9 @@ This folder contains the project-level documentation for Buddy.
 - [A single-day dashboard for the child home screen](frontend/analysis/child-day-dashboard.md)
 - [Historical meal plans and children's ratings](frontend/analysis/mealplan-history-and-ratings.md)
 - [Creating events across accessible calendars](frontend/analysis/calendar-agenda-and-event-creation.md)
+- [Child calendar agenda](frontend/analysis/child-calendar-agenda-plan.md)
+- [Guardian calendar day, work-week, week, and month views](frontend/analysis/guardian-full-calendar-views.md)
+- [Child progress and rewards](frontend/analysis/child-progress-and-rewards.md)
 - [Pickup planning and daily views](frontend/analysis/pickup-planning-and-daily-views.md)
 
 ## Backend design analysis
@@ -39,6 +42,7 @@ This folder contains the project-level documentation for Buddy.
 - [Meal plan iCal feed](backend/analysis/mealplan-ical-feed.md)
 - [Pickup and drop-off schedules](backend/analysis/pickup-schedules.md)
 - [Guardian-managed child language](backend/analysis/child-language-settings.md)
+- [Gamified progress](backend/analysis/gamified-progress.md)
 
 ## Deployment
 
