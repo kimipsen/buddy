@@ -53,6 +53,11 @@ export const calendar = {
         event: 'Begivenhed',
         task: 'Opgave'
       },
+      taskSource: {
+        manual: 'Manuel',
+        template: 'Fra skabelon',
+        templateLabel: 'Opgaveskabelon'
+      },
       allDayLabel: 'Hele dagen',
       startDateLabel: 'Startdato',
       startTimeLabel: 'Starttid',

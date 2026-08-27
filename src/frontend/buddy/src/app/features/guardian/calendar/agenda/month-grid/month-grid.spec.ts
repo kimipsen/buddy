@@ -98,6 +98,26 @@ describe('MonthGrid', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('more');
   });
 
+  it('collapses every subtask occurrence of one template-scheduled run into a single chip', async () => {
+    const subtasks = [
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-1', parentTitle: 'Morning routine', title: 'Brush teeth' }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-2', parentTitle: 'Morning routine', title: 'Get dressed' }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-3', parentTitle: 'Morning routine', title: 'Eat breakfast' })
+    ];
+
+    const { fixture } = await setup({
+      days: [day('2024-06-10')],
+      occurrencesByDate: { '2024-06-10': subtasks }
+    });
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    // Without grouping, three chips sharing an itemId would also collide on Angular's @for track
+    // key -- grouping collapses them to one chip showing the run's own (parent) title.
+    expect(compiled.textContent).toContain('Morning routine');
+    expect(compiled.textContent).not.toContain('Brush teeth');
+    expect(compiled.textContent).not.toContain('more');
+  });
+
   it('emits daySelected with the clicked day\'s date', async () => {
     const { fixture } = await setup({ days: [day('2024-06-10'), day('2024-06-11')] });
     const emitted: string[] = [];

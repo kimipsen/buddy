@@ -11,6 +11,7 @@ import { medicine } from './medicine';
 import { pickup } from './pickup';
 import { profile } from './profile';
 import { shell } from './shell';
+import { taskLibrary } from './task-library';
 import { verifyEmail } from './verify-email';
 
 export const en = {
@@ -27,5 +28,6 @@ export const en = {
   pickup,
   profile,
   shell,
+  taskLibrary,
   verifyEmail
 };

@@ -188,7 +188,7 @@
         <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
           <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.tasksTitle' | translate }}</h2>
           <ul class="mt-4 space-y-3">
-            @for (task of tasks(); track task.itemId) {
+            @for (task of tasks(); track keyFor(task)) {
               <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
                 <button
                   type="button"
@@ -197,7 +197,7 @@
                   [class.bg-emerald-400]="task.isCompleted"
                   [class.text-white]="task.isCompleted"
                   [class.border-slate-300]="!task.isCompleted"
-                  [disabled]="savingTaskId() === task.itemId"
+                  [disabled]="savingTaskId() === keyFor(task)"
                   [attr.aria-label]="(task.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
                   (click)="toggleTask(task)"
                 >

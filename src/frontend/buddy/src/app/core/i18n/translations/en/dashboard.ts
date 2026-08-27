@@ -16,7 +16,8 @@ export const dashboard = {
     taskUpdateError: 'Unable to update this task.',
     empty: 'No tasks due today.',
     overdue: 'Overdue',
-    dueToday: 'Due today'
+    dueToday: 'Due today',
+    rollup: '{completed} of {total} done'
   },
   events: {
     title: 'Today’s events',

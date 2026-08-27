@@ -1,0 +1,53 @@
+<div class="relative">
+  <input
+    type="text"
+    class="w-full min-w-[9rem] rounded-lg border border-slate-300 py-1.5 pl-2 pr-6 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+    [placeholder]="'taskLibrary.picker.noTemplate' | translate"
+    autocomplete="off"
+    [value]="displayValue()"
+    [disabled]="disabled()"
+    (focus)="openDropdown()"
+    (input)="onQueryInput($event)"
+    (keydown.escape)="closeDropdown()"
+    (keydown.enter)="selectFirstMatch()"
+  />
+
+  @if (open()) {
+    <div class="fixed inset-0 z-10" (click)="closeDropdown()"></div>
+
+    <ul
+      class="z-20 max-h-56 min-w-[16rem] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+      [style]="dropdownStyle()"
+    >
+      <li>
+        <button
+          type="button"
+          class="block w-full px-3 py-1.5 text-left text-sm text-slate-500 hover:bg-slate-100"
+          (click)="selectTemplate(null)"
+        >
+          {{ 'taskLibrary.picker.noTemplate' | translate }}
+        </button>
+      </li>
+
+      @for (template of filteredTemplates(); track template.id) {
+        <li>
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-slate-100"
+            (click)="selectTemplate(template)"
+          >
+            <span class="text-base leading-none">{{ template.icon }}</span>
+            {{ template.name }}
+            <span class="ml-auto shrink-0 text-xs text-slate-400">
+              {{ 'taskLibrary.picker.summary' | translate: { count: template.subtasks.length, duration: summary(template) } }}
+            </span>
+          </button>
+        </li>
+      }
+
+      @if (filteredTemplates().length === 0) {
+        <li class="px-3 py-1.5 text-sm text-slate-400">{{ 'taskLibrary.picker.noMatches' | translate }}</li>
+      }
+    </ul>
+  }
+</div>

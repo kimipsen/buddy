@@ -191,7 +191,7 @@ describe('TasksToday', () => {
     checkbox.dispatchEvent(new Event('change'));
     await settle(fixture);
 
-    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true);
+    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
     expect(findCheckbox(compiled, 'Water plants')?.checked).toBe(true);
   });
 
@@ -209,7 +209,7 @@ describe('TasksToday', () => {
     checkbox.dispatchEvent(new Event('change'));
     await settle(fixture);
 
-    expect(setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true);
+    expect(setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
   });
 
   it('disables the checkbox for a task assigned to someone else and refuses to toggle it', async () => {
@@ -227,6 +227,86 @@ describe('TasksToday', () => {
     await settle(fixture);
 
     expect(setTaskCompletion).not.toHaveBeenCalled();
+  });
+
+  // ----- Multi-subtask rollup -----
+
+  describe('rolling up a template-scheduled run', () => {
+    function subtaskOf(run: string, subtaskId: string, overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
+      return task({ itemId: run, subtaskId, parentTitle: 'Morning routine', ...overrides });
+    }
+
+    it('shows a single row with a fraction-complete badge instead of one row per subtask', async () => {
+      const subtasks = [
+        subtaskOf('run-1', 'sub-1', { title: 'Brush teeth', isCompleted: true, dueAt: `${today}T08:00:00Z`, isAllDay: false }),
+        subtaskOf('run-1', 'sub-2', { title: 'Get dressed', isCompleted: false, dueAt: `${today}T08:10:00Z`, isAllDay: false }),
+        subtaskOf('run-1', 'sub-3', { title: 'Eat breakfast', isCompleted: false, dueAt: `${today}T08:20:00Z`, isAllDay: false })
+      ];
+
+      const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => subtasks) } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent?.match(/Morning routine/g)?.length).toBe(1);
+      expect(compiled.textContent).not.toContain('Brush teeth');
+      expect(compiled.textContent).toContain('1 of 3 done');
+    });
+
+    it('does not render a checkbox for a rolled-up multi-subtask row', async () => {
+      const subtasks = [
+        subtaskOf('run-1', 'sub-1', { title: 'Brush teeth', dueAt: `${today}T08:00:00Z`, isAllDay: false }),
+        subtaskOf('run-1', 'sub-2', { title: 'Get dressed', dueAt: `${today}T08:10:00Z`, isAllDay: false })
+      ];
+
+      const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => subtasks) } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('input[type="checkbox"]')).toBeNull();
+    });
+
+    it('is not yet overdue while its LAST subtask is still in the future, even if an earlier one is already past its own time', async () => {
+      const notYetOverdue = [
+        subtaskOf('run-1', 'sub-1', {
+          title: 'Brush teeth',
+          dueAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          isAllDay: false
+        }),
+        subtaskOf('run-1', 'sub-2', {
+          title: 'Eat breakfast',
+          dueAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          isAllDay: false
+        })
+      ];
+
+      const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => notYetOverdue) } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).not.toContain('Overdue');
+      expect(compiled.textContent).toContain('Due today');
+    });
+
+    it('becomes overdue once its LAST subtask\'s due time has passed', async () => {
+      const bothOverdue = [
+        subtaskOf('run-2', 'sub-1', {
+          title: 'Brush teeth',
+          dueAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          isAllDay: false
+        }),
+        subtaskOf('run-2', 'sub-2', {
+          title: 'Eat breakfast',
+          dueAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          isAllDay: false
+        })
+      ];
+
+      const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => bothOverdue) } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Overdue');
+    });
   });
 
   it('shows an error and keeps the list visible when toggling a task fails', async () => {

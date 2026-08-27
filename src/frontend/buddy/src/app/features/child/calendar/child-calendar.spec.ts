@@ -155,7 +155,7 @@ describe('ChildCalendar', () => {
     findButtonByAriaLabel(compiled, 'Mark done')?.click();
     await settle(fixture);
 
-    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true);
+    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
     expect(findButtonByAriaLabel(compiled, 'Mark not done')).toBeTruthy();
   });
 
@@ -239,6 +239,53 @@ describe('ChildCalendar', () => {
     expect(compiled.querySelector('form')).toBeFalsy();
     expect(compiled.querySelector('input[type="text"]')).toBeFalsy();
     expect(compiled.querySelector('input[type="color"]')).toBeFalsy();
+  });
+
+  // ----- Template-scheduled task runs (grouped rendering + the compound-key fix) -----
+
+  it('renders a 3-subtask run as one block showing the parent title once, with a toggle per subtask', async () => {
+    const subtasks = [
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-1', parentTitle: 'Morning routine', title: 'Brush teeth', startsAt: null, endsAt: null, dueAt: `${today}T08:00:00Z` }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-2', parentTitle: 'Morning routine', title: 'Get dressed', startsAt: null, endsAt: null, dueAt: `${today}T08:10:00Z` }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-3', parentTitle: 'Morning routine', title: 'Eat breakfast', startsAt: null, endsAt: null, dueAt: `${today}T08:20:00Z` })
+    ];
+
+    const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => subtasks) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent?.match(/Morning routine/g)?.length).toBe(1);
+    expect(compiled.textContent).toContain('Brush teeth');
+    expect(compiled.textContent).toContain('Get dressed');
+    expect(compiled.textContent).toContain('Eat breakfast');
+    expect(compiled.querySelectorAll('ul.ml-2 button')).toHaveLength(3);
+  });
+
+  it('completing one subtask of a 3-subtask run does not flip the other subtasks (the compound-key fix)', async () => {
+    const subtasks = [
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-1', parentTitle: 'Morning routine', title: 'Brush teeth', startsAt: null, endsAt: null, dueAt: `${today}T08:00:00Z` }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-2', parentTitle: 'Morning routine', title: 'Get dressed', startsAt: null, endsAt: null, dueAt: `${today}T08:10:00Z` }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-3', parentTitle: 'Morning routine', title: 'Eat breakfast', startsAt: null, endsAt: null, dueAt: `${today}T08:20:00Z` })
+    ];
+
+    const { fixture, calendars } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => subtasks) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const toggles = Array.from(compiled.querySelectorAll<HTMLButtonElement>('ul.ml-2 button'));
+    expect(toggles).toHaveLength(3);
+
+    toggles[0].click();
+    await settle(fixture);
+
+    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'run-1', today, true, 'sub-1');
+
+    const afterToggle = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('ul.ml-2 button'));
+    expect(afterToggle[0].textContent?.trim()).toBe('✓');
+    // The sibling subtasks must remain untouched -- without the compound (itemId + subtaskId) key,
+    // every occurrence sharing itemId "run-1" would have been optimistically flipped too.
+    expect(afterToggle[1].textContent?.trim()).toBe('');
+    expect(afterToggle[2].textContent?.trim()).toBe('');
   });
 
   it('navigates the visible week forward and backward', async () => {

@@ -6,6 +6,7 @@ import { CalendarItemKind, CalendarOccurrence, CalendarsService } from '../../..
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { occurrenceKey } from '../../../core/task-run';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
@@ -163,6 +164,13 @@ export class ChildHome implements OnInit, OnDestroy {
     return `${dose.medicineId}|${dose.time}`;
   }
 
+  // Compound key distinguishing sibling subtask occurrences of the same template-scheduled run
+  // (same itemId, different subtaskId) -- see core/task-run.ts's occurrenceKey for why itemId
+  // alone is no longer sufficient once a run can produce more than one occurrence per item.
+  protected keyFor(task: CalendarOccurrence): string {
+    return occurrenceKey(task);
+  }
+
   protected async setDoseStatus(dose: MedicineDoseOccurrence, status: DoseStatus): Promise<void> {
     const key = this.doseKey(dose);
     this.savingDoseKey.set(key);
@@ -179,12 +187,13 @@ export class ChildHome implements OnInit, OnDestroy {
   }
 
   protected async toggleTask(task: CalendarOccurrence): Promise<void> {
-    this.savingTaskId.set(task.itemId);
+    const key = occurrenceKey(task);
+    this.savingTaskId.set(key);
     const isCompleted = !task.isCompleted;
 
     try {
-      await this.calendars.setTaskCompletion(task.calendarId, task.itemId, todayIsoDate(), isCompleted);
-      this.tasks.update((current) => current.map((existing) => (existing.itemId === task.itemId ? { ...existing, isCompleted } : existing)));
+      await this.calendars.setTaskCompletion(task.calendarId, task.itemId, todayIsoDate(), isCompleted, task.subtaskId ?? null);
+      this.tasks.update((current) => current.map((existing) => (occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing)));
 
       // The backend awards/revokes a star as part of the same request that just completed above
       // (see SetTaskCompletionHandler), so re-reading progress now already reflects it -- no

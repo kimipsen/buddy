@@ -5,6 +5,7 @@ import { CalendarItemKind, CalendarOccurrence, CalendarSummary, CalendarsService
 import { toIsoDate, todayIsoDate, toIsoDateInTimeZone } from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
 
@@ -132,6 +133,25 @@ export class ChildCalendar {
     return this.occurrencesByDate()[date] ?? [];
   }
 
+  // Folds a day's occurrences into agenda rows -- a template-scheduled task's subtask occurrences
+  // (sharing an itemId + parentTitle) render as one bracketed block instead of one row each; every
+  // other occurrence is unaffected. Mirrors the guardian agenda's identical grouping (see
+  // core/task-run.ts).
+  protected groupedOccurrencesFor(date: string): AgendaEntry[] {
+    return groupTaskRuns(this.occurrencesFor(date));
+  }
+
+  protected isRun(entry: AgendaEntry): boolean {
+    return isTaskRun(entry);
+  }
+
+  // Compound key distinguishing sibling subtask occurrences of the same template-scheduled run
+  // (same itemId, different subtaskId) -- see core/task-run.ts's occurrenceKey for why itemId
+  // alone is no longer sufficient once a run can produce more than one occurrence per item.
+  protected keyFor(occurrence: CalendarOccurrence): string {
+    return occurrenceKey(occurrence);
+  }
+
   // Mirrors the backend's SetTaskCompletionHandler rejection of future OccurrenceDates -- this is
   // just the UI affordance so a child never sees an actionable checkbox for a day that hasn't
   // arrived yet, not the source of truth.
@@ -172,13 +192,14 @@ export class ChildCalendar {
     }
 
     const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
+    const key = occurrenceKey(occurrence);
 
-    this.savingTaskId.set(occurrence.itemId);
+    this.savingTaskId.set(key);
 
     try {
-      await this.calendars.setTaskCompletion(occurrence.calendarId, occurrence.itemId, date, isCompleted);
+      await this.calendars.setTaskCompletion(occurrence.calendarId, occurrence.itemId, date, isCompleted, occurrence.subtaskId ?? null);
       this.occurrences.update((current) =>
-        current.map((existing) => (existing.itemId === occurrence.itemId ? { ...existing, isCompleted } : existing))
+        current.map((existing) => (occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing))
       );
     } catch {
       this.error.set('child.calendar.taskUpdateError');

@@ -9,6 +9,8 @@ import {
   CalendarsService
 } from '../../../../core/calendars.service';
 import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
+import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
+import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
 import { UsersService } from '../../../../core/users.service';
 import { CalendarAgenda } from './agenda';
 
@@ -60,9 +62,39 @@ describe('CalendarAgenda', () => {
     };
   }
 
+  function taskTemplate(overrides: Partial<TaskTemplate> = {}): TaskTemplate {
+    return {
+      id: 'template-1',
+      name: 'Morning routine',
+      icon: '🌅',
+      color: '#0ea5e9',
+      subtasks: [],
+      totalDurationMinutes: 15,
+      isArchived: false,
+      createdBy: 'guardian-1',
+      lastModifiedBy: 'guardian-1',
+      ...overrides
+    };
+  }
+
+  function childSummary(overrides: Partial<ChildSummary> = {}): ChildSummary {
+    return {
+      id: 'child-1',
+      name: { givenName: 'Sam', familyName: 'Kid' },
+      guardianLinkId: 'link-1',
+      kind: 0,
+      language: 'en',
+      timeZoneId: 'UTC',
+      ...overrides
+    };
+  }
+
   interface Stubs {
     users?: Partial<UsersService>;
     calendars?: Partial<CalendarsService>;
+    guardians?: Partial<GuardiansService>;
+    taskLibrary?: Partial<TaskLibraryService>;
+    templates?: TaskTemplate[];
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -79,20 +111,35 @@ describe('CalendarAgenda', () => {
       updateItemDetails: vi.fn(async () => ({}) as never),
       rescheduleItem: vi.fn(async () => ({}) as never),
       createItem: vi.fn(async () => ({}) as never),
+      scheduleTaskFromTemplate: vi.fn(async () => ({}) as never),
       ...stubs.calendars
+    };
+    const guardiansStub: Partial<GuardiansService> = {
+      listMyChildren: vi.fn(async () => [childSummary()]),
+      ...stubs.guardians
+    };
+    const taskLibraryStub: Partial<TaskLibraryService> = {
+      // A plain signal preloaded with the fixture list, rather than relying on listTaskTemplates'
+      // async resolution timing -- taskTemplates() reads straight off this signal, same as the
+      // real service's own `templates` contract (see TaskLibraryService).
+      templates: signal(stubs.templates ?? []).asReadonly(),
+      listTaskTemplates: vi.fn(async () => stubs.templates ?? []),
+      ...stubs.taskLibrary
     };
 
     await TestBed.configureTestingModule({
       imports: [CalendarAgenda],
       providers: [
         { provide: UsersService, useValue: usersStub },
-        { provide: CalendarsService, useValue: calendarsStub }
+        { provide: CalendarsService, useValue: calendarsStub },
+        { provide: GuardiansService, useValue: guardiansStub },
+        { provide: TaskLibraryService, useValue: taskLibraryStub }
       ]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(CalendarAgenda);
 
-    return { fixture, calendars: calendarsStub };
+    return { fixture, calendars: calendarsStub, guardians: guardiansStub, taskLibrary: taskLibraryStub };
   }
 
   // loadWeek chains a Promise.all, and a successful load can itself trigger the newCalendarId
@@ -361,7 +408,7 @@ describe('CalendarAgenda', () => {
     checkbox.dispatchEvent(new Event('change'));
     await settle(fixture);
 
-    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true);
+    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
     expect((fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(true);
   });
 
@@ -952,5 +999,188 @@ describe('CalendarAgenda', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Take out trash');
     expect(compiled.textContent).not.toContain('→');
+  });
+
+  // ----- Template-scheduled task runs (grouped rendering + the compound-key fix) -----
+
+  describe('template-scheduled task runs', () => {
+    function subtaskOccurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
+      return occurrence({
+        itemId: 'run-1',
+        kind: 1,
+        parentTitle: 'Morning routine',
+        startsAt: null,
+        endsAt: null,
+        ...overrides
+      });
+    }
+
+    it('renders a 3-subtask run as one block showing the parent title once, with a checkbox per subtask', async () => {
+      const subtasks = [
+        subtaskOccurrence({ subtaskId: 'sub-1', title: 'Brush teeth', dueAt: `${today}T08:00:00Z` }),
+        subtaskOccurrence({ subtaskId: 'sub-2', title: 'Get dressed', dueAt: `${today}T08:10:00Z` }),
+        subtaskOccurrence({ subtaskId: 'sub-3', title: 'Eat breakfast', dueAt: `${today}T08:20:00Z` })
+      ];
+
+      const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => subtasks) } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      // The parent title renders exactly once (the block header), not once per subtask.
+      expect(compiled.textContent?.match(/Morning routine/g)?.length).toBe(1);
+      expect(compiled.textContent).toContain('Brush teeth');
+      expect(compiled.textContent).toContain('Get dressed');
+      expect(compiled.textContent).toContain('Eat breakfast');
+      // Scoped to the run's own subtask list -- the create form below also renders an unrelated
+      // "all day" checkbox that would otherwise inflate this count.
+      expect(compiled.querySelectorAll('ul.ml-4 input[type="checkbox"]').length).toBe(3);
+    });
+
+    it('completing one subtask of a 3-subtask run does not flip the other subtasks (the compound-key fix)', async () => {
+      const subtasks = [
+        subtaskOccurrence({ subtaskId: 'sub-1', title: 'Brush teeth', dueAt: `${today}T08:00:00Z` }),
+        subtaskOccurrence({ subtaskId: 'sub-2', title: 'Get dressed', dueAt: `${today}T08:10:00Z` }),
+        subtaskOccurrence({ subtaskId: 'sub-3', title: 'Eat breakfast', dueAt: `${today}T08:20:00Z` })
+      ];
+
+      const { fixture, calendars } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => subtasks) } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const checkboxes = Array.from(compiled.querySelectorAll<HTMLInputElement>('ul.ml-4 input[type="checkbox"]'));
+      expect(checkboxes).toHaveLength(3);
+      expect(checkboxes.every((checkbox) => !checkbox.checked)).toBe(true);
+
+      // Toggle only the first subtask.
+      checkboxes[0].dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'run-1', today, true, 'sub-1');
+
+      const afterToggle = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('ul.ml-4 input[type="checkbox"]')
+      );
+      expect(afterToggle[0].checked).toBe(true);
+      // The sibling subtasks must remain unchecked -- without the compound (itemId + subtaskId)
+      // key, every occurrence sharing itemId "run-1" would have been optimistically flipped too.
+      expect(afterToggle[1].checked).toBe(false);
+      expect(afterToggle[2].checked).toBe(false);
+    });
+  });
+
+  // ----- Template-mode task creation -----
+
+  describe('scheduling a task from a template', () => {
+    const template = taskTemplate({ id: 'template-1', name: 'Morning routine', icon: '🌅', color: '#0ea5e9' });
+
+    it('picking a template pre-fills title/icon/color, still editable afterward', async () => {
+      const { fixture } = await setup({ templates: [template] });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'From template')!.click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      const pickerInput = compiled.querySelector<HTMLInputElement>('app-task-picker input')!;
+      pickerInput.dispatchEvent(new Event('focus'));
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      const option = Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-task-picker ul li button')).find((button) =>
+        button.textContent?.includes('Morning routine')
+      )!;
+      option.click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!.value).toBe('Morning routine');
+      expect(compiled.querySelector<HTMLInputElement>('input[name="itemIcon"]')!.value).toBe('🌅');
+
+      // Still editable afterward -- a one-time pre-fill, not a live binding to the template.
+      setInputValue(compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!, 'Custom title');
+      await settle(fixture);
+
+      expect((fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[name="itemTitle"]')!.value).toBe(
+        'Custom title'
+      );
+    });
+
+    it('submits via scheduleTaskFromTemplate with the exact request the service expects', async () => {
+      const { fixture, calendars } = await setup({ templates: [template] });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'From template')!.click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      compiled.querySelector<HTMLInputElement>('app-task-picker input')!.dispatchEvent(new Event('focus'));
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-task-picker ul li button'))
+        .find((button) => button.textContent?.includes('Morning routine'))!
+        .click();
+      await settle(fixture);
+
+      createForm(fixture.nativeElement as HTMLElement).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.scheduleTaskFromTemplate).toHaveBeenCalledWith('cal-1', {
+        taskTemplateId: 'template-1',
+        startDate: today,
+        startTime: '09:00:00',
+        recurrence: null,
+        assignedTo: null,
+        title: 'Morning routine',
+        icon: '🌅',
+        color: '#0ea5e9'
+      });
+      expect(calendars.createItem).not.toHaveBeenCalled();
+    });
+
+    it('disables the add button in template mode until a template is picked', async () => {
+      const { fixture } = await setup({ templates: [template] });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      setInputValue(compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!, 'Something');
+      findButtonByText(compiled, 'From template')!.click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(findButtonByText(compiled, 'Add to calendar')!.disabled).toBe(true);
+    });
+
+    it('hides the all-day checkbox in template mode', async () => {
+      const { fixture } = await setup({ templates: [template] });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('All day');
+
+      findButtonByText(compiled, 'From template')!.click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).not.toContain('All day');
+    });
   });
 });

@@ -15,6 +15,7 @@ import {
   IcalTokenSummary,
   IssuedIcalToken,
   RescheduleItemRequest,
+  ScheduleTaskFromTemplateRequest,
   TaskCompletion,
   UpdateItemDetailsRequest
 } from './calendars.service';
@@ -56,6 +57,8 @@ describe('CalendarsService', () => {
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,
+      parentTitle: null,
+      subtaskId: null,
       ...overrides
     };
   }
@@ -429,14 +432,14 @@ describe('CalendarsService', () => {
   });
 
   describe('setTaskCompletion', () => {
-    it('PATCHes the completion endpoint with date and isCompleted, and resolves with the result', async () => {
+    it('PATCHes the completion endpoint with date, isCompleted, and a null subtaskId when none is given, and resolves with the result', async () => {
       const completion: TaskCompletion = { itemId: 'task-1', occurrenceDate: '2026-08-26', isCompleted: true };
 
       const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', true);
 
       const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/completion`);
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: true });
+      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: true, subtaskId: null });
       req.flush(completion);
 
       await expect(promise).resolves.toEqual(completion);
@@ -448,10 +451,94 @@ describe('CalendarsService', () => {
       const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', false);
 
       const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/completion`);
-      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: false });
+      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: false, subtaskId: null });
       req.flush(completion);
 
       await expect(promise).resolves.toEqual(completion);
+    });
+
+    it('threads a given subtaskId through to the request body, to complete one subtask of a template-scheduled task', async () => {
+      const completion: TaskCompletion = { itemId: 'task-1', occurrenceDate: '2026-08-26', isCompleted: true };
+
+      const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', true, 'subtask-1');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/completion`);
+      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: true, subtaskId: 'subtask-1' });
+      req.flush(completion);
+
+      await expect(promise).resolves.toEqual(completion);
+    });
+  });
+
+  describe('scheduleTaskFromTemplate', () => {
+    const request: ScheduleTaskFromTemplateRequest = {
+      taskTemplateId: 'template-1',
+      startDate: '2026-08-27',
+      startTime: '08:00:00',
+      recurrence: null,
+      assignedTo: 'child-1',
+      title: 'Morning routine',
+      icon: '🌅',
+      color: '#10b981'
+    };
+
+    it('POSTs the request under the calendar\'s from-template endpoint and resolves with the created item', async () => {
+      const created: CalendarItemResponse = {
+        id: 'task-1',
+        calendarId: 'cal-1',
+        kind: 1,
+        title: 'Morning routine',
+        icon: '🌅',
+        color: '#10b981',
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        assignedTo: 'child-1'
+      };
+
+      const promise = service.scheduleTaskFromTemplate('cal-1', request);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/from-template`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(request);
+      req.flush(created);
+
+      await expect(promise).resolves.toEqual(created);
+    });
+
+    it('invalidates the today-occurrences cache so a subsequent listTodayOccurrences re-fetches', async () => {
+      const today = todayIsoDate();
+
+      const firstToday = service.listTodayOccurrences();
+      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([]);
+      await expect(firstToday).resolves.toEqual([]);
+
+      const cachedToday = service.listTodayOccurrences();
+      httpMock.expectNone(`${apiBaseUrl}/calendars`);
+      await expect(cachedToday).resolves.toEqual([]);
+
+      const schedulePromise = service.scheduleTaskFromTemplate('cal-1', request);
+      httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/from-template`).flush({
+        id: 'task-1',
+        calendarId: 'cal-1',
+        kind: 1,
+        title: 'Morning routine',
+        icon: '🌅',
+        color: '#10b981',
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        assignedTo: 'child-1'
+      } satisfies CalendarItemResponse);
+      await schedulePromise;
+
+      const afterSchedule = service.listTodayOccurrences();
+      const calendarsReq = httpMock.expectOne(`${apiBaseUrl}/calendars`);
+      calendarsReq.flush([calendar()]);
+      await flushMicrotasks();
+      httpMock.expectOne((r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` && r.params.get('from') === today && r.params.get('to') === today).flush(
+        []
+      );
+
+      await expect(afterSchedule).resolves.toEqual([]);
     });
   });
 

@@ -98,6 +98,21 @@ export interface RescheduleItemRequest {
   isAllDay: boolean;
 }
 
+// Matches ScheduleTaskFromTemplateRequest exactly. startDate/startTime are flat DateOnly/TimeOnly
+// fields (not a nested DatePart like CreateItemRequest) -- System.Text.Json's built-in converters
+// serialize DateOnly as "yyyy-MM-dd" and TimeOnly as "HH:mm:ss", matching todayIsoDate() and the
+// seconds-appended convention ManageMedicines/TimeSelect already use for TimeOnly-backed fields.
+export interface ScheduleTaskFromTemplateRequest {
+  taskTemplateId: string;
+  startDate: string;
+  startTime: string;
+  recurrence: RecurrenceRuleRequest | null;
+  assignedTo: string | null;
+  title: string;
+  icon: string | null;
+  color: string;
+}
+
 export interface CalendarItemResponse {
   id: string;
   calendarId: string;
@@ -109,6 +124,15 @@ export interface CalendarItemResponse {
   createdBy: string;
   lastModifiedBy: string;
   assignedTo: string | null;
+  // Set when this item was scheduled from a TaskLibrary template (see ScheduleTaskFromTemplate);
+  // null for a freeform item. Optional (rather than a plain `string | null`) for two reasons: (1)
+  // as of this writing the backend's CalendarItemResponse (CreateItem.Endpoint.cs) does not
+  // actually serialize CalendarItem.TaskTemplateId onto this DTO yet, even though the domain type
+  // carries it -- this field is added here for the shape the next step (agenda.ts integration)
+  // will need, but will read as undefined against the real API until that backend gap is closed;
+  // (2) making it optional keeps every existing CalendarItemResponse object literal (e.g. in
+  // calendars.service.spec.ts and any consumer outside this step's scope) compiling unchanged.
+  taskTemplateId?: string | null;
 }
 
 export interface CalendarItemOccurrence {
@@ -128,6 +152,18 @@ export interface CalendarItemOccurrence {
   createdBy: string;
   lastModifiedBy: string;
   assignedTo: string | null;
+  // The parent item's own Title, set only when this occurrence is one subtask of a
+  // template-scheduled task (title above is the subtask's own title in that case). Null for every
+  // other occurrence -- lets the frontend group a routine's subtask occurrences under their
+  // shared parent. Optional (matching the backend's own "additive trailing field" comment on
+  // CalendarItemOccurrence) so every existing CalendarItemOccurrence/CalendarOccurrence object
+  // literal outside this step's scope (agenda/tasks-today/events-today/child-calendar/home specs)
+  // keeps compiling unchanged.
+  parentTitle?: string | null;
+  // The subtask's own id, set only for a template-scheduled task's per-subtask occurrence --
+  // required by setTaskCompletion to target the right subtask. Null otherwise. Optional for the
+  // same back-compat reason as parentTitle.
+  subtaskId?: string | null;
 }
 
 export interface TaskCompletion {
@@ -230,15 +266,29 @@ export class CalendarsService {
     this.todayCache = null;
   }
 
-  async setTaskCompletion(calendarId: string, itemId: string, date: string, isCompleted: boolean): Promise<TaskCompletion> {
+  // subtaskId is required to complete one subtask of a template-scheduled task, and must be
+  // omitted (null) for a plain task -- matches SetTaskCompletionRequest.SubtaskId. Defaults to
+  // null so every existing (pre-TaskLibrary) call site keeps working unchanged.
+  async setTaskCompletion(calendarId: string, itemId: string, date: string, isCompleted: boolean, subtaskId: string | null = null): Promise<TaskCompletion> {
     const completion = await firstValueFrom(
       this.http.patch<TaskCompletion>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/completion`, {
         date,
-        isCompleted
+        isCompleted,
+        subtaskId
       })
     );
     this.todayCache = null;
     return completion;
+  }
+
+  // The calendar-item analog of createItem for a Task whose subtasks come from a TaskLibrary
+  // template instead of being entered by hand -- see ScheduleTaskFromTemplate.Command.cs.
+  async scheduleTaskFromTemplate(calendarId: string, request: ScheduleTaskFromTemplateRequest): Promise<CalendarItemResponse> {
+    const created = await firstValueFrom(
+      this.http.post<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/from-template`, request)
+    );
+    this.todayCache = null;
+    return created;
   }
 
   /**

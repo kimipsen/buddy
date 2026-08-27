@@ -282,8 +282,55 @@ describe('ChildHome', () => {
     findButtonByAriaLabel(compiled, 'Mark done')?.click();
     await settle(fixture);
 
-    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true);
+    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
     expect(findButtonByAriaLabel(compiled, 'Mark not done')).toBeTruthy();
+  });
+
+  it('completing one subtask of a template-scheduled run does not flip its sibling subtasks (the compound-key fix)', async () => {
+    function subtask(subtaskId: string, title: string): CalendarOccurrence {
+      return {
+        itemId: 'run-1',
+        kind: 1,
+        title,
+        icon: '🧹',
+        iconOverride: null,
+        color: '#000',
+        startsAt: null,
+        endsAt: null,
+        dueAt: null,
+        isAllDay: false,
+        isCompleted: false,
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        assignedTo: 'child-1',
+        calendarId: 'cal-1',
+        calendarName: 'Home',
+        parentTitle: 'Morning routine',
+        subtaskId
+      };
+    }
+
+    const subtasks = [subtask('sub-1', 'Brush teeth'), subtask('sub-2', 'Get dressed')];
+    const setTaskCompletion = vi.fn(async () => ({ itemId: 'run-1', occurrenceDate: today, isCompleted: true }) as TaskCompletion);
+
+    const { fixture, calendars } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => subtasks), setTaskCompletion }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const toggles = compiled.querySelectorAll('button[aria-label="Mark done"]');
+    expect(toggles).toHaveLength(2);
+
+    toggles[0].dispatchEvent(new Event('click'));
+    await settle(fixture);
+
+    expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'run-1', today, true, 'sub-1');
+
+    const afterToggle = (fixture.nativeElement as HTMLElement).querySelectorAll('button[aria-label]');
+    const doneCount = Array.from(afterToggle).filter((button) => button.getAttribute('aria-label') === 'Mark not done').length;
+    // Only the toggled subtask flips to "Mark not done" -- the sibling stays "Mark done".
+    expect(doneCount).toBe(1);
   });
 
   it('shows today\'s events including their time', async () => {

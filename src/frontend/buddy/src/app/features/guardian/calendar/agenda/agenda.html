@@ -77,7 +77,44 @@
             <div>
               <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ day.label }}</p>
               <ul class="space-y-2">
-                @for (occurrence of occurrencesFor(day.date); track occurrence.itemId) {
+                @for (entry of groupedOccurrencesFor(day.date); track entry.itemId) {
+                  @if (isRun(entry)) {
+                    @let run = $any(entry);
+                    <li class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                      <div class="mb-2 flex items-center gap-2">
+                        <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="run.color"></span>
+                        <span class="text-lg leading-none">{{ run.icon }}</span>
+                        <span class="font-semibold">{{ run.parentTitle }}</span>
+                        <span class="text-xs text-slate-400">{{ run.calendarName }}</span>
+                      </div>
+                      <ul class="ml-4 space-y-1.5 border-l-2 border-slate-200 pl-3">
+                        @for (subtask of run.subtasks; track keyFor(subtask)) {
+                          <li class="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              [checked]="subtask.isCompleted"
+                              [disabled]="savingTaskId() === keyFor(subtask) || (!subtask.isCompleted && !canCompleteTask(subtask))"
+                              (change)="toggleTaskCompletion(subtask)"
+                            />
+                            <span [class.line-through]="subtask.isCompleted">{{ subtask.title }}</span>
+                            @if (subtask.startsAt) {
+                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500">
+                                {{ subtask.startsAt | userDate: 'shortTime' }}
+                                @if (subtask.endsAt) {
+                                  – {{ subtask.endsAt | userDate: 'shortTime' }}
+                                }
+                              </span>
+                            } @else if (subtask.dueAt) {
+                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500">
+                                {{ subtask.dueAt | userDate: 'shortTime' }}
+                              </span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </li>
+                  } @else {
+                  @let occurrence = $any(entry);
                   <li class="rounded-lg border border-slate-200 px-4 py-3 text-sm">
                     @if (editingItemId() === occurrence.itemId) {
                       <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
@@ -197,7 +234,7 @@
                           <input
                             type="checkbox"
                             [checked]="occurrence.isCompleted"
-                            [disabled]="savingTaskId() === occurrence.itemId || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
+                            [disabled]="savingTaskId() === keyFor(occurrence) || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
                             (change)="toggleTaskCompletion(occurrence)"
                           />
                         }
@@ -265,6 +302,7 @@
                       </div>
                     }
                   </li>
+                  }
                 }
               </ul>
             </div>
@@ -325,10 +363,46 @@
         />
       </div>
 
-      <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-        <input type="checkbox" [checked]="newIsAllDay()" (change)="newIsAllDay.set(!newIsAllDay())" />
-        {{ 'calendar.agenda.form.allDayLabel' | translate }}
-      </label>
+      @if (newKind() === taskKind) {
+        <div class="flex w-fit overflow-hidden rounded-md border border-slate-300">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium transition"
+            [class.bg-slate-950]="newTaskSource() === 'manual'"
+            [class.text-white]="newTaskSource() === 'manual'"
+            [class.text-slate-600]="newTaskSource() !== 'manual'"
+            (click)="setTaskSource('manual')"
+          >
+            {{ 'calendar.agenda.form.taskSource.manual' | translate }}
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium transition"
+            [class.bg-slate-950]="newTaskSource() === 'template'"
+            [class.text-white]="newTaskSource() === 'template'"
+            [class.text-slate-600]="newTaskSource() !== 'template'"
+            (click)="setTaskSource('template')"
+          >
+            {{ 'calendar.agenda.form.taskSource.template' | translate }}
+          </button>
+        </div>
+
+        @if (newTaskSource() === 'template') {
+          <div>
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {{ 'calendar.agenda.form.taskSource.templateLabel' | translate }}
+            </span>
+            <app-task-picker [templates]="taskTemplates()" [templateId]="newTaskTemplateId()" (templateIdChange)="onTemplateSelected($event)" />
+          </div>
+        }
+      }
+
+      @if (!(newKind() === taskKind && newTaskSource() === 'template')) {
+        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+          <input type="checkbox" [checked]="newIsAllDay()" (change)="newIsAllDay.set(!newIsAllDay())" />
+          {{ 'calendar.agenda.form.allDayLabel' | translate }}
+        </label>
+      }
 
       @if (newKind() === eventKind) {
         <div class="grid gap-3 sm:grid-cols-2">

@@ -49,7 +49,57 @@
           <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
             <h2 class="text-xl font-bold tracking-normal">{{ day.label }}</h2>
             <ul class="mt-4 space-y-3">
-              @for (occurrence of occurrencesFor(day.date); track occurrence.itemId) {
+              @for (entry of groupedOccurrencesFor(day.date); track entry.itemId) {
+                @if (isRun(entry)) {
+                  @let run = $any(entry);
+                  <li class="rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3">
+                    <div class="mb-3 flex items-center gap-2">
+                      <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="run.color"></span>
+                      <span class="text-xl" aria-hidden="true">{{ run.icon }}</span>
+                      <span class="text-lg font-bold tracking-normal">{{ run.parentTitle }}</span>
+                      <span class="text-sm font-normal text-slate-400">{{ run.calendarName }}</span>
+                    </div>
+                    <ul class="ml-2 space-y-2 border-l-2 border-slate-200 pl-3">
+                      @for (subtask of run.subtasks; track keyFor(subtask)) {
+                        <li class="flex items-center gap-3">
+                          <button
+                            type="button"
+                            class="grid size-9 shrink-0 place-items-center rounded-lg border-2 text-base font-bold transition disabled:opacity-50"
+                            [class.border-emerald-400]="subtask.isCompleted"
+                            [class.bg-emerald-400]="subtask.isCompleted"
+                            [class.text-white]="subtask.isCompleted"
+                            [class.border-slate-300]="!subtask.isCompleted"
+                            [disabled]="savingTaskId() === keyFor(subtask) || (!subtask.isCompleted && !canCompleteTask(subtask))"
+                            [attr.aria-label]="(subtask.isCompleted ? 'child.calendar.tasks.markNotDone' : 'child.calendar.tasks.markDone') | translate"
+                            (click)="toggleTask(subtask)"
+                          >
+                            @if (subtask.isCompleted) {
+                              ✓
+                            }
+                          </button>
+                          <span
+                            class="flex-1 text-base font-semibold"
+                            [class.line-through]="subtask.isCompleted"
+                            [class.text-slate-400]="subtask.isCompleted"
+                          >
+                            {{ subtask.title }}
+                          </span>
+                          @if (subtask.startsAt) {
+                            <span class="whitespace-nowrap text-sm font-semibold text-slate-500">
+                              {{ subtask.startsAt | userDate: 'shortTime' }}
+                              @if (subtask.endsAt) {
+                                – {{ subtask.endsAt | userDate: 'shortTime' }}
+                              }
+                            </span>
+                          } @else if (subtask.dueAt) {
+                            <span class="whitespace-nowrap text-sm font-semibold text-slate-500">{{ subtask.dueAt | userDate: 'shortTime' }}</span>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  </li>
+                } @else {
+                @let occurrence = $any(entry);
                 <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
                   @if (occurrence.kind === taskKind) {
                     <button
@@ -59,7 +109,7 @@
                       [class.bg-emerald-400]="occurrence.isCompleted"
                       [class.text-white]="occurrence.isCompleted"
                       [class.border-slate-300]="!occurrence.isCompleted"
-                      [disabled]="savingTaskId() === occurrence.itemId || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
+                      [disabled]="savingTaskId() === keyFor(occurrence) || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
                       [attr.aria-label]="(occurrence.isCompleted ? 'child.calendar.tasks.markNotDone' : 'child.calendar.tasks.markDone') | translate"
                       (click)="toggleTask(occurrence)"
                     >
@@ -94,6 +144,7 @@
                     <span class="whitespace-nowrap text-sm font-semibold text-slate-500">{{ occurrence.dueAt | userDate: 'shortTime' }}</span>
                   }
                 </li>
+                }
               }
             </ul>
           </div>

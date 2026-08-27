@@ -53,6 +53,11 @@ export const calendar = {
         event: 'Event',
         task: 'Task'
       },
+      taskSource: {
+        manual: 'Manual',
+        template: 'From template',
+        templateLabel: 'Task template'
+      },
       allDayLabel: 'All day',
       startDateLabel: 'Start date',
       startTimeLabel: 'Start time',

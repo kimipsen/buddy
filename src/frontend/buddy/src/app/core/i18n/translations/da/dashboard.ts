@@ -16,7 +16,8 @@ export const dashboard = {
     taskUpdateError: 'Kunne ikke opdatere denne opgave.',
     empty: 'Ingen opgaver forfalder i dag.',
     overdue: 'Forsinket',
-    dueToday: 'Forfalder i dag'
+    dueToday: 'Forfalder i dag',
+    rollup: '{completed} af {total} udført'
   },
   events: {
     title: 'Dagens begivenheder',

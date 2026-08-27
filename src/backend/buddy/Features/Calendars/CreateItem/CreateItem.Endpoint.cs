@@ -81,7 +81,8 @@ public sealed record CalendarItemResponse(
     RecurrenceRuleRequest? Recurrence,
     Guid CreatedBy,
     Guid LastModifiedBy,
-    Guid? AssignedTo)
+    Guid? AssignedTo,
+    Guid? TaskTemplateId = null)
 {
     public static CalendarItemResponse FromItem(CalendarItem item) => new(
         item.Id,
@@ -95,5 +96,6 @@ public sealed record CalendarItemResponse(
         item.Recurrence is { } r ? new RecurrenceRuleRequest(r.Frequency, r.IntervalCount, r.Until) : null,
         item.CreatedBy.Value,
         item.LastModifiedBy.Value,
-        item.AssignedTo?.Value);
+        item.AssignedTo?.Value,
+        item.TaskTemplateId);
 }

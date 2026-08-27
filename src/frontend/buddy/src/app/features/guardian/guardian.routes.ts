@@ -7,6 +7,7 @@ import { GuardianMealplan } from './mealplan/mealplan';
 import { GuardianMedicine } from './medicine/medicine';
 import { GuardianPickup } from './pickup/pickup';
 import { GuardianShell } from './shell/guardian-shell';
+import { GuardianTaskLibrary } from './task-library/task-library';
 
 export const GUARDIAN_ROUTES: Routes = [
   {
@@ -18,6 +19,7 @@ export const GUARDIAN_ROUTES: Routes = [
       { path: 'medicine', component: GuardianMedicine },
       { path: 'pickup', component: GuardianPickup },
       { path: 'calendar', component: GuardianCalendar },
+      { path: 'task-library', component: GuardianTaskLibrary },
       { path: 'admin', component: GuardianAdmin }
     ]
   }

@@ -2,6 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 
 import { CalendarOccurrence } from '../../../../../core/calendars.service';
 import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { AgendaEntry, groupTaskRuns, isTaskRun } from '../../../../../core/task-run';
 import { AgendaDay } from '../agenda';
 
 const MAX_CHIPS_PER_DAY = 3;
@@ -43,12 +44,23 @@ export class MonthGrid {
     return this.occurrencesByDate()[date] ?? [];
   }
 
-  protected visibleChips(date: string): CalendarOccurrence[] {
-    return this.occurrencesFor(date).slice(0, MAX_CHIPS_PER_DAY);
+  // Grouped the same way the day/week list is (see core/task-run.ts) -- without this, a
+  // template-scheduled task's several same-day subtask occurrences would render as several
+  // identical-itemId chips (an Angular @for track collision) instead of one.
+  protected groupedOccurrencesFor(date: string): AgendaEntry[] {
+    return groupTaskRuns(this.occurrencesFor(date));
+  }
+
+  protected visibleChips(date: string): AgendaEntry[] {
+    return this.groupedOccurrencesFor(date).slice(0, MAX_CHIPS_PER_DAY);
   }
 
   protected overflowCount(date: string): number {
-    return Math.max(0, this.occurrencesFor(date).length - MAX_CHIPS_PER_DAY);
+    return Math.max(0, this.groupedOccurrencesFor(date).length - MAX_CHIPS_PER_DAY);
+  }
+
+  protected titleFor(entry: AgendaEntry): string {
+    return isTaskRun(entry) ? entry.parentTitle : entry.title;
   }
 
   protected selectDay(date: string): void {

@@ -22,13 +22,19 @@ import {
   toTimeInTimeZone,
   todayIsoDate
 } from '../../../../core/date-utils';
+import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
+import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../../core/task-run';
+import { TaskLibraryService } from '../../../../core/task-library.service';
 import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 import { MonthGrid } from './month-grid/month-grid';
+import { TaskPicker } from '../../task-library/task-picker/task-picker';
+
+export type NewTaskSource = 'manual' | 'template';
 
 const DAYS_AHEAD = 7;
 const EVENT_KIND: CalendarItemKind = 0;
@@ -89,13 +95,15 @@ function toDatePart(date: string, time: string): DatePart {
 
 @Component({
   selector: 'app-calendar-agenda',
-  imports: [FormsModule, TranslatePipe, UserDatePipe, DateSelect, TimeSelect, MonthGrid],
+  imports: [FormsModule, TranslatePipe, UserDatePipe, DateSelect, TimeSelect, MonthGrid, TaskPicker],
   templateUrl: './agenda.html'
 })
 export class CalendarAgenda {
   private readonly calendars = inject(CalendarsService);
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
+  private readonly guardians = inject(GuardiansService);
+  private readonly taskLibrary = inject(TaskLibraryService);
 
   protected readonly eventKind = EVENT_KIND;
   protected readonly taskKind = TASK_KIND;
@@ -262,6 +270,17 @@ export class CalendarAgenda {
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
 
+  // Only meaningful when newKind() === TASK_KIND -- 'template' swaps the free-form title/icon/
+  // color entry for a TaskPicker over the family's TaskLibrary and posts through
+  // scheduleTaskFromTemplate instead of createItem. See setTaskSource/onTemplateSelected/createItem.
+  protected readonly newTaskSource = signal<NewTaskSource>('manual');
+  protected readonly newTaskTemplateId = signal('');
+  // Reads straight from the shared service state (like ManageTasks/AssignMealplan), filtered to
+  // what's actually schedulable -- an archived template can still be listed here transiently right
+  // after this component's own initial fetch races a manage-tasks tab archiving one, but never
+  // offered as a pick.
+  protected readonly taskTemplates = computed(() => this.taskLibrary.templates().filter((template) => !template.isArchived));
+
   protected readonly assignableMembers = signal<AssignableMember[]>([]);
   // Merged across every calendar the guardian has assigned members for, keyed by userId -- used to
   // label an occurrence's assignee in the agenda list, not just the picker on the create form.
@@ -270,6 +289,10 @@ export class CalendarAgenda {
   protected readonly canSubmit = computed(() => {
     if (!this.newCalendarId() || !this.newTitle().trim() || !this.newColor().trim()) {
       return false;
+    }
+
+    if (this.newKind() === TASK_KIND && this.newTaskSource() === 'template') {
+      return this.newTaskTemplateId().trim() !== '' && this.newDueDate().trim() !== '';
     }
 
     return this.newKind() === EVENT_KIND
@@ -295,6 +318,13 @@ export class CalendarAgenda {
       this.newAssignedTo.set('');
       void this.loadAssignableMembers(calendarId);
     });
+
+    // A TaskTemplate library is shared by a child's whole family (see TaskFamilyResolution on the
+    // backend) -- listing it under any one of the guardian's children returns every sibling's
+    // shared templates too, so there's no per-child picker needed here, just any pivot child.
+    // Loaded once, independent of the visible week/calendar -- unlike loadWeek()/
+    // loadAssignableMembers(), nothing about which templates exist depends on navigation state.
+    void this.loadTaskTemplates();
   }
 
   protected setViewMode(mode: ViewMode): void {
@@ -338,6 +368,24 @@ export class CalendarAgenda {
 
   protected occurrencesFor(date: string): CalendarOccurrence[] {
     return this.occurrencesByDate()[date] ?? [];
+  }
+
+  // Folds a day's occurrences into agenda rows -- a template-scheduled task's subtask occurrences
+  // (sharing an itemId + parentTitle) render as one bracketed TaskRun block instead of one row
+  // each; every other occurrence is unaffected. See core/task-run.ts.
+  protected groupedOccurrencesFor(date: string): AgendaEntry[] {
+    return groupTaskRuns(this.occurrencesFor(date));
+  }
+
+  protected isRun(entry: AgendaEntry): boolean {
+    return isTaskRun(entry);
+  }
+
+  // Compound key distinguishing sibling subtask occurrences of the same template-scheduled run
+  // (same itemId, different subtaskId) -- see core/task-run.ts's occurrenceKey for why itemId
+  // alone is no longer sufficient once a run can produce more than one occurrence per item.
+  protected keyFor(occurrence: CalendarOccurrence): string {
+    return occurrenceKey(occurrence);
   }
 
   // Month view is overview/navigation only (see the "Rendering" section in docs/frontend/analysis/
@@ -421,13 +469,14 @@ export class CalendarAgenda {
     }
 
     const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
+    const key = occurrenceKey(occurrence);
 
-    this.savingTaskId.set(occurrence.itemId);
+    this.savingTaskId.set(key);
 
     try {
-      await this.calendars.setTaskCompletion(occurrence.calendarId, occurrence.itemId, date, isCompleted);
+      await this.calendars.setTaskCompletion(occurrence.calendarId, occurrence.itemId, date, isCompleted, occurrence.subtaskId ?? null);
       this.occurrences.update((current) =>
-        current.map((existing) => (existing.itemId === occurrence.itemId ? { ...existing, isCompleted } : existing))
+        current.map((existing) => (occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing))
       );
     } catch {
       this.error.set('calendar.agenda.taskUpdateError');
@@ -539,6 +588,35 @@ export class CalendarAgenda {
     }
   }
 
+  // 'manual' is the default and only ever needs clearing newTaskTemplateId (so a leftover pick
+  // never lingers into a later template-mode visit); switching *into* 'template' additionally
+  // forces isAllDay off -- a template-scheduled task is never all-day (see scheduleTaskFromTemplate
+  // below), so a stray `true` left over from manual-mode editing would otherwise hide the due-time
+  // picker without actually taking effect.
+  protected setTaskSource(source: NewTaskSource): void {
+    this.newTaskSource.set(source);
+
+    if (source === 'manual') {
+      this.newTaskTemplateId.set('');
+    } else {
+      this.newIsAllDay.set(false);
+    }
+  }
+
+  // Pre-fills title/icon/color from the picked template -- a one-time copy, not a live binding,
+  // so the guardian can still edit them afterward without the picker fighting back.
+  protected onTemplateSelected(templateId: string): void {
+    this.newTaskTemplateId.set(templateId);
+
+    const template = this.taskTemplates().find((candidate) => candidate.id === templateId);
+
+    if (template) {
+      this.newTitle.set(template.name);
+      this.newIcon.set(template.icon);
+      this.newColor.set(template.color);
+    }
+  }
+
   protected async createItem(): Promise<void> {
     if (!this.canSubmit()) {
       return;
@@ -546,30 +624,44 @@ export class CalendarAgenda {
 
     const calendarId = this.newCalendarId();
     const kind = this.newKind();
-    const isAllDay = this.newIsAllDay();
 
     this.creating.set(true);
     this.createError.set(null);
 
-    // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
-    const startTime = isAllDay ? '00:00' : this.newStartTime();
-    const endTime = isAllDay ? '00:00' : this.newEndTime();
-    const endDate = isAllDay ? addDaysIso(this.newEndDate(), 1) : this.newEndDate();
-    const dueTime = isAllDay ? '00:00' : this.newDueTime();
-
     try {
-      await this.calendars.createItem(calendarId, {
-        kind,
-        title: this.newTitle().trim(),
-        icon: this.newIcon().trim() || null,
-        color: this.newColor().trim(),
-        startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), startTime) : null,
-        endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
-        dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
-        isAllDay,
-        recurrence: this.buildRecurrence(),
-        assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null
-      });
+      if (kind === TASK_KIND && this.newTaskSource() === 'template') {
+        await this.calendars.scheduleTaskFromTemplate(calendarId, {
+          taskTemplateId: this.newTaskTemplateId(),
+          startDate: this.newDueDate(),
+          startTime: `${this.newDueTime()}:00`,
+          recurrence: this.buildRecurrence(),
+          assignedTo: this.newAssignedTo() || null,
+          title: this.newTitle().trim(),
+          icon: this.newIcon().trim() || null,
+          color: this.newColor().trim()
+        });
+      } else {
+        const isAllDay = this.newIsAllDay();
+
+        // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
+        const startTime = isAllDay ? '00:00' : this.newStartTime();
+        const endTime = isAllDay ? '00:00' : this.newEndTime();
+        const endDate = isAllDay ? addDaysIso(this.newEndDate(), 1) : this.newEndDate();
+        const dueTime = isAllDay ? '00:00' : this.newDueTime();
+
+        await this.calendars.createItem(calendarId, {
+          kind,
+          title: this.newTitle().trim(),
+          icon: this.newIcon().trim() || null,
+          color: this.newColor().trim(),
+          startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), startTime) : null,
+          endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
+          dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
+          isAllDay,
+          recurrence: this.buildRecurrence(),
+          assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null
+        });
+      }
 
       this.resetForm();
       await this.loadWeek();
@@ -609,6 +701,22 @@ export class CalendarAgenda {
     this.newIntervalCount.set(1);
     this.newUntil.set('');
     this.newAssignedTo.set('');
+    this.newTaskSource.set('manual');
+    this.newTaskTemplateId.set('');
+  }
+
+  private async loadTaskTemplates(): Promise<void> {
+    try {
+      const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
+
+      if (firstChild) {
+        await this.taskLibrary.listTaskTemplates(firstChild.id);
+      }
+    } catch {
+      // The template picker is a nice-to-have on the create form -- if this fails, manual task
+      // creation still works, just without template-based scheduling as an option.
+    }
   }
 
   private async loadWeek(): Promise<void> {
