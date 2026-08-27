@@ -80,7 +80,7 @@ sequenceDiagram
 | --- | --- | --- |
 | `POST` | `/groups` | Creates a group for the authenticated user. |
 | `GET` | `/groups` | Lists groups visible to the current user. |
-| `GET` | `/groups/{groupId}` | Loads one group and its current membership state. |
+| `GET` | `/groups/{groupId}` | Loads one group and its current membership state, with each member's given/family name and whether they are a child (resolved from the User and GuardianLink streams). |
 | `PATCH` | `/groups/{groupId}/members/{memberId}` | Sets a member role such as owner, admin, or member. |
 | `DELETE` | `/groups/{groupId}/members/{memberId}` | Removes a user from the group. |
 | `PATCH` | `/groups/{groupId}/calendar-permission-policy` | Updates how group roles map to calendar permissions. |
