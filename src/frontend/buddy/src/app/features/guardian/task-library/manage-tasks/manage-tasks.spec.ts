@@ -57,6 +57,9 @@ describe('ManageTasks', () => {
         templatesState.update((current) => [...current, created]);
         return created;
       }),
+      updateTaskTemplate: vi.fn(async (templateId: string, request: TaskTemplateDetails) => {
+        return replace({ ...templatesState().find((t) => t.id === templateId)!, ...request });
+      }),
       archiveTaskTemplate: vi.fn(async (templateId: string) => {
         templatesState.update((current) => current.map((t) => (t.id === templateId ? { ...t, isArchived: true } : t)));
       }),
@@ -303,6 +306,71 @@ describe('ManageTasks', () => {
 
       expect(compiled.textContent).toContain('Unable to create the task template.');
       expect(templateNameInput(compiled).value).toBe('Bedtime routine');
+    });
+  });
+
+  describe('renaming a template', () => {
+    it('renames the overall task template inline and saves the change', async () => {
+      const { fixture, taskLibrary } = await setup({ initialTemplates: [template({ id: 'template-1', name: 'Get ready', icon: '🎒', color: '#6366f1' })] });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Rename')!.click();
+      fixture.detectChanges();
+
+      const nameInput = compiled.querySelector<HTMLInputElement>('input[name="editTemplateName"]')!;
+      setInputValue(nameInput, 'Morning routine');
+      fixture.detectChanges();
+
+      findButtonByText(compiled, 'Save')!.click();
+      await settle(fixture);
+
+      expect(taskLibrary.updateTaskTemplate).toHaveBeenCalledWith('template-1', { name: 'Morning routine', icon: '🎒', color: '#6366f1' });
+      expect(compiled.textContent).toContain('Morning routine');
+      expect(compiled.textContent).not.toContain('Get ready');
+    });
+
+    it('cancels an in-progress rename without saving', async () => {
+      const { fixture, taskLibrary } = await setup({ initialTemplates: [template({ id: 'template-1', name: 'Get ready' })] });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Rename')!.click();
+      fixture.detectChanges();
+      setInputValue(compiled.querySelector<HTMLInputElement>('input[name="editTemplateName"]')!, 'Something else');
+      fixture.detectChanges();
+
+      findButtonByText(compiled, 'Cancel')!.click();
+      fixture.detectChanges();
+
+      expect(taskLibrary.updateTaskTemplate).not.toHaveBeenCalled();
+      expect(compiled.textContent).toContain('Get ready');
+    });
+
+    it('shows a translated error and keeps the edit form open when renaming fails', async () => {
+      const { fixture } = await setup({
+        initialTemplates: [template({ id: 'template-1', name: 'Get ready' })],
+        taskLibrary: { updateTaskTemplate: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Rename')!.click();
+      fixture.detectChanges();
+      setInputValue(compiled.querySelector<HTMLInputElement>('input[name="editTemplateName"]')!, 'Morning routine');
+      fixture.detectChanges();
+      findButtonByText(compiled, 'Save')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Unable to update this task template.');
+      expect(compiled.querySelector<HTMLInputElement>('input[name="editTemplateName"]')).not.toBeNull();
+    });
+
+    it('hides the rename button for an already-archived template', async () => {
+      const { fixture } = await setup({ initialTemplates: [template({ isArchived: true })] });
+      await settle(fixture);
+
+      expect(findButtonByText(fixture.nativeElement as HTMLElement, 'Rename')).toBeUndefined();
     });
   });
 

@@ -14,11 +14,15 @@ export const taskLibrary = {
     totalDuration: '{duration} total',
     editSubtasks: 'Edit subtasks',
     hideSubtasks: 'Hide subtasks',
+    rename: 'Rename',
     form: {
       namePlaceholder: 'Template name',
       iconPlaceholder: 'Icon',
       submit: 'Add template',
-      createError: 'Unable to create the task template.'
+      createError: 'Unable to create the task template.',
+      save: 'Save',
+      cancel: 'Cancel',
+      updateError: 'Unable to update this task template.'
     },
     subtasks: {
       title: 'Subtasks',

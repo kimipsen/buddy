@@ -59,6 +59,13 @@ export class ManageTasks implements OnInit {
 
   protected readonly archivingTemplateId = signal<string | null>(null);
 
+  protected readonly editingTemplateId = signal<string | null>(null);
+  protected readonly editTemplateName = signal('');
+  protected readonly editTemplateIcon = signal('');
+  protected readonly editTemplateColor = signal(DEFAULT_COLOR);
+  protected readonly savingTemplateId = signal<string | null>(null);
+  protected readonly templateError = signal<string | null>(null);
+
   protected readonly newSubtaskTitle = signal('');
   protected readonly newSubtaskIcon = signal('');
   protected readonly newSubtaskDuration = signal(DEFAULT_SUBTASK_DURATION_MINUTES);
@@ -92,9 +99,44 @@ export class ManageTasks implements OnInit {
     this.expandedTemplateId.set(this.expandedTemplateId() === templateId ? null : templateId);
     this.subtaskError.set(null);
     this.cancelEditSubtask();
+    this.cancelEditTemplate();
     this.newSubtaskTitle.set('');
     this.newSubtaskIcon.set('');
     this.newSubtaskDuration.set(DEFAULT_SUBTASK_DURATION_MINUTES);
+  }
+
+  protected startEditTemplate(template: TaskTemplate): void {
+    this.editingTemplateId.set(template.id);
+    this.editTemplateName.set(template.name);
+    this.editTemplateIcon.set(template.icon);
+    this.editTemplateColor.set(template.color);
+    this.templateError.set(null);
+  }
+
+  protected cancelEditTemplate(): void {
+    this.editingTemplateId.set(null);
+  }
+
+  protected async saveTemplate(templateId: string): Promise<void> {
+    const name = this.editTemplateName().trim();
+    const icon = this.editTemplateIcon().trim();
+    const color = this.editTemplateColor().trim();
+
+    if (!name || !icon) {
+      return;
+    }
+
+    this.savingTemplateId.set(templateId);
+    this.templateError.set(null);
+
+    try {
+      await this.taskLibrary.updateTaskTemplate(templateId, { name, icon, color });
+      this.editingTemplateId.set(null);
+    } catch {
+      this.templateError.set('taskLibrary.manageTasks.form.updateError');
+    } finally {
+      this.savingTemplateId.set(null);
+    }
   }
 
   protected async createTemplate(): Promise<void> {

@@ -14,11 +14,15 @@ export const taskLibrary = {
     totalDuration: '{duration} i alt',
     editSubtasks: 'Rediger deltrin',
     hideSubtasks: 'Skjul deltrin',
+    rename: 'Omdøb',
     form: {
       namePlaceholder: 'Skabelonnavn',
       iconPlaceholder: 'Ikon',
       submit: 'Tilføj skabelon',
-      createError: 'Kunne ikke oprette opgaveskabelonen.'
+      createError: 'Kunne ikke oprette opgaveskabelonen.',
+      save: 'Gem',
+      cancel: 'Annuller',
+      updateError: 'Kunne ikke opdatere denne opgaveskabelon.'
     },
     subtasks: {
       title: 'Deltrin',

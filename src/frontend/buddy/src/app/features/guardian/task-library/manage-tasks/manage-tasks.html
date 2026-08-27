@@ -30,35 +30,85 @@
       <ul class="space-y-3">
         @for (template of templates(); track template.id) {
           <li class="rounded-lg border border-slate-200" [class.opacity-60]="template.isArchived">
-            <div class="flex items-center justify-between gap-3 px-4 py-3">
-              <button type="button" class="flex flex-1 items-center gap-2 text-left text-sm font-medium" (click)="toggleExpanded(template.id)">
-                <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="template.color"></span>
-                <span class="text-lg leading-none">{{ template.icon }}</span>
-                <span>{{ template.name }}</span>
-                <span class="text-xs font-normal text-slate-500">({{ 'taskLibrary.manageTasks.totalDuration' | translate: { duration: formatDuration(template.totalDurationMinutes) } }})</span>
-                @if (template.isArchived) {
-                  <span class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                    {{ 'taskLibrary.manageTasks.archivedBadge' | translate }}
-                  </span>
-                }
-              </button>
-
-              <div class="flex items-center gap-3">
-                <button type="button" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800" (click)="toggleExpanded(template.id)">
-                  {{ (expandedTemplateId() === template.id ? 'taskLibrary.manageTasks.hideSubtasks' : 'taskLibrary.manageTasks.editSubtasks') | translate }}
+            @if (editingTemplateId() === template.id) {
+              <form class="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_4rem_3rem_auto_auto]" (ngSubmit)="saveTemplate(template.id)">
+                <input
+                  type="text"
+                  name="editTemplateName"
+                  class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  [ngModel]="editTemplateName()"
+                  (ngModelChange)="editTemplateName.set($event)"
+                />
+                <input
+                  type="text"
+                  name="editTemplateIcon"
+                  class="rounded-lg border border-slate-300 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  [ngModel]="editTemplateIcon()"
+                  (ngModelChange)="editTemplateIcon.set($event)"
+                />
+                <input
+                  type="color"
+                  name="editTemplateColor"
+                  class="h-full w-full rounded-lg border border-slate-300 p-1"
+                  [ngModel]="editTemplateColor()"
+                  (ngModelChange)="editTemplateColor.set($event)"
+                />
+                <button
+                  type="submit"
+                  class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  [disabled]="savingTemplateId() === template.id || !editTemplateName().trim() || !editTemplateIcon().trim()"
+                >
+                  {{ 'taskLibrary.manageTasks.form.save' | translate }}
                 </button>
-                @if (!template.isArchived) {
-                  <button
-                    type="button"
-                    class="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
-                    [disabled]="archivingTemplateId() === template.id"
-                    (click)="archiveTemplate(template.id)"
-                  >
-                    {{ 'taskLibrary.manageTasks.archive' | translate }}
-                  </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                  [disabled]="savingTemplateId() === template.id"
+                  (click)="cancelEditTemplate()"
+                >
+                  {{ 'taskLibrary.manageTasks.form.cancel' | translate }}
+                </button>
+
+                @if (templateError(); as message) {
+                  <p class="text-xs text-red-600 sm:col-span-5">{{ message | translate }}</p>
                 }
+              </form>
+            } @else {
+              <div class="flex items-center justify-between gap-3 px-4 py-3">
+                <button type="button" class="flex flex-1 items-center gap-2 text-left text-sm font-medium" (click)="toggleExpanded(template.id)">
+                  <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="template.color"></span>
+                  <span class="text-lg leading-none">{{ template.icon }}</span>
+                  <span>{{ template.name }}</span>
+                  <span class="text-xs font-normal text-slate-500">({{ 'taskLibrary.manageTasks.totalDuration' | translate: { duration: formatDuration(template.totalDurationMinutes) } }})</span>
+                  @if (template.isArchived) {
+                    <span class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                      {{ 'taskLibrary.manageTasks.archivedBadge' | translate }}
+                    </span>
+                  }
+                </button>
+
+                <div class="flex items-center gap-3">
+                  @if (!template.isArchived) {
+                    <button type="button" class="text-xs font-semibold text-slate-600 hover:text-slate-800" (click)="startEditTemplate(template)">
+                      {{ 'taskLibrary.manageTasks.rename' | translate }}
+                    </button>
+                  }
+                  <button type="button" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800" (click)="toggleExpanded(template.id)">
+                    {{ (expandedTemplateId() === template.id ? 'taskLibrary.manageTasks.hideSubtasks' : 'taskLibrary.manageTasks.editSubtasks') | translate }}
+                  </button>
+                  @if (!template.isArchived) {
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                      [disabled]="archivingTemplateId() === template.id"
+                      (click)="archiveTemplate(template.id)"
+                    >
+                      {{ 'taskLibrary.manageTasks.archive' | translate }}
+                    </button>
+                  }
+                </div>
               </div>
-            </div>
+            }
 
             @if (expandedTemplateId() === template.id) {
               <div class="border-t border-slate-200 bg-slate-50 px-4 py-3">
