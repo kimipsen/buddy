@@ -4,6 +4,7 @@ export const shell = {
   menu: {
     openLabel: 'Open account menu',
     mealPlanner: 'Meal planner',
+    taskLibrary: 'Task library',
     medicine: 'Medicine',
     calendar: 'Calendar',
     settings: 'Settings',
