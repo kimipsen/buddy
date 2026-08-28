@@ -23,6 +23,7 @@ implementation and are therefore worth reading before changing the backend
 model or permissions logic.
 
 - [Aggregate roots and their relationships](analysis/aggregate-roots.md)
+- [Backend domain model diagram](analysis/domain-model-diagram.md)
 - [Group-owned calendars and permissions](analysis/group-owned-calendars-and-permissions.md)
 - [All-day calendar items](analysis/calendar-all-day-items.md)
 - [Integration testing strategy](analysis/integration-testing-strategy.md)

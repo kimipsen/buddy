@@ -4,6 +4,7 @@ This folder contains the project-level documentation for Buddy.
 
 ## Start here
 
+- [Architecture](architecture.md) — C4 context and container diagrams
 - [Backend overview](backend/README.md)
 - [Users flow](backend/users/flow.md)
 - [Calendars flow](backend/calendars/flow.md)
@@ -34,6 +35,7 @@ This folder contains the project-level documentation for Buddy.
 ## Backend design analysis
 
 - [Aggregate roots and their relationships](backend/analysis/aggregate-roots.md)
+- [Backend domain model diagram](backend/analysis/domain-model-diagram.md)
 - [Group-owned calendars and permissions](backend/analysis/group-owned-calendars-and-permissions.md)
 - [All-day calendar items](backend/analysis/calendar-all-day-items.md)
 - [Integration testing strategy](backend/analysis/integration-testing-strategy.md)

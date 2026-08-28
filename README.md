@@ -33,6 +33,7 @@ agents/      Reusable agent skills, examples, templates, and samples
 deploy/      Production Docker Compose and Caddy deployment
 ```
 
+- [Architecture](docs/architecture.md) — C4 context and container diagrams.
 - [Backend documentation](docs/backend/README.md) — domain glossary, user
   flows, HTTP semantics, and design analysis documents.
 - [Frontend documentation](docs/frontend/README.md) — Angular app shell,
