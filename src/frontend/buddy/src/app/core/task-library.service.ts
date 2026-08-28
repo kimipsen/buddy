@@ -116,6 +116,14 @@ export class TaskLibraryService {
     this.templatesState.update((current) => current.map((existing) => (existing.id === template.id ? template : existing)));
   }
 
+  // Used when the caller stops pointing at any particular child (e.g. a calendar assignee that
+  // isn't one of the guardian's children) -- there's no valid childId to list templates for, so
+  // the shared state should reflect "nothing selected" rather than keep showing the last child's
+  // templates.
+  clearTemplates(): void {
+    this.templatesState.set([]);
+  }
+
   async listTaskTemplates(childId: string): Promise<TaskTemplate[]> {
     const responses = await firstValueFrom(this.http.get<TaskTemplateResponse[]>(`${this.base()}/children/${childId}`));
     const templates = responses.map(fromResponse);

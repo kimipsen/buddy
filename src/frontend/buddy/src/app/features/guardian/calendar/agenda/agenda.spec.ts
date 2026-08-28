@@ -124,6 +124,10 @@ describe('CalendarAgenda', () => {
       // real service's own `templates` contract (see TaskLibraryService).
       templates: signal(stubs.templates ?? []).asReadonly(),
       listTaskTemplates: vi.fn(async () => stubs.templates ?? []),
+      // Component effects call this whenever the selected assignee isn't one of the guardian's
+      // children -- stubbed as a no-op since `templates` above is a static fixture, not real
+      // mutable service state.
+      clearTemplates: vi.fn(),
       ...stubs.taskLibrary
     };
 
@@ -1206,6 +1210,49 @@ describe('CalendarAgenda', () => {
 
       compiled = fixture.nativeElement as HTMLElement;
       expect(compiled.textContent).not.toContain('All day');
+    });
+  });
+
+  // ----- Template library follows the selected assignee -----
+
+  describe('template library scoping by assignee', () => {
+    it('loads the template library for the child picked as assignee', async () => {
+      const members: AssignableMember[] = [{ userId: 'child-1', givenName: 'Sam', familyName: 'Kid' }];
+      const { fixture, taskLibrary } = await setup({
+        calendars: { listAssignableMembers: vi.fn(async () => members) },
+        guardians: { listMyChildren: vi.fn(async () => [childSummary({ id: 'child-1' })]) }
+      });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      selectValue(compiled.querySelector<HTMLSelectElement>('select[name="itemAssignee"]')!, 'child-1');
+      await settle(fixture);
+
+      expect(taskLibrary.listTaskTemplates).toHaveBeenCalledWith('child-1');
+    });
+
+    it('clears the template library when the assignee is not one of the guardian\'s children', async () => {
+      const members: AssignableMember[] = [{ userId: 'guardian-2', givenName: 'Jo', familyName: 'Adult' }];
+      const { fixture, taskLibrary } = await setup({
+        calendars: { listAssignableMembers: vi.fn(async () => members) }
+      });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      await settle(fixture);
+      vi.mocked(taskLibrary.clearTemplates!).mockClear();
+
+      compiled = fixture.nativeElement as HTMLElement;
+      selectValue(compiled.querySelector<HTMLSelectElement>('select[name="itemAssignee"]')!, 'guardian-2');
+      await settle(fixture);
+
+      expect(taskLibrary.clearTemplates).toHaveBeenCalled();
+      expect(taskLibrary.listTaskTemplates).not.toHaveBeenCalledWith('guardian-2');
     });
   });
 });

@@ -22,7 +22,7 @@ import {
   toTimeInTimeZone,
   todayIsoDate
 } from '../../../../core/date-utils';
-import { GuardiansService } from '../../../../core/guardians.service';
+import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../../core/task-run';
@@ -271,7 +271,7 @@ export class CalendarAgenda {
   protected readonly createError = signal<string | null>(null);
 
   // Only meaningful when newKind() === TASK_KIND -- 'template' swaps the free-form title/icon/
-  // color entry for a TaskPicker over the family's TaskLibrary and posts through
+  // color entry for a TaskPicker over the selected assignee's TaskLibrary and posts through
   // scheduleTaskFromTemplate instead of createItem. See setTaskSource/onTemplateSelected/createItem.
   protected readonly newTaskSource = signal<NewTaskSource>('manual');
   protected readonly newTaskTemplateId = signal('');
@@ -282,6 +282,9 @@ export class CalendarAgenda {
   protected readonly taskTemplates = computed(() => this.taskLibrary.templates().filter((template) => !template.isArchived));
 
   protected readonly assignableMembers = signal<AssignableMember[]>([]);
+  // Used only to tell whether the selected assignee is one of the guardian's own children (and
+  // if so, which childId) -- AssignableMember carries no child/guardian discriminator of its own.
+  private readonly children = signal<ChildSummary[]>([]);
   // Merged across every calendar the guardian has assigned members for, keyed by userId -- used to
   // label an occurrence's assignee in the agenda list, not just the picker on the create form.
   private readonly memberNamesById = signal<Record<string, string>>({});
@@ -319,12 +322,23 @@ export class CalendarAgenda {
       void this.loadAssignableMembers(calendarId);
     });
 
-    // A TaskTemplate library is shared by a child's whole family (see TaskFamilyResolution on the
-    // backend) -- listing it under any one of the guardian's children returns every sibling's
-    // shared templates too, so there's no per-child picker needed here, just any pivot child.
-    // Loaded once, independent of the visible week/calendar -- unlike loadWeek()/
-    // loadAssignableMembers(), nothing about which templates exist depends on navigation state.
-    void this.loadTaskTemplates();
+    void this.loadChildren();
+
+    effect(() => {
+      // A TaskTemplate belongs to exactly one child, so the picker has to track whichever
+      // assignee is currently selected rather than always showing one fixed child's templates.
+      // A non-child assignee (a guardian) or "unassigned" has no template library of its own here
+      // -- scheduleTaskFromTemplate falls back to the caller (this guardian) as the owning pivot
+      // when unassigned, and guardians never own templates themselves -- so those cases clear the
+      // list instead of leaving the previous assignee's templates showing.
+      const child = this.children().find((candidate) => candidate.id === this.newAssignedTo());
+
+      if (child) {
+        void this.taskLibrary.listTaskTemplates(child.id);
+      } else {
+        this.taskLibrary.clearTemplates();
+      }
+    });
   }
 
   protected setViewMode(mode: ViewMode): void {
@@ -708,14 +722,9 @@ export class CalendarAgenda {
     this.newTaskTemplateId.set('');
   }
 
-  private async loadTaskTemplates(): Promise<void> {
+  private async loadChildren(): Promise<void> {
     try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
-
-      if (firstChild) {
-        await this.taskLibrary.listTaskTemplates(firstChild.id);
-      }
+      this.children.set(await this.guardians.listMyChildren());
     } catch {
       // The template picker is a nice-to-have on the create form -- if this fails, manual task
       // creation still works, just without template-based scheduling as an option.
