@@ -5,9 +5,9 @@ using buddy.Features.Users;
 
 namespace buddy.Features.TaskLibrary;
 
-// No ChildId: a TaskTemplate is shared by every child in the family it was created for (see
-// TaskFamilyResolution), not owned by a single child, so "whose template is this" isn't a
-// question the aggregate itself answers -- same contract as Meal.
+// No ChildId on the aggregate itself: each template is owned by exactly one child, but that
+// ownership lives in the index row written at creation (TaskTemplateIndexDocument), not in the
+// event stream -- see ITaskTemplateEventStore.ListIdsForChildAsync/FindChildIdForTemplateAsync.
 public sealed record TaskTemplate(
     TaskTemplateId Id,
     UserId CreatedBy,

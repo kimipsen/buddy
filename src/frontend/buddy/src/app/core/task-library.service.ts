@@ -33,10 +33,9 @@ export interface Subtask {
   durationMinutes: number;
 }
 
-// A TaskTemplate is shared by every child in its family (see TaskFamilyResolution) -- it's scoped
-// by childId in the URL only to resolve which family's library to read, not because the template
-// belongs to that child. Same contract as Meal/MealplansService, but with no group-sharing axis
-// (TaskLibraryAccessTier has no analog to MealplanAccessTier's group scope).
+// A TaskTemplate belongs to exactly one child -- it's scoped by childId in the URL because that's
+// whose library it is. No group-sharing axis (TaskLibraryAccessTier has no analog to
+// MealplanAccessTier's group scope).
 export interface TaskTemplate {
   id: string;
   name: string;

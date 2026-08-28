@@ -138,8 +138,39 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
         Assert.NotNull(otherTemplate);
         await TaskLibraryTestHelpers.AddSubtaskAsync(fixture, otherGuardianToken, otherTemplate.Id);
 
-        // ownerToken has no relationship at all to otherChild's family, so the unassigned-task
-        // family pivot (the caller themself) can never see otherTemplate.
+        // ownerToken has no relationship at all to otherChild, so the unassigned-task owning-child
+        // pivot (the caller themself) can never match otherTemplate's owner.
         await CalendarTestHelpers.ScheduleTaskFromTemplateAsync(fixture, ownerToken, calendarId, otherTemplate.Id, expectedStatus: 404);
+    }
+
+    [Fact]
+    public async Task Scheduling_a_siblings_template_for_a_different_child_is_not_found()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, guardianToken, "Family");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, guardianToken, "Family", groupId);
+        var alex = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var sam = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Sam");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/groups/{groupId}/children/{alex.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/groups/{groupId}/children/{sam.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var samsTemplate = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, sam.Id);
+        Assert.NotNull(samsTemplate);
+        await TaskLibraryTestHelpers.AddSubtaskAsync(fixture, guardianToken, samsTemplate.Id);
+
+        // Same guardian, same calendar, but Sam's template can't be scheduled for Alex -- task
+        // templates are owned by one child, not shared across siblings.
+        await CalendarTestHelpers.ScheduleTaskFromTemplateAsync(fixture, guardianToken, calendarId, samsTemplate.Id, assignedTo: alex.Id, expectedStatus: 404);
     }
 }

@@ -23,7 +23,7 @@ public static class ListTaskTemplatesHandler
             return access.ToDeniedResult<IReadOnlyCollection<TaskTemplate>>();
         }
 
-        var templateIds = await TaskFamilyResolution.ResolveFamilyTaskTemplateIdsAsync(query.ChildId, guardians, templates, cancellationToken);
+        var templateIds = await templates.ListIdsForChildAsync(query.ChildId, cancellationToken);
         var loaded = new List<TaskTemplate>(templateIds.Count);
 
         foreach (var templateId in templateIds)

@@ -39,11 +39,10 @@ public union TaskTemplateEvent(
     };
 }
 
-// ChildId records which child the creating guardian was acting on behalf of -- needed by
-// MartenTaskTemplateEventStore.CreateAsync to seed the template's first index row, but not
-// projected onto the TaskTemplate aggregate itself, since sharing (see TaskFamilyResolution)
-// makes "whose template is this" a read-time question, not aggregate state -- same contract as
-// MealCreated.ChildId.
+// ChildId records the template's owning child -- needed by MartenTaskTemplateEventStore.CreateAsync
+// to seed the template's index row, but not projected onto the TaskTemplate aggregate itself;
+// ownership is looked up via the index (ITaskTemplateEventStore.ListIdsForChildAsync/
+// FindChildIdForTemplateAsync) rather than carried on aggregate state.
 public sealed record TaskTemplateCreated(
     TaskTemplateId Id, UserId ChildId, UserId CreatedBy, string Name, Icon Icon, Color Color, DateTimeOffset OccurredAt);
 

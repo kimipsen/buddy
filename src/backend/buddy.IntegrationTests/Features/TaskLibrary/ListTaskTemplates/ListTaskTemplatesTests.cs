@@ -53,6 +53,27 @@ public sealed class ListTaskTemplatesTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Does_not_include_a_siblings_task_templates()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var alex = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var sam = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Sam");
+        await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, alex.Id, new CreateTaskTemplateOptions(Name: "Alex's routine"));
+        await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, sam.Id, new CreateTaskTemplateOptions(Name: "Sam's routine"));
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/task-templates/children/{alex.Id}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var templates = response.ReadAsJson<List<TaskTemplateDto>>();
+        Assert.Single(templates);
+        Assert.Equal("Alex's routine", templates[0].Name);
+    }
+
+    [Fact]
     public async Task A_third_party_with_no_guardian_link_gets_not_found()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

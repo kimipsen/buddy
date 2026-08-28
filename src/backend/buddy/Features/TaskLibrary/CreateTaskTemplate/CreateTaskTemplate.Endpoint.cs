@@ -49,10 +49,10 @@ public sealed record CreateTaskTemplateRequest(string Name, string Icon, string 
 
 public sealed record SubtaskResponse(Guid Id, string Title, string? Icon, TimeSpan Duration);
 
-// No ChildId -- a TaskTemplate is shared by every child in its family (see TaskFamilyResolution),
-// so there's no single owning child to report; same contract as MealResponse. Subtasks and
-// TotalDuration are included so the frontend can render a full template from one list call --
-// there's no separate GetTaskTemplate endpoint in v1.
+// No ChildId -- the caller already knows it (it's the :childId in the request URL), and every
+// template returned by a given request belongs to that one child. Subtasks and TotalDuration are
+// included so the frontend can render a full template from one list call -- there's no separate
+// GetTaskTemplate endpoint in v1.
 public sealed record TaskTemplateResponse(
     TaskTemplateId Id,
     string Name,

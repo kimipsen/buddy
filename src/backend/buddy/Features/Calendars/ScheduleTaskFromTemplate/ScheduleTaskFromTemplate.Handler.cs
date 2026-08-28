@@ -72,14 +72,13 @@ public static class ScheduleTaskFromTemplateHandler
         }
 
         // The target CalendarId can be group-owned and span more than one family, so the owning
-        // family can't be resolved from the calendar -- it's resolved from whoever the task ends
-        // up assigned to instead (falling back to the caller when unassigned), the same way
-        // AssignMealToSlotHandler resolves a meal's owning family from its ChildId rather than
-        // from the meal plan.
-        var familyPivot = command.AssignedTo ?? userId;
-        var familyTemplateIds = await TaskFamilyResolution.ResolveFamilyTaskTemplateIdsAsync(familyPivot, guardians, templates, cancellationToken);
+        // child can't be resolved from the calendar -- it's resolved from whoever the task ends
+        // up assigned to instead (falling back to the caller when unassigned). The selected
+        // template must belong to that exact child, not just anyone with calendar access.
+        var owningChildPivot = command.AssignedTo ?? userId;
+        var templateOwnerId = await templates.FindChildIdForTemplateAsync(templateId, cancellationToken);
 
-        if (!familyTemplateIds.Contains(templateId))
+        if (templateOwnerId != owningChildPivot)
         {
             return new Result<CalendarItem>.NotFound();
         }
