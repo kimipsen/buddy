@@ -6,6 +6,21 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Applies the saved/system theme before Angular boots so the page never flashes the wrong
+    // theme. Keep the storage key in sync with THEME_STORAGE_KEY in core/theme-storage.ts.
+    (function () {
+      try {
+        var mode = localStorage.getItem('buddy_theme_mode');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (mode === 'dark' || (mode !== 'light' && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {
+        // localStorage/matchMedia unavailable -- fall back to the default light theme.
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

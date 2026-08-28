@@ -1,4 +1,4 @@
-<main class="min-h-dvh bg-amber-50 text-slate-950">
+<main class="min-h-dvh bg-amber-50 dark:bg-slate-950 text-slate-950 dark:text-slate-50">
   <header class="flex items-center justify-between px-6 py-5 sm:px-8">
     <div class="flex items-center gap-3">
       <span class="grid size-12 place-items-center rounded-2xl bg-emerald-400 text-2xl font-bold">B</span>
@@ -7,7 +7,7 @@
 
     <button
       type="button"
-      class="rounded-2xl border-2 border-slate-300 bg-white px-5 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-400 focus:outline-none focus:ring-4 focus:ring-emerald-300"
+      class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 focus:outline-none focus:ring-4 focus:ring-emerald-300"
       (click)="logout()"
     >
       {{ 'child.home.signOut' | translate }}
@@ -20,7 +20,7 @@
     <div class="flex flex-wrap gap-3">
       <a
         routerLink="/child/mealplan"
-        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-700 transition hover:border-emerald-300"
+        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-emerald-700 dark:text-emerald-400 transition hover:border-emerald-300 dark:hover:border-emerald-700"
       >
         <span aria-hidden="true">🍽️</span>
         {{ 'child.home.mealplanLink' | translate }}
@@ -28,7 +28,7 @@
 
       <a
         routerLink="/child/calendar"
-        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-700 transition hover:border-emerald-300"
+        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-emerald-700 dark:text-emerald-400 transition hover:border-emerald-300 dark:hover:border-emerald-700"
       >
         <span aria-hidden="true">🗓️</span>
         {{ 'child.home.calendarLink' | translate }}
@@ -36,23 +36,23 @@
     </div>
 
     @if (error(); as message) {
-      <p class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700">{{ message | translate }}</p>
+      <p class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400">{{ message | translate }}</p>
     }
 
     @if (contentLoading()) {
-      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
+      <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm">
         <app-loading-spinner [label]="'common.loading' | translate" />
       </div>
     } @else if (hasAnything()) {
       <!-- Meals -->
       @if (mealsToShow().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
           <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.mealsTitle' | translate }}</h2>
           <ul class="mt-4 space-y-3">
             @for (entry of mealsToShow(); track entry.slot) {
-              <li class="rounded-2xl border-2 border-slate-200 px-4 py-3">
+              <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
                 <div class="flex items-center justify-between gap-3">
-                  <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ mealSlotLabels[entry.slot] | translate }}</span>
+                  <span class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ mealSlotLabels[entry.slot] | translate }}</span>
                   <span class="flex items-center gap-2 text-lg font-semibold">
                     <span aria-hidden="true">{{ entry.icon }}</span>
                     {{ entry.mealName }}
@@ -67,6 +67,7 @@
                         class="text-2xl leading-none disabled:opacity-50"
                         [class.text-amber-400]="entry.rating !== null && starCount <= entry.rating.stars"
                         [class.text-slate-300]="entry.rating === null || starCount > entry.rating.stars"
+                        [class.dark:text-slate-600]="entry.rating === null || starCount > entry.rating.stars"
                         [disabled]="savingSlot() === entry.slot"
                         [attr.aria-label]="'child.mealplan.starLabel' | translate: { count: starCount }"
                         (click)="rate(entry, starCount)"
@@ -76,7 +77,7 @@
                     }
                   </div>
 
-                  <button type="button" class="text-sm font-semibold text-emerald-700 hover:text-emerald-800" (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)">
+                  <button type="button" class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300" (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)">
                     {{ (entry.rating?.comment ? 'child.mealplan.editNote' : 'child.mealplan.addNote') | translate }}
                   </button>
                 </div>
@@ -86,7 +87,7 @@
                     <label class="sr-only" [attr.for]="'mealNote-' + entry.slot">{{ 'child.mealplan.notePlaceholder' | translate }}</label>
                     <textarea
                       [id]="'mealNote-' + entry.slot"
-                      class="w-full rounded-xl border-2 border-slate-200 p-3 text-base focus:border-emerald-400 focus:outline-none"
+                      class="w-full rounded-xl border-2 border-slate-200 dark:border-slate-800 p-3 text-base focus:border-emerald-400 focus:outline-none dark:bg-slate-800 dark:text-slate-100"
                       rows="2"
                       [placeholder]="'child.mealplan.notePlaceholder' | translate"
                       [value]="commentDraft()"
@@ -95,7 +96,7 @@
                     <div class="flex justify-end gap-2">
                       <button
                         type="button"
-                        class="rounded-2xl border-2 border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-400"
+                        class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500"
                         (click)="cancelEditing()"
                       >
                         {{ 'child.mealplan.cancel' | translate }}
@@ -111,7 +112,7 @@
                     </div>
                   </div>
                 } @else if (entry.rating?.comment; as comment) {
-                  <p class="mt-2 text-base italic text-slate-600">“{{ comment }}”</p>
+                  <p class="mt-2 text-base italic text-slate-600 dark:text-slate-300">“{{ comment }}”</p>
                 }
               </li>
             }
@@ -121,16 +122,16 @@
 
       <!-- Medicine -->
       @if (doses().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
           <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.medicineTitle' | translate }}</h2>
           <ul class="mt-4 space-y-3">
             @for (dose of doses(); track doseKey(dose)) {
-              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
                 <span class="flex items-center gap-2 text-lg font-semibold">
                   <span class="inline-block size-3 rounded-full" [style.background-color]="dose.color"></span>
                   <span aria-hidden="true">{{ dose.icon }}</span>
                   {{ dose.name }}
-                  <span class="text-sm font-normal text-slate-500">{{ dose.time.slice(0, 5) }}</span>
+                  <span class="text-sm font-normal text-slate-500 dark:text-slate-400">{{ dose.time.slice(0, 5) }}</span>
                 </span>
 
                 @if (dose.status === pending) {
@@ -145,7 +146,7 @@
                     </button>
                     <button
                       type="button"
-                      class="rounded-2xl border-2 border-slate-300 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-400 disabled:opacity-50"
+                      class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
                       [disabled]="savingDoseKey() === doseKey(dose)"
                       (click)="setDoseStatus(dose, skipped)"
                     >
@@ -154,10 +155,10 @@
                   </div>
                 } @else if (dose.status === taken) {
                   <div class="flex items-center gap-2">
-                    <span class="rounded-full bg-emerald-100 px-4 py-2 text-base font-bold text-emerald-800">{{ 'child.home.medicine.taken' | translate }}</span>
+                    <span class="rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-4 py-2 text-base font-bold text-emerald-800 dark:text-emerald-300">{{ 'child.home.medicine.taken' | translate }}</span>
                     <button
                       type="button"
-                      class="text-sm font-semibold text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                      class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
                       [disabled]="savingDoseKey() === doseKey(dose)"
                       (click)="setDoseStatus(dose, pending)"
                     >
@@ -166,10 +167,10 @@
                   </div>
                 } @else {
                   <div class="flex items-center gap-2">
-                    <span class="rounded-full bg-slate-200 px-4 py-2 text-base font-bold text-slate-600">{{ 'child.home.medicine.skipped' | translate }}</span>
+                    <span class="rounded-full bg-slate-200 dark:bg-slate-700 px-4 py-2 text-base font-bold text-slate-600 dark:text-slate-300">{{ 'child.home.medicine.skipped' | translate }}</span>
                     <button
                       type="button"
-                      class="text-sm font-semibold text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                      class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
                       [disabled]="savingDoseKey() === doseKey(dose)"
                       (click)="setDoseStatus(dose, pending)"
                     >
@@ -185,18 +186,18 @@
 
       <!-- Tasks -->
       @if (tasks().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
           <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.tasksTitle' | translate }}</h2>
           <ul class="mt-4 space-y-3">
             @for (entry of groupedTasks(); track entry.itemId) {
               @if (isRun(entry)) {
                 @let run = $any(entry);
-                <li class="rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3">
+                <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3">
                   <div class="mb-3 flex items-center gap-2 text-lg font-semibold">
                     <span aria-hidden="true">{{ run.icon }}</span>
                     {{ run.parentTitle }}
                   </div>
-                  <ul class="ml-2 space-y-2 border-l-2 border-slate-200 pl-3">
+                  <ul class="ml-2 space-y-2 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
                     @for (subtask of run.subtasks; track keyFor(subtask)) {
                       <li class="flex items-center gap-3">
                         <button
@@ -206,6 +207,7 @@
                           [class.bg-emerald-400]="subtask.isCompleted"
                           [class.text-white]="subtask.isCompleted"
                           [class.border-slate-300]="!subtask.isCompleted"
+                          [class.dark:border-slate-600]="!subtask.isCompleted"
                           [disabled]="savingTaskId() === keyFor(subtask)"
                           [attr.aria-label]="(subtask.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
                           (click)="toggleTask(subtask)"
@@ -228,7 +230,7 @@
                 </li>
               } @else {
                 @let task = $any(entry);
-                <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
+                <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
                   <button
                     type="button"
                     class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
@@ -236,6 +238,7 @@
                     [class.bg-emerald-400]="task.isCompleted"
                     [class.text-white]="task.isCompleted"
                     [class.border-slate-300]="!task.isCompleted"
+                    [class.dark:border-slate-600]="!task.isCompleted"
                     [disabled]="savingTaskId() === keyFor(task)"
                     [attr.aria-label]="(task.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
                     (click)="toggleTask(task)"
@@ -257,12 +260,12 @@
 
       <!-- Events -->
       @if (eventsView().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
           <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.eventsTitle' | translate }}</h2>
           <ul class="mt-4 space-y-3">
             @for (event of eventsView(); track event.itemId) {
               <li
-                class="flex items-center justify-between gap-3 overflow-hidden rounded-2xl border-2 border-slate-200 px-4 py-3"
+                class="flex items-center justify-between gap-3 overflow-hidden rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
                 [style.background]="event.isOngoing ? eventProgressBackground(event.progressPercent) : null"
               >
                 <span class="flex items-center gap-2 text-lg font-semibold" [class.line-through]="event.isPast" [class.text-slate-400]="event.isPast">
@@ -275,9 +278,9 @@
                 </span>
 
                 @if (event.isAllDay) {
-                  <span class="text-sm font-semibold text-slate-500">{{ 'child.home.events.allDay' | translate }}</span>
+                  <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{ 'child.home.events.allDay' | translate }}</span>
                 } @else if (event.startsAt) {
-                  <span class="text-sm font-semibold text-slate-500">
+                  <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">
                     {{ event.startsAt | userDate: 'shortTime' }}
                     @if (event.endsAt) {
                       – {{ event.endsAt | userDate: 'shortTime' }}
@@ -292,12 +295,12 @@
 
       <!-- Pickup & drop-off -->
       @if (todaysPickups().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 shadow-sm">
+        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
           <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.pickup.title' | translate }}</h2>
           <ul class="mt-4 space-y-3">
             @for (occurrence of todaysPickups(); track occurrence.slot) {
-              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 px-4 py-3">
-                <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ pickupSlotLabels[occurrence.slot] | translate }}</span>
+              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
+                <span class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ pickupSlotLabels[occurrence.slot] | translate }}</span>
                 <span class="flex flex-col items-end gap-0.5">
                   <span class="flex items-center gap-2 text-lg font-semibold">
                     @switch (occurrence.kind) {
@@ -320,7 +323,7 @@
                     }
                   </span>
                   @if (occurrence.time) {
-                    <span class="text-sm font-semibold text-slate-500">{{ occurrence.time.slice(0, 5) }}</span>
+                    <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{ occurrence.time.slice(0, 5) }}</span>
                   }
                 </span>
               </li>
@@ -329,10 +332,10 @@
         </div>
       }
     } @else {
-      <div class="rounded-3xl border-4 border-emerald-200 bg-white p-8 text-center shadow-sm">
+      <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm">
         <p class="text-5xl">🗓️</p>
         <h2 class="mt-4 text-2xl font-bold tracking-normal">{{ 'child.home.emptyTitle' | translate }}</h2>
-        <p class="mt-2 text-lg leading-7 text-slate-600">
+        <p class="mt-2 text-lg leading-7 text-slate-600 dark:text-slate-300">
           {{ 'child.home.emptySubtitle' | translate }}
         </p>
       </div>
@@ -340,10 +343,10 @@
 
     @if (!loading() && guardianList().length > 0) {
       <div>
-        <h3 class="text-lg font-bold tracking-normal text-slate-700">{{ 'child.home.guardiansTitle' | translate }}</h3>
+        <h3 class="text-lg font-bold tracking-normal text-slate-700 dark:text-slate-300">{{ 'child.home.guardiansTitle' | translate }}</h3>
         <ul class="mt-3 flex flex-wrap gap-3">
           @for (guardian of guardianList(); track guardian.id) {
-            <li class="rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-semibold">
+            <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-base font-semibold">
               {{ guardian.name.givenName }}
             </li>
           }

@@ -1,27 +1,37 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../../../core/auth.service';
+import { ThemeMode } from '../../../../core/theme';
+import { ThemeService } from '../../../../core/theme.service';
 import { ProfileMenu } from './profile-menu';
 
 // TranslatePipe/TranslationService are used unstubbed throughout (the same pattern as the other
 // component specs in this app), so assertions below check the real English copy from
 // core/i18n/translations/en/shell.ts rather than raw translation keys.
 describe('ProfileMenu', () => {
-  async function setup() {
+  async function setup(initialMode: ThemeMode = 'system') {
     const logout = vi.fn();
     const authStub: Partial<AuthService> = { logout };
+    const setMode = vi.fn();
+    const modeState = signal<ThemeMode>(initialMode);
+    const themeStub: Partial<ThemeService> = { mode: modeState.asReadonly(), setMode };
 
     await TestBed.configureTestingModule({
       imports: [ProfileMenu],
-      providers: [provideRouter([]), { provide: AuthService, useValue: authStub }]
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authStub },
+        { provide: ThemeService, useValue: themeStub }
+      ]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ProfileMenu);
     fixture.detectChanges();
 
-    return { fixture, compiled: fixture.nativeElement as HTMLElement, logout };
+    return { fixture, compiled: fixture.nativeElement as HTMLElement, logout, setMode };
   }
 
   // Everything in ProfileMenu is driven by a plain signal (no promises, no HttpClient), so there's
@@ -44,6 +54,12 @@ describe('ProfileMenu', () => {
   function signOutButton(compiled: HTMLElement): HTMLButtonElement | null {
     return Array.from(compiled.querySelectorAll<HTMLButtonElement>('button')).find(
       (button) => button.textContent?.trim() === 'Sign out'
+    ) ?? null;
+  }
+
+  function themeButton(compiled: HTMLElement, label: string): HTMLButtonElement | null {
+    return Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')).find(
+      (button) => button.textContent?.trim() === label
     ) ?? null;
   }
 
@@ -115,5 +131,26 @@ describe('ProfileMenu', () => {
     expect(logout).toHaveBeenCalledTimes(1);
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
     expect(signOutButton(compiled)).toBeNull();
+  });
+
+  it('renders a button for each theme mode, marking only the active mode as pressed', async () => {
+    const { fixture, compiled } = await setup('dark');
+
+    fireClick(fixture, toggleButton(compiled));
+
+    expect(themeButton(compiled, 'Light')?.getAttribute('aria-pressed')).toBe('false');
+    expect(themeButton(compiled, 'Dark')?.getAttribute('aria-pressed')).toBe('true');
+    expect(themeButton(compiled, 'System')?.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('switches the theme mode when a theme button is clicked, without closing the menu', async () => {
+    const { fixture, compiled, setMode } = await setup('system');
+
+    fireClick(fixture, toggleButton(compiled));
+    fireClick(fixture, themeButton(compiled, 'Dark')!);
+
+    expect(setMode).toHaveBeenCalledTimes(1);
+    expect(setMode).toHaveBeenCalledWith('dark');
+    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
   });
 });

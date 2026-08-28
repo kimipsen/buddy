@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { THEME_MODES, ThemeMode } from '../../../../core/theme';
+import { ThemeService } from '../../../../core/theme.service';
 
 @Component({
   selector: 'app-profile-menu',
@@ -11,6 +13,9 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 })
 export class ProfileMenu {
   private readonly auth = inject(AuthService);
+  protected readonly theme = inject(ThemeService);
+
+  protected readonly themeModes = THEME_MODES;
 
   protected readonly open = signal(false);
 
@@ -20,6 +25,10 @@ export class ProfileMenu {
 
   protected close(): void {
     this.open.set(false);
+  }
+
+  protected setTheme(mode: ThemeMode): void {
+    this.theme.setMode(mode);
   }
 
   protected logout(): void {

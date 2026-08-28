@@ -1,25 +1,25 @@
-<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
   <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'dashboard.children.title' | translate }}</h3>
 
   @if (loading()) {
     <app-loading-spinner [label]="'dashboard.children.loading' | translate" />
   } @else if (error(); as message) {
-    <p class="text-sm text-red-600">{{ message | translate }}</p>
+    <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
   } @else if (children().length === 0) {
-    <p class="text-sm text-slate-500">{{ 'dashboard.children.empty' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'dashboard.children.empty' | translate }}</p>
   } @else {
     <ul class="space-y-3">
       @for (child of children(); track child.id) {
-        <li class="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
+        <li class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3">
           <span class="text-sm font-medium">{{ child.name.givenName }} {{ child.name.familyName }}</span>
           <span class="flex items-center gap-2">
             @if (starsByChildId()[child.id]; as stars) {
-              <span class="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+              <span class="flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <span aria-hidden="true">✨</span>
                 {{ 'dashboard.children.starCount' | translate: { count: stars } }}
               </span>
             }
-            <span class="text-xs font-semibold text-slate-500">{{ 'dashboard.children.linkedBadge' | translate }}</span>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ 'dashboard.children.linkedBadge' | translate }}</span>
           </span>
         </li>
       }

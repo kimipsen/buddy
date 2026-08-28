@@ -1,16 +1,19 @@
-<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <h3 class="text-lg font-semibold tracking-normal">{{ viewTitle() }}</h3>
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex overflow-hidden rounded-md border border-slate-300">
+      <div class="flex overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
         @for (mode of viewModes; track mode) {
           <button
             type="button"
             class="px-3 py-1.5 text-sm font-medium transition"
             [class.bg-slate-950]="viewMode() === mode"
+            [class.dark:bg-emerald-600]="viewMode() === mode"
             [class.text-white]="viewMode() === mode"
             [class.text-slate-600]="viewMode() !== mode"
+            [class.dark:text-slate-300]="viewMode() !== mode"
             [class.hover:bg-slate-100]="viewMode() !== mode"
+            [class.dark:hover:bg-slate-800]="viewMode() !== mode"
             (click)="setViewMode(mode)"
           >
             {{ viewModeLabelKey(mode) | translate }}
@@ -19,21 +22,21 @@
       </div>
       <button
         type="button"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        class="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
         (click)="goToToday()"
       >
         {{ 'calendar.agenda.today' | translate }}
       </button>
       <button
         type="button"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        class="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
         (click)="previousPeriod()"
       >
         {{ previousLabelKey() | translate }}
       </button>
       <button
         type="button"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        class="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
         (click)="nextPeriod()"
       >
         {{ nextLabelKey() | translate }}
@@ -42,14 +45,14 @@
   </div>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">{{ 'calendar.agenda.loading' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.loading' | translate }}</p>
   } @else {
     @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>
+      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
     }
 
     @if (myCalendars().length > 1) {
-      <div class="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+      <div class="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3">
         <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'calendar.agenda.filter.title' | translate }}</span>
         @for (calendar of myCalendars(); track calendar.id) {
           <label class="flex items-center gap-1.5 text-sm">
@@ -69,18 +72,18 @@
         (daySelected)="onMonthDaySelected($event)"
       />
     } @else if (!hasAnyVisibleOccurrence()) {
-      <p class="text-sm text-slate-500">{{ 'calendar.agenda.empty' | translate }}</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.empty' | translate }}</p>
     } @else {
       <div class="space-y-4">
         @for (day of days(); track day.date) {
           @if (occurrencesFor(day.date).length > 0) {
             <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ day.label }}</p>
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ day.label }}</p>
               <ul class="space-y-2">
                 @for (entry of groupedOccurrencesFor(day.date); track entry.itemId) {
                   @if (isRun(entry)) {
                     @let run = $any(entry);
-                    <li class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                    <li class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm">
                       <div class="mb-2 flex items-center gap-2">
                         <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="run.color"></span>
                         <span class="text-lg leading-none">{{ run.icon }}</span>
@@ -89,7 +92,7 @@
 
                         <div class="ml-auto flex items-center gap-2">
                           @if (confirmingDeleteItemId() === run.itemId) {
-                            <span class="whitespace-nowrap text-xs text-slate-500">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
+                            <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
                             <button
                               type="button"
                               class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
@@ -100,7 +103,7 @@
                             </button>
                             <button
                               type="button"
-                              class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
                               [disabled]="deletingItemId() === run.itemId"
                               (click)="cancelDeleteItem()"
                             >
@@ -109,7 +112,7 @@
                           } @else {
                             <button
                               type="button"
-                              class="text-xs font-semibold text-red-600 hover:text-red-700"
+                              class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
                               (click)="requestDeleteItem(run.itemId)"
                             >
                               {{ 'calendar.agenda.delete.button' | translate }}
@@ -117,7 +120,7 @@
                           }
                         </div>
                       </div>
-                      <ul class="ml-4 space-y-1.5 border-l-2 border-slate-200 pl-3">
+                      <ul class="ml-4 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
                         @for (subtask of run.subtasks; track keyFor(subtask)) {
                           <li class="flex items-center gap-3">
                             <input
@@ -129,14 +132,14 @@
                             <span class="text-sm leading-none">{{ subtask.icon }}</span>
                             <span [class.line-through]="subtask.isCompleted">{{ subtask.title }}</span>
                             @if (subtask.startsAt) {
-                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500">
+                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 {{ subtask.startsAt | userDate: 'shortTime' }}
                                 @if (subtask.endsAt) {
                                   – {{ subtask.endsAt | userDate: 'shortTime' }}
                                 }
                               </span>
                             } @else if (subtask.dueAt) {
-                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500">
+                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 {{ subtask.dueAt | userDate: 'shortTime' }}
                               </span>
                             }
@@ -146,7 +149,7 @@
                     </li>
                   } @else {
                   @let occurrence = $any(entry);
-                  <li class="rounded-lg border border-slate-200 px-4 py-3 text-sm">
+                  <li class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm">
                     @if (editingItemId() === occurrence.itemId) {
                       <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
                         <div class="grid gap-3 sm:grid-cols-[1fr_5rem_4rem]">
@@ -154,7 +157,7 @@
                             type="text"
                             name="editTitle"
                             [placeholder]="'calendar.agenda.form.titlePlaceholder' | translate"
-                            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                             [ngModel]="editTitle()"
                             (ngModelChange)="editTitle.set($event)"
                           />
@@ -162,7 +165,7 @@
                             type="text"
                             name="editIcon"
                             [placeholder]="calendarIconFor(occurrence.calendarId)"
-                            class="rounded-lg border border-slate-300 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                             [ngModel]="editIcon()"
                             (ngModelChange)="editIcon.set($event)"
                           />
@@ -175,7 +178,7 @@
                           />
                         </div>
 
-                        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
                           <input type="checkbox" [checked]="editIsAllDay()" (change)="editIsAllDay.set(!editIsAllDay())" />
                           {{ 'calendar.agenda.form.allDayLabel' | translate }}
                         </label>
@@ -184,14 +187,14 @@
                           <div class="grid gap-3 sm:grid-cols-2">
                             <div class="grid grid-cols-[1fr_auto] gap-2">
                               <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                   {{ 'calendar.agenda.form.startDateLabel' | translate }}
                                 </span>
                                 <app-date-select [value]="editStartDate()" (valueChange)="editStartDate.set($event)" />
                               </div>
                               @if (!editIsAllDay()) {
                                 <div>
-                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     {{ 'calendar.agenda.form.startTimeLabel' | translate }}
                                   </span>
                                   <app-time-select [value]="editStartTime()" (valueChange)="editStartTime.set($event)" />
@@ -200,14 +203,14 @@
                             </div>
                             <div class="grid grid-cols-[1fr_auto] gap-2">
                               <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                   {{ 'calendar.agenda.form.endDateLabel' | translate }}
                                 </span>
                                 <app-date-select [value]="editEndDate()" (valueChange)="editEndDate.set($event)" />
                               </div>
                               @if (!editIsAllDay()) {
                                 <div>
-                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     {{ 'calendar.agenda.form.endTimeLabel' | translate }}
                                   </span>
                                   <app-time-select [value]="editEndTime()" (valueChange)="editEndTime.set($event)" />
@@ -218,14 +221,14 @@
                         } @else {
                           <div class="grid grid-cols-[1fr_auto] gap-2 sm:w-1/2">
                             <div>
-                              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 {{ 'calendar.agenda.form.dueDateLabel' | translate }}
                               </span>
                               <app-date-select [value]="editDueDate()" (valueChange)="editDueDate.set($event)" />
                             </div>
                             @if (!editIsAllDay()) {
                               <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                   {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
                                 </span>
                                 <app-time-select [value]="editDueTime()" (valueChange)="editDueTime.set($event)" />
@@ -237,14 +240,14 @@
                         <div class="flex items-center gap-2">
                           <button
                             type="submit"
-                            class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                            class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
                             [disabled]="saving() || !canSubmitEdit()"
                           >
                             {{ 'calendar.agenda.edit.saveButton' | translate }}
                           </button>
                           <button
                             type="button"
-                            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
                             [disabled]="saving()"
                             (click)="cancelEditItem()"
                           >
@@ -253,7 +256,7 @@
                         </div>
 
                         @if (editError(); as message) {
-                          <p class="text-xs text-red-600">{{ message | translate }}</p>
+                          <p class="text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
                         }
                       </form>
                     } @else {
@@ -280,7 +283,7 @@
 
                         <div class="ml-auto flex items-center gap-2">
                           @if (confirmingDeleteItemId() === occurrence.itemId) {
-                            <span class="whitespace-nowrap text-xs text-slate-500">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
+                            <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
                             <button
                               type="button"
                               class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
@@ -291,7 +294,7 @@
                             </button>
                             <button
                               type="button"
-                              class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
                               [disabled]="deletingItemId() === occurrence.itemId"
                               (click)="cancelDeleteItem()"
                             >
@@ -299,31 +302,31 @@
                             </button>
                           } @else {
                             @if (occurrence.isAllDay) {
-                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
+                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 {{ 'calendar.agenda.allDay' | translate }}
                               </span>
                             } @else if (occurrence.startsAt) {
-                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
+                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 {{ occurrence.startsAt | userDate: 'shortTime' }}
                                 @if (occurrence.endsAt) {
                                   – {{ occurrence.endsAt | userDate: 'shortTime' }}
                                 }
                               </span>
                             } @else if (occurrence.dueAt) {
-                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500">
+                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 {{ occurrence.dueAt | userDate: 'shortTime' }}
                               </span>
                             }
                             <button
                               type="button"
-                              class="text-xs font-semibold text-slate-600 hover:text-slate-800"
+                              class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200"
                               (click)="startEditItem(occurrence)"
                             >
                               {{ 'calendar.agenda.edit.button' | translate }}
                             </button>
                             <button
                               type="button"
-                              class="text-xs font-semibold text-red-600 hover:text-red-700"
+                              class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
                               (click)="requestDeleteItem(occurrence.itemId)"
                             >
                               {{ 'calendar.agenda.delete.button' | translate }}
@@ -344,15 +347,15 @@
   }
 
   @if (eligibleCalendars().length === 0) {
-    <p class="mt-5 text-sm text-slate-500">{{ 'calendar.agenda.form.noEligibleCalendars' | translate }}</p>
+    <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.form.noEligibleCalendars' | translate }}</p>
   } @else {
-    <form class="mt-6 space-y-3 border-t border-slate-200 pt-5" (ngSubmit)="createItem()">
+    <form class="mt-6 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-5" (ngSubmit)="createItem()">
       <h4 class="text-sm font-semibold">{{ 'calendar.agenda.form.title' | translate }}</h4>
 
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_8rem_1fr_5rem_4rem]">
         <select
           name="itemCalendar"
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newCalendarId()"
           (ngModelChange)="newCalendarId.set($event)"
         >
@@ -362,7 +365,7 @@
         </select>
         <select
           name="itemKind"
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newKind()"
           (ngModelChange)="newKind.set($event)"
         >
@@ -373,7 +376,7 @@
           type="text"
           name="itemTitle"
           [placeholder]="'calendar.agenda.form.titlePlaceholder' | translate"
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newTitle()"
           (ngModelChange)="newTitle.set($event)"
         />
@@ -381,7 +384,7 @@
           type="text"
           name="itemIcon"
           [placeholder]="newCalendarId() ? calendarIconFor(newCalendarId()) : ('calendar.agenda.form.iconPlaceholder' | translate)"
-          class="rounded-lg border border-slate-300 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newIcon()"
           (ngModelChange)="newIcon.set($event)"
         />
@@ -395,13 +398,15 @@
       </div>
 
       @if (newKind() === taskKind) {
-        <div class="flex w-fit overflow-hidden rounded-md border border-slate-300">
+        <div class="flex w-fit overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
           <button
             type="button"
             class="px-3 py-1.5 text-xs font-medium transition"
             [class.bg-slate-950]="newTaskSource() === 'manual'"
+            [class.dark:bg-emerald-600]="newTaskSource() === 'manual'"
             [class.text-white]="newTaskSource() === 'manual'"
             [class.text-slate-600]="newTaskSource() !== 'manual'"
+            [class.dark:text-slate-300]="newTaskSource() !== 'manual'"
             (click)="setTaskSource('manual')"
           >
             {{ 'calendar.agenda.form.taskSource.manual' | translate }}
@@ -410,8 +415,10 @@
             type="button"
             class="px-3 py-1.5 text-xs font-medium transition"
             [class.bg-slate-950]="newTaskSource() === 'template'"
+            [class.dark:bg-emerald-600]="newTaskSource() === 'template'"
             [class.text-white]="newTaskSource() === 'template'"
             [class.text-slate-600]="newTaskSource() !== 'template'"
+            [class.dark:text-slate-300]="newTaskSource() !== 'template'"
             (click)="setTaskSource('template')"
           >
             {{ 'calendar.agenda.form.taskSource.template' | translate }}
@@ -420,7 +427,7 @@
 
         @if (newTaskSource() === 'template') {
           <div>
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.taskSource.templateLabel' | translate }}
             </span>
             <app-task-picker [templates]="taskTemplates()" [templateId]="newTaskTemplateId()" (templateIdChange)="onTemplateSelected($event)" />
@@ -429,7 +436,7 @@
       }
 
       @if (!(newKind() === taskKind && newTaskSource() === 'template')) {
-        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
           <input type="checkbox" [checked]="newIsAllDay()" (change)="newIsAllDay.set(!newIsAllDay())" />
           {{ 'calendar.agenda.form.allDayLabel' | translate }}
         </label>
@@ -439,14 +446,14 @@
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="grid grid-cols-[1fr_auto] gap-2">
             <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ 'calendar.agenda.form.startDateLabel' | translate }}
               </span>
               <app-date-select [value]="newStartDate()" (valueChange)="newStartDate.set($event)" />
             </div>
             @if (!newIsAllDay()) {
               <div>
-                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {{ 'calendar.agenda.form.startTimeLabel' | translate }}
                 </span>
                 <app-time-select [value]="newStartTime()" (valueChange)="newStartTime.set($event)" />
@@ -455,14 +462,14 @@
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-2">
             <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ 'calendar.agenda.form.endDateLabel' | translate }}
               </span>
               <app-date-select [value]="newEndDate()" (valueChange)="newEndDate.set($event)" />
             </div>
             @if (!newIsAllDay()) {
               <div>
-                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {{ 'calendar.agenda.form.endTimeLabel' | translate }}
                 </span>
                 <app-time-select [value]="newEndTime()" (valueChange)="newEndTime.set($event)" />
@@ -473,14 +480,14 @@
       } @else {
         <div class="grid grid-cols-[1fr_auto] gap-2 sm:w-1/2">
           <div>
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.dueDateLabel' | translate }}
             </span>
             <app-date-select [value]="newDueDate()" (valueChange)="newDueDate.set($event)" />
           </div>
           @if (!newIsAllDay()) {
             <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
               </span>
               <app-time-select [value]="newDueTime()" (valueChange)="newDueTime.set($event)" />
@@ -489,12 +496,12 @@
         </div>
 
         <label class="block sm:w-1/2">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {{ 'calendar.agenda.form.assigneeLabel' | translate }}
           </span>
           <select
             name="itemAssignee"
-            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="newAssignedTo()"
             (ngModelChange)="newAssignedTo.set($event)"
           >
@@ -508,12 +515,12 @@
 
       <div class="grid gap-3 sm:grid-cols-3">
         <label class="block">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {{ 'calendar.agenda.form.repeat.label' | translate }}
           </span>
           <select
             name="itemRepeat"
-            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="newRepeat()"
             (ngModelChange)="newRepeat.set($event)"
           >
@@ -527,20 +534,20 @@
 
         @if (newRepeat() !== null) {
           <label class="block">
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.repeat.intervalLabel' | translate }}
             </span>
             <input
               type="number"
               name="itemInterval"
               min="1"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
               [ngModel]="newIntervalCount()"
               (ngModelChange)="newIntervalCount.set($event)"
             />
           </label>
           <div>
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.repeat.untilLabel' | translate }}
             </span>
             <app-date-select [value]="newUntil()" (valueChange)="newUntil.set($event)" />
@@ -550,7 +557,7 @@
 
       <button
         type="submit"
-        class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+        class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
         [disabled]="creating() || !canSubmit()"
       >
         {{ 'calendar.agenda.form.addButton' | translate }}
@@ -558,7 +565,7 @@
     </form>
 
     @if (createError(); as message) {
-      <p class="mt-3 text-sm text-red-600">{{ message | translate }}</p>
+      <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
     }
   }
 </section>

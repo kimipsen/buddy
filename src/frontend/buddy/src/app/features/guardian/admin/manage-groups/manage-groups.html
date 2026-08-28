@@ -1,23 +1,23 @@
-<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
   <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'admin.manageGroups.title' | translate }}</h3>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">{{ 'admin.manageGroups.loading' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.loading' | translate }}</p>
   } @else if (error(); as message) {
-    <p class="text-sm text-red-600">{{ message | translate }}</p>
+    <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
   } @else if (items().length === 0) {
-    <p class="text-sm text-slate-500">{{ 'admin.manageGroups.empty' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.empty' | translate }}</p>
   } @else {
     <ul class="space-y-3">
       @for (group of items(); track group.id) {
-        <li class="rounded-lg border border-slate-200 px-4 py-3">
+        <li class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium">{{ group.name }}</span>
             <div class="flex items-center gap-3">
-              <span class="text-xs font-semibold text-slate-500">{{ roleLabels[group.role] | translate }}</span>
+              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ roleLabels[group.role] | translate }}</span>
               <button
                 type="button"
-                class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                 (click)="toggleMembersPanel(group.id)"
               >
                 {{ (expandedMembersGroupId() === group.id ? 'admin.manageGroups.members.hideButton' : 'admin.manageGroups.members.showButton') | translate }}
@@ -25,28 +25,28 @@
               @if (canManage(group)) {
                 <button
                   type="button"
-                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                   (click)="toggleInvitePanel(group.id)"
                 >
                   {{ (expandedGroupId() === group.id ? 'admin.manageGroups.invite.hideButton' : 'admin.manageGroups.invite.showButton') | translate }}
                 </button>
                 <button
                   type="button"
-                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                   (click)="toggleChildrenPanel(group.id)"
                 >
                   {{ (expandedChildrenGroupId() === group.id ? 'admin.manageGroups.children.hideButton' : 'admin.manageGroups.children.showButton') | translate }}
                 </button>
                 <button
                   type="button"
-                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                   (click)="togglePolicyPanel(group.id)"
                 >
                   {{ (expandedPolicyGroupId() === group.id ? 'admin.manageGroups.policy.hideButton' : 'admin.manageGroups.policy.showButton') | translate }}
                 </button>
                 <button
                   type="button"
-                  class="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                   (click)="toggleMealplanPolicyPanel(group.id)"
                 >
                   {{ (expandedMealplanPolicyGroupId() === group.id ? 'admin.manageGroups.mealplanPolicy.hideButton' : 'admin.manageGroups.mealplanPolicy.showButton') | translate }}
@@ -56,23 +56,23 @@
           </div>
 
           @if (expandedMembersGroupId() === group.id) {
-            <div class="mt-4 border-t border-slate-200 pt-4">
+            <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
               <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'admin.manageGroups.members.title' | translate }}</h4>
 
               @if (membersLoading() === group.id) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.members.loading' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.members.loading' | translate }}</p>
               } @else if (membersError(); as message) {
-                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
               } @else if (membersFor(group.id).length === 0) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.members.empty' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.members.empty' | translate }}</p>
               } @else {
                 @if (guardianMembersFor(group.id).length > 0) {
                   <h5 class="mt-3 text-xs font-semibold text-slate-400">{{ 'admin.manageGroups.members.guardiansTitle' | translate }}</h5>
                   <ul class="mt-2 space-y-2">
                     @for (member of guardianMembersFor(group.id); track member.userId) {
-                      <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                      <li class="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800 px-3 py-2">
                         <span class="text-sm">{{ member.givenName }} {{ member.familyName }}</span>
-                        <span class="text-xs font-semibold text-slate-500">{{ roleLabels[member.role] | translate }}</span>
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ roleLabels[member.role] | translate }}</span>
                       </li>
                     }
                   </ul>
@@ -82,9 +82,9 @@
                   <h5 class="mt-3 text-xs font-semibold text-slate-400">{{ 'admin.manageGroups.members.childrenTitle' | translate }}</h5>
                   <ul class="mt-2 space-y-2">
                     @for (member of childMembersFor(group.id); track member.userId) {
-                      <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                      <li class="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800 px-3 py-2">
                         <span class="text-sm">{{ member.givenName }} {{ member.familyName }}</span>
-                        <span class="text-xs font-semibold text-slate-500">{{ roleLabels[member.role] | translate }}</span>
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ roleLabels[member.role] | translate }}</span>
                       </li>
                     }
                   </ul>
@@ -94,23 +94,23 @@
           }
 
           @if (expandedGroupId() === group.id) {
-            <div class="mt-4 border-t border-slate-200 pt-4">
+            <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
               <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'admin.manageGroups.invite.pendingTitle' | translate }}</h4>
 
               @if (invitesLoading() === group.id) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.invite.loading' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.invite.loading' | translate }}</p>
               } @else if (invitesFor(group.id).length === 0) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.invite.pendingEmpty' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.invite.pendingEmpty' | translate }}</p>
               } @else {
                 <ul class="mt-2 space-y-2">
                   @for (invite of invitesFor(group.id); track invite.id) {
-                    <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                    <li class="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800 px-3 py-2">
                       <span class="text-sm">{{ invite.email }}</span>
                       <div class="flex items-center gap-3">
-                        <span class="text-xs font-semibold text-slate-500">{{ roleLabels[invite.role] | translate }}</span>
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ roleLabels[invite.role] | translate }}</span>
                         <button
                           type="button"
-                          class="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                          class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50"
                           [disabled]="revokingInviteId() === invite.id"
                           (click)="revokeInvite(group.id, invite.id)"
                         >
@@ -123,7 +123,7 @@
               }
 
               @if (invitesError(); as message) {
-                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
               }
 
               <form class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_auto]" (ngSubmit)="sendInvite(group.id)">
@@ -131,13 +131,13 @@
                   type="email"
                   name="inviteEmail"
                   placeholder="{{ 'admin.manageGroups.invite.emailPlaceholder' | translate }}"
-                  class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                   [ngModel]="inviteEmail()"
                   (ngModelChange)="inviteEmail.set($event)"
                 />
                 <select
                   name="inviteRole"
-                  class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                   [ngModel]="inviteRole()"
                   (ngModelChange)="inviteRole.set($event)"
                 >
@@ -147,7 +147,7 @@
                 </select>
                 <button
                   type="submit"
-                  class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                   [disabled]="inviting() || !inviteEmail().trim()"
                 >
                   {{ 'admin.manageGroups.invite.sendButton' | translate }}
@@ -155,26 +155,26 @@
               </form>
 
               @if (inviteError(); as message) {
-                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
               }
             </div>
           }
 
           @if (expandedChildrenGroupId() === group.id) {
-            <div class="mt-4 border-t border-slate-200 pt-4">
+            <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
               <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'admin.manageGroups.children.title' | translate }}</h4>
 
               @if (membersLoading() === group.id) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.children.loading' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.children.loading' | translate }}</p>
               } @else if (membersError(); as message) {
-                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
               } @else if (availableChildrenFor(group.id).length === 0) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.children.empty' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.children.empty' | translate }}</p>
               } @else {
                 <form class="mt-2 grid gap-3 sm:grid-cols-[1fr_auto]" (ngSubmit)="addChild(group.id)">
                   <select
                     name="selectedChild"
-                    class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                     [ngModel]="selectedChildId()"
                     (ngModelChange)="selectedChildId.set($event)"
                   >
@@ -185,7 +185,7 @@
                   </select>
                   <button
                     type="submit"
-                    class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                    class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                     [disabled]="addingChild() || !selectedChildId()"
                   >
                     {{ 'admin.manageGroups.children.addButton' | translate }}
@@ -194,26 +194,26 @@
               }
 
               @if (addChildError(); as message) {
-                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
               }
             </div>
           }
 
           @if (expandedPolicyGroupId() === group.id) {
-            <div class="mt-4 border-t border-slate-200 pt-4">
+            <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
               <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'admin.manageGroups.policy.title' | translate }}</h4>
 
               @if (policyLoading()) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.policy.loading' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.policy.loading' | translate }}</p>
               } @else if (policyLoadError(); as message) {
-                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
               } @else if (policyDraft(); as draft) {
                 <div class="mt-2 grid gap-3 sm:grid-cols-3">
                   @for (row of policyRows; track row.key) {
-                    <label class="flex flex-col gap-1 text-xs font-semibold text-slate-500">
+                    <label class="flex flex-col gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       {{ roleLabels[row.role] | translate }}
                       <select
-                        class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-normal text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800"
                         [ngModel]="draft[row.key]"
                         (ngModelChange)="setDraftRole(row.key, $event)"
                       >
@@ -227,7 +227,7 @@
 
                 <button
                   type="button"
-                  class="mt-3 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  class="mt-3 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                   [disabled]="policySaving()"
                   (click)="savePolicy(group.id)"
                 >
@@ -235,27 +235,27 @@
                 </button>
 
                 @if (policySaveError(); as message) {
-                  <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                  <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
                 }
               }
             </div>
           }
 
           @if (expandedMealplanPolicyGroupId() === group.id) {
-            <div class="mt-4 border-t border-slate-200 pt-4">
+            <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
               <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'admin.manageGroups.mealplanPolicy.title' | translate }}</h4>
 
               @if (mealplanPolicyLoading()) {
-                <p class="mt-2 text-sm text-slate-500">{{ 'admin.manageGroups.mealplanPolicy.loading' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageGroups.mealplanPolicy.loading' | translate }}</p>
               } @else if (mealplanPolicyLoadError(); as message) {
-                <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
               } @else if (mealplanPolicyDraft(); as draft) {
                 <div class="mt-2 grid gap-3 sm:grid-cols-3">
                   @for (row of policyRows; track row.key) {
-                    <label class="flex flex-col gap-1 text-xs font-semibold text-slate-500">
+                    <label class="flex flex-col gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       {{ roleLabels[row.role] | translate }}
                       <select
-                        class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-normal text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800"
                         [ngModel]="draft[row.key]"
                         (ngModelChange)="setMealplanDraftTier(row.key, $event)"
                       >
@@ -269,7 +269,7 @@
 
                 <button
                   type="button"
-                  class="mt-3 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  class="mt-3 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                   [disabled]="mealplanPolicySaving()"
                   (click)="saveMealplanPolicy(group.id)"
                 >
@@ -277,7 +277,7 @@
                 </button>
 
                 @if (mealplanPolicySaveError(); as message) {
-                  <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+                  <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
                 }
               }
             </div>
@@ -292,13 +292,13 @@
       type="text"
       name="groupName"
       placeholder="{{ 'admin.manageGroups.namePlaceholder' | translate }}"
-      class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
       [ngModel]="newGroupName()"
       (ngModelChange)="newGroupName.set($event)"
     />
     <button
       type="submit"
-      class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+      class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
       [disabled]="creating() || !newGroupName().trim()"
     >
       {{ 'admin.manageGroups.addButton' | translate }}
@@ -306,6 +306,6 @@
   </form>
 
   @if (createError(); as message) {
-    <p class="mt-3 text-sm text-red-600">{{ message | translate }}</p>
+    <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
   }
 </section>

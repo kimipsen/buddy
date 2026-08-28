@@ -8,6 +8,12 @@ export const shell = {
     medicine: 'Medicin',
     calendar: 'Kalender',
     settings: 'Indstillinger',
-    signOut: 'Log ud'
+    signOut: 'Log ud',
+    theme: {
+      label: 'Tema',
+      light: 'Lyst',
+      dark: 'Mørkt',
+      system: 'System'
+    }
   }
 };

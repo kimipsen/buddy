@@ -1,5 +1,5 @@
 <section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
-  <a routerLink="/guardian" class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-950">
+  <a routerLink="/guardian" class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
     </svg>
@@ -7,14 +7,14 @@
   </a>
 
   <div class="mb-8">
-    <p class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700">{{ 'mealplan.eyebrow' | translate }}</p>
+    <p class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">{{ 'mealplan.eyebrow' | translate }}</p>
     <h2 class="mt-2 text-3xl font-semibold tracking-normal">{{ 'mealplan.title' | translate }}</h2>
   </div>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">{{ 'mealplan.assign.loading' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'mealplan.assign.loading' | translate }}</p>
   } @else if (!hasChildren()) {
-    <p class="text-sm text-slate-500">{{ 'mealplan.assign.noChildren' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'mealplan.assign.noChildren' | translate }}</p>
   } @else {
     @if (groupScopes().length > 0 && familyScope(); as family) {
       <div class="mb-6 flex flex-wrap gap-2">
@@ -22,9 +22,12 @@
           type="button"
           class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
           [class.bg-slate-950]="isSelected(family)"
+          [class.dark:bg-emerald-600]="isSelected(family)"
           [class.text-white]="isSelected(family)"
           [class.bg-slate-100]="!isSelected(family)"
+          [class.dark:bg-slate-800]="!isSelected(family)"
           [class.text-slate-700]="!isSelected(family)"
+          [class.dark:text-slate-200]="!isSelected(family)"
           (click)="selectScope(family)"
         >
           {{ 'mealplan.scope.myFamily' | translate }}
@@ -34,9 +37,12 @@
             type="button"
             class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
             [class.bg-slate-950]="isSelected(scope)"
+            [class.dark:bg-emerald-600]="isSelected(scope)"
             [class.text-white]="isSelected(scope)"
             [class.bg-slate-100]="!isSelected(scope)"
+            [class.dark:bg-slate-800]="!isSelected(scope)"
             [class.text-slate-700]="!isSelected(scope)"
+            [class.dark:text-slate-200]="!isSelected(scope)"
             (click)="selectScope(scope)"
           >
             {{ scope.groupName }}
@@ -48,14 +54,14 @@
       </div>
     }
 
-    <section class="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section class="mb-6 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
       <h3 class="mb-3 text-lg font-semibold tracking-normal">{{ 'mealplan.sharing.title' | translate }}</h3>
 
       @if (sharedGroupId(); as groupId) {
-        <p class="text-sm text-slate-600">{{ 'mealplan.sharing.currentlySharedWith' | translate: { name: sharedGroupName() ?? groupId } }}</p>
+        <p class="text-sm text-slate-600 dark:text-slate-300">{{ 'mealplan.sharing.currentlySharedWith' | translate: { name: sharedGroupName() ?? groupId } }}</p>
         <button
           type="button"
-          class="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+          class="mt-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50"
           [disabled]="sharing()"
           (click)="unshare()"
         >
@@ -65,7 +71,7 @@
         <form class="flex flex-wrap items-end gap-3" (ngSubmit)="shareWithGroup()">
           <select
             name="shareTargetGroupId"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="shareTargetGroupId()"
             (ngModelChange)="shareTargetGroupId.set($event)"
           >
@@ -76,18 +82,18 @@
           </select>
           <button
             type="submit"
-            class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+            class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
             [disabled]="sharing() || !shareTargetGroupId()"
           >
             {{ 'mealplan.sharing.shareButton' | translate }}
           </button>
         </form>
       } @else {
-        <p class="text-sm text-slate-500">{{ 'mealplan.sharing.noGroups' | translate }}</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'mealplan.sharing.noGroups' | translate }}</p>
       }
 
       @if (shareError(); as message) {
-        <p class="mt-2 text-sm text-red-600">{{ message | translate }}</p>
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
       }
     </section>
 
@@ -100,6 +106,6 @@
   }
 
   @if (error(); as message) {
-    <p class="mt-3 text-sm text-red-600">{{ message | translate }}</p>
+    <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
   }
 </section>

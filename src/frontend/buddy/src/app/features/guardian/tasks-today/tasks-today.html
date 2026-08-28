@@ -1,25 +1,25 @@
-<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
   <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'dashboard.tasks.title' | translate }}</h3>
 
   @if (loading()) {
     <app-loading-spinner [label]="'dashboard.tasks.loading' | translate" />
   } @else {
     @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>
+      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
     }
 
     @if (overdue().length === 0 && dueToday().length === 0) {
       @if (!error()) {
-        <p class="text-sm text-slate-500">{{ 'dashboard.tasks.empty' | translate }}</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'dashboard.tasks.empty' | translate }}</p>
       }
     } @else {
       <div class="space-y-4">
         @if (overdue().length > 0) {
           <div>
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600">{{ 'dashboard.tasks.overdue' | translate }}</p>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">{{ 'dashboard.tasks.overdue' | translate }}</p>
             <ul class="space-y-2">
               @for (rollup of overdue(); track rollup.itemId) {
-                <li class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium">
+                <li class="flex items-center gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm font-medium">
                   @if (rollup.totalCount === 1) {
                     <input
                       type="checkbox"
@@ -32,7 +32,7 @@
                   <span class="text-lg leading-none">{{ rollup.icon }}</span>
                   <span [class.line-through]="rollup.totalCount === 1 && rollup.occurrences[0].isCompleted">{{ rollup.title }}</span>
                   @if (rollup.totalCount > 1) {
-                    <span class="text-xs font-semibold text-slate-500">
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
                       {{ 'dashboard.tasks.rollup' | translate: { completed: rollup.completedCount, total: rollup.totalCount } }}
                     </span>
                   }
@@ -47,10 +47,10 @@
 
         @if (dueToday().length > 0) {
           <div>
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ 'dashboard.tasks.dueToday' | translate }}</p>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'dashboard.tasks.dueToday' | translate }}</p>
             <ul class="space-y-2">
               @for (rollup of dueToday(); track rollup.itemId) {
-                <li class="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium">
+                <li class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm font-medium">
                   @if (rollup.totalCount === 1) {
                     <input
                       type="checkbox"
@@ -63,7 +63,7 @@
                   <span class="text-lg leading-none">{{ rollup.icon }}</span>
                   <span [class.line-through]="rollup.totalCount === 1 && rollup.occurrences[0].isCompleted">{{ rollup.title }}</span>
                   @if (rollup.totalCount > 1) {
-                    <span class="text-xs font-semibold text-slate-500">
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
                       {{ 'dashboard.tasks.rollup' | translate: { completed: rollup.completedCount, total: rollup.totalCount } }}
                     </span>
                   }

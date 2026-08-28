@@ -1,11 +1,11 @@
 <div
-  class="flex items-center gap-3 rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 shadow-sm transition"
+  class="flex items-center gap-3 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-4 py-3 shadow-sm transition"
   [class.animate-bounce]="celebrating()"
 >
   <span class="text-3xl" aria-hidden="true">{{ stage() }}</span>
   <div class="flex flex-col">
-    <span class="text-sm font-bold uppercase tracking-wide text-slate-500">{{ 'child.home.progress.title' | translate }}</span>
-    <span class="flex items-center gap-1 text-lg font-bold text-slate-900">
+    <span class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'child.home.progress.title' | translate }}</span>
+    <span class="flex items-center gap-1 text-lg font-bold text-slate-900 dark:text-slate-100">
       <span aria-hidden="true">✨</span>
       {{ 'child.home.progress.starCount' | translate: { count: totalStars() } }}
     </span>

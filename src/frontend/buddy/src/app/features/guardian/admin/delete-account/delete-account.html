@@ -1,6 +1,6 @@
-<section class="rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
-  <h3 class="mb-2 text-lg font-semibold tracking-normal text-red-900">{{ 'admin.deleteAccount.title' | translate }}</h3>
-  <p class="mb-4 text-sm leading-6 text-red-800">
+<section class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 p-6 shadow-sm">
+  <h3 class="mb-2 text-lg font-semibold tracking-normal text-red-900 dark:text-red-200">{{ 'admin.deleteAccount.title' | translate }}</h3>
+  <p class="mb-4 text-sm leading-6 text-red-800 dark:text-red-300">
     {{ 'admin.deleteAccount.description' | translate }}
   </p>
 
@@ -16,22 +16,22 @@
 @if (confirmOpen()) {
   <div class="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/50 px-4" (click)="closeConfirm()">
     <div
-      class="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-lg"
+      class="w-full max-w-md rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg"
       (click)="$event.stopPropagation()"
     >
-      <h4 class="text-lg font-semibold tracking-normal text-slate-950">{{ 'admin.deleteAccount.confirmTitle' | translate }}</h4>
-      <p class="mt-2 text-sm leading-6 text-slate-600">
+      <h4 class="text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-50">{{ 'admin.deleteAccount.confirmTitle' | translate }}</h4>
+      <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
         {{ 'admin.deleteAccount.confirmDescription' | translate }}
       </p>
 
       @if (error(); as message) {
-        <p class="mt-3 text-sm text-red-600">{{ message | translate }}</p>
+        <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
       }
 
       <div class="mt-6 flex justify-end gap-3">
         <button
           type="button"
-          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
           [disabled]="deleting()"
           (click)="closeConfirm()"
         >

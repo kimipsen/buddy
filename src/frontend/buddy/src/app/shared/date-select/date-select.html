@@ -3,7 +3,7 @@
     @switch (part) {
       @case ('day') {
         <select
-          class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="day()"
           (ngModelChange)="setDay($event)"
         >
@@ -15,7 +15,7 @@
       }
       @case ('month') {
         <select
-          class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="month()"
           (ngModelChange)="setMonth($event)"
         >
@@ -29,7 +29,7 @@
         <input
           type="number"
           placeholder="yyyy"
-          class="w-[4.5rem] rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="w-[4.5rem] rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="year()"
           (ngModelChange)="setYear($event)"
         />

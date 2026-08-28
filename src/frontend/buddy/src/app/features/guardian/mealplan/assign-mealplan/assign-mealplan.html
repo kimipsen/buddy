@@ -1,17 +1,17 @@
-<section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
   <div class="mb-5 flex items-center justify-between gap-3">
     <h3 class="text-lg font-semibold tracking-normal">{{ 'mealplan.assign.title' | translate }}</h3>
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        class="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
         (click)="previousWeek()"
       >
         {{ 'mealplan.assign.previousWeek' | translate }}
       </button>
       <button
         type="button"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-400"
+        class="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
         (click)="nextWeek()"
       >
         {{ 'mealplan.assign.nextWeek' | translate }}
@@ -20,32 +20,32 @@
   </div>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500">{{ 'mealplan.assign.loading' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'mealplan.assign.loading' | translate }}</p>
   } @else if (meals().length === 0) {
-    <p class="text-sm text-slate-500">{{ 'mealplan.assign.noMeals' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'mealplan.assign.noMeals' | translate }}</p>
   } @else {
     @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600">{{ message | translate }}</p>
+      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
     }
 
     @if (readOnly()) {
-      <p class="mb-3 text-xs font-medium text-slate-500">{{ 'mealplan.assign.readOnly' | translate }}</p>
+      <p class="mb-3 text-xs font-medium text-slate-500 dark:text-slate-400">{{ 'mealplan.assign.readOnly' | translate }}</p>
     }
 
     <div class="overflow-x-auto">
       <table cdkDropListGroup class="w-full min-w-[640px] border-separate border-spacing-2">
         <thead>
           <tr>
-            <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"></th>
+            <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"></th>
             @for (slot of slots; track slot) {
-              <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{{ slotLabels[slot] | translate }}</th>
+              <th class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ slotLabels[slot] | translate }}</th>
             }
           </tr>
         </thead>
         <tbody>
           @for (day of days(); track day.date) {
             <tr>
-              <th class="whitespace-nowrap pr-2 text-left text-sm font-semibold text-slate-700">
+              <th class="whitespace-nowrap pr-2 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                 {{ day.label }}
                 @if (isPastDay(day.date)) {
                   <span class="ml-1 text-xs font-medium text-slate-400">{{ 'mealplan.assign.pastDay' | translate }}</span>
@@ -76,13 +76,13 @@
                         @if (!readOnly() && !isPastDay(day.date)) {
                           <div
                             cdkDragHandle
-                            class="pointer-events-auto absolute inset-y-0 right-1.5 flex cursor-grab items-center text-slate-400 hover:text-slate-600"
+                            class="pointer-events-auto absolute inset-y-0 right-1.5 flex cursor-grab items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                             [title]="'mealplan.assign.dragHint' | translate"
                           >
                             <span aria-hidden="true">⠿</span>
                           </div>
                         }
-                        <div *cdkDragPreview class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm shadow-lg">
+                        <div *cdkDragPreview class="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm shadow-lg">
                           <span class="text-base leading-none">{{ entry.icon }}</span>
                           {{ entry.mealName }}
                         </div>
@@ -94,7 +94,7 @@
                     @if (ratings.length > 0) {
                       <ul class="mt-1 space-y-0.5">
                         @for (rating of ratings; track rating.childName) {
-                          <li class="text-xs text-slate-500">
+                          <li class="text-xs text-slate-500 dark:text-slate-400">
                             <span class="font-medium">{{ rating.childName }}:</span>
                             <span aria-hidden="true">{{ starDisplay(rating.stars) }}</span>
                             @if (rating.comment) {

@@ -1,3 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+/* Dark mode is toggled via a `.dark` class on <html> (see ThemeService), not solely
+   `prefers-color-scheme`, so "system" mode can be resolved once in JS and "light"/"dark" can
+   be forced regardless of the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Lets native widgets (checkboxes, date/color pickers, scrollbars) follow the active theme
+   instead of always rendering with light OS chrome. */
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
