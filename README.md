@@ -75,6 +75,9 @@ deploy/      Production Docker Compose and Caddy deployment
 - **Pickup schedule** — a per-child weekly plan for pickup and drop-off slots,
   with explicit guardian, sibling, self-escort, and playdate assignments. See
   [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md).
+- **Task library** — a child-specific collection of reusable task templates
+  with ordered, timed subtasks that a guardian can schedule onto a calendar.
+  See [Task Library flow](docs/backend/task-library/flow.md).
 
 ## Documentation map
 
@@ -87,6 +90,8 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Medicines flow](docs/backend/medicines/flow.md)
 - [Mealplans flow](docs/backend/mealplans/flow.md)
 - [Pickups flow](docs/backend/pickups/flow.md)
+- [Task Library flow](docs/backend/task-library/flow.md)
+- [Progress flow](docs/backend/progress/flow.md)
 - [Glossary](docs/backend/glossary.md)
 - [HTTP status code semantics](docs/backend/http-status-codes.md)
 
@@ -97,12 +102,16 @@ deploy/      Production Docker Compose and Caddy deployment
 - [All-day calendar items](docs/backend/analysis/calendar-all-day-items.md)
 - [Integration testing strategy](docs/backend/analysis/integration-testing-strategy.md)
 - [Mutation testing strategy](docs/backend/analysis/mutation-testing-strategy.md)
+- [Validation rules](docs/backend/analysis/validation-rules.md)
 - [Child accounts and guardian/parent roles](docs/backend/analysis/child-accounts-and-guardian-roles.md)
 - [Guardian-managed child language](docs/backend/analysis/child-language-settings.md)
+- [Guardian-managed child time zone](docs/backend/analysis/child-timezone-settings.md)
 - [Medicine schedules](docs/backend/analysis/medicine-schedules.md)
 - [Meal plans](docs/backend/analysis/mealplans.md)
 - [Group-shared meal plans](docs/backend/analysis/group-owned-mealplans.md)
+- [Meal plan iCal feed](docs/backend/analysis/mealplan-ical-feed.md)
 - [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md)
+- [Gamified progress](docs/backend/analysis/gamified-progress.md)
 
 ## Getting started
 

@@ -58,6 +58,8 @@ Current responsibilities:
 - manage pickup and drop-off assignments for linked children
 - browse day, work-week, rolling-week, and month calendar views and create events/tasks across
   every calendar they can contribute to, personal or group-owned
+- create, edit, and archive per-child task templates and their timed subtasks, and schedule them
+  onto a calendar from the agenda's create-task form
 - manage calendars, groups, children, and the current profile from the admin area
 - sign out of the current session
 
@@ -71,6 +73,7 @@ The guardian routes currently include:
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
   calendar, plus event/task creation
+- `/guardian/task-library` — per-child task template and subtask management
 - `/guardian/admin` — profile, child, calendar, group, event-history, and account administration
 
 ### Child feature
@@ -116,9 +119,13 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `MealplansService` calls meal-library, meal-plan, rating, and group-sharing endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
+- `TaskLibraryService` manages per-child task templates and subtasks, and backs the
+  template picker on the calendar agenda's create-task form
+- `ProgressService` loads a child's star count and unlocked milestones for the progress badge
 - `UsersService` loads the current profile, language, and email-verification state
 - `AuthInterceptor` attaches the access token to outgoing requests
-- `UserEventsService` is available for future user event stream integration
+- `UserEventsService` loads a user's recent-events feed, rendered by `EventsList` on
+  `/guardian/admin`
 - `TranslationService` resolves the UI's current language (see Localization below)
 
 ## Localization (i18n)
@@ -161,6 +168,7 @@ The frontend is an actively developed product shell with working domain workflow
 - a child-facing daily dashboard with meals and ratings, medicine doses,
   pickup/drop-off assignments, and completable tasks
 - a child-facing read-only seven-day calendar agenda
+- per-child task template management and template-based task scheduling
 - profile, calendar, group, child, and account administration
 
 Children have a read-only calendar agenda; event and task creation remains a guardian workflow.
@@ -177,6 +185,8 @@ full calendar timeline.
   implemented for browsing past meal-plan weeks and surfacing children's ratings
 - [Creating events and seeing them across every accessible calendar](analysis/calendar-agenda-and-event-creation.md) —
   implemented guardian agenda/event workflow and child read-only access
+- [Task library](analysis/task-library.md) — implemented per-child task template
+  management and template-based task scheduling
 - [Child calendar agenda](analysis/child-calendar-agenda-plan.md) — implemented read-only
   seven-day child calendar
 - [Guardian calendar views](analysis/guardian-full-calendar-views.md) — implemented day,

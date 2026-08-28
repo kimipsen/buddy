@@ -5,7 +5,7 @@ they reference each other. There is no shared `AggregateRoot` base type or
 marker interface — each aggregate is a `sealed record` in a
 `Features/<Feature>/Types/` folder with a
 `static X? Rehydrate(IEnumerable<XEvent> events)` factory that folds its
-event stream into current state. The nine below were found by grepping for
+event stream into current state. The twelve below were found by grepping for
 that convention.
 
 An arrow means the aggregate at the tail stores the id of the aggregate at
@@ -29,7 +29,10 @@ flowchart TB
         MealPlan["MealPlan\nMealPlanId(Guid)"]
         Meal["Meal\nMealId(Guid)"]
         MedicineSchedule["MedicineSchedule\nMedicineId(Guid)"]
+        MedicineSharing["MedicineSharing\nMedicineSharingId(Guid)"]
         PickupSchedule["PickupSchedule\nPickupScheduleId(Guid)"]
+        TaskTemplate["TaskTemplate\nTaskTemplateId(Guid)"]
+        ChildProgress["ChildProgress\nProgressId(Guid)"]
     end
 
     GuardianLink -- "guardianId, childId : UserId" --> User
@@ -41,18 +44,25 @@ flowchart TB
     Calendar -- "members : UserId" --> User
     CalendarItem -- "calendarId" --> Calendar
     CalendarItem -- "createdBy / lastModifiedBy" --> User
+    CalendarItem -- "taskTemplateId (raw Guid, tasks scheduled from a template)" --> TaskTemplate
 
     MealPlan -- "sharedWithGroupId" --> Group
     MealPlan -- "assignments : MealId" --> Meal
     MealPlan -- "assignedBy" --> User
     Meal -- "createdBy / lastModifiedBy / ratings" --> User
     MedicineSchedule -- "childId (stored), createdBy" --> User
+    MedicineSharing -- "childId, sharedWithGroupId" --> User
+    MedicineSharing -- "sharedWithGroupId" --> Group
     PickupSchedule -- "childId (stored)" --> User
     PickupSchedule -- "assignments: guardianId / siblingChildId / assignedBy" --> User
+    TaskTemplate -- "createdBy / lastModifiedBy" --> User
+    ChildProgress -- "childId (Id == ChildId, no index needed)" --> User
+    ChildProgress -. "awardedOccurrences : CalendarItemId" .-> CalendarItem
 
     GuardianLink -. "family resolved at read time" .-> MealPlan
     GuardianLink -. "family resolved at read time" .-> Meal
     GuardianLink -. "sibling relationship validated at write time" .-> PickupSchedule
+    GuardianLink -. "ownership indexed at write time, not resolved" .-> TaskTemplate
 ```
 
 ## Notes
@@ -84,4 +94,9 @@ flowchart TB
 | MealPlan | `Features/Mealplans/Types/MealPlan.cs` | `MealPlanId(Guid)` | `assignments` → Meal; `sharedWithGroupId` → Group; `assignedBy` → User |
 | Meal | `Features/Mealplans/Types/Meal.cs` | `MealId(Guid)` | `createdBy` / `lastModifiedBy` → User; `ratings` (keys) → User |
 | MedicineSchedule | `Features/Medicines/Types/MedicineSchedule.cs` | `MedicineId(Guid)` | `childId`, `createdBy` / `lastModifiedBy` → User |
+| MedicineSharing | `Features/Medicines/Types/MedicineSharing.cs` | `MedicineSharingId(Guid)` | `childId` → User; `sharedWithGroupId` → Group |
 | PickupSchedule | `Features/Pickups/Types/PickupSchedule.cs` | `PickupScheduleId(Guid)` | `childId` → User; assignments' `guardianId` / `siblingChildId` / `assignedBy` → User |
+| TaskTemplate | `Features/TaskLibrary/Types/TaskTemplate.cs` | `TaskTemplateId(Guid)` | `createdBy` / `lastModifiedBy` → User; owning `childId` lives in `TaskTemplateIndexDocument`, not the aggregate itself |
+| ChildProgress | `Features/Progress/Types/ChildProgress.cs` | `ProgressId(Guid)`, equal to the child's `UserId` | `childId` → User; `awardedOccurrences` → CalendarItem (computed reference, not a foreign-key relationship) |
+
+`CalendarItem` also stores an optional `taskTemplateId` (a raw `Guid`, not `TaskLibrary`'s `TaskTemplateId` type) when it was scheduled from a template — see `Features/Calendars/Types/CalendarItem.cs`.

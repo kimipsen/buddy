@@ -57,8 +57,11 @@ sequenceDiagram
 | `GET` | `/calendars` | Lists calendars visible to the current user. |
 | `GET` | `/calendars/{calendarId}` | Loads one calendar aggregate and its member state. |
 | `DELETE` | `/calendars/{calendarId}` | Deletes the calendar if the caller is authorized. |
-| `PATCH` | `/calendars/{calendarId}/members/{memberId}` | Grants or revokes a member role on the calendar. |
+| `PUT` | `/calendars/{calendarId}/members/{memberId}` | Grants or revokes a member role on the calendar. |
 | `DELETE` | `/calendars/{calendarId}/members/{memberId}` | Removes a member from the calendar. |
+| `GET` | `/calendars/{calendarId}/assignable-members` | Lists members who can be assigned a task on the calendar. |
+| `PATCH` | `/calendars/{calendarId}/icon` | Updates the calendar's icon. |
+| `PUT` | `/calendars/{calendarId}/group/{groupId}` | Transfers a user-owned calendar to a group. |
 | `POST` | `/calendars/{calendarId}/items` | Creates an event or task item. |
 | `POST` | `/calendars/{calendarId}/items/from-template` | Schedules a non-empty, active task template owned by the assignee at a specific time. |
 | `GET` | `/calendars/{calendarId}/items` | Lists items in a calendar. |
@@ -85,6 +88,8 @@ expanding; edits to the template also affect those existing items.
 
 The read model for listing belongs to the calendar index: the API loads calendar membership and permissions to decide whether the current principal can view or mutate the calendar. When a caller asks for occurrences, the system rehydrates the relevant aggregate and expands the calendar graph into a date-window view rather than persisting every computed occurrence.
 
+A task-item occurrence expanded from a template carries a `ParentIcon` alongside `ParentTitle` and `SubtaskId`, so a client can group same-item, same-day subtask occurrences into one visual "task run" without a second lookup. The frontend does exactly this (`task-run.ts`), and keys each run by an `occurrenceKey`/`dateKeyOf` pair that includes the occurrence date, so completing one day's instance of a recurring task only toggles that day.
+
 ## Authorization model
 
 Calendar access is resolved against the calendar's member list and, where relevant, group-owned calendar policies. In practice, this means the caller must be authorized for the specific calendar before they can create items, update recurrence, or delete calendar content. The feature keeps the permission decision central to the aggregate rather than each endpoint reimplementing the policy.
@@ -96,6 +101,8 @@ Calendar access is resolved against the calendar's member list and, where releva
 - `CalendarDeleted`
 - `MemberRoleGranted`
 - `MemberRoleRevoked`
+- `CalendarIconChanged`
+- `CalendarTransferredToGroup`
 - `EventItemCreated`
 - `TaskItemCreated`
 - `TaskCompletionChanged`

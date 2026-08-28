@@ -100,35 +100,28 @@ reacting to a token that already exists:
    band (shown once in the UI, or emailed to the *guardian's* address, never
    the child's, since a young child may not have one).
 
-### A new privileged credential this requires
+### A new privileged credential this requires (implemented)
 
 Step 2 needs the backend to hold a credential that can create users in the
-`buddy` realm, and **nothing like that exists today.** The production
-Keycloak client
-([TestRealm.json](../../../src/backend/buddy.IntegrationTests/Fixtures/TestRealm.json))
-is `publicClient: true` with `serviceAccountsEnabled: false`, and
+`buddy` realm. This has since shipped as a dedicated confidential client:
+[KeycloakAdminOptions.cs](../../../src/backend/buddy/Features/Guardians/KeycloakAdminOptions.cs)
+carries its own `ClientId`/`ClientSecret`/`TokenEndpoint`/`AdminBaseUrl`,
+deliberately separate from
 [KeycloakOptions.cs](../../../src/backend/buddy/Features/Users/KeycloakOptions.cs)
-only carries `Authority` / `Audience` / `RequireHttpsMetadata` /
-`ValidIssuer` — no `ClientId`, `ClientSecret`, or admin-base-URL. The only
-place this codebase calls the Keycloak Admin API today is
-[BuddyApiFixture.cs](../../../src/backend/buddy.IntegrationTests/Fixtures/BuddyApiFixture.cs),
-and it does so as *test* infrastructure — authenticating as the built-in
-`master` realm's `admin-cli` client with hardcoded `admin`/`admin`
-credentials — a pattern that has no production equivalent to reuse.
+(which remains RP-side token validation only), and
+[KeycloakAdminClient.cs](../../../src/backend/buddy/Features/Guardians/KeycloakAdminClient.cs)
+implements the client-credentials grant, `POST {AdminBaseUrl}/users`, and
+assigning the `buddy-child` realm role, scoped to `manage-users` rather than
+the realm-wide `realm-admin`. `appsettings.Development.json` only holds a
+local dev placeholder secret; production `ClientSecret` still needs real
+secret storage per deployment, and the blast-radius property below is
+unchanged now that the credential exists:
 
-Shipping Option A therefore requires, as net-new work rather than a
-byproduct of adding an aggregate:
-
-- A new confidential client (or a service account added to the existing
-  public `buddy-api` client), scoped to `manage-users` rather than the
-  realm-wide `realm-admin` unless a concrete need for the latter shows up.
-- Production secret storage and a rotation plan for that client's secret —
-  no existing pattern in the codebase to follow.
-- A security review of blast radius: this credential can create, modify,
-  and delete *any* user in the realm, not just a calling guardian's own
-  children, so `POST /users/me/children`'s own authorization logic is the
-  only thing standing between "guardian adds their own child" and
-  "guardian-scoped credential used to touch an arbitrary account."
+- This credential can create, modify, and delete *any* user in the realm,
+  not just a calling guardian's own children, so `POST /users/me/children`'s
+  own authorization logic is the only thing standing between "guardian adds
+  their own child" and "guardian-scoped credential used to touch an
+  arbitrary account."
 
 ### Cross-aggregate write ordering (not a single transaction)
 
@@ -378,7 +371,7 @@ members.
 | `Email` on `User` | No schema change — reuse the existing `?? ""` empty-string convention already produced by `GetOrCreateUserHandler` |
 | Where does `GuardianLink` live, for atomicity with child-user creation | In the Users schema/store, appended alongside `UserCreated` in the same session — not a separate store, so the two writes commit together |
 | How is a caller's `GuardianLink` to a calendar's owning user found | New `GuardianLinkDocument(ChildId, GuardianId, GuardianKind, IsRevoked)` read model — `Calendar.Owner` only carries a `UserId`, unlike the group case where `GroupId` is already in hand |
-| What credential does the backend use to create a child in Keycloak (Option A) | A new confidential client / service account scoped to `manage-users` — does not exist today; requires new secret storage and a security review of blast radius before implementation |
+| What credential does the backend use to create a child in Keycloak (Option A) | A dedicated confidential client scoped to `manage-users` — implemented as `KeycloakAdminClient`/`KeycloakAdminOptions`; production secret storage/rotation still follows the deployment's normal secret-management process |
 
 ## Remaining open questions
 
@@ -393,10 +386,9 @@ members.
 - Whether Option B (child self-registration + invite code) is needed at all
   for v1, or can be deferred until there's a concrete need for
   teen/independent-login children.
-- The new Keycloak service-account credential Option A needs (client scope,
-  secret storage/rotation, blast radius if compromised) has not had a
-  security review — this should happen before implementation starts, not
-  after.
+- The Keycloak service-account credential Option A uses (client scope,
+  production secret storage/rotation, blast radius if compromised) has
+  shipped without a documented security review — this should still happen.
 
 ## Diagram
 

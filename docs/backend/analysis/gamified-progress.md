@@ -1,9 +1,11 @@
 # Gamified Progress for Children's Tasks
 
 Status: Sketch implemented for tasks (`Features/Progress/`, wired into
-`SetTaskCompletionHandler`, plus a `GET /progress/me` read endpoint and a
-child-dashboard widget). Doses, reward redemption, and guardian controls
-remain unimplemented -- see open questions.
+`SetTaskCompletionHandler`, plus a `GET /progress/me` read endpoint, a
+guardian-facing `GET /progress/children/{childId}` read endpoint, and a
+child-dashboard widget). Doses, reward redemption, and guardian *write*
+controls (redemption, manual adjustment) remain unimplemented -- see open
+questions.
 
 ## Context
 

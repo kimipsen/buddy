@@ -62,6 +62,34 @@ The event that stores a hash of the verification token plus its expiry time. The
 ### EmailVerified
 The event that marks the email address as verified and clears the pending verification state.
 
+## Guardian domain
+
+### GuardianLink
+The event-sourced relationship record between a guardian and a child, both plain `User`s. There is no separate `Child` type — a `User` is a child solely because a `GuardianLink` points `guardianId -> childId`. Multiple guardians can link to the same child, and one guardian can link to many children.
+
+Properties:
+- ChildId / GuardianId: the two `User`s the link connects
+- Kind: the `GuardianKind` label
+- IsRevoked: whether the relationship is still active
+
+### GuardianKind
+A descriptive, record-keeping label on a `GuardianLink`.
+
+Values:
+- Parent
+- Guardian
+
+Unlike `GroupRole` or `CalendarRole`, `GuardianKind` never gates permission level — a `Parent` and a `Guardian` have the same default authority over the child's account.
+
+### GuardianInvite
+An event-sourced invite that brings a second adult into an existing child's guardianship, mirroring the Groups invite/accept/revoke triad. It lives on its own dedicated stream rather than the child's `User` stream, since neither the `User` nor a `GuardianLink` pre-exists the invite. Accepting it appends a new `GuardianLinked` event.
+
+### ChildSummary
+A read-model shape returned by guardian-facing child-listing endpoints: the child's `UserId`, name, the `GuardianLinkId` and `GuardianKind` connecting them to the caller, language, and time zone, without requiring a full `User` aggregate rehydration per child.
+
+### GuardianSummary
+A read-model shape for a single guardian entry: the guardian's `UserId`, name, and the `GuardianLinkId`/`GuardianKind` connecting them to the child, returned when listing the guardians linked to a child or to the current user.
+
 ## Calendar domain
 
 ### Calendar

@@ -4,7 +4,8 @@ This document defines how Buddy backend endpoints should use HTTP status codes.
 
 Scope:
 - REST endpoints across the `users`, `guardians`, `groups`, `calendars`,
-   `medicines`, `mealplans`, and `pickups` API groups
+   `medicines`, `mealplans`, `pickups`, `task-templates`, and `progress`
+   API groups
 - authenticated endpoints using bearer tokens
 - query and command operations, including create, update, delete, verify, and
    resend
@@ -263,6 +264,129 @@ Notes:
 | `GET /calendars/{calendarId}/ical-tokens` | `200` | `401`, `403`, `404` | Token summary listing for authorized member. |
 | `DELETE /calendars/{calendarId}/ical-tokens/{tokenId}` | `204` | `401`, `403`, `404` | Revokes existing token when authorized. |
 | `GET /calendars/{calendarId}/ical/{token}` | `200` | `404` | Anonymous endpoint; `404` for unknown calendar or invalid token. |
+
+### Groups API (`/groups`, plus `/invites/{token}/...`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `POST /groups` | `200` | `401` | No existing resource to hide behind `404`, so an unauthenticated caller gets `401` directly. |
+| `GET /groups` | `200` | `401` | Lists groups visible to the caller. |
+| `GET /groups/{groupId}` | `200` | `401`, `404` | `404` for unknown group or non-member. |
+| `PUT /groups/{groupId}/members/{memberId}` | `204` | `400`, `401`, `403`, `404` | `400` for attempting to grant `Owner` through this endpoint; `403` for a caller without member-management role. |
+| `DELETE /groups/{groupId}/members/{memberId}` | `204` | `401`, `403`, `404` | `403` for a caller without member-management role. |
+| `PUT /groups/{groupId}/calendar-permission-policy` | `204` | `400`, `401`, `403`, `404` | `400` when the policy is missing an entry for every group role. |
+| `PUT /groups/{groupId}/mealplan-permission-policy` | `204` | `400`, `401`, `403`, `404` | `400` for a missing role entry or an invalid `Rate` policy value. |
+| `PUT /groups/{groupId}/medicine-permission-policy` | `204` | `400`, `401`, `403`, `404` | `400` for a missing role entry or an invalid `Mark` policy value. |
+| `PUT /groups/{groupId}/children/{childId}` | `204` | `401`, `403`, `404` | Adds a child directly, skipping invite/accept; `403` when the caller lacks group-management role or an active guardian link to the child. |
+| `DELETE /groups/{groupId}` | `204` | `401`, `403`, `404` | `403` for an authenticated non-owner. |
+| `POST /groups/{groupId}/invites` | `200` | `400`, `401`, `403`, `404` | `400` for an invalid invite payload; `403` for a non-owner/admin. |
+| `GET /groups/{groupId}/invites` | `200` | `401`, `403`, `404` | Owner/admin-only listing of pending invites. |
+| `DELETE /groups/{groupId}/invites/{inviteId}` | `204` | `401`, `403`, `404` | Revokes a pending invite. |
+| `GET /invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |
+| `POST /invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller's own verified email doesn't match the invite. |
+
+### Guardians API (`/users/me/children`, `/users/me/guardians`, `/users/me/siblings`, `/guardian-invites`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `POST /users/me/children` | `200` | `400`, `401`, `409` | `400` for invalid child-profile fields; `409` when the requested username is already in use. |
+| `GET /users/me/children` | `200` | `401` | Lists the caller's own child accounts. |
+| `GET /users/me/children/{childId}/guardians` | `200` | `401`, `404` | `404` for unknown child or no guardian relationship. |
+| `DELETE /users/me/children/{childId}/guardian-link` | `204` | `401`, `404` | `404` for unknown child or no active link to revoke. |
+| `PATCH /users/me/children/{childId}/language` | `200` | `400`, `401`, `404` | `400` for an unsupported language code. |
+| `PATCH /users/me/children/{childId}/timezone` | `200` | `400`, `401`, `404` | `400` for an invalid time zone id. |
+| `GET /users/me/guardians` | `200` | `401` | Lists guardians linked to the caller. |
+| `GET /users/me/siblings` | `200` | `401` | Lists the caller's sibling children resolved from the shared guardian-link graph. |
+| `POST /users/me/children/{childId}/guardian-invites` | `200` | `400`, `401`, `404` | `400` for an invalid invite payload; `404` for unknown child or caller without an active guardian link. |
+| `GET /users/me/children/{childId}/guardian-invites` | `200` | `401`, `404` | `404` for unknown child or caller without an active guardian link. |
+| `DELETE /users/me/children/{childId}/guardian-invites/{inviteId}` | `204` | `401`, `404` | `404` for unknown invite or caller without an active guardian link. |
+| `GET /guardian-invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |
+| `POST /guardian-invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller's own verified email doesn't match the invite. |
+
+### Mealplans API (`/mealplans`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `POST /mealplans/children/{childId}/meals` | `200` | `400`, `401`, `403`, `404` | `400` for invalid name/icon/color; `403` for the child (`Rate` tier) attempting to create; `404` for no guardian-child relationship. |
+| `GET /mealplans/children/{childId}/meals` | `200` | `401`, `403`, `404` | `403` is declared but not currently reachable (`CheckView` never returns `Forbidden`); `404` for no guardian-child relationship. |
+| `PATCH /mealplans/children/{childId}/meals/{mealId}/details` | `200` | `400`, `401`, `403`, `404` | `400` for invalid field values; `403` for the child attempting to edit; `404` for no relationship, unknown/archived meal, or a meal outside the caller's family. |
+| `DELETE /mealplans/children/{childId}/meals/{mealId}` | `204` | `401`, `403`, `404` | `403` for the child attempting to archive; `404` for no relationship, unknown meal, or a meal outside the caller's family. |
+| `PUT /mealplans/children/{childId}/meals/{mealId}/rating` | `200` | `400`, `401`, `403`, `404` | `400` for an out-of-range rating; `403` for a guardian (`Manage` tier) attempting to rate -- only the child may rate; `404` for no relationship or a meal outside the caller's family. |
+| `PUT /mealplans/children/{childId}/plan?date=...&slot=...` | `200` | `400`, `401`, `403`, `404` | `400` for validation failure or assigning an archived meal; `403` for the child attempting to write; `404` for no relationship or a meal outside the caller's family. |
+| `DELETE /mealplans/children/{childId}/plan?date=...&slot=...` | `204` | `401`, `403`, `404` | Idempotent: clearing an already-empty slot still returns `204`; `403` for the child attempting to write. |
+| `GET /mealplans/children/{childId}/plan?from=...&to=...` | `200` | `400`, `401`, `404` | `400` for an invalid or out-of-range `from`/`to`; no `403` is declared on this route -- `CheckView` never returns `Forbidden`. |
+| `PUT /mealplans/children/{childId}/slot-times` | `204` | `401`, `403`, `404` | `403` for the child attempting to configure default meal times. |
+| `POST /mealplans/children/{childId}/ical-tokens` | `200` | `401`, `403`, `404` | `403` for the child attempting to mint a subscription token. |
+| `GET /mealplans/children/{childId}/ical-tokens` | `200` | `401`, `403`, `404` | `403` for the child attempting to list issued tokens. |
+| `DELETE /mealplans/children/{childId}/ical-tokens/{tokenId}` | `204` | `401`, `403`, `404` | Idempotent-style revoke; `403` for the child attempting to revoke a token. |
+| `GET /mealplans/{mealPlanId}/ical/{token}` | `200` | `404` | Anonymous; a missing plan and a wrong/revoked token both collapse to `404`. |
+| `PUT /mealplans/children/{childId}/plan/groups/{groupId}` | `204` | `401`, `403`, `404` | `403` for the child, or for a caller lacking `Manage` role on the target group -- sharing needs both sides' consent; `404` for no relationship or no group access. |
+| `DELETE /mealplans/children/{childId}/plan/groups/{groupId}` | `204` | `401`, `403`, `404` | Idempotent unshare from a group not currently shared with; `403` for the child attempting to unshare. |
+| `GET /mealplans/children/{childId}/plan/groups` | `200` | `401`, `403`, `404` | `403` for the child attempting to view sharing status. Returns `200` with a null group when nothing is shared. |
+| `GET /mealplans/groups/{groupId}/plan` | `200` | `400`, `401`, `404` | `400` for an invalid/out-of-range `from`/`to`; no `403` is declared -- group `View` access never returns `Forbidden`. |
+| `PUT /mealplans/groups/{groupId}/plan` | `200` | `400`, `401`, `403`, `404` | `403` for a `View`-tier group member attempting to write; `404` for no group access or a plan not shared with the group. |
+| `DELETE /mealplans/groups/{groupId}/plan` | `204` | `401`, `403`, `404` | `403` for a `View`-tier group member attempting to write; `404` for no group access or a plan not shared with the group. |
+| `GET /mealplans/groups/{groupId}/meals` | `200` | `401`, `404` | `404` for no group access or a plan not shared with the group; no `403` is declared on this route. |
+| `POST /mealplans/groups/{groupId}/meals` | `200` | `400`, `401`, `403`, `404` | `403` for a `View`-tier group member; `404` for no group access or an unshared plan. |
+| `PATCH /mealplans/groups/{groupId}/meals/{mealId}/details` | `200` | `400`, `401`, `403`, `404` | `403` for a `View`-tier group member; `404` for no group access, an unshared plan, or a meal outside the family. |
+| `DELETE /mealplans/groups/{groupId}/meals/{mealId}` | `204` | `401`, `403`, `404` | `403` for a `View`-tier group member attempting to archive; `404` for no group access, an unshared plan, or unknown meal. |
+
+Note: `PUT /groups/{groupId}/mealplan-permission-policy` is documented under the Groups API above, not here.
+
+### Medicines API (`/medicines`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `POST /medicines/children/{childId}/schedules` | `200` | `400`, `401`, `403`, `404` | `400` for invalid schedule fields; `403` for a caller without `Manage` tier; `404` for no guardian-child relationship. |
+| `GET /medicines/children/{childId}/schedules` | `200` | `401`, `403`, `404` | `403` for a caller without `Manage` tier (e.g. the child); `404` for no guardian-child relationship. |
+| `PATCH /medicines/children/{childId}/schedules/{medicineId}/details` | `200` | `400`, `401`, `403`, `404` | `400` for invalid field values; `403` for a caller without `Manage` tier; `404` for no relationship or unknown medicine. |
+| `PATCH /medicines/children/{childId}/schedules/{medicineId}/schedule` | `200` | `400`, `401`, `403`, `404` | `400` for invalid times or date range; `403` for a caller without `Manage` tier; `404` for no relationship or unknown medicine. |
+| `DELETE /medicines/children/{childId}/schedules/{medicineId}` | `204` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no relationship or unknown medicine. |
+| `GET /medicines/children/{childId}/doses?from=...&to=...` | `200` | `400`, `401`, `404` | `400` for an invalid `from`/`to` range; no `403` is declared on this route. |
+| `PUT /medicines/children/{childId}/doses/{medicineId}?date=...&time=...` | `200` | `400`, `401`, `403`, `404` | `400` for an invalid status value; `403` for a caller without `Mark` tier; `404` for no relationship, unknown medicine, or no dose at that date/time. |
+| `PUT /medicines/children/{childId}/group-share/{groupId}` | `204` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no relationship or an ineligible group. |
+| `DELETE /medicines/children/{childId}/group-share/{groupId}` | `204` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no relationship or no active share with that group. |
+| `GET /medicines/children/{childId}/group-share` | `200` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no guardian-child relationship. |
+| `POST /medicines/groups/{groupId}/children/{childId}/schedules` | `200` | `400`, `401`, `403`, `404` | `403` for a group caller without `Manage`-tier medicine policy -- there is no `View` tier; `404` for a child not shared with the group. |
+| `GET /medicines/groups/{groupId}/children/{childId}/schedules` | `200` | `401`, `403`, `404` | `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group. |
+| `PATCH /medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/details` | `200` | `400`, `401`, `403`, `404` | `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group or unknown medicine. |
+| `PATCH /medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/schedule` | `200` | `400`, `401`, `403`, `404` | `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group or unknown medicine. |
+| `DELETE /medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}` | `204` | `401`, `403`, `404` | `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group or unknown medicine. |
+| `GET /medicines/groups/{groupId}/children/{childId}/doses?from=...&to=...` | `200` | `400`, `401`, `403`, `404` | `400` for an invalid `from`/`to` range; `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group. |
+| `PUT /medicines/groups/{groupId}/children/{childId}/doses/{medicineId}?date=...&time=...` | `200` | `400`, `401`, `403`, `404` | `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group, unknown medicine, or no dose at that date/time. |
+
+Note: `PUT /groups/{groupId}/medicine-permission-policy` is documented under the Groups API above, not here. `MedicinePermissionPolicy` is all-or-nothing (`None`/`Manage`) -- there is no group-level `View` tier for medicines.
+
+### Pickups API (`/pickups`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `PUT /pickups/children/{childId}/assignments?date=...&slot=...` | `200` | `400`, `401`, `403`, `404` | `400` for invalid assignee-kind fields; `403` for a child attempting a write; `404` for no relationship to the child (privacy-hiding). |
+| `DELETE /pickups/children/{childId}/assignments?date=...&slot=...` | `204` | `401`, `403`, `404` | Idempotent: clearing an already-empty slot still returns `204`; `403` for a child attempting a write. |
+| `GET /pickups/children/{childId}/schedule?from=...&to=...` | `200` | `400`, `401`, `404` | `400` for a date range longer than 31 days or otherwise invalid. |
+
+### Progress API (`/progress`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `GET /progress/me` | `200` | `401` | Always resolves to the caller's own progress; no existence-hiding case applies. |
+| `GET /progress/children/{childId}` | `200` | `401`, `404` | `404` for unknown child or caller without an active guardian link (and not the child themself). |
+
+There is no write endpoint in this API: star awarding happens internally via `RecordStarChange`, invoked from the task-completion handler, and is never exposed over HTTP.
+
+### Task Library API (`/task-templates`, plus `/calendars/{calendarId}/items/from-template`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `POST /task-templates/children/{childId}` | `200` | `400`, `401`, `403`, `404` | `400` for invalid name/icon/color; `403` for the child attempting to create a template; `404` for a caller with no relationship to the child. |
+| `GET /task-templates/children/{childId}` | `200` | `401`, `403`, `404` | `404` for a caller with no relationship to the child. |
+| `PATCH /task-templates/{templateId}` | `200` | `400`, `401`, `403`, `404` | `400` for invalid name/icon/color; `403` for the child attempting to edit; `404` for unknown template or no relationship. |
+| `DELETE /task-templates/{templateId}` | `204` | `401`, `403`, `404` | `403` for the child attempting to archive; `404` for unknown template or no relationship. |
+| `POST /task-templates/{templateId}/subtasks` | `200` | `400`, `401`, `403`, `404` | `400` for invalid title/duration or requested position; `403` for the child attempting to add a subtask; `404` for unknown template or no relationship. |
+| `PATCH /task-templates/{templateId}/subtasks/{subtaskId}` | `200` | `400`, `401`, `403`, `404` | `400` for invalid title/duration; `403` for the child attempting to edit; `404` for unknown template/subtask or no relationship. |
+| `DELETE /task-templates/{templateId}/subtasks/{subtaskId}` | `204` | `401`, `403`, `404` | `403` for the child attempting to remove; `404` for unknown template/subtask or no relationship. |
+| `PUT /task-templates/{templateId}/subtasks/order` | `200` | `400`, `401`, `403`, `404` | `400` when the new order omits or duplicates a current subtask ID; `403` for the child attempting to reorder; `404` for unknown template or no relationship. |
+| `POST /calendars/{calendarId}/items/from-template` | `200` | `400`, `401`, `403`, `404` | `400` for an empty or archived template; `403` for a caller without contributor access to the calendar; `404` for unknown calendar/template or a template not owned by the assignee or caller. |
 
 ## OpenAPI Alignment Checklist
 

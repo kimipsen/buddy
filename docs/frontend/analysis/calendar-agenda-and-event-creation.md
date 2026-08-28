@@ -39,6 +39,9 @@ The screen supports:
 - per-calendar show/hide filtering;
 - event/task creation in calendars where the effective role can contribute;
 - title, icon, color, all-day, date/time, and task due-date fields;
+- for tasks, an alternative "from template" mode that swaps free-form entry
+  for a picker over the selected assignee's task library (see [Task
+  library](task-library.md));
 - daily, weekly, monthly, and yearly recurrence with interval and optional end
   date;
 - editing details, schedule, and recurrence through the corresponding backend

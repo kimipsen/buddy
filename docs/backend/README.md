@@ -12,6 +12,7 @@ Backend documentation for the Buddy API.
 - [Mealplans flow](mealplans/flow.md)
 - [Pickups flow](pickups/flow.md)
 - [Task Library flow](task-library/flow.md)
+- [Progress flow](progress/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
 
@@ -26,6 +27,7 @@ model or permissions logic.
 - [All-day calendar items](analysis/calendar-all-day-items.md)
 - [Integration testing strategy](analysis/integration-testing-strategy.md)
 - [Mutation testing strategy](analysis/mutation-testing-strategy.md)
+- [Validation rules](analysis/validation-rules.md)
 - [Child accounts and guardian/parent roles](analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](analysis/medicine-schedules.md)
 - [Meal plans](analysis/mealplans.md)

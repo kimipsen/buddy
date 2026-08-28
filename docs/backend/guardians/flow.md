@@ -49,8 +49,12 @@ sequenceDiagram
 | --- | --- | --- |
 | `POST` | `/users/me/children` | Creates an account for a child and establishes the guardian relationship. |
 | `GET` | `/users/me/children` | Lists the current guardian's child accounts. |
+| `GET` | `/users/me/children/{childId}/guardians` | Lists the active guardians linked to a specific child. |
 | `DELETE` | `/users/me/children/{childId}/guardian-link` | Revokes the guardian-child relationship. |
+| `PATCH` | `/users/me/children/{childId}/language` | An active guardian updates the child's language. |
+| `PATCH` | `/users/me/children/{childId}/timezone` | An active guardian updates the child's time zone. |
 | `GET` | `/users/me/guardians` | Lists guardians linked to the current authenticated user. |
+| `GET` | `/users/me/siblings` | Lists the caller's siblings, resolved via shared guardians. |
 | `POST` | `/users/me/children/{childId}/guardian-invites` | An active guardian invites another adult, by email, to co-manage this child. |
 | `GET` | `/users/me/children/{childId}/guardian-invites` | Lists this child's pending guardian invites. |
 | `DELETE` | `/users/me/children/{childId}/guardian-invites/{inviteId}` | Revokes a pending guardian invite. |

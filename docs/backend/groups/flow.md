@@ -27,14 +27,14 @@ sequenceDiagram
     API-->>App: 200 OK
 
     User->>App: Add a member or change a role
-    App->>API: PATCH /groups/{groupId}/members/{memberId}
+    App->>API: PUT /groups/{groupId}/members/{memberId}
     API->>Groups: SetGroupMemberRole command
     Groups->>Store: Append GroupMemberRoleGranted or Revoked
     Groups-->>API: Updated group
     API-->>App: 200 OK
 
     User->>App: Update calendar-sharing policy
-    App->>API: PATCH /groups/{groupId}/calendar-permission-policy
+    App->>API: PUT /groups/{groupId}/calendar-permission-policy
     API->>Groups: UpdateCalendarPermissionPolicy command
     Groups->>Store: Append GroupCalendarPolicyUpdated
     Groups-->>API: Updated group
@@ -81,9 +81,9 @@ sequenceDiagram
 | `POST` | `/groups` | Creates a group for the authenticated user. |
 | `GET` | `/groups` | Lists groups visible to the current user. |
 | `GET` | `/groups/{groupId}` | Loads one group and its current membership state, with each member's given/family name and whether they are a child (resolved from the User and GuardianLink streams). |
-| `PATCH` | `/groups/{groupId}/members/{memberId}` | Sets a member role such as owner, admin, or member. |
+| `PUT` | `/groups/{groupId}/members/{memberId}` | Sets a member role such as owner, admin, or member. |
 | `DELETE` | `/groups/{groupId}/members/{memberId}` | Removes a user from the group. |
-| `PATCH` | `/groups/{groupId}/calendar-permission-policy` | Updates how group roles map to calendar permissions. |
+| `PUT` | `/groups/{groupId}/calendar-permission-policy` | Updates how group roles map to calendar permissions. |
 | `PUT` | `/groups/{groupId}/mealplan-permission-policy` | Updates how group roles map to meal-plan access tiers. |
 | `PUT` | `/groups/{groupId}/medicine-permission-policy` | Updates how group roles map to medicine access tiers. |
 | `PUT` | `/groups/{groupId}/children/{childId}` | An active guardian of `childId` adds them directly as a Member -- no invite/accept step (see below). |
@@ -106,6 +106,8 @@ This matters because the feature does not directly own schedules or items; inste
 - `GroupMemberRoleGranted`
 - `GroupMemberRoleRevoked`
 - `GroupCalendarPolicyUpdated`
+- `GroupMealplanPolicyUpdated`
+- `GroupMedicinePolicyUpdated`
 - `GroupDeleted`
 - `GroupInviteCreated`
 - `GroupInviteAccepted`

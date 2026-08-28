@@ -27,7 +27,7 @@ sequenceDiagram
     API-->>App: 200 OK
 
     Guardian->>App: Review today's doses
-    App->>API: GET /medicines/children/{childId}/doses?date=...
+    App->>API: GET /medicines/children/{childId}/doses?from=...&to=...
     API->>Medicines: ListTodaysDoses query
     Medicines->>Store: Expand daily dose occurrences from current state
     Store-->>Medicines: dose occurrences with statuses
@@ -35,7 +35,7 @@ sequenceDiagram
     API-->>App: 200 OK
 
     Guardian->>App: Mark a dose as taken or skipped
-    App->>API: PATCH /medicines/children/{childId}/doses/{medicineId}/status
+    App->>API: PUT /medicines/children/{childId}/doses/{medicineId}?date=...&time=...
     API->>Medicines: SetDoseStatus command
     Medicines->>Store: Append DoseStatusChanged
     Medicines-->>API: Updated schedule / dose state
@@ -51,8 +51,22 @@ sequenceDiagram
 | `PATCH` | `/medicines/children/{childId}/schedules/{medicineId}/details` | Updates medicine details such as name, dosage, icon, or color. |
 | `PATCH` | `/medicines/children/{childId}/schedules/{medicineId}/schedule` | Reschedules the windows or time list for a medicine. |
 | `DELETE` | `/medicines/children/{childId}/schedules/{medicineId}` | Stops a medicine schedule. |
-| `GET` | `/medicines/children/{childId}/doses` | Lists dose occurrences for a date or date window. |
-| `PATCH` | `/medicines/children/{childId}/doses/{medicineId}/status` | Marks a dose as `Taken`, `Skipped`, or `Pending`. |
+| `GET` | `/medicines/children/{childId}/doses` | Lists dose occurrences for a `from`/`to` date range. |
+| `PUT` | `/medicines/children/{childId}/doses/{medicineId}?date=...&time=...` | Marks a dose as `Taken`, `Skipped`, or `Pending`. |
+| `PUT` | `/medicines/children/{childId}/group-share/{groupId}` | Shares the child's medicine schedules with a group. |
+| `DELETE` | `/medicines/children/{childId}/group-share/{groupId}` | Unshares the child's medicine schedules from a group. |
+| `GET` | `/medicines/children/{childId}/group-share` | Returns the group the child's medicine schedules are currently shared with, if any. |
+| `POST` | `/medicines/groups/{groupId}/children/{childId}/schedules` | Creates a medicine schedule for a shared child via group access. |
+| `GET` | `/medicines/groups/{groupId}/children/{childId}/schedules` | Lists a shared child's schedules via group access. |
+| `PATCH` | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/details` | Updates schedule details via group access. |
+| `PATCH` | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/schedule` | Reschedules via group access. |
+| `DELETE` | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}` | Stops a schedule via group access. |
+| `GET` | `/medicines/groups/{groupId}/children/{childId}/doses` | Lists dose occurrences via group access. |
+| `PUT` | `/medicines/groups/{groupId}/children/{childId}/doses/{medicineId}` | Sets dose status via group access. |
+
+## Group sharing
+
+A guardian can share a child's medicine schedules with a group, granting members access under that group's `MedicinePermissionPolicy` (`None` or `Manage` — there is no `View` tier) instead of the guardian-child relationship alone. See [Medicine schedules](../analysis/medicine-schedules.md) for the full authorization model and the `MedicineGroupAccess` resolution rules.
 
 ## Core lifecycle
 
