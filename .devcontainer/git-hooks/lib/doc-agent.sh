@@ -6,8 +6,8 @@ DOC_AGENT_COMMIT_PREFIX="docs: sync documentation (auto)"
 DOC_AGENT_SKIP_MARKER="[skip-docs]"
 
 doc_agent_build_prompt() {
-  local commit_msg="$1" diff="$2"
-  cat <<PROMPT
+  local prompt_file="$1" commit_msg="$2" diff="$3"
+  cat >"$prompt_file" <<PROMPT
 You are updating project documentation to stay in sync with a git commit that
 was just made in this repository.
 
@@ -33,7 +33,7 @@ PROMPT
 }
 
 doc_agent_run() {
-  local repo_root commit_msg agent diff prompt
+  local repo_root commit_msg agent diff prompt_file instruction
 
   repo_root="$(git rev-parse --show-toplevel)"
   cd "$repo_root" || return 0
@@ -70,29 +70,42 @@ doc_agent_run() {
     return 0
   fi
 
-  prompt="$(doc_agent_build_prompt "$commit_msg" "$diff")"
+  # Large commits can produce diffs that exceed the OS argument-length limit,
+  # so the prompt (which embeds the full diff) is written to a temp file
+  # instead of being passed inline as a CLI argument.
+  prompt_file="$(mktemp -t doc-agent-prompt.XXXXXX)"
+  trap 'rm -f "$prompt_file"' RETURN
+  doc_agent_build_prompt "$prompt_file" "$commit_msg" "$diff"
 
   echo "post-commit: running $agent to check documentation for the last commit..."
 
   case "$agent" in
     claude)
-      claude -p "$prompt" \
+      instruction="Read the file at $prompt_file — it contains the commit message, diff, and instructions for updating documentation. Follow those instructions exactly, then stop."
+      claude -p "$instruction" \
         --permission-mode acceptEdits \
         --allowedTools "Read,Edit,Glob,Grep" \
         --add-dir "$repo_root" \
+        --add-dir "$(dirname "$prompt_file")" \
         >/dev/null
       ;;
     codex)
-      codex exec "$prompt" \
+      # codex exec reads its instructions from stdin when no prompt argument
+      # (or "-") is given, so the prompt file is streamed in rather than
+      # passed as an argument.
+      codex exec - \
         --sandbox workspace-write \
         --skip-git-repo-check \
         -C "$repo_root" \
+        <"$prompt_file" \
         >/dev/null
       ;;
     copilot)
-      copilot -p "$prompt" -s \
+      instruction="Read the file at $prompt_file — it contains the commit message, diff, and instructions for updating documentation. Follow those instructions exactly, then stop."
+      copilot -p "$instruction" -s \
         --allow-tool write \
         --deny-tool shell \
+        --add-dir "$(dirname "$prompt_file")" \
         >/dev/null
       ;;
     *)
