@@ -60,7 +60,7 @@ sequenceDiagram
 | `PATCH` | `/calendars/{calendarId}/members/{memberId}` | Grants or revokes a member role on the calendar. |
 | `DELETE` | `/calendars/{calendarId}/members/{memberId}` | Removes a member from the calendar. |
 | `POST` | `/calendars/{calendarId}/items` | Creates an event or task item. |
-| `POST` | `/calendars/{calendarId}/items/from-template` | Schedules a non-empty, active family task template at a specific time. |
+| `POST` | `/calendars/{calendarId}/items/from-template` | Schedules a non-empty, active task template owned by the assignee at a specific time. |
 | `GET` | `/calendars/{calendarId}/items` | Lists items in a calendar. |
 | `GET` | `/calendars/{calendarId}/occurrences` | Recomputes occurrences for a date range; template tasks produce one timed occurrence per current subtask. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/details` | Updates an item's name, description, or visual metadata. |

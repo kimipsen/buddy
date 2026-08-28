@@ -14,7 +14,7 @@ The unique identifier for a calendar. A calendar is always owned by a group, can
 The unique identifier for an item that belongs to a calendar. A calendar item is either an event or a task.
 
 ### TaskTemplateId
-The unique identifier for a reusable task template in a family's task library.
+The unique identifier for a reusable task template in a child's task library.
 
 ### SubtaskId
 The unique identifier for a subtask within a task template. It is also used to identify which subtask occurrence is being marked complete after the template is scheduled.
@@ -168,12 +168,10 @@ A calendar item can be soft-deleted by appending an `ItemDeleted` event. The agg
 ## Task library domain
 
 ### Task library
-A family-shared collection of reusable task templates. A child can view the library resolved for them, while an active guardian can create, edit, reorder, and archive its templates and subtasks.
-
-There is no persisted family or household aggregate. The family is resolved from active guardian links: children who share at least one active guardian share the same task templates.
+A child-specific collection of reusable task templates. A child can view their own library, while an active guardian can create, edit, reorder, and archive its templates and subtasks.
 
 ### TaskTemplate
-An event-sourced reusable routine made up of an ordered list of subtasks. A template has a name, icon, color, creator, last modifier, and archived state. It is indexed under the child the guardian acted on behalf of when creating it, but it is shared with the child's resolved family rather than owned by that child alone.
+An event-sourced reusable routine made up of an ordered list of subtasks. A template has a name, icon, color, creator, last modifier, and archived state. It is indexed under the child it was created for, and that ownership never changes -- there is no sharing across siblings.
 
 ### TaskTemplateDetails
 The editable top-level metadata of a task template: name, icon, and color.
@@ -192,8 +190,8 @@ The level of task-library access resolved for a caller.
 
 Values:
 - None: the caller has no relationship to the child.
-- View: the caller is the child and can view the family task library.
-- Manage: the caller is an active guardian and can view and modify the family task library.
+- View: the caller is the child and can view their own task library.
+- Manage: the caller is an active guardian and can view and modify the child's task library.
 
 ### TaskLibraryAccess
 The outcome of a task-library permission check.
