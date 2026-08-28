@@ -127,6 +127,7 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `UserEventsService` loads a user's recent-events feed, rendered by `EventsList` on
   `/guardian/admin`
 - `TranslationService` resolves the UI's current language (see Localization below)
+- `ThemeService` resolves the active light/dark theme (see Theming below)
 
 ## Localization (i18n)
 
@@ -150,6 +151,24 @@ the pipe in the template using Angular's `as` narrowing, e.g. `@if (error(); as 
 message | translate }} }` — a raw backend validation message (not a static UI string) is passed
 through untranslated instead.
 
+## Theming
+
+The app supports light, dark, and system (OS-following) themes, chosen from the theme switcher in
+the profile menu (top-right of the guardian shell). The selection is a `light` | `dark` | `system`
+mode stored under `buddy_theme_mode` in `localStorage`
+([`core/theme-storage.ts`](../../src/frontend/buddy/src/app/core/theme-storage.ts)) and resolved by
+[`ThemeService`](../../src/frontend/buddy/src/app/core/theme.service.ts): `system` tracks
+`prefers-color-scheme` live via a `matchMedia` listener, while `light`/`dark` override the OS
+setting outright.
+
+`App` applies the resolved theme by toggling a `dark` class on `<html>`, which Tailwind's
+`dark:` variant is keyed off (`@custom-variant dark (&:where(.dark, .dark *));` in
+[`styles.css`](../../src/frontend/buddy/src/styles.css)) instead of relying solely on
+`prefers-color-scheme` media queries. `styles.css` also sets the `color-scheme` CSS property so
+native widgets (checkboxes, date/color pickers, scrollbars) follow the active theme.
+[`index.html`](../../src/frontend/buddy/src/index.html) re-applies the same class from the stored
+preference in an inline script before Angular boots, to avoid a flash of the wrong theme on load.
+
 ## Current status
 
 The frontend is an actively developed product shell with working domain workflows. The core pieces already in place are:
@@ -170,6 +189,7 @@ The frontend is an actively developed product shell with working domain workflow
 - a child-facing read-only seven-day calendar agenda
 - per-child task template management and template-based task scheduling
 - profile, calendar, group, child, and account administration
+- light, dark, and system theme selection, persisted per browser
 
 Children have a read-only calendar agenda; event and task creation remains a guardian workflow.
 The child home keeps routines in separate, scannable sections rather than merging them into a

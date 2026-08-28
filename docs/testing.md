@@ -61,6 +61,15 @@ so this reliably flushes any depth of chained `await`s in a mocked service
 call (including a `Promise.all` of several mocked calls), as long as nothing
 in that chain schedules a further macrotask itself.
 
+### `window.matchMedia` in specs
+
+jsdom doesn't implement `window.matchMedia`, which `ThemeService` calls on construction. A global
+stub in
+[`src/test-setup.ts`](../src/frontend/buddy/src/test-setup.ts) (wired up via `angular.json`'s
+`test.options.setupFiles`) keeps any spec that injects `ThemeService` through real DI from
+crashing with "matchMedia is not a function". Specs that care about a specific OS preference
+(e.g. `theme.service.spec.ts`) stub `matchMedia` themselves instead of relying on the default.
+
 ## Backend
 
 Build the complete backend solution:
