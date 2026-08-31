@@ -1,54 +1,8 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { TranslationService } from '../../core/i18n/translation.service';
-
-type Period = 'AM' | 'PM';
-
-const HOURS_24 = Array.from({ length: 24 }, (_, hour) => hour);
-const HOURS_12 = Array.from({ length: 12 }, (_, hour) => hour + 1);
-const MINUTES = Array.from({ length: 60 }, (_, minute) => minute);
-
-function to24Hour(hour12: number, period: Period): number {
-  const base = hour12 % 12;
-  return period === 'PM' ? base + 12 : base;
-}
-
-function from12Hour(hour24: number): { hour: number; period: Period } {
-  return { hour: hour24 % 12 === 0 ? 12 : hour24 % 12, period: hour24 < 12 ? 'AM' : 'PM' };
-}
-
-function pad2(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-// Guards against a malformed `value` input (not just an empty string) -- e.g. "value.split(':')"
-// on a string with no colon yields an array too short to destructure a minute out of, which
-// previously left `minute` as `undefined` rather than `null` and slipped past the `emitIfComplete`
-// null-check, emitting things like "08:undefined".
-function parseHhMm(value: string): { hour24: number; minute: number } | null {
-  if (!value) {
-    return null;
-  }
-
-  const [hour24, minute] = value.split(':').map(Number);
-
-  if (!Number.isInteger(hour24) || !Number.isInteger(minute) || hour24 < 0 || hour24 > 23 || minute < 0 || minute > 59) {
-    return null;
-  }
-
-  return { hour24, minute };
-}
-
-// Danish uses a 24-hour clock, English a 12-hour one with AM/PM -- native <input type="time">
-// renders that split based on the browser's/OS's own locale, not the app's selected language (see
-// TranslationService), so this picker is built from plain <select>s instead to guarantee it always
-// matches the language chosen in the app, regardless of the browser or OS.
-//
 // `value`/`valueChange` carry a plain "HH:mm" string (24-hour, no seconds), the same shape the
-// pickups and medicine-schedule APIs already use. `valueChange` only fires once both an hour and a
-// minute are picked, so a half-made selection (e.g. hour chosen, minute not yet) never round-trips
-// back in through `value` as a cleared one.
+// pickups and medicine-schedule APIs already use and the native <input type="time"> value format.
 @Component({
   selector: 'app-time-select',
   imports: [FormsModule],
@@ -57,63 +11,4 @@ function parseHhMm(value: string): { hour24: number; minute: number } | null {
 export class TimeSelect {
   readonly value = input<string>('');
   readonly valueChange = output<string>();
-
-  private readonly translation = inject(TranslationService);
-
-  protected readonly is24Hour = computed(() => this.translation.language() === 'da');
-  protected readonly hourOptions = computed(() => (this.is24Hour() ? HOURS_24 : HOURS_12));
-  protected readonly minuteOptions = MINUTES;
-  protected readonly pad2 = pad2;
-
-  protected readonly hour = signal<number | null>(null);
-  protected readonly minute = signal<number | null>(null);
-  protected readonly period = signal<Period>('AM');
-
-  constructor() {
-    effect(() => this.applyValue(this.value()));
-  }
-
-  protected setHour(hour: number | null): void {
-    this.hour.set(hour);
-    this.emitIfComplete();
-  }
-
-  protected setMinute(minute: number | null): void {
-    this.minute.set(minute);
-    this.emitIfComplete();
-  }
-
-  protected setPeriod(period: Period): void {
-    this.period.set(period);
-    this.emitIfComplete();
-  }
-
-  private applyValue(value: string): void {
-    const parsed = parseHhMm(value);
-
-    if (!parsed) {
-      this.hour.set(null);
-      this.minute.set(null);
-      this.period.set('AM');
-      return;
-    }
-
-    const { hour, period } = this.is24Hour() ? { hour: parsed.hour24, period: this.period() } : from12Hour(parsed.hour24);
-
-    this.hour.set(hour);
-    this.minute.set(parsed.minute);
-    this.period.set(period);
-  }
-
-  private emitIfComplete(): void {
-    const hour = this.hour();
-    const minute = this.minute();
-
-    if (hour == null || minute == null) {
-      return;
-    }
-
-    const hour24 = this.is24Hour() ? hour : to24Hour(hour, this.period());
-    this.valueChange.emit(`${pad2(hour24)}:${pad2(minute)}`);
-  }
 }

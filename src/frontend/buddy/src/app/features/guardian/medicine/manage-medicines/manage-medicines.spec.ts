@@ -110,20 +110,10 @@ describe('ManageMedicines', () => {
     compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
   }
 
-  // The create-schedule form always contains at least one app-time-select, itself built from
-  // native <select>s (see time-select.html) -- so a plain `querySelector('select')` can pick up a
-  // dose-time dropdown instead of the child/group picker a test actually means. Both the child
-  // selector and the group-share picker live outside that <form>, so scoping to that excludes them.
+  // Both the child selector and the group-share picker live outside the create-schedule <form>, so
+  // scoping to outside it excludes any unrelated <select> a future in-form control might add.
   function selectsOutsideForm(compiled: HTMLElement): HTMLSelectElement[] {
     return Array.from(compiled.querySelectorAll<HTMLSelectElement>('select')).filter((select) => !select.closest('form'));
-  }
-
-  function selectByLabel(select: HTMLSelectElement, label: string): void {
-    const index = Array.from(select.options).findIndex((option) => option.textContent?.trim() === label);
-    expect(index, `option "${label}" not found in select`).toBeGreaterThanOrEqual(0);
-
-    select.selectedIndex = index;
-    select.dispatchEvent(new Event('change'));
   }
 
   // Fills in the two fields the create form actually requires beyond its own non-empty defaults
@@ -452,10 +442,9 @@ describe('ManageMedicines', () => {
       fixture.detectChanges();
 
       const secondPicker = compiled.querySelectorAll('app-time-select')[1];
-      const [hourSelect, minuteSelect, periodSelect] = Array.from(secondPicker.querySelectorAll('select')) as HTMLSelectElement[];
-      selectByLabel(hourSelect, '2');
-      selectByLabel(minuteSelect, '15');
-      selectByLabel(periodSelect, 'PM');
+      const timeInput = secondPicker.querySelector<HTMLInputElement>('input[type="time"]')!;
+      timeInput.value = '14:15';
+      timeInput.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
       fillRequiredFields(compiled);

@@ -99,6 +99,16 @@ describe('PickupCell', () => {
     select.dispatchEvent(new Event('change'));
   }
 
+  function timeInput(compiled: HTMLElement): HTMLInputElement {
+    return compiled.querySelector<HTMLInputElement>('input[type="time"]')!;
+  }
+
+  function setTime(compiled: HTMLElement, value: string): void {
+    const input = timeInput(compiled);
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+  }
+
   function setInput(compiled: HTMLElement, placeholder: string, value: string): void {
     const input = compiled.querySelector<HTMLInputElement>(`input[placeholder="${placeholder}"]`);
     expect(input, `input with placeholder "${placeholder}" not found`).toBeTruthy();
@@ -267,12 +277,8 @@ describe('PickupCell', () => {
       expect(contactInput?.value).toBe('555-1234');
       expect(notesInput?.value).toBe('Bring snacks');
 
-      // TimeSelect renders "09:15" (stripped of seconds) as a 12-hour hour/minute/period triple.
-      const timeSelects = selects(compiled).slice(1);
-      const [hourSelect, minuteSelect, periodSelect] = timeSelects;
-      expect(hourSelect.selectedOptions[0].textContent?.trim()).toBe('9');
-      expect(minuteSelect.selectedOptions[0].textContent?.trim()).toBe('15');
-      expect(periodSelect.selectedOptions[0].textContent?.trim()).toBe('AM');
+      // TimeSelect renders "09:15" (stripped of seconds) in the native time input.
+      expect(timeInput(compiled).value).toBe('09:15');
     });
 
     it('shows a "no siblings" hint when switching to the sibling kind with no siblings available', async () => {
@@ -404,7 +410,7 @@ describe('PickupCell', () => {
       expect((onAssign.mock.calls[0][0] as AssignPickupRequest).notes).toBe('needs a jacket');
     });
 
-    it('sends time as HH:mm:00 once a time is picked via the time select, using the last-selected kind', async () => {
+    it('sends time as HH:mm:00 once a time is picked via the time input, using the last-selected kind', async () => {
       const { fixture, compiled, onAssign } = await setup();
 
       findButton(compiled, 'Not planned')!.click();
@@ -412,11 +418,7 @@ describe('PickupCell', () => {
       selectByLabel(selects(compiled)[0], 'Goes alone');
       fixture.detectChanges();
 
-      // Selects 1..3 belong to the nested app-time-select (hour, minute, period) in English.
-      const [, hourSelect, minuteSelect, periodSelect] = selects(compiled);
-      selectByLabel(hourSelect, '9');
-      selectByLabel(minuteSelect, '05');
-      selectByLabel(periodSelect, 'PM');
+      setTime(compiled, '21:05');
       fixture.detectChanges();
 
       findButton(compiled, 'Save')!.click();
