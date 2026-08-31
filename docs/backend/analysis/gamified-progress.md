@@ -195,6 +195,10 @@ before reward redemption (Phase 3) is designed.
   older ones, may find it patronizing) isn't modeled yet — likely a small
   `Guardian`-set flag, deferred until Phase 3's guardian controls.
 
+**Update:** guardian-configurable goal posts and icons (replacing the fixed
+milestone/icon scales referenced above) are now planned — see
+[configurable-goal-posts.md](configurable-goal-posts.md).
+
 ## Diagram
 
 ```mermaid
