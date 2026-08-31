@@ -13,6 +13,7 @@ import {
 } from '../../../../core/calendars.service';
 import {
   addDaysIso,
+  addMinutesToTime,
   buildDateRangeIso,
   buildMonthGridIso,
   parseIsoDate,
@@ -26,7 +27,7 @@ import { ChildSummary, GuardiansService } from '../../../../core/guardians.servi
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../../core/task-run';
-import { TaskLibraryService } from '../../../../core/task-library.service';
+import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
 import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
 import { DateSelect } from '../../../../shared/date-select/date-select';
@@ -91,6 +92,20 @@ function instantFor(occurrence: CalendarOccurrence): Date | null {
 
 function toDatePart(date: string, time: string): DatePart {
   return { date, time: `${time}:00` };
+}
+
+// Formats a whole-minutes duration for display (e.g. "35m", "1h", "1h 30m") -- same convention as
+// ManageTasks's and TaskPicker's own formatDuration, duplicated rather than shared since none of
+// the three components import from another.
+function formatDuration(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours === 0) {
+    return `${minutes}m`;
+  }
+
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
 }
 
 @Component({
@@ -281,6 +296,8 @@ export class CalendarAgenda {
   // offered as a pick.
   protected readonly taskTemplates = computed(() => this.taskLibrary.templates().filter((template) => !template.isArchived));
 
+  protected readonly selectedTaskTemplate = computed(() => this.taskTemplates().find((template) => template.id === this.newTaskTemplateId()) ?? null);
+
   protected readonly assignableMembers = signal<AssignableMember[]>([]);
   // Used only to tell whether the selected assignee is one of the guardian's own children (and
   // if so, which childId) -- AssignableMember carries no child/guardian discriminator of its own.
@@ -339,6 +356,16 @@ export class CalendarAgenda {
         this.taskLibrary.clearTemplates();
       }
     });
+  }
+
+  protected formatDuration(totalMinutes: number): string {
+    return formatDuration(totalMinutes);
+  }
+
+  // The picked template's total subtask duration applied to the currently chosen due time, so the
+  // guardian can see when the task is expected to finish before submitting.
+  protected templateEndTime(template: TaskTemplate): string {
+    return addMinutesToTime(this.newDueTime(), template.totalDurationMinutes);
   }
 
   protected setViewMode(mode: ViewMode): void {

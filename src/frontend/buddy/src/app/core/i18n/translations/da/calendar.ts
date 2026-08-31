@@ -65,6 +65,7 @@ export const calendar = {
       endTimeLabel: 'Sluttid',
       dueDateLabel: 'Forfaldsdato',
       dueTimeLabel: 'Forfaldstid',
+      taskDurationHint: 'Tager {duration} — slutter omkring {endTime}',
       assigneeLabel: 'Tildel til',
       assigneeUnassigned: 'Ingen',
       repeat: {

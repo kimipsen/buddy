@@ -495,6 +495,12 @@
           }
         </div>
 
+        @if (newTaskSource() === 'template' && !newIsAllDay() && selectedTaskTemplate(); as template) {
+          <p class="sm:w-1/2 text-xs text-slate-500 dark:text-slate-400">
+            {{ 'calendar.agenda.form.taskDurationHint' | translate: { duration: formatDuration(template.totalDurationMinutes), endTime: templateEndTime(template) } }}
+          </p>
+        }
+
         <label class="block sm:w-1/2">
           <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {{ 'calendar.agenda.form.assigneeLabel' | translate }}

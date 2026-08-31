@@ -65,6 +65,7 @@ export const calendar = {
       endTimeLabel: 'End time',
       dueDateLabel: 'Due date',
       dueTimeLabel: 'Due time',
+      taskDurationHint: 'Takes {duration} — ends around {endTime}',
       assigneeLabel: 'Assign to',
       assigneeUnassigned: 'Nobody',
       repeat: {

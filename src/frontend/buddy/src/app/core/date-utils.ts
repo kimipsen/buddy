@@ -81,3 +81,11 @@ export function toIsoDateInTimeZone(date: Date, timeZone: string): string {
 export function toTimeInTimeZone(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
 }
+
+// Adds a whole number of minutes to a "HH:mm" wall-clock time, wrapping across midnight -- used to
+// derive a task's expected end time from its scheduled start time and a duration in minutes.
+export function addMinutesToTime(time: string, minutes: number): string {
+  const [hours, mins] = time.split(':').map(Number);
+  const wrapped = (((hours * 60 + mins + minutes) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(wrapped / 60)).padStart(2, '0')}:${String(wrapped % 60).padStart(2, '0')}`;
+}
