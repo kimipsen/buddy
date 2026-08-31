@@ -19,6 +19,7 @@ export const mealplan = {
   },
   manageMeals: {
     title: 'Måltider',
+    scopeLabel: 'Redigerer måltider for:',
     loading: 'Indlæser måltider…',
     noChildren: 'Tilknyt et barn under Indstillinger, før du kan oprette måltider.',
     empty: 'Ingen måltider endnu. Tilføj et herunder.',

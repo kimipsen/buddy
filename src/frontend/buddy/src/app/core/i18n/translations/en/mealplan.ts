@@ -19,6 +19,7 @@ export const mealplan = {
   },
   manageMeals: {
     title: 'Meals',
+    scopeLabel: 'Editing meals for:',
     loading: 'Loading meals…',
     noChildren: 'Link a child from Settings before defining meals.',
     empty: 'No meals yet. Add one below.',

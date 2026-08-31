@@ -25,6 +25,12 @@ export class ManageMeals {
     return scope.kind === 'group' && scope.accessTier !== MANAGE;
   });
 
+  protected readonly isFamilyScope = computed(() => this.scope().kind === 'family');
+  protected readonly groupName = computed(() => {
+    const scope = this.scope();
+    return scope.kind === 'group' ? scope.groupName : null;
+  });
+
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
