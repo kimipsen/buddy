@@ -29,7 +29,8 @@ export const child = {
     },
     progress: {
       title: 'Your progress',
-      starCount: '{count} stars'
+      starCount: '{count} stars',
+      nextGoal: 'Next: {icon} at {threshold}'
     },
     pickup: {
       title: 'Today’s pickup & drop-off',

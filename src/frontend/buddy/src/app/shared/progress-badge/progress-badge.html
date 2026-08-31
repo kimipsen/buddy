@@ -9,5 +9,10 @@
       <span aria-hidden="true">✨</span>
       {{ 'child.home.progress.starCount' | translate: { count: totalStars() } }}
     </span>
+    @if (hasNextGoal()) {
+      <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+        {{ 'child.home.progress.nextGoal' | translate: { icon: nextGoalIcon(), threshold: nextGoalThreshold() } }}
+      </span>
+    }
   </div>
 </div>

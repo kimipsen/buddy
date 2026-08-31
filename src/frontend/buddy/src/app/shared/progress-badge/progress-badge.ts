@@ -2,12 +2,6 @@ import { Component, computed, effect, input, signal } from '@angular/core';
 
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
-// Deliberately not the ★ glyph -- that's already the meal-rating icon on the child dashboard
-// (see child.mealplan star rating), so reusing it here would read as "rate something" rather
-// than "you earned something." A growing plant reinforces the never-resets-to-zero design in
-// docs/backend/analysis/gamified-progress.md: it only ever grows, it doesn't wilt on a missed day.
-const GROWTH_STAGES = ['🌱', '🌿', '🪴', '🌳'];
-
 @Component({
   selector: 'app-progress-badge',
   imports: [TranslatePipe],
@@ -15,13 +9,16 @@ const GROWTH_STAGES = ['🌱', '🌿', '🪴', '🌳'];
 })
 export class ProgressBadge {
   readonly totalStars = input.required<number>();
-  readonly unlockedMilestones = input<number[]>([]);
+  // Resolved server-side from the child's guardian-configured goal posts (see
+  // docs/backend/analysis/configurable-goal-posts.md) -- including extrapolated posts past
+  // whatever the guardian configured, so the badge never plateaus. currentIcon is null before
+  // the child has reached their first goal post.
+  readonly currentIcon = input<string | null>(null);
+  readonly nextGoalThreshold = input<number>(0);
+  readonly nextGoalIcon = input<string>('🌱');
 
-  protected readonly stage = computed(() => {
-    const stageIndex = Math.min(this.unlockedMilestones().length, GROWTH_STAGES.length - 1);
-
-    return GROWTH_STAGES[stageIndex];
-  });
+  protected readonly stage = computed(() => this.currentIcon() ?? this.nextGoalIcon());
+  protected readonly hasNextGoal = computed(() => this.nextGoalThreshold() > this.totalStars());
 
   // A short pulse whenever the count goes up -- immediate feedback at the moment of completion
   // matters more here than a delayed summary, so this reacts to the input signal directly rather

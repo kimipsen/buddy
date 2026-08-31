@@ -10,6 +10,7 @@ import { mealplan } from './mealplan';
 import { medicine } from './medicine';
 import { pickup } from './pickup';
 import { profile } from './profile';
+import { progress } from './progress';
 import { shell } from './shell';
 import { taskLibrary } from './task-library';
 import { verifyEmail } from './verify-email';
@@ -27,6 +28,7 @@ export const da = {
   medicine,
   pickup,
   profile,
+  progress,
   shell,
   taskLibrary,
   verifyEmail

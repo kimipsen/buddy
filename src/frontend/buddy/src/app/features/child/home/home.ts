@@ -125,7 +125,14 @@ export class ChildHome implements OnInit, OnDestroy {
     return this.events().map((event) => ({ ...event, ...this.eventProgress(event, nowMs) }));
   });
 
-  protected readonly progress = signal<ProgressSummary>({ totalStars: 0, unlockedMilestones: [] });
+  protected readonly progress = signal<ProgressSummary>({
+    totalStars: 0,
+    unlockedMilestones: [],
+    currentIcon: null,
+    nextGoalThreshold: 0,
+    nextGoalIcon: '🌱',
+    goalPosts: []
+  });
 
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
   // shouldn't render five empty-state messages back to back.

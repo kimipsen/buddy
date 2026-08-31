@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using buddy.Features.Calendars;
 using buddy.Features.Users;
 
@@ -7,7 +9,8 @@ public union ProgressEvent(
     ProgressStarted,
     StarAwarded,
     StarRevoked,
-    MilestoneUnlocked
+    MilestoneUnlocked,
+    GoalPostsConfigured
 )
 {
     public static ProgressEvent FromPayload(object payload) => payload switch
@@ -16,6 +19,7 @@ public union ProgressEvent(
         StarAwarded e => e,
         StarRevoked e => e,
         MilestoneUnlocked e => e,
+        GoalPostsConfigured e => e,
         _ => throw new ArgumentException($"Unknown progress event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -25,6 +29,7 @@ public union ProgressEvent(
         StarAwarded => nameof(StarAwarded),
         StarRevoked => nameof(StarRevoked),
         MilestoneUnlocked => nameof(MilestoneUnlocked),
+        GoalPostsConfigured => nameof(GoalPostsConfigured),
     };
 }
 
@@ -43,3 +48,8 @@ public sealed record StarAwarded(ProgressId Id, CalendarItemId SourceItemId, Dat
 public sealed record StarRevoked(ProgressId Id, CalendarItemId SourceItemId, DateOnly OccurrenceDate, DateTimeOffset OccurredAt, Guid? SubtaskId = null);
 
 public sealed record MilestoneUnlocked(ProgressId Id, int Threshold, DateTimeOffset OccurredAt);
+
+// Guardian-authored, full-replace: each save carries the complete ordered list, mirroring
+// UpdateCalendarIcon's plain-field-replace shape rather than inventing a partial-update event.
+// See docs/backend/analysis/configurable-goal-posts.md.
+public sealed record GoalPostsConfigured(ProgressId Id, ImmutableArray<GoalPost> GoalPosts, DateTimeOffset OccurredAt);

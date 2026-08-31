@@ -29,7 +29,7 @@ describe('ChildrenOverview', () => {
       ...stubs.guardians
     };
     const progressStub: Partial<ProgressService> = {
-      getChildProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [] })),
+      getChildProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [], currentIcon: null, nextGoalThreshold: 5, nextGoalIcon: '🌱', goalPosts: [] })),
       ...stubs.progress
     };
 
@@ -112,7 +112,7 @@ describe('ChildrenOverview', () => {
   it('shows exactly one linked badge per child even when a star badge renders alongside it', async () => {
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [child()]) },
-      progress: { getChildProgress: vi.fn(async () => ({ totalStars: 3, unlockedMilestones: [] })) }
+      progress: { getChildProgress: vi.fn(async () => ({ totalStars: 3, unlockedMilestones: [], currentIcon: '🌱', nextGoalThreshold: 5, nextGoalIcon: '🌿', goalPosts: [] })) }
     });
     await settle(fixture);
 

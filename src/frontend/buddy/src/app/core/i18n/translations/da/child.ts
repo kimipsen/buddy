@@ -29,7 +29,8 @@ export const child = {
     },
     progress: {
       title: 'Dine point',
-      starCount: '{count} stjerner'
+      starCount: '{count} stjerner',
+      nextGoal: 'Næste: {icon} ved {threshold}'
     },
     pickup: {
       title: 'Dagens afhentning & aflevering',

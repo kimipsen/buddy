@@ -196,7 +196,7 @@ before reward redemption (Phase 3) is designed.
   `Guardian`-set flag, deferred until Phase 3's guardian controls.
 
 **Update:** guardian-configurable goal posts and icons (replacing the fixed
-milestone/icon scales referenced above) are now planned — see
+milestone/icon scales referenced above) are now implemented — see
 [configurable-goal-posts.md](configurable-goal-posts.md).
 
 ## Diagram

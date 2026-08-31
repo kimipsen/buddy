@@ -7,6 +7,7 @@ export const shell = {
     taskLibrary: 'Opgavebibliotek',
     medicine: 'Medicin',
     calendar: 'Kalender',
+    progress: 'Mål',
     settings: 'Indstillinger',
     signOut: 'Log ud',
     theme: {

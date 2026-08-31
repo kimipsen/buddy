@@ -12,8 +12,9 @@ using Weasel.Core;
 namespace buddy.Features.Progress;
 
 // RecordStarChange (see that folder) has no endpoint of its own -- it's only ever called
-// explicitly from other features' handlers, never over HTTP. GetMyProgress is the one read
-// endpoint this feature needs so the child dashboard has something to show.
+// explicitly from other features' handlers, never over HTTP. GetMyProgress/GetChildProgress are
+// the read endpoints the dashboards need; ConfigureGoalPosts is Progress's first guardian write
+// (see docs/backend/analysis/configurable-goal-posts.md).
 public static class ProgressFeature
 {
     public const string OpenApiDocumentName = "progress";
@@ -23,7 +24,8 @@ public static class ProgressFeature
         typeof(ProgressStarted),
         typeof(StarAwarded),
         typeof(StarRevoked),
-        typeof(MilestoneUnlocked)
+        typeof(MilestoneUnlocked),
+        typeof(GoalPostsConfigured)
     ];
 
     public static IServiceCollection AddProgressFeature(this IServiceCollection services, IConfiguration configuration)
@@ -66,6 +68,7 @@ public static class ProgressFeature
 
         progress.MapGetMyProgress();
         progress.MapGetChildProgress();
+        progress.MapConfigureGoalPosts();
 
         return endpoints;
     }

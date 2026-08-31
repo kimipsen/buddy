@@ -82,7 +82,7 @@ describe('ChildHome', () => {
       ...stubs.calendars
     };
     const progressStub: Partial<ProgressService> = {
-      getMyProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [] })),
+      getMyProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [], currentIcon: null, nextGoalThreshold: 5, nextGoalIcon: '🌱', goalPosts: [] })),
       ...stubs.progress
     };
 

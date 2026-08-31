@@ -1,6 +1,9 @@
 # Configurable Goal Posts for Progress
 
-Status: Planned, implementation starting. Extends `Features/Progress/` (see
+Status: Implemented. `GoalPost`/`GoalPostsConfigured`/`GoalPostResolver` in
+`Features/Progress/Types/`, the guardian-only `ConfigureGoalPosts` command
+(`PUT /progress/children/{childId}/goals`), and a guardian-facing "Manage
+progress goals" screen. Extends `Features/Progress/` (see
 [gamified-progress.md](gamified-progress.md) for the base feature this
 builds on) with the first guardian *write* action on Progress.
 

@@ -15,7 +15,13 @@
   </header>
 
   <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
-    <app-progress-badge class="block" [totalStars]="progress().totalStars" [unlockedMilestones]="progress().unlockedMilestones" />
+    <app-progress-badge
+      class="block"
+      [totalStars]="progress().totalStars"
+      [currentIcon]="progress().currentIcon"
+      [nextGoalThreshold]="progress().nextGoalThreshold"
+      [nextGoalIcon]="progress().nextGoalIcon"
+    />
 
     <div class="flex flex-wrap gap-3">
       <a

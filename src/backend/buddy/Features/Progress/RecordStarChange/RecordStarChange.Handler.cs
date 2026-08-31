@@ -1,10 +1,9 @@
+using System.Collections.Immutable;
+
 namespace buddy.Features.Progress;
 
 public static class RecordStarChangeHandler
 {
-    // Deliberately a fixed list for this sketch -- no per-child configuration yet.
-    private static readonly int[] MilestoneThresholds = [5, 10, 25, 50, 100];
-
     public static async Task Handle(RecordStarChange command, IProgressEventStore progress, CancellationToken cancellationToken)
     {
         var id = ProgressId.ForChild(command.ChildId);
@@ -34,12 +33,13 @@ public static class RecordStarChangeHandler
             newEvents.Add(new StarAwarded(id, command.ItemId, command.OccurrenceDate, now, command.SubtaskId));
 
             var totalAfter = (current?.TotalStars ?? 0) + 1;
-            var alreadyUnlocked = current?.UnlockedMilestones ?? System.Collections.Immutable.ImmutableHashSet<int>.Empty;
-            var crossed = Array.Find(MilestoneThresholds, t => t == totalAfter && !alreadyUnlocked.Contains(t));
+            var alreadyUnlocked = current?.UnlockedMilestones ?? ImmutableHashSet<int>.Empty;
+            var configuredGoalPosts = current?.GoalPosts ?? ImmutableArray<GoalPost>.Empty;
+            var crossed = GoalPostResolver.AtThreshold(configuredGoalPosts, totalAfter);
 
-            if (crossed != default)
+            if (crossed is not null && !alreadyUnlocked.Contains(crossed.Threshold))
             {
-                newEvents.Add(new MilestoneUnlocked(id, crossed, now));
+                newEvents.Add(new MilestoneUnlocked(id, crossed.Threshold, now));
             }
         }
         else

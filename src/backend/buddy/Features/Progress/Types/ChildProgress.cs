@@ -10,7 +10,8 @@ public sealed record ChildProgress(
     UserId ChildId,
     int TotalStars,
     ImmutableHashSet<(CalendarItemId ItemId, DateOnly OccurrenceDate, Guid? SubtaskId)> AwardedOccurrences,
-    ImmutableHashSet<int> UnlockedMilestones)
+    ImmutableHashSet<int> UnlockedMilestones,
+    ImmutableArray<GoalPost> GoalPosts)
 {
     public static ChildProgress? Rehydrate(IEnumerable<ProgressEvent> events)
     {
@@ -25,7 +26,8 @@ public sealed record ChildProgress(
                     started.ChildId,
                     0,
                     ImmutableHashSet<(CalendarItemId, DateOnly, Guid?)>.Empty,
-                    ImmutableHashSet<int>.Empty),
+                    ImmutableHashSet<int>.Empty,
+                    ImmutableArray<GoalPost>.Empty),
                 StarAwarded awarded => progress! with
                 {
                     TotalStars = progress!.TotalStars + 1,
@@ -39,6 +41,10 @@ public sealed record ChildProgress(
                 MilestoneUnlocked milestone => progress! with
                 {
                     UnlockedMilestones = progress!.UnlockedMilestones.Add(milestone.Threshold)
+                },
+                GoalPostsConfigured configured => progress! with
+                {
+                    GoalPosts = configured.GoalPosts
                 },
                 _ => progress
             };
