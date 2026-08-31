@@ -66,6 +66,10 @@ export interface Meal {
   lastModifiedBy: string;
 }
 
+export interface GroupMealplanStatus {
+  hasSharedPlan: boolean;
+}
+
 export interface MealDetails {
   name: string;
   description?: string | null;
@@ -154,5 +158,9 @@ export class MealplansService {
       )
     );
     return response.groupId && response.groupName ? { groupId: response.groupId, groupName: response.groupName } : null;
+  }
+
+  getGroupMealplanStatus(groupId: string): Promise<GroupMealplanStatus> {
+    return firstValueFrom(this.http.get<GroupMealplanStatus>(`${this.runtimeConfig.apiBaseUrl}/mealplans/groups/${groupId}/status`));
   }
 }

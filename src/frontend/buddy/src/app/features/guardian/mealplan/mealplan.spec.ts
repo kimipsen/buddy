@@ -53,6 +53,7 @@ describe('GuardianMealplan', () => {
       listMeals: vi.fn(async () => []),
       listMealPlan: vi.fn(async () => []),
       getSharedGroup: vi.fn(async () => null),
+      getGroupMealplanStatus: vi.fn(async () => ({ hasSharedPlan: true })),
       shareWithGroup: vi.fn(async () => undefined),
       unshareFromGroup: vi.fn(async () => undefined),
       ...stubs.mealplans
@@ -194,6 +195,21 @@ describe('GuardianMealplan', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(findButtonByText(compiled, 'Member Co')).toBeFalsy();
+    expect(findButtonByText(compiled, 'My family')).toBeFalsy();
+  });
+
+  it('excludes a qualifying-tier group that has no meal plan shared with it yet', async () => {
+    const { fixture } = await setup({
+      groups: {
+        listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-unshared', name: 'Unshared Co', role: 0 })]),
+        getGroup: vi.fn(async () => groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }))
+      },
+      mealplans: { getGroupMealplanStatus: vi.fn(async () => ({ hasSharedPlan: false })) }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByText(compiled, 'Unshared Co')).toBeFalsy();
     expect(findButtonByText(compiled, 'My family')).toBeFalsy();
   });
 

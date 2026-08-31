@@ -31,10 +31,9 @@ export class GuardianMealplan implements OnInit {
   private familyChildId: string | null = null;
   protected readonly familyScope = signal<MealplanScope | null>(null);
   // Groups the guardian's own GroupRole maps to View or Manage tier for via
-  // MealplanPermissionPolicy -- shown as switchable scopes regardless of whether a plan has
-  // actually been shared with them yet (there's no "list my shared plans" endpoint;
-  // ManageMeals/AssignMealplan surface their own error state if a group turns out to have no
-  // shared plan).
+  // MealplanPermissionPolicy, further filtered down to only those a plan has actually been
+  // shared with (via GetGroupMealplanStatus) -- a qualifying-tier group with nothing shared yet
+  // has no meals to show, and clicking into it used to 404.
   protected readonly groupScopes = signal<GroupMealplanScope[]>([]);
   protected readonly selectedScope = signal<MealplanScope | null>(null);
 
@@ -176,7 +175,7 @@ export class GuardianMealplan implements OnInit {
       })
     );
 
-    const scopes: GroupMealplanScope[] = [];
+    const candidates: GroupMealplanScope[] = [];
 
     groups.forEach((group, index) => {
       const detail = details[index];
@@ -184,10 +183,14 @@ export class GuardianMealplan implements OnInit {
       const accessTier = detail?.mealplanPermissionPolicy[roleName];
 
       if (accessTier === MANAGE || accessTier === VIEW) {
-        scopes.push({ kind: 'group', groupId: group.id, groupName: group.name, accessTier });
+        candidates.push({ kind: 'group', groupId: group.id, groupName: group.name, accessTier });
       }
     });
 
-    this.groupScopes.set(scopes);
+    const statuses = await Promise.all(
+      candidates.map((scope) => this.mealplans.getGroupMealplanStatus(scope.groupId).catch(() => ({ hasSharedPlan: false })))
+    );
+
+    this.groupScopes.set(candidates.filter((_, index) => statuses[index].hasSharedPlan));
   }
 }

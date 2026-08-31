@@ -101,6 +101,7 @@ public static class MealplansFeature
         mealplans.MapCreateMealForGroup();
         mealplans.MapUpdateMealDetailsForGroup();
         mealplans.MapArchiveMealForGroup();
+        mealplans.MapGetGroupMealplanStatus();
 
         return endpoints;
     }
