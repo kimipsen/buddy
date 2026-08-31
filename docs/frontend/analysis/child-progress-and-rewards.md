@@ -91,14 +91,17 @@ button is disabled).
 
 ## Guardian visibility
 
-Guardians see each linked child's star count as a small `✨ N stars` pill on
-the existing children list
+Guardians see each linked child's star count as a small `{icon} N stars` pill
+on the existing children list
 ([children-overview.html](../../../src/frontend/buddy/src/app/features/guardian/children-overview/children-overview.html)),
 next to the "Linked" badge already there — not a new widget, since the
 guardian dashboard already has exactly one place that lists "my children,"
 and progress is a fact about a child, not a "today" occurrence like the
-other `-today` widgets on that dashboard. Backed by a new
-`GET /progress/children/{childId}` endpoint
+other `-today` widgets on that dashboard. The pill's icon is the child's
+`currentIcon` (falling back to `nextGoalIcon` before any goal post is
+reached), the same resolution `progress-badge.ts` uses, rather than a
+hardcoded `✨` sparkle — so a guardian sees the same goalpost icon the child
+sees. Backed by a new `GET /progress/children/{childId}` endpoint
 ([GetChildProgress.Handler.cs](../../../src/backend/buddy/Features/Progress/GetChildProgress/GetChildProgress.Handler.cs)),
 authorized the same way `MedicineAuthorization` already gates a guardian
 viewing a child's medicine schedules — self, or an active `GuardianLink`,
