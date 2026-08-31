@@ -230,6 +230,7 @@ overwrites the row), and unsharing deletes it. Written/deleted by
 | `ArchiveMealForGroup` | `Features/Mealplans` | `ResolveManageAsync` | |
 | `AssignMealToSlotForGroup` | `Features/Mealplans` | `ResolveManageAsync` | |
 | `ClearMealSlotForGroup` | `Features/Mealplans` | `ResolveManageAsync` | |
+| `GetGroupMealplanStatus` | `Features/Mealplans` | `ResolveViewAsync` (`View` or `Manage`) | Turns `ResolveViewAsync`'s `NotFound` ("nothing shared yet") into a normal `{ hasSharedPlan: false }` result instead of an error — lets the frontend check ahead of rendering a group's meal-plan tab whether any family has actually shared a plan with that group |
 
 `RateMeal` gets **no** group-keyed sibling — rating stays exclusively the
 child's own action, per the existing, unmodified `CheckRate` tier. A group
@@ -249,6 +250,7 @@ GET    /mealplans/groups/{groupId}/meals                        ListMealsForGrou
 POST   /mealplans/groups/{groupId}/meals                        CreateMealForGroup
 PATCH  /mealplans/groups/{groupId}/meals/{mealId}/details        UpdateMealDetailsForGroup
 DELETE /mealplans/groups/{groupId}/meals/{mealId}                ArchiveMealForGroup
+GET    /mealplans/groups/{groupId}/status                        GetGroupMealplanStatus
 
 GET    /mealplans/children/{childId}/plan/groups                GetSharedGroup
 
