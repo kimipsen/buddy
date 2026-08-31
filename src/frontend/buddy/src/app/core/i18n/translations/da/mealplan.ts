@@ -31,6 +31,7 @@ export const mealplan = {
     descriptionPlaceholder: 'Beskrivelse (valgfri)',
     iconPlaceholder: 'Ikon',
     addButton: 'Tilføj måltid',
+    similarMealsWarning: 'Der findes allerede lignende måltider:',
     createError: 'Kunne ikke oprette måltidet.',
     archiveError: 'Kunne ikke arkivere dette måltid.',
     loadError: 'Kunne ikke indlæse måltider.'

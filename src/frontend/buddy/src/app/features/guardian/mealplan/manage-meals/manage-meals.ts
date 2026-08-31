@@ -41,6 +41,22 @@ export class ManageMeals {
   });
 
   protected readonly newMealName = signal('');
+
+  // Non-blocking hint shown under the create form so guardians notice a near-duplicate before
+  // submitting -- matches both directions (existing name contains the query, or vice versa) so
+  // it still fires once the user has typed past an exact existing name (e.g. "Pizza night").
+  protected readonly similarMeals = computed(() => {
+    const query = this.newMealName().trim().toLowerCase();
+
+    if (!query) {
+      return [];
+    }
+
+    return this.meals().filter((meal) => meal.name.toLowerCase().includes(query) || query.includes(meal.name.toLowerCase()));
+  });
+
+  protected readonly similarMealsLabel = computed(() => this.similarMeals().map((meal) => `${meal.icon} ${meal.name}`).join(', '));
+
   protected readonly newMealDescription = signal('');
   protected readonly newMealIcon = signal('🍽️');
   protected readonly newMealColor = signal(DEFAULT_COLOR);

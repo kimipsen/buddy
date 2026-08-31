@@ -31,6 +31,7 @@ export const mealplan = {
     descriptionPlaceholder: 'Description (optional)',
     iconPlaceholder: 'Icon',
     addButton: 'Add meal',
+    similarMealsWarning: 'Similar meals already exist:',
     createError: 'Unable to create the meal.',
     archiveError: 'Unable to archive this meal.',
     loadError: 'Unable to load meals.'
