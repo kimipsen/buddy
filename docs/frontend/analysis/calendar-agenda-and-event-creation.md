@@ -41,7 +41,8 @@ The screen supports:
 - title, icon, color, all-day, date/time, and task due-date fields;
 - for tasks, an alternative "from template" mode that swaps free-form entry
   for a picker over the selected assignee's task library (see [Task
-  library](task-library.md));
+  library](task-library.md)), showing a hint with the template's total
+  subtask duration and the resulting end time once a due time is set;
 - daily, weekly, monthly, and yearly recurrence with interval and optional end
   date;
 - editing details, schedule, and recurrence through the corresponding backend
