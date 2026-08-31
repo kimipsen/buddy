@@ -20,7 +20,7 @@ export class ChildrenOverview implements OnInit {
 
   // Keyed by child ID rather than joined onto ChildSummary -- progress can fail or load slower
   // per child without blocking the (more important) name/linked-status list from rendering.
-  protected readonly starsByChildId = signal<Record<string, number>>({});
+  protected readonly progressByChildId = signal<Record<string, { totalStars: number; icon: string }>>({});
 
   ngOnInit(): void {
     void this.loadChildren();
@@ -50,13 +50,13 @@ export class ChildrenOverview implements OnInit {
         try {
           const summary = await this.progressService.getChildProgress(child.id);
 
-          return [child.id, summary.totalStars] as const;
+          return [child.id, { totalStars: summary.totalStars, icon: summary.currentIcon ?? summary.nextGoalIcon }] as const;
         } catch {
           return null;
         }
       })
     );
 
-    this.starsByChildId.set(Object.fromEntries(entries.filter((entry) => entry !== null)));
+    this.progressByChildId.set(Object.fromEntries(entries.filter((entry) => entry !== null)));
   }
 }

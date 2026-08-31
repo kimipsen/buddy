@@ -118,6 +118,9 @@ describe('ChildrenOverview', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('3');
+    // The child's current goalpost icon, not a hardcoded star -- see progress-badge.ts for the
+    // same currentIcon-falls-back-to-nextGoalIcon resolution.
+    expect(compiled.textContent).toContain('🌱');
 
     const badges = compiled.querySelectorAll('li > span:last-child > span:last-child');
     expect(badges).toHaveLength(1);
