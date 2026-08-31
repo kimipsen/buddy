@@ -38,6 +38,7 @@ model or permissions logic.
 - [Guardian-managed child language](analysis/child-language-settings.md)
 - [Guardian-managed child time zone](analysis/child-timezone-settings.md)
 - [Gamified progress](analysis/gamified-progress.md)
+- [Configurable goal posts for progress](analysis/configurable-goal-posts.md)
 
 ## Current focus areas
 

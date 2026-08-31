@@ -121,7 +121,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
 - `TaskLibraryService` manages per-child task templates and subtasks, and backs the
   template picker on the calendar agenda's create-task form
-- `ProgressService` loads a child's star count and unlocked milestones for the progress badge
+- `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post
+  info for the progress badge, and lets a guardian configure a child's goal posts
 - `UsersService` loads the current profile, language, and email-verification state
 - `AuthInterceptor` attaches the access token to outgoing requests
 - `UserEventsService` loads a user's recent-events feed, rendered by `EventsList` on
@@ -212,7 +213,7 @@ full calendar timeline.
 - [Guardian calendar views](analysis/guardian-full-calendar-views.md) — implemented day,
   work-week, rolling-week, and month navigation
 - [Child progress and rewards](analysis/child-progress-and-rewards.md) — implemented progress
-  summary and reward sketch
+  summary, guardian-configurable goal posts, and reward sketch
 - [Pickup planning and daily views](analysis/pickup-planning-and-daily-views.md) — implemented
   guardian planner, guardian dashboard summary, and child read-only view
 

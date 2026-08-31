@@ -1,18 +1,24 @@
 # Progress badge on the child home dashboard
 
-Status: Sketch implemented (widget + service; no reward redemption UI yet)
+Status: Implemented (badge + service + guardian goal-post management; no
+reward redemption UI yet)
 
 ## Context
 
 The backend now tracks a per-child, non-resetting star count as tasks are
 completed (`Features/Progress/`, see
-[gamified-progress.md](../../backend/analysis/gamified-progress.md)). This
-document covers the one frontend surface that exists for it so far: a small
+[gamified-progress.md](../../backend/analysis/gamified-progress.md)), and a
+guardian can configure the ordered list of goal posts (threshold, icon,
+optional label) a child progresses through, extrapolated indefinitely past
+whatever the guardian configured (see
+[configurable-goal-posts.md](../../backend/analysis/configurable-goal-posts.md)).
+This document covers the two frontend surfaces that exist for it: a small
 badge on `/child`, the single-day dashboard described in
-[A single-day dashboard for the child home screen](child-day-dashboard.md).
-It deliberately does not cover a reward catalog, redemption flow, or
-guardian-facing controls — those depend on product decisions the backend
-doc leaves open.
+[A single-day dashboard for the child home screen](child-day-dashboard.md),
+and a guardian-facing "Manage progress goals" screen at
+`/guardian/progress`. It deliberately does not cover a reward catalog or
+redemption flow — those depend on product decisions the backend doc leaves
+open.
 
 ## A naming/visual collision worth calling out
 
@@ -22,11 +28,20 @@ glyph for "you earned a reward" would sit right next to "rate this meal" and
 read as the same interaction, which it isn't: one is feedback the child
 gives, the other is a reward the child receives. `ProgressBadge`
 ([progress-badge.ts](../../../src/frontend/buddy/src/app/shared/progress-badge/progress-badge.ts))
-deliberately uses a growing-plant motif (🌱→🌿→🪴→🌳, keyed off how many
-milestones are unlocked) and a `✨` sparkle next to the numeric count instead.
-This also reinforces the backend's own design intent — the count only grows,
-it doesn't wilt on a missed day — in a way a star rating (which the child
-already associates with "how good was this") wouldn't.
+deliberately uses an icon motif (a growing plant by default — 🌱→🌿→🪴→🌳→🏆 —
+or whatever icons the guardian configured) and a `✨` sparkle next to the
+numeric count instead. This also reinforces the backend's own design intent
+— the count only grows, it doesn't wilt on a missed day — in a way a star
+rating (which the child already associates with "how good was this")
+wouldn't.
+
+The badge no longer computes its own icon from `unlockedMilestones().length`:
+`ProgressSummary` now resolves `currentIcon` (the icon of the last goal post
+reached, or `null` before the first one), `nextGoalThreshold`, and
+`nextGoalIcon` server-side (`GoalPostResolver`, shared with the milestone
+detection on the write path), so the badge is a thin renderer of whatever
+the backend resolves and never re-derives the extrapolation logic. It shows
+a "next goal" hint (icon + threshold) whenever one is still ahead.
 
 The backend's internal event/type names (`StarAwarded`, `ProgressSummary`)
 keep the word "star" — that's an implementation detail invisible to the
@@ -97,18 +112,39 @@ block the (more important) name/linked-status list from rendering — the
 same best-effort shape `tasks-today` already uses for its own secondary
 lookup (assignee names).
 
+## Guardian goal-post management
+
+A guardian configures a child's goal posts on a dedicated
+`/guardian/progress` screen
+([progress.ts](../../../src/frontend/buddy/src/app/features/guardian/progress/progress.ts)),
+reachable from the profile menu — not inline on `children-overview`, since
+editing an ordered list of thresholds/icons/labels needs more room than a
+row in that list. `ManageProgressGoals`
+([manage-progress-goals.ts](../../../src/frontend/buddy/src/app/features/guardian/progress/manage-progress-goals/manage-progress-goals.ts))
+picks the guardian's first child by default, loads that child's current
+goal posts via `ProgressService.getChildProgress()`, and lets the guardian
+add/remove/edit rows before saving the full list with
+`ProgressService.configureGoalPosts()` — a full replace, mirroring the
+backend's `GoalPostsConfigured` event semantics rather than a diff-based
+update. `canSave()` requires at least one row with a positive threshold and
+a non-empty icon (the same shape `ConfigureGoalPostsValidator` enforces
+server-side); on success the rows are reset from the response's
+`goalPosts` so the form reflects exactly what the server persisted,
+including any server-side normalization.
+
 ## Deliberate boundaries
 
 - No reward catalog or redemption UI — Phase 3 in the backend doc, blocked
   on the same open product questions (real-world vs. cosmetic rewards).
 - No per-child on/off toggle for gamification, and no way for a guardian to
-  manually adjust a child's stars.
+  manually adjust a child's stars — goal posts control the icons/thresholds
+  a child progresses through, not the star count itself.
 - No sibling comparison of any kind — the badge only ever renders the
   signed-in child's own `GET /progress/me` response.
 - No dose-related stars shown, since the backend doesn't award any for
   doses yet (open question in the backend doc).
-- `home.spec.ts` now stubs `ProgressService` the same way every other
-  dashboard dependency is stubbed, but no dedicated test was added for the
-  badge's own bounce/growth-stage behavior — this sketch prioritized an
-  end-to-end wire-up (backend event → endpoint → widget) over full test
-  coverage of the new pieces.
+- No preview of extrapolated (round ≥ 1) goal posts in the management
+  screen — a guardian only edits the configured list; the rounds the
+  backend generates past it aren't shown or editable there.
+- `home.spec.ts` and `manage-progress-goals.spec.ts` stub `ProgressService`
+  the same way every other dashboard dependency is stubbed.
