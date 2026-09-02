@@ -1,3 +1,4 @@
+using buddy.Common.Idempotency;
 using buddy.Email;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
@@ -47,6 +48,7 @@ builder.Services.AddOpenApi(options =>
     options.ShouldInclude = api => api.GroupName is null;
 });
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddIdempotencyFeature(builder.Configuration);
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
 builder.Services.AddGuardiansFeature(builder.Configuration);
@@ -79,6 +81,7 @@ else
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseIdempotencyKeys();
 
 app.MapUsersFeature();
 app.MapGuardiansFeature();

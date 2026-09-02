@@ -6,7 +6,11 @@ namespace buddy.Features.Guardians;
 public static class AcceptGuardianInviteHandler
 {
     public static async Task<Result<Unit>> Handle(
-        AcceptGuardianInvite command, IGuardianInviteEventStore invites, IUserEventStore users, CancellationToken cancellationToken)
+        AcceptGuardianInvite command,
+        IGuardianInviteEventStore invites,
+        IUserEventStore users,
+        IGuardianLinkEventStore guardians,
+        CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
@@ -15,7 +19,22 @@ public static class AcceptGuardianInviteHandler
 
         var invite = await invites.FindInviteByTokenAsync(command.Token, cancellationToken);
 
-        if (invite is null || invite.Status != GuardianInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
+        if (invite is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
+        // Retrying an already-succeeded accept -- idempotent no-op instead of NotFound, so a
+        // client retry after a dropped response doesn't read as failure. Only when this caller is
+        // the one holding the resulting link; if it's since been revoked, that's a real absence
+        // and falls through to NotFound below like any other non-Pending invite.
+        if (invite.Status == GuardianInviteStatus.Accepted
+            && await guardians.FindActiveLinkAsync(new UserId(invite.ChildId), userId, cancellationToken) is not null)
+        {
+            return new Result<Unit>.Success(Unit.Value);
+        }
+
+        if (invite.Status != GuardianInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
         {
             return new Result<Unit>.NotFound();
         }

@@ -38,6 +38,36 @@ public sealed class RateMealTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Rating_the_same_meal_with_the_same_stars_and_comment_again_does_not_change_RatedAt()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+
+        var first = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Stars = 5, Comment = "Loved it!" }).ToUrl($"/mealplans/children/{child.Id}/meals/{meal.Id}/rating");
+            _.StatusCodeShouldBeOk();
+        });
+        var firstRating = Assert.Single(first.ReadAsJson<MealDto>().Ratings);
+
+        // Retrying the exact same rating (e.g. a client double-tap or network retry) must be a
+        // true no-op, not just the same Stars/Comment with a bumped RatedAt.
+        var second = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Stars = 5, Comment = "Loved it!" }).ToUrl($"/mealplans/children/{child.Id}/meals/{meal.Id}/rating");
+            _.StatusCodeShouldBeOk();
+        });
+        var secondRating = Assert.Single(second.ReadAsJson<MealDto>().Ratings);
+
+        Assert.Equal(firstRating.RatedAt, secondRating.RatedAt);
+    }
+
+    [Fact]
     public async Task A_rating_outside_one_to_five_is_rejected()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

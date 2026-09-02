@@ -52,6 +52,16 @@ public static class ShareMealPlanWithGroupHandler
         }
         else
         {
+            var planEvents = await mealPlans.ReadAsync(mealPlanId, cancellationToken);
+            var plan = MealPlan.Rehydrate(planEvents)!;
+
+            // Already shared with this exact group -- idempotent no-op, same rationale as
+            // UnshareMealPlanFromGroupHandler's already-not-shared check.
+            if (plan.SharedWithGroupId == command.GroupId)
+            {
+                return new Result<Unit>.Success(Unit.Value);
+            }
+
             await mealPlans.AppendAsync(mealPlanId, [new MealPlanSharedWithGroup(mealPlanId, command.GroupId, command.ChildId, userId, now)], cancellationToken);
         }
 

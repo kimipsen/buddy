@@ -132,6 +132,9 @@ Use when request is valid but conflicts with current resource state.
 Typical Buddy use:
 - resend email verification during cooldown window
 - optimistic concurrency or version mismatch (if surfaced)
+- `Idempotency-Key` reused with a different request body (`idempotency_key_reused`), or a
+  request with that key still in flight (`idempotency_key_in_progress`) -- see
+  [Idempotency-Key (POST)](#idempotency-key-post) below
 
 ### 410 Gone
 Use when resource used to exist but is permanently removed and this distinction is useful.
@@ -221,6 +224,31 @@ When selecting a status code, ask in order:
 - Updates/Patches: `200` or `204`, plus `400`, `401`, `403`, `404`, `409`
 - Deletes: `204`, plus `401`, `403` or `404`
 - Verification flows: `204` or `200`, plus `400`, `401`, `404`, `409`, optional `429`
+
+## Idempotency-Key (POST)
+
+`DELETE` and most `PUT`/`PATCH` handlers in this codebase are idempotent by construction: each
+reads current state and appends an event only when something actually changes (see e.g.
+`UpdateMealDetailsHandler`, `ClearMealSlotHandler`). `POST` create endpoints (`CreateMeal`,
+`CreateGroup`, `CreateChild`, `InviteGuardian`, ...) can't follow that pattern -- a fresh id is
+the point of a create -- so a network-timeout retry or a client double-tap would otherwise create
+a second resource.
+
+`IdempotencyKeyMiddleware` (`buddy.Common.Idempotency`) closes that gap for any `POST` as an
+opt-in: a client that includes an `Idempotency-Key` header (any client-generated string, at most
+200 characters) gets retry safety; a client that doesn't is completely unaffected.
+
+- First request with a given `(caller, key)`: executes normally; the response (status, content
+  type, and body) is cached against the key.
+- A retry with the same key and the same request (method, path, query, and body): replays the
+  cached response verbatim instead of re-executing -- no second resource, no second email, etc.
+- A retry with the same key but a *different* request: `409 idempotency_key_reused`.
+- A concurrent request still holding the same key: `409 idempotency_key_in_progress`.
+- Malformed key (empty, or over 200 characters): `400 invalid_idempotency_key`.
+
+Completed entries are kept for 24h, then swept by a background cleanup pass; an `InProgress`
+entry whose owning request never completed (a crash mid-request) is swept after 5 minutes so the
+key becomes claimable again.
 
 ## Endpoint Status Mapping
 

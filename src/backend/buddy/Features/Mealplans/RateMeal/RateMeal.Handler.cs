@@ -50,6 +50,15 @@ public static class RateMealHandler
         }
 
         var before = meal.Ratings.GetValueOrDefault(userId);
+
+        // Same rating content already on file -- idempotent no-op, same rationale as
+        // UpdateMealDetailsHandler's before/after check. Without this, retrying an identical
+        // PUT bumps RatedAt to "now" even though nothing actually changed.
+        if (before is not null && before.Stars == command.Stars && before.Comment == command.Comment)
+        {
+            return new Result<Meal>.Success(meal);
+        }
+
         var after = new MealRating(command.Stars, command.Comment, DateTimeOffset.UtcNow);
 
         await meals.AppendAsync(command.MealId, [new MealRated(command.MealId, userId, before, after, after.RatedAt)], cancellationToken);

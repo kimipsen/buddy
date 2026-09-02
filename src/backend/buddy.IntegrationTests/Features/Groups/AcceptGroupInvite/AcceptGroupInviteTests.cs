@@ -36,6 +36,33 @@ public sealed class AcceptGroupInviteTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Accepting_an_already_accepted_invite_is_an_idempotent_success()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Team");
+        var (invitee, inviteeToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        await GroupTestHelpers.InviteToGroupAsync(fixture, ownerToken, groupId, invitee.Email, GroupRole.Admin);
+        var token = await GroupTestHelpers.ReadInviteTokenAsync(fixture, invitee.Email);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/invites/{token}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+
+        // A client retry of the exact same accept (e.g. after a dropped response) must not read
+        // as failure just because the invite is no longer Pending.
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/invites/{token}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+    }
+
+    [Fact]
     public async Task A_different_logged_in_user_cannot_accept_someone_elses_invite()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();

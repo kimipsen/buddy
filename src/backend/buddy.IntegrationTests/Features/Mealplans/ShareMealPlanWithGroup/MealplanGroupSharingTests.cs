@@ -161,6 +161,38 @@ public sealed class MealplanGroupSharingTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Sharing_with_the_same_group_again_is_an_idempotent_no_op()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, guardianToken, "Co-parents");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/mealplans/children/{child.Id}/plan/groups/{groupId}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        // A client retry of the exact same share (e.g. after a dropped response) must not fail
+        // or disturb the existing share.
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/mealplans/children/{child.Id}/plan/groups/{groupId}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var sharedGroupResponse = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/children/{child.Id}/plan/groups");
+            _.StatusCodeShouldBeOk();
+        });
+        Assert.Equal(groupId, sharedGroupResponse.ReadAsJson<SharedGroupResponseDto>().GroupId);
+    }
+
+    [Fact]
     public async Task A_member_with_the_default_none_policy_cannot_reach_the_shared_plan()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

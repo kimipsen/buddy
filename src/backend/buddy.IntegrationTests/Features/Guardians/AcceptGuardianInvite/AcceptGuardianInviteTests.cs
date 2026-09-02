@@ -42,6 +42,33 @@ public sealed class AcceptGuardianInviteTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Accepting_an_already_accepted_invite_is_an_idempotent_success()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var (invitee, inviteeToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        await GuardianTestHelpers.InviteGuardianAsync(fixture, guardianToken, child.Id, invitee.Email, GuardianKind.Parent);
+        var token = await GuardianTestHelpers.ReadGuardianInviteTokenAsync(fixture, invitee.Email);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/guardian-invites/{token}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+
+        // A client retry of the exact same accept (e.g. after a dropped response) must not read
+        // as failure just because the invite is no longer Pending.
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/guardian-invites/{token}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+    }
+
+    [Fact]
     public async Task A_different_logged_in_user_cannot_accept_someone_elses_invite()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

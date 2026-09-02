@@ -14,7 +14,26 @@ public static class AcceptGroupInviteHandler
 
         var invite = await groups.FindInviteByTokenAsync(command.Token, cancellationToken);
 
-        if (invite is null || invite.Status != GroupInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
+        if (invite is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
+        // Retrying an already-succeeded accept -- idempotent no-op instead of NotFound, so a
+        // client retry after a dropped response doesn't read as failure. Only when this caller is
+        // still a member; if they've since been removed, that's a real absence and falls through
+        // to NotFound below like any other non-Pending invite.
+        if (invite.Status == GroupInviteStatus.Accepted)
+        {
+            var existingGroup = Group.Rehydrate(await groups.ReadAsync(new GroupId(invite.GroupId), cancellationToken));
+
+            if (existingGroup is not null && existingGroup.Members.ContainsKey(userId))
+            {
+                return new Result<Unit>.Success(Unit.Value);
+            }
+        }
+
+        if (invite.Status != GroupInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
         {
             return new Result<Unit>.NotFound();
         }
