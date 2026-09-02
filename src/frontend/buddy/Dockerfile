@@ -4,7 +4,7 @@ FROM node:26-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY . .
 
@@ -25,5 +25,8 @@ RUN node -e " \
 "
 
 FROM caddy:2-alpine AS runtime
+
+RUN addgroup -S caddy && adduser -S -G caddy caddy
+
 COPY --from=build /app/dist/buddy/browser /usr/share/caddy
 COPY Caddyfile /etc/caddy/Caddyfile

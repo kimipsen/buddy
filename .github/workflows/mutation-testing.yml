@@ -52,7 +52,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: src/frontend/buddy
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run StrykerJS
         working-directory: src/frontend/buddy
