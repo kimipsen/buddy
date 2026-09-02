@@ -70,72 +70,97 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
 
         foreach (var @event in events)
         {
-            switch (@event)
-            {
-                case MemberRoleGranted granted:
-                    var (grantedName, grantedIcon) = await ResolveCalendarNameAndIconAsync(session, calendarId, cancellationToken);
-
-                    session.Store(new CalendarMembershipDocument(
-                        CalendarMembershipDocument.BuildId(calendarId.Value, granted.MemberId.Value),
-                        calendarId.Value,
-                        granted.MemberId.Value,
-                        granted.Role,
-                        grantedName,
-                        grantedIcon));
-                    break;
-
-                case MemberRoleRevoked revoked:
-                    session.Delete<CalendarMembershipDocument>(CalendarMembershipDocument.BuildId(calendarId.Value, revoked.MemberId.Value));
-                    break;
-
-                case CalendarTransferredToGroup transferred:
-                    // Upserts the same row (Id = calendarId) with the new GroupId -- whether the
-                    // calendar was previously personal (no row yet) or owned by a different
-                    // group (row already exists), this is the only write needed either way.
-                    var (transferredName, transferredIcon) = await ResolveCalendarNameAndIconAsync(session, calendarId, cancellationToken);
-                    session.Store(new GroupOwnedCalendarDocument(calendarId.Value, transferred.NewGroupId.Value, transferredName, transferredIcon));
-                    break;
-
-                case CalendarIconChanged changed:
-                    var membershipRows = await session.Query<CalendarMembershipDocument>()
-                        .Where(d => d.CalendarId == calendarId.Value)
-                        .ToListAsync(cancellationToken);
-
-                    foreach (var row in membershipRows)
-                    {
-                        session.Store(row with { Icon = changed.Icon.Value });
-                    }
-
-                    var groupOwnedRow = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken);
-
-                    if (groupOwnedRow is not null)
-                    {
-                        session.Store(groupOwnedRow with { Icon = changed.Icon.Value });
-                    }
-                    break;
-
-                case CalendarDeleted:
-                    var members = await session.Query<CalendarMembershipDocument>()
-                        .Where(d => d.CalendarId == calendarId.Value)
-                        .ToListAsync(cancellationToken);
-
-                    foreach (var member in members)
-                    {
-                        session.Delete(member);
-                    }
-
-                    // A no-op for a user-owned calendar -- only group-owned calendars have one of these.
-                    var groupOwned = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken);
-
-                    if (groupOwned is not null)
-                    {
-                        session.Delete(groupOwned);
-                    }
-                    break;
-            }
+            await ApplyProjectionAsync(session, calendarId, @event, cancellationToken);
         }
 
         await session.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task ApplyProjectionAsync(IDocumentSession session, CalendarId calendarId, CalendarEvent @event, CancellationToken cancellationToken)
+    {
+        switch (@event)
+        {
+            case MemberRoleGranted granted:
+                await ApplyMemberRoleGrantedAsync(session, calendarId, granted, cancellationToken);
+                break;
+
+            case MemberRoleRevoked revoked:
+                session.Delete<CalendarMembershipDocument>(CalendarMembershipDocument.BuildId(calendarId.Value, revoked.MemberId.Value));
+                break;
+
+            case CalendarTransferredToGroup transferred:
+                await ApplyCalendarTransferredToGroupAsync(session, calendarId, transferred, cancellationToken);
+                break;
+
+            case CalendarIconChanged changed:
+                await ApplyCalendarIconChangedAsync(session, calendarId, changed, cancellationToken);
+                break;
+
+            case CalendarDeleted:
+                await ApplyCalendarDeletedAsync(session, calendarId, cancellationToken);
+                break;
+        }
+    }
+
+    private static async Task ApplyMemberRoleGrantedAsync(IDocumentSession session, CalendarId calendarId, MemberRoleGranted granted, CancellationToken cancellationToken)
+    {
+        var (name, icon) = await ResolveCalendarNameAndIconAsync(session, calendarId, cancellationToken);
+
+        session.Store(new CalendarMembershipDocument(
+            CalendarMembershipDocument.BuildId(calendarId.Value, granted.MemberId.Value),
+            calendarId.Value,
+            granted.MemberId.Value,
+            granted.Role,
+            name,
+            icon));
+    }
+
+    // Upserts the same row (Id = calendarId) with the new GroupId -- whether the calendar was
+    // previously personal (no row yet) or owned by a different group (row already exists), this
+    // is the only write needed either way.
+    private static async Task ApplyCalendarTransferredToGroupAsync(IDocumentSession session, CalendarId calendarId, CalendarTransferredToGroup transferred, CancellationToken cancellationToken)
+    {
+        var (name, icon) = await ResolveCalendarNameAndIconAsync(session, calendarId, cancellationToken);
+        session.Store(new GroupOwnedCalendarDocument(calendarId.Value, transferred.NewGroupId.Value, name, icon));
+    }
+
+    private static async Task ApplyCalendarIconChangedAsync(IDocumentSession session, CalendarId calendarId, CalendarIconChanged changed, CancellationToken cancellationToken)
+    {
+        var membershipRows = await session.Query<CalendarMembershipDocument>()
+            .Where(d => d.CalendarId == calendarId.Value)
+            .ToListAsync(cancellationToken);
+
+        foreach (var row in membershipRows)
+        {
+            session.Store(row with { Icon = changed.Icon.Value });
+        }
+
+        var groupOwnedRow = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken);
+
+        if (groupOwnedRow is not null)
+        {
+            session.Store(groupOwnedRow with { Icon = changed.Icon.Value });
+        }
+    }
+
+    private static async Task ApplyCalendarDeletedAsync(IDocumentSession session, CalendarId calendarId, CancellationToken cancellationToken)
+    {
+        var members = await session.Query<CalendarMembershipDocument>()
+            .Where(d => d.CalendarId == calendarId.Value)
+            .ToListAsync(cancellationToken);
+
+        foreach (var member in members)
+        {
+            session.Delete(member);
+        }
+
+        // A no-op for a user-owned calendar -- only group-owned calendars have one of these.
+        var groupOwned = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken);
+
+        if (groupOwned is not null)
+        {
+            session.Delete(groupOwned);
+        }
     }
 
     // The calendar's name never changes, so any existing membership document for this calendar

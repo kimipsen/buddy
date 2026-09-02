@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -28,6 +28,13 @@ export class DeleteAccount {
     }
 
     this.confirmOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    if (this.confirmOpen()) {
+      this.closeConfirm();
+    }
   }
 
   protected async confirmDelete(): Promise<void> {

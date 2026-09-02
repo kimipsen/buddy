@@ -108,6 +108,7 @@ describe('PickupsService', () => {
       const promise = service.assignPickup(childId, '2026-08-26', 0, request);
 
       const req = httpMock.expectOne((r) => r.url === `${base()}/assignments` && r.params.get('slot') === '0');
+      expect(req.request.params.get('slot')).toBe('0');
       req.flush(occurrence({ slot: 0, kind: 1, guardianId: null }));
 
       await promise;
@@ -183,6 +184,7 @@ describe('PickupsService', () => {
       const promise = service.clearPickup(childId, '2026-08-26', 0);
 
       const req = httpMock.expectOne((r) => r.url === `${base()}/assignments` && r.params.get('slot') === '0');
+      expect(req.request.params.get('slot')).toBe('0');
       req.flush(null);
 
       await promise;

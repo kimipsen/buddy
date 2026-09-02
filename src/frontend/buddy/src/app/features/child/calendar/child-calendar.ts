@@ -87,7 +87,8 @@ export class ChildCalendar {
       }
 
       const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
-      (byDate[date] ??= []).push(occurrence);
+      const occurrencesForDate = (byDate[date] ??= []);
+      occurrencesForDate.push(occurrence);
     }
 
     for (const dayOccurrences of Object.values(byDate)) {

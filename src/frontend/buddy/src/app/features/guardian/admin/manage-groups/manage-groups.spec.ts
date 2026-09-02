@@ -147,6 +147,52 @@ describe('ManageGroups', () => {
     select.dispatchEvent(new Event('change'));
   }
 
+  // ----- Panel loading errors -----
+  // Each of these opens a panel whose data comes from a single rejected service call and asserts
+  // the resulting error copy -- otherwise-independent panels (invites, members, add-child,
+  // calendar policy, mealplan policy) that all follow the exact same open-panel-and-fail shape.
+  it.each([
+    {
+      description: 'shows an error when loading invites fails',
+      buttonText: 'Invite',
+      override: { listInvites: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      message: 'Unable to load invites.'
+    },
+    {
+      description: 'shows an error when loading the members panel fails',
+      buttonText: 'Members',
+      override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      message: 'Unable to load group members.'
+    },
+    {
+      description: 'shows an error when loading members fails',
+      buttonText: 'Add a child',
+      override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      message: 'Unable to load group members.'
+    },
+    {
+      description: 'shows an error when loading the calendar policy fails',
+      buttonText: 'Calendar permissions',
+      override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      message: 'Unable to load calendar permissions.'
+    },
+    {
+      description: 'shows an error when loading the mealplan policy fails',
+      buttonText: 'Meal plan permissions',
+      override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      message: 'Unable to load meal plan permissions.'
+    }
+  ])('$description', async ({ buttonText, override, message }) => {
+    const { fixture } = await setup({ groups: override });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, buttonText)!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain(message);
+  });
+
   // ----- Groups list: loading / empty / error -----
 
   it('shows a loading message before the groups list resolves', async () => {
@@ -301,17 +347,6 @@ describe('ManageGroups', () => {
     await settle(fixture);
 
     expect(compiled.textContent).toContain('No pending invites.');
-  });
-
-  it('shows an error when loading invites fails', async () => {
-    const { fixture } = await setup({ groups: { listInvites: vi.fn(async () => Promise.reject(new Error('boom'))) } });
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Invite')!.click();
-    await settle(fixture);
-
-    expect(compiled.textContent).toContain('Unable to load invites.');
   });
 
   it('collapses the invite panel on a second click without reloading invites', async () => {
@@ -497,17 +532,6 @@ describe('ManageGroups', () => {
     expect(compiled.textContent).toContain('Sam Kid');
   });
 
-  it('shows an error when loading the members panel fails', async () => {
-    const { fixture } = await setup({ groups: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) } });
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Members')!.click();
-    await settle(fixture);
-
-    expect(compiled.textContent).toContain('Unable to load group members.');
-  });
-
   it('collapses the members panel on a second click without reloading', async () => {
     const getGroup = vi.fn(async () => groupDetail({ members: [member()] }));
     const { fixture } = await setup({ groups: { getGroup } });
@@ -565,38 +589,78 @@ describe('ManageGroups', () => {
     expect(names).toContain('Ada Kid');
   });
 
-  it('shows an error when loading members fails', async () => {
-    const { fixture } = await setup({ groups: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) } });
-    await settle(fixture);
+  // Each of these opens a panel, picks a new value from its first/only relevant select, submits,
+  // and asserts the service call the submit is expected to trigger -- otherwise-independent panels
+  // (add-child, calendar policy, mealplan policy) that all follow the same pick-and-submit shape.
+  it.each([
+    {
+      description: 'adds the selected child to the group and reloads members',
+      run: async () => {
+        const getGroup = vi.fn(async () => groupDetail({ members: [] }));
+        const { fixture, groups } = await setup({
+          guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
+          groups: { getGroup }
+        });
+        await settle(fixture);
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Add a child')!.click();
-    await settle(fixture);
+        const compiled = fixture.nativeElement as HTMLElement;
+        findButtonByText(compiled, 'Add a child')!.click();
+        await settle(fixture);
 
-    expect(compiled.textContent).toContain('Unable to load group members.');
-  });
+        const select = compiled.querySelector<HTMLSelectElement>('select[name="selectedChild"]')!;
+        selectByLabel(select, 'Sam Kid');
+        await settle(fixture);
 
-  it('adds the selected child to the group and reloads members', async () => {
-    const getGroup = vi.fn(async () => groupDetail({ members: [] }));
-    const { fixture, groups } = await setup({
-      guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
-      groups: { getGroup }
-    });
-    await settle(fixture);
+        compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+        await settle(fixture);
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Add a child')!.click();
-    await settle(fixture);
+        expect(groups.addChildToGroup).toHaveBeenCalledWith('group-1', 'child-1');
+        expect(getGroup).toHaveBeenCalledTimes(2);
+      }
+    },
+    {
+      description: 'saves the calendar policy with the edited role value',
+      run: async () => {
+        const { fixture, groups } = await setup();
+        await settle(fixture);
 
-    const select = compiled.querySelector<HTMLSelectElement>('select[name="selectedChild"]')!;
-    selectByLabel(select, 'Sam Kid');
-    await settle(fixture);
+        const compiled = fixture.nativeElement as HTMLElement;
+        findButtonByText(compiled, 'Calendar permissions')!.click();
+        await settle(fixture);
 
-    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
-    await settle(fixture);
+        // The first select in the policy grid is the Owner row (policyRows[0] = { key: 'Owner' }).
+        const ownerSelect = compiled.querySelectorAll('select')[0];
+        selectByLabel(ownerSelect, 'Viewer'); // calendarRoles = [0, 1, 2] -> Viewer is CalendarRole 2.
+        await settle(fixture);
 
-    expect(groups.addChildToGroup).toHaveBeenCalledWith('group-1', 'child-1');
-    expect(getGroup).toHaveBeenCalledTimes(2);
+        findButtonByText(compiled, 'Save permissions')!.click();
+        await settle(fixture);
+
+        expect(groups.updateCalendarPermissionPolicy).toHaveBeenCalledWith('group-1', { ...calendarPolicy, Owner: 2 });
+      }
+    },
+    {
+      description: 'saves the mealplan policy with the edited tier value',
+      run: async () => {
+        const { fixture, groups } = await setup();
+        await settle(fixture);
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        findButtonByText(compiled, 'Meal plan permissions')!.click();
+        await settle(fixture);
+
+        const ownerSelect = compiled.querySelectorAll('select')[0];
+        selectByLabel(ownerSelect, 'Full access'); // mealplanTiers = [0, 3, 2] -> "Full access" is tier 2 (Manage).
+        await settle(fixture);
+
+        findButtonByText(compiled, 'Save permissions')!.click();
+        await settle(fixture);
+
+        expect(groups.updateMealplanPermissionPolicy).toHaveBeenCalledWith('group-1', { ...mealplanPolicy, Owner: 2 });
+      }
+    }
+  ])('$description', async ({ run }) => {
+    await run();
   });
 
   it('shows an error when adding a child fails', async () => {
@@ -633,36 +697,6 @@ describe('ManageGroups', () => {
     expect(groups.getGroup).toHaveBeenCalledWith('group-1');
     // three role rows (Owner/Admin/Member), each with a select bound to the draft.
     expect(compiled.querySelectorAll('select').length).toBeGreaterThanOrEqual(3);
-  });
-
-  it('shows an error when loading the calendar policy fails', async () => {
-    const { fixture } = await setup({ groups: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) } });
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Calendar permissions')!.click();
-    await settle(fixture);
-
-    expect(compiled.textContent).toContain('Unable to load calendar permissions.');
-  });
-
-  it('saves the calendar policy with the edited role value', async () => {
-    const { fixture, groups } = await setup();
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Calendar permissions')!.click();
-    await settle(fixture);
-
-    // The first select in the policy grid is the Owner row (policyRows[0] = { key: 'Owner' }).
-    const ownerSelect = compiled.querySelectorAll('select')[0];
-    selectByLabel(ownerSelect, 'Viewer'); // calendarRoles = [0, 1, 2] -> Viewer is CalendarRole 2.
-    await settle(fixture);
-
-    findButtonByText(compiled, 'Save permissions')!.click();
-    await settle(fixture);
-
-    expect(groups.updateCalendarPermissionPolicy).toHaveBeenCalledWith('group-1', { ...calendarPolicy, Owner: 2 });
   });
 
   it('shows an error when saving the calendar policy fails', async () => {
@@ -721,35 +755,6 @@ describe('ManageGroups', () => {
     // mealplanTiers = [0, 3, 2] -> None, View, Manage; Rate (1, the child's own tier) is excluded.
     const labels = Array.from(firstSelect.options).map((option) => option.textContent?.trim());
     expect(labels).toEqual(['No access', 'Read only', 'Full access']);
-  });
-
-  it('saves the mealplan policy with the edited tier value', async () => {
-    const { fixture, groups } = await setup();
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Meal plan permissions')!.click();
-    await settle(fixture);
-
-    const ownerSelect = compiled.querySelectorAll('select')[0];
-    selectByLabel(ownerSelect, 'Full access'); // mealplanTiers = [0, 3, 2] -> "Full access" is tier 2 (Manage).
-    await settle(fixture);
-
-    findButtonByText(compiled, 'Save permissions')!.click();
-    await settle(fixture);
-
-    expect(groups.updateMealplanPermissionPolicy).toHaveBeenCalledWith('group-1', { ...mealplanPolicy, Owner: 2 });
-  });
-
-  it('shows an error when loading the mealplan policy fails', async () => {
-    const { fixture } = await setup({ groups: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) } });
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Meal plan permissions')!.click();
-    await settle(fixture);
-
-    expect(compiled.textContent).toContain('Unable to load meal plan permissions.');
   });
 
   it('shows an error when saving the mealplan policy fails', async () => {

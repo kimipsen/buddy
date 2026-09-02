@@ -7,6 +7,7 @@
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="selectedChildId()"
         (ngModelChange)="onChildChange($event)"
+        aria-label="{{ 'common.selectChildLabel' | translate }}"
       >
         @for (child of children(); track child.id) {
           <option [value]="child.id">{{ child.name.givenName }}</option>
@@ -43,6 +44,7 @@
             class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="shareTargetGroupId()"
             (ngModelChange)="shareTargetGroupId.set($event)"
+            aria-label="{{ 'medicine.manageMedicines.sharing.selectPlaceholder' | translate }}"
           >
             <option value="" disabled>{{ 'medicine.manageMedicines.sharing.selectPlaceholder' | translate }}</option>
             @for (group of manageableGroups(); track group.id) {
@@ -138,6 +140,7 @@
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newName()"
           (ngModelChange)="newName.set($event)"
+          aria-label="{{ 'medicine.manageMedicines.form.namePlaceholder' | translate }}"
         />
         <input
           type="text"
@@ -146,6 +149,7 @@
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newDosage()"
           (ngModelChange)="newDosage.set($event)"
+          aria-label="{{ 'medicine.manageMedicines.form.dosagePlaceholder' | translate }}"
         />
         <input
           type="text"
@@ -154,6 +158,7 @@
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newIcon()"
           (ngModelChange)="newIcon.set($event)"
+          aria-label="{{ 'medicine.manageMedicines.form.iconPlaceholder' | translate }}"
         />
         <input
           type="color"
@@ -161,6 +166,7 @@
           class="h-full w-full rounded-lg border border-slate-300 p-1"
           [ngModel]="newColor()"
           (ngModelChange)="newColor.set($event)"
+          aria-label="{{ 'common.colorLabel' | translate }}"
         />
       </div>
 
@@ -169,7 +175,7 @@
         <div class="space-y-2">
           @for (time of newTimes(); track $index) {
             <div class="flex items-center gap-2">
-              <app-time-select [value]="time" (valueChange)="setTimeField($index, $event)" />
+              <app-time-select [value]="time" (valueChange)="setTimeField($index, $event)" [ariaLabel]="'medicine.manageMedicines.form.doseTimesLabel' | translate" />
               @if (newTimes().length > 1) {
                 <button
                   type="button"

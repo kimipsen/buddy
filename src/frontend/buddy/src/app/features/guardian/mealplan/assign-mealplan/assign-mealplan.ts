@@ -1,5 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 
 import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
@@ -61,7 +61,7 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
   imports: [MealPicker, TranslatePipe, CdkDrag, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup],
   templateUrl: './assign-mealplan.html'
 })
-export class AssignMealplan {
+export class AssignMealplan implements OnInit {
   private readonly mealplans = inject(MealplansService);
   private readonly guardians = inject(GuardiansService);
   private readonly translation = inject(TranslationService);
@@ -99,7 +99,9 @@ export class AssignMealplan {
       this.anchorDate();
       void this.load(this.scope());
     });
+  }
 
+  ngOnInit(): void {
     void this.loadChildNames();
   }
 

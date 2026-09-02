@@ -213,7 +213,7 @@ describe('buildMonthGridIso', () => {
   it('produces a 5-row grid for a month that starts and ends mid-week', () => {
     // February 2024 (leap year): the 1st is a Thursday, the 29th is a Thursday.
     const grid = buildMonthGridIso('2024-02-10');
-    expect(grid.length).toBe(35);
+    expect(grid).toHaveLength(35);
     expect(grid[0]).toBe('2024-01-29');
     expect(grid.at(-1)).toBe('2024-03-03');
   });

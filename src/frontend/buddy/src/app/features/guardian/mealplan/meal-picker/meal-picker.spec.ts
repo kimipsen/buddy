@@ -134,22 +134,29 @@ describe('MealPicker', () => {
   });
 
   describe('filtering', () => {
-    it('filters the option list to meals whose name contains the query, case-insensitively', async () => {
+    it.each([
+      {
+        description: 'filters the option list to meals whose name contains the query, case-insensitively',
+        query: 'TAC',
+        expected: ['Not planned', '🌮 Tacos']
+      },
+      {
+        description: 'matches on a substring anywhere in the name, not only a prefix',
+        query: 'soup',
+        expected: ['Not planned', '🍅 Tomato Soup']
+      },
+      {
+        description: 'ignores leading/trailing whitespace in the query',
+        query: '  taco  ',
+        expected: ['Not planned', '🌮 Tacos']
+      }
+    ])('$description', async ({ query, expected }) => {
       const { fixture, compiled } = await setup();
 
       openDropdown(fixture);
-      typeQuery(fixture, 'TAC');
+      typeQuery(fixture, query);
 
-      expect(optionLabels(compiled)).toEqual(['Not planned', '🌮 Tacos']);
-    });
-
-    it('matches on a substring anywhere in the name, not only a prefix', async () => {
-      const { fixture, compiled } = await setup();
-
-      openDropdown(fixture);
-      typeQuery(fixture, 'soup');
-
-      expect(optionLabels(compiled)).toEqual(['Not planned', '🍅 Tomato Soup']);
+      expect(optionLabels(compiled)).toEqual(expected);
     });
 
     it('shows every meal again once the query is cleared', async () => {
@@ -170,15 +177,6 @@ describe('MealPicker', () => {
 
       expect(optionLabels(compiled)).toEqual(['Not planned']);
       expect(compiled.textContent).toContain('No meals match.');
-    });
-
-    it('ignores leading/trailing whitespace in the query', async () => {
-      const { fixture, compiled } = await setup();
-
-      openDropdown(fixture);
-      typeQuery(fixture, '  taco  ');
-
-      expect(optionLabels(compiled)).toEqual(['Not planned', '🌮 Tacos']);
     });
   });
 

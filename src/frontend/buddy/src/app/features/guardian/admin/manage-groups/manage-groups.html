@@ -131,12 +131,14 @@
                   type="email"
                   name="inviteEmail"
                   placeholder="{{ 'admin.manageGroups.invite.emailPlaceholder' | translate }}"
+                  aria-label="{{ 'admin.manageGroups.invite.emailPlaceholder' | translate }}"
                   class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                   [ngModel]="inviteEmail()"
                   (ngModelChange)="inviteEmail.set($event)"
                 />
                 <select
                   name="inviteRole"
+                  aria-label="{{ 'admin.manageGroups.invite.roleLabel' | translate }}"
                   class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                   [ngModel]="inviteRole()"
                   (ngModelChange)="inviteRole.set($event)"
@@ -174,6 +176,7 @@
                 <form class="mt-2 grid gap-3 sm:grid-cols-[1fr_auto]" (ngSubmit)="addChild(group.id)">
                   <select
                     name="selectedChild"
+                    aria-label="{{ 'admin.manageGroups.children.selectPlaceholder' | translate }}"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                     [ngModel]="selectedChildId()"
                     (ngModelChange)="selectedChildId.set($event)"
@@ -292,6 +295,7 @@
       type="text"
       name="groupName"
       placeholder="{{ 'admin.manageGroups.namePlaceholder' | translate }}"
+      aria-label="{{ 'admin.manageGroups.namePlaceholder' | translate }}"
       class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
       [ngModel]="newGroupName()"
       (ngModelChange)="newGroupName.set($event)"

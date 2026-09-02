@@ -24,6 +24,8 @@ export const pickup = {
       sibling: 'En søskende',
       playdate: 'Legeaftale'
     },
+    kindLabel: 'Afhentningstype',
+    timeLabel: 'Afhentningstidspunkt',
     selectGuardianPlaceholder: 'Vælg en voksen',
     selectSiblingPlaceholder: 'Vælg en søskende',
     noSiblings: 'Ingen søskende tilknyttet endnu.',

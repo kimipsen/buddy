@@ -33,9 +33,5 @@ public readonly struct Result<T>
 
 // For richer, exhaustively-handled error information than a string, declare an error union per
 // aggregate using the same technique as domain events (see OrderEvents.cs) and use
-// Result<TError> — e.g. a hand-rolled two-case result carrying `OrderError` instead of `string`:
-//
-// public union OrderError(OrderError.AlreadyCompleted)
-// {
-//     public sealed record AlreadyCompleted;
-// }
+// Result<TError> — e.g. a hand-rolled two-case result carrying an `OrderError` union instead of
+// `string`, with a single no-payload case named `AlreadyCompleted`.

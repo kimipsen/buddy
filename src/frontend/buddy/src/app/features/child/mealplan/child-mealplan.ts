@@ -142,7 +142,7 @@ export class ChildMealplan implements OnInit {
   }
 
   protected async saveComment(entry: MealPlanEntry): Promise<void> {
-    const starCount = entry.rating?.stars ?? STARS[STARS.length - 1];
+    const starCount = entry.rating?.stars ?? STARS.at(-1)!;
     await this.submitRating(entry, starCount, this.commentDraft().trim() || null);
     this.cancelEditing();
   }

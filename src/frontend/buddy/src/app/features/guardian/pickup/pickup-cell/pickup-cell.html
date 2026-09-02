@@ -4,6 +4,7 @@
       class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
       [ngModel]="kind()"
       (ngModelChange)="kind.set($event)"
+      aria-label="{{ 'pickup.cell.kindLabel' | translate }}"
     >
       <option [ngValue]="guardianKind">{{ 'pickup.cell.kind.guardian' | translate }}</option>
       <option [ngValue]="selfEscortKind">{{ 'pickup.cell.kind.selfEscort' | translate }}</option>
@@ -16,6 +17,7 @@
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="guardianId()"
         (ngModelChange)="guardianId.set($event)"
+        aria-label="{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}"
       >
         <option value="" disabled>{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}</option>
         @for (guardian of guardians(); track guardian.id) {
@@ -29,6 +31,7 @@
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="siblingChildId()"
         (ngModelChange)="siblingChildId.set($event)"
+        aria-label="{{ 'pickup.cell.selectSiblingPlaceholder' | translate }}"
       >
         <option value="" disabled>{{ 'pickup.cell.selectSiblingPlaceholder' | translate }}</option>
         @for (sibling of siblings(); track sibling.id) {
@@ -47,6 +50,7 @@
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="playdateHostName()"
         (ngModelChange)="playdateHostName.set($event)"
+        aria-label="{{ 'pickup.cell.playdateHostPlaceholder' | translate }}"
       />
       <input
         type="text"
@@ -54,6 +58,7 @@
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="playdateLocation()"
         (ngModelChange)="playdateLocation.set($event)"
+        aria-label="{{ 'pickup.cell.playdateLocationPlaceholder' | translate }}"
       />
       <input
         type="text"
@@ -61,16 +66,18 @@
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="playdateContactInfo()"
         (ngModelChange)="playdateContactInfo.set($event)"
+        aria-label="{{ 'pickup.cell.playdateContactPlaceholder' | translate }}"
       />
     }
 
-    <app-time-select [value]="time()" (valueChange)="time.set($event)" />
+    <app-time-select [value]="time()" (valueChange)="time.set($event)" [ariaLabel]="'pickup.cell.timeLabel' | translate" />
     <input
       type="text"
       [placeholder]="'pickup.cell.notesPlaceholder' | translate"
       class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
       [ngModel]="notes()"
       (ngModelChange)="notes.set($event)"
+      aria-label="{{ 'pickup.cell.notesPlaceholder' | translate }}"
     />
 
     <div class="flex items-center justify-between pt-1">

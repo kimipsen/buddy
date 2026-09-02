@@ -93,4 +93,4 @@ app.MapMealplansFeature();
 app.MapPickupsFeature();
 app.MapProgressFeature();
 
-app.Run();
+await app.RunAsync();

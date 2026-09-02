@@ -23,12 +23,11 @@ public static class UpdateMedicinePermissionPolicyEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            foreach (var role in Enum.GetValues<GroupRole>())
+            var missingRoles = Enum.GetValues<GroupRole>().Where(role => !request.Policy.ContainsKey(role)).ToArray();
+
+            if (missingRoles is [var missingRole, ..])
             {
-                if (!request.Policy.ContainsKey(role))
-                {
-                    return TypedResults.BadRequest(buddy.Common.Validation.ValidationProblem.Of($"The policy must include an entry for every group role; '{role}' is missing.").ToEnvelope(httpContext));
-                }
+                return TypedResults.BadRequest(buddy.Common.Validation.ValidationProblem.Of($"The policy must include an entry for every group role; '{missingRole}' is missing.").ToEnvelope(httpContext));
             }
 
             // Mark is the two-principal (child/guardian) tier (MedicineAuthorization.CheckMark)

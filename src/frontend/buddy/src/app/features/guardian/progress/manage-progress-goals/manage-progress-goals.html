@@ -4,6 +4,7 @@
 
     @if (children().length > 1) {
       <select
+        aria-label="{{ 'common.selectChildLabel' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="selectedChildId()"
         (ngModelChange)="onChildChange($event)"
@@ -34,6 +35,7 @@
             min="1"
             [attr.name]="'goalThreshold' + $index"
             [placeholder]="'progress.manageProgressGoals.form.thresholdPlaceholder' | translate"
+            aria-label="{{ 'progress.manageProgressGoals.form.thresholdPlaceholder' | translate }}"
             class="w-32 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="row.threshold"
             (ngModelChange)="setThreshold($index, $event)"
@@ -42,6 +44,7 @@
             type="text"
             [attr.name]="'goalIcon' + $index"
             [placeholder]="'progress.manageProgressGoals.form.iconPlaceholder' | translate"
+            aria-label="{{ 'progress.manageProgressGoals.form.iconPlaceholder' | translate }}"
             class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="row.icon"
             (ngModelChange)="setIcon($index, $event)"
@@ -50,6 +53,7 @@
             type="text"
             [attr.name]="'goalLabel' + $index"
             [placeholder]="'progress.manageProgressGoals.form.labelPlaceholder' | translate"
+            aria-label="{{ 'progress.manageProgressGoals.form.labelPlaceholder' | translate }}"
             class="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="row.label"
             (ngModelChange)="setLabel($index, $event)"

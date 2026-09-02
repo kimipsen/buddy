@@ -1037,7 +1037,7 @@ describe('CalendarAgenda', () => {
       expect(compiled.textContent).toContain('Eat breakfast');
       // Scoped to the run's own subtask list -- the create form below also renders an unrelated
       // "all day" checkbox that would otherwise inflate this count.
-      expect(compiled.querySelectorAll('ul.ml-4 input[type="checkbox"]').length).toBe(3);
+      expect(compiled.querySelectorAll('ul.ml-4 input[type="checkbox"]')).toHaveLength(3);
     });
 
     it('completing one subtask of a 3-subtask run does not flip the other subtasks (the compound-key fix)', async () => {

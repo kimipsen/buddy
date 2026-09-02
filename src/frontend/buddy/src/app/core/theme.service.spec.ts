@@ -64,31 +64,17 @@ describe('ThemeService', () => {
   });
 
   describe('isDark', () => {
-    it('is true when the mode is "dark", regardless of the OS preference', () => {
-      stubMatchMedia(false);
+    it.each([
+      { description: 'is true when the mode is "dark", regardless of the OS preference', osMatches: false, mode: 'dark' as const, expected: true },
+      { description: 'is false when the mode is "light", regardless of the OS preference', osMatches: true, mode: 'light' as const, expected: false },
+      { description: 'follows the OS preference when the mode is "system"', osMatches: true, mode: 'system' as const, expected: true }
+    ])('$description', ({ osMatches, mode, expected }) => {
+      stubMatchMedia(osMatches);
       const service = new ThemeService();
 
-      service.setMode('dark');
+      service.setMode(mode);
 
-      expect(service.isDark()).toBe(true);
-    });
-
-    it('is false when the mode is "light", regardless of the OS preference', () => {
-      stubMatchMedia(true);
-      const service = new ThemeService();
-
-      service.setMode('light');
-
-      expect(service.isDark()).toBe(false);
-    });
-
-    it('follows the OS preference when the mode is "system"', () => {
-      stubMatchMedia(true);
-      const service = new ThemeService();
-
-      service.setMode('system');
-
-      expect(service.isDark()).toBe(true);
+      expect(service.isDark()).toBe(expected);
     });
 
     it('reacts live to OS preference changes while in "system" mode', () => {

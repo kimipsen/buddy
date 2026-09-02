@@ -13,7 +13,7 @@
   </button>
 
   @if (open()) {
-    <div class="fixed inset-0 z-10" (click)="close()"></div>
+    <div class="fixed inset-0 z-10" (click)="close()" (keydown.escape)="close()"></div>
 
     <div
       class="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900"

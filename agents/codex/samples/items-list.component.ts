@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ItemsService, Item } from './items.service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -9,14 +9,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
   imports: [CommonModule],
   templateUrl: './items-list.component.html',
 })
-export class ItemsListComponent {
+export class ItemsListComponent implements OnInit {
   // signals for UI state
   items = signal<Item[]>([]);
   loading = signal(false);
   page = signal(1);
   pageSize = 20;
 
-  constructor(private itemsService: ItemsService) {
+  constructor(private readonly itemsService: ItemsService) {}
+
+  ngOnInit(): void {
     this.load();
   }
 

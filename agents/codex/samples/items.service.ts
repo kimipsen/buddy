@@ -10,7 +10,7 @@ export interface Item {
 
 @Injectable({ providedIn: 'root' })
 export class ItemsService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   fetchItems(page = 1, pageSize = 20): Observable<Item[]> {
     return this.http.get<Item[]>(`/api/items?page=${page}&pageSize=${pageSize}`);

@@ -28,6 +28,7 @@ export const calendar = {
     },
     taskUpdateError: 'Kunne ikke opdatere denne opgave.',
     allDay: 'Hele dagen',
+    completeTaskLabel: 'Markér som udført',
     delete: {
       button: 'Slet',
       confirmPrompt: 'Slet denne?',
@@ -49,6 +50,8 @@ export const calendar = {
       noEligibleCalendars: 'Du skal have en kalender, du kan tilføje til. Opret en under Kalendere i Indstillinger.',
       titlePlaceholder: 'Titel',
       iconPlaceholder: 'Ikon',
+      calendarLabel: 'Kalender',
+      kindLabel: 'Type',
       kind: {
         event: 'Begivenhed',
         task: 'Opgave'

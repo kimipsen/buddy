@@ -97,7 +97,7 @@ describe('ChildrenOverview', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const items = compiled.querySelectorAll('li');
 
-    expect(items.length).toBe(2);
+    expect(items).toHaveLength(2);
     expect(compiled.textContent).toContain('Sam Kid');
     expect(compiled.textContent).toContain('Alex Kid');
 
@@ -105,7 +105,7 @@ describe('ChildrenOverview', () => {
     // badges is itself a last-child of <li>, and (see the next test) the "Linked" span can have a
     // star-badge sibling before it, so an unscoped selector matches extra spans it shouldn't.
     const badges = compiled.querySelectorAll('li > span:last-child > span:last-child');
-    expect(badges.length).toBe(2);
+    expect(badges).toHaveLength(2);
     badges.forEach((badge) => expect(badge.textContent).toContain('Linked'));
   });
 

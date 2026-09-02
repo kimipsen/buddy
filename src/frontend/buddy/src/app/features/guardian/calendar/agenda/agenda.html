@@ -128,6 +128,7 @@
                               [checked]="subtask.isCompleted"
                               [disabled]="savingTaskId() === keyFor(subtask) || (!subtask.isCompleted && !canCompleteTask(subtask))"
                               (change)="toggleTaskCompletion(subtask)"
+                              aria-label="{{ 'calendar.agenda.completeTaskLabel' | translate }}"
                             />
                             <span class="text-sm leading-none">{{ subtask.icon }}</span>
                             <span [class.line-through]="subtask.isCompleted">{{ subtask.title }}</span>
@@ -160,6 +161,7 @@
                             class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                             [ngModel]="editTitle()"
                             (ngModelChange)="editTitle.set($event)"
+                            aria-label="{{ 'calendar.agenda.form.titlePlaceholder' | translate }}"
                           />
                           <input
                             type="text"
@@ -168,6 +170,7 @@
                             class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                             [ngModel]="editIcon()"
                             (ngModelChange)="editIcon.set($event)"
+                            aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
                           />
                           <input
                             type="color"
@@ -175,6 +178,7 @@
                             class="h-full w-full rounded-lg border border-slate-300 p-1"
                             [ngModel]="editColor()"
                             (ngModelChange)="editColor.set($event)"
+                            aria-label="{{ 'common.colorLabel' | translate }}"
                           />
                         </div>
 
@@ -190,14 +194,14 @@
                                 <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                   {{ 'calendar.agenda.form.startDateLabel' | translate }}
                                 </span>
-                                <app-date-select [value]="editStartDate()" (valueChange)="editStartDate.set($event)" />
+                                <app-date-select [value]="editStartDate()" (valueChange)="editStartDate.set($event)" [ariaLabel]="'calendar.agenda.form.startDateLabel' | translate" />
                               </div>
                               @if (!editIsAllDay()) {
                                 <div>
                                   <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     {{ 'calendar.agenda.form.startTimeLabel' | translate }}
                                   </span>
-                                  <app-time-select [value]="editStartTime()" (valueChange)="editStartTime.set($event)" />
+                                  <app-time-select [value]="editStartTime()" (valueChange)="editStartTime.set($event)" [ariaLabel]="'calendar.agenda.form.startTimeLabel' | translate" />
                                 </div>
                               }
                             </div>
@@ -206,14 +210,14 @@
                                 <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                   {{ 'calendar.agenda.form.endDateLabel' | translate }}
                                 </span>
-                                <app-date-select [value]="editEndDate()" (valueChange)="editEndDate.set($event)" />
+                                <app-date-select [value]="editEndDate()" (valueChange)="editEndDate.set($event)" [ariaLabel]="'calendar.agenda.form.endDateLabel' | translate" />
                               </div>
                               @if (!editIsAllDay()) {
                                 <div>
                                   <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     {{ 'calendar.agenda.form.endTimeLabel' | translate }}
                                   </span>
-                                  <app-time-select [value]="editEndTime()" (valueChange)="editEndTime.set($event)" />
+                                  <app-time-select [value]="editEndTime()" (valueChange)="editEndTime.set($event)" [ariaLabel]="'calendar.agenda.form.endTimeLabel' | translate" />
                                 </div>
                               }
                             </div>
@@ -224,14 +228,14 @@
                               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 {{ 'calendar.agenda.form.dueDateLabel' | translate }}
                               </span>
-                              <app-date-select [value]="editDueDate()" (valueChange)="editDueDate.set($event)" />
+                              <app-date-select [value]="editDueDate()" (valueChange)="editDueDate.set($event)" [ariaLabel]="'calendar.agenda.form.dueDateLabel' | translate" />
                             </div>
                             @if (!editIsAllDay()) {
                               <div>
                                 <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                   {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
                                 </span>
-                                <app-time-select [value]="editDueTime()" (valueChange)="editDueTime.set($event)" />
+                                <app-time-select [value]="editDueTime()" (valueChange)="editDueTime.set($event)" [ariaLabel]="'calendar.agenda.form.dueTimeLabel' | translate" />
                               </div>
                             }
                           </div>
@@ -270,6 +274,7 @@
                             [checked]="occurrence.isCompleted"
                             [disabled]="savingTaskId() === keyFor(occurrence) || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
                             (change)="toggleTaskCompletion(occurrence)"
+                            aria-label="{{ 'calendar.agenda.completeTaskLabel' | translate }}"
                           />
                         }
 
@@ -358,6 +363,7 @@
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newCalendarId()"
           (ngModelChange)="newCalendarId.set($event)"
+          aria-label="{{ 'calendar.agenda.form.calendarLabel' | translate }}"
         >
           @for (calendar of eligibleCalendars(); track calendar.id) {
             <option [value]="calendar.id">{{ calendar.name }}</option>
@@ -368,6 +374,7 @@
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newKind()"
           (ngModelChange)="newKind.set($event)"
+          aria-label="{{ 'calendar.agenda.form.kindLabel' | translate }}"
         >
           <option [ngValue]="eventKind">{{ 'calendar.agenda.form.kind.event' | translate }}</option>
           <option [ngValue]="taskKind">{{ 'calendar.agenda.form.kind.task' | translate }}</option>
@@ -379,6 +386,7 @@
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newTitle()"
           (ngModelChange)="newTitle.set($event)"
+          aria-label="{{ 'calendar.agenda.form.titlePlaceholder' | translate }}"
         />
         <input
           type="text"
@@ -387,6 +395,7 @@
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newIcon()"
           (ngModelChange)="newIcon.set($event)"
+          aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
         />
         <input
           type="color"
@@ -394,6 +403,7 @@
           class="h-full w-full rounded-lg border border-slate-300 p-1"
           [ngModel]="newColor()"
           (ngModelChange)="newColor.set($event)"
+          aria-label="{{ 'common.colorLabel' | translate }}"
         />
       </div>
 
@@ -449,14 +459,14 @@
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ 'calendar.agenda.form.startDateLabel' | translate }}
               </span>
-              <app-date-select [value]="newStartDate()" (valueChange)="newStartDate.set($event)" />
+              <app-date-select [value]="newStartDate()" (valueChange)="newStartDate.set($event)" [ariaLabel]="'calendar.agenda.form.startDateLabel' | translate" />
             </div>
             @if (!newIsAllDay()) {
               <div>
                 <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {{ 'calendar.agenda.form.startTimeLabel' | translate }}
                 </span>
-                <app-time-select [value]="newStartTime()" (valueChange)="newStartTime.set($event)" />
+                <app-time-select [value]="newStartTime()" (valueChange)="newStartTime.set($event)" [ariaLabel]="'calendar.agenda.form.startTimeLabel' | translate" />
               </div>
             }
           </div>
@@ -465,14 +475,14 @@
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ 'calendar.agenda.form.endDateLabel' | translate }}
               </span>
-              <app-date-select [value]="newEndDate()" (valueChange)="newEndDate.set($event)" />
+              <app-date-select [value]="newEndDate()" (valueChange)="newEndDate.set($event)" [ariaLabel]="'calendar.agenda.form.endDateLabel' | translate" />
             </div>
             @if (!newIsAllDay()) {
               <div>
                 <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {{ 'calendar.agenda.form.endTimeLabel' | translate }}
                 </span>
-                <app-time-select [value]="newEndTime()" (valueChange)="newEndTime.set($event)" />
+                <app-time-select [value]="newEndTime()" (valueChange)="newEndTime.set($event)" [ariaLabel]="'calendar.agenda.form.endTimeLabel' | translate" />
               </div>
             }
           </div>
@@ -483,14 +493,14 @@
             <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.dueDateLabel' | translate }}
             </span>
-            <app-date-select [value]="newDueDate()" (valueChange)="newDueDate.set($event)" />
+            <app-date-select [value]="newDueDate()" (valueChange)="newDueDate.set($event)" [ariaLabel]="'calendar.agenda.form.dueDateLabel' | translate" />
           </div>
           @if (!newIsAllDay()) {
             <div>
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
               </span>
-              <app-time-select [value]="newDueTime()" (valueChange)="newDueTime.set($event)" />
+              <app-time-select [value]="newDueTime()" (valueChange)="newDueTime.set($event)" [ariaLabel]="'calendar.agenda.form.dueTimeLabel' | translate" />
             </div>
           }
         </div>
@@ -556,7 +566,7 @@
             <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.repeat.untilLabel' | translate }}
             </span>
-            <app-date-select [value]="newUntil()" (valueChange)="newUntil.set($event)" />
+            <app-date-select [value]="newUntil()" (valueChange)="newUntil.set($event)" [ariaLabel]="'calendar.agenda.form.repeat.untilLabel' | translate" />
           </div>
         }
       </div>

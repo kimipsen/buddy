@@ -24,13 +24,9 @@ public static class ListMySiblingsHandler
         {
             var guardianChildren = await guardianLinks.ListForGuardianAsync(new UserId(link.GuardianId), cancellationToken);
 
-            foreach (var siblingLink in guardianChildren)
-            {
-                if (siblingLink.ChildId != childId.Value)
-                {
-                    siblingIds.Add(siblingLink.ChildId);
-                }
-            }
+            siblingIds.UnionWith(guardianChildren
+                .Where(siblingLink => siblingLink.ChildId != childId.Value)
+                .Select(siblingLink => siblingLink.ChildId));
         }
 
         var summaries = new List<SiblingSummary>(siblingIds.Count);

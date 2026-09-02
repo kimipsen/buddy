@@ -11,4 +11,5 @@ import { FormsModule } from '@angular/forms';
 export class TimeSelect {
   readonly value = input<string>('');
   readonly valueChange = output<string>();
+  readonly ariaLabel = input('');
 }

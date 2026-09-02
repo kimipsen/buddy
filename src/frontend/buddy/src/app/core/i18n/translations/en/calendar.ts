@@ -28,6 +28,7 @@ export const calendar = {
     },
     taskUpdateError: 'Unable to update this task.',
     allDay: 'All day',
+    completeTaskLabel: 'Mark as done',
     delete: {
       button: 'Delete',
       confirmPrompt: 'Delete this?',
@@ -49,6 +50,8 @@ export const calendar = {
       noEligibleCalendars: 'You need a calendar you can add to. Create one from Calendars in Settings.',
       titlePlaceholder: 'Title',
       iconPlaceholder: 'Icon',
+      calendarLabel: 'Calendar',
+      kindLabel: 'Type',
       kind: {
         event: 'Event',
         task: 'Task'

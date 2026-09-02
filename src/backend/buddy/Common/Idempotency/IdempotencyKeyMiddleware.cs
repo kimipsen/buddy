@@ -154,9 +154,9 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
 
         using var combined = new MemoryStream();
         var prefix = Encoding.UTF8.GetBytes($"{request.Method} {request.Path}{request.QueryString}\n");
-        combined.Write(prefix);
+        await combined.WriteAsync(prefix);
         bodyBuffer.Position = 0;
-        bodyBuffer.CopyTo(combined);
+        await bodyBuffer.CopyToAsync(combined);
 
         return Convert.ToHexString(SHA256.HashData(combined.ToArray()));
     }

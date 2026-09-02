@@ -37,7 +37,7 @@ export class PickupToday implements OnInit {
   protected readonly hasChildren = signal(true);
   protected readonly multipleChildren = signal(false);
 
-  private childGuardiansById = new Map<string, GuardianSummary[]>();
+  private readonly childGuardiansById = new Map<string, GuardianSummary[]>();
 
   ngOnInit(): void {
     void this.loadToday();

@@ -4,6 +4,7 @@
 
     @if (children().length > 1) {
       <select
+        aria-label="{{ 'common.selectChildLabel' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="selectedChildId()"
         (ngModelChange)="onChildChange($event)"
@@ -42,6 +43,7 @@
                 <input
                   type="text"
                   name="editTemplateName"
+                  aria-label="{{ 'taskLibrary.manageTasks.form.namePlaceholder' | translate }}"
                   class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                   [value]="editTemplateName()"
                   (input)="editTemplateName.set($any($event.target).value)"
@@ -49,6 +51,7 @@
                 <input
                   type="text"
                   name="editTemplateIcon"
+                  aria-label="{{ 'taskLibrary.manageTasks.form.iconPlaceholder' | translate }}"
                   class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                   [value]="editTemplateIcon()"
                   (input)="editTemplateIcon.set($any($event.target).value)"
@@ -56,6 +59,7 @@
                 <input
                   type="color"
                   name="editTemplateColor"
+                  aria-label="{{ 'common.colorLabel' | translate }}"
                   class="h-full w-full rounded-lg border border-slate-300 dark:border-slate-600 p-1"
                   [value]="editTemplateColor()"
                   (input)="editTemplateColor.set($any($event.target).value)"
@@ -136,6 +140,7 @@
                             <input
                               type="text"
                               [attr.name]="'editSubtaskTitle-' + subtask.id"
+                              aria-label="{{ 'taskLibrary.manageTasks.subtasks.titlePlaceholder' | translate }}"
                               class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                               [ngModel]="editSubtaskTitle()"
                               (ngModelChange)="editSubtaskTitle.set($event)"
@@ -143,6 +148,7 @@
                             <input
                               type="text"
                               [attr.name]="'editSubtaskIcon-' + subtask.id"
+                              aria-label="{{ 'taskLibrary.manageTasks.subtasks.iconPlaceholder' | translate }}"
                               class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                               [ngModel]="editSubtaskIcon()"
                               (ngModelChange)="editSubtaskIcon.set($event)"
@@ -151,6 +157,7 @@
                               type="number"
                               min="1"
                               [attr.name]="'editSubtaskDuration-' + subtask.id"
+                              aria-label="{{ 'taskLibrary.manageTasks.subtasks.durationLabel' | translate }}"
                               class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                               [ngModel]="editSubtaskDuration()"
                               (ngModelChange)="editSubtaskDuration.set($event)"
@@ -224,6 +231,7 @@
                     type="text"
                     name="newSubtaskTitle"
                     [placeholder]="'taskLibrary.manageTasks.subtasks.titlePlaceholder' | translate"
+                    aria-label="{{ 'taskLibrary.manageTasks.subtasks.titlePlaceholder' | translate }}"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                     [ngModel]="newSubtaskTitle()"
                     (ngModelChange)="newSubtaskTitle.set($event)"
@@ -232,6 +240,7 @@
                     type="text"
                     name="newSubtaskIcon"
                     [placeholder]="'taskLibrary.manageTasks.subtasks.iconPlaceholder' | translate"
+                    aria-label="{{ 'taskLibrary.manageTasks.subtasks.iconPlaceholder' | translate }}"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                     [ngModel]="newSubtaskIcon()"
                     (ngModelChange)="newSubtaskIcon.set($event)"
@@ -265,6 +274,7 @@
         type="text"
         name="templateName"
         [placeholder]="'taskLibrary.manageTasks.form.namePlaceholder' | translate"
+        aria-label="{{ 'taskLibrary.manageTasks.form.namePlaceholder' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newTemplateName()"
         (ngModelChange)="newTemplateName.set($event)"
@@ -273,6 +283,7 @@
         type="text"
         name="templateIcon"
         [placeholder]="'taskLibrary.manageTasks.form.iconPlaceholder' | translate"
+        aria-label="{{ 'taskLibrary.manageTasks.form.iconPlaceholder' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newTemplateIcon()"
         (ngModelChange)="newTemplateIcon.set($event)"
@@ -280,6 +291,7 @@
       <input
         type="color"
         name="templateColor"
+        aria-label="{{ 'common.colorLabel' | translate }}"
         class="h-full w-full rounded-lg border border-slate-300 dark:border-slate-600 p-1"
         [ngModel]="newTemplateColor()"
         (ngModelChange)="newTemplateColor.set($event)"

@@ -52,9 +52,50 @@ public static class SetTaskCompletionHandler
             return new Result<CalendarItem>.Validation(ValidationProblem.Of("Only a task can be marked complete."));
         }
 
-        // The two completion modes never mix: a template-scheduled task always requires a
-        // SubtaskId (its occurrences complete independently -- see CalendarOccurrenceExpansion),
-        // a plain task never accepts one.
+        if (await ValidateSubtaskAsync(item, command, templates, cancellationToken) is { } subtaskError)
+        {
+            return subtaskError;
+        }
+
+        // A Viewer can still toggle completion on a task assigned specifically to them: marking
+        // your own chore done is narrower than the general "create/edit any item" contributor
+        // right, so it shouldn't require the group to grant that just for this.
+        var isSelfCompletingOwnTask = item.AssignedTo == userId;
+
+        if (access != CalendarAccess.Allowed && !isSelfCompletingOwnTask)
+        {
+            return access.ToDeniedResult<CalendarItem>();
+        }
+
+        if (ValidateNotFuture(command, calendar!) is { } futureError)
+        {
+            return futureError;
+        }
+
+        var before = item.CompletionLog.GetValueOrDefault((command.OccurrenceDate, command.SubtaskId), false);
+
+        if (before == command.IsCompleted)
+        {
+            return new Result<CalendarItem>.Success(item);
+        }
+
+        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow, command.SubtaskId);
+
+        await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
+
+        await TryRecordStarChangeAsync(item, command, bus, cancellationToken);
+
+        return new Result<CalendarItem>.Success(CalendarItem.Rehydrate([.. itemEvents, completionChanged])!);
+    }
+
+    // The two completion modes never mix: a template-scheduled task always requires a SubtaskId
+    // (its occurrences complete independently -- see CalendarOccurrenceExpansion), a plain task
+    // never accepts one. Also rejects a stale id from an out-of-date client (a subtask removed, or
+    // the whole template hard-deleted, since the template's last fetch) rather than silently
+    // writing a phantom completion entry for a subtask that no longer exists.
+    private static async Task<Result<CalendarItem>?> ValidateSubtaskAsync(
+        CalendarItem item, SetTaskCompletion command, ITaskTemplateEventStore templates, CancellationToken cancellationToken)
+    {
         if (item.TaskTemplateId is not null && command.SubtaskId is null)
         {
             return new Result<CalendarItem>.Validation(ValidationProblem.Of("A subtask id is required to complete a template-scheduled task."));
@@ -70,63 +111,53 @@ public static class SetTaskCompletionHandler
             var templateEvents = await templates.ReadAsync(new TaskTemplateId(rawTemplateId), cancellationToken);
             var template = TaskTemplate.Rehydrate(templateEvents);
 
-            // Reject a stale id from an out-of-date client (a subtask removed, or the whole
-            // template hard-deleted, since the template's last fetch) rather than silently writing
-            // a phantom completion entry for a subtask that no longer exists.
             if (template is null || !template.Subtasks.Any(s => s.Id.Value == subtaskId))
             {
                 return new Result<CalendarItem>.NotFound();
             }
         }
 
-        // A Viewer can still toggle completion on a task assigned specifically to them: marking
-        // your own chore done is narrower than the general "create/edit any item" contributor
-        // right, so it shouldn't require the group to grant that just for this.
-        var isSelfCompletingOwnTask = item.AssignedTo == userId;
+        return null;
+    }
 
-        if (access != CalendarAccess.Allowed && !isSelfCompletingOwnTask)
+    // A future occurrence can't already have happened -- only checked when marking complete,
+    // since un-completing one is always allowed regardless of date.
+    private static Result<CalendarItem>? ValidateNotFuture(SetTaskCompletion command, Calendar calendar)
+    {
+        if (!command.IsCompleted)
         {
-            return access.ToDeniedResult<CalendarItem>();
+            return null;
         }
 
-        if (command.IsCompleted)
-        {
-            var zone = TimeZoneInfo.FindSystemTimeZoneById(calendar!.TimeZoneId.Value);
-            var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, zone).Date);
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(calendar.TimeZoneId.Value);
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, zone).Date);
 
-            if (command.OccurrenceDate > today)
-            {
-                return new Result<CalendarItem>.Validation(ValidationProblem.Of("Cannot mark a future occurrence as complete."));
-            }
+        if (command.OccurrenceDate > today)
+        {
+            return new Result<CalendarItem>.Validation(ValidationProblem.Of("Cannot mark a future occurrence as complete."));
         }
 
-        var before = item.CompletionLog.GetValueOrDefault((command.OccurrenceDate, command.SubtaskId), false);
+        return null;
+    }
 
-        if (before == command.IsCompleted)
+    // Explicit cross-feature call, not a transaction with the append above -- see
+    // docs/backend/analysis/gamified-progress.md. The task completion itself has already
+    // succeeded by this point; a failure here just leaves the child's star count stale until the
+    // next successful, idempotent completion change catches it up.
+    private static async Task TryRecordStarChangeAsync(CalendarItem item, SetTaskCompletion command, IMessageBus bus, CancellationToken cancellationToken)
+    {
+        if (item.AssignedTo is not { } childId)
         {
-            return new Result<CalendarItem>.Success(item);
+            return;
         }
 
-        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow, command.SubtaskId);
-
-        await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
-
-        // Explicit cross-feature call, not a transaction with the append above -- see
-        // docs/backend/analysis/gamified-progress.md. The task completion itself has already
-        // succeeded by this point; a failure here just leaves the child's star count stale until
-        // the next successful, idempotent completion change catches it up.
-        if (item.AssignedTo is { } childId)
+        try
         {
-            try
-            {
-                await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted, command.SubtaskId), cancellationToken);
-            }
-            catch
-            {
-                // Deliberately swallowed -- see the comment above.
-            }
+            await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted, command.SubtaskId), cancellationToken);
         }
-
-        return new Result<CalendarItem>.Success(CalendarItem.Rehydrate([.. itemEvents, completionChanged])!);
+        catch
+        {
+            // Deliberately swallowed -- see the comment above.
+        }
     }
 }

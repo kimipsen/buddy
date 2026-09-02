@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth.service';
@@ -25,6 +25,13 @@ export class ProfileMenu {
 
   protected close(): void {
     this.open.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    if (this.open()) {
+      this.close();
+    }
   }
 
   protected setTheme(mode: ThemeMode): void {

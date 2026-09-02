@@ -53,7 +53,9 @@ public static class GoalPostResolver
     // Terminates because thresholds strictly increase with index (ascending config, positive step).
     public static ResolvedGoalPost? AtThreshold(ImmutableArray<GoalPost> configured, int stars)
     {
-        for (var index = 0; ; index++)
+        var index = 0;
+
+        while (true)
         {
             var resolved = At(configured, index);
 
@@ -66,6 +68,8 @@ public static class GoalPostResolver
             {
                 return null;
             }
+
+            index++;
         }
     }
 
@@ -74,8 +78,9 @@ public static class GoalPostResolver
     public static (ResolvedGoalPost? Current, ResolvedGoalPost Next) Resolve(ImmutableArray<GoalPost> configured, int totalStars)
     {
         ResolvedGoalPost? current = null;
+        var index = 0;
 
-        for (var index = 0; ; index++)
+        while (true)
         {
             var candidate = At(configured, index);
 
@@ -85,6 +90,7 @@ public static class GoalPostResolver
             }
 
             current = candidate;
+            index++;
         }
     }
 }

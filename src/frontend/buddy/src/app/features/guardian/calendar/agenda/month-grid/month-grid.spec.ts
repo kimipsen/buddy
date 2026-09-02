@@ -62,7 +62,7 @@ describe('MonthGrid', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     const cells = compiled.querySelectorAll('button');
-    expect(cells.length).toBe(35);
+    expect(cells).toHaveLength(35);
   });
 
   it('renders the weekday header labels in order', async () => {

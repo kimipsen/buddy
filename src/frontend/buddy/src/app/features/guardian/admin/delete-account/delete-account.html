@@ -14,10 +14,15 @@
 </section>
 
 @if (confirmOpen()) {
-  <div class="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/50 px-4" (click)="closeConfirm()">
+  <div
+    class="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/50 px-4"
+    (click)="closeConfirm()"
+    (keydown.escape)="closeConfirm()"
+  >
     <div
       class="w-full max-w-md rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg"
       (click)="$event.stopPropagation()"
+      (keydown.escape)="closeConfirm()"
     >
       <h4 class="text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-50">{{ 'admin.deleteAccount.confirmTitle' | translate }}</h4>
       <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">

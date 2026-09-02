@@ -82,6 +82,7 @@
                 <form class="grid gap-3 sm:grid-cols-[1fr_auto]" (ngSubmit)="confirmMove(calendar.id)">
                   <select
                     name="moveTargetGroupId"
+                    aria-label="{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                     [ngModel]="moveTargetGroupId()"
                     (ngModelChange)="moveTargetGroupId.set($event)"
@@ -113,6 +114,7 @@
                 <input
                   type="text"
                   name="editIconValue"
+                  aria-label="{{ 'admin.manageCalendars.iconPlaceholder' | translate }}"
                   class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                   [ngModel]="editIconValue()"
                   (ngModelChange)="editIconValue.set($event)"
@@ -208,6 +210,7 @@
         type="text"
         name="calendarName"
         placeholder="{{ 'admin.manageCalendars.namePlaceholder' | translate }}"
+        aria-label="{{ 'admin.manageCalendars.namePlaceholder' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newCalendarName()"
         (ngModelChange)="newCalendarName.set($event)"
@@ -216,12 +219,14 @@
         type="text"
         name="calendarIcon"
         placeholder="{{ 'admin.manageCalendars.iconPlaceholder' | translate }}"
+        aria-label="{{ 'admin.manageCalendars.iconPlaceholder' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newCalendarIcon()"
         (ngModelChange)="newCalendarIcon.set($event)"
       />
       <select
         name="calendarTimeZoneId"
+        aria-label="{{ 'admin.manageChildren.timeZone.label' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newCalendarTimeZoneId()"
         (ngModelChange)="newCalendarTimeZoneId.set($event)"
@@ -232,6 +237,7 @@
       </select>
       <select
         name="calendarGroupId"
+        aria-label="{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newCalendarGroupId()"
         (ngModelChange)="newCalendarGroupId.set($event)"

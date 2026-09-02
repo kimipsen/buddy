@@ -24,6 +24,8 @@ export const pickup = {
       sibling: 'A sibling',
       playdate: 'Playdate'
     },
+    kindLabel: 'Pickup type',
+    timeLabel: 'Pickup time',
     selectGuardianPlaceholder: 'Choose a guardian',
     selectSiblingPlaceholder: 'Choose a sibling',
     noSiblings: 'No siblings linked yet.',

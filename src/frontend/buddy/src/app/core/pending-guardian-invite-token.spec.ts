@@ -41,7 +41,7 @@ describe('pending-guardian-invite-token', () => {
     it('does not touch sessionStorage when there is nothing to remove', () => {
       takePendingGuardianInviteToken();
 
-      expect(sessionStorage.length).toBe(0);
+      expect(sessionStorage).toHaveLength(0);
     });
 
     it('does not read a value stored under a different key', () => {

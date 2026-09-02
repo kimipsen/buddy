@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -113,7 +113,7 @@ function formatDuration(totalMinutes: number): string {
   imports: [FormsModule, TranslatePipe, UserDatePipe, DateSelect, TimeSelect, MonthGrid, TaskPicker],
   templateUrl: './agenda.html'
 })
-export class CalendarAgenda {
+export class CalendarAgenda implements OnInit {
   private readonly calendars = inject(CalendarsService);
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
@@ -246,7 +246,8 @@ export class CalendarAgenda {
       }
 
       const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
-      (byDate[date] ??= []).push(occurrence);
+      const occurrencesForDate = (byDate[date] ??= []);
+      occurrencesForDate.push(occurrence);
     }
 
     for (const dayOccurrences of Object.values(byDate)) {
@@ -339,8 +340,6 @@ export class CalendarAgenda {
       void this.loadAssignableMembers(calendarId);
     });
 
-    void this.loadChildren();
-
     effect(() => {
       // A TaskTemplate belongs to exactly one child, so the picker has to track whichever
       // assignee is currently selected rather than always showing one fixed child's templates.
@@ -356,6 +355,10 @@ export class CalendarAgenda {
         this.taskLibrary.clearTemplates();
       }
     });
+  }
+
+  ngOnInit(): void {
+    void this.loadChildren();
   }
 
   protected formatDuration(totalMinutes: number): string {
@@ -674,37 +677,9 @@ export class CalendarAgenda {
 
     try {
       if (kind === TASK_KIND && this.newTaskSource() === 'template') {
-        await this.calendars.scheduleTaskFromTemplate(calendarId, {
-          taskTemplateId: this.newTaskTemplateId(),
-          startDate: this.newDueDate(),
-          startTime: `${this.newDueTime()}:00`,
-          recurrence: this.buildRecurrence(),
-          assignedTo: this.newAssignedTo() || null,
-          title: this.newTitle().trim(),
-          icon: this.newIcon().trim() || null,
-          color: this.newColor().trim()
-        });
+        await this.createTaskFromTemplate(calendarId);
       } else {
-        const isAllDay = this.newIsAllDay();
-
-        // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
-        const startTime = isAllDay ? '00:00' : this.newStartTime();
-        const endTime = isAllDay ? '00:00' : this.newEndTime();
-        const endDate = isAllDay ? addDaysIso(this.newEndDate(), 1) : this.newEndDate();
-        const dueTime = isAllDay ? '00:00' : this.newDueTime();
-
-        await this.calendars.createItem(calendarId, {
-          kind,
-          title: this.newTitle().trim(),
-          icon: this.newIcon().trim() || null,
-          color: this.newColor().trim(),
-          startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), startTime) : null,
-          endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
-          dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
-          isAllDay,
-          recurrence: this.buildRecurrence(),
-          assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null
-        });
+        await this.createManualItem(calendarId, kind);
       }
 
       this.resetForm();
@@ -714,6 +689,42 @@ export class CalendarAgenda {
     } finally {
       this.creating.set(false);
     }
+  }
+
+  private async createTaskFromTemplate(calendarId: string): Promise<void> {
+    await this.calendars.scheduleTaskFromTemplate(calendarId, {
+      taskTemplateId: this.newTaskTemplateId(),
+      startDate: this.newDueDate(),
+      startTime: `${this.newDueTime()}:00`,
+      recurrence: this.buildRecurrence(),
+      assignedTo: this.newAssignedTo() || null,
+      title: this.newTitle().trim(),
+      icon: this.newIcon().trim() || null,
+      color: this.newColor().trim()
+    });
+  }
+
+  private async createManualItem(calendarId: string, kind: CalendarItemKind): Promise<void> {
+    const isAllDay = this.newIsAllDay();
+
+    // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
+    const startTime = isAllDay ? '00:00' : this.newStartTime();
+    const endTime = isAllDay ? '00:00' : this.newEndTime();
+    const endDate = isAllDay ? addDaysIso(this.newEndDate(), 1) : this.newEndDate();
+    const dueTime = isAllDay ? '00:00' : this.newDueTime();
+
+    await this.calendars.createItem(calendarId, {
+      kind,
+      title: this.newTitle().trim(),
+      icon: this.newIcon().trim() || null,
+      color: this.newColor().trim(),
+      startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), startTime) : null,
+      endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
+      dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
+      isAllDay,
+      recurrence: this.buildRecurrence(),
+      assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null
+    });
   }
 
   private buildRecurrence(): RecurrenceRuleRequest | null {
