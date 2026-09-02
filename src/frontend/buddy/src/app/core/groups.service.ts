@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { CalendarRole } from './calendars.service';
+import { postIdempotent } from './http-idempotency';
 import { MealplanAccessTier } from './mealplans.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -74,7 +75,7 @@ export class GroupsService {
   }
 
   createGroup(request: CreateGroupRequest): Promise<GroupSummary> {
-    return firstValueFrom(this.http.post<GroupSummary>(`${this.runtimeConfig.apiBaseUrl}/groups`, request));
+    return firstValueFrom(postIdempotent<GroupSummary>(this.http, `${this.runtimeConfig.apiBaseUrl}/groups`, request));
   }
 
   listInvites(groupId: string): Promise<GroupInvite[]> {
@@ -82,7 +83,9 @@ export class GroupsService {
   }
 
   inviteToGroup(groupId: string, request: InviteToGroupRequest): Promise<GroupInvite> {
-    return firstValueFrom(this.http.post<GroupInvite>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`, request));
+    return firstValueFrom(
+      postIdempotent<GroupInvite>(this.http, `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`, request)
+    );
   }
 
   revokeInvite(groupId: string, inviteId: string): Promise<void> {
@@ -117,6 +120,6 @@ export class GroupsService {
   }
 
   acceptInvite(token: string): Promise<void> {
-    return firstValueFrom(this.http.post<void>(`${this.runtimeConfig.apiBaseUrl}/invites/${token}/accept`, {}));
+    return firstValueFrom(postIdempotent<void>(this.http, `${this.runtimeConfig.apiBaseUrl}/invites/${token}/accept`, {}));
   }
 }

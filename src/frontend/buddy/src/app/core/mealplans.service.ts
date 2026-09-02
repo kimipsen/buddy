@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // MealSlot values match the backend's MealSlot enum ordinals (no string enum converter is
@@ -113,7 +114,7 @@ export class MealplansService {
   }
 
   async createMeal(scope: MealplanScope, request: MealDetails): Promise<Meal> {
-    const meal = await firstValueFrom(this.http.post<Meal>(`${this.base(scope)}/meals`, request));
+    const meal = await firstValueFrom(postIdempotent<Meal>(this.http, `${this.base(scope)}/meals`, request));
     this.mealsState.update((current) => [...current, meal]);
     return meal;
   }

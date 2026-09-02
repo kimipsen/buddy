@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { todayIsoDate } from './date-utils';
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // CalendarRole/CalendarItemKind values match the backend's enum ordinals (no string enum
@@ -191,7 +192,7 @@ export class CalendarsService {
   }
 
   createCalendar(request: CreateCalendarRequest): Promise<CalendarSummary> {
-    return firstValueFrom(this.http.post<CalendarSummary>(`${this.runtimeConfig.apiBaseUrl}/calendars`, request));
+    return firstValueFrom(postIdempotent<CalendarSummary>(this.http, `${this.runtimeConfig.apiBaseUrl}/calendars`, request));
   }
 
   // Owner-only -- the calendar's icon is the one detail that can change after creation today.
@@ -217,7 +218,9 @@ export class CalendarsService {
   }
 
   createIcalToken(calendarId: string): Promise<IssuedIcalToken> {
-    return firstValueFrom(this.http.post<IssuedIcalToken>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`, {}));
+    return firstValueFrom(
+      postIdempotent<IssuedIcalToken>(this.http, `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`, {})
+    );
   }
 
   revokeIcalToken(calendarId: string, tokenId: string): Promise<void> {
@@ -244,7 +247,7 @@ export class CalendarsService {
 
   async createItem(calendarId: string, request: CreateItemRequest): Promise<CalendarItemResponse> {
     const created = await firstValueFrom(
-      this.http.post<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items`, request)
+      postIdempotent<CalendarItemResponse>(this.http, `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items`, request)
     );
     this.todayCache = null;
     return created;
@@ -290,7 +293,11 @@ export class CalendarsService {
   // template instead of being entered by hand -- see ScheduleTaskFromTemplate.Command.cs.
   async scheduleTaskFromTemplate(calendarId: string, request: ScheduleTaskFromTemplateRequest): Promise<CalendarItemResponse> {
     const created = await firstValueFrom(
-      this.http.post<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/from-template`, request)
+      postIdempotent<CalendarItemResponse>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/from-template`,
+        request
+      )
     );
     this.todayCache = null;
     return created;

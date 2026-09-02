@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 export interface PersonName {
@@ -94,7 +95,7 @@ export class GuardiansService {
 
   createChild(request: CreateChildRequest): Promise<CreateChildResult> {
     return firstValueFrom(
-      this.http.post<CreateChildResult>(`${this.runtimeConfig.apiBaseUrl}/users/me/children`, request)
+      postIdempotent<CreateChildResult>(this.http, `${this.runtimeConfig.apiBaseUrl}/users/me/children`, request)
     );
   }
 
@@ -124,7 +125,11 @@ export class GuardiansService {
 
   inviteGuardian(childId: string, request: InviteGuardianRequest): Promise<GuardianInvite> {
     return firstValueFrom(
-      this.http.post<GuardianInvite>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardian-invites`, request)
+      postIdempotent<GuardianInvite>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardian-invites`,
+        request
+      )
     );
   }
 
@@ -139,6 +144,8 @@ export class GuardiansService {
   }
 
   acceptGuardianInvite(token: string): Promise<void> {
-    return firstValueFrom(this.http.post<void>(`${this.runtimeConfig.apiBaseUrl}/guardian-invites/${token}/accept`, {}));
+    return firstValueFrom(
+      postIdempotent<void>(this.http, `${this.runtimeConfig.apiBaseUrl}/guardian-invites/${token}/accept`, {})
+    );
   }
 }

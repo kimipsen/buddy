@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // Wire format for Duration/TotalDuration matches the backend's default System.Text.Json TimeSpan
@@ -132,7 +133,9 @@ export class TaskLibraryService {
   }
 
   async createTaskTemplate(childId: string, request: TaskTemplateDetails): Promise<TaskTemplate> {
-    const response = await firstValueFrom(this.http.post<TaskTemplateResponse>(`${this.base()}/children/${childId}`, request));
+    const response = await firstValueFrom(
+      postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/children/${childId}`, request)
+    );
     const template = fromResponse(response);
     this.templatesState.update((current) => [...current, template]);
     return template;
@@ -154,7 +157,7 @@ export class TaskLibraryService {
 
   async addSubtask(templateId: string, title: string, icon: string | null, durationMinutes: number, position?: number | null): Promise<TaskTemplate> {
     const response = await firstValueFrom(
-      this.http.post<TaskTemplateResponse>(`${this.base()}/${templateId}/subtasks`, {
+      postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/${templateId}/subtasks`, {
         title,
         icon,
         duration: formatDurationMinutes(durationMinutes),

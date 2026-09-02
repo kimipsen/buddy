@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // DoseStatus values match the backend's DoseStatus enum ordinals (no string enum converter is
@@ -66,7 +67,7 @@ export class MedicinesService {
 
   createSchedule(childId: string, request: CreateMedicineScheduleRequest): Promise<MedicineSchedule> {
     return firstValueFrom(
-      this.http.post<MedicineSchedule>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules`, request)
+      postIdempotent<MedicineSchedule>(this.http, `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules`, request)
     );
   }
 

@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { Language } from './i18n/language';
 import { TranslationService } from './i18n/translation.service';
 import { PersonName } from './guardians.service';
+import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 export interface Email {
@@ -70,7 +71,7 @@ export class UsersService {
 
   async verifyEmail(token: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
-      this.http.post<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/email/verify`, { token })
+      postIdempotent<CurrentUser>(this.http, `${this.runtimeConfig.apiBaseUrl}/users/me/email/verify`, { token })
     );
     this.currentUserPromise = Promise.resolve(updated);
     return updated;
