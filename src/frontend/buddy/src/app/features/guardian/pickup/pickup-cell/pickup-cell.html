@@ -13,11 +13,12 @@
     </select>
 
     @if (kind() === guardianKind) {
+      <label class="sr-only" [attr.for]="instanceId + '-guardianId'">{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}</label>
       <select
+        [attr.id]="instanceId + '-guardianId'"
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="guardianId()"
         (ngModelChange)="guardianId.set($event)"
-        aria-label="{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}"
       >
         <option value="" disabled>{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}</option>
         @for (guardian of guardians(); track guardian.id) {
@@ -27,11 +28,12 @@
     }
 
     @if (kind() === siblingKind) {
+      <label class="sr-only" [attr.for]="instanceId + '-siblingChildId'">{{ 'pickup.cell.selectSiblingPlaceholder' | translate }}</label>
       <select
+        [attr.id]="instanceId + '-siblingChildId'"
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="siblingChildId()"
         (ngModelChange)="siblingChildId.set($event)"
-        aria-label="{{ 'pickup.cell.selectSiblingPlaceholder' | translate }}"
       >
         <option value="" disabled>{{ 'pickup.cell.selectSiblingPlaceholder' | translate }}</option>
         @for (sibling of siblings(); track sibling.id) {

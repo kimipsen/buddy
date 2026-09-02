@@ -30,6 +30,8 @@ $commit_msg
 Diff:
 $diff
 PROMPT
+
+  return 0
 }
 
 doc_agent_run() {

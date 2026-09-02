@@ -3,8 +3,9 @@
     <h3 class="text-lg font-semibold tracking-normal">{{ 'taskLibrary.manageTasks.title' | translate }}</h3>
 
     @if (children().length > 1) {
+      <label class="sr-only" for="selectedChildId">{{ 'common.selectChildLabel' | translate }}</label>
       <select
-        aria-label="{{ 'common.selectChildLabel' | translate }}"
+        id="selectedChildId"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="selectedChildId()"
         (ngModelChange)="onChildChange($event)"

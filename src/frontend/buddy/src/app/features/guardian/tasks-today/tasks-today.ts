@@ -48,7 +48,10 @@ function toRollup(entry: AgendaEntry): TaskRollup {
 
   // "Overdue" for the whole run reads off its LAST subtask's due time -- that's when the entire
   // routine should have been finished, not when its first step was due.
-  const last = entry.subtasks.reduce((latest, occurrence) => ((occurrence.dueAt ?? '') > (latest.dueAt ?? '') ? occurrence : latest));
+  const last = entry.subtasks.reduce(
+    (latest, occurrence) => ((occurrence.dueAt ?? '') > (latest.dueAt ?? '') ? occurrence : latest),
+    entry.subtasks[0]
+  );
 
   return {
     itemId: entry.itemId,

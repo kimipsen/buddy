@@ -80,9 +80,10 @@
                 <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.move.noGroups' | translate }}</p>
               } @else {
                 <form class="grid gap-3 sm:grid-cols-[1fr_auto]" (ngSubmit)="confirmMove(calendar.id)">
+                  <label class="sr-only" [attr.for]="'moveTargetGroupId-' + calendar.id">{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}</label>
                   <select
                     name="moveTargetGroupId"
-                    aria-label="{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}"
+                    [attr.id]="'moveTargetGroupId-' + calendar.id"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                     [ngModel]="moveTargetGroupId()"
                     (ngModelChange)="moveTargetGroupId.set($event)"
@@ -224,9 +225,10 @@
         [ngModel]="newCalendarIcon()"
         (ngModelChange)="newCalendarIcon.set($event)"
       />
+      <label class="sr-only" for="calendarTimeZoneId">{{ 'admin.manageChildren.timeZone.label' | translate }}</label>
       <select
         name="calendarTimeZoneId"
-        aria-label="{{ 'admin.manageChildren.timeZone.label' | translate }}"
+        id="calendarTimeZoneId"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newCalendarTimeZoneId()"
         (ngModelChange)="newCalendarTimeZoneId.set($event)"
@@ -235,9 +237,10 @@
           <option [value]="timeZoneId">{{ timeZoneId }}</option>
         }
       </select>
+      <label class="sr-only" for="calendarGroupId">{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}</label>
       <select
         name="calendarGroupId"
-        aria-label="{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}"
+        id="calendarGroupId"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="newCalendarGroupId()"
         (ngModelChange)="newCalendarGroupId.set($event)"

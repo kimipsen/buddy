@@ -13,10 +13,10 @@ describe('LoadingSpinner', () => {
     return { fixture, compiled: fixture.nativeElement as HTMLElement };
   }
 
-  it('renders the app-loading-spinner element with a status role', async () => {
+  it('renders the app-loading-spinner element as a status output', async () => {
     const { compiled } = await setup();
 
-    expect(compiled.querySelector('[role="status"]')).toBeTruthy();
+    expect(compiled.querySelector('output')).toBeTruthy();
   });
 
   it('renders no label text by default', async () => {

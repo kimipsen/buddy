@@ -136,9 +136,10 @@
                 [ngModel]="inviteEmail()"
                 (ngModelChange)="inviteEmail.set($event)"
               />
+              <label class="sr-only" [attr.for]="'guardianInviteKind-' + child.id">{{ 'admin.manageChildren.invite.kindLabel' | translate }}</label>
               <select
                 name="guardianInviteKind"
-                aria-label="{{ 'admin.manageChildren.invite.kindLabel' | translate }}"
+                [attr.id]="'guardianInviteKind-' + child.id"
                 class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                 [ngModel]="inviteKind()"
                 (ngModelChange)="inviteKind.set($event)"

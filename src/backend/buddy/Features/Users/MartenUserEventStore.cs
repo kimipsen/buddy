@@ -46,9 +46,9 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
             .ToListAsync(cancellationToken);
 
         // Normalize back to ascending order so callers never need to know this was fetched in reverse.
-        events.Reverse();
-
-        return [.. events.Select(e => new UserEventEntry(e.Version, UserEvent.FromPayload(e.Data)))];
+        // `events` is IReadOnlyList<IEvent>, which has no in-place Reverse() -- Enumerable.Reverse()
+        // is a non-mutating LINQ method, so its result must be used rather than discarded.
+        return [.. events.Reverse().Select(e => new UserEventEntry(e.Version, UserEvent.FromPayload(e.Data)))];
     }
 
     public async Task<IReadOnlyCollection<UserEvent>> CreateAsync(KeycloakSubject keycloakSubject, UserId userId, IReadOnlyCollection<UserEvent> events, CancellationToken cancellationToken)

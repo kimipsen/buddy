@@ -12,6 +12,10 @@ const SELF_ESCORT: PickupAssigneeKind = 1;
 const SIBLING: PickupAssigneeKind = 2;
 const PLAYDATE: PickupAssigneeKind = 3;
 
+// The weekly grid renders many `app-pickup-cell` instances at once, so form-control ids need a
+// per-instance suffix to stay unique across all of them (see `instanceId` below).
+let nextPickupCellInstanceId = 0;
+
 // One weekly-grid cell: displays the current assignment (if any) as a compact summary, or an
 // inline edit form when clicked -- no modal exists anywhere in this codebase (see
 // manage-medicines.ts's inline confirm/cancel pattern), so editing happens in place the same way.
@@ -21,6 +25,8 @@ const PLAYDATE: PickupAssigneeKind = 3;
   templateUrl: './pickup-cell.html'
 })
 export class PickupCell {
+  protected readonly instanceId = `pickup-cell-${nextPickupCellInstanceId++}`;
+
   readonly guardians = input.required<GuardianSummary[]>();
   readonly siblings = input.required<ChildSummary[]>();
   readonly occurrence = input<PickupOccurrence | null>(null);

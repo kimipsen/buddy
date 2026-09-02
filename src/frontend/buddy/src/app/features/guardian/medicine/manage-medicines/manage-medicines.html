@@ -3,11 +3,12 @@
     <h3 class="text-lg font-semibold tracking-normal">{{ 'medicine.manageMedicines.title' | translate }}</h3>
 
     @if (children().length > 1) {
+      <label class="sr-only" for="selectedChildId">{{ 'common.selectChildLabel' | translate }}</label>
       <select
+        id="selectedChildId"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="selectedChildId()"
         (ngModelChange)="onChildChange($event)"
-        aria-label="{{ 'common.selectChildLabel' | translate }}"
       >
         @for (child of children(); track child.id) {
           <option [value]="child.id">{{ child.name.givenName }}</option>
@@ -40,11 +41,12 @@
         <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'medicine.manageMedicines.sharing.noGroups' | translate }}</p>
       } @else {
         <div class="mt-2 flex flex-wrap items-center gap-3">
+          <label class="sr-only" for="shareTargetGroupId">{{ 'medicine.manageMedicines.sharing.selectPlaceholder' | translate }}</label>
           <select
+            id="shareTargetGroupId"
             class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="shareTargetGroupId()"
             (ngModelChange)="shareTargetGroupId.set($event)"
-            aria-label="{{ 'medicine.manageMedicines.sharing.selectPlaceholder' | translate }}"
           >
             <option value="" disabled>{{ 'medicine.manageMedicines.sharing.selectPlaceholder' | translate }}</option>
             @for (group of manageableGroups(); track group.id) {

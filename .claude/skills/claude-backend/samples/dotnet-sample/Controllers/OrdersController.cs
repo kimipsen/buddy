@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 using Microsoft.AspNetCore.Mvc;
 using Project.Domain.Orders;
 using Project.Infrastructure.EventSourcing;
@@ -41,4 +43,4 @@ public class OrdersController : ControllerBase
     }
 }
 
-public record AddItemRequest(Guid ItemId, int Quantity);
+public record AddItemRequest(Guid ItemId, [property: Required] int Quantity);
