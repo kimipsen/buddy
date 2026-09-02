@@ -238,6 +238,10 @@ a second resource.
 opt-in: a client that includes an `Idempotency-Key` header (any client-generated string, at most
 200 characters) gets retry safety; a client that doesn't is completely unaffected.
 
+The Angular frontend opts in for all of its create-style `POST` calls through `postIdempotent`
+(`src/frontend/buddy/src/app/core/http-idempotency.ts`), which generates a fresh key per call and
+retries a transient failure (network error or `5xx`) with that same key instead of a new one.
+
 - First request with a given `(caller, key)`: executes normally; the response (status, content
   type, and body) is cached against the key.
 - A retry with the same key and the same request (method, path, query, and body): replays the

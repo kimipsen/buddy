@@ -124,6 +124,12 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post
   info for the progress badge, and lets a guardian configure a child's goal posts
 - `UsersService` loads the current profile, language, and email-verification state
+- `postIdempotent` (`http-idempotency.ts`) wraps `HttpClient.post` for create-style calls
+  (calendars, groups, children, meals, medicine schedules, task templates, invites, email
+  verification, ...) with a fresh `Idempotency-Key` header per call and retries a transient
+  failure (network error or `5xx`) with that same key, so a dropped response can't create a
+  duplicate resource -- see [Idempotency-Key (POST)](../backend/http-status-codes.md#idempotency-key-post)
+  for the backend side of this contract
 - `AuthInterceptor` attaches the access token to outgoing requests
 - `UserEventsService` loads a user's recent-events feed, rendered by `EventsList` on
   `/guardian/admin`
