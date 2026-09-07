@@ -72,6 +72,12 @@ sequenceDiagram
 | `PUT` | `/mealplans/children/{childId}/ai/providers/{provider}/key` | Adds or replaces the family's API key for `provider` (BYOK). The first key added for a family becomes the active provider automatically. |
 | `DELETE` | `/mealplans/children/{childId}/ai/providers/{provider}/key` | Removes the family's key for `provider` (idempotent). If `provider` was active, the family is left with no active provider. |
 | `PUT` | `/mealplans/children/{childId}/ai/active-provider/{provider}` | Switches the family's active provider to one that already has a key configured. |
+| `POST` | `/mealplans/children/{childId}/ai/providers/{provider}/test-connection` | Sends a minimal request through `provider` to confirm a key works, either the family's already-stored key or one supplied in the request body before it's ever saved. |
+| `GET` | `/mealplans/children/{childId}/ai/sessions/current` | Returns the family's current AI assistant session (transcript + draft), if one exists. |
+| `POST` | `/mealplans/children/{childId}/ai/sessions` | Starts a new AI assistant session for a date range/slot selection, discarding whatever session was previously current for the family. |
+| `POST` | `/mealplans/children/{childId}/ai/sessions/current/messages` | Sends a guardian chat message to the current session and runs the provider's tool-calling loop to update the draft. |
+| `POST` | `/mealplans/children/{childId}/ai/sessions/current/apply` | Commits the current session's draft assignments to the real family plan and marks the session applied. |
+| `POST` | `/mealplans/children/{childId}/ai/sessions/current/discard` | Discards the current session without touching the real plan (idempotent). |
 
 ## Core lifecycle
 
@@ -111,9 +117,36 @@ Provider API keys (BYOK — bring your own key, for Anthropic, OpenAI, or
 Gemini) are encrypted at rest via the ASP.NET Core Data Protection API before
 being stored; only the encrypted ciphertext and the key's last 4 characters
 are persisted, and every read-facing response returns the masked
-`AiProviderSettings` shape rather than the credential itself. This is BYOK
-provider-management only — session/chat endpoints for the AI assistant are a
-later phase.
+`AiProviderSettings` shape rather than the credential itself. `TestProviderConnection`
+sends a one-word "OK" round trip through the resolved provider client to confirm a
+key works, either the family's already-stored key or a not-yet-saved one from the
+request body, and never surfaces the provider's raw error body — only a short,
+best-effort message extracted from it.
+
+`MealplanAiSession` is a separate stream per session (not a family-wide singleton
+like `MealPlan`/`AiProviderCredential`): starting a new session always creates a
+fresh stream, and `AiSessionResolution` treats the family's "current" session as
+whichever session was started most recently across every sibling, discarding
+(`AiSessionDiscarded`) whatever was previously current if it was still
+`Drafting`. A session starts with `AiSessionStarted` (the requested date range,
+slots, must-include meals, and free-text notes) and accumulates
+`AiUserMessageSent`, `AiToolInvocationRecorded`, `AiDraftAssignmentSet`/
+`AiDraftAssignmentCleared`, and `AiAssistantMessageRecorded` events as the
+guardian chats with the assistant, ending in exactly one of `AiSessionApplied` or
+`AiSessionDiscarded`. `SendAiSessionMessage` runs a bounded tool-calling loop
+(`SendAiSessionMessageHandler.MaxToolLoopIterations`, currently 20) against the
+family's active provider: the model's only way to affect state is
+`propose_assignment`/`clear_draft_assignment` (each validated against the
+session's requested range/slots and the family's actual meal library before
+touching the draft), plus a read-only `get_calendar_conflicts` tool that looks up
+the caller's visible calendar occurrences — the one place Mealplans reads from
+Calendars, never the reverse (see
+[docs/backend/analysis/mealplans.md](../analysis/mealplans.md)). `ApplyAiSessionDraft`
+commits the session's draft by replaying each entry through the same
+`AssignMealToSlot` write path a manual assignment uses, so authorization and
+domain rules apply identically whether a slot was filled by a guardian or the AI
+assistant. `DiscardAiSession` is idempotent — discarding an already-applied or
+already-discarded session is a no-op that just returns the current view.
 
 ## Authorization model
 
@@ -126,9 +159,9 @@ meal or the plan, even for themselves. This check is unaffected by sibling
 sharing — it answers "is the caller allowed to act as `childId`," not "whose
 meal is this."
 
-All four AI provider-management endpoints require the same guardian "manage"
-access as writing the plan — there is no child-facing view of provider
-credentials.
+Every AI provider-management and AI session endpoint requires the same guardian
+"manage" access as writing the plan — there is no child-facing view of provider
+credentials or AI sessions.
 
 ## Calendar integration
 

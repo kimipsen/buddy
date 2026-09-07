@@ -55,12 +55,16 @@ Current responsibilities:
 - create child accounts and capture the one-time temporary password
 - show today's events, tasks, and medicine doses
 - manage meals and assign them to shared meal-plan slots
+- start a chat-based AI assistant session to draft meal-plan assignments over a
+  date range, then apply or discard the resulting draft
 - manage pickup and drop-off assignments for linked children
 - browse day, work-week, rolling-week, and month calendar views and create events/tasks across
   every calendar they can contribute to, personal or group-owned
 - create, edit, and archive per-child task templates and their timed subtasks, and schedule them
   onto a calendar from the agenda's create-task form
 - manage calendars, groups, children, and the current profile from the admin area
+- manage the family's BYOK AI provider settings (add/remove keys, switch the
+  active provider, test a connection) from the admin area
 - sign out of the current session
 
 The route definition is in [src/frontend/buddy/src/app/features/guardian/guardian.routes.ts](../../src/frontend/buddy/src/app/features/guardian/guardian.routes.ts).
@@ -69,6 +73,8 @@ The guardian routes currently include:
 
 - `/guardian` — dashboard and today's operational summary
 - `/guardian/mealplan` — meal library and meal-plan assignment
+- `/guardian/mealplan/ai-assistant` — chat-based AI assistant for drafting
+  meal-plan assignments
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
@@ -112,6 +118,9 @@ The email verification flow is in [src/frontend/buddy/src/app/features/verify-em
 The shared domain services live under [src/frontend/buddy/src/app/core](../../src/frontend/buddy/src/app/core):
 
 - `AccountService` resolves whether the user is a guardian or child
+- `AiAssistantService` calls the AI provider-settings and AI mealplan-session
+  endpoints (list/set/remove provider keys, test a connection, start a session,
+  send a chat message, apply or discard the draft)
 - `CalendarsService` lists accessible calendars and occurrences and manages
   calendar items and task completion
 - `GroupsService` manages group membership, invitations, and sharing policies
@@ -187,6 +196,8 @@ The frontend is an actively developed product shell with working domain workflow
 - email verification and invitation return flows
 - English and Danish localization
 - guardian meal planning, meal ratings, and group-shared meal-plan access
+- a guardian-facing chat-based AI assistant that drafts meal-plan assignments
+  over a date range and BYOK AI provider settings management in the admin area
 - medicine schedule management and today's dose views
 - guardian pickup/drop-off planning plus guardian and child today views
 - guardian-facing day, work-week, rolling-week, and month calendar views with event/task creation
