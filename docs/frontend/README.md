@@ -94,6 +94,7 @@ Current responsibilities:
 - let the child browse current and previous meal-plan weeks and rate meals
 - show guardian links when available
 - provide the child-specific entry route
+- offer a menu (top-right of the child shell) for theme selection and sign out
 
 The route definition is in [src/frontend/buddy/src/app/features/child/child.routes.ts](../../src/frontend/buddy/src/app/features/child/child.routes.ts).
 
@@ -170,7 +171,8 @@ through untranslated instead.
 ## Theming
 
 The app supports light, dark, and system (OS-following) themes, chosen from the theme switcher in
-the profile menu (top-right of the guardian shell). The selection is a `light` | `dark` | `system`
+the profile menu (top-right of the guardian shell) or, for a child, the equivalent menu
+(top-right of the child shell). The selection is a `light` | `dark` | `system`
 mode stored under `buddy_theme_mode` in `localStorage`
 ([`core/theme-storage.ts`](../../src/frontend/buddy/src/app/core/theme-storage.ts)) and resolved by
 [`ThemeService`](../../src/frontend/buddy/src/app/core/theme.service.ts): `system` tracks
