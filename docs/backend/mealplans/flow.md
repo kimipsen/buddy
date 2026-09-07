@@ -68,6 +68,10 @@ sequenceDiagram
 | `PUT` | `/mealplans/children/{childId}/plan?date=...&slot=...` | Assigns (or reassigns) a meal to a date/slot on the family's shared plan. |
 | `DELETE` | `/mealplans/children/{childId}/plan?date=...&slot=...` | Clears a planned slot on the family's shared plan (idempotent). |
 | `GET` | `/mealplans/children/{childId}/plan?from=...&to=...` | Lists the family's plan entries in a date range, joined with each meal's current details and `childId`'s own rating. |
+| `GET` | `/mealplans/children/{childId}/ai/providers` | Lists the family's configured AI provider entries (provider, last 4 of the key, added date) and the active provider, never the key itself. |
+| `PUT` | `/mealplans/children/{childId}/ai/providers/{provider}/key` | Adds or replaces the family's API key for `provider` (BYOK). The first key added for a family becomes the active provider automatically. |
+| `DELETE` | `/mealplans/children/{childId}/ai/providers/{provider}/key` | Removes the family's key for `provider` (idempotent). If `provider` was active, the family is left with no active provider. |
+| `PUT` | `/mealplans/children/{childId}/ai/active-provider/{provider}` | Switches the family's active provider to one that already has a key configured. |
 
 ## Core lifecycle
 
@@ -97,6 +101,20 @@ its referenced meal's current name/icon/color and the *viewing* child's own
 rating, recomputed on every call, the same as `ListTodaysDoses` does for
 medicine schedules.
 
+`AiProviderCredential` is a separate family-wide singleton stream, resolved
+the same way as `MealPlan` (one credential set shared by every guardian in
+the family, indexed under whichever child a guardian happened to be acting
+through when the first key was added). It's provisioned lazily on the first
+`SetProviderApiKey` call with `AiCredentialsInitialized`, then accumulates
+`ProviderApiKeySet`/`ProviderApiKeyRemoved`/`ActiveProviderChanged` events.
+Provider API keys (BYOK — bring your own key, for Anthropic, OpenAI, or
+Gemini) are encrypted at rest via the ASP.NET Core Data Protection API before
+being stored; only the encrypted ciphertext and the key's last 4 characters
+are persisted, and every read-facing response returns the masked
+`AiProviderSettings` shape rather than the credential itself. This is BYOK
+provider-management only — session/chat endpoints for the AI assistant are a
+later phase.
+
 ## Authorization model
 
 Access is scoped to the guardian-child relationship for the specific
@@ -107,6 +125,10 @@ a meal; the child can view everything and rate a meal, but can never write a
 meal or the plan, even for themselves. This check is unaffected by sibling
 sharing — it answers "is the caller allowed to act as `childId`," not "whose
 meal is this."
+
+All four AI provider-management endpoints require the same guardian "manage"
+access as writing the plan — there is no child-facing view of provider
+credentials.
 
 ## Calendar integration
 
