@@ -28,7 +28,11 @@ public static class MealplansFeature
         typeof(MealPlanUnsharedFromGroup),
         typeof(MealPlanSlotTimeSet),
         typeof(MealPlanIcalTokenIssued),
-        typeof(MealPlanIcalTokenRevoked)
+        typeof(MealPlanIcalTokenRevoked),
+        typeof(AiCredentialsInitialized),
+        typeof(ProviderApiKeySet),
+        typeof(ProviderApiKeyRemoved),
+        typeof(ActiveProviderChanged)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -61,6 +65,13 @@ public static class MealplansFeature
 
         services.AddSingleton<IMealEventStore, MartenMealEventStore>();
         services.AddSingleton<IMealPlanEventStore, MartenMealPlanEventStore>();
+        services.AddSingleton<IAiCredentialEventStore, MartenAiCredentialEventStore>();
+
+        // Framework-provided at-rest encryption for stored provider API keys -- see
+        // DataProtectionApiKeyCipher. No new dependency: Data Protection ships as part of the
+        // ASP.NET Core shared framework.
+        services.AddDataProtection();
+        services.AddSingleton<IApiKeyCipher, DataProtectionApiKeyCipher>();
 
         return services;
     }
@@ -102,6 +113,13 @@ public static class MealplansFeature
         mealplans.MapUpdateMealDetailsForGroup();
         mealplans.MapArchiveMealForGroup();
         mealplans.MapGetGroupMealplanStatus();
+
+        // AI assistant: BYOK provider credentials (see docs/backend/plans -- AI-Assisted Mealplan
+        // Generation). Session/chat endpoints land in a later phase.
+        mealplans.MapListProviders();
+        mealplans.MapSetProviderApiKey();
+        mealplans.MapRemoveProviderApiKey();
+        mealplans.MapSetActiveProvider();
 
         return endpoints;
     }

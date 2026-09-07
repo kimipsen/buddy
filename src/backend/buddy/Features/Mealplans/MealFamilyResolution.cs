@@ -64,4 +64,22 @@ public static class MealFamilyResolution
 
         return null;
     }
+
+    // An AiProviderCredential is likewise a family-wide singleton -- same "first index row found"
+    // resolution as MealPlan, see AiAssistant/MartenAiCredentialEventStore.
+    public static async Task<AiCredentialId?> ResolveFamilyAiCredentialIdAsync(
+        UserId childId, IGuardianLinkEventStore guardians, IAiCredentialEventStore aiCredentials, CancellationToken cancellationToken)
+    {
+        var family = await ResolveFamilyAsync(childId, guardians, cancellationToken);
+
+        foreach (var member in family)
+        {
+            if (await aiCredentials.FindIdForChildAsync(member, cancellationToken) is { } id)
+            {
+                return id;
+            }
+        }
+
+        return null;
+    }
 }
