@@ -29,9 +29,7 @@
 			"extensions": [
 				"SonarSource.sonarlint-vscode",
 				"cweijan.vscode-redis-client",
-				"humao.rest-client",
-				"Angular.ng-template",
-				"openai.chatgpt"
+				"humao.rest-client"
 			]
 		}
 	},
