@@ -32,7 +32,15 @@ public static class MealplansFeature
         typeof(AiCredentialsInitialized),
         typeof(ProviderApiKeySet),
         typeof(ProviderApiKeyRemoved),
-        typeof(ActiveProviderChanged)
+        typeof(ActiveProviderChanged),
+        typeof(AiSessionStarted),
+        typeof(AiUserMessageSent),
+        typeof(AiToolInvocationRecorded),
+        typeof(AiDraftAssignmentSet),
+        typeof(AiDraftAssignmentCleared),
+        typeof(AiAssistantMessageRecorded),
+        typeof(AiSessionApplied),
+        typeof(AiSessionDiscarded)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -66,12 +74,23 @@ public static class MealplansFeature
         services.AddSingleton<IMealEventStore, MartenMealEventStore>();
         services.AddSingleton<IMealPlanEventStore, MartenMealPlanEventStore>();
         services.AddSingleton<IAiCredentialEventStore, MartenAiCredentialEventStore>();
+        services.AddSingleton<IAiSessionEventStore, MartenAiSessionEventStore>();
 
         // Framework-provided at-rest encryption for stored provider API keys -- see
         // DataProtectionApiKeyCipher. No new dependency: Data Protection ships as part of the
         // ASP.NET Core shared framework.
         services.AddDataProtection();
         services.AddSingleton<IApiKeyCipher, DataProtectionApiKeyCipher>();
+
+        services.Configure<AiAssistantModelOptions>(configuration.GetSection(AiAssistantModelOptions.SectionName));
+
+        // Each is a typed HttpClient (see AddHttpClient<TClient>()'s own transient lifetime), so
+        // AiProviderRegistry -- which holds all three -- stays transient too rather than becoming
+        // a singleton captive dependency.
+        services.AddHttpClient<AnthropicChatClient>(client => client.BaseAddress = new Uri("https://api.anthropic.com/"));
+        services.AddHttpClient<OpenAiChatClient>(client => client.BaseAddress = new Uri("https://api.openai.com/"));
+        services.AddHttpClient<GeminiChatClient>(client => client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
+        services.AddTransient<IAiProviderRegistry, AiProviderRegistry>();
 
         return services;
     }
@@ -114,12 +133,19 @@ public static class MealplansFeature
         mealplans.MapArchiveMealForGroup();
         mealplans.MapGetGroupMealplanStatus();
 
-        // AI assistant: BYOK provider credentials (see docs/backend/plans -- AI-Assisted Mealplan
-        // Generation). Session/chat endpoints land in a later phase.
+        // AI assistant: BYOK provider credentials + the chat/tool-calling session loop (see
+        // docs/backend/plans -- AI-Assisted Mealplan Generation). OpenAi/Gemini and the calendar
+        // tool land in later phases.
         mealplans.MapListProviders();
         mealplans.MapSetProviderApiKey();
         mealplans.MapRemoveProviderApiKey();
         mealplans.MapSetActiveProvider();
+        mealplans.MapTestProviderConnection();
+        mealplans.MapGetCurrentAiSession();
+        mealplans.MapStartAiSession();
+        mealplans.MapSendAiSessionMessage();
+        mealplans.MapApplyAiSessionDraft();
+        mealplans.MapDiscardAiSession();
 
         return endpoints;
     }

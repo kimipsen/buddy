@@ -59,5 +59,51 @@ export const mealplan = {
   picker: {
     notPlanned: 'Ikke planlagt',
     noMatches: 'Ingen måltider matcher.'
+  },
+  aiAssistant: {
+    entryButton: 'Planlæg med AI',
+    eyebrow: 'AI-madplansassistent',
+    title: 'Chat med din assistent for at lave et udkast til en plan.',
+    backToMealplan: 'Tilbage til madplan',
+    loading: 'Indlæser…',
+    noChildren: 'Tilknyt et barn under Indstillinger, før du kan bruge AI-assistenten.',
+    noProviderConfigured: 'Tilføj en API-nøgle til en AI-udbyder under Indstillinger, før du starter en session.',
+    goToSettings: 'Gå til Indstillinger',
+    loadError: 'Kunne ikke indlæse AI-assistenten.',
+    start: {
+      title: 'Start en ny session',
+      fromLabel: 'Fra',
+      toLabel: 'Til',
+      slotsLabel: 'Måltider der skal planlægges',
+      notesPlaceholder: 'Andet du vil nævne? (valgfrit)',
+      startButton: 'Start planlægning',
+      starting: 'Starter…',
+      startError: 'Kunne ikke starte en session. Tjek at en udbyder er konfigureret.',
+      noSlotsSelected: 'Vælg mindst ét måltid.'
+    },
+    session: {
+      statusDrafting: 'Udkast',
+      statusApplied: 'Tilføjet til din madplan',
+      statusDiscarded: 'Kasseret',
+      startNewButton: 'Start en ny session',
+      transcriptEmpty: 'Sig hej for at komme i gang — fortæl assistenten, hvad du leder efter.',
+      you: 'Dig',
+      assistant: 'Assistent',
+      messagePlaceholder: 'Skriv en besked…',
+      sendButton: 'Send',
+      sending: 'Tænker…',
+      sendError: 'Kunne ikke sende beskeden. Prøv igen.',
+      draftTitle: 'Udkast til plan',
+      draftEmpty: 'Intet foreslået endnu.',
+      applyButton: 'Tilføj til min madplan',
+      applying: 'Tilføjer…',
+      applyError: 'Kunne ikke tilføje dette udkast.',
+      discardButton: 'Kassér',
+      discarding: 'Kasserer…',
+      discardError: 'Kunne ikke kassere denne session.',
+      discardConfirmPrompt: 'Kassér denne session? Dette kan ikke fortrydes.',
+      discardConfirmButton: 'Bekræft',
+      discardCancelButton: 'Annuller'
+    }
   }
 };

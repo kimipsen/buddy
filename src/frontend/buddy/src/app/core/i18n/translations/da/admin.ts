@@ -176,6 +176,38 @@ export const admin = {
       revokeError: 'Kunne ikke tilbagekalde dette link.'
     }
   },
+  aiProviders: {
+    title: 'AI-madplansassistent',
+    description: 'Tilføj din egen API-nøgle til en AI-udbyder for at lade assistenten hjælpe med at lave en madplan ud fra din families måltider og bedømmelser.',
+    loading: 'Indlæser udbydere…',
+    noChildren: 'Tilknyt et barn under Indstillinger, før du kan konfigurere en AI-udbyder.',
+    loadError: 'Kunne ikke indlæse AI-udbyderindstillinger.',
+    activeBadge: 'Aktiv',
+    makeActiveButton: 'Gør aktiv',
+    activeError: 'Kunne ikke skifte den aktive udbyder.',
+    testButton: 'Test forbindelse',
+    testing: 'Tester…',
+    testSuccess: 'Forbindelsen lykkedes.',
+    testFailure: 'Forbindelsen mislykkedes.',
+    addButton: 'Tilføj nøgle',
+    replaceButton: 'Udskift nøgle',
+    hideButton: 'Luk',
+    apiKeyPlaceholder: 'API-nøgle',
+    saveButton: 'Gem',
+    saveError: 'Kunne ikke gemme denne API-nøgle.',
+    remove: {
+      button: 'Fjern',
+      confirmPrompt: 'Fjern denne API-nøgle?',
+      confirmButton: 'Bekræft',
+      cancelButton: 'Annuller',
+      error: 'Kunne ikke fjerne denne API-nøgle.'
+    },
+    names: {
+      anthropic: 'Anthropic (Claude)',
+      openAi: 'OpenAI (ChatGPT)',
+      gemini: 'Google (Gemini)'
+    }
+  },
   deleteAccount: {
     title: 'Faresone',
     description: 'Sletning af din konto fjerner din adgang permanent. Dette kan ikke fortrydes.',

@@ -1,0 +1,140 @@
+<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+  <h3 class="mb-1 text-lg font-semibold tracking-normal">{{ 'admin.aiProviders.title' | translate }}</h3>
+  <p class="mb-5 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.aiProviders.description' | translate }}</p>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.aiProviders.loading' | translate }}</p>
+  } @else if (!hasChildren()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.aiProviders.noChildren' | translate }}</p>
+  } @else if (error(); as message) {
+    <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+  } @else {
+    <ul class="space-y-3">
+      @for (provider of providerList; track provider) {
+        <li class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-sm font-medium">
+              {{ providerLabelKeys[provider] | translate }}
+              @if (activeProvider() === provider) {
+                <span class="ml-2 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  {{ 'admin.aiProviders.activeBadge' | translate }}
+                </span>
+              }
+            </span>
+
+            @if (confirmingRemoveProvider() === provider) {
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400">{{ 'admin.aiProviders.remove.confirmPrompt' | translate }}</span>
+                <button
+                  type="button"
+                  class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                  [disabled]="removing()"
+                  (click)="confirmRemove(provider)"
+                >
+                  {{ 'admin.aiProviders.remove.confirmButton' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                  [disabled]="removing()"
+                  (click)="cancelRemove()"
+                >
+                  {{ 'admin.aiProviders.remove.cancelButton' | translate }}
+                </button>
+              </div>
+            } @else {
+              <div class="flex flex-wrap items-center gap-3">
+                @if (isConfigured(provider)) {
+                  <span class="font-mono text-xs text-slate-500 dark:text-slate-400">••••{{ entryFor(provider)?.last4 }}</span>
+
+                  @if (activeProvider() !== provider) {
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
+                      [disabled]="settingActiveProvider() === provider"
+                      (click)="makeActive(provider)"
+                    >
+                      {{ 'admin.aiProviders.makeActiveButton' | translate }}
+                    </button>
+                  }
+
+                  <button
+                    type="button"
+                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
+                    [disabled]="testingProvider() === provider"
+                    (click)="testConnection(provider)"
+                  >
+                    {{ (testingProvider() === provider ? 'admin.aiProviders.testing' : 'admin.aiProviders.testButton') | translate }}
+                  </button>
+
+                  <button type="button" class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300" (click)="startEdit(provider)">
+                    {{ (editingProvider() === provider ? 'admin.aiProviders.hideButton' : 'admin.aiProviders.replaceButton') | translate }}
+                  </button>
+
+                  <button type="button" class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400" (click)="requestRemove(provider)">
+                    {{ 'admin.aiProviders.remove.button' | translate }}
+                  </button>
+                } @else {
+                  <button type="button" class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300" (click)="startEdit(provider)">
+                    {{ (editingProvider() === provider ? 'admin.aiProviders.hideButton' : 'admin.aiProviders.addButton') | translate }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          @if (testResults().get(provider); as result) {
+            <p
+              class="mt-2 text-xs"
+              [class.text-emerald-700]="result.isSuccessful"
+              [class.dark:text-emerald-400]="result.isSuccessful"
+              [class.text-red-600]="!result.isSuccessful"
+              [class.dark:text-red-400]="!result.isSuccessful"
+            >
+              {{ (result.isSuccessful ? 'admin.aiProviders.testSuccess' : 'admin.aiProviders.testFailure') | translate }}
+              @if (!result.isSuccessful && result.errorMessage) {
+                — {{ result.errorMessage }}
+              }
+            </p>
+          }
+
+          @if (editingProvider() === provider) {
+            <div class="mt-3 border-t border-slate-200 dark:border-slate-800 pt-3">
+              <form class="grid gap-3 sm:grid-cols-[1fr_auto]" (ngSubmit)="saveKey(provider)">
+                <label class="sr-only" [attr.for]="'apiKey-' + provider">{{ 'admin.aiProviders.apiKeyPlaceholder' | translate }}</label>
+                <input
+                  type="password"
+                  autocomplete="off"
+                  [attr.id]="'apiKey-' + provider"
+                  name="apiKey"
+                  placeholder="{{ 'admin.aiProviders.apiKeyPlaceholder' | translate }}"
+                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                  [ngModel]="apiKeyInput()"
+                  (ngModelChange)="apiKeyInput.set($event)"
+                />
+                <button
+                  type="submit"
+                  class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                  [disabled]="saving() || !apiKeyInput().trim()"
+                >
+                  {{ 'admin.aiProviders.saveButton' | translate }}
+                </button>
+              </form>
+
+              @if (saveError(); as message) {
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (removeError(); as message) {
+      <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    }
+    @if (activeError(); as message) {
+      <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    }
+  }
+</section>

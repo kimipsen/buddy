@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { GuardianAdmin } from './admin/admin';
 import { GuardianCalendar } from './calendar/calendar';
 import { GuardianDashboard } from './dashboard';
+import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
 import { GuardianMealplan } from './mealplan/mealplan';
 import { GuardianMedicine } from './medicine/medicine';
 import { GuardianPickup } from './pickup/pickup';
@@ -17,6 +18,7 @@ export const GUARDIAN_ROUTES: Routes = [
     children: [
       { path: '', component: GuardianDashboard },
       { path: 'mealplan', component: GuardianMealplan },
+      { path: 'mealplan/ai-assistant', component: MealplanAiAssistant },
       { path: 'medicine', component: GuardianMedicine },
       { path: 'progress', component: GuardianProgress },
       { path: 'pickup', component: GuardianPickup },

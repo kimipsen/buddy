@@ -176,6 +176,38 @@ export const admin = {
       revokeError: 'Unable to revoke this link.'
     }
   },
+  aiProviders: {
+    title: 'AI mealplan assistant',
+    description: 'Add your own API key for an AI provider to let the assistant help draft a meal plan from your family\'s meals and ratings.',
+    loading: 'Loading providers…',
+    noChildren: 'Link a child from Settings before configuring an AI provider.',
+    loadError: 'Unable to load AI provider settings.',
+    activeBadge: 'Active',
+    makeActiveButton: 'Make active',
+    activeError: 'Unable to switch the active provider.',
+    testButton: 'Test connection',
+    testing: 'Testing…',
+    testSuccess: 'Connection succeeded.',
+    testFailure: 'Connection failed.',
+    addButton: 'Add key',
+    replaceButton: 'Replace key',
+    hideButton: 'Close',
+    apiKeyPlaceholder: 'API key',
+    saveButton: 'Save',
+    saveError: 'Unable to save this API key.',
+    remove: {
+      button: 'Remove',
+      confirmPrompt: 'Remove this API key?',
+      confirmButton: 'Confirm',
+      cancelButton: 'Cancel',
+      error: 'Unable to remove this API key.'
+    },
+    names: {
+      anthropic: 'Anthropic (Claude)',
+      openAi: 'OpenAI (ChatGPT)',
+      gemini: 'Google (Gemini)'
+    }
+  },
   deleteAccount: {
     title: 'Danger zone',
     description: 'Deleting your account removes your access permanently. This cannot be undone.',

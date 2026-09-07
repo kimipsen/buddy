@@ -59,5 +59,51 @@ export const mealplan = {
   picker: {
     notPlanned: 'Not planned',
     noMatches: 'No meals match.'
+  },
+  aiAssistant: {
+    entryButton: 'Plan with AI',
+    eyebrow: 'AI mealplan assistant',
+    title: 'Chat with your assistant to draft a plan.',
+    backToMealplan: 'Back to meal plan',
+    loading: 'Loading…',
+    noChildren: 'Link a child from Settings before using the AI assistant.',
+    noProviderConfigured: 'Add an AI provider API key in Settings before starting a session.',
+    goToSettings: 'Go to Settings',
+    loadError: 'Unable to load the AI assistant.',
+    start: {
+      title: 'Start a new session',
+      fromLabel: 'From',
+      toLabel: 'To',
+      slotsLabel: 'Meal slots to plan',
+      notesPlaceholder: "Anything else to mention? (optional)",
+      startButton: 'Start planning',
+      starting: 'Starting…',
+      startError: 'Unable to start a session. Check that a provider is configured.',
+      noSlotsSelected: 'Choose at least one meal slot.'
+    },
+    session: {
+      statusDrafting: 'Drafting',
+      statusApplied: 'Applied to your meal plan',
+      statusDiscarded: 'Discarded',
+      startNewButton: 'Start a new session',
+      transcriptEmpty: "Say hello to get started — tell the assistant what you're looking for.",
+      you: 'You',
+      assistant: 'Assistant',
+      messagePlaceholder: 'Type a message…',
+      sendButton: 'Send',
+      sending: 'Thinking…',
+      sendError: 'Unable to send that message. Please try again.',
+      draftTitle: 'Draft plan',
+      draftEmpty: 'Nothing proposed yet.',
+      applyButton: 'Apply to my meal plan',
+      applying: 'Applying…',
+      applyError: 'Unable to apply this draft.',
+      discardButton: 'Discard',
+      discarding: 'Discarding…',
+      discardError: 'Unable to discard this session.',
+      discardConfirmPrompt: 'Discard this session? This cannot be undone.',
+      discardConfirmButton: 'Confirm',
+      discardCancelButton: 'Cancel'
+    }
   }
 };

@@ -6,9 +6,17 @@
     {{ 'mealplan.backToDashboard' | translate }}
   </a>
 
-  <div class="mb-8">
-    <p class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">{{ 'mealplan.eyebrow' | translate }}</p>
-    <h2 class="mt-2 text-3xl font-semibold tracking-normal">{{ 'mealplan.title' | translate }}</h2>
+  <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">{{ 'mealplan.eyebrow' | translate }}</p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">{{ 'mealplan.title' | translate }}</h2>
+    </div>
+    <a
+      routerLink="/guardian/mealplan/ai-assistant"
+      class="inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+    >
+      {{ 'mealplan.aiAssistant.entryButton' | translate }}
+    </a>
   </div>
 
   @if (loading()) {

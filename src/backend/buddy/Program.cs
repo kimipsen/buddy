@@ -24,6 +24,10 @@ builder.Host.UseWolverine(opts =>
     // into generated constructor code, so it needs the explicit service-location opt-in below
     // (the rest of each handler's dependencies still get the faster constructor-inlined codegen).
     opts.CodeGeneration.AlwaysUseServiceLocationFor<IKeycloakAdminClient>();
+
+    // Same reasoning as above: IAiProviderRegistry ultimately holds a typed HttpClient
+    // (AnthropicChatClient), which Wolverine's constructor-codegen can't inline either.
+    opts.CodeGeneration.AlwaysUseServiceLocationFor<IAiProviderRegistry>();
 });
 
 // Add services to the container.
