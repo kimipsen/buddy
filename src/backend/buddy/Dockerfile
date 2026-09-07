@@ -15,7 +15,9 @@ RUN dotnet publish buddy/buddy.csproj -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/nightly/aspnet:11.0-preview AS runtime
 
-RUN addgroup -S aspnet && adduser -S aspnet -G aspnet
+RUN if ! id -u aspnet >/dev/null 2>&1; then \
+			addgroup -S aspnet && adduser -S aspnet -G aspnet; \
+		fi
 
 WORKDIR /app
 COPY --from=build /app .

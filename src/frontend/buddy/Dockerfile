@@ -26,7 +26,9 @@ RUN node -e " \
 
 FROM caddy:2-alpine AS runtime
 
-RUN addgroup -S caddy && adduser -S -G caddy caddy
+RUN if ! id -u caddy >/dev/null 2>&1; then \
+      addgroup -S caddy && adduser -S -G caddy caddy; \
+    fi
 
 COPY --from=build /app/dist/buddy/browser /usr/share/caddy
 COPY Caddyfile /etc/caddy/Caddyfile
