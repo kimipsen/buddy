@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { AuthService } from '../../../core/auth.service';
 import { CalendarItemKind, CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
@@ -15,6 +14,7 @@ import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { ProgressBadge } from '../../../shared/progress-badge/progress-badge';
+import { ChildMenu } from './child-menu/child-menu';
 
 const EVENT_KIND: CalendarItemKind = 0;
 const TASK_KIND: CalendarItemKind = 1;
@@ -53,11 +53,10 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
 
 @Component({
   selector: 'app-child-home',
-  imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge, UserDatePipe],
+  imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge, UserDatePipe, ChildMenu],
   templateUrl: './home.html'
 })
 export class ChildHome implements OnInit, OnDestroy {
-  private readonly auth = inject(AuthService);
   private readonly guardians = inject(GuardiansService);
   private readonly pickups = inject(PickupsService);
   private readonly users = inject(UsersService);
@@ -155,10 +154,6 @@ export class ChildHome implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.nowIntervalId);
-  }
-
-  protected logout(): void {
-    this.auth.logout();
   }
 
   protected assigneeName(occurrence: PickupOccurrence): string | null {

@@ -12,6 +12,15 @@ export const child = {
     tasksTitle: 'Opgaver i dag',
     eventsTitle: 'Begivenheder i dag',
     loadError: 'Der gik noget galt. Prøv igen om lidt.',
+    menu: {
+      openLabel: 'Åbn menu'
+    },
+    theme: {
+      label: 'Tema',
+      light: 'Lyst',
+      dark: 'Mørkt',
+      system: 'System'
+    },
     medicine: {
       markTaken: 'Taget',
       skip: 'Spring over',

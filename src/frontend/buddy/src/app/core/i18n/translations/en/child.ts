@@ -12,6 +12,15 @@ export const child = {
     tasksTitle: 'Tasks today',
     eventsTitle: 'Events today',
     loadError: 'Something went wrong. Try again in a bit.',
+    menu: {
+      openLabel: 'Open menu'
+    },
+    theme: {
+      label: 'Theme',
+      light: 'Light',
+      dark: 'Dark',
+      system: 'System'
+    },
     medicine: {
       markTaken: 'Taken',
       skip: 'Skip',

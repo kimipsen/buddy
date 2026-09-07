@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AuthService } from '../../../core/auth.service';
 import { CalendarOccurrence, CalendarsService, TaskCompletion } from '../../../core/calendars.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
@@ -43,7 +42,6 @@ describe('ChildHome', () => {
   }
 
   interface Stubs {
-    auth?: Partial<AuthService>;
     guardians?: Partial<GuardiansService>;
     pickups?: Partial<PickupsService>;
     users?: Partial<UsersService>;
@@ -54,7 +52,6 @@ describe('ChildHome', () => {
   }
 
   async function setup(stubs: Stubs = {}) {
-    const authStub: Partial<AuthService> = { logout: vi.fn(), ...stubs.auth };
     const guardiansStub: Partial<GuardiansService> = {
       listMyGuardians: vi.fn(async () => []),
       listMySiblings: vi.fn(async () => []),
@@ -90,7 +87,6 @@ describe('ChildHome', () => {
       imports: [ChildHome],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: authStub },
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: PickupsService, useValue: pickupsStub },
         { provide: UsersService, useValue: usersStub },
@@ -105,7 +101,6 @@ describe('ChildHome', () => {
 
     return {
       fixture,
-      auth: authStub,
       guardians: guardiansStub,
       pickups: pickupsStub,
       users: usersStub,
@@ -155,16 +150,6 @@ describe('ChildHome', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
-  });
-
-  it('signs the child out when the sign out button is clicked', async () => {
-    const { fixture, auth } = await setup();
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    findButtonByText(compiled, 'Sign out')?.click();
-
-    expect(auth.logout).toHaveBeenCalled();
   });
 
   it('renders today\'s guardians once loaded', async () => {
