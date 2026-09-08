@@ -17,6 +17,22 @@ export const mealplan = {
     shareError: 'Kunne ikke dele madplanen med den gruppe.',
     unshareError: 'Kunne ikke stoppe deling af madplanen.'
   },
+  ical: {
+    title: 'Kalenderabonnement',
+    description: 'Abonner på denne madplan fra en kalenderapp med et privat link.',
+    loading: 'Indlæser abonnementslinks…',
+    empty: 'Ingen abonnementslinks endnu.',
+    issuedOn: 'Udstedt',
+    createButton: 'Opret abonnementslink',
+    creating: 'Opretter…',
+    createError: 'Kunne ikke oprette et abonnementslink.',
+    revokeButton: 'Tilbagekald',
+    revokeError: 'Kunne ikke tilbagekalde det abonnementslink.',
+    loadError: 'Kunne ikke indlæse abonnementslinks.',
+    newUrlHint: 'Kopiér dette link til din kalenderapp nu -- det vises ikke igen.',
+    copyButton: 'Kopiér link',
+    copiedButton: 'Kopieret!'
+  },
   manageMeals: {
     title: 'Måltider',
     scopeLabel: 'Redigerer måltider for:',

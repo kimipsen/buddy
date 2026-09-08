@@ -17,6 +17,22 @@ export const mealplan = {
     shareError: 'Unable to share the meal plan with that group.',
     unshareError: 'Unable to stop sharing the meal plan.'
   },
+  ical: {
+    title: 'Calendar subscription',
+    description: 'Subscribe to this meal plan from a calendar app using a private link.',
+    loading: 'Loading subscription links…',
+    empty: 'No subscription links yet.',
+    issuedOn: 'Issued',
+    createButton: 'Create subscription link',
+    creating: 'Creating…',
+    createError: 'Unable to create a subscription link.',
+    revokeButton: 'Revoke',
+    revokeError: 'Unable to revoke that subscription link.',
+    loadError: 'Unable to load subscription links.',
+    newUrlHint: 'Copy this link into your calendar app now -- it will not be shown again.',
+    copyButton: 'Copy link',
+    copiedButton: 'Copied!'
+  },
   manageMeals: {
     title: 'Meals',
     scopeLabel: 'Editing meals for:',

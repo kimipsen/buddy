@@ -71,6 +71,18 @@ export interface GroupMealplanStatus {
   hasSharedPlan: boolean;
 }
 
+export interface MealplanIcalTokenSummary {
+  tokenId: string;
+  issuedAt: string;
+}
+
+// Returned exactly once, at creation -- the plaintext token is never retrievable again after this.
+export interface IssuedMealplanIcalToken {
+  tokenId: string;
+  token: string;
+  subscriptionPath: string;
+}
+
 export interface MealDetails {
   name: string;
   description?: string | null;
@@ -163,5 +175,32 @@ export class MealplansService {
 
   getGroupMealplanStatus(groupId: string): Promise<GroupMealplanStatus> {
     return firstValueFrom(this.http.get<GroupMealplanStatus>(`${this.runtimeConfig.apiBaseUrl}/mealplans/groups/${groupId}/status`));
+  }
+
+  // iCal subscription tokens are always a family-side action (MealplanAuthorization.CheckManage
+  // on the childId, same gate as sharing) -- there's no group-scope equivalent, since a group
+  // scope carries no childId for this route to key off.
+  listIcalTokens(childId: string): Promise<MealplanIcalTokenSummary[]> {
+    return firstValueFrom(
+      this.http.get<MealplanIcalTokenSummary[]>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens`)
+    );
+  }
+
+  createIcalToken(childId: string): Promise<IssuedMealplanIcalToken> {
+    return firstValueFrom(
+      postIdempotent<IssuedMealplanIcalToken>(this.http, `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens`, {})
+    );
+  }
+
+  revokeIcalToken(childId: string, tokenId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens/${tokenId}`)
+    );
+  }
+
+  // subscriptionPath is relative (e.g. "/mealplans/{mealPlanId}/ical/{token}") -- prefix with
+  // apiBaseUrl to get the URL a calendar app can subscribe to.
+  icalFeedUrl(subscriptionPath: string): string {
+    return `${this.runtimeConfig.apiBaseUrl}${subscriptionPath}`;
   }
 }

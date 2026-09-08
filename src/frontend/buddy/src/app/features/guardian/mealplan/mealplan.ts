@@ -7,16 +7,18 @@ import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MealplanAccessTier, MealplanScope, MealplansService } from '../../../core/mealplans.service';
 import { AssignMealplan } from './assign-mealplan/assign-mealplan';
+import { MealplanIcal } from './mealplan-ical/mealplan-ical';
 import { ManageMeals } from './manage-meals/manage-meals';
 
 const MANAGE: MealplanAccessTier = 2;
 const VIEW: MealplanAccessTier = 3;
 
 type GroupMealplanScope = Extract<MealplanScope, { kind: 'group' }>;
+type FamilyMealplanScope = Extract<MealplanScope, { kind: 'family' }>;
 
 @Component({
   selector: 'app-guardian-mealplan',
-  imports: [RouterLink, FormsModule, ManageMeals, AssignMealplan, TranslatePipe],
+  imports: [RouterLink, FormsModule, ManageMeals, AssignMealplan, MealplanIcal, TranslatePipe],
   templateUrl: './mealplan.html'
 })
 export class GuardianMealplan implements OnInit {
@@ -29,7 +31,7 @@ export class GuardianMealplan implements OnInit {
   protected readonly hasChildren = signal(true);
 
   private familyChildId: string | null = null;
-  protected readonly familyScope = signal<MealplanScope | null>(null);
+  protected readonly familyScope = signal<FamilyMealplanScope | null>(null);
   // Groups the guardian's own GroupRole maps to View or Manage tier for via
   // MealplanPermissionPolicy, further filtered down to only those a plan has actually been
   // shared with (via GetGroupMealplanStatus) -- a qualifying-tier group with nothing shared yet
@@ -136,7 +138,7 @@ export class GuardianMealplan implements OnInit {
       this.hasChildren.set(true);
       this.familyChildId = children[0].id;
 
-      const familyScope: MealplanScope = { kind: 'family', childId: children[0].id };
+      const familyScope: FamilyMealplanScope = { kind: 'family', childId: children[0].id };
       this.familyScope.set(familyScope);
       this.selectedScope.set(familyScope);
 

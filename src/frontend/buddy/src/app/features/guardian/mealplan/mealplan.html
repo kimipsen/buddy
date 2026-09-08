@@ -107,6 +107,10 @@
       }
     </section>
 
+    @if (familyScope(); as family) {
+      <app-mealplan-ical class="mb-6 block" [childId]="family.childId" />
+    }
+
     @if (selectedScope(); as scope) {
       <div class="space-y-6">
         <app-manage-meals class="block" [scope]="scope" />
