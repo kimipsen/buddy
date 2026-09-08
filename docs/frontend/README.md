@@ -55,6 +55,7 @@ Current responsibilities:
 - create child accounts and capture the one-time temporary password
 - show today's events, tasks, and medicine doses
 - manage meals and assign them to shared meal-plan slots
+- create, list, and revoke private iCal subscription links for the family's meal plan
 - start a chat-based AI assistant session to draft meal-plan assignments over a
   date range, then apply or discard the resulting draft
 - manage pickup and drop-off assignments for linked children
@@ -126,7 +127,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   calendar items and task completion
 - `GroupsService` manages group membership, invitations, and sharing policies
 - `GuardiansService` calls the backend guardian endpoints
-- `MealplansService` calls meal-library, meal-plan, rating, and group-sharing endpoints
+- `MealplansService` calls meal-library, meal-plan, rating, group-sharing, and iCal
+  subscription-token endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
 - `TaskLibraryService` manages per-child task templates and subtasks, and backs the
@@ -198,6 +200,7 @@ The frontend is an actively developed product shell with working domain workflow
 - email verification and invitation return flows
 - English and Danish localization
 - guardian meal planning, meal ratings, and group-shared meal-plan access
+- guardian-facing private iCal subscription links for the family's meal plan
 - a guardian-facing chat-based AI assistant that drafts meal-plan assignments
   over a date range and BYOK AI provider settings management in the admin area
 - medicine schedule management and today's dose views
