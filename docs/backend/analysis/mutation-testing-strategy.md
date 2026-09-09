@@ -30,18 +30,21 @@ Stryker from. This does mean mutation runs pay the same cost the integration sui
 
 ## Configuration (`buddy.IntegrationTests/stryker-config.json`)
 
-- `project` / `test-projects` — pins Stryker to `buddy.csproj` mutated, tested by
-  `buddy.IntegrationTests.csproj`, rather than relying on solution-wide auto-detection.
-- `concurrency: 1` — the single biggest tuning decision. `BuddyApiFixture` starts one
+- `solution: "backend.slnx"` — Stryker resolves the project under test and the
+  `buddy.IntegrationTests` test project from the solution instead of the explicit `project` /
+  `test-projects` pins used previously (both are now `null`/empty).
+- `concurrency: 8` — raised from the previous `1`. `BuddyApiFixture` starts one
   Postgres/Keycloak/mailpit trio and shares it across the whole test run *within one process*
-  (see the integration test doc). Stryker's concurrency setting spawns that many independent test
-  host processes in parallel, each of which would start its own trio of containers. Given the
-  Keycloak JVM's startup cost, running several of those concurrently is a resource trade worth
-  making deliberately, not defaulting into via Stryker's normal "one process per CPU core"
-  behavior. Raise it locally if you have the Docker headroom and want faster wall-clock time.
-- `mutate` — `**/*.cs` excluding `obj/`/`bin/`, i.e. all of `buddy`'s source. Nothing feature
-  specific is excluded by default.
-- `reporters` — `html` (browsable report under the output folder), `progress` and `cleartext` for
+  (see the integration test doc); Stryker's concurrency setting spawns that many independent test
+  host processes in parallel, each starting its own trio of containers. Adjust based on the
+  Docker headroom available in the environment running mutation testing.
+- `mutation-level: "Standard"`, `coverage-analysis: "perTest"` — Stryker's default mutation
+  breadth and per-test coverage capture, made explicit rather than left implicit.
+- `thresholds` — `high: 80`, `low: 60`, `break: 0`; a mutation score break threshold still isn't
+  enforced (`break: 0`) for the reason described under "Performance characteristics" below.
+- `mutate` — `**/*.cs` excluding `obj/`/`bin/`/`*.Designer.cs`/`*.g.cs`, i.e. all of `buddy`'s
+  source. Nothing feature specific is excluded by default.
+- `reporters` — `Progress`, `Html` (browsable report under the output folder), and `cleartext` for
   terminal feedback during a run.
 
 ## Running it
@@ -80,9 +83,11 @@ cost multiplies by mutant count, so:
   few real runs establish a baseline instead of guessing a number now.
 - 18 mutants scoped to one feature (`CreateChild`) took ~14.5 minutes end to end (~3.5 minutes for
   the coverage-capture dry run against the full 145-test suite, then ~11 minutes for the 18
-  mutants themselves) at `concurrency: 1`. Extrapolating linearly, an unscoped run across all of
-  `buddy`'s ~1500 mutants would take multiple hours — plan CI runs accordingly (e.g. overnight, or
-  scoped to the area of a specific PR) rather than expecting a quick turnaround.
+  mutants themselves) at `concurrency: 1` (the config now defaults to `concurrency: 8`; these
+  numbers predate that change and don't reflect the higher parallelism). Extrapolating linearly,
+  an unscoped run across all of `buddy`'s ~1500 mutants would take multiple hours — plan CI runs
+  accordingly (e.g. overnight, or scoped to the area of a specific PR) rather than expecting a
+  quick turnaround.
 
 ## Known issue: test discovery fails on the net11.0 preview SDK
 
