@@ -1,11 +1,60 @@
 {
   "stryker-config": {
-    "project": "buddy.csproj",
-    "test-projects": ["buddy.IntegrationTests.csproj"],
-    "reporters": ["html", "progress", "cleartext"],
+    "project-info": {
+      "name": "Buddy",
+      "module": "Backend",
+      "version": "1.0.0"
+    },
+    "concurrency": 8,
+    "mutation-level": "Standard",
+    "language-version": "latest",
+    "additional-timeout": 5000,
+    "mutate": [
+      "**/*.cs",
+      "!**/obj/**/*.cs",
+      "!**/bin/**/*.cs",
+      "!**/*.Designer.cs",
+      "!**/*.g.cs"
+    ],
+    "solution": "backend.slnx",
+    "configuration": null,
+    "target-framework": null,
+    "project": null,
+    "coverage-analysis": "perTest",
+    "disable-bail": false,
+    "disable-mix-mutants": false,
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    },
+    "verbosity": "info",
+    "reporters": [
+      "Progress",
+      "Html",
+      "cleartext"
+    ],
+    "since": {
+      "enabled": false,
+      "ignore-changes-in": [],
+      "target": "master"
+    },
+    "baseline": {
+      "enabled": false,
+      "provider": "disk",
+      "azure-fileshare-url": "",
+      "s3-bucket-name": "",
+      "s3-endpoint": "",
+      "s3-region": "",
+      "fallback-version": "master"
+    },
+    "dashboard-url": "https://dashboard.stryker-mutator.io",
+    "test-projects": [],
+    "test-case-filter": "",
+    "test-runner": null,
+    "ignore-mutations": [],
+    "ignore-methods": ["*Logger*", "ToString"],
     "report-file-name": "mutation-report",
-    "concurrency": 1,
-    "mutate": ["**/*.cs", "!**/obj/**/*.cs", "!**/bin/**/*.cs"],
-    "ignore-methods": ["*Logger*", "ToString"]
+    "break-on-initial-test-failure": false
   }
 }

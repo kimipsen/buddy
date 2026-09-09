@@ -6,10 +6,12 @@ meaningful — a test that calls an endpoint and only checks the status code wil
 while missing a broken response body. Mutation testing closes that gap: Stryker.NET rewrites
 small pieces of the production code (a `==` to `!=`, a boundary `<` to `<=`, a string literal to
 `""`) one at a time and reruns the test suite; a mutant that still passes ("survived") marks a
-spot the tests don't actually pin down. Status: implemented —
+spot the tests don't actually pin down. Status: implemented, currently blocked in this environment by an upstream Stryker.NET/.NET
+preview-SDK incompatibility —
 [`buddy.IntegrationTests/stryker-config.json`](../../../src/backend/buddy.IntegrationTests/stryker-config.json)
-exists and was smoke-tested against a real feature slice in this environment (see "Verification
-status").
+exists and was smoke-tested successfully against a real feature slice on 2026-08-22 (see
+"Verification status"), but `dotnet stryker` cannot currently discover tests at all; see "Known
+issue: test discovery fails on the net11.0 preview SDK" below.
 
 ## Why Stryker.NET
 
@@ -81,6 +83,50 @@ cost multiplies by mutant count, so:
   mutants themselves) at `concurrency: 1`. Extrapolating linearly, an unscoped run across all of
   `buddy`'s ~1500 mutants would take multiple hours — plan CI runs accordingly (e.g. overnight, or
   scoped to the area of a specific PR) rather than expecting a quick turnaround.
+
+## Known issue: test discovery fails on the net11.0 preview SDK
+
+As of 2026-09-09, `dotnet stryker` (run either via `task test:mutation:backend` or directly from
+`buddy.IntegrationTests`) fails immediately at test discovery, before any mutant runs:
+
+```
+[ERR] TestDiscoverer: Test discovery has been aborted!
+[WRN] Project '.../buddy.IntegrationTests.csproj' did not report any test. This may be because
+the test adapter package, xunit.runner.visualstudio, failed to deploy or run. ...
+Stryker.NET failed to mutate your project.
+No test result reported. Make sure your test project contains test and is compatible with VsTest.
+```
+
+With `--verbosity trace`, the underlying exception is:
+
+```
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.ProxyDiscoveryManager.InitializeDiscovery(...)
+```
+
+**Root cause:** the backend targets `net11.0` (`Directory.Build.props`) on the `.NET 11` preview
+SDK (`11.0.100-preview.7...`, unpinned by `global.json` so it floats to whatever preview build the
+environment has installed). Stryker.NET 4.16.0 (the latest release on NuGet as of this writing)
+embeds its own fixed copy of `Microsoft.TestPlatform.Portable` — a `net8.0` `vstest.console` —
+baked into the tool at build time, with no supported way to point it at a different/newer
+TestPlatform ([confirmed in a maintainer discussion](https://github.com/stryker-mutator/stryker-net/discussions/1962):
+Stryker can't yet use the SDK's own bundled vstest due to `TestPlatform.TranslationLayer`
+compatibility risk). That embedded net8.0 vstest can't reliably drive a testhost built for a newer
+preview TFM, which is the same class of failure Stryker has hit before on .NET 8 preview/RC SDKs
+([stryker-net#2741](https://github.com/stryker-mutator/stryker-net/issues/2741)).
+
+This is not a regression in this repo's test setup — `dotnet build backend.slnx` and
+`dotnet test buddy.IntegrationTests --list-tests` both work fine and list all 60 tests directly.
+It's specifically Stryker's bundled VSTest that can't talk to the net11.0 preview testhost. The
+Aug 22 verification run below presumably predates whatever preview SDK bump introduced this.
+
+Two alternate `--test-runner` values exist in 4.16.0 (`vstest`, the default, and `mtp` for
+Microsoft Testing Platform); `mtp` was tried and fails the same way, since `buddy.IntegrationTests`
+uses the classic `xunit.runner.visualstudio` VSTest adapter rather than an MTP-native test SDK
+(e.g. xunit.v3) — moving to that would be a separate, larger change.
+
+There's no local workaround. This is blocked on either Stryker.NET adding support for newer
+preview TFMs/SDKs, or the backend moving off a floating preview SDK to a pinned GA one.
 
 ## Verification status
 
