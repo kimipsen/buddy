@@ -493,6 +493,8 @@ appsettings.*.json
 # Task setup
 [Tt]askfile.yml
 [Tt]askfile.yaml
+.taskrc.yml
+.taskrc.yaml
 
 # Temporary content
 .temp/
