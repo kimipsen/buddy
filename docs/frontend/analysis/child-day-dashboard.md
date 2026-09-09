@@ -4,9 +4,8 @@ Status: Implemented
 
 The child home at `/child` is a focused view of today rather than a calendar to
 navigate. It combines planned meals, medicine doses, pickup/drop-off
-assignments, and tasks in separate sections, then shows the child's guardian
-and sibling relationships. This page preserves the design rationale and records
-how the shipped dashboard evolved from it.
+assignments, and tasks in separate sections. This page preserves the design
+rationale and records how the shipped dashboard evolved from it.
 
 ## Design outcome
 
@@ -30,8 +29,8 @@ loads today's domain data from existing services:
 - `MedicinesService.listDoses()` for today's dose occurrences;
 - `PickupsService.listSchedule()` for today's pickup/drop-off assignments;
 - `CalendarsService.listTodayOccurrences()`, split into tasks and events;
-- `GuardiansService.listMyGuardians()` and `listMySiblings()` for relationship
-  summaries and pickup assignee names.
+- `GuardiansService.listMyGuardians()` and `listMySiblings()` for pickup
+  assignee names (no separate guardians/siblings list is rendered).
 
 These requests do not require a child picker because the route always acts as
 the authenticated child. The sections maintain independent signals, while a
