@@ -2,19 +2,16 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Microsoft.Extensions.Options;
+
 namespace buddy.Features.Mealplans;
 
 // Raw HTTP against Anthropic's Messages API (no SDK dependency) -- deliberately symmetric with the
 // other providers' adapters, all behind IAiChatClient. The iterative tool-calling loop is not this
 // client's concern: SendAsync is a single round trip, one request in, one response out.
-public sealed class AnthropicChatClient(HttpClient httpClient) : IAiChatClient
+public sealed class AnthropicChatClient(HttpClient httpClient, IOptionsMonitor<AiAssistantModelOptions> options) : IAiChatClient
 {
     private const string ApiVersion = "2023-06-01";
-
-    // A cost/quality default for a consumer app, not the family's only option -- letting a family
-    // pick a model per provider is a frontend/catalog concern for a later phase (see the AI
-    // mealplan plan's build order).
-    private const string Model = "claude-sonnet-5";
 
     private const int MaxTokens = 2048;
 
@@ -26,7 +23,7 @@ public sealed class AnthropicChatClient(HttpClient httpClient) : IAiChatClient
     public async Task<AiChatCompletionResult> SendAsync(AiChatCompletionRequest request, CancellationToken cancellationToken)
     {
         var anthropicRequest = new AnthropicRequest(
-            Model,
+            options.CurrentValue.AnthropicModel,
             MaxTokens,
             request.SystemPrompt,
             BuildMessages(request.History),

@@ -11,4 +11,6 @@ public sealed class AiAssistantModelOptions
     public string OpenAiModel { get; init; } = "gpt-4.1";
 
     public string GeminiModel { get; init; } = "gemini-2.5-flash";
+
+    public string AnthropicModel { get; init; } = "claude-sonnet-5";
 }
