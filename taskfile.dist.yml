@@ -47,6 +47,25 @@ tasks:
     cmds:
       - npm test
 
+  test:mutation:
+    desc: Run all mutation tests (backend, then frontend)
+    cmds:
+      - task: test:mutation:backend
+      - task: test:mutation:frontend
+
+  test:mutation:backend:
+    desc: Run backend mutation tests (dotnet-stryker)
+    dir: src/backend/buddy.IntegrationTests
+    cmds:
+      - dotnet tool restore
+      - dotnet stryker
+
+  test:mutation:frontend:
+    desc: Run frontend mutation tests (Stryker)
+    dir: src/frontend/buddy
+    cmds:
+      - npm run test:mutation
+
   deploy:
     desc: Build and (re)start the production stack (deploy/docker-compose.prod.yml)
     dir: deploy
