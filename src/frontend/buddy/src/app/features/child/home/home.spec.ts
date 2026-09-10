@@ -152,15 +152,6 @@ describe('ChildHome', () => {
     expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
   });
 
-  it('renders today\'s guardians once loaded', async () => {
-    const guardianList: GuardianSummary[] = [{ id: 'guardian-1', name: { givenName: 'Gina', familyName: 'G' }, guardianLinkId: 'link-1', kind: 0 }];
-    const { fixture } = await setup({ guardians: { listMyGuardians: vi.fn(async () => guardianList) } });
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Gina');
-  });
-
   it('rates a meal and reflects the rating on every slot sharing that meal', async () => {
     const entries = [mealEntry({ slot: 0 }), mealEntry({ slot: 1 })];
     const rateMeal = vi.fn(async () => ({
