@@ -51,7 +51,7 @@ export class TaskPicker {
     return template ? `${template.icon} ${template.name}` : '';
   });
 
-  protected readonly filteredTemplates = computed(() => {
+  protected readonly filteredTemplates = computed((): TaskTemplate[] => {
     const query = this.query().trim().toLowerCase();
 
     if (!query) {

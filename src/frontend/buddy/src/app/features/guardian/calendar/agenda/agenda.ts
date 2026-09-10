@@ -195,7 +195,9 @@ export class CalendarAgenda implements OnInit {
   );
 
   protected readonly myCalendars = signal<CalendarSummary[]>([]);
-  protected readonly eligibleCalendars = computed(() => this.myCalendars().filter((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE));
+  protected readonly eligibleCalendars = computed<CalendarSummary[]>(() =>
+    this.myCalendars().filter((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE)
+  );
 
   protected readonly occurrences = signal<CalendarOccurrence[]>([]);
   protected readonly hiddenCalendarIds = signal<Set<string>>(new Set());

@@ -53,7 +53,7 @@ export class ManagePickups implements OnInit {
   protected readonly selectedChildId = signal<string | null>(null);
 
   protected readonly childGuardians = signal<GuardianSummary[]>([]);
-  protected readonly siblings = computed(() =>
+  protected readonly siblings = computed((): ChildSummary[] =>
     this.children().filter((child) => child.id !== this.selectedChildId())
   );
 

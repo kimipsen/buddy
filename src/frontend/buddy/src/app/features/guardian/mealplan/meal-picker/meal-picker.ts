@@ -32,7 +32,7 @@ export class MealPicker {
     return meal ? `${meal.icon} ${meal.name}` : '';
   });
 
-  protected readonly filteredMeals = computed(() => {
+  protected readonly filteredMeals = computed((): Meal[] => {
     const query = this.query().trim().toLowerCase();
 
     if (!query) {

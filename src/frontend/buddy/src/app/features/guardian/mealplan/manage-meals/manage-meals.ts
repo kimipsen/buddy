@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { MealplanAccessTier, MealplanScope, MealplansService } from '../../../../core/mealplans.service';
+import { Meal, MealplanAccessTier, MealplanScope, MealplansService } from '../../../../core/mealplans.service';
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
@@ -39,8 +39,8 @@ export class ManageMeals {
   protected readonly meals = computed(() => this.mealplans.meals().filter((meal) => !meal.isArchived));
 
   protected readonly currentPage = signal(0);
-  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.meals().length / PAGE_SIZE)));
-  protected readonly page = computed(() => Math.min(this.currentPage(), this.totalPages() - 1));
+  protected readonly totalPages = computed((): number => Math.max(1, Math.ceil(this.meals().length / PAGE_SIZE)));
+  protected readonly page = computed((): number => Math.min(this.currentPage(), this.totalPages() - 1));
   protected readonly pagedMeals = computed(() => {
     const start = this.page() * PAGE_SIZE;
     return this.meals().slice(start, start + PAGE_SIZE);
@@ -51,7 +51,7 @@ export class ManageMeals {
   // Non-blocking hint shown under the create form so guardians notice a near-duplicate before
   // submitting -- matches both directions (existing name contains the query, or vice versa) so
   // it still fires once the user has typed past an exact existing name (e.g. "Pizza night").
-  protected readonly similarMeals = computed(() => {
+  protected readonly similarMeals = computed((): Meal[] => {
     const query = this.newMealName().trim().toLowerCase();
 
     if (!query) {

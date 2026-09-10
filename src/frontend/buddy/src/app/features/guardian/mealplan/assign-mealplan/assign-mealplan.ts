@@ -5,7 +5,7 @@ import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
-import { MealPlanEntry, MealplanAccessTier, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
+import { Meal, MealPlanEntry, MealplanAccessTier, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
 import { MealPicker } from '../meal-picker/meal-picker';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
@@ -82,7 +82,7 @@ export class AssignMealplan implements OnInit {
 
   // Reads straight from the shared service state, so adding a meal in the meal library on the
   // same page shows up here immediately without a manual refetch.
-  protected readonly meals = computed(() => this.mealplans.meals().filter((meal) => !meal.isArchived));
+  protected readonly meals = computed<Meal[]>(() => this.mealplans.meals().filter((meal) => !meal.isArchived));
   protected readonly entriesByKey = signal<Partial<Record<string, MealPlanEntry>>>({});
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
