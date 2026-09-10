@@ -47,8 +47,10 @@ deploy/      Production Docker Compose and Caddy deployment
   test suites.
 - [Deployment](deploy/README.md) — production Docker Compose and Caddy setup.
 - [Agent packages](agents/README.md) — reusable coding and documentation skills.
-- [src/backend/buddy](src/backend/buddy) — the API implementation.
-- [src/frontend/buddy](src/frontend/buddy) — the Angular frontend.
+- [Backend app guide](src/backend/buddy/README.md) — running, configuring, and
+  laying out the API implementation.
+- [Frontend app guide](src/frontend/buddy/README.md) — running, configuring,
+  and laying out the Angular frontend.
 - [docs/README.md](docs/README.md) — the documentation landing page.
 
 ## Core concepts
@@ -138,6 +140,9 @@ service network expected by the checked-in development configuration.
 cd src/backend/buddy
 dotnet run
 ```
+
+  See the [backend app guide](src/backend/buddy/README.md) for configuration
+  details and project layout.
 
 4. In another terminal, install dependencies and start the frontend:
 
