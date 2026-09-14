@@ -74,3 +74,12 @@ tasks:
         msg: "deploy/.env not found — copy deploy/.env.example to deploy/.env and fill in real values first."
     cmds:
       - docker compose -f docker-compose.prod.yml up -d --build
+
+  deploy:azure:
+    desc: Deploy backend + frontend + Keycloak + Postgres to Azure Container Apps (deploy/azure/deploy.sh)
+    dir: deploy/azure
+    preconditions:
+      - sh: test -f .env
+        msg: "deploy/azure/.env not found — copy deploy/azure/.env.example to deploy/azure/.env and fill in real values first."
+    cmds:
+      - ./deploy.sh

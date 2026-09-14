@@ -51,6 +51,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.ShouldInclude = api => api.GroupName is null;
 });
+builder.Services.AddHealthChecks();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddIdempotencyFeature(builder.Configuration);
 builder.Services.AddEmail(builder.Configuration);
@@ -86,6 +87,8 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseIdempotencyKeys();
+
+app.MapHealthChecks("/health");
 
 app.MapUsersFeature();
 app.MapGuardiansFeature();

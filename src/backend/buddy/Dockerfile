@@ -7,16 +7,13 @@ FROM mcr.microsoft.com/dotnet/nightly/sdk:11.0-preview AS build
 WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
-COPY buddy/buddy.csproj buddy/
-RUN dotnet restore buddy/buddy.csproj
-
 COPY buddy/ buddy/
-RUN dotnet publish buddy/buddy.csproj -c Release -o /app --no-restore
+RUN dotnet publish buddy/buddy.csproj -c Release -o /app
 
 FROM mcr.microsoft.com/dotnet/nightly/aspnet:11.0-preview AS runtime
 
 RUN if ! id -u aspnet >/dev/null 2>&1; then \
-			addgroup -S aspnet && adduser -S aspnet -G aspnet; \
+			groupadd --system aspnet && useradd --system --gid aspnet aspnet; \
 		fi
 
 WORKDIR /app
