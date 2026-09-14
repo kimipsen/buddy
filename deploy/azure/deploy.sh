@@ -13,6 +13,8 @@
 
 set -euo pipefail
 
+command -v jq >/dev/null || { echo "jq is required (used to configure Keycloak's SMTP settings via its Admin REST API) - install it and rerun." >&2; exit 1; }
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
@@ -23,6 +25,20 @@ source "$SCRIPT_DIR/.env"
 : "${FRONTEND_CUSTOM_DOMAIN:=}"
 : "${API_CUSTOM_DOMAIN:=}"
 : "${KEYCLOAK_CUSTOM_DOMAIN:=}"
+
+# Optional - defaults let existing .env files keep working unmodified.
+: "${COMM_SERVICE_NAME:=buddy-comm}"
+: "${EMAIL_SERVICE_NAME:=buddy-email}"
+: "${COMM_DATA_LOCATION:=Europe}"
+: "${MAIL_SMTP_USERNAME:=buddy-smtp}"
+
+# Optional - set both if your account can't create Entra app registrations
+# itself (see "Mail" in README-azure.md) and someone with rights created one
+# for you instead. Blank means deploy.sh creates its own.
+: "${SMTP_APP_ID:=}"
+: "${SMTP_APP_SECRET:=}"
+
+SMTP_APP_NAME="$COMM_SERVICE_NAME-smtp"
 
 containerapp_exists() {
   az containerapp show --name "$1" --resource-group "$RESOURCE_GROUP" -o none 2>/dev/null
@@ -44,6 +60,28 @@ postgres_firewall_rule_exists() {
 postgres_db_exists() {
   az postgres flexible-server db show --resource-group "$RESOURCE_GROUP" \
     --server-name "$PG_SERVER_NAME" --name "$1" -o none 2>/dev/null
+}
+
+email_service_exists() {
+  az communication email show --name "$EMAIL_SERVICE_NAME" --resource-group "$RESOURCE_GROUP" -o none 2>/dev/null
+}
+
+email_domain_exists() {
+  az communication email domain show --domain-name AzureManagedDomain \
+    --email-service-name "$EMAIL_SERVICE_NAME" --resource-group "$RESOURCE_GROUP" -o none 2>/dev/null
+}
+
+communication_service_exists() {
+  az communication show --name "$COMM_SERVICE_NAME" --resource-group "$RESOURCE_GROUP" -o none 2>/dev/null
+}
+
+smtp_app_id() {
+  az ad app list --display-name "$SMTP_APP_NAME" --query "[0].appId" -o tsv 2>/dev/null
+}
+
+smtp_username_exists() {
+  az communication smtp-username show --comm-service-name "$COMM_SERVICE_NAME" \
+    --resource-group "$RESOURCE_GROUP" --smtp-username "$MAIL_SMTP_USERNAME" -o none 2>/dev/null
 }
 
 bind_custom_domain() {
@@ -69,12 +107,14 @@ WARN
   fi
 }
 
-echo "==> Registering resource providers and the containerapp CLI extension"
+echo "==> Registering resource providers and the containerapp/communication CLI extensions"
 az extension add --name containerapp --upgrade -o none -y
+az extension add --name communication --upgrade -o none -y
 az provider register --namespace Microsoft.App -o none
 az provider register --namespace Microsoft.OperationalInsights -o none
 az provider register --namespace Microsoft.DBforPostgreSQL -o none
 az provider register --namespace Microsoft.ContainerRegistry -o none
+az provider register --namespace Microsoft.Communication -o none
 
 echo "==> Creating resource group $RESOURCE_GROUP"
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION" -o none
@@ -252,6 +292,160 @@ fi
 
 bind_custom_domain keycloak "$KEYCLOAK_CUSTOM_DOMAIN" "$KEYCLOAK_FQDN"
 
+echo "==> Creating the Email Communication Service $EMAIL_SERVICE_NAME"
+if email_service_exists; then
+  echo "==> Email Communication Service $EMAIL_SERVICE_NAME already exists, skipping creation"
+else
+  az communication email create \
+    --name "$EMAIL_SERVICE_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --location "Global" \
+    --data-location "$COMM_DATA_LOCATION" \
+    -o none
+fi
+
+# Azure Managed Domain: a free, ready-to-send *.azurecomm.net domain with no DNS
+# verification step, at the cost of a fixed "DoNotReply" sender and a low sending
+# quota. Good enough to get real mail flowing; switch to a verified custom domain
+# (--domain-management CustomerManaged) later for your own sender address and
+# production-grade volume - see the Mail section in README-azure.md.
+echo "==> Creating the Azure managed email domain"
+if email_domain_exists; then
+  echo "==> Email domain already exists, skipping creation"
+else
+  az communication email domain create \
+    --domain-name AzureManagedDomain \
+    --email-service-name "$EMAIL_SERVICE_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --location "Global" \
+    --domain-management AzureManaged \
+    -o none
+fi
+
+EMAIL_DOMAIN_ID=$(az communication email domain show \
+  --domain-name AzureManagedDomain \
+  --email-service-name "$EMAIL_SERVICE_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query id -o tsv)
+
+MAIL_FROM_DOMAIN=$(az communication email domain show \
+  --domain-name AzureManagedDomain \
+  --email-service-name "$EMAIL_SERVICE_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query properties.mailFromSenderDomain -o tsv)
+
+echo "==> Creating the Communication Services resource $COMM_SERVICE_NAME"
+if communication_service_exists; then
+  echo "==> Communication Services resource $COMM_SERVICE_NAME already exists, skipping creation"
+  az communication update \
+    --name "$COMM_SERVICE_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --linked-domains "$EMAIL_DOMAIN_ID" \
+    -o none
+else
+  az communication create \
+    --name "$COMM_SERVICE_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --location "Global" \
+    --data-location "$COMM_DATA_LOCATION" \
+    --linked-domains "$EMAIL_DOMAIN_ID" \
+    -o none
+fi
+
+COMM_SERVICE_ID=$(az communication show --name "$COMM_SERVICE_NAME" --resource-group "$RESOURCE_GROUP" --query id -o tsv)
+
+# SMTP AUTH for Communication Services Email is backed by an Entra app + client
+# secret, not a static password - each credential-minting command below prints
+# its secret exactly once, so it only runs when there's no usable SMTP username
+# yet. A rerun after a mid-setup failure re-plugs into whichever step didn't
+# finish (existing app -> mint a fresh secret for it; existing SMTP username ->
+# skip entirely) rather than starting over or getting stuck.
+#
+# None of this is allowed to abort the deploy: creating an Entra app
+# registration needs a directory permission Contributor alone doesn't grant,
+# and plenty of org tenants don't hand that out by default. If it's missing,
+# everything below is skipped and the API/Keycloak just deploy without
+# outbound email - see the printed guidance and "Mail" in README-azure.md.
+MAIL_SMTP_PASSWORD=""
+if smtp_username_exists; then
+  echo "==> SMTP username $MAIL_SMTP_USERNAME already exists, skipping SMTP credential creation"
+elif [[ -n "$SMTP_APP_ID" && -n "$SMTP_APP_SECRET" ]]; then
+  echo "==> Using the SMTP_APP_ID from .env (created for you by someone with Entra app registration rights)"
+  MAIL_SMTP_PASSWORD="$SMTP_APP_SECRET"
+  SMTP_TENANT_ID=$(az account show --query tenantId -o tsv)
+else
+  echo "==> Creating the Entra app for SMTP AUTH"
+  EXISTING_SMTP_APP_ID=$(smtp_app_id)
+  if [[ -n "$EXISTING_SMTP_APP_ID" ]]; then
+    SMTP_APP_ID="$EXISTING_SMTP_APP_ID"
+    SMTP_TENANT_ID=$(az account show --query tenantId -o tsv)
+    if ! MAIL_SMTP_PASSWORD=$(az ad app credential reset --id "$SMTP_APP_ID" --query password -o tsv 2>/tmp/smtp-app-error); then
+      cat /tmp/smtp-app-error >&2
+      echo "!! Could not mint a new client secret for the existing $SMTP_APP_NAME Entra app - skipping SMTP setup for this run. See \"Mail\" in README-azure.md." >&2
+      MAIL_SMTP_PASSWORD=""
+    fi
+  elif ! SP_OUTPUT=$(az ad sp create-for-rbac \
+      --name "$SMTP_APP_NAME" \
+      --role "Communication and Email Service Owner" \
+      --scopes "$COMM_SERVICE_ID" \
+      --query "[appId, password, tenant]" -o tsv 2>/tmp/smtp-app-error); then
+    cat /tmp/smtp-app-error >&2
+    cat <<WARN >&2
+!! Could not create the Entra app registration needed for SMTP AUTH - your
+   account likely lacks permission to register applications in this tenant
+   (common in managed orgs). The rest of the deploy will continue without
+   outbound email. To finish this later, either:
+     - ask your Entra/Azure admin to grant you the "Application Developer"
+       Entra role (or enable "Users can register applications"), then rerun
+       ./deploy.sh, or
+     - ask them to run this and give you back the appId/password:
+         az ad sp create-for-rbac --name "$SMTP_APP_NAME" \\
+           --role "Communication and Email Service Owner" \\
+           --scopes "$COMM_SERVICE_ID"
+       then set SMTP_APP_ID / SMTP_APP_SECRET in .env to those values and
+       rerun ./deploy.sh.
+   See "Mail" in README-azure.md for details.
+WARN
+  else
+    IFS=$'\t' read -r SMTP_APP_ID MAIL_SMTP_PASSWORD SMTP_TENANT_ID <<<"$SP_OUTPUT"
+  fi
+fi
+
+# Whichever path above produced a password (existing username, .env override,
+# reset secret, or a freshly created app), turn it into the actual SMTP
+# username Keycloak/the API authenticate with. The role assignment behind a
+# freshly created app can take up to a couple of minutes to propagate, so
+# retry until smtp-username create sees it rather than failing immediately.
+if [[ -n "$MAIL_SMTP_PASSWORD" ]] && ! smtp_username_exists; then
+  echo "==> Creating the SMTP username (waiting for the role assignment to propagate if needed)"
+  for attempt in $(seq 1 10); do
+    if az communication smtp-username create \
+        --comm-service-name "$COMM_SERVICE_NAME" \
+        --resource-group "$RESOURCE_GROUP" \
+        --smtp-username "$MAIL_SMTP_USERNAME" \
+        --username "$MAIL_SMTP_USERNAME" \
+        --entra-application-id "$SMTP_APP_ID" \
+        --tenant-id "$SMTP_TENANT_ID" \
+        -o none 2>/dev/null; then
+      break
+    fi
+    if [[ "$attempt" -eq 10 ]]; then
+      echo "!! Timed out waiting for the role assignment to propagate. Rerun ./deploy.sh to retry - it will pick up where this left off." >&2
+      MAIL_SMTP_PASSWORD=""
+    fi
+    sleep 15
+  done
+fi
+
+# The source of truth for whether SMTP is actually usable is Azure's state,
+# not whether the steps above happened to run (or succeed) this time.
+if smtp_username_exists; then
+  MAIL_CONFIGURED=true
+else
+  MAIL_CONFIGURED=false
+  echo "!! Outbound email is not configured - the API and Keycloak will deploy without it. See \"Mail\" in README-azure.md to finish setup later." >&2
+fi
+
 echo "==> Building the API image"
 az acr build \
   --registry "$ACR_NAME" \
@@ -276,15 +470,31 @@ API_ENV_VARS=(
   "Cors__AllowedOrigins__0=https://$FRONTEND_HOSTNAME"
   "Mail__FrontendBaseUrl=https://$FRONTEND_HOSTNAME"
 )
+if [[ "$MAIL_CONFIGURED" == true ]]; then
+  API_ENV_VARS+=(
+    Mail__Host=smtp.azurecomm.net
+    Mail__Port=587
+    Mail__UseSsl=false
+    "Mail__Username=$MAIL_SMTP_USERNAME"
+    Mail__Password=secretref:mail-smtp-password
+    "Mail__FromAddress=DoNotReply@$MAIL_FROM_DOMAIN"
+  )
+fi
+
+API_SECRETS=(
+  "postgres-connection-string=Host=$PG_HOST;Port=5432;Database=$APP_DB_NAME;Username=$PG_ADMIN_USER;Password=$PG_ADMIN_PASSWORD;Ssl Mode=Require;Trust Server Certificate=true"
+  "keycloak-admin-cli-secret=$KEYCLOAK_ADMIN_CLI_SECRET"
+)
+if [[ -n "$MAIL_SMTP_PASSWORD" ]]; then
+  API_SECRETS+=("mail-smtp-password=$MAIL_SMTP_PASSWORD")
+fi
 
 if containerapp_exists api; then
   echo "==> Updating API app config ($API_HOSTNAME)"
   az containerapp secret set \
     --name api \
     --resource-group "$RESOURCE_GROUP" \
-    --secrets \
-      "postgres-connection-string=Host=$PG_HOST;Port=5432;Database=$APP_DB_NAME;Username=$PG_ADMIN_USER;Password=$PG_ADMIN_PASSWORD;Ssl Mode=Require;Trust Server Certificate=true" \
-      "keycloak-admin-cli-secret=$KEYCLOAK_ADMIN_CLI_SECRET" \
+    --secrets "${API_SECRETS[@]}" \
     -o none
   az containerapp update \
     --name api \
@@ -307,9 +517,7 @@ else
     --ingress external \
     --min-replicas 1 --max-replicas 3 \
     --cpu 1.0 --memory 2.0Gi \
-    --secrets \
-      "postgres-connection-string=Host=$PG_HOST;Port=5432;Database=$APP_DB_NAME;Username=$PG_ADMIN_USER;Password=$PG_ADMIN_PASSWORD;Ssl Mode=Require;Trust Server Certificate=true" \
-      "keycloak-admin-cli-secret=$KEYCLOAK_ADMIN_CLI_SECRET" \
+    --secrets "${API_SECRETS[@]}" \
     --env-vars "${API_ENV_VARS[@]}" \
     -o none
 fi
@@ -352,6 +560,47 @@ else
 fi
 
 bind_custom_domain frontend "$FRONTEND_CUSTOM_DOMAIN" "$FRONTEND_FQDN"
+
+if [[ "$MAIL_CONFIGURED" != true ]]; then
+  echo "==> Skipping Keycloak SMTP configuration (outbound email isn't set up yet - see above)"
+else
+  # Keycloak sends its own mail (password resets, address verification, etc.)
+  # and has no idea about the ACS setup above - point its "buddy" realm at the
+  # same SMTP credentials via the Admin REST API. The realm itself is a
+  # manual, post-deploy step (README-azure.md, step 4), so on a first run
+  # this just skips with a note to rerun once it exists.
+  echo "==> Configuring the buddy realm's SMTP settings in Keycloak"
+  KC_ADMIN_TOKEN=""
+  if TOKEN_RESPONSE=$(curl -sf -X POST "https://$KEYCLOAK_HOSTNAME/realms/master/protocol/openid-connect/token" \
+      -d "client_id=admin-cli" \
+      -d "username=$KEYCLOAK_ADMIN" \
+      -d "password=$KEYCLOAK_ADMIN_PASSWORD" \
+      -d "grant_type=password" 2>/dev/null); then
+    KC_ADMIN_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r .access_token)
+  fi
+
+  if [[ -z "$KC_ADMIN_TOKEN" || "$KC_ADMIN_TOKEN" == "null" ]]; then
+    echo "!! Could not authenticate to Keycloak as $KEYCLOAK_ADMIN - skipping SMTP realm configuration. Rerun ./deploy.sh to retry." >&2
+  elif ! CURRENT_REALM=$(curl -sf -H "Authorization: Bearer $KC_ADMIN_TOKEN" "https://$KEYCLOAK_HOSTNAME/admin/realms/buddy" 2>/dev/null); then
+    echo "==> The buddy realm doesn't exist yet (see README-azure.md, step 4) - skipping SMTP configuration for now. Rerun ./deploy.sh once it's created."
+  else
+    MAIL_SMTP_PASSWORD_VALUE=$(az containerapp secret list --name api --resource-group "$RESOURCE_GROUP" --show-values \
+      --query "[?name=='mail-smtp-password'].value | [0]" -o tsv)
+    UPDATED_REALM=$(echo "$CURRENT_REALM" | jq \
+      --arg user "$MAIL_SMTP_USERNAME" \
+      --arg password "$MAIL_SMTP_PASSWORD_VALUE" \
+      --arg from "DoNotReply@$MAIL_FROM_DOMAIN" \
+      '.smtpServer = {host: "smtp.azurecomm.net", port: "587", from: $from, ssl: "false", starttls: "true", auth: "true", user: $user, password: $password}')
+    if curl -sf -X PUT "https://$KEYCLOAK_HOSTNAME/admin/realms/buddy" \
+        -H "Authorization: Bearer $KC_ADMIN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "$UPDATED_REALM" -o /dev/null; then
+      echo "==> Keycloak's buddy realm now sends email through $EMAIL_SERVICE_NAME"
+    else
+      echo "!! Failed to update the buddy realm's SMTP settings. Rerun ./deploy.sh to retry." >&2
+    fi
+  fi
+fi
 
 cat <<EOF
 
