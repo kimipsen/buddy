@@ -28,12 +28,9 @@ az login
 az account set --subscription "<subscription name or id>"
 ```
 
-You need `Contributor` (or equivalent) on the subscription/resource group, plus
-permission to create Microsoft Entra app registrations (the default for any
-user in most tenants) — `deploy.sh` registers one for SMTP email auth (see
-"Mail" below). You also need `jq` and `curl` installed locally — `deploy.sh`
-uses them to talk to Keycloak's Admin REST API directly (there's no `az`
-command for that).
+You need `Contributor` (or equivalent) on the subscription/resource group. You
+also need `jq` and `curl` installed locally — `deploy.sh` uses them to talk to
+Keycloak's Admin REST API directly (there's no `az` command for that).
 
 ## 2. Configure
 
@@ -57,8 +54,8 @@ the `api` app.
 
 This, in order:
 
-1. Registers the required resource providers and the `containerapp`/
-   `communication` CLI extensions.
+1. Registers the required resource providers and the `containerapp` CLI
+   extension.
 2. Creates the resource group.
 3. Creates an Azure Container Registry (admin credentials enabled, used by
    Container Apps to pull images).
@@ -71,17 +68,16 @@ This, in order:
 6. Builds the Keycloak image (`quay.io/keycloak/keycloak:21.1.1` + the
    `themes/buddy` theme) via `az acr build` — builds happen in Azure, no
    local Docker daemon required — and deploys it.
-7. Sets up Azure Communication Services Email (an Email Communication Service,
-   a free Azure-managed sending domain, the Communication Services resource
-   itself, and an Entra app + SMTP username for SMTP AUTH) — see "Mail" below.
-8. Builds and deploys the API image, wired up with that SMTP configuration.
-9. Builds the frontend image with `API_BASE_URL`/`KEYCLOAK_AUTHORITY` passed
+7. Builds and deploys the API image, wired up with Gmail SMTP if
+   `GMAIL_SMTP_USER`/`GMAIL_SMTP_APP_PASSWORD` are set in `.env` — see "Mail"
+   below.
+8. Builds the frontend image with `API_BASE_URL`/`KEYCLOAK_AUTHORITY` passed
    as build args (baked into `runtime-config.json` at build time, same as the
    Oracle setup), and deploys it.
-10. Points Keycloak's `buddy` realm at the same SMTP credentials via its Admin
-    REST API, so Keycloak's own emails (password resets, address
-    verification) send too — skipped with a note on the very first run, since
-    the realm doesn't exist until step 4 below.
+9. Points Keycloak's `buddy` realm at the same Gmail SMTP credentials via its
+   Admin REST API, so Keycloak's own emails (password resets, address
+   verification) send too — skipped with a note on the very first run, since
+   the realm doesn't exist until step 4 below.
 
 At the end it prints the three `https://*.azurecontainerapps.io` URLs.
 
@@ -115,77 +111,53 @@ automatically:
 
 ## 5. Mail
 
-`deploy.sh` wires the API's SMTP email sending (`IEmailSender` /
-`SmtpEmailSender` — verification and invite emails) up to [Azure
-Communication Services Email](https://learn.microsoft.com/azure/communication-services/concepts/email/email-overview)
-automatically, no manual step needed:
+Outbound email (the API's `IEmailSender`/`SmtpEmailSender` — verification and
+invite emails — and Keycloak's own password-reset/address-verification mail)
+goes through **Gmail SMTP**, configured entirely via `.env`, no Azure resource
+involved.
 
-- An **Email Communication Service** resource plus a free **Azure Managed
-  Domain** (`<random-id>.azurecomm.net`) — no DNS verification required, ready
-  to send immediately.
-- A **Communication Services** resource, linked to that domain.
-- A **Microsoft Entra app registration** scoped to that resource with the
-  `Communication and Email Service Owner` role, and an **SMTP username**
-  resource linking it to `smtp.azurecomm.net`. The API sends as
-  `DoNotReply@<random-id>.azurecomm.net` over SMTP AUTH (`Mail__Host`,
-  `Mail__Username`, `Mail__Password` etc. — see `API_ENV_VARS` in
-  `deploy.sh`).
+This replaced an earlier Azure Communication Services (ACS) approach: ACS
+Email's SMTP AUTH requires a Microsoft Entra app registration scoped to the
+ACS resource, which needs a directory permission that `Contributor` on the
+resource group doesn't grant — in a managed tenant, getting that permission
+(or the RBAC rights to assign the app its role) can mean waiting on an admin,
+which wasn't worth it here just to send a handful of transactional emails.
+Gmail SMTP needs nothing beyond a Google account.
 
-The Entra app's client secret is only ever shown once, at creation time — that
-run stores it straight into the `api` app's `mail-smtp-password` secret, and
-every later run of `deploy.sh` leaves it alone (see the comments around the
-SMTP setup step in `deploy.sh` for exactly how it decides whether to mint a
-new one).
+**Setup:**
 
-**If registering the Entra app fails** (`Insufficient privileges to complete
-the operation` / `Directory permission is needed...`): your account can't
-register applications in this tenant — common in managed orgs, and separate
-from the `Contributor` role on the resource group. `deploy.sh` doesn't treat
-this as fatal — it prints a warning and keeps going, so Postgres/Keycloak/API/
-frontend all still deploy, just without outbound email (`Mail__Host` etc. are
-left unset on the API, same as before this feature existed). To finish it,
-either:
+1. Enable 2-Step Verification on the Gmail account you want to send from
+   (Google Account > Security) — required for the next step to be available.
+2. Create an [App Password](https://myaccount.google.com/apppasswords) for
+   it. This is a 16-character password scoped to SMTP, distinct from your
+   normal Gmail password — that won't work here.
+3. In `.env`, set:
+   ```
+   GMAIL_SMTP_USER=you@gmail.com
+   GMAIL_SMTP_APP_PASSWORD=<the 16-character app password>
+   ```
+4. Run `./deploy.sh`. Both are optional — leave them blank and the API and
+   Keycloak deploy without outbound email (same as before this feature
+   existed), with a warning printed either way.
 
-- Ask your Entra/Azure admin to grant you the **Application Developer** Entra
-  role (or have them enable "Users can register applications" tenant-wide),
-  then rerun `./deploy.sh` — it picks up exactly where it left off.
-- Ask them to run this one command (using the `COMM_SERVICE_NAME` from your
-  `.env` and the Communication Services resource ID) and hand you back the
-  `appId`/`password` it prints:
-  ```
-  az ad sp create-for-rbac --name "buddy-comm-smtp" \
-    --role "Communication and Email Service Owner" \
-    --scopes "$(az communication show --name buddy-comm -g "$RESOURCE_GROUP" --query id -o tsv)"
-  ```
-  Then set `SMTP_APP_ID` / `SMTP_APP_SECRET` in `.env` to those two values and
-  rerun `./deploy.sh` — it'll use them instead of creating its own app.
+`deploy.sh` sets `Mail__Host`/`Mail__Port`/`Mail__Username`/`Mail__Password`/
+`Mail__FromAddress` on the `api` app (password via a `mail-smtp-password`
+Container App secret, same as every other credential in this script), and —
+once the `buddy` realm exists (step 4 below) — configures Keycloak's Realm
+Settings > Email to match via the Admin REST API. On the very first
+`./deploy.sh` run the realm doesn't exist yet, so that last part just prints a
+note and skips — rerun `./deploy.sh` after finishing step 4 to pick it up (or
+set it manually in Realm Settings > Email if you'd rather not rerun the whole
+script).
 
-**Keycloak uses the same credentials.** Once the `buddy` realm exists (step 4
-below), `deploy.sh` also configures its Realm Settings > Email via the
-Admin REST API, so Keycloak's own mail (password resets, address
-verification) goes out through the same Azure Managed Domain. On the very
-first `./deploy.sh` run the realm doesn't exist yet, so this step just prints
-a note and skips — rerun `./deploy.sh` after finishing step 4 to pick it up
-(or set it manually in Realm Settings > Email if you'd rather not rerun the
-whole script).
-
-**Limitations of the free Azure Managed Domain**: fixed `DoNotReply` sender,
-no custom display name, and a low sending quota — fine to get real mail
-flowing, not meant for production volume. To send from your own domain
-instead:
-
-1. Verify a domain (`--domain-management CustomerManaged` instead of
-   `AzureManaged` — see [Add custom verified email
-   domains](https://learn.microsoft.com/azure/communication-services/quickstarts/email/add-custom-verified-domains)
-   for the DNS records Azure asks for).
-2. Add a sender username under it (`az communication email domain
-   sender-username create`).
-3. Update the `api` app's `Mail__FromAddress` env var (and optionally
-   `Mail__Username`/`Mail__FromName`) to match, and the `buddy` realm's
-   Realm Settings > Email > From address in Keycloak to match too.
-
-`deploy.sh` doesn't automate the custom-domain path since it needs a domain
-you own and DNS access, unlike everything else in this section.
+**Limitations of Gmail SMTP**: sending quotas are low (around 500/day for a
+regular account) and mail comes from a personal-looking `@gmail.com` address
+— fine for a small app's transactional volume, not meant as a long-term
+production mail provider. If you outgrow it, look at a dedicated transactional
+email provider (Azure Communication Services once the Entra permission is
+sorted, SendGrid, Postmark, etc.) — since `IEmailSender`/`MailOptions` is
+plain SMTP already, most providers are a drop-in `.env` change (`Mail__Host`
+etc.) rather than a code change.
 
 ## 6. Custom domains (optional)
 
