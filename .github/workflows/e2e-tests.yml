@@ -1,0 +1,81 @@
+name: Frontend e2e tests
+
+on:
+  pull_request:
+    paths:
+      - "src/frontend/**"
+      - "src/backend/**"
+      - ".devcontainer/docker-compose.yml"
+      - ".devcontainer/keycloak/**"
+      - ".devcontainer/postgres/**"
+      - ".github/workflows/e2e-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/frontend/**"
+      - "src/backend/**"
+      - ".devcontainer/docker-compose.yml"
+      - ".devcontainer/keycloak/**"
+      - ".devcontainer/postgres/**"
+      - ".github/workflows/e2e-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "11.0.x"
+          dotnet-quality: "preview"
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: src/frontend/buddy/package.json
+
+      # Ephemeral, CI-only credentials -- matches the ConnectionStrings__Postgres and
+      # Authentication__* overrides in playwright.config.ts's ciBackendEnv.
+      - name: Write devcontainer .env
+        run: |
+          cat > .devcontainer/.env <<'EOF'
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=postgres
+          POSTGRES_DB=postgres
+          KEYCLOAK_ADMIN=admin
+          KEYCLOAK_ADMIN_PASSWORD=admin
+          KC_DB_USERNAME=postgres
+          KC_DB_PASSWORD=postgres
+          MAILPIT_ENABLE_AUTH=false
+          MAILPIT_USERNAME=mailpit
+          MAILPIT_PASSWORD=mailpit
+          EOF
+
+      # Testcontainers needs a Docker daemon, which the ubuntu-latest runner provides natively --
+      # same as backend-tests.yml's integration suite.
+      - name: Start db, Keycloak and Mailpit
+        run: docker compose -f .devcontainer/docker-compose.yml up -d --wait db keycloak mailpit
+
+      - name: Install frontend dependencies
+        working-directory: src/frontend/buddy
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: src/frontend/buddy
+        run: npx playwright install --with-deps chromium
+
+      # playwright.config.ts's webServer array starts both the API (dotnet run, pointed at the
+      # compose services above via CI-only host overrides) and the Angular dev server.
+      - name: Run Playwright tests
+        working-directory: src/frontend/buddy
+        run: npx playwright test
+        env:
+          CI: "true"
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: src/frontend/buddy/playwright-report/
+          retention-days: 14

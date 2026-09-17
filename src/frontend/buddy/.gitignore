@@ -43,6 +43,12 @@ __screenshots__/
 /reports/mutation
 .stryker-tmp/
 
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+public/config/runtime-config.json.e2e-backup
+
 # System files
 .DS_Store
 Thumbs.db

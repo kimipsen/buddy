@@ -30,6 +30,27 @@ The HTML mutation report is written to
 [frontend overview](frontend/README.md#mutation-testing) for configuration and
 resource considerations.
 
+### End-to-end tests
+
+Run the Playwright suite, which drives a real browser against the real
+backend API and Keycloak instance (not mocked):
+
+```bash
+cd src/frontend/buddy
+npx playwright install --with-deps chromium   # once per machine
+npm run test:e2e
+```
+
+This needs Postgres, Keycloak, and Mailpit running -- inside the devcontainer
+they already are, seeded automatically from
+`.devcontainer/keycloak/buddy-realm.json` (see the
+[development container guide](../.devcontainer/README.md)).
+`playwright.config.ts` starts the Angular dev server and the backend API
+itself. Most specs authenticate via a fast direct-grant token fetch
+(`e2e/support/auth-fixture.ts`) rather than driving Keycloak's hosted login
+form; `e2e/login.spec.ts` is the one spec that drives the real form, to prove
+the redirect/PKCE flow itself still works.
+
 ### Waiting for async work in component tests
 
 The frontend has no `zone.js` dependency and runs zoneless. Component tests
@@ -127,6 +148,9 @@ verified scoping instructions and expected runtime characteristics.
 
 - `.github/workflows/backend-tests.yml` restores, builds, and runs the backend
   suite for backend changes.
+- `.github/workflows/e2e-tests.yml` starts Postgres, Keycloak, and Mailpit via
+  `.devcontainer/docker-compose.yml` and runs the Playwright suite against a
+  real backend and frontend.
 - `.github/workflows/mutation-testing.yml` exposes manually triggered backend
   and frontend mutation jobs.
 

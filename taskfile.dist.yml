@@ -47,6 +47,21 @@ tasks:
     cmds:
       - npm test
 
+  test:e2e:
+    desc: Run all e2e tests (frontend only, for now)
+    cmds:
+      - task: test:e2e:frontend
+
+  test:e2e:frontend:
+    desc: >-
+      Run frontend e2e tests (Playwright). Needs Postgres, Keycloak, and
+      Mailpit running (already true in the devcontainer); starts the API and
+      Angular dev server itself. Run "npx playwright install --with-deps
+      chromium" once per machine first.
+    dir: src/frontend/buddy
+    cmds:
+      - npm run test:e2e
+
   test:mutation:
     desc: Run all mutation tests (backend, then frontend)
     cmds:

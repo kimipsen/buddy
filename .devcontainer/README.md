@@ -19,48 +19,22 @@ The file is git-ignored. Change the placeholder passwords before using the
 container on a shared machine.
 
 Open the repository in VS Code and run **Dev Containers: Reopen in Container**.
-The Compose stack starts PostgreSQL, Keycloak, RabbitMQ, Redis, and Mailpit, but
-two first-run Keycloak prerequisites are currently manual.
+The Compose stack starts PostgreSQL, Keycloak, and Mailpit. Both first-run
+Keycloak prerequisites are automated:
 
-### Create the Keycloak database
+- Postgres creates the separate `keycloak` database Keycloak needs (see
+  `postgres/init-keycloak-db.sql`, run once via `docker-entrypoint-initdb.d`
+  on an empty data volume).
+- Keycloak imports the `buddy` realm — clients `buddy-frontend` (public,
+  used by the Angular app) and `buddy-admin-cli` (confidential, used by the
+  backend to provision child accounts), plus seeded users `alice`/`bob`/
+  `carol` — from the checked-in export at `keycloak/buddy-realm.json`, via
+  `start-dev --import-realm`. Import is skipped if the realm already exists,
+  so this only takes effect on a fresh `postgres-data` volume.
 
-The PostgreSQL image creates `POSTGRES_DB`, but Keycloak is configured to use a
-separate database named `keycloak`. Create it after the database container is
-running:
-
-```bash
-docker compose -f .devcontainer/docker-compose.yml exec db \
-  psql -U postgres -d postgres -c 'CREATE DATABASE keycloak;'
-```
-
-If `.devcontainer/.env` uses different PostgreSQL names, substitute its
-`POSTGRES_USER` and `POSTGRES_DB` values. A `database "keycloak" already exists`
-error means this step was completed previously. Restart Keycloak afterward:
-
-```bash
-docker compose -f .devcontainer/docker-compose.yml restart keycloak
-```
-
-### Configure the Buddy realm
-
-Open the Keycloak admin console at `http://localhost:9080` and sign in with
-`KEYCLOAK_ADMIN` and `KEYCLOAK_ADMIN_PASSWORD` from `.devcontainer/.env`.
-Create a realm named `buddy` with these clients:
-
-- `buddy-frontend`: public OpenID Connect client for the Angular app. Allow
-  `http://localhost:4200/*` as a valid redirect URI and
-  `http://localhost:4200` as a web origin.
-- `buddy-admin-cli`: confidential service-account client used by the backend to
-  provision child accounts. Enable service accounts, grant the service account
-  the realm-management permissions needed to create users and assign realm
-  roles, and place its generated secret in
-  `Authentication:KeycloakAdmin:ClientSecret` through user secrets or a local
-  configuration override.
-
-The checked-in `appsettings.Development.json` contains a development client
-secret, but it only works when it matches the client configured in the local
-realm. The repository's only realm export is an integration-test fixture; it is
-owned by Testcontainers and is not a supported local-development bootstrap.
+The checked-in `appsettings.Development.json` client secret for
+`buddy-admin-cli` matches the one baked into `keycloak/buddy-realm.json`;
+change both together if you rotate it.
 
 ## Running Buddy
 
@@ -102,12 +76,6 @@ Open `http://localhost:4200`.
 | Keycloak | `http://localhost:9080` | Authentication and child-account provisioning |
 | PostgreSQL | `db:5432` inside Compose | Marten event and document storage; Keycloak storage |
 | Mailpit | `http://localhost:9025` (`mailpit:1025` SMTP) | Development email capture |
-| RabbitMQ | `http://localhost:15672` | Provisioned for development; not currently registered by the app |
-| Redis | `redis:6379` | Provisioned for development; not currently registered by the app |
-
-RabbitMQ and Redis are available for future work, but the current application
-does not depend on either service. Do not document them as production
-requirements unless application registration is added.
 
 ## Useful commands
 
@@ -145,8 +113,13 @@ works, requirements, and how to skip it for a single commit.
 
 ## Troubleshooting
 
-- **Keycloak reports that database `keycloak` does not exist:** complete the
-  database creation step and restart Keycloak.
+- **Keycloak reports that database `keycloak` does not exist:** this means
+  `postgres-data` was initialized before `postgres/init-keycloak-db.sql` was
+  added. Run the `CREATE DATABASE keycloak;` statement manually against the
+  `db` service (`docker compose -f .devcontainer/docker-compose.yml exec db
+  psql -U postgres -d postgres -c 'CREATE DATABASE keycloak;'`) and restart
+  Keycloak, or remove the `postgres-data` volume to reinitialize from
+  scratch.
 - **Login redirects are rejected:** verify the `buddy-frontend` redirect URI,
   web origin, realm name, and client ID against
   `src/frontend/buddy/public/config/runtime-config.json`.

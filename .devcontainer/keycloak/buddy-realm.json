@@ -1,0 +1,88 @@
+{
+  "realm": "buddy",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "buddy-child" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "buddy-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:4200/*"],
+      "webOrigins": ["http://localhost:4200"],
+      "defaultClientScopes": ["profile", "email", "roles"],
+      "protocolMappers": [
+        {
+          "name": "audience-buddy-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "buddy-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "buddy-admin-cli",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "buddy-admin-cli-dev-secret"
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-buddy-admin-cli",
+      "enabled": true,
+      "serviceAccountClientId": "buddy-admin-cli",
+      "clientRoles": {
+        "realm-management": ["manage-users"]
+      }
+    },
+    {
+      "username": "alice",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "alice@buddy.test",
+      "firstName": "Alice",
+      "lastName": "Anderson",
+      "credentials": [{ "type": "password", "value": "alice-test-pw", "temporary": false }]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "bob@buddy.test",
+      "firstName": "Bob",
+      "lastName": "Brown",
+      "credentials": [{ "type": "password", "value": "bob-test-pw", "temporary": false }]
+    },
+    {
+      "username": "carol",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "carol@buddy.test",
+      "firstName": "Carol",
+      "lastName": "Clarke",
+      "credentials": [{ "type": "password", "value": "carol-test-pw", "temporary": false }]
+    }
+  ]
+}

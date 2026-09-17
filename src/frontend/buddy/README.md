@@ -76,9 +76,22 @@ Run mutation testing with StrykerJS:
 npm run test:mutation
 ```
 
-The mutation report is written to `reports/mutation/index.html`. The repository
-does not currently configure an end-to-end browser test runner, so there is no
-supported `ng e2e` command.
+The mutation report is written to `reports/mutation/index.html`.
+
+Run the Playwright end-to-end suite (needs Postgres, Keycloak and Mailpit
+running -- see the [development container guide](../../../.devcontainer/README.md)):
+
+```bash
+npx playwright install --with-deps chromium   # once per machine
+npm run test:e2e
+```
+
+`playwright.config.ts` starts the Angular dev server and the backend API for
+you; inside the devcontainer both come up talking to the already-running
+Postgres/Keycloak/Mailpit services. Tests live under `e2e/`; `e2e/support/`
+has the Keycloak direct-grant login fixture and Mailpit client that specs use
+instead of driving the hosted login form or Testcontainers themselves -- see
+`e2e/login.spec.ts` for the one spec that does drive the real login form.
 
 See the repository [testing guide](../../../docs/testing.md) for backend and CI
 commands.
