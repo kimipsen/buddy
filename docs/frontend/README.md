@@ -191,32 +191,13 @@ preference in an inline script before Angular boots, to avoid a flash of the wro
 
 ## Current status
 
-The frontend is an actively developed product shell with working domain workflows. The core pieces already in place are:
-
-- Keycloak authentication and token lifecycle
-- route guards and role-based redirecting
-- guardian-child provisioning flow
-- child/guardian role separation
-- email verification and invitation return flows
-- English and Danish localization
-- guardian meal planning, meal ratings, and group-shared meal-plan access
-- guardian-facing private iCal subscription links for the family's meal plan
-- a guardian-facing chat-based AI assistant that drafts meal-plan assignments
-  over a date range and BYOK AI provider settings management in the admin area
-- medicine schedule management and today's dose views
-- guardian pickup/drop-off planning plus guardian and child today views
-- guardian-facing day, work-week, rolling-week, and month calendar views with event/task creation
-  across personal and group-owned calendars
-- a child-facing daily dashboard with meals and ratings, medicine doses,
-  pickup/drop-off assignments, and completable tasks
-- a child-facing read-only seven-day calendar agenda
-- per-child task template management and template-based task scheduling
-- profile, calendar, group, child, and account administration
-- light, dark, and system theme selection, persisted per browser
+The frontend is an actively developed product shell with working domain workflows. See the
+[Features](../../README.md#features) list in the root README for the up-to-date checklist of
+implemented and planned features.
 
 Children have a read-only calendar agenda; event and task creation remains a guardian workflow.
 The child home keeps routines in separate, scannable sections rather than merging them into a
-full calendar timeline.
+full calendar timeline. Theme selection (light/dark/system) is persisted per browser.
 
 ## Design analysis
 

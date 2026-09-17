@@ -19,6 +19,46 @@ self-escort, and playdate arrangements. The child gets a clear, interactive
 view of their day; the guardian gets visibility and the ability to adjust plans
 in real time.
 
+## Features
+
+### Guardian
+
+- [x] Create child accounts and manage guardian/child relationships
+- [x] Shared calendars: day, work-week, rolling-week, and month views, with
+      event/task creation across personal and group-owned calendars
+- [x] Medicine schedules with daily dose times and dose-status tracking
+- [x] Family meal library and meal-plan assignment, with meal ratings and
+      group-shared meal plans
+- [x] Private iCal subscription links for the family's meal plan
+- [x] Chat-based AI assistant that drafts meal-plan assignments, with
+      BYOK AI provider settings management
+- [x] Pickup and drop-off scheduling (guardian, sibling, self-escort, and
+      playdate assignments)
+- [x] Reusable task library with ordered, timed subtasks, schedulable onto a
+      calendar
+- [x] Group and calendar sharing/permissions management
+- [x] Configurable goal posts and gamified progress tracking for children
+- [x] Profile, calendar, group, child, and account administration
+- [ ] Sleep diary logging for children (proposed, not yet implemented — see
+      [Sleep diary](docs/backend/analysis/sleep-diary.md))
+
+### Child
+
+- [x] Personalized day view: meals and ratings, medicine doses,
+      pickup/drop-off assignments, and tasks
+- [x] Read-only seven-day calendar agenda
+- [x] Browse current and previous meal-plan weeks and rate meals
+- [x] View linked guardians
+- [x] Complete tasks from the day view
+- [x] View progress and unlocked milestones
+
+### Platform
+
+- [x] Keycloak authentication, token lifecycle, and role-based routing
+- [x] Group invitations and email-verification flows
+- [x] English and Danish localization
+- [x] Light, dark, and system theme selection
+
 ## Repository structure
 
 ```
