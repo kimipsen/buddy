@@ -220,6 +220,8 @@ full calendar timeline.
 
 ## Design analysis
 
+- [Visual specification](analysis/visual-specification.md) — proposed data-type-to-component
+  map and guardian/child visual language, applied to the Sleep Diary as a worked example
 - [Installing Buddy on a kid's iPad](analysis/ipad-installation.md) — PWA vs. native install
   options, push notification support, and pricing
 - [A single-day dashboard for the child home screen](analysis/child-day-dashboard.md) — layout
