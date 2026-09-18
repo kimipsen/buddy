@@ -65,13 +65,13 @@ npm install
 npm start
 ```
 
-Open `http://localhost:4200`.
+Open `http://localhost:4300`.
 
 ## Local services
 
 | Service | Address | Current role |
 | --- | --- | --- |
-| Frontend | `http://localhost:4200` | Angular development server |
+| Frontend | `http://localhost:4300` | Angular development server |
 | Buddy API | `https://localhost:7076` or `http://localhost:5193` | ASP.NET API |
 | Keycloak | `http://localhost:9080` | Authentication and child-account provisioning |
 | PostgreSQL | `db:5432` inside Compose | Marten event and document storage; Keycloak storage |

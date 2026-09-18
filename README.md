@@ -192,7 +192,7 @@ npm install
 npm start
 ```
 
-The frontend is available at `http://localhost:4200`. See the
+The frontend is available at `http://localhost:4300`. See the
 [frontend app guide](src/frontend/buddy/README.md) for build and runtime
 configuration details, and the [testing guide](docs/testing.md) for test
 commands.

@@ -32,7 +32,7 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: 'http://localhost:4300',
     // The backend's dev HTTPS endpoint uses a self-signed cert that's never trusted in CI, and
     // dotnet dev-certs' "trust" step isn't supported on Linux -- ignoring cert errors here (both
     // for the browser and the webServer readiness checks below) is simpler than working around
@@ -49,7 +49,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm start',
-      url: 'http://localhost:4200',
+      url: 'http://localhost:4300',
       reuseExistingServer: !isCI,
     },
     {

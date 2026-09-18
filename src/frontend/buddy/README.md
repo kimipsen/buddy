@@ -29,7 +29,7 @@ npm install
 npm start
 ```
 
-The Angular development server listens on `http://localhost:4200` and reloads
+The Angular development server listens on `http://localhost:4300` and reloads
 when source files change.
 
 Runtime endpoints are read from

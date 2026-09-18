@@ -18,8 +18,8 @@
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
       "protocol": "openid-connect",
-      "redirectUris": ["http://localhost:4200/*"],
-      "webOrigins": ["http://localhost:4200"],
+      "redirectUris": ["http://localhost:4300/*"],
+      "webOrigins": ["http://localhost:4300"],
       "defaultClientScopes": ["profile", "email", "roles"],
       "protocolMappers": [
         {

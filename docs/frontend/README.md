@@ -233,7 +233,7 @@ npm install
 npm start
 ```
 
-The app runs by default on the Angular dev server at http://localhost:4200/.
+The app runs by default on the Angular dev server at http://localhost:4300/.
 
 ## Testing
 
