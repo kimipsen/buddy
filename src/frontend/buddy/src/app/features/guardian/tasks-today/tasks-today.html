@@ -21,12 +21,11 @@
               @for (rollup of overdue(); track rollup.itemId) {
                 <li class="flex items-center gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm font-medium">
                   @if (rollup.totalCount === 1) {
-                    <input
-                      type="checkbox"
+                    <app-toggle
                       [checked]="rollup.occurrences[0].isCompleted"
-                      [attr.aria-label]="rollup.title"
+                      [ariaLabel]="rollup.title"
                       [disabled]="!canToggle(rollup) || savingTaskId() === keyFor(rollup)"
-                      (change)="toggleTask(rollup)"
+                      (checkedChange)="toggleTask(rollup)"
                     />
                   }
                   <span class="text-lg leading-none">{{ rollup.icon }}</span>
@@ -52,12 +51,11 @@
               @for (rollup of dueToday(); track rollup.itemId) {
                 <li class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm font-medium">
                   @if (rollup.totalCount === 1) {
-                    <input
-                      type="checkbox"
+                    <app-toggle
                       [checked]="rollup.occurrences[0].isCompleted"
-                      [attr.aria-label]="rollup.title"
+                      [ariaLabel]="rollup.title"
                       [disabled]="!canToggle(rollup) || savingTaskId() === keyFor(rollup)"
-                      (change)="toggleTask(rollup)"
+                      (checkedChange)="toggleTask(rollup)"
                     />
                   }
                   <span class="text-lg leading-none">{{ rollup.icon }}</span>

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { Subtask, TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
+import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
+import { Stepper } from '../../../../shared/stepper/stepper';
 
 const DEFAULT_COLOR = '#6366f1';
 const DEFAULT_ICON = '📋';
@@ -27,7 +29,7 @@ function formatDuration(totalMinutes: number): string {
 // group-sharing axis (see TaskLibraryAuthorization.cs), so there's no scope input to accept here.
 @Component({
   selector: 'app-manage-tasks',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Stepper],
   templateUrl: './manage-tasks.html'
 })
 export class ManageTasks implements OnInit {

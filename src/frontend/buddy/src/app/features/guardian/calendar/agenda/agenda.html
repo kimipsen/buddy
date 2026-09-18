@@ -55,10 +55,10 @@
       <div class="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3">
         <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'calendar.agenda.filter.title' | translate }}</span>
         @for (calendar of myCalendars(); track calendar.id) {
-          <label class="flex items-center gap-1.5 text-sm">
-            <input type="checkbox" [checked]="!isCalendarHidden(calendar.id)" (change)="toggleCalendarVisibility(calendar.id)" />
+          <div class="flex items-center gap-1.5 text-sm">
+            <app-toggle [checked]="!isCalendarHidden(calendar.id)" [ariaLabel]="calendar.name" (checkedChange)="toggleCalendarVisibility(calendar.id)" />
             {{ calendar.name }}
-          </label>
+          </div>
         }
       </div>
     }
@@ -123,12 +123,11 @@
                       <ul class="ml-4 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
                         @for (subtask of run.subtasks; track keyFor(subtask)) {
                           <li class="flex items-center gap-3">
-                            <input
-                              type="checkbox"
+                            <app-toggle
                               [checked]="subtask.isCompleted"
                               [disabled]="savingTaskId() === keyFor(subtask) || (!subtask.isCompleted && !canCompleteTask(subtask))"
-                              (change)="toggleTaskCompletion(subtask)"
-                              aria-label="{{ 'calendar.agenda.completeTaskLabel' | translate }}"
+                              [ariaLabel]="'calendar.agenda.completeTaskLabel' | translate"
+                              (checkedChange)="toggleTaskCompletion(subtask)"
                             />
                             <span class="text-sm leading-none">{{ subtask.icon }}</span>
                             <span [class.line-through]="subtask.isCompleted">{{ subtask.title }}</span>
@@ -153,7 +152,7 @@
                   <li class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm">
                     @if (editingItemId() === occurrence.itemId) {
                       <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
-                        <div class="grid gap-3 sm:grid-cols-[1fr_5rem_4rem]">
+                        <div class="grid gap-3 sm:grid-cols-[1fr_5rem]">
                           <input
                             type="text"
                             name="editTitle"
@@ -172,20 +171,14 @@
                             (ngModelChange)="editIcon.set($event)"
                             aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
                           />
-                          <input
-                            type="color"
-                            name="editColor"
-                            class="h-full w-full rounded-lg border border-slate-300 p-1"
-                            [ngModel]="editColor()"
-                            (ngModelChange)="editColor.set($event)"
-                            aria-label="{{ 'common.colorLabel' | translate }}"
-                          />
                         </div>
 
-                        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                          <input type="checkbox" [checked]="editIsAllDay()" (change)="editIsAllDay.set(!editIsAllDay())" />
+                        <app-color-swatch-picker [value]="editColor()" [ariaLabel]="'common.colorLabel' | translate" (valueChange)="editColor.set($event)" />
+
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                          <app-toggle [checked]="editIsAllDay()" (checkedChange)="editIsAllDay.set($event)" [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate" />
                           {{ 'calendar.agenda.form.allDayLabel' | translate }}
-                        </label>
+                        </div>
 
                         @if (occurrence.kind === eventKind) {
                           <div class="grid gap-3 sm:grid-cols-2">
@@ -269,12 +262,11 @@
                         <span class="text-lg leading-none">{{ occurrence.icon }}</span>
 
                         @if (occurrence.kind === taskKind) {
-                          <input
-                            type="checkbox"
+                          <app-toggle
                             [checked]="occurrence.isCompleted"
                             [disabled]="savingTaskId() === keyFor(occurrence) || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
-                            (change)="toggleTaskCompletion(occurrence)"
-                            aria-label="{{ 'calendar.agenda.completeTaskLabel' | translate }}"
+                            [ariaLabel]="'calendar.agenda.completeTaskLabel' | translate"
+                            (checkedChange)="toggleTaskCompletion(occurrence)"
                           />
                         }
 
@@ -357,7 +349,7 @@
     <form class="mt-6 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-5" (ngSubmit)="createItem()">
       <h4 class="text-sm font-semibold">{{ 'calendar.agenda.form.title' | translate }}</h4>
 
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_8rem_1fr_5rem_4rem]">
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_8rem_1fr_5rem]">
         <label class="sr-only" for="itemCalendar">{{ 'calendar.agenda.form.calendarLabel' | translate }}</label>
         <select
           name="itemCalendar"
@@ -370,16 +362,12 @@
             <option [value]="calendar.id">{{ calendar.name }}</option>
           }
         </select>
-        <select
-          name="itemKind"
-          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-          [ngModel]="newKind()"
-          (ngModelChange)="newKind.set($event)"
-          aria-label="{{ 'calendar.agenda.form.kindLabel' | translate }}"
-        >
-          <option [ngValue]="eventKind">{{ 'calendar.agenda.form.kind.event' | translate }}</option>
-          <option [ngValue]="taskKind">{{ 'calendar.agenda.form.kind.task' | translate }}</option>
-        </select>
+        <app-segmented-control
+          [options]="itemKindOptions()"
+          [selected]="newKind()"
+          [ariaLabel]="'calendar.agenda.form.kindLabel' | translate"
+          (selectedChange)="newKind.set($event)"
+        />
         <input
           type="text"
           name="itemTitle"
@@ -398,15 +386,9 @@
           (ngModelChange)="newIcon.set($event)"
           aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
         />
-        <input
-          type="color"
-          name="itemColor"
-          class="h-full w-full rounded-lg border border-slate-300 p-1"
-          [ngModel]="newColor()"
-          (ngModelChange)="newColor.set($event)"
-          aria-label="{{ 'common.colorLabel' | translate }}"
-        />
       </div>
+
+      <app-color-swatch-picker [value]="newColor()" [ariaLabel]="'common.colorLabel' | translate" (valueChange)="newColor.set($event)" />
 
       @if (newKind() === taskKind) {
         <div class="flex w-fit overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
@@ -447,10 +429,10 @@
       }
 
       @if (!(newKind() === taskKind && newTaskSource() === 'template')) {
-        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-          <input type="checkbox" [checked]="newIsAllDay()" (change)="newIsAllDay.set(!newIsAllDay())" />
+        <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          <app-toggle [checked]="newIsAllDay()" (checkedChange)="newIsAllDay.set($event)" [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate" />
           {{ 'calendar.agenda.form.allDayLabel' | translate }}
-        </label>
+        </div>
       }
 
       @if (newKind() === eventKind) {
@@ -550,19 +532,17 @@
         </label>
 
         @if (newRepeat() !== null) {
-          <label class="block">
+          <div class="block">
             <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.repeat.intervalLabel' | translate }}
             </span>
-            <input
-              type="number"
-              name="itemInterval"
-              min="1"
-              class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-              [ngModel]="newIntervalCount()"
-              (ngModelChange)="newIntervalCount.set($event)"
+            <app-stepper
+              [value]="newIntervalCount()"
+              [min]="1"
+              [ariaLabel]="'calendar.agenda.form.repeat.intervalLabel' | translate"
+              (valueChange)="newIntervalCount.set($event)"
             />
-          </label>
+          </div>
           <div>
             <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {{ 'calendar.agenda.form.repeat.untilLabel' | translate }}

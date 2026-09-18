@@ -1,0 +1,19 @@
+<div class="inline-flex w-full overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600" role="radiogroup" [attr.aria-label]="ariaLabel() || null">
+  @for (option of options(); track $index) {
+    <button
+      type="button"
+      role="radio"
+      [attr.aria-checked]="isSelected(option.value)"
+      class="flex-1 px-2 py-1.5 text-xs font-medium transition focus:z-10 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [class.bg-emerald-500]="isSelected(option.value)"
+      [class.text-white]="isSelected(option.value)"
+      [class.text-slate-600]="!isSelected(option.value)"
+      [class.dark:text-slate-300]="!isSelected(option.value)"
+      [class.hover:bg-slate-100]="!isSelected(option.value)"
+      [class.dark:hover:bg-slate-800]="!isSelected(option.value)"
+      (click)="select(option.value)"
+    >
+      {{ option.label }}
+    </button>
+  }
+</div>

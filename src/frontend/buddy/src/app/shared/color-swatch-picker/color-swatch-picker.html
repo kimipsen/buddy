@@ -1,0 +1,16 @@
+<div class="flex flex-wrap gap-2" role="radiogroup" [attr.aria-label]="ariaLabel() || null">
+  @for (color of allSwatches(); track color) {
+    <button
+      type="button"
+      role="radio"
+      [attr.aria-checked]="color === value()"
+      [attr.aria-label]="color"
+      class="size-7 rounded-full border-2 transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+      [class.border-slate-900]="color === value()"
+      [class.dark:border-white]="color === value()"
+      [class.border-transparent]="color !== value()"
+      [style.background-color]="color"
+      (click)="select(color)"
+    ></button>
+  }
+</div>

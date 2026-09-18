@@ -6,6 +6,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { UsersService } from '../../../core/users.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
+import { Toggle } from '../../../shared/toggle/toggle';
 
 const TASK_KIND = 1;
 
@@ -71,7 +72,7 @@ function toRollup(entry: AgendaEntry): TaskRollup {
 
 @Component({
   selector: 'app-tasks-today',
-  imports: [TranslatePipe, LoadingSpinner],
+  imports: [TranslatePipe, LoadingSpinner, Toggle],
   templateUrl: './tasks-today.html'
 })
 export class TasksToday implements OnInit {

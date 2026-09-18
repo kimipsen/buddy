@@ -8,6 +8,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
+import { Toggle } from '../../../shared/toggle/toggle';
 
 const EVENT_KIND: CalendarItemKind = 0;
 const TASK_KIND: CalendarItemKind = 1;
@@ -50,7 +51,7 @@ function instantFor(occurrence: CalendarOccurrence): Date | null {
 // docs/frontend/analysis/child-calendar-agenda-plan.md for why those are deliberately absent here.
 @Component({
   selector: 'app-child-calendar',
-  imports: [RouterLink, TranslatePipe, UserDatePipe],
+  imports: [RouterLink, TranslatePipe, UserDatePipe, Toggle],
   templateUrl: './child-calendar.html'
 })
 export class ChildCalendar {

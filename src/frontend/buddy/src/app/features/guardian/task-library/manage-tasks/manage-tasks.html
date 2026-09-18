@@ -40,49 +40,48 @@
                 for a keystroke dispatched in the same tick a freshly-toggled @if mounts it, which
                 dropped edits silently. A native input listener has no such registration delay.
               -->
-              <form class="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_4rem_3rem_auto_auto]" (ngSubmit)="saveTemplate(template.id)">
-                <input
-                  type="text"
-                  name="editTemplateName"
-                  aria-label="{{ 'taskLibrary.manageTasks.form.namePlaceholder' | translate }}"
-                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                  [value]="editTemplateName()"
-                  (input)="editTemplateName.set($any($event.target).value)"
-                />
-                <input
-                  type="text"
-                  name="editTemplateIcon"
-                  aria-label="{{ 'taskLibrary.manageTasks.form.iconPlaceholder' | translate }}"
-                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                  [value]="editTemplateIcon()"
-                  (input)="editTemplateIcon.set($any($event.target).value)"
-                />
-                <input
-                  type="color"
-                  name="editTemplateColor"
-                  aria-label="{{ 'common.colorLabel' | translate }}"
-                  class="h-full w-full rounded-lg border border-slate-300 dark:border-slate-600 p-1"
-                  [value]="editTemplateColor()"
-                  (input)="editTemplateColor.set($any($event.target).value)"
-                />
-                <button
-                  type="submit"
-                  class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-                  [disabled]="savingTemplateId() === template.id || !editTemplateName().trim() || !editTemplateIcon().trim()"
-                >
-                  {{ 'taskLibrary.manageTasks.form.save' | translate }}
-                </button>
-                <button
-                  type="button"
-                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
-                  [disabled]="savingTemplateId() === template.id"
-                  (click)="cancelEditTemplate()"
-                >
-                  {{ 'taskLibrary.manageTasks.form.cancel' | translate }}
-                </button>
+              <form class="space-y-2 px-4 py-3" (ngSubmit)="saveTemplate(template.id)">
+                <div class="grid gap-2 sm:grid-cols-[1fr_4rem]">
+                  <input
+                    type="text"
+                    name="editTemplateName"
+                    aria-label="{{ 'taskLibrary.manageTasks.form.namePlaceholder' | translate }}"
+                    class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                    [value]="editTemplateName()"
+                    (input)="editTemplateName.set($any($event.target).value)"
+                  />
+                  <input
+                    type="text"
+                    name="editTemplateIcon"
+                    aria-label="{{ 'taskLibrary.manageTasks.form.iconPlaceholder' | translate }}"
+                    class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                    [value]="editTemplateIcon()"
+                    (input)="editTemplateIcon.set($any($event.target).value)"
+                  />
+                </div>
+
+                <app-color-swatch-picker [value]="editTemplateColor()" [ariaLabel]="'common.colorLabel' | translate" (valueChange)="editTemplateColor.set($event)" />
+
+                <div class="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                    [disabled]="savingTemplateId() === template.id || !editTemplateName().trim() || !editTemplateIcon().trim()"
+                  >
+                    {{ 'taskLibrary.manageTasks.form.save' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                    [disabled]="savingTemplateId() === template.id"
+                    (click)="cancelEditTemplate()"
+                  >
+                    {{ 'taskLibrary.manageTasks.form.cancel' | translate }}
+                  </button>
+                </div>
 
                 @if (templateError(); as message) {
-                  <p class="text-xs text-red-600 dark:text-red-400 sm:col-span-5">{{ message | translate }}</p>
+                  <p class="text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
                 }
               </form>
             } @else {
@@ -137,7 +136,7 @@
                     @for (subtask of template.subtasks; track subtask.id; let index = $index) {
                       <li class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
                         @if (editingSubtaskId() === subtask.id) {
-                          <div class="grid gap-2 sm:grid-cols-[1fr_4rem_5rem_auto_auto]">
+                          <div class="grid gap-2 sm:grid-cols-[1fr_4rem_8rem_auto_auto] sm:items-center">
                             <input
                               type="text"
                               [attr.name]="'editSubtaskTitle-' + subtask.id"
@@ -154,14 +153,11 @@
                               [ngModel]="editSubtaskIcon()"
                               (ngModelChange)="editSubtaskIcon.set($event)"
                             />
-                            <input
-                              type="number"
-                              min="1"
-                              [attr.name]="'editSubtaskDuration-' + subtask.id"
-                              aria-label="{{ 'taskLibrary.manageTasks.subtasks.durationLabel' | translate }}"
-                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                              [ngModel]="editSubtaskDuration()"
-                              (ngModelChange)="editSubtaskDuration.set($event)"
+                            <app-stepper
+                              [value]="editSubtaskDuration()"
+                              [min]="1"
+                              [ariaLabel]="'taskLibrary.manageTasks.subtasks.durationLabel' | translate"
+                              (valueChange)="editSubtaskDuration.set($event)"
                             />
                             <button
                               type="button"
@@ -227,7 +223,7 @@
                   </ul>
                 }
 
-                <form class="grid gap-2 sm:grid-cols-[1fr_4rem_5rem_auto]" (ngSubmit)="addSubtask(template.id)">
+                <form class="grid gap-2 sm:grid-cols-[1fr_4rem_8rem_auto] sm:items-center" (ngSubmit)="addSubtask(template.id)">
                   <input
                     type="text"
                     name="newSubtaskTitle"
@@ -246,14 +242,11 @@
                     [ngModel]="newSubtaskIcon()"
                     (ngModelChange)="newSubtaskIcon.set($event)"
                   />
-                  <input
-                    type="number"
-                    name="newSubtaskDuration"
-                    min="1"
-                    [attr.aria-label]="'taskLibrary.manageTasks.subtasks.durationLabel' | translate"
-                    class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                    [ngModel]="newSubtaskDuration()"
-                    (ngModelChange)="newSubtaskDuration.set($event)"
+                  <app-stepper
+                    [value]="newSubtaskDuration()"
+                    [min]="1"
+                    [ariaLabel]="'taskLibrary.manageTasks.subtasks.durationLabel' | translate"
+                    (valueChange)="newSubtaskDuration.set($event)"
                   />
                   <button
                     type="submit"

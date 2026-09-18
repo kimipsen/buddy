@@ -1,16 +1,11 @@
 @if (editing()) {
   <div class="w-56 space-y-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 p-3 text-left shadow-lg">
-    <select
-      class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-      [ngModel]="kind()"
-      (ngModelChange)="kind.set($event)"
-      aria-label="{{ 'pickup.cell.kindLabel' | translate }}"
-    >
-      <option [ngValue]="guardianKind">{{ 'pickup.cell.kind.guardian' | translate }}</option>
-      <option [ngValue]="selfEscortKind">{{ 'pickup.cell.kind.selfEscort' | translate }}</option>
-      <option [ngValue]="siblingKind">{{ 'pickup.cell.kind.sibling' | translate }}</option>
-      <option [ngValue]="playdateKind">{{ 'pickup.cell.kind.playdate' | translate }}</option>
-    </select>
+    <app-segmented-control
+      [options]="kindOptions()"
+      [selected]="kind()"
+      [ariaLabel]="'pickup.cell.kindLabel' | translate"
+      (selectedChange)="kind.set($event)"
+    />
 
     @if (kind() === guardianKind) {
       <label class="sr-only" [attr.for]="instanceId + '-guardianId'">{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}</label>

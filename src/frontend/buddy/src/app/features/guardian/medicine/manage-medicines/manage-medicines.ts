@@ -6,6 +6,8 @@ import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MedicineSchedule, MedicinesService } from '../../../../core/medicines.service';
+import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
+import { RepeatableRow } from '../../../../shared/repeatable-row/repeatable-row';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 
 const DEFAULT_COLOR = '#f43f5e';
@@ -20,7 +22,7 @@ function withoutSeconds(time: string): string {
 
 @Component({
   selector: 'app-manage-medicines',
-  imports: [FormsModule, TranslatePipe, TimeSelect],
+  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, RepeatableRow, TimeSelect],
   templateUrl: './manage-medicines.html'
 })
 export class ManageMedicines implements OnInit {

@@ -1,0 +1,10 @@
+<div class="flex items-center gap-2">
+  <div class="flex-1">
+    <ng-content />
+  </div>
+  @if (canRemove()) {
+    <button type="button" class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400" (click)="remove.emit()">
+      {{ removeLabel() }}
+    </button>
+  }
+</div>

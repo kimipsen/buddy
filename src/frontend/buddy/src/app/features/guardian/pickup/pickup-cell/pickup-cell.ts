@@ -1,10 +1,12 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { AssignPickupRequest, PickupAssigneeKind, PickupOccurrence } from '../../../../core/pickups.service';
 import { TimeOfDayPipe } from '../../../../core/time-of-day.pipe';
+import { SegmentedControl, SegmentedControlOption } from '../../../../shared/segmented-control/segmented-control';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 
 const GUARDIAN: PickupAssigneeKind = 0;
@@ -21,11 +23,20 @@ let nextPickupCellInstanceId = 0;
 // manage-medicines.ts's inline confirm/cancel pattern), so editing happens in place the same way.
 @Component({
   selector: 'app-pickup-cell',
-  imports: [FormsModule, TranslatePipe, TimeOfDayPipe, TimeSelect],
+  imports: [FormsModule, TranslatePipe, TimeOfDayPipe, SegmentedControl, TimeSelect],
   templateUrl: './pickup-cell.html'
 })
 export class PickupCell {
+  private readonly translation = inject(TranslationService);
+
   protected readonly instanceId = `pickup-cell-${nextPickupCellInstanceId++}`;
+
+  protected readonly kindOptions = computed<SegmentedControlOption<PickupAssigneeKind>[]>(() => [
+    { value: GUARDIAN, label: this.translation.translate('pickup.cell.kind.guardian') },
+    { value: SELF_ESCORT, label: this.translation.translate('pickup.cell.kind.selfEscort') },
+    { value: SIBLING, label: this.translation.translate('pickup.cell.kind.sibling') },
+    { value: PLAYDATE, label: this.translation.translate('pickup.cell.kind.playdate') }
+  ]);
 
   readonly guardians = input.required<GuardianSummary[]>();
   readonly siblings = input.required<ChildSummary[]>();

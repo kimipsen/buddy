@@ -30,8 +30,12 @@ import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../.
 import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
 import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
+import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { DateSelect } from '../../../../shared/date-select/date-select';
+import { SegmentedControl, SegmentedControlOption } from '../../../../shared/segmented-control/segmented-control';
+import { Stepper } from '../../../../shared/stepper/stepper';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
+import { Toggle } from '../../../../shared/toggle/toggle';
 import { MonthGrid } from './month-grid/month-grid';
 import { TaskPicker } from '../../task-library/task-picker/task-picker';
 
@@ -110,7 +114,7 @@ function formatDuration(totalMinutes: number): string {
 
 @Component({
   selector: 'app-calendar-agenda',
-  imports: [FormsModule, TranslatePipe, UserDatePipe, DateSelect, TimeSelect, MonthGrid, TaskPicker],
+  imports: [FormsModule, TranslatePipe, UserDatePipe, ColorSwatchPicker, DateSelect, SegmentedControl, Stepper, TimeSelect, Toggle, MonthGrid, TaskPicker],
   templateUrl: './agenda.html'
 })
 export class CalendarAgenda implements OnInit {
@@ -123,6 +127,11 @@ export class CalendarAgenda implements OnInit {
   protected readonly eventKind = EVENT_KIND;
   protected readonly taskKind = TASK_KIND;
   protected readonly today = todayIsoDate();
+
+  protected readonly itemKindOptions = computed<SegmentedControlOption<CalendarItemKind>[]>(() => [
+    { value: EVENT_KIND, label: this.translation.translate('calendar.agenda.form.kind.event') },
+    { value: TASK_KIND, label: this.translation.translate('calendar.agenda.form.kind.task') }
+  ]);
 
   protected readonly anchorDate = signal(todayIsoDate());
   protected readonly viewMode = signal<ViewMode>('week');
