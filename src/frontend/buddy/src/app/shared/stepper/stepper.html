@@ -13,6 +13,7 @@
     class="w-14 border-x border-slate-300 dark:border-slate-600 bg-transparent px-1 py-1.5 text-center text-sm focus:outline-none [appearance:textfield]"
     [ngModel]="value()"
     (ngModelChange)="setValue($event)"
+    [ngModelOptions]="{ standalone: true }"
     [disabled]="disabled()"
     [attr.aria-label]="ariaLabel() || null"
   />

@@ -141,7 +141,7 @@ describe('ManageTasks', () => {
   }
 
   function subtaskDurationInput(compiled: HTMLElement): HTMLInputElement {
-    return compiled.querySelector('input[name="newSubtaskDuration"]')!;
+    return compiled.querySelector('form input[name="newSubtaskTitle"]')!.closest('form')!.querySelector('app-stepper input[type="number"]')!;
   }
 
   function selectsOutsideForm(compiled: HTMLElement): HTMLSelectElement[] {

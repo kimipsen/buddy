@@ -183,6 +183,20 @@ describe('CalendarAgenda', () => {
     return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
   }
 
+  // app-toggle replaced every native `<input type="checkbox">` in this screen (calendar-visibility
+  // filters, task/subtask completion, the "all day" flags) with a `<button role="switch"
+  // aria-checked>` -- clicking it toggles, and checked state reads off aria-checked rather than
+  // `.checked`. Scoped lookups pass `root` narrower than the whole compiled element (e.g. a single
+  // run's subtask list) the same way the old `input[type="checkbox"]` selector was scoped.
+  function findToggle(root: ParentNode, ariaLabel?: string): HTMLButtonElement {
+    const toggles = Array.from(root.querySelectorAll<HTMLButtonElement>('button[role="switch"]'));
+    return (ariaLabel ? toggles.find((toggle) => toggle.getAttribute('aria-label') === ariaLabel) : toggles[0])!;
+  }
+
+  function toggleIsChecked(toggle: HTMLButtonElement): boolean {
+    return toggle.getAttribute('aria-checked') === 'true';
+  }
+
   // The create form and an open edit form can both be present at once (they aren't mutually
   // exclusive), so `form` alone isn't a reliable index -- anchor on the create form's own title
   // input instead.
@@ -369,11 +383,11 @@ describe('CalendarAgenda', () => {
     expect(compiled.textContent).toContain('Home item');
     expect(compiled.textContent).toContain('School item');
 
-    const checkboxes = Array.from(compiled.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
-    const homeCheckbox = checkboxes.find((checkbox) => checkbox.parentElement?.textContent?.includes('Home'))!;
-    expect(homeCheckbox.checked).toBe(true);
+    // app-toggle's ariaLabel is bound to the calendar name, so it identifies the toggle directly.
+    const homeToggle = findToggle(compiled, 'Home');
+    expect(toggleIsChecked(homeToggle)).toBe(true);
 
-    homeCheckbox.dispatchEvent(new Event('change'));
+    homeToggle.click();
     await settle(fixture);
 
     compiled = fixture.nativeElement as HTMLElement;
@@ -391,8 +405,8 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const homeCheckbox = compiled.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
-    homeCheckbox.dispatchEvent(new Event('change'));
+    const homeToggle = findToggle(compiled);
+    homeToggle.click();
     await settle(fixture);
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Nothing planned this week.');
@@ -406,14 +420,14 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const checkbox = compiled.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
-    expect(checkbox.checked).toBe(false);
+    const toggle = findToggle(compiled);
+    expect(toggleIsChecked(toggle)).toBe(false);
 
-    checkbox.dispatchEvent(new Event('change'));
+    toggle.click();
     await settle(fixture);
 
     expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
-    expect((fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(true);
+    expect(toggleIsChecked(findToggle(fixture.nativeElement as HTMLElement))).toBe(true);
   });
 
   it('disables the completion checkbox for a task due on a future day', async () => {
@@ -423,10 +437,10 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const checkbox = compiled.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
-    expect(checkbox.disabled).toBe(true);
+    const toggle = findToggle(compiled);
+    expect(toggle.disabled).toBe(true);
 
-    checkbox.dispatchEvent(new Event('change'));
+    toggle.click();
     await settle(fixture);
 
     expect(calendars.setTaskCompletion).not.toHaveBeenCalled();
@@ -443,11 +457,11 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    compiled.querySelector<HTMLInputElement>('input[type="checkbox"]')!.dispatchEvent(new Event('change'));
+    findToggle(compiled).click();
     await settle(fixture);
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Unable to update this task.');
-    expect((fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(false);
+    expect(toggleIsChecked(findToggle(fixture.nativeElement as HTMLElement))).toBe(false);
   });
 
   // ----- Delete -----
@@ -696,13 +710,12 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     let compiled = fixture.nativeElement as HTMLElement;
-    const kindSelect = compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!;
-    selectByIndex(kindSelect, 1); // Task
+    findButtonByText(compiled, 'Task')!.click(); // app-segmented-control kind picker
     await settle(fixture);
 
     compiled = fixture.nativeElement as HTMLElement;
     setInputValue(compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!, 'Take out trash');
-    compiled.querySelector<HTMLInputElement>('input[type="checkbox"]')!.dispatchEvent(new Event('change')); // all-day on
+    findToggle(compiled).click(); // all-day on
     await settle(fixture);
 
     compiled = fixture.nativeElement as HTMLElement;
@@ -1036,8 +1049,8 @@ describe('CalendarAgenda', () => {
       expect(compiled.textContent).toContain('Get dressed');
       expect(compiled.textContent).toContain('Eat breakfast');
       // Scoped to the run's own subtask list -- the create form below also renders an unrelated
-      // "all day" checkbox that would otherwise inflate this count.
-      expect(compiled.querySelectorAll('ul.ml-4 input[type="checkbox"]')).toHaveLength(3);
+      // "all day" toggle that would otherwise inflate this count.
+      expect(compiled.querySelectorAll('ul.ml-4 button[role="switch"]')).toHaveLength(3);
     });
 
     it('completing one subtask of a 3-subtask run does not flip the other subtasks (the compound-key fix)', async () => {
@@ -1051,24 +1064,24 @@ describe('CalendarAgenda', () => {
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
-      const checkboxes = Array.from(compiled.querySelectorAll<HTMLInputElement>('ul.ml-4 input[type="checkbox"]'));
-      expect(checkboxes).toHaveLength(3);
-      expect(checkboxes.every((checkbox) => !checkbox.checked)).toBe(true);
+      const toggles = Array.from(compiled.querySelectorAll<HTMLButtonElement>('ul.ml-4 button[role="switch"]'));
+      expect(toggles).toHaveLength(3);
+      expect(toggles.every((toggle) => !toggleIsChecked(toggle))).toBe(true);
 
       // Toggle only the first subtask.
-      checkboxes[0].dispatchEvent(new Event('change'));
+      toggles[0].click();
       await settle(fixture);
 
       expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'run-1', today, true, 'sub-1');
 
       const afterToggle = Array.from(
-        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('ul.ml-4 input[type="checkbox"]')
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('ul.ml-4 button[role="switch"]')
       );
-      expect(afterToggle[0].checked).toBe(true);
+      expect(toggleIsChecked(afterToggle[0])).toBe(true);
       // The sibling subtasks must remain unchecked -- without the compound (itemId + subtaskId)
       // key, every occurrence sharing itemId "run-1" would have been optimistically flipped too.
-      expect(afterToggle[1].checked).toBe(false);
-      expect(afterToggle[2].checked).toBe(false);
+      expect(toggleIsChecked(afterToggle[1])).toBe(false);
+      expect(toggleIsChecked(afterToggle[2])).toBe(false);
     });
 
     it('can delete a template-scheduled run from its grouped block, same confirm flow as a plain item', async () => {
@@ -1107,7 +1120,7 @@ describe('CalendarAgenda', () => {
       await settle(fixture);
 
       let compiled = fixture.nativeElement as HTMLElement;
-      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      findButtonByText(compiled, 'Task')!.click(); // app-segmented-control kind picker
       await settle(fixture);
 
       compiled = fixture.nativeElement as HTMLElement;
@@ -1144,7 +1157,7 @@ describe('CalendarAgenda', () => {
       await settle(fixture);
 
       let compiled = fixture.nativeElement as HTMLElement;
-      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      findButtonByText(compiled, 'Task')!.click(); // app-segmented-control kind picker
       await settle(fixture);
 
       compiled = fixture.nativeElement as HTMLElement;
@@ -1182,7 +1195,7 @@ describe('CalendarAgenda', () => {
       await settle(fixture);
 
       let compiled = fixture.nativeElement as HTMLElement;
-      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      findButtonByText(compiled, 'Task')!.click(); // app-segmented-control kind picker
       await settle(fixture);
 
       compiled = fixture.nativeElement as HTMLElement;
@@ -1199,7 +1212,7 @@ describe('CalendarAgenda', () => {
       await settle(fixture);
 
       let compiled = fixture.nativeElement as HTMLElement;
-      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      findButtonByText(compiled, 'Task')!.click(); // app-segmented-control kind picker
       await settle(fixture);
 
       compiled = fixture.nativeElement as HTMLElement;
@@ -1225,7 +1238,7 @@ describe('CalendarAgenda', () => {
       await settle(fixture);
 
       let compiled = fixture.nativeElement as HTMLElement;
-      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      findButtonByText(compiled, 'Task')!.click(); // app-segmented-control kind picker
       await settle(fixture);
 
       compiled = fixture.nativeElement as HTMLElement;
@@ -1243,7 +1256,7 @@ describe('CalendarAgenda', () => {
       await settle(fixture);
 
       let compiled = fixture.nativeElement as HTMLElement;
-      selectByIndex(compiled.querySelector<HTMLSelectElement>('select[name="itemKind"]')!, 1); // Task
+      findButtonByText(compiled, 'Task')!.click(); // app-segmented-control kind picker
       await settle(fixture);
       vi.mocked(taskLibrary.clearTemplates!).mockClear();
 

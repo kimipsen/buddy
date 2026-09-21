@@ -68,7 +68,9 @@ describe('PickupCell', () => {
   // See docs/testing.md's zoneless-async note: SelectControlValueAccessor doesn't finish writing
   // an [ngValue]-bound select's initial selection within the same synchronous detectChanges() that
   // first creates it (its <option>s register with the accessor a tick later), so a macrotask flush
-  // is needed before reading selectedOptions on a just-opened edit form.
+  // is needed before reading selectedOptions on a just-opened edit form. This still applies to the
+  // guardian/sibling `<select>` (the "kind" picker itself is a segmented-control radiogroup, not a
+  // native select, so it settles synchronously).
   async function settle(fixture: { detectChanges: () => void }): Promise<void> {
     fixture.detectChanges();
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -87,11 +89,21 @@ describe('PickupCell', () => {
     return Array.from(compiled.querySelectorAll('select'));
   }
 
-  function selectByLabel(select: HTMLSelectElement, label: string): void {
-    const index = Array.from(select.options).findIndex((option) => option.textContent?.trim() === label);
-    expect(index, `option "${label}" not found`).toBeGreaterThanOrEqual(0);
-    select.selectedIndex = index;
-    select.dispatchEvent(new Event('change'));
+  // The "kind" picker (guardian/self-escort/sibling/playdate) is an `app-segmented-control`: a
+  // `role="radiogroup"` of `role="radio"` buttons, not a native `<select>` -- see
+  // shared/segmented-control/segmented-control.html.
+  function kindRadios(compiled: HTMLElement): HTMLButtonElement[] {
+    return Array.from(compiled.querySelectorAll<HTMLButtonElement>('[role="radiogroup"] button[role="radio"]'));
+  }
+
+  function selectKind(compiled: HTMLElement, label: string): void {
+    const button = kindRadios(compiled).find((candidate) => candidate.textContent?.trim() === label);
+    expect(button, `kind option "${label}" not found`).toBeTruthy();
+    button!.click();
+  }
+
+  function selectedKindLabel(compiled: HTMLElement): string | undefined {
+    return kindRadios(compiled).find((button) => button.getAttribute('aria-checked') === 'true')?.textContent?.trim();
   }
 
   function selectByValue(select: HTMLSelectElement, value: string): void {
@@ -236,8 +248,7 @@ describe('PickupCell', () => {
       // writing the initial selection) after a further macrotask on a freshly-created @if branch --
       // see settle()/docs/testing.md's zoneless-async note.
       await settle(fixture);
-      const [kindSelect] = selects(compiled);
-      expect(kindSelect.selectedOptions[0].textContent?.trim()).toBe('A guardian');
+      expect(selectedKindLabel(compiled)).toBe('A guardian');
       expect(findButton(compiled, 'Save')?.disabled).toBe(true);
     });
 
@@ -264,8 +275,7 @@ describe('PickupCell', () => {
       findButton(compiled, 'Casper')!.click();
       await settle(fixture);
 
-      const [kindSelect] = selects(compiled);
-      expect(kindSelect.selectedOptions[0].textContent?.trim()).toBe('Playdate');
+      expect(selectedKindLabel(compiled)).toBe('Playdate');
 
       const hostInput = compiled.querySelector<HTMLInputElement>('input[placeholder="Who’s hosting? (required)"]');
       const locationInput = compiled.querySelector<HTMLInputElement>('input[placeholder="Location (optional)"]');
@@ -287,7 +297,7 @@ describe('PickupCell', () => {
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
 
-      selectByLabel(selects(compiled)[0], 'A sibling');
+      selectKind(compiled, 'A sibling');
       fixture.detectChanges();
 
       expect(compiled.textContent).toContain('No siblings linked yet.');
@@ -301,9 +311,9 @@ describe('PickupCell', () => {
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
 
-      const [kindSelect, guardianSelect] = selects(compiled);
-      selectByLabel(kindSelect, 'A guardian');
+      selectKind(compiled, 'A guardian');
       fixture.detectChanges();
+      const [guardianSelect] = selects(compiled);
       selectByValue(guardianSelect, 'g1');
       fixture.detectChanges();
 
@@ -332,9 +342,9 @@ describe('PickupCell', () => {
 
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
-      selectByLabel(selects(compiled)[0], 'A sibling');
+      selectKind(compiled, 'A sibling');
       fixture.detectChanges();
-      selectByValue(selects(compiled)[1], 's1');
+      selectByValue(selects(compiled)[0], 's1');
       fixture.detectChanges();
 
       findButton(compiled, 'Save')!.click();
@@ -350,7 +360,7 @@ describe('PickupCell', () => {
 
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
-      selectByLabel(selects(compiled)[0], 'Goes alone');
+      selectKind(compiled, 'Goes alone');
       fixture.detectChanges();
 
       expect(findButton(compiled, 'Save')?.disabled).toBe(false);
@@ -374,7 +384,7 @@ describe('PickupCell', () => {
 
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
-      selectByLabel(selects(compiled)[0], 'Playdate');
+      selectKind(compiled, 'Playdate');
       fixture.detectChanges();
 
       setInput(compiled, 'Who’s hosting? (required)', '   ');
@@ -402,7 +412,7 @@ describe('PickupCell', () => {
 
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
-      selectByLabel(selects(compiled)[0], 'Goes alone');
+      selectKind(compiled, 'Goes alone');
       setInput(compiled, 'Notes (optional)', '  needs a jacket  ');
       fixture.detectChanges();
 
@@ -415,7 +425,7 @@ describe('PickupCell', () => {
 
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
-      selectByLabel(selects(compiled)[0], 'Goes alone');
+      selectKind(compiled, 'Goes alone');
       fixture.detectChanges();
 
       setTime(compiled, '21:05');
@@ -432,14 +442,14 @@ describe('PickupCell', () => {
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
 
-      const [kindSelect, guardianSelect] = selects(compiled);
-      selectByLabel(kindSelect, 'A guardian');
+      selectKind(compiled, 'A guardian');
       fixture.detectChanges();
+      const [guardianSelect] = selects(compiled);
       selectByValue(guardianSelect, 'g1');
       fixture.detectChanges();
       expect(findButton(compiled, 'Save')?.disabled).toBe(false);
 
-      selectByLabel(selects(compiled)[0], 'A sibling');
+      selectKind(compiled, 'A sibling');
       fixture.detectChanges();
 
       // The guardian select is gone (kind is now sibling) and no sibling has been chosen yet.
@@ -455,14 +465,14 @@ describe('PickupCell', () => {
 
       findButton(compiled, 'Goes alone')!.click();
       fixture.detectChanges();
-      expect(selects(compiled)).not.toHaveLength(0);
+      expect(compiled.querySelector('[role="radiogroup"]')).toBeTruthy();
 
       findButton(compiled, 'Cancel')!.click();
       fixture.detectChanges();
 
       expect(onAssign).not.toHaveBeenCalled();
       expect(onClear).not.toHaveBeenCalled();
-      expect(selects(compiled)).toHaveLength(0);
+      expect(compiled.querySelector('[role="radiogroup"]')).toBeNull();
       expect(compiled.textContent).toContain('Goes alone');
     });
   });

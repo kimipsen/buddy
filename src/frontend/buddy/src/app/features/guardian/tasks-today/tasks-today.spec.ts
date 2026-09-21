@@ -83,8 +83,12 @@ describe('TasksToday', () => {
     }
   }
 
-  function findCheckbox(compiled: HTMLElement, title: string): HTMLInputElement | undefined {
-    return compiled.querySelector<HTMLInputElement>(`input[type="checkbox"][aria-label="${title}"]`) ?? undefined;
+  function findCheckbox(compiled: HTMLElement, title: string): HTMLButtonElement | undefined {
+    return compiled.querySelector<HTMLButtonElement>(`button[role="switch"][aria-label="${title}"]`) ?? undefined;
+  }
+
+  function isChecked(checkbox: HTMLButtonElement): boolean {
+    return checkbox.getAttribute('aria-checked') === 'true';
   }
 
   it('shows the loading spinner while tasks are loading', async () => {
@@ -155,7 +159,7 @@ describe('TasksToday', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     const checkbox = findCheckbox(compiled, 'Done chore');
-    expect(checkbox?.checked).toBe(true);
+    expect(checkbox && isChecked(checkbox)).toBe(true);
 
     const title = Array.from(compiled.querySelectorAll('span')).find((span) => span.textContent?.trim() === 'Done chore');
     expect(title?.classList.contains('line-through')).toBe(true);
@@ -188,11 +192,12 @@ describe('TasksToday', () => {
     const checkbox = findCheckbox(compiled, 'Water plants')!;
     expect(checkbox.disabled).toBe(false);
 
-    checkbox.dispatchEvent(new Event('change'));
+    checkbox.click();
     await settle(fixture);
 
     expect(calendars.setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
-    expect(findCheckbox(compiled, 'Water plants')?.checked).toBe(true);
+    const updated = findCheckbox(compiled, 'Water plants');
+    expect(updated && isChecked(updated)).toBe(true);
   });
 
   it('allows toggling a task assigned to the signed-in guardian', async () => {
@@ -206,7 +211,7 @@ describe('TasksToday', () => {
     const checkbox = findCheckbox(compiled, 'Pack lunch')!;
     expect(checkbox.disabled).toBe(false);
 
-    checkbox.dispatchEvent(new Event('change'));
+    checkbox.click();
     await settle(fixture);
 
     expect(setTaskCompletion).toHaveBeenCalledWith('cal-1', 'task-1', today, true, null);
@@ -223,7 +228,7 @@ describe('TasksToday', () => {
     const checkbox = findCheckbox(compiled, 'Feed the dog')!;
     expect(checkbox.disabled).toBe(true);
 
-    checkbox.dispatchEvent(new Event('change'));
+    checkbox.click();
     await settle(fixture);
 
     expect(setTaskCompletion).not.toHaveBeenCalled();
@@ -262,7 +267,7 @@ describe('TasksToday', () => {
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.querySelector('input[type="checkbox"]')).toBeNull();
+      expect(compiled.querySelector('button[role="switch"]')).toBeNull();
     });
 
     it('is not yet overdue while its LAST subtask is still in the future, even if an earlier one is already past its own time', async () => {
@@ -319,7 +324,7 @@ describe('TasksToday', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    findCheckbox(compiled, 'Water plants')!.dispatchEvent(new Event('change'));
+    findCheckbox(compiled, 'Water plants')!.click();
     await settle(fixture);
 
     expect(compiled.textContent).toContain('Unable to update this task.');

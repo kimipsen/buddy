@@ -107,6 +107,17 @@ describe('ManagePickups', () => {
     return cells(fixture)[dayOffset * 2 + slot];
   }
 
+  // The "kind" picker inside a pickup-cell's edit form is an `app-segmented-control`: a
+  // `role="radiogroup"` of `role="radio"` buttons, not a native `<select>` -- see
+  // shared/segmented-control/segmented-control.html.
+  function selectKind(cell: HTMLElement, label: string): void {
+    const button = Array.from(cell.querySelectorAll<HTMLButtonElement>('[role="radiogroup"] button[role="radio"]')).find(
+      (candidate) => candidate.textContent?.trim() === label
+    );
+    expect(button, `kind option "${label}" not found`).toBeTruthy();
+    button!.click();
+  }
+
   function deferred<T>() {
     let resolve!: (value: T) => void;
     let reject!: (reason?: unknown) => void;
@@ -238,12 +249,10 @@ describe('ManagePickups', () => {
     cell.querySelector<HTMLButtonElement>('button')!.click();
     fixture.detectChanges();
 
-    const kindSelect = cell.querySelectorAll('select')[0] as HTMLSelectElement;
-    kindSelect.value = kindSelect.options[2].value; // sibling option
-    kindSelect.dispatchEvent(new Event('change'));
+    selectKind(cell, 'A sibling');
     fixture.detectChanges();
 
-    const siblingSelect = cell.querySelectorAll('select')[1] as HTMLSelectElement;
+    const siblingSelect = cell.querySelectorAll('select')[0] as HTMLSelectElement;
     const siblingOptionLabels = Array.from(siblingSelect.options)
       .map((option) => option.textContent?.trim())
       .filter((label) => label && label !== 'Choose a sibling');
@@ -265,7 +274,7 @@ describe('ManagePickups', () => {
       fixture.detectChanges();
 
       // Default kind is "guardian" (GUARDIAN=0), so only the guardian picker needs a value.
-      const guardianSelect = cell.querySelectorAll('select')[1] as HTMLSelectElement;
+      const guardianSelect = cell.querySelectorAll('select')[0] as HTMLSelectElement;
       guardianSelect.value = 'guardian-1';
       guardianSelect.dispatchEvent(new Event('change'));
       fixture.detectChanges();
@@ -303,9 +312,7 @@ describe('ManagePickups', () => {
       fixture.detectChanges();
 
       // Switch to "goes alone" (SELF_ESCORT=1), which needs no further picker to become saveable.
-      const kindSelect = cell.querySelectorAll('select')[0] as HTMLSelectElement;
-      kindSelect.value = kindSelect.options[1].value;
-      kindSelect.dispatchEvent(new Event('change'));
+      selectKind(cell, 'Goes alone');
       fixture.detectChanges();
 
       Array.from(cell.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Save')!.click();
@@ -330,7 +337,7 @@ describe('ManagePickups', () => {
       cell.querySelector<HTMLButtonElement>('button')!.click();
       fixture.detectChanges();
 
-      const guardianSelect = cell.querySelectorAll('select')[1] as HTMLSelectElement;
+      const guardianSelect = cell.querySelectorAll('select')[0] as HTMLSelectElement;
       guardianSelect.value = 'guardian-1';
       guardianSelect.dispatchEvent(new Event('change'));
       fixture.detectChanges();
