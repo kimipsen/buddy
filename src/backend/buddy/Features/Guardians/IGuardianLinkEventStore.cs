@@ -6,6 +6,8 @@ public interface IGuardianLinkEventStore
 {
     Task<IReadOnlyCollection<GuardianEvent>> ReadAsync(GuardianLinkId id, CancellationToken cancellationToken);
 
+    Task<GuardianLink?> FindSnapshotAsync(GuardianLinkId id, CancellationToken cancellationToken);
+
     Task AppendAsync(GuardianLinkId id, IReadOnlyCollection<GuardianEvent> events, CancellationToken cancellationToken);
 
     Task<GuardianLinkDocument?> FindActiveLinkAsync(UserId childId, UserId guardianId, CancellationToken cancellationToken);

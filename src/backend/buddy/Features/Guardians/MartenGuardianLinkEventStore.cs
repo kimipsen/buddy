@@ -17,6 +17,14 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
         return [.. events.Select(e => GuardianEvent.FromPayload(e.Data))];
     }
 
+    public async Task<GuardianLink?> FindSnapshotAsync(GuardianLinkId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<GuardianLinkSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.GuardianLink;
+    }
+
     public async Task AppendAsync(GuardianLinkId id, IReadOnlyCollection<GuardianEvent> events, CancellationToken cancellationToken)
     {
         if (events.Count == 0)

@@ -6,6 +6,8 @@ public interface IUserEventStore
 
     Task<IReadOnlyCollection<UserEvent>> ReadAsync(UserId userId, CancellationToken cancellationToken);
 
+    Task<User?> FindSnapshotAsync(UserId userId, CancellationToken cancellationToken);
+
     // Both return entries in ascending version order.
     Task<IReadOnlyCollection<UserEventEntry>> ReadForwardAsync(UserId userId, long afterVersion, int take, CancellationToken cancellationToken);
 

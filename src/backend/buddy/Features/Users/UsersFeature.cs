@@ -4,6 +4,7 @@ using buddy.Features.Guardians;
 using buddy.Serialization;
 
 using JasperFx.Events;
+using JasperFx.Events.Projections;
 
 using Marten;
 
@@ -91,6 +92,23 @@ public static class UsersFeature
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
                 configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+
+            // Inline snapshots of User and GuardianLink, kept transactionally consistent with
+            // every event append. Routed to a schema separate from "users" -- they're
+            // derived/rebuildable read state, never the source of truth. GuardianLink is
+            // registered here rather than in GuardiansFeature because its event stream lives in
+            // this same Marten store/schema (see MartenGuardianLinkEventStore). See
+            // docs/backend/analysis/event-stream-snapshots.md.
+            //
+            // Registered explicitly via Register(), not the Projections.Snapshot<T>() convenience
+            // method: that method tries to auto-derive the document's TId via reflection, which
+            // throws (ArgumentNullException out of MakeGenericType) for a Guid Id. Register()
+            // takes the already-typed projection instance directly, sidestepping that lookup.
+            options.Projections.Register(new UserSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<UserSnapshot>().DatabaseSchemaName("snapshots");
+
+            options.Projections.Register(new GuardianLinkSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<GuardianLinkSnapshot>().DatabaseSchemaName("snapshots");
 
             return options;
         });
