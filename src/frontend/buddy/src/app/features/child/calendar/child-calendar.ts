@@ -2,9 +2,10 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { CalendarItemKind, CalendarOccurrence, CalendarSummary, CalendarsService } from '../../../core/calendars.service';
-import { toIsoDate, todayIsoDate, toIsoDateInTimeZone } from '../../../core/date-utils';
+import { toIsoDate, todayIsoDate, toIsoDateInTimeZone, toTimeInTimeZone } from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
@@ -14,9 +15,35 @@ const EVENT_KIND: CalendarItemKind = 0;
 const TASK_KIND: CalendarItemKind = 1;
 const DAYS_AHEAD = 7;
 
+// Meals only carry a date + MealSlot, never a real clock time -- this mirrors the backend's
+// MealSlotDefaultTimes.cs fallback (used there only for the iCal feed) purely so a meal can be
+// slotted into the right position among real-timestamped occurrences. Note the chronological
+// order (Breakfast, Lunch, Snack, Dinner) differs from the enum's declaration order.
+const MEAL_SLOT_SORT_TIME: Record<MealSlot, string> = { 0: '07:00', 1: '12:00', 2: '18:00', 3: '15:00' };
+
+const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
+  0: 'dashboard.mealplan.slots.breakfast',
+  1: 'dashboard.mealplan.slots.lunch',
+  2: 'dashboard.mealplan.slots.dinner',
+  3: 'dashboard.mealplan.slots.snack'
+};
+
 interface AgendaDay {
   date: string;
   label: string;
+}
+
+// A meal plan entry, wrapped so it can sit alongside AgendaEntry (CalendarOccurrence | TaskRun)
+// without changing core/task-run.ts, which is shared with the guardian agenda and knows nothing
+// about meals.
+interface MealRow {
+  meal: MealPlanEntry;
+}
+
+type ChildAgendaRow = AgendaEntry | MealRow;
+
+function isMealRow(row: ChildAgendaRow): row is MealRow {
+  return 'meal' in row;
 }
 
 // Parsed as local-timezone components rather than `new Date(isoDate)` -- the latter parses an
@@ -46,6 +73,19 @@ function instantFor(occurrence: CalendarOccurrence): Date | null {
   return value ? new Date(value) : null;
 }
 
+// A wall-clock "HH:mm" sort key comparable across both real-timestamped rows (tasks/events, via
+// their instant converted into the viewer's own time zone) and meal rows (which only ever have a
+// slot, via MEAL_SLOT_SORT_TIME) -- lets groupedOccurrencesFor sort every row kind in one pass.
+function sortKeyFor(row: ChildAgendaRow, timeZoneId: string): string {
+  if (isMealRow(row)) {
+    return MEAL_SLOT_SORT_TIME[row.meal.slot];
+  }
+
+  const occurrence = isTaskRun(row) ? row.subtasks[0] : row;
+  const instant = instantFor(occurrence);
+  return instant ? toTimeInTimeZone(instant, timeZoneId) : '';
+}
+
 // Read-only child counterpart to the guardian's CalendarAgenda: same week-window and
 // occurrence-grouping shape, but no create/edit/delete -- see
 // docs/frontend/analysis/child-calendar-agenda-plan.md for why those are deliberately absent here.
@@ -56,17 +96,20 @@ function instantFor(occurrence: CalendarOccurrence): Date | null {
 })
 export class ChildCalendar {
   private readonly calendars = inject(CalendarsService);
+  private readonly mealplans = inject(MealplansService);
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
 
   protected readonly eventKind = EVENT_KIND;
   protected readonly taskKind = TASK_KIND;
+  protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
 
   protected readonly anchorDate = signal(todayIsoDate());
   protected readonly days = computed(() => buildDays(this.anchorDate(), this.translation.language()));
 
   protected readonly myCalendars = signal<CalendarSummary[]>([]);
   protected readonly occurrences = signal<CalendarOccurrence[]>([]);
+  protected readonly mealEntries = signal<MealPlanEntry[]>([]);
   protected readonly hiddenCalendarIds = signal<Set<string>>(new Set());
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -99,13 +142,25 @@ export class ChildCalendar {
     return byDate;
   });
 
-  // Checked against the currently displayed `days()`, not every key `occurrencesByDate()` happens
-  // to hold -- `occurrences()` can briefly retain items from an out-of-range fetch (e.g. stale data
-  // while navigating between weeks), which would otherwise suppress the empty state without any
-  // occurrence actually being rendered.
+  protected readonly mealEntriesByDate = computed(() => {
+    const byDate: Record<string, MealPlanEntry[]> = {};
+
+    for (const entry of this.mealEntries()) {
+      const entriesForDate = (byDate[entry.date] ??= []);
+      entriesForDate.push(entry);
+    }
+
+    return byDate;
+  });
+
+  // Checked against the currently displayed `days()`, not every key `occurrencesByDate()`/
+  // `mealEntriesByDate()` happens to hold -- both signals can briefly retain items from an
+  // out-of-range fetch (e.g. stale data while navigating between weeks), which would otherwise
+  // suppress the empty state without any row actually being rendered.
   protected readonly hasAnyVisibleOccurrence = computed(() => {
     const byDate = this.occurrencesByDate();
-    return this.days().some((day) => (byDate[day.date] ?? []).length > 0);
+    const mealsByDate = this.mealEntriesByDate();
+    return this.days().some((day) => (byDate[day.date] ?? []).length > 0 || (mealsByDate[day.date] ?? []).length > 0);
   });
 
   constructor() {
@@ -135,16 +190,39 @@ export class ChildCalendar {
     return this.occurrencesByDate()[date] ?? [];
   }
 
-  // Folds a day's occurrences into agenda rows -- a template-scheduled task's subtask occurrences
-  // (sharing an itemId + parentTitle) render as one bracketed block instead of one row each; every
-  // other occurrence is unaffected. Mirrors the guardian agenda's identical grouping (see
-  // core/task-run.ts).
-  protected groupedOccurrencesFor(date: string): AgendaEntry[] {
-    return groupTaskRuns(this.occurrencesFor(date));
+  protected mealEntriesFor(date: string): MealPlanEntry[] {
+    return this.mealEntriesByDate()[date] ?? [];
   }
 
-  protected isRun(entry: AgendaEntry): boolean {
-    return isTaskRun(entry);
+  // Folds a day's occurrences and meal-plan entries into one time-ordered list of agenda rows --
+  // a template-scheduled task's subtask occurrences (sharing an itemId + parentTitle) render as
+  // one bracketed block instead of one row each, and meals are interleaved among tasks/events by
+  // wall-clock slot time (see sortKeyFor). Occurrence grouping mirrors the guardian agenda's
+  // identical logic (see core/task-run.ts); meals have no backend equivalent to merge with --
+  // see docs/frontend/analysis/child-calendar-mealplan-integration.md for why this stays a
+  // frontend-only merge.
+  protected groupedOccurrencesFor(date: string): ChildAgendaRow[] {
+    const rows: ChildAgendaRow[] = [
+      ...groupTaskRuns(this.occurrencesFor(date)),
+      ...this.mealEntriesFor(date).map((meal): MealRow => ({ meal }))
+    ];
+
+    const timeZoneId = this.users.timeZoneId();
+    return rows.sort((a, b) => sortKeyFor(a, timeZoneId).localeCompare(sortKeyFor(b, timeZoneId)));
+  }
+
+  protected isRun(entry: ChildAgendaRow): boolean {
+    return !isMealRow(entry) && isTaskRun(entry);
+  }
+
+  protected isMeal(entry: ChildAgendaRow): boolean {
+    return isMealRow(entry);
+  }
+
+  // Meal rows have no itemId to track by -- date+slot is their natural stable identity (see
+  // MealPlanEntry, keyed the same way in child-mealplan.ts).
+  protected rowTrackKey(entry: ChildAgendaRow): string {
+    return isMealRow(entry) ? `meal:${entry.meal.date}:${entry.meal.slot}` : `item:${entry.itemId}`;
   }
 
   // Compound key distinguishing sibling subtask occurrences of the same template-scheduled run
@@ -217,14 +295,17 @@ export class ChildCalendar {
     try {
       const from = this.days()[0].date;
       const to = this.days().at(-1)!.date;
+      const me = await this.users.ensureCurrentUser();
 
-      const [myCalendars, occurrences] = await Promise.all([
+      const [myCalendars, occurrences, mealEntries] = await Promise.all([
         this.calendars.listMyCalendars(),
-        this.calendars.listOccurrencesInRange(from, to)
+        this.calendars.listOccurrencesInRange(from, to),
+        this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to)
       ]);
 
       this.myCalendars.set(myCalendars);
       this.occurrences.set(occurrences);
+      this.mealEntries.set(mealEntries);
     } catch {
       this.error.set('child.calendar.loadError');
     } finally {

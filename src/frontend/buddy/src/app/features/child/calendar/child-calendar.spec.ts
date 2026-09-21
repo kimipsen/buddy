@@ -5,11 +5,21 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CalendarOccurrence, CalendarSummary, CalendarsService } from '../../../core/calendars.service';
 import { toIsoDate, todayIsoDate } from '../../../core/date-utils';
-import { UsersService } from '../../../core/users.service';
+import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
+import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildCalendar } from './child-calendar';
 
 describe('ChildCalendar', () => {
   const today = todayIsoDate();
+
+  const currentUser: CurrentUser = {
+    id: 'child-1',
+    email: { value: 'kid@buddy.test', isVerified: true },
+    userName: 'kid',
+    name: { givenName: 'Kim', familyName: 'Kid' },
+    timeZoneId: 'UTC',
+    language: 'en'
+  };
 
   // Mirrors the component's own local-date arithmetic (parseIsoDate + toIsoDate) so expectations
   // don't depend on the host machine's time zone.
@@ -44,14 +54,32 @@ describe('ChildCalendar', () => {
     };
   }
 
+  function mealEntry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
+    return {
+      date: today,
+      slot: 0,
+      mealId: 'meal-1',
+      mealName: 'Pancakes',
+      icon: '🥞',
+      color: '#ffaa00',
+      rating: null,
+      notes: null,
+      assignedBy: 'guardian-1',
+      allRatings: [],
+      ...overrides
+    };
+  }
+
   interface Stubs {
     users?: Partial<UsersService>;
     calendars?: Partial<CalendarsService>;
+    mealplans?: Partial<MealplansService>;
   }
 
   async function setup(stubs: Stubs = {}) {
     const usersStub: Partial<UsersService> = {
       timeZoneId: signal('UTC').asReadonly(),
+      ensureCurrentUser: vi.fn(async () => currentUser),
       ...stubs.users
     };
     const calendarsStub: Partial<CalendarsService> = {
@@ -60,15 +88,24 @@ describe('ChildCalendar', () => {
       setTaskCompletion: vi.fn(async () => ({ itemId: 'item-1', occurrenceDate: today, isCompleted: true })),
       ...stubs.calendars
     };
+    const mealplansStub: Partial<MealplansService> = {
+      listMealPlan: vi.fn(async () => []),
+      ...stubs.mealplans
+    };
 
     await TestBed.configureTestingModule({
       imports: [ChildCalendar],
-      providers: [provideRouter([]), { provide: UsersService, useValue: usersStub }, { provide: CalendarsService, useValue: calendarsStub }]
+      providers: [
+        provideRouter([]),
+        { provide: UsersService, useValue: usersStub },
+        { provide: CalendarsService, useValue: calendarsStub },
+        { provide: MealplansService, useValue: mealplansStub }
+      ]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ChildCalendar);
 
-    return { fixture, calendars: calendarsStub };
+    return { fixture, calendars: calendarsStub, mealplans: mealplansStub };
   }
 
   async function settle(fixture: { detectChanges: () => void }): Promise<void> {
@@ -286,6 +323,67 @@ describe('ChildCalendar', () => {
     // every occurrence sharing itemId "run-1" would have been optimistically flipped too.
     expect(afterToggle[1].textContent?.trim()).toBe('');
     expect(afterToggle[2].textContent?.trim()).toBe('');
+  });
+
+  // ----- Meal plan integration -----
+
+  it('interleaves a meal among tasks/events on the same day in slot-chronological order', async () => {
+    const breakfast = mealEntry({ mealId: 'breakfast', mealName: 'Pancakes', slot: 0 });
+    const snack = mealEntry({ mealId: 'snack', mealName: 'Apple slices', slot: 3 });
+    const dinner = mealEntry({ mealId: 'dinner', mealName: 'Pasta', slot: 2 });
+    const lunchTask = occurrence({
+      itemId: 'task-1',
+      kind: 1,
+      title: 'Homework',
+      startsAt: null,
+      endsAt: null,
+      dueAt: `${today}T13:00:00Z`
+    });
+
+    const { fixture } = await setup({
+      calendars: { listOccurrencesInRange: vi.fn(async () => [lunchTask]) },
+      mealplans: { listMealPlan: vi.fn(async () => [breakfast, snack, dinner]) }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const text = compiled.textContent ?? '';
+
+    // Chronological slot order is Breakfast (07:00) < Homework (13:00) < Snack (15:00) < Dinner
+    // (18:00) -- notably Snack sorts before Dinner despite MealSlot's declaration order (Dinner=2,
+    // Snack=3) putting it after.
+    expect(text.indexOf('Pancakes')).toBeLessThan(text.indexOf('Homework'));
+    expect(text.indexOf('Homework')).toBeLessThan(text.indexOf('Apple slices'));
+    expect(text.indexOf('Apple slices')).toBeLessThan(text.indexOf('Pasta'));
+  });
+
+  it('shows a day with only a meal entry, without folding it into the empty state', async () => {
+    const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Pancakes');
+    expect(compiled.textContent).not.toContain('Nothing planned this week');
+  });
+
+  it('renders a meal row with its icon, name, and slot label, with no completion affordance', async () => {
+    const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('🥞');
+    expect(compiled.textContent).toContain('Pancakes');
+    expect(compiled.textContent).toContain('Breakfast');
+
+    const mealRow = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Pancakes'));
+    expect(mealRow?.querySelector('button')).toBeFalsy();
+  });
+
+  it('requests the meal plan for the current week for the signed-in child', async () => {
+    const { fixture, mealplans } = await setup();
+    await settle(fixture);
+
+    expect(mealplans.listMealPlan).toHaveBeenCalledWith({ kind: 'family', childId: 'child-1' }, today, addDays(today, 6));
   });
 
   it('navigates the visible week forward and backward', async () => {

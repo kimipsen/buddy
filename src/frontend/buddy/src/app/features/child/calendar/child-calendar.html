@@ -45,12 +45,22 @@
       <p class="text-lg font-semibold text-slate-500 dark:text-slate-400">{{ 'child.calendar.loading' | translate }}</p>
     } @else if (hasAnyVisibleOccurrence()) {
       @for (day of days(); track day.date) {
-        @if (occurrencesFor(day.date).length > 0) {
+        @if (groupedOccurrencesFor(day.date).length > 0) {
           <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
             <h2 class="text-xl font-bold tracking-normal">{{ day.label }}</h2>
             <ul class="mt-4 space-y-3">
-              @for (entry of groupedOccurrencesFor(day.date); track entry.itemId) {
-                @if (isRun(entry)) {
+              @for (entry of groupedOccurrencesFor(day.date); track rowTrackKey(entry)) {
+                @if (isMeal(entry)) {
+                  @let meal = $any(entry).meal;
+                  <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
+                    <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="meal.color"></span>
+                    <span class="flex flex-1 items-center gap-2 text-lg font-semibold">
+                      <span aria-hidden="true">{{ meal.icon }}</span>
+                      {{ meal.mealName }}
+                    </span>
+                    <span class="whitespace-nowrap text-sm font-semibold text-slate-500 dark:text-slate-400">{{ mealSlotLabels[meal.slot] | translate }}</span>
+                  </li>
+                } @else if (isRun(entry)) {
                   @let run = $any(entry);
                   <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3">
                     <div class="mb-3 flex items-center gap-2">

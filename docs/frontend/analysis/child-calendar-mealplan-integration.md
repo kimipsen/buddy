@@ -1,6 +1,6 @@
 # Meal plan in the child calendar (`/child/calendar`) — implementation plan
 
-Status: Proposed, not yet implemented. This is a follow-up to
+Status: Implemented. This is a follow-up to
 [Child calendar agenda (`/child/calendar`) — implementation plan](child-calendar-agenda-plan.md),
 which built the multi-day agenda this plan extends. Read it alongside
 [`ChildCalendar`](../../../src/frontend/buddy/src/app/features/child/calendar/child-calendar.ts)
