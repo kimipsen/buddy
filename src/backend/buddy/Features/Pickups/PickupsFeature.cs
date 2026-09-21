@@ -2,6 +2,7 @@ using buddy.Features.Users;
 using buddy.Serialization;
 
 using JasperFx.Events;
+using JasperFx.Events.Projections;
 
 using Marten;
 
@@ -46,7 +47,29 @@ public static class PickupsFeature
 
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
-                configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+                configure: json =>
+                {
+                    json.Converters.Add(new StronglyTypedIdJsonConverterFactory());
+                    // PickupSchedule.Assignments is keyed by a ValueTuple (DateOnly, PickupSlot),
+                    // which plain System.Text.Json can't (de)serialize -- see
+                    // docs/backend/analysis/event-stream-snapshots.md, Question 4/5. Marten's
+                    // serializer options here are separate from Program.cs's, so this needs its
+                    // own registration.
+                    json.Converters.Add(new ValueTupleJsonConverterFactory());
+                });
+
+            // Inline snapshot of PickupSchedule, kept transactionally consistent with every event
+            // append. Routed to a schema separate from "pickups" -- it's derived/rebuildable read
+            // state, never the source of truth. See
+            // docs/backend/analysis/event-stream-snapshots.md.
+            //
+            // Registered explicitly via Register(), not the Projections.Snapshot<T>() convenience
+            // method: that method tries to auto-derive the document's TId via reflection, which
+            // throws (ArgumentNullException out of MakeGenericType) for PickupScheduleSnapshot's
+            // Guid Id. Register() takes the already-typed PickupScheduleSnapshotProjection
+            // instance directly, sidestepping that lookup.
+            options.Projections.Register(new PickupScheduleSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<PickupScheduleSnapshot>().DatabaseSchemaName("snapshots");
 
             return options;
         });

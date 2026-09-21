@@ -22,9 +22,7 @@ public static class PickupScheduleExpansion
             return [];
         }
 
-        var events = await pickups.ReadAsync(scheduleId, cancellationToken);
-
-        if (PickupSchedule.Rehydrate(events) is not { } schedule)
+        if (await pickups.FindSnapshotAsync(scheduleId, cancellationToken) is not { } schedule)
         {
             return [];
         }

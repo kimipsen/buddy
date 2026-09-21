@@ -14,6 +14,14 @@ public sealed class MartenPickupScheduleEventStore(IPickupsStore store) : IPicku
         return [.. events.Select(e => PickupEvent.FromPayload(e.Data))];
     }
 
+    public async Task<PickupSchedule?> FindSnapshotAsync(PickupScheduleId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<PickupScheduleSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.PickupSchedule;
+    }
+
     public async Task<IReadOnlyCollection<PickupEvent>> CreateAsync(PickupScheduleId id, IReadOnlyCollection<PickupEvent> events, CancellationToken cancellationToken)
     {
         var childId = events.FirstOrDefault() switch
