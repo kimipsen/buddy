@@ -12,6 +12,14 @@ public sealed class MartenProgressEventStore(IProgressStore store) : IProgressEv
         return [.. events.Select(e => ProgressEvent.FromPayload(e.Data))];
     }
 
+    public async Task<ChildProgress?> FindSnapshotAsync(ProgressId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<ChildProgressSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.ChildProgress;
+    }
+
     public async Task<IReadOnlyCollection<ProgressEvent>> CreateAsync(ProgressId id, IReadOnlyCollection<ProgressEvent> events, CancellationToken cancellationToken)
     {
         if (events.FirstOrDefault() is not ProgressStarted)

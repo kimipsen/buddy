@@ -10,8 +10,7 @@ public static class GetMyProgressHandler
         }
 
         var id = ProgressId.ForChild(childId);
-        var events = await progress.ReadAsync(id, cancellationToken);
-        var current = ChildProgress.Rehydrate(events);
+        var current = await progress.FindSnapshotAsync(id, cancellationToken);
 
         return ProgressSummary.From(current);
     }

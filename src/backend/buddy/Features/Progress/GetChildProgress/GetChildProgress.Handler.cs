@@ -21,8 +21,7 @@ public static class GetChildProgressHandler
         }
 
         var id = ProgressId.ForChild(query.ChildId);
-        var events = await progress.ReadAsync(id, cancellationToken);
-        var current = ChildProgress.Rehydrate(events);
+        var current = await progress.FindSnapshotAsync(id, cancellationToken);
 
         return new Result<ProgressSummary>.Success(ProgressSummary.From(current));
     }
