@@ -34,6 +34,7 @@ builder.Host.UseWolverine(opts =>
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new StronglyTypedIdJsonConverterFactory());
+    options.SerializerOptions.Converters.Add(new ValueTupleJsonConverterFactory());
 });
 
 var frontendOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
