@@ -42,41 +42,38 @@ public sealed record Calendar(
         return null;
     }
 
-    public static Calendar? Rehydrate(IEnumerable<CalendarEvent> events)
+    public static Calendar? Rehydrate(IEnumerable<CalendarEvent> events) => events.Aggregate((Calendar?)null, Fold);
+
+    // Single-event step, split out from Rehydrate so CalendarSnapshotProjection can drive the same
+    // logic one Marten-delivered event at a time instead of duplicating this switch. Deliberately
+    // not named Apply/Create -- those names are a convention JasperFx's projection source
+    // generator scans for on any type used as a projection document, and Calendar is that document
+    // (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
+    public static Calendar? Fold(Calendar? calendar, CalendarEvent @event) => @event switch
     {
-        Calendar? calendar = null;
-
-        foreach (var @event in events)
-        {
-            calendar = @event switch
-            {
-                CalendarCreated created => new Calendar(
-                    created.CalendarId,
-                    created.Name,
-                    DefaultIcon,
-                    created.TimeZoneId,
-                    new CalendarOwner.User(created.OwnerId),
-                    ImmutableDictionary<UserId, CalendarRole>.Empty.Add(created.OwnerId, CalendarRole.Owner),
-                    ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
-                CalendarCreatedForGroup created => new Calendar(
-                    created.CalendarId,
-                    created.Name,
-                    DefaultIcon,
-                    created.TimeZoneId,
-                    new CalendarOwner.Group(created.OwnerId),
-                    ImmutableDictionary<UserId, CalendarRole>.Empty,
-                    ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
-                CalendarIconChanged changed => calendar! with { Icon = changed.Icon },
-                CalendarTransferredToGroup transferred => calendar! with { Owner = new CalendarOwner.Group(transferred.NewGroupId) },
-                MemberRoleGranted granted => calendar! with { Members = calendar!.Members.SetItem(granted.MemberId, granted.Role) },
-                MemberRoleRevoked revoked => calendar! with { Members = calendar!.Members.Remove(revoked.MemberId) },
-                IcalTokenIssued issued => calendar! with { Tokens = calendar!.Tokens.SetItem(issued.TokenId, new IcalTokenInfo(issued.TokenHash, issued.OccurredAt)) },
-                IcalTokenRevoked revoked => calendar! with { Tokens = calendar!.Tokens.Remove(revoked.TokenId) },
-                CalendarDeleted => calendar! with { IsDeleted = true },
-                _ => calendar
-            };
-        }
-
-        return calendar;
-    }
+        CalendarCreated created => new Calendar(
+            created.CalendarId,
+            created.Name,
+            DefaultIcon,
+            created.TimeZoneId,
+            new CalendarOwner.User(created.OwnerId),
+            ImmutableDictionary<UserId, CalendarRole>.Empty.Add(created.OwnerId, CalendarRole.Owner),
+            ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
+        CalendarCreatedForGroup created => new Calendar(
+            created.CalendarId,
+            created.Name,
+            DefaultIcon,
+            created.TimeZoneId,
+            new CalendarOwner.Group(created.OwnerId),
+            ImmutableDictionary<UserId, CalendarRole>.Empty,
+            ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
+        CalendarIconChanged changed => calendar! with { Icon = changed.Icon },
+        CalendarTransferredToGroup transferred => calendar! with { Owner = new CalendarOwner.Group(transferred.NewGroupId) },
+        MemberRoleGranted granted => calendar! with { Members = calendar!.Members.SetItem(granted.MemberId, granted.Role) },
+        MemberRoleRevoked revoked => calendar! with { Members = calendar!.Members.Remove(revoked.MemberId) },
+        IcalTokenIssued issued => calendar! with { Tokens = calendar!.Tokens.SetItem(issued.TokenId, new IcalTokenInfo(issued.TokenHash, issued.OccurredAt)) },
+        IcalTokenRevoked revoked => calendar! with { Tokens = calendar!.Tokens.Remove(revoked.TokenId) },
+        CalendarDeleted => calendar! with { IsDeleted = true },
+        _ => calendar
+    };
 }

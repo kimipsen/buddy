@@ -193,6 +193,12 @@ internal sealed class FakeCalendarItemEventStore : ICalendarItemEventStore
     public Task<IReadOnlyCollection<CalendarItemEvent>> ReadAsync(CalendarItemId itemId, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyCollection<CalendarItemEvent>>(_streams.TryGetValue(itemId, out var events) ? events : []);
 
+    // No real Marten projection behind this fake -- derive the same way FindSnapshotAsync's real
+    // implementation is defined to agree with (Fold over the stream), just without a stored
+    // snapshot document to read it from.
+    public Task<CalendarItem?> FindSnapshotAsync(CalendarItemId itemId, CancellationToken cancellationToken) =>
+        Task.FromResult(_streams.TryGetValue(itemId, out var events) ? CalendarItem.Rehydrate(events) : null);
+
     public Task<IReadOnlyCollection<CalendarItemEvent>> CreateAsync(CalendarItemId itemId, IReadOnlyCollection<CalendarItemEvent> events, CancellationToken cancellationToken) =>
         throw new NotSupportedException();
 

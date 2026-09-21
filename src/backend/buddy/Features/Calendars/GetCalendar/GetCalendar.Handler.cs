@@ -14,8 +14,7 @@ public static class GetCalendarHandler
             return new Result<Calendar>.NotFound();
         }
 
-        var events = await calendars.ReadAsync(query.CalendarId, cancellationToken);
-        var calendar = Calendar.Rehydrate(events);
+        var calendar = await calendars.FindSnapshotAsync(query.CalendarId, cancellationToken);
         var access = await CalendarAuthorization.CheckView(calendar, userId, groups, guardians, cancellationToken);
 
         return access == CalendarAccess.Allowed ? new Result<Calendar>.Success(calendar!) : access.ToDeniedResult<Calendar>();
