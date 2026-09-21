@@ -20,59 +20,56 @@ public sealed record TaskTemplate(
 {
     public TimeSpan TotalDuration => Subtasks.Aggregate(TimeSpan.Zero, (sum, subtask) => sum + subtask.Duration);
 
-    public static TaskTemplate? Rehydrate(IEnumerable<TaskTemplateEvent> events)
+    public static TaskTemplate? Rehydrate(IEnumerable<TaskTemplateEvent> events) => events.Aggregate((TaskTemplate?)null, Fold);
+
+    // Single-event step, split out from Rehydrate so TaskTemplateSnapshotProjection can drive the
+    // same logic one Marten-delivered event at a time instead of duplicating this switch.
+    // Deliberately not named Apply/Create -- those names are a convention JasperFx's projection
+    // source generator scans for on any type used as a projection document, and TaskTemplate is
+    // that document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
+    public static TaskTemplate? Fold(TaskTemplate? template, TaskTemplateEvent @event) => @event switch
     {
-        TaskTemplate? template = null;
-
-        foreach (var @event in events)
+        TaskTemplateCreated created => new TaskTemplate(
+            created.Id,
+            created.CreatedBy,
+            created.Name,
+            created.Icon,
+            created.Color,
+            ImmutableList<Subtask>.Empty,
+            IsArchived: false,
+            created.CreatedBy),
+        TaskTemplateDetailsUpdated updated => template! with
         {
-            template = @event switch
-            {
-                TaskTemplateCreated created => new TaskTemplate(
-                    created.Id,
-                    created.CreatedBy,
-                    created.Name,
-                    created.Icon,
-                    created.Color,
-                    ImmutableList<Subtask>.Empty,
-                    IsArchived: false,
-                    created.CreatedBy),
-                TaskTemplateDetailsUpdated updated => template! with
-                {
-                    Name = updated.After.Name,
-                    Icon = updated.After.Icon,
-                    Color = updated.After.Color,
-                    LastModifiedBy = updated.ModifiedBy
-                },
-                SubtaskAdded added => template! with
-                {
-                    Subtasks = template!.Subtasks.Insert(Math.Clamp(added.Position, 0, template.Subtasks.Count), added.Subtask),
-                    LastModifiedBy = added.ModifiedBy
-                },
-                SubtaskUpdated updated => template! with
-                {
-                    Subtasks = template!.Subtasks.SetItem(
-                        template.Subtasks.FindIndex(s => s.Id == updated.SubtaskId),
-                        updated.After),
-                    LastModifiedBy = updated.ModifiedBy
-                },
-                SubtaskRemoved removed => template! with
-                {
-                    Subtasks = template!.Subtasks.RemoveAll(s => s.Id == removed.SubtaskId),
-                    LastModifiedBy = removed.ModifiedBy
-                },
-                SubtasksReordered reordered => template! with
-                {
-                    Subtasks = Reorder(template!.Subtasks, reordered.After),
-                    LastModifiedBy = reordered.ModifiedBy
-                },
-                TaskTemplateArchived archived => template! with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
-                _ => template
-            };
-        }
-
-        return template;
-    }
+            Name = updated.After.Name,
+            Icon = updated.After.Icon,
+            Color = updated.After.Color,
+            LastModifiedBy = updated.ModifiedBy
+        },
+        SubtaskAdded added => template! with
+        {
+            Subtasks = template!.Subtasks.Insert(Math.Clamp(added.Position, 0, template.Subtasks.Count), added.Subtask),
+            LastModifiedBy = added.ModifiedBy
+        },
+        SubtaskUpdated updated => template! with
+        {
+            Subtasks = template!.Subtasks.SetItem(
+                template.Subtasks.FindIndex(s => s.Id == updated.SubtaskId),
+                updated.After),
+            LastModifiedBy = updated.ModifiedBy
+        },
+        SubtaskRemoved removed => template! with
+        {
+            Subtasks = template!.Subtasks.RemoveAll(s => s.Id == removed.SubtaskId),
+            LastModifiedBy = removed.ModifiedBy
+        },
+        SubtasksReordered reordered => template! with
+        {
+            Subtasks = Reorder(template!.Subtasks, reordered.After),
+            LastModifiedBy = reordered.ModifiedBy
+        },
+        TaskTemplateArchived archived => template! with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
+        _ => template
+    };
 
     // Every id in `after` must already exist in `subtasks` -- a fold-invariant violation here is a
     // real bug (the handler emitting SubtasksReordered is responsible for only ever appending a

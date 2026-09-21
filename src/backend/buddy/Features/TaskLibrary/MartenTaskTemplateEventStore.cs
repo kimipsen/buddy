@@ -14,6 +14,14 @@ public sealed class MartenTaskTemplateEventStore(ITaskLibraryStore store) : ITas
         return [.. events.Select(e => TaskTemplateEvent.FromPayload(e.Data))];
     }
 
+    public async Task<TaskTemplate?> FindSnapshotAsync(TaskTemplateId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<TaskTemplateSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.TaskTemplate;
+    }
+
     public async Task<IReadOnlyCollection<TaskTemplateEvent>> CreateAsync(TaskTemplateId id, IReadOnlyCollection<TaskTemplateEvent> events, CancellationToken cancellationToken)
     {
         var childId = events.FirstOrDefault() switch

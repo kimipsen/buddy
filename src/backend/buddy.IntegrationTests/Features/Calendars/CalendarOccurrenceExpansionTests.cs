@@ -216,6 +216,9 @@ internal sealed class FakeTaskTemplateEventStore : ITaskTemplateEventStore
     public Task<IReadOnlyCollection<TaskTemplateEvent>> ReadAsync(TaskTemplateId id, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyCollection<TaskTemplateEvent>>(_streams.TryGetValue(id, out var events) ? events : []);
 
+    public Task<TaskTemplate?> FindSnapshotAsync(TaskTemplateId id, CancellationToken cancellationToken) =>
+        Task.FromResult(_streams.TryGetValue(id, out var events) ? TaskTemplate.Rehydrate(events) : null);
+
     public Task<IReadOnlyCollection<TaskTemplateEvent>> CreateAsync(TaskTemplateId id, IReadOnlyCollection<TaskTemplateEvent> events, CancellationToken cancellationToken) =>
         throw new NotSupportedException();
 
