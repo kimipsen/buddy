@@ -10,31 +10,30 @@ public sealed record AiProviderCredential(
     ImmutableDictionary<AiProvider, StoredApiKey> Providers,
     AiProvider? ActiveProvider)
 {
-    public static AiProviderCredential? Rehydrate(IEnumerable<AiProviderCredentialEvent> events)
+    public static AiProviderCredential? Rehydrate(IEnumerable<AiProviderCredentialEvent> events) =>
+        events.Aggregate((AiProviderCredential?)null, Fold);
+
+    // Single-event step, split out from Rehydrate so AiProviderCredentialSnapshotProjection can
+    // drive the same logic one Marten-delivered event at a time instead of duplicating this
+    // switch. Deliberately not named Apply/Create -- those names are a convention JasperFx's
+    // projection source generator scans for on any type used as a projection document, and
+    // AiProviderCredential is that document (see Question 4/5 in
+    // docs/backend/analysis/event-stream-snapshots.md).
+    public static AiProviderCredential? Fold(AiProviderCredential? credential, AiProviderCredentialEvent @event) => @event switch
     {
-        AiProviderCredential? credential = null;
-
-        foreach (var @event in events)
+        AiCredentialsInitialized created => new AiProviderCredential(
+            created.Id,
+            ImmutableDictionary<AiProvider, StoredApiKey>.Empty,
+            null),
+        ProviderApiKeySet set => credential! with
         {
-            credential = @event switch
-            {
-                AiCredentialsInitialized created => new AiProviderCredential(
-                    created.Id,
-                    ImmutableDictionary<AiProvider, StoredApiKey>.Empty,
-                    null),
-                ProviderApiKeySet set => credential! with
-                {
-                    Providers = credential!.Providers.SetItem(set.Provider, set.Key)
-                },
-                ProviderApiKeyRemoved removed => credential! with
-                {
-                    Providers = credential!.Providers.Remove(removed.Provider)
-                },
-                ActiveProviderChanged changed => credential! with { ActiveProvider = changed.Provider },
-                _ => credential
-            };
-        }
-
-        return credential;
-    }
+            Providers = credential!.Providers.SetItem(set.Provider, set.Key)
+        },
+        ProviderApiKeyRemoved removed => credential! with
+        {
+            Providers = credential!.Providers.Remove(removed.Provider)
+        },
+        ActiveProviderChanged changed => credential! with { ActiveProvider = changed.Provider },
+        _ => credential
+    };
 }

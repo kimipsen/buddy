@@ -30,8 +30,7 @@ public static class ListProvidersHandler
             return new Result<AiProviderSettings>.Success(AiProviderSettings.Empty);
         }
 
-        var events = await credentials.ReadAsync(credentialId, cancellationToken);
-        var credential = AiProviderCredential.Rehydrate(events)!;
+        var credential = (await credentials.FindSnapshotAsync(credentialId, cancellationToken))!;
 
         return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(credential));
     }

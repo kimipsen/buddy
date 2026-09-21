@@ -32,7 +32,7 @@ public static class GetSharedGroupHandler
             return new Result<SharedMealplanGroup?>.Success(null);
         }
 
-        var plan = MealPlan.Rehydrate(await mealPlans.ReadAsync(mealPlanId, cancellationToken))!;
+        var plan = (await mealPlans.FindSnapshotAsync(mealPlanId, cancellationToken))!;
 
         if (plan.SharedWithGroupId is not { } groupId)
         {

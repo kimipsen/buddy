@@ -7,6 +7,8 @@ public interface IMealPlanEventStore
 {
     Task<IReadOnlyCollection<MealPlanEvent>> ReadAsync(MealPlanId id, CancellationToken cancellationToken);
 
+    Task<MealPlan?> FindSnapshotAsync(MealPlanId id, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<MealPlanEvent>> CreateAsync(MealPlanId id, IReadOnlyCollection<MealPlanEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(MealPlanId id, IReadOnlyCollection<MealPlanEvent> events, CancellationToken cancellationToken);

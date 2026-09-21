@@ -14,6 +14,14 @@ public sealed class MartenAiCredentialEventStore(IMealplansStore store) : IAiCre
         return [.. events.Select(e => AiProviderCredentialEvent.FromPayload(e.Data))];
     }
 
+    public async Task<AiProviderCredential?> FindSnapshotAsync(AiCredentialId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<AiProviderCredentialSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.AiProviderCredential;
+    }
+
     public async Task<IReadOnlyCollection<AiProviderCredentialEvent>> CreateAsync(AiCredentialId id, IReadOnlyCollection<AiProviderCredentialEvent> events, CancellationToken cancellationToken)
     {
         var childId = events.FirstOrDefault() switch

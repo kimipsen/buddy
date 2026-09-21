@@ -39,40 +39,37 @@ public sealed record MealPlan(
         return null;
     }
 
-    public static MealPlan? Rehydrate(IEnumerable<MealPlanEvent> events)
+    public static MealPlan? Rehydrate(IEnumerable<MealPlanEvent> events) => events.Aggregate((MealPlan?)null, Fold);
+
+    // Single-event step, split out from Rehydrate so MealPlanSnapshotProjection can drive the same
+    // logic one Marten-delivered event at a time instead of duplicating this switch. Deliberately
+    // not named Apply/Create -- those names are a convention JasperFx's projection source
+    // generator scans for on any type used as a projection document, and MealPlan is that document
+    // (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
+    public static MealPlan? Fold(MealPlan? plan, MealPlanEvent @event) => @event switch
     {
-        MealPlan? plan = null;
-
-        foreach (var @event in events)
+        MealPlanCreated created => new MealPlan(
+            created.Id,
+            ImmutableDictionary<(DateOnly, MealSlot), MealPlanAssignment>.Empty,
+            ImmutableDictionary<MealSlot, TimeOnly>.Empty,
+            ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
+        // Sparse dictionary: only slots a guardian actually filled hold a key, so a plan
+        // for a year is one small stream, not one entry per possible date/slot.
+        MealAssignedToSlot assigned => plan! with
         {
-            plan = @event switch
-            {
-                MealPlanCreated created => new MealPlan(
-                    created.Id,
-                    ImmutableDictionary<(DateOnly, MealSlot), MealPlanAssignment>.Empty,
-                    ImmutableDictionary<MealSlot, TimeOnly>.Empty,
-                    ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
-                // Sparse dictionary: only slots a guardian actually filled hold a key, so a plan
-                // for a year is one small stream, not one entry per possible date/slot.
-                MealAssignedToSlot assigned => plan! with
-                {
-                    Assignments = plan!.Assignments.SetItem((assigned.Date, assigned.Slot), assigned.After)
-                },
-                MealSlotCleared cleared => plan! with
-                {
-                    Assignments = plan!.Assignments.Remove((cleared.Date, cleared.Slot))
-                },
-                // At most one group at a time -- sharing with a second group simply overwrites
-                // the first (see "Remaining open questions" in group-owned-mealplans.md).
-                MealPlanSharedWithGroup shared => plan! with { SharedWithGroupId = shared.GroupId },
-                MealPlanUnsharedFromGroup => plan! with { SharedWithGroupId = null },
-                MealPlanSlotTimeSet timeSet => plan! with { SlotTimes = plan!.SlotTimes.SetItem(timeSet.Slot, timeSet.Time) },
-                MealPlanIcalTokenIssued issued => plan! with { Tokens = plan!.Tokens.SetItem(issued.TokenId, new IcalTokenInfo(issued.Hash, issued.OccurredAt)) },
-                MealPlanIcalTokenRevoked revoked => plan! with { Tokens = plan!.Tokens.Remove(revoked.TokenId) },
-                _ => plan
-            };
-        }
-
-        return plan;
-    }
+            Assignments = plan!.Assignments.SetItem((assigned.Date, assigned.Slot), assigned.After)
+        },
+        MealSlotCleared cleared => plan! with
+        {
+            Assignments = plan!.Assignments.Remove((cleared.Date, cleared.Slot))
+        },
+        // At most one group at a time -- sharing with a second group simply overwrites
+        // the first (see "Remaining open questions" in group-owned-mealplans.md).
+        MealPlanSharedWithGroup shared => plan! with { SharedWithGroupId = shared.GroupId },
+        MealPlanUnsharedFromGroup => plan! with { SharedWithGroupId = null },
+        MealPlanSlotTimeSet timeSet => plan! with { SlotTimes = plan!.SlotTimes.SetItem(timeSet.Slot, timeSet.Time) },
+        MealPlanIcalTokenIssued issued => plan! with { Tokens = plan!.Tokens.SetItem(issued.TokenId, new IcalTokenInfo(issued.Hash, issued.OccurredAt)) },
+        MealPlanIcalTokenRevoked revoked => plan! with { Tokens = plan!.Tokens.Remove(revoked.TokenId) },
+        _ => plan
+    };
 }

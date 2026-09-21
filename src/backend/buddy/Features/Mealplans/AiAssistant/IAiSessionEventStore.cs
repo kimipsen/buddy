@@ -6,6 +6,8 @@ public interface IAiSessionEventStore
 {
     Task<IReadOnlyCollection<MealplanAiSessionEvent>> ReadAsync(MealplanAiSessionId id, CancellationToken cancellationToken);
 
+    Task<MealplanAiSession?> FindSnapshotAsync(MealplanAiSessionId id, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<MealplanAiSessionEvent>> CreateAsync(MealplanAiSessionId id, IReadOnlyCollection<MealplanAiSessionEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(MealplanAiSessionId id, IReadOnlyCollection<MealplanAiSessionEvent> events, CancellationToken cancellationToken);
