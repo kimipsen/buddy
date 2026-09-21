@@ -15,6 +15,14 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
         return [.. events.Select(e => CalendarEvent.FromPayload(e.Data))];
     }
 
+    public async Task<Calendar?> FindSnapshotAsync(CalendarId calendarId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<CalendarSnapshot>(calendarId.Value, cancellationToken);
+
+        return snapshot?.Calendar;
+    }
+
     public async Task<IReadOnlyCollection<CalendarEvent>> CreateAsync(CalendarId calendarId, IReadOnlyCollection<CalendarEvent> events, CancellationToken cancellationToken)
     {
         var payloads = events

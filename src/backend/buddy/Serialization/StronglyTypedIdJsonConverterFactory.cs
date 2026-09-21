@@ -24,6 +24,19 @@ public sealed class StronglyTypedIdJsonConverterFactory : JsonConverterFactory
 
     private static PropertyInfo? GetValueProperty(Type type)
     {
+        // Every genuine strongly-typed id in this codebase (UserId, CalendarId, ...) is a
+        // top-level type. A nested type with the same single-"Value"-parameter shape is a
+        // different pattern entirely -- a union case wrapping one id, e.g.
+        // CalendarOwner.User(UserId Value) -- and must NOT be swallowed by this factory: doing so
+        // strips the case's own JSON shape, which then breaks the union's type-classifier
+        // deserialization (System.Text.Json's JsonUnionConverter needs the case's normal object
+        // shape to tell cases apart). Excluding DeclaringType != null keeps this factory scoped to
+        // actual id wrappers only.
+        if (type.DeclaringType is not null)
+        {
+            return null;
+        }
+
         if (type.GetConstructors() is not [var ctor] || ctor.GetParameters() is not [{ Name: "Value" } parameter])
         {
             return null;
