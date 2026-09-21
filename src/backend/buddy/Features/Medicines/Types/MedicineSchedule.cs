@@ -20,57 +20,54 @@ public sealed record MedicineSchedule(
     UserId LastModifiedBy,
     bool IsStopped = false)
 {
-    public static MedicineSchedule? Rehydrate(IEnumerable<MedicineEvent> events)
+    public static MedicineSchedule? Rehydrate(IEnumerable<MedicineEvent> events) => events.Aggregate((MedicineSchedule?)null, Fold);
+
+    // Single-event step, split out from Rehydrate so MedicineScheduleSnapshotProjection can drive
+    // the same logic one Marten-delivered event at a time instead of duplicating this switch.
+    // Deliberately not named Apply/Create -- those names are a convention JasperFx's projection
+    // source generator scans for on any type used as a projection document, and MedicineSchedule
+    // is that document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
+    public static MedicineSchedule? Fold(MedicineSchedule? schedule, MedicineEvent @event) => @event switch
     {
-        MedicineSchedule? schedule = null;
-
-        foreach (var @event in events)
+        MedicineScheduleCreated created => new MedicineSchedule(
+            created.Id,
+            created.ChildId,
+            created.CreatedBy,
+            created.Name,
+            created.Dosage,
+            created.Icon,
+            created.Color,
+            created.Times,
+            created.StartDate,
+            created.EndDate,
+            ImmutableDictionary<(DateOnly, TimeOnly), DoseStatus>.Empty,
+            created.CreatedBy),
+        MedicineDetailsUpdated updated => schedule! with
         {
-            schedule = @event switch
-            {
-                MedicineScheduleCreated created => new MedicineSchedule(
-                    created.Id,
-                    created.ChildId,
-                    created.CreatedBy,
-                    created.Name,
-                    created.Dosage,
-                    created.Icon,
-                    created.Color,
-                    created.Times,
-                    created.StartDate,
-                    created.EndDate,
-                    ImmutableDictionary<(DateOnly, TimeOnly), DoseStatus>.Empty,
-                    created.CreatedBy),
-                MedicineDetailsUpdated updated => schedule! with
-                {
-                    Name = updated.After.Name,
-                    Dosage = updated.After.Dosage,
-                    Icon = updated.After.Icon,
-                    Color = updated.After.Color,
-                    LastModifiedBy = updated.ModifiedBy
-                },
-                MedicineScheduleRescheduled rescheduled => schedule! with
-                {
-                    Times = rescheduled.After.Times,
-                    StartDate = rescheduled.After.StartDate,
-                    EndDate = rescheduled.After.EndDate,
-                    LastModifiedBy = rescheduled.ModifiedBy
-                },
-                MedicineScheduleStopped stopped => schedule! with { IsStopped = true, LastModifiedBy = stopped.ModifiedBy },
-                // Sparse log: a (Date, Time) with no entry is implicitly Pending, so an undo
-                // (After: Pending) removes the key rather than storing it explicitly -- keeps the
-                // log's size proportional to guardian/child actions, not to elapsed calendar time.
-                DoseStatusChanged changed => schedule! with
-                {
-                    DoseLog = changed.After == DoseStatus.Pending
-                        ? schedule!.DoseLog.Remove((changed.Date, changed.Time))
-                        : schedule!.DoseLog.SetItem((changed.Date, changed.Time), changed.After),
-                    LastModifiedBy = changed.ModifiedBy
-                },
-                _ => schedule
-            };
-        }
-
-        return schedule;
-    }
+            Name = updated.After.Name,
+            Dosage = updated.After.Dosage,
+            Icon = updated.After.Icon,
+            Color = updated.After.Color,
+            LastModifiedBy = updated.ModifiedBy
+        },
+        MedicineScheduleRescheduled rescheduled => schedule! with
+        {
+            Times = rescheduled.After.Times,
+            StartDate = rescheduled.After.StartDate,
+            EndDate = rescheduled.After.EndDate,
+            LastModifiedBy = rescheduled.ModifiedBy
+        },
+        MedicineScheduleStopped stopped => schedule! with { IsStopped = true, LastModifiedBy = stopped.ModifiedBy },
+        // Sparse log: a (Date, Time) with no entry is implicitly Pending, so an undo
+        // (After: Pending) removes the key rather than storing it explicitly -- keeps the
+        // log's size proportional to guardian/child actions, not to elapsed calendar time.
+        DoseStatusChanged changed => schedule! with
+        {
+            DoseLog = changed.After == DoseStatus.Pending
+                ? schedule!.DoseLog.Remove((changed.Date, changed.Time))
+                : schedule!.DoseLog.SetItem((changed.Date, changed.Time), changed.After),
+            LastModifiedBy = changed.ModifiedBy
+        },
+        _ => schedule
+    };
 }

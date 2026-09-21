@@ -6,6 +6,8 @@ public interface IMedicineSharingEventStore
 {
     Task<IReadOnlyCollection<MedicineSharingEvent>> ReadAsync(MedicineSharingId id, CancellationToken cancellationToken);
 
+    Task<MedicineSharing?> FindSnapshotAsync(MedicineSharingId id, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<MedicineSharingEvent>> CreateAsync(MedicineSharingId id, IReadOnlyCollection<MedicineSharingEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(MedicineSharingId id, IReadOnlyCollection<MedicineSharingEvent> events, CancellationToken cancellationToken);

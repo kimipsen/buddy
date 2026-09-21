@@ -14,6 +14,14 @@ public sealed class MartenMedicineSharingEventStore(IMedicinesStore store) : IMe
         return [.. events.Select(e => MedicineSharingEvent.FromPayload(e.Data))];
     }
 
+    public async Task<MedicineSharing?> FindSnapshotAsync(MedicineSharingId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<MedicineSharingSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.MedicineSharing;
+    }
+
     public async Task<IReadOnlyCollection<MedicineSharingEvent>> CreateAsync(MedicineSharingId id, IReadOnlyCollection<MedicineSharingEvent> events, CancellationToken cancellationToken)
     {
         var childId = events.FirstOrDefault() switch
