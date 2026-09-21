@@ -11,8 +11,7 @@ public static class GetOrCreateUserHandler
 
         if (userId is not null)
         {
-            var existingEvents = await events.ReadAsync(userId, cancellationToken);
-            var existingUser = User.Rehydrate(existingEvents)!;
+            var existingUser = (await events.FindSnapshotAsync(userId, cancellationToken))!;
 
             return existingUser.IsDeleted ? new Result<User>.NotFound() : new Result<User>.Success(existingUser);
         }

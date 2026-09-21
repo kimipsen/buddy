@@ -21,50 +21,47 @@ public sealed record User(
 
     public Language ResolvedLanguage => Language ?? SupportedLanguages.Default;
 
-    public static User? Rehydrate(IEnumerable<UserEvent> events)
+    public static User? Rehydrate(IEnumerable<UserEvent> events) => events.Aggregate((User?)null, Fold);
+
+    // Single-event step, split out from Rehydrate so UserSnapshotProjection can drive the same
+    // logic one Marten-delivered event at a time instead of duplicating this switch. Deliberately
+    // not named Apply/Create -- those names are a convention JasperFx's projection source
+    // generator scans for on any type used as a projection document, and User is that document
+    // (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
+    public static User? Fold(User? user, UserEvent @event) => @event switch
     {
-        User? user = null;
-
-        foreach (var @event in events)
+        UserCreated created => new User(
+            created.UserId,
+            created.KeycloakSubject,
+            created.Email,
+            created.UserName,
+            created.Name),
+        NameUpdated nameUpdated => user! with { Name = nameUpdated.After },
+        TimeZoneUpdated timeZoneUpdated => user! with { TimeZoneId = timeZoneUpdated.After },
+        LanguageUpdated languageUpdated => user! with { Language = languageUpdated.After },
+        // A new address is never covered by a verification of the old one, so any
+        // pending verification for the old address is cleared here too.
+        EmailUpdated emailUpdated => user! with
         {
-            user = @event switch
-            {
-                UserCreated created => new User(
-                    created.UserId,
-                    created.KeycloakSubject,
-                    created.Email,
-                    created.UserName,
-                    created.Name),
-                NameUpdated nameUpdated => user! with { Name = nameUpdated.After },
-                TimeZoneUpdated timeZoneUpdated => user! with { TimeZoneId = timeZoneUpdated.After },
-                LanguageUpdated languageUpdated => user! with { Language = languageUpdated.After },
-                // A new address is never covered by a verification of the old one, so any
-                // pending verification for the old address is cleared here too.
-                EmailUpdated emailUpdated => user! with
-                {
-                    Email = emailUpdated.After,
-                    EmailVerificationTokenHash = null,
-                    EmailVerificationRequestedAt = null,
-                    EmailVerificationExpiresAt = null
-                },
-                EmailVerificationRequested requested => user! with
-                {
-                    EmailVerificationTokenHash = requested.TokenHash,
-                    EmailVerificationRequestedAt = requested.OccurredAt,
-                    EmailVerificationExpiresAt = requested.ExpiresAt
-                },
-                EmailVerified => user! with
-                {
-                    Email = user!.Email with { IsVerified = true },
-                    EmailVerificationTokenHash = null,
-                    EmailVerificationRequestedAt = null,
-                    EmailVerificationExpiresAt = null
-                },
-                UserDeleted => user! with { IsDeleted = true },
-                _ => user
-            };
-        }
-
-        return user;
-    }
+            Email = emailUpdated.After,
+            EmailVerificationTokenHash = null,
+            EmailVerificationRequestedAt = null,
+            EmailVerificationExpiresAt = null
+        },
+        EmailVerificationRequested requested => user! with
+        {
+            EmailVerificationTokenHash = requested.TokenHash,
+            EmailVerificationRequestedAt = requested.OccurredAt,
+            EmailVerificationExpiresAt = requested.ExpiresAt
+        },
+        EmailVerified => user! with
+        {
+            Email = user!.Email with { IsVerified = true },
+            EmailVerificationTokenHash = null,
+            EmailVerificationRequestedAt = null,
+            EmailVerificationExpiresAt = null
+        },
+        UserDeleted => user! with { IsDeleted = true },
+        _ => user
+    };
 }

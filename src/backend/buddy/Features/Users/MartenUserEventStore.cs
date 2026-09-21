@@ -22,6 +22,14 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
         return [.. events.Select(e => UserEvent.FromPayload(e.Data))];
     }
 
+    public async Task<User?> FindSnapshotAsync(UserId userId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<UserSnapshot>(userId.Value, cancellationToken);
+
+        return snapshot?.User;
+    }
+
     public async Task<IReadOnlyCollection<UserEventEntry>> ReadForwardAsync(UserId userId, long afterVersion, int take, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();
