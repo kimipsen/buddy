@@ -28,12 +28,10 @@ public static class ListTaskTemplatesHandler
 
         foreach (var templateId in templateIds)
         {
-            var events = await templates.ReadAsync(templateId, cancellationToken);
-
             // Deliberately includes archived templates -- a guardian's library of a child's
             // templates, including retired ones, not just what's currently assignable. Same
             // contract as ListMealsHandler.LoadFamilyMealsAsync.
-            if (TaskTemplate.Rehydrate(events) is { } template)
+            if (await templates.FindSnapshotAsync(templateId, cancellationToken) is { } template)
             {
                 loaded.Add(template);
             }

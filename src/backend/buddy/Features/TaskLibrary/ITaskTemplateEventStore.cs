@@ -6,6 +6,8 @@ public interface ITaskTemplateEventStore
 {
     Task<IReadOnlyCollection<TaskTemplateEvent>> ReadAsync(TaskTemplateId id, CancellationToken cancellationToken);
 
+    Task<TaskTemplate?> FindSnapshotAsync(TaskTemplateId id, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<TaskTemplateEvent>> CreateAsync(TaskTemplateId id, IReadOnlyCollection<TaskTemplateEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(TaskTemplateId id, IReadOnlyCollection<TaskTemplateEvent> events, CancellationToken cancellationToken);
