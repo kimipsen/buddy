@@ -6,6 +6,8 @@ public interface IPickupScheduleEventStore
 {
     Task<IReadOnlyCollection<PickupEvent>> ReadAsync(PickupScheduleId id, CancellationToken cancellationToken);
 
+    Task<PickupSchedule?> FindSnapshotAsync(PickupScheduleId id, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<PickupEvent>> CreateAsync(PickupScheduleId id, IReadOnlyCollection<PickupEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(PickupScheduleId id, IReadOnlyCollection<PickupEvent> events, CancellationToken cancellationToken);
