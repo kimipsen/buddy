@@ -1,6 +1,7 @@
 using buddy.Serialization;
 
 using JasperFx.Events;
+using JasperFx.Events.Projections;
 
 using Marten;
 
@@ -52,6 +53,18 @@ public static class GroupsFeature
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
                 configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+
+            // Inline snapshot of Group, kept transactionally consistent with every event append.
+            // Routed to a schema separate from "groups" -- it's derived/rebuildable read state,
+            // never the source of truth. See docs/backend/analysis/event-stream-snapshots.md.
+            //
+            // Registered explicitly via Register(), not the Projections.Snapshot<T>() convenience
+            // method: that method tries to auto-derive the document's TId via reflection, which
+            // throws (ArgumentNullException out of MakeGenericType) for GroupSnapshot's Guid Id.
+            // Register() takes the already-typed GroupSnapshotProjection instance directly,
+            // sidestepping that lookup.
+            options.Projections.Register(new GroupSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<GroupSnapshot>().DatabaseSchemaName("snapshots");
 
             return options;
         });

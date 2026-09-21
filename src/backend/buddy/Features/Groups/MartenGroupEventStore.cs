@@ -14,6 +14,14 @@ public sealed class MartenGroupEventStore(IGroupsStore store) : IGroupEventStore
         return [.. events.Select(e => GroupEvent.FromPayload(e.Data))];
     }
 
+    public async Task<Group?> FindSnapshotAsync(GroupId groupId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<GroupSnapshot>(groupId.Value, cancellationToken);
+
+        return snapshot?.Group;
+    }
+
     public async Task<IReadOnlyCollection<GroupEvent>> CreateAsync(GroupId groupId, IReadOnlyCollection<GroupEvent> events, CancellationToken cancellationToken)
     {
         if (events.FirstOrDefault() is not GroupCreated created)

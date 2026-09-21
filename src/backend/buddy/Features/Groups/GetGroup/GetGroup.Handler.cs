@@ -18,8 +18,7 @@ public static class GetGroupHandler
             return new Result<GroupWithMemberDetails>.NotFound();
         }
 
-        var events = await groups.ReadAsync(query.GroupId, cancellationToken);
-        var group = Group.Rehydrate(events);
+        var group = await groups.FindSnapshotAsync(query.GroupId, cancellationToken);
         var access = GroupAuthorization.CheckView(group, userId);
 
         if (access != GroupAccess.Allowed)

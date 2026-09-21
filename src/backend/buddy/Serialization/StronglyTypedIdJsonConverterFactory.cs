@@ -46,5 +46,24 @@ public sealed class StronglyTypedIdJsonConverterFactory : JsonConverterFactory
 
         public override void Write(Utf8JsonWriter writer, TId value, JsonSerializerOptions options) =>
             JsonSerializer.Serialize(writer, ValueProperty.GetValue(value), options);
+
+        // Needed to serialize a Dictionary<TId, ...> (e.g. Group.Members: ImmutableDictionary<UserId,
+        // GroupRole>) -- JSON object keys are always strings, so this re-encodes the raw property-name
+        // text as the JSON string token TValue's own converter expects, rather than trying to run
+        // TValue's normal (non-property-name) Read/Write, which assumes a full JSON value, not a bare
+        // string. Every wrapper Value type in this codebase is Guid, which is exactly that shape.
+        public override TId ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var propertyName = reader.GetString()!;
+            var value = JsonSerializer.Deserialize<TValue>(JsonSerializer.Serialize(propertyName), options);
+            return (TId)Constructor.Invoke([value]);
+        }
+
+        public override void WriteAsPropertyName(Utf8JsonWriter writer, TId value, JsonSerializerOptions options)
+        {
+            var json = JsonSerializer.Serialize(ValueProperty.GetValue(value), options);
+            var name = json.Length >= 2 && json[0] == '"' ? JsonSerializer.Deserialize<string>(json)! : json;
+            writer.WritePropertyName(name);
+        }
     }
 }

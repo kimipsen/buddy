@@ -1,6 +1,9 @@
 # Event-Stream Snapshots
 
-Status: Proposed (not yet implemented)
+Status: Pilot implemented for `Groups` (`GroupSnapshotProjection`, `GetGroup` cut over to reads
+from it). Questions 1-5 below are resolved with what was actually built, including two real
+Marten/serialization constraints hit along the way that the original plan only flagged as
+possibilities. Rollout to the remaining 8 modules is not yet done.
 
 ## Context
 
@@ -28,10 +31,11 @@ event-sourcing schemas.
 ## Question 1: hand-roll parallel snapshot documents, or use Marten's built-in snapshot projections?
 
 **Decision: use Marten's built-in snapshot-projection feature**
-(`SingleStreamProjection<TDoc, TId>` + `options.Projections.Snapshot<T>(...)`),
-not a hand-rolled write alongside each `AppendAsync`, even though the
-existing `*Document` pattern shows the codebase is comfortable hand-rolling
-read models.
+(`SingleStreamProjection<TDoc, TId>`, registered via `options.Projections.Register(...)`
+— see Question 5 for why `Register` and not the `Projections.Snapshot<T>()`
+convenience method the original plan assumed), not a hand-rolled write
+alongside each `AppendAsync`, even though the existing `*Document` pattern
+shows the codebase is comfortable hand-rolling read models.
 
 Reasoning:
 
@@ -64,16 +68,21 @@ top for read performance, not a domain boundary — one schema keeps "where do
 I look for current-state lookups" a single, simple answer, and keeps
 permissioning/backup policy for snapshot tables (rebuildable, disposable) in
 one place, distinct from the authoritative event tables. Each module's
-`StoreOptions` gets one extra line:
+`StoreOptions` gets two extra lines (see Question 5 for why the projection
+is registered explicitly rather than via `Snapshot<Group>()`, and why the
+document type is `GroupSnapshot`, not `Group` itself):
 
 ```csharp
-options.Projections.Snapshot<Group>(SnapshotLifecycle.Inline);
-options.Schema.For<Group>().DatabaseSchemaName("snapshots");
+options.Projections.Register(new GroupSnapshotProjection(), ProjectionLifecycle.Inline);
+options.Schema.For<GroupSnapshot>().DatabaseSchemaName("snapshots");
 ```
 
 Multiple modules' `StoreOptions` pointing at the same physical `snapshots`
 schema is safe as long as each module's snapshot document type is distinct
-(it is — `Group`, `Guardian`, `MealPlan`, ... don't collide).
+(it is — `GroupSnapshot`, `GuardianSnapshot`, `MealPlanSnapshot`, ... don't
+collide). Confirmed in Postgres after the `Groups` pilot: `groups` and
+`snapshots` are separate schemas, and `snapshots.mt_doc_groupsnapshot` holds
+one row per group, upserted in the same transaction as every event append.
 
 ## Question 3: projection lifecycle — Inline or Async?
 
@@ -92,35 +101,96 @@ module once there's real traffic data, not deciding upfront for all 9.
 
 Every aggregate's `Rehydrate` is a `foreach` + `switch` that folds a full
 event list (e.g. `Group.cs:19-50`). Marten's projection needs a single-event
-step, so each aggregate needs its fold body split out:
+step, so each aggregate needs its fold body split out. Done for `Group` as
+[`Group.Fold`](../../../src/backend/buddy/Features/Groups/Types/Group.cs):
 
 ```csharp
-public static Group? Apply(Group? current, GroupEvent @event) => @event switch
+public static Group? Fold(Group? group, GroupEvent @event) => @event switch
 {
     GroupCreated created => new Group(...),
-    GroupMemberRoleGranted granted => current! with { Members = ... },
+    GroupMemberRoleGranted granted => group! with { Members = ... },
     ...
 };
 
 public static Group? Rehydrate(IEnumerable<GroupEvent> events) =>
-    events.Aggregate((Group?)null, Apply);
+    events.Aggregate((Group?)null, Fold);
 ```
 
-This is a pure refactor (no behavior change) done once per aggregate, and
-the resulting `Apply` is what each module's new
-`XSnapshotProjection : SingleStreamProjection<X, Guid>` calls from its
-`Create`/`Apply` overloads.
+One naming gotcha found while implementing this: the step function must
+**not** be named `Apply` or `Create` on the aggregate/document type itself.
+JasperFx's projection source generator scans any type used as a projection
+document (`Group` is, via `GroupSnapshotProjection`) for methods named
+`Apply`/`Create` as a *self-aggregation* convention, and misinterprets a
+same-named static helper with the wrong signature — the resulting generated
+`Evolver` fails to compile (`cannot convert from 'object' to 'Group?'`).
+`Fold` avoids the collision; the projection class's own `Apply`/`Create`
+overloads (a different type, `GroupSnapshotProjection`) are the ones the
+generator is meant to find.
 
 ## Question 5: strongly-typed IDs as Marten document identity
 
-Aggregates use wrapper ID types (`GroupId`, not `Guid`) as their `Id`
-property. Marten's document identity needs to resolve that to a storable
-key. To confirm at implementation time: whether the existing
-`StronglyTypedIdJsonConverterFactory` (used today only for JSON
-serialization, see `GroupsFeature.cs:52-54`) is sufficient, or whether an
-explicit Marten identity/value mapping is needed per ID type. Not expected
-to be hard, but it's a real per-aggregate detail, not boilerplate — flagging
-rather than assuming.
+Resolved, and it took two real fixes beyond what was expected:
+
+**5a. `Projections.Snapshot<T>()` doesn't work for a strongly-typed id.**
+The convenience method tries to auto-derive the document's identity type via
+reflection, and throws `ArgumentNullException` out of `Type.MakeGenericType`
+for any id shape it doesn't recognize. Fix: register the projection
+instance explicitly instead —
+`options.Projections.Register(new GroupSnapshotProjection(), ProjectionLifecycle.Inline)` —
+which needs no auto-derivation since the concrete `SingleStreamProjection<TDoc, TId>`
+subclass already pins both type parameters at compile time.
+
+**5b. Marten's document identity (a different code path from the event-stream
+identity unwrapping used for aggregate fetches) only recognizes a plain
+`Guid`/`string`/`int`/`long`, or a wrapper **struct** (`readonly record struct
+PaymentId(Guid Value)`), as a document's `Id`.** `GroupId` in this codebase
+is a `sealed record` — a *class*, not a struct — and `Group.Id : GroupId`
+made Marten's `DocumentMapping.CompileAndValidate()` fail with `Could not
+determine an 'id/Id' field or property for requested document type
+buddy.Features.Groups.Group`. Confirmed in isolation: the identical shape
+with `readonly record struct` instead of `sealed record` works out of the
+box; the class-based version doesn't, with or without an explicit
+`.Identity(...)` mapping (a projected/nested member expression like `x =>
+x.Id.Value` is rejected: "not valid as an id column in Marten").
+
+Converting every strongly-typed id in the codebase from a class to a struct
+was out of scope for this pilot (it's a cross-cutting change touching
+nullability semantics everywhere those ids are used, not a snapshot
+concern). Instead, `Group` itself is **not** the Marten document. A thin
+wrapper carries the plain `Guid` Marten needs alongside the real value —
+[`GroupSnapshot`](../../../src/backend/buddy/Features/Groups/Types/GroupSnapshotProjection.cs):
+
+```csharp
+public sealed record GroupSnapshot(Guid Id, Group Group);
+
+public sealed class GroupSnapshotProjection : SingleStreamProjection<GroupSnapshot, Guid>
+{
+    public GroupSnapshot Create(GroupCreated created) =>
+        new(created.GroupId.Value, Group.Fold(null, GroupEvent.FromPayload(created))!);
+
+    public GroupSnapshot Apply(GroupSnapshot current, GroupMemberRoleGranted granted) =>
+        current with { Group = Group.Fold(current.Group, GroupEvent.FromPayload(granted))! };
+    // ... one Apply overload per event type that changes Group's own fields
+}
+```
+
+`FindSnapshotAsync` unwraps it: `(await session.LoadAsync<GroupSnapshot>(groupId.Value, ct))?.Group`.
+`GroupId` itself is untouched everywhere else in the codebase — this
+wrapper exists purely at the snapshot-storage boundary, one per module.
+
+**5c. A second, unrelated serialization gap surfaced by actually persisting
+`Group` for the first time.** `Group.Members` is an
+`ImmutableDictionary<UserId, GroupRole>` — a strongly-typed id used as a
+*dictionary key*. Nothing before this had ever JSON-serialized `Group` (its
+state only ever existed as an in-memory `Rehydrate` result), so this path
+was never exercised. `StronglyTypedIdJsonConverterFactory`
+(`src/backend/buddy/Serialization/StronglyTypedIdJsonConverterFactory.cs`)
+only implemented `Read`/`Write`, not `ReadAsPropertyName`/`WriteAsPropertyName`,
+so `System.Text.Json` refused the dictionary with `NotSupportedException:
+... is not a supported dictionary key`. Fixed by adding both overrides to
+the shared converter — a real gap in a shared utility, not something
+specific to snapshots, so it benefits every future JSON path that keys a
+dictionary by a strongly-typed id, not just this one.
 
 ## Rollout: pilot on one module first
 
@@ -144,32 +214,38 @@ existing stream gets a snapshot before it's relied on.
 
 ## Cutting over reads before writes
 
-Add a `FindSnapshotAsync`/`GetAsync` method on each `I<Module>EventStore`
-doing `session.LoadAsync<Group>(id)`, and point read/query endpoints at it
-in place of `ReadAsync` + `Rehydrate` — this is the actual "quicker lookup"
-win.
+Done for the pilot: `IGroupEventStore.FindSnapshotAsync` does
+`session.LoadAsync<GroupSnapshot>(groupId.Value, ct)` and unwraps `.Group`;
+`GetGroupHandler` (`Features/Groups/GetGroup/GetGroup.Handler.cs`) now calls
+it instead of `ReadAsync` + `Rehydrate`. Verified against a real Postgres
+(both manually via `curl` and via the full `buddy.IntegrationTests` suite,
+424/424 passing beforehand, 425/425 after adding the snapshot-consistency
+test below) that the response is unchanged.
 
-Command handlers that evaluate business rules before appending new events
-should stay on the existing replay-from-events path initially, even though
-`Inline` lifecycle makes the snapshot transactionally consistent and
-therefore *safe* to trust for that too. Switching write-path reads to the
-snapshot is a separate decision to make per handler once the read-path
-cutover has proven the snapshot correct in production, not something to
-flip everywhere at once alongside the initial rollout.
+Every other `Groups` command handler (`CreateGroup`, `SetGroupMemberRole`,
+`DeleteGroup`, ...) is untouched and still replays from events — `Rehydrate`
+still exists and is still what they call, `Fold` is just the shared step it
+now delegates to. Switching a write-path handler's read to the snapshot is a
+separate decision to make per handler, not something this pilot did
+everywhere at once.
 
 ## Testing
 
-Following the existing `buddy.IntegrationTests` convention (real Postgres
-via Testcontainers, tests colocated under `Features/<Module>/`):
+Added `buddy.IntegrationTests/SnapshotTests/GroupSnapshotTests.cs` (a new
+top-level `SnapshotTests/` folder, parallel to the existing `EventShapeTests/`,
+since this is a cross-cutting concern rather than a single use case): runs a
+sequence of commands (create, grant a role, revoke it) against a real
+Postgres via the existing Testcontainers fixture, then asserts
+`FindSnapshotAsync(id)` is `Assert.Equivalent(..., strict: true)` to
+`Group.Rehydrate(await ReadAsync(id))` — plain `Assert.Equal` doesn't work
+here because `ImmutableDictionary<TKey,TValue>` has no structural `Equals`
+override, so two `Group` values with identical `Members` content aren't
+`==`-equal; `Assert.Equivalent` does a deep, member-wise comparison instead.
 
-- Per module: an integration test asserting
-  `session.LoadAsync<Group>(id) == Group.Rehydrate(events)` after a sequence
-  of commands against a fresh stream.
-- A rebuild test: delete/reset the snapshot table, run the rebuild, assert
-  the snapshot matches the replayed aggregate again.
-- Consider a golden-file shape test for each snapshot document, analogous to
-  the existing `EventShapeTests/`, so a schema drift in the snapshot shape
-  is caught the same way event-shape drift is caught today.
+Not yet done, left for the full rollout: a rebuild test (delete/reset the
+snapshot table, rebuild, assert it matches again — no rebuild tooling is
+wired up yet, see "Backfilling existing streams" above) and a golden-file
+shape test for the snapshot document analogous to `EventShapeTests/`.
 
 ## Diagram
 
@@ -185,8 +261,8 @@ flowchart LR
     end
 
     subgraph Snapshots_Schema["schema: snapshots (new, shared)"]
-        GS["Group\n(snapshot doc)"]
-        OS["Guardian, MealPlan, ...\n(snapshot docs, one table per aggregate)"]
+        GS["GroupSnapshot\n(Guid Id, Group Group)"]
+        OS["GuardianSnapshot, MealPlanSnapshot, ...\n(one table per module, same Guid-Id-wrapper shape)"]
     end
 
     GE -- "Inline SingleStreamProjection\n(same transaction as Append)" --> GS

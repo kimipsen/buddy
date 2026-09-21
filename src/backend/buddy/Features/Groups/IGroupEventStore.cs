@@ -6,6 +6,8 @@ public interface IGroupEventStore
 {
     Task<IReadOnlyCollection<GroupEvent>> ReadAsync(GroupId groupId, CancellationToken cancellationToken);
 
+    Task<Group?> FindSnapshotAsync(GroupId groupId, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<GroupEvent>> CreateAsync(GroupId groupId, IReadOnlyCollection<GroupEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(GroupId groupId, IReadOnlyCollection<GroupEvent> events, CancellationToken cancellationToken);
