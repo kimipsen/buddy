@@ -50,7 +50,17 @@
 
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveEmail()">
         <label class="block">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'profile.email.label' | translate }}</span>
+          <span class="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {{ 'profile.email.label' | translate }}
+            @if (currentEmailVerified() && email().trim() === currentEmail()) {
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal text-emerald-700 dark:text-emerald-400">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3">
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+                {{ 'profile.email.verified' | translate }}
+              </span>
+            }
+          </span>
           <input
             type="email"
             name="email"

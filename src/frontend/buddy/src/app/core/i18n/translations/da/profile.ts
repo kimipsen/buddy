@@ -13,7 +13,8 @@ export const profile = {
     label: 'E-mail',
     save: 'Gem e-mail',
     saved: 'E-mail opdateret. Tjek din indbakke for at bekræfte den.',
-    error: 'Kunne ikke opdatere din e-mail.'
+    error: 'Kunne ikke opdatere din e-mail.',
+    verified: 'Bekræftet'
   },
   timeZone: {
     label: 'Tidszone',

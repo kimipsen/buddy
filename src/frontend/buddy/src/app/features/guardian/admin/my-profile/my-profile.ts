@@ -30,6 +30,7 @@ export class MyProfile implements OnInit {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly currentEmail = signal<string | null>(null);
+  protected readonly currentEmailVerified = signal(false);
 
   protected readonly givenName = signal('');
   protected readonly familyName = signal('');
@@ -98,6 +99,7 @@ export class MyProfile implements OnInit {
     try {
       const updated = await this.users.updateEmail(email);
       this.currentEmail.set(updated.email.value);
+      this.currentEmailVerified.set(updated.email.isVerified);
       this.emailSaved.set(true);
     } catch (error) {
       this.emailError.set(this.apiErrorMessage(error, 'profile.email.error'));
@@ -170,6 +172,7 @@ export class MyProfile implements OnInit {
     this.currentFamilyName.set(user.name.familyName);
     this.email.set(user.email.value);
     this.currentEmail.set(user.email.value);
+    this.currentEmailVerified.set(user.email.isVerified);
     this.timeZoneId.set(user.timeZoneId);
     this.currentTimeZoneId.set(user.timeZoneId);
 

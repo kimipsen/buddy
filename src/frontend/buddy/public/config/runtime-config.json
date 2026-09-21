@@ -1,6 +1,6 @@
 {
   "keycloak": {
-    "authority": "http://keycloak:8080",
+    "authority": "http://localhost:9080",
     "realm": "buddy",
     "clientId": "buddy-frontend",
     "redirectPath": "/dashboard"

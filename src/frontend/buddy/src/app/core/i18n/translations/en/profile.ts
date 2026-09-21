@@ -13,7 +13,8 @@ export const profile = {
     label: 'Email',
     save: 'Save email',
     saved: 'Email updated. Check your inbox to verify it.',
-    error: 'Unable to update your email.'
+    error: 'Unable to update your email.',
+    verified: 'Verified'
   },
   timeZone: {
     label: 'Time zone',
