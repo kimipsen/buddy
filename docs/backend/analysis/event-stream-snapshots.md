@@ -1,9 +1,13 @@
 # Event-Stream Snapshots
 
-Status: Pilot implemented for `Groups` (`GroupSnapshotProjection`, `GetGroup` cut over to reads
-from it). Questions 1-5 below are resolved with what was actually built, including two real
-Marten/serialization constraints hit along the way that the original plan only flagged as
-possibilities. Rollout to the remaining 8 modules is not yet done.
+Status: Implemented for all 14 event-sourced aggregates across all 9 modules. Questions 1-5
+below are resolved with what was actually built, including several real Marten/serialization
+constraints hit along the way that the original plan only flagged as possibilities — plus two
+more found during the full rollout (a `ValueTuple`-keyed dictionary/set gotcha, and a
+discriminated-union JSON-shape collision in `Calendars`), documented in a new Question 6 below.
+Full test suite: 438/438 passing. See [TODO.md](../../../TODO.md) for the per-aggregate
+handler-cutover checklist and follow-ups not done here (backfill tooling, a few aggregates with
+no single-get handler to cut over).
 
 ## Context
 
@@ -192,16 +196,72 @@ the shared converter — a real gap in a shared utility, not something
 specific to snapshots, so it benefits every future JSON path that keys a
 dictionary by a strongly-typed id, not just this one.
 
-## Rollout: pilot on one module first
+## Question 6: two more serialization gotchas found during the full rollout
+
+Rolling out to the other 8 modules surfaced two more real constraints, neither anticipated by
+the pilot (`Group` didn't happen to have either shape):
+
+**6a. `ValueTuple`-keyed dictionaries and sets.** Several aggregates use a composite
+`(DateOnly, ...)`-style tuple as a dictionary key or hash-set element —
+`CalendarItem.CompletionLog`, `MedicineSchedule.DoseLog`, `MealPlan.Assignments`,
+`MealplanAiSession.Draft`, `PickupSchedule.Assignments`, `ChildProgress.AwardedOccurrences`.
+Plain `System.Text.Json` either throws `NotSupportedException` (as a dictionary key) or —
+worse — silently serializes the tuple as an empty JSON object `{}` (as a plain value/set
+element, since a `ValueTuple`'s `ItemN` are public fields, not properties, and `System.Text.Json`
+only serializes properties by default). The second failure mode is a real, silent data-loss trap:
+no exception, just an empty object where real data should be. Fixed with a new
+[`ValueTupleJsonConverterFactory`](../../../src/backend/buddy/Serialization/ValueTupleJsonConverterFactory.cs)
+(same shape as `StronglyTypedIdJsonConverterFactory`: writes/reads the tuple as a JSON array,
+and encodes that same array as the property-name string for dictionary-key use), registered
+per-module alongside `StronglyTypedIdJsonConverterFactory` wherever an aggregate needs it, plus
+one line in `Program.cs`'s `ConfigureHttpJsonOptions` for any HTTP response that returns such an
+aggregate directly. Verified with an explicit round-trip assertion (not just incidental
+equivalence-check coverage) in `ChildProgressSnapshotTests.cs`, since `AwardedOccurrences` is
+exactly the "3-tuple hash-set element" shape most likely to silently lose data.
+
+**6b. A discriminated union whose cases share a JSON shape.** `Calendar.Owner` is `CalendarOwner`,
+a closed `union` with two cases, `User(UserId Value)` and `Group(GroupId Value)`. Both `UserId`
+and `GroupId` flatten to a bare `Guid` via `StronglyTypedIdJsonConverterFactory`, so both cases
+serialize to the *identical* JSON shape `{"Value": "<guid>"}` — the union's own type-classifier
+deserialization can't tell them apart ("JSON value type 'Object' is ambiguous for union type").
+This was latent and undetected before snapshots: `Calendar` was never JSON-round-tripped
+anywhere (it's not part of any event payload, and no API response DTO exposes `Owner`), so it
+only surfaced once `CalendarSnapshot` made `Calendar` itself a Marten-stored, serialized
+document. Fixing it took two changes:
+- `StronglyTypedIdJsonConverterFactory` was accidentally also matching the union's nested case
+  types (`CalendarOwner.User`/`.Group`, which have the same "single ctor param named `Value`"
+  shape as a genuine id wrapper), stripping their object shape entirely. Fixed by excluding
+  nested types (`type.DeclaringType is not null → not a match`) — every genuine strongly-typed
+  id in this codebase is a top-level type, so this doesn't affect any of them.
+- Even with that fixed, the union's *default* shape-based classifier still can't disambiguate
+  two cases that happen to serialize identically. `Features/Pickups/Types/PickupAssigneeKind.cs`
+  had already hit this exact class of problem and deliberately avoided a union over it. Since
+  reshaping `CalendarOwner` itself would be a much larger, riskier change (touching
+  `CalendarAuthorization` and every handler that pattern-matches it), the fix instead is a small,
+  narrowly-scoped
+  [`CalendarOwnerJsonConverter`](../../../src/backend/buddy/Features/Calendars/Types/CalendarOwnerJsonConverter.cs)
+  (an explicit `{"Kind":"User"|"Group","Id":"<guid>"}` shape), registered only on the `Calendars`
+  module's `StoreOptions` — it doesn't touch `CalendarOwner`'s C# shape or any other module.
+  Worth checking for if any *other* module's union ever needs to be JSON-serialized directly in
+  the future (none currently do outside their own event payloads, which don't hit this because
+  individual event records don't share this kind of case-ambiguity).
+
+## Rollout: pilot on one module first, then the rest in parallel
 
 **Decision: `Groups` is the pilot module.** Moderate event count (10 event
 types), and it already has a working parallel-document pattern
 (`GroupMembershipDocument`) to compare the new snapshot against for
 correctness during development. Prove out the full recipe — refactor,
 projection class, schema routing, backfill, read-path cutover, tests — on
-`Groups` alone, then repeat identically across the remaining 8 modules
-(`Calendars`, `Guardians`, `Mealplans`, `Medicines`, `Pickups`, `Progress`,
-`TaskLibrary`, `Users`).
+`Groups` alone first.
+
+That done, the remaining 8 modules (`Calendars`, `Guardians`+`Users`,
+`Mealplans`+`AiAssistant`, `Medicines`, `Pickups`, `Progress`, `TaskLibrary`)
+were implemented in parallel, one task per module (two modules paired up
+where they share a single Marten store: `Guardians`+`Users`, and
+`Mealplans`+`AiAssistant`), each following the same recipe independently.
+See Question 6 above for the two additional gotchas that surfaced only once
+every module's actual field shapes were exercised, not just `Group`'s.
 
 ## Backfilling existing streams
 
