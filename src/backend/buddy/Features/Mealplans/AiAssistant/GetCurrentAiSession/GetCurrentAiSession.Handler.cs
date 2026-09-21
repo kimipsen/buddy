@@ -31,8 +31,12 @@ public static class GetCurrentAiSessionHandler
             return new Result<AiSessionView>.NotFound();
         }
 
+        // The transcript AiSessionViewBuilder builds is deliberately not part of MealplanAiSession
+        // itself (see MealplanAiSession.Fold) -- it's derived on demand from the raw event stream,
+        // so that read still goes through ReadAsync. Only the session's own current-state fields
+        // (Draft/Status/...) are cut over to the snapshot.
         var events = await sessions.ReadAsync(sessionId, cancellationToken);
-        var session = MealplanAiSession.Rehydrate(events)!;
+        var session = (await sessions.FindSnapshotAsync(sessionId, cancellationToken))!;
         var view = await AiSessionViewBuilder.BuildAsync(session, events, meals, cancellationToken);
 
         return new Result<AiSessionView>.Success(view);

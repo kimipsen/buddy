@@ -14,6 +14,14 @@ public sealed class MartenAiSessionEventStore(IMealplansStore store) : IAiSessio
         return [.. events.Select(e => MealplanAiSessionEvent.FromPayload(e.Data))];
     }
 
+    public async Task<MealplanAiSession?> FindSnapshotAsync(MealplanAiSessionId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<MealplanAiSessionSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.MealplanAiSession;
+    }
+
     public async Task<IReadOnlyCollection<MealplanAiSessionEvent>> CreateAsync(MealplanAiSessionId id, IReadOnlyCollection<MealplanAiSessionEvent> events, CancellationToken cancellationToken)
     {
         var started = events.FirstOrDefault() switch

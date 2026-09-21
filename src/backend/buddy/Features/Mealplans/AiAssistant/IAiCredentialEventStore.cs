@@ -6,6 +6,8 @@ public interface IAiCredentialEventStore
 {
     Task<IReadOnlyCollection<AiProviderCredentialEvent>> ReadAsync(AiCredentialId id, CancellationToken cancellationToken);
 
+    Task<AiProviderCredential?> FindSnapshotAsync(AiCredentialId id, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<AiProviderCredentialEvent>> CreateAsync(AiCredentialId id, IReadOnlyCollection<AiProviderCredentialEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(AiCredentialId id, IReadOnlyCollection<AiProviderCredentialEvent> events, CancellationToken cancellationToken);

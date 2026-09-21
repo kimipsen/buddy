@@ -2,6 +2,7 @@ using buddy.Features.Users;
 using buddy.Serialization;
 
 using JasperFx.Events;
+using JasperFx.Events.Projections;
 
 using Marten;
 
@@ -66,7 +67,38 @@ public static class MealplansFeature
 
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
-                configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+                configure: json =>
+                {
+                    json.Converters.Add(new StronglyTypedIdJsonConverterFactory());
+
+                    // MealPlan.Assignments and MealplanAiSession.Draft are keyed by (DateOnly,
+                    // MealSlot), which plain System.Text.Json can't serialize (NotSupportedException),
+                    // both as a value and -- more importantly, since they're dictionary keys -- as a
+                    // JSON property name. See docs/backend/analysis/event-stream-snapshots.md, gotcha 4.
+                    json.Converters.Add(new ValueTupleJsonConverterFactory());
+                });
+
+            // Inline snapshots of Meal, MealPlan, AiProviderCredential and MealplanAiSession, kept
+            // transactionally consistent with every event append. Routed to a schema separate from
+            // "mealplans" -- they're derived/rebuildable read state, never the source of truth. See
+            // docs/backend/analysis/event-stream-snapshots.md.
+            //
+            // Registered explicitly via Register(), not the Projections.Snapshot<T>() convenience
+            // method: that method tries to auto-derive the document's TId via reflection, which
+            // throws (ArgumentNullException out of MakeGenericType) for a Guid Id like these
+            // snapshot wrappers use. Register() takes the already-typed projection instance
+            // directly, sidestepping that lookup.
+            options.Projections.Register(new MealSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<MealSnapshot>().DatabaseSchemaName("snapshots");
+
+            options.Projections.Register(new MealPlanSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<MealPlanSnapshot>().DatabaseSchemaName("snapshots");
+
+            options.Projections.Register(new AiProviderCredentialSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<AiProviderCredentialSnapshot>().DatabaseSchemaName("snapshots");
+
+            options.Projections.Register(new MealplanAiSessionSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<MealplanAiSessionSnapshot>().DatabaseSchemaName("snapshots");
 
             return options;
         });
