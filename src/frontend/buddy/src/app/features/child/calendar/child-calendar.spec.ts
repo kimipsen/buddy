@@ -229,10 +229,10 @@ describe('ChildCalendar', () => {
     expect(compiled.textContent).toContain('All day');
   });
 
-  it('shows no filter checkboxes when only one calendar is accessible', async () => {
+  it('shows no filter toggles when only one calendar is accessible', async () => {
     const { fixture } = await setup();
     await settle(fixture);
-    expect((fixture.nativeElement as HTMLElement).querySelector('input[type="checkbox"]')).toBeFalsy();
+    expect((fixture.nativeElement as HTMLElement).querySelector('button[role="switch"]')).toBeFalsy();
   });
 
   it('shows a per-calendar filter when more than one calendar is accessible', async () => {
@@ -257,11 +257,7 @@ describe('ChildCalendar', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const schoolCheckbox = Array.from(compiled.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find((checkbox) =>
-      checkbox.closest('label')?.textContent?.includes('School')
-    )!;
-
-    schoolCheckbox.click();
+    findButtonByAriaLabel(compiled, 'School')?.click();
     await settle(fixture);
 
     expect(compiled.textContent).toContain('Home item');
