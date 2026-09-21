@@ -11,22 +11,23 @@ namespace buddy.Features.Medicines;
 // docs/backend/analysis/medicine-schedules.md).
 public sealed record MedicineSharing(MedicineSharingId Id, UserId ChildId, GroupId? SharedWithGroupId)
 {
-    public static MedicineSharing? Rehydrate(IEnumerable<MedicineSharingEvent> events)
+    public static MedicineSharing? Rehydrate(IEnumerable<MedicineSharingEvent> events) => events.Aggregate((MedicineSharing?)null, Fold);
+
+    // Single-event step, split out from Rehydrate so MedicineSharingSnapshotProjection can drive
+    // the same logic one Marten-delivered event at a time instead of duplicating this switch.
+    // Deliberately not named Apply/Create -- those names are a convention JasperFx's projection
+    // source generator scans for on any type used as a projection document, and MedicineSharing is
+    // that document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md). The
+    // sharing is null check below is preserved exactly as it was in Rehydrate -- MedicineSharedWithGroup
+    // doubles as both the stream's creation event and a later re-share event (see
+    // MedicineSharingEvents.cs), so this single case still has to distinguish "first event on this
+    // stream" from "a later one" itself, same as before the split.
+    public static MedicineSharing? Fold(MedicineSharing? sharing, MedicineSharingEvent @event) => @event switch
     {
-        MedicineSharing? sharing = null;
-
-        foreach (var @event in events)
-        {
-            sharing = @event switch
-            {
-                MedicineSharedWithGroup shared => sharing is null
-                    ? new MedicineSharing(shared.Id, shared.ChildId, shared.GroupId)
-                    : sharing with { SharedWithGroupId = shared.GroupId },
-                MedicineUnsharedFromGroup => sharing! with { SharedWithGroupId = null },
-                _ => sharing
-            };
-        }
-
-        return sharing;
-    }
+        MedicineSharedWithGroup shared => sharing is null
+            ? new MedicineSharing(shared.Id, shared.ChildId, shared.GroupId)
+            : sharing with { SharedWithGroupId = shared.GroupId },
+        MedicineUnsharedFromGroup => sharing! with { SharedWithGroupId = null },
+        _ => sharing
+    };
 }

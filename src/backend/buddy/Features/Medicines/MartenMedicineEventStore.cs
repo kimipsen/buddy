@@ -14,6 +14,14 @@ public sealed class MartenMedicineEventStore(IMedicinesStore store) : IMedicineE
         return [.. events.Select(e => MedicineEvent.FromPayload(e.Data))];
     }
 
+    public async Task<MedicineSchedule?> FindSnapshotAsync(MedicineId id, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+        var snapshot = await session.LoadAsync<MedicineScheduleSnapshot>(id.Value, cancellationToken);
+
+        return snapshot?.MedicineSchedule;
+    }
+
     public async Task<IReadOnlyCollection<MedicineEvent>> CreateAsync(MedicineId id, IReadOnlyCollection<MedicineEvent> events, CancellationToken cancellationToken)
     {
         var childId = events.FirstOrDefault() switch

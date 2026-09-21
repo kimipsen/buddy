@@ -33,7 +33,7 @@ public static class GetSharedMedicineGroupHandler
             return new Result<SharedMedicineGroup?>.Success(null);
         }
 
-        var record = MedicineSharing.Rehydrate(await sharing.ReadAsync(sharingId, cancellationToken))!;
+        var record = (await sharing.FindSnapshotAsync(sharingId, cancellationToken))!;
 
         if (record.SharedWithGroupId is not { } groupId)
         {
