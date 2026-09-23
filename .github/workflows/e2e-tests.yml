@@ -30,7 +30,7 @@ jobs:
           dotnet-version: "11.0.x"
           dotnet-quality: "preview"
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version-file: src/frontend/buddy/package.json
 
@@ -74,7 +74,7 @@ jobs:
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: src/frontend/buddy/playwright-report/
