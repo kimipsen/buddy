@@ -68,8 +68,14 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
     {
         await using var session = store.QuerySession();
 
+        // Ordered (with a stable tie-breaker) because callers -- e.g. GuardianMealplan.load on the
+        // frontend, via ListMyChildren -- pick the first child in this list as a single "family"
+        // scope. Without an explicit order, Postgres gives no row-order guarantee at all, so that
+        // pick could silently change between two calls with no data changed in between.
         return await session.Query<GuardianLinkDocument>()
             .Where(d => d.GuardianId == guardianId.Value && !d.IsRevoked)
+            .OrderBy(d => d.CreatedAt)
+            .ThenBy(d => d.ChildId)
             .ToListAsync(cancellationToken);
     }
 
@@ -136,7 +142,8 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
             linked.ChildId.Value,
             linked.GuardianId.Value,
             linked.Kind,
-            IsRevoked: false));
+            IsRevoked: false,
+            CreatedAt: DateTimeOffset.UtcNow));
 
         await session.SaveChangesAsync(cancellationToken);
 

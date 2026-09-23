@@ -31,6 +31,13 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   reporter: 'html',
+  // The default 5s is tight for this suite's assertions (each one typically follows a real
+  // network round trip -- create/save/etc. -- not just a local state change), and this devcontainer
+  // runs the whole stack (Angular dev server, .NET backend, Postgres, Keycloak, Mailpit, plus
+  // whatever IDE tooling is active) alongside the browser under test, so latency varies more than
+  // on a dedicated CI runner. 10s gives real assertions room without masking a genuinely broken one
+  // for long.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: 'http://localhost:4300',
     // The backend's dev HTTPS endpoint uses a self-signed cert that's never trusted in CI, and

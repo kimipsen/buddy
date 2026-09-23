@@ -42,6 +42,7 @@ __screenshots__/
 # Stryker mutation testing
 /reports/mutation
 .stryker-tmp/
+.mutation-batch-progress
 
 # Playwright
 /playwright-report/

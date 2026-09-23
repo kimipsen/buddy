@@ -12,7 +12,16 @@ namespace buddy.Features.Guardians;
 // answer the access question, because GuardianKind never gates access (see GuardianKind) -- the
 // single boolean is the whole decision, so nothing is lost versus rehydrating the aggregate.
 // GuardianLinkId is kept too, so a later append (revoke/kind-change) knows which stream to target.
-public sealed record GuardianLinkDocument(string Id, Guid GuardianLinkId, Guid ChildId, Guid GuardianId, GuardianKind Kind, bool IsRevoked)
+//
+// CreatedAt is nullable for the same reason CalendarMembershipDocument.Icon is: it was added after
+// this document type already had rows in some environments, and Marten deserializes a JSON payload
+// missing the property as null rather than erroring -- every reader must treat null as "no
+// timestamp recorded" (oldest, for ordering purposes), not as an error. ListForGuardianAsync
+// (MartenGuardianLinkEventStore.cs) orders by it precisely because a plain Marten document query
+// without ORDER BY has no guaranteed row order at all, even across two calls with no intervening
+// writes -- callers like GuardianMealplan.load (frontend) pick "children[0]" as a single family
+// scope, so an unordered result let that pick silently change between page loads.
+public sealed record GuardianLinkDocument(string Id, Guid GuardianLinkId, Guid ChildId, Guid GuardianId, GuardianKind Kind, bool IsRevoked, DateTimeOffset? CreatedAt = null)
 {
     public static string BuildId(Guid childId, Guid guardianId) => $"{childId}:{guardianId}";
 }

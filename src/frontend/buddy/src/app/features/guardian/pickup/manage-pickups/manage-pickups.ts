@@ -160,6 +160,15 @@ export class ManagePickups implements OnInit {
         this.pickups.listSchedule(childId, week[0].date, week.at(-1)!.date)
       ]);
 
+      // A newer call (from switching the child again before this one resolved) may have already
+      // superseded this request -- applying this response now would silently overwrite the newer
+      // selection's data with this now-stale child's, even though the dropdown still shows the
+      // right one selected. See selectChildIfPresent's own comment in e2e/support/guardian-data.ts
+      // for how this surfaced.
+      if (this.selectedChildId() !== childId) {
+        return;
+      }
+
       this.childGuardians.set(childGuardians);
 
       const byKey: Partial<Record<string, PickupOccurrence>> = {};
@@ -170,9 +179,13 @@ export class ManagePickups implements OnInit {
 
       this.entriesByKey.set(byKey);
     } catch {
-      this.error.set('pickup.assign.loadError');
+      if (this.selectedChildId() === childId) {
+        this.error.set('pickup.assign.loadError');
+      }
     } finally {
-      this.loading.set(false);
+      if (this.selectedChildId() === childId) {
+        this.loading.set(false);
+      }
     }
   }
 }

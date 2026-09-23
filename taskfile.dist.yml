@@ -47,6 +47,11 @@ tasks:
     cmds:
       - npm test
 
+  test:e2e:frontend:report:
+    dir: src/frontend/buddy
+    cmds:
+      - npx playwright show-report
+
   test:e2e:
     desc: Run all e2e tests (frontend only, for now)
     cmds:
@@ -80,6 +85,46 @@ tasks:
     dir: src/frontend/buddy
     cmds:
       - npm run test:mutation
+
+  test:mutation:frontend:batch:
+    desc: >-
+      Work through frontend mutation testing a few files at a time (see
+      scripts/mutation-batch.sh), so it doesn't overwhelm the devcontainer.
+      Re-run repeatedly to cover the whole codebase; results accumulate in
+      reports/stryker-incremental.json as a baseline. Usage: task
+      test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=1] [--
+      --status|--reset|--dry-run]
+    dir: src/frontend/buddy
+    vars:
+      BATCH_SIZE: '{{.BATCH_SIZE | default "5"}}'
+      CONCURRENCY: '{{.CONCURRENCY | default "1"}}'
+    cmds:
+      - ./scripts/mutation-batch.sh --batch-size {{.BATCH_SIZE}} --concurrency
+        {{.CONCURRENCY}} {{.CLI_ARGS}}
+
+  test:mutation:frontend:changed:
+    desc: >-
+      Run frontend mutation tests only on files changed since a base commit
+      (default: origin/master), reusing reports/stryker-incremental.json as a
+      baseline if one exists. Usage: task test:mutation:frontend:changed
+      [BASE=origin/master] [CONCURRENCY=1]
+    dir: src/frontend/buddy
+    vars:
+      BASE: '{{.BASE | default "origin/master"}}'
+      CONCURRENCY: '{{.CONCURRENCY | default "1"}}'
+    cmds:
+      - >-
+        git fetch origin --quiet || echo "Warning: could not fetch origin,
+        diffing against the local ref for {{.BASE}}" >&2
+      - |
+        FILES=$(git diff --name-only --diff-filter=ACM "{{.BASE}}"...HEAD -- 'src/app/**/*.ts' | grep -v '\.spec\.ts$' | paste -sd, -)
+        if [ -z "$FILES" ]; then
+          echo "No changed frontend source files since {{.BASE}}."
+          exit 0
+        fi
+        echo "Mutating files changed since {{.BASE}}:"
+        echo "$FILES" | tr ',' '\n' | sed 's/^/  /'
+        npx stryker run --mutate "$FILES" --incremental --concurrency {{.CONCURRENCY}}
 
   deploy:
     desc: Build and (re)start the production stack (deploy/docker-compose.prod.yml)

@@ -165,7 +165,8 @@ public sealed class MartenGuardianInviteEventStore(IUsersStore store) : IGuardia
             linked.ChildId.Value,
             linked.GuardianId.Value,
             linked.Kind,
-            IsRevoked: false));
+            IsRevoked: false,
+            CreatedAt: DateTimeOffset.UtcNow));
 
         await session.SaveChangesAsync(cancellationToken);
     }
