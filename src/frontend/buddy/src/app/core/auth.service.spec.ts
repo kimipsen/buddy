@@ -161,21 +161,28 @@ describe('AuthService', () => {
         jsonResponse({ access_token: 'new-access', refresh_token: 'new-refresh', id_token: 'new-id', expires_in: 300 })
       );
 
+      const before = Date.now();
       await service.completeLoginRedirect();
+      const after = Date.now();
 
       expect(service.isAuthenticated()).toBe(true);
-      expect(readStoredTokens(sessionStorage)).toEqual({
+      const stored = readStoredTokens(sessionStorage);
+      expect(stored).toEqual({
         accessToken: 'new-access',
         refreshToken: 'new-refresh',
         idToken: 'new-id',
         expiresAt: expect.any(Number)
       });
+      // expires_in is in seconds, so expiresAt lands 300s after the exchange.
+      expect(stored?.expiresAt).toBeGreaterThanOrEqual(before + 300_000);
+      expect(stored?.expiresAt).toBeLessThanOrEqual(after + 300_000);
       expect(sessionStorage.getItem(CODE_VERIFIER_STORAGE_KEY)).toBeNull();
       expect(historyReplaceState).toHaveBeenCalledWith({}, '', keycloakConfig.redirectPath);
 
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
       expect(url).toBe(`${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/token`);
       expect(init.method).toBe('POST');
+      expect(init.headers).toEqual({ 'Content-Type': 'application/x-www-form-urlencoded' });
       const body = init.body as URLSearchParams;
       expect(body.get('grant_type')).toBe('authorization_code');
       expect(body.get('code')).toBe('abc123');
@@ -319,6 +326,7 @@ describe('AuthService', () => {
       expect(token).toBeNull();
       expect(fetchMock).not.toHaveBeenCalled();
       expect(service.isAuthenticated()).toBe(false);
+      expect(readStoredTokens(sessionStorage)).toBeNull();
     });
 
     it('shares a single in-flight refresh across concurrent callers', async () => {

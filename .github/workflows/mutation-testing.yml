@@ -1,11 +1,48 @@
 name: Mutation testing
 
 on:
-  workflow_dispatch: {}
+  # Nightly at 02:00 UTC. GitHub may start scheduled runs late, and disables schedules in repos
+  # with no activity for 60 days.
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Which mutation suites to run
+        type: choice
+        options: [frontend, backend, both]
+        default: frontend
+
+# A slow run must never be cancelled by (or overlap with) the next night's run.
+concurrency:
+  group: mutation-testing
+  cancel-in-progress: false
 
 jobs:
-  backend:
+  # Scheduled runs can't take inputs, so they read the MUTATION_SCOPE repository variable instead
+  # (Settings -> Secrets and variables -> Actions -> Variables). Unset means frontend only, since
+  # Stryker.NET doesn't support .NET 11 yet -- set it to "both" once it does.
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
+    steps:
+      - id: scope
+        env:
+          SCOPE: ${{ inputs.scope || vars.MUTATION_SCOPE || 'frontend' }}
+        run: |
+          case "$SCOPE" in
+            frontend|backend|both) ;;
+            *) echo "::error::Invalid mutation scope '$SCOPE' (expected frontend, backend or both)"; exit 1 ;;
+          esac
+          echo "scope=$SCOPE" >> "$GITHUB_OUTPUT"
+          echo "Mutation scope: \`$SCOPE\` (${{ github.event_name }})" >> "$GITHUB_STEP_SUMMARY"
+
+  backend:
+    needs: setup
+    if: needs.setup.outputs.scope != 'frontend'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
 
@@ -27,6 +64,7 @@ jobs:
       # docs/backend/analysis/mutation-testing-strategy.md. To scope a run to one feature, edit
       # the "mutate" array in stryker-config.json rather than passing --mutate here -- Stryker.NET
       # does not honor the CLI flag when the config file also sets "mutate".
+      # Until Stryker.NET supports .NET 11 this step is expected to fail; the job is opt-in.
       - name: Run Stryker.NET
         working-directory: src/backend/buddy.IntegrationTests
         run: dotnet tool run dotnet-stryker
@@ -40,7 +78,16 @@ jobs:
           if-no-files-found: ignore
 
   frontend:
+    needs: setup
+    if: needs.setup.outputs.scope != 'backend'
     runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: read
+      issues: write
+    defaults:
+      run:
+        working-directory: src/frontend/buddy
     steps:
       - uses: actions/checkout@v7
 
@@ -51,17 +98,79 @@ jobs:
           cache-dependency-path: src/frontend/buddy/package-lock.json
 
       - name: Install dependencies
-        working-directory: src/frontend/buddy
         run: npm ci --ignore-scripts
 
+      # Overlay the most recent CI baseline on top of the committed one, so each night only
+      # re-tests mutants whose source or tests changed. With no cache (first run, or evicted
+      # after 7 days unused) the committed reports/stryker-incremental.json is used as-is.
+      - name: Restore incremental baseline
+        uses: actions/cache/restore@v4
+        with:
+          path: src/frontend/buddy/reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.run_id }}
+          restore-keys: stryker-incremental-
+
+      # Runners aren't shared like the devcontainer, so use every vCPU instead of batching.
+      # timeoutMS in stryker.conf.json keeps one slow test run from cascading into timeouts.
       - name: Run StrykerJS
-        working-directory: src/frontend/buddy
-        run: npm run test:mutation
+        run: npm run test:mutation -- --incremental --concurrency "$(nproc)"
+
+      - name: Save incremental baseline
+        if: ${{ !cancelled() }}
+        uses: actions/cache/save@v4
+        with:
+          path: src/frontend/buddy/reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.run_id }}
+
+      - name: Write summary
+        if: ${{ !cancelled() }}
+        run: |
+          jq -r '
+            [.files[].mutants[].status] as $s
+            | def n(x): [$s[] | select(. == x)] | length;
+            (n("Killed")) as $k | (n("Timeout")) as $t | (n("Survived")) as $sv | (n("NoCoverage")) as $nc
+            | ($k + $t + $sv + $nc) as $valid
+            | "### Frontend mutation score: \(if $valid > 0 then (($k + $t) * 10000 / $valid | round / 100) else "n/a" end)%\n",
+              "| Killed | Survived | Timeout | No coverage | Compile error | Files |",
+              "|---|---|---|---|---|---|",
+              "| \($k) | \($sv) | \($t) | \($nc) | \(n("CompileError")) | \(.files | length) |"
+          ' reports/stryker-incremental.json >> "$GITHUB_STEP_SUMMARY"
+
+      # Only after a completed Stryker run, so a crash or timeout never rewrites the issue with
+      # stale or partial results.
+      - name: Build findings list
+        run: node scripts/mutation-issue.mjs --out reports/mutation-findings.md > reports/mutation-issue.md
+
+      # One rolling issue, rewritten each run from the default branch: created when there are
+      # surviving/uncovered mutants, closed once there are none. Branch runs don't touch it.
+      - name: Update findings issue
+        if: github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LABEL: mutation-testing
+          TITLE: Frontend mutation testing findings
+        run: |
+          gh label create "$LABEL" --color D93F0B --description "Findings from the nightly mutation-testing run" 2>/dev/null || true
+          NUMBER=$(gh issue list --label "$LABEL" --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if grep -q '^- \[ \]' reports/mutation-issue.md; then
+            if [ -n "$NUMBER" ]; then
+              gh issue edit "$NUMBER" --body-file reports/mutation-issue.md
+            else
+              NUMBER=$(gh issue create --title "$TITLE" --label "$LABEL" --body-file reports/mutation-issue.md | grep -o '[0-9]*$')
+            fi
+            echo "Findings: ${{ github.server_url }}/${{ github.repository }}/issues/$NUMBER" >> "$GITHUB_STEP_SUMMARY"
+          elif [ -n "$NUMBER" ]; then
+            gh issue close "$NUMBER" --comment "No surviving or uncovered mutants as of ${GITHUB_SHA::7}."
+          fi
 
       - name: Upload report
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: frontend-mutation-report
-          path: src/frontend/buddy/reports/mutation
+          path: |
+            src/frontend/buddy/reports/mutation
+            src/frontend/buddy/reports/stryker-incremental.json
+            src/frontend/buddy/reports/mutation-findings.md
           if-no-files-found: ignore

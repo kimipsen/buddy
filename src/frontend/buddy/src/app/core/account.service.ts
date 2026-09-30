@@ -15,13 +15,9 @@ export class AccountService {
 
   readonly role = this._role.asReadonly();
 
+  // The settled promise is kept after a successful lookup, so it doubles as the memoized result --
+  // later calls reuse it instead of re-fetching. Only a failure clears it, allowing a retry.
   async resolveRole(): Promise<AccountRole> {
-    const resolved = this._role();
-
-    if (resolved) {
-      return resolved;
-    }
-
     this.pendingResolution ??= this.loadRole().catch((error: unknown) => {
       this.pendingResolution = null;
       throw error;

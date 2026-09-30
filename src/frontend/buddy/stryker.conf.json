@@ -6,12 +6,13 @@
     "command": "npm test -- --watch=false"
   },
   "coverageAnalysis": "off",
+  "timeoutMS": 60000,
   "concurrency": 4,
   "checkers": ["typescript"],
   "typescriptChecker": {
     "prioritizePerformanceOverAccuracy": true
   },
-  "mutate": ["src/app/**/*.ts", "!src/app/**/*.spec.ts"],
+  "mutate": ["src/app/**/*.ts", "!src/app/**/*.spec.ts", "!src/app/core/i18n/translations/**"],
   "reporters": ["progress", "clear-text", "html"],
   "htmlReporter": {
     "fileName": "reports/mutation/index.html"

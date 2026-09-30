@@ -101,4 +101,23 @@ describe('postIdempotent', () => {
 
     await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
   });
+
+  it('backs off linearly, waiting twice the base delay before the second retry', async () => {
+    const promise = firstValueFrom(postIdempotent<{ id: string }>(http, '/things', {}));
+
+    httpMock.expectOne('/things').flush('boom', { status: 500, statusText: 'Server Error' });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    httpMock.expectOne('/things').flush('boom', { status: 500, statusText: 'Server Error' });
+
+    // The second retry is due 600ms (2 x RETRY_BASE_DELAY_MS) after this failure, so it must not
+    // have gone out yet at 400ms.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    httpMock.expectNone('/things');
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    httpMock.expectOne('/things').flush({ id: '1' });
+
+    await expect(promise).resolves.toEqual({ id: '1' });
+  });
 });

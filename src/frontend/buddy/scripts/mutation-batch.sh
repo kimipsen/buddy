@@ -68,7 +68,7 @@ if [[ "$MODE" == "reset" ]]; then
 fi
 
 # Same file set Stryker itself mutates (see stryker.conf.json's "mutate" glob).
-mapfile -t all_files < <(find src/app -type f -name '*.ts' ! -name '*.spec.ts' | sort)
+mapfile -t all_files < <(find src/app -type f -name '*.ts' ! -name '*.spec.ts' ! -path 'src/app/core/i18n/translations/*' | sort)
 total="${#all_files[@]}"
 
 touch "$PROGRESS_FILE"

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   addDaysIso,
+  addMinutesToTime,
   browserTimeZoneId,
   buildDateRangeIso,
   buildMonthGridIso,
@@ -220,5 +221,32 @@ describe('buildMonthGridIso', () => {
 
   it('is independent of which day within the month the anchor is', () => {
     expect(buildMonthGridIso('2024-06-01')).toEqual(buildMonthGridIso('2024-06-30'));
+  });
+});
+
+describe('addMinutesToTime', () => {
+  it('adds minutes within the same hour', () => {
+    expect(addMinutesToTime('09:15', 30)).toBe('09:45');
+  });
+
+  it('carries minutes over into the next hour', () => {
+    expect(addMinutesToTime('08:59', 1)).toBe('09:00');
+    expect(addMinutesToTime('10:40', 95)).toBe('12:15');
+  });
+
+  it('zero-pads single-digit hours and minutes', () => {
+    expect(addMinutesToTime('09:05', 0)).toBe('09:05');
+  });
+
+  it('wraps forward across midnight', () => {
+    expect(addMinutesToTime('23:30', 45)).toBe('00:15');
+  });
+
+  it('wraps backward across midnight for a negative offset', () => {
+    expect(addMinutesToTime('00:10', -20)).toBe('23:50');
+  });
+
+  it('wraps offsets longer than a whole day', () => {
+    expect(addMinutesToTime('10:00', 1500)).toBe('11:00');
   });
 });

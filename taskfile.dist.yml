@@ -92,12 +92,12 @@ tasks:
       scripts/mutation-batch.sh), so it doesn't overwhelm the devcontainer.
       Re-run repeatedly to cover the whole codebase; results accumulate in
       reports/stryker-incremental.json as a baseline. Usage: task
-      test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=1] [--
+      test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=2] [--
       --status|--reset|--dry-run]
     dir: src/frontend/buddy
     vars:
       BATCH_SIZE: '{{.BATCH_SIZE | default "5"}}'
-      CONCURRENCY: '{{.CONCURRENCY | default "1"}}'
+      CONCURRENCY: '{{.CONCURRENCY | default "2"}}'
     cmds:
       - ./scripts/mutation-batch.sh --batch-size {{.BATCH_SIZE}} --concurrency
         {{.CONCURRENCY}} {{.CLI_ARGS}}

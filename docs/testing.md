@@ -1,7 +1,7 @@
 # Testing
 
 Buddy has frontend unit tests, backend integration and event-shape tests, and
-manual mutation-testing workflows. Run commands from the repository root unless
+nightly and manual mutation-testing workflows. Run commands from the repository root unless
 a command changes directory explicitly.
 
 ## Frontend
@@ -151,8 +151,41 @@ verified scoping instructions and expected runtime characteristics.
 - `.github/workflows/e2e-tests.yml` starts Postgres, Keycloak, and Mailpit via
   `.devcontainer/docker-compose.yml` and runs the Playwright suite against a
   real backend and frontend.
-- `.github/workflows/mutation-testing.yml` exposes manually triggered backend
-  and frontend mutation jobs.
+- `.github/workflows/mutation-testing.yml` runs mutation testing nightly and on
+  demand. See [nightly mutation testing](#nightly-mutation-testing).
+
+### Nightly mutation testing
+
+The mutation workflow runs every night at 02:00 UTC and can also be started
+from **Actions → Mutation testing → Run workflow**, where a `scope` input picks
+`frontend` (default), `backend` or `both`.
+
+Scheduled runs can't take inputs, so they read the `MUTATION_SCOPE` repository
+variable (**Settings → Secrets and variables → Actions → Variables**) and fall
+back to `frontend` when it is unset. The backend job stays opt-in because
+Stryker.NET doesn't support .NET 11 yet, so a backend run is expected to fail
+for now. Once it's supported, set `MUTATION_SCOPE=both`; no code change is
+needed.
+
+The frontend job runs StrykerJS with `--incremental` on all runner vCPUs.
+Each run starts from the committed
+`src/frontend/buddy/reports/stryker-incremental.json` and layers on the latest
+baseline from the Actions cache, so only mutants whose source or tests changed
+are re-tested. Jobs time out after 300 minutes. If the committed baseline gets
+far behind, refresh it locally with `task test:mutation:frontend:batch` and
+commit it, so that a run with an evicted cache still fits.
+Each run writes the mutation score to the job summary and uploads the HTML
+report and the incremental JSON as the `frontend-mutation-report` artifact.
+
+Runs on the default branch also keep one open issue, **Frontend mutation
+testing findings** (label `mutation-testing`), up to date. It lists every
+surviving and uncovered mutant as a checklist grouped by file, with a link to
+the line, the mutator, and the original and replacement code. Each run rewrites
+the issue, so a fixed mutant just drops off the list. The issue is closed once
+nothing is left. If the list is longer than GitHub's issue-body limit, the
+complete version is in `mutation-findings.md` in the artifact. To generate the
+same list locally from your own baseline, run
+`node scripts/mutation-issue.mjs` in `src/frontend/buddy`.
 
 Before submitting a documentation-only change, run the relevant Markdown/link
 checks and `git diff --check`. Application tests are only necessary when the

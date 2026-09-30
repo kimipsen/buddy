@@ -668,5 +668,31 @@ describe('CalendarsService', () => {
 
       await expect(second).resolves.toEqual([]);
     });
+
+    it('does not evict a newer cached promise when a superseded one fails afterwards', async () => {
+      const stale = service.listTodayOccurrences();
+      stale.catch(() => undefined);
+      const staleCalendarsReq = httpMock.expectOne(`${apiBaseUrl}/calendars`);
+
+      // A mutation clears the cache while the first fetch is still in flight, so the next call
+      // starts (and memoizes) a fresh fetch.
+      const deletePromise = service.deleteItem('cal-1', 'task-1');
+      httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1`).flush(null);
+      await deletePromise;
+
+      const fresh = service.listTodayOccurrences();
+      const freshCalendarsReq = httpMock.expectOne(`${apiBaseUrl}/calendars`);
+
+      // The superseded fetch failing must leave the fresh memoized promise in place.
+      staleCalendarsReq.flush('boom', { status: 500, statusText: 'Server Error' });
+      await expect(stale).rejects.toBeTruthy();
+
+      const afterFailure = service.listTodayOccurrences();
+      httpMock.expectNone(`${apiBaseUrl}/calendars`);
+
+      freshCalendarsReq.flush([]);
+      await expect(fresh).resolves.toEqual([]);
+      expect(afterFailure).toBe(fresh);
+    });
   });
 });
