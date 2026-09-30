@@ -8,6 +8,12 @@ describe('theme-storage', () => {
     sessionStorage.clear();
   });
 
+  it('uses the storage key the pre-boot theme script in index.html reads', () => {
+    writeStoredThemeMode(localStorage, 'dark');
+
+    expect(localStorage.getItem('buddy_theme_mode')).toBe('dark');
+  });
+
   describe('readStoredThemeMode', () => {
     it('returns null when nothing has been stored', () => {
       expect(readStoredThemeMode(localStorage)).toBeNull();

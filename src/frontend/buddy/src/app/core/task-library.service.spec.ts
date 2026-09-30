@@ -117,6 +117,34 @@ describe('TaskLibraryService', () => {
       expect(result.subtasks[0].durationMinutes).toBe(90);
     });
 
+    it('includes the day component of a "c"-format duration, including multi-digit days', async () => {
+      const response = templateResponse({
+        subtasks: [{ id: 'subtask-1', title: 'Camp', icon: null, duration: '1.02:30:00' }],
+        totalDuration: '12.00:05:00'
+      });
+
+      const promise = service.listTaskTemplates('child-1');
+      httpMock.expectOne(`${base()}/children/child-1`).flush([response]);
+
+      const [result] = await promise;
+      expect(result.subtasks[0].durationMinutes).toBe((24 + 2) * 60 + 30);
+      expect(result.totalDurationMinutes).toBe(12 * 24 * 60 + 5);
+    });
+
+    it('treats a duration that does not start with the "c" format as zero minutes', async () => {
+      const response = templateResponse({
+        subtasks: [{ id: 'subtask-1', title: 'Odd', icon: null, duration: 'x00:05:00' }],
+        totalDuration: 'not-a-duration'
+      });
+
+      const promise = service.listTaskTemplates('child-1');
+      httpMock.expectOne(`${base()}/children/child-1`).flush([response]);
+
+      const [result] = await promise;
+      expect(result.subtasks[0].durationMinutes).toBe(0);
+      expect(result.totalDurationMinutes).toBe(0);
+    });
+
     it('rejects when the backend returns an error status', async () => {
       const promise = service.listTaskTemplates('child-1');
       promise.catch(() => undefined);
@@ -124,6 +152,19 @@ describe('TaskLibraryService', () => {
       httpMock.expectOne(`${base()}/children/child-1`).flush('boom', { status: 500, statusText: 'Server Error' });
 
       await expect(promise).rejects.toBeTruthy();
+    });
+  });
+
+  describe('clearTemplates', () => {
+    it('empties the shared templates state', async () => {
+      const listPromise = service.listTaskTemplates('child-1');
+      httpMock.expectOne(`${base()}/children/child-1`).flush([templateResponse()]);
+      await listPromise;
+      expect(service.templates()).toHaveLength(1);
+
+      service.clearTemplates();
+
+      expect(service.templates()).toEqual([]);
     });
   });
 
@@ -262,6 +303,15 @@ describe('TaskLibraryService', () => {
 
   describe('updateSubtask', () => {
     it('PATCHes the subtask and replaces the template in state', async () => {
+      const original = templateResponse({
+        id: 'template-1',
+        subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00' }],
+        totalDuration: '00:05:00'
+      });
+      const listPromise = service.listTaskTemplates('child-1');
+      httpMock.expectOne(`${base()}/children/child-1`).flush([original]);
+      await listPromise;
+
       const updated = templateResponse({
         id: 'template-1',
         subtasks: [{ id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', duration: '00:07:00' }],
@@ -275,13 +325,13 @@ describe('TaskLibraryService', () => {
       expect(req.request.body).toEqual({ title: 'Brush teeth thoroughly', icon: '🪥', duration: '00:07:00' });
       req.flush(updated);
 
-      await expect(promise).resolves.toEqual(
-        template({
-          id: 'template-1',
-          subtasks: [{ id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', durationMinutes: 7 }],
-          totalDurationMinutes: 7
-        })
-      );
+      const expected = template({
+        id: 'template-1',
+        subtasks: [{ id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', durationMinutes: 7 }],
+        totalDurationMinutes: 7
+      });
+      await expect(promise).resolves.toEqual(expected);
+      expect(service.templates()).toEqual([expected]);
     });
   });
 
@@ -313,6 +363,29 @@ describe('TaskLibraryService', () => {
           totalDurationMinutes: 10
         })
       ]);
+    });
+    it('leaves other templates in state untouched (same object)', async () => {
+      const target = templateResponse({
+        id: 'template-1',
+        subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' }],
+        totalDuration: '00:05:00'
+      });
+      const other = templateResponse({
+        id: 'template-2',
+        subtasks: [{ id: 'subtask-9', title: 'Pack bag', icon: null, duration: '00:03:00' }],
+        totalDuration: '00:03:00'
+      });
+      const listPromise = service.listTaskTemplates('child-1');
+      httpMock.expectOne(`${base()}/children/child-1`).flush([target, other]);
+      await listPromise;
+      const otherBefore = service.templates()[1];
+
+      const promise = service.removeSubtask('template-1', 'subtask-1');
+      httpMock.expectOne(`${base()}/template-1/subtasks/subtask-1`).flush(null);
+      await promise;
+
+      expect(service.templates()[1]).toBe(otherBefore);
+      expect(service.templates()[0].subtasks).toEqual([]);
     });
   });
 

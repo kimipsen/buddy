@@ -82,6 +82,14 @@ describe('roleRedirectGuard', () => {
     expect(accountStub.resolveRole).not.toHaveBeenCalled();
   });
 
+  it('provisions the backend user once authenticated, before redirecting', async () => {
+    const { usersStub } = setup();
+
+    await runGuard();
+
+    expect(usersStub.ensureCurrentUser).toHaveBeenCalledTimes(1);
+  });
+
   it('still resolves a role when provisioning the current user fails', async () => {
     const usersStub: Partial<UsersService> = { ensureCurrentUser: vi.fn(async () => Promise.reject(new Error('boom'))) };
     const { router } = setup({ users: usersStub, account: { resolveRole: vi.fn(async () => 'guardian' as AccountRole) } });

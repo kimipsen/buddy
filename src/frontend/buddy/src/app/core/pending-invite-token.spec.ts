@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { storePendingInviteToken, takePendingInviteToken } from './pending-invite-token';
 
@@ -7,6 +7,10 @@ const STORAGE_KEY = 'buddy_pending_invite_token';
 describe('pending-invite-token', () => {
   beforeEach(() => {
     sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('takePendingInviteToken', () => {
@@ -39,9 +43,12 @@ describe('pending-invite-token', () => {
     });
 
     it('does not touch sessionStorage when there is nothing to remove', () => {
+      const removeItem = vi.spyOn(Storage.prototype, 'removeItem');
+
       takePendingInviteToken();
 
       expect(sessionStorage).toHaveLength(0);
+      expect(removeItem).not.toHaveBeenCalled();
     });
 
     it('does not read a value stored under a different key', () => {

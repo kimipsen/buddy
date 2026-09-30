@@ -191,5 +191,10 @@ describe('task-run', () => {
 
       expect(occurrenceKey(day1)).not.toBe(occurrenceKey(day2));
     });
+
+    it('falls back to dueAt, then to an empty date part, when startsAt is missing', () => {
+      expect(occurrenceKey({ itemId: 'task-1', subtaskId: null, startsAt: null, dueAt: '2026-08-29T17:00:00Z' })).toBe('task-1::2026-08-29');
+      expect(occurrenceKey({ itemId: 'task-1', subtaskId: null, startsAt: null, dueAt: null })).toBe('task-1::');
+    });
   });
 });

@@ -35,6 +35,14 @@ describe('ThemeService', () => {
     vi.unstubAllGlobals();
   });
 
+  it('watches the OS dark-mode preference media query', () => {
+    stubMatchMedia(false);
+
+    new ThemeService();
+
+    expect(window.matchMedia).toHaveBeenCalledWith('(prefers-color-scheme: dark)');
+  });
+
   describe('initial mode', () => {
     it('defaults to "system" when nothing is stored', () => {
       stubMatchMedia(false);
