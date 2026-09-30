@@ -97,6 +97,19 @@ describe('ChildMenu', () => {
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('closes the open menu when Escape is pressed', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
+    expect(signOutButton(compiled)).toBeNull();
+  });
+
   it('logs out and closes the menu when sign out is clicked', async () => {
     const { fixture, compiled, logout } = await setup();
 

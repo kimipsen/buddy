@@ -220,6 +220,88 @@ describe('ChildCalendar', () => {
     expect(calendars.setTaskCompletion).not.toHaveBeenCalled();
   });
 
+  it('refuses to complete a future task even if its toggle is clicked while enabled', async () => {
+    const task = occurrence({ itemId: 'task-1', kind: 1, title: 'Feed the cat', startsAt: null, endsAt: null, dueAt: `${addDays(today, 1)}T17:00:00Z` });
+    const { fixture, calendars } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [task]) } });
+    await settle(fixture);
+
+    const button = findButtonByAriaLabel(fixture.nativeElement as HTMLElement, 'Mark done')!;
+    button.disabled = false;
+    button.click();
+    await settle(fixture);
+
+    expect(calendars.setTaskCompletion).not.toHaveBeenCalled();
+  });
+
+  it('disables a task\'s toggle while its completion is saving, and re-enables it afterwards', async () => {
+    const task = occurrence({ itemId: 'task-1', kind: 1, title: 'Feed the cat', startsAt: null, endsAt: null, dueAt: `${today}T17:00:00Z` });
+    let resolveSave!: () => void;
+    const setTaskCompletion = vi.fn(
+      () => new Promise<{ itemId: string; occurrenceDate: string; isCompleted: boolean }>((resolve) => {
+        resolveSave = () => resolve({ itemId: 'task-1', occurrenceDate: today, isCompleted: true });
+      })
+    );
+    const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [task]), setTaskCompletion } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'Mark done')!.click();
+    fixture.detectChanges();
+
+    expect(findButtonByAriaLabel(compiled, 'Mark done')?.disabled).toBe(true);
+
+    resolveSave();
+    await settle(fixture);
+
+    expect(findButtonByAriaLabel(compiled, 'Mark not done')?.disabled).toBe(false);
+  });
+
+  it('shows an error and leaves the task unchanged when saving its completion fails', async () => {
+    const task = occurrence({ itemId: 'task-1', kind: 1, title: 'Feed the cat', startsAt: null, endsAt: null, dueAt: `${today}T17:00:00Z` });
+    const { fixture } = await setup({
+      calendars: {
+        listOccurrencesInRange: vi.fn(async () => [task]),
+        setTaskCompletion: vi.fn(async () => Promise.reject(new Error('boom')))
+      }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'Mark done')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Something went wrong updating that task. Try again in a bit.');
+    expect(findButtonByAriaLabel(compiled, 'Mark done')?.disabled).toBe(false);
+    expect(findButtonByAriaLabel(compiled, 'Mark not done')).toBeUndefined();
+  });
+
+  it('clears a previous load error once a later week loads successfully', async () => {
+    const listOccurrencesInRange = vi
+      .fn<CalendarsService['listOccurrencesInRange']>()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValue([]);
+    const { fixture } = await setup({ calendars: { listOccurrencesInRange } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Something went wrong loading your calendar');
+
+    Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.includes('Next week'))?.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Something went wrong loading your calendar');
+  });
+
+  it('labels each day with its short weekday, month, and day number', async () => {
+    const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [occurrence()]) } });
+    await settle(fixture);
+
+    const [year, month, day] = today.split('-').map(Number);
+    const expected = new Date(year, month - 1, day).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
+    const heading = (fixture.nativeElement as HTMLElement).querySelector('h2');
+    expect(heading?.textContent?.trim()).toBe(expected);
+  });
+
   it('renders "All day" instead of a time range for an all-day occurrence', async () => {
     const allDay = occurrence({ itemId: 'all-day', title: 'Field trip', isAllDay: true });
     const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [allDay]) } });
@@ -264,6 +346,30 @@ describe('ChildCalendar', () => {
     expect(compiled.textContent).not.toContain('School item');
   });
 
+  it('shows a hidden calendar\'s occurrences again when it is toggled back on', async () => {
+    const first = occurrence({ itemId: 'a', title: 'Home item', calendarId: 'cal-1', calendarName: 'Home' });
+    const second = occurrence({ itemId: 'b', title: 'School item', calendarId: 'cal-2', calendarName: 'School' });
+
+    const { fixture } = await setup({
+      calendars: {
+        listMyCalendars: vi.fn(async () => [calendarSummary(), calendarSummary({ id: 'cal-2', name: 'School' })]),
+        listOccurrencesInRange: vi.fn(async () => [first, second])
+      }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'School')?.click();
+    await settle(fixture);
+    expect(compiled.textContent).not.toContain('School item');
+
+    findButtonByAriaLabel(compiled, 'School')?.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Home item');
+    expect(compiled.textContent).toContain('School item');
+  });
+
   it('never renders create, edit, or delete controls', async () => {
     const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => [occurrence()]) } });
     await settle(fixture);
@@ -292,6 +398,24 @@ describe('ChildCalendar', () => {
     expect(compiled.textContent).toContain('Get dressed');
     expect(compiled.textContent).toContain('Eat breakfast');
     expect(compiled.querySelectorAll('ul.ml-2 button')).toHaveLength(3);
+  });
+
+  it('orders a run\'s subtasks by time even when they arrive out of order', async () => {
+    const subtasks = [
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-3', parentTitle: 'Morning routine', title: 'Eat breakfast', startsAt: null, endsAt: null, dueAt: `${today}T08:20:00Z` }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-1', parentTitle: 'Morning routine', title: 'Brush teeth', startsAt: null, endsAt: null, dueAt: `${today}T08:00:00Z` }),
+      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-2', parentTitle: 'Morning routine', title: 'Get dressed', startsAt: null, endsAt: null, dueAt: `${today}T08:10:00Z` })
+    ];
+
+    const { fixture } = await setup({ calendars: { listOccurrencesInRange: vi.fn(async () => subtasks) } });
+    await settle(fixture);
+
+    const titles = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('ul.ml-2 > li')).map((li) => li.textContent?.trim());
+    expect(titles).toEqual([
+      expect.stringContaining('Brush teeth'),
+      expect.stringContaining('Get dressed'),
+      expect.stringContaining('Eat breakfast')
+    ]);
   });
 
   it('completing one subtask of a 3-subtask run does not flip the other subtasks (the compound-key fix)', async () => {
@@ -351,6 +475,39 @@ describe('ChildCalendar', () => {
     expect(text.indexOf('Pancakes')).toBeLessThan(text.indexOf('Homework'));
     expect(text.indexOf('Homework')).toBeLessThan(text.indexOf('Apple slices'));
     expect(text.indexOf('Apple slices')).toBeLessThan(text.indexOf('Pasta'));
+  });
+
+  it('places breakfast at 07:00 and lunch at 12:00 among timed events', async () => {
+    const events = [
+      occurrence({ itemId: 'swim', title: 'Early swim', startsAt: `${today}T06:00:00Z`, endsAt: `${today}T06:30:00Z` }),
+      occurrence({ itemId: 'read', title: 'Reading time', startsAt: `${today}T10:00:00Z`, endsAt: `${today}T10:30:00Z` }),
+      occurrence({ itemId: 'park', title: 'Park trip', startsAt: `${today}T13:00:00Z`, endsAt: `${today}T14:00:00Z` })
+    ];
+    const meals = [mealEntry({ slot: 0, mealName: 'Pancakes' }), mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Soup' })];
+
+    const { fixture } = await setup({
+      calendars: { listOccurrencesInRange: vi.fn(async () => events) },
+      mealplans: { listMealPlan: vi.fn(async () => meals) }
+    });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text.indexOf('Early swim')).toBeLessThan(text.indexOf('Pancakes'));
+    expect(text.indexOf('Pancakes')).toBeLessThan(text.indexOf('Reading time'));
+    expect(text.indexOf('Reading time')).toBeLessThan(text.indexOf('Soup'));
+    expect(text.indexOf('Soup')).toBeLessThan(text.indexOf('Park trip'));
+  });
+
+  it.each([
+    [1 as MealSlot, 'Lunch'],
+    [2 as MealSlot, 'Dinner'],
+    [3 as MealSlot, 'Snack']
+  ])('labels a meal in slot %s as "%s"', async (slot, label) => {
+    const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [mealEntry({ slot, mealName: 'Stew' })]) } });
+    await settle(fixture);
+
+    const mealRow = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('li')).find((li) => li.textContent?.includes('Stew'));
+    expect(mealRow?.querySelector(':scope > span:last-child')?.textContent?.trim()).toBe(label);
   });
 
   it('shows a day with only a meal entry, without folding it into the empty state', async () => {

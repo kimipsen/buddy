@@ -83,6 +83,7 @@ function sortKeyFor(row: ChildAgendaRow, timeZoneId: string): string {
 
   const occurrence = isTaskRun(row) ? row.subtasks[0] : row;
   const instant = instantFor(occurrence);
+  // Stryker disable next-line StringLiteral: unreachable -- occurrencesByDate drops every occurrence without a startsAt/dueAt, so instant is never null here
   return instant ? toTimeInTimeZone(instant, timeZoneId) : '';
 }
 
@@ -111,6 +112,7 @@ export class ChildCalendar {
   protected readonly occurrences = signal<CalendarOccurrence[]>([]);
   protected readonly mealEntries = signal<MealPlanEntry[]>([]);
   protected readonly hiddenCalendarIds = signal<Set<string>>(new Set());
+  // Stryker disable next-line BooleanLiteral: the constructor's effect calls loadWeek(), which sets loading(true), before the template first renders
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly savingTaskId = signal<string | null>(null);
@@ -136,6 +138,7 @@ export class ChildCalendar {
     }
 
     for (const dayOccurrences of Object.values(byDate)) {
+      // Stryker disable next-line StringLiteral: unreachable -- only occurrences with a startsAt or dueAt are grouped above
       dayOccurrences.sort((a, b) => (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''));
     }
 
@@ -167,6 +170,7 @@ export class ChildCalendar {
     effect(() => {
       // Read anchorDate() here (not just inside loadWeek()) so the effect re-runs when the
       // visible week changes.
+      // Stryker disable next-line CallExpression: redundant with loadWeek() reading days() (and so anchorDate()) synchronously before its first await
       this.anchorDate();
       void this.loadWeek();
     });
