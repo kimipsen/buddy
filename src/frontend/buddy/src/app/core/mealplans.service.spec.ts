@@ -3,7 +3,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { Meal, MealPlanEntry, MealplanScope, MealplansService, MealRating } from './mealplans.service';
+import {
+  GroupMealplanStatus,
+  IssuedMealplanIcalToken,
+  Meal,
+  MealPlanEntry,
+  MealplanIcalTokenSummary,
+  MealplanScope,
+  MealplansService,
+  MealRating
+} from './mealplans.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
 describe('MealplansService', () => {
@@ -354,6 +363,68 @@ describe('MealplansService', () => {
       req.flush({ groupId: 'group-1', groupName: null });
 
       await expect(promise).resolves.toBeNull();
+    });
+  });
+
+  describe('getGroupMealplanStatus', () => {
+    it('GETs the status for the group and resolves with it', async () => {
+      const status: GroupMealplanStatus = { hasSharedPlan: true };
+
+      const promise = service.getGroupMealplanStatus('group-1');
+
+      const req = httpMock.expectOne(`${groupBase()}/status`);
+      expect(req.request.method).toBe('GET');
+      req.flush(status);
+
+      await expect(promise).resolves.toEqual(status);
+    });
+  });
+
+  describe('listIcalTokens', () => {
+    it('GETs the ical-tokens list for the child', async () => {
+      const tokens: MealplanIcalTokenSummary[] = [{ tokenId: 'token-1', issuedAt: '2026-08-01T00:00:00Z' }];
+
+      const promise = service.listIcalTokens('child-1');
+
+      const req = httpMock.expectOne(`${familyBase()}/ical-tokens`);
+      expect(req.request.method).toBe('GET');
+      req.flush(tokens);
+
+      await expect(promise).resolves.toEqual(tokens);
+    });
+  });
+
+  describe('createIcalToken', () => {
+    it('POSTs an empty body and resolves with the issued token', async () => {
+      const issued: IssuedMealplanIcalToken = { tokenId: 'token-1', token: 'plaintext-secret', subscriptionPath: '/mealplans/plan-1/ical/token-1' };
+
+      const promise = service.createIcalToken('child-1');
+
+      const req = httpMock.expectOne(`${familyBase()}/ical-tokens`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
+      req.flush(issued);
+
+      await expect(promise).resolves.toEqual(issued);
+    });
+  });
+
+  describe('revokeIcalToken', () => {
+    it('DELETEs the specific token under the child', async () => {
+      const promise = service.revokeIcalToken('child-1', 'token-1');
+
+      const req = httpMock.expectOne(`${familyBase()}/ical-tokens/token-1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await expect(promise).resolves.toBeNull();
+    });
+  });
+
+  describe('icalFeedUrl', () => {
+    it('prefixes the relative subscription path with the configured API base URL, issuing no HTTP request', () => {
+      // httpMock.verify() in afterEach would fail if this triggered a request.
+      expect(service.icalFeedUrl('/mealplans/plan-1/ical/token-1')).toBe(`${apiBaseUrl}/mealplans/plan-1/ical/token-1`);
     });
   });
 });

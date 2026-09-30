@@ -1,6 +1,6 @@
 ---
 name: mutation-fix
-description: Run the next batch of frontend mutation tests (task test:mutation:frontend:batch), triage the surviving and uncovered mutants, strengthen the Angular/Vitest specs to kill the relevant ones, and re-run Stryker on the same files until nothing relevant survives. Use for "run the mutation tests and fix survivors", "kill the surviving mutants", "work through the next mutation batch".
+description: Run the next batch of frontend mutation tests (task test:mutation:frontend:batch), triage the surviving and uncovered mutants, strengthen the Angular/Vitest specs to kill the relevant ones, and re-run Stryker on the same files until nothing relevant survives, then send a push notification with the outcome. Use for "run the mutation tests and fix survivors", "kill the surviving mutants", "work through the next mutation batch".
 ---
 
 # Mutation Fix Loop
@@ -20,8 +20,8 @@ task test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=2]
 This is slow (every mutant re-runs `npm test`). Run it with `run_in_background: true` and a generous timeout, redirect output to a log file in the scratchpad, and wait for the completion notification — do not poll.
 
 - Take the batch's file list from the `Running batch X-Y of Z:` lines in the output. **Remember it**: it's the scope for the rest of the loop.
-- If the output says `All N files have been covered`, stop and tell the user; they can start over with `task test:mutation:frontend:batch -- --reset`.
-- If Stryker fails before testing mutants (initial test run failed, TypeScript errors), stop and report the error — don't try to fix unrelated breakage silently.
+- If the output says `All N files have been covered`, stop and tell the user (and notify, see step 6); they can start over with `task test:mutation:frontend:batch -- --reset`.
+- If Stryker fails before testing mutants (initial test run failed, TypeScript errors), stop, report the error and notify (step 6) — don't try to fix unrelated breakage silently.
 
 **Never re-run the batch task to retry.** The script appends the batch to `.mutation-batch-progress` after each run, so a second invocation moves on to the *next* files. Re-runs use Stryker directly (step 4).
 
@@ -67,10 +67,10 @@ Fix any failing test before moving on — a failing initial test run makes Stryk
 ## 4. Re-run Stryker on the same files
 
 ```bash
-npx stryker run --mutate "<file1>,<file2>,..." --incremental --concurrency <same as step 1, default 2>
+npx stryker run --mutate "<file1>,<file2>,..." --incremental --force --concurrency <same as step 1, default 2>
 ```
 
-Run it in the background as in step 1. `--incremental` reuses results for untouched mutants and re-tests the ones whose source or specs changed, and updates `reports/stryker-incremental.json`. If only one or two files still have survivors, pass just those files to save time.
+Run it in the background as in step 1. **`--force` is required.** This project uses the command test runner with coverage analysis off, so Stryker can't see that a spec changed: without `--force` it reuses every cached result ("N of N mutant result(s) are reused"), finishes in seconds and reports the same survivors. `--force` re-tests every mutant in the listed files, and `--incremental` still writes the fresh results to `reports/stryker-incremental.json`. Because every mutant in those files gets retested, pass only the files that still have survivors.
 
 Then go back to step 2 with the same file list.
 
@@ -90,3 +90,14 @@ Finish with a short summary:
 - that `reports/stryker-incremental.json` changed — it's the committed baseline the nightly CI run starts from, so it should be committed together with the spec changes.
 
 Don't commit unless the user asks. The HTML report for a closer look is at `reports/mutation/index.html`.
+
+## 6. Notify
+
+A cycle takes long enough that the user has usually walked away, so end every cycle with one notification. Load the `PushNotification` tool first if it isn't loaded yet (`ToolSearch` with `select:PushNotification`), then send one after the step 5 report, with `status: "proactive"`. Keep it to one line, under 200 characters, no markdown, and lead with the outcome:
+
+- finished: `mutation-fix done: batch 51-55, 86.5%→100%, 5 killed, 1 left (not worth it). Specs changed, uncommitted.`
+- stuck or hit `MAX_ROUNDS`: `mutation-fix stuck: 3 survivors left in foo.service.ts after 4 rounds — needs your call.`
+
+Also notify (same format) whenever the loop stops early and needs the user: every file covered, Stryker failing before it tests mutants, or a survivor that points to a real bug or dead code and needs their go-ahead before production code changes.
+
+Send only one notification per cycle, plus these early stops. Don't notify after the individual Stryker runs in steps 1 and 4. If the tool says the notification wasn't sent (for example because the user is at the terminal), that's fine; don't retry.
