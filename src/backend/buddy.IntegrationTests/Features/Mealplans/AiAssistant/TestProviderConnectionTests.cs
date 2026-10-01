@@ -101,4 +101,37 @@ public sealed class TestProviderConnectionTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(403);
         });
     }
+
+    [Fact]
+    public async Task A_key_of_exactly_500_characters_passes_validation()
+    {
+        // The validator runs before the guardian check, so a 404 for a child the caller has no link
+        // to proves the 500-character key was accepted -- without sending it to a real provider.
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { ApiKey = new string('k', 500) }).ToUrl($"/mealplans/children/{Guid.NewGuid()}/ai/providers/Anthropic/test-connection");
+            _.StatusCodeShouldBe(404);
+        });
+    }
+
+    [Fact]
+    public async Task A_key_longer_than_500_characters_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { ApiKey = new string('k', 501) }).ToUrl($"/mealplans/children/{child.Id}/ai/providers/Anthropic/test-connection");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("ApiKey", error.Details.Keys);
+    }
 }

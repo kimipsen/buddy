@@ -75,13 +75,17 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
         await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Post.Json(new { From, To = From.AddDays(40), Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = Array.Empty<Guid>(), Notes = (string?)null })
+            _.Post.Json(new { From, To = From.AddDays(StartAiSessionValidator.MaxRangeDays + 1), Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = Array.Empty<Guid>(), Notes = (string?)null })
                 .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal([$"The requested range cannot exceed {StartAiSessionValidator.MaxRangeDays} days."], error.Details["To"]);
     }
 
     [Fact]
@@ -91,13 +95,17 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
         await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
             _.Post.Json(new { From, To, Slots = Array.Empty<MealSlot>(), MustIncludeMealIds = Array.Empty<Guid>(), Notes = (string?)null })
                 .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["At least one meal slot must be requested."], error.Details["RequestedSlots"]);
     }
 
     [Fact]
@@ -115,5 +123,88 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
                 .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
             _.StatusCodeShouldBe(403);
         });
+    }
+
+    [Fact]
+    public async Task A_range_of_exactly_the_maximum_is_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+        var to = From.AddDays(StartAiSessionValidator.MaxRangeDays);
+
+        var view = await AiAssistantTestHelpers.StartSessionAsync(fixture, guardianToken, child.Id, From, to, [MealSlot.Dinner]);
+
+        Assert.Equal(From, view.From);
+        Assert.Equal(to, view.To);
+    }
+
+    [Fact]
+    public async Task A_range_where_to_is_before_from_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { From, To = From.AddDays(-1), Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = Array.Empty<Guid>(), Notes = (string?)null })
+                .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["'to' must not be before 'from'."], error.Details["To"]);
+    }
+
+    [Fact]
+    public async Task A_single_day_range_is_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+
+        var view = await AiAssistantTestHelpers.StartSessionAsync(fixture, guardianToken, child.Id, From, From, [MealSlot.Dinner]);
+
+        Assert.Equal(From, view.From);
+        Assert.Equal(From, view.To);
+    }
+
+    [Fact]
+    public async Task Notes_of_exactly_2000_characters_are_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { From, To, Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = Array.Empty<Guid>(), Notes = new string('n', 2000) })
+                .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
+            _.StatusCodeShouldBeOk();
+        });
+    }
+
+    [Fact]
+    public async Task Notes_longer_than_2000_characters_are_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { From, To, Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = Array.Empty<Guid>(), Notes = new string('n', 2001) })
+                .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Notes", error.Details.Keys);
     }
 }

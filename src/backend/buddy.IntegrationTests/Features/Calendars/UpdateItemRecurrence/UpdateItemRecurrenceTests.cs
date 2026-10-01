@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Calendars;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Fixtures;
@@ -42,12 +43,16 @@ public sealed class UpdateItemRecurrenceTests(BuddyApiFixture fixture)
         var item = await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId);
         Assert.NotNull(item);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Patch.Json(new { Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 0, Until = (DateOnly?)null } })
                 .ToUrl($"/calendars/{calendarId}/items/{item.Id}/recurrence");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Recurrence.IntervalCount", error.Details.Keys);
     }
 }

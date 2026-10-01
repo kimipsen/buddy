@@ -65,6 +65,23 @@ public sealed partial class VerifyEmailTests(BuddyApiFixture fixture)
         Assert.Equal(["The verification token is invalid."], error.Details[""]);
     }
 
+    [Fact]
+    public async Task Rejects_an_empty_token()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new { Token = "" }).ToUrl("/users/me/email/verify");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Token", error.Details.Keys);
+    }
+
     private async Task<string> ReadVerificationTokenAsync(string emailAddress)
     {
         var messages = await fixture.GetMailpitMessagesToAsync(emailAddress);

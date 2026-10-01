@@ -1,5 +1,7 @@
 using Alba;
 
+using buddy.Features.Guardians;
+
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -63,6 +65,38 @@ public sealed class ListMyChildrenTests(BuddyApiFixture fixture)
 
         Assert.Equal(expected, firstCall);
         Assert.Equal(expected, secondCall);
+    }
+
+    [Fact]
+    public async Task Children_are_ordered_by_when_the_guardian_was_linked_not_by_name_or_child_id()
+    {
+        // The order key is the link's creation time (GuardianLinkDocument.CreatedAt), with ChildId
+        // only as a tie-breaker. Here the child linked last has both the alphabetically first name
+        // and the older (smaller UUIDv7) id, so ordering by name or by id would put it first.
+        var (_, otherGuardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var (guardian, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var olderChild = await GuardianTestHelpers.CreateChildAsync(fixture, otherGuardianToken, "Aaron");
+        var ownChild = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Zoe");
+
+        await GuardianTestHelpers.InviteGuardianAsync(fixture, otherGuardianToken, olderChild.Id, guardian.Email, GuardianKind.Parent);
+        var inviteToken = await GuardianTestHelpers.ReadGuardianInviteTokenAsync(fixture, guardian.Email);
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Url($"/guardian-invites/{inviteToken}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url("/users/me/children/");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.True(olderChild.Id.CompareTo(ownChild.Id) < 0, "Precondition: the later-linked child has the smaller id.");
+        Assert.Equal(new[] { ownChild.Id, olderChild.Id }, response.ReadAsJson<ChildSummaryDto[]>().Select(c => c.Id));
     }
 
     [Fact]

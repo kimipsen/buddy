@@ -195,4 +195,82 @@ public sealed class ListMealPlanTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(404);
         });
     }
+
+    [Fact]
+    public async Task Accepts_a_range_of_exactly_the_maximum_length()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/children/{child.Id}/plan?from={today:yyyy-MM-dd}&to={today.AddDays(ListMealPlanHandler.MaxRangeDays):yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+    }
+
+    [Fact]
+    public async Task The_group_plan_rejects_a_range_where_to_is_before_from()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var groupId = await MealplanTestHelpers.ShareWithNewGroupAsync(fixture, guardianToken, child.Id);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/groups/{groupId}/plan?from={today:yyyy-MM-dd}&to={today.AddDays(-1):yyyy-MM-dd}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["'to' must not be before 'from'."], error.Details["To"]);
+    }
+
+    [Fact]
+    public async Task The_group_plan_rejects_a_range_longer_than_the_maximum()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var groupId = await MealplanTestHelpers.ShareWithNewGroupAsync(fixture, guardianToken, child.Id);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/groups/{groupId}/plan?from={today:yyyy-MM-dd}&to={today.AddDays(ListMealPlanHandler.MaxRangeDays + 1):yyyy-MM-dd}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal([$"The requested range cannot exceed {ListMealPlanHandler.MaxRangeDays} days."], error.Details["To"]);
+    }
+
+    [Fact]
+    public async Task The_group_plan_accepts_a_single_day_range_and_a_range_of_exactly_the_maximum_length()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var groupId = await MealplanTestHelpers.ShareWithNewGroupAsync(fixture, guardianToken, child.Id);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/groups/{groupId}/plan?from={today:yyyy-MM-dd}&to={today:yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/groups/{groupId}/plan?from={today:yyyy-MM-dd}&to={today.AddDays(ListMealPlanHandler.MaxRangeDays):yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+    }
 }

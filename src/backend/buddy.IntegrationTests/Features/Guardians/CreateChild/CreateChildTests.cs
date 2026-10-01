@@ -67,6 +67,69 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
         Assert.Contains("GivenName", error.Details.Keys);
     }
 
+    [Theory]
+    [InlineData("GivenName", "", "Child", "blank-given")]
+    [InlineData("FamilyName", "Child", "", "blank-family")]
+    [InlineData("FamilyName", "Child", "   ", "whitespace-family")]
+    [InlineData("Username", "Child", "Child", "")]
+    [InlineData("Username", "Child", "Child", "   ")]
+    public async Task Rejects_a_blank_name_or_username_naming_the_field(string field, string givenName, string familyName, string username)
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var error = await PostInvalidChildAsync(guardianToken, givenName, familyName, username);
+
+        Assert.Equal(field, Assert.Single(error.Details.Keys));
+    }
+
+    [Theory]
+    [InlineData("GivenName")]
+    [InlineData("FamilyName")]
+    [InlineData("Username")]
+    public async Task Rejects_a_name_or_username_longer_than_200_characters_naming_the_field(string field)
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var tooLong = new string('a', 201);
+
+        var error = await PostInvalidChildAsync(
+            guardianToken,
+            field == "GivenName" ? tooLong : "Child",
+            field == "FamilyName" ? tooLong : "Child",
+            field == "Username" ? tooLong : $"too-long-{Guid.CreateVersion7():N}");
+
+        Assert.Equal(field, Assert.Single(error.Details.Keys));
+    }
+
+    [Fact]
+    public async Task Accepts_names_and_a_username_of_exactly_200_characters()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var givenName = new string('g', 200);
+        var familyName = new string('f', 200);
+        var username = $"max-{Guid.CreateVersion7():N}".PadRight(200, 'u');
+
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, givenName, familyName, username);
+
+        Assert.Equal(givenName, child.Name.GivenName);
+        Assert.Equal(familyName, child.Name.FamilyName);
+        Assert.Equal(username, child.Username);
+    }
+
+    private async Task<ErrorEnvelope> PostInvalidChildAsync(string guardianToken, string givenName, string familyName, string username)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { GivenName = givenName, FamilyName = familyName, Username = username })
+                .ToUrl("/users/me/children/");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        return error;
+    }
+
     [Fact]
     public async Task Requires_authentication()
     {

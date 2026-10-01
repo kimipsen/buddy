@@ -48,7 +48,7 @@ sequenceDiagram
 | Method | Route | Behavior |
 | --- | --- | --- |
 | `POST` | `/users/me/children` | Creates an account for a child and establishes the guardian relationship. |
-| `GET` | `/users/me/children` | Lists the current guardian's child accounts. |
+| `GET` | `/users/me/children` | Lists the current guardian's child accounts, ordered by when the guardian was linked to each child (oldest link first; links without a recorded time last), then by child id. The order is stable, so a client can use the first entry as a default family scope. |
 | `GET` | `/users/me/children/{childId}/guardians` | Lists the active guardians linked to a specific child. |
 | `DELETE` | `/users/me/children/{childId}/guardian-link` | Revokes the guardian-child relationship. |
 | `PATCH` | `/users/me/children/{childId}/language` | An active guardian updates the child's language. |

@@ -82,11 +82,63 @@ public sealed class ListTodaysDosesTests(BuddyApiFixture fixture)
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        await fixture.Host.Scenario(_ =>
-        {
-            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Get.Url($"/medicines/children/{child.Id}/doses?from={today:yyyy-MM-dd}&to={today.AddDays(-1):yyyy-MM-dd}");
-            _.StatusCodeShouldBe(400);
-        });
+        var response = await GetDosesAsync(guardianToken, $"/medicines/children/{child.Id}/doses", today, today.AddDays(-1), 400);
+
+        MedicineTestHelpers.AssertValidationError(response, "To");
     }
+
+    [Fact]
+    public async Task A_range_of_31_days_is_accepted_but_32_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var url = $"/medicines/children/{child.Id}/doses";
+
+        await GetDosesAsync(guardianToken, url, today, today.AddDays(31), 200);
+        var response = await GetDosesAsync(guardianToken, url, today, today.AddDays(32), 400);
+
+        MedicineTestHelpers.AssertValidationError(response, "To");
+    }
+
+    [Fact]
+    public async Task A_group_range_where_to_is_before_from_is_rejected_but_a_single_day_is_accepted()
+    {
+        var (guardianToken, url) = await CreateSharedGroupDosesUrlAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await GetDosesAsync(guardianToken, url, today, today, 200);
+        var response = await GetDosesAsync(guardianToken, url, today, today.AddDays(-1), 400);
+
+        MedicineTestHelpers.AssertValidationError(response, "To");
+    }
+
+    [Fact]
+    public async Task A_group_range_of_31_days_is_accepted_but_32_is_rejected()
+    {
+        var (guardianToken, url) = await CreateSharedGroupDosesUrlAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await GetDosesAsync(guardianToken, url, today, today.AddDays(31), 200);
+        var response = await GetDosesAsync(guardianToken, url, today, today.AddDays(32), 400);
+
+        MedicineTestHelpers.AssertValidationError(response, "To");
+    }
+
+    private async Task<(string GuardianToken, string Url)> CreateSharedGroupDosesUrlAsync()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var groupId = await MedicineTestHelpers.ShareWithNewGroupAsync(fixture, guardianToken, child.Id);
+
+        return (guardianToken, $"/medicines/groups/{groupId}/children/{child.Id}/doses");
+    }
+
+    private Task<IScenarioResult> GetDosesAsync(string token, string url, DateOnly from, DateOnly to, int expectedStatus) =>
+        fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"{url}?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
 }

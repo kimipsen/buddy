@@ -16,7 +16,8 @@ namespace buddy.Features.Guardians;
 // CreatedAt is nullable for the same reason CalendarMembershipDocument.Icon is: it was added after
 // this document type already had rows in some environments, and Marten deserializes a JSON payload
 // missing the property as null rather than erroring -- every reader must treat null as "no
-// timestamp recorded" (oldest, for ordering purposes), not as an error. ListForGuardianAsync
+// timestamp recorded", not as an error. In ListForGuardianAsync's ascending ORDER BY, Postgres
+// sorts those nulls last (after every timestamped link), then by ChildId -- still deterministic. ListForGuardianAsync
 // (MartenGuardianLinkEventStore.cs) orders by it precisely because a plain Marten document query
 // without ORDER BY has no guaranteed row order at all, even across two calls with no intervening
 // writes -- callers like GuardianMealplan.load (frontend) pick "children[0]" as a single family

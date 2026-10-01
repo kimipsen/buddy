@@ -210,4 +210,112 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(403);
         });
     }
+
+    [Fact]
+    public async Task A_guardian_assignee_without_a_guardian_id_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Guardian }, 400);
+
+        AssertValidationError(response, "GuardianId");
+    }
+
+    [Fact]
+    public async Task A_sibling_assignee_without_a_sibling_child_id_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Sibling }, 400);
+
+        AssertValidationError(response, "SiblingChildId");
+    }
+
+    [Fact]
+    public async Task A_playdate_assignee_without_a_host_name_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "" }, 400);
+
+        AssertValidationError(response, "PlaydateHostName");
+    }
+
+    [Fact]
+    public async Task A_playdate_host_name_of_200_characters_is_accepted_but_201_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = new string('h', 200) }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = new string('h', 201) }, 400);
+
+        AssertValidationError(response, "PlaydateHostName");
+    }
+
+    [Fact]
+    public async Task The_host_name_rules_only_apply_to_a_playdate_assignee()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.SelfEscort, PlaydateHostName = new string('h', 201) }, 200);
+    }
+
+    [Fact]
+    public async Task A_playdate_location_of_200_characters_is_accepted_but_201_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateLocation = new string('l', 200) }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateLocation = new string('l', 201) }, 400);
+
+        AssertValidationError(response, "PlaydateLocation");
+    }
+
+    [Fact]
+    public async Task Playdate_contact_info_of_2000_characters_is_accepted_but_2001_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateContactInfo = new string('c', 2000) }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateContactInfo = new string('c', 2001) }, 400);
+
+        AssertValidationError(response, "PlaydateContactInfo");
+    }
+
+    [Fact]
+    public async Task Notes_of_2000_characters_are_accepted_but_2001_are_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.SelfEscort, Notes = new string('n', 2000) }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.SelfEscort, Notes = new string('n', 2001) }, 400);
+
+        AssertValidationError(response, "Notes");
+    }
+
+    private async Task<(string GuardianToken, Guid ChildId)> CreateChildAsync()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        return (guardianToken, child.Id);
+    }
+
+    private Task<IScenarioResult> AssignAsync(string token, Guid childId, object body, int expectedStatus) =>
+        fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Put.Json(body)
+                .ToUrl($"/pickups/children/{childId}/assignments")
+                .QueryString("date", $"{DateOnly.FromDateTime(DateTime.UtcNow):yyyy-MM-dd}")
+                .QueryString("slot", "PickUp");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+    private static void AssertValidationError(IScenarioResult response, string field)
+    {
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains(field, error.Details.Keys);
+    }
 }

@@ -103,4 +103,68 @@ public sealed class RateMealTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(403);
         });
     }
+
+    [Fact]
+    public async Task A_rating_of_zero_stars_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Stars = 0, Comment = (string?)null }).ToUrl($"/mealplans/children/{child.Id}/meals/{meal.Id}/rating");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["Stars must be between 1 and 5."], error.Details["Stars"]);
+    }
+
+    [Fact]
+    public async Task A_one_star_rating_with_a_2000_character_comment_is_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+        var comment = new string('c', 2000);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Stars = 1, Comment = comment }).ToUrl($"/mealplans/children/{child.Id}/meals/{meal.Id}/rating");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var rating = Assert.Single(response.ReadAsJson<MealDto>().Ratings);
+        Assert.Equal(1, rating.Stars);
+        Assert.Equal(comment, rating.Comment);
+    }
+
+    [Fact]
+    public async Task A_comment_longer_than_2000_characters_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Stars = 4, Comment = new string('c', 2001) }).ToUrl($"/mealplans/children/{child.Id}/meals/{meal.Id}/rating");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Comment", error.Details.Keys);
+    }
 }

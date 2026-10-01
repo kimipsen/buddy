@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -27,5 +28,25 @@ public sealed class UpdateCalendarIconTests(BuddyApiFixture fixture)
 
         var updated = response.ReadAsJson<CalendarResponseDto>();
         Assert.Equal("star", updated.Icon);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task A_blank_icon_is_rejected(string icon)
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Icon = icon }).ToUrl($"/calendars/{calendarId}/icon");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Icon.Value", error.Details.Keys);
     }
 }

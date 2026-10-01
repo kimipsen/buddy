@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.IntegrationTests.Features.Calendars;
@@ -35,12 +36,53 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Json(new { Name = "Bad TZ", TimeZoneId = "Not/A_Real_Zone" }).ToUrl("/calendars/");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("TimeZoneId", error.Details.Keys);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task A_blank_calendar_name_is_rejected(string name)
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+
+        var error = await PostInvalidCalendarAsync(token, name, groupId);
+
+        Assert.Contains("Name", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_calendar_name_longer_than_200_characters_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+
+        var error = await PostInvalidCalendarAsync(token, new string('c', 201), groupId);
+
+        Assert.Contains("Name", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_calendar_name_of_exactly_200_characters_is_accepted()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+        var name = new string('c', 200);
+
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, name, groupId);
+
+        var calendar = await CalendarTestHelpers.GetCalendarAsync(fixture, token, calendarId);
+        Assert.Equal(name, calendar.Name);
     }
 
     [Fact]
@@ -86,5 +128,19 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
             _.Post.Json(new { Name = "Should Fail", TimeZoneId = CalendarTestHelpers.DefaultTimeZone, GroupId = groupId }).ToUrl("/calendars/");
             _.StatusCodeShouldBe(403);
         });
+    }
+
+    private async Task<ErrorEnvelope> PostInvalidCalendarAsync(string token, string name, Guid groupId)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new { Name = name, TimeZoneId = CalendarTestHelpers.DefaultTimeZone, GroupId = groupId }).ToUrl("/calendars/");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        return error;
     }
 }

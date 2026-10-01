@@ -1,5 +1,7 @@
 using Alba;
 
+using buddy.Common;
+using buddy.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.TaskLibrary;
@@ -172,5 +174,94 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
         // Same guardian, same calendar, but Sam's template can't be scheduled for Alex -- task
         // templates are owned by one child, not shared across siblings.
         await CalendarTestHelpers.ScheduleTaskFromTemplateAsync(fixture, guardianToken, calendarId, samsTemplate.Id, assignedTo: alex.Id, expectedStatus: 404);
+    }
+
+    [Fact]
+    public async Task A_title_longer_than_200_characters_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidScheduleAsync(token, calendarId, Guid.CreateVersion7(), new string('t', 201), recurrence: null);
+
+        Assert.Contains("Title", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task An_empty_template_id_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidScheduleAsync(token, calendarId, Guid.Empty, "Morning routine", recurrence: null);
+
+        Assert.Contains("TaskTemplateId", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_recurrence_interval_count_below_one_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidScheduleAsync(
+            token, calendarId, Guid.CreateVersion7(), "Morning routine", new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 0, null));
+
+        Assert.Contains("Recurrence.IntervalCount", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_200_character_title_and_a_recurrence_interval_count_of_one_are_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, guardianToken, "Family");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, guardianToken, "Family", groupId);
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/groups/{groupId}/children/{child.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(template);
+        await TaskLibraryTestHelpers.AddSubtaskAsync(fixture, guardianToken, template.Id);
+        var title = new string('t', 200);
+
+        var item = await CalendarTestHelpers.ScheduleTaskFromTemplateAsync(
+            fixture, guardianToken, calendarId, template.Id, title,
+            recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, null), assignedTo: child.Id);
+
+        Assert.NotNull(item);
+        Assert.Equal(title, item.Title);
+        Assert.NotNull(item.Recurrence);
+        Assert.Equal(1, item.Recurrence.IntervalCount);
+    }
+
+    private async Task<ErrorEnvelope> PostInvalidScheduleAsync(
+        string token, Guid calendarId, Guid taskTemplateId, string title, RecurrenceRuleRequest? recurrence)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new
+            {
+                TaskTemplateId = taskTemplateId,
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1),
+                StartTime = new TimeOnly(7, 0),
+                Recurrence = recurrence,
+                AssignedTo = (Guid?)null,
+                Title = title,
+                Icon = "task",
+                Color = "#ff0000"
+            }).ToUrl($"/calendars/{calendarId}/items/from-template");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        return error;
     }
 }

@@ -46,6 +46,7 @@ public sealed class SendAiSessionMessageTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Text", error.Details.Keys);
     }
 
     [Fact]
@@ -61,5 +62,40 @@ public sealed class SendAiSessionMessageTests(BuddyApiFixture fixture)
             _.Post.Json(new { Text = "Plan five dinners for us." }).ToUrl($"/mealplans/children/{child.Id}/ai/sessions/current/messages");
             _.StatusCodeShouldBe(403);
         });
+    }
+
+    [Fact]
+    public async Task A_message_of_exactly_4000_characters_passes_validation()
+    {
+        // With no session started the handler stops at "no current session" (404) right after the
+        // validator, so a 404 here proves the 4000-character text was accepted without ever
+        // reaching a provider.
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Text = new string('m', 4000) }).ToUrl($"/mealplans/children/{child.Id}/ai/sessions/current/messages");
+            _.StatusCodeShouldBe(404);
+        });
+    }
+
+    [Fact]
+    public async Task A_message_longer_than_4000_characters_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Text = new string('m', 4001) }).ToUrl($"/mealplans/children/{child.Id}/ai/sessions/current/messages");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Text", error.Details.Keys);
     }
 }

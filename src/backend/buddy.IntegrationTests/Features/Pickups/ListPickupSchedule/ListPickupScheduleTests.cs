@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Pickups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
@@ -81,13 +82,37 @@ public sealed class ListPickupScheduleTests(BuddyApiFixture fixture)
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var yesterday = today.AddDays(-1);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await GetScheduleAsync(guardianToken, child.Id, today, today.AddDays(-1), 400);
+
+        AssertValidationError(response, "To");
+    }
+
+    [Fact]
+    public async Task A_range_of_31_days_is_accepted_but_32_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await GetScheduleAsync(guardianToken, child.Id, today, today.AddDays(31), 200);
+        var response = await GetScheduleAsync(guardianToken, child.Id, today, today.AddDays(32), 400);
+
+        AssertValidationError(response, "To");
+    }
+
+    private Task<IScenarioResult> GetScheduleAsync(string token, Guid childId, DateOnly from, DateOnly to, int expectedStatus) =>
+        fixture.Host.Scenario(_ =>
         {
-            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Get.Url($"/pickups/children/{child.Id}/schedule?from={today:yyyy-MM-dd}&to={yesterday:yyyy-MM-dd}");
-            _.StatusCodeShouldBe(400);
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/pickups/children/{childId}/schedule?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}");
+            _.StatusCodeShouldBe(expectedStatus);
         });
+
+    private static void AssertValidationError(IScenarioResult response, string field)
+    {
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains(field, error.Details.Keys);
     }
 }

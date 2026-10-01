@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Progress;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
@@ -47,6 +48,26 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
         });
     }
 
+    private async Task<IScenarioResult> PutGoalPostsAsync(Guid childId, string guardianToken, GoalPostBody[] goalPosts, int expectedStatus) =>
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { GoalPosts = goalPosts }).ToUrl($"/progress/children/{childId}/goals");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+    private static GoalPostBody[] AscendingGoalPosts(int count) =>
+        [.. Enumerable.Range(1, count).Select(threshold => new GoalPostBody(threshold, "⭐", null))];
+
+    private static void AssertValidationErrorOn(IScenarioResult response, string field)
+    {
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains(field, error.Details.Keys);
+    }
+
+    private sealed record GoalPostBody(int Threshold, string Icon, string? Label);
+
     [Fact]
     [CoversEndpoint("ConfigureGoalPosts")]
     public async Task Guardian_can_configure_goal_posts_and_they_are_reflected_in_progress_summary()
@@ -88,13 +109,87 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
     {
         var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
             _.Put.Json(new { GoalPosts = Array.Empty<object>() })
                 .ToUrl($"/progress/children/{childId}/goals");
             _.StatusCodeShouldBe(400);
         });
+
+        AssertValidationErrorOn(response, "GoalPosts");
+    }
+
+    [Fact]
+    public async Task Twenty_goal_posts_are_accepted()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, AscendingGoalPosts(20), expectedStatus: 200);
+
+        Assert.Equal(20, response.ReadAsJson<ProgressSummary>().GoalPosts.Count);
+    }
+
+    [Fact]
+    public async Task Twenty_one_goal_posts_are_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, AscendingGoalPosts(21), expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "GoalPosts");
+    }
+
+    [Fact]
+    public async Task Goal_posts_with_equal_thresholds_are_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(
+            childId, guardianToken, [new GoalPostBody(2, "🥉", null), new GoalPostBody(2, "🥈", null)], expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "GoalPosts");
+    }
+
+    [Fact]
+    public async Task Goal_posts_with_descending_thresholds_are_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(
+            childId, guardianToken, [new GoalPostBody(2, "🥉", null), new GoalPostBody(1, "🥈", null)], expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "GoalPosts");
+    }
+
+    [Fact]
+    public async Task A_goal_post_threshold_of_one_is_accepted()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "🥉", null)], expectedStatus: 200);
+
+        Assert.Equal(1, Assert.Single(response.ReadAsJson<ProgressSummary>().GoalPosts).Threshold);
+    }
+
+    [Fact]
+    public async Task A_goal_post_threshold_of_zero_is_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(0, "🥉", null)], expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "GoalPosts[0].Threshold");
+    }
+
+    [Fact]
+    public async Task A_goal_post_with_an_empty_icon_is_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "", null)], expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "GoalPosts[0].Icon");
     }
 
     [Fact]

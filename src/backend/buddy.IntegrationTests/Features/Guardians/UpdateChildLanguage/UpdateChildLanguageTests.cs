@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -43,12 +44,16 @@ public sealed class UpdateChildLanguageTests(BuddyApiFixture fixture)
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
             _.Patch.Json(new { Language = "fr" }).ToUrl($"/users/me/children/{child.Id}/language");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Language", error.Details.Keys);
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.IntegrationTests.Features.Calendars;
@@ -103,19 +104,141 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
         var day = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
 
-        await fixture.Host.Scenario(_ =>
+        var error = await PostInvalidItemAsync(token, calendarId, new
         {
-            _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Post.Json(new
-            {
-                Kind = CalendarItemKind.Event,
-                Title = "Incomplete",
-                Icon = "calendar",
-                Color = "#00ff00",
-                StartsAt = new { Date = day, Time = new TimeOnly(9, 0) }
-            }).ToUrl($"/calendars/{calendarId}/items");
-            _.StatusCodeShouldBe(400);
+            Kind = CalendarItemKind.Event,
+            Title = "Incomplete",
+            Icon = "calendar",
+            Color = "#00ff00",
+            StartsAt = new { Date = day, Time = new TimeOnly(9, 0) }
         });
+
+        Assert.Contains("EndsAt", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task An_event_missing_a_start_time_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var day = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var error = await PostInvalidItemAsync(token, calendarId, new
+        {
+            Kind = CalendarItemKind.Event,
+            Title = "Incomplete",
+            Icon = "calendar",
+            Color = "#00ff00",
+            EndsAt = new { Date = day, Time = new TimeOnly(9, 30) }
+        });
+
+        Assert.Contains("StartsAt", error.Details.Keys);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-30)]
+    public async Task An_event_that_does_not_end_after_it_starts_is_rejected(int endOffsetMinutes)
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var day = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var start = new TimeOnly(9, 0);
+
+        var error = await PostInvalidItemAsync(token, calendarId, new
+        {
+            Kind = CalendarItemKind.Event,
+            Title = "Backwards",
+            Icon = "calendar",
+            Color = "#00ff00",
+            StartsAt = new { Date = day, Time = start },
+            EndsAt = new { Date = day, Time = start.AddMinutes(endOffsetMinutes) }
+        });
+
+        // The end-after-start rule validates the whole command (RuleFor(x => x)), so FluentValidation
+        // reports it under the empty property name.
+        Assert.Contains("", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_task_missing_a_due_date_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidItemAsync(token, calendarId, new
+        {
+            Kind = CalendarItemKind.Task,
+            Title = "No due date",
+            Icon = "task",
+            Color = "#ff0000"
+        });
+
+        Assert.Contains("DueDate", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task An_item_title_longer_than_200_characters_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidItemAsync(token, calendarId, new
+        {
+            Kind = CalendarItemKind.Task,
+            Title = new string('t', 201),
+            Icon = "task",
+            Color = "#ff0000",
+            DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) }
+        });
+
+        Assert.Contains("Title", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task An_item_title_of_exactly_200_characters_is_accepted()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var title = new string('t', 200);
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, title);
+
+        Assert.NotNull(item);
+        Assert.Equal(title, item.Title);
+    }
+
+    [Fact]
+    public async Task A_recurrence_interval_count_below_one_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidItemAsync(token, calendarId, new
+        {
+            Kind = CalendarItemKind.Task,
+            Title = "Water plants",
+            Icon = "task",
+            Color = "#ff0000",
+            DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) },
+            Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 0, Until = (DateOnly?)null }
+        });
+
+        Assert.Contains("Recurrence.IntervalCount", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_recurrence_interval_count_of_one_is_accepted()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, "Water plants", recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, null));
+
+        Assert.NotNull(item);
+        Assert.NotNull(item.Recurrence);
+        Assert.Equal(1, item.Recurrence.IntervalCount);
     }
 
     [Fact]
@@ -176,20 +299,33 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Shared");
 
-        await fixture.Host.Scenario(_ =>
+        var error = await PostInvalidItemAsync(ownerToken, calendarId, new
         {
-            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
-            _.Post.Json(new
-            {
-                Kind = CalendarItemKind.Event,
-                Title = "Standup",
-                Icon = "calendar",
-                Color = "#00ff00",
-                StartsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 0) },
-                EndsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 30) },
-                AssignedTo = Guid.NewGuid()
-            }).ToUrl($"/calendars/{calendarId}/items");
+            Kind = CalendarItemKind.Event,
+            Title = "Standup",
+            Icon = "calendar",
+            Color = "#00ff00",
+            StartsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 0) },
+            EndsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 30) },
+            AssignedTo = Guid.NewGuid()
+        });
+
+        // Asserting the field key matters: without the validator rule, the handler's own
+        // assignee-access check would still reject this random id with a 400 under "".
+        Assert.Contains("AssignedTo", error.Details.Keys);
+    }
+
+    private async Task<ErrorEnvelope> PostInvalidItemAsync(string token, Guid calendarId, object body)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(body).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        return error;
     }
 }
