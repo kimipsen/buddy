@@ -6,5 +6,6 @@
     "Anthropic.claude-code",
     "GitHub.copilot-chat",
     "ms-playwright.playwright",
+    "kimdim.kimdim-angular-test-explorer",
   ]
 }
