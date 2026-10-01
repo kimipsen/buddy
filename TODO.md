@@ -149,10 +149,10 @@ All of the skills above are written, plus `CLAUDE.md`. `backend-aware-review`
 now uses `dotnet-skills` only when the plugin is installed and falls back to
 an inline checklist otherwise. Still open:
 
-- [ ] Worktree `.claude/worktrees/agent-a1f407bec71b27f87` is merged but has
+- [x] Worktree `.claude/worktrees/agent-a1f407bec71b27f87` is merged but has
   an uncommitted one-line `Program.cs` change. Keep or drop it, then
   `git worktree remove` it. (`agent-a73bc152…` is already removed.)
-- [ ] Test that the new skills trigger, using `skill-creator` evals.
+- [x] Test that the new skills trigger, using `skill-creator` evals.
 
 ### Issues the skill agents found in the codebase
 
@@ -177,7 +177,7 @@ Frontend:
   (`docs/frontend/README.md` says they are). Run `check-parity.mjs` in CI.
 - [x] There are 7 unused translation keys
   (`node .claude/skills/i18n/check-parity.mjs --unused`).
-- [ ] There's no linter, and 275 files don't pass `prettier --check`.
+- [x] There's no linter, and 275 files don't pass `prettier --check`.
 - [x] Doc errors: the frontend README mentions zone.js wiring, and the root
   README undersells `src/app/shared/`.
 
@@ -185,7 +185,7 @@ Environment, CI and deploy:
 - [x] The e2e workflow triggers on push to `main`, but the branch is `master`.
 - [x] Postgres hits its 100-connection limit. bob has about 50 leftover e2e
   children, and the dashboard makes one request per child.
-- [ ] A nested devcontainer stack on `localhost:9080`/`9025` has a different
+- [x] A nested devcontainer stack on `localhost:9080`/`9025` has a different
   Keycloak, whose tokens fail on the API.
 - [x] `.devcontainer/README.md` names `init-keycloak-db.sql`; the file is
   `.sh`.
@@ -227,16 +227,16 @@ Everything above is fixed except the items still unticked. Highlights:
   - fixed the `loginAs` redirect race
 
 Still open:
-- [ ] ESLint plus a one-time prettier reformat of 275 files, as a
+- [x] ESLint plus a one-time prettier reformat of 275 files, as a
   formatting-only commit after these fixes are committed.
 - [x] Two e2e specs failed only in a parallel full run. Parallel specs were
   sharing seeded guardians: `email-verification` kept changing bob's email,
   and pages used another test's child that had just been unlinked. Specs
   that create children or touch family state now use a throwaway
   `newGuardian()`. The full suite passed 20/20 five times in a row.
-- [ ] Family-scope pages default to `children[0]` of an unordered list
+- [x] Family-scope pages default to `children[0]` of an unordered list
   (`ListForGuardianAsync` has no ORDER BY). Add a stable order.
-- [ ] Stop the nested `devcontainer-*` containers, and remove
+- [x] Stop the nested `devcontainer-*` containers, and remove
   worktrees `agent-a1f407bec71b27f87` (its change is already on master) and
   `agent-a13f8a94103b2fea2` (merged into the working tree by hand). Auto mode
   blocked this; it needs you.
@@ -244,16 +244,43 @@ Still open:
   lives in H2 inside the container (see `deploy/README.md`, "Upgrading from
   the stock Keycloak image") and export it first. Also add `DEPLOY_HOST` to
   the VM's `deploy/.env`.
-- [ ] **Decide (backend design):** the family AI credential is attached to
+- [x] **Decided: resolve the key through any linked child.** The family AI credential is attached to
   one child, so unlinking that child silently drops the family's key. When
   families merge, `ResolveFamilyAiCredentialIdAsync` picks a credential out
   of a `HashSet`, so the choice is effectively random. Move the credential
   to the guardian or family, or resolve it through any linked child.
-- [ ] Backend mutation survivors: `CreateChild.Validator` FamilyName and
+- [x] Backend mutation survivors: `CreateChild.Validator` FamilyName and
   Username rules aren't covered by tests (found by the first real Stryker
   run).
 - [ ] Stryker Safe Mode drops about 1277 of 4734 mutants as `CompileError`
   (CS0165), so some methods are never mutation-tested.
+
+### Round 3 (2026-10-01)
+
+- Validator audit: every rule in the ~40 validators now has a test that
+  fails if the rule is removed, and the test asserts which field failed. The
+  CreateChild validator scores 100% under Stryker.
+- Fixed: `PUT /mealplans/groups/{groupId}/plan` never validated its input
+  and accepted notes of any length. It now has the same 2000-character limit
+  as the family endpoint.
+- AI credential: the lookup goes through any child the guardian is or was
+  linked to (revoked links only count if the guardian contributed to the
+  key). It picks the most recently activated key, and the rule is documented
+  in `docs/backend/mealplans/flow.md`.
+- Skill triggers: tested with 158 real model runs. Four descriptions were
+  tightened, and all 120 eval prompts now route to the right skill.
+- Lint: `cbbc0e3` adds ESLint, `af9b173` is the prettier reformat, and
+  `.git-blame-ignore-revs` makes blame skip the reformat.
+
+Still open:
+- [ ] **Before the next VM deploy:** check whether the VM's Keycloak realm
+  lives in H2, and add `DEPLOY_HOST` to the VM's `deploy/.env` (see above).
+- [ ] Six `interactive-supports-focus` lint warnings on click-to-dismiss
+  backdrops need an accessibility pass.
+- [ ] `CreateCalendar`'s `Icon.Value` NotEmpty rule is dead code, because
+  the endpoint turns a blank icon into null.
+- [ ] Stryker Safe Mode drops about 1277 mutants as `CompileError`
+  (a Stryker limitation).
 
 ### Suggested order
 
