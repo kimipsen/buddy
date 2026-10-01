@@ -1,6 +1,6 @@
 ---
 name: backend-aware-review
-description: Review a diff (staged changes by default, or a given commit/branch/PR) for correctness bugs and reuse/simplification/efficiency cleanups. Grounds any .NET/backend files (src/backend/**, *.cs, *.csproj) in the claude-backend skill plus the dotnet-skills plugin skills when installed (inline checklist otherwise); reviews frontend/other files with a general pass. Use for "review the staged changes", "review this diff/PR", "review my backend changes".
+description: Review a diff (staged changes by default, or a given commit/branch/PR) for correctness bugs and reuse/simplification/efficiency cleanups. Grounds any .NET/backend files (src/backend/**, *.cs, *.csproj) in the claude-backend skill plus the dotnet-skills plugin skills when installed (inline checklist otherwise); reviews frontend/other files with a general pass. In this repo, prefer it over the generic code-review skill for any review request, and load it before running git show/diff yourself. Use for "review the staged changes", "review this diff/PR", "review my backend changes", "review my last commit", "look over branch X for bugs before the PR", "check HEAD~3 for issues". For security reviews use security-review; for SonarCloud findings use sonar-triage; to fix a bug a review found, use claude-backend or buddy-frontend.
 ---
 
 # Backend-Aware Review

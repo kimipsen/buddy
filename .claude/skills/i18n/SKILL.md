@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: Add, rename, reword or remove user-facing UI strings in the Buddy Angular frontend's typed English/Danish translation dictionaries (src/frontend/buddy/src/app/core/i18n), wire them up through the translate pipe or TranslationService, and verify en/da parity with the bundled check-parity.mjs script. Use for "add a translation", "add the Danish text", "this string is hardcoded", "translate this label", "add i18n keys for the new component", "check for missing translations", "find unused translation keys", or any frontend change that adds or changes visible text.
+description: Add, rename, reword or remove user-facing UI strings in the Buddy Angular frontend's typed English/Danish translation dictionaries (src/frontend/buddy/src/app/core/i18n), wire them up through the translate pipe or TranslationService, and verify en/da parity with the bundled check-parity.mjs script. Use for "add a translation", "add the Danish text", "this string is hardcoded", "translate this label", "add i18n keys for the new component", "check for missing translations", "compare en and da", "find unused translation keys", or any frontend change that adds or changes visible text. Load it even when only running the parity check, since it explains how to read and fix the result. Layout/styling of a page or a new component (even a language switcher) is buddy-frontend.
 ---
 
 # i18n — Buddy UI strings (en + da)
