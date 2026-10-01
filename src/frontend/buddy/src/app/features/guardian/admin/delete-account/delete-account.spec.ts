@@ -41,8 +41,24 @@ describe('DeleteAccount', () => {
     fixture.detectChanges();
   }
 
+  // The dim layer behind the panel: pointer-only, so it is hidden from assistive tech.
   function backdrop(compiled: HTMLElement): HTMLElement | null {
-    return compiled.querySelector('.fixed.inset-0');
+    return compiled.querySelector('.fixed.inset-0 > [aria-hidden="true"]');
+  }
+
+  function dialog(compiled: HTMLElement): HTMLElement | null {
+    return compiled.querySelector('[role="dialog"]');
+  }
+
+  function openDialog(fixture: { detectChanges: () => void; nativeElement: HTMLElement }) {
+    findButtonByText(fixture.nativeElement, 'Delete my account')!.click();
+    fixture.detectChanges();
+  }
+
+  function pressTab(shiftKey = false): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey, cancelable: true });
+    document.dispatchEvent(event);
+    return event;
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
@@ -100,8 +116,12 @@ describe('DeleteAccount', () => {
     findButtonByText(compiled, 'Delete my account')!.click();
     fixture.detectChanges();
 
-    const dialogPanel = compiled.querySelector<HTMLElement>('.fixed.inset-0 > div')!;
-    dialogPanel.click();
+    // Neither the panel itself nor its text closes it: only the backdrop does.
+    dialog(compiled)!.click();
+    fixture.detectChanges();
+    expect(backdrop(compiled)).toBeTruthy();
+
+    compiled.querySelector<HTMLElement>('#delete-account-confirm-description')!.click();
     fixture.detectChanges();
     expect(backdrop(compiled)).toBeTruthy();
 
@@ -240,5 +260,94 @@ describe('DeleteAccount', () => {
     fixture.detectChanges();
 
     expect(compiled.textContent).not.toContain('Unable to delete your account.');
+  });
+  it('renders the confirm panel as a labelled modal dialog with an inert backdrop', () => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    openDialog(fixture);
+
+    const panel = dialog(compiled)!;
+    expect(panel.getAttribute('aria-modal')).toBe('true');
+    expect(
+      document.getElementById(panel.getAttribute('aria-labelledby')!)?.textContent?.trim(),
+    ).toBe('Delete your account?');
+    expect(
+      document.getElementById(panel.getAttribute('aria-describedby')!)?.textContent?.trim(),
+    ).toBe(
+      'This permanently deletes your account and cannot be undone. You’ll be signed out immediately.',
+    );
+    expect(backdrop(compiled)!.contains(panel)).toBe(false);
+  });
+
+  it('moves focus to Cancel when the dialog opens', () => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    openDialog(fixture);
+
+    expect(document.activeElement).toBe(findButtonByText(compiled, 'Cancel'));
+  });
+
+  it.each([
+    ['Escape', () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))],
+    ['a backdrop click', (compiled: HTMLElement) => backdrop(compiled)!.click()],
+    ['Cancel', (compiled: HTMLElement) => findButtonByText(compiled, 'Cancel')!.click()],
+  ])('returns focus to the delete button after closing via %s', (_, close) => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    openDialog(fixture);
+    close(compiled);
+    fixture.detectChanges();
+
+    expect(dialog(compiled)).toBeFalsy();
+    expect(document.activeElement).toBe(findButtonByText(compiled, 'Delete my account'));
+  });
+
+  it('wraps Tab from the last button to the first, and Shift+Tab from the first to the last', () => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+    openDialog(fixture);
+    const cancel = findButtonByText(compiled, 'Cancel')!;
+    const confirm = findButtonByText(compiled, 'Yes, delete my account')!;
+
+    confirm.focus();
+    expect(pressTab().defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(cancel);
+
+    expect(pressTab(true).defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(confirm);
+  });
+
+  it('leaves Tab alone between the dialog buttons and pulls stray focus back into the dialog', () => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+    openDialog(fixture);
+
+    // Cancel -> Confirm is ordinary tab order inside the dialog, so the browser handles it.
+    expect(pressTab().defaultPrevented).toBe(false);
+
+    findButtonByText(compiled, 'Delete my account')!.focus();
+    expect(pressTab().defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(findButtonByText(compiled, 'Cancel'));
+  });
+
+  it('keeps focus on the dialog panel when Tab is pressed while both buttons are disabled', () => {
+    const deleteCurrentUser = vi.fn(() => new Promise<void>(() => undefined));
+    const { fixture } = setup({ users: { deleteCurrentUser } });
+    const compiled = fixture.nativeElement as HTMLElement;
+    openDialog(fixture);
+    findButtonByText(compiled, 'Yes, delete my account')!.click();
+    fixture.detectChanges();
+
+    expect(pressTab().defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(dialog(compiled));
+  });
+
+  it('ignores Tab while the dialog is closed', () => {
+    setup();
+
+    expect(pressTab().defaultPrevented).toBe(false);
   });
 });

@@ -4,6 +4,7 @@
     class="grid size-12 place-items-center rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 focus:outline-none focus:ring-4 focus:ring-emerald-300"
     aria-haspopup="true"
     [attr.aria-expanded]="open()"
+    #trigger
     (click)="toggle()"
   >
     <svg
@@ -24,9 +25,11 @@
   </button>
 
   @if (open()) {
-    <div class="fixed inset-0 z-10" (click)="close()" (keydown.escape)="close()"></div>
+    <!-- Pointer-only dismiss target; keyboard users close with Escape (see onEscape). -->
+    <div class="fixed inset-0 z-10" aria-hidden="true" (click)="dismiss()"></div>
 
     <div
+      #panel
       class="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-lg"
     >
       <p

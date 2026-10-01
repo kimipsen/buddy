@@ -1,5 +1,6 @@
 <div class="relative">
   <input
+    #queryInput
     type="text"
     class="w-full min-w-[9rem] rounded-lg border border-slate-300 dark:border-slate-600 py-1.5 pl-2 pr-6 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-100"
     [placeholder]="'taskLibrary.picker.noTemplate' | translate"
@@ -9,18 +10,15 @@
     [disabled]="disabled()"
     (focus)="openDropdown()"
     (input)="onQueryInput($event)"
-    (keydown.escape)="closeDropdown()"
     (keydown.enter)="selectFirstMatch()"
   />
 
   @if (open()) {
-    <div
-      class="fixed inset-0 z-10"
-      (click)="closeDropdown()"
-      (keydown.escape)="closeDropdown()"
-    ></div>
+    <!-- Pointer-only dismiss target; keyboard users close with Escape (see onEscape). -->
+    <div class="fixed inset-0 z-10" aria-hidden="true" (click)="closeDropdown()"></div>
 
     <ul
+      #list
       class="z-20 max-h-56 min-w-[16rem] overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-1 shadow-lg"
       [style]="dropdownStyle()"
     >

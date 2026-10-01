@@ -63,7 +63,8 @@ describe('MealPicker', () => {
   }
 
   function pressKey(fixture: ComponentFixture<MealPicker>, key: string): void {
-    fireEvent(fixture, new KeyboardEvent('keydown', { key }));
+    // Bubbles like a real key press: Escape is handled on the component host.
+    fireEvent(fixture, new KeyboardEvent('keydown', { key, bubbles: true }));
   }
 
   function clickOption(fixture: ComponentFixture<MealPicker>, name: string): void {
@@ -286,7 +287,50 @@ describe('MealPicker', () => {
     });
   });
 
+  describe('Escape from inside the list', () => {
+    it('closes the dropdown and hands focus back to the input without reopening it', async () => {
+      const { fixture, compiled, onMealIdChange } = await setup({ mealId: '' });
+
+      openDropdown(fixture);
+      const option = findMealOption(compiled, 'Tacos');
+      option.focus();
+      option.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(compiled.querySelector('ul')).toBeFalsy();
+      expect(document.activeElement).toBe(textInput(compiled));
+      expect(onMealIdChange).not.toHaveBeenCalled();
+    });
+
+    it('leaves focus alone on Escape while the dropdown is closed', async () => {
+      const { fixture, compiled } = await setup({ mealId: '' });
+
+      pressKey(fixture, 'Escape');
+
+      expect(compiled.querySelector('ul')).toBeFalsy();
+      expect(document.activeElement).not.toBe(textInput(compiled));
+    });
+  });
+
   describe('clicking outside', () => {
+    it('hides the pointer-only backdrop from assistive tech', async () => {
+      const { fixture, compiled } = await setup({ mealId: '' });
+
+      openDropdown(fixture);
+
+      expect(compiled.querySelector('.fixed.inset-0')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('stays open when clicking inside the list but not on an option', async () => {
+      const { fixture, compiled } = await setup({ mealId: '' });
+
+      openDropdown(fixture);
+      compiled.querySelector<HTMLElement>('ul')!.click();
+      fixture.detectChanges();
+
+      expect(compiled.querySelector('ul')).toBeTruthy();
+    });
+
     it('closes the dropdown when clicking the backdrop overlay', async () => {
       const { fixture, compiled } = await setup({ mealId: '' });
 

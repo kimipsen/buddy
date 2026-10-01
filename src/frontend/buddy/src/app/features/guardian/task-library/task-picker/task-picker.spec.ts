@@ -87,7 +87,8 @@ describe('TaskPicker', () => {
   }
 
   function pressKey(fixture: ComponentFixture<TaskPicker>, key: string): void {
-    fireEvent(fixture, new KeyboardEvent('keydown', { key }));
+    // Bubbles like a real key press: Escape is handled on the component host.
+    fireEvent(fixture, new KeyboardEvent('keydown', { key, bubbles: true }));
   }
 
   function optionButtons(compiled: HTMLElement): HTMLButtonElement[] {
@@ -264,7 +265,50 @@ describe('TaskPicker', () => {
     });
   });
 
+  describe('Escape from inside the list', () => {
+    it('closes the dropdown and hands focus back to the input without reopening it', async () => {
+      const { fixture, compiled, onTemplateIdChange } = await setup({ templateId: '' });
+
+      openDropdown(fixture);
+      const option = findTemplateOption(compiled, 'Bedtime routine');
+      option.focus();
+      option.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(compiled.querySelector('ul')).toBeFalsy();
+      expect(document.activeElement).toBe(textInput(compiled));
+      expect(onTemplateIdChange).not.toHaveBeenCalled();
+    });
+
+    it('leaves focus alone on Escape while the dropdown is closed', async () => {
+      const { fixture, compiled } = await setup({ templateId: '' });
+
+      pressKey(fixture, 'Escape');
+
+      expect(compiled.querySelector('ul')).toBeFalsy();
+      expect(document.activeElement).not.toBe(textInput(compiled));
+    });
+  });
+
   describe('clicking outside', () => {
+    it('hides the pointer-only backdrop from assistive tech', async () => {
+      const { fixture, compiled } = await setup({ templateId: '' });
+
+      openDropdown(fixture);
+
+      expect(compiled.querySelector('.fixed.inset-0')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('stays open when clicking inside the list but not on an option', async () => {
+      const { fixture, compiled } = await setup({ templateId: '' });
+
+      openDropdown(fixture);
+      compiled.querySelector<HTMLElement>('ul')!.click();
+      fixture.detectChanges();
+
+      expect(compiled.querySelector('ul')).toBeTruthy();
+    });
+
     it('closes the dropdown when clicking the backdrop overlay', async () => {
       const { fixture, compiled } = await setup({ templateId: '' });
 

@@ -66,14 +66,6 @@ module.exports = defineConfig([
   {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
-    rules: {
-      // Warn, not error: the existing hits are full-screen click-to-dismiss backdrops
-      // (menus, pickers, confirm dialog) that also close on Escape, plus the dialog
-      // panel's `(click)="$event.stopPropagation()"`. Making them
-      // focusable or swapping them for buttons changes focus order and keyboard
-      // behaviour, which needs a deliberate a11y pass rather than a lint fix.
-      '@angular-eslint/template/interactive-supports-focus': 'warn',
-    },
   },
   // Last, so it turns off any stylistic rules that would conflict with prettier.
   prettier,

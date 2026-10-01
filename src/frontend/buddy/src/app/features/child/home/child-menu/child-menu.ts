@@ -1,4 +1,13 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  Injector,
+  afterNextRender,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { AuthService } from '../../../../core/auth.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -16,20 +25,40 @@ export class ChildMenu {
 
   protected readonly themeModes = THEME_MODES;
 
+  private readonly injector = inject(Injector);
+  private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');
+  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
+
   protected readonly open = signal(false);
 
   protected toggle(): void {
     this.open.update((value) => !value);
+
+    if (this.open()) {
+      afterNextRender(() => this.focusFirstItem(), { injector: this.injector });
+    }
+  }
+
+  // Runs once the panel has rendered, so keyboard users land inside the menu they just opened.
+  private focusFirstItem(): void {
+    this.panel()?.nativeElement.querySelector<HTMLElement>('a, button')?.focus();
   }
 
   protected close(): void {
     this.open.set(false);
   }
 
+  // Backdrop click / Escape: close and hand focus back to the toggle, since the focused control
+  // inside the panel is about to be removed from the DOM.
+  protected dismiss(): void {
+    this.close();
+    this.trigger().nativeElement.focus();
+  }
+
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
     if (this.open()) {
-      this.close();
+      this.dismiss();
     }
   }
 

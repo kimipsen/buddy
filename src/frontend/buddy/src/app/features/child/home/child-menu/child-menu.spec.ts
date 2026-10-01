@@ -145,4 +145,59 @@ describe('ChildMenu', () => {
     expect(setMode).toHaveBeenCalledWith('dark');
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
   });
+  it('hides the pointer-only backdrop from assistive tech', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+
+    expect(compiled.querySelector('.fixed.inset-0')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('moves focus to the first theme button when the menu opens', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+
+    expect(document.activeElement).toBe(themeButton(compiled, 'Light'));
+  });
+
+  it('does not close when clicking inside the menu panel', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+    const panel = themeButton(compiled, 'Light')!.parentElement!.parentElement!;
+    fireClick(fixture, panel);
+
+    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it.each([
+    ['Escape', () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))],
+    [
+      'a backdrop click',
+      (compiled: HTMLElement) =>
+        compiled
+          .querySelector('.fixed.inset-0')!
+          .dispatchEvent(new Event('click', { bubbles: true })),
+    ],
+  ])('returns focus to the toggle after closing via %s', async (_, close) => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+    close(compiled);
+    fixture.detectChanges();
+
+    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(toggleButton(compiled));
+  });
+
+  it('ignores Escape while the menu is closed, leaving focus where it is', async () => {
+    const { fixture, compiled } = await setup();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).not.toBe(toggleButton(compiled));
+  });
 });

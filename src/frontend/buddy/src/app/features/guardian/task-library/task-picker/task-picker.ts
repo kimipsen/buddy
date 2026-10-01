@@ -1,4 +1,14 @@
-import { Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TaskTemplate } from '../../../../core/task-library.service';
@@ -35,6 +45,9 @@ export class TaskPicker {
   readonly templateIdChange = output<string>();
 
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+
+  private readonly queryInput = viewChild.required<ElementRef<HTMLInputElement>>('queryInput');
+  private readonly list = viewChild<ElementRef<HTMLElement>>('list');
 
   protected readonly open = signal(false);
   protected readonly query = signal('');
@@ -83,6 +96,22 @@ export class TaskPicker {
   protected closeDropdown(): void {
     this.open.set(false);
     this.query.set('');
+  }
+
+  // Escape from the input or from an option inside the list. If focus is on an option it is about
+  // to be removed, so hand it back to the input first; that refocus re-runs openDropdown(), which
+  // is harmless because the dropdown is closed straight after.
+  @HostListener('keydown.escape')
+  protected onEscape(): void {
+    if (!this.open()) {
+      return;
+    }
+
+    if (this.list()?.nativeElement.contains(document.activeElement)) {
+      this.queryInput().nativeElement.focus();
+    }
+
+    this.closeDropdown();
   }
 
   protected onQueryInput(event: Event): void {

@@ -9,6 +9,7 @@
   </p>
 
   <button
+    #trigger
     type="button"
     class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
     (click)="openConfirm()"
@@ -18,20 +19,30 @@
 </section>
 
 @if (confirmOpen()) {
-  <div
-    class="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/50 px-4"
-    (click)="closeConfirm()"
-    (keydown.escape)="closeConfirm()"
-  >
+  <div class="fixed inset-0 z-30 flex items-center justify-center px-4">
+    <!-- Pointer-only dismiss target behind the panel, so clicks inside the panel never reach it;
+         keyboard users close with Escape (see onEscape). -->
+    <div class="absolute inset-0 bg-slate-950/50" aria-hidden="true" (click)="closeConfirm()"></div>
+
     <div
-      class="w-full max-w-md rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg"
-      (click)="$event.stopPropagation()"
-      (keydown.escape)="closeConfirm()"
+      #panel
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-account-confirm-title"
+      aria-describedby="delete-account-confirm-description"
+      tabindex="-1"
+      class="relative w-full max-w-md rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg focus:outline-none"
     >
-      <h4 class="text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-50">
+      <h4
+        id="delete-account-confirm-title"
+        class="text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-50"
+      >
         {{ 'admin.deleteAccount.confirmTitle' | translate }}
       </h4>
-      <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+      <p
+        id="delete-account-confirm-description"
+        class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300"
+      >
         {{ 'admin.deleteAccount.confirmDescription' | translate }}
       </p>
 
@@ -41,6 +52,7 @@
 
       <div class="mt-6 flex justify-end gap-3">
         <button
+          #cancelButton
           type="button"
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
           [disabled]="deleting()"
