@@ -1,0 +1,51 @@
+// -> src/backend/buddy/Features/{{Domain}}/{{UseCase}}/{{UseCase}}.Endpoint.cs
+// Derived from Medicines/UpdateMedicineDetails.Endpoint.cs. Then add
+// `{{routeGroup}}.Map{{UseCase}}();` to Map{{Domain}}Feature in {{Domain}}Feature.cs.
+using System.Security.Claims;
+
+using buddy.Common;
+using buddy.Features.Users;
+
+using Microsoft.AspNetCore.Http.HttpResults;
+
+using Wolverine;
+
+namespace buddy.Features.{{Domain}};
+
+public static class {{UseCase}}Endpoint
+{
+    public static RouteGroupBuilder Map{{UseCase}}(this RouteGroupBuilder {{routeGroup}})
+    {
+        // Route is relative to the feature's MapGroup prefix. Declare in Results<...> exactly the
+        // statuses this route can return -- the generated OpenAPI is built from it.
+        {{routeGroup}}.MapPatch("{{route}}", async Task<Results<Ok<{{Response}}>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
+            ClaimsPrincipal principal,
+            Guid childId,
+            Guid id,
+            {{UseCase}}Request request,
+            IMessageBus bus,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            var command = {{UseCase}}.FromClaims(principal, new UserId(childId), new {{AggregateId}}(id), request.Name);
+            var result = await bus.InvokeAsync<Result<{{Aggregate}}>>(command, cancellationToken);
+
+            // Exhaustive over the union -- no `_ =>` arm. A case this route never produces
+            // collapses to NotFound with a comment (see ListMedicineSchedules.Endpoint.cs)
+            // instead of widening Results<...>.
+            return result switch
+            {
+                Result<{{Aggregate}}>.Success(var value) => TypedResults.Ok({{Response}}.{{ResponseFactory}}(value)),
+                Result<{{Aggregate}}>.Forbidden => TypedResults.Forbid(),
+                Result<{{Aggregate}}>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
+                Result<{{Aggregate}}>.NotFound => TypedResults.NotFound(),
+            };
+        })
+        .WithName("{{UseCase}}"); // Unique; [CoversEndpoint("{{UseCase}}")] in the tests must match.
+
+        return {{routeGroup}};
+    }
+}
+
+// Wire DTO: primitives only (string/Guid), converted to value types in the endpoint.
+public sealed record {{UseCase}}Request(string Name);

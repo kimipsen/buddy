@@ -1,52 +1,189 @@
 ---
 name: claude-backend
-description: .NET backend development with screaming architecture (domain-first), event sourcing, EF Core and PostgreSQL. Use when creating or changing domain models, value/ID types, aggregates, domain events, event stores, DbContexts, projections, or EF Core migrations in a .NET service.
+description: Buddy .NET 11 backend conventions - vertical-slice features, event sourcing on Marten (per-feature event schemas plus inline snapshot projections in a shared `snapshots` schema), WolverineFx handlers, FluentValidation, minimal-API endpoints, the Result<T> union, and Alba + Testcontainers integration tests. Use when creating or changing a feature/use case, command, handler, endpoint, validator, domain event, aggregate, ID type, event store, snapshot projection or backend integration test under src/backend.
 ---
 
-# Claude Backend Skill — .NET Backend (Screaming Architecture)
+# Buddy Backend (.NET 11, Marten, Wolverine)
 
-Purpose: Assist backend development for .NET services with a focus on "screaming architecture" (domain-first), event sourcing, EF Core and PostgreSQL.
+Scope: `src/backend/` - `buddy/` (the API), `buddy.IntegrationTests/` (all backend tests), `backend.slnx`. There is no EF Core and no `DbContext` in Buddy; persistence is Marten on Postgres. EF Core guidance for *other* services lives in `references/efcore.md` - don't apply it here.
 
-Project layout requirement: place backend source code and related artifacts under `src/backend/` in the repository (for example `src/backend/Domain`, `src/backend/Infrastructure`, `src/backend/Web`).
+Read before designing anything non-trivial:
+- `docs/backend/analysis/event-stream-snapshots.md` - snapshot projections and the Marten gotchas behind the patterns below.
+- `docs/backend/http-status-codes.md` - status codes per operation, error envelope, `Idempotency-Key`.
+- `docs/backend/glossary.md` - domain vocabulary; use these names.
+- `docs/testing.md` - how to run tests, Docker requirement, mutation testing.
+- The feature's own analysis doc under `docs/backend/analysis/` and `docs/backend/<domain>/` if one exists.
 
-Behavioral rules:
-- Start in "Planning Mode": always provide a short plan (assumptions, steps, required files, and trade-offs) before producing code.
-- Prefer domain-specific types over primitives: create small, explicit value types for identifiers and other domain concepts (example: `public readonly record struct OrderId(Guid Value);`). When generating identifiers (GUIDs) in .NET, prefer UUIDv7 (time-ordered) for better indexing and ordering semantics — use `Guid.CreateVersion7()` rather than `Guid.NewGuid()`.
-- Prefer native C# discriminated unions for domain events over marker interfaces or an abstract base record: declare a `union` whose cases are nested `sealed record` types (e.g., `public union OrderEvent(OrderEvent.OrderCreated, OrderEvent.ItemAdded, OrderEvent.OrderCompleted)`). Unlike an abstract base — which any assembly can derive from — a union is genuinely closed, and `switch` expressions over it are checked for exhaustiveness, so a new case is reported at every site that has not handled it. Requires .NET 11 with `<LangVersion>preview</LangVersion>`; also set `<WarningsAsErrors>$(WarningsAsErrors);CS8509</WarningsAsErrors>` so a non-exhaustive switch fails the build instead of merely warning. Note that only switch *expressions* are checked — a switch *statement* is not.
-- **SonarCloud/SonarQube false positives from `union`**: as of this preview SDK, SonarCloud's C# analyzer does not understand the `union` declaration syntax and misparses it. On every file that declares a `union`, expect false-positive `csharpsquid:S3903` ("types should be defined in named namespaces" — the parser loses namespace scope after the unrecognized syntax, even though the types are correctly namespaced), `csharpsquid:S1186` ("empty methods" — it reads `public union Foo(A, B, C)` as an empty method declaration), and `csharpsquid:S3060` ("offload this type test to a subclass" — flagging the union's `this switch { A => ..., B => ... }` discriminator, which *is* the correct, idiomatic pattern here; "fixing" it would mean tearing out the union architecture). Verify by reading the flagged file yourself before acting on any of these three rules — don't restructure working union code to silence them. The right fix is marking them Won't Fix/False Positive in SonarCloud, not code changes.
-- **SonarCloud nullable false positives**: SonarCloud's Automatic Analysis for C# does not run a real `dotnet build`, so it can miss `<Nullable>enable</Nullable>` set via `Directory.Build.props` and flag every null-forgiving `!` as unnecessary (`csharpsquid:S8970`). Before touching a flagged `!`, confirm nullable actually is enabled project-wide — if so, this is almost always a scanner false positive, not a real issue.
-- **CQRS parameter-count noise**: handler `Handle` methods and minimal-API endpoint lambdas commonly take 8+ parameters once you count the command/query plus every injected store/service plus `CancellationToken`. SonarCloud's `csharpsquid:S107` ("too many parameters", threshold 7) will flag most of them. That's an architectural consequence of this pattern, not a bug — don't break up a handler's signature just to satisfy the threshold; raise the quality-profile threshold or mark these Won't Fix instead.
-- Consequences of unions for event sourcing, which the samples show: put data common to every case (e.g. `OccurredAt`) in an exhaustive projection on the union rather than a shared base record; and because a union is a value type whose boxed `GetType().Name` is always the union's own name, expose explicit `EventType` and `Payload` members for the persistence discriminator and JSON body, and hand the event store the payload rather than the union value.
-- Use event sourcing where appropriate: emit immutable domain events, store append-only event streams in a Postgres schema, and provide simple replay/rehydration patterns.
-- **`Reverse()` gotcha on read-backward queries**: a paginated event-store read that fetches descending-by-version and then needs to hand callers ascending order back must check the actual declared return type before calling `.Reverse()`. If the query method returns `IReadOnlyList<T>` (typical for a store method backed by an interface contract rather than a concrete `List<T>`), `.Reverse()` resolves to the non-mutating `Enumerable.Reverse()` LINQ extension — not `List<T>`'s in-place mutator — so its result must be used (`return [.. events.Reverse().Select(...)]`), never called as a bare statement (`events.Reverse();` silently no-ops and the caller gets events in the wrong order). SonarCloud's `csharpsquid:S2201` ("use the return value") catches this — treat it as a real bug report for event-store code, not noise.
-- Prefer the Result pattern over throwing exceptions for expected, recoverable outcomes: domain/business-rule violations, validation failures, and not-found cases. A method that can fail this way should return `Result` or `Result<T>` (see `samples/Result.cs`) rather than `throw`, so callers handle the failure as a value instead of via `try/catch`. Reserve exceptions for truly exceptional, unrecoverable conditions the caller cannot be expected to handle in-line: programmer errors, corrupt/unmapped data (e.g. `OrderEvent.FromPayload` on an unknown payload type), and infrastructure failures (DB connection loss, etc.) — those should still throw. At the API boundary, map a failed `Result` to the appropriate HTTP status (400/404/409) instead of relying on exception-handling middleware for expected failures.
-- Use EF Core for read-models and small domain-specific DbContexts; configure separate schemas per domain (e.g., `orders` schema) to ease future microservice extraction.
-- Target .NET 11 compatibility and EF Core with Npgsql provider for PostgreSQL 19.
-- Prefer small, testable components and clearly separated infrastructure (event store, repositories, projections).
+Start in planning mode: for anything beyond a one-file change, give a short plan (assumptions, files, trade-offs) before code.
 
-Usage:
-- Ask for a plan first for any non-trivial change. If the user does not provide project context, list the files and configuration you need.
-- When asked to generate code, follow this output format:
-	1. Plan — concise bullet list of steps and assumptions.
-	2. Implementation — code files with suggested file paths and brief rationale.
-	3. Migrations/DB — SQL or EF Core migration guidance and schema notes.
-	4. Tests — suggested unit/integration tests and commands to run them.
-	5. Notes — trade-offs, backwards-compatibility, and next steps (e.g., extracting microservices).
+## 1. Layout - vertical slices, domain first
 
-Secrets handling:
-- Store secrets and sensitive configuration in a `.env` file for local development (for example `src/backend/.env`). **Do not commit** the `.env` file to source control; include a tracked `src/backend/.env.example` with placeholder values. Generated code should read secrets from environment variables (e.g., `Environment.GetEnvironmentVariable("MY_CONN")`) or via the configuration providers (`Configuration["My:Conn"]`). In documentation, call out secure deployment practices: inject secrets via CI/CD, cloud secret stores (Key Vault, Secrets Manager), or platform-managed app settings.
+```
+src/backend/buddy/
+  Program.cs                      # Add<Domain>Feature(...) / Map<Domain>Feature() per domain
+  Common/                         # Result.cs, Unit.cs, ErrorEnvelope.cs, Idempotency/, RateLimiting/, Validation/
+  Serialization/                  # StronglyTypedIdJsonConverterFactory, ValueTupleJsonConverterFactory
+  Features/<Domain>/
+    <Domain>Feature.cs            # DI + Marten store + endpoint group
+    I<Domain>Store.cs             # `public interface IPickupsStore : IDocumentStore;`
+    I<Aggregate>EventStore.cs     # store contract, domain types in/out
+    Marten<Aggregate>EventStore.cs
+    <Domain>Authorization.cs      # access tiers -> Allowed/NotFound/Forbidden
+    <Domain>.http                 # manual requests for every endpoint
+    Types/                        # IDs, events union, aggregate, *Snapshot + *SnapshotProjection, *Document
+    <UseCase>/
+      <UseCase>.Command.cs        # also used for queries (GetGroup.Command.cs)
+      <UseCase>.Handler.cs
+      <UseCase>.Endpoint.cs
+      <UseCase>.Validator.cs      # when the command has structural rules
+```
 
-Capabilities:
-- Generate .NET 11 code for domain models, value types, event-sourced aggregates, event store adapters, and EF Core DbContexts mapped to a domain-specific schema.
-- Provide sample tests, EF Core entity mappings, and sample migrations for PostgreSQL 19 (including storing event payloads as JSONB).
-- Recommend architecture changes and migration plans tailored to screaming-architecture.
+Reference slice: `src/backend/buddy/Features/Pickups/` (`AssignPickup/`, `PickupsFeature.cs`, `MartenPickupScheduleEventStore.cs`, `Types/`).
 
-Reference material bundled with this skill (read on demand, don't preload):
-- `samples/OrderId.cs`, `samples/OrderEvents.cs`, `samples/OrderAggregate.cs` — value-type IDs, event discriminated unions, aggregate rehydration, and Result-returning business-rule methods.
-- `samples/Result.cs` — minimal `Result` / `Result<T>` types for expected-failure returns; note on using an error union for richer typed errors.
-- `samples/IEventStore.cs`, `samples/PostgresEventStore.cs`, `samples/OrderDbContext.cs` — event store contract, Postgres adapter, DbContext with per-domain schema.
-- `samples/efcore-mapping.md` — EF Core entity mappings and JSONB payload notes.
-- `samples/dotnet-sample/` — end-to-end src/ layout (Domain, Infrastructure, Web) with DI event-type mapper, design-time DbContext factory, docker-compose and `MIGRATIONS-README.md`.
-- `examples/example.txt` — example prompts that drive reproducible outputs.
+- One folder per use case; namespace is `buddy.Features.<Domain>` for every file in the domain (no sub-namespace per use case).
+- Business rules stay inside their slice. Only generic technical code goes to `Common/` (e.g. `Common/Validation/DateRangeRules.cs`).
+- Cross-domain needs go through the other domain's `I*EventStore` (e.g. Pickups injects `IGuardianLinkEventStore`), never its Marten store. Register the dependency's feature first in `Program.cs` and say so in a comment.
+- New domain: add `Add<Domain>Feature` and `Map<Domain>Feature` calls in `Program.cs`, its own OpenAPI document (`OpenApiDocumentName`), and a `<Domain>.http`.
 
-Tags: backend, dotnet, event-sourcing, efcore, postgresql, domain, id-types
+## 2. Types
+
+- **IDs**: one `sealed record` per ID wrapping a `Guid`, with a UUIDv7 factory - see `Features/Pickups/Types/PickupScheduleId.cs`:
+  ```csharp
+  public sealed record PickupScheduleId(Guid Value)
+  {
+      public static PickupScheduleId New() => new(Guid.CreateVersion7());
+  }
+  ```
+  Always `Guid.CreateVersion7()`, never `Guid.NewGuid()` for domain IDs. Keep the single `Value` ctor parameter and make the ID a top-level type - `StronglyTypedIdJsonConverterFactory` serializes it as the bare value only under those conditions. Don't switch existing IDs to `readonly record struct`: they are persisted inside event JSON and the codebase is consistent on `sealed record`.
+- Other domain concepts get small types too (`Features/Users/Types/Email.cs`, `Name.cs`, `Language.cs`) instead of raw `string`.
+- Aggregates: immutable `sealed record`s, collections as `ImmutableDictionary`/`ImmutableList`.
+
+## 3. Events - C# `union`
+
+Pattern: `Features/Pickups/Types/PickupEvents.cs`, `Features/Users/Types/UserEvents.cs`.
+
+```csharp
+public union PickupEvent(PickupScheduleCreated, PickupAssigned, PickupCleared)
+{
+    public static PickupEvent FromPayload(object payload) => payload switch { ...,
+        _ => throw new ArgumentException($"Unknown pickup event payload: {payload.GetType().Name}", nameof(payload)) };
+    public string EventType => this switch { PickupScheduleCreated => nameof(PickupScheduleCreated), ... };
+}
+public sealed record PickupScheduleCreated(PickupScheduleId Id, UserId ChildId, DateTimeOffset OccurredAt);
+```
+
+- Cases are top-level `sealed record`s next to the union; every event carries `OccurredAt`.
+- A union is closed and `switch` *expressions* over it are exhaustiveness-checked (CS8509). `src/backend/Directory.Build.props` sets `TreatWarningsAsErrors`, so a missing case fails the build. Switch *statements* are not checked - prefer expressions over unions. In a new project without global warnings-as-errors, add `<WarningsAsErrors>$(WarningsAsErrors);CS8509</WarningsAsErrors>`.
+- A union is a value type: `GetType().Name` on a boxed union is always the union's name. Use `EventType` for discriminators and `e.Value` (the case record) for persistence.
+- Requires `net11.0` + `<LangVersion>preview</LangVersion>` (already in `Directory.Build.props`).
+- Adding a new event: add the case to the union, `FromPayload`, `EventType`, the aggregate fold, the snapshot projection (`Apply`), the feature's `EventTypes` array in `<Domain>Feature.cs`, and an event-shape golden test (section 8).
+- Events are persisted JSON. Renaming/removing a field or a type breaks existing streams - add a new event or field instead, and expect the golden file diff.
+
+## 4. Aggregates and rehydration
+
+Pattern: `Features/Pickups/Types/PickupSchedule.cs`.
+
+- `public static T? Rehydrate(IEnumerable<TEvent> events) => events.Aggregate((T?)null, Fold);`
+- `public static T? Fold(T? state, TEvent @event)` - one event step, reused by the snapshot projection. Do **not** name it `Apply`/`Create`: JasperFx's projection source generator scans those names on any projection document type.
+- Command handlers that decide on current state rehydrate from `ReadAsync`. Read-only handlers (Get/List) use `FindSnapshotAsync` (`Features/Groups/GetGroup/GetGroup.Handler.cs`).
+- Append only when something changed (compare before/after) - this is what makes PUT/DELETE idempotent (see `AssignPickupHandler`'s `unchanged` check).
+
+## 5. Persistence - Marten
+
+Store registration: `Features/Pickups/PickupsFeature.cs`. Event store: `Features/Pickups/MartenPickupScheduleEventStore.cs`.
+
+- One Marten store per domain: `services.AddMartenStore<I<Domain>Store>(...)` with `options.DatabaseSchemaName = "<domain>"`, `Events.StreamIdentity = StreamIdentity.AsGuid`, `Events.AddEventTypes(EventTypes)`.
+- Serializer: `UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString, ...)` and add `StronglyTypedIdJsonConverterFactory` (+ `ValueTupleJsonConverterFactory` if any state is keyed by a `ValueTuple`). Marten's JSON options are separate from `Program.cs`'s HTTP JSON options - register converters in both.
+- Event store methods: `QuerySession()` for reads, `LightweightSession()` + `SaveChangesAsync` for writes; `StartStream(id.Value, payloads)` on create, `Append(id.Value, payloads)` after. Payloads are `e.Value ?? throw new InvalidOperationException(...)`. Map back with `<Union>.FromPayload(e.Data)`. Return domain types from the interface, never Marten types.
+- `AppendAsync` returns early on an empty event list.
+- Lookup documents (`PickupScheduleIndexDocument`, `GroupMembershipDocument`) are written in the same session as the event append so they commit atomically.
+- Concurrency on create: rely on a DB constraint (`session.Insert` + catch `DocumentAlreadyExistsException`), see `MartenUserEventStore.CreateAsync`. No in-memory locks.
+
+### Snapshots
+
+Pattern: `Features/Pickups/Types/PickupScheduleSnapshotProjection.cs`.
+
+- Document is a wrapper `sealed record <Agg>Snapshot(Guid Id, <Agg> <Agg>)` - Marten can't use a `sealed record` ID class as a document Id.
+- Projection: `SingleStreamProjection<<Agg>Snapshot, Guid>` with `Create(<FirstEvent>)` and one `Apply(current, <Event>)` per later event, each delegating to `<Agg>.Fold`.
+- Register in `<Domain>Feature.cs`:
+  ```csharp
+  options.Projections.Register(new PickupScheduleSnapshotProjection(), ProjectionLifecycle.Inline);
+  options.Schema.For<PickupScheduleSnapshot>().DatabaseSchemaName("snapshots");
+  ```
+  `Register(...)`, not `Projections.Snapshot<T>()` (throws for these document types). Always `Inline`, always schema `snapshots`. Snapshots are derived, rebuildable state - events remain the source of truth.
+- Every snapshot gets a `SnapshotTests/<Agg>SnapshotTests.cs` asserting snapshot == full replay.
+
+### `Reverse()` gotcha
+
+A read-backward query (`OrderByDescending(e => e.Version).Take(n).ToListAsync()`) returns `IReadOnlyList<T>`. `.Reverse()` on it is `Enumerable.Reverse()` - non-mutating. Use the result: `return [.. events.Reverse().Select(...)];`. A bare `events.Reverse();` silently does nothing. See `MartenUserEventStore.ReadBackwardAsync`.
+
+## 6. Commands, handlers, validators - Wolverine + FluentValidation
+
+- Command: `sealed record <UseCase>(UserId? UserId, ...)` plus `static <UseCase> FromClaims(ClaimsPrincipal principal, ...)` using `principal.GetUserId()`. See `AssignPickup.Command.cs`.
+- Handler: `public static class <UseCase>Handler` with `public static async Task<Result<T>> Handle(<UseCase> command, <deps...>, CancellationToken cancellationToken)`. Wolverine discovers it by convention and injects parameters - no registration.
+- Handler order (from `AssignPickup.Handler.cs`):
+  1. `if (await validator.ValidateCommandAsync(command, ct) is { } problem) return new Result<T>.Validation(problem);`
+  2. `if (command.UserId is not { } userId) return new Result<T>.NotFound();`
+  3. Authorization via `<Domain>Authorization.Check*` -> `access.ToDeniedResult<T>()`.
+  4. Async/relationship checks needing the DB -> `ValidationProblem.Of("message")`.
+  5. Load, decide, append (only if changed), return `Success`.
+- Validator: `sealed class <UseCase>Validator : AbstractValidator<<UseCase>>`, structural rules only. Auto-registered by `AddValidatorsFromAssemblyContaining<Program>()`. DB-backed rules stay in the handler (see `docs/backend/analysis/validation-rules.md`).
+- Handlers can call other handlers via an injected `IMessageBus` (`SetTaskCompletion.Handler.cs`).
+- Timestamps: `DateTimeOffset.UtcNow` once per handler, reused across the events it emits.
+
+## 7. Result pattern and endpoints
+
+`Common/Result.cs`:
+```csharp
+public union Result<T>(Result<T>.Success, Result<T>.NotFound, Result<T>.Forbidden, Result<T>.Validation) { ... }
+```
+- Expected outcomes (validation, not found, forbidden, business-rule rejection) are `Result<T>` values, not exceptions. No success payload -> `Result<Unit>`.
+- Throw only for programmer errors, corrupt/unmapped data (`FromPayload` default arm, `UnreachableException` in `ToDeniedResult` for `Allowed`) and infrastructure failures.
+- Outcomes that don't fit the four cases get a feature-specific union (`CreateChildOutcome`, `CreateGroupOutcome` with `Unauthenticated`) - don't add cases to `Result<T>`; every switch over it would need the arm.
+- `ResultExtensions.Reraise<T, TOther>()` converts a failed result to another payload type.
+- No access relationship at all -> `NotFound` (don't reveal existence); relationship but insufficient tier -> `Forbidden`.
+
+Endpoint (`AssignPickup.Endpoint.cs`, `ClearPickup.Endpoint.cs`):
+- `public static class <UseCase>Endpoint` with `MapX(this RouteGroupBuilder group)`; the group in `<Domain>Feature.Map<Domain>Feature` adds `.WithTags`, `.RequireAuthorization()`, `.WithGroupName(OpenApiDocumentName)`.
+- Lambda returns `Task<Results<Ok<T>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>>`, builds the command, calls `bus.InvokeAsync<Result<T>>(command, ct)`, and maps with an exhaustive `switch` expression. Validation -> `TypedResults.BadRequest(problem.ToEnvelope(httpContext))`.
+- Request body is a separate `sealed record <UseCase>Request` with primitives (`Guid?`), converted to domain IDs in the endpoint.
+- Every endpoint has `.WithName("<UseCase>")` - the endpoint coverage test keys on it.
+- Status codes per `docs/backend/http-status-codes.md` (create 201, update 200/204, delete 204). Create-style POSTs are covered by `IdempotencyKeyMiddleware`.
+- Add the request to `<Domain>.http`.
+
+## 8. Tests - xunit + Alba + Testcontainers
+
+All backend tests are in `src/backend/buddy.IntegrationTests/` (no separate unit test project).
+
+- Fixture: `Fixtures/BuddyApiFixture.cs` - one shared Postgres/Keycloak/Mailpit set per run via `[Collection(BuddyApiCollection.Name)]`. No DB reset between tests; isolate with fresh users (`fixture.CreateAuthenticatedUserAsync()`) and fresh IDs.
+- Feature tests: `Features/<Domain>/<UseCase>/<UseCase>Tests.cs`, `public sealed class X(BuddyApiFixture fixture)`, drive HTTP via `fixture.Host.Scenario(...)` with a real Keycloak token. Test names are sentences: `A_guardian_can_assign_a_sibling_as_escort`. Example: `Features/Pickups/AssignPickup/AssignPickupTests.cs`.
+- Mark at least one test per endpoint `[CoversEndpoint("<EndpointName>")]` - `Meta/EndpointCoverageTests.cs` fails on any mapped endpoint without one (and on stale names).
+- Cover the authorization matrix (guardian / child / unrelated user) and each `Result` arm the endpoint maps.
+- Event shape: new/changed events get a test in `EventShapeTests/<Domain>EventShapeTests.cs` against `EventShapeTests/GoldenFiles/<Domain>/*.json` with fixed IDs and instants.
+- Snapshot: `SnapshotTests/<Agg>SnapshotTests.cs` (section 5).
+- Run: `task test:backend` or `dotnet test src/backend/backend.slnx` (needs Docker). Mutation: `task test:mutation:backend`.
+
+## 9. Config and secrets
+
+- Config through `IConfiguration`/options classes (`Features/Users/PostgresOptions.cs` reads `ConnectionStrings:Postgres`). Integration tests override via `ConfigurationOverride` in the fixture.
+- Never commit secrets. `appsettings.*.json` and `.env` are git-ignored; keep local secrets there or in environment variables, keep a placeholder `.env.example` tracked if you introduce env-based config. Production secrets come from CI/CD or a cloud secret store.
+- Central package versions in `src/backend/Directory.Packages.props`; `.csproj` `PackageReference`s carry no version.
+
+## 10. SonarCloud
+
+Known false positives (union syntax, nullable, parameter count) and the one real one (`S2201` on `Reverse()`): `references/sonar-known-issues.md`. Read it before acting on a Sonar finding.
+
+## Output format for generated code
+
+1. Plan - steps and assumptions.
+2. Implementation - files with paths under `src/backend/buddy/Features/<Domain>/...`.
+3. Persistence - new event types, `EventTypes` registration, snapshot/projection and document changes.
+4. Tests - feature tests with `[CoversEndpoint]`, golden files, snapshot test; command to run.
+5. Notes - trade-offs, compatibility of persisted events, docs to update.
+
+## Bundled reference (read on demand)
+
+- `references/sonar-known-issues.md` - SonarCloud triage for this repo.
+- `references/efcore.md` - EF Core DbContexts/migrations. Not used in Buddy; for other services.
+- `samples/` - generic, framework-light templates (Order aggregate, union events, Result, hand-rolled Postgres event store, EF Core DbContext). Not Buddy's patterns: their `readonly record struct` IDs, hand-rolled event store and EF Core usage differ from Buddy. Use only for non-Buddy services; for Buddy, copy from `src/backend/buddy/Features/Pickups/`.
+- `examples/example.txt` - example prompts.

@@ -1,11 +1,11 @@
 ---
 name: backend-aware-review
-description: Review a diff (staged changes by default, or a given commit/branch/PR) for correctness bugs and reuse/simplification/efficiency cleanups. Routes any .NET/backend files (src/backend/**, *.cs, *.csproj) through the relevant dotnet-skills plugin skills and agents instead of generic judgment; reviews frontend/other files with a general pass. Use for "review the staged changes", "review this diff/PR", "review my backend changes".
+description: Review a diff (staged changes by default, or a given commit/branch/PR) for correctness bugs and reuse/simplification/efficiency cleanups. Grounds any .NET/backend files (src/backend/**, *.cs, *.csproj) in the claude-backend skill plus the dotnet-skills plugin skills when installed (inline checklist otherwise); reviews frontend/other files with a general pass. Use for "review the staged changes", "review this diff/PR", "review my backend changes".
 ---
 
 # Backend-Aware Review
 
-Purpose: review a diff for correctness bugs and reuse/simplification/efficiency cleanups, the same way `code-review` does — but for any `.NET`/backend file in the diff, ground the review in the `dotnet-skills` plugin instead of relying on generic judgment.
+Purpose: review a diff for correctness bugs and reuse/simplification/efficiency cleanups, the same way `code-review` does — but for any `.NET`/backend file in the diff, ground the review in `claude-backend` and, when installed, the `dotnet-skills` plugin, instead of relying on generic judgment.
 
 ## 1. Resolve the target diff
 
@@ -19,34 +19,44 @@ Purpose: review a diff for correctness bugs and reuse/simplification/efficiency 
 
 Skip a lane entirely if it has no changed files — don't spawn agents for empty work.
 
-## 3. Backend/.NET lane — route through dotnet-skills, don't wing it
+## 3. Backend/.NET lane - grounded review, not generic judgment
 
-For each changed backend file, identify which `dotnet-skills:*` skills actually apply based on what the diff touches, then review with those skills loaded rather than from general C# knowledge. This repo uses Marten (event sourcing) and WolverineFx, not raw EF Core or Akka.NET — pick skills by what's actually in the diff, not by assumption:
+Always load the project's `claude-backend` skill first for any backend file - it holds Buddy's conventions (vertical slices, Marten event stores and snapshot projections, Wolverine handlers, `Result<T>`, test layout).
 
-- Any `.cs` change → `dotnet-skills:csharp-coding-standards` and `dotnet-skills:csharp-nullable-reference-types` as the baseline.
-- Domain models, aggregates, value/ID types, event definitions, projections → also the project's own `claude-backend` skill (screaming architecture, event sourcing, Result-pattern conventions already established in this repo).
-- Query/read-model/persistence code (Marten sessions, LINQ queries, projections) → `dotnet-skills:database-performance`.
-- New/changed types (records, structs, sealed classes) → `dotnet-skills:csharp-type-design-performance`.
-- `async`/`Task`/channels/concurrency-shaped code → `dotnet-skills:csharp-concurrency-patterns` (and `dotnet-skills:dotnet-concurrency-specialist` agent if the change is timing/thread-safety sensitive enough to warrant it).
-- `.csproj`/`Directory.Packages.props`/package version changes → `dotnet-skills:package-management`.
-- Any non-trivial backend logic change → close the pass with `dotnet-skills:slopwatch` to catch disabled tests, suppressed warnings, empty catch blocks, or other shortcuts the diff might be hiding.
+Then check whether any `dotnet-skills:*` skills appear in the available skills list for this session.
 
-Load each applicable skill with `Skill` before judging that file — don't rely on memory of what the skill says.
+- **Present** -> use 3a.
+- **Absent** -> say once in the report that the `dotnet-skills` plugin isn't installed and the backend lane used `claude-backend` + the inline checklist, then use 3b. Don't try to load `dotnet-skills:*` names that aren't listed.
 
-### Known SonarCloud false positives in this repo — don't flag or "fix" these
+Pick checks by what the diff actually touches. This repo uses Marten and WolverineFx, not EF Core or Akka.NET.
 
-If a SonarCloud/SonarQube report (or its findings) is part of what's being reviewed, these rules are confirmed false positives or architectural noise here, not real defects — see `claude-backend`'s skill doc for the full explanation of each:
+### 3a. dotnet-skills routing (plugin installed)
 
-- `csharpsquid:S3903`, `csharpsquid:S1186`, `csharpsquid:S3060` on any file declaring a `union` — the analyzer doesn't understand the preview `union` syntax and misparses it.
-- `csharpsquid:S8970` (unneeded null-forgiving operator) — SonarCloud's Automatic Analysis often misses `<Nullable>enable</Nullable>` from `Directory.Build.props`; verify nullable is actually enabled before treating this as real.
-- `csharpsquid:S107` (too many parameters) on CQRS handlers/minimal-API endpoints — expected given DI-injected dependencies plus `CancellationToken`.
-- `csharpsquid:S2094` (empty record) on a no-payload case inside a `union` (e.g. `Result<T>.NotFound`) — intentional marker type.
+- Any `.cs` change -> `dotnet-skills:csharp-coding-standards` and `dotnet-skills:csharp-nullable-reference-types` as the baseline.
+- Query/read-model/persistence code (Marten sessions, LINQ queries, projections) -> `dotnet-skills:database-performance`.
+- New/changed types (records, structs, sealed classes) -> `dotnet-skills:csharp-type-design-performance`.
+- `async`/`Task`/channels/concurrency-shaped code -> `dotnet-skills:csharp-concurrency-patterns` (and the `dotnet-skills:dotnet-concurrency-specialist` agent if the change is timing/thread-safety sensitive).
+- `.csproj`/`Directory.Packages.props`/package version changes -> `dotnet-skills:package-management`.
+- Any non-trivial backend logic change -> close with `dotnet-skills:slopwatch`.
 
-Conversely, `csharpsquid:S2201` ("use the return value") on an event-store's `events.Reverse()` is worth taking seriously — `IReadOnlyList<T>.Reverse()` is the non-mutating LINQ extension, not `List<T>`'s in-place mutator, and a bare `events.Reverse();` statement silently does nothing. This exact bug shipped once already (`MartenUserEventStore.ReadBackwardAsync`); treat this specific rule as a real correctness check on any event-store code, not noise.
+Load each applicable skill with `Skill` before judging that file - don't rely on memory of what it says.
+
+### 3b. Inline checklist (plugin not installed)
+
+- **Coding standards / nullable** (any `.cs`): matches `claude-backend` conventions and neighbouring files; no new `!` without a reason the compiler can't see; nullable returns checked before use; `switch` expressions (not statements) over unions so CS8509 catches missing arms; no `Guid.NewGuid()` for domain IDs; no exceptions for expected outcomes.
+- **Marten query/projection performance** (event stores, handlers, projections): sessions disposed (`await using`); `QuerySession` for reads, one `LightweightSession` + one `SaveChangesAsync` per write; no stream read/rehydrate inside a loop (N+1) - batch or use a lookup document/snapshot; filters and `Take` applied in the LINQ query, not after `ToListAsync`; read-only handlers use `FindSnapshotAsync`; new event types added to the feature's `EventTypes` and the snapshot projection's `Apply`; snapshot registered `Inline` in schema `snapshots`.
+- **Type design**: IDs are top-level `sealed record X(Guid Value)` with a `CreateVersion7` factory; aggregates and events immutable records; collections `Immutable*`/`IReadOnly*`; renamed/removed fields on persisted event records (breaks existing streams and golden files).
+- **Async / concurrency**: `CancellationToken` passed through every await; no `.Result`/`.Wait()`/`async void`; no shared mutable static state; create races guarded by a DB constraint (`Insert` + `DocumentAlreadyExistsException`), not an in-memory lock; read-modify-append races considered when the diff adds a new invariant.
+- **Package management**: versions only in `src/backend/Directory.Packages.props`, none in `.csproj`; packages within one family (`WolverineFx` + `WolverineFx.*`, `FluentValidation` + `FluentValidation.*`) on the same version; no new package where an existing one covers it.
+- **Slop check**: disabled or skipped tests (`Skip =`, commented-out `[Fact]`), deleted assertions, `#pragma warning disable` / `[SuppressMessage]` / `NoWarn` additions, empty `catch` or catch-and-ignore, `TODO`/`HACK` workarounds, a missing `[CoversEndpoint]` on a new endpoint's tests, missing golden-file or snapshot test for a new event/aggregate.
+
+### Known SonarCloud findings
+
+If a SonarCloud/SonarQube report is part of the review, triage it with `.claude/skills/claude-backend/references/sonar-known-issues.md`: don't flag the listed false positives, and treat `S2201` on an event store's `Reverse()` as a real bug.
 
 ## 4. Everything-else lane — general review
 
-Review frontend/docs/config changes the way `code-review` would at the equivalent effort level: correctness bugs, and reuse/simplification/efficiency cleanups. No dotnet-skills routing needed here.
+Review frontend/docs/config changes the way `code-review` would at the equivalent effort level: correctness bugs, and reuse/simplification/efficiency cleanups. No backend routing needed here.
 
 ## 5. Effort level
 

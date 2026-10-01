@@ -1,7 +1,11 @@
 # Agent packages
 
 This directory contains reusable agent skills, examples, templates, and
-reference implementations. Choose the package that matches the task rather
+reference implementations for **Codex, Copilot and GitHub Pilot**. These
+packages aren't Claude Code skills: they have no frontmatter and Claude Code
+never loads them. Claude Code's project skills live in
+[`.claude/skills/`](../.claude/skills/), which is their canonical home.
+When a convention changes, update both places if it applies to both. Choose the package that matches the task rather
 than combining overlapping instructions by default.
 
 ## Packages

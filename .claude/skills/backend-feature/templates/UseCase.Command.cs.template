@@ -1,0 +1,16 @@
+// -> src/backend/buddy/Features/{{Domain}}/{{UseCase}}/{{UseCase}}.Command.cs
+// Derived from Medicines/UpdateMedicineDetails. Queries use the same file name and shape
+// (ListTodaysDoses.Command.cs); only Mealplans/GetGroupMealplanStatus uses `.Query.cs`.
+using System.Security.Claims;
+
+using buddy.Features.Users;
+
+namespace buddy.Features.{{Domain}};
+
+// UserId is nullable on purpose: GetUserId() returns null when the token has no backend user
+// yet, and the handler maps that to NotFound (see SetDoseStatusHandler).
+public sealed record {{UseCase}}(UserId? UserId, UserId ChildId, {{AggregateId}} {{AggregateId}}, string Name)
+{
+    public static {{UseCase}} FromClaims(ClaimsPrincipal principal, UserId childId, {{AggregateId}} id, string name) =>
+        new(principal.GetUserId(), childId, id, name);
+}

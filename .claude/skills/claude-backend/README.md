@@ -1,19 +1,15 @@
 Claude Backend Skill
 
-This directory contains templates and guidance for backend development with .NET (screaming-architecture), event sourcing, EF Core, and PostgreSQL. Prefer targeting .NET 11 and model domain events as native C# discriminated unions (`union` with nested `sealed record` cases) rather than marker interfaces or an abstract base record. Unions are a preview language feature, so the sample sets `<LangVersion>preview</LangVersion>`. For expected, recoverable failures (business-rule violations, validation, not-found), prefer returning `Result`/`Result<T>` (see `samples/Result.cs`) over throwing; reserve exceptions for programmer errors, corrupt data, and infrastructure failures.
+Conventions for the Buddy .NET 11 backend in `src/backend/`: vertical-slice features under `src/backend/buddy/Features/<Domain>/<UseCase>/`, event sourcing on Marten (per-domain event schemas, inline snapshot projections in a shared `snapshots` schema), WolverineFx handlers, FluentValidation, minimal-API endpoints, the `Result<T>` union, and Alba + Testcontainers integration tests. Domain events are native C# `union`s (preview language feature, `<LangVersion>preview</LangVersion>`). Buddy has no EF Core.
 
-It lives at `.claude/skills/claude-backend/`, which is where Claude Code discovers project skills. Claude Code loads it automatically when a task matches the `description` in `SKILL.md`'s frontmatter; you can also invoke it explicitly with `/claude-backend`.
+It lives at `.claude/skills/claude-backend/`, where Claude Code discovers project skills. It loads automatically when a task matches the `description` in `SKILL.md`'s frontmatter; invoke it explicitly with `/claude-backend`.
 
 Files:
-- `SKILL.md` — YAML frontmatter (`name`, `description`) plus high-level rules and output format (Planning Mode, ID-type preference, event sourcing, schemas)
-- `manifest.json` — skill metadata and preferences
-- `examples/` — example prompts to drive reproducible outputs
-- `samples/` — small code templates (value types, aggregate, DbContext, event store notes)
+- `SKILL.md` - frontmatter plus the conventions, each with a real example path in `src/backend/buddy`.
+- `manifest.json` - skill metadata.
+- `references/sonar-known-issues.md` - SonarCloud false positives and the one real finding (`S2201` on `Reverse()`).
+- `references/efcore.md` - EF Core / hand-rolled event store guidance. Not used in Buddy; for other services.
+- `samples/` - generic templates (Order aggregate, union events, Result, hand-rolled Postgres event store, EF Core DbContext, `dotnet-sample/` end-to-end layout). Not Buddy's patterns - for Buddy, copy from `src/backend/buddy/Features/Pickups/`.
+- `examples/` - example prompts.
 
-Project layout:
-- Place backend source and artifacts under `src/backend/` (for example `src/backend/Domain`, `src/backend/Infrastructure`, `src/backend/Web`). The `samples/dotnet-sample/` demonstrates the recommended structure under `src/` which can be mapped into `src/backend/` for real projects.
-
-Secrets and configuration:
-- Use `.env` files for local development secrets (keep them untracked). Add a `src/backend/.env.example` with placeholders and document the required environment variables. For production, prefer injecting secrets via CI/CD or cloud secret stores and avoid embedding secrets in source code or client-side bundles.
-
-Use these templates as starting points; adapt names and namespaces to your project.
+Secrets: never commit them. `appsettings.*.json` and `.env` are git-ignored; production secrets come from CI/CD or a cloud secret store.

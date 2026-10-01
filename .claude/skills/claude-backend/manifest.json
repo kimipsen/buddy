@@ -1,9 +1,9 @@
 {
   "name": "claude-backend",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "devcontainer-user",
-  "description": "Claude skill tuned for .NET backend development: screaming-architecture, event sourcing, EF Core, PostgreSQL",
-  "tags": ["claude","dotnet","backend","event-sourcing","efcore","postgresql"],
-  "frameworks": ["dotnet@11"],
-  "preferences": ["event-sourcing","custom-id-types","screaming-architecture","postgresql@19","uuidv7","result-pattern"]
+  "description": "Buddy .NET backend conventions: vertical-slice features, event sourcing on Marten with inline snapshot projections, WolverineFx handlers, FluentValidation, minimal APIs, Result<T> union, Alba + Testcontainers tests",
+  "tags": ["claude","dotnet","backend","event-sourcing","marten","wolverine","postgresql"],
+  "frameworks": ["dotnet@11","marten@9","wolverinefx@6"],
+  "preferences": ["event-sourcing","vertical-slices","custom-id-types","uuidv7","result-pattern","csharp-unions"]
 }
