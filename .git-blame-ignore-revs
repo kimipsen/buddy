@@ -1,0 +1,5 @@
+# Bulk formatting commits, skipped by `git blame`.
+# Enable locally with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style(frontend): apply prettier formatting
+af9b173776f497e60472212d564b1333f2f839f1
