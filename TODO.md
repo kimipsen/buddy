@@ -275,9 +275,9 @@ Still open:
 Still open:
 - [ ] **Before the next VM deploy:** check whether the VM's Keycloak realm
   lives in H2, and add `DEPLOY_HOST` to the VM's `deploy/.env` (see above).
-- [ ] Six `interactive-supports-focus` lint warnings on click-to-dismiss
+- [x] Six `interactive-supports-focus` lint warnings on click-to-dismiss
   backdrops need an accessibility pass.
-- [ ] `CreateCalendar`'s `Icon.Value` NotEmpty rule is dead code, because
+- [x] `CreateCalendar`'s `Icon.Value` NotEmpty rule is dead code, because
   the endpoint turns a blank icon into null.
 - [ ] Stryker Safe Mode drops about 1277 mutants as `CompileError`
   (a Stryker limitation).
