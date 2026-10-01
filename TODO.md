@@ -138,8 +138,8 @@ copilot, github-pilot) are not Claude Code skills (no frontmatter, not under
 - [x] Decide whether `agents/` or `.claude/skills/` is the canonical home.
   Either generate Claude skills from `agents/` or mark `agents/` as
   Codex/Copilot-only in `agents/README.md`.
-- [ ] Prune stale `.claude/worktrees/agent-*` checkouts (they hold old
-  copies of the skills and TODO).
+- [x] Prune stale `.claude/worktrees/agent-*` checkouts (they hold old
+  copies of the skills and TODO). `.claude/worktrees/` no longer exists.
 - [ ] After each new skill, test that it triggers using `skill-creator`'s
   eval and description-tuning workflow.
 
