@@ -81,6 +81,17 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<GuardianLinkDocument>> ListRevokedForGuardianAsync(UserId guardianId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        return await session.Query<GuardianLinkDocument>()
+            .Where(d => d.GuardianId == guardianId.Value && d.IsRevoked)
+            .OrderBy(d => d.CreatedAt)
+            .ThenBy(d => d.ChildId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<GuardianLinkDocument>> ListForChildAsync(UserId childId, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();

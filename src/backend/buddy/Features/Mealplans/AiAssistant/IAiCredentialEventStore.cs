@@ -12,7 +12,8 @@ public interface IAiCredentialEventStore
 
     Task AppendAsync(AiCredentialId id, IReadOnlyCollection<AiProviderCredentialEvent> events, CancellationToken cancellationToken);
 
-    // An AiProviderCredential is a 1:1 singleton per family, provisioned lazily -- null means the
-    // family has never configured an AI provider key yet.
+    // The credential indexed under this one child, if any -- null means no credential was ever
+    // provisioned through this child. A family's credential is resolved across all its children
+    // (and the caller's unlinked children) by MealFamilyResolution.ResolveFamilyAiCredentialIdAsync.
     Task<AiCredentialId?> FindIdForChildAsync(UserId childId, CancellationToken cancellationToken);
 }

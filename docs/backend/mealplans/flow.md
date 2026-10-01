@@ -107,11 +107,13 @@ its referenced meal's current name/icon/color and the *viewing* child's own
 rating, recomputed on every call, the same as `ListTodaysDoses` does for
 medicine schedules.
 
-`AiProviderCredential` is a separate family-wide singleton stream, resolved
-the same way as `MealPlan` (one credential set shared by every guardian in
-the family, indexed under whichever child a guardian happened to be acting
-through when the first key was added). It's provisioned lazily on the first
-`SetProviderApiKey` call with `AiCredentialsInitialized`, then accumulates
+`AiProviderCredential` is a separate family-wide stream (one credential set
+shared by every guardian in the family, indexed in
+`mealplans.mt_doc_aicredentialindexdocument` under whichever child a guardian
+happened to be acting through when the first key was added; see "AI credential
+resolution" below for how a request finds it). It's provisioned lazily on the
+first `SetProviderApiKey` call that resolves no credential, with
+`AiCredentialsInitialized`, then accumulates
 `ProviderApiKeySet`/`ProviderApiKeyRemoved`/`ActiveProviderChanged` events.
 Provider API keys (BYOK — bring your own key, for Anthropic, OpenAI, or
 Gemini) are encrypted at rest via the ASP.NET Core Data Protection API before
@@ -122,6 +124,38 @@ sends a one-word "OK" round trip through the resolved provider client to confirm
 key works, either the family's already-stored key or a not-yet-saved one from the
 request body, and never surfaces the provider's raw error body — only a short,
 best-effort message extracted from it.
+
+### AI credential resolution
+
+`MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(childId, guardianId, ...)`
+is used by every AI handler (`ListProviders`, `SetProviderApiKey`,
+`RemoveProviderApiKey`, `SetActiveProvider`, `TestProviderConnection`,
+`StartAiSession`, `SendAiSessionMessage`). The data model is unchanged (one
+index row per credential, naming one child); only the lookup is wide:
+
+1. **Candidates.** Credentials indexed under any child in the requested
+   child's family (every child of every active guardian of that child, which
+   includes every child the calling guardian is linked to), plus credentials
+   indexed under a child the *calling guardian* has since unlinked (a revoked
+   `GuardianLink`), the latter only if the caller contributed to that
+   credential (added a key, removed one, or changed the active provider).
+   Unlinking the child that happens to hold the index row therefore keeps the
+   key for the guardian's remaining children, and the credential keeps
+   serving the unlinked child's remaining family too. A key set up entirely
+   by someone else in a family the caller has left is not inherited.
+2. **Winner: the most recently activated credential.** "Activated" is the
+   `OccurredAt` of the credential's latest `ActiveProviderChanged` event, and
+   only counts while that event's `Provider` is non-null (i.e. the credential
+   currently has an active provider). Re-setting the key of the already-active
+   provider is not an activation. Credentials with no active provider rank
+   below every activated one; ties and the order among non-activated
+   credentials fall back to the larger (newer, UUIDv7) credential id.
+
+This makes merged families (two guardians who each set up a credential, then
+became co-guardians) resolve to the same credential from every sibling and on
+every call. The losing credential's events are kept; it becomes reachable
+again only if it is activated more recently (which can't happen through the
+API while it isn't the resolved one) or the families split again.
 
 `MealplanAiSession` is a separate stream per session (not a family-wide singleton
 like `MealPlan`/`AiProviderCredential`): starting a new session always creates a

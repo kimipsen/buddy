@@ -14,6 +14,11 @@ public interface IGuardianLinkEventStore
 
     Task<IReadOnlyCollection<GuardianLinkDocument>> ListForGuardianAsync(UserId guardianId, CancellationToken cancellationToken);
 
+    // The guardian's revoked links only (children they were linked to and have since unlinked).
+    // Used by MealFamilyResolution so a family resource indexed under an unlinked child (the AI
+    // provider credential) isn't silently lost to the guardian who set it up.
+    Task<IReadOnlyCollection<GuardianLinkDocument>> ListRevokedForGuardianAsync(UserId guardianId, CancellationToken cancellationToken);
+
     // Answers "is this caller a child" -- a non-empty, non-revoked result means the account is a
     // child linked to at least one guardian, which the frontend uses to pick guardian vs child UI.
     Task<IReadOnlyCollection<GuardianLinkDocument>> ListForChildAsync(UserId childId, CancellationToken cancellationToken);

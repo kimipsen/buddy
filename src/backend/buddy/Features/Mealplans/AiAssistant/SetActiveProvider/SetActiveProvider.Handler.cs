@@ -24,7 +24,7 @@ public static class SetActiveProviderHandler
             return access.ToDeniedResult<AiProviderSettings>();
         }
 
-        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, guardians, credentials, cancellationToken);
+        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, userId, guardians, credentials, cancellationToken);
 
         if (credentialId is null)
         {

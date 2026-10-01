@@ -44,7 +44,7 @@ public static class TestProviderConnectionHandler
         }
         else
         {
-            var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, guardians, credentials, cancellationToken);
+            var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, userId, guardians, credentials, cancellationToken);
             var credential = credentialId is null ? null : AiProviderCredential.Rehydrate(await credentials.ReadAsync(credentialId, cancellationToken));
 
             if (credential is null || !credential.Providers.TryGetValue(command.Provider, out var storedKey))

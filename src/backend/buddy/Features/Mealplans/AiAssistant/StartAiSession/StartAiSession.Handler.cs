@@ -34,7 +34,7 @@ public static class StartAiSessionHandler
             return access.ToDeniedResult<AiSessionView>();
         }
 
-        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, guardians, credentials, cancellationToken);
+        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, userId, guardians, credentials, cancellationToken);
 
         if (credentialId is null)
         {

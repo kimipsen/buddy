@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace buddy.Features.Mealplans;
 
-// A family-wide singleton, resolved the same way MealPlan is (see MealFamilyResolution) -- one set
+// A family-wide credential, resolved by MealFamilyResolution.ResolveFamilyAiCredentialIdAsync -- one set
 // of provider keys shared by every guardian in the family, not owned by the single child whose
 // guardian happened to add the first key.
 public sealed record AiProviderCredential(

@@ -3,9 +3,10 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
 
-// Distinct from MealFamilyResolution's ResolveFamilyMealPlanIdAsync/ResolveFamilyAiCredentialIdAsync:
-// those resolve a single stream that's written once and appended to forever, so "the first row
-// found among the family" is always correct regardless of which sibling is asked. A session can be
+// Distinct from MealFamilyResolution's ResolveFamilyMealPlanIdAsync: that resolves a single stream
+// that's written once and appended to forever, so "the first row found among the family" is
+// correct regardless of which sibling is asked. (ResolveFamilyAiCredentialIdAsync picks the most
+// recently activated credential instead, for the merged-family case.) A session can be
 // superseded by a later one anchored under a *different* sibling, so resolving "current" here
 // means finding the most recently started session across every child in the family, not just the
 // first row any of them happens to have.

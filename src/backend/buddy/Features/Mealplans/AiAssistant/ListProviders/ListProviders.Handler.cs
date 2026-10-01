@@ -23,7 +23,7 @@ public static class ListProvidersHandler
             return access.ToDeniedResult<AiProviderSettings>();
         }
 
-        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(query.ChildId, guardians, credentials, cancellationToken);
+        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(query.ChildId, userId, guardians, credentials, cancellationToken);
 
         if (credentialId is null)
         {

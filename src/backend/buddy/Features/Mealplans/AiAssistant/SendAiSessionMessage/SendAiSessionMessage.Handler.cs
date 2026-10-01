@@ -62,7 +62,7 @@ public static class SendAiSessionMessageHandler
             return new Result<AiSessionView>.Validation(ValidationProblem.Of("This AI session is no longer active -- start a new one."));
         }
 
-        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, guardians, credentials, cancellationToken);
+        var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, userId, guardians, credentials, cancellationToken);
         var credential = credentialId is null ? null : AiProviderCredential.Rehydrate(await credentials.ReadAsync(credentialId, cancellationToken));
 
         if (credential?.ActiveProvider is not { } activeProvider || !credential.Providers.TryGetValue(activeProvider, out var storedKey))

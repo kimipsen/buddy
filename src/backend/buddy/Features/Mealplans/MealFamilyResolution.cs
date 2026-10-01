@@ -65,21 +65,101 @@ public static class MealFamilyResolution
         return null;
     }
 
-    // An AiProviderCredential is likewise a family-wide singleton -- same "first index row found"
-    // resolution as MealPlan, see AiAssistant/MartenAiCredentialEventStore.
+    // An AiProviderCredential is a family-wide resource, but its index row
+    // (AiCredentialIndexDocument) names exactly one child -- the one the first key was added for.
+    // Resolution therefore has to look wider than that one child, and has to pick
+    // deterministically when more than one credential is reachable. The rule
+    // (docs/backend/mealplans/flow.md, "AI credential resolution"):
+    //
+    // Candidates are the credentials indexed under
+    //   1. any child in the requested child's family (ResolveFamilyAsync -- every child of every
+    //      active guardian of that child, which includes every child the caller is linked to), and
+    //   2. any child the calling guardian has since unlinked (a revoked GuardianLink), but only if
+    //      the caller contributed to that credential themselves (added a key or changed the active
+    //      provider). Unlinking the child that happened to hold the index row therefore doesn't
+    //      drop the key for the guardian's remaining children, while a key set up entirely by
+    //      someone else in a family the caller has left is not inherited.
+    //
+    // The winner is the most recently activated candidate: the one whose current active provider
+    // was set last (OccurredAt of its latest ActiveProviderChanged, which must have a non-null
+    // Provider). Credentials with no active provider rank below every activated one. Ties, and the
+    // order among never-/no-longer-activated credentials, fall back to the larger (newer, UUIDv7)
+    // credential id. This replaces "first index row found", which over a HashSet was arbitrary as
+    // soon as two families with a credential each merged.
     public static async Task<AiCredentialId?> ResolveFamilyAiCredentialIdAsync(
-        UserId childId, IGuardianLinkEventStore guardians, IAiCredentialEventStore aiCredentials, CancellationToken cancellationToken)
+        UserId childId,
+        UserId guardianId,
+        IGuardianLinkEventStore guardians,
+        IAiCredentialEventStore aiCredentials,
+        CancellationToken cancellationToken)
     {
         var family = await ResolveFamilyAsync(childId, guardians, cancellationToken);
+        var unlinked = (await guardians.ListRevokedForGuardianAsync(guardianId, cancellationToken))
+            .Select(link => new UserId(link.ChildId))
+            .Where(child => !family.Contains(child))
+            .ToHashSet();
 
-        foreach (var member in family)
+        (AiCredentialId Id, DateTimeOffset? ActivatedAt)? best = null;
+        var seen = new HashSet<AiCredentialId>();
+
+        foreach (var (member, requiresContribution) in family.Select(m => (m, false)).Concat(unlinked.Select(m => (m, true))))
         {
-            if (await aiCredentials.FindIdForChildAsync(member, cancellationToken) is { } id)
+            if (await aiCredentials.FindIdForChildAsync(member, cancellationToken) is not { } id || !seen.Add(id))
             {
-                return id;
+                continue;
+            }
+
+            var events = await aiCredentials.ReadAsync(id, cancellationToken);
+
+            if (requiresContribution && !HasContributed(events, guardianId))
+            {
+                continue;
+            }
+
+            var candidate = (id, LastActivatedAt(events));
+
+            if (best is null || IsPreferred(candidate, best.Value))
+            {
+                best = candidate;
             }
         }
 
-        return null;
+        return best?.Id;
     }
+
+    // OccurredAt of the ActiveProviderChanged that set the current active provider, or null when
+    // the credential has no active provider right now (never set, or cleared by removing the
+    // active provider's key).
+    private static DateTimeOffset? LastActivatedAt(IEnumerable<AiProviderCredentialEvent> events)
+    {
+        DateTimeOffset? activatedAt = null;
+
+        foreach (var @event in events)
+        {
+            if (@event is ActiveProviderChanged changed)
+            {
+                activatedAt = changed.Provider is null ? null : changed.OccurredAt;
+            }
+        }
+
+        return activatedAt;
+    }
+
+    private static bool HasContributed(IEnumerable<AiProviderCredentialEvent> events, UserId guardianId) =>
+        events.Any(e => e switch
+        {
+            ProviderApiKeySet set => set.Key.AddedBy == guardianId,
+            ActiveProviderChanged changed => changed.ChangedBy == guardianId,
+            ProviderApiKeyRemoved removed => removed.RemovedBy == guardianId,
+            AiCredentialsInitialized => false,
+        });
+
+    private static bool IsPreferred((AiCredentialId Id, DateTimeOffset? ActivatedAt) candidate, (AiCredentialId Id, DateTimeOffset? ActivatedAt) current) =>
+        (candidate.ActivatedAt, current.ActivatedAt) switch
+        {
+            ({ } a, { } b) when a != b => a > b,
+            ({ }, null) => true,
+            (null, { }) => false,
+            _ => candidate.Id.Value.CompareTo(current.Id.Value) > 0,
+        };
 }
