@@ -70,6 +70,7 @@ export class ChildMealplan implements OnInit {
 
   protected readonly entriesByKey = signal<Partial<Record<string, MealPlanEntry>>>({});
   protected readonly hasAnyEntries = computed(() => Object.keys(this.entriesByKey()).length > 0);
+  // Stryker disable next-line BooleanLiteral: ngOnInit -> load() sets loading(true) synchronously before the first render, so the initial value is never observed
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly savingKey = signal<string | null>(null);
@@ -78,6 +79,7 @@ export class ChildMealplan implements OnInit {
   // immediately on tap (see rate()), but a comment needs an explicit Save so typing doesn't fire a
   // request per keystroke.
   protected readonly editingKey = signal<string | null>(null);
+  // Stryker disable next-line StringLiteral: the draft is only read while editing (textarea / saveComment), and startEditing() always overwrites it first
   protected readonly commentDraft = signal('');
 
   private childId: string | null = null;
@@ -128,6 +130,7 @@ export class ChildMealplan implements OnInit {
 
   protected cancelEditing(): void {
     this.editingKey.set(null);
+    // Stryker disable next-line StringLiteral,CallExpression: editingKey is null afterwards, so the draft is unread until startEditing() overwrites it
     this.commentDraft.set('');
   }
 

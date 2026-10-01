@@ -31,6 +31,7 @@ export class AiProviderSettingsComponent implements OnInit {
   protected readonly providerList = PROVIDERS;
   protected readonly providerLabelKeys = PROVIDER_LABEL_KEYS;
 
+  // Stryker disable next-line BooleanLiteral: load() sets loading to true synchronously in ngOnInit, before the first render reads it
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly hasChildren = signal(true);
@@ -39,6 +40,7 @@ export class AiProviderSettingsComponent implements OnInit {
   protected readonly activeProvider = signal<AiProvider | null>(null);
 
   protected readonly editingProvider = signal<AiProvider | null>(null);
+  // Stryker disable next-line StringLiteral: the input is only rendered/submittable after startEdit(), which always resets it to ''
   protected readonly apiKeyInput = signal('');
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
@@ -192,6 +194,7 @@ export class AiProviderSettingsComponent implements OnInit {
 
   private async load(): Promise<void> {
     this.loading.set(true);
+    // Stryker disable next-line CallExpression: load() only runs once from ngOnInit while error still holds its initial null
     this.error.set(null);
 
     try {

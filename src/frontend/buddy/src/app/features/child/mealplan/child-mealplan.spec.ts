@@ -2,7 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
+import { addDaysIso, parseIsoDate, todayIsoDate } from '../../../core/date-utils';
+import { TranslationService } from '../../../core/i18n/translation.service';
+import { Meal, MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildMealplan } from './child-mealplan';
 
@@ -68,6 +70,30 @@ describe('ChildMealplan', () => {
     fixture.detectChanges();
     await new Promise((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();
+  }
+
+  function mealWithRatings(ratings: Meal['ratings']): Meal {
+    return {
+      id: 'meal-from',
+      name: 'Meal meal-from',
+      description: null,
+      icon: '🍽️',
+      color: '#f00',
+      isArchived: false,
+      ratings,
+      createdBy: 'guardian-1',
+      lastModifiedBy: 'guardian-1'
+    };
+  }
+
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
@@ -225,5 +251,128 @@ describe('ChildMealplan', () => {
 
     expect(compiled.textContent).toContain('Unable to save your rating. Try again.');
     expect(starButton.disabled).toBe(false);
+  });
+
+  it('requests exactly the past seven days and labels each day and slot', async () => {
+    const listMealPlan = vi.fn(async (_scope, from: string) => [
+      entryAt(from, 0, 'meal-a'),
+      entryAt(from, 1, 'meal-b'),
+      entryAt(from, 2, 'meal-c'),
+      entryAt(from, 3, 'meal-d')
+    ]);
+    const { fixture } = await setup({ mealplans: { listMealPlan } });
+    await settle(fixture);
+
+    const expectedFrom = addDaysIso(todayIsoDate(), -7);
+    expect(listMealPlan).toHaveBeenCalledExactlyOnceWith({ kind: 'family', childId: 'child-1' }, expectedFrom, addDaysIso(todayIsoDate(), -1));
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const locale = TestBed.inject(TranslationService).language();
+    const expectedLabel = parseIsoDate(expectedFrom).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
+    expect(Array.from(compiled.querySelectorAll('h2')).map((heading) => heading.textContent?.trim())).toEqual([expectedLabel]);
+
+    const slotLabels = Array.from(compiled.querySelectorAll('li span.uppercase')).map((span) => span.textContent?.trim());
+    expect(slotLabels).toEqual(['Breakfast', 'Lunch', 'Dinner', 'Snack']);
+  });
+
+  it('disables the stars while a rating is saving and clears a previous rating error', async () => {
+    const pending = deferred<Meal>();
+    const rateMeal = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockReturnValueOnce(pending.promise);
+
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const starButtons = () => Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'));
+
+    starButtons()[0].click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to save your rating. Try again.');
+    expect(starButtons().every((button) => !button.disabled)).toBe(true);
+
+    starButtons()[3].click();
+    fixture.detectChanges();
+    expect(rateMeal).toHaveBeenLastCalledWith('child-1', 'meal-from', 4, null);
+    expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
+    expect(starButtons().every((button) => button.disabled)).toBe(true);
+
+    pending.resolve(mealWithRatings([{ childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' }]));
+    await settle(fixture);
+    expect(starButtons().every((button) => !button.disabled)).toBe(true);
+    expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
+  });
+
+  it("shows only the current child's rating when other children also rated the meal", async () => {
+    const rateMeal = vi.fn(async () =>
+      mealWithRatings([
+        { childId: 'child-2', stars: 1, comment: 'Yuck', ratedAt: '2026-01-01T00:00:00Z' },
+        { childId: 'child-1', stars: 4, comment: 'Tasty', ratedAt: '2026-01-01T00:00:00Z' }
+      ])
+    );
+
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]')[3].click();
+    await settle(fixture);
+
+    const lit = Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]')).map((button) =>
+      button.classList.contains('text-amber-400')
+    );
+    expect(lit).toEqual([true, true, true, true, false]);
+    expect(compiled.textContent).toContain('Tasty');
+    expect(compiled.textContent).not.toContain('Yuck');
+  });
+
+  it('opens an empty note for an unrated meal and saves the trimmed comment', async () => {
+    const rateMeal = vi.fn(async () => mealWithRatings([{ childId: 'child-1', stars: 5, comment: 'Yum', ratedAt: '2026-01-01T00:00:00Z' }]));
+
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Add a note')?.click();
+    fixture.detectChanges();
+
+    const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea')!;
+    expect(textarea.value).toBe('');
+
+    textarea.value = '  Yum  ';
+    textarea.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    findButtonByText(compiled, 'Save')?.click();
+    await settle(fixture);
+
+    expect(rateMeal).toHaveBeenCalledExactlyOnceWith('child-1', 'meal-from', 5, 'Yum');
+  });
+
+  it('clears a load error once a later week loads successfully', async () => {
+    const listMealPlan = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockImplementation(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]);
+    const { fixture } = await setup({ mealplans: { listMealPlan } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Something went wrong loading your meals. Try again in a bit.');
+
+    findButtonByText(compiled, '← Previous week')?.click();
+    await settle(fixture);
+
+    expect(listMealPlan).toHaveBeenLastCalledWith({ kind: 'family', childId: 'child-1' }, addDaysIso(todayIsoDate(), -14), addDaysIso(todayIsoDate(), -8));
+    expect(compiled.textContent).not.toContain('Something went wrong loading your meals. Try again in a bit.');
+    expect(compiled.textContent).toContain('Meal meal-from');
   });
 });

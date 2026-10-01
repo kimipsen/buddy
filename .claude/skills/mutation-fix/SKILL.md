@@ -43,7 +43,9 @@ Read the source file and its colocated spec (`foo.ts` → `foo.spec.ts`) before 
 ```ts
 // Stryker disable next-line <MutatorName>: <why it's equivalent>
 ```
-Only do this when you can state concretely why it's equivalent. "Hard to test" is not equivalent.
+Only do this when you can state concretely why it's equivalent. "Hard to test" is not equivalent, and code that can never run is dead code, not an equivalent mutant (see the fixing rules below).
+
+A disable comment applies to the next line's nodes only: list every mutator that survives on that line (`// Stryker disable next-line StringLiteral,CallExpression: ...`), and don't put one above `} catch {` / `} finally {` — it gets attached to the `try` block and has no effect on the catch/finally body.
 
 **Not worth killing — leave and report.** Low-value mutants where a test would only pin incidental detail: `console.*` / logging message text, purely cosmetic strings with no product meaning, framework boilerplate (e.g. `providedIn: 'root'`, decorator metadata) where a test would just restate the config. Don't suppress these; list them in the final report so the user can decide.
 
@@ -53,7 +55,8 @@ Fixing rules:
 
 - **Change tests, not production code.** Add or tighten assertions in the existing spec (match its style: TestBed setup, `HttpTestingController`, helpers already in the file). Assert on the precise value the mutant changes — exact URL, exact payload, exact boundary — rather than just "was called" or "is truthy".
 - Test boundaries on both sides for `EqualityOperator` / `ConditionalExpression` survivors; test both branches for `LogicalOperator` / `BooleanLiteral`; for `StringLiteral` survivors that matter, assert the exact string; for `BlockStatement` / `NoCoverage`, add a test that actually exercises the code path.
-- If a survivor reveals dead or unreachable production code, or a real bug, don't paper over it — note it for the user and ask before changing production code.
+- **Dead or unreachable production code: delete it** (the one production change allowed without asking) rather than suppressing its mutants — e.g. a signal nothing reads, a fallback branch the preceding guards make impossible. Keep the deletion minimal and behaviour-preserving, run the spec and `npx tsc --noEmit -p tsconfig.app.json`, and list each deletion in the report. A `// Stryker disable` is never the answer for dead code.
+- If a survivor reveals a real bug, don't paper over it — note it for the user and ask before changing production code.
 - Keep new tests meaningful on their own; don't write a test whose only purpose is to name the mutant.
 
 After editing, run just the affected specs to confirm they pass (the real code must still be green):
@@ -86,7 +89,8 @@ Finish with a short summary:
 - the batch's files, with mutation score before → after;
 - how many survivors were killed, and which specs were changed;
 - every `// Stryker disable` added, with its reason;
-- anything left unfixed (not-worth-it or stuck), with the reason, and any possible bugs or dead code found;
+- any dead code deleted;
+- anything left unfixed (not-worth-it or stuck), with the reason, and any possible bugs found;
 - that `reports/stryker-incremental.json` changed — it's the committed baseline the nightly CI run starts from, so it should be committed together with the spec changes.
 
 Don't commit unless the user asks. The HTML report for a closer look is at `reports/mutation/index.html`.
@@ -98,6 +102,6 @@ A cycle takes long enough that the user has usually walked away, so end every cy
 - finished: `mutation-fix done: batch 51-55, 86.5%→100%, 5 killed, 1 left (not worth it). Specs changed, uncommitted.`
 - stuck or hit `MAX_ROUNDS`: `mutation-fix stuck: 3 survivors left in foo.service.ts after 4 rounds — needs your call.`
 
-Also notify (same format) whenever the loop stops early and needs the user: every file covered, Stryker failing before it tests mutants, or a survivor that points to a real bug or dead code and needs their go-ahead before production code changes.
+Also notify (same format) whenever the loop stops early and needs the user: every file covered, Stryker failing before it tests mutants, or a survivor that points to a real bug and needs their go-ahead before production code changes.
 
 Send only one notification per cycle, plus these early stops. Don't notify after the individual Stryker runs in steps 1 and 4. If the tool says the notification wasn't sent (for example because the user is at the terminal), that's fine; don't retry.

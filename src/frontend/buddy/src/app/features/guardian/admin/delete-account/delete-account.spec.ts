@@ -101,6 +101,36 @@ describe('DeleteAccount', () => {
     expect(backdrop(compiled)).toBeFalsy();
   });
 
+  it('closes the confirm dialog when Escape is pressed', () => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    findButtonByText(compiled, 'Delete my account')!.click();
+    fixture.detectChanges();
+    expect(backdrop(compiled)).toBeTruthy();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(backdrop(compiled)).toBeFalsy();
+  });
+
+  it('keeps the confirm dialog open on Escape while the delete request is in flight', () => {
+    const deleteCurrentUser = vi.fn(() => new Promise<void>(() => undefined));
+    const { fixture } = setup({ users: { deleteCurrentUser } });
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    findButtonByText(compiled, 'Delete my account')!.click();
+    fixture.detectChanges();
+    findButtonByText(compiled, 'Yes, delete my account')!.click();
+    fixture.detectChanges();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(backdrop(compiled)).toBeTruthy();
+  });
+
   it('deletes the current user with no arguments and logs out on success', async () => {
     const { fixture, users, auth } = setup();
     const compiled = fixture.nativeElement as HTMLElement;
@@ -160,6 +190,26 @@ describe('DeleteAccount', () => {
     expect(backdrop(compiled)).toBeTruthy();
     expect(findButtonByText(compiled, 'Cancel')?.disabled).toBe(false);
     expect(findButtonByText(compiled, 'Yes, delete my account')?.disabled).toBe(false);
+  });
+
+  it('clears a previous error as soon as deletion is retried', async () => {
+    const deleteCurrentUser = vi
+      .fn<UsersService['deleteCurrentUser']>()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockImplementation(() => new Promise<void>(() => undefined));
+    const { fixture } = setup({ users: { deleteCurrentUser } });
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    findButtonByText(compiled, 'Delete my account')!.click();
+    fixture.detectChanges();
+    findButtonByText(compiled, 'Yes, delete my account')!.click();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to delete your account.');
+
+    findButtonByText(compiled, 'Yes, delete my account')!.click();
+    fixture.detectChanges();
+
+    expect(compiled.textContent).not.toContain('Unable to delete your account.');
   });
 
   it('clears a previous error when the confirm dialog is reopened', async () => {

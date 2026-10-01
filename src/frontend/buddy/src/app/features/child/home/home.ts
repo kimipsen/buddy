@@ -74,7 +74,6 @@ export class ChildHome implements OnInit, OnDestroy {
   protected readonly guardianList = signal<GuardianSummary[]>([]);
   protected readonly siblingList = signal<SiblingSummary[]>([]);
   protected readonly todaysPickups = signal<PickupOccurrence[]>([]);
-  protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
   // Pickups, meals, doses, and tasks all feed hasAnything() -- until every one of them has
@@ -93,6 +92,7 @@ export class ChildHome implements OnInit, OnDestroy {
   // doesn't have to remember how a meal was by the time they'd next see it there.
   protected readonly savingSlot = signal<MealSlot | null>(null);
   protected readonly editingSlot = signal<MealSlot | null>(null);
+  // Stryker disable next-line StringLiteral: startEditing() always overwrites the draft before the textarea (its only reader) renders
   protected readonly commentDraft = signal('');
   private childId: string | null = null;
 
@@ -228,13 +228,7 @@ export class ChildHome implements OnInit, OnDestroy {
   }
 
   private async loadGuardians(): Promise<void> {
-    this.loading.set(true);
-
-    try {
-      this.guardianList.set(await this.guardians.listMyGuardians());
-    } finally {
-      this.loading.set(false);
-    }
+    this.guardianList.set(await this.guardians.listMyGuardians());
   }
 
   private async loadSiblings(): Promise<void> {
@@ -278,6 +272,7 @@ export class ChildHome implements OnInit, OnDestroy {
 
   protected cancelEditing(): void {
     this.editingSlot.set(null);
+    // Stryker disable next-line StringLiteral,CallExpression: the draft is only read while editing, and startEditing() overwrites it before that
     this.commentDraft.set('');
   }
 
@@ -313,6 +308,7 @@ export class ChildHome implements OnInit, OnDestroy {
         const next = { ...current };
 
         for (const [slot, existing] of Object.entries(next)) {
+          // Stryker disable next-line OptionalChaining: entriesBySlot only ever holds defined entries (loadMeals assigns real entries only), so `existing` is never undefined
           if (existing?.mealId === entry.mealId) {
             next[Number(slot) as MealSlot] = { ...existing, rating: myRating };
           }
@@ -350,6 +346,7 @@ export class ChildHome implements OnInit, OnDestroy {
 
     tasks.sort((a, b) => {
       if (a.dueAt === null) {
+        // Stryker disable next-line ConditionalExpression,EqualityOperator: this branch only returns 0 or 1 and V8's Array.prototype.sort only checks the comparator result with `< 0`, so every variant sorts the same
         return b.dueAt === null ? 0 : 1;
       }
 
@@ -362,6 +359,7 @@ export class ChildHome implements OnInit, OnDestroy {
 
     events.sort((a, b) => {
       if (a.startsAt === null) {
+        // Stryker disable next-line ConditionalExpression,EqualityOperator: this branch only returns 0 or 1 and V8's Array.prototype.sort only checks the comparator result with `< 0`, so every variant sorts the same
         return b.startsAt === null ? 0 : 1;
       }
 
@@ -389,8 +387,8 @@ export class ChildHome implements OnInit, OnDestroy {
       return { isPast: false, isOngoing: false, progressPercent: 0 };
     }
 
-    const progressPercent = endMs > startMs ? ((nowMs - startMs) / (endMs - startMs)) * 100 : 100;
-    return { isPast: false, isOngoing: true, progressPercent };
+    // startMs <= nowMs < endMs here, so the span is always positive.
+    return { isPast: false, isOngoing: true, progressPercent: ((nowMs - startMs) / (endMs - startMs)) * 100 };
   }
 
   // A gradient rather than a separate overlay element -- the card's own background fills in from

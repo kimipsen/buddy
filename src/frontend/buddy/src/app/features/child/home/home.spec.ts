@@ -1,12 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CalendarOccurrence, CalendarsService, TaskCompletion } from '../../../core/calendars.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
-import { MealPlanEntry, MealplansService } from '../../../core/mealplans.service';
+import { Meal, MealPlanEntry, MealplansService } from '../../../core/mealplans.service';
 import { MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupOccurrence, PickupsService } from '../../../core/pickups.service';
 import { ProgressService } from '../../../core/progress.service';
@@ -24,6 +24,71 @@ describe('ChildHome', () => {
   };
 
   const today = todayIsoDate();
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
+    return {
+      itemId: 'item-1',
+      kind: 1,
+      title: 'Item',
+      icon: '🧹',
+      iconOverride: null,
+      color: '#000',
+      startsAt: null,
+      endsAt: null,
+      dueAt: null,
+      isAllDay: false,
+      isCompleted: false,
+      createdBy: 'guardian-1',
+      lastModifiedBy: 'guardian-1',
+      assignedTo: 'child-1',
+      calendarId: 'cal-1',
+      calendarName: 'Home',
+      ...overrides
+    };
+  }
+
+  function doseOccurrence(overrides: Partial<MedicineDoseOccurrence> = {}): MedicineDoseOccurrence {
+    return { medicineId: 'med-1', name: 'Vitamin', dosage: '1 tablet', icon: '💊', color: '#0f0', date: today, time: '09:00:00', status: 0, ...overrides };
+  }
+
+  function ratedMeal(ratings: Meal['ratings']): Meal {
+    return {
+      id: 'meal-1',
+      name: 'Pancakes',
+      description: null,
+      icon: '🥞',
+      color: '#f00',
+      isArchived: false,
+      ratings,
+      createdBy: 'guardian-1',
+      lastModifiedBy: 'guardian-1'
+    };
+  }
+
+  // The <li> rows of the dashboard card headed by the given (translated) title, each row's text
+  // with whitespace collapsed.
+  function sectionRows(compiled: HTMLElement, heading: string): HTMLLIElement[] {
+    const h2 = Array.from(compiled.querySelectorAll('h2')).find((element) => element.textContent?.trim() === heading);
+    return h2 ? Array.from(h2.parentElement!.querySelectorAll<HTMLLIElement>(':scope > ul > li')) : [];
+  }
+
+  function rowText(row: Element): string {
+    return (row.textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
 
   function mealEntry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
     return {
@@ -433,5 +498,437 @@ describe('ChildHome', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Sam');
+  });
+
+  describe('progress badge', () => {
+    it('shows the default seedling badge while progress is still loading', async () => {
+      const { fixture } = await setup({ progress: { getMyProgress: vi.fn(() => new Promise<never>(() => undefined)) } });
+      await settle(fixture);
+
+      const badge = (fixture.nativeElement as HTMLElement).querySelector('app-progress-badge')!;
+      expect(badge.querySelector('.text-3xl')?.textContent?.trim()).toBe('🌱');
+      expect(rowText(badge)).toContain('0 stars');
+    });
+
+    it('shows the loaded progress', async () => {
+      const { fixture } = await setup({
+        progress: { getMyProgress: vi.fn(async () => ({ totalStars: 7, unlockedMilestones: [], currentIcon: '🌳', nextGoalThreshold: 10, nextGoalIcon: '🏆', goalPosts: [] })) }
+      });
+      await settle(fixture);
+
+      const badge = (fixture.nativeElement as HTMLElement).querySelector('app-progress-badge')!;
+      expect(badge.querySelector('.text-3xl')?.textContent?.trim()).toBe('🌳');
+      expect(rowText(badge)).toContain('7 stars');
+      expect(rowText(badge)).toContain('Next: 🏆 at 10');
+    });
+
+    it('keeps the default badge without an error message when progress fails to load', async () => {
+      const { fixture } = await setup({ progress: { getMyProgress: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('app-progress-badge .text-3xl')?.textContent?.trim()).toBe('🌱');
+      expect(compiled.textContent).not.toContain('Something went wrong');
+    });
+
+    it('re-reads progress after toggling a task', async () => {
+      const getMyProgress = vi
+        .fn()
+        .mockResolvedValueOnce({ totalStars: 1, unlockedMilestones: [], currentIcon: null, nextGoalThreshold: 5, nextGoalIcon: '🌱', goalPosts: [] })
+        .mockResolvedValueOnce({ totalStars: 2, unlockedMilestones: [], currentIcon: null, nextGoalThreshold: 5, nextGoalIcon: '🌱', goalPosts: [] });
+      const { fixture } = await setup({
+        progress: { getMyProgress },
+        calendars: { listTodayOccurrences: vi.fn(async () => [occurrence({ itemId: 'task-1', title: 'Clean' })]), setTaskCompletion: vi.fn(async () => ({ itemId: 'task-1', occurrenceDate: today, isCompleted: true })) }
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(rowText(compiled.querySelector('app-progress-badge')!)).toContain('1 stars');
+
+      findButtonByAriaLabel(compiled, 'Mark done')!.click();
+      await settle(fixture);
+
+      expect(getMyProgress).toHaveBeenCalledTimes(2);
+      expect(rowText(compiled.querySelector('app-progress-badge')!)).toContain('2 stars');
+    });
+  });
+
+  describe('meals', () => {
+    it('lists every planned meal in slot order with its translated slot label', async () => {
+      const entries = [
+        mealEntry({ slot: 3, mealId: 'meal-4', mealName: 'Apple' }),
+        mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Sandwich' }),
+        mealEntry({ slot: 2, mealId: 'meal-3', mealName: 'Pasta' }),
+        mealEntry({ slot: 0, mealId: 'meal-1', mealName: 'Pancakes' })
+      ];
+      const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries) } });
+      await settle(fixture);
+
+      const rows = sectionRows(fixture.nativeElement as HTMLElement, 'Meals today');
+      expect(rows.map((row) => row.querySelector('span')?.textContent?.trim())).toEqual(['Breakfast', 'Lunch', 'Dinner', 'Snack']);
+      expect(rows.map((row) => rowText(row.querySelectorAll('span')[1]))).toEqual(['🥞 Pancakes', '🥞 Sandwich', '🥞 Pasta', '🥞 Apple']);
+    });
+
+    it('disables the meal\'s star buttons while a rating is saving and re-enables them afterwards', async () => {
+      const pending = deferred<Meal>();
+      const rateMeal = vi.fn(() => pending.promise);
+      const entries = [mealEntry({ slot: 0 }), mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Soup' })];
+      const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries), rateMeal } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const [breakfast, lunch] = sectionRows(compiled, 'Meals today');
+      const breakfastStars = () => Array.from(breakfast.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'));
+      const lunchStars = () => Array.from(lunch.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'));
+
+      breakfastStars()[1].click();
+      fixture.detectChanges();
+
+      expect(breakfastStars().every((button) => button.disabled)).toBe(true);
+      expect(lunchStars().some((button) => button.disabled)).toBe(false);
+
+      pending.resolve(ratedMeal([{ childId: 'child-1', stars: 2, comment: null, ratedAt: '2026-01-01T00:00:00Z' }]));
+      await settle(fixture);
+
+      expect(breakfastStars().some((button) => button.disabled)).toBe(false);
+    });
+
+    it('shows the rate error when rating fails, re-enables the stars, and clears the error on the next rating', async () => {
+      const rateMeal = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValueOnce(ratedMeal([{ childId: 'child-1', stars: 3, comment: null, ratedAt: '2026-01-01T00:00:00Z' }]));
+      const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]), rateMeal } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const stars = () => Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'));
+
+      stars()[2].click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Unable to save your rating. Try again.');
+      expect(stars().some((button) => button.disabled)).toBe(false);
+      expect(stars().some((button) => button.classList.contains('text-amber-400'))).toBe(false);
+
+      stars()[2].click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
+      expect(stars().map((button) => button.classList.contains('text-amber-400'))).toEqual([true, true, true, false, false]);
+    });
+
+    it('shows only the current child\'s rating and leaves other meals untouched', async () => {
+      const rateMeal = vi.fn(async () =>
+        ratedMeal([
+          { childId: 'sibling-1', stars: 1, comment: 'Yuck', ratedAt: '2026-01-01T00:00:00Z' },
+          { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' }
+        ])
+      );
+      const entries = [mealEntry({ slot: 0 }), mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Soup' })];
+      const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries), rateMeal } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const [breakfast, lunch] = sectionRows(compiled, 'Meals today');
+      const amber = (row: HTMLElement) => Array.from(row.querySelectorAll('button[aria-label^="Rate"]')).map((button) => button.classList.contains('text-amber-400'));
+
+      (breakfast.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]')[3]).click();
+      await settle(fixture);
+
+      expect(amber(breakfast)).toEqual([true, true, true, true, false]);
+      expect(compiled.textContent).not.toContain('Yuck');
+      expect(amber(lunch)).toEqual([false, false, false, false, false]);
+    });
+
+    it('starts an empty note for an unrated meal and saves the trimmed comment', async () => {
+      const rateMeal = vi.fn(async () => ratedMeal([{ childId: 'child-1', stars: 5, comment: 'Yummy!', ratedAt: '2026-01-01T00:00:00Z' }]));
+      const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]), rateMeal } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Add a note')!.click();
+      fixture.detectChanges();
+
+      const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea')!;
+      expect(textarea.value).toBe('');
+
+      textarea.value = '  Yummy!  ';
+      textarea.dispatchEvent(new Event('input'));
+      findButtonByText(compiled, 'Save')!.click();
+      await settle(fixture);
+
+      expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-1', 5, 'Yummy!');
+    });
+
+    it('saves a whitespace-only note as no comment, keeping the existing star count', async () => {
+      const rateMeal = vi.fn(async () => ratedMeal([{ childId: 'child-1', stars: 2, comment: null, ratedAt: '2026-01-01T00:00:00Z' }]));
+      const entry = mealEntry({ rating: { stars: 2, comment: 'Old note', ratedAt: '2026-01-01T00:00:00Z' } });
+      const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [entry]), rateMeal } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Edit note')!.click();
+      fixture.detectChanges();
+
+      const textarea = compiled.querySelector<HTMLTextAreaElement>('textarea')!;
+      expect(textarea.value).toBe('Old note');
+
+      textarea.value = '   ';
+      textarea.dispatchEvent(new Event('input'));
+      findButtonByText(compiled, 'Save')!.click();
+      await settle(fixture);
+
+      expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-1', 2, null);
+    });
+  });
+
+  describe('medicine', () => {
+    it('lists doses sorted by time', async () => {
+      const doses = [doseOccurrence({ medicineId: 'med-2', name: 'Evening', time: '19:00:00' }), doseOccurrence({ medicineId: 'med-1', name: 'Morning', time: '08:30:00' })];
+      const { fixture } = await setup({ medicines: { listDoses: vi.fn(async () => doses) } });
+      await settle(fixture);
+
+      const rows = sectionRows(fixture.nativeElement as HTMLElement, 'Medicine today');
+      expect(rows.map((row) => row.querySelector('span')?.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['💊 Morning 08:30', '💊 Evening 19:00']);
+    });
+
+    it('disables only the saving dose while in flight, updates only that dose, and re-enables afterwards', async () => {
+      const doses = [doseOccurrence({ medicineId: 'med-1', name: 'Morning' }), doseOccurrence({ medicineId: 'med-2', name: 'Other' })];
+      const pending = deferred<MedicineDoseOccurrence>();
+      const setDoseStatus = vi.fn(() => pending.promise);
+      const { fixture } = await setup({ medicines: { listDoses: vi.fn(async () => doses), setDoseStatus } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const rows = () => sectionRows(compiled, 'Medicine today');
+      const buttons = (index: number) => Array.from(rows()[index].querySelectorAll('button'));
+
+      findButtonByText(rows()[0], 'Skip')!.click();
+      await settle(fixture);
+
+      expect(setDoseStatus).toHaveBeenCalledWith('child-1', 'med-1', today, '09:00:00', 2);
+      expect(buttons(0).map((button) => button.disabled)).toEqual([true, true]);
+      expect(buttons(1).map((button) => button.disabled)).toEqual([false, false]);
+
+      pending.resolve({ ...doses[0], status: 2 });
+      await settle(fixture);
+
+      expect(rowText(rows()[0])).toContain('Skipped');
+      expect(buttons(0).map((button) => [button.textContent?.trim(), button.disabled])).toEqual([['Undo', false]]);
+      expect(buttons(1).map((button) => button.textContent?.trim())).toEqual(['Taken', 'Skip']);
+    });
+
+    it('shows the error message and re-enables the dose when saving its status fails', async () => {
+      const setDoseStatus = vi.fn(async () => Promise.reject(new Error('boom')));
+      const { fixture } = await setup({ medicines: { listDoses: vi.fn(async () => [doseOccurrence()]), setDoseStatus } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Taken')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
+      expect(findButtonByText(compiled, 'Taken')!.disabled).toBe(false);
+      expect(findButtonByText(compiled, 'Skip')!.disabled).toBe(false);
+    });
+  });
+
+  describe('tasks', () => {
+    const taskTitles = (compiled: HTMLElement) => sectionRows(compiled, 'Tasks today').map((row) => rowText(row));
+
+    it('lists only tasks, those with a due time first in due order, then undated ones in their original order', async () => {
+      const occurrences = [
+        occurrence({ itemId: 't-a', title: 'Alpha', dueAt: null }),
+        occurrence({ itemId: 't-b', title: 'Bravo', dueAt: `${today}T10:00:00Z` }),
+        occurrence({ itemId: 'e-1', kind: 0, title: 'Party', icon: '🎉', startsAt: `${today}T15:00:00Z`, endsAt: `${today}T16:00:00Z` }),
+        occurrence({ itemId: 't-c', title: 'Charlie', dueAt: `${today}T09:00:00Z` }),
+        occurrence({ itemId: 't-d', title: 'Delta', dueAt: null }),
+        occurrence({ itemId: 't-e', title: 'Echo', dueAt: `${today}T11:00:00Z` }),
+        occurrence({ itemId: 't-f', title: 'Foxtrot', dueAt: null })
+      ];
+      const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => occurrences) } });
+      await settle(fixture);
+
+      expect(taskTitles(fixture.nativeElement as HTMLElement)).toEqual(['🧹 Charlie', '🧹 Bravo', '🧹 Echo', '🧹 Alpha', '🧹 Delta', '🧹 Foxtrot']);
+    });
+
+    it('disables only the saving task while in flight and re-enables it afterwards', async () => {
+      const pending = deferred<TaskCompletion>();
+      const setTaskCompletion = vi.fn(() => pending.promise);
+      const occurrences = [occurrence({ itemId: 't-1', title: 'One' }), occurrence({ itemId: 't-2', title: 'Two' })];
+      const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => occurrences), setTaskCompletion } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const toggles = () => sectionRows(compiled, 'Tasks today').map((row) => row.querySelector('button')!);
+
+      toggles()[0].click();
+      fixture.detectChanges();
+
+      expect(toggles().map((button) => button.disabled)).toEqual([true, false]);
+
+      pending.resolve({ itemId: 't-1', occurrenceDate: today, isCompleted: true });
+      await settle(fixture);
+
+      expect(toggles().map((button) => button.disabled)).toEqual([false, false]);
+      expect(toggles().map((button) => button.getAttribute('aria-label'))).toEqual(['Mark not done', 'Mark done']);
+    });
+
+    it('shows the error message and re-enables the task when toggling fails', async () => {
+      const setTaskCompletion = vi.fn(async () => Promise.reject(new Error('boom')));
+      const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [occurrence()]), setTaskCompletion } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByAriaLabel(compiled, 'Mark done')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
+      const toggle = findButtonByAriaLabel(compiled, 'Mark done')!;
+      expect(toggle.disabled).toBe(false);
+    });
+  });
+
+  describe('events', () => {
+    const nowMs = Date.parse(`${today}T12:00:00Z`);
+    const at = (time: string) => `${today}T${time}Z`;
+
+    async function setupEvents(occurrences: CalendarOccurrence[]) {
+      vi.spyOn(Date, 'now').mockReturnValue(nowMs);
+      const context = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => occurrences) } });
+      await settle(context.fixture);
+      return context;
+    }
+
+    function eventState(row: HTMLLIElement) {
+      const label = row.querySelector('span')!;
+      return {
+        title: rowText(label),
+        isPast: label.classList.contains('line-through'),
+        background: row.style.background
+      };
+    }
+
+    // jsdom normalises the background shorthand, adding commas to rgb() and an explicit background-color.
+    const gradient = (percent: number) => `linear-gradient(to right, rgb(203, 213, 225) ${percent}%, transparent ${percent}%) transparent`;
+
+    it('lists only events, timed ones first by start, then untimed ones in their original order', async () => {
+      const { fixture } = await setupEvents([
+        occurrence({ itemId: 'e-a', kind: 0, title: 'Alpha', icon: '⚽', isAllDay: true }),
+        occurrence({ itemId: 'e-b', kind: 0, title: 'Bravo', icon: '⚽', startsAt: at('18:00:00'), endsAt: at('19:00:00') }),
+        occurrence({ itemId: 't-1', kind: 1, title: 'Chore', dueAt: at('08:00:00') }),
+        occurrence({ itemId: 'e-c', kind: 0, title: 'Charlie', icon: '⚽', startsAt: at('14:00:00'), endsAt: at('15:00:00') }),
+        occurrence({ itemId: 'e-d', kind: 0, title: 'Delta', icon: '⚽', isAllDay: true }),
+        occurrence({ itemId: 'e-e', kind: 0, title: 'Echo', icon: '⚽', startsAt: at('16:00:00'), endsAt: at('17:00:00') }),
+        occurrence({ itemId: 'e-f', kind: 0, title: 'Foxtrot', icon: '⚽', isAllDay: true })
+      ]);
+
+      const titles = sectionRows(fixture.nativeElement as HTMLElement, 'Events today').map((row) => rowText(row).split(' ')[1]);
+      expect(titles).toEqual(['Charlie', 'Echo', 'Bravo', 'Alpha', 'Delta', 'Foxtrot']);
+    });
+
+    it('marks past, ongoing, and upcoming events from the current time', async () => {
+      const { fixture } = await setupEvents([
+        occurrence({ itemId: 'past', kind: 0, title: 'Past', icon: '⚽', startsAt: at('09:00:00'), endsAt: at('10:00:00') }),
+        occurrence({ itemId: 'ends-now', kind: 0, title: 'EndsNow', icon: '⚽', startsAt: at('11:00:00'), endsAt: at('12:00:00') }),
+        occurrence({ itemId: 'ongoing', kind: 0, title: 'Ongoing', icon: '⚽', startsAt: at('11:00:00'), endsAt: at('15:00:00') }),
+        occurrence({ itemId: 'starts-now', kind: 0, title: 'StartsNow', icon: '⚽', startsAt: at('12:00:00'), endsAt: at('13:00:00') }),
+        occurrence({ itemId: 'upcoming', kind: 0, title: 'Upcoming', icon: '⚽', startsAt: at('12:00:01'), endsAt: at('13:00:00') }),
+        occurrence({ itemId: 'instant', kind: 0, title: 'Instant', icon: '⚽', startsAt: at('12:00:00'), endsAt: null }),
+        occurrence({ itemId: 'all-day', kind: 0, title: 'AllDay', icon: '⚽', isAllDay: true, startsAt: at('00:00:00'), endsAt: at('23:59:00') }),
+        occurrence({ itemId: 'untimed', kind: 0, title: 'Untimed', icon: '⚽' })
+      ]);
+
+      const states = sectionRows(fixture.nativeElement as HTMLElement, 'Events today').map(eventState);
+      expect(states).toEqual([
+        { title: '⚽ AllDay', isPast: false, background: '' },
+        { title: '⚽ Past ✓', isPast: true, background: '' },
+        { title: '⚽ EndsNow ✓', isPast: true, background: '' },
+        { title: '⚽ Ongoing', isPast: false, background: gradient(25) },
+        { title: '⚽ StartsNow', isPast: false, background: gradient(0) },
+        { title: '⚽ Instant ✓', isPast: true, background: '' },
+        { title: '⚽ Upcoming', isPast: false, background: '' },
+        { title: '⚽ Untimed', isPast: false, background: '' }
+      ]);
+    });
+
+    it('refreshes the ongoing progress every minute and stops the timer on destroy', async () => {
+      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+      const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+      const { fixture } = await setupEvents([occurrence({ itemId: 'ongoing', kind: 0, title: 'Ongoing', icon: '⚽', startsAt: at('11:00:00'), endsAt: at('13:00:00') })]);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const row = () => sectionRows(compiled, 'Events today')[0];
+      expect(row().style.background).toBe(gradient(50));
+
+      const callIndex = setIntervalSpy.mock.calls.findIndex(([, delay]) => delay === 60_000);
+      expect(callIndex).toBeGreaterThanOrEqual(0);
+      const tick = setIntervalSpy.mock.calls[callIndex][0] as () => void;
+      const intervalId = setIntervalSpy.mock.results[callIndex].value;
+
+      vi.mocked(Date.now).mockReturnValue(Date.parse(at('12:30:00')));
+      tick();
+      fixture.detectChanges();
+      expect(row().style.background).toBe(gradient(75));
+
+      vi.mocked(Date.now).mockReturnValue(Date.parse(at('13:00:00')));
+      tick();
+      fixture.detectChanges();
+      expect(eventState(row())).toEqual({ title: '⚽ Ongoing ✓', isPast: true, background: '' });
+
+      fixture.destroy();
+      expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
+    });
+  });
+
+  describe('pickup assignee names', () => {
+    function pickup(overrides: Partial<PickupOccurrence>): PickupOccurrence {
+      return {
+        date: today,
+        slot: 0,
+        kind: 0,
+        guardianId: null,
+        siblingChildId: null,
+        playdateHostName: null,
+        playdateLocation: null,
+        playdateContactInfo: null,
+        time: null,
+        notes: null,
+        assignedBy: 'guardian-1',
+        ...overrides
+      };
+    }
+
+    const guardianList: GuardianSummary[] = [
+      { id: 'guardian-1', name: { givenName: 'Gina', familyName: 'G' }, guardianLinkId: 'link-1', kind: 0 },
+      { id: 'guardian-2', name: { givenName: 'Gus', familyName: 'G' }, guardianLinkId: 'link-2', kind: 0 }
+    ];
+    const siblingList: SiblingSummary[] = [
+      { id: 'sib-1', name: { givenName: 'Sam', familyName: 'S' } },
+      { id: 'sib-2', name: { givenName: 'Sue', familyName: 'S' } }
+    ];
+
+    it('picks the matching guardian or sibling by id', async () => {
+      const { fixture } = await setup({
+        guardians: { listMyGuardians: vi.fn(async () => guardianList), listMySiblings: vi.fn(async () => siblingList) },
+        pickups: { listSchedule: vi.fn(async () => [pickup({ slot: 0, kind: 0, guardianId: 'guardian-2' }), pickup({ slot: 1, kind: 2, siblingChildId: 'sib-2' })]) }
+      });
+      await settle(fixture);
+
+      const rows = sectionRows(fixture.nativeElement as HTMLElement, 'Today’s pickup & drop-off').map(rowText);
+      expect(rows).toEqual(['Drop-off👤 Gus', 'Pickup🧒 Sue']);
+    });
+
+    it('falls back to the generic label when the guardian or sibling is unknown', async () => {
+      const { fixture } = await setup({
+        guardians: { listMyGuardians: vi.fn(async () => guardianList), listMySiblings: vi.fn(async () => Promise.reject(new Error('boom'))) },
+        pickups: { listSchedule: vi.fn(async () => [pickup({ slot: 0, kind: 0, guardianId: 'guardian-9' }), pickup({ slot: 1, kind: 2, siblingChildId: 'sib-1' })]) }
+      });
+      await settle(fixture);
+
+      const rows = sectionRows(fixture.nativeElement as HTMLElement, 'Today’s pickup & drop-off').map(rowText);
+      expect(rows).toEqual(['Drop-off👤 A guardian', 'Pickup🧒 A sibling']);
+    });
   });
 });
