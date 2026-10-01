@@ -1,15 +1,16 @@
-import { SEEDED_USERS, expect, test } from './support/auth-fixture';
+import { expect, test } from './support/auth-fixture';
 import { uniqueName } from './support/guardian-data';
 import { getMessageText, getMessagesTo } from './support/mailpit-client';
 
 // Changing a guardian's email address is the real minimal path to a fresh verification email --
 // UpdateEmailHandler on the backend only sends one when the new value actually differs from the
 // current one (a no-op "change" to the same address is silently skipped, so alice/bob/carol's
-// original signup-time verification state is never touched by this spec). Uses bob, matching
-// guardian-dashboard.spec.ts/medicine-dose-status.spec.ts's existing choice, since profile-update
-// already leans on carol.
-test('guardian verifies a newly-changed email address via the emailed link', async ({ page, loginAs }) => {
-  await loginAs(SEEDED_USERS.bob);
+// original signup-time verification state is never touched by this spec). Runs as a disposable
+// guardian (newGuardian), not a seeded one: the change is permanent, and when this ran as bob it
+// changed his email mid-flight under guardian-invite-accept.spec.ts (which had just invited bob's
+// previous address), making that spec's accept 403 in parallel runs.
+test('guardian verifies a newly-changed email address via the emailed link', async ({ page, loginAs, newGuardian }) => {
+  await loginAs(await newGuardian());
 
   const newEmail = `${uniqueName('e2everify').toLowerCase()}@buddy.test`;
 

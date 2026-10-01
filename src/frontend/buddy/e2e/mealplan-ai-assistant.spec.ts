@@ -1,4 +1,4 @@
-import { SEEDED_USERS, expect, test } from './support/auth-fixture';
+import { expect, test } from './support/auth-fixture';
 import { createChild } from './support/guardian-data';
 
 // The AI mealplan assistant (MealplanAiAssistant / ai-assistant.ts) has three server round-trips:
@@ -14,9 +14,13 @@ import { createChild } from './support/guardian-data';
 // exact AiSessionView shape from ai-assistant.service.ts (not a guess).
 test('guardian configures a provider, toggles slots, starts/discards a real session, and sends a stubbed chat message', async ({
   page,
-  loginAs
+  loginAs,
+  newGuardian
 }) => {
-  await loginAs(SEEDED_USERS.bob);
+  // A disposable guardian (newGuardian): the AI credential is family-wide and anchored to a child,
+  // and a seeded guardian's family is shared with every parallel test, whose cleanup revokes links
+  // to their children mid-flow. A fresh guardian with one child has a family nobody else touches.
+  await loginAs(await newGuardian());
 
   // hasChildren gates the whole page (MealplanAiAssistant.load), same as the plain mealplan page.
   await createChild(page);
@@ -26,17 +30,25 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
   await page.goto('/guardian/mealplan/ai-assistant');
   await expect(page.getByRole('heading', { name: 'Chat with your assistant to draft a plan.' })).toBeVisible();
 
+  // The "Chat with your assistant" heading above is static (rendered before load() finishes) and
+  // hasProviderConfigured() defaults to true, so neither proves the provider lookup has landed. A
+  // plain isVisible() here ran before GET /ai/providers resolved, always read "no message" and
+  // skipped the setup branch -- harmless only while the family happened to have an active key.
+  // That's not a safe assumption: the AI credential is family-wide but anchored to one child's
+  // index row, so once that child's links are revoked (the created-data cleanup does that after
+  // every test) the family has no provider again. Wait for whichever post-load view appears.
   const noProviderMessage = page.getByText('Add an AI provider API key in Settings before starting a session.');
-  const hasProvider = !(await noProviderMessage.isVisible().catch(() => false));
+  const startHeading = page.getByRole('heading', { name: 'Start a new session' });
+  await expect(noProviderMessage.or(startHeading)).toBeVisible();
+  const hasProvider = !(await noProviderMessage.isVisible());
 
   if (!hasProvider) {
     await expect(page.getByRole('link', { name: 'Go to Settings' })).toHaveAttribute('href', '/guardian/admin');
 
     // Configure a real (fake-value) provider key via the admin UI -- this only ever validates,
     // encrypts and stores the key (SetProviderApiKeyHandler never calls a provider), so it's safe
-    // to do for real rather than stubbing hasProviderConfigured() on the frontend. Bob accumulates
-    // AI provider state across repeated local runs of this spec (nothing here is cleaned up
-    // between runs, same as every other e2e helper), so this only adds a key if none is active yet.
+    // to do for real rather than stubbing hasProviderConfigured() on the frontend. The guardian is
+    // fresh (no key yet), but this still only adds a key if none is active, to stay idempotent.
     await page.goto('/guardian/admin');
     const aiSection = page.locator('app-ai-provider-settings');
     await expect(aiSection.getByRole('heading', { name: 'AI mealplan assistant' })).toBeVisible();

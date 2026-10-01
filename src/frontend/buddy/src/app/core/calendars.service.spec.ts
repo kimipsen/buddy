@@ -20,6 +20,7 @@ import {
   UpdateItemDetailsRequest
 } from './calendars.service';
 import { todayIsoDate } from './date-utils';
+import { PER_ITEM_REQUEST_CONCURRENCY } from './map-with-concurrency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 describe('CalendarsService', () => {
@@ -566,6 +567,39 @@ describe('CalendarsService', () => {
         { ...homeOccurrence, calendarId: 'cal-1', calendarName: 'Home' },
         { ...workOccurrence, calendarId: 'cal-2', calendarName: 'Work' }
       ] satisfies CalendarOccurrence[]);
+    });
+
+    // Regression guard for the per-calendar burst: one occurrences request per calendar used to
+    // fire for every calendar at once. Never more than the shared cap in flight now.
+    it('keeps at most PER_ITEM_REQUEST_CONCURRENCY occurrence requests in flight and still fetches every calendar', async () => {
+      const calendarCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
+      const calendars = Array.from({ length: calendarCount }, (_, i) => calendar({ id: `cal-${i}`, name: `Cal ${i}` }));
+      const isOccurrencesRequest = (r: { url: string }) => /\/calendars\/cal-\d+\/occurrences$/.test(r.url);
+
+      const promise = service.listOccurrencesInRange('2026-08-01', '2026-08-31');
+      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush(calendars);
+      await flushMicrotasks();
+
+      const requestedUrls: string[] = [];
+      let maxInFlight = 0;
+      for (;;) {
+        const inFlight = httpMock.match(isOccurrencesRequest);
+        if (inFlight.length === 0) {
+          break;
+        }
+        maxInFlight = Math.max(maxInFlight, inFlight.length);
+        expect(inFlight.length).toBeLessThanOrEqual(PER_ITEM_REQUEST_CONCURRENCY);
+        for (const req of inFlight) {
+          requestedUrls.push(req.request.url);
+          req.flush([occurrence({ itemId: req.request.url })]);
+        }
+        await flushMicrotasks();
+      }
+
+      expect(maxInFlight).toBe(PER_ITEM_REQUEST_CONCURRENCY);
+      expect(requestedUrls).toHaveLength(calendarCount);
+      const result = await promise;
+      expect(result.map((o) => o.calendarId)).toEqual(calendars.map((c) => c.id));
     });
 
     it('resolves with an empty array when the caller has no calendars at all', async () => {

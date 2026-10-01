@@ -1,3 +1,4 @@
+using buddy.Common.Concurrency;
 using buddy.Common.Idempotency;
 using buddy.Email;
 using buddy.Features.Calendars;
@@ -28,6 +29,10 @@ builder.Host.UseWolverine(opts =>
     // Same reasoning as above: IAiProviderRegistry ultimately holds a typed HttpClient
     // (AnthropicChatClient), which Wolverine's constructor-codegen can't inline either.
     opts.CodeGeneration.AlwaysUseServiceLocationFor<IAiProviderRegistry>();
+
+    // Optimistic concurrency: every handler invocation tracks the stream versions its store
+    // reads saw, so the matching appends are expected-version appends (see StreamVersionTracker).
+    opts.Policies.AddMiddleware(typeof(StreamVersionScopeMiddleware));
 });
 
 // Add services to the container.
@@ -87,6 +92,9 @@ else
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
+// Outside UseIdempotencyKeys: a request that lost a concurrency race gets 409 and its
+// Idempotency-Key released, so the client can retry it with the same key.
+app.UseConcurrencyConflicts();
 app.UseIdempotencyKeys();
 
 app.MapHealthChecks("/health");

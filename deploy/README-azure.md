@@ -43,8 +43,10 @@ cp .env.example .env
 
 `RESOURCE_GROUP` is the named resource group everything gets created in —
 change it if `buddy-rg` isn't what you want. `KEYCLOAK_ADMIN_CLI_SECRET` can
-be a placeholder for now; you'll generate the real one in step 5 and update
-the `api` app.
+be a placeholder for now; you'll generate the real one in step 4 ("Configure
+the realm") and update the `api` app. `.claude/skills/deploy/check-env.sh
+deploy/azure` compares `.env` with `.env.example` by key name and flags
+values still equal to an `.env.example` placeholder, without printing values.
 
 ## 3. Deploy
 
@@ -59,8 +61,9 @@ This, in order:
 2. Creates the resource group.
 3. Creates an Azure Container Registry (admin credentials enabled, used by
    Container Apps to pull images).
-4. Creates the PostgreSQL Flexible Server, opens it to Azure services only,
-   and creates both the `buddy` app database and the `keycloak` database.
+4. Creates the PostgreSQL Flexible Server, makes sure public network access
+   is on (only if it's currently off; see "Postgres network exposure"
+   below), opens the firewall to Azure services only, and creates both the `buddy` app database and the `keycloak` database.
 5. Creates the Container Apps environment, then computes the three apps'
    final FQDNs (`<app-name>.<environment-domain>`) up front — Container Apps
    FQDNs are deterministic, so every app's env vars can reference its peers'
@@ -77,7 +80,7 @@ This, in order:
 9. Points Keycloak's `buddy` realm at the same Gmail SMTP credentials via its
    Admin REST API, so Keycloak's own emails (password resets, address
    verification) send too — skipped with a note on the very first run, since
-   the realm doesn't exist until step 4 below.
+   the realm doesn't exist until you finish step 4 ("Configure the realm").
 
 At the end it prints the three `https://*.azurecontainerapps.io` URLs.
 
@@ -143,7 +146,7 @@ Gmail SMTP needs nothing beyond a Google account.
 `deploy.sh` sets `Mail__Host`/`Mail__Port`/`Mail__Username`/`Mail__Password`/
 `Mail__FromAddress` on the `api` app (password via a `mail-smtp-password`
 Container App secret, same as every other credential in this script), and —
-once the `buddy` realm exists (step 4 below) — configures Keycloak's Realm
+once the `buddy` realm exists (step 4, "Configure the realm") — configures Keycloak's Realm
 Settings > Email to match via the Admin REST API. On the very first
 `./deploy.sh` run the realm doesn't exist yet, so that last part just prints a
 note and skips — rerun `./deploy.sh` after finishing step 4 to pick it up (or
@@ -187,6 +190,124 @@ binding step prints the exact record to create and the command to fetch its
 value — create it and rerun `./deploy.sh` again. Azure issues and manages the
 TLS certificate for you once the records resolve.
 
+## 7. Verify the deploy
+
+`deploy.sh` exits non-zero if any `az` step fails, and prints `!!` lines for
+non-fatal problems (custom domain not bound yet, Keycloak SMTP skipped). Then
+check the running state (all read-only). Load `.env` first as in step 4, and
+use the URLs `deploy.sh` printed:
+
+```
+az containerapp list -g "$RESOURCE_GROUP" \
+  --query "[].{name:name, status:properties.runningStatus, revision:properties.latestRevisionName, ready:properties.latestReadyRevisionName}" -o table
+az containerapp revision list -n api -g "$RESOURCE_GROUP" \
+  --query "[].{name:name, active:properties.active, health:properties.healthState, running:properties.runningState, traffic:properties.trafficWeight}" -o table
+
+curl -fsS  https://<api host>/health              # -> Healthy
+curl -fsSI https://<frontend host>/ | head -1     # -> HTTP/2 200
+curl -fsS  https://<frontend host>/config/runtime-config.json   # apiBaseUrl / keycloak.authority point at the right hosts
+curl -fsS  https://<keycloak host>/realms/buddy/.well-known/openid-configuration | jq -r .issuer
+```
+
+- `latestRevisionName` should equal `latestReadyRevisionName`; otherwise the
+  new revision is still provisioning or failed (`az containerapp logs show -n
+  api -g "$RESOURCE_GROUP" --tail 50`).
+- `/health` is the API's anonymous `MapHealthChecks("/health")` endpoint. No
+  checks are registered, so it confirms the app is up and serving, **not**
+  that Postgres or Keycloak are reachable. The OIDC and frontend checks cover
+  those; a real login in the app is the end-to-end test.
+- The issuer must be exactly `https://<keycloak host>/realms/buddy` (the API's
+  `ValidIssuer`). A 404 on the `buddy` realm means step 4 hasn't been done.
+
+The apps have no health probes configured, so Container Apps only knows the
+container started. That's why the checks above are manual.
+
+## 8. Rollback
+
+### How deploy.sh rolls out
+
+- No `--revisions-mode` is passed to `az containerapp create`, so all three
+  apps use the default **single** revision mode: each `az containerapp
+  update` creates a new revision, and once it's running it gets 100% of the
+  traffic and the previous revision is deactivated (not deleted; inactive
+  revisions are kept and listed).
+- Each image is pinned by **digest** (`buddy-api@sha256:...`), not by
+  `:latest`, so every revision records exactly which image it ran. ACR Basic
+  has no retention policy, so the older digests stay in the registry after
+  `:latest` moves on.
+- Secrets (`az containerapp secret set`) are **app-level, not per revision**.
+  Rolling back a revision does not roll back a secret or the `.env` values
+  baked into one; env vars, on the other hand, are part of the revision
+  template and do roll back with it.
+
+### Roll an app back to its previous revision
+
+```
+cd deploy/azure && set -a; source .env; set +a
+APP=api   # or keycloak / frontend
+
+# 1. Find the last good revision and its image digest
+az containerapp revision list -n "$APP" -g "$RESOURCE_GROUP" --all \
+  --query "sort_by(@, &properties.createdTime)[].{name:name, created:properties.createdTime, active:properties.active, image:properties.template.containers[0].image}" -o table
+
+# 2a. Recreate it as a new revision (same image + env vars + scale settings):
+az containerapp revision copy -n "$APP" -g "$RESOURCE_GROUP" --from-revision <good-revision-name>
+
+# 2b. Or just point the app back at the old image digest:
+az containerapp update -n "$APP" -g "$RESOURCE_GROUP" \
+  --image "$ACR_NAME.azurecr.io/buddy-$APP@sha256:<digest>"
+```
+
+Both create a new revision, which takes all traffic once it's running, the
+same way a deploy does. Then run the checks in step 7. (The image repository
+names are `buddy-api`, `buddy-keycloak` and `buddy-frontend`.)
+
+`az containerapp revision activate` alone is not a rollback in single mode:
+traffic follows the latest revision. To move traffic between two revisions
+without creating a new one, switch the app to multiple revision mode first:
+
+```
+az containerapp revision set-mode -n "$APP" -g "$RESOURCE_GROUP" --mode multiple
+az containerapp revision activate -n "$APP" -g "$RESOURCE_GROUP" --revision <good-revision-name>
+az containerapp ingress traffic set -n "$APP" -g "$RESOURCE_GROUP" --revision-weight <good-revision-name>=100
+```
+
+In multiple mode the next `./deploy.sh` run creates a new revision **without
+moving traffic to it**, because `deploy.sh` doesn't set traffic weights. Set
+the mode back (`--mode single`) before the next deploy, or traffic stays on
+the old revision.
+
+Rolling back the frontend alone only makes sense if its baked-in
+`runtime-config.json` (API/Keycloak URLs) still matches; rolling back the API
+alone is the usual case. A later `./deploy.sh` run from the current tree
+redeploys whatever is checked out, so to stay rolled back, check out the good
+commit before running it again.
+
+### Rolling back with a code checkout
+
+The alternative that needs no revision handling: `git checkout <last good
+commit>` and rerun `./deploy.sh`. That rebuilds all three images, so it's
+slower and produces new digests, but it's the same path as any deploy.
+
+### Data: events don't roll back
+
+> **Warning:** the API stores its data as Marten event streams. Rolling back
+> the API **code** doesn't remove events the newer version appended. If the
+> release you're rolling back added new event types (or changed an event's
+> shape), the older code may fail to load any stream containing them, e.g.
+> errors loading an aggregate or rebuilding a snapshot, for exactly the users
+> who used the new feature. Before rolling back across such a release, decide
+> whether that's acceptable or whether you also need a database restore
+> (below), which loses everything written since the restore point.
+
+The database itself is rolled back with Flexible Server point-in-time
+restore, which creates a **new** server (`az postgres flexible-server restore
+--source-server "$PG_SERVER_NAME" --restore-time <UTC time> --name <new
+name>`); you then point `PG_SERVER_NAME` at it and rerun `./deploy.sh`, or
+update the `postgres-connection-string` / `pg-password` secrets and Keycloak's
+`KC_DB_URL_HOST`. Keycloak's database is on the same server, so it rolls back
+too (users created since then disappear).
+
 ## Notes
 
 - **Redeploying after a code change**: just rerun `./deploy.sh`. It rebuilds
@@ -197,15 +318,25 @@ TLS certificate for you once the records resolve.
   For production hygiene, switch to a system-assigned managed identity per
   Container App with the `AcrPull` role instead, so there's no shared
   credential to rotate.
-- **Postgres network exposure**: the `AllowAzureServices` firewall rule opens
-  the server to any Azure resource in any tenant that has your credentials —
-  the credentials are still required, but if you want to remove public
-  network exposure entirely, integrate the Container Apps environment and the
-  Flexible Server into the same VNet (`--infrastructure-subnet-resource-id`
-  on the environment, private access on the server) instead.
+- **Postgres network exposure**: the Container Apps environment isn't
+  VNet-integrated, so `keycloak` and `api` reach Postgres over its public
+  endpoint. That's why `deploy.sh` needs public network access on the
+  server: firewall rules only apply while it's on, and the
+  `AllowAzureServices` rule (`0.0.0.0`) then admits Azure-originated traffic
+  only. Nothing in `deploy.sh` connects to Postgres from your machine (the
+  databases are created via `az postgres flexible-server db create`, through
+  the Azure control plane). `deploy.sh` reads the current setting first and
+  only runs `az postgres flexible-server update --public-access Enabled` when
+  it's off (it used to run it on every deploy); a VNet-integrated server is
+  left alone. Note that `AllowAzureServices` admits any Azure resource in any
+  tenant that has your credentials — the credentials are still required, but
+  if you want to remove public network exposure entirely, integrate the
+  Container Apps environment and the Flexible Server into the same VNet
+  (`--infrastructure-subnet-resource-id` on the environment, private access
+  on the server) instead, and drop the firewall-rule step from `deploy.sh`.
 - **Backups**: unlike the Oracle VM (manual volume snapshots), Flexible
   Server takes automated daily backups with point-in-time restore by default
-  — no extra setup needed.
+  — no extra setup needed. See "Rollback" (step 8) for restoring it.
 - The `.NET nightly` SDK/runtime image tags in
   `../../src/backend/buddy/Dockerfile` track a floating `11.0-preview` tag —
   pin it to the exact preview version you're relying on before treating this

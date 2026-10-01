@@ -4,7 +4,6 @@ export const child = {
     signOut: 'Sign out',
     emptyTitle: 'Nothing to show yet',
     emptySubtitle: 'Your events and tasks will show up here once a calendar is shared with you.',
-    guardiansTitle: 'Your guardians',
     mealsTitle: 'Meals today',
     mealplanLink: 'See past meals & rate them',
     calendarLink: 'See your full calendar',
@@ -30,8 +29,7 @@ export const child = {
     },
     tasks: {
       markDone: 'Mark done',
-      markNotDone: 'Mark not done',
-      done: 'Done!'
+      markNotDone: 'Mark not done'
     },
     events: {
       allDay: 'All day'

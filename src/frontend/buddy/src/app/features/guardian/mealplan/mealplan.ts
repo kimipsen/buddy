@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { GroupRoleName, GROUP_ROLE_NAMES, GroupSummary, GroupsService } from '../../../core/groups.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from '../../../core/map-with-concurrency';
 import { MealplanAccessTier, MealplanScope, MealplansService } from '../../../core/mealplans.service';
 import { AssignMealplan } from './assign-mealplan/assign-mealplan';
 import { MealplanIcal } from './mealplan-ical/mealplan-ical';
@@ -167,15 +168,16 @@ export class GuardianMealplan implements OnInit {
   }
 
   private async loadGroupScopesFrom(groups: GroupSummary[]): Promise<void> {
-    const details = await Promise.all(
-      groups.map(async (group) => {
-        try {
-          return await this.groupsService.getGroup(group.id);
-        } catch {
-          return null;
-        }
-      })
-    );
+    // One GetGroup per group, then one status call per candidate group: both bounded so a
+    // guardian in many groups doesn't burst the API. Each is best-effort per group (a failure
+    // just drops that group from the scope list), as before.
+    const details = await mapWithConcurrency(groups, PER_ITEM_REQUEST_CONCURRENCY, async (group) => {
+      try {
+        return await this.groupsService.getGroup(group.id);
+      } catch {
+        return null;
+      }
+    });
 
     const candidates: GroupMealplanScope[] = [];
 
@@ -189,8 +191,8 @@ export class GuardianMealplan implements OnInit {
       }
     });
 
-    const statuses = await Promise.all(
-      candidates.map((scope) => this.mealplans.getGroupMealplanStatus(scope.groupId).catch(() => ({ hasSharedPlan: false })))
+    const statuses = await mapWithConcurrency(candidates, PER_ITEM_REQUEST_CONCURRENCY, (scope) =>
+      this.mealplans.getGroupMealplanStatus(scope.groupId).catch(() => ({ hasSharedPlan: false }))
     );
 
     this.groupScopes.set(candidates.filter((_, index) => statuses[index].hasSharedPlan));

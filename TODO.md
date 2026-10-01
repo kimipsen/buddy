@@ -157,44 +157,103 @@ an inline checklist otherwise. Still open:
 ### Issues the skill agents found in the codebase
 
 Backend:
-- [ ] Marten `AppendAsync` never passes an expected version, so concurrent
+- [x] Marten `AppendAsync` never passes an expected version, so concurrent
   read-modify-append on the same stream is last-writer-wins.
-- [ ] Backend mutation testing is blocked: Stryker.NET 4.16 can't discover
+- [x] Backend mutation testing is blocked: Stryker.NET 4.16 can't discover
   tests on the .NET 11 preview SDK, and it still exits 0 when that happens.
-- [ ] 30 event types have no golden-file event-shape test (all of Progress,
+- [x] 30 event types have no golden-file event-shape test (all of Progress,
   AiAssistant, sharing/iCal/invite/policy events). Nothing enforces coverage.
-- [ ] `EventShapeTestSupport` doesn't register `ValueTupleJsonConverterFactory`,
+- [x] `EventShapeTestSupport` doesn't register `ValueTupleJsonConverterFactory`,
   though some stores do.
-- [ ] `http-status-codes.md` says creates return 201; every endpoint returns 200.
-- [ ] There are two resend-cooldown implementations (409 in
+- [x] `http-status-codes.md` says creates return 201; every endpoint returns 200.
+- [x] There are two resend-cooldown implementations (409 in
   `ResendEmailVerification`, 400 in the invites). Unify them.
-- [ ] Stale comments refer to `AssignPickupHandler.ValidateFields`
+- [x] Stale comments refer to `AssignPickupHandler.ValidateFields`
   (`ValidatorExtensions.cs`, `PickupAssignment.cs`).
-- [ ] `event-stream-snapshots.md` intro still says there is no snapshotting.
+- [x] `event-stream-snapshots.md` intro still says there is no snapshotting.
 
 Frontend:
-- [ ] Extra keys in the Danish dictionary aren't caught by the build
+- [x] Extra keys in the Danish dictionary aren't caught by the build
   (`docs/frontend/README.md` says they are). Run `check-parity.mjs` in CI.
-- [ ] There are 7 unused translation keys
+- [x] There are 7 unused translation keys
   (`node .claude/skills/i18n/check-parity.mjs --unused`).
 - [ ] There's no linter, and 275 files don't pass `prettier --check`.
-- [ ] Doc errors: the frontend README mentions zone.js wiring, and the root
+- [x] Doc errors: the frontend README mentions zone.js wiring, and the root
   README undersells `src/app/shared/`.
 
 Environment, CI and deploy:
-- [ ] The e2e workflow triggers on push to `main`, but the branch is `master`.
-- [ ] Postgres hits its 100-connection limit. bob has about 50 leftover e2e
+- [x] The e2e workflow triggers on push to `main`, but the branch is `master`.
+- [x] Postgres hits its 100-connection limit. bob has about 50 leftover e2e
   children, and the dashboard makes one request per child.
 - [ ] A nested devcontainer stack on `localhost:9080`/`9025` has a different
   Keycloak, whose tokens fail on the API.
-- [ ] `.devcontainer/README.md` names `init-keycloak-db.sql`; the file is
+- [x] `.devcontainer/README.md` names `init-keycloak-db.sql`; the file is
   `.sh`.
-- [ ] Deploy:
+- [x] Deploy:
   - No rollback is documented.
   - `task deploy` deploys to whatever Docker host it runs on.
   - The backup command uses the wrong volume name.
   - Compose Keycloak runs `start --optimized` with no Postgres build step.
   - The Azure docs number their steps inconsistently.
+
+### Fix round (2026-10-01)
+
+Everything above is fixed except the items still unticked. Highlights:
+- **Concurrency:** writes now use expected-version appends, handled
+  centrally, and a conflict returns `409 concurrency_conflict`.
+- **Cooldown:** all three resend endpoints now return 409 `resend_cooldown`.
+- **Golden files:** every event type has one, enforced by
+  `Meta/EventGoldenFileCoverageTests`.
+- **Connection pool:** the nine Marten stores share one `NpgsqlDataSource`,
+  capped at 50 (`Common/Postgres/PostgresDataSource.cs`).
+- **Request fan-outs:** per-child, per-group and per-calendar requests are
+  capped at 4 in flight (`core/map-with-concurrency.ts`).
+- **Stryker:** upgraded to Stryker.NET 5.0.0 and run through
+  `run-stryker.sh`, which swaps in the SDK's Roslyn. It now tests mutants,
+  and a log guard makes silent failures fail the task and the workflow.
+- **i18n:** a missing or extra Danish key fails the type check, and the
+  parity check runs in the new `frontend-tests.yml`.
+- **Deploy:**
+  - `preflight.sh` guard
+  - SHA-tagged images
+  - healthchecks
+  - `pg_dump` backups
+  - Keycloak built for Postgres
+  - rollback docs
+- **e2e:**
+  - tests now clean up the data they create
+  - a script removes leftover test data
+  - fixed the AI-assistant spec's timing bug
+  - fixed the `loginAs` redirect race
+
+Still open:
+- [ ] ESLint plus a one-time prettier reformat of 275 files, as a
+  formatting-only commit after these fixes are committed.
+- [x] Two e2e specs failed only in a parallel full run. Parallel specs were
+  sharing seeded guardians: `email-verification` kept changing bob's email,
+  and pages used another test's child that had just been unlinked. Specs
+  that create children or touch family state now use a throwaway
+  `newGuardian()`. The full suite passed 20/20 five times in a row.
+- [ ] Family-scope pages default to `children[0]` of an unordered list
+  (`ListForGuardianAsync` has no ORDER BY). Add a stable order.
+- [ ] Stop the nested `devcontainer-*` containers, and remove
+  worktrees `agent-a1f407bec71b27f87` (its change is already on master) and
+  `agent-a13f8a94103b2fea2` (merged into the working tree by hand). Auto mode
+  blocked this; it needs you.
+- [ ] **Before the next VM deploy:** check whether the VM's Keycloak realm
+  lives in H2 inside the container (see `deploy/README.md`, "Upgrading from
+  the stock Keycloak image") and export it first. Also add `DEPLOY_HOST` to
+  the VM's `deploy/.env`.
+- [ ] **Decide (backend design):** the family AI credential is attached to
+  one child, so unlinking that child silently drops the family's key. When
+  families merge, `ResolveFamilyAiCredentialIdAsync` picks a credential out
+  of a `HashSet`, so the choice is effectively random. Move the credential
+  to the guardian or family, or resolve it through any linked child.
+- [ ] Backend mutation survivors: `CreateChild.Validator` FamilyName and
+  Username rules aren't covered by tests (found by the first real Stryker
+  run).
+- [ ] Stryker Safe Mode drops about 1277 of 4734 mutants as `CompileError`
+  (CS0165), so some methods are never mutation-tested.
 
 ### Suggested order
 

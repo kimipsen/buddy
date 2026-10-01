@@ -4,7 +4,6 @@ export const child = {
     signOut: 'Log ud',
     emptyTitle: 'Der er ikke noget at vise endnu',
     emptySubtitle: 'Dine begivenheder og opgaver vises her, når en kalender er delt med dig.',
-    guardiansTitle: 'Dine voksne',
     mealsTitle: 'Måltider i dag',
     mealplanLink: 'Se tidligere måltider & bedøm dem',
     calendarLink: 'Se hele din kalender',
@@ -30,8 +29,7 @@ export const child = {
     },
     tasks: {
       markDone: 'Marker som klar',
-      markNotDone: 'Marker som ikke klar',
-      done: 'Klaret!'
+      markNotDone: 'Marker som ikke klar'
     },
     events: {
       allDay: 'Hele dagen'

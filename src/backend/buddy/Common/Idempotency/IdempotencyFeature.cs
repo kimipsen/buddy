@@ -1,9 +1,9 @@
-using buddy.Features.Users;
+using buddy.Common.Postgres;
 using buddy.Serialization;
 
 using Marten;
 
-using Microsoft.Extensions.Options;
+using Npgsql;
 
 using Weasel.Core;
 
@@ -13,14 +13,13 @@ public static class IdempotencyFeature
 {
     public static IServiceCollection AddIdempotencyFeature(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<PostgresOptions>(configuration.GetSection(PostgresOptions.SectionName));
+        // Shared process-wide pool -- see PostgresDataSource.
+        services.AddPostgresDataSource(configuration);
 
         services.AddMartenStore<IIdempotencyStore>(serviceProvider =>
         {
-            var postgres = serviceProvider.GetRequiredService<IOptionsMonitor<PostgresOptions>>().CurrentValue;
-
             var options = new StoreOptions();
-            options.Connection(postgres.Postgres);
+            options.Connection(serviceProvider.GetRequiredService<NpgsqlDataSource>());
             options.DatabaseSchemaName = "idempotency";
 
             options.UseSystemTextJsonForSerialization(

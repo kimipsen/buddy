@@ -1,3 +1,4 @@
+using buddy.Common.Concurrency;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -11,6 +12,7 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(calendarId.Value, token: cancellationToken);
+        session.ObserveStream(calendarId.Value, events);
 
         return [.. events.Select(e => CalendarEvent.FromPayload(e.Data))];
     }
@@ -30,7 +32,7 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.StartStream(calendarId.Value, payloads);
+        session.StartTrackedStream(calendarId.Value, payloads);
 
         // A CalendarIconChanged appended in the same initial batch (CreateCalendarHandler does
         // this when the caller specifies a custom icon at creation) overrides the default before
@@ -74,7 +76,7 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(calendarId.Value, payloads);
+        session.AppendTracked(calendarId.Value, payloads);
 
         foreach (var @event in events)
         {

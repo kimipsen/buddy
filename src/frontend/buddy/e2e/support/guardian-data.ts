@@ -1,5 +1,7 @@
 import { type Page, expect } from '@playwright/test';
 
+import { trackCreatedCalendar, trackCreatedChild, trackCreatedGroup } from './created-data-cleanup';
+
 // Shared setup helpers for specs that need real prerequisite data before they can exercise a
 // per-child/per-calendar flow -- see the e2e background: nothing is pre-seeded (no child,
 // calendar, group, meal, medicine, or task-template data exists for a seeded Keycloak user), and
@@ -50,6 +52,11 @@ export async function createChild(page: Page, prefix = 'E2eChild'): Promise<Crea
   // long-running local dev backend that's already handled a lot of traffic this session.
   await expect(section.getByText(`${givenName} was created.`)).toBeVisible({ timeout: 15_000 });
 
+  // Unlinked from every seeded guardian (and its Keycloak user deleted) after the test -- see
+  // created-data-cleanup.ts and the cleanUpCreatedData auto fixture in auth-fixture.ts. Requires
+  // the spec to import `test` from ./support/auth-fixture, which every spec does.
+  trackCreatedChild({ givenName, familyName, username });
+
   return { givenName, familyName, username };
 }
 
@@ -98,6 +105,9 @@ export async function createGroup(page: Page, prefix = 'E2eGroup'): Promise<stri
 
   await expect(section.getByText(name, { exact: true })).toBeVisible();
 
+  // Deleted after the test (cascading to its calendars) -- see created-data-cleanup.ts.
+  trackCreatedGroup(name);
+
   return name;
 }
 
@@ -124,6 +134,9 @@ export async function createCalendar(page: Page, groupName: string, prefix = 'E2
   // The list row renders "<icon> <name>" as one text node (see manage-calendars.html), so an
   // exact match against the name alone would never hit -- a substring match is enough here.
   await expect(section.getByText(name)).toBeVisible();
+
+  // Deleted after the test -- see created-data-cleanup.ts.
+  trackCreatedCalendar(name);
 
   return name;
 }

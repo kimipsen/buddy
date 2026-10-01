@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from '../../../core/map-with-concurrency';
 import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
@@ -74,16 +75,16 @@ export class DosesToday implements OnInit {
       this.multipleChildren.set(children.length > 1);
 
       const today = todayIsoDate();
-      const perChild = await Promise.all(
-        children.map(async (child) => {
-          const occurrences = await this.medicines.listDoses(child.id, today, today);
-          return occurrences.map((occurrence) => ({
-            ...occurrence,
-            childId: child.id,
-            childName: child.name.givenName
-          }));
-        })
-      );
+      // One listDoses per child (no batch endpoint), bounded so a large family doesn't burst the
+      // API. Still all-or-nothing: any child's failure shows the widget's load error.
+      const perChild = await mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, async (child) => {
+        const occurrences = await this.medicines.listDoses(child.id, today, today);
+        return occurrences.map((occurrence) => ({
+          ...occurrence,
+          childId: child.id,
+          childName: child.name.givenName
+        }));
+      });
 
       this.doses.set(perChild.flat().sort((a, b) => a.time.localeCompare(b.time)));
     } catch {

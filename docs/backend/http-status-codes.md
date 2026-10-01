@@ -43,21 +43,19 @@ Typical Buddy use:
 - `GET /calendars/{id}`
 - `GET /calendars/{id}/items`
 
+Also used for creates: every create-style `POST` in Buddy (create calendar, item, group,
+child, meal, invite, iCal token, ...) returns `200` with the created resource in the body --
+see [201 Created](#201-created).
+
 Do not use when:
-- a new resource was created (use `201`)
 - the response intentionally has no body (use `204`)
 
 ### 201 Created
-Use when a new resource is created successfully.
-
-Requirements:
-- include response body with created resource summary where useful
-- include `Location` header when canonical URI is known
-
-Typical Buddy use:
-- create calendar
-- create calendar item
-- issue new iCal token
+Not used. Buddy's create endpoints return `200 OK` with the created resource in the body, and
+no endpoint uses `TypedResults.Created` or sets a `Location` header. The frontend and the
+integration tests depend on `200`, so a switch to `201` would be a deliberate API contract
+change across every create endpoint, not a per-endpoint choice. New create endpoints follow
+the `200` convention.
 
 ### 202 Accepted
 Use only when work is queued for asynchronous processing and not completed yet.
@@ -130,8 +128,14 @@ Typical Buddy use:
 Use when request is valid but conflicts with current resource state.
 
 Typical Buddy use:
-- resend email verification during cooldown window
-- optimistic concurrency or version mismatch (if surfaced)
+- a resend during the shared one-minute resend cooldown (`resend_cooldown`):
+  `POST /users/me/email/verify/resend`, `POST /groups/{groupId}/invites` and
+  `POST /users/me/children/{childId}/guardian-invites` all use
+  `Common/RateLimiting/ResendCooldown` and return this code with the `ErrorEnvelope` body
+- optimistic concurrency (`concurrency_conflict`): another request appended to the same event
+  stream between this request's read and its append. Any command endpoint can return it (it is
+  produced centrally by `ConcurrencyConflictMiddleware`, not declared per endpoint); the client
+  should reload and retry
 - `Idempotency-Key` reused with a different request body (`idempotency_key_reused`), or a
   request with that key still in flight (`idempotency_key_in_progress`) -- see
   [Idempotency-Key (POST)](#idempotency-key-post) below
@@ -170,7 +174,8 @@ Team rule (resolved):
 Use when request rate exceeds limits.
 
 Typical Buddy use:
-- auth or verification endpoints under abuse protection
+- not currently used: the resend cooldown is a state conflict and returns `409`
+  (`resend_cooldown`), see above
 
 Return guidance:
 - include `Retry-After` when known
@@ -211,7 +216,7 @@ When selecting a status code, ask in order:
 6. Does request conflict with current state?
    - yes: `409`
 7. Did we create something?
-   - yes: `201`
+   - yes: `200` with the created resource (Buddy does not use `201`)
 8. Did we succeed with no body?
    - yes: `204`
 9. Otherwise successful read/update with body
@@ -220,7 +225,7 @@ When selecting a status code, ask in order:
 ## Suggested Defaults For This Project
 
 - Reads: `200`, `401`, `404`
-- Creates: `201`, `400`, `401`, `403`, `404`, `409`
+- Creates: `200`, `400`, `401`, `403`, `404`, `409`
 - Updates/Patches: `200` or `204`, plus `400`, `401`, `403`, `404`, `409`
 - Deletes: `204`, plus `401`, `403` or `404`
 - Verification flows: `204` or `200`, plus `400`, `401`, `404`, `409`, optional `429`
@@ -262,6 +267,8 @@ Notes:
 - `401` applies to all endpoints protected by `.RequireAuthorization()` when token authentication fails.
 - Some write endpoints intentionally collapse private-resource visibility into `404` for non-members.
 - `500` remains possible for unexpected failures even when omitted from endpoint-level mappings.
+- `409 concurrency_conflict` is possible on any command endpoint that reads and then appends to
+  an event stream (a lost optimistic-concurrency race) and is omitted from the tables below.
 
 ### Users API (`/users`)
 
@@ -271,7 +278,7 @@ Notes:
 | `GET /users/me/events` | `200` | `400`, `401` | `400` for invalid paging cursor or page-size input. |
 | `PATCH /users/me/name` | `200` | `401`, `404` | `404` when local user does not exist or is deleted. |
 | `PATCH /users/me/email` | `200` | `400`, `401`, `404` | `400` for invalid email payload. |
-| `POST /users/me/email/verify/resend` | `204` | `401`, `404`, `409` | `409` during resend cooldown; `204` for already-verified or resend accepted. |
+| `POST /users/me/email/verify/resend` | `204` | `401`, `404`, `409` | `409 resend_cooldown` during the resend cooldown; `204` for already-verified or resend accepted. |
 | `POST /users/me/email/verify` | `200` | `400`, `401`, `404` | `400` for invalid/expired token or malformed request. |
 | `DELETE /users/me` | `204` | `401` | Idempotent delete: repeated deletes remain `204`. |
 
@@ -280,7 +287,7 @@ Notes:
 | Endpoint | Success | Client error statuses | When to use |
 | --- | --- | --- | --- |
 | `GET /calendars` | `200` | `401` | Authenticated list of caller-visible calendars. |
-| `POST /calendars` | `200` | `400`, `401`, `403` | Current implementation returns `200`; consider `201` if response contract changes. |
+| `POST /calendars` | `200` | `400`, `401`, `403` | Creates return `200` with the created calendar (see [201 Created](#201-created)). |
 | `GET /calendars/{calendarId}` | `200` | `401`, `404` | `404` for unknown/deleted/hidden calendar. |
 | `DELETE /calendars/{calendarId}` | `204` | `401`, `403`, `404` | `403` for authenticated non-owner; `404` for unknown/hidden calendar. |
 | `PUT or PATCH /calendars/{calendarId}/members/{memberId}` (set role) | `204` | `400`, `401`, `403`, `404` | `400` for invalid role payload; owner-level operation. |
@@ -311,7 +318,7 @@ Notes:
 | `PUT /groups/{groupId}/medicine-permission-policy` | `204` | `400`, `401`, `403`, `404` | `400` for a missing role entry or an invalid `Mark` policy value. |
 | `PUT /groups/{groupId}/children/{childId}` | `204` | `401`, `403`, `404` | Adds a child directly, skipping invite/accept; `403` when the caller lacks group-management role or an active guardian link to the child. |
 | `DELETE /groups/{groupId}` | `204` | `401`, `403`, `404` | `403` for an authenticated non-owner. |
-| `POST /groups/{groupId}/invites` | `200` | `400`, `401`, `403`, `404` | `400` for an invalid invite payload; `403` for a non-owner/admin. |
+| `POST /groups/{groupId}/invites` | `200` | `400`, `401`, `403`, `404`, `409` | `400` for a malformed invite payload; `403` for a non-owner/admin or an `Owner` role invite; `409 resend_cooldown` when the same email was invited less than a minute ago. |
 | `GET /groups/{groupId}/invites` | `200` | `401`, `403`, `404` | Owner/admin-only listing of pending invites. |
 | `DELETE /groups/{groupId}/invites/{inviteId}` | `204` | `401`, `403`, `404` | Revokes a pending invite. |
 | `GET /invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |
@@ -329,7 +336,7 @@ Notes:
 | `PATCH /users/me/children/{childId}/timezone` | `200` | `400`, `401`, `404` | `400` for an invalid time zone id. |
 | `GET /users/me/guardians` | `200` | `401` | Lists guardians linked to the caller. |
 | `GET /users/me/siblings` | `200` | `401` | Lists the caller's sibling children resolved from the shared guardian-link graph. |
-| `POST /users/me/children/{childId}/guardian-invites` | `200` | `400`, `401`, `404` | `400` for an invalid invite payload; `404` for unknown child or caller without an active guardian link. |
+| `POST /users/me/children/{childId}/guardian-invites` | `200` | `400`, `401`, `404`, `409` | `400` for a malformed invite payload; `404` for unknown child or caller without an active guardian link; `409 resend_cooldown` when the same email was invited less than a minute ago. |
 | `GET /users/me/children/{childId}/guardian-invites` | `200` | `401`, `404` | `404` for unknown child or caller without an active guardian link. |
 | `DELETE /users/me/children/{childId}/guardian-invites/{inviteId}` | `204` | `401`, `404` | `404` for unknown invite or caller without an active guardian link. |
 | `GET /guardian-invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |

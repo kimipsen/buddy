@@ -217,6 +217,9 @@ existing conventions at once.
    library).
 4. Extract the resend-cooldown constant + check into one shared helper used
    by `InviteToGroup.Handler.cs` and `InviteGuardian.Handler.cs`.
+   Done as `Common/RateLimiting/ResendCooldown`, later also adopted by
+   `ResendEmailVerification`. An active cooldown is no longer a validation
+   failure: all three return `409 resend_cooldown` (see `http-status-codes.md`).
 5. Decide 400 vs. 422 (recommend keeping 400 uniformly — it's what's already
    implemented and is the more common REST convention — and formally closing
    the open question in `http-status-codes.md`), then implement the

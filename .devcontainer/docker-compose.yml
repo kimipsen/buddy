@@ -34,6 +34,10 @@ services:
   db:
     image: postgres:18
     restart: unless-stopped
+    # Headroom only: the API is bounded by its single shared pool (all Marten stores,
+    # Maximum Pool Size 50, see src/backend/buddy/Common/Postgres/PostgresDataSource.cs),
+    # but Keycloak, psql, the db:marten:* tasks and a second API/test host share this server.
+    command: ["postgres", "-c", "max_connections=200"]
     volumes:
       # PostgreSQL 18+ images store data in a major-version subdirectory, so the
       # mount belongs at /var/lib/postgresql, not /var/lib/postgresql/data.

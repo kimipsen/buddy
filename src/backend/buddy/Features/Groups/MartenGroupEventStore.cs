@@ -1,3 +1,4 @@
+using buddy.Common.Concurrency;
 using buddy.Features.Users;
 
 using Marten;
@@ -10,6 +11,7 @@ public sealed class MartenGroupEventStore(IGroupsStore store) : IGroupEventStore
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(groupId.Value, token: cancellationToken);
+        session.ObserveStream(groupId.Value, events);
 
         return [.. events.Select(e => GroupEvent.FromPayload(e.Data))];
     }
@@ -34,7 +36,7 @@ public sealed class MartenGroupEventStore(IGroupsStore store) : IGroupEventStore
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.StartStream(groupId.Value, payloads);
+        session.StartTrackedStream(groupId.Value, payloads);
         session.Store(new GroupMembershipDocument(
             GroupMembershipDocument.BuildId(groupId.Value, created.OwnerId.Value),
             groupId.Value,
@@ -59,7 +61,7 @@ public sealed class MartenGroupEventStore(IGroupsStore store) : IGroupEventStore
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(groupId.Value, payloads);
+        session.AppendTracked(groupId.Value, payloads);
 
         foreach (var @event in events)
         {

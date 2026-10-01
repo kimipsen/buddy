@@ -7,7 +7,7 @@
     },
     "concurrency": 8,
     "mutation-level": "Standard",
-    "language-version": "latest",
+    "language-version": "Preview",
     "additional-timeout": 5000,
     "mutate": [
       "**/*.cs",
@@ -16,7 +16,7 @@
       "!**/*.Designer.cs",
       "!**/*.g.cs"
     ],
-    "solution": "backend.slnx",
+    "solution": "../backend.slnx",
     "configuration": null,
     "target-framework": null,
     "project": null,

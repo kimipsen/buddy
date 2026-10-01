@@ -4,7 +4,7 @@
 // checked-in config has only Progress/Html/cleartext) and an absolute solution
 // path so the copy can live outside the repo (e.g. the scratchpad).
 //
-// Stryker.NET 4.16 ignores --mutate on the CLI when the config file sets
+// Stryker.NET (verified on 4.16) ignores --mutate on the CLI when the config file sets
 // "mutate", so scoping goes through a separate config passed with -f instead
 // of editing the checked-in file.
 //
@@ -38,7 +38,7 @@ const base = JSON.parse(readFileSync('stryker-config.json', 'utf8'));
 const cfg = base['stryker-config'];
 const excludes = (cfg.mutate ?? []).filter((m) => m.startsWith('!'));
 cfg.mutate = [...globs, ...excludes];
-cfg.solution = resolve('..', cfg.solution ?? 'backend.slnx');
+cfg.solution = resolve(cfg.solution ?? '../backend.slnx');
 const reporters = new Set((cfg.reporters ?? []).map((r) => r.toLowerCase()));
 cfg.reporters = [...(cfg.reporters ?? []), ...(reporters.has('json') ? [] : ['Json'])];
 if (concurrency) cfg.concurrency = Number(concurrency);

@@ -1,4 +1,4 @@
-import { SEEDED_USERS, expect, test } from './support/auth-fixture';
+import { expect, test } from './support/auth-fixture';
 import { createCalendar, createChild, createGroup, uniqueName } from './support/guardian-data';
 
 // TaskTemplates are per-child (TaskLibraryAccessTier has no group-sharing axis -- see
@@ -8,8 +8,9 @@ import { createCalendar, createChild, createGroup, uniqueName } from './support/
 // just against ManageTasks's own list -- which deliberately keeps an archived template visible
 // (with a badge) instead of hiding it, so checking there wouldn't prove archiving actually removes
 // it from what's schedulable.
-test('guardian builds a task template with subtasks, reorders and edits them, then archives it', async ({ page, loginAs }) => {
-  await loginAs(SEEDED_USERS.carol);
+test('guardian builds a task template with subtasks, reorders and edits them, then archives it', async ({ page, loginAs, newGuardian }) => {
+  // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
+  await loginAs(await newGuardian());
 
   const child = await createChild(page);
   const groupName = await createGroup(page);

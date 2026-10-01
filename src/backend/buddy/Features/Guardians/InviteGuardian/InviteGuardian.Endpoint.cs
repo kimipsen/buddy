@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.RateLimiting;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -13,7 +14,7 @@ public static class InviteGuardianEndpoint
 {
     public static RouteGroupBuilder MapInviteGuardian(this RouteGroupBuilder children)
     {
-        children.MapPost("/{childId:guid}/guardian-invites", async Task<Results<Ok<GuardianInviteResponse>, NotFound, BadRequest<ErrorEnvelope>>> (
+        children.MapPost("/{childId:guid}/guardian-invites", async Task<Results<Ok<GuardianInviteResponse>, NotFound, Conflict<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid childId,
             InviteGuardianRequest request,
@@ -22,16 +23,13 @@ public static class InviteGuardianEndpoint
             CancellationToken cancellationToken) =>
         {
             var command = InviteGuardian.FromClaims(principal, new UserId(childId), request.Email, request.Kind);
-            var result = await bus.InvokeAsync<Result<GuardianInviteSummary>>(command, cancellationToken);
+            var result = await bus.InvokeAsync<InviteGuardianOutcome>(command, cancellationToken);
 
             return result switch
             {
-                Result<GuardianInviteSummary>.Success(var invite) => TypedResults.Ok(GuardianInviteResponse.FromSummary(invite)),
-                Result<GuardianInviteSummary>.NotFound => TypedResults.NotFound(),
-                Result<GuardianInviteSummary>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
-                // InviteGuardianHandler never produces Forbidden -- there's no ForbidHttpResult
-                // in this route's declared results, so this collapses to NotFound.
-                Result<GuardianInviteSummary>.Forbidden => TypedResults.NotFound(),
+                InviteGuardianOutcome.Success(var invite) => TypedResults.Ok(GuardianInviteResponse.FromSummary(invite)),
+                InviteGuardianOutcome.NotFound => TypedResults.NotFound(),
+                ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
             };
         })
         .WithName("InviteGuardian");

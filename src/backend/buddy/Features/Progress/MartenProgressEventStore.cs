@@ -1,3 +1,5 @@
+using buddy.Common.Concurrency;
+
 using Marten;
 
 namespace buddy.Features.Progress;
@@ -8,6 +10,7 @@ public sealed class MartenProgressEventStore(IProgressStore store) : IProgressEv
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(id.Value, token: cancellationToken);
+        session.ObserveStream(id.Value, events);
 
         return [.. events.Select(e => ProgressEvent.FromPayload(e.Data))];
     }
@@ -32,7 +35,7 @@ public sealed class MartenProgressEventStore(IProgressStore store) : IProgressEv
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.StartStream(id.Value, payloads);
+        session.StartTrackedStream(id.Value, payloads);
 
         await session.SaveChangesAsync(cancellationToken);
 
@@ -51,7 +54,7 @@ public sealed class MartenProgressEventStore(IProgressStore store) : IProgressEv
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(id.Value, payloads);
+        session.AppendTracked(id.Value, payloads);
 
         await session.SaveChangesAsync(cancellationToken);
     }

@@ -1,4 +1,4 @@
-using buddy.Features.Users;
+using buddy.Common.Postgres;
 using buddy.Serialization;
 
 using JasperFx.Events;
@@ -6,7 +6,7 @@ using JasperFx.Events.Projections;
 
 using Marten;
 
-using Microsoft.Extensions.Options;
+using Npgsql;
 
 using Weasel.Core;
 
@@ -33,14 +33,13 @@ public static class PickupsFeature
             options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
         });
 
-        services.Configure<PostgresOptions>(configuration.GetSection(PostgresOptions.SectionName));
+        // Shared process-wide pool -- see PostgresDataSource.
+        services.AddPostgresDataSource(configuration);
 
         services.AddMartenStore<IPickupsStore>(serviceProvider =>
         {
-            var postgres = serviceProvider.GetRequiredService<IOptionsMonitor<PostgresOptions>>().CurrentValue;
-
             var options = new StoreOptions();
-            options.Connection(postgres.Postgres);
+            options.Connection(serviceProvider.GetRequiredService<NpgsqlDataSource>());
             options.DatabaseSchemaName = "pickups";
             options.Events.StreamIdentity = StreamIdentity.AsGuid;
             options.Events.AddEventTypes(EventTypes);

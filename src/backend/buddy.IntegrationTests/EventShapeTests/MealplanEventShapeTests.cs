@@ -1,4 +1,5 @@
 using buddy.Features.Calendars;
+using buddy.Features.Groups;
 using buddy.Features.Mealplans;
 using buddy.Features.Users;
 
@@ -62,4 +63,33 @@ public sealed class MealplanEventShapeTests
             FixedGuardianId,
             FixedInstant),
         "Mealplans/MealSlotCleared.json");
+
+    private static readonly GroupId FixedGroupId = new(Guid.Parse("00000000-0000-0000-0000-000000000010"));
+    // Mealplans has its own IcalTokenId (see MealPlanIcalTokenIssued), distinct from Calendars'.
+    private static readonly buddy.Features.Mealplans.IcalTokenId FixedTokenId = new(Guid.Parse("00000000-0000-0000-0000-000000000062"));
+
+    [Fact]
+    public void MealPlanSharedWithGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealPlanSharedWithGroup(FixedMealPlanId, FixedGroupId, FixedChildId, FixedGuardianId, FixedInstant),
+        "Mealplans/MealPlanSharedWithGroup.json");
+
+    [Fact]
+    public void MealPlanUnsharedFromGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealPlanUnsharedFromGroup(FixedMealPlanId, FixedGroupId, FixedGuardianId, FixedInstant),
+        "Mealplans/MealPlanUnsharedFromGroup.json");
+
+    [Fact]
+    public void MealPlanSlotTimeSet() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealPlanSlotTimeSet(FixedMealPlanId, MealSlot.Dinner, new TimeOnly(17, 30), FixedGuardianId, FixedInstant),
+        "Mealplans/MealPlanSlotTimeSet.json");
+
+    [Fact]
+    public void MealPlanIcalTokenIssued() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealPlanIcalTokenIssued(FixedMealPlanId, FixedTokenId, "deadbeef", FixedGuardianId, FixedInstant),
+        "Mealplans/MealPlanIcalTokenIssued.json");
+
+    [Fact]
+    public void MealPlanIcalTokenRevoked() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealPlanIcalTokenRevoked(FixedMealPlanId, FixedTokenId, FixedGuardianId, FixedInstant),
+        "Mealplans/MealPlanIcalTokenRevoked.json");
 }

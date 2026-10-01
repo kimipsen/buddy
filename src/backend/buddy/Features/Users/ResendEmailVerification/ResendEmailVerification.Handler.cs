@@ -1,16 +1,15 @@
+using buddy.Common.RateLimiting;
 using buddy.Email;
 
 namespace buddy.Features.Users;
 
 public static class ResendEmailVerificationHandler
 {
-    public static readonly TimeSpan ResendCooldown = TimeSpan.FromMinutes(1);
-
-    public static async Task<ResendEmailVerificationResult> Handle(ResendEmailVerification command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
+    public static async Task<ResendEmailVerificationOutcome> Handle(ResendEmailVerification command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
     {
         if (command.UserId is not { } userId)
         {
-            return ResendEmailVerificationResult.UserNotFound;
+            return new ResendEmailVerificationOutcome.NotFound();
         }
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);
@@ -18,19 +17,19 @@ public static class ResendEmailVerificationHandler
 
         if (user is null || user.IsDeleted)
         {
-            return ResendEmailVerificationResult.UserNotFound;
+            return new ResendEmailVerificationOutcome.NotFound();
         }
 
         if (user.Email.IsVerified)
         {
-            return ResendEmailVerificationResult.AlreadyVerified;
+            return new ResendEmailVerificationOutcome.AlreadyVerified();
         }
 
         var now = DateTimeOffset.UtcNow;
 
-        if (user.EmailVerificationRequestedAt is { } requestedAt && now - requestedAt < ResendCooldown)
+        if (ResendCooldown.IsActive(user.EmailVerificationRequestedAt, now))
         {
-            return ResendEmailVerificationResult.TooManyRequests;
+            return new ResendCooldownActive("A verification email was already sent recently. Try again in a minute.");
         }
 
         var (token, hash, expiresAt) = EmailVerificationToken.Generate(now);
@@ -38,14 +37,19 @@ public static class ResendEmailVerificationHandler
 
         await emailSender.SendEmailVerificationAsync(user.Email.Value, token, cancellationToken);
 
-        return ResendEmailVerificationResult.Sent;
+        return new ResendEmailVerificationOutcome.Sent();
     }
 }
 
-public enum ResendEmailVerificationResult
+// Its own outcome rather than Result<T>: AlreadyVerified is a success (204) with nothing to
+// return, and the cooldown is the shared ResendCooldownActive (409, see ResendCooldown).
+public union ResendEmailVerificationOutcome(
+    ResendEmailVerificationOutcome.Sent,
+    ResendEmailVerificationOutcome.AlreadyVerified,
+    ResendEmailVerificationOutcome.NotFound,
+    ResendCooldownActive)
 {
-    Sent,
-    AlreadyVerified,
-    TooManyRequests,
-    UserNotFound
+    public sealed record Sent;
+    public sealed record AlreadyVerified;
+    public sealed record NotFound;
 }

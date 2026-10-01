@@ -1,28 +1,21 @@
-import { SEEDED_USERS, expect, test } from './support/auth-fixture';
-import { createChild, selectChildIfPresent } from './support/guardian-data';
+import { expect, test } from './support/auth-fixture';
+import { createChild } from './support/guardian-data';
 
 // ConfigureGoalPostsValidator (backend) requires the list to be non-empty, each threshold
 // strictly positive, each icon non-empty, and thresholds strictly ascending with no duplicates --
 // matching the frontend's own "Make sure star counts are positive and increasing" error text. This
 // spec always adds two rows with thresholds 5 then 10 so both the frontend's canSave() gate and
 // the backend's own validation are satisfied throughout.
-test('guardian adds and removes goal-post rows, and changes persist after reload', async ({ page, loginAs }) => {
-  await loginAs(SEEDED_USERS.alice);
+test('guardian adds and removes goal-post rows, and changes persist after reload', async ({ page, loginAs, newGuardian }) => {
+  // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
+  await loginAs(await newGuardian());
 
-  const child = await createChild(page, 'E2eProgressChild');
+  await createChild(page, 'E2eProgressChild');
 
   await page.goto('/guardian/progress');
 
   const section = page.locator('app-manage-progress-goals');
   await expect(section.getByRole('heading', { name: 'Goal posts' })).toBeVisible();
-
-  // Alice accumulates children across every local run of the other e2e specs (nothing here is
-  // cleaned up between runs -- see guardian-data.ts), so pin the per-child <select> (when it's
-  // even rendered -- it only shows once alice has more than one child) onto the child this run
-  // just created. Without this, ManageProgressGoals' own "first child from listMyChildren"
-  // default (no stable ordering -- see mealplan-assignment.spec.ts's identical caveat) could land
-  // on some other run's child instead.
-  await selectChildIfPresent(page, child.givenName);
 
   const addGoalButton = section.getByRole('button', { name: '+ Add another goal' });
   const saveButton = section.getByRole('button', { name: 'Save goal posts' });
@@ -34,7 +27,9 @@ test('guardian adds and removes goal-post rows, and changes persist after reload
   // GoalPostResolver.cs and ProgressSummary.From), and ManageProgressGoals renders exactly what it
   // gets back. Clear those out first so addRow below appends at a known index (0, not "however
   // many defaults happened to precede it") -- this is purely local component state until Save is
-  // clicked, so it's safe to do without ever persisting the now-empty list.
+  // clicked, so it's safe to do without ever persisting the now-empty list. The heading renders
+  // before the goal posts load, so wait for the default rows before counting them.
+  await expect(removeButton.first()).toBeVisible();
   let remaining = await removeButton.count();
 
   while (remaining > 0) {
@@ -63,7 +58,6 @@ test('guardian adds and removes goal-post rows, and changes persist after reload
 
   // Reload and confirm both rows persisted, in order, with their exact values.
   await page.reload();
-  await selectChildIfPresent(page, child.givenName);
 
   await expect(section.locator('[name="goalThreshold0"]')).toHaveValue('5');
   await expect(section.locator('[name="goalIcon0"]')).toHaveValue('🌟');
@@ -83,7 +77,6 @@ test('guardian adds and removes goal-post rows, and changes persist after reload
   await expect(section.getByText('Goal posts saved.')).toBeVisible();
 
   await page.reload();
-  await selectChildIfPresent(page, child.givenName);
 
   await expect(section.locator('[name="goalThreshold0"]')).toHaveValue('5');
   await expect(section.locator('[name="goalThreshold1"]')).toHaveCount(0);

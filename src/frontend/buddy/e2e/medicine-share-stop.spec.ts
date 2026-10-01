@@ -1,17 +1,17 @@
-import { SEEDED_USERS, expect, test } from './support/auth-fixture';
-import { createChild, createGroup, selectChildIfPresent, uniqueName } from './support/guardian-data';
+import { expect, test } from './support/auth-fixture';
+import { createChild, createGroup, uniqueName } from './support/guardian-data';
 
-test('guardian shares a medicine schedule with a group, then stops the schedule', async ({ page, loginAs }) => {
-  await loginAs(SEEDED_USERS.bob);
+test('guardian shares a medicine schedule with a group, then stops the schedule', async ({ page, loginAs, newGuardian }) => {
+  // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
+  await loginAs(await newGuardian());
 
-  const child = await createChild(page);
+  await createChild(page);
   const groupName = await createGroup(page);
 
   const medicineName = uniqueName('E2E Medicine');
 
   await page.goto('/guardian/medicine');
   await expect(page.getByRole('heading', { name: 'Medicine schedules', exact: true })).toBeVisible();
-  await selectChildIfPresent(page, child.givenName);
 
   await page.getByLabel('Medicine name').fill(medicineName);
   await page.getByLabel('Dosage (e.g. 5ml)').fill('5ml');
@@ -32,7 +32,6 @@ test('guardian shares a medicine schedule with a group, then stops the schedule'
 
   // Sharing persists across a reload.
   await page.reload();
-  await selectChildIfPresent(page, child.givenName);
   await expect(page.getByText('Shared with', { exact: false })).toBeVisible();
   await expect(page.getByText(groupName, { exact: true })).toBeVisible();
 
@@ -52,7 +51,6 @@ test('guardian shares a medicine schedule with a group, then stops the schedule'
 
   // Persists across a reload too.
   await page.reload();
-  await selectChildIfPresent(page, child.givenName);
   await expect(page.locator('li', { hasText: medicineName })).toHaveCount(0);
 
   // A stopped schedule generates no further doses -- confirm it's absent from the guardian

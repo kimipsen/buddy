@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from '../../../core/map-with-concurrency';
 import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
@@ -67,16 +68,17 @@ export class PickupToday implements OnInit {
       this.multipleChildren.set(children.length > 1);
 
       const today = todayIsoDate();
-      const perChild = await Promise.all(
-        children.map(async (child) => {
-          const [occurrences, childGuardians] = await Promise.all([
-            this.pickups.listSchedule(child.id, today, today),
-            this.guardians.listChildGuardians(child.id)
-          ]);
-          this.childGuardiansById.set(child.id, childGuardians);
-          return occurrences.map((occurrence) => ({ ...occurrence, childId: child.id, childName: child.name.givenName }));
-        })
-      );
+      // Two requests per child (schedule + guardians) with at most PER_ITEM_REQUEST_CONCURRENCY
+      // children in flight, so never more than 2x the cap requests at once. Still all-or-nothing:
+      // any child's failure shows the widget's load error.
+      const perChild = await mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, async (child) => {
+        const [occurrences, childGuardians] = await Promise.all([
+          this.pickups.listSchedule(child.id, today, today),
+          this.guardians.listChildGuardians(child.id)
+        ]);
+        this.childGuardiansById.set(child.id, childGuardians);
+        return occurrences.map((occurrence) => ({ ...occurrence, childId: child.id, childName: child.name.givenName }));
+      });
 
       this.rows.set(perChild.flat().sort((a, b) => a.slot - b.slot));
     } catch {

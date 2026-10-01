@@ -20,8 +20,9 @@ concurrency:
 
 jobs:
   # Scheduled runs can't take inputs, so they read the MUTATION_SCOPE repository variable instead
-  # (Settings -> Secrets and variables -> Actions -> Variables). Unset means frontend only, since
-  # Stryker.NET doesn't support .NET 11 yet -- set it to "both" once it does.
+  # (Settings -> Secrets and variables -> Actions -> Variables). Unset means frontend only. The
+  # backend suite works again (Stryker.NET 5.0.0 + the SDK Roslyn overlay in run-stryker.sh) but
+  # an unscoped run takes hours -- set it to "both" once that cost is acceptable nightly.
   setup:
     runs-on: ubuntu-latest
     outputs:
@@ -64,10 +65,20 @@ jobs:
       # docs/backend/analysis/mutation-testing-strategy.md. To scope a run to one feature, edit
       # the "mutate" array in stryker-config.json rather than passing --mutate here -- Stryker.NET
       # does not honor the CLI flag when the config file also sets "mutate".
-      # Until Stryker.NET supports .NET 11 this step is expected to fail; the job is opt-in.
+      # run-stryker.sh runs the tool with the SDK's Roslyn swapped in (the bundled one can't compile
+      # C# preview unions) and fails the step when Stryker tested no mutants (no tests discovered,
+      # initial test run failed, mutated build failed, crash) -- Stryker.NET itself can exit 0 then.
       - name: Run Stryker.NET
         working-directory: src/backend/buddy.IntegrationTests
-        run: dotnet tool run dotnet-stryker
+        run: ./run-stryker.sh
+
+      - name: Upload Stryker log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-mutation-log
+          path: src/backend/buddy.IntegrationTests/StrykerOutput/stryker-run.log
+          if-no-files-found: ignore
 
       - name: Upload report
         if: always()

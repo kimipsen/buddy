@@ -55,7 +55,7 @@ sequenceDiagram
 | `PATCH` | `/users/me/children/{childId}/timezone` | An active guardian updates the child's time zone. |
 | `GET` | `/users/me/guardians` | Lists guardians linked to the current authenticated user. |
 | `GET` | `/users/me/siblings` | Lists the caller's siblings, resolved via shared guardians. |
-| `POST` | `/users/me/children/{childId}/guardian-invites` | An active guardian invites another adult, by email, to co-manage this child. |
+| `POST` | `/users/me/children/{childId}/guardian-invites` | An active guardian invites another adult, by email, to co-manage this child. Re-inviting the same email within a minute returns `409 resend_cooldown`. |
 | `GET` | `/users/me/children/{childId}/guardian-invites` | Lists this child's pending guardian invites. |
 | `DELETE` | `/users/me/children/{childId}/guardian-invites/{inviteId}` | Revokes a pending guardian invite. |
 | `GET` | `/guardian-invites/{token}/preview` | Unauthenticated preview of who a guardian-invite link is for. |

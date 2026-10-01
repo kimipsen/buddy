@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { todayIsoDate } from '../../../core/date-utils';
 import { ChildSummary, GuardianSummary, GuardiansService } from '../../../core/guardians.service';
 import { PickupOccurrence, PickupsService } from '../../../core/pickups.service';
+import { PER_ITEM_REQUEST_CONCURRENCY } from '../../../core/map-with-concurrency';
 import { PickupToday } from './pickup-today';
 
 describe('PickupToday', () => {
@@ -75,8 +76,8 @@ describe('PickupToday', () => {
     return { fixture, guardians: guardiansStub, pickups: pickupsStub };
   }
 
-  // loadToday chains more than one await (listMyChildren, then a Promise.all of per-child
-  // listSchedule/listChildGuardians pairs, itself inside an outer Promise.all) before the signals
+  // loadToday chains more than one await (listMyChildren, then a mapWithConcurrency over per-child
+  // listSchedule/listChildGuardians Promise.all pairs) before the signals
   // driving the template settle -- a single whenStable() flush isn't always enough, so flush a
   // generous fixed number of times rather than guessing when it's "probably" done.
   async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
@@ -266,5 +267,64 @@ describe('PickupToday', () => {
     const rows = Array.from(compiled.querySelectorAll('li')).map((li) => li.textContent ?? '');
     expect(rows.find((text) => text.includes('Charlie'))).toContain('Gina');
     expect(rows.find((text) => text.includes('Dana'))).toContain('Peter');
+  });
+
+  // Holds every call open until released, tracking how many are in flight at once.
+  function gatedCalls<T>(valueFor: (id: string) => T) {
+    const waiting: (() => void)[] = [];
+    let inFlight = 0;
+    let maxInFlight = 0;
+
+    return {
+      call: (id: string) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        return new Promise<T>((resolve) =>
+          waiting.push(() => {
+            inFlight--;
+            resolve(valueFor(id));
+          })
+        );
+      },
+      releaseOne: () => waiting.shift()!(),
+      get pending() {
+        return waiting.length;
+      },
+      get maxInFlight() {
+        return maxInFlight;
+      }
+    };
+  }
+
+  // Regression guard for the dashboard burst: two requests per child (schedule + guardians) used
+  // to fire for every child at once. Now at most the cap's worth of children are in flight.
+  it('caps concurrent per-child requests and still renders every child\'s pickups', async () => {
+    const childCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
+    const children = Array.from({ length: childCount }, (_, i) =>
+      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } })
+    );
+    const gate = gatedCalls(() => [occurrence({ kind: 1 })]);
+    const listSchedule = vi.fn((childId: string) => gate.call(childId));
+    const listChildGuardians = vi.fn(async () => [guardian()]);
+
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children), listChildGuardians },
+      pickups: { listSchedule }
+    });
+    await settle(fixture);
+
+    expect(listSchedule).toHaveBeenCalledTimes(PER_ITEM_REQUEST_CONCURRENCY);
+    expect(listChildGuardians).toHaveBeenCalledTimes(PER_ITEM_REQUEST_CONCURRENCY);
+
+    while (gate.pending > 0) {
+      gate.releaseOne();
+      await settle(fixture);
+    }
+
+    expect(listSchedule).toHaveBeenCalledTimes(childCount);
+    expect(listChildGuardians).toHaveBeenCalledTimes(childCount);
+    expect(gate.maxInFlight).toBe(PER_ITEM_REQUEST_CONCURRENCY);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    children.forEach((c) => expect(text).toContain(c.name.givenName));
   });
 });

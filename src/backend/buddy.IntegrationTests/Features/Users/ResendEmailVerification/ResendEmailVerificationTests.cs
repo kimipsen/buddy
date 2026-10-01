@@ -1,5 +1,7 @@
 using Alba;
 
+using buddy.Common;
+using buddy.Common.RateLimiting;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -39,11 +41,13 @@ public sealed class ResendEmailVerificationTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Url("/users/me/email/verify/resend");
             _.StatusCodeShouldBe(409);
         });
+
+        Assert.Equal(ResendCooldown.ErrorCode, response.ReadAsJson<ErrorEnvelope>().Code);
     }
 }

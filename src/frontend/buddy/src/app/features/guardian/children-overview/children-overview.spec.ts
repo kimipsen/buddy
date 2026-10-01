@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
-import { ProgressService } from '../../../core/progress.service';
-import { ChildrenOverview } from './children-overview';
+import { ProgressService, ProgressSummary } from '../../../core/progress.service';
+import { ChildrenOverview, PROGRESS_REQUEST_CONCURRENCY } from './children-overview';
 
 describe('ChildrenOverview', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
@@ -134,5 +134,84 @@ describe('ChildrenOverview', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).not.toContain('No children linked yet.');
     expect(compiled.textContent).not.toContain('Unable to load children.');
+  });
+  function summary(totalStars: number): ProgressSummary {
+    return { totalStars, unlockedMilestones: [], currentIcon: '🌱', nextGoalThreshold: 5, nextGoalIcon: '🌿', goalPosts: [] };
+  }
+
+  // Regression guard for the dashboard N+1 burst: a guardian with many children used to fire one
+  // /progress/children/{id} request per child all at once, which exhausted the API's Postgres
+  // pools. There's still one request per child, but never more than the cap in flight.
+  it('caps concurrent progress requests and still loads a badge for every child', async () => {
+    const childCount = PROGRESS_REQUEST_CONCURRENCY * 3 + 1;
+    const children = Array.from({ length: childCount }, (_, i) =>
+      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } })
+    );
+    const pending = new Map<string, (value: ProgressSummary) => void>();
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const getChildProgress = vi.fn((childId: string) => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      return new Promise<ProgressSummary>((resolve) => {
+        pending.set(childId, (value) => {
+          inFlight--;
+          resolve(value);
+        });
+      });
+    });
+
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children) },
+      progress: { getChildProgress }
+    });
+    await settle(fixture);
+
+    expect(getChildProgress).toHaveBeenCalledTimes(PROGRESS_REQUEST_CONCURRENCY);
+
+    // Drain: resolve whatever is in flight until every child has been requested and answered.
+    let answered = 0;
+    while (answered < childCount) {
+      const [id, resolve] = pending.entries().next().value!;
+      pending.delete(id);
+      resolve(summary(Number(id.split('-')[1]) + 100));
+      answered++;
+      await settle(fixture);
+    }
+
+    expect(getChildProgress).toHaveBeenCalledTimes(childCount);
+    expect(new Set(getChildProgress.mock.calls.map(([id]) => id)).size).toBe(childCount);
+    expect(maxInFlight).toBe(PROGRESS_REQUEST_CONCURRENCY);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const items = Array.from(compiled.querySelectorAll('li'));
+    expect(items).toHaveLength(childCount);
+    items.forEach((item, i) => expect(item.textContent).toContain(String(i + 100)));
+  });
+
+  it('still shows the other children\'s badges when one child\'s progress fails', async () => {
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
+      child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } })
+    ];
+
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children) },
+      progress: {
+        getChildProgress: vi.fn(async (childId: string) => {
+          if (childId === 'child-1') {
+            throw new Error('boom');
+          }
+          return summary(7);
+        })
+      }
+    });
+    await settle(fixture);
+
+    const [sam, alex] = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('li'));
+    expect(sam.textContent).not.toContain('🌱');
+    expect(alex.textContent).toContain('7');
+    expect(alex.textContent).toContain('🌱');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Unable to load children.');
   });
 });

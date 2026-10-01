@@ -1,4 +1,5 @@
 using buddy.Features.Calendars;
+using buddy.Features.Groups;
 using buddy.Features.Medicines;
 using buddy.Features.Users;
 
@@ -53,4 +54,17 @@ public sealed class MedicineEventShapeTests
     public void DoseStatusChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new DoseStatusChanged(FixedMedicineId, FixedStartDate, new TimeOnly(8, 0), DoseStatus.Pending, DoseStatus.Taken, FixedChildId, FixedInstant),
         "Medicines/DoseStatusChanged.json");
+
+    private static readonly MedicineSharingId FixedSharingId = new(Guid.Parse("00000000-0000-0000-0000-000000000051"));
+    private static readonly GroupId FixedGroupId = new(Guid.Parse("00000000-0000-0000-0000-000000000010"));
+
+    [Fact]
+    public void MedicineSharedWithGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MedicineSharedWithGroup(FixedSharingId, FixedChildId, FixedGroupId, FixedGuardianId, FixedInstant),
+        "Medicines/MedicineSharedWithGroup.json");
+
+    [Fact]
+    public void MedicineUnsharedFromGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MedicineUnsharedFromGroup(FixedSharingId, FixedGroupId, FixedGuardianId, FixedInstant),
+        "Medicines/MedicineUnsharedFromGroup.json");
 }

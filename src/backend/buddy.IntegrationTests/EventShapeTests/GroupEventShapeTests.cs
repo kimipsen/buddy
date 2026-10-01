@@ -2,6 +2,8 @@ using System.Collections.Immutable;
 
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
+using buddy.Features.Mealplans;
+using buddy.Features.Medicines;
 using buddy.Features.Users;
 
 using Xunit;
@@ -61,4 +63,28 @@ public sealed class GroupEventShapeTests
     public void GroupInviteRevoked() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new GroupInviteRevoked(FixedGroupId, FixedInviteId, FixedUserId, FixedInstant),
         "Groups/GroupInviteRevoked.json");
+
+    [Fact]
+    public void GroupMealplanPolicyUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new GroupMealplanPolicyUpdated(
+            FixedGroupId,
+            ImmutableDictionary<GroupRole, MealplanAccessTier>.Empty
+                .Add(GroupRole.Owner, MealplanAccessTier.Manage)
+                .Add(GroupRole.Admin, MealplanAccessTier.Manage)
+                .Add(GroupRole.Member, MealplanAccessTier.View),
+            FixedUserId,
+            FixedInstant),
+        "Groups/GroupMealplanPolicyUpdated.json");
+
+    [Fact]
+    public void GroupMedicinePolicyUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new GroupMedicinePolicyUpdated(
+            FixedGroupId,
+            ImmutableDictionary<GroupRole, MedicineAccessTier>.Empty
+                .Add(GroupRole.Owner, MedicineAccessTier.Manage)
+                .Add(GroupRole.Admin, MedicineAccessTier.Manage)
+                .Add(GroupRole.Member, MedicineAccessTier.None),
+            FixedUserId,
+            FixedInstant),
+        "Groups/GroupMedicinePolicyUpdated.json");
 }

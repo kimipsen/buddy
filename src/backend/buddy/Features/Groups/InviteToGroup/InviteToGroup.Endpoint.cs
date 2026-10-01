@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.RateLimiting;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -12,7 +13,7 @@ public static class InviteToGroupEndpoint
 {
     public static RouteGroupBuilder MapInviteToGroup(this RouteGroupBuilder groups)
     {
-        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<GroupInviteResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
+        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<GroupInviteResponse>, NotFound, ForbidHttpResult, Conflict<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             InviteToGroupRequest request,
@@ -21,14 +22,14 @@ public static class InviteToGroupEndpoint
             CancellationToken cancellationToken) =>
         {
             var command = InviteToGroup.FromClaims(principal, new GroupId(groupId), request.Email, request.Role);
-            var result = await bus.InvokeAsync<Result<GroupInviteSummary>>(command, cancellationToken);
+            var result = await bus.InvokeAsync<InviteToGroupOutcome>(command, cancellationToken);
 
             return result switch
             {
-                Result<GroupInviteSummary>.Success(var invite) => TypedResults.Ok(GroupInviteResponse.FromSummary(invite)),
-                Result<GroupInviteSummary>.Forbidden => TypedResults.Forbid(),
-                Result<GroupInviteSummary>.NotFound => TypedResults.NotFound(),
-                Result<GroupInviteSummary>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
+                InviteToGroupOutcome.Success(var invite) => TypedResults.Ok(GroupInviteResponse.FromSummary(invite)),
+                InviteToGroupOutcome.Forbidden => TypedResults.Forbid(),
+                InviteToGroupOutcome.NotFound => TypedResults.NotFound(),
+                ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
             };
         })
         .WithName("InviteToGroup");

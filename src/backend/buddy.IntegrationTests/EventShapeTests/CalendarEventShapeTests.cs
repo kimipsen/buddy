@@ -145,4 +145,9 @@ public sealed class CalendarEventShapeTests
     public void ItemDeleted() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new ItemDeleted(FixedItemId, FixedUserId, FixedInstant),
         "Calendars/ItemDeleted.json");
+
+    [Fact]
+    public void CalendarTransferredToGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new CalendarTransferredToGroup(FixedCalendarId, FixedGroupId, FixedUserId, FixedInstant),
+        "Calendars/CalendarTransferredToGroup.json");
 }

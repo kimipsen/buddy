@@ -87,7 +87,7 @@ describe('TranslationService', () => {
     it('resolves a top-level key to its string value', () => {
       const service = new TranslationService();
 
-      expect(service.translate('common.signOut')).toBe('Sign out');
+      expect(service.translate('common.colorLabel')).toBe('Color');
     });
 
     it('resolves a nested dotted key to its string value', () => {
@@ -117,9 +117,9 @@ describe('TranslationService', () => {
     it('returns the key itself when a segment attempts to traverse into a string node', () => {
       const service = new TranslationService();
 
-      // "common.signOut" resolves to a string; trying to go one level deeper than that must
+      // "common.colorLabel" resolves to a string; trying to go one level deeper than that must
       // fail rather than throwing or accidentally indexing into the string.
-      expect(service.translate('common.signOut.nope')).toBe('common.signOut.nope');
+      expect(service.translate('common.colorLabel.nope')).toBe('common.colorLabel.nope');
     });
 
     it('leaves placeholders untouched when no params are given', () => {
@@ -149,7 +149,7 @@ describe('TranslationService', () => {
     it('ignores params that do not correspond to any placeholder in the template', () => {
       const service = new TranslationService();
 
-      expect(service.translate('common.signOut', { unused: 'value' })).toBe('Sign out');
+      expect(service.translate('common.colorLabel', { unused: 'value' })).toBe('Color');
     });
 
     it('resolves against the dictionary for the currently selected language', () => {

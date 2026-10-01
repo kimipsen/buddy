@@ -1,3 +1,12 @@
+# Production stack for the Oracle VM. Run via `task deploy` (which runs
+# deploy/preflight.sh first and sets BUDDY_IMAGE_TAG to the git SHA), see
+# deploy/README.md. Run from deploy/, the compose project name is "deploy", so
+# named volumes are deploy_postgres-data, deploy_caddy-data, deploy_caddy-config.
+#
+# Built images are tagged buddy-{api,frontend,keycloak}:${BUDDY_IMAGE_TAG}
+# (default "latest" for a manual `docker compose up`), so earlier builds stay
+# on the host and a rollback can start them again with --no-build.
+
 services:
   caddy:
     image: caddy:2
@@ -19,6 +28,7 @@ services:
       - frontend
 
   frontend:
+    image: buddy-frontend:${BUDDY_IMAGE_TAG:-latest}
     build:
       context: ../src/frontend/buddy
       args:
@@ -29,6 +39,7 @@ services:
       - buddy_network
 
   api:
+    image: buddy-api:${BUDDY_IMAGE_TAG:-latest}
     build:
       context: ../src/backend
       dockerfile: buddy/Dockerfile
@@ -48,9 +59,20 @@ services:
       Authentication__KeycloakAdmin__ClientSecret: "${KEYCLOAK_ADMIN_CLI_SECRET}"
       Cors__AllowedOrigins__0: "https://${APP_DOMAIN}"
       Mail__FrontendBaseUrl: "https://${APP_DOMAIN}"
+    # The aspnet runtime image has no curl/wget; bash's /dev/tcp does the GET.
+    # /health is MapHealthChecks with no registered checks: it says the process
+    # is serving requests, not that Postgres/Keycloak are reachable.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
-      - db
-      - keycloak
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - buddy_network
 
@@ -62,13 +84,27 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - buddy_network
 
   keycloak:
-    image: quay.io/keycloak/keycloak:21.1.1
+    image: buddy-keycloak:${BUDDY_IMAGE_TAG:-latest}
+    # Same image as Azure: stock 21.1.1 + `kc.sh build --db=postgres` + the
+    # buddy theme baked in. The stock image is built for dev-file (H2), and
+    # `start --optimized` (the image's CMD) doesn't re-run the build, so the
+    # stock image would ignore KC_DB=postgres.
+    build:
+      context: ..
+      dockerfile: deploy/azure/keycloak/Dockerfile
+      args:
+        HEALTH_ENABLED: "true"
     restart: unless-stopped
-    command: start --optimized
     env_file:
       - .env
     environment:
@@ -83,10 +119,16 @@ services:
       KC_PROXY: edge
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-    volumes:
-      - ../themes/buddy:/opt/keycloak/themes/buddy:ro
+    # No curl in the Keycloak image either. /health/ready includes the DB check.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - buddy_network
 

@@ -18,13 +18,20 @@ e.g. [`Features/Groups/GroupsFeature.cs`](../../../src/backend/buddy/Features/Gr
 Aggregates are plain immutable records with a static fold,
 e.g. `Group.Rehydrate(IEnumerable<GroupEvent> events)`
 ([`Features/Groups/Types/Group.cs`](../../../src/backend/buddy/Features/Groups/Types/Group.cs)),
-and every command handler re-reads and re-folds the *entire* stream from
-event 1 on every request — there is no caching or snapshotting anywhere
-today. The only existing read-model precedent is a set of hand-rolled Marten
-"documents" (`GroupMembershipDocument`, `GuardianLinkDocument`,
-`MedicineIndexDocument`, ...) that individual event stores update by hand,
-inline, in the same session as the event append
+and every aggregate now has an inline snapshot projection (`<Agg>Snapshot`
+documents in the shared `snapshots` schema, updated in the same transaction as
+each append). Read-only handlers (`Get*`/`List*`) load the snapshot through
+`FindSnapshotAsync`; command handlers still re-read and re-fold the full stream
+through `ReadAsync`, which is also where the optimistic-concurrency version is
+taken from (see `Common/Concurrency/StreamVersionTracker.cs`). Alongside the
+snapshots, the hand-rolled lookup "documents" (`GroupMembershipDocument`,
+`GuardianLinkDocument`, `MedicineIndexDocument`, ...) are still written by the
+event stores inline, in the same session as the event append
 (see `MartenGroupEventStore.AppendAsync`).
+
+Before this work, every handler re-folded the entire stream from event 1 on
+every request and there was no caching or snapshotting anywhere; the rest of
+this document records how that was changed.
 
 The ask: add a snapshot of current aggregate state per stream, for quicker
 lookups, without weakening events as the single source of truth — snapshots

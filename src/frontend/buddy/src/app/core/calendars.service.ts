@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { todayIsoDate } from './date-utils';
 import { postIdempotent } from './http-idempotency';
+import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from './map-with-concurrency';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // CalendarRole/CalendarItemKind values match the backend's enum ordinals (no string enum
@@ -333,12 +334,12 @@ export class CalendarsService {
   async listOccurrencesInRange(from: string, to: string): Promise<CalendarOccurrence[]> {
     const calendars = await this.listMyCalendars();
 
-    const perCalendar = await Promise.all(
-      calendars.map(async (calendar) => {
-        const occurrences = await this.listOccurrences(calendar.id, from, to);
-        return occurrences.map((occurrence) => ({ ...occurrence, calendarId: calendar.id, calendarName: calendar.name }));
-      })
-    );
+    // One request per calendar (no cross-calendar range endpoint), bounded so a guardian in many
+    // calendars doesn't burst the API. Still rejects if any calendar fails, as before.
+    const perCalendar = await mapWithConcurrency(calendars, PER_ITEM_REQUEST_CONCURRENCY, async (calendar) => {
+      const occurrences = await this.listOccurrences(calendar.id, from, to);
+      return occurrences.map((occurrence) => ({ ...occurrence, calendarId: calendar.id, calendarName: calendar.name }));
+    });
 
     return perCalendar.flat();
   }

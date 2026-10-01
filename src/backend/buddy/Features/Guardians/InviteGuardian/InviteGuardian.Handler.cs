@@ -1,6 +1,4 @@
-using buddy.Common;
 using buddy.Common.RateLimiting;
-using buddy.Common.Validation;
 using buddy.Email;
 using buddy.Features.Users;
 
@@ -8,7 +6,7 @@ namespace buddy.Features.Guardians;
 
 public static class InviteGuardianHandler
 {
-    public static async Task<Result<GuardianInviteSummary>> Handle(
+    public static async Task<InviteGuardianOutcome> Handle(
         InviteGuardian command,
         IGuardianLinkEventStore guardianLinks,
         IGuardianInviteEventStore invites,
@@ -18,7 +16,7 @@ public static class InviteGuardianHandler
     {
         if (command.UserId is not { } userId)
         {
-            return new Result<GuardianInviteSummary>.NotFound();
+            return new InviteGuardianOutcome.NotFound();
         }
 
         // Any active guardian of this child can invite a co-guardian -- GuardianKind never gates
@@ -27,14 +25,14 @@ public static class InviteGuardianHandler
 
         if (link is null)
         {
-            return new Result<GuardianInviteSummary>.NotFound();
+            return new InviteGuardianOutcome.NotFound();
         }
 
         var child = User.Rehydrate(await users.ReadAsync(command.ChildId, cancellationToken));
 
         if (child is null || child.IsDeleted)
         {
-            return new Result<GuardianInviteSummary>.NotFound();
+            return new InviteGuardianOutcome.NotFound();
         }
 
         // Deliberately no "does an account exist for this email" check -- same
@@ -45,7 +43,7 @@ public static class InviteGuardianHandler
 
         if (ResendCooldown.IsActive(existingInvite?.CreatedAt, now))
         {
-            return new Result<GuardianInviteSummary>.Validation(ValidationProblem.Of("An invite was already sent recently. Try again in a minute."));
+            return new ResendCooldownActive("An invite was already sent recently. Try again in a minute.");
         }
 
         var inviteId = existingInvite is null ? GuardianInviteId.New() : new GuardianInviteId(existingInvite.Id);
@@ -63,6 +61,6 @@ public static class InviteGuardianHandler
 
         await emailSender.SendGuardianInviteEmailAsync(normalizedEmail, child.Name.GivenName, token, cancellationToken);
 
-        return new Result<GuardianInviteSummary>.Success(new GuardianInviteSummary(inviteId.Value, normalizedEmail, command.Kind, now, expiresAt));
+        return new InviteGuardianOutcome.Success(new GuardianInviteSummary(inviteId.Value, normalizedEmail, command.Kind, now, expiresAt));
     }
 }

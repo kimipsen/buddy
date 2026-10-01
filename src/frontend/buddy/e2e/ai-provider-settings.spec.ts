@@ -1,4 +1,4 @@
-import { SEEDED_USERS, expect, test } from './support/auth-fixture';
+import { expect, test } from './support/auth-fixture';
 import { createChild } from './support/guardian-data';
 
 // Every AI provider settings call except "test connection" is 100% local on the backend --
@@ -11,8 +11,11 @@ import { createChild } from './support/guardian-data';
 // boundary. Instead, this spec intercepts the browser's own request to *our* backend's
 // test-connection endpoint and fulfills it directly, so that endpoint (and therefore any real
 // egress) is never actually invoked.
-test('guardian adds AI provider keys, switches the active one, tests a connection (stubbed), and removes a key', async ({ page, loginAs }) => {
-  await loginAs(SEEDED_USERS.alice);
+test('guardian adds AI provider keys, switches the active one, tests a connection (stubbed), and removes a key', async ({ page, loginAs, newGuardian }) => {
+  // A disposable guardian (newGuardian): the AI credential is family-wide and anchored to a child,
+  // and a seeded guardian's family is shared with every parallel test, whose cleanup revokes links
+  // to their children mid-flow. A fresh guardian with one child has a family nobody else touches.
+  await loginAs(await newGuardian());
 
   await createChild(page);
 
@@ -31,11 +34,9 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
 
   // AI provider credentials are resolved per *family* (MealFamilyResolution.
   // ResolveFamilyAiCredentialIdAsync), i.e. shared across every child of the same guardian -- not
-  // scoped to the single child this run just created. Since alice's family is shared across
-  // repeated runs of this spec against the same persistent backend, a previous run can leave keys
-  // configured (and an active provider already set), which would make the "first key auto-
-  // activates" assertion below unreliable. Reset to an empty slate first so this run behaves the
-  // same regardless of what any earlier run left behind.
+  // scoped to the single child this run just created. This run's guardian is fresh, so its
+  // family should start empty; leftover keys (and an active provider) would make the "first key
+  // auto-activates" assertion below unreliable, so any that are there are removed first anyway.
   // Every state-changing click below is paired with page.waitForResponse for the exact request it
   // triggers, rather than just polling the rendered text with a timeout: the component applies the
   // PUT/DELETE response's body directly (AiProviderSettingsComponent.applySettings), so once that

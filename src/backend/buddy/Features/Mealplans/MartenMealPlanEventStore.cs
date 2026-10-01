@@ -1,3 +1,4 @@
+using buddy.Common.Concurrency;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -11,6 +12,7 @@ public sealed class MartenMealPlanEventStore(IMealplansStore store) : IMealPlanE
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(id.Value, token: cancellationToken);
+        session.ObserveStream(id.Value, events);
 
         return [.. events.Select(e => MealPlanEvent.FromPayload(e.Data))];
     }
@@ -36,7 +38,7 @@ public sealed class MartenMealPlanEventStore(IMealplansStore store) : IMealPlanE
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.StartStream(id.Value, payloads);
+        session.StartTrackedStream(id.Value, payloads);
         session.Store(new MealPlanIndexDocument(id.Value, childId.Value));
 
         // Lazy creation can bundle a share into the same batch (e.g. sharing a family's very
@@ -64,7 +66,7 @@ public sealed class MartenMealPlanEventStore(IMealplansStore store) : IMealPlanE
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(id.Value, payloads);
+        session.AppendTracked(id.Value, payloads);
 
         foreach (var @event in events)
         {

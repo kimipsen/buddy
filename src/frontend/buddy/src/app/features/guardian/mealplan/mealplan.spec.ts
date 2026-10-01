@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { GroupDetail, GroupSummary, GroupsService } from '../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { Meal, MealplansService } from '../../../core/mealplans.service';
+import { PER_ITEM_REQUEST_CONCURRENCY } from '../../../core/map-with-concurrency';
 import { GuardianMealplan } from './mealplan';
 
 describe('GuardianMealplan', () => {
@@ -75,14 +76,16 @@ describe('GuardianMealplan', () => {
   }
 
   // load() chains guardians.listMyChildren, then a Promise.all of listMyGroups/getSharedGroup,
-  // then a further Promise.all of per-group getGroup calls -- more await-depth than a single
+  // then bounded (mapWithConcurrency) per-group getGroup and status calls -- more await-depth than a single
   // macrotask flush reliably drains, especially once the real child components' own effects (each
-  // with their own chained loads against the same mocked service) are added on top.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  // with their own chained loads against the same mocked service) are added on top. Each round is
+  // a macrotask (per docs/testing.md) rather than whenStable(), which only spans a microtask or so
+  // here and ran out of depth once the per-group calls went through mapWithConcurrency.
+  async function settle(fixture: { detectChanges: () => void }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
-      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
       fixture.detectChanges();
     }
   }
@@ -393,5 +396,84 @@ describe('GuardianMealplan', () => {
     expect(compiled.textContent).toContain('Unable to stop sharing the meal plan.');
     // Still marked as shared since the unshare didn't actually succeed.
     expect(compiled.textContent).toContain('Shared with Family Group.');
+  });
+
+  // Holds every call open until released, tracking how many are in flight at once.
+  function gatedCalls<T>(valueFor: (id: string) => T) {
+    const waiting: (() => void)[] = [];
+    let inFlight = 0;
+    let maxInFlight = 0;
+
+    return {
+      call: (id: string) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        return new Promise<T>((resolve) =>
+          waiting.push(() => {
+            inFlight--;
+            resolve(valueFor(id));
+          })
+        );
+      },
+      releaseOne: () => waiting.shift()!(),
+      get pending() {
+        return waiting.length;
+      },
+      get maxInFlight() {
+        return maxInFlight;
+      }
+    };
+  }
+
+  // Regression guard: one GetGroup per group (and one status call per qualifying group) used to
+  // fire for every group at once. Both are now bounded by the shared cap.
+  it('caps concurrent per-group detail requests and still offers every qualifying group', async () => {
+    const groupCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
+    const groups = Array.from({ length: groupCount }, (_, i) => groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }));
+    const gate = gatedCalls((groupId) => groupDetail({ id: groupId }));
+    const getGroup = vi.fn((groupId: string) => gate.call(groupId));
+    const getGroupMealplanStatus = vi.fn(async () => ({ hasSharedPlan: true }));
+
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => groups), getGroup },
+      mealplans: { getGroupMealplanStatus }
+    });
+    await settle(fixture);
+
+    expect(getGroup).toHaveBeenCalledTimes(PER_ITEM_REQUEST_CONCURRENCY);
+
+    while (gate.pending > 0) {
+      gate.releaseOne();
+      await settle(fixture);
+    }
+
+    expect(getGroup).toHaveBeenCalledTimes(groupCount);
+    expect(gate.maxInFlight).toBe(PER_ITEM_REQUEST_CONCURRENCY);
+    expect(getGroupMealplanStatus).toHaveBeenCalledTimes(groupCount);
+    const compiled = fixture.nativeElement as HTMLElement;
+    groups.forEach((group) => expect(findButtonByText(compiled, group.name)).toBeTruthy());
+  });
+
+  it('caps concurrent shared-plan status requests across qualifying groups', async () => {
+    const groupCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
+    const groups = Array.from({ length: groupCount }, (_, i) => groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }));
+    const gate = gatedCalls(() => ({ hasSharedPlan: true }));
+    const getGroupMealplanStatus = vi.fn((groupId: string) => gate.call(groupId));
+
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => groups), getGroup: vi.fn(async (groupId: string) => groupDetail({ id: groupId })) },
+      mealplans: { getGroupMealplanStatus }
+    });
+    await settle(fixture);
+
+    expect(getGroupMealplanStatus).toHaveBeenCalledTimes(PER_ITEM_REQUEST_CONCURRENCY);
+
+    while (gate.pending > 0) {
+      gate.releaseOne();
+      await settle(fixture);
+    }
+
+    expect(getGroupMealplanStatus).toHaveBeenCalledTimes(groupCount);
+    expect(gate.maxInFlight).toBe(PER_ITEM_REQUEST_CONCURRENCY);
   });
 });

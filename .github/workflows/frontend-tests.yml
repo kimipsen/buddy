@@ -1,0 +1,50 @@
+name: Frontend tests
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/frontend/**"
+      - ".claude/skills/i18n/**"
+      - ".github/workflows/frontend-tests.yml"
+  push:
+    branches: [master]
+    paths:
+      - "src/frontend/**"
+      - ".claude/skills/i18n/**"
+      - ".github/workflows/frontend-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/frontend/buddy
+    steps:
+      - uses: actions/checkout@v7
+
+      # Same Node major as the devcontainer's LTS (and e2e-tests.yml); package.json has no
+      # engines field to read it from.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: src/frontend/buddy/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The app type check also enforces exact en/da key parity (translations/index.ts).
+      - name: Type check app
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Type check specs
+        run: npx tsc --noEmit -p tsconfig.spec.json
+
+      - name: Unit tests
+        run: npm test -- --watch=false
+
+      # Fails on missing keys or {placeholder} mismatches between en and da; identical-text
+      # entries are reported as warnings.
+      - name: i18n parity
+        run: node ../../../.claude/skills/i18n/check-parity.mjs

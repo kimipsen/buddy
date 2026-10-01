@@ -1,3 +1,4 @@
+using buddy.Common.Postgres;
 using System.Security.Claims;
 
 using buddy.Features.Guardians;
@@ -12,6 +13,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+
+using Npgsql;
 
 using Weasel.Core;
 
@@ -54,7 +57,8 @@ public static class UsersFeature
         });
 
         services.Configure<KeycloakOptions>(configuration.GetSection(KeycloakOptions.SectionName));
-        services.Configure<PostgresOptions>(configuration.GetSection(PostgresOptions.SectionName));
+        // Shared process-wide pool -- see PostgresDataSource.
+        services.AddPostgresDataSource(configuration);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer();
@@ -81,10 +85,8 @@ public static class UsersFeature
 
         services.AddMartenStore<IUsersStore>(serviceProvider =>
         {
-            var postgres = serviceProvider.GetRequiredService<IOptionsMonitor<PostgresOptions>>().CurrentValue;
-
             var options = new StoreOptions();
-            options.Connection(postgres.Postgres);
+            options.Connection(serviceProvider.GetRequiredService<NpgsqlDataSource>());
             options.DatabaseSchemaName = "users";
             options.Events.StreamIdentity = StreamIdentity.AsGuid;
             options.Events.AddEventTypes(EventTypes);

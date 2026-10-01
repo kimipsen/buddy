@@ -93,10 +93,12 @@ Pattern: `Features/Pickups/Types/PickupSchedule.cs`.
 Store registration: `Features/Pickups/PickupsFeature.cs`. Event store: `Features/Pickups/MartenPickupScheduleEventStore.cs`.
 
 - One Marten store per domain: `services.AddMartenStore<I<Domain>Store>(...)` with `options.DatabaseSchemaName = "<domain>"`, `Events.StreamIdentity = StreamIdentity.AsGuid`, `Events.AddEventTypes(EventTypes)`.
+- Connection: every store shares the process-wide pool. Call `services.AddPostgresDataSource(configuration)` in the feature (idempotent) and `options.Connection(serviceProvider.GetRequiredService<NpgsqlDataSource>())` in the store lambda, never `options.Connection(connectionString)`, which gives the store a private pool. `Common/Postgres/PostgresDataSource.cs` builds it from `ConnectionStrings:Postgres` with a default `Maximum Pool Size=50` and `Application Name=buddy` (explicit values in the connection string win). Marten doesn't dispose a supplied data source; the DI container does. `PostgresDataSourceHostTests` asserts every store uses it - add a new store's interface to its list.
 - Serializer: `UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString, ...)` and add `StronglyTypedIdJsonConverterFactory` (+ `ValueTupleJsonConverterFactory` if any state is keyed by a `ValueTuple`). Marten's JSON options are separate from `Program.cs`'s HTTP JSON options - register converters in both.
-- Event store methods: `QuerySession()` for reads, `LightweightSession()` + `SaveChangesAsync` for writes; `StartStream(id.Value, payloads)` on create, `Append(id.Value, payloads)` after. Payloads are `e.Value ?? throw new InvalidOperationException(...)`. Map back with `<Union>.FromPayload(e.Data)`. Return domain types from the interface, never Marten types.
+- Event store methods: `QuerySession()` for reads, `LightweightSession()` + `SaveChangesAsync` for writes. Go through the `Common/Concurrency/StreamVersionTracker` extensions, never `session.Events.*` directly: `session.ObserveStream(id.Value, events)` right after `FetchStreamAsync` in `ReadAsync`, `session.StartTrackedStream(id.Value, payloads)` on create, `session.AppendTracked(id.Value, payloads)` after. Payloads are `e.Value ?? throw new InvalidOperationException(...)`. Map back with `<Union>.FromPayload(e.Data)`. Return domain types from the interface, never Marten types.
 - `AppendAsync` returns early on an empty event list.
 - Lookup documents (`PickupScheduleIndexDocument`, `GroupMembershipDocument`) are written in the same session as the event append so they commit atomically.
+- **Optimistic concurrency** (read-modify-append): `StreamVersionScopeMiddleware` (Wolverine middleware on every handler, `Program.cs`) opens a per-invocation scope; `ReadAsync` records the stream version it saw and the matching `AppendAsync` becomes an expected-version append. A concurrent writer in between makes Marten throw `EventStreamUnexpectedMaxEventIdException` (a `JasperFx.ConcurrencyException`), which `ConcurrencyConflictMiddleware` renders as `409 concurrency_conflict` (`ErrorEnvelope`). Handlers and endpoints need nothing extra, as long as the decision is made on a `ReadAsync` in the same handler invocation (nested `IMessageBus.InvokeAsync` shares the scope). Not covered: appends with no prior `ReadAsync` of that stream (e.g. guardian invites decided from `GuardianInviteDocument`), decisions made on `FindSnapshotAsync`, and store calls outside a handler, which all stay plain appends. Test: `buddy.IntegrationTests/Common/Concurrency/OptimisticConcurrencyTests.cs`.
 - Concurrency on create: rely on a DB constraint (`session.Insert` + catch `DocumentAlreadyExistsException`), see `MartenUserEventStore.CreateAsync`. No in-memory locks.
 
 ### Snapshots
@@ -148,7 +150,8 @@ Endpoint (`AssignPickup.Endpoint.cs`, `ClearPickup.Endpoint.cs`):
 - Lambda returns `Task<Results<Ok<T>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>>`, builds the command, calls `bus.InvokeAsync<Result<T>>(command, ct)`, and maps with an exhaustive `switch` expression. Validation -> `TypedResults.BadRequest(problem.ToEnvelope(httpContext))`.
 - Request body is a separate `sealed record <UseCase>Request` with primitives (`Guid?`), converted to domain IDs in the endpoint.
 - Every endpoint has `.WithName("<UseCase>")` - the endpoint coverage test keys on it.
-- Status codes per `docs/backend/http-status-codes.md` (create 201, update 200/204, delete 204). Create-style POSTs are covered by `IdempotencyKeyMiddleware`.
+- Status codes per `docs/backend/http-status-codes.md`: creates return **200** with the created resource (no endpoint uses 201/`TypedResults.Created`), update 200/204, delete 204. Create-style POSTs are covered by `IdempotencyKeyMiddleware`.
+- Resend throttling: `Common/RateLimiting/ResendCooldown` is the only cooldown (InviteGuardian, InviteToGroup, ResendEmailVerification). The handler returns `ResendCooldownActive` as a case of its feature-specific outcome union; the endpoint renders it with `cooldown.ToConflict(httpContext)` -> `409 resend_cooldown`.
 - Add the request to `<Domain>.http`.
 
 ## 8. Tests - xunit + Alba + Testcontainers
@@ -159,13 +162,13 @@ All backend tests are in `src/backend/buddy.IntegrationTests/` (no separate unit
 - Feature tests: `Features/<Domain>/<UseCase>/<UseCase>Tests.cs`, `public sealed class X(BuddyApiFixture fixture)`, drive HTTP via `fixture.Host.Scenario(...)` with a real Keycloak token. Test names are sentences: `A_guardian_can_assign_a_sibling_as_escort`. Example: `Features/Pickups/AssignPickup/AssignPickupTests.cs`.
 - Mark at least one test per endpoint `[CoversEndpoint("<EndpointName>")]` - `Meta/EndpointCoverageTests.cs` fails on any mapped endpoint without one (and on stale names).
 - Cover the authorization matrix (guardian / child / unrelated user) and each `Result` arm the endpoint maps.
-- Event shape: new/changed events get a test in `EventShapeTests/<Domain>EventShapeTests.cs` against `EventShapeTests/GoldenFiles/<Domain>/*.json` with fixed IDs and instants.
+- Event shape: new/changed events get a test in `EventShapeTests/<Domain>EventShapeTests.cs` against `EventShapeTests/GoldenFiles/<Domain>/*.json` with fixed IDs and instants. Every registered event type has one; `Meta/EventGoldenFileCoverageTests.cs` fails on a type in any feature's `EventTypes` without a `<Type>.json`/`<Type>_<Variant>.json` (and on stale golden files). `EventShapeTestSupport` registers the union of the stores' converters (StronglyTypedId, ValueTuple, CalendarOwner) - keep it in sync when a store adds one.
 - Snapshot: `SnapshotTests/<Agg>SnapshotTests.cs` (section 5).
 - Run: `task test:backend` or `dotnet test src/backend/backend.slnx` (needs Docker). Mutation: `task test:mutation:backend`.
 
 ## 9. Config and secrets
 
-- Config through `IConfiguration`/options classes (`Features/Users/PostgresOptions.cs` reads `ConnectionStrings:Postgres`). Integration tests override via `ConfigurationOverride` in the fixture.
+- Config through `IConfiguration`/options classes (`Features/Users/PostgresOptions.cs` reads `ConnectionStrings:Postgres`, which feeds the shared `NpgsqlDataSource`). Integration tests override via `ConfigurationOverride` in the fixture.
 - Never commit secrets. `appsettings.*.json` and `.env` are git-ignored; keep local secrets there or in environment variables, keep a placeholder `.env.example` tracked if you introduce env-based config. Production secrets come from CI/CD or a cloud secret store.
 - Central package versions in `src/backend/Directory.Packages.props`; `.csproj` `PackageReference`s carry no version.
 

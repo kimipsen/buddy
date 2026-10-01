@@ -1,0 +1,11 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000021",
+  "ChildId": "00000000-0000-0000-0000-000000000003",
+  "ChildGivenName": "Alex",
+  "InvitedEmail": "invitee@buddy.test",
+  "Kind": "Parent",
+  "InvitedBy": "00000000-0000-0000-0000-000000000001",
+  "TokenHash": "deadbeef",
+  "ExpiresAt": "2025-01-08T12:00:00+00:00",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

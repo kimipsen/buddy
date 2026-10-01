@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { AssignableMember, CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
 import { toIsoDateInTimeZone } from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from '../../../core/map-with-concurrency';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { UsersService } from '../../../core/users.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
@@ -164,8 +165,8 @@ export class TasksToday implements OnInit {
 
   private async loadAssigneeNames(tasks: CalendarOccurrence[]): Promise<void> {
     const assignedCalendarIds = [...new Set(tasks.filter((task) => task.assignedTo !== null).map((task) => task.calendarId))];
-    const memberLists = await Promise.all(
-      assignedCalendarIds.map((calendarId) => this.calendars.listAssignableMembers(calendarId).catch((): AssignableMember[] => []))
+    const memberLists = await mapWithConcurrency(assignedCalendarIds, PER_ITEM_REQUEST_CONCURRENCY, (calendarId) =>
+      this.calendars.listAssignableMembers(calendarId).catch((): AssignableMember[] => [])
     );
 
     this.memberNamesById.set(

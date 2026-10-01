@@ -116,17 +116,40 @@ else
     -o none
 fi
 
-# Public network access has to be Enabled for firewall rules to apply at all
-# (safe/idempotent to (re)run even if it's already enabled). Access is then
-# restricted down to just Azure services via the firewall rule below -
-# tighten to a VNet-integrated / private endpoint setup later if you want to
-# remove public network exposure entirely.
-echo "==> Ensuring the Postgres server allows public network access"
-az postgres flexible-server update \
+# Why public access at all: the Container Apps environment below is not
+# VNet-integrated, so keycloak and api reach Postgres over its public endpoint,
+# limited to Azure-originated traffic by the AllowAzureServices firewall rule
+# (and firewall rules only apply while public access is Enabled). Nothing in
+# this script connects to Postgres from the machine running it - the databases
+# are created through the Azure control plane (`az postgres flexible-server db
+# create`) - so public access is a runtime need of the apps, not of the script.
+#
+# Only change it when it's actually off, so a rerun doesn't issue a redundant
+# server update, and leave a VNet-integrated (private access) server alone:
+# public access can't be enabled on one, and the apps would reach it over the
+# VNet anyway. If the state can't be read, fall back to enabling it (the
+# previous unconditional behaviour). See "Postgres network exposure" in
+# README-azure.md.
+PG_PUBLIC_ACCESS=$(az postgres flexible-server show \
   --resource-group "$RESOURCE_GROUP" \
   --name "$PG_SERVER_NAME" \
-  --public-access Enabled \
-  -o none
+  --query network.publicNetworkAccess -o tsv 2>/dev/null || true)
+PG_DELEGATED_SUBNET=$(az postgres flexible-server show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$PG_SERVER_NAME" \
+  --query network.delegatedSubnetResourceId -o tsv 2>/dev/null || true)
+if [[ -n "$PG_DELEGATED_SUBNET" ]]; then
+  echo "==> Postgres server is VNet-integrated (private access) - leaving its network settings alone"
+elif [[ "$PG_PUBLIC_ACCESS" == "Enabled" ]]; then
+  echo "==> Postgres server already allows public network access (firewalled to Azure services), skipping"
+else
+  echo "==> Enabling public network access on the Postgres server (was: ${PG_PUBLIC_ACCESS:-unknown}) so the Container Apps can reach it"
+  az postgres flexible-server update \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$PG_SERVER_NAME" \
+    --public-access Enabled \
+    -o none
+fi
 
 if postgres_firewall_rule_exists AllowAzureServices; then
   echo "==> Firewall rule AllowAzureServices already exists, skipping"

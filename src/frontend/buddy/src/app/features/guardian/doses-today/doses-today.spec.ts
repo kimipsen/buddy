@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { todayIsoDate } from '../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
+import { PER_ITEM_REQUEST_CONCURRENCY } from '../../../core/map-with-concurrency';
 import { DosesToday } from './doses-today';
 
 describe('DosesToday', () => {
@@ -66,7 +67,7 @@ describe('DosesToday', () => {
     return { fixture, guardians: guardiansStub, medicines: medicinesStub };
   }
 
-  // loadDoses chains more than one await (listMyChildren, then a Promise.all of per-child
+  // loadDoses chains more than one await (listMyChildren, then a bounded mapWithConcurrency of per-child
   // listDoses calls) before the signals driving the template settle. Per docs/testing.md, this
   // app runs zoneless and whenStable() does not resolve on a plain mocked Promise, so a macrotask
   // flush is used instead, repeated to cover any depth of chained awaits (including the toggle
@@ -282,5 +283,61 @@ describe('DosesToday', () => {
 
     expect(compiled.textContent).toContain('Unable to update this dose.');
     expect(compiled.textContent).toContain('Still pending');
+  });
+
+  // Holds every call open until released, tracking how many are in flight at once.
+  function gatedCalls<T>(valueFor: (id: string) => T) {
+    const waiting: (() => void)[] = [];
+    let inFlight = 0;
+    let maxInFlight = 0;
+
+    return {
+      call: (id: string) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        return new Promise<T>((resolve) =>
+          waiting.push(() => {
+            inFlight--;
+            resolve(valueFor(id));
+          })
+        );
+      },
+      releaseOne: () => waiting.shift()!(),
+      get pending() {
+        return waiting.length;
+      },
+      get maxInFlight() {
+        return maxInFlight;
+      }
+    };
+  }
+
+  // Regression guard for the dashboard burst: one listDoses per child used to fire all at once
+  // via Promise.all. Still one request per child, but never more than the cap in flight.
+  it('caps concurrent per-child dose requests and still renders every child\'s doses', async () => {
+    const childCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
+    const children = Array.from({ length: childCount }, (_, i) =>
+      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } })
+    );
+    const gate = gatedCalls((childId) => [dose({ medicineId: `med-${childId}`, name: `Med-${childId}` })]);
+    const listDoses = vi.fn((childId: string) => gate.call(childId));
+
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children) },
+      medicines: { listDoses }
+    });
+    await settle(fixture);
+
+    expect(listDoses).toHaveBeenCalledTimes(PER_ITEM_REQUEST_CONCURRENCY);
+
+    while (gate.pending > 0) {
+      gate.releaseOne();
+      await settle(fixture);
+    }
+
+    expect(listDoses).toHaveBeenCalledTimes(childCount);
+    expect(gate.maxInFlight).toBe(PER_ITEM_REQUEST_CONCURRENCY);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    children.forEach((c) => expect(text).toContain(`Med-${c.id}`));
   });
 });

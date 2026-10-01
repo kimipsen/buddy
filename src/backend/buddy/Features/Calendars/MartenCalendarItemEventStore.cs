@@ -1,3 +1,5 @@
+using buddy.Common.Concurrency;
+
 using Marten;
 
 namespace buddy.Features.Calendars;
@@ -8,6 +10,7 @@ public sealed class MartenCalendarItemEventStore(ICalendarsStore store) : ICalen
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(itemId.Value, token: cancellationToken);
+        session.ObserveStream(itemId.Value, events);
 
         return [.. events.Select(e => CalendarItemEvent.FromPayload(e.Data))];
     }
@@ -34,7 +37,7 @@ public sealed class MartenCalendarItemEventStore(ICalendarsStore store) : ICalen
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.StartStream(itemId.Value, payloads);
+        session.StartTrackedStream(itemId.Value, payloads);
         session.Store(new CalendarItemIndexDocument(itemId.Value, calendarId.Value, IsDeleted: false));
 
         await session.SaveChangesAsync(cancellationToken);
@@ -54,7 +57,7 @@ public sealed class MartenCalendarItemEventStore(ICalendarsStore store) : ICalen
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(itemId.Value, payloads);
+        session.AppendTracked(itemId.Value, payloads);
 
         if (events.Any(e => e is ItemDeleted))
         {

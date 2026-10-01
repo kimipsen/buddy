@@ -1,11 +1,13 @@
 import { readRuntimeConfig } from './runtime-config';
 
 // Provisions (and tears down) a throwaway Keycloak user directly against the buddy realm's Admin
-// REST API -- used ONLY by delete-account.spec.ts to get a genuinely fresh, non-seeded guardian
-// account it can safely delete. Every other e2e spec depends on alice/bob/carol (SEEDED_USERS in
-// support/auth-fixture.ts, seeded via .devcontainer/keycloak/buddy-realm.json) continuing to exist,
-// so a delete-account test must never be able to touch those -- this module never takes a username
-// as input from a caller, it always mints its own random one.
+// REST API -- used by delete-account.spec.ts to get a genuinely fresh, non-seeded guardian account
+// it can safely delete, and by the newGuardian fixture (auth-fixture.ts) for specs that need a
+// guardian whose family/account state no parallel test shares. Every other e2e spec depends on
+// alice/bob/carol (SEEDED_USERS in support/seeded-users.ts, seeded via
+// .devcontainer/keycloak/buddy-realm.json) continuing to exist, so this module must never be able
+// to touch those -- it never takes a username as input from a caller, it always mints its own
+// random one.
 //
 // There's no self-service signup anywhere in this app (buddy-realm.json has
 // "registrationAllowed": false, and the guardian-invite-accept flow requires the invitee to already
@@ -22,6 +24,10 @@ import { readRuntimeConfig } from './runtime-config';
 // (keycloak-client.ts's getAccessToken) with no required-action step to drive.
 const MASTER_ADMIN_USERNAME = 'admin';
 const MASTER_ADMIN_PASSWORD = 'admin';
+
+// Keycloak firstName of every disposable guardian -- what the app shows as their given name (e.g.
+// the pickup cell's guardian options).
+export const DISPOSABLE_GUARDIAN_GIVEN_NAME = 'E2e';
 
 export interface DisposableGuardian {
   username: string;
@@ -75,7 +81,7 @@ export async function createDisposableGuardian(prefix = 'e2edelete'): Promise<Di
       email,
       emailVerified: true,
       enabled: true,
-      firstName: 'E2e',
+      firstName: DISPOSABLE_GUARDIAN_GIVEN_NAME,
       lastName: 'Disposable',
       credentials: [{ type: 'password', value: password, temporary: false }],
     }),

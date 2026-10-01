@@ -34,7 +34,6 @@ export const admin = {
       hideButton: 'Luk',
       title: 'Medlemmer',
       loading: 'Indlæser medlemmer…',
-      loadError: 'Kunne ikke indlæse gruppens medlemmer.',
       empty: 'Denne gruppe har endnu ingen medlemmer.',
       guardiansTitle: 'Værger',
       childrenTitle: 'Børn'

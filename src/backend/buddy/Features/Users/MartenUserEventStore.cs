@@ -1,3 +1,5 @@
+using buddy.Common.Concurrency;
+
 using JasperFx;
 
 using Marten;
@@ -18,6 +20,7 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(userId.Value, token: cancellationToken);
+        session.ObserveStream(userId.Value, events);
 
         return [.. events.Select(e => UserEvent.FromPayload(e.Data))];
     }
@@ -73,7 +76,7 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
         // guards against concurrent creation for the same subject -- across processes,
         // not just within one, unlike an in-memory gate.
         session.Insert(new KeycloakIdentity(keycloakSubject.Value, userId));
-        session.Events.StartStream(userId.Value, payloads);
+        session.StartTrackedStream(userId.Value, payloads);
 
         try
         {
@@ -103,7 +106,7 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(userId.Value, payloads);
+        session.AppendTracked(userId.Value, payloads);
 
         await session.SaveChangesAsync(cancellationToken);
     }

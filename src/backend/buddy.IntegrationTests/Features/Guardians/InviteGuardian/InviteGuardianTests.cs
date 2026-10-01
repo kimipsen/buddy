@@ -1,5 +1,7 @@
 using Alba;
 
+using buddy.Common;
+using buddy.Common.RateLimiting;
 using buddy.Features.Guardians;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
@@ -44,7 +46,7 @@ public sealed class InviteGuardianTests(BuddyApiFixture fixture)
     }
 
     [Fact]
-    public async Task Re_inviting_the_same_email_immediately_is_rejected_by_the_cooldown()
+    public async Task Re_inviting_the_same_email_immediately_is_rejected_as_a_conflict_by_the_cooldown()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
@@ -52,11 +54,13 @@ public sealed class InviteGuardianTests(BuddyApiFixture fixture)
 
         await GuardianTestHelpers.InviteGuardianAsync(fixture, guardianToken, child.Id, invitee.Email, GuardianKind.Parent);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
             _.Post.Json(new { Email = invitee.Email, Kind = GuardianKind.Parent }).ToUrl($"/users/me/children/{child.Id}/guardian-invites");
-            _.StatusCodeShouldBe(400);
+            _.StatusCodeShouldBe(409);
         });
+
+        Assert.Equal(ResendCooldown.ErrorCode, response.ReadAsJson<ErrorEnvelope>().Code);
     }
 }

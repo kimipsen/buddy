@@ -32,7 +32,7 @@ curl -s -o /dev/null -w "mailpit %{http_code}\n" http://mailpit:8025/api/v1/info
 
 All must be `accepting connections` / `200`. If not: `docker compose -f .devcontainer/docker-compose.yml ps` and `... logs keycloak|db|mailpit` (the Compose stack is started by the devcontainer itself; see `.devcontainer/README.md` Troubleshooting). Keycloak can take ~30s after a container restart.
 
-If `psql` says `FATAL: sorry, too many clients already`: Postgres `max_connections` is 100 and a running API holds many pooled connections (one Marten store per feature). A guardian with many e2e-created children (bob/alice/carol accumulate them) makes the dashboard fan out one `/progress/children/{id}` call per child and exhaust the pool (500s in the API log). Stop the API (step 7) to free connections; that's an environment/data-volume issue, not your change.
+If `psql` says `FATAL: sorry, too many clients already` (`53300` in the API log): all nine Marten stores share one Npgsql pool (`src/backend/buddy/Common/Postgres/PostgresDataSource.cs`), capped at `Maximum Pool Size=50` unless the connection string sets its own, so a running API never holds more than 50 connections (a 2100-request burst at 128 parallel peaked at exactly 50). Before, each store had its own pool defaulting to 100 and one dashboard load took all 100. Check who holds connections with `PGPASSWORD=postgres psql -h db -U postgres -c "select count(*), application_name, state from pg_stat_activity group by 2,3"`. The API's rows have `application_name` `buddy` (unless the connection string sets `Application Name`), and Keycloak's are `PostgreSQL JDBC Driver`. Stopping the API (step 7) releases its pool. If you see it again, several API/test hosts running at once, a connection string with a large explicit `Maximum Pool Size`, or something else holding connections is the likely cause.
 
 ## 2. Check ports and stop stale processes
 
@@ -71,7 +71,9 @@ Other API probes: `https://localhost:7076/openapi/v1.json` (200 in Development; 
 
 ## 4. Log in and screenshot a page
 
-Seeded users come from `.devcontainer/keycloak/buddy-realm.json` (realm `buddy`, public client `buddy-frontend` with direct grants enabled); passwords are mirrored in `SEEDED_USERS` in `src/frontend/buddy/e2e/support/auth-fixture.ts`. alice, bob and carol are all **guardians** (`<name>@buddy.test`, email verified). There's no seeded child login and no self-registration. Never change their passwords or emails; other specs depend on them.
+If a seeded guardian shows dozens of `E2eChild…` children or `E2eGroup…`/`E2eCalendar…` entries, they're leftovers from e2e runs before per-test cleanup existed (or from a killed run). They make the per-item fan-outs on `/guardian` and `/guardian/admin` slow. From `src/frontend/buddy`, with the API running: `node e2e/scripts/cleanup-leftover-e2e-data.mjs` (dry run), then `--apply`. It only touches names in the exact shape the e2e helpers generate (`E2e…Child<suffix>` / `Testson`, owned `E2eGroup[A|B]<suffix>`, `E2eCalendar<suffix>`, `e2echild*` Keycloak users).
+
+Seeded users come from `.devcontainer/keycloak/buddy-realm.json` (realm `buddy`, public client `buddy-frontend` with direct grants enabled); passwords are mirrored in `SEEDED_USERS` in `src/frontend/buddy/e2e/support/seeded-users.ts` (re-exported by `auth-fixture.ts`). alice, bob and carol are all **guardians** (`<name>@buddy.test`, email verified). There's no seeded child login and no self-registration. Never change their passwords or emails; other specs depend on them.
 
 Use the bundled helper, run from `src/frontend/buddy` (it resolves Playwright from there; Chromium is already installed if `npx playwright test` has ever run, otherwise `npx playwright install --with-deps chromium`):
 

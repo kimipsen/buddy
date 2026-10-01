@@ -111,7 +111,10 @@ rather than embedding user-facing strings.
 - `src/app/features/guardian/` — guardian dashboard, mealplan, medicine,
   pickup, calendar, and administration routes.
 - `src/app/features/child/` — child day view and mealplan/rating route.
-- `src/app/shared/` — reusable date and time controls.
+- `src/app/shared/` — reusable standalone UI components: form controls
+  (`toggle`, `segmented-control`, `stepper`, `date-select`, `time-select`,
+  `color-swatch-picker`, `repeatable-row`) and display widgets
+  (`loading-spinner`, `progress-badge`).
 - `public/config/` — browser-visible runtime configuration.
 
 Generate new Angular artifacts only when they fit this feature-first layout;

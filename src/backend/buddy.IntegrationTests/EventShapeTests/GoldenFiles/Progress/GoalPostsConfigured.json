@@ -1,0 +1,16 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000003",
+  "GoalPosts": [
+    {
+      "Threshold": 5,
+      "Icon": "star",
+      "Label": "Movie night"
+    },
+    {
+      "Threshold": 20,
+      "Icon": "trophy",
+      "Label": null
+    }
+  ],
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

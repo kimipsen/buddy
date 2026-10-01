@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using buddy.Common.RateLimiting;
 using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
@@ -14,4 +15,12 @@ public sealed record GuardianInviteSummary(Guid Id, string Email, GuardianKind K
 {
     public static GuardianInviteSummary FromDocument(GuardianInviteDocument document) =>
         new(document.Id, document.InvitedEmail, document.Kind, document.CreatedAt, document.ExpiresAt);
+}
+
+// Distinct from the shared Result<T> only for the resend cooldown (409, see ResendCooldown). The
+// handler never produces Forbidden or a validation failure, so neither is a case here.
+public union InviteGuardianOutcome(InviteGuardianOutcome.Success, InviteGuardianOutcome.NotFound, ResendCooldownActive)
+{
+    public sealed record Success(GuardianInviteSummary Invite);
+    public sealed record NotFound;
 }

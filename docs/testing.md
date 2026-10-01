@@ -148,6 +148,9 @@ verified scoping instructions and expected runtime characteristics.
 
 - `.github/workflows/backend-tests.yml` restores, builds, and runs the backend
   suite for backend changes.
+- `.github/workflows/frontend-tests.yml` type-checks the app and spec
+  tsconfigs, runs the Vitest unit suite, and runs the en/da translation parity
+  check (`.claude/skills/i18n/check-parity.mjs`) for frontend changes.
 - `.github/workflows/e2e-tests.yml` starts Postgres, Keycloak, and Mailpit via
   `.devcontainer/docker-compose.yml` and runs the Playwright suite against a
   real backend and frontend.

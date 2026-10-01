@@ -154,9 +154,12 @@ The app supports English and Danish. Static UI text is a translation key resolve
 [`TranslationService`](../../src/frontend/buddy/src/app/core/i18n/translation.service.ts) and the
 `translate` pipe, e.g. `{{ 'profile.title' | translate }}`, rather than a hardcoded string.
 Dictionaries live under `src/frontend/buddy/src/app/core/i18n/translations/{en,da}/`, one file per
-feature area, merged in that language's `index.ts`; `translations/index.ts` types `da` against
-`typeof en` so a missing or extra key in either language fails the build instead of silently
-falling back to the raw key at runtime.
+feature area, merged in that language's `index.ts`. `translations/index.ts` compares the full set of
+dotted key paths of `en` and `da` at the type level, so a key missing from or extra in either
+language (at any nesting depth) fails `tsc`/`ng build` with an error naming the offending keys,
+instead of silently falling back to the raw key at runtime. CI additionally runs
+`.claude/skills/i18n/check-parity.mjs` (`.github/workflows/frontend-tests.yml`), which also fails
+on `{placeholder}` mismatches between the two languages and warns about identical en/da text.
 
 The current language is a signal seeded from the browser's own language (`detectBrowserLanguage`
 in `core/i18n/language.ts`) so the pre-auth login screen renders sensibly before any user is
@@ -251,7 +254,8 @@ regressions, not just that it runs. Angular 22's new test builder wraps Vitest i
 than exposing a standalone `vitest.config.ts`, so Stryker drives it through its built-in command
 test runner (`npm test -- --watch=false`) instead of the `@stryker-mutator/vitest-runner` plugin —
 treating `ng test` as a black-box pass/fail command avoids having to reimplement the builder's
-internal Vitest wiring (jsdom, zone.js, Angular template compilation) in a separate config file.
+internal Vitest wiring (jsdom, TestBed initialisation, Angular template compilation) in a
+separate config file.
 The TypeScript checker (`checkers: ["typescript"]`) still runs ahead of the test command to skip
 mutants that don't compile, without needing the Vitest API integration.
 

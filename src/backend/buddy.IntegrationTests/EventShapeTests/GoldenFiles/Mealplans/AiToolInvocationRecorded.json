@@ -1,0 +1,9 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000071",
+  "ToolCallId": "toolu_01",
+  "ToolName": "set_draft_assignment",
+  "ArgumentsJson": "{\"date\":\"2025-06-02\",\"slot\":\"Dinner\"}",
+  "ResultJson": "{\"ok\":true}",
+  "IsError": false,
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

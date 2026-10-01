@@ -1,3 +1,4 @@
+using buddy.Common.Concurrency;
 using buddy.Features.Users;
 
 using Marten;
@@ -13,6 +14,7 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(id.Value, token: cancellationToken);
+        session.ObserveStream(id.Value, events);
 
         return [.. events.Select(e => GuardianEvent.FromPayload(e.Data))];
     }
@@ -37,7 +39,7 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(id.Value, payloads);
+        session.AppendTracked(id.Value, payloads);
 
         foreach (var @event in events)
         {
@@ -134,8 +136,8 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
         // user signup, extended to also start the GuardianLink stream in the same transaction --
         // the fix for the doc's "Provisioning-time atomicity" gap.
         session.Insert(new KeycloakIdentity(childSubject.Value, childId));
-        session.Events.StartStream(childId.Value, userPayloads);
-        session.Events.StartStream(linkId.Value, guardianPayloads);
+        session.StartTrackedStream(childId.Value, userPayloads);
+        session.StartTrackedStream(linkId.Value, guardianPayloads);
         session.Store(new GuardianLinkDocument(
             GuardianLinkDocument.BuildId(linked.ChildId.Value, linked.GuardianId.Value),
             linkId.Value,

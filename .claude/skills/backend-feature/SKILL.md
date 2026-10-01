@@ -31,7 +31,7 @@ Handler order (every handler follows it, see `CreateMedicineSchedule.Handler.cs`
 2. `if (command.UserId is not { } userId) return new Result<T>.NotFound();`
 3. `var access = await <Domain>Authorization.Check...(...); if (access != <Domain>Access.Allowed) return access.ToDeniedResult<T>();`
 4. Load: `<Aggregate>.Rehydrate(await store.ReadAsync(id, ct))`. Treat `null`, a wrong owner (`schedule.ChildId != command.ChildId`) or a stopped/archived aggregate as `NotFound`.
-5. Checks that need state stay in the handler, after authorization, and return `new Result<T>.Validation(ValidationProblem.Of("..."))`. Examples: SetDoseStatus's "no dose at that time", `Common/RateLimiting/ResendCooldown.IsActive(...)` in `InviteGuardian.Handler.cs`.
+5. Checks that need state stay in the handler, after authorization, and return `new Result<T>.Validation(ValidationProblem.Of("..."))`. Example: SetDoseStatus's "no dose at that time". Exception: an active resend cooldown (`Common/RateLimiting/ResendCooldown.IsActive(...)`) is not a validation failure; return `new ResendCooldownActive("...")` from a feature outcome union (`InviteGuardianOutcome`) -> 409.
 6. Compare before and after. Append `[new <Event>(...)]` **only if something changed**. This is what makes PUT/PATCH/DELETE idempotent.
 7. Return `Success(...)`. Use `Result<Unit>` when there is no body.
 
@@ -54,9 +54,10 @@ Wiring:
 - Add `group.Map<UseCase>();` to `Map<Domain>Feature` in `<Domain>Feature.cs`. The group already applies `.WithTags("<Domain>")`, `.RequireAuthorization()` and `.WithGroupName(OpenApiDocumentName)`, and the feature has its own OpenAPI document (`services.AddOpenApi(OpenApiDocumentName, ...)`). `Program.cs` changes only for a new domain (step 3).
 - Anonymous routes are the exception and need `.AllowAnonymous()` (the iCal feeds only).
 - **Idempotency:** nothing to do per endpoint. `Common/Idempotency/IdempotencyKeyMiddleware.cs` covers every POST that carries an `Idempotency-Key` header, and the frontend sends one through `postIdempotent`. PUT/PATCH/DELETE get idempotency from step 6.
-- **Rate limiting:** there is no ASP.NET rate limiter. Throttling is a handler check (`ResendCooldown`) that returns `Validation` → 400.
+- **Rate limiting:** there is no ASP.NET rate limiter. Throttling is the shared handler check `Common/RateLimiting/ResendCooldown`; the handler returns `ResendCooldownActive` (a case of a feature-specific outcome union, e.g. `InviteToGroupOutcome`) and the endpoint maps it with `cooldown.ToConflict(httpContext)` → `409` with the `resend_cooldown` envelope. Declare `Conflict<ErrorEnvelope>` in `Results<...>`.
+- **Optimistic concurrency:** nothing to do per handler. Rehydrate with `store.ReadAsync` and append with `store.AppendAsync` in the same handler; the store's `StreamVersionTracker` calls make the append expected-version, and a lost race becomes `409 concurrency_conflict` through `ConcurrencyConflictMiddleware`. Don't add a 409 arm for it. A new event store must use `session.ObserveStream` / `StartTrackedStream` / `AppendTracked` (see `claude-backend` section 5).
 - **Group variant** (`<UseCase>ForGroup.*` in the same folder, route `/groups/{groupId:guid}/children/{childId:guid}/...`): authorize with `<Domain>GroupAccess.ResolveAsync(...)` and `resolved.Reraise<Unit, T>()`, then call the base handler's `internal static ...ForChildAsync(...)` helper (`SetDoseStatusForGroup.Handler.cs`). Extract that helper as soon as a second caller appears.
-- **`.http` file:** add a request to `Features/<Domain>/<Domain>.http` using `{{buddy_HostAddress}}`, `Authorization: Bearer {{guardianToken}}`, and a `###` separator (`Medicines/Medicines.http`). Only Calendars, Mealplans, Medicines, Pickups, TaskLibrary (`Tasklibrary.http`) and Users have one. Don't create one for other domains unless asked.
+- **`.http` file:** add a request to `Features/<Domain>/<Domain>.http` using `{{buddy_HostAddress}}`, `Authorization: Bearer {{guardianToken}}`, and a `###` separator (`Medicines/Medicines.http`). Only Calendars, Mealplans, Medicines, Pickups, TaskLibrary and Users have one. Don't create one for other domains unless asked.
 
 ## 2. A new event on an existing aggregate
 
@@ -66,7 +67,7 @@ Use `Features/Medicines/Types/MedicineEvents.cs` as the model. Event names are p
 2. `Types/<Aggregate>.cs`: add a `Fold` arm. Don't rely on the `_ => x` fallthrough, which silently ignores the event.
 3. `Types/<Aggregate>SnapshotProjection.cs`: add `public <X>Snapshot Apply(<X>Snapshot current, <NewEvent> e) => current with { <X> = <X>.Fold(current.<X>, <X>Event.FromPayload(e))! };`. If you skip it, the snapshot goes stale silently.
 4. `<Domain>Feature.cs`: add `typeof(<NewEvent>)` to `EventTypes`.
-5. Golden file: add a `[Fact]` in `buddy.IntegrationTests/EventShapeTests/<Domain>EventShapeTests.cs` using the fixed ids and `FixedInstant`. Run the filter below. The failure prints the exact JSON. Save it as `EventShapeTests/GoldenFiles/<Domain>/<NewEvent>.json`. Once a golden file exists, never edit it to make a test pass: a diff there means stored history can no longer be replayed.
+5. Golden file: add a `[Fact]` in `buddy.IntegrationTests/EventShapeTests/<Domain>EventShapeTests.cs` using the fixed ids and `FixedInstant`. Run the filter below. The failure prints the exact JSON. Review it, then save it as `EventShapeTests/GoldenFiles/<Domain>/<NewEvent>.json` (extra shapes of one type: `<NewEvent>_<Variant>.json`). `Meta/EventGoldenFileCoverageTests` fails for any type in a feature's `EventTypes` without one. Once a golden file exists, never edit it to make a test pass: a diff there means stored history can no longer be replayed.
 6. Extend `SnapshotTests/<Aggregate>SnapshotTests.cs` so its command sequence produces the new event.
 
 ## 3. A new aggregate (and maybe a new domain)
@@ -77,7 +78,7 @@ Mirror Medicines/MedicineSchedule file for file:
 - [ ] `Types/<X>Events.cs`: union + `FromPayload` + `EventType` (step 2).
 - [ ] `Types/<X>.cs`: immutable record with `static Rehydrate(events) => events.Aggregate((<X>?)null, Fold)` and `static Fold(<X>?, <X>Event)`. **Don't name the step function `Apply`/`Create`**: JasperFx's generator picks those up and the build breaks.
 - [ ] `Types/<X>SnapshotProjection.cs`: `public sealed record <X>Snapshot(Guid Id, <X> <X>);` + `sealed class <X>SnapshotProjection : SingleStreamProjection<<X>Snapshot, Guid>` with `Create(<CreatedEvent>)` and one `Apply` per state-changing event. The wrapper exists because Marten can't use a class-based `<X>Id` as a document id.
-- [ ] `I<X>EventStore.cs` + `Marten<X>EventStore.cs` (`MartenMedicineEventStore.cs`): `ReadAsync` (`FetchStreamAsync` → `<X>Event.FromPayload(e.Data)`), `FindSnapshotAsync` (`LoadAsync<<X>Snapshot>(id.Value)` → `?.<X>`), `CreateAsync` (`StartStream`, guard that the first event is the created event, store any index document such as `MedicineIndexDocument` in the same session), `AppendAsync` (no-op on an empty list). Persist the unwrapped `e.Value`, never the union.
+- [ ] `I<X>EventStore.cs` + `Marten<X>EventStore.cs` (`MartenMedicineEventStore.cs`): `ReadAsync` (`FetchStreamAsync` → `<X>Event.FromPayload(e.Data)`), `FindSnapshotAsync` (`LoadAsync<<X>Snapshot>(id.Value)` → `?.<X>`), `CreateAsync` (`session.StartTrackedStream`, guard that the first event is the created event, store any index document such as `MedicineIndexDocument` in the same session), `AppendAsync` (no-op on an empty list, then `session.AppendTracked`). Call `session.ObserveStream(id.Value, events)` in `ReadAsync` after the fetch. Persist the unwrapped `e.Value`, never the union.
 - [ ] `<Domain>Feature.cs`, inside the store's `StoreOptions`:
   - `options.Projections.Register(new <X>SnapshotProjection(), ProjectionLifecycle.Inline);`. Use `Register`, **not** `Projections.Snapshot<T>()`, which throws for these ids.
   - `options.Schema.For<<X>Snapshot>().DatabaseSchemaName("snapshots");`

@@ -1,5 +1,7 @@
 using Alba;
 
+using buddy.Common;
+using buddy.Common.RateLimiting;
 using buddy.Features.Groups;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Fixtures;
@@ -84,7 +86,7 @@ public sealed class InviteToGroupTests(BuddyApiFixture fixture)
     }
 
     [Fact]
-    public async Task Re_inviting_the_same_email_immediately_is_rejected_by_the_cooldown()
+    public async Task Re_inviting_the_same_email_immediately_is_rejected_as_a_conflict_by_the_cooldown()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
         var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Team");
@@ -92,11 +94,13 @@ public sealed class InviteToGroupTests(BuddyApiFixture fixture)
 
         await GroupTestHelpers.InviteToGroupAsync(fixture, ownerToken, groupId, invitee.Email, GroupRole.Member);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
             _.Post.Json(new { Email = invitee.Email, Role = GroupRole.Member }).ToUrl($"/groups/{groupId}/invites");
-            _.StatusCodeShouldBe(400);
+            _.StatusCodeShouldBe(409);
         });
+
+        Assert.Equal(ResendCooldown.ErrorCode, response.ReadAsJson<ErrorEnvelope>().Code);
     }
 }

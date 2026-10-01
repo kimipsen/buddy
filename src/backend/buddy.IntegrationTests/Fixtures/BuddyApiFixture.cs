@@ -4,8 +4,15 @@ using System.Text.Json;
 
 using Alba;
 
+using buddy.Features.Users;
+using buddy.IntegrationTests.Common.Concurrency;
+
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using Testcontainers.PostgreSql;
 
@@ -89,7 +96,14 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["Mail:Port"] = _mailpit.GetMappedPublicPort(1025).ToString()
         };
 
-        Host = await AlbaHost.For<global::Program>(_ => { }, ConfigurationOverride.Create(configOverrides));
+        Host = await AlbaHost.For<global::Program>(
+            builder => builder.ConfigureTestServices(services =>
+            {
+                // Inert unless a test arms it -- see ConcurrentWriterUserEventStore.
+                services.AddSingleton<MartenUserEventStore>();
+                services.Replace(ServiceDescriptor.Singleton<IUserEventStore, ConcurrentWriterUserEventStore>());
+            }),
+            ConfigurationOverride.Create(configOverrides));
     }
 
     // Real access token for one of the seeded test users (see Fixtures/TestRealm.json), obtained

@@ -1,3 +1,4 @@
+using buddy.Common.Concurrency;
 using buddy.Features.Users;
 
 using Marten;
@@ -10,6 +11,7 @@ public sealed class MartenAiCredentialEventStore(IMealplansStore store) : IAiCre
     {
         await using var session = store.QuerySession();
         var events = await session.Events.FetchStreamAsync(id.Value, token: cancellationToken);
+        session.ObserveStream(id.Value, events);
 
         return [.. events.Select(e => AiProviderCredentialEvent.FromPayload(e.Data))];
     }
@@ -35,7 +37,7 @@ public sealed class MartenAiCredentialEventStore(IMealplansStore store) : IAiCre
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.StartStream(id.Value, payloads);
+        session.StartTrackedStream(id.Value, payloads);
         session.Store(new AiCredentialIndexDocument(id.Value, childId.Value));
 
         await session.SaveChangesAsync(cancellationToken);
@@ -55,7 +57,7 @@ public sealed class MartenAiCredentialEventStore(IMealplansStore store) : IAiCre
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(id.Value, payloads);
+        session.AppendTracked(id.Value, payloads);
 
         await session.SaveChangesAsync(cancellationToken);
     }

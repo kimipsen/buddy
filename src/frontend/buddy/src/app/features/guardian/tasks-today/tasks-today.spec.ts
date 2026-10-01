@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AssignableMember, CalendarOccurrence, CalendarsService, TaskCompletion } from '../../../core/calendars.service';
 import { toIsoDateInTimeZone } from '../../../core/date-utils';
 import { CurrentUser, UsersService } from '../../../core/users.service';
+import { PER_ITEM_REQUEST_CONCURRENCY } from '../../../core/map-with-concurrency';
 import { TasksToday } from './tasks-today';
 
 describe('TasksToday', () => {
@@ -329,5 +330,45 @@ describe('TasksToday', () => {
 
     expect(compiled.textContent).toContain('Unable to update this task.');
     expect(compiled.textContent).toContain('Water plants');
+  });
+
+  // Regression guard: one listAssignableMembers per distinct calendar with assigned tasks used to
+  // fire for every calendar at once. Bounded by the shared cap now, and every name still resolves.
+  it('caps concurrent assignable-member lookups and still resolves every assignee name', async () => {
+    const calendarCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
+    const tasks = Array.from({ length: calendarCount }, (_, i) =>
+      task({ itemId: `task-${i}`, title: `Chore ${i}`, calendarId: `cal-${i}`, assignedTo: `kid-${i}` })
+    );
+    const waiting: (() => void)[] = [];
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const listAssignableMembers = vi.fn((calendarId: string) => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      const index = calendarId.split('-')[1];
+      return new Promise<AssignableMember[]>((resolve) =>
+        waiting.push(() => {
+          inFlight--;
+          resolve([{ userId: `kid-${index}`, givenName: `Kid${index}`, familyName: 'Test' }]);
+        })
+      );
+    });
+
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => tasks), listAssignableMembers }
+    });
+    await settle(fixture);
+
+    expect(listAssignableMembers).toHaveBeenCalledTimes(PER_ITEM_REQUEST_CONCURRENCY);
+
+    while (waiting.length > 0) {
+      waiting.shift()!();
+      await settle(fixture);
+    }
+
+    expect(listAssignableMembers).toHaveBeenCalledTimes(calendarCount);
+    expect(maxInFlight).toBe(PER_ITEM_REQUEST_CONCURRENCY);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    tasks.forEach((_, i) => expect(text).toContain(`Kid${i} Test`));
   });
 });

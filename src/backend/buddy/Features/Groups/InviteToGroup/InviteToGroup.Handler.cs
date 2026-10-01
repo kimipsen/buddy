@@ -1,13 +1,11 @@
-using buddy.Common;
 using buddy.Common.RateLimiting;
-using buddy.Common.Validation;
 using buddy.Email;
 
 namespace buddy.Features.Groups;
 
 public static class InviteToGroupHandler
 {
-    public static async Task<Result<GroupInviteSummary>> Handle(
+    public static async Task<InviteToGroupOutcome> Handle(
         InviteToGroup command,
         IGroupEventStore groups,
         IEmailSender emailSender,
@@ -16,12 +14,12 @@ public static class InviteToGroupHandler
         if (command.Role == GroupRole.Owner)
         {
             // Ownership is assigned only at creation, same restriction as SetGroupMemberRole.
-            return new Result<GroupInviteSummary>.Forbidden();
+            return new InviteToGroupOutcome.Forbidden();
         }
 
         if (command.UserId is not { } userId)
         {
-            return new Result<GroupInviteSummary>.NotFound();
+            return new InviteToGroupOutcome.NotFound();
         }
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
@@ -30,7 +28,7 @@ public static class InviteToGroupHandler
 
         if (access != GroupAccess.Allowed)
         {
-            return access.ToDeniedResult<GroupInviteSummary>();
+            return access == GroupAccess.Forbidden ? new InviteToGroupOutcome.Forbidden() : new InviteToGroupOutcome.NotFound();
         }
 
         // Deliberately no "does an account exist for this email" or "is this email already a
@@ -43,7 +41,7 @@ public static class InviteToGroupHandler
 
         if (ResendCooldown.IsActive(existingInvite?.CreatedAt, now))
         {
-            return new Result<GroupInviteSummary>.Validation(ValidationProblem.Of("An invite was already sent recently. Try again in a minute."));
+            return new ResendCooldownActive("An invite was already sent recently. Try again in a minute.");
         }
 
         var inviteId = existingInvite?.Id ?? Guid.CreateVersion7();
@@ -56,6 +54,6 @@ public static class InviteToGroupHandler
 
         await emailSender.SendGroupInviteEmailAsync(normalizedEmail, group!.Name, token, cancellationToken);
 
-        return new Result<GroupInviteSummary>.Success(new GroupInviteSummary(inviteId, normalizedEmail, command.Role, now, expiresAt));
+        return new InviteToGroupOutcome.Success(new GroupInviteSummary(inviteId, normalizedEmail, command.Role, now, expiresAt));
     }
 }

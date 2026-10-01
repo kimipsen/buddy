@@ -34,7 +34,6 @@ export const admin = {
       hideButton: 'Close',
       title: 'Members',
       loading: 'Loading members…',
-      loadError: 'Unable to load group members.',
       empty: 'This group has no members yet.',
       guardiansTitle: 'Guardians',
       childrenTitle: 'Children'

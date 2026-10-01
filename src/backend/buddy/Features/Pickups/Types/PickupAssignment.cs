@@ -3,7 +3,9 @@ using buddy.Features.Users;
 namespace buddy.Features.Pickups;
 
 // GuardianId/SiblingChildId/Playdate* are only meaningful for their matching Kind -- see
-// AssignPickupHandler.ValidateFields, which is where that's enforced at write time; nothing here
+// AssignPickupValidator (each Kind carries its own fields) and AssignPickupHandler's
+// ValidateRelationshipAsync (the guardian/sibling really is related to the child), which is
+// where that's enforced at write time; nothing here
 // stops a caller from constructing an inconsistent combination directly, so validation is the
 // only guard (see Types/PickupAssigneeKind.cs for why this isn't a closed union instead).
 // Time is optional -- a guardian can record "pickup at 15:15 today, early dismissal" for

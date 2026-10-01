@@ -74,11 +74,14 @@ tasks:
       - task: test:mutation:frontend
 
   test:mutation:backend:
-    desc: Run backend mutation tests (dotnet-stryker)
+    desc: >-
+      Run backend mutation tests (dotnet-stryker). Fails if Stryker didn't
+      test any mutants (no tests discovered, initial test run failed), which
+      Stryker itself can report with exit code 0.
     dir: src/backend/buddy.IntegrationTests
     cmds:
       - dotnet tool restore
-      - dotnet stryker
+      - ./run-stryker.sh {{.CLI_ARGS}}
 
   test:mutation:frontend:
     desc: Run frontend mutation tests (Stryker)
@@ -127,13 +130,23 @@ tasks:
         npx stryker run --mutate "$FILES" --incremental --concurrency {{.CONCURRENCY}}
 
   deploy:
-    desc: Build and (re)start the production stack (deploy/docker-compose.prod.yml)
+    desc: Build and (re)start the production stack (deploy/docker-compose.prod.yml) - on the Oracle VM only
     dir: deploy
     preconditions:
       - sh: test -f .env
         msg: "deploy/.env not found — copy deploy/.env.example to deploy/.env and fill in real values first."
     cmds:
-      - docker compose -f docker-compose.prod.yml up -d --build
+      # Refuses inside a container (devcontainer/Codespaces) and unless DEPLOY_HOST in .env matches `hostname`.
+      - ./preflight.sh
+      # Images are tagged with the commit (plus -dirty for uncommitted changes) so a rollback can reuse them; see deploy/README.md "Rollback".
+      - |
+        set -e
+        BUDDY_IMAGE_TAG="$(git rev-parse --short=12 HEAD)$(git diff --quiet HEAD -- || echo -dirty)"
+        export BUDDY_IMAGE_TAG
+        echo "Deploying image tag $BUDDY_IMAGE_TAG"
+        docker compose -f docker-compose.prod.yml up -d --build --wait --wait-timeout 600
+        # Only reached when every service came up (healthy where it has a healthcheck): :latest = last good deploy.
+        for svc in api frontend keycloak; do docker tag "buddy-$svc:$BUDDY_IMAGE_TAG" "buddy-$svc:latest"; done
 
   deploy:azure:
     desc: Deploy backend + frontend + Keycloak + Postgres to Azure Container Apps (deploy/azure/deploy.sh)

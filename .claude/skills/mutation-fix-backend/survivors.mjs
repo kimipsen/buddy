@@ -47,8 +47,13 @@ const matches = (key, w) => {
 };
 
 const FINDINGS = new Set(['Survived', 'NoCoverage']);
+// Stryker.NET 5 lists every source file of the project, also the ones outside the run's "mutate"
+// scope: those have an empty mutants array, or only mutants with statusReason
+// "Removed by mutate filter". Treat such files as not mutated in this run.
+const inScope = (file) => (file.mutants ?? []).some((m) => m.statusReason !== 'Removed by mutate filter');
+const mutated = Object.entries(report.files ?? {}).filter(([, file]) => inScope(file));
 const result = [];
-for (const [key, file] of Object.entries(report.files ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
+for (const [key, file] of mutated.sort(([a], [b]) => a.localeCompare(b))) {
   if (wanted.length && !wanted.some((w) => matches(key, w))) continue;
   const lines = (file.source ?? '').split('\n');
   const counts = {};
@@ -60,6 +65,7 @@ for (const [key, file] of Object.entries(report.files ?? {}).sort(([a], [b]) => 
       id: m.id,
       status: m.status,
       mutator: m.mutatorName,
+      reason: m.statusReason,
       disableName: disableName(m.mutatorName),
       line: m.location.start.line,
       original: snippet(lines, m.location),
@@ -70,7 +76,7 @@ for (const [key, file] of Object.entries(report.files ?? {}).sort(([a], [b]) => 
   result.push({ path: display(key), counts, findings });
 }
 
-const missing = wanted.filter((w) => !Object.keys(report.files ?? {}).some((k) => matches(k, w)));
+const missing = wanted.filter((w) => !mutated.some(([k]) => matches(k, w)));
 const total = result.reduce((sum, r) => sum + r.findings.length, 0);
 
 if (asJson) {

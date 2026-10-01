@@ -1,3 +1,4 @@
+using buddy.Common.Concurrency;
 using buddy.Features.Users;
 
 using Marten;
@@ -21,7 +22,7 @@ public sealed class MartenGuardianInviteEventStore(IUsersStore store) : IGuardia
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.StartStream(id.Value, payloads);
+        session.StartTrackedStream(id.Value, payloads);
         session.Store(new GuardianInviteDocument(
             id.Value,
             created.ChildId.Value,
@@ -51,7 +52,7 @@ public sealed class MartenGuardianInviteEventStore(IUsersStore store) : IGuardia
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.Events.Append(id.Value, payloads);
+        session.AppendTracked(id.Value, payloads);
 
         foreach (var @event in events)
         {
@@ -152,8 +153,8 @@ public sealed class MartenGuardianInviteEventStore(IUsersStore store) : IGuardia
 
         await using var session = store.LightweightSession();
 
-        session.Events.Append(inviteId.Value, invitePayloads);
-        session.Events.StartStream(linkId.Value, guardianPayloads);
+        session.AppendTracked(inviteId.Value, invitePayloads);
+        session.StartTrackedStream(linkId.Value, guardianPayloads);
 
         var invite = await session.LoadAsync<GuardianInviteDocument>(inviteId.Value, cancellationToken)
             ?? throw new InvalidOperationException($"No GuardianInviteDocument found for invite '{inviteId.Value}'.");
