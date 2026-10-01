@@ -237,7 +237,7 @@ describe('AssignMealplan', () => {
     });
 
     it('shows a translated error and leaves the slot unassigned when assignMealToSlot rejects', async () => {
-      const { fixture, mealplans } = await setup({
+      const { fixture } = await setup({
         mealplans: { assignMealToSlot: vi.fn(async () => Promise.reject(new Error('boom'))) }
       });
       await settle(fixture);

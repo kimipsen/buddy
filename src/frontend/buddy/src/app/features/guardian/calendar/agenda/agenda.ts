@@ -78,7 +78,7 @@ function buildDays(anchorIsoDate: string, locale: string): AgendaDay[] {
   return buildLabeledDays(anchorIsoDate, DAYS_AHEAD, locale);
 }
 
-function buildMonthDays(anchorIsoDate: string, locale: string): AgendaDay[] {
+function buildMonthDays(anchorIsoDate: string): AgendaDay[] {
   const anchorMonth = parseIsoDate(anchorIsoDate).getMonth();
 
   return buildMonthGridIso(anchorIsoDate).map((date) => ({
@@ -152,7 +152,7 @@ export class CalendarAgenda implements OnInit {
       case 'week':
         return buildDays(anchor, locale);
       case 'month':
-        return buildMonthDays(anchor, locale);
+        return buildMonthDays(anchor);
     }
   });
 

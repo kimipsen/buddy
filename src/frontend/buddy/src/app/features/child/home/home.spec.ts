@@ -231,7 +231,7 @@ describe('ChildHome', () => {
       lastModifiedBy: 'guardian-1'
     }));
 
-    const { fixture, mealplans } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries), rateMeal } });
+    const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries), rateMeal } });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;

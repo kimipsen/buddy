@@ -6,7 +6,7 @@ import { ThemeService } from './theme.service';
 // jsdom doesn't implement matchMedia, so every test needs a stub. This fake supports the single
 // listener ThemeService registers and lets tests simulate the OS preference changing at runtime.
 function stubMatchMedia(initialMatches: boolean) {
-  const listeners: Array<(event: { matches: boolean }) => void> = [];
+  const listeners: ((event: { matches: boolean }) => void)[] = [];
   const mediaQueryList = {
     matches: initialMatches,
     media: '(prefers-color-scheme: dark)',

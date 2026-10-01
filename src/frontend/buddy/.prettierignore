@@ -1,0 +1,16 @@
+# Build and tooling output
+dist
+.angular
+node_modules
+coverage
+reports
+.stryker-tmp
+playwright-report
+test-results
+blob-report
+
+# Lockfile is npm-managed
+package-lock.json
+
+# Runtime config is rewritten per environment (e2e, deploy)
+public/config

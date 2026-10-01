@@ -300,7 +300,7 @@ describe('AiProviderSettingsComponent', () => {
   });
 
   it('disables Save while saving, clears the previous error on retry and re-enables it after a failure', async () => {
-    const attempts: Array<ReturnType<typeof deferred<AiProviderSettings>>> = [];
+    const attempts: ReturnType<typeof deferred<AiProviderSettings>>[] = [];
     const setProviderApiKey = vi.fn(() => {
       const next = deferred<AiProviderSettings>();
       attempts.push(next);
@@ -394,7 +394,7 @@ describe('AiProviderSettingsComponent', () => {
   });
 
   it('disables the confirm buttons while removing, shows an error on failure and clears it on retry', async () => {
-    const attempts: Array<ReturnType<typeof deferred<AiProviderSettings>>> = [];
+    const attempts: ReturnType<typeof deferred<AiProviderSettings>>[] = [];
     const removeProviderApiKey = vi.fn(() => {
       const next = deferred<AiProviderSettings>();
       attempts.push(next);
@@ -472,7 +472,7 @@ describe('AiProviderSettingsComponent', () => {
   });
 
   it('disables Make active while switching, shows an error on failure and clears it on retry', async () => {
-    const attempts: Array<ReturnType<typeof deferred<AiProviderSettings>>> = [];
+    const attempts: ReturnType<typeof deferred<AiProviderSettings>>[] = [];
     const setActiveProvider = vi.fn(() => {
       const next = deferred<AiProviderSettings>();
       attempts.push(next);

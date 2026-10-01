@@ -60,9 +60,11 @@ npm test -- --watch=false                                       # whole unit sui
 npm run build                                                   # production build (budget: 500kB warn / 1MB error initial)
 npm run test:e2e                                                # Playwright; needs Postgres/Keycloak/Mailpit (devcontainer)
 node ../../../.claude/skills/i18n/check-parity.mjs              # en/da parity
+npm run lint                                                    # ESLint via ng lint (src/**/*.ts, src/**/*.html, e2e/**/*.ts); warnings allowed
+npm run format:check                                            # prettier --check . (CI); `npm run format` to write
 ```
 
-There is no ESLint / `ng lint` target. Prettier is configured (`.prettierrc`: width 100, single quotes, angular parser for HTML) but **not enforced** — most existing files don't conform, so don't run `prettier --write` on whole files you only touched lightly (it creates noisy diffs); match the surrounding style instead.
+ESLint is `angular-eslint` with a flat config in `eslint.config.js` (typescript-eslint recommended + stylistic, angular ts/template recommended + template accessibility, `eslint-config-prettier` last). Lint must exit 0; the only warn-level rule is `@angular-eslint/template/interactive-supports-focus` (existing click-to-dismiss backdrops). Prettier (`.prettierrc`: width 100, single quotes, angular parser for HTML; `.prettierignore` for build/report output and `public/config`) is enforced in CI, so run `npx prettier --write <files>` on files you change. The one-off whole-tree reformat commit is listed in the repo-root `.git-blame-ignore-revs` (`git config blame.ignoreRevsFile .git-blame-ignore-revs`).
 
 ## Hardening specs
 

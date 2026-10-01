@@ -41,6 +41,13 @@ jobs:
       - name: Type check specs
         run: npx tsc --noEmit -p tsconfig.spec.json
 
+      # ESLint (angular-eslint, flat config in eslint.config.js); warnings don't fail the build.
+      - name: Lint
+        run: npm run lint
+
+      - name: Prettier check
+        run: npm run format:check
+
       - name: Unit tests
         run: npm test -- --watch=false
 

@@ -119,10 +119,6 @@ describe('ManageTasks', () => {
     return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
   }
 
-  function findAllButtonsByText(compiled: HTMLElement, text: string): HTMLButtonElement[] {
-    return Array.from(compiled.querySelectorAll('button')).filter((button) => button.textContent?.trim() === text);
-  }
-
   function setInputValue(input: HTMLInputElement, value: string): void {
     input.value = value;
     input.dispatchEvent(new Event('input'));

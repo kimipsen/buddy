@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
-import { AssignPickupRequest, PickupAssigneeKind, PickupOccurrence } from '../../../../core/pickups.service';
+import { AssignPickupRequest, PickupOccurrence } from '../../../../core/pickups.service';
 import { PickupCell } from './pickup-cell';
 
 describe('PickupCell', () => {

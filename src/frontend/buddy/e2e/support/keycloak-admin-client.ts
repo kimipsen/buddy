@@ -116,7 +116,7 @@ export async function deleteKeycloakUser(username: string): Promise<void> {
       return;
     }
 
-    const users = (await lookup.json()) as Array<{ id: string }>;
+    const users = (await lookup.json()) as { id: string }[];
     const userId = users[0]?.id;
 
     if (!userId) {
