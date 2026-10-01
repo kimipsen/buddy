@@ -12,9 +12,8 @@ public sealed class CreateCalendarValidator : AbstractValidator<CreateCalendar>
             .Must(TimeZoneResolution.IsValid)
             .WithMessage(x => $"'{x.TimeZoneId.Value}' is not a recognized IANA time zone identifier.");
 
-        RuleFor(x => x.Icon!.Value)
-            .NotEmpty()
-            .WithMessage("Icon must not be empty.")
-            .When(x => x.Icon is not null);
+        // No Icon rule: the icon is optional on create, and CreateCalendarEndpoint maps a blank icon
+        // to null, so a blank Icon can't reach this validator. UpdateCalendarIconValidator does reject
+        // a blank icon, because there the icon is required.
     }
 }
