@@ -2,13 +2,28 @@ import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Meal, MealDetails, MealplanScope, MealplansService } from '../../../../core/mealplans.service';
+import {
+  Meal,
+  MealDetails,
+  MealplanScope,
+  MealplansService,
+} from '../../../../core/mealplans.service';
 import { ManageMeals } from './manage-meals';
 
 describe('ManageMeals', () => {
   const familyScope: MealplanScope = { kind: 'family', childId: 'child-1' };
-  const groupViewScope: MealplanScope = { kind: 'group', groupId: 'group-1', groupName: 'The Fam', accessTier: 3 };
-  const groupManageScope: MealplanScope = { kind: 'group', groupId: 'group-1', groupName: 'The Fam', accessTier: 2 };
+  const groupViewScope: MealplanScope = {
+    kind: 'group',
+    groupId: 'group-1',
+    groupName: 'The Fam',
+    accessTier: 3,
+  };
+  const groupManageScope: MealplanScope = {
+    kind: 'group',
+    groupId: 'group-1',
+    groupName: 'The Fam',
+    accessTier: 2,
+  };
 
   function meal(overrides: Partial<Meal> = {}): Meal {
     return {
@@ -21,7 +36,7 @@ describe('ManageMeals', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -48,12 +63,12 @@ describe('ManageMeals', () => {
         mealsState.update((current) => current.filter((m) => m.id !== mealId));
       }),
       updateMealDetails: vi.fn(),
-      ...options.mealplans
+      ...options.mealplans,
     };
 
     await TestBed.configureTestingModule({
       imports: [ManageMeals],
-      providers: [{ provide: MealplansService, useValue: mealplansStub }]
+      providers: [{ provide: MealplansService, useValue: mealplansStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageMeals);
@@ -72,7 +87,9 @@ describe('ManageMeals', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   function setInputValue(input: HTMLInputElement, value: string): void {
@@ -120,7 +137,9 @@ describe('ManageMeals', () => {
   });
 
   it('shows the translated error message when loading meals fails', async () => {
-    const { fixture } = await setup(familyScope, { mealplans: { listMeals: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup(familyScope, {
+      mealplans: { listMeals: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -128,7 +147,10 @@ describe('ManageMeals', () => {
   });
 
   it('renders each meal from the shared service signal, including its icon and name', async () => {
-    const meals = [meal({ id: 'meal-1', name: 'Pancakes', icon: '🥞' }), meal({ id: 'meal-2', name: 'Toast', icon: '🍞' })];
+    const meals = [
+      meal({ id: 'meal-1', name: 'Pancakes', icon: '🥞' }),
+      meal({ id: 'meal-2', name: 'Toast', icon: '🍞' }),
+    ];
     const { fixture } = await setup(familyScope, { initialMeals: meals });
     await settle(fixture);
 
@@ -146,7 +168,7 @@ describe('ManageMeals', () => {
     const preseeded = [meal({ id: 'preseeded', name: 'Already there' })];
     const { fixture } = await setup(familyScope, {
       initialMeals: preseeded,
-      mealplans: { listMeals: vi.fn(async () => []) }
+      mealplans: { listMeals: vi.fn(async () => []) },
     });
     await settle(fixture);
 
@@ -155,7 +177,10 @@ describe('ManageMeals', () => {
   });
 
   it('excludes archived meals from the displayed list', async () => {
-    const meals = [meal({ id: 'meal-1', name: 'Active Meal', isArchived: false }), meal({ id: 'meal-2', name: 'Archived Meal', isArchived: true })];
+    const meals = [
+      meal({ id: 'meal-1', name: 'Active Meal', isArchived: false }),
+      meal({ id: 'meal-2', name: 'Archived Meal', isArchived: true }),
+    ];
     const { fixture } = await setup(familyScope, { initialMeals: meals });
     await settle(fixture);
 
@@ -166,7 +191,9 @@ describe('ManageMeals', () => {
 
   describe('pagination', () => {
     function mealsPage(count: number): Meal[] {
-      return Array.from({ length: count }, (_, index) => meal({ id: `meal-${index}`, name: `Meal ${index}` }));
+      return Array.from({ length: count }, (_, index) =>
+        meal({ id: `meal-${index}`, name: `Meal ${index}` }),
+      );
     }
 
     it('does not show pagination controls when there are 5 or fewer meals', async () => {
@@ -262,7 +289,7 @@ describe('ManageMeals', () => {
         name: 'Waffles',
         description: null,
         icon: '🧇',
-        color: '#123456'
+        color: '#123456',
       });
     });
 
@@ -280,7 +307,7 @@ describe('ManageMeals', () => {
 
       expect(mealplans.createMeal).toHaveBeenCalledWith(
         familyScope,
-        expect.objectContaining({ name: 'Waffles', description: 'Crispy and golden' })
+        expect.objectContaining({ name: 'Waffles', description: 'Crispy and golden' }),
       );
     });
 
@@ -303,7 +330,9 @@ describe('ManageMeals', () => {
 
     it('jumps to the newly-added last page once the created meal pushes the count past a page boundary', async () => {
       const { fixture } = await setup(familyScope, {
-        initialMeals: Array.from({ length: 5 }, (_, index) => meal({ id: `meal-${index}`, name: `Meal ${index}` }))
+        initialMeals: Array.from({ length: 5 }, (_, index) =>
+          meal({ id: `meal-${index}`, name: `Meal ${index}` }),
+        ),
       });
       await settle(fixture);
 
@@ -320,7 +349,9 @@ describe('ManageMeals', () => {
     });
 
     it('shows the translated error message and keeps the entered name when create fails', async () => {
-      const { fixture } = await setup(familyScope, { mealplans: { createMeal: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+      const { fixture } = await setup(familyScope, {
+        mealplans: { createMeal: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -334,7 +365,9 @@ describe('ManageMeals', () => {
     });
 
     it('re-enables the submit button after a failed create', async () => {
-      const { fixture } = await setup(familyScope, { mealplans: { createMeal: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+      const { fixture } = await setup(familyScope, {
+        mealplans: { createMeal: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -349,7 +382,10 @@ describe('ManageMeals', () => {
 
   describe('archiving a meal', () => {
     it('archives the clicked meal and removes it from the list once the request resolves', async () => {
-      const meals = [meal({ id: 'meal-1', name: 'Pancakes' }), meal({ id: 'meal-2', name: 'Toast' })];
+      const meals = [
+        meal({ id: 'meal-1', name: 'Pancakes' }),
+        meal({ id: 'meal-2', name: 'Toast' }),
+      ];
       const { fixture, mealplans } = await setup(familyScope, { initialMeals: meals });
       await settle(fixture);
 
@@ -367,12 +403,21 @@ describe('ManageMeals', () => {
     it('disables only the archive button for the meal being archived, and re-enables it afterwards', async () => {
       let resolveArchive!: () => void;
       const archiveMeal = vi.fn(() => new Promise<void>((resolve) => (resolveArchive = resolve)));
-      const meals = [meal({ id: 'meal-1', name: 'Pancakes' }), meal({ id: 'meal-2', name: 'Toast' })];
-      const { fixture } = await setup(familyScope, { initialMeals: meals, mealplans: { archiveMeal } });
+      const meals = [
+        meal({ id: 'meal-1', name: 'Pancakes' }),
+        meal({ id: 'meal-2', name: 'Toast' }),
+      ];
+      const { fixture } = await setup(familyScope, {
+        initialMeals: meals,
+        mealplans: { archiveMeal },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
-      const archiveButtons = () => Array.from(compiled.querySelectorAll('button')).filter((b) => b.textContent?.trim() === 'Archive');
+      const archiveButtons = () =>
+        Array.from(compiled.querySelectorAll('button')).filter(
+          (b) => b.textContent?.trim() === 'Archive',
+        );
 
       archiveButtons()[0].click();
       fixture.detectChanges();
@@ -392,7 +437,7 @@ describe('ManageMeals', () => {
       const meals = [meal({ id: 'meal-1', name: 'Pancakes' })];
       const { fixture } = await setup(familyScope, {
         initialMeals: meals,
-        mealplans: { archiveMeal: vi.fn(async () => Promise.reject(new Error('boom'))) }
+        mealplans: { archiveMeal: vi.fn(async () => Promise.reject(new Error('boom'))) },
       });
       await settle(fixture);
 
@@ -415,7 +460,9 @@ describe('ManageMeals', () => {
       expect(compiled.textContent).toContain('Pancakes');
       expect(findButtonByText(compiled, 'Archive')).toBeUndefined();
       expect(compiled.querySelector('form')).toBeNull();
-      expect(compiled.textContent).toContain("You have read-only access to this group's meal library.");
+      expect(compiled.textContent).toContain(
+        "You have read-only access to this group's meal library.",
+      );
     });
 
     it('shows the create form and archive button for a Manage-tier group scope', async () => {

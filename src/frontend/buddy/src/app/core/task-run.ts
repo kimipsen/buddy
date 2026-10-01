@@ -63,7 +63,7 @@ export function groupTaskRuns(occurrences: CalendarOccurrence[]): AgendaEntry[] 
         // The parent's own effective icon, not the (possibly subtask-specific) icon of whichever
         // subtask happens to appear first -- see CalendarItemOccurrence.parentIcon.
         icon: occurrence.parentIcon ?? occurrence.icon,
-        subtasks: []
+        subtasks: [],
       };
       runsByKey.set(key, run);
       entries.push(run);
@@ -87,6 +87,8 @@ export function groupTaskRuns(occurrences: CalendarOccurrence[]): AgendaEntry[] 
 // itemId (and, for a plain recurring task, empty subtaskId) repeats once per day it occurs, so the
 // optimistic "mark done" update below -- which patches every occurrence whose key matches -- would
 // flip every day's occurrence of that item at once instead of just the one that was toggled.
-export function occurrenceKey(occurrence: Pick<CalendarOccurrence, 'itemId' | 'subtaskId' | 'startsAt' | 'dueAt'>): string {
+export function occurrenceKey(
+  occurrence: Pick<CalendarOccurrence, 'itemId' | 'subtaskId' | 'startsAt' | 'dueAt'>,
+): string {
   return `${occurrence.itemId}:${occurrence.subtaskId ?? ''}:${dateKeyOf(occurrence)}`;
 }

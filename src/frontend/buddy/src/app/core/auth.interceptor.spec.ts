@@ -18,17 +18,17 @@ describe('authInterceptor', () => {
   function setup(stubs: Stubs = {}) {
     const authStub: Partial<AuthService> = {
       getAccessToken: vi.fn(async () => 'access-token-1'),
-      ...stubs.auth
+      ...stubs.auth,
     };
     const runtimeConfigStub: Partial<RuntimeConfigService> = {
-      apiBaseUrl: stubs.apiBaseUrl ?? API_BASE_URL
+      apiBaseUrl: stubs.apiBaseUrl ?? API_BASE_URL,
     };
 
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthService, useValue: authStub },
-        { provide: RuntimeConfigService, useValue: runtimeConfigStub }
-      ]
+        { provide: RuntimeConfigService, useValue: runtimeConfigStub },
+      ],
     });
 
     return { authStub };
@@ -81,7 +81,10 @@ describe('authInterceptor', () => {
 
   it('treats a URL that merely contains, but does not start with, the API base URL as non-API', async () => {
     const { authStub } = setup();
-    const req = new HttpRequest('GET', `https://other.example.com/proxy?target=${API_BASE_URL}/users/me`);
+    const req = new HttpRequest(
+      'GET',
+      `https://other.example.com/proxy?target=${API_BASE_URL}/users/me`,
+    );
     const next = vi.fn<HttpHandlerFn>(() => of(passThroughResponse));
 
     await run(req, next);

@@ -1,7 +1,11 @@
 import { DISPOSABLE_GUARDIAN_GIVEN_NAME, expect, test } from './support/auth-fixture';
 import { createChild } from './support/guardian-data';
 
-test('guardian assigns a pickup person for a child/day cell, and it persists', async ({ page, loginAs, newGuardian }) => {
+test('guardian assigns a pickup person for a child/day cell, and it persists', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
   await loginAs(await newGuardian());
 
@@ -19,17 +23,25 @@ test('guardian assigns a pickup person for a child/day cell, and it persists', a
 
   // Kind defaults to "A guardian", which is what's being tested here -- the child's only
   // guardian is its creator (this test's disposable guardian), so they're the sole option.
-  await page.getByLabel('Choose a guardian').selectOption({ label: DISPOSABLE_GUARDIAN_GIVEN_NAME });
+  await page
+    .getByLabel('Choose a guardian')
+    .selectOption({ label: DISPOSABLE_GUARDIAN_GIVEN_NAME });
   await page.getByRole('button', { name: 'Save' }).click();
 
   // The assigned summary renders as a single button whose accessible name is the guardian's given
   // name (an aria-hidden icon precedes it in the DOM text, so a plain text match would see
   // "👤 <name>" instead -- see pickup-cell.html).
-  await expect(dropOffCell.getByRole('button', { name: DISPOSABLE_GUARDIAN_GIVEN_NAME, exact: true })).toBeVisible();
+  await expect(
+    dropOffCell.getByRole('button', { name: DISPOSABLE_GUARDIAN_GIVEN_NAME, exact: true }),
+  ).toBeVisible();
 
   await page.reload();
 
-
   const dropOffCellAfterReload = page.locator('tbody tr').first().locator('td').first();
-  await expect(dropOffCellAfterReload.getByRole('button', { name: DISPOSABLE_GUARDIAN_GIVEN_NAME, exact: true })).toBeVisible();
+  await expect(
+    dropOffCellAfterReload.getByRole('button', {
+      name: DISPOSABLE_GUARDIAN_GIVEN_NAME,
+      exact: true,
+    }),
+  ).toBeVisible();
 });

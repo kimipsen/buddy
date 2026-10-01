@@ -10,7 +10,10 @@ import { createDisposableGuardian, deleteKeycloakUser } from './support/keycloak
 const SEEDED_USERNAMES = Object.values(SEEDED_USERS).map((user) => user.username);
 const SEEDED_EMAILS = ['alice@buddy.test', 'bob@buddy.test', 'carol@buddy.test'];
 
-test('a disposable guardian account deletes itself from the danger zone, and is signed out', async ({ page, loginAs }) => {
+test('a disposable guardian account deletes itself from the danger zone, and is signed out', async ({
+  page,
+  loginAs,
+}) => {
   const disposable = await createDisposableGuardian();
 
   // Fail-safe #1: assert the account we're about to drive is not a seeded one, before ever

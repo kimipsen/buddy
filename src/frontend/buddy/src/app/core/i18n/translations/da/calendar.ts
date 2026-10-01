@@ -21,10 +21,10 @@ export const calendar = {
       day: 'Dag',
       workweek: 'Arbejdsuge',
       week: 'Uge',
-      month: 'Måned'
+      month: 'Måned',
     },
     monthGrid: {
-      moreLabel: '+{count} mere'
+      moreLabel: '+{count} mere',
     },
     taskUpdateError: 'Kunne ikke opdatere denne opgave.',
     allDay: 'Hele dagen',
@@ -34,32 +34,33 @@ export const calendar = {
       confirmPrompt: 'Slet denne?',
       confirmButton: 'Bekræft',
       cancelButton: 'Annuller',
-      error: 'Kunne ikke slette dette element.'
+      error: 'Kunne ikke slette dette element.',
     },
     edit: {
       button: 'Rediger',
       saveButton: 'Gem',
       cancelButton: 'Annuller',
-      error: 'Kunne ikke opdatere dette element. Kontrollér oplysningerne, og prøv igen.'
+      error: 'Kunne ikke opdatere dette element. Kontrollér oplysningerne, og prøv igen.',
     },
     filter: {
-      title: 'Kalendere'
+      title: 'Kalendere',
     },
     form: {
       title: 'Tilføj en begivenhed eller opgave',
-      noEligibleCalendars: 'Du skal have en kalender, du kan tilføje til. Opret en under Kalendere i Indstillinger.',
+      noEligibleCalendars:
+        'Du skal have en kalender, du kan tilføje til. Opret en under Kalendere i Indstillinger.',
       titlePlaceholder: 'Titel',
       iconPlaceholder: 'Ikon',
       calendarLabel: 'Kalender',
       kindLabel: 'Type',
       kind: {
         event: 'Begivenhed',
-        task: 'Opgave'
+        task: 'Opgave',
       },
       taskSource: {
         manual: 'Manuel',
         template: 'Fra skabelon',
-        templateLabel: 'Opgaveskabelon'
+        templateLabel: 'Opgaveskabelon',
       },
       allDayLabel: 'Hele dagen',
       startDateLabel: 'Startdato',
@@ -79,10 +80,10 @@ export const calendar = {
         monthly: 'Månedligt',
         yearly: 'Årligt',
         intervalLabel: 'Hver',
-        untilLabel: 'Indtil (valgfrit)'
+        untilLabel: 'Indtil (valgfrit)',
       },
       addButton: 'Tilføj til kalender',
-      createError: 'Kunne ikke oprette denne begivenhed. Kontrollér oplysningerne, og prøv igen.'
-    }
-  }
+      createError: 'Kunne ikke oprette denne begivenhed. Kontrollér oplysningerne, og prøv igen.',
+    },
+  },
 };

@@ -9,13 +9,13 @@ import { storePendingGuardianInviteToken } from '../../core/pending-guardian-inv
 
 const KIND_LABELS: Record<GuardianKind, string> = {
   0: 'invite.guardianPreview.kinds.parent',
-  1: 'invite.guardianPreview.kinds.guardian'
+  1: 'invite.guardianPreview.kinds.guardian',
 };
 
 @Component({
   selector: 'app-accept-guardian-invite',
   imports: [TranslatePipe],
-  templateUrl: './accept-guardian-invite.html'
+  templateUrl: './accept-guardian-invite.html',
 })
 export class AcceptGuardianInvite implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -55,9 +55,11 @@ export class AcceptGuardianInvite implements OnInit {
       await this.guardians.acceptGuardianInvite(this.token);
       this.accepted.set(true);
     } catch (error) {
-      this.acceptError.set(error instanceof HttpErrorResponse && error.status === 403
-        ? 'invite.guardianAccept.wrongAccountError'
-        : 'invite.guardianAccept.error');
+      this.acceptError.set(
+        error instanceof HttpErrorResponse && error.status === 403
+          ? 'invite.guardianAccept.wrongAccountError'
+          : 'invite.guardianAccept.error',
+      );
     } finally {
       this.accepting.set(false);
     }

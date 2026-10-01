@@ -1,6 +1,12 @@
 import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, provideRouter, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  provideRouter,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { authGuard } from './auth.guard';
@@ -17,15 +23,19 @@ describe('authGuard', () => {
     const authStub: Partial<AuthService> = {
       completeLoginRedirect: vi.fn(async () => {}),
       isAuthenticated: signal(true).asReadonly(),
-      ...stubs.auth
+      ...stubs.auth,
     };
     const usersStub: Partial<UsersService> = {
       ensureCurrentUser: vi.fn(async () => ({}) as never),
-      ...stubs.users
+      ...stubs.users,
     };
 
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: AuthService, useValue: authStub }, { provide: UsersService, useValue: usersStub }]
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authStub },
+        { provide: UsersService, useValue: usersStub },
+      ],
     });
 
     const router = TestBed.inject(Router);
@@ -34,7 +44,9 @@ describe('authGuard', () => {
   }
 
   function runGuard() {
-    return TestBed.runInInjectionContext(() => authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
+    return TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
   }
 
   it('completes any pending login redirect before checking authentication', async () => {
@@ -46,7 +58,7 @@ describe('authGuard', () => {
       isAuthenticated: computed(() => {
         calls.push('isAuthenticated');
         return true;
-      })
+      }),
     };
     setup({ auth: authStub });
 
@@ -75,7 +87,9 @@ describe('authGuard', () => {
   });
 
   it('still allows navigation when provisioning the current user fails', async () => {
-    const usersStub: Partial<UsersService> = { ensureCurrentUser: vi.fn(async () => Promise.reject(new Error('boom'))) };
+    const usersStub: Partial<UsersService> = {
+      ensureCurrentUser: vi.fn(async () => Promise.reject(new Error('boom'))),
+    };
     setup({ users: usersStub });
 
     const result = await runGuard();

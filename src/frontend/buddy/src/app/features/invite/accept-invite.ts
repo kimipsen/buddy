@@ -10,7 +10,7 @@ import { storePendingInviteToken } from '../../core/pending-invite-token';
 @Component({
   selector: 'app-accept-invite',
   imports: [TranslatePipe],
-  templateUrl: './accept-invite.html'
+  templateUrl: './accept-invite.html',
 })
 export class AcceptInvite implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -48,9 +48,11 @@ export class AcceptInvite implements OnInit {
       await this.groups.acceptInvite(this.token);
       this.accepted.set(true);
     } catch (error) {
-      this.acceptError.set(error instanceof HttpErrorResponse && error.status === 403
-        ? 'invite.accept.wrongAccountError'
-        : 'invite.accept.error');
+      this.acceptError.set(
+        error instanceof HttpErrorResponse && error.status === 403
+          ? 'invite.accept.wrongAccountError'
+          : 'invite.accept.error',
+      );
     } finally {
       this.accepting.set(false);
     }

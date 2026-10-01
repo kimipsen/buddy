@@ -10,7 +10,7 @@ import {
   GroupRoleName,
   GroupSummary,
   GroupsService,
-  MealplanPermissionPolicy
+  MealplanPermissionPolicy,
 } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -19,7 +19,7 @@ import { MealplanAccessTier } from '../../../../core/mealplans.service';
 const ROLE_LABELS: Record<number, string> = {
   0: 'admin.manageGroups.roles.owner',
   1: 'admin.manageGroups.roles.admin',
-  2: 'admin.manageGroups.roles.member'
+  2: 'admin.manageGroups.roles.member',
 };
 
 // A group owner/admin can invite Admins or Members, never another Owner (matches the backend's
@@ -29,7 +29,7 @@ const INVITABLE_ROLES: GroupRole[] = [1, 2];
 const CALENDAR_ROLE_LABELS: Record<CalendarRole, string> = {
   0: 'admin.manageCalendars.roles.owner',
   1: 'admin.manageCalendars.roles.contributor',
-  2: 'admin.manageCalendars.roles.viewer'
+  2: 'admin.manageCalendars.roles.viewer',
 };
 
 const CALENDAR_ROLES: CalendarRole[] = [0, 1, 2];
@@ -39,7 +39,7 @@ const CALENDAR_ROLES: CalendarRole[] = [0, 1, 2];
 const POLICY_ROWS: { key: GroupRoleName; role: GroupRole }[] = [
   { key: 'Owner', role: 0 },
   { key: 'Admin', role: 1 },
-  { key: 'Member', role: 2 }
+  { key: 'Member', role: 2 },
 ];
 
 // None (0), Manage (2), and View (3) are the three valid group-policy values for meal plans --
@@ -47,7 +47,7 @@ const POLICY_ROWS: { key: GroupRoleName; role: GroupRole }[] = [
 const MEALPLAN_TIER_LABELS: Record<number, string> = {
   0: 'admin.manageGroups.mealplanPolicy.tiers.none',
   2: 'admin.manageGroups.mealplanPolicy.tiers.manage',
-  3: 'admin.manageGroups.mealplanPolicy.tiers.view'
+  3: 'admin.manageGroups.mealplanPolicy.tiers.view',
 };
 
 const MEALPLAN_TIERS: MealplanAccessTier[] = [0, 3, 2];
@@ -55,7 +55,7 @@ const MEALPLAN_TIERS: MealplanAccessTier[] = [0, 3, 2];
 @Component({
   selector: 'app-manage-groups',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './manage-groups.html'
+  templateUrl: './manage-groups.html',
 })
 export class ManageGroups implements OnInit {
   private readonly groups = inject(GroupsService);

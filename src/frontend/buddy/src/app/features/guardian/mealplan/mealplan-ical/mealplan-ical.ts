@@ -7,7 +7,7 @@ import { MealplanIcalTokenSummary, MealplansService } from '../../../../core/mea
 @Component({
   selector: 'app-mealplan-ical',
   imports: [DatePipe, TranslatePipe],
-  templateUrl: './mealplan-ical.html'
+  templateUrl: './mealplan-ical.html',
 })
 export class MealplanIcal {
   private readonly mealplans = inject(MealplansService);

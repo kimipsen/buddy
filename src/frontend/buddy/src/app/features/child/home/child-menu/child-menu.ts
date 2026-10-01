@@ -8,7 +8,7 @@ import { ThemeService } from '../../../../core/theme.service';
 @Component({
   selector: 'app-child-menu',
   imports: [TranslatePipe],
-  templateUrl: './child-menu.html'
+  templateUrl: './child-menu.html',
 })
 export class ChildMenu {
   private readonly auth = inject(AuthService);

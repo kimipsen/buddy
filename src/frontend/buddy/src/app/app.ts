@@ -7,7 +7,7 @@ import { ThemeService } from './core/theme.service';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
-  templateUrl: './app.html'
+  templateUrl: './app.html',
 })
 export class App {
   private readonly translation = inject(TranslationService);

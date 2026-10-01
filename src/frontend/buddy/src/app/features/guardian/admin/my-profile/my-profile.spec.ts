@@ -11,7 +11,7 @@ describe('MyProfile', () => {
     userName: 'alice',
     name: { givenName: 'Alice', familyName: 'Anderson' },
     timeZoneId: 'UTC',
-    language: 'en'
+    language: 'en',
   };
 
   async function setup() {
@@ -19,12 +19,12 @@ describe('MyProfile', () => {
       ensureCurrentUser: () => Promise.resolve(currentUser),
       updateName: vi.fn(),
       updateTimeZone: vi.fn(),
-      updateLanguage: vi.fn()
+      updateLanguage: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [{ provide: UsersService, useValue: usersServiceStub }]
+      providers: [{ provide: UsersService, useValue: usersServiceStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(MyProfile);
@@ -37,9 +37,12 @@ describe('MyProfile', () => {
     return { fixture, compiled };
   }
 
-  function findSaveButton(compiled: HTMLElement, textFragment: string): HTMLButtonElement | undefined {
+  function findSaveButton(
+    compiled: HTMLElement,
+    textFragment: string,
+  ): HTMLButtonElement | undefined {
     return Array.from(compiled.querySelectorAll('button')).find(
-      (button) => button.type === 'submit' && button.textContent?.includes(textFragment)
+      (button) => button.type === 'submit' && button.textContent?.includes(textFragment),
     );
   }
 

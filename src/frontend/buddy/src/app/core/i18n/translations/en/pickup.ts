@@ -4,14 +4,14 @@ export const pickup = {
   title: 'Plan pickups and drop-offs.',
   slots: {
     dropOff: 'Drop-off',
-    pickUp: 'Pickup'
+    pickUp: 'Pickup',
   },
   assign: {
     title: 'Weekly schedule',
     loading: 'Loading schedule…',
     noChildren: 'Link a child from Settings before planning pickups.',
     loadError: 'Unable to load the pickup schedule.',
-    updateError: 'Unable to update this slot.'
+    updateError: 'Unable to update this slot.',
   },
   cell: {
     notPlanned: 'Not planned',
@@ -22,7 +22,7 @@ export const pickup = {
       guardian: 'A guardian',
       selfEscort: 'Goes alone',
       sibling: 'A sibling',
-      playdate: 'Playdate'
+      playdate: 'Playdate',
     },
     kindLabel: 'Pickup type',
     timeLabel: 'Pickup time',
@@ -32,6 +32,6 @@ export const pickup = {
     playdateHostPlaceholder: 'Who’s hosting? (required)',
     playdateLocationPlaceholder: 'Location (optional)',
     playdateContactPlaceholder: 'Contact info (optional)',
-    notesPlaceholder: 'Notes (optional)'
-  }
+    notesPlaceholder: 'Notes (optional)',
+  },
 };

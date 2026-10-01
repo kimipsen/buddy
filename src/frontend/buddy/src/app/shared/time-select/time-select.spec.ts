@@ -32,7 +32,7 @@ describe('TimeSelect', () => {
     expect(input.type).toBe('time');
   });
 
-  it('reflects the value input as the input\'s value', async () => {
+  it("reflects the value input as the input's value", async () => {
     const { input } = await setup({ value: '14:30' });
 
     expect(input.value).toBe('14:30');

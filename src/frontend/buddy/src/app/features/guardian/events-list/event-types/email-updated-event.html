@@ -1,5 +1,12 @@
-<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'events.types.emailUpdated.title' | translate }}</p>
-<p class="mt-1 text-sm font-medium">
-  {{ 'events.types.emailUpdated.description' | translate: { before: data().before.value, after: data().after.value } }}
+<p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+  {{ 'events.types.emailUpdated.title' | translate }}
 </p>
-<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ data().occurredAt | userDate: 'medium' }}</p>
+<p class="mt-1 text-sm font-medium">
+  {{
+    'events.types.emailUpdated.description'
+      | translate: { before: data().before.value, after: data().after.value }
+  }}
+</p>
+<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+  {{ data().occurredAt | userDate: 'medium' }}
+</p>

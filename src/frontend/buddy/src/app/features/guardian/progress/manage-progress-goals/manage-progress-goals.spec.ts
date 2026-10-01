@@ -7,7 +7,15 @@ import { ManageProgressGoals } from './manage-progress-goals';
 
 describe('ManageProgressGoals', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
-    return { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC', ...overrides };
+    return {
+      id: 'child-1',
+      name: { givenName: 'Sam', familyName: 'Kid' },
+      guardianLinkId: 'link-1',
+      kind: 0,
+      language: 'en',
+      timeZoneId: 'UTC',
+      ...overrides,
+    };
   }
 
   function summary(overrides: Partial<ProgressSummary> = {}): ProgressSummary {
@@ -19,9 +27,9 @@ describe('ManageProgressGoals', () => {
       nextGoalIcon: '🌱',
       goalPosts: [
         { threshold: 5, icon: '🌱', label: null },
-        { threshold: 10, icon: '🌿', label: null }
+        { threshold: 10, icon: '🌿', label: null },
       ],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -33,20 +41,22 @@ describe('ManageProgressGoals', () => {
   async function setup(stubs: Stubs = {}) {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child()]),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const progressStub: Partial<ProgressService> = {
       getChildProgress: vi.fn(async () => summary()),
-      configureGoalPosts: vi.fn(async (_childId: string, goalPosts: GoalPost[]) => summary({ goalPosts })),
-      ...stubs.progress
+      configureGoalPosts: vi.fn(async (_childId: string, goalPosts: GoalPost[]) =>
+        summary({ goalPosts }),
+      ),
+      ...stubs.progress,
     };
 
     await TestBed.configureTestingModule({
       imports: [ManageProgressGoals],
       providers: [
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: ProgressService, useValue: progressStub }
-      ]
+        { provide: ProgressService, useValue: progressStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageProgressGoals);
@@ -56,7 +66,10 @@ describe('ManageProgressGoals', () => {
 
   // Mirrors manage-medicines.spec.ts's settle() -- loadChildren chains loadGoalPosts before the
   // signals driving the template settle.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -66,7 +79,9 @@ describe('ManageProgressGoals', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   function setInputValue(input: HTMLInputElement, value: string): void {
@@ -74,11 +89,14 @@ describe('ManageProgressGoals', () => {
     input.dispatchEvent(new Event('input'));
   }
 
-  function rowInputs(compiled: HTMLElement, index: number): { threshold: HTMLInputElement; icon: HTMLInputElement; label: HTMLInputElement } {
+  function rowInputs(
+    compiled: HTMLElement,
+    index: number,
+  ): { threshold: HTMLInputElement; icon: HTMLInputElement; label: HTMLInputElement } {
     return {
       threshold: compiled.querySelector<HTMLInputElement>(`input[name="goalThreshold${index}"]`)!,
       icon: compiled.querySelector<HTMLInputElement>(`input[name="goalIcon${index}"]`)!,
-      label: compiled.querySelector<HTMLInputElement>(`input[name="goalLabel${index}"]`)!
+      label: compiled.querySelector<HTMLInputElement>(`input[name="goalLabel${index}"]`)!,
     };
   }
 
@@ -94,14 +112,20 @@ describe('ManageProgressGoals', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Link a child from Settings before configuring goal posts.');
+    expect(compiled.textContent).toContain(
+      'Link a child from Settings before configuring goal posts.',
+    );
   });
 
   it('shows a translated error when loading children fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Unable to load goal posts.');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Unable to load goal posts.',
+    );
   });
 
   it('loads the selected child’s current goal posts into editable rows', async () => {
@@ -168,13 +192,15 @@ describe('ManageProgressGoals', () => {
 
     expect(progress.configureGoalPosts).toHaveBeenCalledWith('child-1', [
       { threshold: 3, icon: '🌱', label: null },
-      { threshold: 10, icon: '🌿', label: null }
+      { threshold: 10, icon: '🌿', label: null },
     ]);
     expect(compiled.textContent).toContain('Goal posts saved.');
   });
 
   it('shows a translated error and keeps editing when saving fails', async () => {
-    const { fixture } = await setup({ progress: { configureGoalPosts: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      progress: { configureGoalPosts: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;

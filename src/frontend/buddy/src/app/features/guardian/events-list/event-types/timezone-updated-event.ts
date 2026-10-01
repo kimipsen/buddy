@@ -7,7 +7,7 @@ import { TimeZoneUpdatedData } from './user-event.model';
 @Component({
   selector: 'app-timezone-updated-event',
   imports: [UserDatePipe, TranslatePipe],
-  templateUrl: './timezone-updated-event.html'
+  templateUrl: './timezone-updated-event.html',
 })
 export class TimeZoneUpdatedEvent {
   readonly data = input.required<TimeZoneUpdatedData>();

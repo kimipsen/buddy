@@ -25,12 +25,14 @@ describe('AcceptInvite', () => {
     const authStub: Partial<AuthService> = {
       isAuthenticated: signal(true).asReadonly(),
       login: vi.fn(async () => {}),
-      ...stubs.auth
+      ...stubs.auth,
     };
     const groupsStub: Partial<GroupsService> = {
-      previewInvite: vi.fn(async (): Promise<GroupInvitePreview> => ({ groupName: 'The Andersens' })),
+      previewInvite: vi.fn(async (): Promise<GroupInvitePreview> => ({
+        groupName: 'The Andersens',
+      })),
       acceptInvite: vi.fn(async () => {}),
-      ...stubs.groups
+      ...stubs.groups,
     };
     const token = stubs.token ?? 'invite-token-123';
 
@@ -40,8 +42,11 @@ describe('AcceptInvite', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
         { provide: GroupsService, useValue: groupsStub },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token }) } } }
-      ]
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ token }) } },
+        },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(AcceptInvite);
@@ -64,16 +69,23 @@ describe('AcceptInvite', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
-  function findButton(fixture: ComponentFixture<unknown>, label: string): HTMLButtonElement | undefined {
+  function findButton(
+    fixture: ComponentFixture<unknown>,
+    label: string,
+  ): HTMLButtonElement | undefined {
     return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(
-      (button) => button.textContent?.trim() === label
+      (button) => button.textContent?.trim() === label,
     );
   }
 
   it('shows the loading state before the preview resolves', async () => {
     let resolvePreview!: (value: GroupInvitePreview) => void;
     const { fixture } = await setup({
-      groups: { previewInvite: vi.fn(() => new Promise<GroupInvitePreview>((resolve) => (resolvePreview = resolve))) }
+      groups: {
+        previewInvite: vi.fn(
+          () => new Promise<GroupInvitePreview>((resolve) => (resolvePreview = resolve)),
+        ),
+      },
     });
 
     fixture.detectChanges();
@@ -94,14 +106,18 @@ describe('AcceptInvite', () => {
   });
 
   it('shows the group name once the preview resolves', async () => {
-    const { fixture } = await setup({ groups: { previewInvite: vi.fn(async () => ({ groupName: 'The Andersens' })) } });
+    const { fixture } = await setup({
+      groups: { previewInvite: vi.fn(async () => ({ groupName: 'The Andersens' })) },
+    });
     await settle(fixture);
 
     expect(text(fixture)).toContain("You've been invited to join The Andersens.");
   });
 
   it('shows an error when the invite token is invalid or expired', async () => {
-    const { fixture } = await setup({ groups: { previewInvite: vi.fn(async () => Promise.reject(new Error('not found'))) } });
+    const { fixture } = await setup({
+      groups: { previewInvite: vi.fn(async () => Promise.reject(new Error('not found'))) },
+    });
     await settle(fixture);
 
     expect(text(fixture)).toContain('This invite link is invalid or has expired.');
@@ -109,7 +125,9 @@ describe('AcceptInvite', () => {
   });
 
   it('does not show the accept button when the preview failed', async () => {
-    const { fixture } = await setup({ groups: { previewInvite: vi.fn(async () => Promise.reject(new Error('not found'))) } });
+    const { fixture } = await setup({
+      groups: { previewInvite: vi.fn(async () => Promise.reject(new Error('not found'))) },
+    });
     await settle(fixture);
 
     expect(findButton(fixture, 'Accept invite')).toBeUndefined();
@@ -129,11 +147,15 @@ describe('AcceptInvite', () => {
 
     expect(findButton(fixture, 'Accept invite')).toBeUndefined();
     expect(findButton(fixture, 'Log in to accept')).toBeTruthy();
-    expect(text(fixture)).toContain('Log in with the account this invite was sent to, to accept it.');
+    expect(text(fixture)).toContain(
+      'Log in with the account this invite was sent to, to accept it.',
+    );
   });
 
   it('stores the exact pending invite token and starts login when logging in to accept', async () => {
-    const { fixture, auth, token } = await setup({ auth: { isAuthenticated: signal(false).asReadonly() } });
+    const { fixture, auth, token } = await setup({
+      auth: { isAuthenticated: signal(false).asReadonly() },
+    });
     await settle(fixture);
 
     findButton(fixture, 'Log in to accept')!.click();
@@ -146,8 +168,8 @@ describe('AcceptInvite', () => {
     const { fixture, groups, token } = await setup({
       groups: {
         previewInvite: vi.fn(async () => ({ groupName: 'The Andersens' })),
-        acceptInvite: vi.fn(async () => {})
-      }
+        acceptInvite: vi.fn(async () => {}),
+      },
     });
     await settle(fixture);
 
@@ -164,7 +186,9 @@ describe('AcceptInvite', () => {
   it('disables the accept button while acceptance is in flight, and re-enables scope is replaced by the success screen', async () => {
     let resolveAccept!: () => void;
     const { fixture } = await setup({
-      groups: { acceptInvite: vi.fn(() => new Promise<void>((resolve) => (resolveAccept = resolve))) }
+      groups: {
+        acceptInvite: vi.fn(() => new Promise<void>((resolve) => (resolveAccept = resolve))),
+      },
     });
     await settle(fixture);
 
@@ -182,36 +206,48 @@ describe('AcceptInvite', () => {
 
   it('shows the wrong-account error when acceptInvite rejects with a 403', async () => {
     const forbidden = new HttpErrorResponse({ status: 403 });
-    const { fixture } = await setup({ groups: { acceptInvite: vi.fn(async () => Promise.reject(forbidden)) } });
+    const { fixture } = await setup({
+      groups: { acceptInvite: vi.fn(async () => Promise.reject(forbidden)) },
+    });
     await settle(fixture);
 
     findButton(fixture, 'Accept invite')!.click();
     await settle(fixture);
 
-    expect(text(fixture)).toContain("This invite was sent to a different account than the one you're logged in with.");
+    expect(text(fixture)).toContain(
+      "This invite was sent to a different account than the one you're logged in with.",
+    );
     expect(text(fixture)).not.toContain("You've joined");
   });
 
   it('shows a generic error when acceptInvite rejects with a non-403 error', async () => {
-    const { fixture } = await setup({ groups: { acceptInvite: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      groups: { acceptInvite: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     findButton(fixture, 'Accept invite')!.click();
     await settle(fixture);
 
-    expect(text(fixture)).toContain('Unable to accept this invite. It may have expired or already been used.');
+    expect(text(fixture)).toContain(
+      'Unable to accept this invite. It may have expired or already been used.',
+    );
   });
 
   it('shows a generic error, not the wrong-account error, for a 401 HttpErrorResponse', async () => {
     const unauthorized = new HttpErrorResponse({ status: 401 });
-    const { fixture } = await setup({ groups: { acceptInvite: vi.fn(async () => Promise.reject(unauthorized)) } });
+    const { fixture } = await setup({
+      groups: { acceptInvite: vi.fn(async () => Promise.reject(unauthorized)) },
+    });
     await settle(fixture);
 
     findButton(fixture, 'Accept invite')!.click();
     await settle(fixture);
 
-    expect(text(fixture)).toContain('Unable to accept this invite. It may have expired or already been used.');
-    expect(text(fixture)).not.toContain("sent to a different account");
+    expect(text(fixture)).toContain(
+      'Unable to accept this invite. It may have expired or already been used.',
+    );
+    expect(text(fixture)).not.toContain('sent to a different account');
   });
 
   it('clears a previous accept error once a retry succeeds', async () => {
@@ -247,7 +283,9 @@ describe('AcceptInvite', () => {
   });
 
   it('renders the interpolated group name in the success title, distinct from the preview title', async () => {
-    const { fixture } = await setup({ groups: { previewInvite: vi.fn(async () => ({ groupName: 'Camp Wonder' })) } });
+    const { fixture } = await setup({
+      groups: { previewInvite: vi.fn(async () => ({ groupName: 'Camp Wonder' })) },
+    });
     await settle(fixture);
 
     expect(text(fixture)).toContain("You've been invited to join Camp Wonder.");

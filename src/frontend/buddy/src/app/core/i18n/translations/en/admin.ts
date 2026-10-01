@@ -13,7 +13,7 @@ export const admin = {
     roles: {
       owner: 'Owner',
       admin: 'Admin',
-      member: 'Member'
+      member: 'Member',
     },
     invite: {
       showButton: 'Invite',
@@ -25,9 +25,10 @@ export const admin = {
       emailPlaceholder: 'Email address',
       roleLabel: 'Role',
       sendButton: 'Send invite',
-      sendError: 'Unable to send the invite. The email may already be a member, or an invite was already sent recently.',
+      sendError:
+        'Unable to send the invite. The email may already be a member, or an invite was already sent recently.',
       cancelButton: 'Cancel',
-      cancelError: 'Unable to cancel the invite.'
+      cancelError: 'Unable to cancel the invite.',
     },
     members: {
       showButton: 'Members',
@@ -36,7 +37,7 @@ export const admin = {
       loading: 'Loading members…',
       empty: 'This group has no members yet.',
       guardiansTitle: 'Guardians',
-      childrenTitle: 'Children'
+      childrenTitle: 'Children',
     },
     children: {
       showButton: 'Add a child',
@@ -47,7 +48,7 @@ export const admin = {
       empty: 'All of your children are already in this group.',
       selectPlaceholder: 'Choose a child',
       addButton: 'Add to group',
-      addError: 'Unable to add this child to the group.'
+      addError: 'Unable to add this child to the group.',
     },
     policy: {
       title: 'Calendar permissions',
@@ -56,7 +57,7 @@ export const admin = {
       loading: 'Loading permissions…',
       loadError: 'Unable to load calendar permissions.',
       saveButton: 'Save permissions',
-      saveError: 'Unable to save calendar permissions.'
+      saveError: 'Unable to save calendar permissions.',
     },
     mealplanPolicy: {
       title: 'Meal plan permissions',
@@ -69,9 +70,9 @@ export const admin = {
       tiers: {
         none: 'No access',
         view: 'Read only',
-        manage: 'Full access'
-      }
-    }
+        manage: 'Full access',
+      },
+    },
   },
   manageChildren: {
     title: 'Children',
@@ -86,11 +87,11 @@ export const admin = {
     revokeError: 'Unable to remove this child.',
     language: {
       label: 'Language',
-      error: 'Unable to update this child\'s language.'
+      error: "Unable to update this child's language.",
     },
     timeZone: {
       label: 'Time zone',
-      error: 'Unable to update this child\'s time zone.'
+      error: "Unable to update this child's time zone.",
     },
     givenNamePlaceholder: 'Given name',
     familyNamePlaceholder: 'Family name',
@@ -117,9 +118,9 @@ export const admin = {
       cancelError: 'Unable to cancel the invite.',
       kinds: {
         parent: 'Parent',
-        guardian: 'Guardian'
-      }
-    }
+        guardian: 'Guardian',
+      },
+    },
   },
   manageCalendars: {
     title: 'Calendars',
@@ -133,34 +134,36 @@ export const admin = {
     roles: {
       owner: 'Owner',
       contributor: 'Contributor',
-      viewer: 'Viewer'
+      viewer: 'Viewer',
     },
-    needsGroupHint: 'You need a group before you can add a calendar. Create one under Groups first.',
+    needsGroupHint:
+      'You need a group before you can add a calendar. Create one under Groups first.',
     move: {
       showButton: 'Move to group',
       hideButton: 'Close',
       selectPlaceholder: 'Choose a group',
       confirmButton: 'Move',
       noGroups: 'You need another group you manage before you can move this calendar.',
-      error: 'Unable to move this calendar. You may not manage the destination group.'
+      error: 'Unable to move this calendar. You may not manage the destination group.',
     },
     delete: {
       button: 'Delete',
       confirmPrompt: 'Delete this calendar? This cannot be undone.',
       confirmButton: 'Confirm',
       cancelButton: 'Cancel',
-      error: 'Unable to delete this calendar.'
+      error: 'Unable to delete this calendar.',
     },
     editIcon: {
       showButton: 'Change icon',
       hideButton: 'Close',
       confirmButton: 'Save',
-      error: 'Unable to change this calendar\'s icon.'
+      error: "Unable to change this calendar's icon.",
     },
     ical: {
       showButton: 'Subscribe',
       hideButton: 'Close',
-      description: 'Generate a private link to subscribe to this calendar in an external calendar app (e.g. Google Calendar, Apple Calendar, Outlook).',
+      description:
+        'Generate a private link to subscribe to this calendar in an external calendar app (e.g. Google Calendar, Apple Calendar, Outlook).',
       loading: 'Loading links…',
       loadError: 'Unable to load subscription links.',
       empty: 'No subscription links yet.',
@@ -172,12 +175,13 @@ export const admin = {
       copyButton: 'Copy',
       copiedButton: 'Copied',
       revokeButton: 'Revoke',
-      revokeError: 'Unable to revoke this link.'
-    }
+      revokeError: 'Unable to revoke this link.',
+    },
   },
   aiProviders: {
     title: 'AI mealplan assistant',
-    description: 'Add your own API key for an AI provider to let the assistant help draft a meal plan from your family\'s meals and ratings.',
+    description:
+      "Add your own API key for an AI provider to let the assistant help draft a meal plan from your family's meals and ratings.",
     loading: 'Loading providers…',
     noChildren: 'Link a child from Settings before configuring an AI provider.',
     loadError: 'Unable to load AI provider settings.',
@@ -199,23 +203,24 @@ export const admin = {
       confirmPrompt: 'Remove this API key?',
       confirmButton: 'Confirm',
       cancelButton: 'Cancel',
-      error: 'Unable to remove this API key.'
+      error: 'Unable to remove this API key.',
     },
     names: {
       anthropic: 'Anthropic (Claude)',
       openAi: 'OpenAI (ChatGPT)',
-      gemini: 'Google (Gemini)'
-    }
+      gemini: 'Google (Gemini)',
+    },
   },
   deleteAccount: {
     title: 'Danger zone',
     description: 'Deleting your account removes your access permanently. This cannot be undone.',
     deleteButton: 'Delete my account',
     confirmTitle: 'Delete your account?',
-    confirmDescription: 'This permanently deletes your account and cannot be undone. You’ll be signed out immediately.',
+    confirmDescription:
+      'This permanently deletes your account and cannot be undone. You’ll be signed out immediately.',
     cancel: 'Cancel',
     confirmButton: 'Yes, delete my account',
     deletingButton: 'Deleting…',
-    error: 'Unable to delete your account.'
-  }
+    error: 'Unable to delete your account.',
+  },
 };

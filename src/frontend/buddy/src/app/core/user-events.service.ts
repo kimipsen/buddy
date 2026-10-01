@@ -28,8 +28,7 @@ export class UserEventsService {
     }
 
     return firstValueFrom(
-      this.http.get<UserEventsPage>(`${this.runtimeConfig.apiBaseUrl}/users/me/events`, { params })
+      this.http.get<UserEventsPage>(`${this.runtimeConfig.apiBaseUrl}/users/me/events`, { params }),
     );
   }
 }
-

@@ -24,8 +24,8 @@ describe('ProfileMenu', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
-        { provide: ThemeService, useValue: themeStub }
-      ]
+        { provide: ThemeService, useValue: themeStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ProfileMenu);
@@ -52,15 +52,19 @@ describe('ProfileMenu', () => {
   }
 
   function signOutButton(compiled: HTMLElement): HTMLButtonElement | null {
-    return Array.from(compiled.querySelectorAll<HTMLButtonElement>('button')).find(
-      (button) => button.textContent?.trim() === 'Sign out'
-    ) ?? null;
+    return (
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('button')).find(
+        (button) => button.textContent?.trim() === 'Sign out',
+      ) ?? null
+    );
   }
 
   function themeButton(compiled: HTMLElement, label: string): HTMLButtonElement | null {
-    return Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')).find(
-      (button) => button.textContent?.trim() === label
-    ) ?? null;
+    return (
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')).find(
+        (button) => button.textContent?.trim() === label,
+      ) ?? null
+    );
   }
 
   it('renders closed with the toggle collapsed and no menu items', async () => {

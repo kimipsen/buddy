@@ -9,7 +9,7 @@ import {
   CalendarsService,
   DatePart,
   RecurrenceFrequency,
-  RecurrenceRuleRequest
+  RecurrenceRuleRequest,
 } from '../../../../core/calendars.service';
 import {
   addDaysIso,
@@ -21,7 +21,7 @@ import {
   startOfWeekIso,
   toIsoDateInTimeZone,
   toTimeInTimeZone,
-  todayIsoDate
+  todayIsoDate,
 } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -32,7 +32,10 @@ import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { DateSelect } from '../../../../shared/date-select/date-select';
-import { SegmentedControl, SegmentedControlOption } from '../../../../shared/segmented-control/segmented-control';
+import {
+  SegmentedControl,
+  SegmentedControlOption,
+} from '../../../../shared/segmented-control/segmented-control';
 import { Stepper } from '../../../../shared/stepper/stepper';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 import { Toggle } from '../../../../shared/toggle/toggle';
@@ -62,7 +65,11 @@ const WORKWEEK_DAYS = 5;
 function labeledDay(isoDate: string, locale: string): AgendaDay {
   return {
     date: isoDate,
-    label: parseIsoDate(isoDate).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
+    label: parseIsoDate(isoDate).toLocaleDateString(locale, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    }),
   };
 }
 
@@ -84,7 +91,7 @@ function buildMonthDays(anchorIsoDate: string): AgendaDay[] {
   return buildMonthGridIso(anchorIsoDate).map((date) => ({
     date,
     label: String(parseIsoDate(date).getDate()),
-    isCurrentMonth: parseIsoDate(date).getMonth() === anchorMonth
+    isCurrentMonth: parseIsoDate(date).getMonth() === anchorMonth,
   }));
 }
 
@@ -114,8 +121,20 @@ function formatDuration(totalMinutes: number): string {
 
 @Component({
   selector: 'app-calendar-agenda',
-  imports: [FormsModule, TranslatePipe, UserDatePipe, ColorSwatchPicker, DateSelect, SegmentedControl, Stepper, TimeSelect, Toggle, MonthGrid, TaskPicker],
-  templateUrl: './agenda.html'
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    UserDatePipe,
+    ColorSwatchPicker,
+    DateSelect,
+    SegmentedControl,
+    Stepper,
+    TimeSelect,
+    Toggle,
+    MonthGrid,
+    TaskPicker,
+  ],
+  templateUrl: './agenda.html',
 })
 export class CalendarAgenda implements OnInit {
   private readonly calendars = inject(CalendarsService);
@@ -130,7 +149,7 @@ export class CalendarAgenda implements OnInit {
 
   protected readonly itemKindOptions = computed<SegmentedControlOption<CalendarItemKind>[]>(() => [
     { value: EVENT_KIND, label: this.translation.translate('calendar.agenda.form.kind.event') },
-    { value: TASK_KIND, label: this.translation.translate('calendar.agenda.form.kind.task') }
+    { value: TASK_KIND, label: this.translation.translate('calendar.agenda.form.kind.task') },
   ]);
 
   protected readonly anchorDate = signal(todayIsoDate());
@@ -176,8 +195,8 @@ export class CalendarAgenda implements OnInit {
           date: parseIsoDate(this.anchorDate()).toLocaleDateString(this.translation.language(), {
             weekday: 'long',
             month: 'long',
-            day: 'numeric'
-          })
+            day: 'numeric',
+          }),
         });
       case 'workweek':
         return this.translation.translate('calendar.agenda.workweekTitle');
@@ -189,23 +208,35 @@ export class CalendarAgenda implements OnInit {
         return this.translation.translate('calendar.agenda.monthTitle', {
           month: parseIsoDate(this.anchorDate()).toLocaleDateString(this.translation.language(), {
             month: 'long',
-            year: 'numeric'
-          })
+            year: 'numeric',
+          }),
         });
     }
   });
 
   protected readonly previousLabelKey = computed(
-    () => ({ day: 'calendar.agenda.previousDay', workweek: 'calendar.agenda.previousWeek', week: 'calendar.agenda.previousWeek', month: 'calendar.agenda.previousMonth' })[this.viewMode()]
+    () =>
+      ({
+        day: 'calendar.agenda.previousDay',
+        workweek: 'calendar.agenda.previousWeek',
+        week: 'calendar.agenda.previousWeek',
+        month: 'calendar.agenda.previousMonth',
+      })[this.viewMode()],
   );
 
   protected readonly nextLabelKey = computed(
-    () => ({ day: 'calendar.agenda.nextDay', workweek: 'calendar.agenda.nextWeek', week: 'calendar.agenda.nextWeek', month: 'calendar.agenda.nextMonth' })[this.viewMode()]
+    () =>
+      ({
+        day: 'calendar.agenda.nextDay',
+        workweek: 'calendar.agenda.nextWeek',
+        week: 'calendar.agenda.nextWeek',
+        month: 'calendar.agenda.nextMonth',
+      })[this.viewMode()],
   );
 
   protected readonly myCalendars = signal<CalendarSummary[]>([]);
   protected readonly eligibleCalendars = computed<CalendarSummary[]>(() =>
-    this.myCalendars().filter((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE)
+    this.myCalendars().filter((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE),
   );
 
   protected readonly occurrences = signal<CalendarOccurrence[]>([]);
@@ -262,7 +293,9 @@ export class CalendarAgenda implements OnInit {
     }
 
     for (const dayOccurrences of Object.values(byDate)) {
-      dayOccurrences.sort((a, b) => (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''));
+      dayOccurrences.sort((a, b) =>
+        (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''),
+      );
     }
 
     return byDate;
@@ -306,9 +339,13 @@ export class CalendarAgenda implements OnInit {
   // what's actually schedulable -- an archived template can still be listed here transiently right
   // after this component's own initial fetch races a manage-tasks tab archiving one, but never
   // offered as a pick.
-  protected readonly taskTemplates = computed(() => this.taskLibrary.templates().filter((template) => !template.isArchived));
+  protected readonly taskTemplates = computed(() =>
+    this.taskLibrary.templates().filter((template) => !template.isArchived),
+  );
 
-  protected readonly selectedTaskTemplate = computed(() => this.taskTemplates().find((template) => template.id === this.newTaskTemplateId()) ?? null);
+  protected readonly selectedTaskTemplate = computed(
+    () => this.taskTemplates().find((template) => template.id === this.newTaskTemplateId()) ?? null,
+  );
 
   protected readonly assignableMembers = signal<AssignableMember[]>([]);
   // Used only to tell whether the selected assignee is one of the guardian's own children (and
@@ -387,7 +424,12 @@ export class CalendarAgenda implements OnInit {
   }
 
   protected viewModeLabelKey(mode: ViewMode): string {
-    return { day: 'calendar.agenda.view.day', workweek: 'calendar.agenda.view.workweek', week: 'calendar.agenda.view.week', month: 'calendar.agenda.view.month' }[mode];
+    return {
+      day: 'calendar.agenda.view.day',
+      workweek: 'calendar.agenda.view.workweek',
+      week: 'calendar.agenda.view.week',
+      month: 'calendar.agenda.view.month',
+    }[mode];
   }
 
   protected goToToday(): void {
@@ -475,7 +517,12 @@ export class CalendarAgenda implements OnInit {
       this.assignableMembers.set(members);
       this.memberNamesById.update((current) => ({
         ...current,
-        ...Object.fromEntries(members.map((member) => [member.userId, `${member.givenName} ${member.familyName}`.trim()]))
+        ...Object.fromEntries(
+          members.map((member) => [
+            member.userId,
+            `${member.givenName} ${member.familyName}`.trim(),
+          ]),
+        ),
       }));
     } catch {
       // The assignee picker is a nice-to-have on the create form -- if this fails, task creation
@@ -529,9 +576,17 @@ export class CalendarAgenda implements OnInit {
     this.savingTaskId.set(key);
 
     try {
-      await this.calendars.setTaskCompletion(occurrence.calendarId, occurrence.itemId, date, isCompleted, occurrence.subtaskId ?? null);
+      await this.calendars.setTaskCompletion(
+        occurrence.calendarId,
+        occurrence.itemId,
+        date,
+        isCompleted,
+        occurrence.subtaskId ?? null,
+      );
       this.occurrences.update((current) =>
-        current.map((existing) => (occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing))
+        current.map((existing) =>
+          occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
+        ),
       );
     } catch {
       this.error.set('calendar.agenda.taskUpdateError');
@@ -553,14 +608,18 @@ export class CalendarAgenda implements OnInit {
   // Accepts anything carrying itemId/calendarId -- both a single CalendarOccurrence and a
   // TaskRun (the grouped view of a template-scheduled item's subtask occurrences) qualify, since
   // deleting always targets the whole scheduled item, never an individual subtask.
-  protected async confirmDeleteItem(occurrence: Pick<CalendarOccurrence, 'itemId' | 'calendarId'>): Promise<void> {
+  protected async confirmDeleteItem(
+    occurrence: Pick<CalendarOccurrence, 'itemId' | 'calendarId'>,
+  ): Promise<void> {
     this.deletingItemId.set(occurrence.itemId);
     this.error.set(null);
 
     try {
       await this.calendars.deleteItem(occurrence.calendarId, occurrence.itemId);
       this.confirmingDeleteItemId.set(null);
-      this.occurrences.update((current) => current.filter((existing) => existing.itemId !== occurrence.itemId));
+      this.occurrences.update((current) =>
+        current.filter((existing) => existing.itemId !== occurrence.itemId),
+      );
     } catch {
       this.error.set('calendar.agenda.delete.error');
     } finally {
@@ -629,12 +688,16 @@ export class CalendarAgenda implements OnInit {
     const dueTime = isAllDay ? '00:00' : this.editDueTime();
 
     try {
-      await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, { title, icon: icon || null, color });
+      await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, {
+        title,
+        icon: icon || null,
+        color,
+      });
       await this.calendars.rescheduleItem(occurrence.calendarId, occurrence.itemId, {
         startsAt: kind === EVENT_KIND ? toDatePart(this.editStartDate(), startTime) : null,
         endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
         dueDate: kind === TASK_KIND ? toDatePart(this.editDueDate(), dueTime) : null,
-        isAllDay
+        isAllDay,
       });
 
       this.editingItemId.set(null);
@@ -711,7 +774,7 @@ export class CalendarAgenda implements OnInit {
       assignedTo: this.newAssignedTo() || null,
       title: this.newTitle().trim(),
       icon: this.newIcon().trim() || null,
-      color: this.newColor().trim()
+      color: this.newColor().trim(),
     });
   }
 
@@ -734,7 +797,7 @@ export class CalendarAgenda implements OnInit {
       dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
       isAllDay,
       recurrence: this.buildRecurrence(),
-      assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null
+      assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null,
     });
   }
 
@@ -748,7 +811,7 @@ export class CalendarAgenda implements OnInit {
     return {
       frequency,
       intervalCount: this.newIntervalCount(),
-      until: this.newUntil().trim() || null
+      until: this.newUntil().trim() || null,
     };
   }
 
@@ -790,7 +853,7 @@ export class CalendarAgenda implements OnInit {
 
       const [myCalendars, occurrences] = await Promise.all([
         this.calendars.listMyCalendars(),
-        this.calendars.listOccurrencesInRange(from, to)
+        this.calendars.listOccurrencesInRange(from, to),
       ]);
 
       this.myCalendars.set(myCalendars);

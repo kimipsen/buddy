@@ -1,7 +1,11 @@
 import { expect, test } from './support/auth-fixture';
 import { createChild, uniqueName } from './support/guardian-data';
 
-test('guardian marks a dose taken from the dashboard doses-today widget, and it persists', async ({ page, loginAs, newGuardian }) => {
+test('guardian marks a dose taken from the dashboard doses-today widget, and it persists', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
   await loginAs(await newGuardian());
 
@@ -10,7 +14,9 @@ test('guardian marks a dose taken from the dashboard doses-today widget, and it 
   const medicineName = uniqueName('E2E Medicine');
 
   await page.goto('/guardian/medicine');
-  await expect(page.getByRole('heading', { name: 'Medicine schedules', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Medicine schedules', exact: true }),
+  ).toBeVisible();
 
   await page.getByLabel('Medicine name').fill(medicineName);
   await page.getByLabel('Dosage (e.g. 5ml)').fill('5ml');

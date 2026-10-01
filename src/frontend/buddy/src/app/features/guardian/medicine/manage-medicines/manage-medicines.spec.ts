@@ -12,7 +12,15 @@ describe('ManageMedicines', () => {
   const DEFAULT_COLOR = '#f43f5e';
 
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
-    return { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC', ...overrides };
+    return {
+      id: 'child-1',
+      name: { givenName: 'Sam', familyName: 'Kid' },
+      guardianLinkId: 'link-1',
+      kind: 0,
+      language: 'en',
+      timeZoneId: 'UTC',
+      ...overrides,
+    };
   }
 
   function schedule(overrides: Partial<MedicineSchedule> = {}): MedicineSchedule {
@@ -29,7 +37,7 @@ describe('ManageMedicines', () => {
       isStopped: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -46,20 +54,22 @@ describe('ManageMedicines', () => {
   async function setup(stubs: Stubs = {}) {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child()]),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const medicinesStub: Partial<MedicinesService> = {
       listSchedules: vi.fn(async () => []),
-      createSchedule: vi.fn(async (childId, request) => schedule({ id: 'med-new', childId, ...request })),
+      createSchedule: vi.fn(async (childId, request) =>
+        schedule({ id: 'med-new', childId, ...request }),
+      ),
       stopSchedule: vi.fn(async () => undefined),
       shareWithGroup: vi.fn(async () => undefined),
       unshareFromGroup: vi.fn(async () => undefined),
       getSharedGroup: vi.fn(async () => null),
-      ...stubs.medicines
+      ...stubs.medicines,
     };
     const groupsStub: Partial<GroupsService> = {
       listMyGroups: vi.fn(async () => []),
-      ...stubs.groups
+      ...stubs.groups,
     };
 
     await TestBed.configureTestingModule({
@@ -67,8 +77,8 @@ describe('ManageMedicines', () => {
       providers: [
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: MedicinesService, useValue: medicinesStub },
-        { provide: GroupsService, useValue: groupsStub }
-      ]
+        { provide: GroupsService, useValue: groupsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageMedicines);
@@ -80,7 +90,10 @@ describe('ManageMedicines', () => {
   // calls) before the signals driving the template settle -- mirrors tasks-today.spec.ts /
   // manage-groups.spec.ts's settle(), since a single whenStable() flush isn't always enough for a
   // multi-hop stubbed service chain under zoneless change detection.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -90,7 +103,9 @@ describe('ManageMedicines', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   function setInputValue(input: HTMLInputElement, value: string): void {
@@ -113,7 +128,9 @@ describe('ManageMedicines', () => {
   // Both the child selector and the group-share picker live outside the create-schedule <form>, so
   // scoping to outside it excludes any unrelated <select> a future in-form control might add.
   function selectsOutsideForm(compiled: HTMLElement): HTMLSelectElement[] {
-    return Array.from(compiled.querySelectorAll<HTMLSelectElement>('select')).filter((select) => !select.closest('form'));
+    return Array.from(compiled.querySelectorAll<HTMLSelectElement>('select')).filter(
+      (select) => !select.closest('form'),
+    );
   }
 
   // Fills in the two fields the create form actually requires beyond its own non-empty defaults
@@ -128,7 +145,9 @@ describe('ManageMedicines', () => {
       const { fixture } = await setup();
       fixture.detectChanges();
 
-      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Loading medicine schedules');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Loading medicine schedules',
+      );
     });
 
     it('shows the no-children message when the guardian has no linked children', async () => {
@@ -136,12 +155,16 @@ describe('ManageMedicines', () => {
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.textContent).toContain('Link a child from Settings before scheduling medicine.');
+      expect(compiled.textContent).toContain(
+        'Link a child from Settings before scheduling medicine.',
+      );
       expect(compiled.querySelector('form')).toBeFalsy();
     });
 
     it('shows a translated error when loading children fails', async () => {
-      const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -152,14 +175,18 @@ describe('ManageMedicines', () => {
       const { fixture } = await setup();
       await settle(fixture);
 
-      expect((fixture.nativeElement as HTMLElement).textContent).toContain('No medicine schedules yet. Add one below.');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'No medicine schedules yet. Add one below.',
+      );
     });
 
     it('filters out stopped schedules from the rendered list', async () => {
       const active = schedule({ id: 'med-active', name: 'Active Med', isStopped: false });
       const stopped = schedule({ id: 'med-stopped', name: 'Stopped Med', isStopped: true });
 
-      const { fixture } = await setup({ medicines: { listSchedules: vi.fn(async () => [active, stopped]) } });
+      const { fixture } = await setup({
+        medicines: { listSchedules: vi.fn(async () => [active, stopped]) },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -178,7 +205,10 @@ describe('ManageMedicines', () => {
 
     it('loads the first child automatically and requests its schedules', async () => {
       const listSchedules = vi.fn(async () => []);
-      const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-9' })]) }, medicines: { listSchedules } });
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-9' })]) },
+        medicines: { listSchedules },
+      });
       await settle(fixture);
 
       expect(listSchedules).toHaveBeenCalledWith('child-9');
@@ -192,7 +222,10 @@ describe('ManageMedicines', () => {
         .mockResolvedValueOnce([schedule({ id: 'med-a', name: 'Med A', childId: 'child-a' })])
         .mockResolvedValueOnce([schedule({ id: 'med-b', name: 'Med B', childId: 'child-b' })]);
 
-      const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [childA, childB]) }, medicines: { listSchedules } });
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [childA, childB]) },
+        medicines: { listSchedules },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -212,7 +245,9 @@ describe('ManageMedicines', () => {
   describe('schedule rendering', () => {
     it('renders dose times without seconds, comma-separated', async () => {
       const { fixture } = await setup({
-        medicines: { listSchedules: vi.fn(async () => [schedule({ times: ['08:00:00', '13:30:00'] })]) }
+        medicines: {
+          listSchedules: vi.fn(async () => [schedule({ times: ['08:00:00', '13:30:00'] })]),
+        },
       });
       await settle(fixture);
 
@@ -221,27 +256,39 @@ describe('ManageMedicines', () => {
 
     it('shows an ongoing range when there is no end date', async () => {
       const { fixture } = await setup({
-        medicines: { listSchedules: vi.fn(async () => [schedule({ startDate: '2026-08-01', endDate: null })]) }
+        medicines: {
+          listSchedules: vi.fn(async () => [schedule({ startDate: '2026-08-01', endDate: null })]),
+        },
       });
       await settle(fixture);
 
-      expect((fixture.nativeElement as HTMLElement).textContent).toContain('from 2026-08-01 (ongoing)');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'from 2026-08-01 (ongoing)',
+      );
     });
 
     it('shows a bounded range when there is an end date', async () => {
       const { fixture } = await setup({
-        medicines: { listSchedules: vi.fn(async () => [schedule({ startDate: '2026-08-01', endDate: '2026-08-15' })]) }
+        medicines: {
+          listSchedules: vi.fn(async () => [
+            schedule({ startDate: '2026-08-01', endDate: '2026-08-15' }),
+          ]),
+        },
       });
       await settle(fixture);
 
-      expect((fixture.nativeElement as HTMLElement).textContent).toContain('from 2026-08-01 to 2026-08-15');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'from 2026-08-01 to 2026-08-15',
+      );
     });
   });
 
   describe('stopping a schedule', () => {
     it('asks for confirmation before stopping, without calling the service yet', async () => {
       const stopSchedule = vi.fn(async () => undefined);
-      const { fixture } = await setup({ medicines: { listSchedules: vi.fn(async () => [schedule()]), stopSchedule } });
+      const { fixture } = await setup({
+        medicines: { listSchedules: vi.fn(async () => [schedule()]), stopSchedule },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -254,7 +301,9 @@ describe('ManageMedicines', () => {
 
     it('cancels the stop request without calling the service', async () => {
       const stopSchedule = vi.fn(async () => undefined);
-      const { fixture } = await setup({ medicines: { listSchedules: vi.fn(async () => [schedule()]), stopSchedule } });
+      const { fixture } = await setup({
+        medicines: { listSchedules: vi.fn(async () => [schedule()]), stopSchedule },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -292,7 +341,9 @@ describe('ManageMedicines', () => {
 
     it('shows a translated error and keeps the confirmation open when stopping fails', async () => {
       const stopSchedule = vi.fn(async () => Promise.reject(new Error('boom')));
-      const { fixture } = await setup({ medicines: { listSchedules: vi.fn(async () => [schedule({ id: 'med-1' })]), stopSchedule } });
+      const { fixture } = await setup({
+        medicines: { listSchedules: vi.fn(async () => [schedule({ id: 'med-1' })]), stopSchedule },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -310,7 +361,9 @@ describe('ManageMedicines', () => {
 
     it('clears a prior stop error on Cancel', async () => {
       const stopSchedule = vi.fn(async () => Promise.reject(new Error('boom')));
-      const { fixture } = await setup({ medicines: { listSchedules: vi.fn(async () => [schedule({ id: 'med-1' })]), stopSchedule } });
+      const { fixture } = await setup({
+        medicines: { listSchedules: vi.fn(async () => [schedule({ id: 'med-1' })]), stopSchedule },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -363,7 +416,7 @@ describe('ManageMedicines', () => {
         color: DEFAULT_COLOR,
         times: ['08:00:00'],
         startDate: todayIsoDate(),
-        endDate: null
+        endDate: null,
       });
       expect(listSchedules).toHaveBeenCalledTimes(2);
     });
@@ -374,7 +427,10 @@ describe('ManageMedicines', () => {
 
       const compiled = fixture.nativeElement as HTMLElement;
       fillRequiredFields(compiled);
-      setInputValue(compiled.querySelector<HTMLInputElement>('input[name="medicineEndDate"]')!, '2026-09-15');
+      setInputValue(
+        compiled.querySelector<HTMLInputElement>('input[name="medicineEndDate"]')!,
+        '2026-09-15',
+      );
       fixture.detectChanges();
       submitCreateForm(compiled);
       await settle(fixture);
@@ -395,7 +451,9 @@ describe('ManageMedicines', () => {
 
       expect(nameInput(compiled).value).toBe('');
       expect(dosageInput(compiled).value).toBe('');
-      expect(compiled.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+      expect(compiled.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(
+        true,
+      );
     });
 
     it('shows a translated error and keeps the entered values when creation fails', async () => {
@@ -411,7 +469,9 @@ describe('ManageMedicines', () => {
 
       expect(compiled.textContent).toContain('Unable to create the medicine schedule.');
       expect(nameInput(compiled).value).toBe('Amoxicillin');
-      expect(compiled.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(false);
+      expect(compiled.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(
+        false,
+      );
     });
 
     it('adds and removes dose-time fields, hiding the remove control while only one remains', async () => {
@@ -425,9 +485,15 @@ describe('ManageMedicines', () => {
       findButtonByText(compiled, '+ Add another time')!.click();
       fixture.detectChanges();
       expect(compiled.querySelectorAll('app-time-select')).toHaveLength(2);
-      expect(Array.from(compiled.querySelectorAll('button')).filter((b) => b.textContent?.trim() === 'Remove')).toHaveLength(2);
+      expect(
+        Array.from(compiled.querySelectorAll('button')).filter(
+          (b) => b.textContent?.trim() === 'Remove',
+        ),
+      ).toHaveLength(2);
 
-      Array.from(compiled.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Remove')!.click();
+      Array.from(compiled.querySelectorAll('button'))
+        .find((b) => b.textContent?.trim() === 'Remove')!
+        .click();
       fixture.detectChanges();
       expect(compiled.querySelectorAll('app-time-select')).toHaveLength(1);
       expect(findButtonByText(compiled, 'Remove')).toBeFalsy();
@@ -463,7 +529,7 @@ describe('ManageMedicines', () => {
       await settle(fixture);
 
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-        'You need a group you manage before you can share this child’s medicine schedules.'
+        'You need a group you manage before you can share this child’s medicine schedules.',
       );
     });
 
@@ -472,7 +538,9 @@ describe('ManageMedicines', () => {
       const admin = group({ id: 'g-admin', name: 'Administered', role: 1 });
       const member = group({ id: 'g-member', name: 'Just a member', role: 2 });
 
-      const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [owner, admin, member]) } });
+      const { fixture } = await setup({
+        groups: { listMyGroups: vi.fn(async () => [owner, admin, member]) },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -498,7 +566,9 @@ describe('ManageMedicines', () => {
     });
 
     it('shares with the selected group, using its name from the manageable-groups list', async () => {
-      const { fixture, medicines } = await setup({ groups: { listMyGroups: vi.fn(async () => [group({ id: 'group-1', name: 'The Fam' })]) } });
+      const { fixture, medicines } = await setup({
+        groups: { listMyGroups: vi.fn(async () => [group({ id: 'group-1', name: 'The Fam' })]) },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -518,7 +588,10 @@ describe('ManageMedicines', () => {
 
     it('shows a translated error and stays in the picker state when sharing fails', async () => {
       const shareWithGroup = vi.fn(async () => Promise.reject(new Error('boom')));
-      const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [group()]) }, medicines: { shareWithGroup } });
+      const { fixture } = await setup({
+        groups: { listMyGroups: vi.fn(async () => [group()]) },
+        medicines: { shareWithGroup },
+      });
       await settle(fixture);
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -536,7 +609,9 @@ describe('ManageMedicines', () => {
     it('unshares from the currently shared group and returns to the picker', async () => {
       const { fixture, medicines } = await setup({
         groups: { listMyGroups: vi.fn(async () => [group({ id: 'group-1', name: 'The Fam' })]) },
-        medicines: { getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'The Fam' })) }
+        medicines: {
+          getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'The Fam' })),
+        },
       });
       await settle(fixture);
 
@@ -556,8 +631,8 @@ describe('ManageMedicines', () => {
       const { fixture } = await setup({
         medicines: {
           getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'The Fam' })),
-          unshareFromGroup
-        }
+          unshareFromGroup,
+        },
       });
       await settle(fixture);
 
@@ -576,7 +651,15 @@ describe('ManageMedicines', () => {
     // past the service's own guard exercises that template fallback directly.
     it('falls back to the raw group id when a shared group has no resolved name', async () => {
       const { fixture } = await setup({
-        medicines: { getSharedGroup: vi.fn(async () => ({ groupId: 'group-9', groupName: null }) as unknown as { groupId: string; groupName: string }) }
+        medicines: {
+          getSharedGroup: vi.fn(
+            async () =>
+              ({ groupId: 'group-9', groupName: null }) as unknown as {
+                groupId: string;
+                groupName: string;
+              },
+          ),
+        },
       });
       await settle(fixture);
 

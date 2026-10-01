@@ -9,7 +9,11 @@ import { getMessageText, getMessagesTo } from './support/mailpit-client';
 // guardian (newGuardian), not a seeded one: the change is permanent, and when this ran as bob it
 // changed his email mid-flight under guardian-invite-accept.spec.ts (which had just invited bob's
 // previous address), making that spec's accept 403 in parallel runs.
-test('guardian verifies a newly-changed email address via the emailed link', async ({ page, loginAs, newGuardian }) => {
+test('guardian verifies a newly-changed email address via the emailed link', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   await loginAs(await newGuardian());
 
   const newEmail = `${uniqueName('e2everify').toLowerCase()}@buddy.test`;
@@ -26,7 +30,9 @@ test('guardian verifies a newly-changed email address via the emailed link', asy
   await expect(saveEmailButton).toBeEnabled();
   await saveEmailButton.click();
 
-  await expect(profileSection.getByText('Email updated. Check your inbox to verify it.')).toBeVisible();
+  await expect(
+    profileSection.getByText('Email updated. Check your inbox to verify it.'),
+  ).toBeVisible();
 
   // The backend awaits the SMTP send before its PATCH response returns (SmtpEmailSender via
   // Mailpit), but Mailpit's own search index can lag slightly behind message delivery -- retry
@@ -48,7 +54,9 @@ test('guardian verifies a newly-changed email address via the emailed link', asy
 
   await page.getByRole('button', { name: 'Verify email' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Your email address is verified.' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Your email address is verified.' }),
+  ).toBeVisible();
 
   // Confirm it actually persisted server-side, not just the verify-email page's own local state.
   await page.goto('/guardian/admin');

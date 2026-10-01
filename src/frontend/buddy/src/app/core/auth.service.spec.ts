@@ -15,7 +15,7 @@ const keycloakConfig: KeycloakConfig = {
   authority: 'https://keycloak.buddy.test',
   clientId: 'buddy-app',
   realm: 'buddy',
-  redirectPath: '/auth/callback'
+  redirectPath: '/auth/callback',
 };
 
 interface FetchResponse {
@@ -25,12 +25,15 @@ interface FetchResponse {
   json: () => Promise<unknown>;
 }
 
-function jsonResponse(body: unknown, init: { ok?: boolean; status?: number; statusText?: string } = {}): FetchResponse {
+function jsonResponse(
+  body: unknown,
+  init: { ok?: boolean; status?: number; statusText?: string } = {},
+): FetchResponse {
   return {
     ok: init.ok ?? true,
     status: init.status ?? 200,
     statusText: init.statusText ?? '',
-    json: async () => body
+    json: async () => body,
   };
 }
 
@@ -64,18 +67,18 @@ function setup(options: SetupOptions = {}) {
     location: {
       search: options.search ?? '',
       origin,
-      href: ''
+      href: '',
     },
     defaultView: {
-      history: { replaceState: historyReplaceState }
-    }
+      history: { replaceState: historyReplaceState },
+    },
   };
 
   TestBed.configureTestingModule({
     providers: [
       { provide: DOCUMENT, useValue: documentStub },
-      { provide: RuntimeConfigService, useValue: { keycloak: keycloakConfig } }
-    ]
+      { provide: RuntimeConfigService, useValue: { keycloak: keycloakConfig } },
+    ],
   });
 
   const service = TestBed.inject(AuthService);
@@ -98,7 +101,12 @@ describe('AuthService', () => {
     });
 
     it('reports authenticated when tokens are already present in storage at startup', () => {
-      const tokens: TokenSet = { accessToken: 'a', refreshToken: 'r', idToken: null, expiresAt: Date.now() + 100_000 };
+      const tokens: TokenSet = {
+        accessToken: 'a',
+        refreshToken: 'r',
+        idToken: null,
+        expiresAt: Date.now() + 100_000,
+      };
       const { service } = setup({ storedTokens: tokens });
 
       expect(service.isAuthenticated()).toBe(true);
@@ -115,9 +123,13 @@ describe('AuthService', () => {
       expect(verifier).toBeTruthy();
 
       const url = new URL(documentStub.location.href);
-      expect(url.origin + url.pathname).toBe(`${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/auth`);
+      expect(url.origin + url.pathname).toBe(
+        `${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/auth`,
+      );
       expect(url.searchParams.get('client_id')).toBe(keycloakConfig.clientId);
-      expect(url.searchParams.get('redirect_uri')).toBe(`https://app.buddy.test${keycloakConfig.redirectPath}`);
+      expect(url.searchParams.get('redirect_uri')).toBe(
+        `https://app.buddy.test${keycloakConfig.redirectPath}`,
+      );
       expect(url.searchParams.get('response_type')).toBe('code');
       expect(url.searchParams.get('scope')).toBe('openid profile email');
       expect(url.searchParams.get('code_challenge_method')).toBe('S256');
@@ -158,7 +170,12 @@ describe('AuthService', () => {
       documentStub.location.search = '?code=abc123&state=xyz';
 
       const fetchMock = stubFetch(
-        jsonResponse({ access_token: 'new-access', refresh_token: 'new-refresh', id_token: 'new-id', expires_in: 300 })
+        jsonResponse({
+          access_token: 'new-access',
+          refresh_token: 'new-refresh',
+          id_token: 'new-id',
+          expires_in: 300,
+        }),
       );
 
       const before = Date.now();
@@ -171,7 +188,7 @@ describe('AuthService', () => {
         accessToken: 'new-access',
         refreshToken: 'new-refresh',
         idToken: 'new-id',
-        expiresAt: expect.any(Number)
+        expiresAt: expect.any(Number),
       });
       // expires_in is in seconds, so expiresAt lands 300s after the exchange.
       expect(stored?.expiresAt).toBeGreaterThanOrEqual(before + 300_000);
@@ -180,7 +197,9 @@ describe('AuthService', () => {
       expect(historyReplaceState).toHaveBeenCalledWith({}, '', keycloakConfig.redirectPath);
 
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-      expect(url).toBe(`${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/token`);
+      expect(url).toBe(
+        `${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/token`,
+      );
       expect(init.method).toBe('POST');
       expect(init.headers).toEqual({ 'Content-Type': 'application/x-www-form-urlencoded' });
       const body = init.body as URLSearchParams;
@@ -199,7 +218,9 @@ describe('AuthService', () => {
 
       stubFetch(jsonResponse({}, { ok: false, status: 400, statusText: 'Bad Request' }));
 
-      await expect(service.completeLoginRedirect()).rejects.toThrow('Token request failed: 400 Bad Request');
+      await expect(service.completeLoginRedirect()).rejects.toThrow(
+        'Token request failed: 400 Bad Request',
+      );
 
       expect(service.isAuthenticated()).toBe(false);
       expect(readStoredTokens(sessionStorage)).toBeNull();
@@ -210,7 +231,12 @@ describe('AuthService', () => {
 
   describe('logout', () => {
     it('clears the session and redirects to Keycloak logout with an id_token_hint when an id token is present', () => {
-      const tokens: TokenSet = { accessToken: 'a', refreshToken: 'r', idToken: 'id-123', expiresAt: Date.now() + 100_000 };
+      const tokens: TokenSet = {
+        accessToken: 'a',
+        refreshToken: 'r',
+        idToken: 'id-123',
+        expiresAt: Date.now() + 100_000,
+      };
       const { service, documentStub } = setup({ storedTokens: tokens });
 
       service.logout();
@@ -219,14 +245,21 @@ describe('AuthService', () => {
       expect(readStoredTokens(sessionStorage)).toBeNull();
 
       const url = new URL(documentStub.location.href);
-      expect(url.origin + url.pathname).toBe(`${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/logout`);
+      expect(url.origin + url.pathname).toBe(
+        `${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/logout`,
+      );
       expect(url.searchParams.get('id_token_hint')).toBe('id-123');
       expect(url.searchParams.get('client_id')).toBeNull();
       expect(url.searchParams.get('post_logout_redirect_uri')).toBe('https://app.buddy.test/login');
     });
 
     it('falls back to client_id when signed in but the stored token set has no id token', () => {
-      const tokens: TokenSet = { accessToken: 'a', refreshToken: 'r', idToken: null, expiresAt: Date.now() + 100_000 };
+      const tokens: TokenSet = {
+        accessToken: 'a',
+        refreshToken: 'r',
+        idToken: null,
+        expiresAt: Date.now() + 100_000,
+      };
       const { service, documentStub } = setup({ storedTokens: tokens });
 
       service.logout();
@@ -260,7 +293,12 @@ describe('AuthService', () => {
     });
 
     it('returns the current access token without refreshing when it is not close to expiry', async () => {
-      const tokens: TokenSet = { accessToken: 'still-valid', refreshToken: 'r', idToken: null, expiresAt: Date.now() + 60_000 };
+      const tokens: TokenSet = {
+        accessToken: 'still-valid',
+        refreshToken: 'r',
+        idToken: null,
+        expiresAt: Date.now() + 60_000,
+      };
       const { service } = setup({ storedTokens: tokens });
       const fetchMock = stubFetch();
 
@@ -273,9 +311,16 @@ describe('AuthService', () => {
     it('treats a token expiring exactly at the refresh skew boundary as needing a refresh', async () => {
       const now = 1_700_000_000_000;
       vi.setSystemTime(now);
-      const tokens: TokenSet = { accessToken: 'old', refreshToken: 'refresh-me', idToken: null, expiresAt: now + REFRESH_SKEW_MS };
+      const tokens: TokenSet = {
+        accessToken: 'old',
+        refreshToken: 'refresh-me',
+        idToken: null,
+        expiresAt: now + REFRESH_SKEW_MS,
+      };
       const { service } = setup({ storedTokens: tokens });
-      const fetchMock = stubFetch(jsonResponse({ access_token: 'new', refresh_token: 'new-r', expires_in: 300 }));
+      const fetchMock = stubFetch(
+        jsonResponse({ access_token: 'new', refresh_token: 'new-r', expires_in: 300 }),
+      );
 
       const token = await service.getAccessToken();
 
@@ -284,10 +329,20 @@ describe('AuthService', () => {
     });
 
     it('refreshes an expired token and returns the new access token', async () => {
-      const tokens: TokenSet = { accessToken: 'old', refreshToken: 'refresh-me', idToken: 'old-id', expiresAt: Date.now() - 1000 };
+      const tokens: TokenSet = {
+        accessToken: 'old',
+        refreshToken: 'refresh-me',
+        idToken: 'old-id',
+        expiresAt: Date.now() - 1000,
+      };
       const { service } = setup({ storedTokens: tokens });
       const fetchMock = stubFetch(
-        jsonResponse({ access_token: 'new-access', refresh_token: 'new-refresh', id_token: 'new-id', expires_in: 300 })
+        jsonResponse({
+          access_token: 'new-access',
+          refresh_token: 'new-refresh',
+          id_token: 'new-id',
+          expires_in: 300,
+        }),
       );
 
       const token = await service.getAccessToken();
@@ -297,7 +352,9 @@ describe('AuthService', () => {
       expect(readStoredTokens(sessionStorage)?.accessToken).toBe('new-access');
 
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-      expect(url).toBe(`${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/token`);
+      expect(url).toBe(
+        `${keycloakConfig.authority}/realms/${keycloakConfig.realm}/protocol/openid-connect/token`,
+      );
       const body = init.body as URLSearchParams;
       expect(body.get('grant_type')).toBe('refresh_token');
       expect(body.get('refresh_token')).toBe('refresh-me');
@@ -305,7 +362,12 @@ describe('AuthService', () => {
     });
 
     it('clears the session and returns null when a refresh request fails', async () => {
-      const tokens: TokenSet = { accessToken: 'old', refreshToken: 'refresh-me', idToken: null, expiresAt: Date.now() - 1000 };
+      const tokens: TokenSet = {
+        accessToken: 'old',
+        refreshToken: 'refresh-me',
+        idToken: null,
+        expiresAt: Date.now() - 1000,
+      };
       const { service } = setup({ storedTokens: tokens });
       stubFetch(jsonResponse({}, { ok: false, status: 401, statusText: 'Unauthorized' }));
 
@@ -317,7 +379,12 @@ describe('AuthService', () => {
     });
 
     it('clears the session without a network call when there is no refresh token to use', async () => {
-      const tokens: TokenSet = { accessToken: 'old', refreshToken: null, idToken: null, expiresAt: Date.now() - 1000 };
+      const tokens: TokenSet = {
+        accessToken: 'old',
+        refreshToken: null,
+        idToken: null,
+        expiresAt: Date.now() - 1000,
+      };
       const { service } = setup({ storedTokens: tokens });
       const fetchMock = stubFetch();
 
@@ -330,11 +397,21 @@ describe('AuthService', () => {
     });
 
     it('shares a single in-flight refresh across concurrent callers', async () => {
-      const tokens: TokenSet = { accessToken: 'old', refreshToken: 'refresh-me', idToken: null, expiresAt: Date.now() - 1000 };
+      const tokens: TokenSet = {
+        accessToken: 'old',
+        refreshToken: 'refresh-me',
+        idToken: null,
+        expiresAt: Date.now() - 1000,
+      };
       const { service } = setup({ storedTokens: tokens });
-      const fetchMock = stubFetch(jsonResponse({ access_token: 'new-access', refresh_token: 'new-refresh', expires_in: 300 }));
+      const fetchMock = stubFetch(
+        jsonResponse({ access_token: 'new-access', refresh_token: 'new-refresh', expires_in: 300 }),
+      );
 
-      const [first, second] = await Promise.all([service.getAccessToken(), service.getAccessToken()]);
+      const [first, second] = await Promise.all([
+        service.getAccessToken(),
+        service.getAccessToken(),
+      ]);
 
       expect(first).toBe('new-access');
       expect(second).toBe('new-access');
@@ -342,11 +419,16 @@ describe('AuthService', () => {
     });
 
     it('starts a new refresh after a previous one has completed', async () => {
-      const tokens: TokenSet = { accessToken: 'old', refreshToken: 'refresh-me', idToken: null, expiresAt: Date.now() - 1000 };
+      const tokens: TokenSet = {
+        accessToken: 'old',
+        refreshToken: 'refresh-me',
+        idToken: null,
+        expiresAt: Date.now() - 1000,
+      };
       const { service } = setup({ storedTokens: tokens });
       const fetchMock = stubFetch(
         jsonResponse({ access_token: 'first-refresh', refresh_token: 'r2', expires_in: 0 }),
-        jsonResponse({ access_token: 'second-refresh', refresh_token: 'r3', expires_in: 300 })
+        jsonResponse({ access_token: 'second-refresh', refresh_token: 'r3', expires_in: 300 }),
       );
 
       const first = await service.getAccessToken();

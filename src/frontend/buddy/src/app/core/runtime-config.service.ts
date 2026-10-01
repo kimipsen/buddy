@@ -39,6 +39,6 @@ export class RuntimeConfigService {
       throw new Error(`Unable to load runtime config: ${response.status} ${response.statusText}`);
     }
 
-    this.config = await response.json() as RuntimeConfig;
+    this.config = (await response.json()) as RuntimeConfig;
   }
 }

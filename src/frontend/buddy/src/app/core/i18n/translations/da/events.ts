@@ -6,40 +6,40 @@ export const events = {
     loadError: 'Kunne ikke indlæse seneste begivenheder.',
     empty: 'Ingen begivenheder endnu.',
     previous: 'Forrige',
-    next: 'Næste'
+    next: 'Næste',
   },
   types: {
     userCreated: {
       title: 'Konto oprettet',
-      description: '{name} ({email}) tilmeldte sig via Keycloak.'
+      description: '{name} ({email}) tilmeldte sig via Keycloak.',
     },
     userDeleted: {
       title: 'Konto slettet',
-      description: 'Kontoen blev slettet.'
+      description: 'Kontoen blev slettet.',
     },
     nameUpdated: {
       title: 'Navn opdateret',
-      description: 'Navn ændret fra {before} til {after}.'
+      description: 'Navn ændret fra {before} til {after}.',
     },
     emailUpdated: {
       title: 'E-mail opdateret',
-      description: 'E-mail ændret fra {before} til {after}.'
+      description: 'E-mail ændret fra {before} til {after}.',
     },
     emailVerificationRequested: {
       title: 'E-mailbekræftelse anmodet',
-      description: 'Der blev sendt et bekræftelseslink, som udløber {expiresAt}.'
+      description: 'Der blev sendt et bekræftelseslink, som udløber {expiresAt}.',
     },
     emailVerified: {
       title: 'E-mail bekræftet',
-      description: 'E-mailadressen blev bekræftet.'
+      description: 'E-mailadressen blev bekræftet.',
     },
     timeZoneUpdated: {
       title: 'Tidszone opdateret',
-      description: 'Tidszone ændret fra {before} til {after}.'
+      description: 'Tidszone ændret fra {before} til {after}.',
     },
     languageUpdated: {
       title: 'Sprog opdateret',
-      description: 'Sprog ændret fra {before} til {after}.'
-    }
-  }
+      description: 'Sprog ændret fra {before} til {after}.',
+    },
+  },
 };

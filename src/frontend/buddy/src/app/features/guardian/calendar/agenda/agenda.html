@@ -1,4 +1,6 @@
-<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+<section
+  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+>
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <h3 class="text-lg font-semibold tracking-normal">{{ viewTitle() }}</h3>
     <div class="flex flex-wrap items-center gap-2">
@@ -45,18 +47,28 @@
   </div>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.loading' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'calendar.agenda.loading' | translate }}
+    </p>
   } @else {
     @if (error(); as message) {
       <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
     }
 
     @if (myCalendars().length > 1) {
-      <div class="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3">
-        <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ 'calendar.agenda.filter.title' | translate }}</span>
+      <div
+        class="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
+      >
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{
+          'calendar.agenda.filter.title' | translate
+        }}</span>
         @for (calendar of myCalendars(); track calendar.id) {
           <div class="flex items-center gap-1.5 text-sm">
-            <app-toggle [checked]="!isCalendarHidden(calendar.id)" [ariaLabel]="calendar.name" (checkedChange)="toggleCalendarVisibility(calendar.id)" />
+            <app-toggle
+              [checked]="!isCalendarHidden(calendar.id)"
+              [ariaLabel]="calendar.name"
+              (checkedChange)="toggleCalendarVisibility(calendar.id)"
+            />
             {{ calendar.name }}
           </div>
         }
@@ -72,27 +84,41 @@
         (daySelected)="onMonthDaySelected($event)"
       />
     } @else if (!hasAnyVisibleOccurrence()) {
-      <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.empty' | translate }}</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'calendar.agenda.empty' | translate }}
+      </p>
     } @else {
       <div class="space-y-4">
         @for (day of days(); track day.date) {
           @if (occurrencesFor(day.date).length > 0) {
             <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ day.label }}</p>
+              <p
+                class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
+                {{ day.label }}
+              </p>
               <ul class="space-y-2">
                 @for (entry of groupedOccurrencesFor(day.date); track entry.itemId) {
                   @if (isRun(entry)) {
                     @let run = $any(entry);
-                    <li class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm">
+                    <li
+                      class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm"
+                    >
                       <div class="mb-2 flex items-center gap-2">
-                        <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="run.color"></span>
+                        <span
+                          class="inline-block size-3 shrink-0 rounded-full"
+                          [style.background-color]="run.color"
+                        ></span>
                         <span class="text-lg leading-none">{{ run.icon }}</span>
                         <span class="font-semibold">{{ run.parentTitle }}</span>
                         <span class="text-xs text-slate-400">{{ run.calendarName }}</span>
 
                         <div class="ml-auto flex items-center gap-2">
                           @if (confirmingDeleteItemId() === run.itemId) {
-                            <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
+                            <span
+                              class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
+                              >{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span
+                            >
                             <button
                               type="button"
                               class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
@@ -120,26 +146,37 @@
                           }
                         </div>
                       </div>
-                      <ul class="ml-4 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
+                      <ul
+                        class="ml-4 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-800 pl-3"
+                      >
                         @for (subtask of run.subtasks; track keyFor(subtask)) {
                           <li class="flex items-center gap-3">
                             <app-toggle
                               [checked]="subtask.isCompleted"
-                              [disabled]="savingTaskId() === keyFor(subtask) || (!subtask.isCompleted && !canCompleteTask(subtask))"
+                              [disabled]="
+                                savingTaskId() === keyFor(subtask) ||
+                                (!subtask.isCompleted && !canCompleteTask(subtask))
+                              "
                               [ariaLabel]="'calendar.agenda.completeTaskLabel' | translate"
                               (checkedChange)="toggleTaskCompletion(subtask)"
                             />
                             <span class="text-sm leading-none">{{ subtask.icon }}</span>
-                            <span [class.line-through]="subtask.isCompleted">{{ subtask.title }}</span>
+                            <span [class.line-through]="subtask.isCompleted">{{
+                              subtask.title
+                            }}</span>
                             @if (subtask.startsAt) {
-                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              <span
+                                class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400"
+                              >
                                 {{ subtask.startsAt | userDate: 'shortTime' }}
                                 @if (subtask.endsAt) {
                                   – {{ subtask.endsAt | userDate: 'shortTime' }}
                                 }
                               </span>
                             } @else if (subtask.dueAt) {
-                              <span class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              <span
+                                class="ml-auto whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400"
+                              >
                                 {{ subtask.dueAt | userDate: 'shortTime' }}
                               </span>
                             }
@@ -148,191 +185,266 @@
                       </ul>
                     </li>
                   } @else {
-                  @let occurrence = $any(entry);
-                  <li class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm">
-                    @if (editingItemId() === occurrence.itemId) {
-                      <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
-                        <div class="grid gap-3 sm:grid-cols-[1fr_5rem]">
-                          <input
-                            type="text"
-                            name="editTitle"
-                            [placeholder]="'calendar.agenda.form.titlePlaceholder' | translate"
-                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                            [ngModel]="editTitle()"
-                            (ngModelChange)="editTitle.set($event)"
-                            aria-label="{{ 'calendar.agenda.form.titlePlaceholder' | translate }}"
-                          />
-                          <input
-                            type="text"
-                            name="editIcon"
-                            [placeholder]="calendarIconFor(occurrence.calendarId)"
-                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                            [ngModel]="editIcon()"
-                            (ngModelChange)="editIcon.set($event)"
-                            aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
-                          />
-                        </div>
-
-                        <app-color-swatch-picker [value]="editColor()" [ariaLabel]="'common.colorLabel' | translate" (valueChange)="editColor.set($event)" />
-
-                        <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                          <app-toggle [checked]="editIsAllDay()" (checkedChange)="editIsAllDay.set($event)" [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate" />
-                          {{ 'calendar.agenda.form.allDayLabel' | translate }}
-                        </div>
-
-                        @if (occurrence.kind === eventKind) {
-                          <div class="grid gap-3 sm:grid-cols-2">
-                            <div class="grid grid-cols-[1fr_auto] gap-2">
-                              <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                  {{ 'calendar.agenda.form.startDateLabel' | translate }}
-                                </span>
-                                <app-date-select [value]="editStartDate()" (valueChange)="editStartDate.set($event)" [ariaLabel]="'calendar.agenda.form.startDateLabel' | translate" />
-                              </div>
-                              @if (!editIsAllDay()) {
-                                <div>
-                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                    {{ 'calendar.agenda.form.startTimeLabel' | translate }}
-                                  </span>
-                                  <app-time-select [value]="editStartTime()" (valueChange)="editStartTime.set($event)" [ariaLabel]="'calendar.agenda.form.startTimeLabel' | translate" />
-                                </div>
-                              }
-                            </div>
-                            <div class="grid grid-cols-[1fr_auto] gap-2">
-                              <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                  {{ 'calendar.agenda.form.endDateLabel' | translate }}
-                                </span>
-                                <app-date-select [value]="editEndDate()" (valueChange)="editEndDate.set($event)" [ariaLabel]="'calendar.agenda.form.endDateLabel' | translate" />
-                              </div>
-                              @if (!editIsAllDay()) {
-                                <div>
-                                  <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                    {{ 'calendar.agenda.form.endTimeLabel' | translate }}
-                                  </span>
-                                  <app-time-select [value]="editEndTime()" (valueChange)="editEndTime.set($event)" [ariaLabel]="'calendar.agenda.form.endTimeLabel' | translate" />
-                                </div>
-                              }
-                            </div>
+                    @let occurrence = $any(entry);
+                    <li
+                      class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm"
+                    >
+                      @if (editingItemId() === occurrence.itemId) {
+                        <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
+                          <div class="grid gap-3 sm:grid-cols-[1fr_5rem]">
+                            <input
+                              type="text"
+                              name="editTitle"
+                              [placeholder]="'calendar.agenda.form.titlePlaceholder' | translate"
+                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                              [ngModel]="editTitle()"
+                              (ngModelChange)="editTitle.set($event)"
+                              aria-label="{{ 'calendar.agenda.form.titlePlaceholder' | translate }}"
+                            />
+                            <input
+                              type="text"
+                              name="editIcon"
+                              [placeholder]="calendarIconFor(occurrence.calendarId)"
+                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                              [ngModel]="editIcon()"
+                              (ngModelChange)="editIcon.set($event)"
+                              aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
+                            />
                           </div>
-                        } @else {
-                          <div class="grid grid-cols-[1fr_auto] gap-2 sm:w-1/2">
-                            <div>
-                              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                {{ 'calendar.agenda.form.dueDateLabel' | translate }}
-                              </span>
-                              <app-date-select [value]="editDueDate()" (valueChange)="editDueDate.set($event)" [ariaLabel]="'calendar.agenda.form.dueDateLabel' | translate" />
-                            </div>
-                            @if (!editIsAllDay()) {
-                              <div>
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                  {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
-                                </span>
-                                <app-time-select [value]="editDueTime()" (valueChange)="editDueTime.set($event)" [ariaLabel]="'calendar.agenda.form.dueTimeLabel' | translate" />
-                              </div>
-                            }
-                          </div>
-                        }
 
-                        <div class="flex items-center gap-2">
-                          <button
-                            type="submit"
-                            class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-                            [disabled]="saving() || !canSubmitEdit()"
-                          >
-                            {{ 'calendar.agenda.edit.saveButton' | translate }}
-                          </button>
-                          <button
-                            type="button"
-                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
-                            [disabled]="saving()"
-                            (click)="cancelEditItem()"
-                          >
-                            {{ 'calendar.agenda.edit.cancelButton' | translate }}
-                          </button>
-                        </div>
-
-                        @if (editError(); as message) {
-                          <p class="text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
-                        }
-                      </form>
-                    } @else {
-                      <div class="flex items-center gap-3">
-                        <span class="inline-block size-3 shrink-0 rounded-full" [style.background-color]="occurrence.color"></span>
-                        <span class="text-lg leading-none">{{ occurrence.icon }}</span>
-
-                        @if (occurrence.kind === taskKind) {
-                          <app-toggle
-                            [checked]="occurrence.isCompleted"
-                            [disabled]="savingTaskId() === keyFor(occurrence) || (!occurrence.isCompleted && !canCompleteTask(occurrence))"
-                            [ariaLabel]="'calendar.agenda.completeTaskLabel' | translate"
-                            (checkedChange)="toggleTaskCompletion(occurrence)"
+                          <app-color-swatch-picker
+                            [value]="editColor()"
+                            [ariaLabel]="'common.colorLabel' | translate"
+                            (valueChange)="editColor.set($event)"
                           />
-                        }
 
-                        <span class="font-medium" [class.line-through]="occurrence.kind === taskKind && occurrence.isCompleted">
-                          {{ occurrence.title }}
-                        </span>
-                        <span class="text-xs text-slate-400">{{ occurrence.calendarName }}</span>
-                        @if (occurrence.kind === taskKind && assigneeNameFor(occurrence.assignedTo); as assigneeName) {
-                          <span class="text-xs text-slate-400">→ {{ assigneeName }}</span>
-                        }
+                          <div
+                            class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300"
+                          >
+                            <app-toggle
+                              [checked]="editIsAllDay()"
+                              (checkedChange)="editIsAllDay.set($event)"
+                              [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate"
+                            />
+                            {{ 'calendar.agenda.form.allDayLabel' | translate }}
+                          </div>
 
-                        <div class="ml-auto flex items-center gap-2">
-                          @if (confirmingDeleteItemId() === occurrence.itemId) {
-                            <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span>
-                            <button
-                              type="button"
-                              class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-                              [disabled]="deletingItemId() === occurrence.itemId"
-                              (click)="confirmDeleteItem(occurrence)"
-                            >
-                              {{ 'calendar.agenda.delete.confirmButton' | translate }}
-                            </button>
-                            <button
-                              type="button"
-                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
-                              [disabled]="deletingItemId() === occurrence.itemId"
-                              (click)="cancelDeleteItem()"
-                            >
-                              {{ 'calendar.agenda.delete.cancelButton' | translate }}
-                            </button>
-                          } @else {
-                            @if (occurrence.isAllDay) {
-                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                {{ 'calendar.agenda.allDay' | translate }}
-                              </span>
-                            } @else if (occurrence.startsAt) {
-                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                {{ occurrence.startsAt | userDate: 'shortTime' }}
-                                @if (occurrence.endsAt) {
-                                  – {{ occurrence.endsAt | userDate: 'shortTime' }}
+                          @if (occurrence.kind === eventKind) {
+                            <div class="grid gap-3 sm:grid-cols-2">
+                              <div class="grid grid-cols-[1fr_auto] gap-2">
+                                <div>
+                                  <span
+                                    class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                                  >
+                                    {{ 'calendar.agenda.form.startDateLabel' | translate }}
+                                  </span>
+                                  <app-date-select
+                                    [value]="editStartDate()"
+                                    (valueChange)="editStartDate.set($event)"
+                                    [ariaLabel]="'calendar.agenda.form.startDateLabel' | translate"
+                                  />
+                                </div>
+                                @if (!editIsAllDay()) {
+                                  <div>
+                                    <span
+                                      class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                                    >
+                                      {{ 'calendar.agenda.form.startTimeLabel' | translate }}
+                                    </span>
+                                    <app-time-select
+                                      [value]="editStartTime()"
+                                      (valueChange)="editStartTime.set($event)"
+                                      [ariaLabel]="
+                                        'calendar.agenda.form.startTimeLabel' | translate
+                                      "
+                                    />
+                                  </div>
                                 }
-                              </span>
-                            } @else if (occurrence.dueAt) {
-                              <span class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                {{ occurrence.dueAt | userDate: 'shortTime' }}
-                              </span>
-                            }
-                            <button
-                              type="button"
-                              class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200"
-                              (click)="startEditItem(occurrence)"
-                            >
-                              {{ 'calendar.agenda.edit.button' | translate }}
-                            </button>
-                            <button
-                              type="button"
-                              class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
-                              (click)="requestDeleteItem(occurrence.itemId)"
-                            >
-                              {{ 'calendar.agenda.delete.button' | translate }}
-                            </button>
+                              </div>
+                              <div class="grid grid-cols-[1fr_auto] gap-2">
+                                <div>
+                                  <span
+                                    class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                                  >
+                                    {{ 'calendar.agenda.form.endDateLabel' | translate }}
+                                  </span>
+                                  <app-date-select
+                                    [value]="editEndDate()"
+                                    (valueChange)="editEndDate.set($event)"
+                                    [ariaLabel]="'calendar.agenda.form.endDateLabel' | translate"
+                                  />
+                                </div>
+                                @if (!editIsAllDay()) {
+                                  <div>
+                                    <span
+                                      class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                                    >
+                                      {{ 'calendar.agenda.form.endTimeLabel' | translate }}
+                                    </span>
+                                    <app-time-select
+                                      [value]="editEndTime()"
+                                      (valueChange)="editEndTime.set($event)"
+                                      [ariaLabel]="'calendar.agenda.form.endTimeLabel' | translate"
+                                    />
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          } @else {
+                            <div class="grid grid-cols-[1fr_auto] gap-2 sm:w-1/2">
+                              <div>
+                                <span
+                                  class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                                >
+                                  {{ 'calendar.agenda.form.dueDateLabel' | translate }}
+                                </span>
+                                <app-date-select
+                                  [value]="editDueDate()"
+                                  (valueChange)="editDueDate.set($event)"
+                                  [ariaLabel]="'calendar.agenda.form.dueDateLabel' | translate"
+                                />
+                              </div>
+                              @if (!editIsAllDay()) {
+                                <div>
+                                  <span
+                                    class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                                  >
+                                    {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
+                                  </span>
+                                  <app-time-select
+                                    [value]="editDueTime()"
+                                    (valueChange)="editDueTime.set($event)"
+                                    [ariaLabel]="'calendar.agenda.form.dueTimeLabel' | translate"
+                                  />
+                                </div>
+                              }
+                            </div>
                           }
+
+                          <div class="flex items-center gap-2">
+                            <button
+                              type="submit"
+                              class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+                              [disabled]="saving() || !canSubmitEdit()"
+                            >
+                              {{ 'calendar.agenda.edit.saveButton' | translate }}
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                              [disabled]="saving()"
+                              (click)="cancelEditItem()"
+                            >
+                              {{ 'calendar.agenda.edit.cancelButton' | translate }}
+                            </button>
+                          </div>
+
+                          @if (editError(); as message) {
+                            <p class="text-xs text-red-600 dark:text-red-400">
+                              {{ message | translate }}
+                            </p>
+                          }
+                        </form>
+                      } @else {
+                        <div class="flex items-center gap-3">
+                          <span
+                            class="inline-block size-3 shrink-0 rounded-full"
+                            [style.background-color]="occurrence.color"
+                          ></span>
+                          <span class="text-lg leading-none">{{ occurrence.icon }}</span>
+
+                          @if (occurrence.kind === taskKind) {
+                            <app-toggle
+                              [checked]="occurrence.isCompleted"
+                              [disabled]="
+                                savingTaskId() === keyFor(occurrence) ||
+                                (!occurrence.isCompleted && !canCompleteTask(occurrence))
+                              "
+                              [ariaLabel]="'calendar.agenda.completeTaskLabel' | translate"
+                              (checkedChange)="toggleTaskCompletion(occurrence)"
+                            />
+                          }
+
+                          <span
+                            class="font-medium"
+                            [class.line-through]="
+                              occurrence.kind === taskKind && occurrence.isCompleted
+                            "
+                          >
+                            {{ occurrence.title }}
+                          </span>
+                          <span class="text-xs text-slate-400">{{ occurrence.calendarName }}</span>
+                          @if (
+                            occurrence.kind === taskKind && assigneeNameFor(occurrence.assignedTo);
+                            as assigneeName
+                          ) {
+                            <span class="text-xs text-slate-400">→ {{ assigneeName }}</span>
+                          }
+
+                          <div class="ml-auto flex items-center gap-2">
+                            @if (confirmingDeleteItemId() === occurrence.itemId) {
+                              <span
+                                class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
+                                >{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span
+                              >
+                              <button
+                                type="button"
+                                class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                                [disabled]="deletingItemId() === occurrence.itemId"
+                                (click)="confirmDeleteItem(occurrence)"
+                              >
+                                {{ 'calendar.agenda.delete.confirmButton' | translate }}
+                              </button>
+                              <button
+                                type="button"
+                                class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                                [disabled]="deletingItemId() === occurrence.itemId"
+                                (click)="cancelDeleteItem()"
+                              >
+                                {{ 'calendar.agenda.delete.cancelButton' | translate }}
+                              </button>
+                            } @else {
+                              @if (occurrence.isAllDay) {
+                                <span
+                                  class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                >
+                                  {{ 'calendar.agenda.allDay' | translate }}
+                                </span>
+                              } @else if (occurrence.startsAt) {
+                                <span
+                                  class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                >
+                                  {{ occurrence.startsAt | userDate: 'shortTime' }}
+                                  @if (occurrence.endsAt) {
+                                    – {{ occurrence.endsAt | userDate: 'shortTime' }}
+                                  }
+                                </span>
+                              } @else if (occurrence.dueAt) {
+                                <span
+                                  class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                >
+                                  {{ occurrence.dueAt | userDate: 'shortTime' }}
+                                </span>
+                              }
+                              <button
+                                type="button"
+                                class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200"
+                                (click)="startEditItem(occurrence)"
+                              >
+                                {{ 'calendar.agenda.edit.button' | translate }}
+                              </button>
+                              <button
+                                type="button"
+                                class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
+                                (click)="requestDeleteItem(occurrence.itemId)"
+                              >
+                                {{ 'calendar.agenda.delete.button' | translate }}
+                              </button>
+                            }
+                          </div>
                         </div>
-                      </div>
-                    }
-                  </li>
+                      }
+                    </li>
                   }
                 }
               </ul>
@@ -344,13 +456,20 @@
   }
 
   @if (eligibleCalendars().length === 0) {
-    <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">{{ 'calendar.agenda.form.noEligibleCalendars' | translate }}</p>
+    <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'calendar.agenda.form.noEligibleCalendars' | translate }}
+    </p>
   } @else {
-    <form class="mt-6 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-5" (ngSubmit)="createItem()">
+    <form
+      class="mt-6 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-5"
+      (ngSubmit)="createItem()"
+    >
       <h4 class="text-sm font-semibold">{{ 'calendar.agenda.form.title' | translate }}</h4>
 
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_8rem_1fr_5rem]">
-        <label class="sr-only" for="itemCalendar">{{ 'calendar.agenda.form.calendarLabel' | translate }}</label>
+        <label class="sr-only" for="itemCalendar">{{
+          'calendar.agenda.form.calendarLabel' | translate
+        }}</label>
         <select
           name="itemCalendar"
           id="itemCalendar"
@@ -380,7 +499,11 @@
         <input
           type="text"
           name="itemIcon"
-          [placeholder]="newCalendarId() ? calendarIconFor(newCalendarId()) : ('calendar.agenda.form.iconPlaceholder' | translate)"
+          [placeholder]="
+            newCalendarId()
+              ? calendarIconFor(newCalendarId())
+              : ('calendar.agenda.form.iconPlaceholder' | translate)
+          "
           class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
           [ngModel]="newIcon()"
           (ngModelChange)="newIcon.set($event)"
@@ -388,10 +511,16 @@
         />
       </div>
 
-      <app-color-swatch-picker [value]="newColor()" [ariaLabel]="'common.colorLabel' | translate" (valueChange)="newColor.set($event)" />
+      <app-color-swatch-picker
+        [value]="newColor()"
+        [ariaLabel]="'common.colorLabel' | translate"
+        (valueChange)="newColor.set($event)"
+      />
 
       @if (newKind() === taskKind) {
-        <div class="flex w-fit overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
+        <div
+          class="flex w-fit overflow-hidden rounded-md border border-slate-300 dark:border-slate-600"
+        >
           <button
             type="button"
             class="px-3 py-1.5 text-xs font-medium transition"
@@ -420,17 +549,29 @@
 
         @if (newTaskSource() === 'template') {
           <div>
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span
+              class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
               {{ 'calendar.agenda.form.taskSource.templateLabel' | translate }}
             </span>
-            <app-task-picker [templates]="taskTemplates()" [templateId]="newTaskTemplateId()" (templateIdChange)="onTemplateSelected($event)" />
+            <app-task-picker
+              [templates]="taskTemplates()"
+              [templateId]="newTaskTemplateId()"
+              (templateIdChange)="onTemplateSelected($event)"
+            />
           </div>
         }
       }
 
       @if (!(newKind() === taskKind && newTaskSource() === 'template')) {
-        <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-          <app-toggle [checked]="newIsAllDay()" (checkedChange)="newIsAllDay.set($event)" [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate" />
+        <div
+          class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300"
+        >
+          <app-toggle
+            [checked]="newIsAllDay()"
+            (checkedChange)="newIsAllDay.set($event)"
+            [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate"
+          />
           {{ 'calendar.agenda.form.allDayLabel' | translate }}
         </div>
       }
@@ -439,33 +580,57 @@
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="grid grid-cols-[1fr_auto] gap-2">
             <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span
+                class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
                 {{ 'calendar.agenda.form.startDateLabel' | translate }}
               </span>
-              <app-date-select [value]="newStartDate()" (valueChange)="newStartDate.set($event)" [ariaLabel]="'calendar.agenda.form.startDateLabel' | translate" />
+              <app-date-select
+                [value]="newStartDate()"
+                (valueChange)="newStartDate.set($event)"
+                [ariaLabel]="'calendar.agenda.form.startDateLabel' | translate"
+              />
             </div>
             @if (!newIsAllDay()) {
               <div>
-                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span
+                  class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
                   {{ 'calendar.agenda.form.startTimeLabel' | translate }}
                 </span>
-                <app-time-select [value]="newStartTime()" (valueChange)="newStartTime.set($event)" [ariaLabel]="'calendar.agenda.form.startTimeLabel' | translate" />
+                <app-time-select
+                  [value]="newStartTime()"
+                  (valueChange)="newStartTime.set($event)"
+                  [ariaLabel]="'calendar.agenda.form.startTimeLabel' | translate"
+                />
               </div>
             }
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-2">
             <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span
+                class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
                 {{ 'calendar.agenda.form.endDateLabel' | translate }}
               </span>
-              <app-date-select [value]="newEndDate()" (valueChange)="newEndDate.set($event)" [ariaLabel]="'calendar.agenda.form.endDateLabel' | translate" />
+              <app-date-select
+                [value]="newEndDate()"
+                (valueChange)="newEndDate.set($event)"
+                [ariaLabel]="'calendar.agenda.form.endDateLabel' | translate"
+              />
             </div>
             @if (!newIsAllDay()) {
               <div>
-                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span
+                  class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
                   {{ 'calendar.agenda.form.endTimeLabel' | translate }}
                 </span>
-                <app-time-select [value]="newEndTime()" (valueChange)="newEndTime.set($event)" [ariaLabel]="'calendar.agenda.form.endTimeLabel' | translate" />
+                <app-time-select
+                  [value]="newEndTime()"
+                  (valueChange)="newEndTime.set($event)"
+                  [ariaLabel]="'calendar.agenda.form.endTimeLabel' | translate"
+                />
               </div>
             }
           </div>
@@ -473,29 +638,53 @@
       } @else {
         <div class="grid grid-cols-[1fr_auto] gap-2 sm:w-1/2">
           <div>
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span
+              class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
               {{ 'calendar.agenda.form.dueDateLabel' | translate }}
             </span>
-            <app-date-select [value]="newDueDate()" (valueChange)="newDueDate.set($event)" [ariaLabel]="'calendar.agenda.form.dueDateLabel' | translate" />
+            <app-date-select
+              [value]="newDueDate()"
+              (valueChange)="newDueDate.set($event)"
+              [ariaLabel]="'calendar.agenda.form.dueDateLabel' | translate"
+            />
           </div>
           @if (!newIsAllDay()) {
             <div>
-              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span
+                class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
                 {{ 'calendar.agenda.form.dueTimeLabel' | translate }}
               </span>
-              <app-time-select [value]="newDueTime()" (valueChange)="newDueTime.set($event)" [ariaLabel]="'calendar.agenda.form.dueTimeLabel' | translate" />
+              <app-time-select
+                [value]="newDueTime()"
+                (valueChange)="newDueTime.set($event)"
+                [ariaLabel]="'calendar.agenda.form.dueTimeLabel' | translate"
+              />
             </div>
           }
         </div>
 
-        @if (newTaskSource() === 'template' && !newIsAllDay() && selectedTaskTemplate(); as template) {
+        @if (
+          newTaskSource() === 'template' && !newIsAllDay() && selectedTaskTemplate();
+          as template
+        ) {
           <p class="sm:w-1/2 text-xs text-slate-500 dark:text-slate-400">
-            {{ 'calendar.agenda.form.taskDurationHint' | translate: { duration: formatDuration(template.totalDurationMinutes), endTime: templateEndTime(template) } }}
+            {{
+              'calendar.agenda.form.taskDurationHint'
+                | translate
+                  : {
+                      duration: formatDuration(template.totalDurationMinutes),
+                      endTime: templateEndTime(template),
+                    }
+            }}
           </p>
         }
 
         <label class="block sm:w-1/2">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
             {{ 'calendar.agenda.form.assigneeLabel' | translate }}
           </span>
           <select
@@ -506,7 +695,9 @@
           >
             <option value="">{{ 'calendar.agenda.form.assigneeUnassigned' | translate }}</option>
             @for (member of assignableMembers(); track member.userId) {
-              <option [value]="member.userId">{{ member.givenName }} {{ member.familyName }}</option>
+              <option [value]="member.userId">
+                {{ member.givenName }} {{ member.familyName }}
+              </option>
             }
           </select>
         </label>
@@ -514,7 +705,9 @@
 
       <div class="grid gap-3 sm:grid-cols-3">
         <label class="block">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
             {{ 'calendar.agenda.form.repeat.label' | translate }}
           </span>
           <select
@@ -533,7 +726,9 @@
 
         @if (newRepeat() !== null) {
           <div class="block">
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span
+              class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
               {{ 'calendar.agenda.form.repeat.intervalLabel' | translate }}
             </span>
             <app-stepper
@@ -544,10 +739,16 @@
             />
           </div>
           <div>
-            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <span
+              class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
               {{ 'calendar.agenda.form.repeat.untilLabel' | translate }}
             </span>
-            <app-date-select [value]="newUntil()" (valueChange)="newUntil.set($event)" [ariaLabel]="'calendar.agenda.form.repeat.untilLabel' | translate" />
+            <app-date-select
+              [value]="newUntil()"
+              (valueChange)="newUntil.set($event)"
+              [ariaLabel]="'calendar.agenda.form.repeat.untilLabel' | translate"
+            />
           </div>
         }
       </div>

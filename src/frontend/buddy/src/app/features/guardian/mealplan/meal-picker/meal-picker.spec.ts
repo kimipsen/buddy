@@ -16,7 +16,7 @@ describe('MealPicker', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -121,7 +121,12 @@ describe('MealPicker', () => {
 
       openDropdown(fixture);
 
-      expect(optionLabels(compiled)).toEqual(['Not planned', '🥞 Pancakes', '🌮 Tacos', '🍅 Tomato Soup']);
+      expect(optionLabels(compiled)).toEqual([
+        'Not planned',
+        '🥞 Pancakes',
+        '🌮 Tacos',
+        '🍅 Tomato Soup',
+      ]);
     });
 
     it('clears the visible text so the input starts blank even when a meal was already selected', async () => {
@@ -136,20 +141,21 @@ describe('MealPicker', () => {
   describe('filtering', () => {
     it.each([
       {
-        description: 'filters the option list to meals whose name contains the query, case-insensitively',
+        description:
+          'filters the option list to meals whose name contains the query, case-insensitively',
         query: 'TAC',
-        expected: ['Not planned', '🌮 Tacos']
+        expected: ['Not planned', '🌮 Tacos'],
       },
       {
         description: 'matches on a substring anywhere in the name, not only a prefix',
         query: 'soup',
-        expected: ['Not planned', '🍅 Tomato Soup']
+        expected: ['Not planned', '🍅 Tomato Soup'],
       },
       {
         description: 'ignores leading/trailing whitespace in the query',
         query: '  taco  ',
-        expected: ['Not planned', '🌮 Tacos']
-      }
+        expected: ['Not planned', '🌮 Tacos'],
+      },
     ])('$description', async ({ query, expected }) => {
       const { fixture, compiled } = await setup();
 

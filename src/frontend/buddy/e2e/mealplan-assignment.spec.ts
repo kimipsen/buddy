@@ -19,7 +19,11 @@ import { readRuntimeConfig } from './support/runtime-config';
 // meal POST / plan PUT went to a child the caller no longer guarded (PUT 404, or the meal list
 // reloaded empty). Confirmed from the traces: the assignment PUT targeted
 // guardian-invite-accept's child, which was unlinked from alice a moment later.
-test('guardian creates a meal and assigns it to a slot in the current week', async ({ page, loginAs, newGuardian }) => {
+test('guardian creates a meal and assigns it to a slot in the current week', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   const guardian = await newGuardian();
   await loginAs(guardian);
 
@@ -56,7 +60,10 @@ test('guardian creates a meal and assigns it to a slot in the current week', asy
   await breakfastPicker.fill(mealName);
 
   const [assignResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && /\/mealplans\/children\/[^/]+\/plan\?/.test(res.url())),
+    page.waitForResponse(
+      (res) =>
+        res.request().method() === 'PUT' && /\/mealplans\/children\/[^/]+\/plan\?/.test(res.url()),
+    ),
     breakfastPicker.press('Enter'),
   ]);
 
@@ -70,7 +77,9 @@ test('guardian creates a meal and assigns it to a slot in the current week', asy
   const assignBody = (await assignResponse.json()) as { mealId: string; date: string };
 
   if (!childId) {
-    throw new Error(`Could not extract childId from assignment request URL: ${assignResponse.url()}`);
+    throw new Error(
+      `Could not extract childId from assignment request URL: ${assignResponse.url()}`,
+    );
   }
 
   const { apiBaseUrl } = readRuntimeConfig();

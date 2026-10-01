@@ -15,10 +15,15 @@ describe('ChildMealplan', () => {
     userName: 'kid',
     name: { givenName: 'Kim', familyName: 'Kid' },
     timeZoneId: 'UTC',
-    language: 'en'
+    language: 'en',
   };
 
-  function entryAt(date: string, slot: MealSlot, mealId: string, overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
+  function entryAt(
+    date: string,
+    slot: MealSlot,
+    mealId: string,
+    overrides: Partial<MealPlanEntry> = {},
+  ): MealPlanEntry {
     return {
       date,
       slot,
@@ -30,17 +35,22 @@ describe('ChildMealplan', () => {
       notes: null,
       assignedBy: 'guardian-1',
       allRatings: [],
-      ...overrides
+      ...overrides,
     };
   }
 
   // Keys every returned plan to the actual date range the component asked for, so tests don't
   // need to duplicate the component's private anchor-date math to know which dates are in view.
-  function rangeKeyedMealplansStub(overrides: Partial<MealplansService> = {}): Partial<MealplansService> {
+  function rangeKeyedMealplansStub(
+    overrides: Partial<MealplansService> = {},
+  ): Partial<MealplansService> {
     return {
-      listMealPlan: vi.fn(async (_scope, from: string, to: string) => [entryAt(from, 0, `meal-from-${from}`), entryAt(to, 1, `meal-to-${to}`)]),
+      listMealPlan: vi.fn(async (_scope, from: string, to: string) => [
+        entryAt(from, 0, `meal-from-${from}`),
+        entryAt(to, 1, `meal-to-${to}`),
+      ]),
       rateMeal: vi.fn(),
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -50,12 +60,23 @@ describe('ChildMealplan', () => {
   }
 
   async function setup(stubs: Stubs = {}) {
-    const usersStub: Partial<UsersService> = { ensureCurrentUser: vi.fn(async () => currentUser), ...stubs.users };
-    const mealplansStub: Partial<MealplansService> = { listMealPlan: vi.fn(async () => []), rateMeal: vi.fn(), ...stubs.mealplans };
+    const usersStub: Partial<UsersService> = {
+      ensureCurrentUser: vi.fn(async () => currentUser),
+      ...stubs.users,
+    };
+    const mealplansStub: Partial<MealplansService> = {
+      listMealPlan: vi.fn(async () => []),
+      rateMeal: vi.fn(),
+      ...stubs.mealplans,
+    };
 
     await TestBed.configureTestingModule({
       imports: [ChildMealplan],
-      providers: [provideRouter([]), { provide: UsersService, useValue: usersStub }, { provide: MealplansService, useValue: mealplansStub }]
+      providers: [
+        provideRouter([]),
+        { provide: UsersService, useValue: usersStub },
+        { provide: MealplansService, useValue: mealplansStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ChildMealplan);
@@ -82,7 +103,7 @@ describe('ChildMealplan', () => {
       isArchived: false,
       ratings,
       createdBy: 'guardian-1',
-      lastModifiedBy: 'guardian-1'
+      lastModifiedBy: 'guardian-1',
     };
   }
 
@@ -97,7 +118,9 @@ describe('ChildMealplan', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   it('shows a loading message while the plan is loading', async () => {
@@ -117,11 +140,15 @@ describe('ChildMealplan', () => {
   });
 
   it('shows the translated error message when loading the plan fails', async () => {
-    const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Something went wrong loading your meals. Try again in a bit.');
+    expect(compiled.textContent).toContain(
+      'Something went wrong loading your meals. Try again in a bit.',
+    );
   });
 
   it('renders planned meals with rating controls for days up to today', async () => {
@@ -178,19 +205,24 @@ describe('ChildMealplan', () => {
       isArchived: false,
       ratings: [{ childId: 'child-1', stars: 3, comment: null, ratedAt: '2026-01-01T00:00:00Z' }],
       createdBy: 'guardian-1',
-      lastModifiedBy: 'guardian-1'
+      lastModifiedBy: 'guardian-1',
     }));
 
     const { fixture } = await setup({
       mealplans: {
-        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-shared'), entryAt(from, 1, 'meal-shared')]),
-        rateMeal
-      }
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 0, 'meal-shared'),
+          entryAt(from, 1, 'meal-shared'),
+        ]),
+        rateMeal,
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const starButtons = Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'));
+    const starButtons = Array.from(
+      compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'),
+    );
     expect(starButtons).toHaveLength(10);
 
     starButtons[2].click();
@@ -209,13 +241,18 @@ describe('ChildMealplan', () => {
       icon: '🍽️',
       color: '#f00',
       isArchived: false,
-      ratings: [{ childId: 'child-1', stars: 5, comment: 'So good', ratedAt: '2026-01-01T00:00:00Z' }],
+      ratings: [
+        { childId: 'child-1', stars: 5, comment: 'So good', ratedAt: '2026-01-01T00:00:00Z' },
+      ],
       createdBy: 'guardian-1',
-      lastModifiedBy: 'guardian-1'
+      lastModifiedBy: 'guardian-1',
     }));
 
     const { fixture } = await setup({
-      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+      mealplans: {
+        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        rateMeal,
+      },
     });
     await settle(fixture);
 
@@ -240,7 +277,10 @@ describe('ChildMealplan', () => {
     const rateMeal = vi.fn(async () => Promise.reject(new Error('boom')));
 
     const { fixture } = await setup({
-      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+      mealplans: {
+        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        rateMeal,
+      },
     });
     await settle(fixture);
 
@@ -258,20 +298,32 @@ describe('ChildMealplan', () => {
       entryAt(from, 0, 'meal-a'),
       entryAt(from, 1, 'meal-b'),
       entryAt(from, 2, 'meal-c'),
-      entryAt(from, 3, 'meal-d')
+      entryAt(from, 3, 'meal-d'),
     ]);
     const { fixture } = await setup({ mealplans: { listMealPlan } });
     await settle(fixture);
 
     const expectedFrom = addDaysIso(todayIsoDate(), -7);
-    expect(listMealPlan).toHaveBeenCalledExactlyOnceWith({ kind: 'family', childId: 'child-1' }, expectedFrom, addDaysIso(todayIsoDate(), -1));
+    expect(listMealPlan).toHaveBeenCalledExactlyOnceWith(
+      { kind: 'family', childId: 'child-1' },
+      expectedFrom,
+      addDaysIso(todayIsoDate(), -1),
+    );
 
     const compiled = fixture.nativeElement as HTMLElement;
     const locale = TestBed.inject(TranslationService).language();
-    const expectedLabel = parseIsoDate(expectedFrom).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
-    expect(Array.from(compiled.querySelectorAll('h2')).map((heading) => heading.textContent?.trim())).toEqual([expectedLabel]);
+    const expectedLabel = parseIsoDate(expectedFrom).toLocaleDateString(locale, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+    expect(
+      Array.from(compiled.querySelectorAll('h2')).map((heading) => heading.textContent?.trim()),
+    ).toEqual([expectedLabel]);
 
-    const slotLabels = Array.from(compiled.querySelectorAll('li span.uppercase')).map((span) => span.textContent?.trim());
+    const slotLabels = Array.from(compiled.querySelectorAll('li span.uppercase')).map((span) =>
+      span.textContent?.trim(),
+    );
     expect(slotLabels).toEqual(['Breakfast', 'Lunch', 'Dinner', 'Snack']);
   });
 
@@ -283,12 +335,16 @@ describe('ChildMealplan', () => {
       .mockReturnValueOnce(pending.promise);
 
     const { fixture } = await setup({
-      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+      mealplans: {
+        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        rateMeal,
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const starButtons = () => Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'));
+    const starButtons = () =>
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'));
 
     starButtons()[0].click();
     await settle(fixture);
@@ -301,7 +357,11 @@ describe('ChildMealplan', () => {
     expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
     expect(starButtons().every((button) => button.disabled)).toBe(true);
 
-    pending.resolve(mealWithRatings([{ childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' }]));
+    pending.resolve(
+      mealWithRatings([
+        { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+      ]),
+    );
     await settle(fixture);
     expect(starButtons().every((button) => !button.disabled)).toBe(true);
     expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
@@ -311,12 +371,15 @@ describe('ChildMealplan', () => {
     const rateMeal = vi.fn(async () =>
       mealWithRatings([
         { childId: 'child-2', stars: 1, comment: 'Yuck', ratedAt: '2026-01-01T00:00:00Z' },
-        { childId: 'child-1', stars: 4, comment: 'Tasty', ratedAt: '2026-01-01T00:00:00Z' }
-      ])
+        { childId: 'child-1', stars: 4, comment: 'Tasty', ratedAt: '2026-01-01T00:00:00Z' },
+      ]),
     );
 
     const { fixture } = await setup({
-      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+      mealplans: {
+        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        rateMeal,
+      },
     });
     await settle(fixture);
 
@@ -324,19 +387,26 @@ describe('ChildMealplan', () => {
     compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]')[3].click();
     await settle(fixture);
 
-    const lit = Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]')).map((button) =>
-      button.classList.contains('text-amber-400')
-    );
+    const lit = Array.from(
+      compiled.querySelectorAll<HTMLButtonElement>('button[aria-label^="Rate"]'),
+    ).map((button) => button.classList.contains('text-amber-400'));
     expect(lit).toEqual([true, true, true, true, false]);
     expect(compiled.textContent).toContain('Tasty');
     expect(compiled.textContent).not.toContain('Yuck');
   });
 
   it('opens an empty note for an unrated meal and saves the trimmed comment', async () => {
-    const rateMeal = vi.fn(async () => mealWithRatings([{ childId: 'child-1', stars: 5, comment: 'Yum', ratedAt: '2026-01-01T00:00:00Z' }]));
+    const rateMeal = vi.fn(async () =>
+      mealWithRatings([
+        { childId: 'child-1', stars: 5, comment: 'Yum', ratedAt: '2026-01-01T00:00:00Z' },
+      ]),
+    );
 
     const { fixture } = await setup({
-      mealplans: { listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]), rateMeal }
+      mealplans: {
+        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        rateMeal,
+      },
     });
     await settle(fixture);
 
@@ -366,13 +436,21 @@ describe('ChildMealplan', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Something went wrong loading your meals. Try again in a bit.');
+    expect(compiled.textContent).toContain(
+      'Something went wrong loading your meals. Try again in a bit.',
+    );
 
     findButtonByText(compiled, '← Previous week')?.click();
     await settle(fixture);
 
-    expect(listMealPlan).toHaveBeenLastCalledWith({ kind: 'family', childId: 'child-1' }, addDaysIso(todayIsoDate(), -14), addDaysIso(todayIsoDate(), -8));
-    expect(compiled.textContent).not.toContain('Something went wrong loading your meals. Try again in a bit.');
+    expect(listMealPlan).toHaveBeenLastCalledWith(
+      { kind: 'family', childId: 'child-1' },
+      addDaysIso(todayIsoDate(), -14),
+      addDaysIso(todayIsoDate(), -8),
+    );
+    expect(compiled.textContent).not.toContain(
+      'Something went wrong loading your meals. Try again in a bit.',
+    );
     expect(compiled.textContent).toContain('Meal meal-from');
   });
 });

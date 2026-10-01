@@ -1,7 +1,9 @@
 <main class="min-h-dvh bg-amber-50 dark:bg-slate-950 text-slate-950 dark:text-slate-50">
   <header class="flex items-center justify-between px-6 py-5 sm:px-8">
     <div class="flex items-center gap-3">
-      <span class="grid size-12 place-items-center rounded-2xl bg-emerald-400 text-2xl font-bold">B</span>
+      <span class="grid size-12 place-items-center rounded-2xl bg-emerald-400 text-2xl font-bold"
+        >B</span
+      >
       <h1 class="text-2xl font-bold tracking-normal">{{ 'child.home.title' | translate }}</h1>
     </div>
 
@@ -36,23 +38,36 @@
     </div>
 
     @if (error(); as message) {
-      <p class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400">{{ message | translate }}</p>
+      <p
+        class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400"
+      >
+        {{ message | translate }}
+      </p>
     }
 
     @if (contentLoading()) {
-      <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm">
+      <div
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm"
+      >
         <app-loading-spinner [label]="'common.loading' | translate" />
       </div>
     } @else if (hasAnything()) {
       <!-- Meals -->
       @if (mealsToShow().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
-          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.mealsTitle' | translate }}</h2>
+        <div
+          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
+        >
+          <h2 class="text-2xl font-bold tracking-normal">
+            {{ 'child.home.mealsTitle' | translate }}
+          </h2>
           <ul class="mt-4 space-y-3">
             @for (entry of mealsToShow(); track entry.slot) {
               <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
                 <div class="flex items-center justify-between gap-3">
-                  <span class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ mealSlotLabels[entry.slot] | translate }}</span>
+                  <span
+                    class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                    >{{ mealSlotLabels[entry.slot] | translate }}</span
+                  >
                   <span class="flex items-center gap-2 text-lg font-semibold">
                     <span aria-hidden="true">{{ entry.icon }}</span>
                     {{ entry.mealName }}
@@ -65,11 +80,19 @@
                       <button
                         type="button"
                         class="text-2xl leading-none disabled:opacity-50"
-                        [class.text-amber-400]="entry.rating !== null && starCount <= entry.rating.stars"
-                        [class.text-slate-300]="entry.rating === null || starCount > entry.rating.stars"
-                        [class.dark:text-slate-600]="entry.rating === null || starCount > entry.rating.stars"
+                        [class.text-amber-400]="
+                          entry.rating !== null && starCount <= entry.rating.stars
+                        "
+                        [class.text-slate-300]="
+                          entry.rating === null || starCount > entry.rating.stars
+                        "
+                        [class.dark:text-slate-600]="
+                          entry.rating === null || starCount > entry.rating.stars
+                        "
                         [disabled]="savingSlot() === entry.slot"
-                        [attr.aria-label]="'child.mealplan.starLabel' | translate: { count: starCount }"
+                        [attr.aria-label]="
+                          'child.mealplan.starLabel' | translate: { count: starCount }
+                        "
                         (click)="rate(entry, starCount)"
                       >
                         ★
@@ -77,14 +100,23 @@
                     }
                   </div>
 
-                  <button type="button" class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300" (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)">
-                    {{ (entry.rating?.comment ? 'child.mealplan.editNote' : 'child.mealplan.addNote') | translate }}
+                  <button
+                    type="button"
+                    class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                    (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)"
+                  >
+                    {{
+                      (entry.rating?.comment ? 'child.mealplan.editNote' : 'child.mealplan.addNote')
+                        | translate
+                    }}
                   </button>
                 </div>
 
                 @if (isEditing(entry)) {
                   <div class="mt-3 space-y-2">
-                    <label class="sr-only" [attr.for]="'mealNote-' + entry.slot">{{ 'child.mealplan.notePlaceholder' | translate }}</label>
+                    <label class="sr-only" [attr.for]="'mealNote-' + entry.slot">{{
+                      'child.mealplan.notePlaceholder' | translate
+                    }}</label>
                     <textarea
                       [id]="'mealNote-' + entry.slot"
                       class="w-full rounded-xl border-2 border-slate-200 dark:border-slate-800 p-3 text-base focus:border-emerald-400 focus:outline-none dark:bg-slate-800 dark:text-slate-100"
@@ -112,7 +144,9 @@
                     </div>
                   </div>
                 } @else if (entry.rating?.comment; as comment) {
-                  <p class="mt-2 text-base italic text-slate-600 dark:text-slate-300">“{{ comment }}”</p>
+                  <p class="mt-2 text-base italic text-slate-600 dark:text-slate-300">
+                    “{{ comment }}”
+                  </p>
                 }
               </li>
             }
@@ -122,16 +156,27 @@
 
       <!-- Medicine -->
       @if (doses().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
-          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.medicineTitle' | translate }}</h2>
+        <div
+          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
+        >
+          <h2 class="text-2xl font-bold tracking-normal">
+            {{ 'child.home.medicineTitle' | translate }}
+          </h2>
           <ul class="mt-4 space-y-3">
             @for (dose of doses(); track doseKey(dose)) {
-              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
+              <li
+                class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+              >
                 <span class="flex items-center gap-2 text-lg font-semibold">
-                  <span class="inline-block size-3 rounded-full" [style.background-color]="dose.color"></span>
+                  <span
+                    class="inline-block size-3 rounded-full"
+                    [style.background-color]="dose.color"
+                  ></span>
                   <span aria-hidden="true">{{ dose.icon }}</span>
                   {{ dose.name }}
-                  <span class="text-sm font-normal text-slate-500 dark:text-slate-400">{{ dose.time.slice(0, 5) }}</span>
+                  <span class="text-sm font-normal text-slate-500 dark:text-slate-400">{{
+                    dose.time.slice(0, 5)
+                  }}</span>
                 </span>
 
                 @if (dose.status === pending) {
@@ -155,7 +200,10 @@
                   </div>
                 } @else if (dose.status === taken) {
                   <div class="flex items-center gap-2">
-                    <span class="rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-4 py-2 text-base font-bold text-emerald-800 dark:text-emerald-300">{{ 'child.home.medicine.taken' | translate }}</span>
+                    <span
+                      class="rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-4 py-2 text-base font-bold text-emerald-800 dark:text-emerald-300"
+                      >{{ 'child.home.medicine.taken' | translate }}</span
+                    >
                     <button
                       type="button"
                       class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
@@ -167,7 +215,10 @@
                   </div>
                 } @else {
                   <div class="flex items-center gap-2">
-                    <span class="rounded-full bg-slate-200 dark:bg-slate-700 px-4 py-2 text-base font-bold text-slate-600 dark:text-slate-300">{{ 'child.home.medicine.skipped' | translate }}</span>
+                    <span
+                      class="rounded-full bg-slate-200 dark:bg-slate-700 px-4 py-2 text-base font-bold text-slate-600 dark:text-slate-300"
+                      >{{ 'child.home.medicine.skipped' | translate }}</span
+                    >
                     <button
                       type="button"
                       class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
@@ -186,13 +237,19 @@
 
       <!-- Tasks -->
       @if (tasks().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
-          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.tasksTitle' | translate }}</h2>
+        <div
+          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
+        >
+          <h2 class="text-2xl font-bold tracking-normal">
+            {{ 'child.home.tasksTitle' | translate }}
+          </h2>
           <ul class="mt-4 space-y-3">
             @for (entry of groupedTasks(); track entry.itemId) {
               @if (isRun(entry)) {
                 @let run = $any(entry);
-                <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3">
+                <li
+                  class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
+                >
                   <div class="mb-3 flex items-center gap-2 text-lg font-semibold">
                     <span aria-hidden="true">{{ run.icon }}</span>
                     {{ run.parentTitle }}
@@ -209,7 +266,12 @@
                           [class.border-slate-300]="!subtask.isCompleted"
                           [class.dark:border-slate-600]="!subtask.isCompleted"
                           [disabled]="savingTaskId() === keyFor(subtask)"
-                          [attr.aria-label]="(subtask.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
+                          [attr.aria-label]="
+                            (subtask.isCompleted
+                              ? 'child.home.tasks.markNotDone'
+                              : 'child.home.tasks.markDone'
+                            ) | translate
+                          "
                           (click)="toggleTask(subtask)"
                         >
                           @if (subtask.isCompleted) {
@@ -230,7 +292,9 @@
                 </li>
               } @else {
                 @let task = $any(entry);
-                <li class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
+                <li
+                  class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+                >
                   <button
                     type="button"
                     class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
@@ -240,14 +304,23 @@
                     [class.border-slate-300]="!task.isCompleted"
                     [class.dark:border-slate-600]="!task.isCompleted"
                     [disabled]="savingTaskId() === keyFor(task)"
-                    [attr.aria-label]="(task.isCompleted ? 'child.home.tasks.markNotDone' : 'child.home.tasks.markDone') | translate"
+                    [attr.aria-label]="
+                      (task.isCompleted
+                        ? 'child.home.tasks.markNotDone'
+                        : 'child.home.tasks.markDone'
+                      ) | translate
+                    "
                     (click)="toggleTask(task)"
                   >
                     @if (task.isCompleted) {
                       ✓
                     }
                   </button>
-                  <span class="flex items-center gap-2 text-lg font-semibold" [class.line-through]="task.isCompleted" [class.text-slate-400]="task.isCompleted">
+                  <span
+                    class="flex items-center gap-2 text-lg font-semibold"
+                    [class.line-through]="task.isCompleted"
+                    [class.text-slate-400]="task.isCompleted"
+                  >
                     <span aria-hidden="true">{{ task.icon }}</span>
                     {{ task.title }}
                   </span>
@@ -260,16 +333,29 @@
 
       <!-- Events -->
       @if (eventsView().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
-          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.eventsTitle' | translate }}</h2>
+        <div
+          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
+        >
+          <h2 class="text-2xl font-bold tracking-normal">
+            {{ 'child.home.eventsTitle' | translate }}
+          </h2>
           <ul class="mt-4 space-y-3">
             @for (event of eventsView(); track event.itemId) {
               <li
                 class="flex items-center justify-between gap-3 overflow-hidden rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
-                [style.background]="event.isOngoing ? eventProgressBackground(event.progressPercent) : null"
+                [style.background]="
+                  event.isOngoing ? eventProgressBackground(event.progressPercent) : null
+                "
               >
-                <span class="flex items-center gap-2 text-lg font-semibold" [class.line-through]="event.isPast" [class.text-slate-400]="event.isPast">
-                  <span class="inline-block size-3 rounded-full" [style.background-color]="event.color"></span>
+                <span
+                  class="flex items-center gap-2 text-lg font-semibold"
+                  [class.line-through]="event.isPast"
+                  [class.text-slate-400]="event.isPast"
+                >
+                  <span
+                    class="inline-block size-3 rounded-full"
+                    [style.background-color]="event.color"
+                  ></span>
                   <span aria-hidden="true">{{ event.icon }}</span>
                   {{ event.title }}
                   @if (event.isPast) {
@@ -278,7 +364,9 @@
                 </span>
 
                 @if (event.isAllDay) {
-                  <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{ 'child.home.events.allDay' | translate }}</span>
+                  <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{
+                    'child.home.events.allDay' | translate
+                  }}</span>
                 } @else if (event.startsAt) {
                   <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">
                     {{ event.startsAt | userDate: 'shortTime' }}
@@ -295,18 +383,30 @@
 
       <!-- Pickup & drop-off -->
       @if (todaysPickups().length > 0) {
-        <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
-          <h2 class="text-2xl font-bold tracking-normal">{{ 'child.home.pickup.title' | translate }}</h2>
+        <div
+          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
+        >
+          <h2 class="text-2xl font-bold tracking-normal">
+            {{ 'child.home.pickup.title' | translate }}
+          </h2>
           <ul class="mt-4 space-y-3">
             @for (occurrence of todaysPickups(); track occurrence.slot) {
-              <li class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
-                <span class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ pickupSlotLabels[occurrence.slot] | translate }}</span>
+              <li
+                class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+              >
+                <span
+                  class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >{{ pickupSlotLabels[occurrence.slot] | translate }}</span
+                >
                 <span class="flex flex-col items-end gap-0.5">
                   <span class="flex items-center gap-2 text-lg font-semibold">
                     @switch (occurrence.kind) {
                       @case (guardianKind) {
                         <span aria-hidden="true">👤</span>
-                        {{ assigneeName(occurrence) ?? ('child.home.pickup.kind.guardian' | translate) }}
+                        {{
+                          assigneeName(occurrence) ??
+                            ('child.home.pickup.kind.guardian' | translate)
+                        }}
                       }
                       @case (selfEscortKind) {
                         <span aria-hidden="true">🚶</span>
@@ -314,7 +414,9 @@
                       }
                       @case (siblingKind) {
                         <span aria-hidden="true">🧒</span>
-                        {{ assigneeName(occurrence) ?? ('child.home.pickup.kind.sibling' | translate) }}
+                        {{
+                          assigneeName(occurrence) ?? ('child.home.pickup.kind.sibling' | translate)
+                        }}
                       }
                       @case (playdateKind) {
                         <span aria-hidden="true">🎉</span>
@@ -323,7 +425,9 @@
                     }
                   </span>
                   @if (occurrence.time) {
-                    <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{ occurrence.time.slice(0, 5) }}</span>
+                    <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{
+                      occurrence.time.slice(0, 5)
+                    }}</span>
                   }
                 </span>
               </li>
@@ -332,9 +436,13 @@
         </div>
       }
     } @else {
-      <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm">
+      <div
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm"
+      >
         <p class="text-5xl">🗓️</p>
-        <h2 class="mt-4 text-2xl font-bold tracking-normal">{{ 'child.home.emptyTitle' | translate }}</h2>
+        <h2 class="mt-4 text-2xl font-bold tracking-normal">
+          {{ 'child.home.emptyTitle' | translate }}
+        </h2>
         <p class="mt-2 text-lg leading-7 text-slate-600 dark:text-slate-300">
           {{ 'child.home.emptySubtitle' | translate }}
         </p>

@@ -75,51 +75,86 @@ export class GroupsService {
   }
 
   createGroup(request: CreateGroupRequest): Promise<GroupSummary> {
-    return firstValueFrom(postIdempotent<GroupSummary>(this.http, `${this.runtimeConfig.apiBaseUrl}/groups`, request));
+    return firstValueFrom(
+      postIdempotent<GroupSummary>(this.http, `${this.runtimeConfig.apiBaseUrl}/groups`, request),
+    );
   }
 
   listInvites(groupId: string): Promise<GroupInvite[]> {
-    return firstValueFrom(this.http.get<GroupInvite[]>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`));
+    return firstValueFrom(
+      this.http.get<GroupInvite[]>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`),
+    );
   }
 
   inviteToGroup(groupId: string, request: InviteToGroupRequest): Promise<GroupInvite> {
     return firstValueFrom(
-      postIdempotent<GroupInvite>(this.http, `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`, request)
+      postIdempotent<GroupInvite>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`,
+        request,
+      ),
     );
   }
 
   revokeInvite(groupId: string, inviteId: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites/${inviteId}`));
+    return firstValueFrom(
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites/${inviteId}`,
+      ),
+    );
   }
 
   // Adds a child the caller guards directly as a Member -- no invite/accept step, since a
   // guardian already has authority over their own child (mirrors CreateChild's direct-provision
   // pattern rather than InviteToGroup's email-based flow).
   addChildToGroup(groupId: string, childId: string): Promise<void> {
-    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/children/${childId}`, {}));
+    return firstValueFrom(
+      this.http.put<void>(
+        `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/children/${childId}`,
+        {},
+      ),
+    );
   }
 
   getGroup(groupId: string): Promise<GroupDetail> {
-    return firstValueFrom(this.http.get<GroupDetail>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}`));
+    return firstValueFrom(
+      this.http.get<GroupDetail>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}`),
+    );
   }
 
   updateCalendarPermissionPolicy(groupId: string, policy: CalendarPermissionPolicy): Promise<void> {
     return firstValueFrom(
-      this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/calendar-permission-policy`, { policy })
+      this.http.put<void>(
+        `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/calendar-permission-policy`,
+        { policy },
+      ),
     );
   }
 
   updateMealplanPermissionPolicy(groupId: string, policy: MealplanPermissionPolicy): Promise<void> {
     return firstValueFrom(
-      this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/mealplan-permission-policy`, { policy })
+      this.http.put<void>(
+        `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/mealplan-permission-policy`,
+        { policy },
+      ),
     );
   }
 
   previewInvite(token: string): Promise<GroupInvitePreview> {
-    return firstValueFrom(this.http.get<GroupInvitePreview>(`${this.runtimeConfig.apiBaseUrl}/invites/${token}/preview`));
+    return firstValueFrom(
+      this.http.get<GroupInvitePreview>(
+        `${this.runtimeConfig.apiBaseUrl}/invites/${token}/preview`,
+      ),
+    );
   }
 
   acceptInvite(token: string): Promise<void> {
-    return firstValueFrom(postIdempotent<void>(this.http, `${this.runtimeConfig.apiBaseUrl}/invites/${token}/accept`, {}));
+    return firstValueFrom(
+      postIdempotent<void>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/invites/${token}/accept`,
+        {},
+      ),
+    );
   }
 }

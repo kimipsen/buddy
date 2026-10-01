@@ -7,6 +7,6 @@ import { ProfileMenu } from './profile-menu/profile-menu';
 @Component({
   selector: 'app-guardian-shell',
   imports: [RouterOutlet, RouterLink, ProfileMenu, TranslatePipe],
-  templateUrl: './guardian-shell.html'
+  templateUrl: './guardian-shell.html',
 })
 export class GuardianShell {}

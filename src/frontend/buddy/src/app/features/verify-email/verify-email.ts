@@ -10,7 +10,7 @@ import { UsersService } from '../../core/users.service';
 @Component({
   selector: 'app-verify-email',
   imports: [TranslatePipe],
-  templateUrl: './verify-email.html'
+  templateUrl: './verify-email.html',
 })
 export class VerifyEmail implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -46,9 +46,12 @@ export class VerifyEmail implements OnInit {
       // The backend's validation failures now come back as a structured envelope
       // ({ code, message, details, requestId }), not a bare string body.
       this.verifyError.set(
-        error instanceof HttpErrorResponse && error.error && typeof error.error === 'object' && 'message' in error.error
+        error instanceof HttpErrorResponse &&
+          error.error &&
+          typeof error.error === 'object' &&
+          'message' in error.error
           ? String(error.error.message)
-          : 'verifyEmail.error'
+          : 'verifyEmail.error',
       );
     } finally {
       this.verifying.set(false);

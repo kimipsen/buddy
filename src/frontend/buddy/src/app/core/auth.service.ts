@@ -3,7 +3,12 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { generateCodeChallenge, generateCodeVerifier } from './pkce';
 import { RuntimeConfigService } from './runtime-config.service';
-import { clearStoredTokens, readStoredTokens, writeStoredTokens, type TokenSet } from './token-storage';
+import {
+  clearStoredTokens,
+  readStoredTokens,
+  writeStoredTokens,
+  type TokenSet,
+} from './token-storage';
 
 const CODE_VERIFIER_KEY = 'buddy_keycloak_code_verifier';
 // Refresh a bit ahead of expiry to avoid racing an in-flight request against an expired token.
@@ -42,7 +47,7 @@ export class AuthService {
       code,
       redirect_uri: redirectUri,
       client_id: keycloak.clientId,
-      code_verifier: codeVerifier
+      code_verifier: codeVerifier,
     });
 
     this.setTokens(tokens);
@@ -54,7 +59,7 @@ export class AuthService {
     const keycloak = this.keycloak;
     const redirectUri = `${currentOrigin}${keycloak.redirectPath}`;
     const loginUrl = new URL(
-      `${keycloak.authority}/realms/${keycloak.realm}/protocol/openid-connect/auth`
+      `${keycloak.authority}/realms/${keycloak.realm}/protocol/openid-connect/auth`,
     );
 
     const codeVerifier = generateCodeVerifier();
@@ -79,9 +84,12 @@ export class AuthService {
 
     const keycloak = this.keycloak;
     const logoutUrl = new URL(
-      `${keycloak.authority}/realms/${keycloak.realm}/protocol/openid-connect/logout`
+      `${keycloak.authority}/realms/${keycloak.realm}/protocol/openid-connect/logout`,
     );
-    logoutUrl.searchParams.set('post_logout_redirect_uri', `${this.document.location.origin}/login`);
+    logoutUrl.searchParams.set(
+      'post_logout_redirect_uri',
+      `${this.document.location.origin}/login`,
+    );
 
     if (idToken) {
       logoutUrl.searchParams.set('id_token_hint', idToken);
@@ -122,7 +130,7 @@ export class AuthService {
       const refreshed = await this.exchangeToken({
         grant_type: 'refresh_token',
         refresh_token: current.refreshToken,
-        client_id: this.keycloak.clientId
+        client_id: this.keycloak.clientId,
       });
 
       this.setTokens(refreshed);
@@ -141,14 +149,14 @@ export class AuthService {
     const response = await fetch(tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(params)
+      body: new URLSearchParams(params),
     });
 
     if (!response.ok) {
       throw new Error(`Token request failed: ${response.status} ${response.statusText}`);
     }
 
-    const body = await response.json() as {
+    const body = (await response.json()) as {
       access_token: string;
       refresh_token?: string;
       id_token?: string;
@@ -159,7 +167,7 @@ export class AuthService {
       accessToken: body.access_token,
       refreshToken: body.refresh_token ?? null,
       idToken: body.id_token ?? null,
-      expiresAt: Date.now() + body.expires_in * 1000
+      expiresAt: Date.now() + body.expires_in * 1000,
     };
   }
 

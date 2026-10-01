@@ -7,7 +7,7 @@ import { EmailUpdatedData } from './user-event.model';
 @Component({
   selector: 'app-email-updated-event',
   imports: [UserDatePipe, TranslatePipe],
-  templateUrl: './email-updated-event.html'
+  templateUrl: './email-updated-event.html',
 })
 export class EmailUpdatedEvent {
   readonly data = input.required<EmailUpdatedData>();

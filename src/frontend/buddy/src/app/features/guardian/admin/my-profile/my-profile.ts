@@ -3,14 +3,19 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { listTimeZoneIds } from '../../../../core/date-utils';
-import { LANGUAGE_NAMES, Language, SUPPORTED_LANGUAGES, isSupportedLanguage } from '../../../../core/i18n/language';
+import {
+  LANGUAGE_NAMES,
+  Language,
+  SUPPORTED_LANGUAGES,
+  isSupportedLanguage,
+} from '../../../../core/i18n/language';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { CurrentUser, UsersService } from '../../../../core/users.service';
 
 @Component({
   selector: 'app-my-profile',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './my-profile.html'
+  templateUrl: './my-profile.html',
 })
 export class MyProfile implements OnInit {
   private readonly users = inject(UsersService);
@@ -18,7 +23,10 @@ export class MyProfile implements OnInit {
   // The backend's validation failures now come back as a structured envelope
   // ({ code, message, details, requestId }), not a bare string body.
   private apiErrorMessage(error: unknown, fallback: string): string {
-    return error instanceof HttpErrorResponse && error.error && typeof error.error === 'object' && 'message' in error.error
+    return error instanceof HttpErrorResponse &&
+      error.error &&
+      typeof error.error === 'object' &&
+      'message' in error.error
       ? String(error.error.message)
       : fallback;
   }

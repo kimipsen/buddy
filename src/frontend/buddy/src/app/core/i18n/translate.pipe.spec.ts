@@ -7,11 +7,11 @@ import { TranslationService } from './translation.service';
 describe('TranslatePipe', () => {
   function setup(translate: (key: string, params?: Record<string, string | number>) => string) {
     const translationServiceStub: Partial<TranslationService> = {
-      translate: vi.fn(translate)
+      translate: vi.fn(translate),
     };
 
     TestBed.configureTestingModule({
-      providers: [TranslatePipe, { provide: TranslationService, useValue: translationServiceStub }]
+      providers: [TranslatePipe, { provide: TranslationService, useValue: translationServiceStub }],
     });
 
     const pipe = TestBed.inject(TranslatePipe);

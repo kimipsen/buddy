@@ -15,7 +15,7 @@ describe('TimeZoneUpdatedEvent', () => {
 
     await TestBed.configureTestingModule({
       imports: [TimeZoneUpdatedEvent],
-      providers: [{ provide: UsersService, useValue: usersStub }]
+      providers: [{ provide: UsersService, useValue: usersStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(TimeZoneUpdatedEvent);
@@ -30,7 +30,7 @@ describe('TimeZoneUpdatedEvent', () => {
       userId: 'user-1',
       before: 'UTC',
       after: 'Europe/Copenhagen',
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Time zone updated');
@@ -43,9 +43,11 @@ describe('TimeZoneUpdatedEvent', () => {
       userId: 'user-1',
       before: 'America/New_York',
       after: 'Pacific/Kiritimati',
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
-    expect(compiled.textContent).toContain('Time zone changed from America/New_York to Pacific/Kiritimati.');
+    expect(compiled.textContent).toContain(
+      'Time zone changed from America/New_York to Pacific/Kiritimati.',
+    );
   });
 });

@@ -18,6 +18,9 @@ export class TimeOfDayPipe implements PipeTransform {
     const [hours, minutes] = value.split(':').map(Number);
     const date = new Date(2000, 0, 1, hours, minutes);
 
-    return new Intl.DateTimeFormat(this.translation.language(), { hour: 'numeric', minute: '2-digit' }).format(date);
+    return new Intl.DateTimeFormat(this.translation.language(), {
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date);
   }
 }

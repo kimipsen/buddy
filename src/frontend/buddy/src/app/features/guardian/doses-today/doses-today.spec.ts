@@ -19,7 +19,7 @@ describe('DosesToday', () => {
       kind: 0,
       language: 'en',
       timeZoneId: 'UTC',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -33,7 +33,7 @@ describe('DosesToday', () => {
       date: today,
       time: '08:00:00',
       status: 0,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -45,12 +45,12 @@ describe('DosesToday', () => {
   async function setup(stubs: Stubs = {}) {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child()]),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const medicinesStub: Partial<MedicinesService> = {
       listDoses: vi.fn(async () => []),
       setDoseStatus: vi.fn(),
-      ...stubs.medicines
+      ...stubs.medicines,
     };
 
     await TestBed.configureTestingModule({
@@ -58,8 +58,8 @@ describe('DosesToday', () => {
       providers: [
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: MedicinesService, useValue: medicinesStub }
-      ]
+        { provide: MedicinesService, useValue: medicinesStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(DosesToday);
@@ -81,7 +81,9 @@ describe('DosesToday', () => {
   }
 
   function findButton(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   it('shows the loading spinner while doses are loading', async () => {
@@ -109,7 +111,9 @@ describe('DosesToday', () => {
   });
 
   it('shows the translated error message when loading doses fails', async () => {
-    const { fixture } = await setup({ medicines: { listDoses: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      medicines: { listDoses: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -117,7 +121,9 @@ describe('DosesToday', () => {
   });
 
   it('shows the translated error message when listing children fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -125,10 +131,22 @@ describe('DosesToday', () => {
   });
 
   it('renders a pending dose with mark-taken and skip actions, sorted by time', async () => {
-    const earlyDose = dose({ medicineId: 'med-early', name: 'Vitamin D', time: '07:00:00', status: 0 });
-    const lateDose = dose({ medicineId: 'med-late', name: 'Ibuprofen', time: '20:00:00', status: 0 });
+    const earlyDose = dose({
+      medicineId: 'med-early',
+      name: 'Vitamin D',
+      time: '07:00:00',
+      status: 0,
+    });
+    const lateDose = dose({
+      medicineId: 'med-late',
+      name: 'Ibuprofen',
+      time: '20:00:00',
+      status: 0,
+    });
 
-    const { fixture } = await setup({ medicines: { listDoses: vi.fn(async () => [lateDose, earlyDose]) } });
+    const { fixture } = await setup({
+      medicines: { listDoses: vi.fn(async () => [lateDose, earlyDose]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -158,7 +176,7 @@ describe('DosesToday', () => {
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [childA, childB]) },
-      medicines: { listDoses }
+      medicines: { listDoses },
     });
     await settle(fixture);
 
@@ -171,15 +189,24 @@ describe('DosesToday', () => {
 
   it('renders a taken dose with a status pill and undo action, and a skipped dose likewise', async () => {
     const takenDose = dose({ medicineId: 'med-taken', name: 'Taken med', status: 1 });
-    const skippedDose = dose({ medicineId: 'med-skipped', name: 'Skipped med', time: '09:00:00', status: 2 });
+    const skippedDose = dose({
+      medicineId: 'med-skipped',
+      name: 'Skipped med',
+      time: '09:00:00',
+      status: 2,
+    });
 
-    const { fixture } = await setup({ medicines: { listDoses: vi.fn(async () => [takenDose, skippedDose]) } });
+    const { fixture } = await setup({
+      medicines: { listDoses: vi.fn(async () => [takenDose, skippedDose]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Taken');
     expect(compiled.textContent).toContain('Skipped');
-    const undoButtons = Array.from(compiled.querySelectorAll('button')).filter((b) => b.textContent?.trim() === 'Undo');
+    const undoButtons = Array.from(compiled.querySelectorAll('button')).filter(
+      (b) => b.textContent?.trim() === 'Undo',
+    );
     expect(undoButtons).toHaveLength(2);
   });
 
@@ -189,7 +216,7 @@ describe('DosesToday', () => {
     const setDoseStatus = vi.fn(async () => updated);
 
     const { fixture, medicines } = await setup({
-      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus }
+      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus },
     });
     await settle(fixture);
 
@@ -207,7 +234,7 @@ describe('DosesToday', () => {
     const setDoseStatus = vi.fn(async () => updated);
 
     const { fixture, medicines } = await setup({
-      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus }
+      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus },
     });
     await settle(fixture);
 
@@ -225,7 +252,7 @@ describe('DosesToday', () => {
     const setDoseStatus = vi.fn(async () => updated);
 
     const { fixture, medicines } = await setup({
-      medicines: { listDoses: vi.fn(async () => [takenDose]), setDoseStatus }
+      medicines: { listDoses: vi.fn(async () => [takenDose]), setDoseStatus },
     });
     await settle(fixture);
 
@@ -244,11 +271,11 @@ describe('DosesToday', () => {
       () =>
         new Promise<MedicineDoseOccurrence>((resolve) => {
           resolveUpdate = resolve;
-        })
+        }),
     );
 
     const { fixture } = await setup({
-      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus }
+      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus },
     });
     await settle(fixture);
 
@@ -273,7 +300,7 @@ describe('DosesToday', () => {
     const setDoseStatus = vi.fn(async () => Promise.reject(new Error('boom')));
 
     const { fixture } = await setup({
-      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus }
+      medicines: { listDoses: vi.fn(async () => [pendingDose]), setDoseStatus },
     });
     await settle(fixture);
 
@@ -299,7 +326,7 @@ describe('DosesToday', () => {
           waiting.push(() => {
             inFlight--;
             resolve(valueFor(id));
-          })
+          }),
         );
       },
       releaseOne: () => waiting.shift()!(),
@@ -308,23 +335,25 @@ describe('DosesToday', () => {
       },
       get maxInFlight() {
         return maxInFlight;
-      }
+      },
     };
   }
 
   // Regression guard for the dashboard burst: one listDoses per child used to fire all at once
   // via Promise.all. Still one request per child, but never more than the cap in flight.
-  it('caps concurrent per-child dose requests and still renders every child\'s doses', async () => {
+  it("caps concurrent per-child dose requests and still renders every child's doses", async () => {
     const childCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
     const children = Array.from({ length: childCount }, (_, i) =>
-      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } })
+      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } }),
     );
-    const gate = gatedCalls((childId) => [dose({ medicineId: `med-${childId}`, name: `Med-${childId}` })]);
+    const gate = gatedCalls((childId) => [
+      dose({ medicineId: `med-${childId}`, name: `Med-${childId}` }),
+    ]);
     const listDoses = vi.fn((childId: string) => gate.call(childId));
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => children) },
-      medicines: { listDoses }
+      medicines: { listDoses },
     });
     await settle(fixture);
 

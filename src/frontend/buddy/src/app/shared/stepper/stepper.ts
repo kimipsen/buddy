@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-stepper',
   imports: [FormsModule],
-  templateUrl: './stepper.html'
+  templateUrl: './stepper.html',
 })
 export class Stepper {
   readonly value = input.required<number>();

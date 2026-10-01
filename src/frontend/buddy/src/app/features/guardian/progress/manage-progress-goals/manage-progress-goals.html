@@ -1,9 +1,15 @@
-<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+<section
+  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+>
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-    <h3 class="text-lg font-semibold tracking-normal">{{ 'progress.manageProgressGoals.title' | translate }}</h3>
+    <h3 class="text-lg font-semibold tracking-normal">
+      {{ 'progress.manageProgressGoals.title' | translate }}
+    </h3>
 
     @if (children().length > 1) {
-      <label class="sr-only" for="selectedChildId">{{ 'common.selectChildLabel' | translate }}</label>
+      <label class="sr-only" for="selectedChildId">{{
+        'common.selectChildLabel' | translate
+      }}</label>
       <select
         id="selectedChildId"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
@@ -18,15 +24,21 @@
   </div>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'progress.manageProgressGoals.loading' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'progress.manageProgressGoals.loading' | translate }}
+    </p>
   } @else if (!hasChildren()) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'progress.manageProgressGoals.noChildrenLinked' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'progress.manageProgressGoals.noChildrenLinked' | translate }}
+    </p>
   } @else {
     @if (error(); as message) {
       <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
     }
 
-    <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">{{ 'progress.manageProgressGoals.hint' | translate }}</p>
+    <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'progress.manageProgressGoals.hint' | translate }}
+    </p>
 
     <div class="space-y-2">
       @for (row of rows(); track $index) {
@@ -89,7 +101,9 @@
       </button>
 
       @if (saved()) {
-        <span class="text-sm text-emerald-700 dark:text-emerald-400">{{ 'progress.manageProgressGoals.saveSuccess' | translate }}</span>
+        <span class="text-sm text-emerald-700 dark:text-emerald-400">{{
+          'progress.manageProgressGoals.saveSuccess' | translate
+        }}</span>
       }
     </div>
 

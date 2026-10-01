@@ -13,7 +13,7 @@ function stubMatchMedia(initialMatches: boolean) {
     addEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
       listeners.push(listener);
     },
-    removeEventListener: () => {}
+    removeEventListener: () => {},
   };
 
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue(mediaQueryList));
@@ -22,7 +22,7 @@ function stubMatchMedia(initialMatches: boolean) {
     emitChange(matches: boolean): void {
       mediaQueryList.matches = matches;
       listeners.forEach((listener) => listener({ matches }));
-    }
+    },
   };
 }
 
@@ -73,9 +73,24 @@ describe('ThemeService', () => {
 
   describe('isDark', () => {
     it.each([
-      { description: 'is true when the mode is "dark", regardless of the OS preference', osMatches: false, mode: 'dark' as const, expected: true },
-      { description: 'is false when the mode is "light", regardless of the OS preference', osMatches: true, mode: 'light' as const, expected: false },
-      { description: 'follows the OS preference when the mode is "system"', osMatches: true, mode: 'system' as const, expected: true }
+      {
+        description: 'is true when the mode is "dark", regardless of the OS preference',
+        osMatches: false,
+        mode: 'dark' as const,
+        expected: true,
+      },
+      {
+        description: 'is false when the mode is "light", regardless of the OS preference',
+        osMatches: true,
+        mode: 'light' as const,
+        expected: false,
+      },
+      {
+        description: 'follows the OS preference when the mode is "system"',
+        osMatches: true,
+        mode: 'system' as const,
+        expected: true,
+      },
     ])('$description', ({ osMatches, mode, expected }) => {
       stubMatchMedia(osMatches);
       const service = new ThemeService();

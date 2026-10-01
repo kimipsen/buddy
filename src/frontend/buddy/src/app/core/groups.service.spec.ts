@@ -10,7 +10,7 @@ import {
   GroupInvitePreview,
   GroupSummary,
   GroupsService,
-  MealplanPermissionPolicy
+  MealplanPermissionPolicy,
 } from './groups.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -27,8 +27,8 @@ describe('GroupsService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: runtimeConfigStub }
-      ]
+        { provide: RuntimeConfigService, useValue: runtimeConfigStub },
+      ],
     });
 
     service = TestBed.inject(GroupsService);
@@ -98,7 +98,13 @@ describe('GroupsService', () => {
   describe('listInvites', () => {
     it('GETs the invites for a group and resolves them', async () => {
       const invites: GroupInvite[] = [
-        { id: 'invite-1', email: 'a@b.test', role: 2, invitedAt: '2026-08-01T00:00:00Z', expiresAt: '2026-08-08T00:00:00Z' }
+        {
+          id: 'invite-1',
+          email: 'a@b.test',
+          role: 2,
+          invitedAt: '2026-08-01T00:00:00Z',
+          expiresAt: '2026-08-08T00:00:00Z',
+        },
       ];
 
       const promise = service.listInvites('group-1');
@@ -127,7 +133,7 @@ describe('GroupsService', () => {
         email: 'c@d.test',
         role: 1,
         invitedAt: '2026-08-01T00:00:00Z',
-        expiresAt: '2026-08-08T00:00:00Z'
+        expiresAt: '2026-08-08T00:00:00Z',
       };
 
       const promise = service.inviteToGroup('group-1', { email: 'c@d.test', role: 1 });
@@ -189,9 +195,11 @@ describe('GroupsService', () => {
       const detail: GroupDetail = {
         id: 'group-1',
         name: 'Home',
-        members: [{ userId: 'user-1', givenName: 'Jamie', familyName: 'Adult', role: 0, isChild: false }],
+        members: [
+          { userId: 'user-1', givenName: 'Jamie', familyName: 'Adult', role: 0, isChild: false },
+        ],
         calendarPermissionPolicy: { Owner: 2, Admin: 2, Member: 1 },
-        mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 }
+        mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
       };
 
       const promise = service.getGroup('group-1');

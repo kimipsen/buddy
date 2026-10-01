@@ -15,7 +15,7 @@ describe('UserDeletedEvent', () => {
 
     await TestBed.configureTestingModule({
       imports: [UserDeletedEvent],
-      providers: [{ provide: UsersService, useValue: usersStub }]
+      providers: [{ provide: UsersService, useValue: usersStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(UserDeletedEvent);
@@ -34,7 +34,10 @@ describe('UserDeletedEvent', () => {
   });
 
   it('renders the timestamp in the injected time zone rather than a hardcoded one', async () => {
-    const { compiled } = await setup({ userId: 'user-1', occurredAt: '2026-01-15T09:30:00Z' }, 'Pacific/Kiritimati');
+    const { compiled } = await setup(
+      { userId: 'user-1', occurredAt: '2026-01-15T09:30:00Z' },
+      'Pacific/Kiritimati',
+    );
 
     // 09:30 UTC on 2026-01-15 is 23:30 the same day in UTC+14 Kiritimati.
     expect(compiled.textContent).toContain('Jan 15, 2026, 11:30:00 PM');

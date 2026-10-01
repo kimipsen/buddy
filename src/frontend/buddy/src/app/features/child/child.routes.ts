@@ -7,14 +7,14 @@ import { ChildMealplan } from './mealplan/child-mealplan';
 export const CHILD_ROUTES: Routes = [
   {
     path: '',
-    component: ChildHome
+    component: ChildHome,
   },
   {
     path: 'mealplan',
-    component: ChildMealplan
+    component: ChildMealplan,
   },
   {
     path: 'calendar',
-    component: ChildCalendar
-  }
+    component: ChildCalendar,
+  },
 ];

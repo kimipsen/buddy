@@ -15,7 +15,7 @@ describe('LanguageUpdatedEvent', () => {
 
     await TestBed.configureTestingModule({
       imports: [LanguageUpdatedEvent],
-      providers: [{ provide: UsersService, useValue: usersStub }]
+      providers: [{ provide: UsersService, useValue: usersStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(LanguageUpdatedEvent);
@@ -30,7 +30,7 @@ describe('LanguageUpdatedEvent', () => {
       userId: 'user-1',
       before: 'en',
       after: 'da',
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Language updated');
@@ -43,7 +43,7 @@ describe('LanguageUpdatedEvent', () => {
       userId: 'user-1',
       before: 'da',
       after: 'fr',
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Language changed from Dansk to fr.');

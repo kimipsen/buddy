@@ -5,7 +5,7 @@ export const mealplan = {
   loadError: 'Unable to load the meal plan.',
   scope: {
     myFamily: 'My family',
-    readOnlyBadge: 'read only'
+    readOnlyBadge: 'read only',
   },
   sharing: {
     title: 'Share with a group',
@@ -15,7 +15,7 @@ export const mealplan = {
     currentlySharedWith: 'Shared with {name}.',
     noGroups: 'Create a group, or become an admin of one, to share this meal plan.',
     shareError: 'Unable to share the meal plan with that group.',
-    unshareError: 'Unable to stop sharing the meal plan.'
+    unshareError: 'Unable to stop sharing the meal plan.',
   },
   ical: {
     title: 'Calendar subscription',
@@ -31,7 +31,7 @@ export const mealplan = {
     loadError: 'Unable to load subscription links.',
     newUrlHint: 'Copy this link into your calendar app now -- it will not be shown again.',
     copyButton: 'Copy link',
-    copiedButton: 'Copied!'
+    copiedButton: 'Copied!',
   },
   manageMeals: {
     title: 'Meals',
@@ -50,7 +50,7 @@ export const mealplan = {
     similarMealsWarning: 'Similar meals already exist:',
     createError: 'Unable to create the meal.',
     archiveError: 'Unable to archive this meal.',
-    loadError: 'Unable to load meals.'
+    loadError: 'Unable to load meals.',
   },
   assign: {
     title: "This week's plan",
@@ -63,17 +63,17 @@ export const mealplan = {
     dragHint: 'Drag to move or swap with another day or meal',
     previousWeek: '← Previous week',
     nextWeek: 'Next week →',
-    pastDay: '(past)'
+    pastDay: '(past)',
   },
   slots: {
     breakfast: 'Breakfast',
     lunch: 'Lunch',
     dinner: 'Dinner',
-    snack: 'Snack'
+    snack: 'Snack',
   },
   picker: {
     notPlanned: 'Not planned',
-    noMatches: 'No meals match.'
+    noMatches: 'No meals match.',
   },
   aiAssistant: {
     entryButton: 'Plan with AI',
@@ -90,11 +90,11 @@ export const mealplan = {
       fromLabel: 'From',
       toLabel: 'To',
       slotsLabel: 'Meal slots to plan',
-      notesPlaceholder: "Anything else to mention? (optional)",
+      notesPlaceholder: 'Anything else to mention? (optional)',
       startButton: 'Start planning',
       starting: 'Starting…',
       startError: 'Unable to start a session. Check that a provider is configured.',
-      noSlotsSelected: 'Choose at least one meal slot.'
+      noSlotsSelected: 'Choose at least one meal slot.',
     },
     session: {
       statusDrafting: 'Drafting',
@@ -117,7 +117,7 @@ export const mealplan = {
       discardError: 'Unable to discard this session.',
       discardConfirmPrompt: 'Discard this session? This cannot be undone.',
       discardConfirmButton: 'Confirm',
-      discardCancelButton: 'Cancel'
-    }
-  }
+      discardCancelButton: 'Cancel',
+    },
+  },
 };

@@ -26,7 +26,11 @@ const maxChars = Number(flag('--max-chars', '60000'));
 const reportPath = args[0] ?? 'reports/stryker-incremental.json';
 
 const report = JSON.parse(readFileSync(reportPath, 'utf8'));
-const { GITHUB_REPOSITORY: repo, GITHUB_SHA: sha, GITHUB_SERVER_URL: server = 'https://github.com' } = process.env;
+const {
+  GITHUB_REPOSITORY: repo,
+  GITHUB_SHA: sha,
+  GITHUB_SERVER_URL: server = 'https://github.com',
+} = process.env;
 const prefix = process.env.REPORT_PATH_PREFIX ?? 'src/frontend/buddy/';
 
 const FINDINGS = new Set(['Survived', 'NoCoverage']);
@@ -38,10 +42,15 @@ for (const [path, file] of Object.entries(report.files).sort(([a], [b]) => a.loc
   const findings = [];
   for (const mutant of file.mutants) {
     counts[mutant.status] = (counts[mutant.status] ?? 0) + 1;
-    if (FINDINGS.has(mutant.status)) findings.push({ ...mutant, original: snippet(lines, mutant.location) });
+    if (FINDINGS.has(mutant.status))
+      findings.push({ ...mutant, original: snippet(lines, mutant.location) });
   }
   if (findings.length === 0) continue;
-  findings.sort((a, b) => a.location.start.line - b.location.start.line || a.location.start.column - b.location.start.column);
+  findings.sort(
+    (a, b) =>
+      a.location.start.line - b.location.start.line ||
+      a.location.start.column - b.location.start.column,
+  );
   files.push({ path, findings });
 }
 
@@ -55,8 +64,10 @@ const header = [
   `Mutation score: **${score}** · ${n('Survived')} survived · ${n('NoCoverage')} without coverage · ` +
     `${n('Killed')} killed · ${n('Timeout')} timed out · ${n('CompileError')} compile errors`,
   '',
-  sha ? `Generated from \`${sha.slice(0, 7)}\`${process.env.GITHUB_RUN_ID ? ` by [this run](${server}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})` : ''}. ` +
-    'This issue is rewritten by every nightly run, so ticked boxes are not kept; a fixed mutant simply disappears.' : '',
+  sha
+    ? `Generated from \`${sha.slice(0, 7)}\`${process.env.GITHUB_RUN_ID ? ` by [this run](${server}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})` : ''}. ` +
+      'This issue is rewritten by every nightly run, so ticked boxes are not kept; a fixed mutant simply disappears.'
+    : '',
   '',
   'Each entry is `line: Mutator` followed by the original code and the replacement that no test noticed. ' +
     'Fix a finding by adding or tightening a test so it fails for the replacement; ' +
@@ -67,7 +78,10 @@ const header = [
 const sections = files.map(({ path, findings }) => {
   const items = findings.map((m) => {
     const line = m.location.start.line;
-    const where = repo && sha ? `[L${line}](${server}/${repo}/blob/${sha}/${prefix}${path}#L${line})` : `L${line}`;
+    const where =
+      repo && sha
+        ? `[L${line}](${server}/${repo}/blob/${sha}/${prefix}${path}#L${line})`
+        : `L${line}`;
     const tag = m.status === 'NoCoverage' ? ' *(no coverage)*' : '';
     return `- [ ] ${where}: \`${m.mutatorName}\`${tag}: ${code(m.original)} → ${code(m.replacement ?? '')}`;
   });
@@ -87,8 +101,9 @@ for (const section of sections) {
   shown++;
 }
 if (shown < sections.length) {
-  body += `\n> [!NOTE]\n> ${sections.length - shown} more file(s) did not fit in an issue body. ` +
-    'The full list is in the `mutation-findings.md` file of the run\'s `frontend-mutation-report` artifact.\n';
+  body +=
+    `\n> [!NOTE]\n> ${sections.length - shown} more file(s) did not fit in an issue body. ` +
+    "The full list is in the `mutation-findings.md` file of the run's `frontend-mutation-report` artifact.\n";
 }
 process.stdout.write(body);
 

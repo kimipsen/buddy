@@ -36,7 +36,10 @@ export class TranslationService {
   }
 }
 
-function resolve(dictionary: Record<string, TranslationValue>, key: string): TranslationValue | undefined {
+function resolve(
+  dictionary: Record<string, TranslationValue>,
+  key: string,
+): TranslationValue | undefined {
   return key.split('.').reduce<TranslationValue | undefined>((node, segment) => {
     return node && typeof node === 'object' ? node[segment] : undefined;
   }, dictionary);
@@ -45,5 +48,7 @@ function resolve(dictionary: Record<string, TranslationValue>, key: string): Tra
 // Placeholders use single braces ("{name}") rather than Angular's own "{{ }}" interpolation syntax
 // to keep a translated string with a placeholder unambiguous inside a template expression.
 function interpolate(template: string, params: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in params ? String(params[key]) : match));
+  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+    key in params ? String(params[key]) : match,
+  );
 }

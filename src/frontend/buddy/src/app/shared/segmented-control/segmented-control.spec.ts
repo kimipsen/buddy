@@ -20,7 +20,7 @@ describe('SegmentedControl', () => {
     fixture.componentRef.setInput('options', [
       { value: 0, label: 'Guardian' },
       { value: 1, label: 'Self-escort' },
-      { value: 2, label: 'Sibling' }
+      { value: 2, label: 'Sibling' },
     ]);
     fixture.componentRef.setInput('selected', selected);
     fixture.detectChanges();
@@ -33,13 +33,21 @@ describe('SegmentedControl', () => {
     const { buttons } = await setup(0);
 
     expect(buttons).toHaveLength(3);
-    expect(buttons.map((button) => button.textContent?.trim())).toEqual(['Guardian', 'Self-escort', 'Sibling']);
+    expect(buttons.map((button) => button.textContent?.trim())).toEqual([
+      'Guardian',
+      'Self-escort',
+      'Sibling',
+    ]);
   });
 
   it('marks the selected option as checked', async () => {
     const { buttons } = await setup(1);
 
-    expect(buttons.map((button) => button.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
+    expect(buttons.map((button) => button.getAttribute('aria-checked'))).toEqual([
+      'false',
+      'true',
+      'false',
+    ]);
   });
 
   it('emits selectedChange with the clicked option value', async () => {

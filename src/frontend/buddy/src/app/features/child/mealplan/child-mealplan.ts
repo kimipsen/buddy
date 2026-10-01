@@ -11,7 +11,7 @@ const SLOT_LABELS: Record<MealSlot, string> = {
   0: 'dashboard.mealplan.slots.breakfast',
   1: 'dashboard.mealplan.slots.lunch',
   2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack'
+  3: 'dashboard.mealplan.slots.snack',
 };
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
@@ -39,7 +39,7 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
 
     return {
       date: toIsoDate(date),
-      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
+      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' }),
     };
   });
 }
@@ -55,7 +55,7 @@ function defaultAnchor(): string {
 @Component({
   selector: 'app-child-mealplan',
   imports: [RouterLink, TranslatePipe],
-  templateUrl: './child-mealplan.html'
+  templateUrl: './child-mealplan.html',
 })
 export class ChildMealplan implements OnInit {
   private readonly mealplans = inject(MealplansService);
@@ -66,7 +66,9 @@ export class ChildMealplan implements OnInit {
   protected readonly slotLabels = SLOT_LABELS;
   protected readonly stars = STARS;
   protected readonly anchorDate = signal(defaultAnchor());
-  protected readonly days = computed(() => buildDays(this.anchorDate(), this.translation.language()));
+  protected readonly days = computed(() =>
+    buildDays(this.anchorDate(), this.translation.language()),
+  );
 
   protected readonly entriesByKey = signal<Partial<Record<string, MealPlanEntry>>>({});
   protected readonly hasAnyEntries = computed(() => Object.keys(this.entriesByKey()).length > 0);
@@ -100,7 +102,11 @@ export class ChildMealplan implements OnInit {
 
   private shiftWeek(offsetDays: number): void {
     const anchor = parseIsoDate(this.anchorDate());
-    const shifted = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offsetDays);
+    const shifted = new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() + offsetDays,
+    );
     this.anchorDate.set(toIsoDate(shifted));
   }
 
@@ -150,7 +156,11 @@ export class ChildMealplan implements OnInit {
     this.cancelEditing();
   }
 
-  private async submitRating(entry: MealPlanEntry, starCount: number, comment: string | null): Promise<void> {
+  private async submitRating(
+    entry: MealPlanEntry,
+    starCount: number,
+    comment: string | null,
+  ): Promise<void> {
     if (!this.childId) {
       return;
     }
@@ -189,7 +199,11 @@ export class ChildMealplan implements OnInit {
       const me = await this.users.ensureCurrentUser();
       this.childId = me.id;
       const days = this.days();
-      const entries = await this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, days[0].date, days.at(-1)!.date);
+      const entries = await this.mealplans.listMealPlan(
+        { kind: 'family', childId: me.id },
+        days[0].date,
+        days.at(-1)!.date,
+      );
       const byKey: Partial<Record<string, MealPlanEntry>> = {};
 
       for (const entry of entries) {

@@ -43,19 +43,22 @@ export class UsersService {
    * repeated calls (e.g. from a route guard firing on every navigation) only hit the network once.
    */
   ensureCurrentUser(): Promise<CurrentUser> {
-    this.currentUserPromise ??= firstValueFrom(this.http.get<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me`)).then(
-      (user) => {
-        this.timeZoneState.set(user.timeZoneId);
-        this.i18n.setLanguageFromServer(user.language);
-        return user;
-      }
-    );
+    this.currentUserPromise ??= firstValueFrom(
+      this.http.get<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me`),
+    ).then((user) => {
+      this.timeZoneState.set(user.timeZoneId);
+      this.i18n.setLanguageFromServer(user.language);
+      return user;
+    });
     return this.currentUserPromise;
   }
 
   async updateName(givenName: string, familyName: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
-      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/name`, { givenName, familyName })
+      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/name`, {
+        givenName,
+        familyName,
+      }),
     );
     this.currentUserPromise = Promise.resolve(updated);
     return updated;
@@ -63,7 +66,7 @@ export class UsersService {
 
   async updateEmail(email: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
-      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/email`, { email })
+      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/email`, { email }),
     );
     this.currentUserPromise = Promise.resolve(updated);
     return updated;
@@ -71,7 +74,11 @@ export class UsersService {
 
   async verifyEmail(token: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
-      postIdempotent<CurrentUser>(this.http, `${this.runtimeConfig.apiBaseUrl}/users/me/email/verify`, { token })
+      postIdempotent<CurrentUser>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/users/me/email/verify`,
+        { token },
+      ),
     );
     this.currentUserPromise = Promise.resolve(updated);
     return updated;
@@ -79,7 +86,9 @@ export class UsersService {
 
   async updateTimeZone(timeZoneId: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
-      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/timezone`, { timeZoneId })
+      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/timezone`, {
+        timeZoneId,
+      }),
     );
     this.currentUserPromise = Promise.resolve(updated);
     this.timeZoneState.set(updated.timeZoneId);
@@ -88,7 +97,9 @@ export class UsersService {
 
   async updateLanguage(language: Language): Promise<CurrentUser> {
     const updated = await firstValueFrom(
-      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/language`, { language })
+      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/language`, {
+        language,
+      }),
     );
     this.currentUserPromise = Promise.resolve(updated);
     this.i18n.setLanguageFromServer(updated.language);

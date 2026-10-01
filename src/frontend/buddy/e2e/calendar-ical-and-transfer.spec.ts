@@ -9,7 +9,10 @@ import { createCalendar, createGroup } from './support/guardian-data';
 // transfer *from* (CreateCalendarRequest.groupId is always required), but transferring an
 // *already-existing group-owned* calendar to a *different* group it's own real flow, so this spec
 // exercises it as the closest equivalent to "transfer a calendar to a group".
-test('guardian generates and revokes an iCal subscription link, then moves the calendar to another group', async ({ page, loginAs }) => {
+test('guardian generates and revokes an iCal subscription link, then moves the calendar to another group', async ({
+  page,
+  loginAs,
+}) => {
   await loginAs(SEEDED_USERS.alice);
 
   const groupAName = await createGroup(page, 'E2eGroupA');
@@ -21,7 +24,9 @@ test('guardian generates and revokes an iCal subscription link, then moves the c
   await calendarRow.getByRole('button', { name: 'Subscribe' }).click();
 
   const [createResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'POST' && res.url().includes('/ical-tokens')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'POST' && res.url().includes('/ical-tokens'),
+    ),
     calendarRow.getByRole('button', { name: 'Generate new link' }).click(),
   ]);
   expect(createResponse.ok()).toBe(true);
@@ -36,7 +41,9 @@ test('guardian generates and revokes an iCal subscription link, then moves the c
 
   // Revoke it, then confirm the same URL no longer resolves.
   const [revokeResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'DELETE' && res.url().includes('/ical-tokens/')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'DELETE' && res.url().includes('/ical-tokens/'),
+    ),
     calendarRow.getByRole('button', { name: 'Revoke' }).click(),
   ]);
   expect(revokeResponse.ok()).toBe(true);
@@ -59,7 +66,10 @@ test('guardian generates and revokes an iCal subscription link, then moves the c
   await calendarRowAfterNav.getByLabel('Choose a group').selectOption({ label: groupBName });
 
   const [moveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && /\/calendars\/[^/]+\/group\/[^/]+$/.test(res.url())),
+    page.waitForResponse(
+      (res) =>
+        res.request().method() === 'PUT' && /\/calendars\/[^/]+\/group\/[^/]+$/.test(res.url()),
+    ),
     calendarRowAfterNav.getByRole('button', { name: 'Move', exact: true }).click(),
   ]);
   expect(moveResponse.ok()).toBe(true);

@@ -15,7 +15,7 @@ describe('NameUpdatedEvent', () => {
 
     await TestBed.configureTestingModule({
       imports: [NameUpdatedEvent],
-      providers: [{ provide: UsersService, useValue: usersStub }]
+      providers: [{ provide: UsersService, useValue: usersStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(NameUpdatedEvent);
@@ -30,7 +30,7 @@ describe('NameUpdatedEvent', () => {
       userId: 'user-1',
       before: { givenName: 'Ann', familyName: 'A' },
       after: { givenName: 'Anna', familyName: 'A' },
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Name updated');
@@ -43,7 +43,7 @@ describe('NameUpdatedEvent', () => {
       userId: 'user-1',
       before: { givenName: 'Ann', familyName: '' },
       after: { givenName: 'Anna', familyName: 'A' },
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     // givenName + ' ' + familyName with an empty familyName leaves a trailing space on "Ann ",

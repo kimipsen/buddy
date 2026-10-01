@@ -7,7 +7,7 @@ export const dashboard = {
     loadError: 'Unable to load children.',
     empty: 'No children linked yet. Add one from Settings.',
     linkedBadge: 'Linked',
-    starCount: '{count} stars'
+    starCount: '{count} stars',
   },
   tasks: {
     title: 'Today’s tasks',
@@ -17,13 +17,13 @@ export const dashboard = {
     empty: 'No tasks due today.',
     overdue: 'Overdue',
     dueToday: 'Due today',
-    rollup: '{completed} of {total} done'
+    rollup: '{completed} of {total} done',
   },
   events: {
     title: 'Today’s events',
     loading: 'Loading events…',
     loadError: 'Unable to load today’s events.',
-    empty: 'Nothing else on the calendar today.'
+    empty: 'Nothing else on the calendar today.',
   },
   mealplan: {
     title: 'Today’s meal plan',
@@ -36,8 +36,8 @@ export const dashboard = {
       breakfast: 'Breakfast',
       lunch: 'Lunch',
       dinner: 'Dinner',
-      snack: 'Snack'
-    }
+      snack: 'Snack',
+    },
   },
   doses: {
     title: 'Today’s medicine',
@@ -51,7 +51,7 @@ export const dashboard = {
     skip: 'Skip',
     taken: 'Taken',
     skipped: 'Skipped',
-    undo: 'Undo'
+    undo: 'Undo',
   },
   pickup: {
     title: 'Today’s pickup & drop-off',
@@ -62,12 +62,12 @@ export const dashboard = {
     empty: 'Nothing planned for today.',
     slots: {
       dropOff: 'Drop-off',
-      pickUp: 'Pickup'
+      pickUp: 'Pickup',
     },
     kind: {
       guardian: 'A guardian',
       selfEscort: 'Goes alone',
-      sibling: 'A sibling'
-    }
-  }
+      sibling: 'A sibling',
+    },
+  },
 };

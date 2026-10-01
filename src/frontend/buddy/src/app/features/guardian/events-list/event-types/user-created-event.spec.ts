@@ -15,7 +15,7 @@ describe('UserCreatedEvent', () => {
 
     await TestBed.configureTestingModule({
       imports: [UserCreatedEvent],
-      providers: [{ provide: UsersService, useValue: usersStub }]
+      providers: [{ provide: UsersService, useValue: usersStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(UserCreatedEvent);
@@ -32,7 +32,7 @@ describe('UserCreatedEvent', () => {
       email: { value: 'ann@buddy.test', isVerified: true },
       userName: 'auser',
       name: { givenName: 'Ann', familyName: 'A' },
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Account created');
@@ -47,7 +47,7 @@ describe('UserCreatedEvent', () => {
       email: { value: 'ann@buddy.test', isVerified: true },
       userName: null,
       name: { givenName: 'Ann', familyName: 'A' },
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Ann A (ann@buddy.test) joined via Keycloak.');

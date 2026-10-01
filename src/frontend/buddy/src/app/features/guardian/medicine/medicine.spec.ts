@@ -14,13 +14,13 @@ import { GuardianMedicine } from './medicine';
 describe('GuardianMedicine', () => {
   async function setup() {
     const guardiansStub: Partial<GuardiansService> = {
-      listMyChildren: vi.fn(async () => [])
+      listMyChildren: vi.fn(async () => []),
     };
     const medicinesStub: Partial<MedicinesService> = {
-      listSchedules: vi.fn(async () => [])
+      listSchedules: vi.fn(async () => []),
     };
     const groupsStub: Partial<GroupsService> = {
-      listMyGroups: vi.fn(async () => [])
+      listMyGroups: vi.fn(async () => []),
     };
 
     await TestBed.configureTestingModule({
@@ -29,8 +29,8 @@ describe('GuardianMedicine', () => {
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: MedicinesService, useValue: medicinesStub },
-        { provide: GroupsService, useValue: groupsStub }
-      ]
+        { provide: GroupsService, useValue: groupsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianMedicine);

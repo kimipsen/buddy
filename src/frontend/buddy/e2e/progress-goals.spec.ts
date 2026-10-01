@@ -6,7 +6,11 @@ import { createChild } from './support/guardian-data';
 // matching the frontend's own "Make sure star counts are positive and increasing" error text. This
 // spec always adds two rows with thresholds 5 then 10 so both the frontend's canSave() gate and
 // the backend's own validation are satisfied throughout.
-test('guardian adds and removes goal-post rows, and changes persist after reload', async ({ page, loginAs, newGuardian }) => {
+test('guardian adds and removes goal-post rows, and changes persist after reload', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
   await loginAs(await newGuardian());
 

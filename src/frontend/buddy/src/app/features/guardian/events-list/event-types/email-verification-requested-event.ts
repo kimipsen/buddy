@@ -7,7 +7,7 @@ import { EmailVerificationRequestedData } from './user-event.model';
 @Component({
   selector: 'app-email-verification-requested-event',
   imports: [UserDatePipe, TranslatePipe],
-  templateUrl: './email-verification-requested-event.html'
+  templateUrl: './email-verification-requested-event.html',
 })
 export class EmailVerificationRequestedEvent {
   readonly data = input.required<EmailVerificationRequestedData>();

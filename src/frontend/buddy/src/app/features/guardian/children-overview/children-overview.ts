@@ -15,7 +15,7 @@ export const PROGRESS_REQUEST_CONCURRENCY = 4;
 @Component({
   selector: 'app-children-overview',
   imports: [TranslatePipe, LoadingSpinner],
-  templateUrl: './children-overview.html'
+  templateUrl: './children-overview.html',
 })
 export class ChildrenOverview implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -27,7 +27,9 @@ export class ChildrenOverview implements OnInit {
 
   // Keyed by child ID rather than joined onto ChildSummary -- progress can fail or load slower
   // per child without blocking the (more important) name/linked-status list from rendering.
-  protected readonly progressByChildId = signal<Record<string, { totalStars: number; icon: string }>>({});
+  protected readonly progressByChildId = signal<
+    Record<string, { totalStars: number; icon: string }>
+  >({});
 
   ngOnInit(): void {
     void this.loadChildren();
@@ -56,7 +58,10 @@ export class ChildrenOverview implements OnInit {
     await mapWithConcurrency(children, PROGRESS_REQUEST_CONCURRENCY, async (child) => {
       try {
         const summary = await this.progressService.getChildProgress(child.id);
-        const entry = { totalStars: summary.totalStars, icon: summary.currentIcon ?? summary.nextGoalIcon };
+        const entry = {
+          totalStars: summary.totalStars,
+          icon: summary.currentIcon ?? summary.nextGoalIcon,
+        };
 
         this.progressByChildId.update((current) => ({ ...current, [child.id]: entry }));
       } catch {

@@ -7,7 +7,7 @@ import { UsersService } from '../../../../core/users.service';
 @Component({
   selector: 'app-delete-account',
   imports: [TranslatePipe],
-  templateUrl: './delete-account.html'
+  templateUrl: './delete-account.html',
 })
 export class DeleteAccount {
   private readonly users = inject(UsersService);

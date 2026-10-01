@@ -6,7 +6,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-login',
   imports: [TranslatePipe],
-  templateUrl: './login.html'
+  templateUrl: './login.html',
 })
 export class Login {
   private readonly auth = inject(AuthService);

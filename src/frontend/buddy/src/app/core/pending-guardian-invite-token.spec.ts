@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { storePendingGuardianInviteToken, takePendingGuardianInviteToken } from './pending-guardian-invite-token';
+import {
+  storePendingGuardianInviteToken,
+  takePendingGuardianInviteToken,
+} from './pending-guardian-invite-token';
 
 const STORAGE_KEY = 'buddy_pending_guardian_invite_token';
 

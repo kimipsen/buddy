@@ -21,7 +21,7 @@ describe('ProgressService', () => {
       nextGoalThreshold: 20,
       nextGoalIcon: 'trophy',
       goalPosts: [{ threshold: 20, icon: 'trophy', label: 'Big prize' }],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -30,8 +30,11 @@ describe('ProgressService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: { apiBaseUrl } as Partial<RuntimeConfigService> }
-      ]
+        {
+          provide: RuntimeConfigService,
+          useValue: { apiBaseUrl } as Partial<RuntimeConfigService>,
+        },
+      ],
     });
 
     service = TestBed.inject(ProgressService);
@@ -58,7 +61,9 @@ describe('ProgressService', () => {
     it('rejects on an error response', async () => {
       const promise = service.getMyProgress();
 
-      httpMock.expectOne(`${apiBaseUrl}/progress/me`).flush('boom', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne(`${apiBaseUrl}/progress/me`)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
 
       await expect(promise).rejects.toMatchObject({ status: 500 });
     });
@@ -80,7 +85,9 @@ describe('ProgressService', () => {
     it('rejects on an error response', async () => {
       const promise = service.getChildProgress(childId);
 
-      httpMock.expectOne(`${apiBaseUrl}/progress/children/${childId}`).flush('nope', { status: 403, statusText: 'Forbidden' });
+      httpMock
+        .expectOne(`${apiBaseUrl}/progress/children/${childId}`)
+        .flush('nope', { status: 403, statusText: 'Forbidden' });
 
       await expect(promise).rejects.toMatchObject({ status: 403 });
     });
@@ -90,7 +97,7 @@ describe('ProgressService', () => {
     it('PUTs the full goal post list wrapped in { goalPosts } and returns the updated summary', async () => {
       const goalPosts: GoalPost[] = [
         { threshold: 10, icon: 'balloon', label: null },
-        { threshold: 25, icon: 'bike', label: 'New bike' }
+        { threshold: 25, icon: 'bike', label: 'New bike' },
       ];
       const body = summary({ goalPosts });
 

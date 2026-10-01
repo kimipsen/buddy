@@ -12,13 +12,17 @@ interface GoalPostRow {
 }
 
 function toRow(goalPost: GoalPost): GoalPostRow {
-  return { threshold: String(goalPost.threshold), icon: goalPost.icon, label: goalPost.label ?? '' };
+  return {
+    threshold: String(goalPost.threshold),
+    icon: goalPost.icon,
+    label: goalPost.label ?? '',
+  };
 }
 
 @Component({
   selector: 'app-manage-progress-goals',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './manage-progress-goals.html'
+  templateUrl: './manage-progress-goals.html',
 })
 export class ManageProgressGoals implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -56,7 +60,9 @@ export class ManageProgressGoals implements OnInit {
   }
 
   protected setThreshold(index: number, value: string): void {
-    this.rows.update((rows) => rows.map((row, i) => (i === index ? { ...row, threshold: value } : row)));
+    this.rows.update((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, threshold: value } : row)),
+    );
     this.saved.set(false);
   }
 
@@ -66,12 +72,17 @@ export class ManageProgressGoals implements OnInit {
   }
 
   protected setLabel(index: number, value: string): void {
-    this.rows.update((rows) => rows.map((row, i) => (i === index ? { ...row, label: value } : row)));
+    this.rows.update((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, label: value } : row)),
+    );
     this.saved.set(false);
   }
 
   protected canSave(): boolean {
-    return this.rows().length > 0 && this.rows().every((row) => Number(row.threshold) > 0 && row.icon.trim().length > 0);
+    return (
+      this.rows().length > 0 &&
+      this.rows().every((row) => Number(row.threshold) > 0 && row.icon.trim().length > 0)
+    );
   }
 
   protected async save(): Promise<void> {
@@ -89,7 +100,7 @@ export class ManageProgressGoals implements OnInit {
       const goalPosts: GoalPost[] = this.rows().map((row) => ({
         threshold: Number(row.threshold),
         icon: row.icon.trim(),
-        label: row.label.trim() || null
+        label: row.label.trim() || null,
       }));
 
       const summary = await this.progressService.configureGoalPosts(childId, goalPosts);

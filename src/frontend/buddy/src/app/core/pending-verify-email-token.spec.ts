@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { storePendingVerifyEmailToken, takePendingVerifyEmailToken } from './pending-verify-email-token';
+import {
+  storePendingVerifyEmailToken,
+  takePendingVerifyEmailToken,
+} from './pending-verify-email-token';
 
 const STORAGE_KEY = 'buddy_pending_verify_email_token';
 

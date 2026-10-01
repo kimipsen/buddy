@@ -26,7 +26,7 @@ describe('UnknownEvent', () => {
   it('renders nested objects, arrays, booleans, and null values within the payload verbatim', async () => {
     const { compiled } = await setup('Namespace.Weird/Type-2', {
       nested: { list: [1, 2, 3], flag: true },
-      missing: null
+      missing: null,
     });
 
     expect(compiled.querySelector('p')?.textContent).toBe('Namespace.Weird/Type-2');

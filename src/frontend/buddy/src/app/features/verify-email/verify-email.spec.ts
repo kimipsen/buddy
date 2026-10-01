@@ -19,7 +19,7 @@ describe('VerifyEmail', () => {
       name: { givenName: 'Uma', familyName: 'User' },
       timeZoneId: 'UTC',
       language: 'en',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -37,11 +37,11 @@ describe('VerifyEmail', () => {
     const authStub: Partial<AuthService> = {
       isAuthenticated: signal(true).asReadonly(),
       login: vi.fn(async () => {}),
-      ...stubs.auth
+      ...stubs.auth,
     };
     const usersStub: Partial<UsersService> = {
       verifyEmail: vi.fn(async () => fakeCurrentUser()),
-      ...stubs.users
+      ...stubs.users,
     };
     const token = stubs.token ?? 'verify-token-123';
     const paramMap = stubs.omitTokenParam ? convertToParamMap({}) : convertToParamMap({ token });
@@ -52,8 +52,8 @@ describe('VerifyEmail', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
         { provide: UsersService, useValue: usersStub },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap } } }
-      ]
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap } } },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(VerifyEmail);
@@ -75,9 +75,12 @@ describe('VerifyEmail', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
-  function findButton(fixture: ComponentFixture<unknown>, label: string): HTMLButtonElement | undefined {
+  function findButton(
+    fixture: ComponentFixture<unknown>,
+    label: string,
+  ): HTMLButtonElement | undefined {
     return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(
-      (button) => button.textContent?.trim() === label
+      (button) => button.textContent?.trim() === label,
     );
   }
 
@@ -87,13 +90,18 @@ describe('VerifyEmail', () => {
       await settle(fixture);
 
       expect(text(fixture)).toContain('Verify your email address');
-      expect(text(fixture)).toContain('Log in with the account this link was sent to, to verify it.');
+      expect(text(fixture)).toContain(
+        'Log in with the account this link was sent to, to verify it.',
+      );
       expect(findButton(fixture, 'Verify email')).toBeUndefined();
       expect(findButton(fixture, 'Log in to verify')).toBeTruthy();
     });
 
     it('stores the exact route token and starts login when logging in to verify', async () => {
-      const { fixture, auth, token } = await setup({ auth: { isAuthenticated: signal(false).asReadonly() }, token: 'a-specific-token' });
+      const { fixture, auth, token } = await setup({
+        auth: { isAuthenticated: signal(false).asReadonly() },
+        token: 'a-specific-token',
+      });
       await settle(fixture);
 
       findButton(fixture, 'Log in to verify')!.click();
@@ -103,7 +111,10 @@ describe('VerifyEmail', () => {
     });
 
     it('falls back to storing an empty-string token when the route param is missing entirely', async () => {
-      const { fixture } = await setup({ auth: { isAuthenticated: signal(false).asReadonly() }, omitTokenParam: true });
+      const { fixture } = await setup({
+        auth: { isAuthenticated: signal(false).asReadonly() },
+        omitTokenParam: true,
+      });
       await settle(fixture);
 
       findButton(fixture, 'Log in to verify')!.click();
@@ -155,7 +166,11 @@ describe('VerifyEmail', () => {
     it('disables the verify button while verification is in flight, and hides it once verification succeeds', async () => {
       let resolveVerify!: (value: CurrentUser) => void;
       const { fixture } = await setup({
-        users: { verifyEmail: vi.fn(() => new Promise<CurrentUser>((resolve) => (resolveVerify = resolve))) }
+        users: {
+          verifyEmail: vi.fn(
+            () => new Promise<CurrentUser>((resolve) => (resolveVerify = resolve)),
+          ),
+        },
       });
       await settle(fixture);
 
@@ -198,7 +213,9 @@ describe('VerifyEmail', () => {
     });
 
     it('re-enables the verify button after a failed attempt so the user can retry', async () => {
-      const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+      const { fixture } = await setup({
+        users: { verifyEmail: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
       await settle(fixture);
 
       findButton(fixture, 'Verify email')!.click();
@@ -208,55 +225,82 @@ describe('VerifyEmail', () => {
     });
 
     it('shows the translated generic error message when verifyEmail rejects with a plain Error', async () => {
-      const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+      const { fixture } = await setup({
+        users: { verifyEmail: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
       await settle(fixture);
 
       findButton(fixture, 'Verify email')!.click();
       await settle(fixture);
 
-      expect(text(fixture)).toContain('Unable to verify this email. The link may have expired or already been used.');
+      expect(text(fixture)).toContain(
+        'Unable to verify this email. The link may have expired or already been used.',
+      );
       expect(text(fixture)).not.toContain('Your email address is verified.');
     });
 
     it('shows the backend validation message verbatim for an HttpErrorResponse with a structured error envelope body', async () => {
       const serverError = new HttpErrorResponse({
-        error: { code: 'validation_error', message: 'This verification link has already been used.', details: {}, requestId: 'abc' },
-        status: 400
+        error: {
+          code: 'validation_error',
+          message: 'This verification link has already been used.',
+          details: {},
+          requestId: 'abc',
+        },
+        status: 400,
       });
-      const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) } });
+      const { fixture } = await setup({
+        users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) },
+      });
       await settle(fixture);
 
       findButton(fixture, 'Verify email')!.click();
       await settle(fixture);
 
       expect(text(fixture)).toContain('This verification link has already been used.');
-      expect(text(fixture)).not.toContain('Unable to verify this email. The link may have expired or already been used.');
+      expect(text(fixture)).not.toContain(
+        'Unable to verify this email. The link may have expired or already been used.',
+      );
     });
 
     it('falls back to the generic error message for an HttpErrorResponse with a plain string body', async () => {
-      const serverError = new HttpErrorResponse({ error: 'This verification link has already been used.', status: 400 });
-      const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) } });
+      const serverError = new HttpErrorResponse({
+        error: 'This verification link has already been used.',
+        status: 400,
+      });
+      const { fixture } = await setup({
+        users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) },
+      });
       await settle(fixture);
 
       findButton(fixture, 'Verify email')!.click();
       await settle(fixture);
 
-      expect(text(fixture)).toContain('Unable to verify this email. The link may have expired or already been used.');
+      expect(text(fixture)).toContain(
+        'Unable to verify this email. The link may have expired or already been used.',
+      );
     });
 
     it('falls back to the generic error message when the HttpErrorResponse body is an object with no message', async () => {
       const serverError = new HttpErrorResponse({ error: { code: 'TOKEN_EXPIRED' }, status: 400 });
-      const { fixture } = await setup({ users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) } });
+      const { fixture } = await setup({
+        users: { verifyEmail: vi.fn(async () => Promise.reject(serverError)) },
+      });
       await settle(fixture);
 
       findButton(fixture, 'Verify email')!.click();
       await settle(fixture);
 
-      expect(text(fixture)).toContain('Unable to verify this email. The link may have expired or already been used.');
+      expect(text(fixture)).toContain(
+        'Unable to verify this email. The link may have expired or already been used.',
+      );
     });
 
     it('clears a previous error once a retry succeeds', async () => {
-      const verifyEmail = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(fakeCurrentUser());
+      const verifyEmail = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValueOnce(fakeCurrentUser());
       const { fixture } = await setup({ users: { verifyEmail } });
       await settle(fixture);
 

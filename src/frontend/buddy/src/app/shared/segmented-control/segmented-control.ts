@@ -12,7 +12,7 @@ export interface SegmentedControlOption<T> {
 @Component({
   selector: 'app-segmented-control',
   imports: [],
-  templateUrl: './segmented-control.html'
+  templateUrl: './segmented-control.html',
 })
 export class SegmentedControl<T> {
   readonly options = input.required<SegmentedControlOption<T>[]>();

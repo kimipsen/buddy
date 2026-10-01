@@ -14,11 +14,11 @@ import { GuardianTaskLibrary } from './task-library';
 describe('GuardianTaskLibrary', () => {
   async function setup() {
     const guardiansStub: Partial<GuardiansService> = {
-      listMyChildren: vi.fn(async () => [])
+      listMyChildren: vi.fn(async () => []),
     };
     const taskLibraryStub: Partial<TaskLibraryService> = {
       templates: signal<TaskTemplate[]>([]).asReadonly(),
-      listTaskTemplates: vi.fn(async () => [])
+      listTaskTemplates: vi.fn(async () => []),
     };
 
     await TestBed.configureTestingModule({
@@ -26,8 +26,8 @@ describe('GuardianTaskLibrary', () => {
       providers: [
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: TaskLibraryService, useValue: taskLibraryStub }
-      ]
+        { provide: TaskLibraryService, useValue: taskLibraryStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianTaskLibrary);

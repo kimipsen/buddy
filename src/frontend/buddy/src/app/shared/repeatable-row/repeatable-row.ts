@@ -8,7 +8,7 @@ import { Component, input, output } from '@angular/core';
 @Component({
   selector: 'app-repeatable-row',
   imports: [],
-  templateUrl: './repeatable-row.html'
+  templateUrl: './repeatable-row.html',
 })
 export class RepeatableRow {
   readonly canRemove = input(true);

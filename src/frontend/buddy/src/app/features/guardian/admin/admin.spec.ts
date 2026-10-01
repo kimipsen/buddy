@@ -21,7 +21,7 @@ describe('GuardianAdmin', () => {
     userName: 'guardian',
     name: { givenName: 'Gina', familyName: 'G' },
     timeZoneId: 'UTC',
-    language: 'en'
+    language: 'en',
   };
 
   const eventsPage: UserEventsPage = { items: [], previousCursor: null, nextCursor: null };
@@ -42,19 +42,21 @@ describe('GuardianAdmin', () => {
       updateName: vi.fn(),
       updateTimeZone: vi.fn(),
       updateLanguage: vi.fn(),
-      deleteCurrentUser: vi.fn(async () => undefined)
+      deleteCurrentUser: vi.fn(async () => undefined),
     };
     const authStub: Partial<AuthService> = { logout: vi.fn() };
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => []),
-      listGuardianInvites: vi.fn(async () => [])
+      listGuardianInvites: vi.fn(async () => []),
     };
     const calendarsStub: Partial<CalendarsService> = {
       listMyCalendars: vi.fn(async () => []),
-      listIcalTokens: vi.fn(async () => [])
+      listIcalTokens: vi.fn(async () => []),
     };
     const groupsStub: Partial<GroupsService> = { listMyGroups: vi.fn(async () => []) };
-    const userEventsStub: Partial<UserEventsService> = { listCurrentUserEvents: vi.fn(async () => eventsPage) };
+    const userEventsStub: Partial<UserEventsService> = {
+      listCurrentUserEvents: vi.fn(async () => eventsPage),
+    };
 
     await TestBed.configureTestingModule({
       imports: [GuardianAdmin],
@@ -65,8 +67,8 @@ describe('GuardianAdmin', () => {
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: CalendarsService, useValue: calendarsStub },
         { provide: GroupsService, useValue: groupsStub },
-        { provide: UserEventsService, useValue: userEventsStub }
-      ]
+        { provide: UserEventsService, useValue: userEventsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianAdmin);
@@ -88,7 +90,7 @@ describe('GuardianAdmin', () => {
       'app-manage-calendars',
       'app-manage-groups',
       'app-events-list',
-      'app-delete-account'
+      'app-delete-account',
     ];
     for (const selector of selectors) {
       expect(compiled.querySelector(selector)).toBeTruthy();

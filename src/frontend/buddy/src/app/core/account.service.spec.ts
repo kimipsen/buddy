@@ -11,14 +11,16 @@ describe('AccountService', () => {
     id: 'guardian-1',
     name: { givenName: 'Gina', familyName: 'G' },
     guardianLinkId: 'link-1',
-    kind: 0
+    kind: 0,
   };
 
   function setup(): AccountService {
     listMyGuardians = vi.fn();
 
     TestBed.configureTestingModule({
-      providers: [{ provide: GuardiansService, useValue: { listMyGuardians } as Partial<GuardiansService> }]
+      providers: [
+        { provide: GuardiansService, useValue: { listMyGuardians } as Partial<GuardiansService> },
+      ],
     });
 
     return TestBed.inject(AccountService);

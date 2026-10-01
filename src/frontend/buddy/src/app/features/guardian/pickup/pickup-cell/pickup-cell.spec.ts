@@ -7,11 +7,23 @@ import { PickupCell } from './pickup-cell';
 
 describe('PickupCell', () => {
   function guardian(id: string, givenName: string): GuardianSummary {
-    return { id, name: { givenName, familyName: 'Guardian' }, guardianLinkId: `link-${id}`, kind: 1 };
+    return {
+      id,
+      name: { givenName, familyName: 'Guardian' },
+      guardianLinkId: `link-${id}`,
+      kind: 1,
+    };
   }
 
   function sibling(id: string, givenName: string): ChildSummary {
-    return { id, name: { givenName, familyName: 'Kid' }, guardianLinkId: `link-${id}`, kind: 0, language: 'en', timeZoneId: 'UTC' };
+    return {
+      id,
+      name: { givenName, familyName: 'Kid' },
+      guardianLinkId: `link-${id}`,
+      kind: 0,
+      language: 'en',
+      timeZoneId: 'UTC',
+    };
   }
 
   function occurrence(overrides: Partial<PickupOccurrence> = {}): PickupOccurrence {
@@ -27,7 +39,7 @@ describe('PickupCell', () => {
       time: null,
       notes: null,
       assignedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -93,17 +105,23 @@ describe('PickupCell', () => {
   // `role="radiogroup"` of `role="radio"` buttons, not a native `<select>` -- see
   // shared/segmented-control/segmented-control.html.
   function kindRadios(compiled: HTMLElement): HTMLButtonElement[] {
-    return Array.from(compiled.querySelectorAll<HTMLButtonElement>('[role="radiogroup"] button[role="radio"]'));
+    return Array.from(
+      compiled.querySelectorAll<HTMLButtonElement>('[role="radiogroup"] button[role="radio"]'),
+    );
   }
 
   function selectKind(compiled: HTMLElement, label: string): void {
-    const button = kindRadios(compiled).find((candidate) => candidate.textContent?.trim() === label);
+    const button = kindRadios(compiled).find(
+      (candidate) => candidate.textContent?.trim() === label,
+    );
     expect(button, `kind option "${label}" not found`).toBeTruthy();
     button!.click();
   }
 
   function selectedKindLabel(compiled: HTMLElement): string | undefined {
-    return kindRadios(compiled).find((button) => button.getAttribute('aria-checked') === 'true')?.textContent?.trim();
+    return kindRadios(compiled)
+      .find((button) => button.getAttribute('aria-checked') === 'true')
+      ?.textContent?.trim();
   }
 
   function selectByValue(select: HTMLSelectElement, value: string): void {
@@ -154,7 +172,7 @@ describe('PickupCell', () => {
     it('shows the assigned guardian’s given name and formatted time when the guardian can be resolved', async () => {
       const { compiled } = await setup({
         guardians: [guardian('g1', 'Anna')],
-        occurrence: occurrence({ kind: 0, guardianId: 'g1', time: '14:30:00' })
+        occurrence: occurrence({ kind: 0, guardianId: 'g1', time: '14:30:00' }),
       });
 
       expect(compiled.textContent).toContain('Anna');
@@ -165,7 +183,7 @@ describe('PickupCell', () => {
     it('falls back to the generic "guardian" label when the assigned guardian id cannot be resolved', async () => {
       const { compiled } = await setup({
         guardians: [],
-        occurrence: occurrence({ kind: 0, guardianId: 'missing-guardian' })
+        occurrence: occurrence({ kind: 0, guardianId: 'missing-guardian' }),
       });
 
       expect(compiled.textContent).toContain('A guardian');
@@ -181,7 +199,7 @@ describe('PickupCell', () => {
     it('shows the assigned sibling’s given name when the sibling can be resolved', async () => {
       const { compiled } = await setup({
         siblings: [sibling('s1', 'Leo')],
-        occurrence: occurrence({ kind: 2, siblingChildId: 's1' })
+        occurrence: occurrence({ kind: 2, siblingChildId: 's1' }),
       });
 
       expect(compiled.textContent).toContain('Leo');
@@ -191,7 +209,7 @@ describe('PickupCell', () => {
     it('falls back to the generic "sibling" label when the assigned sibling id cannot be resolved', async () => {
       const { compiled } = await setup({
         siblings: [],
-        occurrence: occurrence({ kind: 2, siblingChildId: 'missing-sibling' })
+        occurrence: occurrence({ kind: 2, siblingChildId: 'missing-sibling' }),
       });
 
       expect(compiled.textContent).toContain('A sibling');
@@ -199,7 +217,7 @@ describe('PickupCell', () => {
 
     it('shows the playdate host name', async () => {
       const { compiled } = await setup({
-        occurrence: occurrence({ kind: 3, playdateHostName: 'Casper' })
+        occurrence: occurrence({ kind: 3, playdateHostName: 'Casper' }),
       });
 
       expect(compiled.textContent).toContain('Casper');
@@ -268,7 +286,7 @@ describe('PickupCell', () => {
         playdateLocation: 'The park',
         playdateContactInfo: '555-1234',
         time: '09:15:00',
-        notes: 'Bring snacks'
+        notes: 'Bring snacks',
       });
       const { fixture, compiled } = await setup({ occurrence: existing });
 
@@ -277,10 +295,18 @@ describe('PickupCell', () => {
 
       expect(selectedKindLabel(compiled)).toBe('Playdate');
 
-      const hostInput = compiled.querySelector<HTMLInputElement>('input[placeholder="Who’s hosting? (required)"]');
-      const locationInput = compiled.querySelector<HTMLInputElement>('input[placeholder="Location (optional)"]');
-      const contactInput = compiled.querySelector<HTMLInputElement>('input[placeholder="Contact info (optional)"]');
-      const notesInput = compiled.querySelector<HTMLInputElement>('input[placeholder="Notes (optional)"]');
+      const hostInput = compiled.querySelector<HTMLInputElement>(
+        'input[placeholder="Who’s hosting? (required)"]',
+      );
+      const locationInput = compiled.querySelector<HTMLInputElement>(
+        'input[placeholder="Location (optional)"]',
+      );
+      const contactInput = compiled.querySelector<HTMLInputElement>(
+        'input[placeholder="Contact info (optional)"]',
+      );
+      const notesInput = compiled.querySelector<HTMLInputElement>(
+        'input[placeholder="Notes (optional)"]',
+      );
 
       expect(hostInput?.value).toBe('Casper');
       expect(locationInput?.value).toBe('The park');
@@ -306,7 +332,9 @@ describe('PickupCell', () => {
 
   describe('saving from the edit form', () => {
     it('emits a guardian assignment and closes the form on save', async () => {
-      const { fixture, compiled, onAssign } = await setup({ guardians: [guardian('g1', 'Anna'), guardian('g2', 'Bob')] });
+      const { fixture, compiled, onAssign } = await setup({
+        guardians: [guardian('g1', 'Anna'), guardian('g2', 'Bob')],
+      });
 
       findButton(compiled, 'Not planned')!.click();
       fixture.detectChanges();
@@ -330,7 +358,7 @@ describe('PickupCell', () => {
         playdateLocation: null,
         playdateContactInfo: null,
         time: null,
-        notes: null
+        notes: null,
       });
 
       fixture.detectChanges();
@@ -375,7 +403,7 @@ describe('PickupCell', () => {
         playdateLocation: null,
         playdateContactInfo: null,
         time: null,
-        notes: null
+        notes: null,
       });
     });
 

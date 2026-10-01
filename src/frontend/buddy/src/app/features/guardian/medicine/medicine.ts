@@ -7,6 +7,6 @@ import { ManageMedicines } from './manage-medicines/manage-medicines';
 @Component({
   selector: 'app-guardian-medicine',
   imports: [RouterLink, ManageMedicines, TranslatePipe],
-  templateUrl: './medicine.html'
+  templateUrl: './medicine.html',
 })
 export class GuardianMedicine {}

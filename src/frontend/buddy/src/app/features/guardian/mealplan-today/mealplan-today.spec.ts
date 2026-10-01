@@ -13,7 +13,7 @@ describe('MealplanToday', () => {
     guardianLinkId: 'link-1',
     kind: 0,
     language: 'en',
-    timeZoneId: 'UTC'
+    timeZoneId: 'UTC',
   };
 
   function entry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
@@ -28,7 +28,7 @@ describe('MealplanToday', () => {
       notes: null,
       assignedBy: 'guardian-1',
       allRatings: [],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -40,11 +40,11 @@ describe('MealplanToday', () => {
   async function setup(stubs: Stubs = {}) {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child]),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const mealplansStub: Partial<MealplansService> = {
       listMealPlan: vi.fn(async () => []),
-      ...stubs.mealplans
+      ...stubs.mealplans,
     };
 
     await TestBed.configureTestingModule({
@@ -52,8 +52,8 @@ describe('MealplanToday', () => {
       providers: [
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: MealplansService, useValue: mealplansStub }
-      ]
+        { provide: MealplansService, useValue: mealplansStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(MealplanToday);
@@ -64,7 +64,10 @@ describe('MealplanToday', () => {
   // loadPlan chains an await for listMyChildren followed by an await for listMealPlan before the
   // signals driving the template settle -- a single whenStable() flush isn't always enough, so
   // flush a generous fixed number of times rather than guessing when it's "probably" done.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -82,7 +85,9 @@ describe('MealplanToday', () => {
   });
 
   it('shows the translated error message when loading the plan fails', async () => {
-    const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -91,7 +96,9 @@ describe('MealplanToday', () => {
   });
 
   it('shows the translated error message when loading children fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -100,7 +107,10 @@ describe('MealplanToday', () => {
 
   it('shows the no-children message when the guardian has no linked children, without calling listMealPlan', async () => {
     const listMealPlan = vi.fn(async () => []);
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => []) }, mealplans: { listMealPlan } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => []) },
+      mealplans: { listMealPlan },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -111,7 +121,10 @@ describe('MealplanToday', () => {
   it('requests the plan for the first linked child scoped to today only', async () => {
     const secondChild: ChildSummary = { ...child, id: 'child-2' };
     const listMealPlan = vi.fn(async () => []);
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child, secondChild]) }, mealplans: { listMealPlan } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child, secondChild]) },
+      mealplans: { listMealPlan },
+    });
     await settle(fixture);
 
     const today = new Date().toISOString().slice(0, 10);
@@ -146,7 +159,7 @@ describe('MealplanToday', () => {
 
   it('renders every slot when all four are planned', async () => {
     const entries: MealPlanEntry[] = ([0, 1, 2, 3] as MealSlot[]).map((slot) =>
-      entry({ slot, mealId: `meal-${slot}`, mealName: `Meal ${slot}`, icon: '🍽️' })
+      entry({ slot, mealId: `meal-${slot}`, mealName: `Meal ${slot}`, icon: '🍽️' }),
     );
     const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries) } });
     await settle(fixture);

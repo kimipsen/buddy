@@ -21,10 +21,10 @@ export const calendar = {
       day: 'Day',
       workweek: 'Work week',
       week: 'Week',
-      month: 'Month'
+      month: 'Month',
     },
     monthGrid: {
-      moreLabel: '+{count} more'
+      moreLabel: '+{count} more',
     },
     taskUpdateError: 'Unable to update this task.',
     allDay: 'All day',
@@ -34,32 +34,33 @@ export const calendar = {
       confirmPrompt: 'Delete this?',
       confirmButton: 'Confirm',
       cancelButton: 'Cancel',
-      error: 'Unable to delete this item.'
+      error: 'Unable to delete this item.',
     },
     edit: {
       button: 'Edit',
       saveButton: 'Save',
       cancelButton: 'Cancel',
-      error: 'Unable to update this item. Check the details and try again.'
+      error: 'Unable to update this item. Check the details and try again.',
     },
     filter: {
-      title: 'Calendars'
+      title: 'Calendars',
     },
     form: {
       title: 'Add an event or task',
-      noEligibleCalendars: 'You need a calendar you can add to. Create one from Calendars in Settings.',
+      noEligibleCalendars:
+        'You need a calendar you can add to. Create one from Calendars in Settings.',
       titlePlaceholder: 'Title',
       iconPlaceholder: 'Icon',
       calendarLabel: 'Calendar',
       kindLabel: 'Type',
       kind: {
         event: 'Event',
-        task: 'Task'
+        task: 'Task',
       },
       taskSource: {
         manual: 'Manual',
         template: 'From template',
-        templateLabel: 'Task template'
+        templateLabel: 'Task template',
       },
       allDayLabel: 'All day',
       startDateLabel: 'Start date',
@@ -79,10 +80,10 @@ export const calendar = {
         monthly: 'Monthly',
         yearly: 'Yearly',
         intervalLabel: 'Every',
-        untilLabel: 'Until (optional)'
+        untilLabel: 'Until (optional)',
       },
       addButton: 'Add to calendar',
-      createError: 'Unable to create this event. Check the details and try again.'
-    }
-  }
+      createError: 'Unable to create this event. Check the details and try again.',
+    },
+  },
 };

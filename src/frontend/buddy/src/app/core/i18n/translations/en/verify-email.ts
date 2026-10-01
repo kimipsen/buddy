@@ -5,5 +5,5 @@ export const verifyEmail = {
   successTitle: 'Your email address is verified.',
   goToAppButton: 'Continue',
   logInPrompt: 'Log in with the account this link was sent to, to verify it.',
-  logInButton: 'Log in to verify'
+  logInButton: 'Log in to verify',
 };

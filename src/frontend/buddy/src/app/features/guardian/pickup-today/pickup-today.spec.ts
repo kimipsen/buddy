@@ -19,7 +19,7 @@ describe('PickupToday', () => {
       kind: 0,
       language: 'en',
       timeZoneId: 'UTC',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -29,7 +29,7 @@ describe('PickupToday', () => {
       name: { givenName: 'Gina', familyName: 'G' },
       guardianLinkId: 'link-1',
       kind: 0,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -46,7 +46,7 @@ describe('PickupToday', () => {
       time: null,
       notes: null,
       assignedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -59,16 +59,20 @@ describe('PickupToday', () => {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child()]),
       listChildGuardians: vi.fn(async () => []),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const pickupsStub: Partial<PickupsService> = {
       listSchedule: vi.fn(async () => []),
-      ...stubs.pickups
+      ...stubs.pickups,
     };
 
     await TestBed.configureTestingModule({
       imports: [PickupToday],
-      providers: [provideRouter([]), { provide: GuardiansService, useValue: guardiansStub }, { provide: PickupsService, useValue: pickupsStub }]
+      providers: [
+        provideRouter([]),
+        { provide: GuardiansService, useValue: guardiansStub },
+        { provide: PickupsService, useValue: pickupsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(PickupToday);
@@ -80,7 +84,10 @@ describe('PickupToday', () => {
   // listSchedule/listChildGuardians Promise.all pairs) before the signals
   // driving the template settle -- a single whenStable() flush isn't always enough, so flush a
   // generous fixed number of times rather than guessing when it's "probably" done.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -107,7 +114,9 @@ describe('PickupToday', () => {
   });
 
   it('shows the translated error message when loading the schedule fails', async () => {
-    const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      pickups: { listSchedule: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -120,7 +129,7 @@ describe('PickupToday', () => {
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => []), listChildGuardians },
-      pickups: { listSchedule }
+      pickups: { listSchedule },
     });
     await settle(fixture);
 
@@ -136,7 +145,7 @@ describe('PickupToday', () => {
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
-      pickups: { listSchedule }
+      pickups: { listSchedule },
     });
     await settle(fixture);
 
@@ -179,8 +188,12 @@ describe('PickupToday', () => {
     const assignedToGina = occurrence({ kind: 0, guardianId: 'guardian-1' });
 
     const { fixture } = await setup({
-      guardians: { listChildGuardians: vi.fn(async () => [guardian({ id: 'guardian-1', name: { givenName: 'Gina', familyName: 'Guardian' } })]) },
-      pickups: { listSchedule: vi.fn(async () => [assignedToGina]) }
+      guardians: {
+        listChildGuardians: vi.fn(async () => [
+          guardian({ id: 'guardian-1', name: { givenName: 'Gina', familyName: 'Guardian' } }),
+        ]),
+      },
+      pickups: { listSchedule: vi.fn(async () => [assignedToGina]) },
     });
     await settle(fixture);
 
@@ -194,8 +207,12 @@ describe('PickupToday', () => {
     const assignedToUnknown = occurrence({ kind: 0, guardianId: 'missing-guardian' });
 
     const { fixture } = await setup({
-      guardians: { listChildGuardians: vi.fn(async () => [guardian({ id: 'guardian-1', name: { givenName: 'Gina', familyName: 'G' } })]) },
-      pickups: { listSchedule: vi.fn(async () => [assignedToUnknown]) }
+      guardians: {
+        listChildGuardians: vi.fn(async () => [
+          guardian({ id: 'guardian-1', name: { givenName: 'Gina', familyName: 'G' } }),
+        ]),
+      },
+      pickups: { listSchedule: vi.fn(async () => [assignedToUnknown]) },
     });
     await settle(fixture);
 
@@ -208,8 +225,12 @@ describe('PickupToday', () => {
     const dropOff = occurrence({ slot: 0, kind: 1 });
 
     const { fixture } = await setup({
-      guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1', name: { givenName: 'Charlie', familyName: 'C' } })]) },
-      pickups: { listSchedule: vi.fn(async () => [dropOff]) }
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({ id: 'child-1', name: { givenName: 'Charlie', familyName: 'C' } }),
+        ]),
+      },
+      pickups: { listSchedule: vi.fn(async () => [dropOff]) },
     });
     await settle(fixture);
 
@@ -222,12 +243,14 @@ describe('PickupToday', () => {
     const dana = child({ id: 'child-2', name: { givenName: 'Dana', familyName: 'D' } });
 
     const listSchedule = vi.fn(async (childId: string) =>
-      childId === 'child-1' ? [occurrence({ slot: 1, kind: 1 })] : [occurrence({ slot: 0, kind: 1 })]
+      childId === 'child-1'
+        ? [occurrence({ slot: 1, kind: 1 })]
+        : [occurrence({ slot: 0, kind: 1 })],
     );
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [charlie, dana]) },
-      pickups: { listSchedule }
+      pickups: { listSchedule },
     });
     await settle(fixture);
 
@@ -249,17 +272,19 @@ describe('PickupToday', () => {
     const dana = child({ id: 'child-2', name: { givenName: 'Dana', familyName: 'D' } });
 
     const listSchedule = vi.fn(async (childId: string) =>
-      childId === 'child-1' ? [occurrence({ slot: 0, kind: 0, guardianId: 'guardian-1' })] : [occurrence({ slot: 1, kind: 0, guardianId: 'guardian-1' })]
+      childId === 'child-1'
+        ? [occurrence({ slot: 0, kind: 0, guardianId: 'guardian-1' })]
+        : [occurrence({ slot: 1, kind: 0, guardianId: 'guardian-1' })],
     );
     const listChildGuardians = vi.fn(async (childId: string) =>
       childId === 'child-1'
         ? [guardian({ id: 'guardian-1', name: { givenName: 'Gina', familyName: 'G' } })]
-        : [guardian({ id: 'guardian-1', name: { givenName: 'Peter', familyName: 'P' } })]
+        : [guardian({ id: 'guardian-1', name: { givenName: 'Peter', familyName: 'P' } })],
     );
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [charlie, dana]), listChildGuardians },
-      pickups: { listSchedule }
+      pickups: { listSchedule },
     });
     await settle(fixture);
 
@@ -283,7 +308,7 @@ describe('PickupToday', () => {
           waiting.push(() => {
             inFlight--;
             resolve(valueFor(id));
-          })
+          }),
         );
       },
       releaseOne: () => waiting.shift()!(),
@@ -292,16 +317,16 @@ describe('PickupToday', () => {
       },
       get maxInFlight() {
         return maxInFlight;
-      }
+      },
     };
   }
 
   // Regression guard for the dashboard burst: two requests per child (schedule + guardians) used
   // to fire for every child at once. Now at most the cap's worth of children are in flight.
-  it('caps concurrent per-child requests and still renders every child\'s pickups', async () => {
+  it("caps concurrent per-child requests and still renders every child's pickups", async () => {
     const childCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
     const children = Array.from({ length: childCount }, (_, i) =>
-      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } })
+      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } }),
     );
     const gate = gatedCalls(() => [occurrence({ kind: 1 })]);
     const listSchedule = vi.fn((childId: string) => gate.call(childId));
@@ -309,7 +334,7 @@ describe('PickupToday', () => {
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => children), listChildGuardians },
-      pickups: { listSchedule }
+      pickups: { listSchedule },
     });
     await settle(fixture);
 

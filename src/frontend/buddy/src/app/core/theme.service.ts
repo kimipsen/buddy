@@ -8,7 +8,9 @@ export class ThemeService {
   private readonly media = window.matchMedia('(prefers-color-scheme: dark)');
   private readonly systemPrefersDark = signal(this.media.matches);
 
-  private readonly modeState = signal<ThemeMode>(readStoredThemeMode(localStorage) ?? DEFAULT_THEME_MODE);
+  private readonly modeState = signal<ThemeMode>(
+    readStoredThemeMode(localStorage) ?? DEFAULT_THEME_MODE,
+  );
   readonly mode = this.modeState.asReadonly();
 
   // What App's effect actually applies to <html>: "system" resolves against the live OS

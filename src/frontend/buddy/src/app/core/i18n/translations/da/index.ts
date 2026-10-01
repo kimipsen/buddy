@@ -31,5 +31,5 @@ export const da = {
   progress,
   shell,
   taskLibrary,
-  verifyEmail
+  verifyEmail,
 };

@@ -2,7 +2,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ChildSummary, CreateChildResult, GuardianInvite, GuardiansService } from '../../../../core/guardians.service';
+import {
+  ChildSummary,
+  CreateChildResult,
+  GuardianInvite,
+  GuardiansService,
+} from '../../../../core/guardians.service';
 import { ManageChildren } from './manage-children';
 
 describe('ManageChildren', () => {
@@ -14,7 +19,7 @@ describe('ManageChildren', () => {
       kind: 0,
       language: 'en',
       timeZoneId: 'UTC',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -25,7 +30,7 @@ describe('ManageChildren', () => {
       kind: 1,
       invitedAt: '2026-08-01T00:00:00Z',
       expiresAt: '2026-08-08T00:00:00Z',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -39,7 +44,7 @@ describe('ManageChildren', () => {
       timeZoneId: 'UTC',
       username: 'ada.kid',
       temporaryPassword: 'temp-pass-123',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -52,17 +57,21 @@ describe('ManageChildren', () => {
       listMyChildren: vi.fn(async () => []),
       createChild: vi.fn(async () => createdChild()),
       revokeChild: vi.fn(async () => undefined),
-      updateChildLanguage: vi.fn(async (childId: string, language: string) => child({ id: childId, language })),
-      updateChildTimeZone: vi.fn(async (childId: string, timeZoneId: string) => child({ id: childId, timeZoneId })),
+      updateChildLanguage: vi.fn(async (childId: string, language: string) =>
+        child({ id: childId, language }),
+      ),
+      updateChildTimeZone: vi.fn(async (childId: string, timeZoneId: string) =>
+        child({ id: childId, timeZoneId }),
+      ),
       listGuardianInvites: vi.fn(async () => []),
       inviteGuardian: vi.fn(async () => invite()),
       revokeGuardianInvite: vi.fn(async () => undefined),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
 
     await TestBed.configureTestingModule({
       imports: [ManageChildren],
-      providers: [{ provide: GuardiansService, useValue: guardiansStub }]
+      providers: [{ provide: GuardiansService, useValue: guardiansStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageChildren);
@@ -82,7 +91,11 @@ describe('ManageChildren', () => {
     fixture.detectChanges();
   }
 
-  function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (reason?: unknown) => void } {
+  function deferred<T>(): {
+    promise: Promise<T>;
+    resolve: (value: T) => void;
+    reject: (reason?: unknown) => void;
+  } {
     let resolve!: (value: T) => void;
     let reject!: (reason?: unknown) => void;
     const promise = new Promise<T>((res, rej) => {
@@ -93,7 +106,9 @@ describe('ManageChildren', () => {
   }
 
   function findButtonByText(scope: ParentNode, text: string): HTMLButtonElement | undefined {
-    return Array.from(scope.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(scope.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   function setInputValue(input: HTMLInputElement, value: string): void {
@@ -113,7 +128,9 @@ describe('ManageChildren', () => {
   }
 
   function childRow(compiled: HTMLElement, fullName: string): HTMLElement {
-    const row = Array.from(compiled.querySelectorAll('li')).find((li) => li.querySelector('span')?.textContent?.trim() === fullName);
+    const row = Array.from(compiled.querySelectorAll('li')).find(
+      (li) => li.querySelector('span')?.textContent?.trim() === fullName,
+    );
     if (!row) {
       throw new Error(`child row not found for "${fullName}"`);
     }
@@ -123,7 +140,9 @@ describe('ManageChildren', () => {
   // Locates a pending invite's <li> inside the (single, always-unique-when-open) invite panel by
   // the email shown in its first <span>.
   function inviteRow(compiled: HTMLElement, email: string): HTMLElement {
-    const row = Array.from(compiled.querySelectorAll('li')).find((li) => li.querySelector('span')?.textContent?.trim() === email);
+    const row = Array.from(compiled.querySelectorAll('li')).find(
+      (li) => li.querySelector('span')?.textContent?.trim() === email,
+    );
     if (!row) {
       throw new Error(`invite row not found for "${email}"`);
     }
@@ -150,7 +169,12 @@ describe('ManageChildren', () => {
     return addChildForm(compiled).querySelector<HTMLButtonElement>('button[type="submit"]')!;
   }
 
-  function fillAddChildForm(compiled: HTMLElement, given: string, family: string, username: string): void {
+  function fillAddChildForm(
+    compiled: HTMLElement,
+    given: string,
+    family: string,
+    username: string,
+  ): void {
     setInputValue(childGivenNameInput(compiled), given);
     setInputValue(childFamilyNameInput(compiled), family);
     setInputValue(childUsernameInput(compiled), username);
@@ -191,7 +215,9 @@ describe('ManageChildren', () => {
   });
 
   it('shows an error message when loading children fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -199,7 +225,10 @@ describe('ManageChildren', () => {
   });
 
   it('renders each child with its name and current language selected', async () => {
-    const children = [child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, language: 'en' }), child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' }, language: 'da' })];
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, language: 'en' }),
+      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' }, language: 'da' }),
+    ];
     const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => children) } });
     await settle(fixture);
 
@@ -269,16 +298,27 @@ describe('ManageChildren', () => {
     addChildForm(compiled).dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(guardians.createChild).toHaveBeenCalledWith({ givenName: 'Ada', familyName: 'Kid', username: 'ada.kid' });
+    expect(guardians.createChild).toHaveBeenCalledWith({
+      givenName: 'Ada',
+      familyName: 'Kid',
+      username: 'ada.kid',
+    });
     expect(listMyChildren).toHaveBeenCalledTimes(2);
     expect(childGivenNameInput(compiled).value).toBe('');
     expect(childFamilyNameInput(compiled).value).toBe('');
     expect(childUsernameInput(compiled).value).toBe('');
   });
 
-  it('shows the created child\'s name and temporary password after a successful create', async () => {
+  it("shows the created child's name and temporary password after a successful create", async () => {
     const { fixture } = await setup({
-      guardians: { createChild: vi.fn(async () => createdChild({ name: { givenName: 'Ada', familyName: 'Kid' }, temporaryPassword: 'p4ssw0rd!' })) }
+      guardians: {
+        createChild: vi.fn(async () =>
+          createdChild({
+            name: { givenName: 'Ada', familyName: 'Kid' },
+            temporaryPassword: 'p4ssw0rd!',
+          }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -315,7 +355,9 @@ describe('ManageChildren', () => {
   });
 
   it('shows a username-taken error and keeps the typed values on a 409 response', async () => {
-    const createChild = vi.fn(async () => Promise.reject(new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
+    const createChild = vi.fn(async () =>
+      Promise.reject(new HttpErrorResponse({ status: 409, statusText: 'Conflict' })),
+    );
     const { fixture } = await setup({ guardians: { createChild } });
     await settle(fixture);
 
@@ -343,7 +385,9 @@ describe('ManageChildren', () => {
   });
 
   it('shows a generic create error on a non-409 HTTP error', async () => {
-    const createChild = vi.fn(async () => Promise.reject(new HttpErrorResponse({ status: 500, statusText: 'Server Error' })));
+    const createChild = vi.fn(async () =>
+      Promise.reject(new HttpErrorResponse({ status: 500, statusText: 'Server Error' })),
+    );
     const { fixture } = await setup({ guardians: { createChild } });
     await settle(fixture);
 
@@ -359,7 +403,9 @@ describe('ManageChildren', () => {
   // ----- Revoke-child flow -----
 
   it('shows a confirmation prompt instead of the remove button when remove is requested', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -373,7 +419,9 @@ describe('ManageChildren', () => {
   });
 
   it('cancels the confirmation without calling revokeChild', async () => {
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -405,7 +453,12 @@ describe('ManageChildren', () => {
 
   it('disables the confirm and cancel buttons while the revoke request is in flight', async () => {
     const { promise, resolve } = deferred<void>();
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), revokeChild: vi.fn(() => promise) } });
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        revokeChild: vi.fn(() => promise),
+      },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -429,7 +482,9 @@ describe('ManageChildren', () => {
   // click Cancel themselves to dismiss the prompt after a failed attempt.
   it('keeps the confirmation prompt open and shows an error when revoking fails', async () => {
     const revokeChild = vi.fn(async () => Promise.reject(new Error('boom')));
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), revokeChild } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), revokeChild },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -445,9 +500,11 @@ describe('ManageChildren', () => {
 
   // ----- Language change flow -----
 
-  it('changes a child\'s language and reflects the updated value', async () => {
+  it("changes a child's language and reflects the updated value", async () => {
     const updateChildLanguage = vi.fn(async () => child({ language: 'da' }));
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildLanguage } });
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildLanguage },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -461,14 +518,19 @@ describe('ManageChildren', () => {
   });
 
   it('shows a per-child language error without affecting other children', async () => {
-    const children = [child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }), child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } })];
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
+      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } }),
+    ];
     const updateChildLanguage = vi.fn(async (childId: string) => {
       if (childId === 'child-1') {
         return Promise.reject(new Error('boom'));
       }
       return child({ id: childId, language: 'da' });
     });
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => children), updateChildLanguage } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children), updateChildLanguage },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -479,8 +541,8 @@ describe('ManageChildren', () => {
 
     const samRow = childRow(compiled, 'Sam Kid');
     const adaRow = childRow(compiled, 'Ada Kid');
-    expect(samRow.textContent).toContain('Unable to update this child\'s language.');
-    expect(adaRow.textContent).not.toContain('Unable to update this child\'s language.');
+    expect(samRow.textContent).toContain("Unable to update this child's language.");
+    expect(adaRow.textContent).not.toContain("Unable to update this child's language.");
   });
 
   it('clears a previous language error on a successful retry', async () => {
@@ -488,7 +550,9 @@ describe('ManageChildren', () => {
       .fn()
       .mockImplementationOnce(async () => Promise.reject(new Error('boom')))
       .mockImplementationOnce(async () => child({ language: 'da' }));
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildLanguage } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildLanguage },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -496,12 +560,16 @@ describe('ManageChildren', () => {
     select.value = 'da';
     select.dispatchEvent(new Event('change'));
     await settle(fixture);
-    expect(childRow(compiled, 'Sam Kid').textContent).toContain('Unable to update this child\'s language.');
+    expect(childRow(compiled, 'Sam Kid').textContent).toContain(
+      "Unable to update this child's language.",
+    );
 
     select.dispatchEvent(new Event('change'));
     await settle(fixture);
 
-    expect(childRow(compiled, 'Sam Kid').textContent).not.toContain('Unable to update this child\'s language.');
+    expect(childRow(compiled, 'Sam Kid').textContent).not.toContain(
+      "Unable to update this child's language.",
+    );
   });
 
   // manage-children.html previously bound [disabled] on this <select> alongside [ngModel], which
@@ -511,7 +579,12 @@ describe('ManageChildren', () => {
   // resync, so it now actually reflects savingLanguageChildId().
   it('disables the language select while the change is in flight, and re-enables it once it settles', async () => {
     const { promise, resolve } = deferred<ChildSummary>();
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildLanguage: vi.fn(() => promise) } });
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        updateChildLanguage: vi.fn(() => promise),
+      },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -533,8 +606,16 @@ describe('ManageChildren', () => {
 
   it('renders each child with its current time zone selected', async () => {
     const children = [
-      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, timeZoneId: 'America/New_York' }),
-      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' }, timeZoneId: 'Europe/Copenhagen' })
+      child({
+        id: 'child-1',
+        name: { givenName: 'Sam', familyName: 'Kid' },
+        timeZoneId: 'America/New_York',
+      }),
+      child({
+        id: 'child-2',
+        name: { givenName: 'Ada', familyName: 'Kid' },
+        timeZoneId: 'Europe/Copenhagen',
+      }),
     ];
     const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => children) } });
     await settle(fixture);
@@ -544,9 +625,11 @@ describe('ManageChildren', () => {
     expect(childTimeZoneSelect(compiled, 'Ada Kid').value).toBe('Europe/Copenhagen');
   });
 
-  it('changes a child\'s time zone and reflects the updated value', async () => {
+  it("changes a child's time zone and reflects the updated value", async () => {
     const updateChildTimeZone = vi.fn(async () => child({ timeZoneId: 'Europe/Copenhagen' }));
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildTimeZone } });
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildTimeZone },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -560,14 +643,19 @@ describe('ManageChildren', () => {
   });
 
   it('shows a per-child time zone error without affecting other children', async () => {
-    const children = [child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }), child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } })];
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
+      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } }),
+    ];
     const updateChildTimeZone = vi.fn(async (childId: string) => {
       if (childId === 'child-1') {
         return Promise.reject(new Error('boom'));
       }
       return child({ id: childId, timeZoneId: 'Europe/Copenhagen' });
     });
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => children), updateChildTimeZone } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children), updateChildTimeZone },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -578,13 +666,18 @@ describe('ManageChildren', () => {
 
     const samRow = childRow(compiled, 'Sam Kid');
     const adaRow = childRow(compiled, 'Ada Kid');
-    expect(samRow.textContent).toContain('Unable to update this child\'s time zone.');
-    expect(adaRow.textContent).not.toContain('Unable to update this child\'s time zone.');
+    expect(samRow.textContent).toContain("Unable to update this child's time zone.");
+    expect(adaRow.textContent).not.toContain("Unable to update this child's time zone.");
   });
 
   it('disables the time zone select while the change is in flight, and re-enables it once it settles', async () => {
     const { promise, resolve } = deferred<ChildSummary>();
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildTimeZone: vi.fn(() => promise) } });
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        updateChildTimeZone: vi.fn(() => promise),
+      },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -607,7 +700,9 @@ describe('ManageChildren', () => {
   it('loads and shows pending invites when the invite panel is opened', async () => {
     const invites = [invite({ email: 'pending@buddy.test' })];
     const listGuardianInvites = vi.fn(async () => invites);
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites } });
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -620,7 +715,9 @@ describe('ManageChildren', () => {
   });
 
   it('shows the pending-empty message when a child has no invites', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -632,7 +729,10 @@ describe('ManageChildren', () => {
 
   it('shows an error when loading invites fails', async () => {
     const { fixture } = await setup({
-      guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        listGuardianInvites: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -645,7 +745,9 @@ describe('ManageChildren', () => {
 
   it('collapses the invite panel on a second click without reloading invites', async () => {
     const listGuardianInvites = vi.fn(async () => []);
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -661,10 +763,19 @@ describe('ManageChildren', () => {
     expect(findButtonByText(childRow(compiled, 'Sam Kid'), 'Invite a co-guardian')).toBeTruthy();
   });
 
-  it('switches the invite panel between children, loading the newly selected child\'s invites', async () => {
-    const children = [child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }), child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } })];
-    const listGuardianInvites = vi.fn(async (childId: string) => (childId === 'child-1' ? [invite({ email: 'sam-invite@buddy.test' })] : [invite({ email: 'ada-invite@buddy.test' })]));
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => children), listGuardianInvites } });
+  it("switches the invite panel between children, loading the newly selected child's invites", async () => {
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
+      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } }),
+    ];
+    const listGuardianInvites = vi.fn(async (childId: string) =>
+      childId === 'child-1'
+        ? [invite({ email: 'sam-invite@buddy.test' })]
+        : [invite({ email: 'ada-invite@buddy.test' })],
+    );
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children), listGuardianInvites },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -681,7 +792,9 @@ describe('ManageChildren', () => {
   });
 
   it('resets the typed email, kind, and error when the invite panel is reopened', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -704,7 +817,9 @@ describe('ManageChildren', () => {
   // ----- Send-invite flow -----
 
   it('keeps the send-invite button disabled until an email is entered', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -724,7 +839,9 @@ describe('ManageChildren', () => {
 
   it('sends an invite with the trimmed email and default Parent kind, then reloads and clears the email', async () => {
     const listGuardianInvites = vi.fn(async () => []);
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites } });
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -737,13 +854,18 @@ describe('ManageChildren', () => {
     inviteForm(compiled)!.dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', { email: 'friend@buddy.test', kind: 0 });
+    expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', {
+      email: 'friend@buddy.test',
+      kind: 0,
+    });
     expect(listGuardianInvites).toHaveBeenCalledTimes(2);
     expect(inviteEmailInput(compiled)!.value).toBe('');
   });
 
   it('sends an invite with the Guardian kind when selected', async () => {
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -759,24 +881,33 @@ describe('ManageChildren', () => {
     inviteForm(compiled)!.dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', { email: 'friend@buddy.test', kind: 1 });
+    expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', {
+      email: 'friend@buddy.test',
+      kind: 1,
+    });
   });
 
   it('only offers Parent and Guardian as invitable kinds', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
     findButtonByText(childRow(compiled, 'Sam Kid'), 'Invite a co-guardian')!.click();
     await settle(fixture);
 
-    const labels = Array.from(inviteKindSelect(compiled)!.querySelectorAll('option')).map((option) => option.textContent?.trim());
+    const labels = Array.from(inviteKindSelect(compiled)!.querySelectorAll('option')).map(
+      (option) => option.textContent?.trim(),
+    );
     expect(labels).toEqual(['Parent', 'Guardian']);
   });
 
   it('shows a send-invite error and keeps the typed email', async () => {
     const inviteGuardian = vi.fn(async () => Promise.reject(new Error('boom')));
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), inviteGuardian } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), inviteGuardian },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -789,13 +920,20 @@ describe('ManageChildren', () => {
     inviteForm(compiled)!.dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(compiled.textContent).toContain('Unable to send the invite. An invite was already sent to this address recently.');
+    expect(compiled.textContent).toContain(
+      'Unable to send the invite. An invite was already sent to this address recently.',
+    );
     expect(inviteEmailInput(compiled)!.value).toBe('friend@buddy.test');
   });
 
   it('disables the send-invite button while the request is in flight', async () => {
     const { promise, resolve } = deferred<GuardianInvite>();
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), inviteGuardian: vi.fn(() => promise) } });
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        inviteGuardian: vi.fn(() => promise),
+      },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -819,7 +957,9 @@ describe('ManageChildren', () => {
   it('revokes a pending invite and reloads the invite list', async () => {
     const pendingInvite = invite({ id: 'invite-9', email: 'pending@buddy.test' });
     const listGuardianInvites = vi.fn(async () => [pendingInvite]);
-    const { fixture, guardians } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites } });
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -839,8 +979,8 @@ describe('ManageChildren', () => {
       guardians: {
         listMyChildren: vi.fn(async () => [child()]),
         listGuardianInvites: vi.fn(async () => [pendingInvite]),
-        revokeGuardianInvite: vi.fn(async () => Promise.reject(new Error('boom')))
-      }
+        revokeGuardianInvite: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -854,11 +994,18 @@ describe('ManageChildren', () => {
     expect(compiled.textContent).toContain('Unable to cancel the invite.');
   });
 
-  it('disables only the targeted invite\'s cancel button while it is being revoked', async () => {
-    const invites = [invite({ id: 'invite-9', email: 'pending@buddy.test' }), invite({ id: 'invite-10', email: 'other@buddy.test' })];
+  it("disables only the targeted invite's cancel button while it is being revoked", async () => {
+    const invites = [
+      invite({ id: 'invite-9', email: 'pending@buddy.test' }),
+      invite({ id: 'invite-10', email: 'other@buddy.test' }),
+    ];
     const { promise, resolve } = deferred<void>();
     const { fixture } = await setup({
-      guardians: { listMyChildren: vi.fn(async () => [child()]), listGuardianInvites: vi.fn(async () => invites), revokeGuardianInvite: vi.fn(() => promise) }
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        listGuardianInvites: vi.fn(async () => invites),
+        revokeGuardianInvite: vi.fn(() => promise),
+      },
     });
     await settle(fixture);
 
@@ -869,8 +1016,12 @@ describe('ManageChildren', () => {
     findButtonByText(inviteRow(compiled, 'pending@buddy.test'), 'Cancel')!.click();
     fixture.detectChanges();
 
-    expect(findButtonByText(inviteRow(compiled, 'pending@buddy.test'), 'Cancel')!.disabled).toBe(true);
-    expect(findButtonByText(inviteRow(compiled, 'other@buddy.test'), 'Cancel')!.disabled).toBe(false);
+    expect(findButtonByText(inviteRow(compiled, 'pending@buddy.test'), 'Cancel')!.disabled).toBe(
+      true,
+    );
+    expect(findButtonByText(inviteRow(compiled, 'other@buddy.test'), 'Cancel')!.disabled).toBe(
+      false,
+    );
 
     resolve(undefined);
     await settle(fixture);
@@ -882,7 +1033,11 @@ describe('ManageChildren', () => {
     const writeText = vi.fn(async () => undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
-    const { fixture } = await setup({ guardians: { createChild: vi.fn(async () => createdChild({ temporaryPassword: 'p4ssw0rd!' })) } });
+    const { fixture } = await setup({
+      guardians: {
+        createChild: vi.fn(async () => createdChild({ temporaryPassword: 'p4ssw0rd!' })),
+      },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;

@@ -15,7 +15,7 @@ describe('EmailVerificationRequestedEvent', () => {
 
     await TestBed.configureTestingModule({
       imports: [EmailVerificationRequestedEvent],
-      providers: [{ provide: UsersService, useValue: usersStub }]
+      providers: [{ provide: UsersService, useValue: usersStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(EmailVerificationRequestedEvent);
@@ -29,18 +29,20 @@ describe('EmailVerificationRequestedEvent', () => {
     const { compiled } = await setup({
       userId: 'user-1',
       expiresAt: '2026-01-22T18:00:00Z',
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Email verification requested');
-    expect(compiled.textContent).toContain('A verification link was sent, expiring Jan 22, 2026, 6:00:00 PM.');
+    expect(compiled.textContent).toContain(
+      'A verification link was sent, expiring Jan 22, 2026, 6:00:00 PM.',
+    );
   });
 
   it('formats occurredAt and expiresAt independently, without swapping the two distinct instants', async () => {
     const { compiled } = await setup({
       userId: 'user-1',
       expiresAt: '2026-01-22T18:00:00Z',
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     // The description sentence carries expiresAt; the trailing timestamp line carries occurredAt.

@@ -1,4 +1,6 @@
-<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+<section
+  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+>
   <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'profile.title' | translate }}</h3>
 
   @if (loading()) {
@@ -9,7 +11,10 @@
     <div class="space-y-6">
       <form class="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" (ngSubmit)="saveName()">
         <label class="block">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'profile.name.givenNameLabel' | translate }}</span>
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >{{ 'profile.name.givenNameLabel' | translate }}</span
+          >
           <input
             type="text"
             name="givenName"
@@ -19,7 +24,10 @@
           />
         </label>
         <label class="block">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'profile.name.familyNameLabel' | translate }}</span>
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >{{ 'profile.name.familyNameLabel' | translate }}</span
+          >
           <input
             type="text"
             name="familyName"
@@ -35,7 +43,8 @@
             savingName() ||
             !givenName().trim() ||
             !familyName().trim() ||
-            (givenName().trim() === currentGivenName() && familyName().trim() === currentFamilyName())
+            (givenName().trim() === currentGivenName() &&
+              familyName().trim() === currentFamilyName())
           "
         >
           {{ 'profile.name.save' | translate }}
@@ -45,16 +54,31 @@
       @if (nameError(); as message) {
         <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
       } @else if (nameSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">{{ 'profile.name.saved' | translate }}</p>
+        <p class="text-sm text-emerald-700 dark:text-emerald-400">
+          {{ 'profile.name.saved' | translate }}
+        </p>
       }
 
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveEmail()">
         <label class="block">
-          <span class="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <span
+            class="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
             {{ 'profile.email.label' | translate }}
             @if (currentEmailVerified() && email().trim() === currentEmail()) {
-              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal text-emerald-700 dark:text-emerald-400">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3">
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal text-emerald-700 dark:text-emerald-400"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="size-3"
+                >
                   <path d="M5 13l4 4L19 7" />
                 </svg>
                 {{ 'profile.email.verified' | translate }}
@@ -81,12 +105,17 @@
       @if (emailError(); as message) {
         <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
       } @else if (emailSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">{{ 'profile.email.saved' | translate }}</p>
+        <p class="text-sm text-emerald-700 dark:text-emerald-400">
+          {{ 'profile.email.saved' | translate }}
+        </p>
       }
 
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveTimeZone()">
         <label class="block">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'profile.timeZone.label' | translate }}</span>
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >{{ 'profile.timeZone.label' | translate }}</span
+          >
           <select
             name="timeZoneId"
             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
@@ -110,12 +139,17 @@
       @if (timeZoneError(); as message) {
         <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
       } @else if (timeZoneSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">{{ 'profile.timeZone.saved' | translate }}</p>
+        <p class="text-sm text-emerald-700 dark:text-emerald-400">
+          {{ 'profile.timeZone.saved' | translate }}
+        </p>
       }
 
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveLanguage()">
         <label class="block">
-          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'profile.language.label' | translate }}</span>
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >{{ 'profile.language.label' | translate }}</span
+          >
           <select
             name="language"
             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
@@ -139,7 +173,9 @@
       @if (languageError(); as message) {
         <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
       } @else if (languageSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">{{ 'profile.language.saved' | translate }}</p>
+        <p class="text-sm text-emerald-700 dark:text-emerald-400">
+          {{ 'profile.language.saved' | translate }}
+        </p>
       }
     </div>
   }

@@ -9,14 +9,16 @@ import { UsersService } from './users.service';
 describe('UserDatePipe', () => {
   function createPipe(timeZoneId: string, language: 'en' | 'da' = 'en'): UserDatePipe {
     const usersStub: Partial<UsersService> = { timeZoneId: signal(timeZoneId).asReadonly() };
-    const translationStub: Partial<TranslationService> = { language: signal(language).asReadonly() };
+    const translationStub: Partial<TranslationService> = {
+      language: signal(language).asReadonly(),
+    };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
         { provide: UsersService, useValue: usersStub },
-        { provide: TranslationService, useValue: translationStub }
-      ]
+        { provide: TranslationService, useValue: translationStub },
+      ],
     });
 
     return TestBed.runInInjectionContext(() => new UserDatePipe());

@@ -11,7 +11,10 @@ import { createCalendar, createGroup, uniqueName } from './support/guardian-data
 // assigned to a child would render on the guardian dashboard but with its toggle disabled. The
 // real minimal path for "the guardian completes a task from their own dashboard" is therefore a
 // manual (non-template) Task item left unassigned, created straight from the calendar agenda.
-test('guardian completes a task from the dashboard tasks-today widget, and it persists', async ({ page, loginAs }) => {
+test('guardian completes a task from the dashboard tasks-today widget, and it persists', async ({
+  page,
+  loginAs,
+}) => {
   await loginAs(SEEDED_USERS.alice);
 
   const groupName = await createGroup(page);

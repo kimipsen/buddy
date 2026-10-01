@@ -16,7 +16,7 @@ export const PER_ITEM_REQUEST_CONCURRENCY = 4;
 export async function mapWithConcurrency<T, R>(
   items: readonly T[],
   limit: number,
-  task: (item: T, index: number) => Promise<R>
+  task: (item: T, index: number) => Promise<R>,
 ): Promise<R[]> {
   if (!Number.isInteger(limit) || limit < 1) {
     throw new RangeError(`mapWithConcurrency limit must be a positive integer, got ${limit}`);

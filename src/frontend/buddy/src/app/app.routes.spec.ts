@@ -26,7 +26,7 @@ describe('app routes', () => {
     ['login', Login],
     ['invite/:token', AcceptInvite],
     ['guardian-invite/:token', AcceptGuardianInvite],
-    ['verify-email/:token', VerifyEmail]
+    ['verify-email/:token', VerifyEmail],
   ])('serves %s publicly, without an auth guard', (path, component) => {
     const r = route(path);
 
@@ -36,7 +36,7 @@ describe('app routes', () => {
 
   it.each([
     ['guardian', GUARDIAN_ROUTES],
-    ['child', CHILD_ROUTES]
+    ['child', CHILD_ROUTES],
   ])('lazy-loads the %s tree behind authGuard', async (path, children) => {
     const r = route(path);
 

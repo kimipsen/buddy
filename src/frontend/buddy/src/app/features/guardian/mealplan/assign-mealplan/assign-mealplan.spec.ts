@@ -5,13 +5,29 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
-import { Meal, MealPlanEntry, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
+import {
+  Meal,
+  MealPlanEntry,
+  MealplanScope,
+  MealSlot,
+  MealplansService,
+} from '../../../../core/mealplans.service';
 import { AssignMealplan } from './assign-mealplan';
 
 describe('AssignMealplan', () => {
   const familyScope: MealplanScope = { kind: 'family', childId: 'child-1' };
-  const groupManageScope: MealplanScope = { kind: 'group', groupId: 'group-1', groupName: 'The Fam', accessTier: 2 };
-  const groupViewScope: MealplanScope = { kind: 'group', groupId: 'group-1', groupName: 'The Fam', accessTier: 3 };
+  const groupManageScope: MealplanScope = {
+    kind: 'group',
+    groupId: 'group-1',
+    groupName: 'The Fam',
+    accessTier: 2,
+  };
+  const groupViewScope: MealplanScope = {
+    kind: 'group',
+    groupId: 'group-1',
+    groupName: 'The Fam',
+    accessTier: 3,
+  };
 
   const today = todayIsoDate();
 
@@ -34,7 +50,7 @@ describe('AssignMealplan', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -53,7 +69,7 @@ describe('AssignMealplan', () => {
       notes: null,
       assignedBy: 'guardian-1',
       allRatings: [],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -72,22 +88,28 @@ describe('AssignMealplan', () => {
       listMealPlan: vi.fn(async () => []),
       assignMealToSlot: vi.fn(async (_scope, date, slot, mealId) => {
         const matched = mealsState().find((candidate) => candidate.id === mealId);
-        return entry({ date, slot, mealId, mealName: matched?.name ?? mealId, icon: matched?.icon ?? '🍽️' });
+        return entry({
+          date,
+          slot,
+          mealId,
+          mealName: matched?.name ?? mealId,
+          icon: matched?.icon ?? '🍽️',
+        });
       }),
       clearMealSlot: vi.fn(async () => undefined),
-      ...stubs.mealplans
+      ...stubs.mealplans,
     };
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => []),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
 
     await TestBed.configureTestingModule({
       imports: [AssignMealplan],
       providers: [
         { provide: MealplansService, useValue: mealplansStub },
-        { provide: GuardiansService, useValue: guardiansStub }
-      ]
+        { provide: GuardiansService, useValue: guardiansStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(AssignMealplan);
@@ -125,14 +147,21 @@ describe('AssignMealplan', () => {
     fixture.detectChanges();
   }
 
-  function mealOption(compiled: HTMLElement, date: string, slot: MealSlot, label: string): HTMLButtonElement {
-    return Array.from(cell(compiled, date, slot).querySelectorAll<HTMLButtonElement>('ul li button')).find((button) =>
-      button.textContent?.includes(label)
-    )!;
+  function mealOption(
+    compiled: HTMLElement,
+    date: string,
+    slot: MealSlot,
+    label: string,
+  ): HTMLButtonElement {
+    return Array.from(
+      cell(compiled, date, slot).querySelectorAll<HTMLButtonElement>('ul li button'),
+    ).find((button) => button.textContent?.includes(label))!;
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   interface SlotRef {
@@ -153,7 +182,10 @@ describe('AssignMealplan', () => {
   }
 
   function dragEvent(source: SlotRef, target: SlotRef): CdkDragDrop<SlotRef> {
-    return { item: { data: source }, container: { data: target } } as unknown as CdkDragDrop<SlotRef>;
+    return {
+      item: { data: source },
+      container: { data: target },
+    } as unknown as CdkDragDrop<SlotRef>;
   }
 
   it('shows the loading message before the plan and meal library resolve', async () => {
@@ -167,7 +199,9 @@ describe('AssignMealplan', () => {
     const { fixture } = await setup({ meals: [] });
     await settle(fixture);
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Add a meal below before you can plan a week.');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Add a meal below before you can plan a week.',
+    );
   });
 
   it('treats a meal library containing only archived meals as empty', async () => {
@@ -180,7 +214,9 @@ describe('AssignMealplan', () => {
   });
 
   it('shows the translated error message when loading the plan fails, while still rendering the grid', async () => {
-    const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -189,13 +225,17 @@ describe('AssignMealplan', () => {
   });
 
   it('shows the translated error message when loading the meal library fails', async () => {
-    const { fixture } = await setup({ mealplans: { listMeals: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      mealplans: { listMeals: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     // The meal library shown in the grid comes straight from the shared mealplans.meals() signal
     // (independent of whether the listMeals() call that was supposed to refresh it succeeded), so
     // the grid still renders with the pre-seeded meals -- only the error banner should differ.
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Unable to load the meal plan.');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Unable to load the meal plan.',
+    );
   });
 
   it('requests the plan for the current 7-day window starting today', async () => {
@@ -216,7 +256,12 @@ describe('AssignMealplan', () => {
       mealOption(compiled, today, 1, 'Tacos').click();
       await settle(fixture);
 
-      expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(familyScope, today, 1, 'meal-2');
+      expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(
+        familyScope,
+        today,
+        1,
+        'meal-2',
+      );
       expect(pickerInput(compiled, today, 1).value).toBe('🌮 Tacos');
     });
 
@@ -232,13 +277,20 @@ describe('AssignMealplan', () => {
       // assignMealToSlot's 5th (notes) parameter is simply never passed by the caller here, so
       // the mock only ever observes 4 arguments -- pinned explicitly since it's easy to lose this
       // behavior by accident if a "notes" affordance is later bolted onto the call.
-      expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(familyScope, today, 0, 'meal-1');
-      expect((mealplans.assignMealToSlot as ReturnType<typeof vi.fn>).mock.calls[0]).toHaveLength(4);
+      expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(
+        familyScope,
+        today,
+        0,
+        'meal-1',
+      );
+      expect((mealplans.assignMealToSlot as ReturnType<typeof vi.fn>).mock.calls[0]).toHaveLength(
+        4,
+      );
     });
 
     it('shows a translated error and leaves the slot unassigned when assignMealToSlot rejects', async () => {
       const { fixture } = await setup({
-        mealplans: { assignMealToSlot: vi.fn(async () => Promise.reject(new Error('boom'))) }
+        mealplans: { assignMealToSlot: vi.fn(async () => Promise.reject(new Error('boom'))) },
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
@@ -254,8 +306,16 @@ describe('AssignMealplan', () => {
 
   describe('clearing an assignment', () => {
     it('calls clearMealSlot with the scope, date and slot, and removes the entry', async () => {
-      const preassigned = entry({ date: today, slot: 0, mealId: 'meal-1', mealName: 'Pancakes', icon: '🥞' });
-      const { fixture, mealplans } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [preassigned]) } });
+      const preassigned = entry({
+        date: today,
+        slot: 0,
+        mealId: 'meal-1',
+        mealName: 'Pancakes',
+        icon: '🥞',
+      });
+      const { fixture, mealplans } = await setup({
+        mealplans: { listMealPlan: vi.fn(async () => [preassigned]) },
+      });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
       expect(pickerInput(compiled, today, 0).value).toBe('🥞 Pancakes');
@@ -269,9 +329,18 @@ describe('AssignMealplan', () => {
     });
 
     it('shows a translated error and leaves the entry in place when clearMealSlot rejects', async () => {
-      const preassigned = entry({ date: today, slot: 0, mealId: 'meal-1', mealName: 'Pancakes', icon: '🥞' });
+      const preassigned = entry({
+        date: today,
+        slot: 0,
+        mealId: 'meal-1',
+        mealName: 'Pancakes',
+        icon: '🥞',
+      });
       const { fixture } = await setup({
-        mealplans: { listMealPlan: vi.fn(async () => [preassigned]), clearMealSlot: vi.fn(async () => Promise.reject(new Error('boom'))) }
+        mealplans: {
+          listMealPlan: vi.fn(async () => [preassigned]),
+          clearMealSlot: vi.fn(async () => Promise.reject(new Error('boom'))),
+        },
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
@@ -294,7 +363,11 @@ describe('AssignMealplan', () => {
       findButtonByText(compiled, 'Next week →')!.click();
       await settle(fixture);
 
-      expect(mealplans.listMealPlan).toHaveBeenLastCalledWith(familyScope, addDays(today, 7), addDays(today, 13));
+      expect(mealplans.listMealPlan).toHaveBeenLastCalledWith(
+        familyScope,
+        addDays(today, 7),
+        addDays(today, 13),
+      );
     });
 
     it('moves the visible week backward by 7 days and re-fetches that range', async () => {
@@ -305,7 +378,11 @@ describe('AssignMealplan', () => {
       findButtonByText(compiled, '← Previous week')!.click();
       await settle(fixture);
 
-      expect(mealplans.listMealPlan).toHaveBeenLastCalledWith(familyScope, addDays(today, -7), addDays(today, -1));
+      expect(mealplans.listMealPlan).toHaveBeenLastCalledWith(
+        familyScope,
+        addDays(today, -7),
+        addDays(today, -1),
+      );
     });
 
     it('marks a day before today as past and disables its meal picker', async () => {
@@ -372,7 +449,11 @@ describe('AssignMealplan', () => {
       const { fixture, mealplans } = await setup({ scope: groupManageScope });
       await settle(fixture);
 
-      expect(mealplans.listMealPlan).toHaveBeenCalledWith(groupManageScope, today, addDays(today, 6));
+      expect(mealplans.listMealPlan).toHaveBeenCalledWith(
+        groupManageScope,
+        today,
+        addDays(today, 6),
+      );
       expect(mealplans.listMeals).toHaveBeenCalledWith(groupManageScope);
     });
 
@@ -383,14 +464,25 @@ describe('AssignMealplan', () => {
       fixture.componentRef.setInput('scope', groupManageScope);
       await settle(fixture);
 
-      expect(mealplans.listMealPlan).toHaveBeenLastCalledWith(groupManageScope, today, addDays(today, 6));
+      expect(mealplans.listMealPlan).toHaveBeenLastCalledWith(
+        groupManageScope,
+        today,
+        addDays(today, 6),
+      );
     });
   });
 
   describe('sibling ratings on past days', () => {
     it("resolves a rating's child name for a past day in family scope", async () => {
       const children: ChildSummary[] = [
-        { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC' }
+        {
+          id: 'child-1',
+          name: { givenName: 'Sam', familyName: 'Kid' },
+          guardianLinkId: 'link-1',
+          kind: 0,
+          language: 'en',
+          timeZoneId: 'UTC',
+        },
       ];
 
       const { fixture } = await setup({
@@ -400,11 +492,13 @@ describe('AssignMealplan', () => {
               date: from,
               slot: 0,
               mealId: 'meal-1',
-              allRatings: [{ childId: 'child-1', stars: 4, comment: 'Yum', ratedAt: '2026-01-01T00:00:00Z' }]
-            })
-          ])
+              allRatings: [
+                { childId: 'child-1', stars: 4, comment: 'Yum', ratedAt: '2026-01-01T00:00:00Z' },
+              ],
+            }),
+          ]),
         },
-        guardians: { listMyChildren: vi.fn(async () => children) }
+        guardians: { listMyChildren: vi.fn(async () => children) },
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
@@ -420,10 +514,22 @@ describe('AssignMealplan', () => {
       const { fixture } = await setup({
         mealplans: {
           listMealPlan: vi.fn(async (_scope, from: string) => [
-            entry({ date: from, slot: 0, mealId: 'meal-1', allRatings: [{ childId: 'unresolved-child', stars: 3, comment: null, ratedAt: '2026-01-01T00:00:00Z' }] })
-          ])
+            entry({
+              date: from,
+              slot: 0,
+              mealId: 'meal-1',
+              allRatings: [
+                {
+                  childId: 'unresolved-child',
+                  stars: 3,
+                  comment: null,
+                  ratedAt: '2026-01-01T00:00:00Z',
+                },
+              ],
+            }),
+          ]),
         },
-        guardians: { listMyChildren: vi.fn(async () => []) }
+        guardians: { listMyChildren: vi.fn(async () => []) },
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
@@ -439,9 +545,16 @@ describe('AssignMealplan', () => {
       const { fixture } = await setup({
         mealplans: {
           listMealPlan: vi.fn(async () => [
-            entry({ date: futureDate, slot: 0, mealId: 'meal-1', allRatings: [{ childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' }] })
-          ])
-        }
+            entry({
+              date: futureDate,
+              slot: 0,
+              mealId: 'meal-1',
+              allRatings: [
+                { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+              ],
+            }),
+          ]),
+        },
       });
       await settle(fixture);
 
@@ -453,9 +566,16 @@ describe('AssignMealplan', () => {
         scope: groupManageScope,
         mealplans: {
           listMealPlan: vi.fn(async (_scope, from: string) => [
-            entry({ date: from, slot: 0, mealId: 'meal-1', allRatings: [{ childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' }] })
-          ])
-        }
+            entry({
+              date: from,
+              slot: 0,
+              mealId: 'meal-1',
+              allRatings: [
+                { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+              ],
+            }),
+          ]),
+        },
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
@@ -471,16 +591,33 @@ describe('AssignMealplan', () => {
     it('moves a meal onto an empty cell: assigns the target then clears the source', async () => {
       const source: SlotRef = { date: today, slot: 0 };
       const target: SlotRef = { date: addDays(today, 1), slot: 1 };
-      const sourceEntry = entry({ date: source.date, slot: source.slot, mealId: 'meal-1', mealName: 'Pancakes', icon: '🥞' });
+      const sourceEntry = entry({
+        date: source.date,
+        slot: source.slot,
+        mealId: 'meal-1',
+        mealName: 'Pancakes',
+        icon: '🥞',
+      });
 
-      const { fixture, mealplans } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [sourceEntry]) } });
+      const { fixture, mealplans } = await setup({
+        mealplans: { listMealPlan: vi.fn(async () => [sourceEntry]) },
+      });
       await settle(fixture);
 
       await internals(fixture).onMealDrop(dragEvent(source, target));
       await settle(fixture);
 
-      expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(familyScope, target.date, target.slot, 'meal-1');
-      expect(mealplans.clearMealSlot).toHaveBeenCalledExactlyOnceWith(familyScope, source.date, source.slot);
+      expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(
+        familyScope,
+        target.date,
+        target.slot,
+        'meal-1',
+      );
+      expect(mealplans.clearMealSlot).toHaveBeenCalledExactlyOnceWith(
+        familyScope,
+        source.date,
+        source.slot,
+      );
 
       const compiled = fixture.nativeElement as HTMLElement;
       expect(pickerInput(compiled, target.date, target.slot).value).toBe('🥞 Pancakes');
@@ -490,10 +627,24 @@ describe('AssignMealplan', () => {
     it('swaps two occupied cells rather than clearing either', async () => {
       const source: SlotRef = { date: today, slot: 0 };
       const target: SlotRef = { date: today, slot: 1 };
-      const sourceEntry = entry({ date: source.date, slot: source.slot, mealId: 'meal-1', mealName: 'Pancakes', icon: '🥞' });
-      const targetEntry = entry({ date: target.date, slot: target.slot, mealId: 'meal-2', mealName: 'Tacos', icon: '🌮' });
+      const sourceEntry = entry({
+        date: source.date,
+        slot: source.slot,
+        mealId: 'meal-1',
+        mealName: 'Pancakes',
+        icon: '🥞',
+      });
+      const targetEntry = entry({
+        date: target.date,
+        slot: target.slot,
+        mealId: 'meal-2',
+        mealName: 'Tacos',
+        icon: '🌮',
+      });
 
-      const { fixture, mealplans } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [sourceEntry, targetEntry]) } });
+      const { fixture, mealplans } = await setup({
+        mealplans: { listMealPlan: vi.fn(async () => [sourceEntry, targetEntry]) },
+      });
       await settle(fixture);
 
       await internals(fixture).onMealDrop(dragEvent(source, target));
@@ -503,8 +654,20 @@ describe('AssignMealplan', () => {
       expect(mealplans.assignMealToSlot).toHaveBeenCalledTimes(2);
       // Sequential, target first then source -- see the comment on onMealDrop in assign-mealplan.ts
       // about why these two writes are awaited one at a time rather than via Promise.all.
-      expect(mealplans.assignMealToSlot).toHaveBeenNthCalledWith(1, familyScope, target.date, target.slot, 'meal-1');
-      expect(mealplans.assignMealToSlot).toHaveBeenNthCalledWith(2, familyScope, source.date, source.slot, 'meal-2');
+      expect(mealplans.assignMealToSlot).toHaveBeenNthCalledWith(
+        1,
+        familyScope,
+        target.date,
+        target.slot,
+        'meal-1',
+      );
+      expect(mealplans.assignMealToSlot).toHaveBeenNthCalledWith(
+        2,
+        familyScope,
+        source.date,
+        source.slot,
+        'meal-2',
+      );
 
       const compiled = fixture.nativeElement as HTMLElement;
       expect(pickerInput(compiled, target.date, target.slot).value).toBe('🥞 Pancakes');
@@ -514,7 +677,9 @@ describe('AssignMealplan', () => {
     it('does nothing when dropped back onto the same cell', async () => {
       const source: SlotRef = { date: today, slot: 0 };
       const { fixture, mealplans } = await setup({
-        mealplans: { listMealPlan: vi.fn(async () => [entry({ date: today, slot: 0, mealId: 'meal-1' })]) }
+        mealplans: {
+          listMealPlan: vi.fn(async () => [entry({ date: today, slot: 0, mealId: 'meal-1' })]),
+        },
       });
       await settle(fixture);
 
@@ -542,7 +707,9 @@ describe('AssignMealplan', () => {
       const target: SlotRef = { date: pastDate, slot: 1 };
       const pastEntry = entry({ date: pastDate, slot: 0, mealId: 'meal-1' });
 
-      const { fixture, mealplans } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [pastEntry]) } });
+      const { fixture, mealplans } = await setup({
+        mealplans: { listMealPlan: vi.fn(async () => [pastEntry]) },
+      });
       await settle(fixture);
       findButtonByText(fixture.nativeElement as HTMLElement, '← Previous week')!.click();
       await settle(fixture);
@@ -557,7 +724,10 @@ describe('AssignMealplan', () => {
       const target: SlotRef = { date: today, slot: 1 };
       const sourceEntry = entry({ date: source.date, slot: source.slot, mealId: 'meal-1' });
 
-      const { fixture, mealplans } = await setup({ scope: groupViewScope, mealplans: { listMealPlan: vi.fn(async () => [sourceEntry]) } });
+      const { fixture, mealplans } = await setup({
+        scope: groupViewScope,
+        mealplans: { listMealPlan: vi.fn(async () => [sourceEntry]) },
+      });
       await settle(fixture);
 
       await internals(fixture).onMealDrop(dragEvent(source, target));

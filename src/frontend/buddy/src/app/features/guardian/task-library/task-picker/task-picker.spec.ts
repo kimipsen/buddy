@@ -20,7 +20,7 @@ describe('TaskPicker', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -28,13 +28,31 @@ describe('TaskPicker', () => {
     id: 'template-1',
     name: 'Get ready for school',
     icon: '🎒',
-    subtasks: [subtask({ id: 's1' }), subtask({ id: 's2', durationMinutes: 10 }), subtask({ id: 's3', durationMinutes: 20 })],
-    totalDurationMinutes: 35
+    subtasks: [
+      subtask({ id: 's1' }),
+      subtask({ id: 's2', durationMinutes: 10 }),
+      subtask({ id: 's3', durationMinutes: 20 }),
+    ],
+    totalDurationMinutes: 35,
   });
-  const bedtime = template({ id: 'template-2', name: 'Bedtime routine', icon: '🌙', subtasks: [subtask({ id: 's4', durationMinutes: 90 })], totalDurationMinutes: 90 });
-  const chores = template({ id: 'template-3', name: 'Weekend chores', icon: '🧹', subtasks: [], totalDurationMinutes: 0 });
+  const bedtime = template({
+    id: 'template-2',
+    name: 'Bedtime routine',
+    icon: '🌙',
+    subtasks: [subtask({ id: 's4', durationMinutes: 90 })],
+    totalDurationMinutes: 90,
+  });
+  const chores = template({
+    id: 'template-3',
+    name: 'Weekend chores',
+    icon: '🧹',
+    subtasks: [],
+    totalDurationMinutes: 0,
+  });
 
-  async function setup(options: { templates?: TaskTemplate[]; templateId?: string; disabled?: boolean } = {}) {
+  async function setup(
+    options: { templates?: TaskTemplate[]; templateId?: string; disabled?: boolean } = {},
+  ) {
     await TestBed.configureTestingModule({ imports: [TaskPicker] }).compileComponents();
 
     const fixture = TestBed.createComponent(TaskPicker);
@@ -122,7 +140,9 @@ describe('TaskPicker', () => {
 
       openDropdown(fixture);
 
-      const labels = optionButtons(compiled).map((button) => button.textContent!.replace(/\s+/g, ' ').trim());
+      const labels = optionButtons(compiled).map((button) =>
+        button.textContent!.replace(/\s+/g, ' ').trim(),
+      );
       expect(labels[0]).toBe('No template');
       expect(labels[1]).toContain('🎒 Get ready for school');
       expect(labels[2]).toContain('🌙 Bedtime routine');
@@ -134,8 +154,12 @@ describe('TaskPicker', () => {
 
       openDropdown(fixture);
 
-      expect(findTemplateOption(compiled, 'Get ready for school').textContent).toContain('3 steps, 35m');
-      expect(findTemplateOption(compiled, 'Bedtime routine').textContent).toContain('1 steps, 1h 30m');
+      expect(findTemplateOption(compiled, 'Get ready for school').textContent).toContain(
+        '3 steps, 35m',
+      );
+      expect(findTemplateOption(compiled, 'Bedtime routine').textContent).toContain(
+        '1 steps, 1h 30m',
+      );
       expect(findTemplateOption(compiled, 'Weekend chores').textContent).toContain('0 steps, 0m');
     });
 

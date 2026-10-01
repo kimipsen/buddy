@@ -22,7 +22,7 @@ describe('UsersService', () => {
       name: { givenName: 'Uma', familyName: 'User' },
       timeZoneId: 'UTC',
       language: 'en',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -33,9 +33,12 @@ describe('UsersService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: { apiBaseUrl } as Partial<RuntimeConfigService> },
-        { provide: TranslationService, useValue: i18n as Partial<TranslationService> }
-      ]
+        {
+          provide: RuntimeConfigService,
+          useValue: { apiBaseUrl } as Partial<RuntimeConfigService>,
+        },
+        { provide: TranslationService, useValue: i18n as Partial<TranslationService> },
+      ],
     });
 
     service = TestBed.inject(UsersService);

@@ -7,5 +7,6 @@ export const login = {
   cardTitle: 'Welcome back',
   cardSubtitle: 'Continue with your enterprise account to access your dashboard.',
   signInButton: 'Sign in with Keycloak',
-  redirectNote: 'Your browser will be redirected to Keycloak, then returned to Buddy after a successful sign in.'
+  redirectNote:
+    'Your browser will be redirected to Keycloak, then returned to Buddy after a successful sign in.',
 };

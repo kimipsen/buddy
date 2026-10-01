@@ -22,7 +22,7 @@ export const taskLibrary = {
       createError: 'Kunne ikke oprette opgaveskabelonen.',
       save: 'Gem',
       cancel: 'Annuller',
-      updateError: 'Kunne ikke opdatere denne opgaveskabelon.'
+      updateError: 'Kunne ikke opdatere denne opgaveskabelon.',
     },
     subtasks: {
       title: 'Deltrin',
@@ -40,12 +40,12 @@ export const taskLibrary = {
       removeError: 'Kunne ikke fjerne dette deltrin.',
       reorderError: 'Kunne ikke omarrangere deltrin.',
       moveUp: 'Flyt op',
-      moveDown: 'Flyt ned'
-    }
+      moveDown: 'Flyt ned',
+    },
   },
   picker: {
     noTemplate: 'Ingen skabelon',
     noMatches: 'Ingen skabeloner matcher.',
-    summary: '{count} trin, {duration}'
-  }
+    summary: '{count} trin, {duration}',
+  },
 };

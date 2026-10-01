@@ -16,7 +16,7 @@ export const progress = {
     form: {
       thresholdPlaceholder: 'Stars needed',
       iconPlaceholder: 'Icon',
-      labelPlaceholder: 'Label (optional)'
-    }
-  }
+      labelPlaceholder: 'Label (optional)',
+    },
+  },
 };

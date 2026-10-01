@@ -39,7 +39,10 @@ import { SEEDED_USERS, expect, test } from './support/auth-fixture';
 // ability to complete the hosted browser flow at all, independent of the required-action mechanics
 // this spec cares about -- not something reasonably fixable from an e2e spec, so the child-side
 // direction is skipped rather than faked with a stubbed/synthetic session.
-test('a guardian landing on the root path is redirected to /guardian, not /child', async ({ page, loginAs }) => {
+test('a guardian landing on the root path is redirected to /guardian, not /child', async ({
+  page,
+  loginAs,
+}) => {
   await loginAs(SEEDED_USERS.carol);
 
   await page.goto('/');
@@ -50,7 +53,7 @@ test('a guardian landing on the root path is redirected to /guardian, not /child
 
 test('a guardian session is not currently blocked from directly reaching /child (no route guard covers this)', async ({
   page,
-  loginAs
+  loginAs,
 }) => {
   await loginAs(SEEDED_USERS.carol);
 

@@ -12,7 +12,11 @@ describe('Stepper', () => {
     onValueChange: ReturnType<typeof vi.fn>;
   }
 
-  async function setup(options: { value: number; min?: number; max?: number | null }): Promise<Setup> {
+  async function setup(options: {
+    value: number;
+    min?: number;
+    max?: number | null;
+  }): Promise<Setup> {
     await TestBed.configureTestingModule({ imports: [Stepper] }).compileComponents();
 
     const fixture = TestBed.createComponent(Stepper);
@@ -35,7 +39,7 @@ describe('Stepper', () => {
       decrementButton: buttons[0],
       incrementButton: buttons[1],
       input: compiled.querySelector('input')!,
-      onValueChange
+      onValueChange,
     };
   }
 

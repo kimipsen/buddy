@@ -4,8 +4,15 @@ import { RouterLink } from '@angular/router';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from '../../../core/map-with-concurrency';
-import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
+import {
+  PER_ITEM_REQUEST_CONCURRENCY,
+  mapWithConcurrency,
+} from '../../../core/map-with-concurrency';
+import {
+  PickupAssigneeKind,
+  PickupOccurrence,
+  PickupsService,
+} from '../../../core/pickups.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const GUARDIAN: PickupAssigneeKind = 0;
@@ -13,14 +20,17 @@ const SELF_ESCORT: PickupAssigneeKind = 1;
 const SIBLING: PickupAssigneeKind = 2;
 const PLAYDATE: PickupAssigneeKind = 3;
 
-const SLOT_LABELS = { 0: 'dashboard.pickup.slots.dropOff', 1: 'dashboard.pickup.slots.pickUp' } as const;
+const SLOT_LABELS = {
+  0: 'dashboard.pickup.slots.dropOff',
+  1: 'dashboard.pickup.slots.pickUp',
+} as const;
 
 type PickupRow = PickupOccurrence & { childId: string; childName: string };
 
 @Component({
   selector: 'app-pickup-today',
   imports: [RouterLink, TranslatePipe, LoadingSpinner],
-  templateUrl: './pickup-today.html'
+  templateUrl: './pickup-today.html',
 })
 export class PickupToday implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -46,7 +56,10 @@ export class PickupToday implements OnInit {
 
   protected assigneeName(row: PickupRow): string | null {
     if (row.kind === this.guardianKind) {
-      return this.childGuardiansById.get(row.childId)?.find((g) => g.id === row.guardianId)?.name.givenName ?? null;
+      return (
+        this.childGuardiansById.get(row.childId)?.find((g) => g.id === row.guardianId)?.name
+          .givenName ?? null
+      );
     }
 
     return null;
@@ -71,14 +84,22 @@ export class PickupToday implements OnInit {
       // Two requests per child (schedule + guardians) with at most PER_ITEM_REQUEST_CONCURRENCY
       // children in flight, so never more than 2x the cap requests at once. Still all-or-nothing:
       // any child's failure shows the widget's load error.
-      const perChild = await mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, async (child) => {
-        const [occurrences, childGuardians] = await Promise.all([
-          this.pickups.listSchedule(child.id, today, today),
-          this.guardians.listChildGuardians(child.id)
-        ]);
-        this.childGuardiansById.set(child.id, childGuardians);
-        return occurrences.map((occurrence) => ({ ...occurrence, childId: child.id, childName: child.name.givenName }));
-      });
+      const perChild = await mapWithConcurrency(
+        children,
+        PER_ITEM_REQUEST_CONCURRENCY,
+        async (child) => {
+          const [occurrences, childGuardians] = await Promise.all([
+            this.pickups.listSchedule(child.id, today, today),
+            this.guardians.listChildGuardians(child.id),
+          ]);
+          this.childGuardiansById.set(child.id, childGuardians);
+          return occurrences.map((occurrence) => ({
+            ...occurrence,
+            childId: child.id,
+            childName: child.name.givenName,
+          }));
+        },
+      );
 
       this.rows.set(perChild.flat().sort((a, b) => a.slot - b.slot));
     } catch {

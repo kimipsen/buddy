@@ -2,15 +2,24 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { toIsoDate } from '../../../../core/date-utils';
-import { ChildSummary, GuardianSummary, GuardiansService } from '../../../../core/guardians.service';
+import {
+  ChildSummary,
+  GuardianSummary,
+  GuardiansService,
+} from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
-import { AssignPickupRequest, PickupOccurrence, PickupSlot, PickupsService } from '../../../../core/pickups.service';
+import {
+  AssignPickupRequest,
+  PickupOccurrence,
+  PickupSlot,
+  PickupsService,
+} from '../../../../core/pickups.service';
 import { PickupCell } from '../pickup-cell/pickup-cell';
 
 const SLOT_LABELS: Record<PickupSlot, string> = {
   0: 'pickup.slots.dropOff',
-  1: 'pickup.slots.pickUp'
+  1: 'pickup.slots.pickUp',
 };
 
 const SLOTS: PickupSlot[] = [0, 1];
@@ -29,7 +38,7 @@ function buildWeek(locale: string): WeekDay[] {
 
     return {
       date: toIsoDate(date),
-      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
+      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' }),
     };
   });
 }
@@ -37,7 +46,7 @@ function buildWeek(locale: string): WeekDay[] {
 @Component({
   selector: 'app-manage-pickups',
   imports: [FormsModule, PickupCell, TranslatePipe],
-  templateUrl: './manage-pickups.html'
+  templateUrl: './manage-pickups.html',
 })
 export class ManagePickups implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -54,7 +63,7 @@ export class ManagePickups implements OnInit {
 
   protected readonly childGuardians = signal<GuardianSummary[]>([]);
   protected readonly siblings = computed((): ChildSummary[] =>
-    this.children().filter((child) => child.id !== this.selectedChildId())
+    this.children().filter((child) => child.id !== this.selectedChildId()),
   );
 
   protected readonly entriesByKey = signal<Partial<Record<string, PickupOccurrence>>>({});
@@ -79,7 +88,11 @@ export class ManagePickups implements OnInit {
     await this.loadForChild(childId);
   }
 
-  protected async onAssign(date: string, slot: PickupSlot, request: AssignPickupRequest): Promise<void> {
+  protected async onAssign(
+    date: string,
+    slot: PickupSlot,
+    request: AssignPickupRequest,
+  ): Promise<void> {
     const childId = this.selectedChildId();
 
     if (!childId) {
@@ -157,7 +170,7 @@ export class ManagePickups implements OnInit {
       const week = this.week();
       const [childGuardians, occurrences] = await Promise.all([
         this.guardians.listChildGuardians(childId),
-        this.pickups.listSchedule(childId, week[0].date, week.at(-1)!.date)
+        this.pickups.listSchedule(childId, week[0].date, week.at(-1)!.date),
       ]);
 
       // A newer call (from switching the child again before this one resolved) may have already

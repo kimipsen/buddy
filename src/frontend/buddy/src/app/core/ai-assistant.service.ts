@@ -78,48 +78,90 @@ export class AiAssistantService {
     return firstValueFrom(this.http.get<AiProviderSettings>(`${this.base(childId)}/ai/providers`));
   }
 
-  setProviderApiKey(childId: string, provider: AiProvider, apiKey: string): Promise<AiProviderSettings> {
-    return firstValueFrom(this.http.put<AiProviderSettings>(`${this.base(childId)}/ai/providers/${provider}/key`, { apiKey }));
+  setProviderApiKey(
+    childId: string,
+    provider: AiProvider,
+    apiKey: string,
+  ): Promise<AiProviderSettings> {
+    return firstValueFrom(
+      this.http.put<AiProviderSettings>(`${this.base(childId)}/ai/providers/${provider}/key`, {
+        apiKey,
+      }),
+    );
   }
 
   removeProviderApiKey(childId: string, provider: AiProvider): Promise<AiProviderSettings> {
-    return firstValueFrom(this.http.delete<AiProviderSettings>(`${this.base(childId)}/ai/providers/${provider}/key`));
+    return firstValueFrom(
+      this.http.delete<AiProviderSettings>(`${this.base(childId)}/ai/providers/${provider}/key`),
+    );
   }
 
   setActiveProvider(childId: string, provider: AiProvider): Promise<AiProviderSettings> {
-    return firstValueFrom(this.http.put<AiProviderSettings>(`${this.base(childId)}/ai/active-provider/${provider}`, {}));
+    return firstValueFrom(
+      this.http.put<AiProviderSettings>(`${this.base(childId)}/ai/active-provider/${provider}`, {}),
+    );
   }
 
   // A probe, not a state change -- still POST (per this feature's backend design) and so still
   // wrapped in postIdempotent per http-idempotency.ts's "only POST" rule, even though retrying it
   // twice has no side effect to duplicate.
-  testProviderConnection(childId: string, provider: AiProvider, apiKey?: string | null): Promise<TestProviderConnectionResult> {
+  testProviderConnection(
+    childId: string,
+    provider: AiProvider,
+    apiKey?: string | null,
+  ): Promise<TestProviderConnectionResult> {
     return firstValueFrom(
-      postIdempotent<TestProviderConnectionResult>(this.http, `${this.base(childId)}/ai/providers/${provider}/test-connection`, {
-        apiKey: apiKey ?? null
-      })
+      postIdempotent<TestProviderConnectionResult>(
+        this.http,
+        `${this.base(childId)}/ai/providers/${provider}/test-connection`,
+        {
+          apiKey: apiKey ?? null,
+        },
+      ),
     );
   }
 
   // 404 when the family has no current session -- callers should treat that as "nothing to
   // restore" rather than an error.
   getCurrentSession(childId: string): Promise<AiSessionView> {
-    return firstValueFrom(this.http.get<AiSessionView>(`${this.base(childId)}/ai/sessions/current`));
+    return firstValueFrom(
+      this.http.get<AiSessionView>(`${this.base(childId)}/ai/sessions/current`),
+    );
   }
 
   startSession(childId: string, request: StartAiSessionRequest): Promise<AiSessionView> {
-    return firstValueFrom(postIdempotent<AiSessionView>(this.http, `${this.base(childId)}/ai/sessions`, request));
+    return firstValueFrom(
+      postIdempotent<AiSessionView>(this.http, `${this.base(childId)}/ai/sessions`, request),
+    );
   }
 
   sendMessage(childId: string, text: string): Promise<AiSessionView> {
-    return firstValueFrom(postIdempotent<AiSessionView>(this.http, `${this.base(childId)}/ai/sessions/current/messages`, { text }));
+    return firstValueFrom(
+      postIdempotent<AiSessionView>(
+        this.http,
+        `${this.base(childId)}/ai/sessions/current/messages`,
+        { text },
+      ),
+    );
   }
 
   applyDraft(childId: string): Promise<AiSessionView> {
-    return firstValueFrom(postIdempotent<AiSessionView>(this.http, `${this.base(childId)}/ai/sessions/current/apply`, {}));
+    return firstValueFrom(
+      postIdempotent<AiSessionView>(
+        this.http,
+        `${this.base(childId)}/ai/sessions/current/apply`,
+        {},
+      ),
+    );
   }
 
   discardSession(childId: string): Promise<AiSessionView> {
-    return firstValueFrom(postIdempotent<AiSessionView>(this.http, `${this.base(childId)}/ai/sessions/current/discard`, {}));
+    return firstValueFrom(
+      postIdempotent<AiSessionView>(
+        this.http,
+        `${this.base(childId)}/ai/sessions/current/discard`,
+        {},
+      ),
+    );
   }
 }

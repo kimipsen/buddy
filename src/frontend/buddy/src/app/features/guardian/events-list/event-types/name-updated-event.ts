@@ -7,7 +7,7 @@ import { NameUpdatedData } from './user-event.model';
 @Component({
   selector: 'app-name-updated-event',
   imports: [UserDatePipe, TranslatePipe],
-  templateUrl: './name-updated-event.html'
+  templateUrl: './name-updated-event.html',
 })
 export class NameUpdatedEvent {
   readonly data = input.required<NameUpdatedData>();

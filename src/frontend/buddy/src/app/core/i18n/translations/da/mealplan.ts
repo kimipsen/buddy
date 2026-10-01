@@ -5,7 +5,7 @@ export const mealplan = {
   loadError: 'Kunne ikke indlæse madplanen.',
   scope: {
     myFamily: 'Min familie',
-    readOnlyBadge: 'kun læsning'
+    readOnlyBadge: 'kun læsning',
   },
   sharing: {
     title: 'Del med en gruppe',
@@ -15,7 +15,7 @@ export const mealplan = {
     currentlySharedWith: 'Delt med {name}.',
     noGroups: 'Opret en gruppe, eller bliv administrator af en, for at dele denne madplan.',
     shareError: 'Kunne ikke dele madplanen med den gruppe.',
-    unshareError: 'Kunne ikke stoppe deling af madplanen.'
+    unshareError: 'Kunne ikke stoppe deling af madplanen.',
   },
   ical: {
     title: 'Kalenderabonnement',
@@ -31,7 +31,7 @@ export const mealplan = {
     loadError: 'Kunne ikke indlæse abonnementslinks.',
     newUrlHint: 'Kopiér dette link til din kalenderapp nu -- det vises ikke igen.',
     copyButton: 'Kopiér link',
-    copiedButton: 'Kopieret!'
+    copiedButton: 'Kopieret!',
   },
   manageMeals: {
     title: 'Måltider',
@@ -50,7 +50,7 @@ export const mealplan = {
     similarMealsWarning: 'Der findes allerede lignende måltider:',
     createError: 'Kunne ikke oprette måltidet.',
     archiveError: 'Kunne ikke arkivere dette måltid.',
-    loadError: 'Kunne ikke indlæse måltider.'
+    loadError: 'Kunne ikke indlæse måltider.',
   },
   assign: {
     title: 'Ugens plan',
@@ -63,17 +63,17 @@ export const mealplan = {
     dragHint: 'Træk for at flytte eller bytte med en anden dag eller et andet måltid',
     previousWeek: '← Forrige uge',
     nextWeek: 'Næste uge →',
-    pastDay: '(tidligere)'
+    pastDay: '(tidligere)',
   },
   slots: {
     breakfast: 'Morgenmad',
     lunch: 'Frokost',
     dinner: 'Aftensmad',
-    snack: 'Mellemmåltid'
+    snack: 'Mellemmåltid',
   },
   picker: {
     notPlanned: 'Ikke planlagt',
-    noMatches: 'Ingen måltider matcher.'
+    noMatches: 'Ingen måltider matcher.',
   },
   aiAssistant: {
     entryButton: 'Planlæg med AI',
@@ -82,7 +82,8 @@ export const mealplan = {
     backToMealplan: 'Tilbage til madplan',
     loading: 'Indlæser…',
     noChildren: 'Tilknyt et barn under Indstillinger, før du kan bruge AI-assistenten.',
-    noProviderConfigured: 'Tilføj en API-nøgle til en AI-udbyder under Indstillinger, før du starter en session.',
+    noProviderConfigured:
+      'Tilføj en API-nøgle til en AI-udbyder under Indstillinger, før du starter en session.',
     goToSettings: 'Gå til Indstillinger',
     loadError: 'Kunne ikke indlæse AI-assistenten.',
     start: {
@@ -94,7 +95,7 @@ export const mealplan = {
       startButton: 'Start planlægning',
       starting: 'Starter…',
       startError: 'Kunne ikke starte en session. Tjek at en udbyder er konfigureret.',
-      noSlotsSelected: 'Vælg mindst ét måltid.'
+      noSlotsSelected: 'Vælg mindst ét måltid.',
     },
     session: {
       statusDrafting: 'Udkast',
@@ -117,7 +118,7 @@ export const mealplan = {
       discardError: 'Kunne ikke kassere denne session.',
       discardConfirmPrompt: 'Kassér denne session? Dette kan ikke fortrydes.',
       discardConfirmButton: 'Bekræft',
-      discardCancelButton: 'Annuller'
-    }
-  }
+      discardCancelButton: 'Annuller',
+    },
+  },
 };

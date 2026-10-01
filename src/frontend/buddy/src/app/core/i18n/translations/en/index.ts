@@ -31,5 +31,5 @@ export const en = {
   progress,
   shell,
   taskLibrary,
-  verifyEmail
+  verifyEmail,
 };

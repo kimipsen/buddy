@@ -4,26 +4,30 @@ import { FormsModule } from '@angular/forms';
 
 import { listTimeZoneIds } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, isSupportedLanguage } from '../../../../core/i18n/language';
+import {
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+  isSupportedLanguage,
+} from '../../../../core/i18n/language';
 import {
   ChildSummary,
   CreateChildResult,
   GuardianInvite,
   GuardianKind,
-  GuardiansService
+  GuardiansService,
 } from '../../../../core/guardians.service';
 
 const INVITABLE_KINDS: GuardianKind[] = [0, 1];
 
 const KIND_LABELS: Record<GuardianKind, string> = {
   0: 'admin.manageChildren.invite.kinds.parent',
-  1: 'admin.manageChildren.invite.kinds.guardian'
+  1: 'admin.manageChildren.invite.kinds.guardian',
 };
 
 @Component({
   selector: 'app-manage-children',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './manage-children.html'
+  templateUrl: './manage-children.html',
 })
 export class ManageChildren implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -94,9 +98,11 @@ export class ManageChildren implements OnInit {
       this.newChildUsername.set('');
       await this.loadChildren();
     } catch (error) {
-      this.addChildError.set(error instanceof HttpErrorResponse && error.status === 409
-        ? 'admin.manageChildren.usernameTakenError'
-        : 'admin.manageChildren.addError');
+      this.addChildError.set(
+        error instanceof HttpErrorResponse && error.status === 409
+          ? 'admin.manageChildren.usernameTakenError'
+          : 'admin.manageChildren.addError',
+      );
     } finally {
       this.addingChild.set(false);
     }
@@ -142,7 +148,10 @@ export class ManageChildren implements OnInit {
       const updated = await this.guardians.updateChildLanguage(childId, language);
       this.children.update((list) => list.map((child) => (child.id === childId ? updated : child)));
     } catch {
-      this.languageErrorByChildId.update((byChildId) => ({ ...byChildId, [childId]: 'admin.manageChildren.language.error' }));
+      this.languageErrorByChildId.update((byChildId) => ({
+        ...byChildId,
+        [childId]: 'admin.manageChildren.language.error',
+      }));
     } finally {
       this.savingLanguageChildId.set(null);
     }
@@ -164,7 +173,10 @@ export class ManageChildren implements OnInit {
       const updated = await this.guardians.updateChildTimeZone(childId, timeZoneId);
       this.children.update((list) => list.map((child) => (child.id === childId ? updated : child)));
     } catch {
-      this.timeZoneErrorByChildId.update((byChildId) => ({ ...byChildId, [childId]: 'admin.manageChildren.timeZone.error' }));
+      this.timeZoneErrorByChildId.update((byChildId) => ({
+        ...byChildId,
+        [childId]: 'admin.manageChildren.timeZone.error',
+      }));
     } finally {
       this.savingTimeZoneChildId.set(null);
     }

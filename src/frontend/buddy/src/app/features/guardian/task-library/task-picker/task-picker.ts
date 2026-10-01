@@ -25,7 +25,7 @@ function formatDuration(totalMinutes: number): string {
 @Component({
   selector: 'app-task-picker',
   imports: [TranslatePipe],
-  templateUrl: './task-picker.html'
+  templateUrl: './task-picker.html',
 })
 export class TaskPicker {
   readonly templates = input.required<TaskTemplate[]>();
@@ -40,7 +40,9 @@ export class TaskPicker {
   protected readonly query = signal('');
   protected readonly dropdownStyle = signal<Record<string, string>>({});
 
-  protected readonly selectedTemplate = computed(() => this.templates().find((template) => template.id === this.templateId()) ?? null);
+  protected readonly selectedTemplate = computed(
+    () => this.templates().find((template) => template.id === this.templateId()) ?? null,
+  );
 
   protected readonly displayValue = computed(() => {
     if (this.open()) {
@@ -74,7 +76,7 @@ export class TaskPicker {
       position: 'fixed',
       top: `${rect.bottom + 4}px`,
       left: `${rect.left}px`,
-      width: `${rect.width}px`
+      width: `${rect.width}px`,
     });
   }
 

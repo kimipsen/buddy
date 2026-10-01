@@ -3,7 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { UserEventItem, UserEventsPage, UserEventsService } from '../../../core/user-events.service';
+import {
+  UserEventItem,
+  UserEventsPage,
+  UserEventsService,
+} from '../../../core/user-events.service';
 import { EventsList } from './events-list';
 
 describe('EventsList', () => {
@@ -13,7 +17,9 @@ describe('EventsList', () => {
     return { items: [], previousCursor: null, nextCursor: null, ...overrides };
   }
 
-  async function setup(listCurrentUserEvents: UserEventsService['listCurrentUserEvents'] = vi.fn(async () => page())) {
+  async function setup(
+    listCurrentUserEvents: UserEventsService['listCurrentUserEvents'] = vi.fn(async () => page()),
+  ) {
     const userEventsStub: Partial<UserEventsService> = { listCurrentUserEvents };
 
     await TestBed.configureTestingModule({
@@ -24,8 +30,8 @@ describe('EventsList', () => {
         // even though nothing in these tests ever triggers a request through it.
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: UserEventsService, useValue: userEventsStub }
-      ]
+        { provide: UserEventsService, useValue: userEventsStub },
+      ],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -94,23 +100,23 @@ describe('EventsList', () => {
         keycloakSubject: 'sub-1',
         email: { value: 'a@buddy.test', isVerified: true },
         userName: 'auser',
-        name: { givenName: 'Ann', familyName: 'A' }
+        name: { givenName: 'Ann', familyName: 'A' },
       }),
       event('UserDeleted', { userId: 'user-1' }),
       event('NameUpdated', {
         userId: 'user-1',
         before: { givenName: 'Ann', familyName: 'A' },
-        after: { givenName: 'Anna', familyName: 'A' }
+        after: { givenName: 'Anna', familyName: 'A' },
       }),
       event('EmailUpdated', {
         userId: 'user-1',
         before: { value: 'old@buddy.test', isVerified: true },
-        after: { value: 'new@buddy.test', isVerified: false }
+        after: { value: 'new@buddy.test', isVerified: false },
       }),
       event('EmailVerificationRequested', { userId: 'user-1', expiresAt: '2026-01-02T00:00:00Z' }),
       event('EmailVerified', { userId: 'user-1' }),
       event('TimeZoneUpdated', { userId: 'user-1', before: 'UTC', after: 'Europe/Copenhagen' }),
-      event('LanguageUpdated', { userId: 'user-1', before: 'en', after: 'da' })
+      event('LanguageUpdated', { userId: 'user-1', before: 'en', after: 'da' }),
     ];
 
     const { fixture } = await setup(vi.fn(async () => page({ items })));
@@ -125,7 +131,7 @@ describe('EventsList', () => {
       'app-email-verification-requested-event',
       'app-email-verified-event',
       'app-timezone-updated-event',
-      'app-language-updated-event'
+      'app-language-updated-event',
     ];
 
     for (const selector of selectors) {
@@ -135,7 +141,9 @@ describe('EventsList', () => {
   });
 
   it('falls back to the unknown-event component for an unrecognized event kind, passing through its type and data', async () => {
-    const items: UserEventItem[] = [event('SomethingUnexpected', { occurredAt: '2026-01-01T00:00:00Z', foo: 'bar' })];
+    const items: UserEventItem[] = [
+      event('SomethingUnexpected', { occurredAt: '2026-01-01T00:00:00Z', foo: 'bar' }),
+    ];
 
     const { fixture } = await setup(vi.fn(async () => page({ items })));
     await settle(fixture);
@@ -155,10 +163,10 @@ describe('EventsList', () => {
         keycloakSubject: 'sub-1',
         email: { value: 'a@buddy.test', isVerified: true },
         userName: null,
-        name: { givenName: 'Ann', familyName: 'A' }
+        name: { givenName: 'Ann', familyName: 'A' },
       }),
       event('UserDeleted', {}),
-      event('EmailVerified', {})
+      event('EmailVerified', {}),
     ];
 
     const { fixture } = await setup(vi.fn(async () => page({ items })));
@@ -173,7 +181,9 @@ describe('EventsList', () => {
   });
 
   it('disables Previous and enables Next on the first page when a next page exists', async () => {
-    const { fixture } = await setup(vi.fn(async () => page({ items: [event('UserDeleted', {})], nextCursor: 'cursor-2' })));
+    const { fixture } = await setup(
+      vi.fn(async () => page({ items: [event('UserDeleted', {})], nextCursor: 'cursor-2' })),
+    );
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -183,7 +193,9 @@ describe('EventsList', () => {
   });
 
   it('disables Next on the first page when there is no next page', async () => {
-    const { fixture } = await setup(vi.fn(async () => page({ items: [event('UserDeleted', {})], nextCursor: null })));
+    const { fixture } = await setup(
+      vi.fn(async () => page({ items: [event('UserDeleted', {})], nextCursor: null })),
+    );
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -211,7 +223,9 @@ describe('EventsList', () => {
     expect(compiled.querySelector('app-email-verified-event')).not.toBeNull();
     expect(compiled.querySelector('app-user-deleted-event')).toBeNull();
 
-    const [previous, nextAfter] = Array.from(compiled.querySelectorAll('button')) as HTMLButtonElement[];
+    const [previous, nextAfter] = Array.from(
+      compiled.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
     expect(previous.disabled).toBe(false);
     expect(nextAfter.disabled).toBe(true);
   });
@@ -269,8 +283,12 @@ describe('EventsList', () => {
     let resolvePage2!: (value: UserEventsPage) => void;
     const listCurrentUserEvents = vi
       .fn()
-      .mockImplementationOnce(async () => page({ items: [event('UserDeleted', {})], nextCursor: 'cursor-2' }))
-      .mockImplementationOnce(() => new Promise<UserEventsPage>((resolve) => (resolvePage2 = resolve)));
+      .mockImplementationOnce(async () =>
+        page({ items: [event('UserDeleted', {})], nextCursor: 'cursor-2' }),
+      )
+      .mockImplementationOnce(
+        () => new Promise<UserEventsPage>((resolve) => (resolvePage2 = resolve)),
+      );
 
     const { fixture } = await setup(listCurrentUserEvents);
     await settle(fixture);

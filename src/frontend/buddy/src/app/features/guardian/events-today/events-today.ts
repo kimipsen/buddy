@@ -20,7 +20,7 @@ export interface EventView extends CalendarOccurrence {
 @Component({
   selector: 'app-events-today',
   imports: [UserDatePipe, TranslatePipe, LoadingSpinner],
-  templateUrl: './events-today.html'
+  templateUrl: './events-today.html',
 })
 export class EventsToday implements OnInit, OnDestroy {
   private readonly calendars = inject(CalendarsService);
@@ -58,7 +58,10 @@ export class EventsToday implements OnInit, OnDestroy {
 
   // All-day events have no startsAt/endsAt to measure against, so they never read as past or
   // ongoing here -- they stay "current" for the whole day, same as their allDay badge implies.
-  private eventProgress(event: CalendarOccurrence, nowMs: number): { isPast: boolean; isOngoing: boolean; progressPercent: number } {
+  private eventProgress(
+    event: CalendarOccurrence,
+    nowMs: number,
+  ): { isPast: boolean; isOngoing: boolean; progressPercent: number } {
     if (event.isAllDay || event.startsAt === null) {
       return { isPast: false, isOngoing: false, progressPercent: 0 };
     }
@@ -88,7 +91,7 @@ export class EventsToday implements OnInit, OnDestroy {
       this.events.set(
         occurrences
           .filter((occurrence) => occurrence.kind === EVENT_KIND)
-          .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''))
+          .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? '')),
       );
     } catch {
       this.error.set('dashboard.events.loadError');

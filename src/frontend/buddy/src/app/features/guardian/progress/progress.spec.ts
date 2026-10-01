@@ -14,15 +14,26 @@ import { GuardianProgress } from './progress';
 describe('GuardianProgress', () => {
   async function setup() {
     const guardiansStub: Partial<GuardiansService> = {
-      listMyChildren: vi.fn(async () => [])
+      listMyChildren: vi.fn(async () => []),
     };
     const progressStub: Partial<ProgressService> = {
-      getChildProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [], currentIcon: null, nextGoalThreshold: 0, nextGoalIcon: '🌱', goalPosts: [] }))
+      getChildProgress: vi.fn(async () => ({
+        totalStars: 0,
+        unlockedMilestones: [],
+        currentIcon: null,
+        nextGoalThreshold: 0,
+        nextGoalIcon: '🌱',
+        goalPosts: [],
+      })),
     };
 
     await TestBed.configureTestingModule({
       imports: [GuardianProgress],
-      providers: [provideRouter([]), { provide: GuardiansService, useValue: guardiansStub }, { provide: ProgressService, useValue: progressStub }]
+      providers: [
+        provideRouter([]),
+        { provide: GuardiansService, useValue: guardiansStub },
+        { provide: ProgressService, useValue: progressStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianProgress);

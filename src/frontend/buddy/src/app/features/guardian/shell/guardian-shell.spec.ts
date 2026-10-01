@@ -15,7 +15,7 @@ describe('GuardianShell', () => {
 
     await TestBed.configureTestingModule({
       imports: [GuardianShell],
-      providers: [provideRouter([]), { provide: AuthService, useValue: authStub }]
+      providers: [provideRouter([]), { provide: AuthService, useValue: authStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianShell);

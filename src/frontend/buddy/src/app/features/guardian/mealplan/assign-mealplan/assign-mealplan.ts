@@ -1,18 +1,32 @@
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import {
+  CdkDrag,
+  CdkDragDrop,
+  CdkDragHandle,
+  CdkDragPreview,
+  CdkDropList,
+  CdkDropListGroup,
+} from '@angular/cdk/drag-drop';
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 
 import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
-import { Meal, MealPlanEntry, MealplanAccessTier, MealplanScope, MealSlot, MealplansService } from '../../../../core/mealplans.service';
+import {
+  Meal,
+  MealPlanEntry,
+  MealplanAccessTier,
+  MealplanScope,
+  MealSlot,
+  MealplansService,
+} from '../../../../core/mealplans.service';
 import { MealPicker } from '../meal-picker/meal-picker';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   0: 'mealplan.slots.breakfast',
   1: 'mealplan.slots.lunch',
   2: 'mealplan.slots.dinner',
-  3: 'mealplan.slots.snack'
+  3: 'mealplan.slots.snack',
 };
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
@@ -51,15 +65,23 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
 
     return {
       date: toIsoDate(date),
-      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
+      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' }),
     };
   });
 }
 
 @Component({
   selector: 'app-assign-mealplan',
-  imports: [MealPicker, TranslatePipe, CdkDrag, CdkDragHandle, CdkDragPreview, CdkDropList, CdkDropListGroup],
-  templateUrl: './assign-mealplan.html'
+  imports: [
+    MealPicker,
+    TranslatePipe,
+    CdkDrag,
+    CdkDragHandle,
+    CdkDragPreview,
+    CdkDropList,
+    CdkDropListGroup,
+  ],
+  templateUrl: './assign-mealplan.html',
 })
 export class AssignMealplan implements OnInit {
   private readonly mealplans = inject(MealplansService);
@@ -78,11 +100,15 @@ export class AssignMealplan implements OnInit {
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
   protected readonly anchorDate = signal(todayIsoDate());
-  protected readonly days = computed(() => buildDays(this.anchorDate(), this.translation.language()));
+  protected readonly days = computed(() =>
+    buildDays(this.anchorDate(), this.translation.language()),
+  );
 
   // Reads straight from the shared service state, so adding a meal in the meal library on the
   // same page shows up here immediately without a manual refetch.
-  protected readonly meals = computed<Meal[]>(() => this.mealplans.meals().filter((meal) => !meal.isArchived));
+  protected readonly meals = computed<Meal[]>(() =>
+    this.mealplans.meals().filter((meal) => !meal.isArchived),
+  );
   protected readonly entriesByKey = signal<Partial<Record<string, MealPlanEntry>>>({});
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -108,7 +134,9 @@ export class AssignMealplan implements OnInit {
   private async loadChildNames(): Promise<void> {
     try {
       const children: ChildSummary[] = await this.guardians.listMyChildren();
-      this.childNamesById.set(Object.fromEntries(children.map((child) => [child.id, child.name.givenName])));
+      this.childNamesById.set(
+        Object.fromEntries(children.map((child) => [child.id, child.name.givenName])),
+      );
     } catch {
       // Sibling names are a nice-to-have on the historical ratings view -- if this fails, ratings
       // still render (see ratingsFor), just without a resolvable name.
@@ -125,7 +153,11 @@ export class AssignMealplan implements OnInit {
 
   private shiftWeek(offsetDays: number): void {
     const anchor = parseIsoDate(this.anchorDate());
-    const shifted = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offsetDays);
+    const shifted = new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() + offsetDays,
+    );
     this.anchorDate.set(toIsoDate(shifted));
   }
 
@@ -170,7 +202,7 @@ export class AssignMealplan implements OnInit {
     return entry.allRatings.map((rating) => ({
       childName: names[rating.childId] ?? rating.childId,
       stars: rating.stars,
-      comment: rating.comment
+      comment: rating.comment,
     }));
   }
 
@@ -239,11 +271,30 @@ export class AssignMealplan implements OnInit {
       if (targetMealId) {
         // Sequential, not Promise.all: both writes land on the same plan's single event stream,
         // and appending to it concurrently from two requests causes contention.
-        const targetEntry = await this.mealplans.assignMealToSlot(scope, target.date, target.slot, sourceMealId);
-        const sourceEntry = await this.mealplans.assignMealToSlot(scope, source.date, source.slot, targetMealId);
-        this.entriesByKey.update((current) => ({ ...current, [targetKey]: targetEntry, [sourceKey]: sourceEntry }));
+        const targetEntry = await this.mealplans.assignMealToSlot(
+          scope,
+          target.date,
+          target.slot,
+          sourceMealId,
+        );
+        const sourceEntry = await this.mealplans.assignMealToSlot(
+          scope,
+          source.date,
+          source.slot,
+          targetMealId,
+        );
+        this.entriesByKey.update((current) => ({
+          ...current,
+          [targetKey]: targetEntry,
+          [sourceKey]: sourceEntry,
+        }));
       } else {
-        const targetEntry = await this.mealplans.assignMealToSlot(scope, target.date, target.slot, sourceMealId);
+        const targetEntry = await this.mealplans.assignMealToSlot(
+          scope,
+          target.date,
+          target.slot,
+          sourceMealId,
+        );
         await this.mealplans.clearMealSlot(scope, source.date, source.slot);
         this.entriesByKey.update((current) => {
           const next = { ...current, [targetKey]: targetEntry };
@@ -266,7 +317,7 @@ export class AssignMealplan implements OnInit {
     try {
       const [, entries] = await Promise.all([
         this.mealplans.listMeals(scope),
-        this.mealplans.listMealPlan(scope, this.days()[0].date, this.days().at(-1)!.date)
+        this.mealplans.listMealPlan(scope, this.days()[0].date, this.days().at(-1)!.date),
       ]);
 
       const byKey: Partial<Record<string, MealPlanEntry>> = {};

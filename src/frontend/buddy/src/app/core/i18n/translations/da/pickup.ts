@@ -4,14 +4,14 @@ export const pickup = {
   title: 'Planlæg afhentning og aflevering.',
   slots: {
     dropOff: 'Aflevering',
-    pickUp: 'Afhentning'
+    pickUp: 'Afhentning',
   },
   assign: {
     title: 'Ugeplan',
     loading: 'Indlæser plan…',
     noChildren: 'Tilknyt et barn under Indstillinger, før du planlægger afhentning.',
     loadError: 'Kunne ikke indlæse afhentningsplanen.',
-    updateError: 'Kunne ikke opdatere denne tid.'
+    updateError: 'Kunne ikke opdatere denne tid.',
   },
   cell: {
     notPlanned: 'Ikke planlagt',
@@ -22,7 +22,7 @@ export const pickup = {
       guardian: 'En voksen',
       selfEscort: 'Går selv',
       sibling: 'En søskende',
-      playdate: 'Legeaftale'
+      playdate: 'Legeaftale',
     },
     kindLabel: 'Afhentningstype',
     timeLabel: 'Afhentningstidspunkt',
@@ -32,6 +32,6 @@ export const pickup = {
     playdateHostPlaceholder: 'Hvem er vært? (påkrævet)',
     playdateLocationPlaceholder: 'Sted (valgfrit)',
     playdateContactPlaceholder: 'Kontaktoplysninger (valgfrit)',
-    notesPlaceholder: 'Noter (valgfrit)'
-  }
+    notesPlaceholder: 'Noter (valgfrit)',
+  },
 };

@@ -12,15 +12,18 @@ describe('DeleteAccount', () => {
   }
 
   function setup(stubs: Stubs = {}) {
-    const usersStub: Partial<UsersService> = { deleteCurrentUser: vi.fn(async () => undefined), ...stubs.users };
+    const usersStub: Partial<UsersService> = {
+      deleteCurrentUser: vi.fn(async () => undefined),
+      ...stubs.users,
+    };
     const authStub: Partial<AuthService> = { logout: vi.fn(), ...stubs.auth };
 
     TestBed.configureTestingModule({
       imports: [DeleteAccount],
       providers: [
         { provide: UsersService, useValue: usersStub },
-        { provide: AuthService, useValue: authStub }
-      ]
+        { provide: AuthService, useValue: authStub },
+      ],
     });
 
     const fixture = TestBed.createComponent(DeleteAccount);
@@ -43,7 +46,9 @@ describe('DeleteAccount', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   it('shows the danger zone with no confirm dialog open', () => {
@@ -51,7 +56,9 @@ describe('DeleteAccount', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Danger zone');
-    expect(compiled.textContent).toContain('Deleting your account removes your access permanently. This cannot be undone.');
+    expect(compiled.textContent).toContain(
+      'Deleting your account removes your access permanently. This cannot be undone.',
+    );
     expect(findButtonByText(compiled, 'Delete my account')).toBeTruthy();
     expect(backdrop(compiled)).toBeFalsy();
   });
@@ -65,7 +72,9 @@ describe('DeleteAccount', () => {
 
     expect(backdrop(compiled)).toBeTruthy();
     expect(compiled.textContent).toContain('Delete your account?');
-    expect(compiled.textContent).toContain('This permanently deletes your account and cannot be undone. You’ll be signed out immediately.');
+    expect(compiled.textContent).toContain(
+      'This permanently deletes your account and cannot be undone. You’ll be signed out immediately.',
+    );
     expect(findButtonByText(compiled, 'Cancel')).toBeTruthy();
     expect(findButtonByText(compiled, 'Yes, delete my account')).toBeTruthy();
   });
@@ -148,7 +157,9 @@ describe('DeleteAccount', () => {
 
   it('disables both dialog buttons and shows a deleting label while the delete request is in flight', async () => {
     let resolveDelete!: () => void;
-    const deleteCurrentUser = vi.fn(() => new Promise<void>((resolve) => (resolveDelete = resolve)));
+    const deleteCurrentUser = vi.fn(
+      () => new Promise<void>((resolve) => (resolveDelete = resolve)),
+    );
     const { fixture, auth } = setup({ users: { deleteCurrentUser } });
     const compiled = fixture.nativeElement as HTMLElement;
 

@@ -32,7 +32,7 @@ describe('DateSelect', () => {
     expect(input.type).toBe('date');
   });
 
-  it('reflects the value input as the input\'s value', async () => {
+  it("reflects the value input as the input's value", async () => {
     const { input } = await setup({ value: '2024-03-05' });
 
     expect(input.value).toBe('2024-03-05');

@@ -3,7 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { AiAssistantService, AiProviderSettings, AiSessionView, StartAiSessionRequest } from './ai-assistant.service';
+import {
+  AiAssistantService,
+  AiProviderSettings,
+  AiSessionView,
+  StartAiSessionRequest,
+} from './ai-assistant.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
 describe('AiAssistantService', () => {
@@ -30,7 +35,7 @@ describe('AiAssistantService', () => {
       status: 0,
       transcript: [],
       draft: [],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -39,8 +44,11 @@ describe('AiAssistantService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: { apiBaseUrl } as Partial<RuntimeConfigService> }
-      ]
+        {
+          provide: RuntimeConfigService,
+          useValue: { apiBaseUrl } as Partial<RuntimeConfigService>,
+        },
+      ],
     });
 
     service = TestBed.inject(AiAssistantService);
@@ -53,7 +61,10 @@ describe('AiAssistantService', () => {
 
   describe('listProviders', () => {
     it('GETs the provider settings for the child', async () => {
-      const result = settings({ providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }], activeProvider: 0 });
+      const result = settings({
+        providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
+        activeProvider: 0,
+      });
 
       const promise = service.listProviders(childId);
 
@@ -72,7 +83,12 @@ describe('AiAssistantService', () => {
       const req = httpMock.expectOne(`${base()}/ai/providers/0/key`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ apiKey: 'sk-ant-test' });
-      req.flush(settings({ providers: [{ provider: 0, last4: 'test', addedAt: '2026-08-01T00:00:00Z' }], activeProvider: 0 }));
+      req.flush(
+        settings({
+          providers: [{ provider: 0, last4: 'test', addedAt: '2026-08-01T00:00:00Z' }],
+          activeProvider: 0,
+        }),
+      );
 
       await expect(promise).resolves.toMatchObject({ activeProvider: 0 });
     });
@@ -121,7 +137,10 @@ describe('AiAssistantService', () => {
       expect(req.request.body).toEqual({ apiKey: null });
       req.flush({ isSuccessful: false, errorMessage: 'Incorrect API key provided.' });
 
-      await expect(promise).resolves.toEqual({ isSuccessful: false, errorMessage: 'Incorrect API key provided.' });
+      await expect(promise).resolves.toEqual({
+        isSuccessful: false,
+        errorMessage: 'Incorrect API key provided.',
+      });
     });
   });
 
@@ -148,7 +167,13 @@ describe('AiAssistantService', () => {
 
   describe('startSession', () => {
     it('POSTs the session request', async () => {
-      const request: StartAiSessionRequest = { from: '2026-08-01', to: '2026-08-03', slots: [2], mustIncludeMealIds: [], notes: null };
+      const request: StartAiSessionRequest = {
+        from: '2026-08-01',
+        to: '2026-08-03',
+        slots: [2],
+        mustIncludeMealIds: [],
+        notes: null,
+      };
 
       const promise = service.startSession(childId, request);
 

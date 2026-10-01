@@ -10,7 +10,7 @@ import {
   GuardianInvitePreview,
   GuardianSummary,
   GuardiansService,
-  SiblingSummary
+  SiblingSummary,
 } from './guardians.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -27,8 +27,8 @@ describe('GuardiansService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: runtimeConfigStub }
-      ]
+        { provide: RuntimeConfigService, useValue: runtimeConfigStub },
+      ],
     });
 
     service = TestBed.inject(GuardiansService);
@@ -42,7 +42,14 @@ describe('GuardiansService', () => {
   describe('listMyChildren', () => {
     it('GETs the caller’s children and resolves them', async () => {
       const children: ChildSummary[] = [
-        { id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC' }
+        {
+          id: 'child-1',
+          name: { givenName: 'Sam', familyName: 'Kid' },
+          guardianLinkId: 'link-1',
+          kind: 0,
+          language: 'en',
+          timeZoneId: 'UTC',
+        },
       ];
 
       const promise = service.listMyChildren();
@@ -76,7 +83,12 @@ describe('GuardiansService', () => {
   describe('listMyGuardians', () => {
     it('GETs the caller’s guardians and resolves them', async () => {
       const guardians: GuardianSummary[] = [
-        { id: 'guardian-1', name: { givenName: 'Gina', familyName: 'G' }, guardianLinkId: 'link-1', kind: 0 }
+        {
+          id: 'guardian-1',
+          name: { givenName: 'Gina', familyName: 'G' },
+          guardianLinkId: 'link-1',
+          kind: 0,
+        },
       ];
 
       const promise = service.listMyGuardians();
@@ -101,7 +113,12 @@ describe('GuardiansService', () => {
   describe('listChildGuardians', () => {
     it('GETs the guardians for a specific child and resolves them', async () => {
       const guardians: GuardianSummary[] = [
-        { id: 'guardian-2', name: { givenName: 'Pat', familyName: 'P' }, guardianLinkId: 'link-2', kind: 1 }
+        {
+          id: 'guardian-2',
+          name: { givenName: 'Pat', familyName: 'P' },
+          guardianLinkId: 'link-2',
+          kind: 1,
+        },
       ];
 
       const promise = service.listChildGuardians('child-1');
@@ -125,7 +142,9 @@ describe('GuardiansService', () => {
 
   describe('listMySiblings', () => {
     it('GETs the caller’s siblings and resolves them', async () => {
-      const siblings: SiblingSummary[] = [{ id: 'sibling-1', name: { givenName: 'Alex', familyName: 'Kid' } }];
+      const siblings: SiblingSummary[] = [
+        { id: 'sibling-1', name: { givenName: 'Alex', familyName: 'Kid' } },
+      ];
 
       const promise = service.listMySiblings();
 
@@ -156,21 +175,33 @@ describe('GuardiansService', () => {
         language: 'en',
         timeZoneId: 'UTC',
         username: 'sam.kid',
-        temporaryPassword: 'temp-pass-123'
+        temporaryPassword: 'temp-pass-123',
       };
 
-      const promise = service.createChild({ givenName: 'Sam', familyName: 'Kid', username: 'sam.kid' });
+      const promise = service.createChild({
+        givenName: 'Sam',
+        familyName: 'Kid',
+        username: 'sam.kid',
+      });
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ givenName: 'Sam', familyName: 'Kid', username: 'sam.kid' });
+      expect(req.request.body).toEqual({
+        givenName: 'Sam',
+        familyName: 'Kid',
+        username: 'sam.kid',
+      });
       req.flush(created);
 
       await expect(promise).resolves.toEqual(created);
     });
 
     it('rejects when the username is already taken', async () => {
-      const promise = service.createChild({ givenName: 'Sam', familyName: 'Kid', username: 'sam.kid' });
+      const promise = service.createChild({
+        givenName: 'Sam',
+        familyName: 'Kid',
+        username: 'sam.kid',
+      });
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children`);
       req.flush('conflict', { status: 409, statusText: 'Conflict' });
@@ -208,7 +239,7 @@ describe('GuardiansService', () => {
         guardianLinkId: 'link-1',
         kind: 0,
         language: 'da',
-        timeZoneId: 'UTC'
+        timeZoneId: 'UTC',
       };
 
       const promise = service.updateChildLanguage('child-1', 'da');
@@ -239,7 +270,7 @@ describe('GuardiansService', () => {
         guardianLinkId: 'link-1',
         kind: 0,
         language: 'en',
-        timeZoneId: 'Europe/Copenhagen'
+        timeZoneId: 'Europe/Copenhagen',
       };
 
       const promise = service.updateChildTimeZone('child-1', 'Europe/Copenhagen');
@@ -265,7 +296,13 @@ describe('GuardiansService', () => {
   describe('listGuardianInvites', () => {
     it('GETs the pending guardian invites for a child and resolves them', async () => {
       const invites: GuardianInvite[] = [
-        { id: 'invite-1', email: 'co-parent@buddy.test', kind: 1, invitedAt: '2026-08-01T00:00:00Z', expiresAt: '2026-08-08T00:00:00Z' }
+        {
+          id: 'invite-1',
+          email: 'co-parent@buddy.test',
+          kind: 1,
+          invitedAt: '2026-08-01T00:00:00Z',
+          expiresAt: '2026-08-08T00:00:00Z',
+        },
       ];
 
       const promise = service.listGuardianInvites('child-1');
@@ -294,7 +331,7 @@ describe('GuardiansService', () => {
         email: 'co-parent@buddy.test',
         kind: 1,
         invitedAt: '2026-08-01T00:00:00Z',
-        expiresAt: '2026-08-08T00:00:00Z'
+        expiresAt: '2026-08-08T00:00:00Z',
       };
 
       const promise = service.inviteGuardian('child-1', { email: 'co-parent@buddy.test', kind: 1 });
@@ -321,7 +358,9 @@ describe('GuardiansService', () => {
     it('DELETEs the invite and resolves', async () => {
       const promise = service.revokeGuardianInvite('child-1', 'invite-2');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/guardian-invites/invite-2`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/users/me/children/child-1/guardian-invites/invite-2`,
+      );
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
 
@@ -331,7 +370,9 @@ describe('GuardiansService', () => {
     it('rejects when the invite cannot be found', async () => {
       const promise = service.revokeGuardianInvite('child-1', 'missing-invite');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/guardian-invites/missing-invite`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/users/me/children/child-1/guardian-invites/missing-invite`,
+      );
       req.flush('not found', { status: 404, statusText: 'Not Found' });
 
       await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);

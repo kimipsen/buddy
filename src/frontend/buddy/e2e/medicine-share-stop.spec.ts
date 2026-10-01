@@ -1,7 +1,11 @@
 import { expect, test } from './support/auth-fixture';
 import { createChild, createGroup, uniqueName } from './support/guardian-data';
 
-test('guardian shares a medicine schedule with a group, then stops the schedule', async ({ page, loginAs, newGuardian }) => {
+test('guardian shares a medicine schedule with a group, then stops the schedule', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
   await loginAs(await newGuardian());
 
@@ -11,7 +15,9 @@ test('guardian shares a medicine schedule with a group, then stops the schedule'
   const medicineName = uniqueName('E2E Medicine');
 
   await page.goto('/guardian/medicine');
-  await expect(page.getByRole('heading', { name: 'Medicine schedules', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Medicine schedules', exact: true }),
+  ).toBeVisible();
 
   await page.getByLabel('Medicine name').fill(medicineName);
   await page.getByLabel('Dosage (e.g. 5ml)').fill('5ml');
@@ -22,7 +28,9 @@ test('guardian shares a medicine schedule with a group, then stops the schedule'
   await page.getByLabel('Choose a group').selectOption({ label: groupName });
 
   const [shareResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && res.url().includes('/group-share/')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'PUT' && res.url().includes('/group-share/'),
+    ),
     page.getByRole('button', { name: 'Share', exact: true }).click(),
   ]);
   expect(shareResponse.ok()).toBe(true);
@@ -42,7 +50,9 @@ test('guardian shares a medicine schedule with a group, then stops the schedule'
   await scheduleRow.getByRole('button', { name: 'Stop', exact: true }).click();
 
   const [stopResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'DELETE' && res.url().includes('/schedules/')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'DELETE' && res.url().includes('/schedules/'),
+    ),
     scheduleRow.getByRole('button', { name: 'Confirm', exact: true }).click(),
   ]);
   expect(stopResponse.ok()).toBe(true);

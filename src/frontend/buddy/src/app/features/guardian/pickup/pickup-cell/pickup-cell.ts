@@ -4,9 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
-import { AssignPickupRequest, PickupAssigneeKind, PickupOccurrence } from '../../../../core/pickups.service';
+import {
+  AssignPickupRequest,
+  PickupAssigneeKind,
+  PickupOccurrence,
+} from '../../../../core/pickups.service';
 import { TimeOfDayPipe } from '../../../../core/time-of-day.pipe';
-import { SegmentedControl, SegmentedControlOption } from '../../../../shared/segmented-control/segmented-control';
+import {
+  SegmentedControl,
+  SegmentedControlOption,
+} from '../../../../shared/segmented-control/segmented-control';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 
 const GUARDIAN: PickupAssigneeKind = 0;
@@ -24,7 +31,7 @@ let nextPickupCellInstanceId = 0;
 @Component({
   selector: 'app-pickup-cell',
   imports: [FormsModule, TranslatePipe, TimeOfDayPipe, SegmentedControl, TimeSelect],
-  templateUrl: './pickup-cell.html'
+  templateUrl: './pickup-cell.html',
 })
 export class PickupCell {
   private readonly translation = inject(TranslationService);
@@ -35,7 +42,7 @@ export class PickupCell {
     { value: GUARDIAN, label: this.translation.translate('pickup.cell.kind.guardian') },
     { value: SELF_ESCORT, label: this.translation.translate('pickup.cell.kind.selfEscort') },
     { value: SIBLING, label: this.translation.translate('pickup.cell.kind.sibling') },
-    { value: PLAYDATE, label: this.translation.translate('pickup.cell.kind.playdate') }
+    { value: PLAYDATE, label: this.translation.translate('pickup.cell.kind.playdate') },
   ]);
 
   readonly guardians = input.required<GuardianSummary[]>();
@@ -77,12 +84,18 @@ export class PickupCell {
 
   protected readonly summaryGuardianName = computed(() => {
     const occurrence = this.occurrence();
-    return this.guardians().find((guardian) => guardian.id === occurrence?.guardianId)?.name.givenName ?? null;
+    return (
+      this.guardians().find((guardian) => guardian.id === occurrence?.guardianId)?.name.givenName ??
+      null
+    );
   });
 
   protected readonly summarySiblingName = computed(() => {
     const occurrence = this.occurrence();
-    return this.siblings().find((sibling) => sibling.id === occurrence?.siblingChildId)?.name.givenName ?? null;
+    return (
+      this.siblings().find((sibling) => sibling.id === occurrence?.siblingChildId)?.name
+        .givenName ?? null
+    );
   });
 
   protected startEditing(): void {
@@ -118,9 +131,10 @@ export class PickupCell {
       siblingChildId: this.kind() === SIBLING ? this.siblingChildId() : null,
       playdateHostName: this.kind() === PLAYDATE ? this.playdateHostName().trim() : null,
       playdateLocation: this.kind() === PLAYDATE ? this.playdateLocation().trim() || null : null,
-      playdateContactInfo: this.kind() === PLAYDATE ? this.playdateContactInfo().trim() || null : null,
+      playdateContactInfo:
+        this.kind() === PLAYDATE ? this.playdateContactInfo().trim() || null : null,
       time: this.time() ? `${this.time()}:00` : null,
-      notes: this.notes().trim() || null
+      notes: this.notes().trim() || null,
     });
     this.editing.set(false);
   }

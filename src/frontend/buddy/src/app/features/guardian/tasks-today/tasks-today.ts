@@ -1,9 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 
-import { AssignableMember, CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
+import {
+  AssignableMember,
+  CalendarOccurrence,
+  CalendarsService,
+} from '../../../core/calendars.service';
 import { toIsoDateInTimeZone } from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from '../../../core/map-with-concurrency';
+import {
+  PER_ITEM_REQUEST_CONCURRENCY,
+  mapWithConcurrency,
+} from '../../../core/map-with-concurrency';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { UsersService } from '../../../core/users.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
@@ -44,7 +51,7 @@ function toRollup(entry: AgendaEntry): TaskRollup {
       isAllDay: entry.isAllDay,
       completedCount: entry.isCompleted ? 1 : 0,
       totalCount: 1,
-      occurrences: [entry]
+      occurrences: [entry],
     };
   }
 
@@ -52,7 +59,7 @@ function toRollup(entry: AgendaEntry): TaskRollup {
   // routine should have been finished, not when its first step was due.
   const last = entry.subtasks.reduce(
     (latest, occurrence) => ((occurrence.dueAt ?? '') > (latest.dueAt ?? '') ? occurrence : latest),
-    entry.subtasks[0]
+    entry.subtasks[0],
   );
 
   return {
@@ -67,14 +74,14 @@ function toRollup(entry: AgendaEntry): TaskRollup {
     isAllDay: last.isAllDay,
     completedCount: entry.subtasks.filter((occurrence) => occurrence.isCompleted).length,
     totalCount: entry.subtasks.length,
-    occurrences: entry.subtasks
+    occurrences: entry.subtasks,
   };
 }
 
 @Component({
   selector: 'app-tasks-today',
   imports: [TranslatePipe, LoadingSpinner, Toggle],
-  templateUrl: './tasks-today.html'
+  templateUrl: './tasks-today.html',
 })
 export class TasksToday implements OnInit {
   private readonly calendars = inject(CalendarsService);
@@ -123,11 +130,21 @@ export class TasksToday implements OnInit {
     this.savingTaskId.set(key);
 
     try {
-      await this.calendars.setTaskCompletion(task.calendarId, task.itemId, date, isCompleted, task.subtaskId ?? null);
+      await this.calendars.setTaskCompletion(
+        task.calendarId,
+        task.itemId,
+        date,
+        isCompleted,
+        task.subtaskId ?? null,
+      );
 
       const applyCompletion = (existing: TaskRollup): TaskRollup =>
         existing.itemId === rollup.itemId
-          ? { ...existing, completedCount: isCompleted ? 1 : 0, occurrences: [{ ...task, isCompleted }] }
+          ? {
+              ...existing,
+              completedCount: isCompleted ? 1 : 0,
+              occurrences: [{ ...task, isCompleted }],
+            }
           : existing;
 
       this.overdue.update((current) => current.map(applyCompletion));
@@ -144,13 +161,17 @@ export class TasksToday implements OnInit {
     this.error.set(null);
 
     try {
-      const [me, occurrences] = await Promise.all([this.users.ensureCurrentUser(), this.calendars.listTodayOccurrences()]);
+      const [me, occurrences] = await Promise.all([
+        this.users.ensureCurrentUser(),
+        this.calendars.listTodayOccurrences(),
+      ]);
       this.currentUserId = me.id;
 
       const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
       const rollups = groupTaskRuns(tasks).map(toRollup);
       const now = Date.now();
-      const isOverdue = (rollup: TaskRollup) => !rollup.isAllDay && rollup.dueAt !== null && new Date(rollup.dueAt).getTime() < now;
+      const isOverdue = (rollup: TaskRollup) =>
+        !rollup.isAllDay && rollup.dueAt !== null && new Date(rollup.dueAt).getTime() < now;
 
       this.overdue.set(rollups.filter(isOverdue));
       this.dueToday.set(rollups.filter((rollup) => !isOverdue(rollup)));
@@ -164,13 +185,22 @@ export class TasksToday implements OnInit {
   }
 
   private async loadAssigneeNames(tasks: CalendarOccurrence[]): Promise<void> {
-    const assignedCalendarIds = [...new Set(tasks.filter((task) => task.assignedTo !== null).map((task) => task.calendarId))];
-    const memberLists = await mapWithConcurrency(assignedCalendarIds, PER_ITEM_REQUEST_CONCURRENCY, (calendarId) =>
-      this.calendars.listAssignableMembers(calendarId).catch((): AssignableMember[] => [])
+    const assignedCalendarIds = [
+      ...new Set(tasks.filter((task) => task.assignedTo !== null).map((task) => task.calendarId)),
+    ];
+    const memberLists = await mapWithConcurrency(
+      assignedCalendarIds,
+      PER_ITEM_REQUEST_CONCURRENCY,
+      (calendarId) =>
+        this.calendars.listAssignableMembers(calendarId).catch((): AssignableMember[] => []),
     );
 
     this.memberNamesById.set(
-      Object.fromEntries(memberLists.flat().map((member) => [member.userId, `${member.givenName} ${member.familyName}`.trim()]))
+      Object.fromEntries(
+        memberLists
+          .flat()
+          .map((member) => [member.userId, `${member.givenName} ${member.familyName}`.trim()]),
+      ),
     );
   }
 }

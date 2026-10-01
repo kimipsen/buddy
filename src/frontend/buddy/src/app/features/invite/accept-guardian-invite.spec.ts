@@ -30,12 +30,14 @@ describe('AcceptGuardianInvite', () => {
     const authStub: Partial<AuthService> = {
       isAuthenticated: signal(true).asReadonly(),
       login: vi.fn(async () => {}),
-      ...stubs.auth
+      ...stubs.auth,
     };
     const guardiansStub: Partial<GuardiansService> = {
-      previewGuardianInvite: vi.fn(async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview),
+      previewGuardianInvite: vi.fn(
+        async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+      ),
       acceptGuardianInvite: vi.fn(async () => {}),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
 
     await TestBed.configureTestingModule({
@@ -46,9 +48,9 @@ describe('AcceptGuardianInvite', () => {
         { provide: GuardiansService, useValue: guardiansStub },
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: convertToParamMap({ token }) } }
-        }
-      ]
+          useValue: { snapshot: { paramMap: convertToParamMap({ token }) } },
+        },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(AcceptGuardianInvite);
@@ -63,7 +65,9 @@ describe('AcceptGuardianInvite', () => {
 
   it('shows the loading state while the preview is in flight', async () => {
     const { fixture } = await setup({
-      guardians: { previewGuardianInvite: vi.fn(() => new Promise<GuardianInvitePreview>(() => {})) }
+      guardians: {
+        previewGuardianInvite: vi.fn(() => new Promise<GuardianInvitePreview>(() => {})),
+      },
     });
     fixture.detectChanges();
 
@@ -73,7 +77,9 @@ describe('AcceptGuardianInvite', () => {
   });
 
   it('requests the preview using the token from the route', async () => {
-    const previewGuardianInvite = vi.fn(async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview);
+    const previewGuardianInvite = vi.fn(
+      async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+    );
     const { fixture } = await setup({ guardians: { previewGuardianInvite } });
     await settle(fixture);
 
@@ -83,7 +89,9 @@ describe('AcceptGuardianInvite', () => {
 
   it('shows the translated error message when the preview fails to load', async () => {
     const { fixture } = await setup({
-      guardians: { previewGuardianInvite: vi.fn(async () => Promise.reject(new Error('not found'))) }
+      guardians: {
+        previewGuardianInvite: vi.fn(async () => Promise.reject(new Error('not found'))),
+      },
     });
     await settle(fixture);
 
@@ -94,22 +102,34 @@ describe('AcceptGuardianInvite', () => {
 
   it('renders the child name and kind for a parent invite once the preview loads', async () => {
     const { fixture } = await setup({
-      guardians: { previewGuardianInvite: vi.fn(async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview) }
+      guardians: {
+        previewGuardianInvite: vi.fn(
+          async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+        ),
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain("You've been invited to help manage Alex's account, as a parent.");
+    expect(compiled.textContent).toContain(
+      "You've been invited to help manage Alex's account, as a parent.",
+    );
   });
 
   it('renders the guardian kind label for a guardian invite', async () => {
     const { fixture } = await setup({
-      guardians: { previewGuardianInvite: vi.fn(async () => ({ childGivenName: 'Sam', kind: 1 }) as GuardianInvitePreview) }
+      guardians: {
+        previewGuardianInvite: vi.fn(
+          async () => ({ childGivenName: 'Sam', kind: 1 }) as GuardianInvitePreview,
+        ),
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain("You've been invited to help manage Sam's account, as a guardian.");
+    expect(compiled.textContent).toContain(
+      "You've been invited to help manage Sam's account, as a guardian.",
+    );
   });
 
   it('shows the accept button and no log-in prompt when already authenticated', async () => {
@@ -126,18 +146,24 @@ describe('AcceptGuardianInvite', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Log in with the account this invite was sent to, to accept it.');
+    expect(compiled.textContent).toContain(
+      'Log in with the account this invite was sent to, to accept it.',
+    );
     expect(compiled.textContent).toContain('Log in to accept');
     expect(compiled.textContent).not.toContain('Accept invite');
   });
 
   it('stores the pending token and starts login when logging in to accept', async () => {
     const login = vi.fn(async () => {});
-    const { fixture } = await setup({ auth: { isAuthenticated: signal(false).asReadonly(), login } });
+    const { fixture } = await setup({
+      auth: { isAuthenticated: signal(false).asReadonly(), login },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const logInButton = Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Log in to accept')!;
+    const logInButton = Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Log in to accept',
+    )!;
     logInButton.click();
     await settle(fixture);
 
@@ -151,14 +177,18 @@ describe('AcceptGuardianInvite', () => {
     const acceptGuardianInvite = vi.fn(async () => {});
     const { fixture } = await setup({
       guardians: {
-        previewGuardianInvite: vi.fn(async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview),
-        acceptGuardianInvite
-      }
+        previewGuardianInvite: vi.fn(
+          async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+        ),
+        acceptGuardianInvite,
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const acceptButton = Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Accept invite')!;
+    const acceptButton = Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Accept invite',
+    )!;
     acceptButton.click();
     await settle(fixture);
 
@@ -170,7 +200,7 @@ describe('AcceptGuardianInvite', () => {
 
   it('disables the accept button while the accept request is in flight', async () => {
     const { fixture } = await setup({
-      guardians: { acceptGuardianInvite: vi.fn(() => new Promise<void>(() => {})) }
+      guardians: { acceptGuardianInvite: vi.fn(() => new Promise<void>(() => {})) },
     });
     await settle(fixture);
 
@@ -187,7 +217,7 @@ describe('AcceptGuardianInvite', () => {
 
   it('shows the generic accept error and re-enables the button when accepting fails', async () => {
     const { fixture } = await setup({
-      guardians: { acceptGuardianInvite: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      guardians: { acceptGuardianInvite: vi.fn(async () => Promise.reject(new Error('boom'))) },
     });
     await settle(fixture);
 
@@ -196,14 +226,16 @@ describe('AcceptGuardianInvite', () => {
     acceptButton.click();
     await settle(fixture);
 
-    expect(compiled.textContent).toContain('Unable to accept this invite. It may have expired or already been used.');
+    expect(compiled.textContent).toContain(
+      'Unable to accept this invite. It may have expired or already been used.',
+    );
     expect(acceptButton.disabled).toBe(false);
   });
 
   it('shows the wrong-account error when accepting is rejected with a 403', async () => {
     const forbidden = new HttpErrorResponse({ status: 403 });
     const { fixture } = await setup({
-      guardians: { acceptGuardianInvite: vi.fn(async () => Promise.reject(forbidden)) }
+      guardians: { acceptGuardianInvite: vi.fn(async () => Promise.reject(forbidden)) },
     });
     await settle(fixture);
 
@@ -211,13 +243,15 @@ describe('AcceptGuardianInvite', () => {
     (compiled.querySelector('button') as HTMLButtonElement).click();
     await settle(fixture);
 
-    expect(compiled.textContent).toContain("This invite was sent to a different account than the one you're logged in with.");
+    expect(compiled.textContent).toContain(
+      "This invite was sent to a different account than the one you're logged in with.",
+    );
   });
 
   it('does not show the wrong-account error for a non-403 HttpErrorResponse', async () => {
     const serverError = new HttpErrorResponse({ status: 500 });
     const { fixture } = await setup({
-      guardians: { acceptGuardianInvite: vi.fn(async () => Promise.reject(serverError)) }
+      guardians: { acceptGuardianInvite: vi.fn(async () => Promise.reject(serverError)) },
     });
     await settle(fixture);
 
@@ -225,12 +259,18 @@ describe('AcceptGuardianInvite', () => {
     (compiled.querySelector('button') as HTMLButtonElement).click();
     await settle(fixture);
 
-    expect(compiled.textContent).toContain('Unable to accept this invite. It may have expired or already been used.');
-    expect(compiled.textContent).not.toContain("This invite was sent to a different account than the one you're logged in with.");
+    expect(compiled.textContent).toContain(
+      'Unable to accept this invite. It may have expired or already been used.',
+    );
+    expect(compiled.textContent).not.toContain(
+      "This invite was sent to a different account than the one you're logged in with.",
+    );
   });
 
   it('clears a previous accept error on a retried accept attempt', async () => {
-    const acceptGuardianInvite = vi.fn(async (): Promise<void> => Promise.reject(new Error('boom')));
+    const acceptGuardianInvite = vi.fn(async (): Promise<void> =>
+      Promise.reject(new Error('boom')),
+    );
     const { fixture } = await setup({ guardians: { acceptGuardianInvite } });
     await settle(fixture);
 
@@ -238,21 +278,27 @@ describe('AcceptGuardianInvite', () => {
     const acceptButton = compiled.querySelector('button') as HTMLButtonElement;
     acceptButton.click();
     await settle(fixture);
-    expect(compiled.textContent).toContain('Unable to accept this invite. It may have expired or already been used.');
+    expect(compiled.textContent).toContain(
+      'Unable to accept this invite. It may have expired or already been used.',
+    );
 
     acceptGuardianInvite.mockImplementation(() => new Promise<void>(() => {}));
     acceptButton.click();
     await settle(fixture);
 
-    expect(compiled.textContent).not.toContain('Unable to accept this invite. It may have expired or already been used.');
+    expect(compiled.textContent).not.toContain(
+      'Unable to accept this invite. It may have expired or already been used.',
+    );
   });
 
   it('navigates to the guardian admin page when going to children after accepting', async () => {
     const { fixture, router } = await setup({
       guardians: {
-        previewGuardianInvite: vi.fn(async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview),
-        acceptGuardianInvite: vi.fn(async () => {})
-      }
+        previewGuardianInvite: vi.fn(
+          async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+        ),
+        acceptGuardianInvite: vi.fn(async () => {}),
+      },
     });
     const navigateSpy = vi.spyOn(router, 'navigate');
     await settle(fixture);
@@ -261,7 +307,9 @@ describe('AcceptGuardianInvite', () => {
     (compiled.querySelector('button') as HTMLButtonElement).click();
     await settle(fixture);
 
-    const goToChildrenButton = Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Go to my children')!;
+    const goToChildrenButton = Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Go to my children',
+    )!;
     goToChildrenButton.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/guardian/admin']);

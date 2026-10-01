@@ -8,7 +8,7 @@ import { Component, input, output } from '@angular/core';
 @Component({
   selector: 'app-toggle',
   imports: [],
-  templateUrl: './toggle.html'
+  templateUrl: './toggle.html',
 })
 export class Toggle {
   readonly checked = input(false);

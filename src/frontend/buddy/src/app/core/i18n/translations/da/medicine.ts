@@ -21,11 +21,12 @@ export const medicine = {
       selectPlaceholder: 'Vælg en gruppe',
       shareButton: 'Del',
       shareError: 'Kunne ikke dele med denne gruppe.',
-      noGroups: 'Du skal have en gruppe, du administrerer, før du kan dele dette barns medicinplaner.'
+      noGroups:
+        'Du skal have en gruppe, du administrerer, før du kan dele dette barns medicinplaner.',
     },
     scheduleRange: {
       ongoing: 'fra {startDate} (løbende)',
-      withEnd: 'fra {startDate} til {endDate}'
+      withEnd: 'fra {startDate} til {endDate}',
     },
     form: {
       namePlaceholder: 'Medicinnavn',
@@ -37,7 +38,7 @@ export const medicine = {
       startDateLabel: 'Startdato',
       endDateLabel: 'Slutdato (valgfri)',
       submit: 'Tilføj plan',
-      createError: 'Kunne ikke oprette medicinplanen.'
-    }
-  }
+      createError: 'Kunne ikke oprette medicinplanen.',
+    },
+  },
 };

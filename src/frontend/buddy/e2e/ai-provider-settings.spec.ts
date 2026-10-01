@@ -11,7 +11,11 @@ import { createChild } from './support/guardian-data';
 // boundary. Instead, this spec intercepts the browser's own request to *our* backend's
 // test-connection endpoint and fulfills it directly, so that endpoint (and therefore any real
 // egress) is never actually invoked.
-test('guardian adds AI provider keys, switches the active one, tests a connection (stubbed), and removes a key', async ({ page, loginAs, newGuardian }) => {
+test('guardian adds AI provider keys, switches the active one, tests a connection (stubbed), and removes a key', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   // A disposable guardian (newGuardian): the AI credential is family-wide and anchored to a child,
   // and a seeded guardian's family is shared with every parallel test, whose cleanup revokes links
   // to their children mid-flow. A fresh guardian with one child has a family nobody else touches.
@@ -46,7 +50,12 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
     if (await row.getByRole('button', { name: 'Remove' }).isVisible()) {
       await row.getByRole('button', { name: 'Remove' }).click();
       await Promise.all([
-        page.waitForResponse((res) => res.request().method() === 'DELETE' && res.url().includes('/ai/providers/') && res.url().endsWith('/key')),
+        page.waitForResponse(
+          (res) =>
+            res.request().method() === 'DELETE' &&
+            res.url().includes('/ai/providers/') &&
+            res.url().endsWith('/key'),
+        ),
         row.getByRole('button', { name: 'Confirm' }).click(),
       ]);
       await expect(row.getByRole('button', { name: 'Add key' })).toBeVisible();
@@ -58,7 +67,12 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
   await anthropicRow.getByRole('button', { name: 'Add key' }).click();
   await section.locator('input[name="apiKey"]').fill('fake-anthropic-key-1234');
   await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && res.url().includes('/ai/providers/') && res.url().endsWith('/key')),
+    page.waitForResponse(
+      (res) =>
+        res.request().method() === 'PUT' &&
+        res.url().includes('/ai/providers/') &&
+        res.url().endsWith('/key'),
+    ),
     section.getByRole('button', { name: 'Save' }).click(),
   ]);
 
@@ -69,7 +83,12 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
   await openAiRow.getByRole('button', { name: 'Add key' }).click();
   await section.locator('input[name="apiKey"]').fill('fake-openai-key-5678');
   await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && res.url().includes('/ai/providers/') && res.url().endsWith('/key')),
+    page.waitForResponse(
+      (res) =>
+        res.request().method() === 'PUT' &&
+        res.url().includes('/ai/providers/') &&
+        res.url().endsWith('/key'),
+    ),
     section.getByRole('button', { name: 'Save' }).click(),
   ]);
 
@@ -79,7 +98,9 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
 
   // Switch the active provider to OpenAI.
   await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && res.url().includes('/ai/active-provider/')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'PUT' && res.url().includes('/ai/active-provider/'),
+    ),
     openAiRow.getByRole('button', { name: 'Make active' }).click(),
   ]);
   await expect(openAiRow.getByText('Active', { exact: true })).toBeVisible();
@@ -92,7 +113,9 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
   });
 
   await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'POST' && res.url().includes('/test-connection')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'POST' && res.url().includes('/test-connection'),
+    ),
     anthropicRow.getByRole('button', { name: 'Test connection' }).click(),
   ]);
   await expect(anthropicRow.getByText('Connection succeeded.')).toBeVisible();
@@ -100,11 +123,15 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
   // Now stub a failure response and re-test.
   await page.unroute('**/ai/providers/*/test-connection');
   await page.route('**/ai/providers/*/test-connection', async (route) => {
-    await route.fulfill({ json: { isSuccessful: false, errorMessage: 'Incorrect API key provided.' } });
+    await route.fulfill({
+      json: { isSuccessful: false, errorMessage: 'Incorrect API key provided.' },
+    });
   });
 
   await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'POST' && res.url().includes('/test-connection')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'POST' && res.url().includes('/test-connection'),
+    ),
     anthropicRow.getByRole('button', { name: 'Test connection' }).click(),
   ]);
   await expect(anthropicRow.getByText('Connection failed.')).toBeVisible();
@@ -116,7 +143,12 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
   await anthropicRow.getByRole('button', { name: 'Remove' }).click();
   await expect(anthropicRow.getByText('Remove this API key?')).toBeVisible();
   await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'DELETE' && res.url().includes('/ai/providers/') && res.url().endsWith('/key')),
+    page.waitForResponse(
+      (res) =>
+        res.request().method() === 'DELETE' &&
+        res.url().includes('/ai/providers/') &&
+        res.url().endsWith('/key'),
+    ),
     anthropicRow.getByRole('button', { name: 'Confirm' }).click(),
   ]);
 

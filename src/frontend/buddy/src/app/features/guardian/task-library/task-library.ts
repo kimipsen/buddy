@@ -9,6 +9,6 @@ import { ManageTasks } from './manage-tasks/manage-tasks';
 @Component({
   selector: 'app-guardian-task-library',
   imports: [RouterLink, ManageTasks, TranslatePipe],
-  templateUrl: './task-library.html'
+  templateUrl: './task-library.html',
 })
 export class GuardianTaskLibrary {}

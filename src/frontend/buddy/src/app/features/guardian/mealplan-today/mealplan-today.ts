@@ -11,7 +11,7 @@ const SLOT_LABELS: Record<MealSlot, string> = {
   0: 'dashboard.mealplan.slots.breakfast',
   1: 'dashboard.mealplan.slots.lunch',
   2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack'
+  3: 'dashboard.mealplan.slots.snack',
 };
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
@@ -19,7 +19,7 @@ const SLOTS: MealSlot[] = [0, 1, 2, 3];
 @Component({
   selector: 'app-mealplan-today',
   imports: [RouterLink, TranslatePipe, LoadingSpinner],
-  templateUrl: './mealplan-today.html'
+  templateUrl: './mealplan-today.html',
 })
 export class MealplanToday implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -52,7 +52,11 @@ export class MealplanToday implements OnInit {
       this.hasChildren.set(true);
 
       const today = todayIsoDate();
-      const entries = await this.mealplans.listMealPlan({ kind: 'family', childId: children[0].id }, today, today);
+      const entries = await this.mealplans.listMealPlan(
+        { kind: 'family', childId: children[0].id },
+        today,
+        today,
+      );
       const bySlot: Partial<Record<MealSlot, MealPlanEntry>> = {};
 
       for (const entry of entries) {

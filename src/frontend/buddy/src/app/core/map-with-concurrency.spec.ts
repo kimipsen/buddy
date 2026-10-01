@@ -58,7 +58,9 @@ describe('mapWithConcurrency', () => {
   });
 
   it('passes the item index to the task', async () => {
-    await expect(mapWithConcurrency(['a', 'b'], 5, async (item, index) => `${item}${index}`)).resolves.toEqual(['a0', 'b1']);
+    await expect(
+      mapWithConcurrency(['a', 'b'], 5, async (item, index) => `${item}${index}`),
+    ).resolves.toEqual(['a0', 'b1']);
   });
 
   it('resolves to an empty array without calling the task for no items', async () => {
@@ -67,7 +69,7 @@ describe('mapWithConcurrency', () => {
     await expect(
       mapWithConcurrency([], 2, async () => {
         calls++;
-      })
+      }),
     ).resolves.toEqual([]);
     expect(calls).toBe(0);
   });
@@ -79,7 +81,7 @@ describe('mapWithConcurrency', () => {
           throw new Error('boom');
         }
         return item;
-      })
+      }),
     ).rejects.toThrow('boom');
   });
 

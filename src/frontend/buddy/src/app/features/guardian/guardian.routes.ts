@@ -24,7 +24,7 @@ export const GUARDIAN_ROUTES: Routes = [
       { path: 'pickup', component: GuardianPickup },
       { path: 'calendar', component: GuardianCalendar },
       { path: 'task-library', component: GuardianTaskLibrary },
-      { path: 'admin', component: GuardianAdmin }
-    ]
-  }
+      { path: 'admin', component: GuardianAdmin },
+    ],
+  },
 ];

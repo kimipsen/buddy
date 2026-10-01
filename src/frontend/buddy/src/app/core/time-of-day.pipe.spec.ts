@@ -7,10 +7,14 @@ import { TimeOfDayPipe } from './time-of-day.pipe';
 
 describe('TimeOfDayPipe', () => {
   function createPipe(language: 'en' | 'da' = 'en'): TimeOfDayPipe {
-    const translationStub: Partial<TranslationService> = { language: signal(language).asReadonly() };
+    const translationStub: Partial<TranslationService> = {
+      language: signal(language).asReadonly(),
+    };
 
     TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [{ provide: TranslationService, useValue: translationStub }] });
+    TestBed.configureTestingModule({
+      providers: [{ provide: TranslationService, useValue: translationStub }],
+    });
 
     return TestBed.runInInjectionContext(() => new TimeOfDayPipe());
   }
@@ -57,7 +61,9 @@ describe('TimeOfDayPipe', () => {
     const languageState = signal<'en' | 'da'>('en');
     const translationStub: Partial<TranslationService> = { language: languageState.asReadonly() };
     TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [{ provide: TranslationService, useValue: translationStub }] });
+    TestBed.configureTestingModule({
+      providers: [{ provide: TranslationService, useValue: translationStub }],
+    });
     const pipe = TestBed.runInInjectionContext(() => new TimeOfDayPipe());
 
     expect(pipe.transform('14:00')).toBe('2:00 PM');

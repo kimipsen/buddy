@@ -25,8 +25,8 @@ export function postIdempotent<T>(http: HttpClient, url: string, body: unknown):
         }
 
         return timer(RETRY_BASE_DELAY_MS * retryCount);
-      }
-    })
+      },
+    }),
   );
 }
 

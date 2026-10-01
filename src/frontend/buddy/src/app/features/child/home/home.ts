@@ -1,14 +1,26 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { CalendarItemKind, CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
+import {
+  CalendarItemKind,
+  CalendarOccurrence,
+  CalendarsService,
+} from '../../../core/calendars.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
-import { DoseStatus, MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
-import { PickupAssigneeKind, PickupOccurrence, PickupsService } from '../../../core/pickups.service';
+import {
+  DoseStatus,
+  MedicineDoseOccurrence,
+  MedicinesService,
+} from '../../../core/medicines.service';
+import {
+  PickupAssigneeKind,
+  PickupOccurrence,
+  PickupsService,
+} from '../../../core/pickups.service';
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
@@ -27,7 +39,7 @@ const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
   0: 'dashboard.mealplan.slots.breakfast',
   1: 'dashboard.mealplan.slots.lunch',
   2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack'
+  3: 'dashboard.mealplan.slots.snack',
 };
 
 const MEAL_SLOTS: MealSlot[] = [0, 1, 2, 3];
@@ -38,7 +50,10 @@ const SELF_ESCORT: PickupAssigneeKind = 1;
 const SIBLING: PickupAssigneeKind = 2;
 const PLAYDATE: PickupAssigneeKind = 3;
 
-const PICKUP_SLOT_LABELS = { 0: 'child.home.pickup.slots.dropOff', 1: 'child.home.pickup.slots.pickUp' } as const;
+const PICKUP_SLOT_LABELS = {
+  0: 'child.home.pickup.slots.dropOff',
+  1: 'child.home.pickup.slots.pickUp',
+} as const;
 
 export interface EventView extends CalendarOccurrence {
   isPast: boolean;
@@ -54,7 +69,7 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
 @Component({
   selector: 'app-child-home',
   imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge, UserDatePipe, ChildMenu],
-  templateUrl: './home.html'
+  templateUrl: './home.html',
 })
 export class ChildHome implements OnInit, OnDestroy {
   private readonly guardians = inject(GuardiansService);
@@ -86,7 +101,9 @@ export class ChildHome implements OnInit, OnDestroy {
   // Only meals actually planned today, in slot order -- unlike the guardian widget, this skips
   // "not planned" filler rows entirely (see the "if any" layout decision in
   // docs/frontend/analysis/child-day-dashboard.md).
-  protected readonly mealsToShow = computed(() => MEAL_SLOTS.map((slot) => this.entriesBySlot()[slot]).filter((entry) => entry !== undefined));
+  protected readonly mealsToShow = computed(() =>
+    MEAL_SLOTS.map((slot) => this.entriesBySlot()[slot]).filter((entry) => entry !== undefined),
+  );
 
   // Rating today's meals right away (rather than only from the past-weeks planner) so the child
   // doesn't have to remember how a meal was by the time they'd next see it there.
@@ -130,7 +147,7 @@ export class ChildHome implements OnInit, OnDestroy {
     currentIcon: null,
     nextGoalThreshold: 0,
     nextGoalIcon: '🌱',
-    goalPosts: []
+    goalPosts: [],
   });
 
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
@@ -141,14 +158,16 @@ export class ChildHome implements OnInit, OnDestroy {
       this.mealsToShow().length > 0 ||
       this.doses().length > 0 ||
       this.tasks().length > 0 ||
-      this.events().length > 0
+      this.events().length > 0,
   );
 
   ngOnInit(): void {
     void this.loadGuardians();
     void this.loadSiblings();
     void this.loadProgress();
-    void Promise.all([this.loadTodaysPickups(), this.loadDashboard()]).finally(() => this.contentLoading.set(false));
+    void Promise.all([this.loadTodaysPickups(), this.loadDashboard()]).finally(() =>
+      this.contentLoading.set(false),
+    );
     this.nowIntervalId = setInterval(() => this.now.set(Date.now()), NOW_REFRESH_INTERVAL_MS);
   }
 
@@ -158,11 +177,17 @@ export class ChildHome implements OnInit, OnDestroy {
 
   protected assigneeName(occurrence: PickupOccurrence): string | null {
     if (occurrence.kind === this.guardianKind) {
-      return this.guardianList().find((guardian) => guardian.id === occurrence.guardianId)?.name.givenName ?? null;
+      return (
+        this.guardianList().find((guardian) => guardian.id === occurrence.guardianId)?.name
+          .givenName ?? null
+      );
     }
 
     if (occurrence.kind === this.siblingKind) {
-      return this.siblingList().find((sibling) => sibling.id === occurrence.siblingChildId)?.name.givenName ?? null;
+      return (
+        this.siblingList().find((sibling) => sibling.id === occurrence.siblingChildId)?.name
+          .givenName ?? null
+      );
     }
 
     return null;
@@ -189,8 +214,18 @@ export class ChildHome implements OnInit, OnDestroy {
 
     try {
       const me = await this.users.ensureCurrentUser();
-      const updated = await this.medicines.setDoseStatus(me.id, dose.medicineId, dose.date, dose.time, status);
-      this.doses.update((current) => current.map((existing) => (this.doseKey(existing) === key ? { ...existing, status: updated.status } : existing)));
+      const updated = await this.medicines.setDoseStatus(
+        me.id,
+        dose.medicineId,
+        dose.date,
+        dose.time,
+        status,
+      );
+      this.doses.update((current) =>
+        current.map((existing) =>
+          this.doseKey(existing) === key ? { ...existing, status: updated.status } : existing,
+        ),
+      );
     } catch {
       this.error.set('child.home.loadError');
     } finally {
@@ -204,8 +239,18 @@ export class ChildHome implements OnInit, OnDestroy {
     const isCompleted = !task.isCompleted;
 
     try {
-      await this.calendars.setTaskCompletion(task.calendarId, task.itemId, todayIsoDate(), isCompleted, task.subtaskId ?? null);
-      this.tasks.update((current) => current.map((existing) => (occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing)));
+      await this.calendars.setTaskCompletion(
+        task.calendarId,
+        task.itemId,
+        todayIsoDate(),
+        isCompleted,
+        task.subtaskId ?? null,
+      );
+      this.tasks.update((current) =>
+        current.map((existing) =>
+          occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
+        ),
+      );
 
       // The backend awards/revokes a star as part of the same request that just completed above
       // (see SetTaskCompletionHandler), so re-reading progress now already reflects it -- no
@@ -255,7 +300,11 @@ export class ChildHome implements OnInit, OnDestroy {
       this.childId = me.id;
       const today = todayIsoDate();
 
-      await Promise.all([this.loadMeals(me.id, today), this.loadDoses(me.id, today), this.loadCalendarOccurrences()]);
+      await Promise.all([
+        this.loadMeals(me.id, today),
+        this.loadDoses(me.id, today),
+        this.loadCalendarOccurrences(),
+      ]);
     } catch {
       this.error.set('child.home.loadError');
     }
@@ -292,7 +341,11 @@ export class ChildHome implements OnInit, OnDestroy {
     this.cancelEditing();
   }
 
-  private async submitRating(entry: MealPlanEntry, starCount: number, comment: string | null): Promise<void> {
+  private async submitRating(
+    entry: MealPlanEntry,
+    starCount: number,
+    comment: string | null,
+  ): Promise<void> {
     if (!this.childId) {
       return;
     }
@@ -371,7 +424,10 @@ export class ChildHome implements OnInit, OnDestroy {
 
   // All-day events have no startsAt/endsAt to measure against, so they never read as past or
   // ongoing here -- they stay "current" for the whole day, same as their allDay badge implies.
-  private eventProgress(event: CalendarOccurrence, nowMs: number): { isPast: boolean; isOngoing: boolean; progressPercent: number } {
+  private eventProgress(
+    event: CalendarOccurrence,
+    nowMs: number,
+  ): { isPast: boolean; isOngoing: boolean; progressPercent: number } {
     if (event.isAllDay || event.startsAt === null) {
       return { isPast: false, isOngoing: false, progressPercent: 0 };
     }
@@ -388,7 +444,11 @@ export class ChildHome implements OnInit, OnDestroy {
     }
 
     // startMs <= nowMs < endMs here, so the span is always positive.
-    return { isPast: false, isOngoing: true, progressPercent: ((nowMs - startMs) / (endMs - startMs)) * 100 };
+    return {
+      isPast: false,
+      isOngoing: true,
+      progressPercent: ((nowMs - startMs) / (endMs - startMs)) * 100,
+    };
   }
 
   // A gradient rather than a separate overlay element -- the card's own background fills in from

@@ -39,7 +39,13 @@ export function shiftMonthIso(isoDate: string, months: number): string {
   const date = parseIsoDate(isoDate);
   const target = new Date(date.getFullYear(), date.getMonth() + months, 1);
   const lastDayOfTargetMonth = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
-  return toIsoDate(new Date(target.getFullYear(), target.getMonth(), Math.min(date.getDate(), lastDayOfTargetMonth)));
+  return toIsoDate(
+    new Date(
+      target.getFullYear(),
+      target.getMonth(),
+      Math.min(date.getDate(), lastDayOfTargetMonth),
+    ),
+  );
 }
 
 export function buildDateRangeIso(startIsoDate: string, dayCount: number): string[] {
@@ -53,7 +59,9 @@ export function buildMonthGridIso(isoDate: string): string[] {
   const gridStart = startOfWeekIso(startOfMonthIso(isoDate));
   const lastOfMonth = addDaysIso(shiftMonthIso(startOfMonthIso(isoDate), 1), -1);
   const gridEnd = addDaysIso(startOfWeekIso(lastOfMonth), 6);
-  const totalDays = Math.round((parseIsoDate(gridEnd).getTime() - parseIsoDate(gridStart).getTime()) / 86_400_000) + 1;
+  const totalDays =
+    Math.round((parseIsoDate(gridEnd).getTime() - parseIsoDate(gridStart).getTime()) / 86_400_000) +
+    1;
   return buildDateRangeIso(gridStart, totalDays);
 }
 
@@ -73,13 +81,23 @@ export function browserTimeZoneId(): string {
 // user's stored time zone, the same one UserDatePipe renders with). "en-CA" formats as
 // "yyyy-MM-dd" directly, so no manual field assembly is needed.
 export function toIsoDateInTimeZone(date: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
 }
 
 // Companion to toIsoDateInTimeZone -- resolves a "HH:mm" (24-hour) wall-clock time in a specific
 // IANA time zone, the shape app-time-select and the reschedule/create item APIs use.
 export function toTimeInTimeZone(date: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
 }
 
 // Adds a whole number of minutes to a "HH:mm" wall-clock time, wrapping across midnight -- used to

@@ -3,17 +3,33 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AiAssistantService, AiProviderSettings, AiSessionView } from '../../../../core/ai-assistant.service';
+import {
+  AiAssistantService,
+  AiProviderSettings,
+  AiSessionView,
+} from '../../../../core/ai-assistant.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { MealplanAiAssistant } from './ai-assistant';
 
 describe('MealplanAiAssistant', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
-    return { id: 'child-1', name: { givenName: 'Alex', familyName: 'Doe' }, guardianLinkId: 'link-1', kind: 0, language: 'en', timeZoneId: 'UTC', ...overrides };
+    return {
+      id: 'child-1',
+      name: { givenName: 'Alex', familyName: 'Doe' },
+      guardianLinkId: 'link-1',
+      kind: 0,
+      language: 'en',
+      timeZoneId: 'UTC',
+      ...overrides,
+    };
   }
 
   function providerSettings(overrides: Partial<AiProviderSettings> = {}): AiProviderSettings {
-    return { providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }], activeProvider: 0, ...overrides };
+    return {
+      providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
+      activeProvider: 0,
+      ...overrides,
+    };
   }
 
   function session(overrides: Partial<AiSessionView> = {}): AiSessionView {
@@ -25,7 +41,7 @@ describe('MealplanAiAssistant', () => {
       status: 0,
       transcript: [],
       draft: [],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -41,7 +57,7 @@ describe('MealplanAiAssistant', () => {
   async function setup(stubs: Stubs = {}) {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child()]),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const aiAssistantStub: Partial<AiAssistantService> = {
       listProviders: vi.fn(async () => providerSettings()),
@@ -50,7 +66,7 @@ describe('MealplanAiAssistant', () => {
       sendMessage: vi.fn(async () => session()),
       applyDraft: vi.fn(async () => session({ status: 1 })),
       discardSession: vi.fn(async () => session({ status: 2 })),
-      ...stubs.aiAssistant
+      ...stubs.aiAssistant,
     };
 
     await TestBed.configureTestingModule({
@@ -58,8 +74,8 @@ describe('MealplanAiAssistant', () => {
       providers: [
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: AiAssistantService, useValue: aiAssistantStub }
-      ]
+        { provide: AiAssistantService, useValue: aiAssistantStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(MealplanAiAssistant);
@@ -67,7 +83,10 @@ describe('MealplanAiAssistant', () => {
     return { fixture, guardians: guardiansStub, aiAssistant: aiAssistantStub };
   }
 
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -77,22 +96,30 @@ describe('MealplanAiAssistant', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   it('shows a hint when the guardian has no linked children', async () => {
     const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => []) } });
     await settle(fixture);
 
-    expect(fixture.nativeElement.textContent).toContain('Link a child from Settings before using the AI assistant.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Link a child from Settings before using the AI assistant.',
+    );
   });
 
   it('prompts to configure a provider before showing the start form', async () => {
-    const { fixture } = await setup({ aiAssistant: { listProviders: vi.fn(async () => providerSettings({ activeProvider: null })) } });
+    const { fixture } = await setup({
+      aiAssistant: { listProviders: vi.fn(async () => providerSettings({ activeProvider: null })) },
+    });
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    expect(compiled.textContent).toContain('Add an AI provider API key in Settings before starting a session.');
+    expect(compiled.textContent).toContain(
+      'Add an AI provider API key in Settings before starting a session.',
+    );
     expect(compiled.querySelector('form')).toBeNull();
   });
 
@@ -106,7 +133,9 @@ describe('MealplanAiAssistant', () => {
   });
 
   it('restores an in-progress session on load', async () => {
-    const { fixture } = await setup({ aiAssistant: { getCurrentSession: vi.fn(async () => session()) } });
+    const { fixture } = await setup({
+      aiAssistant: { getCurrentSession: vi.fn(async () => session()) },
+    });
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
@@ -123,7 +152,7 @@ describe('MealplanAiAssistant', () => {
 
     expect(aiAssistant.startSession).toHaveBeenCalledWith(
       'child-1',
-      expect.objectContaining({ slots: [2], mustIncludeMealIds: [], notes: null })
+      expect.objectContaining({ slots: [2], mustIncludeMealIds: [], notes: null }),
     );
     expect(fixture.nativeElement.textContent).toContain('Drafting');
   });
@@ -145,9 +174,13 @@ describe('MealplanAiAssistant', () => {
       aiAssistant: {
         getCurrentSession: vi.fn(async () => session()),
         sendMessage: vi.fn(async () =>
-          session({ transcript: [{ role: 0, text: 'Plan five dinners.', occurredAt: '2026-08-01T00:00:00Z' }] })
-        )
-      }
+          session({
+            transcript: [
+              { role: 0, text: 'Plan five dinners.', occurredAt: '2026-08-01T00:00:00Z' },
+            ],
+          }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -168,9 +201,11 @@ describe('MealplanAiAssistant', () => {
     const { fixture, aiAssistant } = await setup({
       aiAssistant: {
         getCurrentSession: vi.fn(async () =>
-          session({ draft: [{ date: '2026-08-01', slot: 2, mealId: 'meal-1', mealName: 'Tacos' }] })
-        )
-      }
+          session({
+            draft: [{ date: '2026-08-01', slot: 2, mealId: 'meal-1', mealName: 'Tacos' }],
+          }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -191,7 +226,9 @@ describe('MealplanAiAssistant', () => {
   });
 
   it('discards the session after confirming', async () => {
-    const { fixture, aiAssistant } = await setup({ aiAssistant: { getCurrentSession: vi.fn(async () => session()) } });
+    const { fixture, aiAssistant } = await setup({
+      aiAssistant: { getCurrentSession: vi.fn(async () => session()) },
+    });
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;

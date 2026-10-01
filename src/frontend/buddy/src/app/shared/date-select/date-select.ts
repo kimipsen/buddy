@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-date-select',
   imports: [FormsModule],
-  templateUrl: './date-select.html'
+  templateUrl: './date-select.html',
 })
 export class DateSelect {
   readonly value = input<string>('');

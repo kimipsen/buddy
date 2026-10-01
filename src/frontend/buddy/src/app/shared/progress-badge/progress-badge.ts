@@ -5,7 +5,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-progress-badge',
   imports: [TranslatePipe],
-  templateUrl: './progress-badge.html'
+  templateUrl: './progress-badge.html',
 })
 export class ProgressBadge {
   readonly totalStars = input.required<number>();

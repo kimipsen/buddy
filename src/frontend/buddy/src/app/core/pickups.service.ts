@@ -47,25 +47,40 @@ export class PickupsService {
 
   listSchedule(childId: string, from: string, to: string): Promise<PickupOccurrence[]> {
     return firstValueFrom(
-      this.http.get<PickupOccurrence[]>(`${this.runtimeConfig.apiBaseUrl}/pickups/children/${childId}/schedule`, {
-        params: { from, to }
-      })
+      this.http.get<PickupOccurrence[]>(
+        `${this.runtimeConfig.apiBaseUrl}/pickups/children/${childId}/schedule`,
+        {
+          params: { from, to },
+        },
+      ),
     );
   }
 
-  assignPickup(childId: string, date: string, slot: PickupSlot, request: AssignPickupRequest): Promise<PickupOccurrence> {
+  assignPickup(
+    childId: string,
+    date: string,
+    slot: PickupSlot,
+    request: AssignPickupRequest,
+  ): Promise<PickupOccurrence> {
     return firstValueFrom(
-      this.http.put<PickupOccurrence>(`${this.runtimeConfig.apiBaseUrl}/pickups/children/${childId}/assignments`, request, {
-        params: { date, slot: String(slot) }
-      })
+      this.http.put<PickupOccurrence>(
+        `${this.runtimeConfig.apiBaseUrl}/pickups/children/${childId}/assignments`,
+        request,
+        {
+          params: { date, slot: String(slot) },
+        },
+      ),
     );
   }
 
   clearPickup(childId: string, date: string, slot: PickupSlot): Promise<void> {
     return firstValueFrom(
-      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/pickups/children/${childId}/assignments`, {
-        params: { date, slot: String(slot) }
-      })
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/pickups/children/${childId}/assignments`,
+        {
+          params: { date, slot: String(slot) },
+        },
+      ),
     );
   }
 }

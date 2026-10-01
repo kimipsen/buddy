@@ -10,7 +10,10 @@ import { uniqueName } from './support/guardian-data';
 // her original given name and time zone at the end rather than leaving the mutation in place --
 // confirmed the hard way: an earlier version of this spec left her renamed, which made
 // pickup-assignment.spec.ts fail (it expected a guardian option literally labeled "Carol").
-test('guardian updates their given name and time zone from My profile, and it persists', async ({ page, loginAs }) => {
+test('guardian updates their given name and time zone from My profile, and it persists', async ({
+  page,
+  loginAs,
+}) => {
   await loginAs(SEEDED_USERS.carol);
 
   await page.goto('/guardian/admin');
@@ -37,14 +40,17 @@ test('guardian updates their given name and time zone from My profile, and it pe
   // run following one that already set it. Toggle between two distinct zones based on whatever is
   // currently selected, so every run actually changes it.
   const originalTimeZone = await timeZoneSelect.inputValue();
-  const targetTimeZone = originalTimeZone === 'Europe/Copenhagen' ? 'America/New_York' : 'Europe/Copenhagen';
+  const targetTimeZone =
+    originalTimeZone === 'Europe/Copenhagen' ? 'America/New_York' : 'Europe/Copenhagen';
   await timeZoneSelect.selectOption(targetTimeZone);
 
   const saveTimeZoneButton = section.getByRole('button', { name: 'Save time zone' });
   await expect(saveTimeZoneButton).toBeEnabled();
   await saveTimeZoneButton.click();
 
-  await expect(section.getByText('Time zone updated. Timestamps across the app now use it.')).toBeVisible();
+  await expect(
+    section.getByText('Time zone updated. Timestamps across the app now use it.'),
+  ).toBeVisible();
 
   await page.reload();
 
@@ -59,5 +65,7 @@ test('guardian updates their given name and time zone from My profile, and it pe
 
   await timeZoneSelect.selectOption(originalTimeZone);
   await saveTimeZoneButton.click();
-  await expect(section.getByText('Time zone updated. Timestamps across the app now use it.')).toBeVisible();
+  await expect(
+    section.getByText('Time zone updated. Timestamps across the app now use it.'),
+  ).toBeVisible();
 });

@@ -15,7 +15,7 @@ describe('EmailUpdatedEvent', () => {
 
     await TestBed.configureTestingModule({
       imports: [EmailUpdatedEvent],
-      providers: [{ provide: UsersService, useValue: usersStub }]
+      providers: [{ provide: UsersService, useValue: usersStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(EmailUpdatedEvent);
@@ -30,7 +30,7 @@ describe('EmailUpdatedEvent', () => {
       userId: 'user-1',
       before: { value: 'old@buddy.test', isVerified: true },
       after: { value: 'new@buddy.test', isVerified: false },
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
     expect(compiled.textContent).toContain('Email updated');
@@ -43,10 +43,12 @@ describe('EmailUpdatedEvent', () => {
       userId: 'user-1',
       before: { value: 'same@buddy.test', isVerified: true },
       after: { value: 'same@buddy.test', isVerified: false },
-      occurredAt: '2026-01-15T09:30:00Z'
+      occurredAt: '2026-01-15T09:30:00Z',
     });
 
-    expect(compiled.textContent).toContain('Email changed from same@buddy.test to same@buddy.test.');
+    expect(compiled.textContent).toContain(
+      'Email changed from same@buddy.test to same@buddy.test.',
+    );
     expect(compiled.textContent).not.toMatch(/true|false/i);
   });
 });

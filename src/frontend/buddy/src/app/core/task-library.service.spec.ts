@@ -30,7 +30,7 @@ describe('TaskLibraryService', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -45,7 +45,7 @@ describe('TaskLibraryService', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -54,8 +54,11 @@ describe('TaskLibraryService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: { apiBaseUrl } as Partial<RuntimeConfigService> }
-      ]
+        {
+          provide: RuntimeConfigService,
+          useValue: { apiBaseUrl } as Partial<RuntimeConfigService>,
+        },
+      ],
     });
 
     service = TestBed.inject(TaskLibraryService);
@@ -71,9 +74,9 @@ describe('TaskLibraryService', () => {
       const response = templateResponse({
         subtasks: [
           { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00' },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' }
+          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
         ],
-        totalDuration: '00:15:00'
+        totalDuration: '00:15:00',
       });
 
       const promise = service.listTaskTemplates('child-1');
@@ -85,9 +88,9 @@ describe('TaskLibraryService', () => {
       const expected = template({
         subtasks: [
           { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5 },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10 }
+          { id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10 },
         ],
-        totalDurationMinutes: 15
+        totalDurationMinutes: 15,
       });
 
       await expect(promise).resolves.toEqual([expected]);
@@ -106,7 +109,7 @@ describe('TaskLibraryService', () => {
     it('correctly parses an hours-and-minutes duration (not just minutes-only)', async () => {
       const response = templateResponse({
         subtasks: [{ id: 'subtask-1', title: 'Long task', icon: null, duration: '01:30:00' }],
-        totalDuration: '01:30:00'
+        totalDuration: '01:30:00',
       });
 
       const promise = service.listTaskTemplates('child-1');
@@ -120,7 +123,7 @@ describe('TaskLibraryService', () => {
     it('includes the day component of a "c"-format duration, including multi-digit days', async () => {
       const response = templateResponse({
         subtasks: [{ id: 'subtask-1', title: 'Camp', icon: null, duration: '1.02:30:00' }],
-        totalDuration: '12.00:05:00'
+        totalDuration: '12.00:05:00',
       });
 
       const promise = service.listTaskTemplates('child-1');
@@ -134,7 +137,7 @@ describe('TaskLibraryService', () => {
     it('treats a duration that does not start with the "c" format as zero minutes', async () => {
       const response = templateResponse({
         subtasks: [{ id: 'subtask-1', title: 'Odd', icon: null, duration: 'x00:05:00' }],
-        totalDuration: 'not-a-duration'
+        totalDuration: 'not-a-duration',
       });
 
       const promise = service.listTaskTemplates('child-1');
@@ -149,7 +152,9 @@ describe('TaskLibraryService', () => {
       const promise = service.listTaskTemplates('child-1');
       promise.catch(() => undefined);
 
-      httpMock.expectOne(`${base()}/children/child-1`).flush('boom', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne(`${base()}/children/child-1`)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
 
       await expect(promise).rejects.toBeTruthy();
     });
@@ -172,7 +177,11 @@ describe('TaskLibraryService', () => {
     it('POSTs the template details under the child and appends the created template to state', async () => {
       const created = templateResponse({ id: 'template-new', name: 'Bedtime routine' });
 
-      const promise = service.createTaskTemplate('child-1', { name: 'Bedtime routine', icon: '🎒', color: '#6366f1' });
+      const promise = service.createTaskTemplate('child-1', {
+        name: 'Bedtime routine',
+        icon: '🎒',
+        color: '#6366f1',
+      });
 
       const req = httpMock.expectOne(`${base()}/children/child-1`);
       expect(req.request.method).toBe('POST');
@@ -191,11 +200,20 @@ describe('TaskLibraryService', () => {
       await listPromise;
 
       const created = templateResponse({ id: 'template-2', name: 'Toast' });
-      const createPromise = service.createTaskTemplate('child-1', { name: 'Toast', icon: '🍞', color: '#111' });
-      httpMock.expectOne((r) => r.url === `${base()}/children/child-1` && r.method === 'POST').flush(created);
+      const createPromise = service.createTaskTemplate('child-1', {
+        name: 'Toast',
+        icon: '🍞',
+        color: '#111',
+      });
+      httpMock
+        .expectOne((r) => r.url === `${base()}/children/child-1` && r.method === 'POST')
+        .flush(created);
       await createPromise;
 
-      expect(service.templates()).toEqual([template({ id: 'template-1' }), template({ id: 'template-2', name: 'Toast' })]);
+      expect(service.templates()).toEqual([
+        template({ id: 'template-1' }),
+        template({ id: 'template-2', name: 'Toast' }),
+      ]);
     });
   });
 
@@ -207,14 +225,20 @@ describe('TaskLibraryService', () => {
       await listPromise;
 
       const updated = templateResponse({ id: 'template-1', name: 'Get ready fast' });
-      const promise = service.updateTaskTemplate('template-1', { name: 'Get ready fast', icon: '🎒', color: '#6366f1' });
+      const promise = service.updateTaskTemplate('template-1', {
+        name: 'Get ready fast',
+        icon: '🎒',
+        color: '#6366f1',
+      });
 
       const req = httpMock.expectOne(`${base()}/template-1`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual({ name: 'Get ready fast', icon: '🎒', color: '#6366f1' });
       req.flush(updated);
 
-      await expect(promise).resolves.toEqual(template({ id: 'template-1', name: 'Get ready fast' }));
+      await expect(promise).resolves.toEqual(
+        template({ id: 'template-1', name: 'Get ready fast' }),
+      );
       expect(service.templates()).toEqual([template({ id: 'template-1', name: 'Get ready fast' })]);
     });
 
@@ -226,11 +250,18 @@ describe('TaskLibraryService', () => {
       await listPromise;
 
       const updated = templateResponse({ id: 'template-1', name: 'Get ready fast' });
-      const promise = service.updateTaskTemplate('template-1', { name: 'Get ready fast', icon: '🎒', color: '#6366f1' });
+      const promise = service.updateTaskTemplate('template-1', {
+        name: 'Get ready fast',
+        icon: '🎒',
+        color: '#6366f1',
+      });
       httpMock.expectOne(`${base()}/template-1`).flush(updated);
       await promise;
 
-      expect(service.templates()).toEqual([template({ id: 'template-other', name: 'Other' }), template({ id: 'template-1', name: 'Get ready fast' })]);
+      expect(service.templates()).toEqual([
+        template({ id: 'template-other', name: 'Other' }),
+        template({ id: 'template-1', name: 'Get ready fast' }),
+      ]);
     });
   });
 
@@ -249,7 +280,10 @@ describe('TaskLibraryService', () => {
       req.flush(null);
 
       await promise;
-      expect(service.templates()).toEqual([template({ id: 'template-1', isArchived: true }), template({ id: 'template-2' })]);
+      expect(service.templates()).toEqual([
+        template({ id: 'template-1', isArchived: true }),
+        template({ id: 'template-2' }),
+      ]);
     });
   });
 
@@ -263,20 +297,25 @@ describe('TaskLibraryService', () => {
       const withSubtask = templateResponse({
         id: 'template-1',
         subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00' }],
-        totalDuration: '00:05:00'
+        totalDuration: '00:05:00',
       });
 
       const promise = service.addSubtask('template-1', 'Brush teeth', '🪥', 5);
 
       const req = httpMock.expectOne(`${base()}/template-1/subtasks`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ title: 'Brush teeth', icon: '🪥', duration: '00:05:00', position: null });
+      expect(req.request.body).toEqual({
+        title: 'Brush teeth',
+        icon: '🪥',
+        duration: '00:05:00',
+        position: null,
+      });
       req.flush(withSubtask);
 
       const expected = template({
         id: 'template-1',
         subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5 }],
-        totalDurationMinutes: 5
+        totalDurationMinutes: 5,
       });
       await expect(promise).resolves.toEqual(expected);
       expect(service.templates()).toEqual([expected]);
@@ -287,7 +326,12 @@ describe('TaskLibraryService', () => {
       promise.catch(() => undefined);
 
       const req = httpMock.expectOne(`${base()}/template-1/subtasks`);
-      expect(req.request.body).toEqual({ title: 'Brush teeth', icon: null, duration: '00:05:00', position: 0 });
+      expect(req.request.body).toEqual({
+        title: 'Brush teeth',
+        icon: null,
+        duration: '00:05:00',
+        position: 0,
+      });
       req.flush(templateResponse());
     });
 
@@ -296,7 +340,12 @@ describe('TaskLibraryService', () => {
       promise.catch(() => undefined);
 
       const req = httpMock.expectOne(`${base()}/template-1/subtasks`);
-      expect(req.request.body).toEqual({ title: 'Long task', icon: null, duration: '01:30:00', position: null });
+      expect(req.request.body).toEqual({
+        title: 'Long task',
+        icon: null,
+        duration: '01:30:00',
+        position: null,
+      });
       req.flush(templateResponse());
     });
   });
@@ -306,7 +355,7 @@ describe('TaskLibraryService', () => {
       const original = templateResponse({
         id: 'template-1',
         subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00' }],
-        totalDuration: '00:05:00'
+        totalDuration: '00:05:00',
       });
       const listPromise = service.listTaskTemplates('child-1');
       httpMock.expectOne(`${base()}/children/child-1`).flush([original]);
@@ -314,21 +363,35 @@ describe('TaskLibraryService', () => {
 
       const updated = templateResponse({
         id: 'template-1',
-        subtasks: [{ id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', duration: '00:07:00' }],
-        totalDuration: '00:07:00'
+        subtasks: [
+          { id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', duration: '00:07:00' },
+        ],
+        totalDuration: '00:07:00',
       });
 
-      const promise = service.updateSubtask('template-1', 'subtask-1', 'Brush teeth thoroughly', '🪥', 7);
+      const promise = service.updateSubtask(
+        'template-1',
+        'subtask-1',
+        'Brush teeth thoroughly',
+        '🪥',
+        7,
+      );
 
       const req = httpMock.expectOne(`${base()}/template-1/subtasks/subtask-1`);
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ title: 'Brush teeth thoroughly', icon: '🪥', duration: '00:07:00' });
+      expect(req.request.body).toEqual({
+        title: 'Brush teeth thoroughly',
+        icon: '🪥',
+        duration: '00:07:00',
+      });
       req.flush(updated);
 
       const expected = template({
         id: 'template-1',
-        subtasks: [{ id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', durationMinutes: 7 }],
-        totalDurationMinutes: 7
+        subtasks: [
+          { id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', durationMinutes: 7 },
+        ],
+        totalDurationMinutes: 7,
       });
       await expect(promise).resolves.toEqual(expected);
       expect(service.templates()).toEqual([expected]);
@@ -341,9 +404,9 @@ describe('TaskLibraryService', () => {
         id: 'template-1',
         subtasks: [
           { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' }
+          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
         ],
-        totalDuration: '00:15:00'
+        totalDuration: '00:15:00',
       });
       const listPromise = service.listTaskTemplates('child-1');
       httpMock.expectOne(`${base()}/children/child-1`).flush([original]);
@@ -360,20 +423,20 @@ describe('TaskLibraryService', () => {
         template({
           id: 'template-1',
           subtasks: [{ id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10 }],
-          totalDurationMinutes: 10
-        })
+          totalDurationMinutes: 10,
+        }),
       ]);
     });
     it('leaves other templates in state untouched (same object)', async () => {
       const target = templateResponse({
         id: 'template-1',
         subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' }],
-        totalDuration: '00:05:00'
+        totalDuration: '00:05:00',
       });
       const other = templateResponse({
         id: 'template-2',
         subtasks: [{ id: 'subtask-9', title: 'Pack bag', icon: null, duration: '00:03:00' }],
-        totalDuration: '00:03:00'
+        totalDuration: '00:03:00',
       });
       const listPromise = service.listTaskTemplates('child-1');
       httpMock.expectOne(`${base()}/children/child-1`).flush([target, other]);
@@ -395,9 +458,9 @@ describe('TaskLibraryService', () => {
         id: 'template-1',
         subtasks: [
           { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' }
+          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
         ],
-        totalDuration: '00:15:00'
+        totalDuration: '00:15:00',
       });
       const listPromise = service.listTaskTemplates('child-1');
       httpMock.expectOne(`${base()}/children/child-1`).flush([original]);
@@ -407,9 +470,9 @@ describe('TaskLibraryService', () => {
         id: 'template-1',
         subtasks: [
           { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
-          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' }
+          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' },
         ],
-        totalDuration: '00:15:00'
+        totalDuration: '00:15:00',
       });
 
       const promise = service.reorderSubtasks('template-1', ['subtask-2', 'subtask-1']);
@@ -423,9 +486,9 @@ describe('TaskLibraryService', () => {
         id: 'template-1',
         subtasks: [
           { id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10 },
-          { id: 'subtask-1', title: 'Brush teeth', icon: null, durationMinutes: 5 }
+          { id: 'subtask-1', title: 'Brush teeth', icon: null, durationMinutes: 5 },
         ],
-        totalDurationMinutes: 15
+        totalDurationMinutes: 15,
       });
       await expect(promise).resolves.toEqual(expected);
       expect(service.templates()).toEqual([expected]);

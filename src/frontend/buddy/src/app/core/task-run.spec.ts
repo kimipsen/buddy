@@ -25,7 +25,7 @@ describe('task-run', () => {
       parentTitle: null,
       subtaskId: null,
       parentIcon: null,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -53,7 +53,7 @@ describe('task-run', () => {
         title: 'Brush teeth',
         parentTitle: 'Morning routine',
         startsAt: '2026-08-27T08:00:00Z',
-        endsAt: '2026-08-27T08:05:00Z'
+        endsAt: '2026-08-27T08:05:00Z',
       });
       const subtask2 = occurrence({
         itemId: 'run-1',
@@ -61,7 +61,7 @@ describe('task-run', () => {
         title: 'Get dressed',
         parentTitle: 'Morning routine',
         startsAt: '2026-08-27T08:05:00Z',
-        endsAt: '2026-08-27T08:10:00Z'
+        endsAt: '2026-08-27T08:10:00Z',
       });
       const subtask3 = occurrence({
         itemId: 'run-1',
@@ -69,7 +69,7 @@ describe('task-run', () => {
         title: 'Eat breakfast',
         parentTitle: 'Morning routine',
         startsAt: '2026-08-27T08:10:00Z',
-        endsAt: '2026-08-27T08:20:00Z'
+        endsAt: '2026-08-27T08:20:00Z',
       });
 
       const entries = groupTaskRuns([subtask1, subtask2, subtask3]);
@@ -89,14 +89,14 @@ describe('task-run', () => {
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         icon: '🪥',
-        parentIcon: '🌞'
+        parentIcon: '🌞',
       });
       const subtask2 = occurrence({
         itemId: 'run-1',
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         icon: '👕',
-        parentIcon: '🌞'
+        parentIcon: '🌞',
       });
 
       const entries = groupTaskRuns([subtask1, subtask2]);
@@ -111,7 +111,7 @@ describe('task-run', () => {
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         icon: '🪥',
-        parentIcon: undefined
+        parentIcon: undefined,
       });
 
       const entries = groupTaskRuns([subtask]);
@@ -122,8 +122,16 @@ describe('task-run', () => {
 
     it('keeps a run and an unrelated ordinary occurrence as separate entries, in encounter order', () => {
       const event = occurrence({ itemId: 'event-1', kind: 0, parentTitle: null });
-      const subtask1 = occurrence({ itemId: 'run-1', subtaskId: 'sub-1', parentTitle: 'Morning routine' });
-      const subtask2 = occurrence({ itemId: 'run-1', subtaskId: 'sub-2', parentTitle: 'Morning routine' });
+      const subtask1 = occurrence({
+        itemId: 'run-1',
+        subtaskId: 'sub-1',
+        parentTitle: 'Morning routine',
+      });
+      const subtask2 = occurrence({
+        itemId: 'run-1',
+        subtaskId: 'sub-2',
+        parentTitle: 'Morning routine',
+      });
 
       const entries = groupTaskRuns([event, subtask1, subtask2]);
 
@@ -138,14 +146,14 @@ describe('task-run', () => {
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         startsAt: '2026-08-27T08:00:00Z',
-        endsAt: '2026-08-27T08:05:00Z'
+        endsAt: '2026-08-27T08:05:00Z',
       });
       const day2 = occurrence({
         itemId: 'recurring-1',
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         startsAt: '2026-08-28T08:00:00Z',
-        endsAt: '2026-08-28T08:05:00Z'
+        endsAt: '2026-08-28T08:05:00Z',
       });
 
       const entries = groupTaskRuns([day1, day2]);
@@ -165,8 +173,12 @@ describe('task-run', () => {
   describe('occurrenceKey', () => {
     it('keys a plain occurrence (no subtaskId) by its itemId alone', () => {
       const base = { startsAt: '2026-08-27T08:00:00Z', dueAt: null };
-      expect(occurrenceKey({ itemId: 'item-1', subtaskId: null, ...base })).toBe('item-1::2026-08-27');
-      expect(occurrenceKey({ itemId: 'item-1', subtaskId: undefined, ...base })).toBe('item-1::2026-08-27');
+      expect(occurrenceKey({ itemId: 'item-1', subtaskId: null, ...base })).toBe(
+        'item-1::2026-08-27',
+      );
+      expect(occurrenceKey({ itemId: 'item-1', subtaskId: undefined, ...base })).toBe(
+        'item-1::2026-08-27',
+      );
     });
 
     it('gives two subtask occurrences sharing an itemId distinct keys', () => {
@@ -178,7 +190,12 @@ describe('task-run', () => {
     });
 
     it('gives the same occurrence the same key on repeated calls', () => {
-      const base = { itemId: 'run-1', subtaskId: 'sub-1', startsAt: '2026-08-27T08:00:00Z', dueAt: null };
+      const base = {
+        itemId: 'run-1',
+        subtaskId: 'sub-1',
+        startsAt: '2026-08-27T08:00:00Z',
+        dueAt: null,
+      };
       const a = occurrenceKey(base);
       const b = occurrenceKey(base);
 
@@ -186,15 +203,34 @@ describe('task-run', () => {
     });
 
     it('gives two occurrences of the same recurring item on different days distinct keys', () => {
-      const day1 = { itemId: 'recurring-1', subtaskId: null, startsAt: '2026-08-27T08:00:00Z', dueAt: null };
-      const day2 = { itemId: 'recurring-1', subtaskId: null, startsAt: '2026-08-28T08:00:00Z', dueAt: null };
+      const day1 = {
+        itemId: 'recurring-1',
+        subtaskId: null,
+        startsAt: '2026-08-27T08:00:00Z',
+        dueAt: null,
+      };
+      const day2 = {
+        itemId: 'recurring-1',
+        subtaskId: null,
+        startsAt: '2026-08-28T08:00:00Z',
+        dueAt: null,
+      };
 
       expect(occurrenceKey(day1)).not.toBe(occurrenceKey(day2));
     });
 
     it('falls back to dueAt, then to an empty date part, when startsAt is missing', () => {
-      expect(occurrenceKey({ itemId: 'task-1', subtaskId: null, startsAt: null, dueAt: '2026-08-29T17:00:00Z' })).toBe('task-1::2026-08-29');
-      expect(occurrenceKey({ itemId: 'task-1', subtaskId: null, startsAt: null, dueAt: null })).toBe('task-1::');
+      expect(
+        occurrenceKey({
+          itemId: 'task-1',
+          subtaskId: null,
+          startsAt: null,
+          dueAt: '2026-08-29T17:00:00Z',
+        }),
+      ).toBe('task-1::2026-08-29');
+      expect(
+        occurrenceKey({ itemId: 'task-1', subtaskId: null, startsAt: null, dueAt: null }),
+      ).toBe('task-1::');
     });
   });
 });

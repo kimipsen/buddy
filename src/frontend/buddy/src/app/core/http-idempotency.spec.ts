@@ -12,7 +12,7 @@ describe('postIdempotent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
 
     http = TestBed.inject(HttpClient);

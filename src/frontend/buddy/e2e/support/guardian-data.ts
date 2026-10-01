@@ -116,7 +116,11 @@ export async function createGroup(page: Page, prefix = 'E2eGroup'): Promise<stri
 // manage-calendars.ts's loadManageableGroups, called from ngOnInit with no reactivity to a group
 // created afterward on the same page) -- callers must have navigated to /guardian/admin *after*
 // the group already existed for it to show up here, which createGroup's own page.goto guarantees.
-export async function createCalendar(page: Page, groupName: string, prefix = 'E2eCalendar'): Promise<string> {
+export async function createCalendar(
+  page: Page,
+  groupName: string,
+  prefix = 'E2eCalendar',
+): Promise<string> {
   const name = uniqueName(prefix);
 
   await page.goto('/guardian/admin');

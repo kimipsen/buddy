@@ -14,12 +14,12 @@ import { GuardianCalendar } from './calendar';
 describe('GuardianCalendar', () => {
   async function setup() {
     const usersStub: Partial<UsersService> = {
-      timeZoneId: signal('UTC').asReadonly()
+      timeZoneId: signal('UTC').asReadonly(),
     };
     const calendarsStub: Partial<CalendarsService> = {
       listMyCalendars: vi.fn(async () => []),
       listOccurrencesInRange: vi.fn(async () => []),
-      listAssignableMembers: vi.fn(async () => [])
+      listAssignableMembers: vi.fn(async () => []),
     };
 
     await TestBed.configureTestingModule({
@@ -27,8 +27,8 @@ describe('GuardianCalendar', () => {
       providers: [
         provideRouter([]),
         { provide: UsersService, useValue: usersStub },
-        { provide: CalendarsService, useValue: calendarsStub }
-      ]
+        { provide: CalendarsService, useValue: calendarsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianCalendar);

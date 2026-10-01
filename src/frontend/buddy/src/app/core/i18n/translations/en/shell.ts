@@ -14,7 +14,7 @@ export const shell = {
       label: 'Theme',
       light: 'Light',
       dark: 'Dark',
-      system: 'System'
-    }
-  }
+      system: 'System',
+    },
+  },
 };

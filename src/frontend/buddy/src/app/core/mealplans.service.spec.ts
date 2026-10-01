@@ -11,7 +11,7 @@ import {
   MealplanIcalTokenSummary,
   MealplanScope,
   MealplansService,
-  MealRating
+  MealRating,
 } from './mealplans.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -21,7 +21,12 @@ describe('MealplansService', () => {
 
   const apiBaseUrl = 'https://api.buddy.test';
   const familyScope: MealplanScope = { kind: 'family', childId: 'child-1' };
-  const groupScope: MealplanScope = { kind: 'group', groupId: 'group-1', groupName: 'The Fam', accessTier: 2 };
+  const groupScope: MealplanScope = {
+    kind: 'group',
+    groupId: 'group-1',
+    groupName: 'The Fam',
+    accessTier: 2,
+  };
 
   function familyBase(): string {
     return `${apiBaseUrl}/mealplans/children/child-1`;
@@ -43,7 +48,7 @@ describe('MealplansService', () => {
       notes: null,
       assignedBy: 'guardian-1',
       allRatings: [],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -58,7 +63,7 @@ describe('MealplansService', () => {
       ratings: [],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -67,8 +72,11 @@ describe('MealplansService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: { apiBaseUrl } as Partial<RuntimeConfigService> }
-      ]
+        {
+          provide: RuntimeConfigService,
+          useValue: { apiBaseUrl } as Partial<RuntimeConfigService>,
+        },
+      ],
     });
 
     service = TestBed.inject(MealplansService);
@@ -86,7 +94,10 @@ describe('MealplansService', () => {
       const promise = service.listMealPlan(familyScope, '2026-08-01', '2026-08-31');
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${familyBase()}/plan` && r.params.get('from') === '2026-08-01' && r.params.get('to') === '2026-08-31'
+        (r) =>
+          r.url === `${familyBase()}/plan` &&
+          r.params.get('from') === '2026-08-01' &&
+          r.params.get('to') === '2026-08-31',
       );
       expect(req.request.method).toBe('GET');
       req.flush(entries);
@@ -98,7 +109,10 @@ describe('MealplansService', () => {
       const promise = service.listMealPlan(groupScope, '2026-08-01', '2026-08-31');
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${groupBase()}/plan` && r.params.get('from') === '2026-08-01' && r.params.get('to') === '2026-08-31'
+        (r) =>
+          r.url === `${groupBase()}/plan` &&
+          r.params.get('from') === '2026-08-01' &&
+          r.params.get('to') === '2026-08-31',
       );
       expect(req.request.method).toBe('GET');
       req.flush([]);
@@ -128,11 +142,15 @@ describe('MealplansService', () => {
   describe('rateMeal', () => {
     it('PUTs stars and comment to the child-scoped rating endpoint', async () => {
       const rating: MealRating = { stars: 5, comment: 'Yum', ratedAt: '2026-08-26T12:00:00Z' };
-      const ratedMeal = meal({ ratings: [{ childId: 'child-1', stars: 5, comment: 'Yum', ratedAt: rating.ratedAt }] });
+      const ratedMeal = meal({
+        ratings: [{ childId: 'child-1', stars: 5, comment: 'Yum', ratedAt: rating.ratedAt }],
+      });
 
       const promise = service.rateMeal('child-1', 'meal-1', 5, 'Yum');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/mealplans/children/child-1/meals/meal-1/rating`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/mealplans/children/child-1/meals/meal-1/rating`,
+      );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ stars: 5, comment: 'Yum' });
       req.flush(ratedMeal);
@@ -143,7 +161,9 @@ describe('MealplansService', () => {
     it('defaults comment to undefined when not provided', async () => {
       const promise = service.rateMeal('child-1', 'meal-1', 3);
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/mealplans/children/child-1/meals/meal-1/rating`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/mealplans/children/child-1/meals/meal-1/rating`,
+      );
       expect(req.request.body).toEqual({ stars: 3, comment: undefined });
       req.flush(meal());
 
@@ -189,7 +209,11 @@ describe('MealplansService', () => {
     it('POSTs the meal details and appends the created meal to state', async () => {
       const created = meal({ id: 'meal-new', name: 'Waffles' });
 
-      const promise = service.createMeal(familyScope, { name: 'Waffles', icon: '🧇', color: '#eee' });
+      const promise = service.createMeal(familyScope, {
+        name: 'Waffles',
+        icon: '🧇',
+        color: '#eee',
+      });
 
       const req = httpMock.expectOne(`${familyBase()}/meals`);
       expect(req.request.method).toBe('POST');
@@ -208,8 +232,14 @@ describe('MealplansService', () => {
       await listPromise;
 
       const created = meal({ id: 'meal-2', name: 'Toast' });
-      const createPromise = service.createMeal(familyScope, { name: 'Toast', icon: '🍞', color: '#111' });
-      httpMock.expectOne((r) => r.url === `${familyBase()}/meals` && r.method === 'POST').flush(created);
+      const createPromise = service.createMeal(familyScope, {
+        name: 'Toast',
+        icon: '🍞',
+        color: '#111',
+      });
+      httpMock
+        .expectOne((r) => r.url === `${familyBase()}/meals` && r.method === 'POST')
+        .flush(created);
       await createPromise;
 
       expect(service.meals()).toEqual([existing, created]);
@@ -224,7 +254,11 @@ describe('MealplansService', () => {
       await listPromise;
 
       const updated = meal({ id: 'meal-1', name: 'Fluffy Pancakes' });
-      const promise = service.updateMealDetails(familyScope, 'meal-1', { name: 'Fluffy Pancakes', icon: '🥞', color: '#fff' });
+      const promise = service.updateMealDetails(familyScope, 'meal-1', {
+        name: 'Fluffy Pancakes',
+        icon: '🥞',
+        color: '#fff',
+      });
 
       const req = httpMock.expectOne(`${familyBase()}/meals/meal-1/details`);
       expect(req.request.method).toBe('PATCH');
@@ -243,7 +277,11 @@ describe('MealplansService', () => {
       await listPromise;
 
       const updated = meal({ id: 'meal-1', name: 'Fluffy Pancakes' });
-      const promise = service.updateMealDetails(familyScope, 'meal-1', { name: 'Fluffy Pancakes', icon: '🥞', color: '#fff' });
+      const promise = service.updateMealDetails(familyScope, 'meal-1', {
+        name: 'Fluffy Pancakes',
+        icon: '🥞',
+        color: '#fff',
+      });
       httpMock.expectOne(`${familyBase()}/meals/meal-1/details`).flush(updated);
       await promise;
 
@@ -272,12 +310,26 @@ describe('MealplansService', () => {
 
   describe('assignMealToSlot', () => {
     it('PUTs mealId/notes with date/slot params and returns the new entry', async () => {
-      const created = entry({ date: '2026-08-26', slot: 1, mealId: 'meal-1', notes: 'extra syrup' });
+      const created = entry({
+        date: '2026-08-26',
+        slot: 1,
+        mealId: 'meal-1',
+        notes: 'extra syrup',
+      });
 
-      const promise = service.assignMealToSlot(familyScope, '2026-08-26', 1, 'meal-1', 'extra syrup');
+      const promise = service.assignMealToSlot(
+        familyScope,
+        '2026-08-26',
+        1,
+        'meal-1',
+        'extra syrup',
+      );
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${familyBase()}/plan` && r.params.get('date') === '2026-08-26' && r.params.get('slot') === '1'
+        (r) =>
+          r.url === `${familyBase()}/plan` &&
+          r.params.get('date') === '2026-08-26' &&
+          r.params.get('slot') === '1',
       );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ mealId: 'meal-1', notes: 'extra syrup' });
@@ -289,7 +341,9 @@ describe('MealplansService', () => {
     it('serializes slot 0 (Breakfast) as the string "0" in query params', async () => {
       const promise = service.assignMealToSlot(familyScope, '2026-08-26', 0, 'meal-1');
 
-      const req = httpMock.expectOne((r) => r.url === `${familyBase()}/plan` && r.params.get('slot') === '0');
+      const req = httpMock.expectOne(
+        (r) => r.url === `${familyBase()}/plan` && r.params.get('slot') === '0',
+      );
       expect(req.request.body).toEqual({ mealId: 'meal-1', notes: undefined });
       req.flush(entry({ slot: 0 }));
 
@@ -302,7 +356,10 @@ describe('MealplansService', () => {
       const promise = service.clearMealSlot(familyScope, '2026-08-26', 2);
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${familyBase()}/plan` && r.params.get('date') === '2026-08-26' && r.params.get('slot') === '2'
+        (r) =>
+          r.url === `${familyBase()}/plan` &&
+          r.params.get('date') === '2026-08-26' &&
+          r.params.get('slot') === '2',
       );
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
@@ -315,7 +372,9 @@ describe('MealplansService', () => {
     it('PUTs an empty body to share a child plan with a group', async () => {
       const promise = service.shareWithGroup('child-1', 'group-1');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/mealplans/children/child-1/plan/groups/group-1`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/mealplans/children/child-1/plan/groups/group-1`,
+      );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({});
       req.flush(null);
@@ -328,7 +387,9 @@ describe('MealplansService', () => {
     it('DELETEs the share relationship', async () => {
       const promise = service.unshareFromGroup('child-1', 'group-1');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/mealplans/children/child-1/plan/groups/group-1`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/mealplans/children/child-1/plan/groups/group-1`,
+      );
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
 
@@ -382,7 +443,9 @@ describe('MealplansService', () => {
 
   describe('listIcalTokens', () => {
     it('GETs the ical-tokens list for the child', async () => {
-      const tokens: MealplanIcalTokenSummary[] = [{ tokenId: 'token-1', issuedAt: '2026-08-01T00:00:00Z' }];
+      const tokens: MealplanIcalTokenSummary[] = [
+        { tokenId: 'token-1', issuedAt: '2026-08-01T00:00:00Z' },
+      ];
 
       const promise = service.listIcalTokens('child-1');
 
@@ -396,7 +459,11 @@ describe('MealplansService', () => {
 
   describe('createIcalToken', () => {
     it('POSTs an empty body and resolves with the issued token', async () => {
-      const issued: IssuedMealplanIcalToken = { tokenId: 'token-1', token: 'plaintext-secret', subscriptionPath: '/mealplans/plan-1/ical/token-1' };
+      const issued: IssuedMealplanIcalToken = {
+        tokenId: 'token-1',
+        token: 'plaintext-secret',
+        subscriptionPath: '/mealplans/plan-1/ical/token-1',
+      };
 
       const promise = service.createIcalToken('child-1');
 
@@ -424,7 +491,9 @@ describe('MealplansService', () => {
   describe('icalFeedUrl', () => {
     it('prefixes the relative subscription path with the configured API base URL, issuing no HTTP request', () => {
       // httpMock.verify() in afterEach would fail if this triggered a request.
-      expect(service.icalFeedUrl('/mealplans/plan-1/ical/token-1')).toBe(`${apiBaseUrl}/mealplans/plan-1/ical/token-1`);
+      expect(service.icalFeedUrl('/mealplans/plan-1/ical/token-1')).toBe(
+        `${apiBaseUrl}/mealplans/plan-1/ical/token-1`,
+      );
     });
   });
 });

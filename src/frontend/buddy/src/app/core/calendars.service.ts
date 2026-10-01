@@ -179,7 +179,10 @@ export interface TaskCompletion {
   isCompleted: boolean;
 }
 
-export type CalendarOccurrence = CalendarItemOccurrence & { calendarId: string; calendarName: string };
+export type CalendarOccurrence = CalendarItemOccurrence & {
+  calendarId: string;
+  calendarName: string;
+};
 
 @Injectable({ providedIn: 'root' })
 export class CalendarsService {
@@ -189,17 +192,27 @@ export class CalendarsService {
   private todayCache: { date: string; promise: Promise<CalendarOccurrence[]> } | null = null;
 
   listMyCalendars(): Promise<CalendarSummary[]> {
-    return firstValueFrom(this.http.get<CalendarSummary[]>(`${this.runtimeConfig.apiBaseUrl}/calendars`));
+    return firstValueFrom(
+      this.http.get<CalendarSummary[]>(`${this.runtimeConfig.apiBaseUrl}/calendars`),
+    );
   }
 
   createCalendar(request: CreateCalendarRequest): Promise<CalendarSummary> {
-    return firstValueFrom(postIdempotent<CalendarSummary>(this.http, `${this.runtimeConfig.apiBaseUrl}/calendars`, request));
+    return firstValueFrom(
+      postIdempotent<CalendarSummary>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/calendars`,
+        request,
+      ),
+    );
   }
 
   // Owner-only -- the calendar's icon is the one detail that can change after creation today.
   updateCalendarIcon(calendarId: string, icon: string): Promise<void> {
     return firstValueFrom(
-      this.http.patch<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/icon`, { icon } satisfies UpdateCalendarIconRequest)
+      this.http.patch<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/icon`, {
+        icon,
+      } satisfies UpdateCalendarIconRequest),
     );
   }
 
@@ -207,25 +220,44 @@ export class CalendarsService {
   // otherwise being fixed at creation. Requires the caller to own the calendar and manage the
   // destination group (two-sided consent, gated server-side).
   transferToGroup(calendarId: string, groupId: string): Promise<void> {
-    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/group/${groupId}`, {}));
+    return firstValueFrom(
+      this.http.put<void>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/group/${groupId}`,
+        {},
+      ),
+    );
   }
 
   deleteCalendar(calendarId: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}`));
+    return firstValueFrom(
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}`),
+    );
   }
 
   listIcalTokens(calendarId: string): Promise<IcalTokenSummary[]> {
-    return firstValueFrom(this.http.get<IcalTokenSummary[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`));
+    return firstValueFrom(
+      this.http.get<IcalTokenSummary[]>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`,
+      ),
+    );
   }
 
   createIcalToken(calendarId: string): Promise<IssuedIcalToken> {
     return firstValueFrom(
-      postIdempotent<IssuedIcalToken>(this.http, `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`, {})
+      postIdempotent<IssuedIcalToken>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens`,
+        {},
+      ),
     );
   }
 
   revokeIcalToken(calendarId: string, tokenId: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens/${tokenId}`));
+    return firstValueFrom(
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/ical-tokens/${tokenId}`,
+      ),
+    );
   }
 
   // subscriptionPath is relative, in the same style as every other endpoint path on this
@@ -236,55 +268,93 @@ export class CalendarsService {
 
   listOccurrences(calendarId: string, from: string, to: string): Promise<CalendarItemOccurrence[]> {
     return firstValueFrom(
-      this.http.get<CalendarItemOccurrence[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/occurrences`, {
-        params: { from, to }
-      })
+      this.http.get<CalendarItemOccurrence[]>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/occurrences`,
+        {
+          params: { from, to },
+        },
+      ),
     );
   }
 
   listAssignableMembers(calendarId: string): Promise<AssignableMember[]> {
-    return firstValueFrom(this.http.get<AssignableMember[]>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/assignable-members`));
+    return firstValueFrom(
+      this.http.get<AssignableMember[]>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/assignable-members`,
+      ),
+    );
   }
 
   async createItem(calendarId: string, request: CreateItemRequest): Promise<CalendarItemResponse> {
     const created = await firstValueFrom(
-      postIdempotent<CalendarItemResponse>(this.http, `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items`, request)
+      postIdempotent<CalendarItemResponse>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items`,
+        request,
+      ),
     );
     this.todayCache = null;
     return created;
   }
 
-  async updateItemDetails(calendarId: string, itemId: string, request: UpdateItemDetailsRequest): Promise<CalendarItemResponse> {
+  async updateItemDetails(
+    calendarId: string,
+    itemId: string,
+    request: UpdateItemDetailsRequest,
+  ): Promise<CalendarItemResponse> {
     const updated = await firstValueFrom(
-      this.http.patch<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/details`, request)
+      this.http.patch<CalendarItemResponse>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/details`,
+        request,
+      ),
     );
     this.todayCache = null;
     return updated;
   }
 
-  async rescheduleItem(calendarId: string, itemId: string, request: RescheduleItemRequest): Promise<CalendarItemResponse> {
+  async rescheduleItem(
+    calendarId: string,
+    itemId: string,
+    request: RescheduleItemRequest,
+  ): Promise<CalendarItemResponse> {
     const updated = await firstValueFrom(
-      this.http.patch<CalendarItemResponse>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/schedule`, request)
+      this.http.patch<CalendarItemResponse>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/schedule`,
+        request,
+      ),
     );
     this.todayCache = null;
     return updated;
   }
 
   async deleteItem(calendarId: string, itemId: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}`));
+    await firstValueFrom(
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}`,
+      ),
+    );
     this.todayCache = null;
   }
 
   // subtaskId is required to complete one subtask of a template-scheduled task, and must be
   // omitted (null) for a plain task -- matches SetTaskCompletionRequest.SubtaskId. Defaults to
   // null so every existing (pre-TaskLibrary) call site keeps working unchanged.
-  async setTaskCompletion(calendarId: string, itemId: string, date: string, isCompleted: boolean, subtaskId: string | null = null): Promise<TaskCompletion> {
+  async setTaskCompletion(
+    calendarId: string,
+    itemId: string,
+    date: string,
+    isCompleted: boolean,
+    subtaskId: string | null = null,
+  ): Promise<TaskCompletion> {
     const completion = await firstValueFrom(
-      this.http.patch<TaskCompletion>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/completion`, {
-        date,
-        isCompleted,
-        subtaskId
-      })
+      this.http.patch<TaskCompletion>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/completion`,
+        {
+          date,
+          isCompleted,
+          subtaskId,
+        },
+      ),
     );
     this.todayCache = null;
     return completion;
@@ -292,13 +362,16 @@ export class CalendarsService {
 
   // The calendar-item analog of createItem for a Task whose subtasks come from a TaskLibrary
   // template instead of being entered by hand -- see ScheduleTaskFromTemplate.Command.cs.
-  async scheduleTaskFromTemplate(calendarId: string, request: ScheduleTaskFromTemplateRequest): Promise<CalendarItemResponse> {
+  async scheduleTaskFromTemplate(
+    calendarId: string,
+    request: ScheduleTaskFromTemplateRequest,
+  ): Promise<CalendarItemResponse> {
     const created = await firstValueFrom(
       postIdempotent<CalendarItemResponse>(
         this.http,
         `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/from-template`,
-        request
-      )
+        request,
+      ),
     );
     this.todayCache = null;
     return created;
@@ -336,10 +409,18 @@ export class CalendarsService {
 
     // One request per calendar (no cross-calendar range endpoint), bounded so a guardian in many
     // calendars doesn't burst the API. Still rejects if any calendar fails, as before.
-    const perCalendar = await mapWithConcurrency(calendars, PER_ITEM_REQUEST_CONCURRENCY, async (calendar) => {
-      const occurrences = await this.listOccurrences(calendar.id, from, to);
-      return occurrences.map((occurrence) => ({ ...occurrence, calendarId: calendar.id, calendarName: calendar.name }));
-    });
+    const perCalendar = await mapWithConcurrency(
+      calendars,
+      PER_ITEM_REQUEST_CONCURRENCY,
+      async (calendar) => {
+        const occurrences = await this.listOccurrences(calendar.id, from, to);
+        return occurrences.map((occurrence) => ({
+          ...occurrence,
+          calendarId: calendar.id,
+          calendarName: calendar.name,
+        }));
+      },
+    );
 
     return perCalendar.flat();
   }

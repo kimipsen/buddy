@@ -28,7 +28,7 @@ describe('MonthGrid', () => {
       assignedTo: null,
       calendarId: 'cal-1',
       calendarName: 'Home',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -42,7 +42,10 @@ describe('MonthGrid', () => {
 
     const fixture = TestBed.createComponent(MonthGrid);
     fixture.componentRef.setInput('days', inputs.days);
-    fixture.componentRef.setInput('weekdayLabels', inputs.weekdayLabels ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+    fixture.componentRef.setInput(
+      'weekdayLabels',
+      inputs.weekdayLabels ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    );
     fixture.componentRef.setInput('occurrencesByDate', inputs.occurrencesByDate ?? {});
     fixture.componentRef.setInput('today', inputs.today ?? '2024-06-15');
     fixture.detectChanges();
@@ -51,11 +54,15 @@ describe('MonthGrid', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   it('lays out 7 days per row across as many rows as it is given', async () => {
-    const days = Array.from({ length: 35 }, (_, index) => day(`2024-05-${String(27 + index).padStart(2, '0')}`));
+    const days = Array.from({ length: 35 }, (_, index) =>
+      day(`2024-05-${String(27 + index).padStart(2, '0')}`),
+    );
     // Only the first 5 (2024-05-27..31) are real dates in May -- the rest wrap via padStart concat,
     // which is fine here since this test only checks the grid's row/column shape, not real dates.
     const { fixture } = await setup({ days });
@@ -69,15 +76,19 @@ describe('MonthGrid', () => {
     const { fixture } = await setup({ days: [day('2024-06-10')] });
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const headers = Array.from(compiled.querySelectorAll('div.bg-slate-50')).map((el) => el.textContent?.trim());
+    const headers = Array.from(compiled.querySelectorAll('div.bg-slate-50')).map((el) =>
+      el.textContent?.trim(),
+    );
     expect(headers).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
   });
 
   it('shows up to 3 occurrence chips and a "+N more" label for the rest', async () => {
-    const occurrences = Array.from({ length: 5 }, (_, index) => occurrence({ itemId: `item-${index}`, title: `Event ${index}` }));
+    const occurrences = Array.from({ length: 5 }, (_, index) =>
+      occurrence({ itemId: `item-${index}`, title: `Event ${index}` }),
+    );
     const { fixture } = await setup({
       days: [day('2024-06-10')],
-      occurrencesByDate: { '2024-06-10': occurrences }
+      occurrencesByDate: { '2024-06-10': occurrences },
     });
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -92,7 +103,7 @@ describe('MonthGrid', () => {
     const occurrences = [occurrence({ itemId: 'item-1', title: 'Only event' })];
     const { fixture } = await setup({
       days: [day('2024-06-10')],
-      occurrencesByDate: { '2024-06-10': occurrences }
+      occurrencesByDate: { '2024-06-10': occurrences },
     });
 
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('more');
@@ -100,14 +111,32 @@ describe('MonthGrid', () => {
 
   it('collapses every subtask occurrence of one template-scheduled run into a single chip', async () => {
     const subtasks = [
-      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-1', parentTitle: 'Morning routine', title: 'Brush teeth' }),
-      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-2', parentTitle: 'Morning routine', title: 'Get dressed' }),
-      occurrence({ itemId: 'run-1', kind: 1, subtaskId: 'sub-3', parentTitle: 'Morning routine', title: 'Eat breakfast' })
+      occurrence({
+        itemId: 'run-1',
+        kind: 1,
+        subtaskId: 'sub-1',
+        parentTitle: 'Morning routine',
+        title: 'Brush teeth',
+      }),
+      occurrence({
+        itemId: 'run-1',
+        kind: 1,
+        subtaskId: 'sub-2',
+        parentTitle: 'Morning routine',
+        title: 'Get dressed',
+      }),
+      occurrence({
+        itemId: 'run-1',
+        kind: 1,
+        subtaskId: 'sub-3',
+        parentTitle: 'Morning routine',
+        title: 'Eat breakfast',
+      }),
     ];
 
     const { fixture } = await setup({
       days: [day('2024-06-10')],
-      occurrencesByDate: { '2024-06-10': subtasks }
+      occurrencesByDate: { '2024-06-10': subtasks },
     });
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -118,7 +147,7 @@ describe('MonthGrid', () => {
     expect(compiled.textContent).not.toContain('more');
   });
 
-  it('emits daySelected with the clicked day\'s date', async () => {
+  it("emits daySelected with the clicked day's date", async () => {
     const { fixture } = await setup({ days: [day('2024-06-10'), day('2024-06-11')] });
     const emitted: string[] = [];
     fixture.componentInstance.daySelected.subscribe((date: string) => emitted.push(date));

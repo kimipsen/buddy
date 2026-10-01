@@ -14,7 +14,10 @@ export class UserDatePipe implements PipeTransform {
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
 
-  transform(value: string | number | Date | null | undefined, format: UserDateFormat = 'medium'): string {
+  transform(
+    value: string | number | Date | null | undefined,
+    format: UserDateFormat = 'medium',
+  ): string {
     if (value === null || value === undefined || value === '') {
       return '';
     }
@@ -23,7 +26,9 @@ export class UserDatePipe implements PipeTransform {
     const timeZone = this.users.timeZoneId();
 
     const options: Intl.DateTimeFormatOptions =
-      format === 'shortTime' ? { timeStyle: 'short', timeZone } : { dateStyle: 'medium', timeStyle: 'medium', timeZone };
+      format === 'shortTime'
+        ? { timeStyle: 'short', timeZone }
+        : { dateStyle: 'medium', timeStyle: 'medium', timeZone };
 
     return new Intl.DateTimeFormat(this.translation.language(), options).format(date);
   }

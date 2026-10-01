@@ -22,7 +22,7 @@ export const taskLibrary = {
       createError: 'Unable to create the task template.',
       save: 'Save',
       cancel: 'Cancel',
-      updateError: 'Unable to update this task template.'
+      updateError: 'Unable to update this task template.',
     },
     subtasks: {
       title: 'Subtasks',
@@ -40,12 +40,12 @@ export const taskLibrary = {
       removeError: 'Unable to remove this subtask.',
       reorderError: 'Unable to reorder subtasks.',
       moveUp: 'Move up',
-      moveDown: 'Move down'
-    }
+      moveDown: 'Move down',
+    },
   },
   picker: {
     noTemplate: 'No template',
     noMatches: 'No templates match.',
-    summary: '{count} steps, {duration}'
-  }
+    summary: '{count} steps, {duration}',
+  },
 };

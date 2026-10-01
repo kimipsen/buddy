@@ -12,45 +12,45 @@ export const child = {
     eventsTitle: 'Begivenheder i dag',
     loadError: 'Der gik noget galt. Prøv igen om lidt.',
     menu: {
-      openLabel: 'Åbn menu'
+      openLabel: 'Åbn menu',
     },
     theme: {
       label: 'Tema',
       light: 'Lyst',
       dark: 'Mørkt',
-      system: 'System'
+      system: 'System',
     },
     medicine: {
       markTaken: 'Taget',
       skip: 'Spring over',
       taken: 'Taget ✓',
       skipped: 'Sprunget over',
-      undo: 'Fortryd'
+      undo: 'Fortryd',
     },
     tasks: {
       markDone: 'Marker som klar',
-      markNotDone: 'Marker som ikke klar'
+      markNotDone: 'Marker som ikke klar',
     },
     events: {
-      allDay: 'Hele dagen'
+      allDay: 'Hele dagen',
     },
     progress: {
       title: 'Dine point',
       starCount: '{count} stjerner',
-      nextGoal: 'Næste: {icon} ved {threshold}'
+      nextGoal: 'Næste: {icon} ved {threshold}',
     },
     pickup: {
       title: 'Dagens afhentning & aflevering',
       slots: {
         dropOff: 'Aflevering',
-        pickUp: 'Afhentning'
+        pickUp: 'Afhentning',
       },
       kind: {
         guardian: 'En voksen',
         selfEscort: 'Du går selv',
-        sibling: 'En søskende'
-      }
-    }
+        sibling: 'En søskende',
+      },
+    },
   },
   mealplan: {
     back: 'Tilbage',
@@ -66,7 +66,7 @@ export const child = {
     editNote: 'Rediger note',
     notePlaceholder: 'Hvad syntes du?',
     cancel: 'Annuller',
-    save: 'Gem'
+    save: 'Gem',
   },
   calendar: {
     back: 'Tilbage',
@@ -81,7 +81,7 @@ export const child = {
     allDay: 'Hele dagen',
     tasks: {
       markDone: 'Marker som klar',
-      markNotDone: 'Marker som ikke klar'
-    }
-  }
+      markNotDone: 'Marker som ikke klar',
+    },
+  },
 };

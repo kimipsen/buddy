@@ -2,8 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { toIsoDate } from '../../../../core/date-utils';
-import { ChildSummary, GuardianSummary, GuardiansService } from '../../../../core/guardians.service';
-import { AssignPickupRequest, PickupOccurrence, PickupsService } from '../../../../core/pickups.service';
+import {
+  ChildSummary,
+  GuardianSummary,
+  GuardiansService,
+} from '../../../../core/guardians.service';
+import {
+  AssignPickupRequest,
+  PickupOccurrence,
+  PickupsService,
+} from '../../../../core/pickups.service';
 import { ManagePickups } from './manage-pickups';
 
 describe('ManagePickups', () => {
@@ -26,7 +34,7 @@ describe('ManagePickups', () => {
       kind: 0,
       language: 'en',
       timeZoneId: 'UTC',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -36,7 +44,7 @@ describe('ManagePickups', () => {
       name: { givenName: 'Gina', familyName: 'G' },
       guardianLinkId: 'link-1',
       kind: 0,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -53,7 +61,7 @@ describe('ManagePickups', () => {
       time: null,
       notes: null,
       assignedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -66,21 +74,21 @@ describe('ManagePickups', () => {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => [child()]),
       listChildGuardians: vi.fn(async () => [guardian()]),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const pickupsStub: Partial<PickupsService> = {
       listSchedule: vi.fn(async () => []),
       assignPickup: vi.fn(),
       clearPickup: vi.fn(),
-      ...stubs.pickups
+      ...stubs.pickups,
     };
 
     await TestBed.configureTestingModule({
       imports: [ManagePickups],
       providers: [
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: PickupsService, useValue: pickupsStub }
-      ]
+        { provide: PickupsService, useValue: pickupsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManagePickups);
@@ -111,9 +119,9 @@ describe('ManagePickups', () => {
   // `role="radiogroup"` of `role="radio"` buttons, not a native `<select>` -- see
   // shared/segmented-control/segmented-control.html.
   function selectKind(cell: HTMLElement, label: string): void {
-    const button = Array.from(cell.querySelectorAll<HTMLButtonElement>('[role="radiogroup"] button[role="radio"]')).find(
-      (candidate) => candidate.textContent?.trim() === label
-    );
+    const button = Array.from(
+      cell.querySelectorAll<HTMLButtonElement>('[role="radiogroup"] button[role="radio"]'),
+    ).find((candidate) => candidate.textContent?.trim() === label);
     expect(button, `kind option "${label}" not found`).toBeTruthy();
     button!.click();
   }
@@ -137,7 +145,9 @@ describe('ManagePickups', () => {
   });
 
   it('shows the "no children" message and skips fetching a schedule when the guardian has no linked children', async () => {
-    const { fixture, guardians, pickups } = await setup({ guardians: { listMyChildren: vi.fn(async () => []) } });
+    const { fixture, guardians, pickups } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => []) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -148,7 +158,9 @@ describe('ManagePickups', () => {
   });
 
   it('shows the translated load error when fetching children fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -156,14 +168,16 @@ describe('ManagePickups', () => {
   });
 
   it('shows the translated load error when fetching the schedule for the child fails', async () => {
-    const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      pickups: { listSchedule: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Unable to load the pickup schedule.');
   });
 
-  it('fetches the child\'s guardians and schedule for a fixed 7-day window starting today', async () => {
+  it("fetches the child's guardians and schedule for a fixed 7-day window starting today", async () => {
     const { fixture, guardians, pickups } = await setup();
     await settle(fixture);
 
@@ -216,14 +230,17 @@ describe('ManagePickups', () => {
 
     const { fixture, guardians, pickups } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [childA, childB]), listChildGuardians },
-      pickups: { listSchedule }
+      pickups: { listSchedule },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
     const picker = compiled.querySelector('select') as HTMLSelectElement;
     expect(picker).toBeTruthy();
-    expect(Array.from(picker.options).map((option) => option.textContent?.trim())).toEqual(['Sam', 'Robin']);
+    expect(Array.from(picker.options).map((option) => option.textContent?.trim())).toEqual([
+      'Sam',
+      'Robin',
+    ]);
 
     listChildGuardians.mockClear();
     listSchedule.mockClear();
@@ -240,7 +257,9 @@ describe('ManagePickups', () => {
     const childA = child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } });
     const childB = child({ id: 'child-2', name: { givenName: 'Robin', familyName: 'Kid' } });
 
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [childA, childB]) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [childA, childB]) },
+    });
     await settle(fixture);
 
     // childA (Sam) is selected by default (first child returned) -- only childB (Robin) should be
@@ -261,7 +280,12 @@ describe('ManagePickups', () => {
 
   describe('assigning a pickup', () => {
     it('sends the exact childId/date/slot/request to the service and shows the result once it resolves', async () => {
-      const assignedOccurrence = occurrence({ date: weekStart, slot: 0, kind: 0, guardianId: 'guardian-1' });
+      const assignedOccurrence = occurrence({
+        date: weekStart,
+        slot: 0,
+        kind: 0,
+        guardianId: 'guardian-1',
+      });
       const assignPickup = vi.fn(async () => assignedOccurrence);
 
       const { fixture, pickups } = await setup({ pickups: { assignPickup } });
@@ -279,7 +303,9 @@ describe('ManagePickups', () => {
       guardianSelect.dispatchEvent(new Event('change'));
       fixture.detectChanges();
 
-      const saveButton = Array.from(cell.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Save')!;
+      const saveButton = Array.from(cell.querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === 'Save',
+      )!;
       expect(saveButton.hasAttribute('disabled')).toBe(false);
       saveButton.click();
       await settle(fixture);
@@ -292,7 +318,7 @@ describe('ManagePickups', () => {
         playdateLocation: null,
         playdateContactInfo: null,
         time: null,
-        notes: null
+        notes: null,
       };
       expect(pickups.assignPickup).toHaveBeenCalledWith('child-1', weekStart, 0, expectedRequest);
 
@@ -315,14 +341,16 @@ describe('ManagePickups', () => {
       selectKind(cell, 'Goes alone');
       fixture.detectChanges();
 
-      Array.from(cell.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Save')!.click();
+      Array.from(cell.querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Save')!
+        .click();
       await settle(fixture);
 
       expect(pickups.assignPickup).toHaveBeenCalledWith(
         'child-1',
         isoDateOffset(2),
         1,
-        expect.objectContaining({ kind: 1 })
+        expect.objectContaining({ kind: 1 }),
       );
     });
 
@@ -342,7 +370,9 @@ describe('ManagePickups', () => {
       guardianSelect.dispatchEvent(new Event('change'));
       fixture.detectChanges();
 
-      Array.from(cell.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Save')!.click();
+      Array.from(cell.querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Save')!
+        .click();
       fixture.detectChanges();
 
       // Editing closed immediately on save(); while the request is in flight the cell falls back to
@@ -363,18 +393,25 @@ describe('ManagePickups', () => {
 
   describe('clearing a pickup', () => {
     it('sends the exact childId/date/slot to the service and reverts the cell once it resolves', async () => {
-      const existing = occurrence({ date: isoDateOffset(1), slot: 1, kind: 0, guardianId: 'guardian-1' });
+      const existing = occurrence({
+        date: isoDateOffset(1),
+        slot: 1,
+        kind: 0,
+        guardianId: 'guardian-1',
+      });
       const clearPickup = vi.fn(async () => undefined);
 
       const { fixture, pickups } = await setup({
-        pickups: { listSchedule: vi.fn(async () => [existing]), clearPickup }
+        pickups: { listSchedule: vi.fn(async () => [existing]), clearPickup },
       });
       await settle(fixture);
 
       const cell = cellAt(fixture, 1, 1);
       expect(cell.textContent).toContain('Gina');
 
-      const clearButton = Array.from(cell.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Clear')!;
+      const clearButton = Array.from(cell.querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === 'Clear',
+      )!;
       clearButton.click();
       await settle(fixture);
 
@@ -387,12 +424,14 @@ describe('ManagePickups', () => {
       const clearPickup = vi.fn(async () => Promise.reject(new Error('boom')));
 
       const { fixture } = await setup({
-        pickups: { listSchedule: vi.fn(async () => [existing]), clearPickup }
+        pickups: { listSchedule: vi.fn(async () => [existing]), clearPickup },
       });
       await settle(fixture);
 
       const cell = cellAt(fixture, 0, 0);
-      const clearButton = Array.from(cell.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Clear')!;
+      const clearButton = Array.from(cell.querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === 'Clear',
+      )!;
       clearButton.click();
       await settle(fixture);
 

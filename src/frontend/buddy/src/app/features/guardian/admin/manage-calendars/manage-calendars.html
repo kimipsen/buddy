@@ -1,12 +1,20 @@
-<section class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-  <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'admin.manageCalendars.title' | translate }}</h3>
+<section
+  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+>
+  <h3 class="mb-5 text-lg font-semibold tracking-normal">
+    {{ 'admin.manageCalendars.title' | translate }}
+  </h3>
 
   @if (loading()) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.loading' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'admin.manageCalendars.loading' | translate }}
+    </p>
   } @else if (error(); as message) {
     <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
   } @else if (items().length === 0) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.empty' | translate }}</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'admin.manageCalendars.empty' | translate }}
+    </p>
   } @else {
     <ul class="space-y-3">
       @for (calendar of items(); track calendar.id) {
@@ -19,7 +27,9 @@
 
             @if (confirmingDeleteCalendarId() === calendar.id) {
               <div class="flex items-center gap-2">
-                <span class="text-xs text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.delete.confirmPrompt' | translate }}</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">{{
+                  'admin.manageCalendars.delete.confirmPrompt' | translate
+                }}</span>
                 <button
                   type="button"
                   class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
@@ -39,28 +49,45 @@
               </div>
             } @else {
               <div class="flex items-center gap-3">
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ roleLabels[calendar.role] | translate }}</span>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{
+                  roleLabels[calendar.role] | translate
+                }}</span>
                 @if (calendar.role === 0) {
                   <button
                     type="button"
                     class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                     (click)="toggleIcal(calendar.id)"
                   >
-                    {{ (icalCalendarId() === calendar.id ? 'admin.manageCalendars.ical.hideButton' : 'admin.manageCalendars.ical.showButton') | translate }}
+                    {{
+                      (icalCalendarId() === calendar.id
+                        ? 'admin.manageCalendars.ical.hideButton'
+                        : 'admin.manageCalendars.ical.showButton'
+                      ) | translate
+                    }}
                   </button>
                   <button
                     type="button"
                     class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                     (click)="startMove(calendar.id)"
                   >
-                    {{ (movingCalendarId() === calendar.id ? 'admin.manageCalendars.move.hideButton' : 'admin.manageCalendars.move.showButton') | translate }}
+                    {{
+                      (movingCalendarId() === calendar.id
+                        ? 'admin.manageCalendars.move.hideButton'
+                        : 'admin.manageCalendars.move.showButton'
+                      ) | translate
+                    }}
                   </button>
                   <button
                     type="button"
                     class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                     (click)="startEditIcon(calendar)"
                   >
-                    {{ (editingIconCalendarId() === calendar.id ? 'admin.manageCalendars.editIcon.hideButton' : 'admin.manageCalendars.editIcon.showButton') | translate }}
+                    {{
+                      (editingIconCalendarId() === calendar.id
+                        ? 'admin.manageCalendars.editIcon.hideButton'
+                        : 'admin.manageCalendars.editIcon.showButton'
+                      ) | translate
+                    }}
                   </button>
                   <button
                     type="button"
@@ -77,10 +104,17 @@
           @if (movingCalendarId() === calendar.id) {
             <div class="mt-3 border-t border-slate-200 dark:border-slate-800 pt-3">
               @if (manageableGroups().length === 0) {
-                <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.move.noGroups' | translate }}</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">
+                  {{ 'admin.manageCalendars.move.noGroups' | translate }}
+                </p>
               } @else {
-                <form class="grid gap-3 sm:grid-cols-[1fr_auto]" (ngSubmit)="confirmMove(calendar.id)">
-                  <label class="sr-only" [attr.for]="'moveTargetGroupId-' + calendar.id">{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}</label>
+                <form
+                  class="grid gap-3 sm:grid-cols-[1fr_auto]"
+                  (ngSubmit)="confirmMove(calendar.id)"
+                >
+                  <label class="sr-only" [attr.for]="'moveTargetGroupId-' + calendar.id">{{
+                    'admin.manageCalendars.move.selectPlaceholder' | translate
+                  }}</label>
                   <select
                     name="moveTargetGroupId"
                     [attr.id]="'moveTargetGroupId-' + calendar.id"
@@ -88,7 +122,9 @@
                     [ngModel]="moveTargetGroupId()"
                     (ngModelChange)="moveTargetGroupId.set($event)"
                   >
-                    <option value="" disabled>{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}</option>
+                    <option value="" disabled>
+                      {{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}
+                    </option>
                     @for (group of manageableGroups(); track group.id) {
                       <option [value]="group.id">{{ group.name }}</option>
                     }
@@ -111,7 +147,10 @@
 
           @if (editingIconCalendarId() === calendar.id) {
             <div class="mt-3 border-t border-slate-200 dark:border-slate-800 pt-3">
-              <form class="grid gap-3 sm:grid-cols-[5rem_auto]" (ngSubmit)="confirmEditIcon(calendar.id)">
+              <form
+                class="grid gap-3 sm:grid-cols-[5rem_auto]"
+                (ngSubmit)="confirmEditIcon(calendar.id)"
+              >
                 <input
                   type="text"
                   name="editIconValue"
@@ -137,15 +176,24 @@
 
           @if (icalCalendarId() === calendar.id) {
             <div class="mt-3 border-t border-slate-200 dark:border-slate-800 pt-3">
-              <p class="text-xs text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.ical.description' | translate }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ 'admin.manageCalendars.ical.description' | translate }}
+              </p>
 
               @if (icalLoading()) {
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.ical.loading' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  {{ 'admin.manageCalendars.ical.loading' | translate }}
+                </p>
               } @else if (icalTokens().length > 0) {
                 <ul class="mt-2 space-y-2">
                   @for (token of icalTokens(); track token.tokenId) {
-                    <li class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm">
-                      <span class="text-slate-600 dark:text-slate-300">{{ 'admin.manageCalendars.ical.issuedOn' | translate }} {{ token.issuedAt | date: 'mediumDate' }}</span>
+                    <li
+                      class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm"
+                    >
+                      <span class="text-slate-600 dark:text-slate-300"
+                        >{{ 'admin.manageCalendars.ical.issuedOn' | translate }}
+                        {{ token.issuedAt | date: 'mediumDate' }}</span
+                      >
                       <button
                         type="button"
                         class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50"
@@ -158,12 +206,18 @@
                   }
                 </ul>
               } @else {
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.ical.empty' | translate }}</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  {{ 'admin.manageCalendars.ical.empty' | translate }}
+                </p>
               }
 
               @if (newIcalUrl(); as url) {
-                <div class="mt-3 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-500/10 p-3 text-sm leading-6 text-emerald-900 dark:text-emerald-200">
-                  <p class="font-medium">{{ 'admin.manageCalendars.ical.newUrlHint' | translate }}</p>
+                <div
+                  class="mt-3 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-500/10 p-3 text-sm leading-6 text-emerald-900 dark:text-emerald-200"
+                >
+                  <p class="font-medium">
+                    {{ 'admin.manageCalendars.ical.newUrlHint' | translate }}
+                  </p>
                   <p class="mt-1 flex flex-wrap items-center gap-2">
                     <span class="break-all font-mono text-xs">{{ url }}</span>
                     <button
@@ -171,7 +225,12 @@
                       class="shrink-0 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300 transition hover:border-emerald-400 dark:hover:border-emerald-500"
                       (click)="copyIcalUrl(url)"
                     >
-                      {{ (icalCopied() ? 'admin.manageCalendars.ical.copiedButton' : 'admin.manageCalendars.ical.copyButton') | translate }}
+                      {{
+                        (icalCopied()
+                          ? 'admin.manageCalendars.ical.copiedButton'
+                          : 'admin.manageCalendars.ical.copyButton'
+                        ) | translate
+                      }}
                     </button>
                   </p>
                 </div>
@@ -183,7 +242,12 @@
                 [disabled]="icalCreating()"
                 (click)="createIcalToken(calendar.id)"
               >
-                {{ (icalCreating() ? 'admin.manageCalendars.ical.creating' : 'admin.manageCalendars.ical.createButton') | translate }}
+                {{
+                  (icalCreating()
+                    ? 'admin.manageCalendars.ical.creating'
+                    : 'admin.manageCalendars.ical.createButton'
+                  ) | translate
+                }}
               </button>
 
               @if (icalCreateError(); as message) {
@@ -204,9 +268,14 @@
   }
 
   @if (manageableGroups().length === 0) {
-    <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">{{ 'admin.manageCalendars.needsGroupHint' | translate }}</p>
+    <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'admin.manageCalendars.needsGroupHint' | translate }}
+    </p>
   } @else {
-    <form class="mt-5 grid gap-3 sm:grid-cols-[1fr_4rem] lg:grid-cols-[1fr_4rem_1fr_1fr]" (ngSubmit)="createCalendar()">
+    <form
+      class="mt-5 grid gap-3 sm:grid-cols-[1fr_4rem] lg:grid-cols-[1fr_4rem_1fr_1fr]"
+      (ngSubmit)="createCalendar()"
+    >
       <input
         type="text"
         name="calendarName"
@@ -225,7 +294,9 @@
         [ngModel]="newCalendarIcon()"
         (ngModelChange)="newCalendarIcon.set($event)"
       />
-      <label class="sr-only" for="calendarTimeZoneId">{{ 'admin.manageChildren.timeZone.label' | translate }}</label>
+      <label class="sr-only" for="calendarTimeZoneId">{{
+        'admin.manageChildren.timeZone.label' | translate
+      }}</label>
       <select
         name="calendarTimeZoneId"
         id="calendarTimeZoneId"
@@ -237,7 +308,9 @@
           <option [value]="timeZoneId">{{ timeZoneId }}</option>
         }
       </select>
-      <label class="sr-only" for="calendarGroupId">{{ 'admin.manageCalendars.move.selectPlaceholder' | translate }}</label>
+      <label class="sr-only" for="calendarGroupId">{{
+        'admin.manageCalendars.move.selectPlaceholder' | translate
+      }}</label>
       <select
         name="calendarGroupId"
         id="calendarGroupId"
@@ -252,7 +325,12 @@
       <button
         type="submit"
         class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-        [disabled]="creating() || !newCalendarName().trim() || !newCalendarTimeZoneId().trim() || !newCalendarGroupId()"
+        [disabled]="
+          creating() ||
+          !newCalendarName().trim() ||
+          !newCalendarTimeZoneId().trim() ||
+          !newCalendarGroupId()
+        "
       >
         {{ 'admin.manageCalendars.addButton' | translate }}
       </button>

@@ -28,18 +28,27 @@ export class ProgressService {
   private readonly runtimeConfig = inject(RuntimeConfigService);
 
   getMyProgress(): Promise<ProgressSummary> {
-    return firstValueFrom(this.http.get<ProgressSummary>(`${this.runtimeConfig.apiBaseUrl}/progress/me`));
+    return firstValueFrom(
+      this.http.get<ProgressSummary>(`${this.runtimeConfig.apiBaseUrl}/progress/me`),
+    );
   }
 
   getChildProgress(childId: string): Promise<ProgressSummary> {
-    return firstValueFrom(this.http.get<ProgressSummary>(`${this.runtimeConfig.apiBaseUrl}/progress/children/${childId}`));
+    return firstValueFrom(
+      this.http.get<ProgressSummary>(
+        `${this.runtimeConfig.apiBaseUrl}/progress/children/${childId}`,
+      ),
+    );
   }
 
   // Guardian-only (see ProgressAuthorization.CheckManage) -- full-replace, mirrors the backend's
   // GoalPostsConfigured event semantics.
   configureGoalPosts(childId: string, goalPosts: GoalPost[]): Promise<ProgressSummary> {
     return firstValueFrom(
-      this.http.put<ProgressSummary>(`${this.runtimeConfig.apiBaseUrl}/progress/children/${childId}/goals`, { goalPosts })
+      this.http.put<ProgressSummary>(
+        `${this.runtimeConfig.apiBaseUrl}/progress/children/${childId}/goals`,
+        { goalPosts },
+      ),
     );
   }
 }

@@ -1,7 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { IssuedMealplanIcalToken, MealplanIcalTokenSummary, MealplansService } from '../../../../core/mealplans.service';
+import {
+  IssuedMealplanIcalToken,
+  MealplanIcalTokenSummary,
+  MealplansService,
+} from '../../../../core/mealplans.service';
 import { MealplanIcal } from './mealplan-ical';
 
 describe('MealplanIcal', () => {
@@ -10,7 +14,12 @@ describe('MealplanIcal', () => {
   }
 
   function issuedToken(overrides: Partial<IssuedMealplanIcalToken> = {}): IssuedMealplanIcalToken {
-    return { tokenId: 'token-new', token: 'plaintext-secret', subscriptionPath: '/mealplans/plan-1/ical/token-new', ...overrides };
+    return {
+      tokenId: 'token-new',
+      token: 'plaintext-secret',
+      subscriptionPath: '/mealplans/plan-1/ical/token-new',
+      ...overrides,
+    };
   }
 
   async function setup(mealplans: Partial<MealplansService> = {}) {
@@ -19,12 +28,12 @@ describe('MealplanIcal', () => {
       createIcalToken: vi.fn(async () => issuedToken()),
       revokeIcalToken: vi.fn(async () => undefined),
       icalFeedUrl: vi.fn((path: string) => `https://api.buddy.test${path}`),
-      ...mealplans
+      ...mealplans,
     };
 
     await TestBed.configureTestingModule({
       imports: [MealplanIcal],
-      providers: [{ provide: MealplansService, useValue: mealplansStub }]
+      providers: [{ provide: MealplansService, useValue: mealplansStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(MealplanIcal);
@@ -40,7 +49,9 @@ describe('MealplanIcal', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   it('loads tokens for the given child on init', async () => {
@@ -59,7 +70,9 @@ describe('MealplanIcal', () => {
   });
 
   it('shows an error when loading tokens fails', async () => {
-    const { fixture } = await setup({ listIcalTokens: vi.fn(async () => Promise.reject(new Error('boom'))) });
+    const { fixture } = await setup({
+      listIcalTokens: vi.fn(async () => Promise.reject(new Error('boom'))),
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -72,12 +85,18 @@ describe('MealplanIcal', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(Array.from(compiled.querySelectorAll('button')).filter((button) => button.textContent?.trim() === 'Revoke')).toHaveLength(2);
+    expect(
+      Array.from(compiled.querySelectorAll('button')).filter(
+        (button) => button.textContent?.trim() === 'Revoke',
+      ),
+    ).toHaveLength(2);
   });
 
   it('creates a new token and shows the plaintext feed URL with a copy button', async () => {
     const { fixture, mealplans } = await setup({
-      createIcalToken: vi.fn(async () => issuedToken({ subscriptionPath: '/mealplans/plan-1/ical/token-new' }))
+      createIcalToken: vi.fn(async () =>
+        issuedToken({ subscriptionPath: '/mealplans/plan-1/ical/token-new' }),
+      ),
     });
     await settle(fixture);
 
@@ -91,13 +110,17 @@ describe('MealplanIcal', () => {
     await settle(fixture);
 
     expect(mealplans.icalFeedUrl).toHaveBeenCalledWith('/mealplans/plan-1/ical/token-new');
-    expect(compiled.textContent).toContain('https://api.buddy.test/mealplans/plan-1/ical/token-new');
+    expect(compiled.textContent).toContain(
+      'https://api.buddy.test/mealplans/plan-1/ical/token-new',
+    );
     expect(findButtonByText(compiled, 'Copy link')).toBeTruthy();
     expect(mealplans.listIcalTokens).toHaveBeenCalledTimes(2);
   });
 
   it('shows an error when creating a token fails', async () => {
-    const { fixture } = await setup({ createIcalToken: vi.fn(async () => Promise.reject(new Error('boom'))) });
+    const { fixture } = await setup({
+      createIcalToken: vi.fn(async () => Promise.reject(new Error('boom'))),
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -120,7 +143,9 @@ describe('MealplanIcal', () => {
     findButtonByText(compiled, 'Copy link')!.click();
     await settle(fixture);
 
-    expect(writeText).toHaveBeenCalledWith(`https://api.buddy.test${issuedToken().subscriptionPath}`);
+    expect(writeText).toHaveBeenCalledWith(
+      `https://api.buddy.test${issuedToken().subscriptionPath}`,
+    );
     expect(findButtonByText(compiled, 'Copied!')).toBeTruthy();
   });
 
@@ -144,7 +169,7 @@ describe('MealplanIcal', () => {
     const tokens = [token({ tokenId: 'token-a' })];
     const { fixture } = await setup({
       listIcalTokens: vi.fn(async () => tokens),
-      revokeIcalToken: vi.fn(async () => Promise.reject(new Error('boom')))
+      revokeIcalToken: vi.fn(async () => Promise.reject(new Error('boom'))),
     });
     await settle(fixture);
 

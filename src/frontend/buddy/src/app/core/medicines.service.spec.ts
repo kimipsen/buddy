@@ -31,7 +31,7 @@ describe('MedicinesService', () => {
       isStopped: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -45,7 +45,7 @@ describe('MedicinesService', () => {
       date: '2026-08-26',
       time: '08:00',
       status: 0,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -54,8 +54,11 @@ describe('MedicinesService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: { apiBaseUrl } as Partial<RuntimeConfigService> }
-      ]
+        {
+          provide: RuntimeConfigService,
+          useValue: { apiBaseUrl } as Partial<RuntimeConfigService>,
+        },
+      ],
     });
 
     service = TestBed.inject(MedicinesService);
@@ -100,7 +103,14 @@ describe('MedicinesService', () => {
 
   describe('createSchedule', () => {
     it('POSTs the create request and returns the created schedule', async () => {
-      const request = { name: 'Amoxicillin', dosage: '5ml', icon: '💊', color: '#f00', times: ['08:00', '20:00'], startDate: '2026-08-01' };
+      const request = {
+        name: 'Amoxicillin',
+        dosage: '5ml',
+        icon: '💊',
+        color: '#f00',
+        times: ['08:00', '20:00'],
+        startDate: '2026-08-01',
+      };
       const created = schedule();
 
       const promise = service.createSchedule(childId, request);
@@ -121,7 +131,7 @@ describe('MedicinesService', () => {
         color: '#f00',
         times: ['08:00'],
         startDate: '2026-08-01',
-        endDate: '2026-08-15'
+        endDate: '2026-08-15',
       };
 
       const promise = service.createSchedule(childId, request);
@@ -153,7 +163,11 @@ describe('MedicinesService', () => {
   describe('rescheduleSchedule', () => {
     it('PATCHes the schedule endpoint with times/startDate/endDate', async () => {
       const request = { times: ['09:00'], startDate: '2026-09-01', endDate: '2026-09-30' };
-      const updated = schedule({ times: ['09:00'], startDate: '2026-09-01', endDate: '2026-09-30' });
+      const updated = schedule({
+        times: ['09:00'],
+        startDate: '2026-09-01',
+        endDate: '2026-09-30',
+      });
 
       const promise = service.rescheduleSchedule(childId, 'med-1', request);
 
@@ -206,7 +220,10 @@ describe('MedicinesService', () => {
       const promise = service.listDoses(childId, '2026-08-01', '2026-08-31');
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${base()}/doses` && r.params.get('from') === '2026-08-01' && r.params.get('to') === '2026-08-31'
+        (r) =>
+          r.url === `${base()}/doses` &&
+          r.params.get('from') === '2026-08-01' &&
+          r.params.get('to') === '2026-08-31',
       );
       expect(req.request.method).toBe('GET');
       req.flush(doses);
@@ -231,7 +248,10 @@ describe('MedicinesService', () => {
       const promise = service.setDoseStatus(childId, 'med-1', '2026-08-26', '08:00', 1);
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${base()}/doses/med-1` && r.params.get('date') === '2026-08-26' && r.params.get('time') === '08:00'
+        (r) =>
+          r.url === `${base()}/doses/med-1` &&
+          r.params.get('date') === '2026-08-26' &&
+          r.params.get('time') === '08:00',
       );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ status: 1 });
@@ -259,7 +279,9 @@ describe('MedicinesService', () => {
     it('PUTs an empty body to the group-share endpoint', async () => {
       const promise = service.shareWithGroup(childId, 'group-1');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/medicines/children/${childId}/group-share/group-1`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/medicines/children/${childId}/group-share/group-1`,
+      );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({});
       req.flush(null);
@@ -272,7 +294,9 @@ describe('MedicinesService', () => {
     it('DELETEs the group-share relationship', async () => {
       const promise = service.unshareFromGroup(childId, 'group-1');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/medicines/children/${childId}/group-share/group-1`);
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/medicines/children/${childId}/group-share/group-1`,
+      );
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
 

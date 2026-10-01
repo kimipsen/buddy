@@ -6,7 +6,7 @@ export const DEFAULT_LANGUAGE: Language = 'en';
 
 export const LANGUAGE_NAMES: Record<Language, string> = {
   en: 'English',
-  da: 'Dansk'
+  da: 'Dansk',
 };
 
 export function isSupportedLanguage(value: string): value is Language {

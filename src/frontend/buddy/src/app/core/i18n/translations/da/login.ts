@@ -7,5 +7,6 @@ export const login = {
   cardTitle: 'Velkommen tilbage',
   cardSubtitle: 'Fortsæt med din virksomhedskonto for at få adgang til dit dashboard.',
   signInButton: 'Log ind med Keycloak',
-  redirectNote: 'Din browser bliver sendt videre til Keycloak og tilbage til Buddy, når du er logget ind.'
+  redirectNote:
+    'Din browser bliver sendt videre til Keycloak og tilbage til Buddy, når du er logget ind.',
 };

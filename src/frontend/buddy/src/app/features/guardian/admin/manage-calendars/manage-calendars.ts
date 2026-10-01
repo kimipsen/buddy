@@ -2,7 +2,11 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { CalendarSummary, CalendarsService, IcalTokenSummary } from '../../../../core/calendars.service';
+import {
+  CalendarSummary,
+  CalendarsService,
+  IcalTokenSummary,
+} from '../../../../core/calendars.service';
 import { browserTimeZoneId, listTimeZoneIds } from '../../../../core/date-utils';
 import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -10,7 +14,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 const ROLE_LABELS: Record<number, string> = {
   0: 'admin.manageCalendars.roles.owner',
   1: 'admin.manageCalendars.roles.contributor',
-  2: 'admin.manageCalendars.roles.viewer'
+  2: 'admin.manageCalendars.roles.viewer',
 };
 
 // Matches the backend's Calendar.DefaultIcon -- what a new calendar gets if this field is left as-is.
@@ -29,7 +33,7 @@ function resolveDefaultTimeZoneId(candidates: readonly string[]): string {
 @Component({
   selector: 'app-manage-calendars',
   imports: [FormsModule, DatePipe, TranslatePipe],
-  templateUrl: './manage-calendars.html'
+  templateUrl: './manage-calendars.html',
 })
 export class ManageCalendars implements OnInit {
   private readonly calendars = inject(CalendarsService);

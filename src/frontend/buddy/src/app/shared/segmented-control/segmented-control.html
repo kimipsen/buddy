@@ -1,4 +1,8 @@
-<div class="inline-flex w-full overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600" role="radiogroup" [attr.aria-label]="ariaLabel() || null">
+<div
+  class="inline-flex w-full overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600"
+  role="radiogroup"
+  [attr.aria-label]="ariaLabel() || null"
+>
   @for (option of options(); track $index) {
     <button
       type="button"

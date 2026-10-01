@@ -12,9 +12,9 @@ describe('RuntimeConfigService', () => {
       authority: 'https://auth.buddy.test',
       clientId: 'buddy-web',
       realm: 'buddy',
-      redirectPath: '/auth/callback'
+      redirectPath: '/auth/callback',
     },
-    apiBaseUrl: 'https://api.buddy.test'
+    apiBaseUrl: 'https://api.buddy.test',
   };
 
   beforeEach(() => {
@@ -37,7 +37,12 @@ describe('RuntimeConfigService', () => {
   });
 
   it('fetches the runtime config from the well-known static path with no-cache semantics', async () => {
-    fetchMock.mockResolvedValue({ ok: true, status: 200, statusText: 'OK', json: async () => config });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => config,
+    });
 
     await service.load();
 
@@ -46,7 +51,12 @@ describe('RuntimeConfigService', () => {
   });
 
   it('exposes apiBaseUrl and keycloak from the fetched config once load() resolves', async () => {
-    fetchMock.mockResolvedValue({ ok: true, status: 200, statusText: 'OK', json: async () => config });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => config,
+    });
 
     await service.load();
 
@@ -55,13 +65,23 @@ describe('RuntimeConfigService', () => {
   });
 
   it('throws with the response status and status text when the fetch response is not ok', async () => {
-    fetchMock.mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found', json: async () => ({}) });
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      json: async () => ({}),
+    });
 
     await expect(service.load()).rejects.toThrow('Unable to load runtime config: 404 Not Found');
   });
 
   it('leaves the config unset (still throwing on access) after a failed load', async () => {
-    fetchMock.mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error', json: async () => ({}) });
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      json: async () => ({}),
+    });
 
     await expect(service.load()).rejects.toThrow();
 

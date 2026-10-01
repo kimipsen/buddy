@@ -15,7 +15,7 @@ import { createChild } from './support/guardian-data';
 test('guardian configures a provider, toggles slots, starts/discards a real session, and sends a stubbed chat message', async ({
   page,
   loginAs,
-  newGuardian
+  newGuardian,
 }) => {
   // A disposable guardian (newGuardian): the AI credential is family-wide and anchored to a child,
   // and a seeded guardian's family is shared with every parallel test, whose cleanup revokes links
@@ -28,7 +28,9 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
   // --- No provider configured yet: real, unstubbed state for a family that has never added an
   // AI provider key (or, on a repeat local run, may already have one -- see below). ---
   await page.goto('/guardian/mealplan/ai-assistant');
-  await expect(page.getByRole('heading', { name: 'Chat with your assistant to draft a plan.' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Chat with your assistant to draft a plan.' }),
+  ).toBeVisible();
 
   // The "Chat with your assistant" heading above is static (rendered before load() finishes) and
   // hasProviderConfigured() defaults to true, so neither proves the provider lookup has landed. A
@@ -37,13 +39,18 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
   // That's not a safe assumption: the AI credential is family-wide but anchored to one child's
   // index row, so once that child's links are revoked (the created-data cleanup does that after
   // every test) the family has no provider again. Wait for whichever post-load view appears.
-  const noProviderMessage = page.getByText('Add an AI provider API key in Settings before starting a session.');
+  const noProviderMessage = page.getByText(
+    'Add an AI provider API key in Settings before starting a session.',
+  );
   const startHeading = page.getByRole('heading', { name: 'Start a new session' });
   await expect(noProviderMessage.or(startHeading)).toBeVisible();
   const hasProvider = !(await noProviderMessage.isVisible());
 
   if (!hasProvider) {
-    await expect(page.getByRole('link', { name: 'Go to Settings' })).toHaveAttribute('href', '/guardian/admin');
+    await expect(page.getByRole('link', { name: 'Go to Settings' })).toHaveAttribute(
+      'href',
+      '/guardian/admin',
+    );
 
     // Configure a real (fake-value) provider key via the admin UI -- this only ever validates,
     // encrypts and stores the key (SetProviderApiKeyHandler never calls a provider), so it's safe
@@ -103,7 +110,9 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
   await startButton.click();
 
   await expect(page.getByText('Drafting', { exact: true })).toBeVisible();
-  await expect(page.getByText("Say hello to get started — tell the assistant what you're looking for.")).toBeVisible();
+  await expect(
+    page.getByText("Say hello to get started — tell the assistant what you're looking for."),
+  ).toBeVisible();
   await expect(page.getByText('Nothing proposed yet.')).toBeVisible();
 
   // --- Discard it for real (DiscardAiSession only appends an event -- no provider call either) --
@@ -135,11 +144,26 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
         requestedSlots: [0, 1],
         status: 0,
         transcript: [
-          { role: 0, text: 'Plan something quick for breakfast.', occurredAt: new Date().toISOString() },
-          { role: 1, text: "Sure -- here's a draft for breakfast and lunch.", occurredAt: new Date().toISOString() }
+          {
+            role: 0,
+            text: 'Plan something quick for breakfast.',
+            occurredAt: new Date().toISOString(),
+          },
+          {
+            role: 1,
+            text: "Sure -- here's a draft for breakfast and lunch.",
+            occurredAt: new Date().toISOString(),
+          },
         ],
-        draft: [{ date: new Date().toISOString().slice(0, 10), slot: 0, mealId: 'e2e-stub-meal', mealName: 'Stubbed Oatmeal' }]
-      }
+        draft: [
+          {
+            date: new Date().toISOString().slice(0, 10),
+            slot: 0,
+            mealId: 'e2e-stub-meal',
+            mealName: 'Stubbed Oatmeal',
+          },
+        ],
+      },
     });
   });
 

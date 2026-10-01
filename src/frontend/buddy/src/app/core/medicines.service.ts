@@ -61,45 +61,67 @@ export class MedicinesService {
 
   listSchedules(childId: string): Promise<MedicineSchedule[]> {
     return firstValueFrom(
-      this.http.get<MedicineSchedule[]>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules`)
+      this.http.get<MedicineSchedule[]>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules`,
+      ),
     );
   }
 
-  createSchedule(childId: string, request: CreateMedicineScheduleRequest): Promise<MedicineSchedule> {
+  createSchedule(
+    childId: string,
+    request: CreateMedicineScheduleRequest,
+  ): Promise<MedicineSchedule> {
     return firstValueFrom(
-      postIdempotent<MedicineSchedule>(this.http, `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules`, request)
+      postIdempotent<MedicineSchedule>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules`,
+        request,
+      ),
     );
   }
 
-  updateScheduleDetails(childId: string, medicineId: string, request: MedicineScheduleDetails): Promise<MedicineSchedule> {
+  updateScheduleDetails(
+    childId: string,
+    medicineId: string,
+    request: MedicineScheduleDetails,
+  ): Promise<MedicineSchedule> {
     return firstValueFrom(
       this.http.patch<MedicineSchedule>(
         `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules/${medicineId}/details`,
-        request
-      )
+        request,
+      ),
     );
   }
 
-  rescheduleSchedule(childId: string, medicineId: string, request: RescheduleMedicineRequest): Promise<MedicineSchedule> {
+  rescheduleSchedule(
+    childId: string,
+    medicineId: string,
+    request: RescheduleMedicineRequest,
+  ): Promise<MedicineSchedule> {
     return firstValueFrom(
       this.http.patch<MedicineSchedule>(
         `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules/${medicineId}/schedule`,
-        request
-      )
+        request,
+      ),
     );
   }
 
   stopSchedule(childId: string, medicineId: string): Promise<void> {
     return firstValueFrom(
-      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules/${medicineId}`)
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules/${medicineId}`,
+      ),
     );
   }
 
   listDoses(childId: string, from: string, to: string): Promise<MedicineDoseOccurrence[]> {
     return firstValueFrom(
-      this.http.get<MedicineDoseOccurrence[]>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/doses`, {
-        params: { from, to }
-      })
+      this.http.get<MedicineDoseOccurrence[]>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/doses`,
+        {
+          params: { from, to },
+        },
+      ),
     );
   }
 
@@ -108,35 +130,44 @@ export class MedicinesService {
     medicineId: string,
     date: string,
     time: string,
-    status: DoseStatus
+    status: DoseStatus,
   ): Promise<MedicineDoseOccurrence> {
     return firstValueFrom(
       this.http.put<MedicineDoseOccurrence>(
         `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/doses/${medicineId}`,
         { status },
-        { params: { date, time } }
-      )
+        { params: { date, time } },
+      ),
     );
   }
 
   // Sharing is always a guardian-side action (only a guardian, via CheckManage, can decide to
   // share or unshare a child's medicine schedules) -- mirrors MealplansService's equivalent.
   shareWithGroup(childId: string, groupId: string): Promise<void> {
-    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share/${groupId}`, {}));
+    return firstValueFrom(
+      this.http.put<void>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share/${groupId}`,
+        {},
+      ),
+    );
   }
 
   unshareFromGroup(childId: string, groupId: string): Promise<void> {
     return firstValueFrom(
-      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share/${groupId}`)
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share/${groupId}`,
+      ),
     );
   }
 
   async getSharedGroup(childId: string): Promise<{ groupId: string; groupName: string } | null> {
     const response = await firstValueFrom(
       this.http.get<{ groupId: string | null; groupName: string | null }>(
-        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share`
-      )
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/group-share`,
+      ),
     );
-    return response.groupId && response.groupName ? { groupId: response.groupId, groupName: response.groupName } : null;
+    return response.groupId && response.groupName
+      ? { groupId: response.groupId, groupName: response.groupName }
+      : null;
   }
 }

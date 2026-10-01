@@ -10,7 +10,7 @@ describe('child routes', () => {
     expect(CHILD_ROUTES).toEqual([
       { path: '', component: ChildHome },
       { path: 'mealplan', component: ChildMealplan },
-      { path: 'calendar', component: ChildCalendar }
+      { path: 'calendar', component: ChildCalendar },
     ]);
   });
 });

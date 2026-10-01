@@ -1,8 +1,18 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { CalendarItemKind, CalendarOccurrence, CalendarSummary, CalendarsService } from '../../../core/calendars.service';
-import { toIsoDate, todayIsoDate, toIsoDateInTimeZone, toTimeInTimeZone } from '../../../core/date-utils';
+import {
+  CalendarItemKind,
+  CalendarOccurrence,
+  CalendarSummary,
+  CalendarsService,
+} from '../../../core/calendars.service';
+import {
+  toIsoDate,
+  todayIsoDate,
+  toIsoDateInTimeZone,
+  toTimeInTimeZone,
+} from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
@@ -19,13 +29,18 @@ const DAYS_AHEAD = 7;
 // MealSlotDefaultTimes.cs fallback (used there only for the iCal feed) purely so a meal can be
 // slotted into the right position among real-timestamped occurrences. Note the chronological
 // order (Breakfast, Lunch, Snack, Dinner) differs from the enum's declaration order.
-const MEAL_SLOT_SORT_TIME: Record<MealSlot, string> = { 0: '07:00', 1: '12:00', 2: '18:00', 3: '15:00' };
+const MEAL_SLOT_SORT_TIME: Record<MealSlot, string> = {
+  0: '07:00',
+  1: '12:00',
+  2: '18:00',
+  3: '15:00',
+};
 
 const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
   0: 'dashboard.mealplan.slots.breakfast',
   1: 'dashboard.mealplan.slots.lunch',
   2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack'
+  3: 'dashboard.mealplan.slots.snack',
 };
 
 interface AgendaDay {
@@ -62,7 +77,7 @@ function buildDays(anchorIsoDate: string, locale: string): AgendaDay[] {
 
     return {
       date: toIsoDate(date),
-      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
+      label: date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' }),
     };
   });
 }
@@ -93,7 +108,7 @@ function sortKeyFor(row: ChildAgendaRow, timeZoneId: string): string {
 @Component({
   selector: 'app-child-calendar',
   imports: [RouterLink, TranslatePipe, UserDatePipe, Toggle],
-  templateUrl: './child-calendar.html'
+  templateUrl: './child-calendar.html',
 })
 export class ChildCalendar {
   private readonly calendars = inject(CalendarsService);
@@ -106,7 +121,9 @@ export class ChildCalendar {
   protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
 
   protected readonly anchorDate = signal(todayIsoDate());
-  protected readonly days = computed(() => buildDays(this.anchorDate(), this.translation.language()));
+  protected readonly days = computed(() =>
+    buildDays(this.anchorDate(), this.translation.language()),
+  );
 
   protected readonly myCalendars = signal<CalendarSummary[]>([]);
   protected readonly occurrences = signal<CalendarOccurrence[]>([]);
@@ -139,7 +156,9 @@ export class ChildCalendar {
 
     for (const dayOccurrences of Object.values(byDate)) {
       // Stryker disable next-line StringLiteral: unreachable -- only occurrences with a startsAt or dueAt are grouped above
-      dayOccurrences.sort((a, b) => (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''));
+      dayOccurrences.sort((a, b) =>
+        (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''),
+      );
     }
 
     return byDate;
@@ -163,7 +182,9 @@ export class ChildCalendar {
   protected readonly hasAnyVisibleOccurrence = computed(() => {
     const byDate = this.occurrencesByDate();
     const mealsByDate = this.mealEntriesByDate();
-    return this.days().some((day) => (byDate[day.date] ?? []).length > 0 || (mealsByDate[day.date] ?? []).length > 0);
+    return this.days().some(
+      (day) => (byDate[day.date] ?? []).length > 0 || (mealsByDate[day.date] ?? []).length > 0,
+    );
   });
 
   constructor() {
@@ -186,7 +207,11 @@ export class ChildCalendar {
 
   private shiftWeek(offsetDays: number): void {
     const anchor = parseIsoDate(this.anchorDate());
-    const shifted = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + offsetDays);
+    const shifted = new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() + offsetDays,
+    );
     this.anchorDate.set(toIsoDate(shifted));
   }
 
@@ -208,7 +233,7 @@ export class ChildCalendar {
   protected groupedOccurrencesFor(date: string): ChildAgendaRow[] {
     const rows: ChildAgendaRow[] = [
       ...groupTaskRuns(this.occurrencesFor(date)),
-      ...this.mealEntriesFor(date).map((meal): MealRow => ({ meal }))
+      ...this.mealEntriesFor(date).map((meal): MealRow => ({ meal })),
     ];
 
     const timeZoneId = this.users.timeZoneId();
@@ -281,9 +306,17 @@ export class ChildCalendar {
     this.savingTaskId.set(key);
 
     try {
-      await this.calendars.setTaskCompletion(occurrence.calendarId, occurrence.itemId, date, isCompleted, occurrence.subtaskId ?? null);
+      await this.calendars.setTaskCompletion(
+        occurrence.calendarId,
+        occurrence.itemId,
+        date,
+        isCompleted,
+        occurrence.subtaskId ?? null,
+      );
       this.occurrences.update((current) =>
-        current.map((existing) => (occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing))
+        current.map((existing) =>
+          occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
+        ),
       );
     } catch {
       this.error.set('child.calendar.taskUpdateError');
@@ -304,7 +337,7 @@ export class ChildCalendar {
       const [myCalendars, occurrences, mealEntries] = await Promise.all([
         this.calendars.listMyCalendars(),
         this.calendars.listOccurrencesInRange(from, to),
-        this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to)
+        this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to),
       ]);
 
       this.myCalendars.set(myCalendars);

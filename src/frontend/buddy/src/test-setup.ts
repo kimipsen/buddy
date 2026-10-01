@@ -13,6 +13,6 @@ if (typeof window.matchMedia !== 'function') {
       removeListener: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
-      dispatchEvent: () => false
+      dispatchEvent: () => false,
     }) as MediaQueryList;
 }

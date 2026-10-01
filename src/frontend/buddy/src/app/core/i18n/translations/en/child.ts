@@ -12,45 +12,45 @@ export const child = {
     eventsTitle: 'Events today',
     loadError: 'Something went wrong. Try again in a bit.',
     menu: {
-      openLabel: 'Open menu'
+      openLabel: 'Open menu',
     },
     theme: {
       label: 'Theme',
       light: 'Light',
       dark: 'Dark',
-      system: 'System'
+      system: 'System',
     },
     medicine: {
       markTaken: 'Taken',
       skip: 'Skip',
       taken: 'Taken ✓',
       skipped: 'Skipped',
-      undo: 'Undo'
+      undo: 'Undo',
     },
     tasks: {
       markDone: 'Mark done',
-      markNotDone: 'Mark not done'
+      markNotDone: 'Mark not done',
     },
     events: {
-      allDay: 'All day'
+      allDay: 'All day',
     },
     progress: {
       title: 'Your progress',
       starCount: '{count} stars',
-      nextGoal: 'Next: {icon} at {threshold}'
+      nextGoal: 'Next: {icon} at {threshold}',
     },
     pickup: {
       title: 'Today’s pickup & drop-off',
       slots: {
         dropOff: 'Drop-off',
-        pickUp: 'Pickup'
+        pickUp: 'Pickup',
       },
       kind: {
         guardian: 'A guardian',
         selfEscort: 'You go alone',
-        sibling: 'A sibling'
-      }
-    }
+        sibling: 'A sibling',
+      },
+    },
   },
   mealplan: {
     back: 'Back',
@@ -66,7 +66,7 @@ export const child = {
     editNote: 'Edit note',
     notePlaceholder: 'What did you think?',
     cancel: 'Cancel',
-    save: 'Save'
+    save: 'Save',
   },
   calendar: {
     back: 'Back',
@@ -81,7 +81,7 @@ export const child = {
     allDay: 'All day',
     tasks: {
       markDone: 'Mark done',
-      markNotDone: 'Mark not done'
-    }
-  }
+      markNotDone: 'Mark not done',
+    },
+  },
 };

@@ -1,7 +1,11 @@
 <main class="min-h-dvh bg-amber-50 dark:bg-slate-950 text-slate-950 dark:text-slate-50">
   <header class="flex items-center justify-between px-6 py-5 sm:px-8">
     <div class="flex items-center gap-3">
-      <a routerLink="/child" class="text-base font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300">← {{ 'child.mealplan.back' | translate }}</a>
+      <a
+        routerLink="/child"
+        class="text-base font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+        >← {{ 'child.mealplan.back' | translate }}</a
+      >
       <h1 class="text-2xl font-bold tracking-normal">{{ 'child.mealplan.title' | translate }}</h1>
     </div>
 
@@ -25,21 +29,32 @@
 
   <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
     @if (error(); as message) {
-      <p class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400">{{ message | translate }}</p>
+      <p
+        class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400"
+      >
+        {{ message | translate }}
+      </p>
     }
 
     @if (loading()) {
-      <p class="text-lg font-semibold text-slate-500 dark:text-slate-400">{{ 'child.mealplan.loading' | translate }}</p>
+      <p class="text-lg font-semibold text-slate-500 dark:text-slate-400">
+        {{ 'child.mealplan.loading' | translate }}
+      </p>
     } @else if (hasAnyEntries()) {
       @for (day of days(); track day.date) {
         @if (entriesForDay(day.date).length > 0) {
-          <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
+          <div
+            class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
+          >
             <h2 class="text-xl font-bold tracking-normal">{{ day.label }}</h2>
             <ul class="mt-4 space-y-4">
               @for (entry of entriesForDay(day.date); track entry.slot) {
                 <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
                   <div class="flex items-center justify-between gap-3">
-                    <span class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ slotLabels[entry.slot] | translate }}</span>
+                    <span
+                      class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                      >{{ slotLabels[entry.slot] | translate }}</span
+                    >
                     <span class="flex items-center gap-2 text-lg font-semibold">
                       <span aria-hidden="true">{{ entry.icon }}</span>
                       {{ entry.mealName }}
@@ -53,11 +68,19 @@
                           <button
                             type="button"
                             class="text-2xl leading-none disabled:opacity-50"
-                            [class.text-amber-400]="entry.rating !== null && starCount <= entry.rating.stars"
-                            [class.text-slate-300]="entry.rating === null || starCount > entry.rating.stars"
-                            [class.dark:text-slate-600]="entry.rating === null || starCount > entry.rating.stars"
+                            [class.text-amber-400]="
+                              entry.rating !== null && starCount <= entry.rating.stars
+                            "
+                            [class.text-slate-300]="
+                              entry.rating === null || starCount > entry.rating.stars
+                            "
+                            [class.dark:text-slate-600]="
+                              entry.rating === null || starCount > entry.rating.stars
+                            "
                             [disabled]="savingKey() === key(entry.date, entry.slot)"
-                            [attr.aria-label]="'child.mealplan.starLabel' | translate: { count: starCount }"
+                            [attr.aria-label]="
+                              'child.mealplan.starLabel' | translate: { count: starCount }
+                            "
                             (click)="rate(entry, starCount)"
                           >
                             ★
@@ -70,13 +93,21 @@
                         class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                         (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)"
                       >
-                        {{ (entry.rating?.comment ? 'child.mealplan.editNote' : 'child.mealplan.addNote') | translate }}
+                        {{
+                          (entry.rating?.comment
+                            ? 'child.mealplan.editNote'
+                            : 'child.mealplan.addNote'
+                          ) | translate
+                        }}
                       </button>
                     </div>
 
                     @if (isEditing(entry)) {
                       <div class="mt-3 space-y-2">
-                        <label class="sr-only" [attr.for]="'mealNote-' + key(entry.date, entry.slot)">
+                        <label
+                          class="sr-only"
+                          [attr.for]="'mealNote-' + key(entry.date, entry.slot)"
+                        >
                           {{ 'child.mealplan.notePlaceholder' | translate }}
                         </label>
                         <textarea
@@ -106,7 +137,9 @@
                         </div>
                       </div>
                     } @else if (entry.rating?.comment; as comment) {
-                      <p class="mt-2 text-base italic text-slate-600 dark:text-slate-300">“{{ comment }}”</p>
+                      <p class="mt-2 text-base italic text-slate-600 dark:text-slate-300">
+                        “{{ comment }}”
+                      </p>
                     }
                   }
                 </li>
@@ -116,9 +149,13 @@
         }
       }
     } @else {
-      <div class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm">
+      <div
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm"
+      >
         <p class="text-5xl">🍽️</p>
-        <h2 class="mt-4 text-2xl font-bold tracking-normal">{{ 'child.mealplan.emptyTitle' | translate }}</h2>
+        <h2 class="mt-4 text-2xl font-bold tracking-normal">
+          {{ 'child.mealplan.emptyTitle' | translate }}
+        </h2>
       </div>
     }
   </section>

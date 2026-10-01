@@ -23,7 +23,7 @@ function withoutSeconds(time: string): string {
 @Component({
   selector: 'app-manage-medicines',
   imports: [FormsModule, TranslatePipe, ColorSwatchPicker, RepeatableRow, TimeSelect],
-  templateUrl: './manage-medicines.html'
+  templateUrl: './manage-medicines.html',
 })
 export class ManageMedicines implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -150,7 +150,7 @@ export class ManageMedicines implements OnInit {
         color,
         times: times.map(withSeconds),
         startDate,
-        endDate: this.newEndDate().trim() || null
+        endDate: this.newEndDate().trim() || null,
       });
       this.newName.set('');
       this.newDosage.set('');
@@ -227,12 +227,17 @@ export class ManageMedicines implements OnInit {
   }
 
   private async loadSchedules(childId: string): Promise<void> {
-    this.schedules.set((await this.medicines.listSchedules(childId)).filter((schedule) => !schedule.isStopped));
+    this.schedules.set(
+      (await this.medicines.listSchedules(childId)).filter((schedule) => !schedule.isStopped),
+    );
   }
 
   private async loadSharing(childId: string): Promise<void> {
     try {
-      const [groups, sharedGroup] = await Promise.all([this.groupsService.listMyGroups(), this.medicines.getSharedGroup(childId)]);
+      const [groups, sharedGroup] = await Promise.all([
+        this.groupsService.listMyGroups(),
+        this.medicines.getSharedGroup(childId),
+      ]);
 
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
       // backend's two-sided consent for ShareMedicineWithGroup.

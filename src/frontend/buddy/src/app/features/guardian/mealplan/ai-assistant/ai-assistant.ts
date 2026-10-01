@@ -14,7 +14,7 @@ const SLOT_LABEL_KEYS: Record<MealSlot, string> = {
   0: 'mealplan.slots.breakfast',
   1: 'mealplan.slots.lunch',
   2: 'mealplan.slots.dinner',
-  3: 'mealplan.slots.snack'
+  3: 'mealplan.slots.snack',
 };
 
 const ALL_SLOTS: readonly MealSlot[] = [0, 1, 2, 3];
@@ -32,7 +32,7 @@ function addDaysIso(iso: string, days: number): string {
 @Component({
   selector: 'app-mealplan-ai-assistant',
   imports: [RouterLink, FormsModule, TranslatePipe],
-  templateUrl: './ai-assistant.html'
+  templateUrl: './ai-assistant.html',
 })
 export class MealplanAiAssistant implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -106,7 +106,7 @@ export class MealplanAiAssistant implements OnInit {
         to: this.toDate(),
         slots,
         mustIncludeMealIds: [],
-        notes: this.notes().trim() || null
+        notes: this.notes().trim() || null,
       });
       this.session.set(session);
       this.lastOutcome.set(null);

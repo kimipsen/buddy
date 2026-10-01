@@ -1,5 +1,7 @@
 @if (editing()) {
-  <div class="w-56 space-y-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 p-3 text-left shadow-lg">
+  <div
+    class="w-56 space-y-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 p-3 text-left shadow-lg"
+  >
     <app-segmented-control
       [options]="kindOptions()"
       [selected]="kind()"
@@ -8,7 +10,9 @@
     />
 
     @if (kind() === guardianKind) {
-      <label class="sr-only" [attr.for]="instanceId + '-guardianId'">{{ 'pickup.cell.selectGuardianPlaceholder' | translate }}</label>
+      <label class="sr-only" [attr.for]="instanceId + '-guardianId'">{{
+        'pickup.cell.selectGuardianPlaceholder' | translate
+      }}</label>
       <select
         [attr.id]="instanceId + '-guardianId'"
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
@@ -23,7 +27,9 @@
     }
 
     @if (kind() === siblingKind) {
-      <label class="sr-only" [attr.for]="instanceId + '-siblingChildId'">{{ 'pickup.cell.selectSiblingPlaceholder' | translate }}</label>
+      <label class="sr-only" [attr.for]="instanceId + '-siblingChildId'">{{
+        'pickup.cell.selectSiblingPlaceholder' | translate
+      }}</label>
       <select
         [attr.id]="instanceId + '-siblingChildId'"
         class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
@@ -67,7 +73,11 @@
       />
     }
 
-    <app-time-select [value]="time()" (valueChange)="time.set($event)" [ariaLabel]="'pickup.cell.timeLabel' | translate" />
+    <app-time-select
+      [value]="time()"
+      (valueChange)="time.set($event)"
+      [ariaLabel]="'pickup.cell.timeLabel' | translate"
+    />
     <input
       type="text"
       [placeholder]="'pickup.cell.notesPlaceholder' | translate"
@@ -123,7 +133,9 @@
       }
     </span>
     @if (occurrence.time) {
-      <span class="text-xs text-slate-500 dark:text-slate-400">{{ occurrence.time | timeOfDay }}</span>
+      <span class="text-xs text-slate-500 dark:text-slate-400">{{
+        occurrence.time | timeOfDay
+      }}</span>
     }
   </button>
   @if (!disabled()) {

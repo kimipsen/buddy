@@ -6,7 +6,7 @@ import {
   AiProvider,
   AiProviderSettings as AiProviderSettingsData,
   AiProviderSettingsEntry,
-  TestProviderConnectionResult
+  TestProviderConnectionResult,
 } from '../../../../core/ai-assistant.service';
 import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -16,13 +16,13 @@ const PROVIDERS: readonly AiProvider[] = [0, 1, 2];
 const PROVIDER_LABEL_KEYS: Record<AiProvider, string> = {
   0: 'admin.aiProviders.names.anthropic',
   1: 'admin.aiProviders.names.openAi',
-  2: 'admin.aiProviders.names.gemini'
+  2: 'admin.aiProviders.names.gemini',
 };
 
 @Component({
   selector: 'app-ai-provider-settings',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './ai-provider-settings.html'
+  templateUrl: './ai-provider-settings.html',
 })
 export class AiProviderSettingsComponent implements OnInit {
   private readonly guardians = inject(GuardiansService);

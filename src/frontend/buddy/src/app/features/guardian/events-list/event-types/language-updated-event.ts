@@ -8,7 +8,7 @@ import { LanguageUpdatedData } from './user-event.model';
 @Component({
   selector: 'app-language-updated-event',
   imports: [UserDatePipe, TranslatePipe],
-  templateUrl: './language-updated-event.html'
+  templateUrl: './language-updated-event.html',
 })
 export class LanguageUpdatedEvent {
   readonly data = input.required<LanguageUpdatedData>();

@@ -1,7 +1,11 @@
 import { test as base } from '@playwright/test';
 
 import { cleanUpCreatedData, trackDisposableGuardian } from './created-data-cleanup';
-import { DISPOSABLE_GUARDIAN_GIVEN_NAME, type DisposableGuardian, createDisposableGuardian } from './keycloak-admin-client';
+import {
+  DISPOSABLE_GUARDIAN_GIVEN_NAME,
+  type DisposableGuardian,
+  createDisposableGuardian,
+} from './keycloak-admin-client';
 import { getAccessToken } from './keycloak-client';
 import { readRuntimeConfig } from './runtime-config';
 import { SEEDED_USERS, type TestUser } from './seeded-users';

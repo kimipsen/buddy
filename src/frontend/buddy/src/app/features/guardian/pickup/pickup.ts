@@ -7,6 +7,6 @@ import { ManagePickups } from './manage-pickups/manage-pickups';
 @Component({
   selector: 'app-guardian-pickup',
   imports: [RouterLink, ManagePickups, TranslatePipe],
-  templateUrl: './pickup.html'
+  templateUrl: './pickup.html',
 })
 export class GuardianPickup {}

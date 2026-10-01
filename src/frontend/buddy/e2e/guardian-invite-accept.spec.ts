@@ -32,12 +32,17 @@ test('guardian invites a co-guardian by email, who accepts the invite from their
   // otherwise trigger -- without it, the accept below 403s ("sent to a different account") even
   // when the emails match, because there'd be no backend User yet to compare against. It also
   // gives the email the backend actually holds for them.
-  const { accessToken: inviteeAccessToken } = await getAccessToken(invitee.username, invitee.password);
+  const { accessToken: inviteeAccessToken } = await getAccessToken(
+    invitee.username,
+    invitee.password,
+  );
   const inviteeMeResponse = await page.request.get(`${apiBaseUrl}/users/me`, {
     headers: { Authorization: `Bearer ${inviteeAccessToken}` },
   });
   expect(inviteeMeResponse.ok()).toBe(true);
-  const inviteeMe = (await inviteeMeResponse.json()) as { email: { value: string; isVerified: boolean } };
+  const inviteeMe = (await inviteeMeResponse.json()) as {
+    email: { value: string; isVerified: boolean };
+  };
   expect(inviteeMe.email.isVerified).toBe(true);
   const inviteEmail = inviteeMe.email.value;
 
@@ -68,7 +73,9 @@ test('guardian invites a co-guardian by email, who accepts the invite from their
 
   await page.getByRole('button', { name: 'Accept invite' }).click();
 
-  await expect(page.getByRole('heading', { name: new RegExp(`now a guardian for ${child.givenName}`) })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: new RegExp(`now a guardian for ${child.givenName}`) }),
+  ).toBeVisible();
 
   await page.getByRole('button', { name: 'Go to my children' }).click();
 
@@ -76,5 +83,7 @@ test('guardian invites a co-guardian by email, who accepts the invite from their
   // surfaces a successful accept is that the child now shows up in *the other guardian's own*
   // children list too. Seeing it here, under the invitee's account (who a moment ago had no link to
   // this child at all), is the real evidence of the now-shared guardianship.
-  await expect(page.locator('app-manage-children').locator('li', { hasText: child.givenName })).toBeVisible();
+  await expect(
+    page.locator('app-manage-children').locator('li', { hasText: child.givenName }),
+  ).toBeVisible();
 });

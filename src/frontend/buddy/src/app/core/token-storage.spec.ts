@@ -14,7 +14,7 @@ describe('token-storage', () => {
     accessToken: 'access-token-value',
     refreshToken: 'refresh-token-value',
     idToken: 'id-token-value',
-    expiresAt: 1_700_000_000_000
+    expiresAt: 1_700_000_000_000,
   };
 
   describe('readStoredTokens', () => {
@@ -81,7 +81,7 @@ describe('token-storage', () => {
         accessToken: 'access-only',
         refreshToken: null,
         idToken: null,
-        expiresAt: 0
+        expiresAt: 0,
       };
 
       writeStoredTokens(localStorage, tokensWithNulls);

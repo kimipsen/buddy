@@ -14,7 +14,7 @@ describe('ChildrenOverview', () => {
       kind: 0,
       language: 'en',
       timeZoneId: 'UTC',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -26,19 +26,26 @@ describe('ChildrenOverview', () => {
   async function setup(stubs: Stubs = {}) {
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => []),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
     const progressStub: Partial<ProgressService> = {
-      getChildProgress: vi.fn(async () => ({ totalStars: 0, unlockedMilestones: [], currentIcon: null, nextGoalThreshold: 5, nextGoalIcon: '🌱', goalPosts: [] })),
-      ...stubs.progress
+      getChildProgress: vi.fn(async () => ({
+        totalStars: 0,
+        unlockedMilestones: [],
+        currentIcon: null,
+        nextGoalThreshold: 5,
+        nextGoalIcon: '🌱',
+        goalPosts: [],
+      })),
+      ...stubs.progress,
     };
 
     await TestBed.configureTestingModule({
       imports: [ChildrenOverview],
       providers: [
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: ProgressService, useValue: progressStub }
-      ]
+        { provide: ProgressService, useValue: progressStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ChildrenOverview);
@@ -49,7 +56,10 @@ describe('ChildrenOverview', () => {
   // loadChildren chains an await on the stubbed service call before the signals driving the
   // template settle -- a single whenStable() flush isn't always enough, so flush a generous fixed
   // number of times rather than guessing when it's "probably" done.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -76,7 +86,9 @@ describe('ChildrenOverview', () => {
   });
 
   it('shows the translated error message when loading children fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -88,7 +100,7 @@ describe('ChildrenOverview', () => {
   it('renders each child with their full name and a linked badge', async () => {
     const children = [
       child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
-      child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } })
+      child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } }),
     ];
 
     const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => children) } });
@@ -112,7 +124,16 @@ describe('ChildrenOverview', () => {
   it('shows exactly one linked badge per child even when a star badge renders alongside it', async () => {
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [child()]) },
-      progress: { getChildProgress: vi.fn(async () => ({ totalStars: 3, unlockedMilestones: [], currentIcon: '🌱', nextGoalThreshold: 5, nextGoalIcon: '🌿', goalPosts: [] })) }
+      progress: {
+        getChildProgress: vi.fn(async () => ({
+          totalStars: 3,
+          unlockedMilestones: [],
+          currentIcon: '🌱',
+          nextGoalThreshold: 5,
+          nextGoalIcon: '🌿',
+          goalPosts: [],
+        })),
+      },
     });
     await settle(fixture);
 
@@ -128,7 +149,9 @@ describe('ChildrenOverview', () => {
   });
 
   it('does not show the empty state or an error once children load successfully', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => [child()]) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -136,7 +159,14 @@ describe('ChildrenOverview', () => {
     expect(compiled.textContent).not.toContain('Unable to load children.');
   });
   function summary(totalStars: number): ProgressSummary {
-    return { totalStars, unlockedMilestones: [], currentIcon: '🌱', nextGoalThreshold: 5, nextGoalIcon: '🌿', goalPosts: [] };
+    return {
+      totalStars,
+      unlockedMilestones: [],
+      currentIcon: '🌱',
+      nextGoalThreshold: 5,
+      nextGoalIcon: '🌿',
+      goalPosts: [],
+    };
   }
 
   // Regression guard for the dashboard N+1 burst: a guardian with many children used to fire one
@@ -145,7 +175,7 @@ describe('ChildrenOverview', () => {
   it('caps concurrent progress requests and still loads a badge for every child', async () => {
     const childCount = PROGRESS_REQUEST_CONCURRENCY * 3 + 1;
     const children = Array.from({ length: childCount }, (_, i) =>
-      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } })
+      child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } }),
     );
     const pending = new Map<string, (value: ProgressSummary) => void>();
     let inFlight = 0;
@@ -163,7 +193,7 @@ describe('ChildrenOverview', () => {
 
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => children) },
-      progress: { getChildProgress }
+      progress: { getChildProgress },
     });
     await settle(fixture);
 
@@ -189,10 +219,10 @@ describe('ChildrenOverview', () => {
     items.forEach((item, i) => expect(item.textContent).toContain(String(i + 100)));
   });
 
-  it('still shows the other children\'s badges when one child\'s progress fails', async () => {
+  it("still shows the other children's badges when one child's progress fails", async () => {
     const children = [
       child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
-      child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } })
+      child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } }),
     ];
 
     const { fixture } = await setup({
@@ -203,8 +233,8 @@ describe('ChildrenOverview', () => {
             throw new Error('boom');
           }
           return summary(7);
-        })
-      }
+        }),
+      },
     });
     await settle(fixture);
 
@@ -212,6 +242,8 @@ describe('ChildrenOverview', () => {
     expect(sam.textContent).not.toContain('🌱');
     expect(alex.textContent).toContain('7');
     expect(alex.textContent).toContain('🌱');
-    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Unable to load children.');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Unable to load children.',
+    );
   });
 });

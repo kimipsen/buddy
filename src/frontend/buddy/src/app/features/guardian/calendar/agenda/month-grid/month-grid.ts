@@ -19,7 +19,7 @@ interface MonthGridWeek {
 @Component({
   selector: 'app-month-grid',
   imports: [TranslatePipe],
-  templateUrl: './month-grid.html'
+  templateUrl: './month-grid.html',
 })
 export class MonthGrid {
   readonly days = input.required<AgendaDay[]>();

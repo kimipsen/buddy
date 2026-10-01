@@ -23,8 +23,8 @@ describe('appConfig', () => {
         ...appConfig.providers,
         provideHttpClientTesting(),
         { provide: RuntimeConfigService, useValue: { load, apiBaseUrl: API_BASE_URL } },
-        { provide: AuthService, useValue: { getAccessToken: async () => 'access-token-1' } }
-      ]
+        { provide: AuthService, useValue: { getAccessToken: async () => 'access-token-1' } },
+      ],
     });
 
     await TestBed.inject(ApplicationInitStatus).donePromise;

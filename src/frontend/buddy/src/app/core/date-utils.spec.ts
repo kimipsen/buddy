@@ -14,7 +14,7 @@ import {
   toIsoDate,
   toIsoDateInTimeZone,
   todayIsoDate,
-  toTimeInTimeZone
+  toTimeInTimeZone,
 } from './date-utils';
 
 describe('toIsoDate', () => {
@@ -88,20 +88,28 @@ describe('toIsoDateInTimeZone', () => {
 
   it('rolls forward to the next calendar day in a zone far ahead of UTC', () => {
     // Pacific/Kiritimati is UTC+14, so late evening UTC is already the next day there.
-    expect(toIsoDateInTimeZone(new Date('2024-06-15T23:30:00Z'), 'Pacific/Kiritimati')).toBe('2024-06-16');
+    expect(toIsoDateInTimeZone(new Date('2024-06-15T23:30:00Z'), 'Pacific/Kiritimati')).toBe(
+      '2024-06-16',
+    );
   });
 
   it('rolls back to the previous calendar day in a zone far behind UTC', () => {
     // Pacific/Honolulu is UTC-10, so just after UTC midnight is still the previous day there.
-    expect(toIsoDateInTimeZone(new Date('2024-01-01T02:00:00Z'), 'Pacific/Honolulu')).toBe('2023-12-31');
+    expect(toIsoDateInTimeZone(new Date('2024-01-01T02:00:00Z'), 'Pacific/Honolulu')).toBe(
+      '2023-12-31',
+    );
   });
 
   it('reflects the DST offset change for the same wall-clock UTC time across seasons', () => {
     // 22:30 UTC stays within the same Copenhagen day in winter (UTC+1 -> 23:30 local) but crosses
     // into the next Copenhagen day in summer (UTC+2 -> 00:30 local), so the same time-of-day input
     // in different seasons must resolve to different local calendar dates purely from the DST shift.
-    expect(toIsoDateInTimeZone(new Date('2024-01-15T22:30:00Z'), 'Europe/Copenhagen')).toBe('2024-01-15');
-    expect(toIsoDateInTimeZone(new Date('2024-07-15T22:30:00Z'), 'Europe/Copenhagen')).toBe('2024-07-16');
+    expect(toIsoDateInTimeZone(new Date('2024-01-15T22:30:00Z'), 'Europe/Copenhagen')).toBe(
+      '2024-01-15',
+    );
+    expect(toIsoDateInTimeZone(new Date('2024-07-15T22:30:00Z'), 'Europe/Copenhagen')).toBe(
+      '2024-07-16',
+    );
   });
 });
 
@@ -194,7 +202,13 @@ describe('shiftMonthIso', () => {
 
 describe('buildDateRangeIso', () => {
   it('returns dayCount consecutive dates starting at startIsoDate', () => {
-    expect(buildDateRangeIso('2024-06-28', 5)).toEqual(['2024-06-28', '2024-06-29', '2024-06-30', '2024-07-01', '2024-07-02']);
+    expect(buildDateRangeIso('2024-06-28', 5)).toEqual([
+      '2024-06-28',
+      '2024-06-29',
+      '2024-06-30',
+      '2024-07-01',
+      '2024-07-02',
+    ]);
   });
 
   it('returns a single-element array for a dayCount of 1', () => {

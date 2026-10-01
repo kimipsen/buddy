@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_LANGUAGE, LANGUAGE_NAMES, SUPPORTED_LANGUAGES, detectBrowserLanguage, isSupportedLanguage } from './language';
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+  detectBrowserLanguage,
+  isSupportedLanguage,
+} from './language';
 
 describe('isSupportedLanguage', () => {
   it.each(SUPPORTED_LANGUAGES)('returns true for the supported language "%s"', (language) => {
@@ -55,7 +61,10 @@ describe('detectBrowserLanguage', () => {
   });
 
   it('skips unsupported entries and returns the first supported candidate in navigator.languages', () => {
-    vi.stubGlobal('navigator', { languages: ['fr-FR', 'de-DE', 'da-DK', 'en-US'], language: 'fr-FR' });
+    vi.stubGlobal('navigator', {
+      languages: ['fr-FR', 'de-DE', 'da-DK', 'en-US'],
+      language: 'fr-FR',
+    });
 
     expect(detectBrowserLanguage()).toBe('da');
   });

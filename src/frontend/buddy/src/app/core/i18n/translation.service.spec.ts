@@ -125,25 +125,33 @@ describe('TranslationService', () => {
     it('leaves placeholders untouched when no params are given', () => {
       const service = new TranslationService();
 
-      expect(service.translate('mealplan.manageMeals.pageIndicator')).toBe('Page {current} of {total}');
+      expect(service.translate('mealplan.manageMeals.pageIndicator')).toBe(
+        'Page {current} of {total}',
+      );
     });
 
     it('substitutes every placeholder present in params', () => {
       const service = new TranslationService();
 
-      expect(service.translate('mealplan.manageMeals.pageIndicator', { current: '2', total: '5' })).toBe('Page 2 of 5');
+      expect(
+        service.translate('mealplan.manageMeals.pageIndicator', { current: '2', total: '5' }),
+      ).toBe('Page 2 of 5');
     });
 
     it('coerces numeric params to strings when interpolating', () => {
       const service = new TranslationService();
 
-      expect(service.translate('mealplan.manageMeals.pageIndicator', { current: 2, total: 5 })).toBe('Page 2 of 5');
+      expect(
+        service.translate('mealplan.manageMeals.pageIndicator', { current: 2, total: 5 }),
+      ).toBe('Page 2 of 5');
     });
 
     it('leaves a placeholder unresolved when its key is missing from params', () => {
       const service = new TranslationService();
 
-      expect(service.translate('mealplan.manageMeals.pageIndicator', { current: 2 })).toBe('Page 2 of {total}');
+      expect(service.translate('mealplan.manageMeals.pageIndicator', { current: 2 })).toBe(
+        'Page 2 of {total}',
+      );
     });
 
     it('ignores params that do not correspond to any placeholder in the template', () => {
@@ -156,7 +164,9 @@ describe('TranslationService', () => {
       const service = new TranslationService();
       service.setLanguage('da');
 
-      expect(service.translate('mealplan.manageMeals.pageIndicator', { current: 2, total: 5 })).toBe('Side 2 af 5');
+      expect(
+        service.translate('mealplan.manageMeals.pageIndicator', { current: 2, total: 5 }),
+      ).toBe('Side 2 af 5');
     });
   });
 });

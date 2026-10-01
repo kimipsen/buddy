@@ -16,7 +16,7 @@ describe('GuardianMealplan', () => {
     guardianLinkId: 'link-1',
     kind: 0,
     language: 'en',
-    timeZoneId: 'UTC'
+    timeZoneId: 'UTC',
   };
 
   function groupSummary(overrides: Partial<GroupSummary> = {}): GroupSummary {
@@ -30,7 +30,7 @@ describe('GuardianMealplan', () => {
       members: [],
       calendarPermissionPolicy: { Owner: 0, Admin: 0, Member: 0 },
       mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -41,11 +41,14 @@ describe('GuardianMealplan', () => {
   }
 
   async function setup(stubs: Stubs = {}) {
-    const guardiansStub: Partial<GuardiansService> = { listMyChildren: vi.fn(async () => [child]), ...stubs.guardians };
+    const guardiansStub: Partial<GuardiansService> = {
+      listMyChildren: vi.fn(async () => [child]),
+      ...stubs.guardians,
+    };
     const groupsStub: Partial<GroupsService> = {
       listMyGroups: vi.fn(async () => []),
       getGroup: vi.fn(async () => Promise.reject(new Error('no group detail stubbed'))),
-      ...stubs.groups
+      ...stubs.groups,
     };
     const mealplansStub: Partial<MealplansService> = {
       // Real service exposes this as a readonly signal; the real child components rendered here
@@ -57,7 +60,7 @@ describe('GuardianMealplan', () => {
       getGroupMealplanStatus: vi.fn(async () => ({ hasSharedPlan: true })),
       shareWithGroup: vi.fn(async () => undefined),
       unshareFromGroup: vi.fn(async () => undefined),
-      ...stubs.mealplans
+      ...stubs.mealplans,
     };
 
     await TestBed.configureTestingModule({
@@ -66,8 +69,8 @@ describe('GuardianMealplan', () => {
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: GroupsService, useValue: groupsStub },
-        { provide: MealplansService, useValue: mealplansStub }
-      ]
+        { provide: MealplansService, useValue: mealplansStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianMealplan);
@@ -91,7 +94,9 @@ describe('GuardianMealplan', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   it('shows the loading message before the initial load resolves', async () => {
@@ -113,7 +118,9 @@ describe('GuardianMealplan', () => {
   });
 
   it('shows a translated error and still treats the guardian as having children when the initial load fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -138,14 +145,20 @@ describe('GuardianMealplan', () => {
       groups: {
         listMyGroups: vi.fn(async () => [
           groupSummary({ id: 'group-manage', name: 'Manage Co', role: 0 }),
-          groupSummary({ id: 'group-view', name: 'View Co', role: 1 })
+          groupSummary({ id: 'group-view', name: 'View Co', role: 1 }),
         ]),
         getGroup: vi.fn(async (groupId: string) =>
           groupId === 'group-view'
-            ? groupDetail({ id: 'group-view', mealplanPermissionPolicy: { Owner: 2, Admin: 3, Member: 0 } })
-            : groupDetail({ id: 'group-manage', mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } })
-        )
-      }
+            ? groupDetail({
+                id: 'group-view',
+                mealplanPermissionPolicy: { Owner: 2, Admin: 3, Member: 0 },
+              })
+            : groupDetail({
+                id: 'group-manage',
+                mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+              }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -157,7 +170,9 @@ describe('GuardianMealplan', () => {
     const manageButton = findButtonByText(compiled, 'Manage Co');
     expect(manageButton).toBeTruthy();
 
-    const viewButton = Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.includes('View Co'));
+    const viewButton = Array.from(compiled.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('View Co'),
+    );
     expect(viewButton?.textContent).toContain('read only');
     expect(manageButton?.textContent).not.toContain('read only');
   });
@@ -165,9 +180,13 @@ describe('GuardianMealplan', () => {
   it('switches the selected scope when a group toggle is clicked, and passes the new scope to the child components', async () => {
     const { fixture, mealplans } = await setup({
       groups: {
-        listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-1', name: 'Family Group', role: 0 })]),
-        getGroup: vi.fn(async () => groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }))
-      }
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-1', name: 'Family Group', role: 0 }),
+        ]),
+        getGroup: vi.fn(async () =>
+          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -182,7 +201,12 @@ describe('GuardianMealplan', () => {
 
     expect(familyButton.classList.contains('bg-slate-950')).toBe(false);
     expect(groupButton.classList.contains('bg-slate-950')).toBe(true);
-    expect(mealplans.listMeals).toHaveBeenCalledWith({ kind: 'group', groupId: 'group-1', groupName: 'Family Group', accessTier: 2 });
+    expect(mealplans.listMeals).toHaveBeenCalledWith({
+      kind: 'group',
+      groupId: 'group-1',
+      groupName: 'Family Group',
+      accessTier: 2,
+    });
   });
 
   it('excludes a group whose resolved access tier is None or Rate from the scope toggle', async () => {
@@ -190,9 +214,13 @@ describe('GuardianMealplan', () => {
       groups: {
         // Member maps to tier 0 (None) in this policy -- below View/Manage, so it should not
         // become a selectable scope even though the guardian belongs to the group.
-        listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-member', name: 'Member Co', role: 2 })]),
-        getGroup: vi.fn(async () => groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }))
-      }
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-member', name: 'Member Co', role: 2 }),
+        ]),
+        getGroup: vi.fn(async () =>
+          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -204,10 +232,14 @@ describe('GuardianMealplan', () => {
   it('excludes a qualifying-tier group that has no meal plan shared with it yet', async () => {
     const { fixture } = await setup({
       groups: {
-        listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-unshared', name: 'Unshared Co', role: 0 })]),
-        getGroup: vi.fn(async () => groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }))
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-unshared', name: 'Unshared Co', role: 0 }),
+        ]),
+        getGroup: vi.fn(async () =>
+          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+        ),
       },
-      mealplans: { getGroupMealplanStatus: vi.fn(async () => ({ hasSharedPlan: false })) }
+      mealplans: { getGroupMealplanStatus: vi.fn(async () => ({ hasSharedPlan: false })) },
     });
     await settle(fixture);
 
@@ -219,9 +251,11 @@ describe('GuardianMealplan', () => {
   it('excludes a group whose detail lookup fails, without surfacing an error', async () => {
     const { fixture } = await setup({
       groups: {
-        listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-broken', name: 'Broken Co', role: 0 })]),
-        getGroup: vi.fn(async () => Promise.reject(new Error('boom')))
-      }
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-broken', name: 'Broken Co', role: 0 }),
+        ]),
+        getGroup: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -246,34 +280,42 @@ describe('GuardianMealplan', () => {
         listMyGroups: vi.fn(async () => [
           groupSummary({ id: 'owner-group', name: 'Owner Co', role: 0 }),
           groupSummary({ id: 'admin-group', name: 'Admin Co', role: 1 }),
-          groupSummary({ id: 'member-group', name: 'Member Co', role: 2 })
-        ])
-      }
+          groupSummary({ id: 'member-group', name: 'Member Co', role: 2 }),
+        ]),
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const options = Array.from(compiled.querySelectorAll('select[name="shareTargetGroupId"] option')).map((option) =>
-      option.textContent?.trim()
-    );
+    const options = Array.from(
+      compiled.querySelectorAll('select[name="shareTargetGroupId"] option'),
+    ).map((option) => option.textContent?.trim());
     expect(options).toContain('Owner Co');
     expect(options).toContain('Admin Co');
     expect(options).not.toContain('Member Co');
   });
 
   it('shows the no-manageable-groups message when the guardian owns or administers no group', async () => {
-    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [groupSummary({ role: 2 })]) } });
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => [groupSummary({ role: 2 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Create a group, or become an admin of one, to share this meal plan.');
+    expect(compiled.textContent).toContain(
+      'Create a group, or become an admin of one, to share this meal plan.',
+    );
   });
 
   it('shares the family plan with the selected group and shows the confirmation', async () => {
     const shareWithGroup = vi.fn(async () => undefined);
     const { fixture, mealplans } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-share', name: 'Sharable Co', role: 0 })]) },
-      mealplans: { shareWithGroup }
+      groups: {
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-share', name: 'Sharable Co', role: 0 }),
+        ]),
+      },
+      mealplans: { shareWithGroup },
     });
     await settle(fixture);
 
@@ -300,8 +342,12 @@ describe('GuardianMealplan', () => {
   it('shows a translated error and re-enables the share button when sharing fails', async () => {
     const shareWithGroup = vi.fn(async () => Promise.reject(new Error('boom')));
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-share', name: 'Sharable Co', role: 0 })]) },
-      mealplans: { shareWithGroup }
+      groups: {
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-share', name: 'Sharable Co', role: 0 }),
+        ]),
+      },
+      mealplans: { shareWithGroup },
     });
     await settle(fixture);
 
@@ -323,7 +369,9 @@ describe('GuardianMealplan', () => {
 
   it('shows the currently shared group and an unshare control', async () => {
     const { fixture } = await setup({
-      mealplans: { getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })) }
+      mealplans: {
+        getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })),
+      },
     });
     await settle(fixture);
 
@@ -337,17 +385,26 @@ describe('GuardianMealplan', () => {
     const unshareFromGroup = vi.fn(async () => undefined);
     const { fixture } = await setup({
       groups: {
-        listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-1', name: 'Family Group', role: 0 })]),
-        getGroup: vi.fn(async () => groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }))
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-1', name: 'Family Group', role: 0 }),
+        ]),
+        getGroup: vi.fn(async () =>
+          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+        ),
       },
-      mealplans: { getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })), unshareFromGroup }
+      mealplans: {
+        getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })),
+        unshareFromGroup,
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
     findButtonByText(compiled, 'Family Group')!.click();
     await settle(fixture);
-    expect(findButtonByText(compiled, 'Family Group')?.classList.contains('bg-slate-950')).toBe(true);
+    expect(findButtonByText(compiled, 'Family Group')?.classList.contains('bg-slate-950')).toBe(
+      true,
+    );
 
     findButtonByText(compiled, 'Stop sharing')!.click();
     await settle(fixture);
@@ -365,10 +422,17 @@ describe('GuardianMealplan', () => {
     const unshareFromGroup = vi.fn(async () => undefined);
     const { fixture } = await setup({
       groups: {
-        listMyGroups: vi.fn(async () => [groupSummary({ id: 'group-1', name: 'Family Group', role: 0 })]),
-        getGroup: vi.fn(async () => groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }))
+        listMyGroups: vi.fn(async () => [
+          groupSummary({ id: 'group-1', name: 'Family Group', role: 0 }),
+        ]),
+        getGroup: vi.fn(async () =>
+          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+        ),
       },
-      mealplans: { getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })), unshareFromGroup }
+      mealplans: {
+        getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })),
+        unshareFromGroup,
+      },
     });
     await settle(fixture);
 
@@ -385,7 +449,10 @@ describe('GuardianMealplan', () => {
   it('shows a translated error when unsharing fails', async () => {
     const unshareFromGroup = vi.fn(async () => Promise.reject(new Error('boom')));
     const { fixture } = await setup({
-      mealplans: { getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })), unshareFromGroup }
+      mealplans: {
+        getSharedGroup: vi.fn(async () => ({ groupId: 'group-1', groupName: 'Family Group' })),
+        unshareFromGroup,
+      },
     });
     await settle(fixture);
 
@@ -412,7 +479,7 @@ describe('GuardianMealplan', () => {
           waiting.push(() => {
             inFlight--;
             resolve(valueFor(id));
-          })
+          }),
         );
       },
       releaseOne: () => waiting.shift()!(),
@@ -421,7 +488,7 @@ describe('GuardianMealplan', () => {
       },
       get maxInFlight() {
         return maxInFlight;
-      }
+      },
     };
   }
 
@@ -429,14 +496,16 @@ describe('GuardianMealplan', () => {
   // fire for every group at once. Both are now bounded by the shared cap.
   it('caps concurrent per-group detail requests and still offers every qualifying group', async () => {
     const groupCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
-    const groups = Array.from({ length: groupCount }, (_, i) => groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }));
+    const groups = Array.from({ length: groupCount }, (_, i) =>
+      groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }),
+    );
     const gate = gatedCalls((groupId) => groupDetail({ id: groupId }));
     const getGroup = vi.fn((groupId: string) => gate.call(groupId));
     const getGroupMealplanStatus = vi.fn(async () => ({ hasSharedPlan: true }));
 
     const { fixture } = await setup({
       groups: { listMyGroups: vi.fn(async () => groups), getGroup },
-      mealplans: { getGroupMealplanStatus }
+      mealplans: { getGroupMealplanStatus },
     });
     await settle(fixture);
 
@@ -456,13 +525,18 @@ describe('GuardianMealplan', () => {
 
   it('caps concurrent shared-plan status requests across qualifying groups', async () => {
     const groupCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
-    const groups = Array.from({ length: groupCount }, (_, i) => groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }));
+    const groups = Array.from({ length: groupCount }, (_, i) =>
+      groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }),
+    );
     const gate = gatedCalls(() => ({ hasSharedPlan: true }));
     const getGroupMealplanStatus = vi.fn((groupId: string) => gate.call(groupId));
 
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => groups), getGroup: vi.fn(async (groupId: string) => groupDetail({ id: groupId })) },
-      mealplans: { getGroupMealplanStatus }
+      groups: {
+        listMyGroups: vi.fn(async () => groups),
+        getGroup: vi.fn(async (groupId: string) => groupDetail({ id: groupId })),
+      },
+      mealplans: { getGroupMealplanStatus },
     });
     await settle(fixture);
 

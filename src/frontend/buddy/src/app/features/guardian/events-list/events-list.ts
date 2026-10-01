@@ -26,9 +26,9 @@ const EVENTS_PAGE_SIZE = 5;
     TimeZoneUpdatedEvent,
     LanguageUpdatedEvent,
     UnknownEvent,
-    TranslatePipe
+    TranslatePipe,
   ],
-  templateUrl: './events-list.html'
+  templateUrl: './events-list.html',
 })
 export class EventsList implements OnInit {
   private readonly userEvents = inject(UserEventsService);
@@ -60,7 +60,10 @@ export class EventsList implements OnInit {
     this.eventsError.set(null);
 
     try {
-      const page = await this.userEvents.listCurrentUserEvents(this.pageCursors[pageIndex] ?? null, EVENTS_PAGE_SIZE);
+      const page = await this.userEvents.listCurrentUserEvents(
+        this.pageCursors[pageIndex] ?? null,
+        EVENTS_PAGE_SIZE,
+      );
 
       this.currentPageIndex = pageIndex;
       this.pageCursors[pageIndex + 1] = page.nextCursor;

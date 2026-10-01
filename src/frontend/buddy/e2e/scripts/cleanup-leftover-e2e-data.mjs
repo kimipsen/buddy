@@ -64,7 +64,13 @@ async function token(realm, clientId, username, password) {
   const response = await fetch(`${KEYCLOAK_URL}/realms/${realm}/protocol/openid-connect/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'password', client_id: clientId, username, password, scope: 'openid' }),
+    body: new URLSearchParams({
+      grant_type: 'password',
+      client_id: clientId,
+      username,
+      password,
+      scope: 'openid',
+    }),
   });
 
   if (!response.ok) {
@@ -75,7 +81,9 @@ async function token(realm, clientId, username, password) {
 }
 
 function isE2eChild(child) {
-  return child.name?.familyName === E2E_FAMILY_NAME && E2E_GIVEN_NAME.test(child.name?.givenName ?? '');
+  return (
+    child.name?.familyName === E2E_FAMILY_NAME && E2E_GIVEN_NAME.test(child.name?.givenName ?? '')
+  );
 }
 
 let failures = 0;
@@ -94,7 +102,9 @@ async function cleanNamed(username, headers, path, pattern, label) {
 
   const items = await response.json();
   const leftovers = items.filter((item) => pattern.test(item.name) && item.role === OWNER);
-  console.log(`${username}: ${items.length} ${label}s, ${leftovers.length} e2e leftovers, ${items.length - leftovers.length} kept`);
+  console.log(
+    `${username}: ${items.length} ${label}s, ${leftovers.length} e2e leftovers, ${items.length - leftovers.length} kept`,
+  );
 
   for (const item of items.filter((candidate) => !leftovers.includes(candidate))) {
     console.log(`  keep    ${label} ${item.name} (${item.id}, role ${item.role})`);
@@ -141,7 +151,9 @@ for (const [username, password] of Object.entries(SEEDED)) {
   const leftovers = children.filter(isE2eChild);
   const kept = children.filter((child) => !isE2eChild(child));
 
-  console.log(`${username}: ${children.length} children, ${leftovers.length} e2e leftovers, ${kept.length} kept`);
+  console.log(
+    `${username}: ${children.length} children, ${leftovers.length} e2e leftovers, ${kept.length} kept`,
+  );
   for (const child of kept) {
     console.log(`  keep    ${child.name.givenName} ${child.name.familyName} (${child.id})`);
   }
@@ -152,7 +164,10 @@ for (const [username, password] of Object.entries(SEEDED)) {
       continue;
     }
 
-    const revoke = await fetch(`${API_URL}/users/me/children/${child.id}/guardian-link`, { method: 'DELETE', headers });
+    const revoke = await fetch(`${API_URL}/users/me/children/${child.id}/guardian-link`, {
+      method: 'DELETE',
+      headers,
+    });
 
     if (revoke.ok) {
       unlinked++;
@@ -169,15 +184,20 @@ for (const [username, password] of Object.entries(SEEDED)) {
 if (!onlyUser) {
   const adminToken = await token('master', 'admin-cli', 'admin', 'admin');
   const adminHeaders = { Authorization: `Bearer ${adminToken}` };
-  const search = await fetch(`${KEYCLOAK_URL}/admin/realms/${REALM}/users?search=e2echild&max=1000&briefRepresentation=true`, {
-    headers: adminHeaders,
-  });
+  const search = await fetch(
+    `${KEYCLOAK_URL}/admin/realms/${REALM}/users?search=e2echild&max=1000&briefRepresentation=true`,
+    {
+      headers: adminHeaders,
+    },
+  );
 
   if (!search.ok) {
     console.error(`Keycloak user search failed: ${search.status}`);
     failures++;
   } else {
-    const users = (await search.json()).filter((user) => E2E_CHILD_USERNAME.test(user.username) && !(user.username in SEEDED));
+    const users = (await search.json()).filter(
+      (user) => E2E_CHILD_USERNAME.test(user.username) && !(user.username in SEEDED),
+    );
     console.log(`keycloak: ${users.length} e2echild* users`);
 
     for (const user of users) {
@@ -186,7 +206,10 @@ if (!onlyUser) {
         continue;
       }
 
-      const removed = await fetch(`${KEYCLOAK_URL}/admin/realms/${REALM}/users/${user.id}`, { method: 'DELETE', headers: adminHeaders });
+      const removed = await fetch(`${KEYCLOAK_URL}/admin/realms/${REALM}/users/${user.id}`, {
+        method: 'DELETE',
+        headers: adminHeaders,
+      });
 
       if (!removed.ok) {
         failures++;
@@ -196,5 +219,9 @@ if (!onlyUser) {
   }
 }
 
-console.log(apply ? `done: ${deleted} groups/calendars deleted, ${unlinked} child links removed, ${failures} failures` : 'dry run only -- re-run with --apply to remove the listed items');
+console.log(
+  apply
+    ? `done: ${deleted} groups/calendars deleted, ${unlinked} child links removed, ${failures} failures`
+    : 'dry run only -- re-run with --apply to remove the listed items',
+);
 process.exit(failures > 0 ? 1 : 0);

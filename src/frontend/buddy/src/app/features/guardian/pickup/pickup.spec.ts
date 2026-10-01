@@ -13,10 +13,10 @@ import { GuardianPickup } from './pickup';
 describe('GuardianPickup', () => {
   async function setup() {
     const guardiansStub: Partial<GuardiansService> = {
-      listMyChildren: vi.fn(async () => [])
+      listMyChildren: vi.fn(async () => []),
     };
     const pickupsStub: Partial<PickupsService> = {
-      listSchedule: vi.fn(async () => [])
+      listSchedule: vi.fn(async () => []),
     };
 
     await TestBed.configureTestingModule({
@@ -24,8 +24,8 @@ describe('GuardianPickup', () => {
       providers: [
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
-        { provide: PickupsService, useValue: pickupsStub }
-      ]
+        { provide: PickupsService, useValue: pickupsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianPickup);

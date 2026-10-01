@@ -10,12 +10,12 @@ import { Login } from './login';
 describe('Login', () => {
   async function setup() {
     const authStub: Partial<AuthService> = {
-      login: vi.fn(async () => undefined)
+      login: vi.fn(async () => undefined),
     };
 
     await TestBed.configureTestingModule({
       imports: [Login],
-      providers: [{ provide: AuthService, useValue: authStub }]
+      providers: [{ provide: AuthService, useValue: authStub }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(Login);

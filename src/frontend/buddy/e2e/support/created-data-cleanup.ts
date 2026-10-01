@@ -131,7 +131,14 @@ export async function cleanUpCreatedData(): Promise<void> {
 
         // Calendars before groups: a group delete cascades to its calendars anyway, but a calendar
         // can also live in a group this test didn't create.
-        await deleteMatching(api, headers, '/calendars', (id) => `/calendars/${id}`, calendars, 'calendar');
+        await deleteMatching(
+          api,
+          headers,
+          '/calendars',
+          (id) => `/calendars/${id}`,
+          calendars,
+          'calendar',
+        );
         await deleteMatching(api, headers, '/groups', (id) => `/groups/${id}`, groups, 'group');
 
         if (children.length === 0) {
@@ -141,23 +148,31 @@ export async function cleanUpCreatedData(): Promise<void> {
         const response = await api.get('/users/me/children', { headers });
 
         if (!response.ok()) {
-          console.warn(`[e2e cleanup] listing ${guardian.username}'s children failed: ${response.status()}`);
+          console.warn(
+            `[e2e cleanup] listing ${guardian.username}'s children failed: ${response.status()}`,
+          );
           continue;
         }
 
         for (const child of (await response.json()) as ChildSummaryDto[]) {
           const isOurs = children.some(
-            (created) => created.givenName === child.name.givenName && created.familyName === child.name.familyName,
+            (created) =>
+              created.givenName === child.name.givenName &&
+              created.familyName === child.name.familyName,
           );
 
           if (!isOurs) {
             continue;
           }
 
-          const revoke = await api.delete(`/users/me/children/${child.id}/guardian-link`, { headers });
+          const revoke = await api.delete(`/users/me/children/${child.id}/guardian-link`, {
+            headers,
+          });
 
           if (!revoke.ok()) {
-            console.warn(`[e2e cleanup] unlinking ${child.name.givenName} from ${guardian.username} failed: ${revoke.status()}`);
+            console.warn(
+              `[e2e cleanup] unlinking ${child.name.givenName} from ${guardian.username} failed: ${revoke.status()}`,
+            );
           }
         }
       } catch (error) {
@@ -168,10 +183,14 @@ export async function cleanUpCreatedData(): Promise<void> {
     for (const guardian of disposables) {
       try {
         const { accessToken } = await getAccessToken(guardian.username, guardian.password);
-        const removed = await api.delete('/users/me', { headers: { Authorization: `Bearer ${accessToken}` } });
+        const removed = await api.delete('/users/me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
 
         if (!removed.ok() && removed.status() !== 404) {
-          console.warn(`[e2e cleanup] deleting backend user ${guardian.username} failed: ${removed.status()}`);
+          console.warn(
+            `[e2e cleanup] deleting backend user ${guardian.username} failed: ${removed.status()}`,
+          );
         }
       } catch (error) {
         console.warn(`[e2e cleanup] deleting backend user ${guardian.username} failed:`, error);

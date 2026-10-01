@@ -6,7 +6,7 @@ import { Meal } from '../../../../core/mealplans.service';
 @Component({
   selector: 'app-meal-picker',
   imports: [TranslatePipe],
-  templateUrl: './meal-picker.html'
+  templateUrl: './meal-picker.html',
 })
 export class MealPicker {
   readonly meals = input.required<Meal[]>();
@@ -21,7 +21,9 @@ export class MealPicker {
   protected readonly query = signal('');
   protected readonly dropdownStyle = signal<Record<string, string>>({});
 
-  protected readonly selectedMeal = computed(() => this.meals().find((meal) => meal.id === this.mealId()) ?? null);
+  protected readonly selectedMeal = computed(
+    () => this.meals().find((meal) => meal.id === this.mealId()) ?? null,
+  );
 
   protected readonly displayValue = computed(() => {
     if (this.open()) {
@@ -55,7 +57,7 @@ export class MealPicker {
       position: 'fixed',
       top: `${rect.bottom + 4}px`,
       left: `${rect.left}px`,
-      width: `${rect.width}px`
+      width: `${rect.width}px`,
     });
   }
 

@@ -8,7 +8,11 @@ import { createCalendar, createChild, createGroup, uniqueName } from './support/
 // just against ManageTasks's own list -- which deliberately keeps an archived template visible
 // (with a badge) instead of hiding it, so checking there wouldn't prove archiving actually removes
 // it from what's schedulable.
-test('guardian builds a task template with subtasks, reorders and edits them, then archives it', async ({ page, loginAs, newGuardian }) => {
+test('guardian builds a task template with subtasks, reorders and edits them, then archives it', async ({
+  page,
+  loginAs,
+  newGuardian,
+}) => {
   // A disposable guardian whose only child is this test's own (see newGuardian in auth-fixture.ts).
   await loginAs(await newGuardian());
 
@@ -20,10 +24,15 @@ test('guardian builds a task template with subtasks, reorders and edits them, th
   const groupRow = groupsSection.locator('li', { hasText: groupName });
 
   await groupRow.getByRole('button', { name: 'Add a child' }).click();
-  await groupRow.getByLabel('Choose a child').selectOption({ label: `${child.givenName} ${child.familyName}` });
+  await groupRow
+    .getByLabel('Choose a child')
+    .selectOption({ label: `${child.givenName} ${child.familyName}` });
 
   const [addChildResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && /\/groups\/[^/]+\/children\/[^/]+$/.test(res.url())),
+    page.waitForResponse(
+      (res) =>
+        res.request().method() === 'PUT' && /\/groups\/[^/]+\/children\/[^/]+$/.test(res.url()),
+    ),
     groupRow.getByRole('button', { name: 'Add to group' }).click(),
   ]);
   expect(addChildResponse.ok()).toBe(true);
@@ -80,7 +89,9 @@ test('guardian builds a task template with subtasks, reorders and edits them, th
   // Reorder via the stepper's move-up/down buttons (Stepper.moveSubtask) rather than any
   // drag-and-drop -- this app has no drag precedent to reuse (see ManageTasks.moveSubtask).
   const [reorderResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && res.url().includes('/subtasks/order')),
+    page.waitForResponse(
+      (res) => res.request().method() === 'PUT' && res.url().includes('/subtasks/order'),
+    ),
     subtaskRows.filter({ hasText: bravoTitle }).getByRole('button', { name: 'Move up' }).click(),
   ]);
   expect(reorderResponse.ok()).toBe(true);
@@ -118,7 +129,9 @@ test('guardian builds a task template with subtasks, reorders and edits them, th
   await calendarSelect.selectOption({ label: calendarName });
 
   await page.getByRole('radio', { name: 'Task', exact: true }).click();
-  await page.getByLabel('Assign to').selectOption({ label: `${child.givenName} ${child.familyName}` });
+  await page
+    .getByLabel('Assign to')
+    .selectOption({ label: `${child.givenName} ${child.familyName}` });
   await page.getByRole('button', { name: 'From template' }).click();
 
   const picker = page.getByLabel('No template');

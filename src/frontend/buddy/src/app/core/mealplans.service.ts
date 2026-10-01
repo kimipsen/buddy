@@ -108,14 +108,19 @@ export class MealplansService {
   }
 
   listMealPlan(scope: MealplanScope, from: string, to: string): Promise<MealPlanEntry[]> {
-    return firstValueFrom(this.http.get<MealPlanEntry[]>(`${this.base(scope)}/plan`, { params: { from, to } }));
+    return firstValueFrom(
+      this.http.get<MealPlanEntry[]>(`${this.base(scope)}/plan`, { params: { from, to } }),
+    );
   }
 
   // Always a family-side, child-only action -- only the child themself may rate their own meals
   // (MealplanAuthorization.CheckRate), so this is never called with a group scope.
   rateMeal(childId: string, mealId: string, stars: number, comment?: string | null): Promise<Meal> {
     return firstValueFrom(
-      this.http.put<Meal>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}/rating`, { stars, comment })
+      this.http.put<Meal>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}/rating`,
+        { stars, comment },
+      ),
     );
   }
 
@@ -126,14 +131,24 @@ export class MealplansService {
   }
 
   async createMeal(scope: MealplanScope, request: MealDetails): Promise<Meal> {
-    const meal = await firstValueFrom(postIdempotent<Meal>(this.http, `${this.base(scope)}/meals`, request));
+    const meal = await firstValueFrom(
+      postIdempotent<Meal>(this.http, `${this.base(scope)}/meals`, request),
+    );
     this.mealsState.update((current) => [...current, meal]);
     return meal;
   }
 
-  async updateMealDetails(scope: MealplanScope, mealId: string, request: MealDetails): Promise<Meal> {
-    const meal = await firstValueFrom(this.http.patch<Meal>(`${this.base(scope)}/meals/${mealId}/details`, request));
-    this.mealsState.update((current) => current.map((existing) => (existing.id === meal.id ? meal : existing)));
+  async updateMealDetails(
+    scope: MealplanScope,
+    mealId: string,
+    request: MealDetails,
+  ): Promise<Meal> {
+    const meal = await firstValueFrom(
+      this.http.patch<Meal>(`${this.base(scope)}/meals/${mealId}/details`, request),
+    );
+    this.mealsState.update((current) =>
+      current.map((existing) => (existing.id === meal.id ? meal : existing)),
+    );
     return meal;
   }
 
@@ -142,39 +157,64 @@ export class MealplansService {
     this.mealsState.update((current) => current.filter((meal) => meal.id !== mealId));
   }
 
-  assignMealToSlot(scope: MealplanScope, date: string, slot: MealSlot, mealId: string, notes?: string | null): Promise<MealPlanEntry> {
+  assignMealToSlot(
+    scope: MealplanScope,
+    date: string,
+    slot: MealSlot,
+    mealId: string,
+    notes?: string | null,
+  ): Promise<MealPlanEntry> {
     return firstValueFrom(
-      this.http.put<MealPlanEntry>(`${this.base(scope)}/plan`, { mealId, notes }, { params: { date, slot: String(slot) } })
+      this.http.put<MealPlanEntry>(
+        `${this.base(scope)}/plan`,
+        { mealId, notes },
+        { params: { date, slot: String(slot) } },
+      ),
     );
   }
 
   clearMealSlot(scope: MealplanScope, date: string, slot: MealSlot): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`${this.base(scope)}/plan`, { params: { date, slot: String(slot) } }));
+    return firstValueFrom(
+      this.http.delete<void>(`${this.base(scope)}/plan`, { params: { date, slot: String(slot) } }),
+    );
   }
 
   // Sharing is always a family-side action (only a guardian, via CheckManage, can decide to share
   // or unshare their child's plan) -- these two and getSharedGroup are never scope-based.
   shareWithGroup(childId: string, groupId: string): Promise<void> {
-    return firstValueFrom(this.http.put<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups/${groupId}`, {}));
+    return firstValueFrom(
+      this.http.put<void>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups/${groupId}`,
+        {},
+      ),
+    );
   }
 
   unshareFromGroup(childId: string, groupId: string): Promise<void> {
     return firstValueFrom(
-      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups/${groupId}`)
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups/${groupId}`,
+      ),
     );
   }
 
   async getSharedGroup(childId: string): Promise<{ groupId: string; groupName: string } | null> {
     const response = await firstValueFrom(
       this.http.get<{ groupId: string | null; groupName: string | null }>(
-        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups`
-      )
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups`,
+      ),
     );
-    return response.groupId && response.groupName ? { groupId: response.groupId, groupName: response.groupName } : null;
+    return response.groupId && response.groupName
+      ? { groupId: response.groupId, groupName: response.groupName }
+      : null;
   }
 
   getGroupMealplanStatus(groupId: string): Promise<GroupMealplanStatus> {
-    return firstValueFrom(this.http.get<GroupMealplanStatus>(`${this.runtimeConfig.apiBaseUrl}/mealplans/groups/${groupId}/status`));
+    return firstValueFrom(
+      this.http.get<GroupMealplanStatus>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/groups/${groupId}/status`,
+      ),
+    );
   }
 
   // iCal subscription tokens are always a family-side action (MealplanAuthorization.CheckManage
@@ -182,19 +222,27 @@ export class MealplansService {
   // scope carries no childId for this route to key off.
   listIcalTokens(childId: string): Promise<MealplanIcalTokenSummary[]> {
     return firstValueFrom(
-      this.http.get<MealplanIcalTokenSummary[]>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens`)
+      this.http.get<MealplanIcalTokenSummary[]>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens`,
+      ),
     );
   }
 
   createIcalToken(childId: string): Promise<IssuedMealplanIcalToken> {
     return firstValueFrom(
-      postIdempotent<IssuedMealplanIcalToken>(this.http, `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens`, {})
+      postIdempotent<IssuedMealplanIcalToken>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens`,
+        {},
+      ),
     );
   }
 
   revokeIcalToken(childId: string, tokenId: string): Promise<void> {
     return firstValueFrom(
-      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens/${tokenId}`)
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens/${tokenId}`,
+      ),
     );
   }
 

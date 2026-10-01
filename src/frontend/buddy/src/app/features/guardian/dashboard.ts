@@ -10,7 +10,15 @@ import { TasksToday } from './tasks-today/tasks-today';
 
 @Component({
   selector: 'app-guardian-dashboard',
-  imports: [ChildrenOverview, MealplanToday, TasksToday, EventsToday, DosesToday, PickupToday, TranslatePipe],
-  templateUrl: './dashboard.html'
+  imports: [
+    ChildrenOverview,
+    MealplanToday,
+    TasksToday,
+    EventsToday,
+    DosesToday,
+    PickupToday,
+    TranslatePipe,
+  ],
+  templateUrl: './dashboard.html',
 })
 export class GuardianDashboard {}

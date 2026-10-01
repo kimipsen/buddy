@@ -2,7 +2,12 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { Meal, MealplanAccessTier, MealplanScope, MealplansService } from '../../../../core/mealplans.service';
+import {
+  Meal,
+  MealplanAccessTier,
+  MealplanScope,
+  MealplansService,
+} from '../../../../core/mealplans.service';
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
@@ -11,7 +16,7 @@ const MANAGE: MealplanAccessTier = 2;
 @Component({
   selector: 'app-manage-meals',
   imports: [FormsModule, TranslatePipe],
-  templateUrl: './manage-meals.html'
+  templateUrl: './manage-meals.html',
 })
 export class ManageMeals {
   private readonly mealplans = inject(MealplansService);
@@ -36,11 +41,17 @@ export class ManageMeals {
 
   // Reads straight from the shared service state, so a meal created/archived from the mealplan
   // grid on the same page (or vice versa) shows up here without a manual refetch.
-  protected readonly meals = computed(() => this.mealplans.meals().filter((meal) => !meal.isArchived));
+  protected readonly meals = computed(() =>
+    this.mealplans.meals().filter((meal) => !meal.isArchived),
+  );
 
   protected readonly currentPage = signal(0);
-  protected readonly totalPages = computed((): number => Math.max(1, Math.ceil(this.meals().length / PAGE_SIZE)));
-  protected readonly page = computed((): number => Math.min(this.currentPage(), this.totalPages() - 1));
+  protected readonly totalPages = computed((): number =>
+    Math.max(1, Math.ceil(this.meals().length / PAGE_SIZE)),
+  );
+  protected readonly page = computed((): number =>
+    Math.min(this.currentPage(), this.totalPages() - 1),
+  );
   protected readonly pagedMeals = computed(() => {
     const start = this.page() * PAGE_SIZE;
     return this.meals().slice(start, start + PAGE_SIZE);
@@ -58,10 +69,16 @@ export class ManageMeals {
       return [];
     }
 
-    return this.meals().filter((meal) => meal.name.toLowerCase().includes(query) || query.includes(meal.name.toLowerCase()));
+    return this.meals().filter(
+      (meal) => meal.name.toLowerCase().includes(query) || query.includes(meal.name.toLowerCase()),
+    );
   });
 
-  protected readonly similarMealsLabel = computed(() => this.similarMeals().map((meal) => `${meal.icon} ${meal.name}`).join(', '));
+  protected readonly similarMealsLabel = computed(() =>
+    this.similarMeals()
+      .map((meal) => `${meal.icon} ${meal.name}`)
+      .join(', '),
+  );
 
   protected readonly newMealDescription = signal('');
   protected readonly newMealIcon = signal('🍽️');
@@ -102,7 +119,7 @@ export class ManageMeals {
         name,
         description: this.newMealDescription().trim() || null,
         icon,
-        color
+        color,
       });
       this.newMealName.set('');
       this.newMealDescription.set('');

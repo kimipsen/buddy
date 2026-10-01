@@ -9,7 +9,7 @@ import { ThemeService } from '../../../../core/theme.service';
 @Component({
   selector: 'app-profile-menu',
   imports: [RouterLink, TranslatePipe],
-  templateUrl: './profile-menu.html'
+  templateUrl: './profile-menu.html',
 })
 export class ProfileMenu {
   private readonly auth = inject(AuthService);

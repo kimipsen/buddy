@@ -7,6 +7,6 @@ import { ManageProgressGoals } from './manage-progress-goals/manage-progress-goa
 @Component({
   selector: 'app-guardian-progress',
   imports: [RouterLink, ManageProgressGoals, TranslatePipe],
-  templateUrl: './progress.html'
+  templateUrl: './progress.html',
 })
 export class GuardianProgress {}

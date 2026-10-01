@@ -29,7 +29,7 @@ describe('EventsToday', () => {
       assignedTo: null,
       calendarId: 'cal-1',
       calendarName: 'Home',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -43,19 +43,19 @@ describe('EventsToday', () => {
     // it directly (to read timeZoneId), so it still needs a DI-friendly stub here.
     const usersStub: Partial<UsersService> = {
       timeZoneId: signal('UTC').asReadonly(),
-      ...stubs.users
+      ...stubs.users,
     };
     const calendarsStub: Partial<CalendarsService> = {
       listTodayOccurrences: vi.fn(async () => []),
-      ...stubs.calendars
+      ...stubs.calendars,
     };
 
     await TestBed.configureTestingModule({
       imports: [EventsToday],
       providers: [
         { provide: UsersService, useValue: usersStub },
-        { provide: CalendarsService, useValue: calendarsStub }
-      ]
+        { provide: CalendarsService, useValue: calendarsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(EventsToday);
@@ -67,7 +67,10 @@ describe('EventsToday', () => {
   // never registers as a PendingTask under zoneless change detection, so whenStable() alone
   // wouldn't reliably wait for it -- flush a generous number of times instead (same pattern as
   // tasks-today.spec.ts, this widget's sibling).
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -94,7 +97,9 @@ describe('EventsToday', () => {
   });
 
   it('shows the translated error message when loading events fails', async () => {
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -104,7 +109,9 @@ describe('EventsToday', () => {
 
   it('renders an event with its icon and title', async () => {
     const dentist = occurrence({ title: 'Dentist', icon: '🦷' });
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [dentist]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [dentist]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -114,31 +121,52 @@ describe('EventsToday', () => {
 
   it('renders a start time for a timed event', async () => {
     const timed = occurrence({ itemId: 'timed', title: 'Dentist', startsAt: `${today}T09:00:00Z` });
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [timed]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [timed]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Dentist'));
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) =>
+      li.textContent?.includes('Dentist'),
+    );
     // The template's ml-auto span only renders `@if (event.startsAt)`.
     const timeSpan = item?.querySelector('.ml-auto');
     expect(timeSpan?.textContent?.trim()).not.toBe('');
   });
 
   it('omits the time span for an event with no startsAt', async () => {
-    const untimed = occurrence({ itemId: 'untimed', title: 'Field trip', startsAt: null, isAllDay: true });
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [untimed]) } });
+    const untimed = occurrence({
+      itemId: 'untimed',
+      title: 'Field trip',
+      startsAt: null,
+      isAllDay: true,
+    });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [untimed]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Field trip'));
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) =>
+      li.textContent?.includes('Field trip'),
+    );
     expect(item?.querySelector('.ml-auto')).toBeFalsy();
   });
 
   it('shows only events, filtering out tasks from the same mixed response', async () => {
     const event = occurrence({ itemId: 'event-1', kind: 0, title: 'Dentist' });
-    const task = occurrence({ itemId: 'task-1', kind: 1, title: 'Buy groceries', startsAt: null, dueAt: `${today}T17:00:00Z` });
+    const task = occurrence({
+      itemId: 'task-1',
+      kind: 1,
+      title: 'Buy groceries',
+      startsAt: null,
+      dueAt: `${today}T17:00:00Z`,
+    });
 
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [task, event]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [task, event]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -147,11 +175,21 @@ describe('EventsToday', () => {
   });
 
   it('sorts same-day events by start time, earliest first, regardless of fetch order', async () => {
-    const late = occurrence({ itemId: 'late', title: 'Late meeting', startsAt: `${today}T18:00:00Z` });
-    const early = occurrence({ itemId: 'early', title: 'Early meeting', startsAt: `${today}T08:00:00Z` });
+    const late = occurrence({
+      itemId: 'late',
+      title: 'Late meeting',
+      startsAt: `${today}T18:00:00Z`,
+    });
+    const early = occurrence({
+      itemId: 'early',
+      title: 'Early meeting',
+      startsAt: `${today}T08:00:00Z`,
+    });
 
     // Deliberately out of order to prove the component sorts, not just echoes fetch order.
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [late, early]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [late, early]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -171,14 +209,18 @@ describe('EventsToday', () => {
       itemId: 'past',
       title: 'Morning meeting',
       startsAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      endsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString()
+      endsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     });
 
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [past]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [past]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Morning meeting'));
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) =>
+      li.textContent?.includes('Morning meeting'),
+    );
     expect(item?.querySelector('.line-through')?.textContent).toContain('Morning meeting');
     expect(item?.textContent).toContain('✓');
   });
@@ -188,14 +230,18 @@ describe('EventsToday', () => {
       itemId: 'upcoming',
       title: 'Afternoon meeting',
       startsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
+      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
     });
 
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [upcoming]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [upcoming]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Afternoon meeting'));
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) =>
+      li.textContent?.includes('Afternoon meeting'),
+    );
     expect(item?.querySelector('.line-through')).toBeFalsy();
   });
 
@@ -204,14 +250,18 @@ describe('EventsToday', () => {
       itemId: 'ongoing',
       title: 'Team standup',
       startsAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      endsAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      endsAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     });
 
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [ongoing]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [ongoing]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('Team standup'));
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) =>
+      li.textContent?.includes('Team standup'),
+    );
     expect(item?.style.background).toContain('linear-gradient');
     expect(item?.querySelector('.line-through')).toBeFalsy();
   });
@@ -222,14 +272,18 @@ describe('EventsToday', () => {
       title: 'School holiday',
       isAllDay: true,
       startsAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      endsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString()
+      endsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     });
 
-    const { fixture } = await setup({ calendars: { listTodayOccurrences: vi.fn(async () => [allDay]) } });
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [allDay]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const item = Array.from(compiled.querySelectorAll('li')).find((li) => li.textContent?.includes('School holiday'));
+    const item = Array.from(compiled.querySelectorAll('li')).find((li) =>
+      li.textContent?.includes('School holiday'),
+    );
     expect(item?.querySelector('.line-through')).toBeFalsy();
     expect(item?.style.background).toBeFalsy();
   });

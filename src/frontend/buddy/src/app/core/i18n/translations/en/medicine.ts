@@ -21,11 +21,11 @@ export const medicine = {
       selectPlaceholder: 'Choose a group',
       shareButton: 'Share',
       shareError: 'Unable to share with this group.',
-      noGroups: 'You need a group you manage before you can share this child’s medicine schedules.'
+      noGroups: 'You need a group you manage before you can share this child’s medicine schedules.',
     },
     scheduleRange: {
       ongoing: 'from {startDate} (ongoing)',
-      withEnd: 'from {startDate} to {endDate}'
+      withEnd: 'from {startDate} to {endDate}',
     },
     form: {
       namePlaceholder: 'Medicine name',
@@ -37,7 +37,7 @@ export const medicine = {
       startDateLabel: 'Start date',
       endDateLabel: 'End date (optional)',
       submit: 'Add schedule',
-      createError: 'Unable to create the medicine schedule.'
-    }
-  }
+      createError: 'Unable to create the medicine schedule.',
+    },
+  },
 };

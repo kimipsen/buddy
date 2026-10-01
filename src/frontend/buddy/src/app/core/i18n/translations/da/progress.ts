@@ -16,7 +16,7 @@ export const progress = {
     form: {
       thresholdPlaceholder: 'Stjerner nødvendige',
       iconPlaceholder: 'Ikon',
-      labelPlaceholder: 'Etiket (valgfri)'
-    }
-  }
+      labelPlaceholder: 'Etiket (valgfri)',
+    },
+  },
 };

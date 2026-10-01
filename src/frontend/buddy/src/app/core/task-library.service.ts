@@ -84,12 +84,12 @@ function fromResponse(response: TaskTemplateResponse): TaskTemplate {
       id: subtask.id,
       title: subtask.title,
       icon: subtask.icon,
-      durationMinutes: parseDurationMinutes(subtask.duration)
+      durationMinutes: parseDurationMinutes(subtask.duration),
     })),
     totalDurationMinutes: parseDurationMinutes(response.totalDuration),
     isArchived: response.isArchived,
     createdBy: response.createdBy,
-    lastModifiedBy: response.lastModifiedBy
+    lastModifiedBy: response.lastModifiedBy,
   };
 }
 
@@ -114,7 +114,9 @@ export class TaskLibraryService {
   }
 
   private replaceTemplate(template: TaskTemplate): void {
-    this.templatesState.update((current) => current.map((existing) => (existing.id === template.id ? template : existing)));
+    this.templatesState.update((current) =>
+      current.map((existing) => (existing.id === template.id ? template : existing)),
+    );
   }
 
   // Used when the caller stops pointing at any particular child (e.g. a calendar assignee that
@@ -126,7 +128,9 @@ export class TaskLibraryService {
   }
 
   async listTaskTemplates(childId: string): Promise<TaskTemplate[]> {
-    const responses = await firstValueFrom(this.http.get<TaskTemplateResponse[]>(`${this.base()}/children/${childId}`));
+    const responses = await firstValueFrom(
+      this.http.get<TaskTemplateResponse[]>(`${this.base()}/children/${childId}`),
+    );
     const templates = responses.map(fromResponse);
     this.templatesState.set(templates);
     return templates;
@@ -134,15 +138,24 @@ export class TaskLibraryService {
 
   async createTaskTemplate(childId: string, request: TaskTemplateDetails): Promise<TaskTemplate> {
     const response = await firstValueFrom(
-      postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/children/${childId}`, request)
+      postIdempotent<TaskTemplateResponse>(
+        this.http,
+        `${this.base()}/children/${childId}`,
+        request,
+      ),
     );
     const template = fromResponse(response);
     this.templatesState.update((current) => [...current, template]);
     return template;
   }
 
-  async updateTaskTemplate(templateId: string, request: TaskTemplateDetails): Promise<TaskTemplate> {
-    const response = await firstValueFrom(this.http.patch<TaskTemplateResponse>(`${this.base()}/${templateId}`, request));
+  async updateTaskTemplate(
+    templateId: string,
+    request: TaskTemplateDetails,
+  ): Promise<TaskTemplate> {
+    const response = await firstValueFrom(
+      this.http.patch<TaskTemplateResponse>(`${this.base()}/${templateId}`, request),
+    );
     const template = fromResponse(response);
     this.replaceTemplate(template);
     return template;
@@ -151,31 +164,45 @@ export class TaskLibraryService {
   async archiveTaskTemplate(templateId: string): Promise<void> {
     await firstValueFrom(this.http.delete<void>(`${this.base()}/${templateId}`));
     this.templatesState.update((current) =>
-      current.map((template) => (template.id === templateId ? { ...template, isArchived: true } : template))
+      current.map((template) =>
+        template.id === templateId ? { ...template, isArchived: true } : template,
+      ),
     );
   }
 
-  async addSubtask(templateId: string, title: string, icon: string | null, durationMinutes: number, position?: number | null): Promise<TaskTemplate> {
+  async addSubtask(
+    templateId: string,
+    title: string,
+    icon: string | null,
+    durationMinutes: number,
+    position?: number | null,
+  ): Promise<TaskTemplate> {
     const response = await firstValueFrom(
       postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/${templateId}/subtasks`, {
         title,
         icon,
         duration: formatDurationMinutes(durationMinutes),
-        position: position ?? null
-      })
+        position: position ?? null,
+      }),
     );
     const template = fromResponse(response);
     this.replaceTemplate(template);
     return template;
   }
 
-  async updateSubtask(templateId: string, subtaskId: string, title: string, icon: string | null, durationMinutes: number): Promise<TaskTemplate> {
+  async updateSubtask(
+    templateId: string,
+    subtaskId: string,
+    title: string,
+    icon: string | null,
+    durationMinutes: number,
+  ): Promise<TaskTemplate> {
     const response = await firstValueFrom(
       this.http.patch<TaskTemplateResponse>(`${this.base()}/${templateId}/subtasks/${subtaskId}`, {
         title,
         icon,
-        duration: formatDurationMinutes(durationMinutes)
-      })
+        duration: formatDurationMinutes(durationMinutes),
+      }),
     );
     const template = fromResponse(response);
     this.replaceTemplate(template);
@@ -183,7 +210,9 @@ export class TaskLibraryService {
   }
 
   async removeSubtask(templateId: string, subtaskId: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${this.base()}/${templateId}/subtasks/${subtaskId}`));
+    await firstValueFrom(
+      this.http.delete<void>(`${this.base()}/${templateId}/subtasks/${subtaskId}`),
+    );
     this.templatesState.update((current) =>
       current.map((template) => {
         if (template.id !== templateId) {
@@ -192,12 +221,16 @@ export class TaskLibraryService {
 
         const subtasks = template.subtasks.filter((subtask) => subtask.id !== subtaskId);
         return { ...template, subtasks, totalDurationMinutes: totalDurationMinutesOf(subtasks) };
-      })
+      }),
     );
   }
 
   async reorderSubtasks(templateId: string, newOrder: string[]): Promise<TaskTemplate> {
-    const response = await firstValueFrom(this.http.put<TaskTemplateResponse>(`${this.base()}/${templateId}/subtasks/order`, { newOrder }));
+    const response = await firstValueFrom(
+      this.http.put<TaskTemplateResponse>(`${this.base()}/${templateId}/subtasks/order`, {
+        newOrder,
+      }),
+    );
     const template = fromResponse(response);
     this.replaceTemplate(template);
     return template;

@@ -15,7 +15,7 @@ describe('UserEventsService', () => {
   const page: UserEventsPage = {
     items: [{ type: 'UserCreated', data: { userId: 'user-1' } }],
     previousCursor: null,
-    nextCursor: 'cursor-2'
+    nextCursor: 'cursor-2',
   };
 
   beforeEach(() => {
@@ -23,8 +23,8 @@ describe('UserEventsService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: runtimeConfigStub }
-      ]
+        { provide: RuntimeConfigService, useValue: runtimeConfigStub },
+      ],
     });
 
     service = TestBed.inject(UserEventsService);
@@ -38,7 +38,9 @@ describe('UserEventsService', () => {
   it('requests the current user events page from the runtime-config-provided API base URL', async () => {
     const resultPromise = service.listCurrentUserEvents(null, 20);
 
-    const req = httpMock.expectOne((request) => request.url === 'https://api.buddy.test/users/me/events');
+    const req = httpMock.expectOne(
+      (request) => request.url === 'https://api.buddy.test/users/me/events',
+    );
     expect(req.request.method).toBe('GET');
     req.flush(page);
 
@@ -49,7 +51,7 @@ describe('UserEventsService', () => {
     const resultPromise = service.listCurrentUserEvents(null, 20);
 
     const req = httpMock.expectOne(
-      (request) => request.url === 'https://api.buddy.test/users/me/events'
+      (request) => request.url === 'https://api.buddy.test/users/me/events',
     );
     expect(req.request.params.get('pageSize')).toBe('20');
     expect(req.request.params.has('cursor')).toBe(false);
@@ -61,7 +63,9 @@ describe('UserEventsService', () => {
   it('includes the cursor query param when a cursor is given', async () => {
     const resultPromise = service.listCurrentUserEvents('cursor-1', 10);
 
-    const req = httpMock.expectOne((request) => request.url === 'https://api.buddy.test/users/me/events');
+    const req = httpMock.expectOne(
+      (request) => request.url === 'https://api.buddy.test/users/me/events',
+    );
     expect(req.request.params.get('pageSize')).toBe('10');
     expect(req.request.params.get('cursor')).toBe('cursor-1');
     req.flush(page);
@@ -72,7 +76,9 @@ describe('UserEventsService', () => {
   it('resolves with the exact page returned by the backend', async () => {
     const resultPromise = service.listCurrentUserEvents(null, 5);
 
-    const req = httpMock.expectOne((request) => request.url === 'https://api.buddy.test/users/me/events');
+    const req = httpMock.expectOne(
+      (request) => request.url === 'https://api.buddy.test/users/me/events',
+    );
     req.flush(page);
 
     const result = await resultPromise;
@@ -84,7 +90,9 @@ describe('UserEventsService', () => {
   it('propagates an HTTP error to the caller', async () => {
     const resultPromise = service.listCurrentUserEvents(null, 20);
 
-    const req = httpMock.expectOne((request) => request.url === 'https://api.buddy.test/users/me/events');
+    const req = httpMock.expectOne(
+      (request) => request.url === 'https://api.buddy.test/users/me/events',
+    );
     req.flush({ message: 'boom' }, { status: 500, statusText: 'Internal Server Error' });
 
     await expect(resultPromise).rejects.toMatchObject({ status: 500 });

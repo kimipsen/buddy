@@ -22,7 +22,7 @@ describe('GuardianDashboard', () => {
     userName: 'guardian',
     name: { givenName: 'Gina', familyName: 'G' },
     timeZoneId: 'UTC',
-    language: 'en'
+    language: 'en',
   };
 
   // The stubbed services are called directly rather than through HttpClient, so no PendingTasks
@@ -38,19 +38,22 @@ describe('GuardianDashboard', () => {
   async function setup() {
     const usersStub: Partial<UsersService> = {
       ensureCurrentUser: vi.fn(async () => currentUser),
-      timeZoneId: signal(currentUser.timeZoneId).asReadonly()
+      timeZoneId: signal(currentUser.timeZoneId).asReadonly(),
     };
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => []),
-      listChildGuardians: vi.fn(async () => [])
+      listChildGuardians: vi.fn(async () => []),
     };
     const calendarsStub: Partial<CalendarsService> = {
       listTodayOccurrences: vi.fn(async () => []),
       listAssignableMembers: vi.fn(async () => []),
-      setTaskCompletion: vi.fn()
+      setTaskCompletion: vi.fn(),
     };
     const mealplansStub: Partial<MealplansService> = { listMealPlan: vi.fn(async () => []) };
-    const medicinesStub: Partial<MedicinesService> = { listDoses: vi.fn(async () => []), setDoseStatus: vi.fn() };
+    const medicinesStub: Partial<MedicinesService> = {
+      listDoses: vi.fn(async () => []),
+      setDoseStatus: vi.fn(),
+    };
     const pickupsStub: Partial<PickupsService> = { listSchedule: vi.fn(async () => []) };
 
     await TestBed.configureTestingModule({
@@ -62,8 +65,8 @@ describe('GuardianDashboard', () => {
         { provide: CalendarsService, useValue: calendarsStub },
         { provide: MealplansService, useValue: mealplansStub },
         { provide: MedicinesService, useValue: medicinesStub },
-        { provide: PickupsService, useValue: pickupsStub }
-      ]
+        { provide: PickupsService, useValue: pickupsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(GuardianDashboard);
@@ -84,7 +87,7 @@ describe('GuardianDashboard', () => {
       'app-tasks-today',
       'app-events-today',
       'app-doses-today',
-      'app-pickup-today'
+      'app-pickup-today',
     ];
     for (const selector of selectors) {
       expect(compiled.querySelector(selector)).toBeTruthy();

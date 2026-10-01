@@ -7,7 +7,7 @@ export const dashboard = {
     loadError: 'Kunne ikke indlæse børn.',
     empty: 'Ingen børn tilknyttet endnu. Tilføj et under Indstillinger.',
     linkedBadge: 'Tilknyttet',
-    starCount: '{count} stjerner'
+    starCount: '{count} stjerner',
   },
   tasks: {
     title: 'Dagens opgaver',
@@ -17,13 +17,13 @@ export const dashboard = {
     empty: 'Ingen opgaver forfalder i dag.',
     overdue: 'Forsinket',
     dueToday: 'Forfalder i dag',
-    rollup: '{completed} af {total} udført'
+    rollup: '{completed} af {total} udført',
   },
   events: {
     title: 'Dagens begivenheder',
     loading: 'Indlæser begivenheder…',
     loadError: 'Kunne ikke indlæse dagens begivenheder.',
-    empty: 'Intet andet i kalenderen i dag.'
+    empty: 'Intet andet i kalenderen i dag.',
   },
   mealplan: {
     title: 'Dagens madplan',
@@ -36,8 +36,8 @@ export const dashboard = {
       breakfast: 'Morgenmad',
       lunch: 'Frokost',
       dinner: 'Aftensmad',
-      snack: 'Mellemmåltid'
-    }
+      snack: 'Mellemmåltid',
+    },
   },
   doses: {
     title: 'Dagens medicin',
@@ -51,7 +51,7 @@ export const dashboard = {
     skip: 'Spring over',
     taken: 'Taget',
     skipped: 'Sprunget over',
-    undo: 'Fortryd'
+    undo: 'Fortryd',
   },
   pickup: {
     title: 'Dagens afhentning & aflevering',
@@ -62,12 +62,12 @@ export const dashboard = {
     empty: 'Intet planlagt for i dag.',
     slots: {
       dropOff: 'Aflevering',
-      pickUp: 'Afhentning'
+      pickUp: 'Afhentning',
     },
     kind: {
       guardian: 'En voksen',
       selfEscort: 'Går selv',
-      sibling: 'En søskende'
-    }
-  }
+      sibling: 'En søskende',
+    },
+  },
 };

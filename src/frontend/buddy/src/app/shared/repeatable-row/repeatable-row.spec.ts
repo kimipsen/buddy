@@ -6,7 +6,9 @@ import { RepeatableRow } from './repeatable-row';
 
 @Component({
   imports: [RepeatableRow],
-  template: `<app-repeatable-row [canRemove]="canRemove" removeLabel="Remove" (remove)="onRemove()"><span>content</span></app-repeatable-row>`
+  template: `<app-repeatable-row [canRemove]="canRemove" removeLabel="Remove" (remove)="onRemove()"
+    ><span>content</span></app-repeatable-row
+  >`,
 })
 class Host {
   canRemove = true;

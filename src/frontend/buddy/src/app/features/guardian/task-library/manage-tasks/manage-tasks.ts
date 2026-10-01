@@ -30,7 +30,7 @@ function formatDuration(totalMinutes: number): string {
 @Component({
   selector: 'app-manage-tasks',
   imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Stepper],
-  templateUrl: './manage-tasks.html'
+  templateUrl: './manage-tasks.html',
 })
 export class ManageTasks implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -229,7 +229,13 @@ export class ManageTasks implements OnInit {
     this.subtaskError.set(null);
 
     try {
-      await this.taskLibrary.updateSubtask(templateId, subtaskId, title, icon || null, durationMinutes);
+      await this.taskLibrary.updateSubtask(
+        templateId,
+        subtaskId,
+        title,
+        icon || null,
+        durationMinutes,
+      );
       this.editingSubtaskId.set(null);
     } catch {
       this.subtaskError.set('taskLibrary.manageTasks.subtasks.updateError');
@@ -253,7 +259,11 @@ export class ManageTasks implements OnInit {
 
   // Simplest correct v1 reorder: swap the target row with its neighbor and submit the whole
   // resulting id order -- no drag-and-drop precedent exists elsewhere in this codebase to reuse.
-  protected async moveSubtask(template: TaskTemplate, index: number, direction: -1 | 1): Promise<void> {
+  protected async moveSubtask(
+    template: TaskTemplate,
+    index: number,
+    direction: -1 | 1,
+  ): Promise<void> {
     const targetIndex = index + direction;
 
     if (targetIndex < 0 || targetIndex >= template.subtasks.length) {

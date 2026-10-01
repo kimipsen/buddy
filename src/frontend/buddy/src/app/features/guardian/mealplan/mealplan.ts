@@ -2,11 +2,23 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { GroupRoleName, GROUP_ROLE_NAMES, GroupSummary, GroupsService } from '../../../core/groups.service';
+import {
+  GroupRoleName,
+  GROUP_ROLE_NAMES,
+  GroupSummary,
+  GroupsService,
+} from '../../../core/groups.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from '../../../core/map-with-concurrency';
-import { MealplanAccessTier, MealplanScope, MealplansService } from '../../../core/mealplans.service';
+import {
+  PER_ITEM_REQUEST_CONCURRENCY,
+  mapWithConcurrency,
+} from '../../../core/map-with-concurrency';
+import {
+  MealplanAccessTier,
+  MealplanScope,
+  MealplansService,
+} from '../../../core/mealplans.service';
 import { AssignMealplan } from './assign-mealplan/assign-mealplan';
 import { MealplanIcal } from './mealplan-ical/mealplan-ical';
 import { ManageMeals } from './manage-meals/manage-meals';
@@ -20,7 +32,7 @@ type FamilyMealplanScope = Extract<MealplanScope, { kind: 'family' }>;
 @Component({
   selector: 'app-guardian-mealplan',
   imports: [RouterLink, FormsModule, ManageMeals, AssignMealplan, MealplanIcal, TranslatePipe],
-  templateUrl: './mealplan.html'
+  templateUrl: './mealplan.html',
 })
 export class GuardianMealplan implements OnInit {
   private readonly guardians = inject(GuardiansService);
@@ -145,7 +157,7 @@ export class GuardianMealplan implements OnInit {
 
       const [groups, sharedGroup] = await Promise.all([
         this.groupsService.listMyGroups(),
-        this.mealplans.getSharedGroup(children[0].id)
+        this.mealplans.getSharedGroup(children[0].id),
       ]);
 
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
@@ -171,13 +183,17 @@ export class GuardianMealplan implements OnInit {
     // One GetGroup per group, then one status call per candidate group: both bounded so a
     // guardian in many groups doesn't burst the API. Each is best-effort per group (a failure
     // just drops that group from the scope list), as before.
-    const details = await mapWithConcurrency(groups, PER_ITEM_REQUEST_CONCURRENCY, async (group) => {
-      try {
-        return await this.groupsService.getGroup(group.id);
-      } catch {
-        return null;
-      }
-    });
+    const details = await mapWithConcurrency(
+      groups,
+      PER_ITEM_REQUEST_CONCURRENCY,
+      async (group) => {
+        try {
+          return await this.groupsService.getGroup(group.id);
+        } catch {
+          return null;
+        }
+      },
+    );
 
     const candidates: GroupMealplanScope[] = [];
 
@@ -192,7 +208,7 @@ export class GuardianMealplan implements OnInit {
     });
 
     const statuses = await mapWithConcurrency(candidates, PER_ITEM_REQUEST_CONCURRENCY, (scope) =>
-      this.mealplans.getGroupMealplanStatus(scope.groupId).catch(() => ({ hasSharedPlan: false }))
+      this.mealplans.getGroupMealplanStatus(scope.groupId).catch(() => ({ hasSharedPlan: false })),
     );
 
     this.groupScopes.set(candidates.filter((_, index) => statuses[index].hasSharedPlan));

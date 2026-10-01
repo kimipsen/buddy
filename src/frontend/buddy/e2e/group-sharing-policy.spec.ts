@@ -9,7 +9,10 @@ import { readRuntimeConfig } from './support/runtime-config';
 // so the real minimal path is inviting an already-seeded guardian by their real email and
 // accepting from their own account -- there's no self-service "create an account from this
 // invite" step for a truly new address.
-test('guardian invites a member to a group by email, who accepts, then the owner updates the group\'s calendar sharing policy', async ({ page, loginAs }) => {
+test("guardian invites a member to a group by email, who accepts, then the owner updates the group's calendar sharing policy", async ({
+  page,
+  loginAs,
+}) => {
   const { apiBaseUrl } = readRuntimeConfig();
 
   // Look up carol's *actual current* backend email rather than assuming "carol@buddy.test": a
@@ -20,12 +23,17 @@ test('guardian invites a member to a group by email, who accepts, then the owner
   // carol's backend User if one doesn't exist yet (GetOrCreateUserHandler), which nothing on the
   // standalone /invite/:token route would otherwise trigger -- without it, the accept below 403s
   // even when the emails do match, because there'd be no backend User yet to compare against.
-  const { accessToken: carolAccessToken } = await getAccessToken(SEEDED_USERS.carol.username, SEEDED_USERS.carol.password);
+  const { accessToken: carolAccessToken } = await getAccessToken(
+    SEEDED_USERS.carol.username,
+    SEEDED_USERS.carol.password,
+  );
   const carolMeResponse = await page.request.get(`${apiBaseUrl}/users/me`, {
     headers: { Authorization: `Bearer ${carolAccessToken}` },
   });
   expect(carolMeResponse.ok()).toBe(true);
-  const carolMe = (await carolMeResponse.json()) as { email: { value: string; isVerified: boolean } };
+  const carolMe = (await carolMeResponse.json()) as {
+    email: { value: string; isVerified: boolean };
+  };
   expect(carolMe.email.isVerified).toBe(true);
   const inviteEmail = carolMe.email.value;
 
@@ -57,7 +65,9 @@ test('guardian invites a member to a group by email, who accepts, then the owner
 
   // Distinct from the preview heading above ("...invited to join {groupName}."), so this also
   // confirms the accept actually succeeded rather than the preview text just still being there.
-  await expect(page.getByRole('heading', { name: new RegExp(`joined ${groupName}`) })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: new RegExp(`joined ${groupName}`) }),
+  ).toBeVisible();
 
   await page.getByRole('button', { name: 'Go to my groups' }).click();
 
@@ -73,14 +83,19 @@ test('guardian invites a member to a group by email, who accepts, then the owner
   const aliceGroupRow = page.locator('app-manage-groups').locator('li', { hasText: groupName });
   await aliceGroupRow.getByRole('button', { name: 'Calendar permissions' }).click();
 
-  const memberPolicySelect = aliceGroupRow.locator('label', { hasText: 'Member' }).locator('select');
+  const memberPolicySelect = aliceGroupRow
+    .locator('label', { hasText: 'Member' })
+    .locator('select');
   const currentLabel = (await memberPolicySelect.locator('option:checked').textContent())?.trim();
   const targetLabel = currentLabel === 'Contributor' ? 'Viewer' : 'Contributor';
 
   await memberPolicySelect.selectOption({ label: targetLabel });
 
   const [saveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.request().method() === 'PUT' && res.url().includes('/calendar-permission-policy')),
+    page.waitForResponse(
+      (res) =>
+        res.request().method() === 'PUT' && res.url().includes('/calendar-permission-policy'),
+    ),
     aliceGroupRow.getByRole('button', { name: 'Save permissions' }).click(),
   ]);
   expect(saveResponse.ok()).toBe(true);
@@ -89,6 +104,9 @@ test('guardian invites a member to a group by email, who accepts, then the owner
 
   await aliceGroupRow.getByRole('button', { name: 'Calendar permissions' }).click();
   await expect(
-    aliceGroupRow.locator('label', { hasText: 'Member' }).locator('select').locator('option:checked'),
+    aliceGroupRow
+      .locator('label', { hasText: 'Member' })
+      .locator('select')
+      .locator('option:checked'),
   ).toHaveText(targetLabel);
 });

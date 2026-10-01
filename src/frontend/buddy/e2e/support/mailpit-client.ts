@@ -73,7 +73,9 @@ export async function waitForMessageTextContaining(
   }
 
   const suffix = lastError instanceof Error ? ` (last error: ${lastError.message})` : '';
-  throw new Error(`No message to '${emailAddress}' containing '${textFragment}' arrived within ${timeoutMs}ms${suffix}`);
+  throw new Error(
+    `No message to '${emailAddress}' containing '${textFragment}' arrived within ${timeoutMs}ms${suffix}`,
+  );
 }
 
 // Pulls the invite token out of an invite email's plain-text body -- SmtpEmailSender.BuildLink
@@ -81,7 +83,10 @@ export async function waitForMessageTextContaining(
 // around it, so a simple path-scoped regex is enough. `path` distinguishes a group invite
 // ("invite") from a guardian invite ("guardian-invite") -- see AcceptInvite/AcceptGuardianInvite's
 // routes.
-export function extractInviteToken(messageText: string, path: 'invite' | 'guardian-invite'): string {
+export function extractInviteToken(
+  messageText: string,
+  path: 'invite' | 'guardian-invite',
+): string {
   const match = new RegExp(String.raw`/${path}/(\S+)`).exec(messageText);
 
   if (!match) {

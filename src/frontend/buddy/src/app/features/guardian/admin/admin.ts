@@ -21,8 +21,8 @@ import { MyProfile } from './my-profile/my-profile';
     ManageGroups,
     AiProviderSettingsComponent,
     EventsList,
-    DeleteAccount
+    DeleteAccount,
   ],
-  templateUrl: './admin.html'
+  templateUrl: './admin.html',
 })
 export class GuardianAdmin {}

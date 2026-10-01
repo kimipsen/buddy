@@ -2,7 +2,12 @@ import { DatePipe } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CalendarSummary, CalendarsService, IcalTokenSummary, IssuedIcalToken } from '../../../../core/calendars.service';
+import {
+  CalendarSummary,
+  CalendarsService,
+  IcalTokenSummary,
+  IssuedIcalToken,
+} from '../../../../core/calendars.service';
 import { browserTimeZoneId } from '../../../../core/date-utils';
 import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { ManageCalendars } from './manage-calendars';
@@ -21,7 +26,12 @@ describe('ManageCalendars', () => {
   }
 
   function issuedToken(overrides: Partial<IssuedIcalToken> = {}): IssuedIcalToken {
-    return { tokenId: 'token-new', token: 'plaintext-secret', subscriptionPath: '/ical/token-new.ics', ...overrides };
+    return {
+      tokenId: 'token-new',
+      token: 'plaintext-secret',
+      subscriptionPath: '/ical/token-new.ics',
+      ...overrides,
+    };
   }
 
   interface Stubs {
@@ -32,7 +42,15 @@ describe('ManageCalendars', () => {
   async function setup(stubs: Stubs = {}) {
     const calendarsStub: Partial<CalendarsService> = {
       listMyCalendars: vi.fn(async () => []),
-      createCalendar: vi.fn(async (request) => ({ id: 'cal-new', name: request.name, icon: request.icon ?? '📅', role: 0 }) as CalendarSummary),
+      createCalendar: vi.fn(
+        async (request) =>
+          ({
+            id: 'cal-new',
+            name: request.name,
+            icon: request.icon ?? '📅',
+            role: 0,
+          }) as CalendarSummary,
+      ),
       updateCalendarIcon: vi.fn(async () => undefined),
       transferToGroup: vi.fn(async () => undefined),
       deleteCalendar: vi.fn(async () => undefined),
@@ -40,19 +58,19 @@ describe('ManageCalendars', () => {
       createIcalToken: vi.fn(async () => issuedToken()),
       revokeIcalToken: vi.fn(async () => undefined),
       icalFeedUrl: vi.fn((path: string) => `https://api.buddy.test${path}`),
-      ...stubs.calendars
+      ...stubs.calendars,
     };
     const groupsStub: Partial<GroupsService> = {
       listMyGroups: vi.fn(async () => [group()]),
-      ...stubs.groups
+      ...stubs.groups,
     };
 
     await TestBed.configureTestingModule({
       imports: [ManageCalendars],
       providers: [
         { provide: CalendarsService, useValue: calendarsStub },
-        { provide: GroupsService, useValue: groupsStub }
-      ]
+        { provide: GroupsService, useValue: groupsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageCalendars);
@@ -64,7 +82,10 @@ describe('ManageCalendars', () => {
   // signals driving the template settle, and some flows (e.g. create -> reload, toggle -> load)
   // chain two mocked service calls back to back -- mirrors tasks-today.spec.ts's settle() since a
   // single whenStable() flush isn't always enough for a stubbed-service chain.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -74,7 +95,9 @@ describe('ManageCalendars', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   function setInputValue(input: HTMLInputElement, value: string): void {
@@ -125,7 +148,9 @@ describe('ManageCalendars', () => {
   });
 
   it('shows an error message when loading calendars fails', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -134,7 +159,12 @@ describe('ManageCalendars', () => {
 
   it('renders each calendar with its icon, name and role label', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar({ id: 'cal-1', name: 'Home', icon: '🏠', role: 0 }), calendar({ id: 'cal-2', name: 'Work', icon: '💼', role: 1 })]) }
+      calendars: {
+        listMyCalendars: vi.fn(async () => [
+          calendar({ id: 'cal-1', name: 'Home', icon: '🏠', role: 0 }),
+          calendar({ id: 'cal-2', name: 'Work', icon: '💼', role: 1 }),
+        ]),
+      },
     });
     await settle(fixture);
 
@@ -148,7 +178,9 @@ describe('ManageCalendars', () => {
   });
 
   it('shows the Viewer role label for a role-2 calendar', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 2 })]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 2 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -156,7 +188,9 @@ describe('ManageCalendars', () => {
   });
 
   it('hides the owner-only action buttons for a calendar the caller only contributes to', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 1 })]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 1 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -167,7 +201,9 @@ describe('ManageCalendars', () => {
   });
 
   it('hides the owner-only action buttons for a calendar the caller only views', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 2 })]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 2 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -176,7 +212,9 @@ describe('ManageCalendars', () => {
   });
 
   it('shows the owner-only action buttons for a calendar the caller owns', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 0 })]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 0 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -189,32 +227,48 @@ describe('ManageCalendars', () => {
   // ----- Create-calendar form -----
 
   it('hides the create-calendar form and shows a hint when the caller manages no group', async () => {
-    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) } });
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('You need a group before you can add a calendar. Create one under Groups first.');
+    expect(compiled.textContent).toContain(
+      'You need a group before you can add a calendar. Create one under Groups first.',
+    );
     expect(compiled.querySelector('input[name="calendarName"]')).toBeNull();
   });
 
   it('silently treats a failure to load manageable groups as having no groups', async () => {
-    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('You need a group before you can add a calendar. Create one under Groups first.');
+    expect(compiled.textContent).toContain(
+      'You need a group before you can add a calendar. Create one under Groups first.',
+    );
     // No dedicated error state exists for this failure -- it degrades to the same hint as "no groups".
     expect(compiled.textContent).not.toContain('Unable to load calendars.');
   });
 
   it('offers only groups the caller owns or administers as create-calendar options, not ones where they are a member', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-owner', name: 'Owned', role: 0 }), group({ id: 'g-admin', name: 'Administered', role: 1 }), group({ id: 'g-member', name: 'MemberOnly', role: 2 })]) }
+      groups: {
+        listMyGroups: vi.fn(async () => [
+          group({ id: 'g-owner', name: 'Owned', role: 0 }),
+          group({ id: 'g-admin', name: 'Administered', role: 1 }),
+          group({ id: 'g-member', name: 'MemberOnly', role: 2 }),
+        ]),
+      },
     });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const optionNames = Array.from(groupSelect(compiled).querySelectorAll('option')).map((option) => option.textContent?.trim());
+    const optionNames = Array.from(groupSelect(compiled).querySelectorAll('option')).map((option) =>
+      option.textContent?.trim(),
+    );
     expect(optionNames).toContain('Owned');
     expect(optionNames).toContain('Administered');
     expect(optionNames).not.toContain('MemberOnly');
@@ -222,7 +276,12 @@ describe('ManageCalendars', () => {
 
   it('auto-selects the first manageable group for the create form', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-first', name: 'First', role: 0 }), group({ id: 'g-second', name: 'Second', role: 1 })]) }
+      groups: {
+        listMyGroups: vi.fn(async () => [
+          group({ id: 'g-first', name: 'First', role: 0 }),
+          group({ id: 'g-second', name: 'Second', role: 1 }),
+        ]),
+      },
     });
     await settle(fixture);
 
@@ -283,7 +342,7 @@ describe('ManageCalendars', () => {
     const listMyCalendars = vi.fn(async () => [calendar()]);
     const { fixture, calendars } = await setup({
       calendars: { listMyCalendars },
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 0 })]) }
+      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 0 })]) },
     });
     await settle(fixture);
 
@@ -302,7 +361,12 @@ describe('ManageCalendars', () => {
     createForm(compiled).dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(calendars.createCalendar).toHaveBeenCalledWith({ name: 'Home Calendar', timeZoneId: selectedTimeZone, groupId: 'g-1', icon: '🏡' });
+    expect(calendars.createCalendar).toHaveBeenCalledWith({
+      name: 'Home Calendar',
+      timeZoneId: selectedTimeZone,
+      groupId: 'g-1',
+      icon: '🏡',
+    });
     expect(listMyCalendars).toHaveBeenCalledTimes(2);
   });
 
@@ -318,7 +382,9 @@ describe('ManageCalendars', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     const select = timeZoneSelect(compiled);
-    const optionValues = Array.from(select.querySelectorAll('option')).map((option) => option.value);
+    const optionValues = Array.from(select.querySelectorAll('option')).map(
+      (option) => option.value,
+    );
     expect(optionValues).not.toContain(detectedTimeZone);
     expect(optionValues).toContain(select.value);
 
@@ -327,8 +393,12 @@ describe('ManageCalendars', () => {
     createForm(compiled).dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(calendars.createCalendar).toHaveBeenCalledWith(expect.objectContaining({ timeZoneId: select.value }));
-    expect(calendars.createCalendar).not.toHaveBeenCalledWith(expect.objectContaining({ timeZoneId: detectedTimeZone }));
+    expect(calendars.createCalendar).toHaveBeenCalledWith(
+      expect.objectContaining({ timeZoneId: select.value }),
+    );
+    expect(calendars.createCalendar).not.toHaveBeenCalledWith(
+      expect.objectContaining({ timeZoneId: detectedTimeZone }),
+    );
   });
 
   it('submits a null icon when the icon field is cleared', async () => {
@@ -363,7 +433,9 @@ describe('ManageCalendars', () => {
   });
 
   it('shows an error and keeps the typed name when creating a calendar fails', async () => {
-    const { fixture } = await setup({ calendars: { createCalendar: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      calendars: { createCalendar: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -379,8 +451,10 @@ describe('ManageCalendars', () => {
 
   // ----- Change-icon flow -----
 
-  it('opens the change-icon form pre-filled with the calendar\'s current icon', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar({ icon: '🏠' })]) } });
+  it("opens the change-icon form pre-filled with the calendar's current icon", async () => {
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ icon: '🏠' })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -392,7 +466,9 @@ describe('ManageCalendars', () => {
   });
 
   it('closes the change-icon form on a second click of the toggle button', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -407,7 +483,9 @@ describe('ManageCalendars', () => {
   });
 
   it('disables the save button while the icon field is empty', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -444,7 +522,10 @@ describe('ManageCalendars', () => {
 
   it('shows an error and keeps the form open when changing the icon fails', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), updateCalendarIcon: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      calendars: {
+        listMyCalendars: vi.fn(async () => [calendar()]),
+        updateCalendarIcon: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -468,7 +549,7 @@ describe('ManageCalendars', () => {
   it('shows the no-other-groups hint when the caller manages no group to move into', async () => {
     const { fixture } = await setup({
       calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
-      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) }
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
     });
     await settle(fixture);
 
@@ -476,13 +557,20 @@ describe('ManageCalendars', () => {
     findButtonByText(compiled, 'Move to group')!.click();
     await settle(fixture);
 
-    expect(compiled.textContent).toContain('You need another group you manage before you can move this calendar.');
+    expect(compiled.textContent).toContain(
+      'You need another group you manage before you can move this calendar.',
+    );
   });
 
   it('offers only manageable groups as move targets', async () => {
     const { fixture } = await setup({
       calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-owner', name: 'Owned', role: 0 }), group({ id: 'g-member', name: 'MemberOnly', role: 2 })]) }
+      groups: {
+        listMyGroups: vi.fn(async () => [
+          group({ id: 'g-owner', name: 'Owned', role: 0 }),
+          group({ id: 'g-member', name: 'MemberOnly', role: 2 }),
+        ]),
+      },
     });
     await settle(fixture);
 
@@ -491,7 +579,9 @@ describe('ManageCalendars', () => {
     await settle(fixture);
 
     const select = compiled.querySelector<HTMLSelectElement>('select[name="moveTargetGroupId"]')!;
-    const optionNames = Array.from(select.querySelectorAll('option')).map((option) => option.textContent?.trim());
+    const optionNames = Array.from(select.querySelectorAll('option')).map((option) =>
+      option.textContent?.trim(),
+    );
     expect(optionNames).toContain('Owned');
     expect(optionNames).not.toContain('MemberOnly');
   });
@@ -499,7 +589,7 @@ describe('ManageCalendars', () => {
   it('disables the move-confirm button until a target group is chosen', async () => {
     const { fixture } = await setup({
       calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 0 })]) }
+      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 0 })]) },
     });
     await settle(fixture);
 
@@ -511,7 +601,9 @@ describe('ManageCalendars', () => {
   });
 
   it('closes the move form on a second click of the toggle button', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -529,7 +621,9 @@ describe('ManageCalendars', () => {
     const listMyCalendars = vi.fn(async () => [calendar()]);
     const { fixture, calendars } = await setup({
       calendars: { listMyCalendars },
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-target', name: 'New Group', role: 0 })]) }
+      groups: {
+        listMyGroups: vi.fn(async () => [group({ id: 'g-target', name: 'New Group', role: 0 })]),
+      },
     });
     await settle(fixture);
 
@@ -552,8 +646,13 @@ describe('ManageCalendars', () => {
 
   it('shows an error and keeps the form open when moving a calendar fails', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), transferToGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-target', name: 'New Group', role: 0 })]) }
+      calendars: {
+        listMyCalendars: vi.fn(async () => [calendar()]),
+        transferToGroup: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
+      groups: {
+        listMyGroups: vi.fn(async () => [group({ id: 'g-target', name: 'New Group', role: 0 })]),
+      },
     });
     await settle(fixture);
 
@@ -569,14 +668,18 @@ describe('ManageCalendars', () => {
     select.closest('form')!.dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(compiled.textContent).toContain('Unable to move this calendar. You may not manage the destination group.');
+    expect(compiled.textContent).toContain(
+      'Unable to move this calendar. You may not manage the destination group.',
+    );
     expect(compiled.querySelector('select[name="moveTargetGroupId"]')).toBeTruthy();
   });
 
   // ----- Delete flow -----
 
   it('shows a confirmation prompt instead of deleting immediately', async () => {
-    const { fixture, calendars } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture, calendars } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -589,7 +692,9 @@ describe('ManageCalendars', () => {
   });
 
   it('cancels the delete confirmation without deleting', async () => {
-    const { fixture, calendars } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture, calendars } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -625,7 +730,10 @@ describe('ManageCalendars', () => {
 
   it('shows an error and keeps the confirmation prompt open when deleting fails', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), deleteCalendar: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      calendars: {
+        listMyCalendars: vi.fn(async () => [calendar()]),
+        deleteCalendar: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -645,7 +753,9 @@ describe('ManageCalendars', () => {
   });
 
   it('disables the confirm and cancel buttons while a delete is in flight', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -662,7 +772,9 @@ describe('ManageCalendars', () => {
   // ----- Panel mutual exclusivity -----
 
   it('opening the move panel closes an open change-icon panel', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -678,7 +790,9 @@ describe('ManageCalendars', () => {
   });
 
   it('requesting delete closes an open move panel and an open iCal panel', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -694,7 +808,9 @@ describe('ManageCalendars', () => {
   });
 
   it('opening the iCal panel closes an open change-icon panel', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -711,7 +827,9 @@ describe('ManageCalendars', () => {
   // ----- iCal subscription tokens -----
 
   it('loads and shows a transient loading message when the iCal panel is opened', async () => {
-    const { fixture, calendars } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture, calendars } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -725,7 +843,9 @@ describe('ManageCalendars', () => {
   });
 
   it('shows the empty state when a calendar has no subscription tokens', async () => {
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]) } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -737,7 +857,10 @@ describe('ManageCalendars', () => {
 
   it('shows an error when loading iCal tokens fails', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), listIcalTokens: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      calendars: {
+        listMyCalendars: vi.fn(async () => [calendar()]),
+        listIcalTokens: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -751,9 +874,15 @@ describe('ManageCalendars', () => {
   it('lists existing tokens with their issued date and a revoke button each', async () => {
     const datePipe = new DatePipe('en-US');
     const expectedDate = datePipe.transform('2026-08-01T00:00:00Z', 'mediumDate');
-    const tokens = [icalToken({ tokenId: 'token-a', issuedAt: '2026-08-01T00:00:00Z' }), icalToken({ tokenId: 'token-b', issuedAt: '2026-08-05T00:00:00Z' })];
+    const tokens = [
+      icalToken({ tokenId: 'token-a', issuedAt: '2026-08-01T00:00:00Z' }),
+      icalToken({ tokenId: 'token-b', issuedAt: '2026-08-05T00:00:00Z' }),
+    ];
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), listIcalTokens: vi.fn(async () => tokens) }
+      calendars: {
+        listMyCalendars: vi.fn(async () => [calendar()]),
+        listIcalTokens: vi.fn(async () => tokens),
+      },
     });
     await settle(fixture);
 
@@ -762,12 +891,18 @@ describe('ManageCalendars', () => {
     await settle(fixture);
 
     expect(compiled.textContent).toContain(`Created ${expectedDate}`);
-    expect(Array.from(compiled.querySelectorAll('button')).filter((button) => button.textContent?.trim() === 'Revoke')).toHaveLength(2);
+    expect(
+      Array.from(compiled.querySelectorAll('button')).filter(
+        (button) => button.textContent?.trim() === 'Revoke',
+      ),
+    ).toHaveLength(2);
   });
 
   it('closes the iCal panel on a second click without reloading tokens', async () => {
     const listIcalTokens = vi.fn(async () => []);
-    const { fixture } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]), listIcalTokens } });
+    const { fixture } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), listIcalTokens },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -788,8 +923,10 @@ describe('ManageCalendars', () => {
       calendars: {
         listMyCalendars: vi.fn(async () => [calendar()]),
         listIcalTokens,
-        createIcalToken: vi.fn(async () => issuedToken({ subscriptionPath: '/ical/token-new.ics' }))
-      }
+        createIcalToken: vi.fn(async () =>
+          issuedToken({ subscriptionPath: '/ical/token-new.ics' }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -815,7 +952,10 @@ describe('ManageCalendars', () => {
 
   it('shows an error when creating a new token fails', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), createIcalToken: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      calendars: {
+        listMyCalendars: vi.fn(async () => [calendar()]),
+        createIcalToken: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -836,8 +976,10 @@ describe('ManageCalendars', () => {
     const { fixture } = await setup({
       calendars: {
         listMyCalendars: vi.fn(async () => [calendar()]),
-        createIcalToken: vi.fn(async () => issuedToken({ subscriptionPath: '/ical/token-new.ics' }))
-      }
+        createIcalToken: vi.fn(async () =>
+          issuedToken({ subscriptionPath: '/ical/token-new.ics' }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -861,8 +1003,10 @@ describe('ManageCalendars', () => {
     const { fixture } = await setup({
       calendars: {
         listMyCalendars: vi.fn(async () => [calendar()]),
-        createIcalToken: vi.fn(async () => issuedToken({ subscriptionPath: '/ical/token-new.ics' }))
-      }
+        createIcalToken: vi.fn(async () =>
+          issuedToken({ subscriptionPath: '/ical/token-new.ics' }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -883,7 +1027,9 @@ describe('ManageCalendars', () => {
     let loadCount = 0;
     const tokens = [icalToken({ tokenId: 'token-a' })];
     const listIcalTokens = vi.fn(async () => (loadCount++ === 0 ? tokens : []));
-    const { fixture, calendars } = await setup({ calendars: { listMyCalendars: vi.fn(async () => [calendar()]), listIcalTokens } });
+    const { fixture, calendars } = await setup({
+      calendars: { listMyCalendars: vi.fn(async () => [calendar()]), listIcalTokens },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -904,8 +1050,8 @@ describe('ManageCalendars', () => {
       calendars: {
         listMyCalendars: vi.fn(async () => [calendar()]),
         listIcalTokens: vi.fn(async () => tokens),
-        revokeIcalToken: vi.fn(async () => Promise.reject(new Error('boom')))
-      }
+        revokeIcalToken: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 

@@ -48,13 +48,15 @@ describe('generateCodeVerifier', () => {
   });
 
   it('base64url-encodes the exact bytes returned by crypto.getRandomValues', () => {
-    const spy = vi.spyOn(crypto, 'getRandomValues').mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
-      const bytes = array as unknown as Uint8Array;
-      for (let i = 0; i < bytes.length; i++) {
-        bytes[i] = i * 8; // deterministic, spans the full byte range across 32 bytes
-      }
-      return array;
-    });
+    const spy = vi
+      .spyOn(crypto, 'getRandomValues')
+      .mockImplementation(<T extends ArrayBufferView | null>(array: T): T => {
+        const bytes = array as unknown as Uint8Array;
+        for (let i = 0; i < bytes.length; i++) {
+          bytes[i] = i * 8; // deterministic, spans the full byte range across 32 bytes
+        }
+        return array;
+      });
 
     const verifier = generateCodeVerifier();
     const expectedBytes = Array.from({ length: 32 }, (_, i) => i * 8);
@@ -79,7 +81,10 @@ describe('generateCodeChallenge', () => {
 
     const challenge = await generateCodeChallenge(verifier);
 
-    const expectedDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    const expectedDigest = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(verifier),
+    );
     const expectedBytes = Array.from(new Uint8Array(expectedDigest));
 
     expect(fromBase64Url(challenge)).toEqual(expectedBytes);

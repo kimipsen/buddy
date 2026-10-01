@@ -17,7 +17,7 @@ import {
   RescheduleItemRequest,
   ScheduleTaskFromTemplateRequest,
   TaskCompletion,
-  UpdateItemDetailsRequest
+  UpdateItemDetailsRequest,
 } from './calendars.service';
 import { todayIsoDate } from './date-utils';
 import { PER_ITEM_REQUEST_CONCURRENCY } from './map-with-concurrency';
@@ -60,7 +60,7 @@ describe('CalendarsService', () => {
       assignedTo: null,
       parentTitle: null,
       subtaskId: null,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -71,8 +71,8 @@ describe('CalendarsService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RuntimeConfigService, useValue: runtimeConfigStub }
-      ]
+        { provide: RuntimeConfigService, useValue: runtimeConfigStub },
+      ],
     });
 
     service = TestBed.inject(CalendarsService);
@@ -109,7 +109,9 @@ describe('CalendarsService', () => {
       // Swallow the unhandled-rejection warning until the assertion below awaits it.
       promise.catch(() => undefined);
 
-      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush('boom', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne(`${apiBaseUrl}/calendars`)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
 
       await expect(promise).rejects.toBeTruthy();
     });
@@ -117,7 +119,12 @@ describe('CalendarsService', () => {
 
   describe('createCalendar', () => {
     it('POSTs the request body and resolves with the created calendar', async () => {
-      const request: CreateCalendarRequest = { name: 'Home', timeZoneId: 'UTC', groupId: 'group-1', icon: '🏠' };
+      const request: CreateCalendarRequest = {
+        name: 'Home',
+        timeZoneId: 'UTC',
+        groupId: 'group-1',
+        icon: '🏠',
+      };
       const created = calendar();
 
       const promise = service.createCalendar(request);
@@ -193,7 +200,11 @@ describe('CalendarsService', () => {
 
   describe('createIcalToken', () => {
     it('POSTs an empty body and resolves with the issued token', async () => {
-      const issued: IssuedIcalToken = { tokenId: 'token-1', token: 'plaintext-secret', subscriptionPath: '/ical/token-1.ics' };
+      const issued: IssuedIcalToken = {
+        tokenId: 'token-1',
+        token: 'plaintext-secret',
+        subscriptionPath: '/ical/token-1.ics',
+      };
 
       const promise = service.createIcalToken('cal-1');
 
@@ -232,7 +243,10 @@ describe('CalendarsService', () => {
       const promise = service.listOccurrences('cal-1', '2026-08-01', '2026-08-31');
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` && r.params.get('from') === '2026-08-01' && r.params.get('to') === '2026-08-31'
+        (r) =>
+          r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` &&
+          r.params.get('from') === '2026-08-01' &&
+          r.params.get('to') === '2026-08-31',
       );
       expect(req.request.method).toBe('GET');
       req.flush(occurrences);
@@ -262,7 +276,9 @@ describe('CalendarsService', () => {
 
   describe('listAssignableMembers', () => {
     it('GETs the assignable-members list for the calendar', async () => {
-      const members: AssignableMember[] = [{ userId: 'child-1', givenName: 'Sam', familyName: 'Kid' }];
+      const members: AssignableMember[] = [
+        { userId: 'child-1', givenName: 'Sam', familyName: 'Kid' },
+      ];
 
       const promise = service.listAssignableMembers('cal-1');
 
@@ -293,7 +309,7 @@ describe('CalendarsService', () => {
       dueDate: { date: '2026-08-26', time: '00:00' },
       isAllDay: true,
       recurrence: null,
-      assignedTo: null
+      assignedTo: null,
     };
 
     it('POSTs the item request under the calendar and resolves with the created item', async () => {
@@ -306,7 +322,7 @@ describe('CalendarsService', () => {
         color: '#000',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null
+        assignedTo: null,
       };
 
       const promise = service.createItem('cal-1', request);
@@ -343,7 +359,7 @@ describe('CalendarsService', () => {
         color: '#000',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null
+        assignedTo: null,
       } satisfies CalendarItemResponse);
       await createPromise;
 
@@ -353,11 +369,16 @@ describe('CalendarsService', () => {
       calendarsReq.flush([calendar()]);
       await flushMicrotasks();
       const occurrencesReq = httpMock.expectOne(
-        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` && r.params.get('from') === today && r.params.get('to') === today
+        (r) =>
+          r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` &&
+          r.params.get('from') === today &&
+          r.params.get('to') === today,
       );
       occurrencesReq.flush([occurrence()]);
 
-      await expect(afterCreate).resolves.toEqual([{ ...occurrence(), calendarId: 'cal-1', calendarName: 'Home' }]);
+      await expect(afterCreate).resolves.toEqual([
+        { ...occurrence(), calendarId: 'cal-1', calendarName: 'Home' },
+      ]);
     });
   });
 
@@ -374,7 +395,7 @@ describe('CalendarsService', () => {
         color: '#111',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null
+        assignedTo: null,
       };
 
       const promise = service.updateItemDetails('cal-1', 'task-1', request);
@@ -393,7 +414,7 @@ describe('CalendarsService', () => {
       startsAt: null,
       endsAt: null,
       dueDate: { date: '2026-08-27', time: '00:00' },
-      isAllDay: true
+      isAllDay: true,
     };
 
     it('PATCHes the item schedule endpoint and resolves with the updated item', async () => {
@@ -406,7 +427,7 @@ describe('CalendarsService', () => {
         color: '#000',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null
+        assignedTo: null,
       };
 
       const promise = service.rescheduleItem('cal-1', 'task-1', request);
@@ -434,7 +455,11 @@ describe('CalendarsService', () => {
 
   describe('setTaskCompletion', () => {
     it('PATCHes the completion endpoint with date, isCompleted, and a null subtaskId when none is given, and resolves with the result', async () => {
-      const completion: TaskCompletion = { itemId: 'task-1', occurrenceDate: '2026-08-26', isCompleted: true };
+      const completion: TaskCompletion = {
+        itemId: 'task-1',
+        occurrenceDate: '2026-08-26',
+        isCompleted: true,
+      };
 
       const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', true);
 
@@ -447,7 +472,11 @@ describe('CalendarsService', () => {
     });
 
     it('sends isCompleted:false as-is, not coerced or dropped', async () => {
-      const completion: TaskCompletion = { itemId: 'task-1', occurrenceDate: '2026-08-26', isCompleted: false };
+      const completion: TaskCompletion = {
+        itemId: 'task-1',
+        occurrenceDate: '2026-08-26',
+        isCompleted: false,
+      };
 
       const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', false);
 
@@ -459,12 +488,20 @@ describe('CalendarsService', () => {
     });
 
     it('threads a given subtaskId through to the request body, to complete one subtask of a template-scheduled task', async () => {
-      const completion: TaskCompletion = { itemId: 'task-1', occurrenceDate: '2026-08-26', isCompleted: true };
+      const completion: TaskCompletion = {
+        itemId: 'task-1',
+        occurrenceDate: '2026-08-26',
+        isCompleted: true,
+      };
 
       const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', true, 'subtask-1');
 
       const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/completion`);
-      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: true, subtaskId: 'subtask-1' });
+      expect(req.request.body).toEqual({
+        date: '2026-08-26',
+        isCompleted: true,
+        subtaskId: 'subtask-1',
+      });
       req.flush(completion);
 
       await expect(promise).resolves.toEqual(completion);
@@ -480,10 +517,10 @@ describe('CalendarsService', () => {
       assignedTo: 'child-1',
       title: 'Morning routine',
       icon: '🌅',
-      color: '#10b981'
+      color: '#10b981',
     };
 
-    it('POSTs the request under the calendar\'s from-template endpoint and resolves with the created item', async () => {
+    it("POSTs the request under the calendar's from-template endpoint and resolves with the created item", async () => {
       const created: CalendarItemResponse = {
         id: 'task-1',
         calendarId: 'cal-1',
@@ -493,7 +530,7 @@ describe('CalendarsService', () => {
         color: '#10b981',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: 'child-1'
+        assignedTo: 'child-1',
       };
 
       const promise = service.scheduleTaskFromTemplate('cal-1', request);
@@ -527,7 +564,7 @@ describe('CalendarsService', () => {
         color: '#10b981',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: 'child-1'
+        assignedTo: 'child-1',
       } satisfies CalendarItemResponse);
       await schedulePromise;
 
@@ -535,9 +572,14 @@ describe('CalendarsService', () => {
       const calendarsReq = httpMock.expectOne(`${apiBaseUrl}/calendars`);
       calendarsReq.flush([calendar()]);
       await flushMicrotasks();
-      httpMock.expectOne((r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` && r.params.get('from') === today && r.params.get('to') === today).flush(
-        []
-      );
+      httpMock
+        .expectOne(
+          (r) =>
+            r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` &&
+            r.params.get('from') === today &&
+            r.params.get('to') === today,
+        )
+        .flush([]);
 
       await expect(afterSchedule).resolves.toEqual([]);
     });
@@ -545,7 +587,10 @@ describe('CalendarsService', () => {
 
   describe('listOccurrencesInRange', () => {
     it('fans out to every calendar and tags each occurrence with its owning calendar id/name', async () => {
-      const calendars = [calendar({ id: 'cal-1', name: 'Home' }), calendar({ id: 'cal-2', name: 'Work' })];
+      const calendars = [
+        calendar({ id: 'cal-1', name: 'Home' }),
+        calendar({ id: 'cal-2', name: 'Work' }),
+      ];
       const homeOccurrence = occurrence({ itemId: 'home-task' });
       const workOccurrence = occurrence({ itemId: 'work-task' });
 
@@ -554,18 +599,22 @@ describe('CalendarsService', () => {
       httpMock.expectOne(`${apiBaseUrl}/calendars`).flush(calendars);
       await flushMicrotasks();
 
-      const homeReq = httpMock.expectOne((r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`);
+      const homeReq = httpMock.expectOne(
+        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`,
+      );
       expect(homeReq.request.params.get('from')).toBe('2026-08-01');
       expect(homeReq.request.params.get('to')).toBe('2026-08-31');
       homeReq.flush([homeOccurrence]);
 
-      const workReq = httpMock.expectOne((r) => r.url === `${apiBaseUrl}/calendars/cal-2/occurrences`);
+      const workReq = httpMock.expectOne(
+        (r) => r.url === `${apiBaseUrl}/calendars/cal-2/occurrences`,
+      );
       workReq.flush([workOccurrence]);
 
       const result = await promise;
       expect(result).toEqual([
         { ...homeOccurrence, calendarId: 'cal-1', calendarName: 'Home' },
-        { ...workOccurrence, calendarId: 'cal-2', calendarName: 'Work' }
+        { ...workOccurrence, calendarId: 'cal-2', calendarName: 'Work' },
       ] satisfies CalendarOccurrence[]);
     });
 
@@ -573,8 +622,11 @@ describe('CalendarsService', () => {
     // fire for every calendar at once. Never more than the shared cap in flight now.
     it('keeps at most PER_ITEM_REQUEST_CONCURRENCY occurrence requests in flight and still fetches every calendar', async () => {
       const calendarCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
-      const calendars = Array.from({ length: calendarCount }, (_, i) => calendar({ id: `cal-${i}`, name: `Cal ${i}` }));
-      const isOccurrencesRequest = (r: { url: string }) => /\/calendars\/cal-\d+\/occurrences$/.test(r.url);
+      const calendars = Array.from({ length: calendarCount }, (_, i) =>
+        calendar({ id: `cal-${i}`, name: `Cal ${i}` }),
+      );
+      const isOccurrencesRequest = (r: { url: string }) =>
+        /\/calendars\/cal-\d+\/occurrences$/.test(r.url);
 
       const promise = service.listOccurrencesInRange('2026-08-01', '2026-08-31');
       httpMock.expectOne(`${apiBaseUrl}/calendars`).flush(calendars);
@@ -645,14 +697,16 @@ describe('CalendarsService', () => {
 
       httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([calendar()]);
       await flushMicrotasks();
-      httpMock.expectOne((r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`).flush('boom', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne((r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
 
       await expect(promise).rejects.toBeTruthy();
     });
   });
 
   describe('listTodayOccurrences', () => {
-    it('fetches every calendar and today\'s occurrences, tagging each with its owning calendar', async () => {
+    it("fetches every calendar and today's occurrences, tagging each with its owning calendar", async () => {
       const today = todayIsoDate();
       const calendars = [calendar()];
       const todaysOccurrence = occurrence();
@@ -663,11 +717,16 @@ describe('CalendarsService', () => {
       await flushMicrotasks();
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` && r.params.get('from') === today && r.params.get('to') === today
+        (r) =>
+          r.url === `${apiBaseUrl}/calendars/cal-1/occurrences` &&
+          r.params.get('from') === today &&
+          r.params.get('to') === today,
       );
       req.flush([todaysOccurrence]);
 
-      await expect(promise).resolves.toEqual([{ ...todaysOccurrence, calendarId: 'cal-1', calendarName: 'Home' }]);
+      await expect(promise).resolves.toEqual([
+        { ...todaysOccurrence, calendarId: 'cal-1', calendarName: 'Home' },
+      ]);
     });
 
     it('memoizes concurrent calls on the same day into a single fan-out', async () => {
@@ -693,7 +752,9 @@ describe('CalendarsService', () => {
       const first = service.listTodayOccurrences();
       first.catch(() => undefined);
 
-      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush('boom', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne(`${apiBaseUrl}/calendars`)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
 
       await expect(first).rejects.toBeTruthy();
 

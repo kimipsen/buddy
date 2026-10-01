@@ -13,7 +13,7 @@ export const admin = {
     roles: {
       owner: 'Ejer',
       admin: 'Administrator',
-      member: 'Medlem'
+      member: 'Medlem',
     },
     invite: {
       showButton: 'Inviter',
@@ -25,9 +25,10 @@ export const admin = {
       emailPlaceholder: 'E-mailadresse',
       roleLabel: 'Rolle',
       sendButton: 'Send invitation',
-      sendError: 'Kunne ikke sende invitationen. E-mailen er muligvis allerede medlem, eller en invitation blev allerede sendt for nylig.',
+      sendError:
+        'Kunne ikke sende invitationen. E-mailen er muligvis allerede medlem, eller en invitation blev allerede sendt for nylig.',
       cancelButton: 'Annuller',
-      cancelError: 'Kunne ikke annullere invitationen.'
+      cancelError: 'Kunne ikke annullere invitationen.',
     },
     members: {
       showButton: 'Medlemmer',
@@ -36,7 +37,7 @@ export const admin = {
       loading: 'Indlæser medlemmer…',
       empty: 'Denne gruppe har endnu ingen medlemmer.',
       guardiansTitle: 'Værger',
-      childrenTitle: 'Børn'
+      childrenTitle: 'Børn',
     },
     children: {
       showButton: 'Tilføj et barn',
@@ -47,7 +48,7 @@ export const admin = {
       empty: 'Alle dine børn er allerede i denne gruppe.',
       selectPlaceholder: 'Vælg et barn',
       addButton: 'Tilføj til gruppe',
-      addError: 'Kunne ikke tilføje barnet til gruppen.'
+      addError: 'Kunne ikke tilføje barnet til gruppen.',
     },
     policy: {
       title: 'Kalendertilladelser',
@@ -56,7 +57,7 @@ export const admin = {
       loading: 'Indlæser tilladelser…',
       loadError: 'Kunne ikke indlæse kalendertilladelser.',
       saveButton: 'Gem tilladelser',
-      saveError: 'Kunne ikke gemme kalendertilladelser.'
+      saveError: 'Kunne ikke gemme kalendertilladelser.',
     },
     mealplanPolicy: {
       title: 'Måltidsplan-tilladelser',
@@ -69,9 +70,9 @@ export const admin = {
       tiers: {
         none: 'Ingen adgang',
         view: 'Kun læsning',
-        manage: 'Fuld adgang'
-      }
-    }
+        manage: 'Fuld adgang',
+      },
+    },
   },
   manageChildren: {
     title: 'Børn',
@@ -86,11 +87,11 @@ export const admin = {
     revokeError: 'Kunne ikke fjerne dette barn.',
     language: {
       label: 'Sprog',
-      error: 'Kunne ikke opdatere barnets sprog.'
+      error: 'Kunne ikke opdatere barnets sprog.',
     },
     timeZone: {
       label: 'Tidszone',
-      error: 'Kunne ikke opdatere barnets tidszone.'
+      error: 'Kunne ikke opdatere barnets tidszone.',
     },
     givenNamePlaceholder: 'Fornavn',
     familyNamePlaceholder: 'Efternavn',
@@ -112,14 +113,15 @@ export const admin = {
       emailPlaceholder: 'E-mailadresse',
       kindLabel: 'Værgetype',
       sendButton: 'Send invitation',
-      sendError: 'Kunne ikke sende invitationen. Der er for nylig sendt en invitation til denne adresse.',
+      sendError:
+        'Kunne ikke sende invitationen. Der er for nylig sendt en invitation til denne adresse.',
       cancelButton: 'Annuller',
       cancelError: 'Kunne ikke annullere invitationen.',
       kinds: {
         parent: 'Forælder',
-        guardian: 'Værge'
-      }
-    }
+        guardian: 'Værge',
+      },
+    },
   },
   manageCalendars: {
     title: 'Kalendere',
@@ -133,34 +135,36 @@ export const admin = {
     roles: {
       owner: 'Ejer',
       contributor: 'Bidragyder',
-      viewer: 'Læser'
+      viewer: 'Læser',
     },
-    needsGroupHint: 'Du skal have en gruppe, før du kan tilføje en kalender. Opret en under Grupper først.',
+    needsGroupHint:
+      'Du skal have en gruppe, før du kan tilføje en kalender. Opret en under Grupper først.',
     move: {
       showButton: 'Flyt til gruppe',
       hideButton: 'Luk',
       selectPlaceholder: 'Vælg en gruppe',
       confirmButton: 'Flyt',
       noGroups: 'Du skal have en anden gruppe, du administrerer, før du kan flytte denne kalender.',
-      error: 'Kunne ikke flytte denne kalender. Du administrerer muligvis ikke modtagergruppen.'
+      error: 'Kunne ikke flytte denne kalender. Du administrerer muligvis ikke modtagergruppen.',
     },
     delete: {
       button: 'Slet',
       confirmPrompt: 'Slet denne kalender? Dette kan ikke fortrydes.',
       confirmButton: 'Bekræft',
       cancelButton: 'Annuller',
-      error: 'Kunne ikke slette denne kalender.'
+      error: 'Kunne ikke slette denne kalender.',
     },
     editIcon: {
       showButton: 'Skift ikon',
       hideButton: 'Luk',
       confirmButton: 'Gem',
-      error: 'Kunne ikke skifte ikon for denne kalender.'
+      error: 'Kunne ikke skifte ikon for denne kalender.',
     },
     ical: {
       showButton: 'Abonnement',
       hideButton: 'Luk',
-      description: 'Generer et privat link til at abonnere på denne kalender i en ekstern kalenderapp (f.eks. Google Kalender, Apple Kalender, Outlook).',
+      description:
+        'Generer et privat link til at abonnere på denne kalender i en ekstern kalenderapp (f.eks. Google Kalender, Apple Kalender, Outlook).',
       loading: 'Indlæser links…',
       loadError: 'Kunne ikke indlæse abonnementslinks.',
       empty: 'Ingen abonnementslinks endnu.',
@@ -172,12 +176,13 @@ export const admin = {
       copyButton: 'Kopiér',
       copiedButton: 'Kopieret',
       revokeButton: 'Tilbagekald',
-      revokeError: 'Kunne ikke tilbagekalde dette link.'
-    }
+      revokeError: 'Kunne ikke tilbagekalde dette link.',
+    },
   },
   aiProviders: {
     title: 'AI-madplansassistent',
-    description: 'Tilføj din egen API-nøgle til en AI-udbyder for at lade assistenten hjælpe med at lave en madplan ud fra din families måltider og bedømmelser.',
+    description:
+      'Tilføj din egen API-nøgle til en AI-udbyder for at lade assistenten hjælpe med at lave en madplan ud fra din families måltider og bedømmelser.',
     loading: 'Indlæser udbydere…',
     noChildren: 'Tilknyt et barn under Indstillinger, før du kan konfigurere en AI-udbyder.',
     loadError: 'Kunne ikke indlæse AI-udbyderindstillinger.',
@@ -199,23 +204,24 @@ export const admin = {
       confirmPrompt: 'Fjern denne API-nøgle?',
       confirmButton: 'Bekræft',
       cancelButton: 'Annuller',
-      error: 'Kunne ikke fjerne denne API-nøgle.'
+      error: 'Kunne ikke fjerne denne API-nøgle.',
     },
     names: {
       anthropic: 'Anthropic (Claude)',
       openAi: 'OpenAI (ChatGPT)',
-      gemini: 'Google (Gemini)'
-    }
+      gemini: 'Google (Gemini)',
+    },
   },
   deleteAccount: {
     title: 'Faresone',
     description: 'Sletning af din konto fjerner din adgang permanent. Dette kan ikke fortrydes.',
     deleteButton: 'Slet min konto',
     confirmTitle: 'Slet din konto?',
-    confirmDescription: 'Dette sletter din konto permanent og kan ikke fortrydes. Du bliver logget ud med det samme.',
+    confirmDescription:
+      'Dette sletter din konto permanent og kan ikke fortrydes. Du bliver logget ud med det samme.',
     cancel: 'Annuller',
     confirmButton: 'Ja, slet min konto',
     deletingButton: 'Sletter…',
-    error: 'Kunne ikke slette din konto.'
-  }
+    error: 'Kunne ikke slette din konto.',
+  },
 };

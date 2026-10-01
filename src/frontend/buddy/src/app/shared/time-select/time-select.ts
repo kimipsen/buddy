@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-time-select',
   imports: [FormsModule],
-  templateUrl: './time-select.html'
+  templateUrl: './time-select.html',
 })
 export class TimeSelect {
   readonly value = input<string>('');

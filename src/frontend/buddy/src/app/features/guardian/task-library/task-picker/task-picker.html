@@ -14,7 +14,11 @@
   />
 
   @if (open()) {
-    <div class="fixed inset-0 z-10" (click)="closeDropdown()" (keydown.escape)="closeDropdown()"></div>
+    <div
+      class="fixed inset-0 z-10"
+      (click)="closeDropdown()"
+      (keydown.escape)="closeDropdown()"
+    ></div>
 
     <ul
       class="z-20 max-h-56 min-w-[16rem] overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-1 shadow-lg"
@@ -40,14 +44,19 @@
             <span class="text-base leading-none">{{ template.icon }}</span>
             {{ template.name }}
             <span class="ml-auto shrink-0 text-xs text-slate-400">
-              {{ 'taskLibrary.picker.summary' | translate: { count: template.subtasks.length, duration: summary(template) } }}
+              {{
+                'taskLibrary.picker.summary'
+                  | translate: { count: template.subtasks.length, duration: summary(template) }
+              }}
             </span>
           </button>
         </li>
       }
 
       @if (filteredTemplates().length === 0) {
-        <li class="px-3 py-1.5 text-sm text-slate-400">{{ 'taskLibrary.picker.noMatches' | translate }}</li>
+        <li class="px-3 py-1.5 text-sm text-slate-400">
+          {{ 'taskLibrary.picker.noMatches' | translate }}
+        </li>
       }
     </ul>
   }

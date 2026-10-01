@@ -5,5 +5,5 @@ export const verifyEmail = {
   successTitle: 'Din e-mailadresse er bekræftet.',
   goToAppButton: 'Fortsæt',
   logInPrompt: 'Log ind med den konto, linket blev sendt til, for at bekræfte det.',
-  logInButton: 'Log ind for at bekræfte'
+  logInButton: 'Log ind for at bekræfte',
 };

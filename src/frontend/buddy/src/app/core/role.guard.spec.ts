@@ -1,6 +1,12 @@
 import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, provideRouter, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  provideRouter,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AccountService, AccountRole } from './account.service';
@@ -26,15 +32,15 @@ describe('roleRedirectGuard', () => {
     const authStub: Partial<AuthService> = {
       completeLoginRedirect: vi.fn(async () => {}),
       isAuthenticated: signal(true).asReadonly(),
-      ...stubs.auth
+      ...stubs.auth,
     };
     const usersStub: Partial<UsersService> = {
       ensureCurrentUser: vi.fn(async () => ({}) as never),
-      ...stubs.users
+      ...stubs.users,
     };
     const accountStub: Partial<AccountService> = {
       resolveRole: vi.fn(async () => 'guardian' as AccountRole),
-      ...stubs.account
+      ...stubs.account,
     };
 
     TestBed.configureTestingModule({
@@ -42,8 +48,8 @@ describe('roleRedirectGuard', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
         { provide: UsersService, useValue: usersStub },
-        { provide: AccountService, useValue: accountStub }
-      ]
+        { provide: AccountService, useValue: accountStub },
+      ],
     });
 
     const router = TestBed.inject(Router);
@@ -52,7 +58,9 @@ describe('roleRedirectGuard', () => {
   }
 
   function runGuard() {
-    return TestBed.runInInjectionContext(() => roleRedirectGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
+    return TestBed.runInInjectionContext(() =>
+      roleRedirectGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
   }
 
   it('completes any pending login redirect before checking authentication', async () => {
@@ -64,7 +72,7 @@ describe('roleRedirectGuard', () => {
       isAuthenticated: computed(() => {
         calls.push('isAuthenticated');
         return true;
-      })
+      }),
     };
     setup({ auth: authStub });
 
@@ -74,7 +82,9 @@ describe('roleRedirectGuard', () => {
   });
 
   it('redirects to /login when the user is not authenticated', async () => {
-    const { router, accountStub } = setup({ auth: { isAuthenticated: signal(false).asReadonly() } });
+    const { router, accountStub } = setup({
+      auth: { isAuthenticated: signal(false).asReadonly() },
+    });
 
     const result = await runGuard();
 
@@ -91,8 +101,13 @@ describe('roleRedirectGuard', () => {
   });
 
   it('still resolves a role when provisioning the current user fails', async () => {
-    const usersStub: Partial<UsersService> = { ensureCurrentUser: vi.fn(async () => Promise.reject(new Error('boom'))) };
-    const { router } = setup({ users: usersStub, account: { resolveRole: vi.fn(async () => 'guardian' as AccountRole) } });
+    const usersStub: Partial<UsersService> = {
+      ensureCurrentUser: vi.fn(async () => Promise.reject(new Error('boom'))),
+    };
+    const { router } = setup({
+      users: usersStub,
+      account: { resolveRole: vi.fn(async () => 'guardian' as AccountRole) },
+    });
 
     const result = await runGuard();
 
@@ -100,7 +115,9 @@ describe('roleRedirectGuard', () => {
   });
 
   it('redirects a guardian to /guardian', async () => {
-    const { router } = setup({ account: { resolveRole: vi.fn(async () => 'guardian' as AccountRole) } });
+    const { router } = setup({
+      account: { resolveRole: vi.fn(async () => 'guardian' as AccountRole) },
+    });
 
     const result = await runGuard();
 
@@ -108,7 +125,9 @@ describe('roleRedirectGuard', () => {
   });
 
   it('redirects a child to /child', async () => {
-    const { router } = setup({ account: { resolveRole: vi.fn(async () => 'child' as AccountRole) } });
+    const { router } = setup({
+      account: { resolveRole: vi.fn(async () => 'child' as AccountRole) },
+    });
 
     const result = await runGuard();
 

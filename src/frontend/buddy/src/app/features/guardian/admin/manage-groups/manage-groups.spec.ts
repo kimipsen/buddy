@@ -8,7 +8,7 @@ import {
   GroupMember,
   GroupSummary,
   GroupsService,
-  MealplanPermissionPolicy
+  MealplanPermissionPolicy,
 } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { ManageGroups } from './manage-groups';
@@ -28,12 +28,19 @@ describe('ManageGroups', () => {
       role: 2,
       invitedAt: '2026-08-01T00:00:00Z',
       expiresAt: '2026-08-08T00:00:00Z',
-      ...overrides
+      ...overrides,
     };
   }
 
   function member(overrides: Partial<GroupMember> = {}): GroupMember {
-    return { userId: 'member-1', givenName: 'Sam', familyName: 'Kid', role: 2, isChild: false, ...overrides };
+    return {
+      userId: 'member-1',
+      givenName: 'Sam',
+      familyName: 'Kid',
+      role: 2,
+      isChild: false,
+      ...overrides,
+    };
   }
 
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
@@ -44,7 +51,7 @@ describe('ManageGroups', () => {
       kind: 1,
       language: 'en',
       timeZoneId: 'UTC',
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -58,7 +65,7 @@ describe('ManageGroups', () => {
       members: [],
       calendarPermissionPolicy: calendarPolicy,
       mealplanPermissionPolicy: mealplanPolicy,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -70,27 +77,31 @@ describe('ManageGroups', () => {
   async function setup(stubs: Stubs = {}) {
     const groupsStub: Partial<GroupsService> = {
       listMyGroups: vi.fn(async () => [group()]),
-      createGroup: vi.fn(async (request) => ({ id: 'group-new', name: request.name, role: 0 }) as GroupSummary),
+      createGroup: vi.fn(
+        async (request) => ({ id: 'group-new', name: request.name, role: 0 }) as GroupSummary,
+      ),
       listInvites: vi.fn(async () => []),
-      inviteToGroup: vi.fn(async (_groupId, request) => invite({ email: request.email, role: request.role })),
+      inviteToGroup: vi.fn(async (_groupId, request) =>
+        invite({ email: request.email, role: request.role }),
+      ),
       revokeInvite: vi.fn(async () => undefined),
       addChildToGroup: vi.fn(async () => undefined),
       getGroup: vi.fn(async () => groupDetail()),
       updateCalendarPermissionPolicy: vi.fn(async () => undefined),
       updateMealplanPermissionPolicy: vi.fn(async () => undefined),
-      ...stubs.groups
+      ...stubs.groups,
     };
     const guardiansStub: Partial<GuardiansService> = {
       listMyChildren: vi.fn(async () => []),
-      ...stubs.guardians
+      ...stubs.guardians,
     };
 
     await TestBed.configureTestingModule({
       imports: [ManageGroups],
       providers: [
         { provide: GroupsService, useValue: groupsStub },
-        { provide: GuardiansService, useValue: guardiansStub }
-      ]
+        { provide: GuardiansService, useValue: guardiansStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageGroups);
@@ -102,7 +113,10 @@ describe('ManageGroups', () => {
   // driving the template settle, and some flows (createGroup -> loadGroups, sendInvite ->
   // loadInvites) chain two mocked service calls back to back -- mirrors tasks-today.spec.ts's
   // settle() since a single whenStable() flush isn't always enough for a stubbed service chain.
-  async function settle(fixture: { detectChanges: () => void; whenStable: () => Promise<boolean> }) {
+  async function settle(fixture: {
+    detectChanges: () => void;
+    whenStable: () => Promise<boolean>;
+  }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
@@ -128,7 +142,9 @@ describe('ManageGroups', () => {
   }
 
   function findButtonByText(compiled: HTMLElement, text: string): HTMLButtonElement | undefined {
-    return Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === text);
+    return Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === text,
+    );
   }
 
   function setInputValue(input: HTMLInputElement, value: string): void {
@@ -141,7 +157,9 @@ describe('ManageGroups', () => {
   // the visible option label -- as the other ngValue-select specs in this app do -- is the only
   // reliable way to drive these selects from a test.
   function selectByLabel(select: HTMLSelectElement, label: string): void {
-    const index = Array.from(select.options).findIndex((option) => option.textContent?.trim() === label);
+    const index = Array.from(select.options).findIndex(
+      (option) => option.textContent?.trim() === label,
+    );
     expect(index, `option "${label}" not found`).toBeGreaterThanOrEqual(0);
     select.selectedIndex = index;
     select.dispatchEvent(new Event('change'));
@@ -156,32 +174,32 @@ describe('ManageGroups', () => {
       description: 'shows an error when loading invites fails',
       buttonText: 'Invite',
       override: { listInvites: vi.fn(async () => Promise.reject(new Error('boom'))) },
-      message: 'Unable to load invites.'
+      message: 'Unable to load invites.',
     },
     {
       description: 'shows an error when loading the members panel fails',
       buttonText: 'Members',
       override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
-      message: 'Unable to load group members.'
+      message: 'Unable to load group members.',
     },
     {
       description: 'shows an error when loading members fails',
       buttonText: 'Add a child',
       override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
-      message: 'Unable to load group members.'
+      message: 'Unable to load group members.',
     },
     {
       description: 'shows an error when loading the calendar policy fails',
       buttonText: 'Calendar permissions',
       override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
-      message: 'Unable to load calendar permissions.'
+      message: 'Unable to load calendar permissions.',
     },
     {
       description: 'shows an error when loading the mealplan policy fails',
       buttonText: 'Meal plan permissions',
       override: { getGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
-      message: 'Unable to load meal plan permissions.'
-    }
+      message: 'Unable to load meal plan permissions.',
+    },
   ])('$description', async ({ buttonText, override, message }) => {
     const { fixture } = await setup({ groups: override });
     await settle(fixture);
@@ -212,7 +230,9 @@ describe('ManageGroups', () => {
   });
 
   it('shows an error message when loading groups fails', async () => {
-    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -221,7 +241,12 @@ describe('ManageGroups', () => {
 
   it('renders each group with its name and role', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g1', name: 'Home', role: 0 }), group({ id: 'g2', name: 'Weekend', role: 2 })]) }
+      groups: {
+        listMyGroups: vi.fn(async () => [
+          group({ id: 'g1', name: 'Home', role: 0 }),
+          group({ id: 'g2', name: 'Weekend', role: 2 }),
+        ]),
+      },
     });
     await settle(fixture);
 
@@ -233,7 +258,9 @@ describe('ManageGroups', () => {
   });
 
   it('hides the manage buttons for a group where the caller is only a member', async () => {
-    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) } });
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -241,7 +268,9 @@ describe('ManageGroups', () => {
   });
 
   it('shows the manage buttons for a group where the caller is an admin', async () => {
-    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [group({ role: 1 })]) } });
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 1 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -309,7 +338,9 @@ describe('ManageGroups', () => {
   });
 
   it('shows an error and keeps the typed name when creating a group fails', async () => {
-    const { fixture } = await setup({ groups: { createGroup: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      groups: { createGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -327,7 +358,9 @@ describe('ManageGroups', () => {
 
   it('loads and shows pending invites when the invite panel is opened', async () => {
     const invites = [invite({ email: 'pending@buddy.test' })];
-    const { fixture, groups } = await setup({ groups: { listInvites: vi.fn(async () => invites) } });
+    const { fixture, groups } = await setup({
+      groups: { listInvites: vi.fn(async () => invites) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -385,7 +418,10 @@ describe('ManageGroups', () => {
     compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(groups.inviteToGroup).toHaveBeenCalledWith('group-1', { email: 'friend@buddy.test', role: 1 });
+    expect(groups.inviteToGroup).toHaveBeenCalledWith('group-1', {
+      email: 'friend@buddy.test',
+      role: 1,
+    });
     expect(listInvites).toHaveBeenCalledTimes(2);
     expect(emailInput.value).toBe('');
   });
@@ -415,7 +451,9 @@ describe('ManageGroups', () => {
   });
 
   it('shows an error when sending an invite fails', async () => {
-    const { fixture } = await setup({ groups: { inviteToGroup: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      groups: { inviteToGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -452,7 +490,10 @@ describe('ManageGroups', () => {
   it('shows an error when revoking an invite fails', async () => {
     const pendingInvite = invite({ id: 'invite-9' });
     const { fixture } = await setup({
-      groups: { listInvites: vi.fn(async () => [pendingInvite]), revokeInvite: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      groups: {
+        listInvites: vi.fn(async () => [pendingInvite]),
+        revokeInvite: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -470,7 +511,9 @@ describe('ManageGroups', () => {
     const pendingInvite = invite({ id: 'invite-9' });
     let resolveRevoke!: () => void;
     const revokeInvite = vi.fn(() => new Promise<void>((resolve) => (resolveRevoke = resolve)));
-    const { fixture } = await setup({ groups: { listInvites: vi.fn(async () => [pendingInvite]), revokeInvite } });
+    const { fixture } = await setup({
+      groups: { listInvites: vi.fn(async () => [pendingInvite]), revokeInvite },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -489,7 +532,9 @@ describe('ManageGroups', () => {
   // ----- Members panel -----
 
   it('is available to a plain member, not just owners/admins', async () => {
-    const { fixture } = await setup({ groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) } });
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -513,12 +558,24 @@ describe('ManageGroups', () => {
         getGroup: vi.fn(async () =>
           groupDetail({
             members: [
-              member({ userId: 'owner-1', givenName: 'Jamie', familyName: 'Adult', role: 0, isChild: false }),
-              member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', role: 2, isChild: true })
-            ]
-          })
-        )
-      }
+              member({
+                userId: 'owner-1',
+                givenName: 'Jamie',
+                familyName: 'Adult',
+                role: 0,
+                isChild: false,
+              }),
+              member({
+                userId: 'child-1',
+                givenName: 'Sam',
+                familyName: 'Kid',
+                role: 2,
+                isChild: true,
+              }),
+            ],
+          }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -556,7 +613,15 @@ describe('ManageGroups', () => {
   it('shows the empty-candidates message when every child is already a member', async () => {
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
-      groups: { getGroup: vi.fn(async () => groupDetail({ members: [member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', isChild: true })] })) }
+      groups: {
+        getGroup: vi.fn(async () =>
+          groupDetail({
+            members: [
+              member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', isChild: true }),
+            ],
+          }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -572,10 +637,18 @@ describe('ManageGroups', () => {
       guardians: {
         listMyChildren: vi.fn(async () => [
           child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
-          child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } })
-        ])
+          child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } }),
+        ]),
       },
-      groups: { getGroup: vi.fn(async () => groupDetail({ members: [member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', isChild: true })] })) }
+      groups: {
+        getGroup: vi.fn(async () =>
+          groupDetail({
+            members: [
+              member({ userId: 'child-1', givenName: 'Sam', familyName: 'Kid', isChild: true }),
+            ],
+          }),
+        ),
+      },
     });
     await settle(fixture);
 
@@ -583,7 +656,9 @@ describe('ManageGroups', () => {
     findButtonByText(compiled, 'Add a child')!.click();
     await settle(fixture);
 
-    const options = Array.from(compiled.querySelectorAll<HTMLOptionElement>('select[name="selectedChild"] option'));
+    const options = Array.from(
+      compiled.querySelectorAll<HTMLOptionElement>('select[name="selectedChild"] option'),
+    );
     const names = options.map((option) => option.textContent?.trim());
     expect(names).not.toContain('Sam Kid');
     expect(names).toContain('Ada Kid');
@@ -599,7 +674,7 @@ describe('ManageGroups', () => {
         const getGroup = vi.fn(async () => groupDetail({ members: [] }));
         const { fixture, groups } = await setup({
           guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
-          groups: { getGroup }
+          groups: { getGroup },
         });
         await settle(fixture);
 
@@ -616,7 +691,7 @@ describe('ManageGroups', () => {
 
         expect(groups.addChildToGroup).toHaveBeenCalledWith('group-1', 'child-1');
         expect(getGroup).toHaveBeenCalledTimes(2);
-      }
+      },
     },
     {
       description: 'saves the calendar policy with the edited role value',
@@ -636,8 +711,11 @@ describe('ManageGroups', () => {
         findButtonByText(compiled, 'Save permissions')!.click();
         await settle(fixture);
 
-        expect(groups.updateCalendarPermissionPolicy).toHaveBeenCalledWith('group-1', { ...calendarPolicy, Owner: 2 });
-      }
+        expect(groups.updateCalendarPermissionPolicy).toHaveBeenCalledWith('group-1', {
+          ...calendarPolicy,
+          Owner: 2,
+        });
+      },
     },
     {
       description: 'saves the mealplan policy with the edited tier value',
@@ -656,9 +734,12 @@ describe('ManageGroups', () => {
         findButtonByText(compiled, 'Save permissions')!.click();
         await settle(fixture);
 
-        expect(groups.updateMealplanPermissionPolicy).toHaveBeenCalledWith('group-1', { ...mealplanPolicy, Owner: 2 });
-      }
-    }
+        expect(groups.updateMealplanPermissionPolicy).toHaveBeenCalledWith('group-1', {
+          ...mealplanPolicy,
+          Owner: 2,
+        });
+      },
+    },
   ])('$description', async ({ run }) => {
     await run();
   });
@@ -666,7 +747,10 @@ describe('ManageGroups', () => {
   it('shows an error when adding a child fails', async () => {
     const { fixture } = await setup({
       guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
-      groups: { getGroup: vi.fn(async () => groupDetail({ members: [] })), addChildToGroup: vi.fn(async () => Promise.reject(new Error('boom'))) }
+      groups: {
+        getGroup: vi.fn(async () => groupDetail({ members: [] })),
+        addChildToGroup: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
     });
     await settle(fixture);
 
@@ -700,7 +784,11 @@ describe('ManageGroups', () => {
   });
 
   it('shows an error when saving the calendar policy fails', async () => {
-    const { fixture } = await setup({ groups: { updateCalendarPermissionPolicy: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      groups: {
+        updateCalendarPermissionPolicy: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -758,7 +846,11 @@ describe('ManageGroups', () => {
   });
 
   it('shows an error when saving the mealplan policy fails', async () => {
-    const { fixture } = await setup({ groups: { updateMealplanPermissionPolicy: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      groups: {
+        updateMealplanPermissionPolicy: vi.fn(async () => Promise.reject(new Error('boom'))),
+      },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -774,7 +866,9 @@ describe('ManageGroups', () => {
   // ----- myChildren load failure is silent -----
 
   it('does not surface an error when loading the guardian’s own children fails', async () => {
-    const { fixture } = await setup({ guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) } });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
