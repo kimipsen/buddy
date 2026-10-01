@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Mvc;
 using Project.Domain.Orders;
@@ -43,4 +43,4 @@ public class OrdersController : ControllerBase
     }
 }
 
-public record AddItemRequest(Guid ItemId, [property: Required] int Quantity);
+public record AddItemRequest(Guid ItemId, [property: JsonRequired] int Quantity);

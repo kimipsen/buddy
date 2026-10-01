@@ -60,12 +60,15 @@ const valid = detected + n('Survived') + n('NoCoverage');
 const score = valid > 0 ? `${((detected * 100) / valid).toFixed(2)}%` : 'n/a';
 const total = files.reduce((sum, f) => sum + f.findings.length, 0);
 
+const runId = process.env.GITHUB_RUN_ID;
+const runLink = runId ? ` by [this run](${server}/${repo}/actions/runs/${runId})` : '';
+
 const header = [
   `Mutation score: **${score}** · ${n('Survived')} survived · ${n('NoCoverage')} without coverage · ` +
     `${n('Killed')} killed · ${n('Timeout')} timed out · ${n('CompileError')} compile errors`,
   '',
   sha
-    ? `Generated from \`${sha.slice(0, 7)}\`${process.env.GITHUB_RUN_ID ? ` by [this run](${server}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID})` : ''}. ` +
+    ? `Generated from \`${sha.slice(0, 7)}\`${runLink}. ` +
       'This issue is rewritten by every nightly run, so ticked boxes are not kept; a fixed mutant simply disappears.'
     : '',
   '',

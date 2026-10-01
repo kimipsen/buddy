@@ -106,6 +106,116 @@ async function deleteMatching(
   }
 }
 
+// Revokes a guardian's link to each of our created children, and removes any of our created
+// calendars/groups this guardian owns. Best-effort per guardian: one guardian's failure is logged
+// and never stops the rest.
+async function cleanUpGuardianOwnedData(
+  api: APIRequestContext,
+  guardians: readonly TestUser[],
+  calendars: readonly string[],
+  groups: readonly string[],
+  children: readonly TrackedChild[],
+): Promise<void> {
+  for (const guardian of guardians) {
+    try {
+      const { accessToken } = await getAccessToken(guardian.username, guardian.password);
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
+      // Calendars before groups: a group delete cascades to its calendars anyway, but a calendar
+      // can also live in a group this test didn't create.
+      await deleteMatching(
+        api,
+        headers,
+        '/calendars',
+        (id) => `/calendars/${id}`,
+        calendars,
+        'calendar',
+      );
+      await deleteMatching(api, headers, '/groups', (id) => `/groups/${id}`, groups, 'group');
+
+      if (children.length === 0) {
+        continue;
+      }
+
+      const response = await api.get('/users/me/children', { headers });
+
+      if (!response.ok()) {
+        console.warn(
+          `[e2e cleanup] listing ${guardian.username}'s children failed: ${response.status()}`,
+        );
+        continue;
+      }
+
+      for (const child of (await response.json()) as ChildSummaryDto[]) {
+        const isOurs = children.some(
+          (created) =>
+            created.givenName === child.name.givenName &&
+            created.familyName === child.name.familyName,
+        );
+
+        if (!isOurs) {
+          continue;
+        }
+
+        const revoke = await api.delete(`/users/me/children/${child.id}/guardian-link`, {
+          headers,
+        });
+
+        if (!revoke.ok()) {
+          console.warn(
+            `[e2e cleanup] unlinking ${child.name.givenName} from ${guardian.username} failed: ${revoke.status()}`,
+          );
+        }
+      }
+    } catch (error) {
+      console.warn(`[e2e cleanup] cleanup as ${guardian.username} failed:`, error);
+    }
+  }
+}
+
+// Soft-deletes the backend user for each disposable guardian this test minted.
+async function deleteDisposableGuardianAccounts(
+  api: APIRequestContext,
+  disposables: readonly DisposableGuardian[],
+): Promise<void> {
+  for (const guardian of disposables) {
+    try {
+      const { accessToken } = await getAccessToken(guardian.username, guardian.password);
+      const removed = await api.delete('/users/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!removed.ok() && removed.status() !== 404) {
+        console.warn(
+          `[e2e cleanup] deleting backend user ${guardian.username} failed: ${removed.status()}`,
+        );
+      }
+    } catch (error) {
+      console.warn(`[e2e cleanup] deleting backend user ${guardian.username} failed:`, error);
+    }
+  }
+}
+
+async function deleteDisposableGuardianKeycloakIdentities(
+  disposables: readonly DisposableGuardian[],
+): Promise<void> {
+  for (const guardian of disposables) {
+    // Fail-safe: never a seeded guardian, only identities createDisposableGuardian() minted.
+    if (guardian.username.startsWith('e2e') && !isSeededUsername(guardian.username)) {
+      await deleteKeycloakUser(guardian.username);
+    }
+  }
+}
+
+async function deleteChildKeycloakIdentities(children: readonly TrackedChild[]): Promise<void> {
+  for (const child of children) {
+    // Fail-safe: only ever delete the throwaway child identities createChild() mints.
+    if (child.username.startsWith('e2echild') && !isSeededUsername(child.username)) {
+      await deleteKeycloakUser(child.username);
+    }
+  }
+}
+
 // Best-effort: a cleanup failure is logged, never thrown, so it can't turn a passing test red or
 // hide the real failure of a failing one.
 export async function cleanUpCreatedData(): Promise<void> {
@@ -123,94 +233,12 @@ export async function cleanUpCreatedData(): Promise<void> {
 
   try {
     const guardians: readonly TestUser[] = [...SEEDED_GUARDIANS, ...disposables];
-
-    for (const guardian of guardians) {
-      try {
-        const { accessToken } = await getAccessToken(guardian.username, guardian.password);
-        const headers = { Authorization: `Bearer ${accessToken}` };
-
-        // Calendars before groups: a group delete cascades to its calendars anyway, but a calendar
-        // can also live in a group this test didn't create.
-        await deleteMatching(
-          api,
-          headers,
-          '/calendars',
-          (id) => `/calendars/${id}`,
-          calendars,
-          'calendar',
-        );
-        await deleteMatching(api, headers, '/groups', (id) => `/groups/${id}`, groups, 'group');
-
-        if (children.length === 0) {
-          continue;
-        }
-
-        const response = await api.get('/users/me/children', { headers });
-
-        if (!response.ok()) {
-          console.warn(
-            `[e2e cleanup] listing ${guardian.username}'s children failed: ${response.status()}`,
-          );
-          continue;
-        }
-
-        for (const child of (await response.json()) as ChildSummaryDto[]) {
-          const isOurs = children.some(
-            (created) =>
-              created.givenName === child.name.givenName &&
-              created.familyName === child.name.familyName,
-          );
-
-          if (!isOurs) {
-            continue;
-          }
-
-          const revoke = await api.delete(`/users/me/children/${child.id}/guardian-link`, {
-            headers,
-          });
-
-          if (!revoke.ok()) {
-            console.warn(
-              `[e2e cleanup] unlinking ${child.name.givenName} from ${guardian.username} failed: ${revoke.status()}`,
-            );
-          }
-        }
-      } catch (error) {
-        console.warn(`[e2e cleanup] cleanup as ${guardian.username} failed:`, error);
-      }
-    }
-
-    for (const guardian of disposables) {
-      try {
-        const { accessToken } = await getAccessToken(guardian.username, guardian.password);
-        const removed = await api.delete('/users/me', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!removed.ok() && removed.status() !== 404) {
-          console.warn(
-            `[e2e cleanup] deleting backend user ${guardian.username} failed: ${removed.status()}`,
-          );
-        }
-      } catch (error) {
-        console.warn(`[e2e cleanup] deleting backend user ${guardian.username} failed:`, error);
-      }
-    }
+    await cleanUpGuardianOwnedData(api, guardians, calendars, groups, children);
+    await deleteDisposableGuardianAccounts(api, disposables);
   } finally {
     await api.dispose();
   }
 
-  for (const guardian of disposables) {
-    // Fail-safe: never a seeded guardian, only identities createDisposableGuardian() minted.
-    if (guardian.username.startsWith('e2e') && !isSeededUsername(guardian.username)) {
-      await deleteKeycloakUser(guardian.username);
-    }
-  }
-
-  for (const child of children) {
-    // Fail-safe: only ever delete the throwaway child identities createChild() mints.
-    if (child.username.startsWith('e2echild') && !isSeededUsername(child.username)) {
-      await deleteKeycloakUser(child.username);
-    }
-  }
+  await deleteDisposableGuardianKeycloakIdentities(disposables);
+  await deleteChildKeycloakIdentities(children);
 }

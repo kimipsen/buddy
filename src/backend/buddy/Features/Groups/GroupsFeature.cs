@@ -63,7 +63,7 @@ public static class GroupsFeature
             // Register() takes the already-typed GroupSnapshotProjection instance directly,
             // sidestepping that lookup.
             options.Projections.Register(new GroupSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<GroupSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<GroupSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

@@ -21,10 +21,10 @@ public sealed record CalendarItemSnapshot(Guid Id, CalendarItem CalendarItem);
 // this projection's document is stored under.
 public sealed class CalendarItemSnapshotProjection : SingleStreamProjection<CalendarItemSnapshot, Guid>
 {
-    public CalendarItemSnapshot Create(EventItemCreated created) =>
+    public static CalendarItemSnapshot Create(EventItemCreated created) =>
         new(created.Id.Value, CalendarItem.Fold(null, CalendarItemEvent.FromPayload(created))!);
 
-    public CalendarItemSnapshot Create(TaskItemCreated created) =>
+    public static CalendarItemSnapshot Create(TaskItemCreated created) =>
         new(created.Id.Value, CalendarItem.Fold(null, CalendarItemEvent.FromPayload(created))!);
 
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, ItemDetailsUpdated updated) =>

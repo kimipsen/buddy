@@ -19,7 +19,7 @@ public sealed record AiProviderCredentialSnapshot(Guid Id, AiProviderCredential 
 // state, not a second source of truth.
 public sealed class AiProviderCredentialSnapshotProjection : SingleStreamProjection<AiProviderCredentialSnapshot, Guid>
 {
-    public AiProviderCredentialSnapshot Create(AiCredentialsInitialized created) =>
+    public static AiProviderCredentialSnapshot Create(AiCredentialsInitialized created) =>
         new(created.Id.Value, AiProviderCredential.Fold(null, AiProviderCredentialEvent.FromPayload(created))!);
 
     public AiProviderCredentialSnapshot Apply(AiProviderCredentialSnapshot current, ProviderApiKeySet set) =>

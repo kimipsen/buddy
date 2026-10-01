@@ -18,7 +18,7 @@ public sealed record TaskTemplateSnapshot(Guid Id, TaskTemplate TaskTemplate);
 // "tasklibrary" event schema -- it is derived, rebuildable state, not a second source of truth.
 public sealed class TaskTemplateSnapshotProjection : SingleStreamProjection<TaskTemplateSnapshot, Guid>
 {
-    public TaskTemplateSnapshot Create(TaskTemplateCreated created) =>
+    public static TaskTemplateSnapshot Create(TaskTemplateCreated created) =>
         new(created.Id.Value, TaskTemplate.Fold(null, TaskTemplateEvent.FromPayload(created))!);
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, TaskTemplateDetailsUpdated updated) =>

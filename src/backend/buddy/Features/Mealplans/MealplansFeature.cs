@@ -90,16 +90,16 @@ public static class MealplansFeature
             // snapshot wrappers use. Register() takes the already-typed projection instance
             // directly, sidestepping that lookup.
             options.Projections.Register(new MealSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<MealSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<MealSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             options.Projections.Register(new MealPlanSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<MealPlanSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<MealPlanSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             options.Projections.Register(new AiProviderCredentialSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<AiProviderCredentialSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<AiProviderCredentialSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             options.Projections.Register(new MealplanAiSessionSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<MealplanAiSessionSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<MealplanAiSessionSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

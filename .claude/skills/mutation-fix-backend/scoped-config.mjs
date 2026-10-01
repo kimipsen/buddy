@@ -27,7 +27,7 @@ const concurrency = take('--concurrency', undefined);
 const globs = args
   .flatMap((a) => a.split(','))
   .filter(Boolean)
-  .map((a) => a.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^(src\/backend\/)?buddy\//, ''));
+  .map((a) => a.replaceAll('\\', '/').replace(/^\.\//, '').replace(/^(src\/backend\/)?buddy\//, ''));
 
 if (!out || !globs.length) {
   console.error('Usage: scoped-config.mjs --out <file.json> [--concurrency N] <glob-or-file> ...');

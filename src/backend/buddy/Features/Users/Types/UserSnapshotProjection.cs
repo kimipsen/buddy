@@ -20,7 +20,7 @@ public sealed record UserSnapshot(Guid Id, User User);
 // GuardianLinkInvite's own streams, which merely happen to live in this same Marten store/schema.
 public sealed class UserSnapshotProjection : SingleStreamProjection<UserSnapshot, Guid>
 {
-    public UserSnapshot Create(UserCreated created) =>
+    public static UserSnapshot Create(UserCreated created) =>
         new(created.UserId.Value, User.Fold(null, UserEvent.FromPayload(created))!);
 
     public UserSnapshot Apply(UserSnapshot current, NameUpdated updated) =>

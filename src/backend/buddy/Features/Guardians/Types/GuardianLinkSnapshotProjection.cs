@@ -21,7 +21,7 @@ public sealed record GuardianLinkSnapshot(Guid Id, GuardianLink GuardianLink);
 // rebuildable state, not a second source of truth.
 public sealed class GuardianLinkSnapshotProjection : SingleStreamProjection<GuardianLinkSnapshot, Guid>
 {
-    public GuardianLinkSnapshot Create(GuardianLinked linked) =>
+    public static GuardianLinkSnapshot Create(GuardianLinked linked) =>
         new(linked.GuardianLinkId.Value, GuardianLink.Fold(null, GuardianEvent.FromPayload(linked))!);
 
     public GuardianLinkSnapshot Apply(GuardianLinkSnapshot current, GuardianKindChanged changed) =>

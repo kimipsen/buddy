@@ -1,16 +1,14 @@
 import { test as base } from '@playwright/test';
 
 import { cleanUpCreatedData, trackDisposableGuardian } from './created-data-cleanup';
-import {
-  DISPOSABLE_GUARDIAN_GIVEN_NAME,
-  type DisposableGuardian,
-  createDisposableGuardian,
-} from './keycloak-admin-client';
+import { type DisposableGuardian, createDisposableGuardian } from './keycloak-admin-client';
 import { getAccessToken } from './keycloak-client';
 import { readRuntimeConfig } from './runtime-config';
-import { SEEDED_USERS, type TestUser } from './seeded-users';
+import type { TestUser } from './seeded-users';
 
-export { DISPOSABLE_GUARDIAN_GIVEN_NAME, SEEDED_USERS, type DisposableGuardian, type TestUser };
+export { DISPOSABLE_GUARDIAN_GIVEN_NAME } from './keycloak-admin-client';
+export { SEEDED_USERS } from './seeded-users';
+export type { DisposableGuardian, TestUser };
 
 // Same storage key the app writes to (src/app/core/token-storage.ts).
 const STORAGE_KEY = 'buddy_keycloak_tokens';

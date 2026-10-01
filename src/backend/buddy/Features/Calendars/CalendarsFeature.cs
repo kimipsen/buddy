@@ -86,10 +86,10 @@ public static class CalendarsFeature
             // record. Register() takes the already-typed projection instance directly,
             // sidestepping that lookup.
             options.Projections.Register(new CalendarSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<CalendarSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<CalendarSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             options.Projections.Register(new CalendarItemSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<CalendarItemSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<CalendarItemSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

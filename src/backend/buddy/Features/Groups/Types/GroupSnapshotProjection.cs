@@ -19,7 +19,7 @@ public sealed record GroupSnapshot(Guid Id, Group Group);
 // fields, only GroupInviteDocument.
 public sealed class GroupSnapshotProjection : SingleStreamProjection<GroupSnapshot, Guid>
 {
-    public GroupSnapshot Create(GroupCreated created) =>
+    public static GroupSnapshot Create(GroupCreated created) =>
         new(created.GroupId.Value, Group.Fold(null, GroupEvent.FromPayload(created))!);
 
     public GroupSnapshot Apply(GroupSnapshot current, GroupMemberRoleGranted granted) =>

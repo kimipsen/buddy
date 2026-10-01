@@ -107,10 +107,10 @@ public static class UsersFeature
             // throws (ArgumentNullException out of MakeGenericType) for a Guid Id. Register()
             // takes the already-typed projection instance directly, sidestepping that lookup.
             options.Projections.Register(new UserSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<UserSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<UserSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             options.Projections.Register(new GuardianLinkSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<GuardianLinkSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<GuardianLinkSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

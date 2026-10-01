@@ -17,7 +17,7 @@ public sealed record MealSnapshot(Guid Id, Meal Meal);
 // derived, rebuildable state, not a second source of truth.
 public sealed class MealSnapshotProjection : SingleStreamProjection<MealSnapshot, Guid>
 {
-    public MealSnapshot Create(MealCreated created) =>
+    public static MealSnapshot Create(MealCreated created) =>
         new(created.Id.Value, Meal.Fold(null, MealEvent.FromPayload(created))!);
 
     public MealSnapshot Apply(MealSnapshot current, MealDetailsUpdated updated) =>

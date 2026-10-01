@@ -70,7 +70,7 @@ public static class ProgressFeature
             // Guid Id. Register() takes the already-typed ChildProgressSnapshotProjection instance
             // directly, sidestepping that lookup.
             options.Projections.Register(new ChildProgressSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<ChildProgressSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<ChildProgressSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

@@ -22,7 +22,7 @@ public sealed record MealplanAiSessionSnapshot(Guid Id, MealplanAiSession Mealpl
 // derived on demand from the raw event stream.
 public sealed class MealplanAiSessionSnapshotProjection : SingleStreamProjection<MealplanAiSessionSnapshot, Guid>
 {
-    public MealplanAiSessionSnapshot Create(AiSessionStarted started) =>
+    public static MealplanAiSessionSnapshot Create(AiSessionStarted started) =>
         new(started.Id.Value, MealplanAiSession.Fold(null, MealplanAiSessionEvent.FromPayload(started))!);
 
     public MealplanAiSessionSnapshot Apply(MealplanAiSessionSnapshot current, AiDraftAssignmentSet set) =>

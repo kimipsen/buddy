@@ -18,7 +18,7 @@ public sealed record PickupScheduleSnapshot(Guid Id, PickupSchedule PickupSchedu
 // "pickups" event schema -- it is derived, rebuildable state, not a second source of truth.
 public sealed class PickupScheduleSnapshotProjection : SingleStreamProjection<PickupScheduleSnapshot, Guid>
 {
-    public PickupScheduleSnapshot Create(PickupScheduleCreated created) =>
+    public static PickupScheduleSnapshot Create(PickupScheduleCreated created) =>
         new(created.Id.Value, PickupSchedule.Fold(null, PickupEvent.FromPayload(created))!);
 
     public PickupScheduleSnapshot Apply(PickupScheduleSnapshot current, PickupAssigned assigned) =>

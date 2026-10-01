@@ -10,9 +10,8 @@ export interface MailpitMessageSummary {
 }
 
 export async function getMessagesTo(emailAddress: string): Promise<MailpitMessageSummary[]> {
-  const response = await fetch(
-    `${MAILPIT_BASE_URL}/api/v1/search?query=${encodeURIComponent(`to:${emailAddress}`)}`,
-  );
+  const query = encodeURIComponent(`to:${emailAddress}`);
+  const response = await fetch(`${MAILPIT_BASE_URL}/api/v1/search?query=${query}`);
 
   if (!response.ok) {
     throw new Error(

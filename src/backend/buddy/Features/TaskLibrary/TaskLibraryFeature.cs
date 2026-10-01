@@ -63,7 +63,7 @@ public static class TaskLibraryFeature
             // Guid Id. Register() takes the already-typed TaskTemplateSnapshotProjection instance
             // directly, sidestepping that lookup.
             options.Projections.Register(new TaskTemplateSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<TaskTemplateSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<TaskTemplateSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

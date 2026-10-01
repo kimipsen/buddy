@@ -18,7 +18,7 @@ public sealed record ChildProgressSnapshot(Guid Id, ChildProgress ChildProgress)
 // "progress" event schema -- it is derived, rebuildable state, not a second source of truth.
 public sealed class ChildProgressSnapshotProjection : SingleStreamProjection<ChildProgressSnapshot, Guid>
 {
-    public ChildProgressSnapshot Create(ProgressStarted started) =>
+    public static ChildProgressSnapshot Create(ProgressStarted started) =>
         new(started.Id.Value, ChildProgress.Fold(null, ProgressEvent.FromPayload(started))!);
 
     public ChildProgressSnapshot Apply(ChildProgressSnapshot current, StarAwarded awarded) =>

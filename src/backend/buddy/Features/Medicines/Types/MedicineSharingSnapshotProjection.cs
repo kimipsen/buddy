@@ -26,7 +26,7 @@ public sealed class MedicineSharingSnapshotProjection : SingleStreamProjection<M
     // stream (no snapshot row yet); any later occurrence of MedicineSharedWithGroup on the same
     // stream (a re-share after an unshare) goes through the Apply overload below instead, exactly
     // mirroring Fold's own null check.
-    public MedicineSharingSnapshot Create(MedicineSharedWithGroup shared) =>
+    public static MedicineSharingSnapshot Create(MedicineSharedWithGroup shared) =>
         new(shared.Id.Value, MedicineSharing.Fold(null, MedicineSharingEvent.FromPayload(shared))!);
 
     public MedicineSharingSnapshot Apply(MedicineSharingSnapshot current, MedicineSharedWithGroup shared) =>

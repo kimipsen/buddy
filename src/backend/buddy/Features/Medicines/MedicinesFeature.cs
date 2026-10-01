@@ -70,10 +70,10 @@ public static class MedicinesFeature
             // snapshot document. Register() takes the already-typed projection instance directly,
             // sidestepping that lookup.
             options.Projections.Register(new MedicineScheduleSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<MedicineScheduleSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<MedicineScheduleSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             options.Projections.Register(new MedicineSharingSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<MedicineSharingSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<MedicineSharingSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

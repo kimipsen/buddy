@@ -18,7 +18,7 @@ ARG HEALTH_ENABLED=false
 
 COPY themes/buddy /opt/keycloak/themes/buddy
 
-RUN /opt/keycloak/bin/kc.sh build --db=postgres --health-enabled=${HEALTH_ENABLED}
+RUN /opt/keycloak/bin/kc.sh build --db=postgres --health-enabled="${HEALTH_ENABLED}"
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
 CMD ["start", "--optimized"]

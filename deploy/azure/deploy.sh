@@ -32,7 +32,8 @@ source "$SCRIPT_DIR/.env"
 : "${GMAIL_SMTP_APP_PASSWORD:=}"
 
 containerapp_exists() {
-  az containerapp show --name "$1" --resource-group "$RESOURCE_GROUP" -o none 2>/dev/null
+  local name=$1
+  az containerapp show --name "$name" --resource-group "$RESOURCE_GROUP" -o none 2>/dev/null
 }
 
 containerapp_env_exists() {
@@ -44,13 +45,15 @@ postgres_server_exists() {
 }
 
 postgres_firewall_rule_exists() {
+  local rule_name=$1
   az postgres flexible-server firewall-rule show --resource-group "$RESOURCE_GROUP" \
-    --server-name "$PG_SERVER_NAME" --name "$1" -o none 2>/dev/null
+    --server-name "$PG_SERVER_NAME" --name "$rule_name" -o none 2>/dev/null
 }
 
 postgres_db_exists() {
+  local db_name=$1
   az postgres flexible-server db show --resource-group "$RESOURCE_GROUP" \
-    --server-name "$PG_SERVER_NAME" --name "$1" -o none 2>/dev/null
+    --server-name "$PG_SERVER_NAME" --name "$db_name" -o none 2>/dev/null
 }
 
 bind_custom_domain() {

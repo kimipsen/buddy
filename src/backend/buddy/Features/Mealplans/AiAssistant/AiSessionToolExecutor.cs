@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 using buddy.Features.Calendars;
@@ -75,7 +76,7 @@ public static class AiSessionToolExecutor
             return new ExecutionOutcome(Error("That meal id is not in the family's available meal library."), true, null);
         }
 
-        return new ExecutionOutcome(Ok(), false, new AiDraftAssignmentSet(sessionId, date, slot, mealId, now));
+        return new ExecutionOutcome(Ok, false, new AiDraftAssignmentSet(sessionId, date, slot, mealId, now));
     }
 
     private static ExecutionOutcome ExecuteClearDraftAssignment(AiRequestedToolCall call, MealplanAiSessionId sessionId, DateTimeOffset now)
@@ -95,7 +96,7 @@ public static class AiSessionToolExecutor
             return new ExecutionOutcome(Error(slotError), true, null);
         }
 
-        return new ExecutionOutcome(Ok(), false, new AiDraftAssignmentCleared(sessionId, date, slot, now));
+        return new ExecutionOutcome(Ok, false, new AiDraftAssignmentCleared(sessionId, date, slot, now));
     }
 
     private static async Task<ExecutionOutcome> ExecuteGetCalendarConflictsAsync(
@@ -155,7 +156,8 @@ public static class AiSessionToolExecutor
 
     private static bool TryGetDate(JsonElement args, string propertyName, out DateOnly date, out string error)
     {
-        if (args.TryGetProperty(propertyName, out var dateElement) && DateOnly.TryParse(dateElement.GetString(), out date))
+        if (args.TryGetProperty(propertyName, out var dateElement) &&
+            DateOnly.TryParse(dateElement.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
         {
             error = "";
             return true;
@@ -179,7 +181,7 @@ public static class AiSessionToolExecutor
         return false;
     }
 
-    private static string Ok() => """{"status":"ok"}""";
+    private const string Ok = """{"status":"ok"}""";
 
     private static string Error(string message) => JsonSerializer.Serialize(new { status = "error", message });
 }

@@ -20,7 +20,7 @@ export class UserEventsService {
   private readonly http = inject(HttpClient);
   private readonly runtimeConfig = inject(RuntimeConfigService);
 
-  async listCurrentUserEvents(cursor: string | null, pageSize: number): Promise<UserEventsPage> {
+  listCurrentUserEvents(cursor: string | null, pageSize: number): Promise<UserEventsPage> {
     const params: Record<string, string> = { pageSize: pageSize.toString() };
 
     if (cursor) {

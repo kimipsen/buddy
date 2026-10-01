@@ -23,21 +23,21 @@ fail() {
   echo "" >&2
   echo "ERROR: Stryker.NET did not test any mutants: $1" >&2
   echo "Full log: $log. See docs/backend/analysis/mutation-testing-strategy.md." >&2
-  if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::error title=Stryker.NET::$1"; fi
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then echo "::error title=Stryker.NET::$1" >&2; fi
   exit 1
 }
 
 stryker=(dotnet stryker)
-if [ "${STRYKER_SDK_ROSLYN:-1}" != 0 ]; then
+if [[ "${STRYKER_SDK_ROSLYN:-1}" != 0 ]]; then
   version=$(sed -n '/"dotnet-stryker"/,/}/s/.*"version": *"\([^"]*\)".*/\1/p' ../dotnet-tools.json)
   tool_dir=$(ls -d "${NUGET_PACKAGES:-$HOME/.nuget/packages}/dotnet-stryker/$version"/tools/net*/any 2>/dev/null | tail -1)
   sdk_version=$(dotnet --version)
   sdk_root=$(dotnet --list-sdks | sed -n "s/^$sdk_version \[\(.*\)\]$/\1/p")
   roslyn="$sdk_root/$sdk_version/Roslyn/bincore"
-  [ -n "$tool_dir" ] || fail "dotnet-stryker $version is not restored (run dotnet tool restore in src/backend)"
-  [ -f "$roslyn/Microsoft.CodeAnalysis.CSharp.dll" ] || fail "SDK Roslyn not found at $roslyn"
+  [[ -n "$tool_dir" ]] || fail "dotnet-stryker $version is not restored (run dotnet tool restore in src/backend)"
+  [[ -f "$roslyn/Microsoft.CodeAnalysis.CSharp.dll" ]] || fail "SDK Roslyn not found at $roslyn"
   copy="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/buddy-stryker-$version-sdk-$sdk_version"
-  if [ ! -f "$copy/.ready" ]; then
+  if [[ ! -f "$copy/.ready" ]]; then
     rm -rf "$copy" && mkdir -p "$copy" && cp -r "$tool_dir/." "$copy/" &&
       cp "$roslyn/Microsoft.CodeAnalysis.dll" "$roslyn/Microsoft.CodeAnalysis.CSharp.dll" "$copy/" &&
       touch "$copy/.ready" || fail "could not prepare the Roslyn-overlaid tool copy at $copy"
@@ -55,7 +55,7 @@ failures='Test discovery has been aborted|did not report any test|No test result
 if grep -Eiq "$failures" "$log"; then
   fail "$(grep -Eim1 "$failures" "$log" | sed 's/^\[[^]]*\] //' | cut -c1-200)"
 fi
-[ "$status" -eq 0 ] || fail "Stryker exited with status $status"
+[[ "$status" -eq 0 ]] || fail "Stryker exited with status $status"
 # A run that tested mutants logs "<N> total mutants will be tested" (N > 0) and a final score.
 grep -Eq '\b[1-9][0-9]* +total mutants will be tested' "$log" || fail "no mutants were tested (none in scope, or the run stopped early)"
 grep -q 'The final mutation score is' "$log" || fail "no final mutation score in the log"

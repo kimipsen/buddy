@@ -18,7 +18,7 @@ public sealed record MealPlanSnapshot(Guid Id, MealPlan MealPlan);
 // "mealplans" event schema -- it is derived, rebuildable state, not a second source of truth.
 public sealed class MealPlanSnapshotProjection : SingleStreamProjection<MealPlanSnapshot, Guid>
 {
-    public MealPlanSnapshot Create(MealPlanCreated created) =>
+    public static MealPlanSnapshot Create(MealPlanCreated created) =>
         new(created.Id.Value, MealPlan.Fold(null, MealPlanEvent.FromPayload(created))!);
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealAssignedToSlot assigned) =>

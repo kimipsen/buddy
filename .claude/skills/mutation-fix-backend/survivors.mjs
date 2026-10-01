@@ -25,7 +25,7 @@ const take = (name, fallback) => {
 };
 const reportPath = take('--report', undefined) ?? findReport();
 const asJson = args.includes('--json') && args.splice(args.indexOf('--json'), 1);
-const norm = (p) => p.replace(/\\/g, '/').replace(/^\.\//, '');
+const norm = (p) => p.replaceAll('\\', '/').replace(/^\.\//, '');
 const wanted = args.flatMap((a) => a.split(',')).filter(Boolean).map(norm);
 
 let report;
@@ -53,7 +53,7 @@ const FINDINGS = new Set(['Survived', 'NoCoverage']);
 const inScope = (file) => (file.mutants ?? []).some((m) => m.statusReason !== 'Removed by mutate filter');
 const mutated = Object.entries(report.files ?? {}).filter(([, file]) => inScope(file));
 const result = [];
-for (const [key, file] of mutated.sort(([a], [b]) => a.localeCompare(b))) {
+for (const [key, file] of mutated.toSorted(([a], [b]) => a.localeCompare(b))) {
   if (wanted.length && !wanted.some((w) => matches(key, w))) continue;
   const lines = (file.source ?? '').split('\n');
   const counts = {};
@@ -88,7 +88,8 @@ if (asJson) {
     const valid = detected + (counts.Survived ?? 0) + (counts.NoCoverage ?? 0);
     const score = valid ? `${((detected * 100) / valid).toFixed(1)}%` : 'n/a';
     const extra = ['Ignored', 'CompileError'].filter((s) => counts[s]).map((s) => `${counts[s]} ${s}`).join(', ');
-    console.log(`\n## ${path}  score ${score}  (${findings.length} to look at${extra ? `; ${extra}` : ''})`);
+    const extraSuffix = extra ? `; ${extra}` : '';
+    console.log(`\n## ${path}  score ${score}  (${findings.length} to look at${extraSuffix})`);
     for (const f of findings) {
       const tag = f.status === 'NoCoverage' ? ' [no coverage]' : '';
       console.log(

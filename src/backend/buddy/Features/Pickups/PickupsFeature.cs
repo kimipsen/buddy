@@ -68,7 +68,7 @@ public static class PickupsFeature
             // Guid Id. Register() takes the already-typed PickupScheduleSnapshotProjection
             // instance directly, sidestepping that lookup.
             options.Projections.Register(new PickupScheduleSnapshotProjection(), ProjectionLifecycle.Inline);
-            options.Schema.For<PickupScheduleSnapshot>().DatabaseSchemaName("snapshots");
+            options.Schema.For<PickupScheduleSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
             return options;
         });

@@ -4,6 +4,7 @@ using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.TaskLibrary;
+using buddy.Features.Users;
 
 using FluentValidation;
 
@@ -103,6 +104,48 @@ public static class SendAiSessionMessageHandler
 
         List<AiChatMessage> history = [.. AiSessionHistoryBuilder.Build(existingEvents), new AiChatMessage(AiChatMessageRole.User, command.Text, [])];
         List<MealplanAiSessionEvent> newEvents = [new AiUserMessageSent(sessionId, command.Text, userId, DateTimeOffset.UtcNow)];
+
+        var toolLoopResult = await RunToolLoopAsync(
+            apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, familyMealIds, userId,
+            calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken);
+
+        if (toolLoopResult is not Result<string>.Success(var finalText))
+        {
+            return toolLoopResult.Reraise<string, AiSessionView>();
+        }
+
+        newEvents.Add(new AiAssistantMessageRecorded(sessionId, finalText, DateTimeOffset.UtcNow));
+
+        await sessions.AppendAsync(sessionId, newEvents, cancellationToken);
+
+        MealplanAiSessionEvent[] allEvents = [.. existingEvents, .. newEvents];
+        var updatedSession = MealplanAiSession.Rehydrate(allEvents)!;
+        var view = await AiSessionViewBuilder.BuildAsync(updatedSession, allEvents, meals, cancellationToken);
+
+        return new Result<AiSessionView>.Success(view);
+    }
+
+    // Drives the provider round-trip / tool-call turns, up to MaxToolLoopIterations. Mutates
+    // history and newEvents in place (both are reference types the caller keeps using afterward);
+    // the return value only carries the assistant's final reply text, or a Validation failure if
+    // the provider itself rejected the request.
+    private static async Task<Result<string>> RunToolLoopAsync(
+        string apiKey,
+        IAiChatClient chatClient,
+        string systemPrompt,
+        List<AiChatMessage> history,
+        List<MealplanAiSessionEvent> newEvents,
+        MealplanAiSessionId sessionId,
+        MealplanAiSession session,
+        IReadOnlyCollection<MealId> familyMealIds,
+        UserId userId,
+        ICalendarEventStore calendars,
+        ICalendarItemEventStore calendarItems,
+        ITaskTemplateEventStore taskTemplates,
+        IGroupEventStore groups,
+        IGuardianLinkEventStore guardians,
+        CancellationToken cancellationToken)
+    {
         string? finalText = null;
 
         for (var iteration = 0; iteration < MaxToolLoopIterations; iteration++)
@@ -115,7 +158,7 @@ public static class SendAiSessionMessageHandler
             }
             catch (AiProviderException ex)
             {
-                return new Result<AiSessionView>.Validation(ValidationProblem.Of($"The AI provider request failed: {ex.Message}"));
+                return new Result<string>.Validation(ValidationProblem.Of($"The AI provider request failed: {ex.Message}"));
             }
 
             if (completion.ToolCalls.Count == 0)
@@ -149,14 +192,6 @@ public static class SendAiSessionMessageHandler
             }
         }
 
-        newEvents.Add(new AiAssistantMessageRecorded(sessionId, finalText ?? "", DateTimeOffset.UtcNow));
-
-        await sessions.AppendAsync(sessionId, newEvents, cancellationToken);
-
-        MealplanAiSessionEvent[] allEvents = [.. existingEvents, .. newEvents];
-        var updatedSession = MealplanAiSession.Rehydrate(allEvents)!;
-        var view = await AiSessionViewBuilder.BuildAsync(updatedSession, allEvents, meals, cancellationToken);
-
-        return new Result<AiSessionView>.Success(view);
+        return new Result<string>.Success(finalText ?? "");
     }
 }

@@ -19,7 +19,7 @@ public sealed record MedicineScheduleSnapshot(Guid Id, MedicineSchedule Medicine
 // state, not a second source of truth.
 public sealed class MedicineScheduleSnapshotProjection : SingleStreamProjection<MedicineScheduleSnapshot, Guid>
 {
-    public MedicineScheduleSnapshot Create(MedicineScheduleCreated created) =>
+    public static MedicineScheduleSnapshot Create(MedicineScheduleCreated created) =>
         new(created.Id.Value, MedicineSchedule.Fold(null, MedicineEvent.FromPayload(created))!);
 
     public MedicineScheduleSnapshot Apply(MedicineScheduleSnapshot current, MedicineDetailsUpdated updated) =>
