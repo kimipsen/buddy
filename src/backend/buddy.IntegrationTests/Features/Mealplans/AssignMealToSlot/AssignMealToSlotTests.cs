@@ -2,6 +2,7 @@ using Alba;
 
 using buddy.Common;
 using buddy.Features.Mealplans;
+using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Fixtures;
@@ -247,5 +248,88 @@ public sealed class AssignMealToSlotTests(BuddyApiFixture fixture)
                 .QueryString("slot", "Dinner");
             _.StatusCodeShouldBe(403);
         });
+    }
+
+    [Fact]
+    public async Task Notes_of_exactly_2000_characters_are_accepted()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var notes = new string('n', 2000);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { MealId = meal.Id, Notes = notes })
+                .ToUrl($"/mealplans/children/{child.Id}/plan")
+                .QueryString("date", $"{today:yyyy-MM-dd}")
+                .QueryString("slot", "Dinner");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(notes, response.ReadAsJson<MealPlanEntryDto>().Notes);
+    }
+
+    [Fact]
+    public async Task Notes_longer_than_2000_characters_are_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { MealId = meal.Id, Notes = new string('n', 2001) })
+                .ToUrl($"/mealplans/children/{child.Id}/plan")
+                .QueryString("date", $"{today:yyyy-MM-dd}")
+                .QueryString("slot", "Dinner");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("Notes", error.Details.Keys);
+    }
+
+    [Theory]
+    [InlineData(2000, 200)]
+    [InlineData(2001, 400)]
+    public async Task Notes_on_a_shared_group_plan_are_limited_to_2000_characters(int notesLength, int expectedStatus)
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, guardianToken, "Co-parents");
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/mealplans/children/{child.Id}/plan/groups/{groupId}");
+            _.StatusCodeShouldBe(204);
+        });
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { MealId = meal.Id, Notes = new string('n', notesLength) })
+                .ToUrl($"/mealplans/groups/{groupId}/plan")
+                .QueryString("date", $"{today:yyyy-MM-dd}")
+                .QueryString("slot", "Dinner");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        if (expectedStatus == 400)
+        {
+            var error = response.ReadAsJson<ErrorEnvelope>();
+            Assert.Equal("validation_error", error.Code);
+            Assert.Equal(["Notes"], error.Details.Keys);
+        }
     }
 }
