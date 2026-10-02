@@ -10,6 +10,12 @@ public static class RevokeGroupInviteHandler
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
         var group = Group.Rehydrate(events);
+
+        if (group is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var access = GroupAuthorization.CheckManage(group, userId);
 
         if (access != GroupAccess.Allowed)

@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
+using buddy.Common.Aggregates;
 using buddy.Features.Users;
 
 namespace buddy.Features.WorkLocations;
@@ -33,31 +34,40 @@ public sealed record WorkLocationSchedule(
     private WorkLocationSchedule WithLocation(WorkLocationId id, Func<WorkLocation, WorkLocation> change) =>
         this with { Locations = Locations.Select(l => l.Id == id ? change(l) : l).ToImmutableList() };
 
-    public static WorkLocationSchedule? Rehydrate(IEnumerable<WorkLocationEvent> events) => events.Aggregate((WorkLocationSchedule?)null, Fold);
+    public static WorkLocationSchedule? Rehydrate(IEnumerable<WorkLocationEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
-    // Single-event step, split out from Rehydrate so WorkLocationScheduleSnapshotProjection can
-    // drive the same logic one Marten-delivered event at a time instead of duplicating this switch.
-    // Deliberately not named Apply/Create -- those names are a convention JasperFx's projection
-    // source generator scans for on any type used as a projection document (see Question 4/5 in
-    // docs/backend/analysis/event-stream-snapshots.md).
-    public static WorkLocationSchedule? Fold(WorkLocationSchedule? schedule, WorkLocationEvent @event) => @event switch
+    public static WorkLocationSchedule Replay(IEnumerable<WorkLocationEvent> events) => EventReplay.Replay(events, Start, Advance);
+
+    // Single-event steps (Start for the creation event, Advance for every later one; not Evolve
+    // either, another JasperFx convention), split out from Rehydrate so
+    // WorkLocationScheduleSnapshotProjection can drive the same logic one Marten-delivered event at
+    // a time instead of duplicating this switch. Deliberately not named Apply/Create -- those names
+    // are a convention JasperFx's projection source generator scans for on any type used as a
+    // projection document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
+    public static WorkLocationSchedule Start(WorkLocationEvent @event) => @event switch
     {
         WorkLocationScheduleStarted started => Empty(started.GuardianId, started.OccurredAt),
-        WorkLocationAdded added => schedule! with
+        _ => throw EventReplay.NotAStartEvent(nameof(WorkLocationSchedule), @event.EventType)
+    };
+
+    public static WorkLocationSchedule Advance(WorkLocationSchedule schedule, WorkLocationEvent @event) => @event switch
+    {
+        WorkLocationAdded added => schedule with
         {
-            Locations = schedule!.Locations.Add(new WorkLocation(added.LocationId, added.Name, added.Icon, added.Color))
+            Locations = schedule.Locations.Add(new WorkLocation(added.LocationId, added.Name, added.Icon, added.Color))
         },
-        WorkLocationDetailsChanged changed => schedule!.WithLocation(
+        WorkLocationDetailsChanged changed => schedule.WithLocation(
             changed.LocationId, l => l with { Name = changed.After.Name, Icon = changed.After.Icon, Color = changed.After.Color }),
-        WorkLocationArchived archived => schedule!.WithLocation(archived.LocationId, l => l with { IsArchived = true }),
-        WorkPatternReplaced replaced => schedule! with { Pattern = replaced.After },
-        WorkLocationOverridden overridden => schedule! with
+        WorkLocationArchived archived => schedule.WithLocation(archived.LocationId, l => l with { IsArchived = true }),
+        WorkPatternReplaced replaced => schedule with { Pattern = replaced.After },
+        WorkLocationOverridden overridden => schedule with
         {
-            Overrides = schedule!.Overrides.SetItem(overridden.Date, overridden.After)
+            Overrides = schedule.Overrides.SetItem(overridden.Date, overridden.After)
         },
-        WorkLocationOverrideCleared cleared => schedule! with
+        WorkLocationOverrideCleared cleared => schedule with
         {
-            Overrides = schedule!.Overrides.Remove(cleared.Date)
+            Overrides = schedule.Overrides.Remove(cleared.Date)
         },
+        WorkLocationScheduleStarted => throw EventReplay.AlreadyStarted(nameof(WorkLocationSchedule), @event.EventType)
     };
 }

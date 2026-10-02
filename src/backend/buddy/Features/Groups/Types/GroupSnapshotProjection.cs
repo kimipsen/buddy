@@ -15,28 +15,28 @@ public sealed record GroupSnapshot(Guid Id, Group Group);
 // (see GroupsFeature.AddGroupsFeature: options.Projections.Register(new GroupSnapshotProjection(),
 // ...)). Stored in the shared "snapshots" schema, never the "groups" event schema -- it is
 // derived, rebuildable state, not a second source of truth. GroupInviteCreated/Accepted/Revoked
-// have no case here, the same way they have no case in Group.Fold: they don't change Group's own
-// fields, only GroupInviteDocument.
+// have no case here, the same way Group.Advance passes them through unchanged: they don't change
+// Group's own fields, only GroupInviteDocument.
 public sealed class GroupSnapshotProjection : SingleStreamProjection<GroupSnapshot, Guid>
 {
     public static GroupSnapshot Create(GroupCreated created) =>
-        new(created.GroupId.Value, Group.Fold(null, GroupEvent.FromPayload(created))!);
+        new(created.GroupId.Value, Group.Start(GroupEvent.FromPayload(created)));
 
     public GroupSnapshot Apply(GroupSnapshot current, GroupMemberRoleGranted granted) =>
-        current with { Group = Group.Fold(current.Group, GroupEvent.FromPayload(granted))! };
+        current with { Group = Group.Advance(current.Group, GroupEvent.FromPayload(granted)) };
 
     public GroupSnapshot Apply(GroupSnapshot current, GroupMemberRoleRevoked revoked) =>
-        current with { Group = Group.Fold(current.Group, GroupEvent.FromPayload(revoked))! };
+        current with { Group = Group.Advance(current.Group, GroupEvent.FromPayload(revoked)) };
 
     public GroupSnapshot Apply(GroupSnapshot current, GroupCalendarPolicyUpdated updated) =>
-        current with { Group = Group.Fold(current.Group, GroupEvent.FromPayload(updated))! };
+        current with { Group = Group.Advance(current.Group, GroupEvent.FromPayload(updated)) };
 
     public GroupSnapshot Apply(GroupSnapshot current, GroupMealplanPolicyUpdated updated) =>
-        current with { Group = Group.Fold(current.Group, GroupEvent.FromPayload(updated))! };
+        current with { Group = Group.Advance(current.Group, GroupEvent.FromPayload(updated)) };
 
     public GroupSnapshot Apply(GroupSnapshot current, GroupMedicinePolicyUpdated updated) =>
-        current with { Group = Group.Fold(current.Group, GroupEvent.FromPayload(updated))! };
+        current with { Group = Group.Advance(current.Group, GroupEvent.FromPayload(updated)) };
 
     public GroupSnapshot Apply(GroupSnapshot current, GroupDeleted deleted) =>
-        current with { Group = Group.Fold(current.Group, GroupEvent.FromPayload(deleted))! };
+        current with { Group = Group.Advance(current.Group, GroupEvent.FromPayload(deleted)) };
 }

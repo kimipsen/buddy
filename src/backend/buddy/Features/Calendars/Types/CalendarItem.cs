@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 
+using buddy.Common.Aggregates;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -38,14 +39,18 @@ public sealed record CalendarItem(
         ? Period!.StartsAt.Date.ToDateTime(Period.StartsAt.Time)
         : DueDate!.Date.ToDateTime(DueDate.Time);
 
-    public static CalendarItem? Rehydrate(IEnumerable<CalendarItemEvent> events) => events.Aggregate((CalendarItem?)null, Fold);
+    public static CalendarItem? Rehydrate(IEnumerable<CalendarItemEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
-    // Single-event step, split out from Rehydrate so CalendarItemSnapshotProjection can drive the
-    // same logic one Marten-delivered event at a time instead of duplicating this switch.
-    // Deliberately not named Apply/Create -- those names are a convention JasperFx's projection
-    // source generator scans for on any type used as a projection document, and CalendarItem is
-    // that document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
-    public static CalendarItem? Fold(CalendarItem? item, CalendarItemEvent @event) => @event switch
+    public static CalendarItem Replay(IEnumerable<CalendarItemEvent> events) => EventReplay.Replay(events, Start, Advance);
+
+    // Single-event steps (Start for the creation event, Advance for every later one; not Evolve
+    // either, another JasperFx convention), split out from Rehydrate so
+    // CalendarItemSnapshotProjection can drive the same logic one Marten-delivered event at a time
+    // instead of duplicating this switch. Deliberately not named Apply/Create -- those names are a
+    // convention JasperFx's projection source generator scans for on any type used as a projection
+    // document, and CalendarItem is that document (see Question 4/5 in
+    // docs/backend/analysis/event-stream-snapshots.md).
+    public static CalendarItem Start(CalendarItemEvent @event) => @event switch
     {
         EventItemCreated created => new CalendarItem(
             created.Id,
@@ -76,22 +81,27 @@ public sealed record CalendarItem(
             created.AssignedTo,
             IsDeleted: false,
             created.TaskTemplateId),
-        ItemDetailsUpdated updated => item! with { Title = updated.After.Title, Icon = updated.After.Icon, Color = updated.After.Color, LastModifiedBy = updated.ModifiedBy },
-        EventRescheduled rescheduled => item! with { Period = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
-        TaskRescheduled rescheduled => item! with { DueDate = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
-        RecurrenceUpdated recurrence => item! with { Recurrence = recurrence.After, LastModifiedBy = recurrence.ModifiedBy },
+        _ => throw EventReplay.NotAStartEvent(nameof(CalendarItem), @event.EventType)
+    };
+
+    public static CalendarItem Advance(CalendarItem item, CalendarItemEvent @event) => @event switch
+    {
+        ItemDetailsUpdated updated => item with { Title = updated.After.Title, Icon = updated.After.Icon, Color = updated.After.Color, LastModifiedBy = updated.ModifiedBy },
+        EventRescheduled rescheduled => item with { Period = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
+        TaskRescheduled rescheduled => item with { DueDate = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
+        RecurrenceUpdated recurrence => item with { Recurrence = recurrence.After, LastModifiedBy = recurrence.ModifiedBy },
         // Sparse log, same rule as MedicineSchedule.DoseLog: "not completed" is the
         // implicit default, so a not-completed entry is removed rather than stored. Keyed
         // by (OccurrenceDate, SubtaskId) so a template-scheduled task's subtasks complete
         // independently; a plain non-template task always keys as (date, null).
-        TaskCompletionChanged completion => item! with
+        TaskCompletionChanged completion => item with
         {
             CompletionLog = completion.After
-                ? item!.CompletionLog.SetItem((completion.OccurrenceDate, completion.SubtaskId), true)
-                : item!.CompletionLog.Remove((completion.OccurrenceDate, completion.SubtaskId)),
+                ? item.CompletionLog.SetItem((completion.OccurrenceDate, completion.SubtaskId), true)
+                : item.CompletionLog.Remove((completion.OccurrenceDate, completion.SubtaskId)),
             LastModifiedBy = completion.ModifiedBy
         },
-        ItemDeleted deleted => item! with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },
-        _ => item
+        ItemDeleted deleted => item with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },
+        EventItemCreated or TaskItemCreated => throw EventReplay.AlreadyStarted(nameof(CalendarItem), @event.EventType)
     };
 }

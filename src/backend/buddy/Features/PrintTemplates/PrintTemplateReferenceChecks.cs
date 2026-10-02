@@ -51,7 +51,8 @@ internal sealed class PrintTemplateReferenceChecks(
         {
             var calendar = await calendars.FindSnapshotAsync(calendarId, cancellationToken);
 
-            if (await CalendarAuthorization.CheckView(calendar, callerId, groups, guardians, cancellationToken) != CalendarAccess.Allowed)
+            if (calendar is null
+                || await CalendarAuthorization.CheckView(calendar, callerId, groups, guardians, cancellationToken) != CalendarAccess.Allowed)
             {
                 return "calendarIds must be calendars you can currently view.";
             }

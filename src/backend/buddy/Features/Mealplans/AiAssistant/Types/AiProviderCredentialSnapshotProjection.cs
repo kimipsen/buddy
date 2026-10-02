@@ -20,14 +20,14 @@ public sealed record AiProviderCredentialSnapshot(Guid Id, AiProviderCredential 
 public sealed class AiProviderCredentialSnapshotProjection : SingleStreamProjection<AiProviderCredentialSnapshot, Guid>
 {
     public static AiProviderCredentialSnapshot Create(AiCredentialsInitialized created) =>
-        new(created.Id.Value, AiProviderCredential.Fold(null, AiProviderCredentialEvent.FromPayload(created))!);
+        new(created.Id.Value, AiProviderCredential.Start(AiProviderCredentialEvent.FromPayload(created)));
 
     public AiProviderCredentialSnapshot Apply(AiProviderCredentialSnapshot current, ProviderApiKeySet set) =>
-        current with { AiProviderCredential = AiProviderCredential.Fold(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(set))! };
+        current with { AiProviderCredential = AiProviderCredential.Advance(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(set)) };
 
     public AiProviderCredentialSnapshot Apply(AiProviderCredentialSnapshot current, ProviderApiKeyRemoved removed) =>
-        current with { AiProviderCredential = AiProviderCredential.Fold(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(removed))! };
+        current with { AiProviderCredential = AiProviderCredential.Advance(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(removed)) };
 
     public AiProviderCredentialSnapshot Apply(AiProviderCredentialSnapshot current, ActiveProviderChanged changed) =>
-        current with { AiProviderCredential = AiProviderCredential.Fold(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(changed))! };
+        current with { AiProviderCredential = AiProviderCredential.Advance(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(changed)) };
 }

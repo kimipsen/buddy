@@ -19,23 +19,23 @@ public sealed record TaskTemplateSnapshot(Guid Id, TaskTemplate TaskTemplate);
 public sealed class TaskTemplateSnapshotProjection : SingleStreamProjection<TaskTemplateSnapshot, Guid>
 {
     public static TaskTemplateSnapshot Create(TaskTemplateCreated created) =>
-        new(created.Id.Value, TaskTemplate.Fold(null, TaskTemplateEvent.FromPayload(created))!);
+        new(created.Id.Value, TaskTemplate.Start(TaskTemplateEvent.FromPayload(created)));
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, TaskTemplateDetailsUpdated updated) =>
-        current with { TaskTemplate = TaskTemplate.Fold(current.TaskTemplate, TaskTemplateEvent.FromPayload(updated))! };
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(updated)) };
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, SubtaskAdded added) =>
-        current with { TaskTemplate = TaskTemplate.Fold(current.TaskTemplate, TaskTemplateEvent.FromPayload(added))! };
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(added)) };
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, SubtaskUpdated updated) =>
-        current with { TaskTemplate = TaskTemplate.Fold(current.TaskTemplate, TaskTemplateEvent.FromPayload(updated))! };
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(updated)) };
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, SubtaskRemoved removed) =>
-        current with { TaskTemplate = TaskTemplate.Fold(current.TaskTemplate, TaskTemplateEvent.FromPayload(removed))! };
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(removed)) };
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, SubtasksReordered reordered) =>
-        current with { TaskTemplate = TaskTemplate.Fold(current.TaskTemplate, TaskTemplateEvent.FromPayload(reordered))! };
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(reordered)) };
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, TaskTemplateArchived archived) =>
-        current with { TaskTemplate = TaskTemplate.Fold(current.TaskTemplate, TaskTemplateEvent.FromPayload(archived))! };
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(archived)) };
 }

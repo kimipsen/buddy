@@ -61,6 +61,6 @@ public static class CreateMedicineScheduleHandler
 
         var events = await medicines.CreateAsync(medicineId, [created], cancellationToken);
 
-        return MedicineSchedule.Rehydrate(events)!;
+        return MedicineSchedule.Replay(events);
     }
 }

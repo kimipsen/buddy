@@ -83,8 +83,8 @@ public sealed record PickupScheduleCreated(PickupScheduleId Id, UserId ChildId, 
 
 Pattern: `Features/Pickups/Types/PickupSchedule.cs`.
 
-- `public static T? Rehydrate(IEnumerable<TEvent> events) => events.Aggregate((T?)null, Fold);`
-- `public static T? Fold(T? state, TEvent @event)` - one event step, reused by the snapshot projection. Do **not** name it `Apply`/`Create`: JasperFx's projection source generator scans those names on any projection document type.
+- `public static T Start(TEvent @event)` builds the aggregate from its creation event (`_ => throw EventReplay.NotAStartEvent(...)`); `public static T Advance(T state, TEvent @event)` applies every later event and lists the creation events as `=> throw EventReplay.AlreadyStarted(...)` instead of a `_ =>` fallthrough, so CS8509 flags a new event the aggregate doesn't handle (events that don't change the aggregate get an explicit `X or Y => state` arm). Both are non-null and reused by the snapshot projection. Do **not** name them `Apply`/`Create`/`Evolve`: JasperFx's projection source generator scans those names on any projection document type.
+- `public static T? Rehydrate(IEnumerable<TEvent> events) => EventReplay.Rehydrate(events, Start, Advance);` (`Common/Aggregates/EventReplay.cs`) - null only for an empty stream. `public static T Replay(...) => EventReplay.Replay(events, Start, Advance);` for a stream the handler just created or appended to, instead of `Rehydrate(...)!`.
 - Command handlers that decide on current state rehydrate from `ReadAsync`. Read-only handlers (Get/List) use `FindSnapshotAsync` (`Features/Groups/GetGroup/GetGroup.Handler.cs`).
 - Append only when something changed (compare before/after) - this is what makes PUT/DELETE idempotent (see `AssignPickupHandler`'s `unchanged` check).
 
@@ -106,7 +106,7 @@ Store registration: `Features/Pickups/PickupsFeature.cs`. Event store: `Features
 Pattern: `Features/Pickups/Types/PickupScheduleSnapshotProjection.cs`.
 
 - Document is a wrapper `sealed record <Agg>Snapshot(Guid Id, <Agg> <Agg>)` - Marten can't use a `sealed record` ID class as a document Id.
-- Projection: `SingleStreamProjection<<Agg>Snapshot, Guid>` with `Create(<FirstEvent>)` and one `Apply(current, <Event>)` per later event, each delegating to `<Agg>.Fold`.
+- Projection: `SingleStreamProjection<<Agg>Snapshot, Guid>` with `Create(<FirstEvent>)` and one `Apply(current, <Event>)` per later event, delegating to `<Agg>.Start` / `<Agg>.Advance` (no `!`).
 - Register in `<Domain>Feature.cs`:
   ```csharp
   options.Projections.Register(new PickupScheduleSnapshotProjection(), ProjectionLifecycle.Inline);

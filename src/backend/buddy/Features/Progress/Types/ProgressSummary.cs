@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-
 namespace buddy.Features.Progress;
 
 public sealed record ProgressSummary(
@@ -10,16 +8,14 @@ public sealed record ProgressSummary(
     string NextGoalIcon,
     IReadOnlyList<GoalPostResponse> GoalPosts)
 {
-    public static ProgressSummary From(ChildProgress? progress)
+    public static ProgressSummary From(ChildProgress progress)
     {
-        var totalStars = progress?.TotalStars ?? 0;
-        var unlockedMilestones = progress?.UnlockedMilestones ?? ImmutableHashSet<int>.Empty;
-        var configuredGoalPosts = progress?.GoalPosts ?? ImmutableArray<GoalPost>.Empty;
-        var (current, next) = GoalPostResolver.Resolve(configuredGoalPosts, totalStars);
+        var configuredGoalPosts = progress.GoalPosts;
+        var (current, next) = GoalPostResolver.Resolve(configuredGoalPosts, progress.TotalStars);
 
         return new ProgressSummary(
-            totalStars,
-            [.. unlockedMilestones.OrderBy(threshold => threshold)],
+            progress.TotalStars,
+            [.. progress.UnlockedMilestones.OrderBy(threshold => threshold)],
             current?.Icon,
             next.Threshold,
             next.Icon,

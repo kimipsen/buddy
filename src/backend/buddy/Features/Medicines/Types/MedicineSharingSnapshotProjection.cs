@@ -20,18 +20,18 @@ public sealed record MedicineSharingSnapshot(Guid Id, MedicineSharing MedicineSh
 public sealed class MedicineSharingSnapshotProjection : SingleStreamProjection<MedicineSharingSnapshot, Guid>
 {
     // MedicineSharedWithGroup doubles as both the stream's creation event and a later re-share
-    // event -- there's no separate "started" event (see MedicineSharingEvents.cs), matching the
-    // "sharing is null ? new(...) : ... with {...}" branch inside MedicineSharing.Fold itself.
+    // event -- there's no separate "started" event (see MedicineSharingEvents.cs), matching
+    // MedicineSharing.Start (first event) vs MedicineSharing.Advance (a later re-share).
     // Marten's generated Evolver dispatches to this Create overload only for the first event on a
     // stream (no snapshot row yet); any later occurrence of MedicineSharedWithGroup on the same
     // stream (a re-share after an unshare) goes through the Apply overload below instead, exactly
-    // mirroring Fold's own null check.
+    // mirroring that split.
     public static MedicineSharingSnapshot Create(MedicineSharedWithGroup shared) =>
-        new(shared.Id.Value, MedicineSharing.Fold(null, MedicineSharingEvent.FromPayload(shared))!);
+        new(shared.Id.Value, MedicineSharing.Start(MedicineSharingEvent.FromPayload(shared)));
 
     public MedicineSharingSnapshot Apply(MedicineSharingSnapshot current, MedicineSharedWithGroup shared) =>
-        current with { MedicineSharing = MedicineSharing.Fold(current.MedicineSharing, MedicineSharingEvent.FromPayload(shared))! };
+        current with { MedicineSharing = MedicineSharing.Advance(current.MedicineSharing, MedicineSharingEvent.FromPayload(shared)) };
 
     public MedicineSharingSnapshot Apply(MedicineSharingSnapshot current, MedicineUnsharedFromGroup unshared) =>
-        current with { MedicineSharing = MedicineSharing.Fold(current.MedicineSharing, MedicineSharingEvent.FromPayload(unshared))! };
+        current with { MedicineSharing = MedicineSharing.Advance(current.MedicineSharing, MedicineSharingEvent.FromPayload(unshared)) };
 }

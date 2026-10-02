@@ -20,12 +20,19 @@ public static class AddChildToGroupHandler
         // required, checked in this order so a caller can't probe group membership for a child
         // they don't guard).
         var link = await guardians.FindActiveLinkAsync(command.ChildId, userId, cancellationToken);
+
         if (link is null)
         {
             return new Result<Unit>.NotFound();
         }
 
         var group = Group.Rehydrate(await groups.ReadAsync(command.GroupId, cancellationToken));
+
+        if (group is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var access = GroupAuthorization.CheckManage(group, userId);
 
         if (access != GroupAccess.Allowed)
@@ -33,7 +40,7 @@ public static class AddChildToGroupHandler
             return access.ToDeniedResult<Unit>();
         }
 
-        if (group!.Members.ContainsKey(command.ChildId))
+        if (group.Members.ContainsKey(command.ChildId))
         {
             return new Result<Unit>.Success(Unit.Value);
         }

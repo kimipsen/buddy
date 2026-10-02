@@ -11,7 +11,7 @@ public sealed record WorkLocationScheduleSnapshot(Guid Id, WorkLocationSchedule 
 public sealed class WorkLocationScheduleSnapshotProjection : SingleStreamProjection<WorkLocationScheduleSnapshot, Guid>
 {
     public static WorkLocationScheduleSnapshot Create(WorkLocationScheduleStarted started) =>
-        new(started.Id.Value, WorkLocationSchedule.Fold(null, WorkLocationEvent.FromPayload(started))!);
+        new(started.Id.Value, WorkLocationSchedule.Start(WorkLocationEvent.FromPayload(started)));
 
     public WorkLocationScheduleSnapshot Apply(WorkLocationScheduleSnapshot current, WorkLocationAdded e) => Next(current, e);
 
@@ -26,5 +26,5 @@ public sealed class WorkLocationScheduleSnapshotProjection : SingleStreamProject
     public WorkLocationScheduleSnapshot Apply(WorkLocationScheduleSnapshot current, WorkLocationOverrideCleared e) => Next(current, e);
 
     private static WorkLocationScheduleSnapshot Next(WorkLocationScheduleSnapshot current, WorkLocationEvent e) =>
-        current with { WorkLocationSchedule = WorkLocationSchedule.Fold(current.WorkLocationSchedule, e)! };
+        current with { WorkLocationSchedule = WorkLocationSchedule.Advance(current.WorkLocationSchedule, e) };
 }

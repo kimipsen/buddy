@@ -13,6 +13,12 @@ public static class CreateIcalTokenHandler
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(events);
+
+        if (calendar is null)
+        {
+            return new Result<IssuedIcalToken>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)

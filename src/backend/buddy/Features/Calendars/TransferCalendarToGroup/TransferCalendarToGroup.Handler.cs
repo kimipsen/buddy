@@ -17,6 +17,12 @@ public static class TransferCalendarToGroupHandler
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(events);
+
+        if (calendar is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
@@ -27,6 +33,12 @@ public static class TransferCalendarToGroupHandler
         // Two-sided consent, the same shape ShareMealPlanWithGroup/ShareMedicineWithGroup use:
         // the calendar's current owner and the destination group's management both have to agree.
         var targetGroup = Group.Rehydrate(await groups.ReadAsync(command.NewGroupId, cancellationToken));
+
+        if (targetGroup is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var groupAccess = GroupAuthorization.CheckManage(targetGroup, userId);
 
         if (groupAccess != GroupAccess.Allowed)
@@ -34,7 +46,7 @@ public static class TransferCalendarToGroupHandler
             return groupAccess.ToDeniedResult<Unit>();
         }
 
-        if (calendar!.Owner is CalendarOwner.Group(var currentGroupId) && currentGroupId == command.NewGroupId)
+        if (calendar.Owner is CalendarOwner.Group(var currentGroupId) && currentGroupId == command.NewGroupId)
         {
             // Already there -- idempotent, same rationale as UnshareMealPlanFromGroupHandler's.
             return new Result<Unit>.Success(Unit.Value);

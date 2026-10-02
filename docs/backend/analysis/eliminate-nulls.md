@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0 and 1 implemented (see each phase's "As built"); phases 2-7 proposed.
+Status: Phases 0-2 implemented (see each phase's "As built"); phases 3-7 proposed.
 
 ## Context
 
@@ -266,7 +266,7 @@ right after a create (37 times).
 - Projections call `Create(created)` directly.
   - Pick method names that don't collide with Marten's projection conventions. Marten
     source-generates against `Create`/`Apply` on projection types, so the aggregate methods may need
-    different names, for example `Start`/`Evolve`.
+    different names, for example `Start`/`Evolve` (as built: `Start`/`Advance`; see below).
 - Handlers that just created a stream build the aggregate from the event they appended, instead of
   `Rehydrate(...)!`.
 - Authorization helpers return the aggregate along with the decision.
@@ -281,6 +281,34 @@ right after a create (37 times).
 
 No event shapes change. Snapshot tests should pass unchanged. This is the proof that the refactor
 preserved behavior.
+
+### As built (Phase 2)
+
+- **Names: `Start` / `Advance`.** The open question is settled: JasperFx's source generator
+  scans `Evolve` (its `AggregateEvolverGenerator`) as well as `Apply`/`Create`, so `Evolve` broke
+  the build.
+- **Aggregates and projections.**
+  - All 16 aggregates have a non-null `Start(event)`, which throws `EventReplay.NotAStartEvent`
+    for a non-creation event, and a non-null `Advance(state, event)`.
+  - `Rehydrate` / `Replay` delegate to `Common/Aggregates/EventReplay.cs`.
+  - The snapshot projections call `Start` / `Advance` directly.
+  - The 37 `Rehydrate(...)!` became `Replay(...)`, and the 69 `state!` in folds are gone.
+- **No catch-all in `Advance`.** It names the creation events as `=> throw EventReplay.AlreadyStarted`
+  instead of using `_ => state`. That surfaced events the old fallthrough silently ignored:
+  `Group` (the three invite events) and `MealplanAiSession` (messages and tool invocations).
+  They are now explicit `=> state` arms, and a new event without an arm fails the build (CS8509).
+- **`MedicineSharingStarted` was not added.** Splitting into `Start`/`Advance` already separates
+  "first `MedicineSharedWithGroup`" from "a later re-share", so the extra event wasn't needed.
+- **Authorization helpers.** `CalendarAuthorization.Check*` and `GroupAuthorization.Check*` take a
+  non-null aggregate, and callers handle a missing one first with the outcome `Check*(null)` used
+  to produce: `NotFound` in handlers, `Forbidden` in `CreateCalendar`, the validation message in
+  `PrintTemplateReferenceChecks`. That removes the `calendar!`/`group!` uses.
+- **Smaller changes.**
+  - `ChildProgress.Initial(id, childId)` replaces the `current?.X ?? default` chains and the
+    hand-built empty aggregate in `ConfigureGoalPosts`. `ProgressSummary.From` takes a non-null
+    aggregate.
+  - The five `FindSnapshotAsync(...)!` after an index lookup now throw a named
+    `InvalidOperationException` (index without a snapshot is corrupt data).
 
 ## Phase 3: delete back-compat code
 
@@ -588,9 +616,6 @@ even forgets to reset `loading` on retry.
 
 ## Remaining open questions
 
-- **Method names for create/apply on aggregates (Phase 2).** Marten source-generates against
-  `Create`/`Apply` on projection types. Lean: `Start`/`Evolve` on the aggregate, so there is no
-  collision. Confirm against the Marten version in use before the first aggregate is converted.
 - **Recurrence on the wire (5.5).** Lean: keep `recurrence: null` / `until: null` on the wire and
   map at the endpoint, because the frontend's form already models "none". Exposing the union on
   the wire would be additive later.
@@ -607,7 +632,7 @@ even forgets to reset `loading` on retry.
 flowchart TB
     P0["Phase 0: guardrails\nTS strict + strictTemplates + noUncheckedIndexedAccess\nSTJ RespectNullableAnnotations, ValidateOnStart"]
     P1["Phase 1: non-null caller id\nRequireProvisionedUser filter -> 403 user_not_provisioned"]
-    P2["Phase 2: aggregate folds\nStart/Evolve, no x! / Rehydrate!"]
+    P2["Phase 2: aggregate folds\nStart/Advance, no x! / Rehydrate!"]
     P3["Phase 3: delete back-compat\n= null defaults, legacy CalendarCreated, doc Icon?"]
     P4["Phase 4: free text = string\n\"\" means none, normalized at endpoint"]
     P5["Phase 5: unions (one PR per domain)\nPickupAssignee, ItemSchedule, CompletionTarget,\nOccurrenceTiming, Recurrence, User, WorkDayStatus"]

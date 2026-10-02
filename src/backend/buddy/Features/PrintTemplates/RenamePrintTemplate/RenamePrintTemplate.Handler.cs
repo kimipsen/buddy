@@ -24,22 +24,22 @@ public static class RenamePrintTemplateHandler
 
         var userId = command.UserId;
 
-        var (template, access) = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
+        var loaded = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
 
-        if (access != PrintTemplateAccess.Allowed)
+        if (loaded is not Result<PrintTemplate>.Success(var template))
         {
-            return access.ToDeniedResult<PrintTemplateResponse>();
+            return loaded.Reraise<PrintTemplate, PrintTemplateResponse>();
         }
 
         var name = command.Name.Trim();
 
-        if (name == template!.Name)
+        if (name == template.Name)
         {
             return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(template));
         }
 
         var renamed = new PrintTemplateRenamed(template.Id, template.Name, name, userId, DateTimeOffset.UtcNow);
-        var after = PrintTemplate.Fold(template, renamed)!;
+        var after = PrintTemplate.Advance(template, renamed);
 
         await store.AppendAsync(template.Id, [renamed], PrintTemplateIndexDocument.From(after), cancellationToken);
 

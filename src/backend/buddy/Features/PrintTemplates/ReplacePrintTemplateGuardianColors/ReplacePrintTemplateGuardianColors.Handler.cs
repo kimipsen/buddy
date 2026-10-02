@@ -28,14 +28,14 @@ public static class ReplacePrintTemplateGuardianColorsHandler
 
         var userId = command.UserId;
 
-        var (template, access) = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
+        var loaded = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
 
-        if (access != PrintTemplateAccess.Allowed)
+        if (loaded is not Result<PrintTemplate>.Success(var template))
         {
-            return access.ToDeniedResult<PrintTemplateResponse>();
+            return loaded.Reraise<PrintTemplate, PrintTemplateResponse>();
         }
 
-        if (command.Colors.SequenceEqual(template!.GuardianColors))
+        if (command.Colors.SequenceEqual(template.GuardianColors))
         {
             return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(template));
         }
@@ -51,6 +51,6 @@ public static class ReplacePrintTemplateGuardianColorsHandler
 
         await store.AppendAsync(template.Id, [replaced], index: null, cancellationToken);
 
-        return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(PrintTemplate.Fold(template, replaced)!));
+        return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(PrintTemplate.Advance(template, replaced)));
     }
 }

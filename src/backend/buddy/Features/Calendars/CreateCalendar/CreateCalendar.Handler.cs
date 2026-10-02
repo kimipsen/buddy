@@ -28,7 +28,7 @@ public static class CreateCalendarHandler
         // collapses into the same Forbidden this already returned for "not a manager of this
         // group" -- there's no separate NotFound case on this outcome, since unlike every other
         // calendar endpoint there's no existing resource yet to hide behind an ambiguous 404.
-        if (GroupAuthorization.CheckManage(group, ownerId) != GroupAccess.Allowed)
+        if (group is null || GroupAuthorization.CheckManage(group, ownerId) != GroupAccess.Allowed)
         {
             return new CreateCalendarOutcome.Forbidden();
         }
@@ -45,6 +45,6 @@ public static class CreateCalendarHandler
 
         var events = await calendars.CreateAsync(calendarId, initialEvents, cancellationToken);
 
-        return new CreateCalendarOutcome.Success(Calendar.Rehydrate(events)!);
+        return new CreateCalendarOutcome.Success(Calendar.Replay(events));
     }
 }

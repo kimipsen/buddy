@@ -22,11 +22,11 @@ public sealed record GuardianLinkSnapshot(Guid Id, GuardianLink GuardianLink);
 public sealed class GuardianLinkSnapshotProjection : SingleStreamProjection<GuardianLinkSnapshot, Guid>
 {
     public static GuardianLinkSnapshot Create(GuardianLinked linked) =>
-        new(linked.GuardianLinkId.Value, GuardianLink.Fold(null, GuardianEvent.FromPayload(linked))!);
+        new(linked.GuardianLinkId.Value, GuardianLink.Start(GuardianEvent.FromPayload(linked)));
 
     public GuardianLinkSnapshot Apply(GuardianLinkSnapshot current, GuardianKindChanged changed) =>
-        current with { GuardianLink = GuardianLink.Fold(current.GuardianLink, GuardianEvent.FromPayload(changed))! };
+        current with { GuardianLink = GuardianLink.Advance(current.GuardianLink, GuardianEvent.FromPayload(changed)) };
 
     public GuardianLinkSnapshot Apply(GuardianLinkSnapshot current, GuardianRevoked revoked) =>
-        current with { GuardianLink = GuardianLink.Fold(current.GuardianLink, GuardianEvent.FromPayload(revoked))! };
+        current with { GuardianLink = GuardianLink.Advance(current.GuardianLink, GuardianEvent.FromPayload(revoked)) };
 }

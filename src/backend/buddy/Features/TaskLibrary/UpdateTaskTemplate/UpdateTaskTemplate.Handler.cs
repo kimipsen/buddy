@@ -41,6 +41,6 @@ public static class UpdateTaskTemplateHandler
 
         await templates.AppendAsync(command.TemplateId, [updated], cancellationToken);
 
-        return new Result<TaskTemplate>.Success(TaskTemplate.Rehydrate([.. loaded.Events, updated])!);
+        return new Result<TaskTemplate>.Success(TaskTemplate.Replay([.. loaded.Events, updated]));
     }
 }

@@ -19,6 +19,12 @@ public static class ListItemsHandler
 
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
+
+        if (calendar is null)
+        {
+            return new Result<IReadOnlyCollection<CalendarItem>>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckView(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)

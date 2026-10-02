@@ -16,10 +16,16 @@ public static class GetPrintTemplateHandler
         var userId = query.UserId;
 
         var template = await store.FindSnapshotAsync(query.TemplateId, cancellationToken);
+
+        if (template is null)
+        {
+            return new Result<PrintTemplateResponse>.NotFound();
+        }
+
         var access = await PrintTemplateAuthorization.CheckManage(template, userId, groups, guardians, cancellationToken);
 
         return access == PrintTemplateAccess.Allowed
-            ? new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(template!))
+            ? new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(template))
             : access.ToDeniedResult<PrintTemplateResponse>();
     }
 }

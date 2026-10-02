@@ -138,6 +138,13 @@ same-named static helper with the wrong signature — the resulting generated
 overloads (a different type, `GroupSnapshotProjection`) are the ones the
 generator is meant to find.
 
+**Later change ([eliminate-nulls.md, Phase 2](eliminate-nulls.md#phase-2-aggregate-folds-without-null)):**
+`Fold(T?, e)` was split into a non-null `Start(e)` for the creation event and
+`Advance(T, e)` for every later one, so no case needs `state!`. The
+projection's `Create` calls `Group.Start(...)` and each `Apply` calls
+`Group.Advance(...)`. `Evolve` is avoided for the same reason as
+`Apply`/`Create`: the generator's `AggregateEvolverGenerator` scans it too.
+
 ## Question 5: strongly-typed IDs as Marten document identity
 
 Resolved, and it took two real fixes beyond what was expected:

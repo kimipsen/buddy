@@ -28,7 +28,7 @@ public static class RemoveProviderApiKeyHandler
         }
 
         var existingEvents = await credentials.ReadAsync(credentialId, cancellationToken);
-        var existing = AiProviderCredential.Rehydrate(existingEvents)!;
+        var existing = AiProviderCredential.Replay(existingEvents);
 
         if (!existing.Providers.ContainsKey(command.Provider))
         {
@@ -47,7 +47,7 @@ public static class RemoveProviderApiKeyHandler
 
         await credentials.AppendAsync(credentialId, newEvents, cancellationToken);
 
-        var updated = AiProviderCredential.Rehydrate([.. existingEvents, .. newEvents])!;
+        var updated = AiProviderCredential.Replay([.. existingEvents, .. newEvents]);
 
         return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(updated));
     }

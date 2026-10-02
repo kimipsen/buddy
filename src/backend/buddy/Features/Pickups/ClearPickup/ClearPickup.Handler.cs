@@ -31,7 +31,7 @@ public static class ClearPickupHandler
         }
 
         var events = await pickups.ReadAsync(scheduleId, cancellationToken);
-        var schedule = PickupSchedule.Rehydrate(events)!;
+        var schedule = PickupSchedule.Replay(events);
 
         if (schedule.Assignments.GetValueOrDefault((command.Date, command.Slot)) is not { } before)
         {

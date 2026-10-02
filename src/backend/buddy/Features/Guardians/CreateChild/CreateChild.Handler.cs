@@ -52,8 +52,8 @@ public static class CreateChildHandler
         var (userEvents, guardianEvents) = await guardianLinks.CreateChildAndLinkAsync(
             provisioned.Subject, childId, [userCreated], linkId, [guardianLinked], cancellationToken);
 
-        var child = User.Rehydrate(userEvents)!;
-        var link = GuardianLink.Rehydrate(guardianEvents)!;
+        var child = User.Replay(userEvents);
+        var link = GuardianLink.Replay(guardianEvents);
 
         return new CreateChildOutcome.Success(child, link, provisioned.Username, provisioned.TemporaryPassword);
     }

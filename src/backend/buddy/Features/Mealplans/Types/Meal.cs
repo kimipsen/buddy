@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 
+using buddy.Common.Aggregates;
 using buddy.Features.Calendars;
 using buddy.Features.Users;
 
@@ -19,14 +20,17 @@ public sealed record Meal(
     ImmutableDictionary<UserId, MealRating> Ratings,
     UserId LastModifiedBy)
 {
-    public static Meal? Rehydrate(IEnumerable<MealEvent> events) => events.Aggregate((Meal?)null, Fold);
+    public static Meal? Rehydrate(IEnumerable<MealEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
-    // Single-event step, split out from Rehydrate so MealSnapshotProjection can drive the same
-    // logic one Marten-delivered event at a time instead of duplicating this switch. Deliberately
-    // not named Apply/Create -- those names are a convention JasperFx's projection source
-    // generator scans for on any type used as a projection document, and Meal is that document
-    // (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
-    public static Meal? Fold(Meal? meal, MealEvent @event) => @event switch
+    public static Meal Replay(IEnumerable<MealEvent> events) => EventReplay.Replay(events, Start, Advance);
+
+    // Single-event steps (Start for the creation event, Advance for every later one; not Evolve
+    // either, another JasperFx convention), split out from Rehydrate so MealSnapshotProjection can
+    // drive the same logic one Marten-delivered event at a time instead of duplicating this switch.
+    // Deliberately not named Apply/Create -- those names are a convention JasperFx's projection
+    // source generator scans for on any type used as a projection document, and Meal is that
+    // document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
+    public static Meal Start(MealEvent @event) => @event switch
     {
         MealCreated created => new Meal(
             created.Id,
@@ -38,7 +42,12 @@ public sealed record Meal(
             IsArchived: false,
             ImmutableDictionary<UserId, MealRating>.Empty,
             created.CreatedBy),
-        MealDetailsUpdated updated => meal! with
+        _ => throw EventReplay.NotAStartEvent(nameof(Meal), @event.EventType)
+    };
+
+    public static Meal Advance(Meal meal, MealEvent @event) => @event switch
+    {
+        MealDetailsUpdated updated => meal with
         {
             Name = updated.After.Name,
             Description = updated.After.Description,
@@ -46,14 +55,14 @@ public sealed record Meal(
             Color = updated.After.Color,
             LastModifiedBy = updated.ModifiedBy
         },
-        MealArchived archived => meal! with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
+        MealArchived archived => meal with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
         // Keyed by which child rated it -- each sibling has their own opinion of a shared
         // meal, so one Meal can hold one rating per child rather than a single value.
-        MealRated rated => meal! with
+        MealRated rated => meal with
         {
-            Ratings = meal!.Ratings.SetItem(rated.ChildId, rated.After),
+            Ratings = meal.Ratings.SetItem(rated.ChildId, rated.After),
             LastModifiedBy = rated.ChildId
         },
-        _ => meal
+        MealCreated => throw EventReplay.AlreadyStarted(nameof(Meal), @event.EventType)
     };
 }

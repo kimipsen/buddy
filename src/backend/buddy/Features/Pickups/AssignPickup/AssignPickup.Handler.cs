@@ -58,7 +58,7 @@ public static class AssignPickupHandler
         else
         {
             var events = await pickups.ReadAsync(scheduleId, cancellationToken);
-            var schedule = PickupSchedule.Rehydrate(events)!;
+            var schedule = PickupSchedule.Replay(events);
             var before = schedule.Assignments.GetValueOrDefault((command.Date, command.Slot));
 
             // Compares content only, not AssignedBy -- re-asserting the same arrangement (even by

@@ -30,6 +30,12 @@ public static class CreateItemHandler
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
+
+        if (calendar is null)
+        {
+            return new Result<CalendarItem>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
@@ -76,6 +82,6 @@ public static class CreateItemHandler
 
         var events = await items.CreateAsync(itemId, [created], cancellationToken);
 
-        return new Result<CalendarItem>.Success(CalendarItem.Rehydrate(events)!);
+        return new Result<CalendarItem>.Success(CalendarItem.Replay(events));
     }
 }

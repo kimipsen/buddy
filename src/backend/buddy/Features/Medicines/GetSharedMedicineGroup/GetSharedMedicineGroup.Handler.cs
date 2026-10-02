@@ -30,7 +30,8 @@ public static class GetSharedMedicineGroupHandler
             return new Result<SharedMedicineGroup?>.Success(null);
         }
 
-        var record = (await sharing.FindSnapshotAsync(sharingId, cancellationToken))!;
+        var record = await sharing.FindSnapshotAsync(sharingId, cancellationToken)
+            ?? throw new InvalidOperationException($"No snapshot for sharingId {sharingId}, although its index says the stream exists.");
 
         if (record.SharedWithGroupId is not { } groupId)
         {

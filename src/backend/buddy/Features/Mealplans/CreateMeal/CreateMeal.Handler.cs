@@ -51,6 +51,6 @@ public static class CreateMealHandler
 
         var events = await meals.CreateAsync(mealId, [created], cancellationToken);
 
-        return Meal.Rehydrate(events)!;
+        return Meal.Replay(events);
     }
 }

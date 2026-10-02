@@ -47,6 +47,6 @@ internal static class WorkLocationScheduleWriter
                 cancellationToken);
         }
 
-        return newEvents.Aggregate(schedule, (current, e) => WorkLocationSchedule.Fold(current, e)!);
+        return newEvents.Aggregate(schedule, (current, e) => WorkLocationSchedule.Advance(current, e));
     }
 }

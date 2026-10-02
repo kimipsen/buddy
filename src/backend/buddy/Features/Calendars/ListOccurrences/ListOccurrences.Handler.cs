@@ -34,6 +34,12 @@ public static class ListOccurrencesHandler
 
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
+
+        if (calendar is null)
+        {
+            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckView(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
@@ -41,7 +47,7 @@ public static class ListOccurrencesHandler
             return access.ToDeniedResult<IReadOnlyCollection<CalendarItemOccurrence>>();
         }
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar!.TimeZoneId, calendar.Icon, query.From, query.To, items, templates, cancellationToken);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, calendar.Icon, query.From, query.To, items, templates, cancellationToken);
 
         if (await ChildVisibility.IsChildAsync(userId, guardians, cancellationToken))
         {

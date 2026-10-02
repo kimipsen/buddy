@@ -22,6 +22,12 @@ public static class RescheduleItemHandler
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
+
+        if (calendar is null)
+        {
+            return new Result<CalendarItem>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)

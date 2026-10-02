@@ -30,12 +30,12 @@ public static class GroupAccessExtensions
 
 public static class GroupAuthorization
 {
-    public static GroupAccess CheckView(Group? group, UserId userId) =>
-        group is not null && CanView(group, userId) ? GroupAccess.Allowed : GroupAccess.NotFound;
+    public static GroupAccess CheckView(Group group, UserId userId) =>
+        CanView(group, userId) ? GroupAccess.Allowed : GroupAccess.NotFound;
 
-    public static GroupAccess CheckManage(Group? group, UserId userId)
+    public static GroupAccess CheckManage(Group group, UserId userId)
     {
-        if (group is null || !CanView(group, userId))
+        if (!CanView(group, userId))
         {
             return GroupAccess.NotFound;
         }
@@ -43,9 +43,9 @@ public static class GroupAuthorization
         return CanManage(group, userId) ? GroupAccess.Allowed : GroupAccess.Forbidden;
     }
 
-    public static GroupAccess CheckOwner(Group? group, UserId userId)
+    public static GroupAccess CheckOwner(Group group, UserId userId)
     {
-        if (group is null || !CanView(group, userId))
+        if (!CanView(group, userId))
         {
             return GroupAccess.NotFound;
         }

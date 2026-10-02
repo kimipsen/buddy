@@ -18,29 +18,29 @@ public sealed record CalendarSnapshot(Guid Id, Calendar Calendar);
 public sealed class CalendarSnapshotProjection : SingleStreamProjection<CalendarSnapshot, Guid>
 {
     public static CalendarSnapshot Create(CalendarCreated created) =>
-        new(created.CalendarId.Value, Calendar.Fold(null, CalendarEvent.FromPayload(created))!);
+        new(created.CalendarId.Value, Calendar.Start(CalendarEvent.FromPayload(created)));
 
     public static CalendarSnapshot Create(CalendarCreatedForGroup created) =>
-        new(created.CalendarId.Value, Calendar.Fold(null, CalendarEvent.FromPayload(created))!);
+        new(created.CalendarId.Value, Calendar.Start(CalendarEvent.FromPayload(created)));
 
     public CalendarSnapshot Apply(CalendarSnapshot current, CalendarIconChanged changed) =>
-        current with { Calendar = Calendar.Fold(current.Calendar, CalendarEvent.FromPayload(changed))! };
+        current with { Calendar = Calendar.Advance(current.Calendar, CalendarEvent.FromPayload(changed)) };
 
     public CalendarSnapshot Apply(CalendarSnapshot current, CalendarTransferredToGroup transferred) =>
-        current with { Calendar = Calendar.Fold(current.Calendar, CalendarEvent.FromPayload(transferred))! };
+        current with { Calendar = Calendar.Advance(current.Calendar, CalendarEvent.FromPayload(transferred)) };
 
     public CalendarSnapshot Apply(CalendarSnapshot current, MemberRoleGranted granted) =>
-        current with { Calendar = Calendar.Fold(current.Calendar, CalendarEvent.FromPayload(granted))! };
+        current with { Calendar = Calendar.Advance(current.Calendar, CalendarEvent.FromPayload(granted)) };
 
     public CalendarSnapshot Apply(CalendarSnapshot current, MemberRoleRevoked revoked) =>
-        current with { Calendar = Calendar.Fold(current.Calendar, CalendarEvent.FromPayload(revoked))! };
+        current with { Calendar = Calendar.Advance(current.Calendar, CalendarEvent.FromPayload(revoked)) };
 
     public CalendarSnapshot Apply(CalendarSnapshot current, IcalTokenIssued issued) =>
-        current with { Calendar = Calendar.Fold(current.Calendar, CalendarEvent.FromPayload(issued))! };
+        current with { Calendar = Calendar.Advance(current.Calendar, CalendarEvent.FromPayload(issued)) };
 
     public CalendarSnapshot Apply(CalendarSnapshot current, IcalTokenRevoked revoked) =>
-        current with { Calendar = Calendar.Fold(current.Calendar, CalendarEvent.FromPayload(revoked))! };
+        current with { Calendar = Calendar.Advance(current.Calendar, CalendarEvent.FromPayload(revoked)) };
 
     public CalendarSnapshot Apply(CalendarSnapshot current, CalendarDeleted deleted) =>
-        current with { Calendar = Calendar.Fold(current.Calendar, CalendarEvent.FromPayload(deleted))! };
+        current with { Calendar = Calendar.Advance(current.Calendar, CalendarEvent.FromPayload(deleted)) };
 }

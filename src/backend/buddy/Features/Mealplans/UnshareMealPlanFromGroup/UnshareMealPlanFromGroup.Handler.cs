@@ -34,7 +34,7 @@ public static class UnshareMealPlanFromGroupHandler
         }
 
         var planEvents = await mealPlans.ReadAsync(mealPlanId, cancellationToken);
-        var plan = MealPlan.Rehydrate(planEvents)!;
+        var plan = MealPlan.Replay(planEvents);
 
         if (plan.SharedWithGroupId != command.GroupId)
         {

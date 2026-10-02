@@ -38,7 +38,7 @@ public static class StartAiSessionHandler
             return new Result<AiSessionView>.Validation(ValidationProblem.Of("No AI provider is configured for this family yet."));
         }
 
-        var credential = AiProviderCredential.Rehydrate(await credentials.ReadAsync(credentialId, cancellationToken))!;
+        var credential = AiProviderCredential.Replay(await credentials.ReadAsync(credentialId, cancellationToken));
 
         if (credential.ActiveProvider is null)
         {
@@ -54,7 +54,7 @@ public static class StartAiSessionHandler
 
         if (currentSessionId is { } existingId)
         {
-            var existing = MealplanAiSession.Rehydrate(await sessions.ReadAsync(existingId, cancellationToken))!;
+            var existing = MealplanAiSession.Replay(await sessions.ReadAsync(existingId, cancellationToken));
 
             if (existing.Status == AiSessionStatus.Drafting)
             {
@@ -70,7 +70,7 @@ public static class StartAiSessionHandler
 
         await sessions.CreateAsync(newId, events, cancellationToken);
 
-        var session = MealplanAiSession.Rehydrate(events)!;
+        var session = MealplanAiSession.Replay(events);
         var view = await AiSessionViewBuilder.BuildAsync(session, events, meals, cancellationToken);
 
         return new Result<AiSessionView>.Success(view);

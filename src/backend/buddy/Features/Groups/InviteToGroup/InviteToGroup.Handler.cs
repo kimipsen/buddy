@@ -21,6 +21,12 @@ public static class InviteToGroupHandler
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
         var group = Group.Rehydrate(events);
+
+        if (group is null)
+        {
+            return new InviteToGroupOutcome.NotFound();
+        }
+
         var access = GroupAuthorization.CheckManage(group, userId);
 
         if (access != GroupAccess.Allowed)
@@ -49,7 +55,7 @@ public static class InviteToGroupHandler
             [new GroupInviteCreated(command.GroupId, inviteId, normalizedEmail, command.Role, userId, hash, expiresAt, now)],
             cancellationToken);
 
-        await emailSender.SendGroupInviteEmailAsync(normalizedEmail, group!.Name, token, cancellationToken);
+        await emailSender.SendGroupInviteEmailAsync(normalizedEmail, group.Name, token, cancellationToken);
 
         return new InviteToGroupOutcome.Success(new GroupInviteSummary(inviteId, normalizedEmail, command.Role, now, expiresAt));
     }

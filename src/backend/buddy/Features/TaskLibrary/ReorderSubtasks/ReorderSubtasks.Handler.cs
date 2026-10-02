@@ -39,6 +39,6 @@ public static class ReorderSubtasksHandler
 
         await templates.AppendAsync(command.TemplateId, [reordered], cancellationToken);
 
-        return new Result<TaskTemplate>.Success(TaskTemplate.Rehydrate([.. loaded.Events, reordered])!);
+        return new Result<TaskTemplate>.Success(TaskTemplate.Replay([.. loaded.Events, reordered]));
     }
 }

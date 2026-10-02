@@ -16,6 +16,12 @@ public static class GetGroupHandler
         var userId = query.UserId;
 
         var group = await groups.FindSnapshotAsync(query.GroupId, cancellationToken);
+
+        if (group is null)
+        {
+            return new Result<GroupWithMemberDetails>.NotFound();
+        }
+
         var access = GroupAuthorization.CheckView(group, userId);
 
         if (access != GroupAccess.Allowed)
@@ -23,8 +29,8 @@ public static class GetGroupHandler
             return access.ToDeniedResult<GroupWithMemberDetails>();
         }
 
-        var members = await GroupMemberResolver.ResolveAsync(group!, guardians, users, cancellationToken);
+        var members = await GroupMemberResolver.ResolveAsync(group, guardians, users, cancellationToken);
 
-        return new Result<GroupWithMemberDetails>.Success(new GroupWithMemberDetails(group!, members));
+        return new Result<GroupWithMemberDetails>.Success(new GroupWithMemberDetails(group, members));
     }
 }

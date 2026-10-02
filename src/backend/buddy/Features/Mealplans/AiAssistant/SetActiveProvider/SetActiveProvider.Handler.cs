@@ -32,7 +32,7 @@ public static class SetActiveProviderHandler
         }
 
         var existingEvents = await credentials.ReadAsync(credentialId, cancellationToken);
-        var existing = AiProviderCredential.Rehydrate(existingEvents)!;
+        var existing = AiProviderCredential.Replay(existingEvents);
 
         if (!existing.Providers.ContainsKey(command.Provider))
         {

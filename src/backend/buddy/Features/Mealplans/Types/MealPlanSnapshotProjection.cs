@@ -19,26 +19,26 @@ public sealed record MealPlanSnapshot(Guid Id, MealPlan MealPlan);
 public sealed class MealPlanSnapshotProjection : SingleStreamProjection<MealPlanSnapshot, Guid>
 {
     public static MealPlanSnapshot Create(MealPlanCreated created) =>
-        new(created.Id.Value, MealPlan.Fold(null, MealPlanEvent.FromPayload(created))!);
+        new(created.Id.Value, MealPlan.Start(MealPlanEvent.FromPayload(created)));
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealAssignedToSlot assigned) =>
-        current with { MealPlan = MealPlan.Fold(current.MealPlan, MealPlanEvent.FromPayload(assigned))! };
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(assigned)) };
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealSlotCleared cleared) =>
-        current with { MealPlan = MealPlan.Fold(current.MealPlan, MealPlanEvent.FromPayload(cleared))! };
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(cleared)) };
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanSharedWithGroup shared) =>
-        current with { MealPlan = MealPlan.Fold(current.MealPlan, MealPlanEvent.FromPayload(shared))! };
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(shared)) };
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanUnsharedFromGroup unshared) =>
-        current with { MealPlan = MealPlan.Fold(current.MealPlan, MealPlanEvent.FromPayload(unshared))! };
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(unshared)) };
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanSlotTimeSet timeSet) =>
-        current with { MealPlan = MealPlan.Fold(current.MealPlan, MealPlanEvent.FromPayload(timeSet))! };
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(timeSet)) };
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanIcalTokenIssued issued) =>
-        current with { MealPlan = MealPlan.Fold(current.MealPlan, MealPlanEvent.FromPayload(issued))! };
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(issued)) };
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanIcalTokenRevoked revoked) =>
-        current with { MealPlan = MealPlan.Fold(current.MealPlan, MealPlanEvent.FromPayload(revoked))! };
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(revoked)) };
 }

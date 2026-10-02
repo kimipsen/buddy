@@ -17,23 +17,23 @@ public sealed record MealplanAiSessionSnapshot(Guid Id, MealplanAiSession Mealpl
 // options.Projections.Register(new MealplanAiSessionSnapshotProjection(), ...)). Stored in the
 // shared "snapshots" schema, never the "mealplans" event schema -- it is derived, rebuildable
 // state, not a second source of truth. AiUserMessageSent/AiToolInvocationRecorded/
-// AiAssistantMessageRecorded have no case here, the same way they have no case in
-// MealplanAiSession.Fold: they don't change the session's own fields, only the transcript that's
+// AiAssistantMessageRecorded have no case here, the same way MealplanAiSession.Advance passes
+// them through unchanged: they don't change the session's own fields, only the transcript that's
 // derived on demand from the raw event stream.
 public sealed class MealplanAiSessionSnapshotProjection : SingleStreamProjection<MealplanAiSessionSnapshot, Guid>
 {
     public static MealplanAiSessionSnapshot Create(AiSessionStarted started) =>
-        new(started.Id.Value, MealplanAiSession.Fold(null, MealplanAiSessionEvent.FromPayload(started))!);
+        new(started.Id.Value, MealplanAiSession.Start(MealplanAiSessionEvent.FromPayload(started)));
 
     public MealplanAiSessionSnapshot Apply(MealplanAiSessionSnapshot current, AiDraftAssignmentSet set) =>
-        current with { MealplanAiSession = MealplanAiSession.Fold(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(set))! };
+        current with { MealplanAiSession = MealplanAiSession.Advance(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(set)) };
 
     public MealplanAiSessionSnapshot Apply(MealplanAiSessionSnapshot current, AiDraftAssignmentCleared cleared) =>
-        current with { MealplanAiSession = MealplanAiSession.Fold(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(cleared))! };
+        current with { MealplanAiSession = MealplanAiSession.Advance(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(cleared)) };
 
     public MealplanAiSessionSnapshot Apply(MealplanAiSessionSnapshot current, AiSessionApplied applied) =>
-        current with { MealplanAiSession = MealplanAiSession.Fold(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(applied))! };
+        current with { MealplanAiSession = MealplanAiSession.Advance(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(applied)) };
 
     public MealplanAiSessionSnapshot Apply(MealplanAiSessionSnapshot current, AiSessionDiscarded discarded) =>
-        current with { MealplanAiSession = MealplanAiSession.Fold(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(discarded))! };
+        current with { MealplanAiSession = MealplanAiSession.Advance(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(discarded)) };
 }

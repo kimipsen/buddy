@@ -55,6 +55,6 @@ public static class {{UseCase}}Handler
         await store.AppendAsync(command.{{AggregateId}}, [changed], cancellationToken);
 
         // Reuse the aggregate's own fold instead of hand-copying fields with `with { ... }`.
-        return new Result<{{Aggregate}}>.Success({{Aggregate}}.Fold(aggregate, changed)!);
+        return new Result<{{Aggregate}}>.Success({{Aggregate}}.Advance(aggregate, changed));
     }
 }

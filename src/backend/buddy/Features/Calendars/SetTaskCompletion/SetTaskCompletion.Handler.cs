@@ -25,6 +25,12 @@ public static class SetTaskCompletionHandler
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
+
+        if (calendar is null)
+        {
+            return new Result<CalendarItem>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
         // NotFound (no resolved role at all) is still denied outright -- only a Forbidden (a
@@ -64,7 +70,7 @@ public static class SetTaskCompletionHandler
             return access.ToDeniedResult<CalendarItem>();
         }
 
-        if (ValidateNotFuture(command, calendar!) is { } futureError)
+        if (ValidateNotFuture(command, calendar) is { } futureError)
         {
             return futureError;
         }
@@ -82,7 +88,7 @@ public static class SetTaskCompletionHandler
 
         await TryRecordStarChangeAsync(item, command, bus, cancellationToken);
 
-        return new Result<CalendarItem>.Success(CalendarItem.Rehydrate([.. itemEvents, completionChanged])!);
+        return new Result<CalendarItem>.Success(CalendarItem.Replay([.. itemEvents, completionChanged]));
     }
 
     // The two completion modes never mix: a template-scheduled task always requires a SubtaskId

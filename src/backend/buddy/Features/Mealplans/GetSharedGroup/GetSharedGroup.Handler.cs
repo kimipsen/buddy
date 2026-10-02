@@ -29,7 +29,8 @@ public static class GetSharedGroupHandler
             return new Result<SharedMealplanGroup?>.Success(null);
         }
 
-        var plan = (await mealPlans.FindSnapshotAsync(mealPlanId, cancellationToken))!;
+        var plan = await mealPlans.FindSnapshotAsync(mealPlanId, cancellationToken)
+            ?? throw new InvalidOperationException($"No snapshot for mealPlanId {mealPlanId}, although its index says the stream exists.");
 
         if (plan.SharedWithGroupId is not { } groupId)
         {

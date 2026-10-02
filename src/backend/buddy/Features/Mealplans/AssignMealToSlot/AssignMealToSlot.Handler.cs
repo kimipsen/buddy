@@ -83,7 +83,7 @@ public static class AssignMealToSlotHandler
         else
         {
             var planEvents = await mealPlans.ReadAsync(mealPlanId, cancellationToken);
-            var plan = MealPlan.Rehydrate(planEvents)!;
+            var plan = MealPlan.Replay(planEvents);
             var before = plan.Assignments.GetValueOrDefault((date, slot));
 
             if (before is null || before.MealId != after.MealId || before.Notes != after.Notes)

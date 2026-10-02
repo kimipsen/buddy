@@ -49,11 +49,11 @@ public static class SetProviderApiKeyHandler
 
             await credentials.CreateAsync(newId, events, cancellationToken);
 
-            return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(AiProviderCredential.Rehydrate(events)!));
+            return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(AiProviderCredential.Replay(events)));
         }
 
         var existingEvents = await credentials.ReadAsync(credentialId, cancellationToken);
-        var existing = AiProviderCredential.Rehydrate(existingEvents)!;
+        var existing = AiProviderCredential.Replay(existingEvents);
 
         List<AiProviderCredentialEvent> newEvents = [new ProviderApiKeySet(credentialId, command.Provider, key, now)];
 
@@ -64,7 +64,7 @@ public static class SetProviderApiKeyHandler
 
         await credentials.AppendAsync(credentialId, newEvents, cancellationToken);
 
-        var updated = AiProviderCredential.Rehydrate([.. existingEvents, .. newEvents])!;
+        var updated = AiProviderCredential.Replay([.. existingEvents, .. newEvents]);
 
         return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(updated));
     }

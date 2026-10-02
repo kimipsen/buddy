@@ -13,7 +13,7 @@ namespace buddy.IntegrationTests.SnapshotTests;
 
 // Verifies the inline Marten snapshot (MedicineScheduleSnapshotProjection, schema "snapshots")
 // stays exactly consistent with a full replay-from-events rehydration after a sequence of
-// commands exercising every event type in MedicineSchedule.Fold -- the same invariant
+// commands exercising every event type in MedicineSchedule.Start/Advance -- the same invariant
 // GroupSnapshotTests checks for Group. See docs/backend/analysis/event-stream-snapshots.md.
 [Collection(BuddyApiCollection.Name)]
 public sealed class MedicineScheduleSnapshotTests(BuddyApiFixture fixture)

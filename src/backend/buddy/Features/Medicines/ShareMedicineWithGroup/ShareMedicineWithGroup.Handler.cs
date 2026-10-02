@@ -25,6 +25,12 @@ public static class ShareMedicineWithGroupHandler
         // Sharing is a two-sided decision: the guardian and the group's own management both have
         // to consent, mirroring ShareMealPlanWithGroup.
         var group = Group.Rehydrate(await groups.ReadAsync(command.GroupId, cancellationToken));
+
+        if (group is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var groupAccess = GroupAuthorization.CheckManage(group, userId);
 
         if (groupAccess != GroupAccess.Allowed)

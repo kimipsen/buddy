@@ -17,16 +17,16 @@ public static class DeletePrintTemplateHandler
 
         // A deleted template is treated as missing, so deleting twice is a 404 the second time --
         // the same rule DeleteCalendar follows.
-        var (template, access) = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
+        var loaded = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
 
-        if (access != PrintTemplateAccess.Allowed)
+        if (loaded is not Result<PrintTemplate>.Success(var template))
         {
-            return access.ToDeniedResult<Unit>();
+            return loaded.Reraise<PrintTemplate, Unit>();
         }
 
-        var deleted = new PrintTemplateDeleted(template!.Id, userId, DateTimeOffset.UtcNow);
+        var deleted = new PrintTemplateDeleted(template.Id, userId, DateTimeOffset.UtcNow);
 
-        await store.AppendAsync(template.Id, [deleted], PrintTemplateIndexDocument.From(PrintTemplate.Fold(template, deleted)!), cancellationToken);
+        await store.AppendAsync(template.Id, [deleted], PrintTemplateIndexDocument.From(PrintTemplate.Advance(template, deleted)), cancellationToken);
 
         return new Result<Unit>.Success(Unit.Value);
     }

@@ -25,6 +25,12 @@ public static class ShareMealPlanWithGroupHandler
         // Sharing is a two-sided decision: the family's guardian and the group's own management
         // both have to consent, mirroring CreateCalendar's group-owned path.
         var group = Group.Rehydrate(await groups.ReadAsync(command.GroupId, cancellationToken));
+
+        if (group is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var groupAccess = GroupAuthorization.CheckManage(group, userId);
 
         if (groupAccess != GroupAccess.Allowed)
@@ -50,7 +56,7 @@ public static class ShareMealPlanWithGroupHandler
         else
         {
             var planEvents = await mealPlans.ReadAsync(mealPlanId, cancellationToken);
-            var plan = MealPlan.Rehydrate(planEvents)!;
+            var plan = MealPlan.Replay(planEvents);
 
             // Already shared with this exact group -- idempotent no-op, same rationale as
             // UnshareMealPlanFromGroupHandler's already-not-shared check.

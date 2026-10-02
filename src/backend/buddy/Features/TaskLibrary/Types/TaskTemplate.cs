@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 
+using buddy.Common.Aggregates;
 using buddy.Features.Calendars;
 using buddy.Features.Users;
 
@@ -20,14 +21,18 @@ public sealed record TaskTemplate(
 {
     public TimeSpan TotalDuration => Subtasks.Aggregate(TimeSpan.Zero, (sum, subtask) => sum + subtask.Duration);
 
-    public static TaskTemplate? Rehydrate(IEnumerable<TaskTemplateEvent> events) => events.Aggregate((TaskTemplate?)null, Fold);
+    public static TaskTemplate? Rehydrate(IEnumerable<TaskTemplateEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
-    // Single-event step, split out from Rehydrate so TaskTemplateSnapshotProjection can drive the
-    // same logic one Marten-delivered event at a time instead of duplicating this switch.
-    // Deliberately not named Apply/Create -- those names are a convention JasperFx's projection
-    // source generator scans for on any type used as a projection document, and TaskTemplate is
-    // that document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
-    public static TaskTemplate? Fold(TaskTemplate? template, TaskTemplateEvent @event) => @event switch
+    public static TaskTemplate Replay(IEnumerable<TaskTemplateEvent> events) => EventReplay.Replay(events, Start, Advance);
+
+    // Single-event steps (Start for the creation event, Advance for every later one; not Evolve
+    // either, another JasperFx convention), split out from Rehydrate so
+    // TaskTemplateSnapshotProjection can drive the same logic one Marten-delivered event at a time
+    // instead of duplicating this switch. Deliberately not named Apply/Create -- those names are a
+    // convention JasperFx's projection source generator scans for on any type used as a projection
+    // document, and TaskTemplate is that document (see Question 4/5 in
+    // docs/backend/analysis/event-stream-snapshots.md).
+    public static TaskTemplate Start(TaskTemplateEvent @event) => @event switch
     {
         TaskTemplateCreated created => new TaskTemplate(
             created.Id,
@@ -38,37 +43,42 @@ public sealed record TaskTemplate(
             ImmutableList<Subtask>.Empty,
             IsArchived: false,
             created.CreatedBy),
-        TaskTemplateDetailsUpdated updated => template! with
+        _ => throw EventReplay.NotAStartEvent(nameof(TaskTemplate), @event.EventType)
+    };
+
+    public static TaskTemplate Advance(TaskTemplate template, TaskTemplateEvent @event) => @event switch
+    {
+        TaskTemplateDetailsUpdated updated => template with
         {
             Name = updated.After.Name,
             Icon = updated.After.Icon,
             Color = updated.After.Color,
             LastModifiedBy = updated.ModifiedBy
         },
-        SubtaskAdded added => template! with
+        SubtaskAdded added => template with
         {
-            Subtasks = template!.Subtasks.Insert(Math.Clamp(added.Position, 0, template.Subtasks.Count), added.Subtask),
+            Subtasks = template.Subtasks.Insert(Math.Clamp(added.Position, 0, template.Subtasks.Count), added.Subtask),
             LastModifiedBy = added.ModifiedBy
         },
-        SubtaskUpdated updated => template! with
+        SubtaskUpdated updated => template with
         {
-            Subtasks = template!.Subtasks.SetItem(
+            Subtasks = template.Subtasks.SetItem(
                 template.Subtasks.FindIndex(s => s.Id == updated.SubtaskId),
                 updated.After),
             LastModifiedBy = updated.ModifiedBy
         },
-        SubtaskRemoved removed => template! with
+        SubtaskRemoved removed => template with
         {
-            Subtasks = template!.Subtasks.RemoveAll(s => s.Id == removed.SubtaskId),
+            Subtasks = template.Subtasks.RemoveAll(s => s.Id == removed.SubtaskId),
             LastModifiedBy = removed.ModifiedBy
         },
-        SubtasksReordered reordered => template! with
+        SubtasksReordered reordered => template with
         {
-            Subtasks = Reorder(template!.Subtasks, reordered.After),
+            Subtasks = Reorder(template.Subtasks, reordered.After),
             LastModifiedBy = reordered.ModifiedBy
         },
-        TaskTemplateArchived archived => template! with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
-        _ => template
+        TaskTemplateArchived archived => template with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
+        TaskTemplateCreated => throw EventReplay.AlreadyStarted(nameof(TaskTemplate), @event.EventType)
     };
 
     // Every id in `after` must already exist in `subtasks` -- a fold-invariant violation here is a

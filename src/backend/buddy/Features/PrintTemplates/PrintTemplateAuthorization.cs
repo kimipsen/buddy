@@ -34,13 +34,13 @@ public static class PrintTemplateAccessExtensions
 public static class PrintTemplateAuthorization
 {
     public static async Task<PrintTemplateAccess> CheckManage(
-        PrintTemplate? template,
+        PrintTemplate template,
         UserId callerId,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (template is null || template.IsDeleted)
+        if (template.IsDeleted)
         {
             return PrintTemplateAccess.NotFound;
         }

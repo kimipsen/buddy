@@ -27,7 +27,8 @@ public static class ListProvidersHandler
             return new Result<AiProviderSettings>.Success(AiProviderSettings.Empty);
         }
 
-        var credential = (await credentials.FindSnapshotAsync(credentialId, cancellationToken))!;
+        var credential = await credentials.FindSnapshotAsync(credentialId, cancellationToken)
+            ?? throw new InvalidOperationException($"No snapshot for credentialId {credentialId}, although its index says the stream exists.");
 
         return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(credential));
     }

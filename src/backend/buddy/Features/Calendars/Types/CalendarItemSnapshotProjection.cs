@@ -22,26 +22,26 @@ public sealed record CalendarItemSnapshot(Guid Id, CalendarItem CalendarItem);
 public sealed class CalendarItemSnapshotProjection : SingleStreamProjection<CalendarItemSnapshot, Guid>
 {
     public static CalendarItemSnapshot Create(EventItemCreated created) =>
-        new(created.Id.Value, CalendarItem.Fold(null, CalendarItemEvent.FromPayload(created))!);
+        new(created.Id.Value, CalendarItem.Start(CalendarItemEvent.FromPayload(created)));
 
     public static CalendarItemSnapshot Create(TaskItemCreated created) =>
-        new(created.Id.Value, CalendarItem.Fold(null, CalendarItemEvent.FromPayload(created))!);
+        new(created.Id.Value, CalendarItem.Start(CalendarItemEvent.FromPayload(created)));
 
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, ItemDetailsUpdated updated) =>
-        current with { CalendarItem = CalendarItem.Fold(current.CalendarItem, CalendarItemEvent.FromPayload(updated))! };
+        current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(updated)) };
 
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, EventRescheduled rescheduled) =>
-        current with { CalendarItem = CalendarItem.Fold(current.CalendarItem, CalendarItemEvent.FromPayload(rescheduled))! };
+        current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(rescheduled)) };
 
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, TaskRescheduled rescheduled) =>
-        current with { CalendarItem = CalendarItem.Fold(current.CalendarItem, CalendarItemEvent.FromPayload(rescheduled))! };
+        current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(rescheduled)) };
 
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, RecurrenceUpdated updated) =>
-        current with { CalendarItem = CalendarItem.Fold(current.CalendarItem, CalendarItemEvent.FromPayload(updated))! };
+        current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(updated)) };
 
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, TaskCompletionChanged completion) =>
-        current with { CalendarItem = CalendarItem.Fold(current.CalendarItem, CalendarItemEvent.FromPayload(completion))! };
+        current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(completion)) };
 
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, ItemDeleted deleted) =>
-        current with { CalendarItem = CalendarItem.Fold(current.CalendarItem, CalendarItemEvent.FromPayload(deleted))! };
+        current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(deleted)) };
 }

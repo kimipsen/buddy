@@ -10,10 +10,10 @@ public sealed record PrintTemplateSnapshot(Guid Id, PrintTemplate PrintTemplate)
 public sealed class PrintTemplateSnapshotProjection : SingleStreamProjection<PrintTemplateSnapshot, Guid>
 {
     public static PrintTemplateSnapshot Create(PrintTemplateCreated created) =>
-        new(created.Id.Value, PrintTemplate.Fold(null, PrintTemplateEvent.FromPayload(created))!);
+        new(created.Id.Value, PrintTemplate.Start(PrintTemplateEvent.FromPayload(created)));
 
     public static PrintTemplateSnapshot Create(PrintTemplateCreatedForGroup created) =>
-        new(created.Id.Value, PrintTemplate.Fold(null, PrintTemplateEvent.FromPayload(created))!);
+        new(created.Id.Value, PrintTemplate.Start(PrintTemplateEvent.FromPayload(created)));
 
     public PrintTemplateSnapshot Apply(PrintTemplateSnapshot current, PrintTemplateRenamed e) => Next(current, e);
 
@@ -26,5 +26,5 @@ public sealed class PrintTemplateSnapshotProjection : SingleStreamProjection<Pri
     public PrintTemplateSnapshot Apply(PrintTemplateSnapshot current, PrintTemplateDeleted e) => Next(current, e);
 
     private static PrintTemplateSnapshot Next(PrintTemplateSnapshot current, PrintTemplateEvent e) =>
-        current with { PrintTemplate = PrintTemplate.Fold(current.PrintTemplate, e)! };
+        current with { PrintTemplate = PrintTemplate.Advance(current.PrintTemplate, e) };
 }

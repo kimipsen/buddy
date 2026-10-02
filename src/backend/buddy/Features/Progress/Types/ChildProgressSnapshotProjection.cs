@@ -19,17 +19,17 @@ public sealed record ChildProgressSnapshot(Guid Id, ChildProgress ChildProgress)
 public sealed class ChildProgressSnapshotProjection : SingleStreamProjection<ChildProgressSnapshot, Guid>
 {
     public static ChildProgressSnapshot Create(ProgressStarted started) =>
-        new(started.Id.Value, ChildProgress.Fold(null, ProgressEvent.FromPayload(started))!);
+        new(started.Id.Value, ChildProgress.Start(ProgressEvent.FromPayload(started)));
 
     public ChildProgressSnapshot Apply(ChildProgressSnapshot current, StarAwarded awarded) =>
-        current with { ChildProgress = ChildProgress.Fold(current.ChildProgress, ProgressEvent.FromPayload(awarded))! };
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(awarded)) };
 
     public ChildProgressSnapshot Apply(ChildProgressSnapshot current, StarRevoked revoked) =>
-        current with { ChildProgress = ChildProgress.Fold(current.ChildProgress, ProgressEvent.FromPayload(revoked))! };
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(revoked)) };
 
     public ChildProgressSnapshot Apply(ChildProgressSnapshot current, MilestoneUnlocked milestone) =>
-        current with { ChildProgress = ChildProgress.Fold(current.ChildProgress, ProgressEvent.FromPayload(milestone))! };
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(milestone)) };
 
     public ChildProgressSnapshot Apply(ChildProgressSnapshot current, GoalPostsConfigured configured) =>
-        current with { ChildProgress = ChildProgress.Fold(current.ChildProgress, ProgressEvent.FromPayload(configured))! };
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(configured)) };
 }

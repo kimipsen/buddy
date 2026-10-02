@@ -38,6 +38,6 @@ public static class AddSubtaskHandler
 
         await templates.AppendAsync(command.TemplateId, [added], cancellationToken);
 
-        return new Result<TaskTemplate>.Success(TaskTemplate.Rehydrate([.. loaded.Events, added])!);
+        return new Result<TaskTemplate>.Success(TaskTemplate.Replay([.. loaded.Events, added]));
     }
 }

@@ -28,17 +28,17 @@ public static class ReplacePrintTemplateRowsHandler
 
         var userId = command.UserId;
 
-        var (template, access) = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
+        var loaded = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
 
-        if (access != PrintTemplateAccess.Allowed)
+        if (loaded is not Result<PrintTemplate>.Success(var template))
         {
-            return access.ToDeniedResult<PrintTemplateResponse>();
+            return loaded.Reraise<PrintTemplate, PrintTemplateResponse>();
         }
 
         // Labels and filters are stored trimmed, so "unchanged" compares what would actually be saved.
         IReadOnlyList<PrintTemplateRow> after = [.. command.Rows.Select(row => row with { Label = row.Label.Trim(), TitleFilter = row.TitleFilter?.Trim() })];
 
-        if (PrintTemplateRow.AreSame(after, template!.Rows))
+        if (PrintTemplateRow.AreSame(after, template.Rows))
         {
             return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(template));
         }
@@ -54,6 +54,6 @@ public static class ReplacePrintTemplateRowsHandler
 
         await store.AppendAsync(template.Id, [replaced], index: null, cancellationToken);
 
-        return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(PrintTemplate.Fold(template, replaced)!));
+        return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(PrintTemplate.Advance(template, replaced)));
     }
 }

@@ -46,7 +46,7 @@ public static class CreatePrintTemplateHandler
             ? new PrintTemplateCreatedForGroup(id, ownerGroupId, name, userId, now)
             : new PrintTemplateCreated(id, userId, name, userId, now);
 
-        var template = PrintTemplate.Fold(null, created)!;
+        var template = PrintTemplate.Start(created);
 
         await store.CreateAsync(id, [created], PrintTemplateIndexDocument.From(template), cancellationToken);
 

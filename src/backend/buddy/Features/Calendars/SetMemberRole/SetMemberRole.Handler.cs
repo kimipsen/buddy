@@ -19,6 +19,12 @@ public static class SetMemberRoleHandler
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(events);
+
+        if (calendar is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)

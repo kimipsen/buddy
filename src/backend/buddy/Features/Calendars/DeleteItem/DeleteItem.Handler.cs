@@ -19,6 +19,12 @@ public static class DeleteItemHandler
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
+
+        if (calendar is null)
+        {
+            return new Result<Unit>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)

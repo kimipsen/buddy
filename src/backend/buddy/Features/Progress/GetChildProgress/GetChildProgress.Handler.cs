@@ -18,7 +18,7 @@ public static class GetChildProgressHandler
         }
 
         var id = ProgressId.ForChild(query.ChildId);
-        var current = await progress.FindSnapshotAsync(id, cancellationToken);
+        var current = await progress.FindSnapshotAsync(id, cancellationToken) ?? ChildProgress.Initial(id, query.ChildId);
 
         return new Result<ProgressSummary>.Success(ProgressSummary.From(current));
     }

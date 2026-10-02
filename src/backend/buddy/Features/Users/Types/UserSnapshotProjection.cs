@@ -16,31 +16,31 @@ public sealed record UserSnapshot(Guid Id, User User);
 // ...)). Stored in the shared "snapshots" schema, never the "users" event schema -- it is derived,
 // rebuildable state, not a second source of truth. GuardianLinked/GuardianKindChanged/
 // GuardianRevoked/GuardianInviteCreated/GuardianInviteAccepted/GuardianInviteRevoked have no case
-// here, the same way they have no case in User.Fold: those events belong to GuardianLink's and
+// here, the same way they have no case in User.Start/Advance: those events belong to GuardianLink's and
 // GuardianLinkInvite's own streams, which merely happen to live in this same Marten store/schema.
 public sealed class UserSnapshotProjection : SingleStreamProjection<UserSnapshot, Guid>
 {
     public static UserSnapshot Create(UserCreated created) =>
-        new(created.UserId.Value, User.Fold(null, UserEvent.FromPayload(created))!);
+        new(created.UserId.Value, User.Start(UserEvent.FromPayload(created)));
 
     public UserSnapshot Apply(UserSnapshot current, NameUpdated updated) =>
-        current with { User = User.Fold(current.User, UserEvent.FromPayload(updated))! };
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(updated)) };
 
     public UserSnapshot Apply(UserSnapshot current, TimeZoneUpdated updated) =>
-        current with { User = User.Fold(current.User, UserEvent.FromPayload(updated))! };
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(updated)) };
 
     public UserSnapshot Apply(UserSnapshot current, LanguageUpdated updated) =>
-        current with { User = User.Fold(current.User, UserEvent.FromPayload(updated))! };
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(updated)) };
 
     public UserSnapshot Apply(UserSnapshot current, EmailUpdated updated) =>
-        current with { User = User.Fold(current.User, UserEvent.FromPayload(updated))! };
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(updated)) };
 
     public UserSnapshot Apply(UserSnapshot current, EmailVerificationRequested requested) =>
-        current with { User = User.Fold(current.User, UserEvent.FromPayload(requested))! };
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(requested)) };
 
     public UserSnapshot Apply(UserSnapshot current, EmailVerified verified) =>
-        current with { User = User.Fold(current.User, UserEvent.FromPayload(verified))! };
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(verified)) };
 
     public UserSnapshot Apply(UserSnapshot current, UserDeleted deleted) =>
-        current with { User = User.Fold(current.User, UserEvent.FromPayload(deleted))! };
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(deleted)) };
 }

@@ -18,14 +18,14 @@ public sealed record MealSnapshot(Guid Id, Meal Meal);
 public sealed class MealSnapshotProjection : SingleStreamProjection<MealSnapshot, Guid>
 {
     public static MealSnapshot Create(MealCreated created) =>
-        new(created.Id.Value, Meal.Fold(null, MealEvent.FromPayload(created))!);
+        new(created.Id.Value, Meal.Start(MealEvent.FromPayload(created)));
 
     public MealSnapshot Apply(MealSnapshot current, MealDetailsUpdated updated) =>
-        current with { Meal = Meal.Fold(current.Meal, MealEvent.FromPayload(updated))! };
+        current with { Meal = Meal.Advance(current.Meal, MealEvent.FromPayload(updated)) };
 
     public MealSnapshot Apply(MealSnapshot current, MealArchived archived) =>
-        current with { Meal = Meal.Fold(current.Meal, MealEvent.FromPayload(archived))! };
+        current with { Meal = Meal.Advance(current.Meal, MealEvent.FromPayload(archived)) };
 
     public MealSnapshot Apply(MealSnapshot current, MealRated rated) =>
-        current with { Meal = Meal.Fold(current.Meal, MealEvent.FromPayload(rated))! };
+        current with { Meal = Meal.Advance(current.Meal, MealEvent.FromPayload(rated)) };
 }

@@ -23,6 +23,12 @@ public static class ListAssignableMembersHandler
 
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);
+
+        if (calendar is null)
+        {
+            return new Result<IReadOnlyCollection<AssignableMemberSummary>>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
@@ -30,7 +36,7 @@ public static class ListAssignableMembersHandler
             return access.ToDeniedResult<IReadOnlyCollection<AssignableMemberSummary>>();
         }
 
-        var memberIds = new HashSet<UserId>(calendar!.Members.Keys);
+        var memberIds = new HashSet<UserId>(calendar.Members.Keys);
 
         if (calendar.Owner is CalendarOwner.Group(var groupId))
         {

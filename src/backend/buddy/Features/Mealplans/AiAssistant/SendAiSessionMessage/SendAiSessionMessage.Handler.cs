@@ -53,7 +53,7 @@ public static class SendAiSessionMessageHandler
         }
 
         var existingEvents = await sessions.ReadAsync(sessionId, cancellationToken);
-        var session = MealplanAiSession.Rehydrate(existingEvents)!;
+        var session = MealplanAiSession.Replay(existingEvents);
 
         if (session.Status != AiSessionStatus.Drafting)
         {
@@ -116,7 +116,7 @@ public static class SendAiSessionMessageHandler
         await sessions.AppendAsync(sessionId, newEvents, cancellationToken);
 
         MealplanAiSessionEvent[] allEvents = [.. existingEvents, .. newEvents];
-        var updatedSession = MealplanAiSession.Rehydrate(allEvents)!;
+        var updatedSession = MealplanAiSession.Replay(allEvents);
         var view = await AiSessionViewBuilder.BuildAsync(updatedSession, allEvents, meals, cancellationToken);
 
         return new Result<AiSessionView>.Success(view);

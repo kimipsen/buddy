@@ -276,8 +276,8 @@ WorkLocationOverrideCleared(WorkLocationScheduleId Id, DateOnly Date,
 
 ### Rehydration
 
-`WorkLocationSchedule.Rehydrate(events)` / `Fold` follows
-`PickupSchedule.Fold`:
+`WorkLocationSchedule.Rehydrate(events)` / `Start` + `Advance` follow
+`PickupSchedule`'s:
 
 - `WorkLocationScheduleStarted` seeds an empty schedule.
 - `WorkLocationAdded` appends to `Locations`.

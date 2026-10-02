@@ -24,14 +24,14 @@ public static class UpdatePrintTemplateLayoutHandler
 
         var userId = command.UserId;
 
-        var (template, access) = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
+        var loaded = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
 
-        if (access != PrintTemplateAccess.Allowed)
+        if (loaded is not Result<PrintTemplate>.Success(var template))
         {
-            return access.ToDeniedResult<PrintTemplateResponse>();
+            return loaded.Reraise<PrintTemplate, PrintTemplateResponse>();
         }
 
-        if (template!.PaperSize == command.PaperSize
+        if (template.PaperSize == command.PaperSize
             && template.DefaultStartWeekday == command.DefaultStartWeekday
             && template.ShowWeekNumber == command.ShowWeekNumber)
         {
@@ -48,6 +48,6 @@ public static class UpdatePrintTemplateLayoutHandler
 
         await store.AppendAsync(template.Id, [changed], index: null, cancellationToken);
 
-        return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(PrintTemplate.Fold(template, changed)!));
+        return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(PrintTemplate.Advance(template, changed)));
     }
 }

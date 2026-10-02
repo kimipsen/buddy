@@ -36,6 +36,6 @@ public static class CreateTaskTemplateHandler
 
         var events = await templates.CreateAsync(templateId, [created], cancellationToken);
 
-        return new Result<TaskTemplate>.Success(TaskTemplate.Rehydrate(events)!);
+        return new Result<TaskTemplate>.Success(TaskTemplate.Replay(events));
     }
 }

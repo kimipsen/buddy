@@ -19,11 +19,11 @@ public sealed record PickupScheduleSnapshot(Guid Id, PickupSchedule PickupSchedu
 public sealed class PickupScheduleSnapshotProjection : SingleStreamProjection<PickupScheduleSnapshot, Guid>
 {
     public static PickupScheduleSnapshot Create(PickupScheduleCreated created) =>
-        new(created.Id.Value, PickupSchedule.Fold(null, PickupEvent.FromPayload(created))!);
+        new(created.Id.Value, PickupSchedule.Start(PickupEvent.FromPayload(created)));
 
     public PickupScheduleSnapshot Apply(PickupScheduleSnapshot current, PickupAssigned assigned) =>
-        current with { PickupSchedule = PickupSchedule.Fold(current.PickupSchedule, PickupEvent.FromPayload(assigned))! };
+        current with { PickupSchedule = PickupSchedule.Advance(current.PickupSchedule, PickupEvent.FromPayload(assigned)) };
 
     public PickupScheduleSnapshot Apply(PickupScheduleSnapshot current, PickupCleared cleared) =>
-        current with { PickupSchedule = PickupSchedule.Fold(current.PickupSchedule, PickupEvent.FromPayload(cleared))! };
+        current with { PickupSchedule = PickupSchedule.Advance(current.PickupSchedule, PickupEvent.FromPayload(cleared)) };
 }

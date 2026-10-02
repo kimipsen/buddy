@@ -27,6 +27,12 @@ public static class UpdateCalendarIconHandler
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(events);
+
+        if (calendar is null)
+        {
+            return new Result<Calendar>.NotFound();
+        }
+
         var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, guardians, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
@@ -34,7 +40,7 @@ public static class UpdateCalendarIconHandler
             return access.ToDeniedResult<Calendar>();
         }
 
-        if (calendar!.Icon == command.Icon)
+        if (calendar.Icon == command.Icon)
         {
             // Idempotent, same rationale as TransferCalendarToGroupHandler's already-there check.
             return new Result<Calendar>.Success(calendar);

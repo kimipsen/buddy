@@ -39,7 +39,7 @@ public static class ClearMealSlotHandler
         }
 
         var planEvents = await mealPlans.ReadAsync(mealPlanId, cancellationToken);
-        var plan = MealPlan.Rehydrate(planEvents)!;
+        var plan = MealPlan.Replay(planEvents);
 
         if (plan.Assignments.GetValueOrDefault((date, slot)) is not { } before)
         {

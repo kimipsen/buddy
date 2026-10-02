@@ -63,8 +63,8 @@ Wiring:
 Use `Features/Medicines/Types/MedicineEvents.cs` as the model. Event names are past tense. The record holds the aggregate id, `Before`/`After` (or the new value), `UserId ModifiedBy` and `DateTimeOffset OccurredAt`.
 
 1. `Types/<X>Events.cs`: add the record, then add the case in **three** places: the `union <X>Event(...)` list, `FromPayload` (`<NewEvent> e => e,`) and `EventType` (`<NewEvent> => nameof(<NewEvent>),`).
-2. `Types/<Aggregate>.cs`: add a `Fold` arm. Don't rely on the `_ => x` fallthrough, which silently ignores the event.
-3. `Types/<Aggregate>SnapshotProjection.cs`: add `public <X>Snapshot Apply(<X>Snapshot current, <NewEvent> e) => current with { <X> = <X>.Fold(current.<X>, <X>Event.FromPayload(e))! };`. If you skip it, the snapshot goes stale silently.
+2. `Types/<Aggregate>.cs`: add an `Advance` arm (or a `Start` arm for a new creation event, plus it in `Advance`'s `AlreadyStarted` arm). `Advance` has no `_ =>` fallthrough, so the build fails until you do; an event that doesn't change the aggregate goes in an explicit `=> state` arm.
+3. `Types/<Aggregate>SnapshotProjection.cs`: add `public <X>Snapshot Apply(<X>Snapshot current, <NewEvent> e) => current with { <X> = <X>.Advance(current.<X>, <X>Event.FromPayload(e)) };`. If you skip it, the snapshot goes stale silently.
 4. `<Domain>Feature.cs`: add `typeof(<NewEvent>)` to `EventTypes`.
 5. Golden file: add a `[Fact]` in `buddy.IntegrationTests/EventShapeTests/<Domain>EventShapeTests.cs` using the fixed ids and `FixedInstant`. Run the filter below. The failure prints the exact JSON. Review it, then save it as `EventShapeTests/GoldenFiles/<Domain>/<NewEvent>.json` (extra shapes of one type: `<NewEvent>_<Variant>.json`). `Meta/EventGoldenFileCoverageTests` fails for any type in a feature's `EventTypes` without one. Once a golden file exists, never edit it to make a test pass: a diff there means stored history can no longer be replayed.
 6. Extend `SnapshotTests/<Aggregate>SnapshotTests.cs` so its command sequence produces the new event.
@@ -75,7 +75,7 @@ Mirror Medicines/MedicineSchedule file for file:
 
 - [ ] `Types/<X>Id.cs`: `public sealed record <X>Id(Guid Value) { public static <X>Id New() => new(Guid.CreateVersion7()); }`
 - [ ] `Types/<X>Events.cs`: union + `FromPayload` + `EventType` (step 2).
-- [ ] `Types/<X>.cs`: immutable record with `static Rehydrate(events) => events.Aggregate((<X>?)null, Fold)` and `static Fold(<X>?, <X>Event)`. **Don't name the step function `Apply`/`Create`**: JasperFx's generator picks those up and the build breaks.
+- [ ] `Types/<X>.cs`: immutable record with non-null `static <X> Start(<X>Event)` / `static <X> Advance(<X>, <X>Event)`, plus `Rehydrate` / `Replay` via `EventReplay` (copy `Features/Pickups/Types/PickupSchedule.cs`). **Don't name the step functions `Apply`/`Create`/`Evolve`**: JasperFx's generator picks those up and the build breaks.
 - [ ] `Types/<X>SnapshotProjection.cs`: `public sealed record <X>Snapshot(Guid Id, <X> <X>);` + `sealed class <X>SnapshotProjection : SingleStreamProjection<<X>Snapshot, Guid>` with `Create(<CreatedEvent>)` and one `Apply` per state-changing event. The wrapper exists because Marten can't use a class-based `<X>Id` as a document id.
 - [ ] `I<X>EventStore.cs` + `Marten<X>EventStore.cs` (`MartenMedicineEventStore.cs`): `ReadAsync` (`FetchStreamAsync` → `<X>Event.FromPayload(e.Data)`), `FindSnapshotAsync` (`LoadAsync<<X>Snapshot>(id.Value)` → `?.<X>`), `CreateAsync` (`session.StartTrackedStream`, guard that the first event is the created event, store any index document such as `MedicineIndexDocument` in the same session), `AppendAsync` (no-op on an empty list, then `session.AppendTracked`). Call `session.ObserveStream(id.Value, events)` in `ReadAsync` after the fetch. Persist the unwrapped `e.Value`, never the union.
 - [ ] `<Domain>Feature.cs`, inside the store's `StoreOptions`:
@@ -125,7 +125,7 @@ task test:backend                                                               
 - [ ] Slice files exist (Command, Validator if there are input rules, Handler, Endpoint) and the slice is mapped in `<Domain>Feature.cs`
 - [ ] Handler follows the order validate → user → authorize → load → state checks → append-if-changed
 - [ ] `Results<...>` matches the reachable statuses, and the switch has no `_ =>` arm
-- [ ] Event added to the union, `FromPayload`, `EventType`, `Fold`, the snapshot `Apply` and `EventTypes`, with a golden file
+- [ ] Event added to the union, `FromPayload`, `EventType`, `Advance` (or `Start`), the snapshot `Apply` and `EventTypes`, with a golden file
 - [ ] `[CoversEndpoint]` present, and tests cover success plus every failure status
 - [ ] `.http` entry added (domains that have a `.http` file); flow doc, status-code table and glossary updated
 - [ ] `dotnet build` is clean, and the EventShapeTests, the slice tests, `EndpointCoverageTests` and the SnapshotTests pass

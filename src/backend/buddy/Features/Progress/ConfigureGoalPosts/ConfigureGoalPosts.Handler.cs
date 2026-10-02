@@ -1,8 +1,5 @@
-using System.Collections.Immutable;
-
 using buddy.Common;
 using buddy.Common.Validation;
-using buddy.Features.Calendars;
 using buddy.Features.Guardians;
 
 using FluentValidation;
@@ -49,13 +46,7 @@ public static class ConfigureGoalPostsHandler
         {
             await progress.CreateAsync(id, [new ProgressStarted(id, command.ChildId, now), configured], cancellationToken);
 
-            current = new ChildProgress(
-                id,
-                command.ChildId,
-                0,
-                ImmutableHashSet<(CalendarItemId, DateOnly, Guid?)>.Empty,
-                ImmutableHashSet<int>.Empty,
-                ImmutableArray<GoalPost>.Empty);
+            current = ChildProgress.Initial(id, command.ChildId);
         }
         else
         {

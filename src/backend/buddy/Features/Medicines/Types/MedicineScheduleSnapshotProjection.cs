@@ -20,17 +20,17 @@ public sealed record MedicineScheduleSnapshot(Guid Id, MedicineSchedule Medicine
 public sealed class MedicineScheduleSnapshotProjection : SingleStreamProjection<MedicineScheduleSnapshot, Guid>
 {
     public static MedicineScheduleSnapshot Create(MedicineScheduleCreated created) =>
-        new(created.Id.Value, MedicineSchedule.Fold(null, MedicineEvent.FromPayload(created))!);
+        new(created.Id.Value, MedicineSchedule.Start(MedicineEvent.FromPayload(created)));
 
     public MedicineScheduleSnapshot Apply(MedicineScheduleSnapshot current, MedicineDetailsUpdated updated) =>
-        current with { MedicineSchedule = MedicineSchedule.Fold(current.MedicineSchedule, MedicineEvent.FromPayload(updated))! };
+        current with { MedicineSchedule = MedicineSchedule.Advance(current.MedicineSchedule, MedicineEvent.FromPayload(updated)) };
 
     public MedicineScheduleSnapshot Apply(MedicineScheduleSnapshot current, MedicineScheduleRescheduled rescheduled) =>
-        current with { MedicineSchedule = MedicineSchedule.Fold(current.MedicineSchedule, MedicineEvent.FromPayload(rescheduled))! };
+        current with { MedicineSchedule = MedicineSchedule.Advance(current.MedicineSchedule, MedicineEvent.FromPayload(rescheduled)) };
 
     public MedicineScheduleSnapshot Apply(MedicineScheduleSnapshot current, MedicineScheduleStopped stopped) =>
-        current with { MedicineSchedule = MedicineSchedule.Fold(current.MedicineSchedule, MedicineEvent.FromPayload(stopped))! };
+        current with { MedicineSchedule = MedicineSchedule.Advance(current.MedicineSchedule, MedicineEvent.FromPayload(stopped)) };
 
     public MedicineScheduleSnapshot Apply(MedicineScheduleSnapshot current, DoseStatusChanged changed) =>
-        current with { MedicineSchedule = MedicineSchedule.Fold(current.MedicineSchedule, MedicineEvent.FromPayload(changed))! };
+        current with { MedicineSchedule = MedicineSchedule.Advance(current.MedicineSchedule, MedicineEvent.FromPayload(changed)) };
 }

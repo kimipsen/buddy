@@ -11,7 +11,8 @@ public static class GetOrCreateUserHandler
 
         if (userId is not null)
         {
-            var existingUser = (await events.FindSnapshotAsync(userId, cancellationToken))!;
+            var existingUser = await events.FindSnapshotAsync(userId, cancellationToken)
+                ?? throw new InvalidOperationException($"No snapshot for userId {userId}, although its index says the stream exists.");
 
             return existingUser.IsDeleted ? new Result<User>.NotFound() : new Result<User>.Success(existingUser);
         }
@@ -41,7 +42,7 @@ public static class GetOrCreateUserHandler
         }
 
         var resultEvents = await events.CreateAsync(command.Subject, created.UserId, initialEvents, cancellationToken);
-        var user = User.Rehydrate(resultEvents)!;
+        var user = User.Replay(resultEvents);
 
         if (verificationToken is not null)
         {

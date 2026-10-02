@@ -18,8 +18,8 @@ namespace buddy.IntegrationTests.SnapshotTests;
 // re-share, which exercises MedicineSharedWithGroup's dual role as both the stream's creation
 // event (MedicineSharingSnapshotProjection.Create, dispatched by Marten's generated Evolver for
 // the first occurrence on a stream) and a later update (MedicineSharingSnapshotProjection.Apply,
-// once a snapshot row already exists), mirroring MedicineSharing.Fold's own
-// "sharing is null ? new(...) : ... with {...}" branch. See
+// once a snapshot row already exists), mirroring MedicineSharing.Start vs
+// MedicineSharing.Advance. See
 // docs/backend/analysis/event-stream-snapshots.md.
 [Collection(BuddyApiCollection.Name)]
 public sealed class MedicineSharingSnapshotTests(BuddyApiFixture fixture)

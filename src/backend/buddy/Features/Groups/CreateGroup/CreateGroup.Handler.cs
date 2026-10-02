@@ -54,7 +54,7 @@ public static class CreateGroupHandler
         var medicinePolicySet = new GroupMedicinePolicyUpdated(groupId, DefaultMedicinePolicy, ownerId, now);
 
         var events = await groups.CreateAsync(groupId, [created, mealplanPolicySet, medicinePolicySet], cancellationToken);
-        var group = Group.Rehydrate(events)!;
+        var group = Group.Replay(events);
         var members = await GroupMemberResolver.ResolveAsync(group, guardians, users, cancellationToken);
 
         return new GroupWithMemberDetails(group, members);

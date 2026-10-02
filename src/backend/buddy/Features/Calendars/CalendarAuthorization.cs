@@ -38,25 +38,15 @@ public static class CalendarAccessExtensions
 // docs/backend/analysis/group-owned-calendars-and-permissions.md for the full resolution contract.
 public static class CalendarAuthorization
 {
-    public static async Task<CalendarAccess> CheckView(Calendar? calendar, UserId userId, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    public static async Task<CalendarAccess> CheckView(Calendar calendar, UserId userId, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
-        if (calendar is null)
-        {
-            return CalendarAccess.NotFound;
-        }
-
         var role = await ResolveRole(calendar, userId, groups, guardians, cancellationToken);
 
         return role is not null ? CalendarAccess.Allowed : CalendarAccess.NotFound;
     }
 
-    public static async Task<CalendarAccess> CheckContribute(Calendar? calendar, UserId userId, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    public static async Task<CalendarAccess> CheckContribute(Calendar calendar, UserId userId, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
-        if (calendar is null)
-        {
-            return CalendarAccess.NotFound;
-        }
-
         var role = await ResolveRole(calendar, userId, groups, guardians, cancellationToken);
 
         if (role is null)
@@ -67,13 +57,8 @@ public static class CalendarAuthorization
         return role is CalendarRole.Owner or CalendarRole.Contributor ? CalendarAccess.Allowed : CalendarAccess.Forbidden;
     }
 
-    public static async Task<CalendarAccess> CheckOwner(Calendar? calendar, UserId userId, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    public static async Task<CalendarAccess> CheckOwner(Calendar calendar, UserId userId, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
-        if (calendar is null)
-        {
-            return CalendarAccess.NotFound;
-        }
-
         var role = await ResolveRole(calendar, userId, groups, guardians, cancellationToken);
 
         if (role is null)

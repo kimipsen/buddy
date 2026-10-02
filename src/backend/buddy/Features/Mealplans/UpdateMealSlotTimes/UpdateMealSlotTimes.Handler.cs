@@ -40,7 +40,7 @@ public static class UpdateMealSlotTimesHandler
         }
 
         var planEvents = await mealPlans.ReadAsync(mealPlanId, cancellationToken);
-        var plan = MealPlan.Rehydrate(planEvents)!;
+        var plan = MealPlan.Replay(planEvents);
 
         var changes = new List<MealPlanEvent>();
 
