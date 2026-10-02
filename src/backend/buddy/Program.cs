@@ -7,6 +7,7 @@ using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Pickups;
+using buddy.Features.PrintTemplates;
 using buddy.Features.WorkLocations;
 using buddy.Features.Progress;
 using buddy.Features.TaskLibrary;
@@ -75,6 +76,8 @@ builder.Services.AddMedicinesFeature(builder.Configuration);
 builder.Services.AddMealplansFeature(builder.Configuration);
 builder.Services.AddPickupsFeature(builder.Configuration);
 builder.Services.AddWorkLocationsFeature(builder.Configuration);
+// After Guardians, Groups, Calendars and WorkLocations: its write-time reference checks read their stores.
+builder.Services.AddPrintTemplatesFeature(builder.Configuration);
 builder.Services.AddProgressFeature(builder.Configuration);
 
 var app = builder.Build();
@@ -110,6 +113,7 @@ app.MapMedicinesFeature();
 app.MapMealplansFeature();
 app.MapPickupsFeature();
 app.MapWorkLocationsFeature();
+app.MapPrintTemplatesFeature();
 app.MapProgressFeature();
 
 await app.RunAsync();

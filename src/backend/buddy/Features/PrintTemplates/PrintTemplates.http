@@ -1,0 +1,79 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Create a family template (omit GroupId for a personal one)
+
+POST {{buddy_HostAddress}}/print-templates
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Ugeplan",
+  "GroupId": "{{groupId}}"
+}
+
+###
+
+# List my and my groups' templates
+GET {{buddy_HostAddress}}/print-templates
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Read one template
+GET {{buddy_HostAddress}}/print-templates/{{templateId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Rename
+PATCH {{buddy_HostAddress}}/print-templates/{{templateId}}/name
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{ "Name": "Skoleuge" }
+
+###
+
+# A3, starting on Sunday (PaperSize 1 = A3, DefaultStartWeekday 0 = Sunday)
+PATCH {{buddy_HostAddress}}/print-templates/{{templateId}}/layout
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{ "PaperSize": 1, "DefaultStartWeekday": 0, "ShowWeekNumber": true }
+
+###
+
+# The sample fridge sheet. Kind: 0 Meal, 1 Pickup, 2 WorkLocation, 3 CalendarMarker, 4 CalendarEvents, 5 TaskChecklist, 6 Blank
+PUT {{buddy_HostAddress}}/print-templates/{{templateId}}/rows
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Rows": [
+    { "Kind": 0, "Label": "Aftensmad", "HeightWeight": 1, "ChildId": "{{childId}}", "MealSlot": 2 },
+    { "Kind": 1, "Label": "Aflevere / Hente", "HeightWeight": 1, "ChildId": "{{childId}}" },
+    { "Kind": 2, "Label": "Far på Stil", "HeightWeight": 1, "GuardianId": "{{guardianId}}", "WorkLocationId": "{{locationId}}" },
+    { "Kind": 4, "Label": "Signes aktiviteter", "HeightWeight": 2, "CalendarIds": ["{{calendarId}}"], "ShowTime": true, "MaxItems": 3 },
+    { "Kind": 5, "Label": "Viggos ansvar", "HeightWeight": 2, "CalendarIds": ["{{calendarId}}"], "AssignedToId": "{{childId}}" },
+    { "Kind": 6, "Label": "Aftaler / Andet", "HeightWeight": 3 }
+  ]
+}
+
+###
+
+# Guardian name colors
+PUT {{buddy_HostAddress}}/print-templates/{{templateId}}/colors
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Colors": [
+    { "GuardianId": "{{guardianId}}", "Color": "#0ea5e9" }
+  ]
+}
+
+###
+
+# Delete
+DELETE {{buddy_HostAddress}}/print-templates/{{templateId}}
+Authorization: Bearer {{guardianToken}}

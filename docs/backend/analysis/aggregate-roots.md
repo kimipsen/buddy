@@ -32,6 +32,7 @@ flowchart TB
         MedicineSharing["MedicineSharing\nMedicineSharingId(Guid)"]
         PickupSchedule["PickupSchedule\nPickupScheduleId(Guid)"]
         WorkLocationSchedule["WorkLocationSchedule\nWorkLocationScheduleId(Guid)"]
+        PrintTemplate["PrintTemplate\nPrintTemplateId(Guid)"]
         TaskTemplate["TaskTemplate\nTaskTemplateId(Guid)"]
         ChildProgress["ChildProgress\nProgressId(Guid)"]
     end
@@ -57,6 +58,8 @@ flowchart TB
     PickupSchedule -- "childId (stored)" --> User
     PickupSchedule -- "assignments: guardianId / siblingChildId / assignedBy" --> User
     WorkLocationSchedule -- "guardianId (stored, equals stream id)" --> User
+    PrintTemplate -- "owner (user or group); rows reference children, groups, calendars, work locations" --> User
+    PrintTemplate -- "owner group" --> Group
     TaskTemplate -- "createdBy / lastModifiedBy" --> User
     ChildProgress -- "childId (Id == ChildId, no index needed)" --> User
     ChildProgress -. "awardedOccurrences : CalendarItemId" .-> CalendarItem
@@ -99,6 +102,7 @@ flowchart TB
 | MedicineSharing | `Features/Medicines/Types/MedicineSharing.cs` | `MedicineSharingId(Guid)` | `childId` → User; `sharedWithGroupId` → Group |
 | PickupSchedule | `Features/Pickups/Types/PickupSchedule.cs` | `PickupScheduleId(Guid)` | `childId` → User; assignments' `guardianId` / `siblingChildId` / `assignedBy` → User |
 | WorkLocationSchedule | `Features/WorkLocations/Types/WorkLocationSchedule.cs` | `WorkLocationScheduleId(Guid)`, equal to the guardian's `UserId` | `guardianId` → User |
+| PrintTemplate | `Features/PrintTemplates/Types/PrintTemplate.cs` | `PrintTemplateId(Guid)` | `owner` → User or Group; rows' `childId` / `guardianId` / `assignedToId` → User, `mealGroupId` → Group, `calendarIds` → Calendar, `workLocationId` → a WorkLocationSchedule location (references only, never access grants) |
 | TaskTemplate | `Features/TaskLibrary/Types/TaskTemplate.cs` | `TaskTemplateId(Guid)` | `createdBy` / `lastModifiedBy` → User; owning `childId` lives in `TaskTemplateIndexDocument`, not the aggregate itself |
 | ChildProgress | `Features/Progress/Types/ChildProgress.cs` | `ProgressId(Guid)`, equal to the child's `UserId` | `childId` → User; `awardedOccurrences` → CalendarItem (computed reference, not a foreign-key relationship) |
 

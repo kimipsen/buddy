@@ -1,6 +1,10 @@
 # Week Plan Print Templates
 
-Status: Proposed
+Status: Backend implemented. `Features/PrintTemplates` ships the `PrintTemplate` aggregate (user- or
+group-owned), all eight slices and routes below, the index document, the inline snapshot, golden
+files and integration tests, including the `WorkLocation` row kind over
+[work-locations.md](work-locations.md). The print sheet and template editor
+([week-plan-printing.md](../../frontend/analysis/week-plan-printing.md)) are not built yet.
 
 ## Context
 
@@ -252,7 +256,11 @@ own authorization (`CalendarAuthorization.CheckView`,
 whose source that guardian can't read prints a short "not available" note
 instead of failing the whole sheet.
 
-Write-time checks are about catching mistakes, not granting access:
+Write-time checks are about catching mistakes, not granting access. They run
+as the guardian saving, and only over references that are **new in that
+save**: a group template legitimately holds rows another member added (their
+private calendar, their child), and a reference that has gone stale since must
+not block every later save:
 
 - every `ChildId` must be a child the caller is an active guardian of
   (`IGuardianLinkEventStore.FindActiveLinkAsync`);
@@ -285,8 +293,10 @@ existing endpoints and lives in the frontend.
 
 ### Validation limits
 
-Added to [validation-rules.md](validation-rules.md) alongside the existing
-rules:
+Structural rules live in each slice's validator (`PrintTemplateRules`,
+`PrintTemplateRowValidator`); the reference checks above need the database and
+run in the handler (`PrintTemplateReferenceChecks`), as
+[validation-rules.md](validation-rules.md) prescribes:
 
 | Field | Rule |
 |---|---|
@@ -297,7 +307,7 @@ rules:
 | `Row.CalendarIds` | 1–10 distinct ids where required |
 | `Row.TitleFilter` | 1–60 characters when present |
 | `Row.MaxItems` | 1–8 when present |
-| `GuardianColors` | at most one entry per guardian |
+| `GuardianColors` | at most one entry per guardian, at most 12 entries, each color 1–32 characters |
 
 ## Routes
 
@@ -327,7 +337,9 @@ Status codes follow [http-status-codes.md](../http-status-codes.md):
 | A referenced child's guardian link is revoked for the printing guardian | Same as above — the pickup/meal endpoints return `NotFound`, the row degrades |
 | A referenced work location is archived | The row keeps printing its marks (archived locations still resolve); the editor flags the row |
 | A guardian named in `GuardianColors` is no longer linked | The entry is harmless and unused; the editor hides it |
-| Two guardians edit rows at nearly the same time | Both `PrintTemplateRowsReplaced` events append; the last wins, neither is lost from history — the same last-writer-wins outcome `PickupAssigned` has |
+| Two guardians edit rows at nearly the same time | Each write is an expected-version append (`StreamVersionTracker`), so a true race gives the second writer `409 concurrency_conflict` and nothing is lost; saves that don't overlap simply replace each other in order |
+| A template is deleted twice | The second delete is `404`: a deleted template is treated as missing, the same rule `DeleteCalendar` follows |
+| A child account | Can't create (`403`), lists nothing (an empty list, even for its group's templates) and gets `404` for any template |
 | A user who owns templates deletes their account | User-owned templates become unreachable with the account, as user-owned calendars do. Group-owned templates are unaffected |
 | A group is deleted | Its templates become unreachable; the index rows are filtered out by group membership |
 | The start week crosses a DST change | No effect on the template. Occurrences already arrive resolved by each calendar's `TimeZoneId` |
@@ -346,6 +358,8 @@ Status codes follow [http-status-codes.md](../http-status-codes.md):
 | Who can edit | The owner, or any non-child member of the owning group |
 | Does a template grant data access | No — every row is fetched through existing, separately authorized endpoints |
 | Server-side rendering endpoint | None in v1; composition happens in the frontend |
+| `MealGroupId` write-time check | The caller must be a non-child member of that group (added during implementation, alongside the checks listed under Authorization) |
+| `AssignedToId` write-time check | None: a wrong assignee only filters a row down to nothing, and print-time authorization already covers access |
 | Guardian "away"/office rows | A dedicated `WorkLocation` row kind over [work-locations.md](work-locations.md), not a `CalendarMarker` with a title filter |
 
 ## Remaining open questions

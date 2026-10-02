@@ -417,6 +417,19 @@ Note: `PUT /groups/{groupId}/medicine-permission-policy` is documented under the
 | `GET /work-locations/guardians/{guardianId}` | `200` | `401`, `404` | `404` unless the caller is that guardian or a co-guardian; children always get `404`. |
 | `GET /work-locations/guardians/{guardianId}/days?from=...&to=...` | `200` | `400`, `401`, `404` | Same access as above; `400` for an invalid range. |
 
+### Print Templates API (`/print-templates`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `POST /print-templates` | `200` | `400`, `401`, `403`, `404` | `400` for a blank or over-80-character name; `403` for a child account; `404` for a `groupId` the caller isn't a guardian member of. |
+| `GET /print-templates` | `200` | `401` | The caller's own templates plus their groups'; a child gets an empty list. |
+| `GET /print-templates/{templateId}` | `200` | `401`, `404` | `404` outside the Manage tier (not the owner / not a guardian member of the owning group), for children, and for deleted templates. |
+| `PATCH /print-templates/{templateId}/name` | `200` | `400`, `401`, `404` | `400` for an invalid name; unchanged names are an idempotent `200`. |
+| `PATCH /print-templates/{templateId}/layout` | `200` | `400`, `401`, `404` | `400` for an unknown paper size or weekday; unchanged layout is an idempotent `200`. |
+| `PUT /print-templates/{templateId}/rows` | `200` | `400`, `401`, `404` | `400` for 0 or over 12 rows, a row missing what its kind needs or setting fields its kind doesn't use, or a reference the caller can't reach (child, group, calendar, guardian, work location). |
+| `PUT /print-templates/{templateId}/colors` | `200` | `400`, `401`, `404` | `400` for two colors for one guardian, a blank color, or a guardian who isn't the caller or a co-guardian. |
+| `DELETE /print-templates/{templateId}` | `204` | `401`, `404` | A second delete is `404`: a deleted template is treated as missing. |
+
 ### Progress API (`/progress`)
 
 | Endpoint | Success | Client error statuses | When to use |

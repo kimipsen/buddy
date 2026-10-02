@@ -104,6 +104,14 @@ classDiagram
         +DateOverrides Overrides
     }
 
+    class PrintTemplate {
+        +PrintTemplateId Id
+        +PrintTemplateOwner Owner
+        +PaperSize PaperSize
+        +PrintTemplateRow[] Rows
+        +GuardianColor[] GuardianColors
+    }
+
     class TaskTemplate {
         +TaskTemplateId Id
         +UserId CreatedBy
@@ -136,6 +144,8 @@ classDiagram
     MedicineSharing --> Group : sharedWithGroupId
     PickupSchedule --> User : childId, assignments
     WorkLocationSchedule --> User : guardianId
+    PrintTemplate --> User : owner or rows
+    PrintTemplate --> Group : owner
     TaskTemplate --> User : createdBy, lastModifiedBy
     ChildProgress --> User : childId
     ChildProgress ..> CalendarItem : awardedOccurrences

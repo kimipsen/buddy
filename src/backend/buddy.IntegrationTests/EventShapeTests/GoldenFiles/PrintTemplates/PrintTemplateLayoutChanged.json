@@ -1,0 +1,11 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000090",
+  "PaperSizeBefore": "A4",
+  "PaperSizeAfter": "A3",
+  "StartWeekdayBefore": "Monday",
+  "StartWeekdayAfter": "Sunday",
+  "ShowWeekNumberBefore": true,
+  "ShowWeekNumberAfter": false,
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

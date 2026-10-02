@@ -237,6 +237,17 @@ A generated subscription token used to access a calendar in iCalendar format. Th
 ### iCalendar feed
 The exported calendar feed generated from a calendar and its recurring items. This is used for external calendar clients.
 
+## Print template domain
+
+### PrintTemplate
+The saved layout of a printable week plan: name, paper size (A4 or A3, always landscape), default start weekday, whether the week number shows, an ordered list of rows and guardian name colors. Owned by one guardian or by a group; the start date is chosen per print and never stored.
+
+### PrintTemplateRow
+One printed row. A flat record with a `PrintRowKind` (Meal, Pickup, WorkLocation, CalendarMarker, CalendarEvents, TaskChecklist, Blank) and only the fields that kind uses. Rows hold references, never data, and grant no access to what they reference.
+
+### GuardianColor
+The color a guardian's name prints in on a template (the paper sheet's blue and red).
+
 ## Work location domain
 
 ### WorkLocationSchedule
