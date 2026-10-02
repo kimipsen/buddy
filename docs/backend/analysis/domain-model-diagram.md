@@ -96,6 +96,14 @@ classDiagram
         +SlotAssignments Assignments
     }
 
+    class WorkLocationSchedule {
+        +WorkLocationScheduleId Id
+        +UserId GuardianId
+        +WorkLocation[] Locations
+        +WorkPattern Pattern
+        +DateOverrides Overrides
+    }
+
     class TaskTemplate {
         +TaskTemplateId Id
         +UserId CreatedBy
@@ -127,6 +135,7 @@ classDiagram
     MedicineSharing --> User : childId
     MedicineSharing --> Group : sharedWithGroupId
     PickupSchedule --> User : childId, assignments
+    WorkLocationSchedule --> User : guardianId
     TaskTemplate --> User : createdBy, lastModifiedBy
     ChildProgress --> User : childId
     ChildProgress ..> CalendarItem : awardedOccurrences

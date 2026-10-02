@@ -404,6 +404,19 @@ Note: `PUT /groups/{groupId}/medicine-permission-policy` is documented under the
 | `DELETE /pickups/children/{childId}/assignments?date=...&slot=...` | `204` | `401`, `403`, `404` | Idempotent: clearing an already-empty slot still returns `204`; `403` for a child attempting a write. |
 | `GET /pickups/children/{childId}/schedule?from=...&to=...` | `200` | `400`, `401`, `404` | `400` for a date range longer than 31 days or otherwise invalid. |
 
+### Work Locations API (`/work-locations`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `POST /work-locations/me/locations` | `200` | `400`, `401`, `403` | `400` for blank/oversized name, icon or color, a name already used by an active location, or a 13th active location; `403` for a child account. |
+| `PATCH /work-locations/me/locations/{locationId}` | `200` | `400`, `401`, `403`, `404` | `404` for an unknown or archived location; unchanged details are an idempotent `200` with no event. |
+| `DELETE /work-locations/me/locations/{locationId}` | `204` | `401`, `403`, `404` | Archives (never deletes). Idempotent on an already-archived location; `404` for an unknown one. |
+| `PUT /work-locations/me/pattern` | `200` | `400`, `401`, `403` | `400` for a cycle outside 1–4 weeks, an anchor that isn't a Monday, a day outside the cycle, two entries for one week+weekday, or an unknown/archived location. |
+| `PUT /work-locations/me/overrides` | `200` | `400`, `401`, `403` | `400` for an invalid range (`to - from` over 31 days, or backwards) or an unknown/archived location. Returns the resolved days for the range. |
+| `DELETE /work-locations/me/overrides?from=...&to=...` | `204` | `400`, `401`, `403` | Idempotent: clearing a range with no overrides still returns `204`. |
+| `GET /work-locations/guardians/{guardianId}` | `200` | `401`, `404` | `404` unless the caller is that guardian or a co-guardian; children always get `404`. |
+| `GET /work-locations/guardians/{guardianId}/days?from=...&to=...` | `200` | `400`, `401`, `404` | Same access as above; `400` for an invalid range. |
+
 ### Progress API (`/progress`)
 
 | Endpoint | Success | Client error statuses | When to use |

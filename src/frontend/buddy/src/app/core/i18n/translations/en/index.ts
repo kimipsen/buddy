@@ -14,6 +14,7 @@ import { progress } from './progress';
 import { shell } from './shell';
 import { taskLibrary } from './task-library';
 import { verifyEmail } from './verify-email';
+import { workLocations } from './work-locations';
 
 export const en = {
   admin,
@@ -32,4 +33,5 @@ export const en = {
   shell,
   taskLibrary,
   verifyEmail,
+  workLocations,
 };

@@ -237,6 +237,23 @@ A generated subscription token used to access a calendar in iCalendar format. Th
 ### iCalendar feed
 The exported calendar feed generated from a calendar and its recurring items. This is used for external calendar clients.
 
+## Work location domain
+
+### WorkLocationSchedule
+A guardian's own record of where they work on each day, used to fill the "Dad at the office" / "Mum in Randers" rows of a printed week plan. One per guardian; its id equals the guardian's `UserId`. Never visible to children and never shown in calendars or iCal feeds.
+
+### WorkLocation
+A guardian-defined place with a name, icon and color. Removing one archives it so existing references keep resolving.
+
+### WorkPattern
+A repeating cycle of 1–4 weeks counted from an anchor Monday (cycle week 0), assigning at most one work location per weekday per cycle week. Anchored rather than ISO-week-parity based, so it doesn't drift across 53-week years.
+
+### WorkDayOverride
+A one-off exception for a single date: a different location, or no location at all (a day off). Overrides beat the pattern.
+
+### Co-guardian
+Another guardian who holds an active `GuardianLink` to at least one of the same children. Co-guardians can view each other's work locations.
+
 ## Event-sourced concepts
 
 ### Event stream

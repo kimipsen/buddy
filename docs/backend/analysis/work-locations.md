@@ -1,6 +1,9 @@
 # Guardian Work Locations
 
-Status: Proposed (not yet implemented)
+Status: Implemented (backend + guardian screen; the print template `WorkLocation` row kind waits for
+[week-plan-print-templates.md](week-plan-print-templates.md)). `Features/WorkLocations` ships the
+`WorkLocationSchedule` aggregate, all eight slices and routes below, the inline snapshot, golden
+files and integration tests; the frontend ships `WorkLocationsService` and `/guardian/work-locations`.
 
 ## Context
 
@@ -197,7 +200,7 @@ The resolution order for a date is **override → pattern → nothing**.
   expressible, which calendar recurrence can't do (Question 1).
 - **Set and clear by date range.** A holiday spans many days, so
   `SetWorkLocationOverrides` and `ClearWorkLocationOverrides` take
-  `[from, to]` (at most 31 days) and append one event per date that
+  `[from, to]` (`to - from` at most 31, the shared `ValidDateRange` rule) and append one event per date that
   actually changes, in a single append. Each per-date event carries
   `Before`/`After`, so the fold and the history stay as simple as
   `PickupAssigned`/`PickupCleared`. Dates whose value wouldn't change emit
@@ -213,7 +216,7 @@ and everyone else get `NotFound`.**
 
 | Tier | Who | Actions |
 |---|---|---|
-| **Manage** | The guardian whose schedule it is | Everything |
+| **Manage** | The guardian whose schedule it is (not a child account: `403`) | Everything |
 | **View** | A co-guardian: the caller and the subject both have an active link to at least one common child | Read locations, pattern and resolved days |
 | — | Everyone else, including every child account | `NotFound` |
 
@@ -321,7 +324,9 @@ exactly one call per guardian.
 
 ### Validation limits
 
-These rules are added to [validation-rules.md](validation-rules.md):
+Structural rules live in each slice's validator; rules that need the aggregate (name
+uniqueness, location limits, "an active location of this guardian") are handler checks, as
+[validation-rules.md](validation-rules.md) prescribes:
 
 | Field | Rule |
 |---|---|
@@ -334,7 +339,8 @@ These rules are added to [validation-rules.md](validation-rules.md):
 | `Days[].Week` | 0 ≤ `Week` < `CycleWeeks`; at most one entry per (`Week`, `Day`) |
 | `Days[].LocationId` | an active location of this guardian |
 | Override `LocationId` | an active location of this guardian, or null |
-| Override and list ranges | `from ≤ to`, at most 31 days, using the shared `ValidDateRange` rule (the same cap as `ListPickupSchedule`) |
+| Override and list ranges | `from ≤ to` and `to - from` ≤ 31, using the shared `ValidDateRange` rule (the same cap as `ListPickupSchedule`) |
+| Name, icon, color lengths | name ≤ 40, icon ≤ 16, color ≤ 32 characters |
 
 ## Routes
 
@@ -381,9 +387,10 @@ caller or a co-guardian (the existing `GuardianColor` rule), and
   - **Pattern:** a `segmented-control` for the cycle length (1–4 weeks), a
     "this week is week A / B …" anchor picker, and a cycle-weeks × 7 grid of
     location selects.
-  - **Exceptions:** a month view. Tap a day to pick a location, "off", or
-    "follow pattern"; drag across days to set a holiday range. Each day shows
-    whether it comes from the pattern or an override.
+  - **Exceptions:** a four-week grid (paged earlier/later) where each day has a
+    picker for a location, "off", or "follow pattern", plus a from/to range
+    form for holidays. Each day shows whether it comes from the pattern or an
+    exception.
 - **i18n:** `core/i18n/translations/{en,da}/work-locations.ts` ("Work
   locations" / "Arbejdssteder").
 

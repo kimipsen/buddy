@@ -1,6 +1,6 @@
 # Event-Stream Snapshots
 
-Status: Implemented for all 14 event-sourced aggregates across all 9 modules. Questions 1-5
+Status: Implemented for all 15 event-sourced aggregates across all 10 modules. Questions 1-5
 below are resolved with what was actually built, including several real Marten/serialization
 constraints hit along the way that the original plan only flagged as possibilities — plus two
 more found during the full rollout (a `ValueTuple`-keyed dictionary/set gotcha, and a

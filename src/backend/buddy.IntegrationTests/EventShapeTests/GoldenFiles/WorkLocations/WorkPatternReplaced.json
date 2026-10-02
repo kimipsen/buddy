@@ -1,0 +1,25 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000001",
+  "Before": {
+    "CycleWeeks": 1,
+    "AnchorMonday": "2024-12-30",
+    "Days": []
+  },
+  "After": {
+    "CycleWeeks": 2,
+    "AnchorMonday": "2024-12-30",
+    "Days": [
+      {
+        "Week": 0,
+        "Day": "Tuesday",
+        "LocationId": "00000000-0000-0000-0000-000000000080"
+      },
+      {
+        "Week": 1,
+        "Day": "Thursday",
+        "LocationId": "00000000-0000-0000-0000-000000000081"
+      }
+    ]
+  },
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

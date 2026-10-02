@@ -78,6 +78,8 @@ The guardian routes currently include:
   meal-plan assignments
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
+- `/guardian/work-locations` — the guardian's own work locations, alternating weekly pattern, and
+  per-day exceptions (used by the printable week plan; never shown to children)
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
   calendar, plus event/task creation
 - `/guardian/task-library` — per-child task template and subtask management
@@ -131,6 +133,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   subscription-token endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
+- `WorkLocationsService` manages the guardian's work locations, pattern, and exceptions, and lists
+  resolved work days for the guardian or a co-guardian
 - `TaskLibraryService` manages per-child task templates and subtasks, and backs the
   template picker on the calendar agenda's create-task form
 - `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post

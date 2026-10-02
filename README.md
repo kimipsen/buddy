@@ -43,8 +43,8 @@ in real time.
       [Sleep diary](docs/backend/analysis/sleep-diary.md))
 - [ ] Printable A3/A4 week plans from saved templates (proposed, not yet
       implemented — see [Week plan print templates](docs/backend/analysis/week-plan-print-templates.md))
-- [ ] Guardian work locations with alternating weekly patterns (proposed, not
-      yet implemented — see [Guardian work locations](docs/backend/analysis/work-locations.md))
+- [x] Guardian work locations with alternating weekly patterns and per-day
+      exceptions
 
 ### Child
 

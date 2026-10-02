@@ -1,0 +1,80 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Add a work location (guardian only)
+
+POST {{buddy_HostAddress}}/work-locations/me/locations
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Stil",
+  "Icon": "🏢",
+  "Color": "#2563eb"
+}
+
+###
+
+# Rename / restyle a location
+PATCH {{buddy_HostAddress}}/work-locations/me/locations/{{locationId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "Kontoret",
+  "Icon": "🏬",
+  "Color": "#16a34a"
+}
+
+###
+
+# Archive a location (also removes it from the pattern)
+DELETE {{buddy_HostAddress}}/work-locations/me/locations/{{locationId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Alternating A/B pattern: Tue + Thu in week A, Thu in week B. Day is the DayOfWeek ordinal (0 = Sunday).
+PUT {{buddy_HostAddress}}/work-locations/me/pattern
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "CycleWeeks": 2,
+  "AnchorMonday": "2026-09-28",
+  "Days": [
+    { "Week": 0, "Day": 2, "LocationId": "{{locationId}}" },
+    { "Week": 0, "Day": 4, "LocationId": "{{locationId}}" },
+    { "Week": 1, "Day": 4, "LocationId": "{{locationId}}" }
+  ]
+}
+
+###
+
+# Mark a holiday week as off (LocationId null)
+PUT {{buddy_HostAddress}}/work-locations/me/overrides
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "From": "2026-10-12",
+  "To": "2026-10-18",
+  "LocationId": null
+}
+
+###
+
+# Clear overrides so the range follows the pattern again
+DELETE {{buddy_HostAddress}}/work-locations/me/overrides?from=2026-10-12&to=2026-10-18
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Read a guardian's locations and pattern (the guardian or a co-guardian)
+GET {{buddy_HostAddress}}/work-locations/guardians/{{guardianId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Resolved days for a week (the guardian or a co-guardian)
+GET {{buddy_HostAddress}}/work-locations/guardians/{{guardianId}}/days?from=2026-09-28&to=2026-10-04
+Authorization: Bearer {{guardianToken}}
