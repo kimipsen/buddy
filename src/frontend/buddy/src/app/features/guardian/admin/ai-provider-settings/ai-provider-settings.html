@@ -129,19 +129,19 @@
           @if (testResults().get(provider); as result) {
             <p
               class="mt-2 text-xs"
-              [class.text-emerald-700]="result.isSuccessful"
-              [class.dark:text-emerald-400]="result.isSuccessful"
-              [class.text-red-600]="!result.isSuccessful"
-              [class.dark:text-red-400]="!result.isSuccessful"
+              [class.text-emerald-700]="result.kind === 0"
+              [class.dark:text-emerald-400]="result.kind === 0"
+              [class.text-red-600]="result.kind !== 0"
+              [class.dark:text-red-400]="result.kind !== 0"
             >
               {{
-                (result.isSuccessful
+                (result.kind === 0
                   ? 'admin.aiProviders.testSuccess'
                   : 'admin.aiProviders.testFailure'
                 ) | translate
               }}
-              @if (!result.isSuccessful && result.errorMessage) {
-                — {{ result.errorMessage }}
+              @if (result.kind === 1) {
+                — {{ result.message }}
               }
             </p>
           }

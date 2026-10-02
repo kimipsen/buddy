@@ -742,6 +742,14 @@ Committed per group.
   status can't disagree with the response. The cleanup query filters on `Response == null` (new
   test). The replay's `?? 200` is gone. `StreamVersionTracker.BeginScope()` returns a no-op
   singleton for a nested scope instead of null.
+- **Mealplans AI.** `ActiveProviderChanged(AiProvider)` plus a new `ActiveProviderCleared`
+  (golden file `ActiveProviderChanged_ToNone` became `ActiveProviderCleared`). `MealFamilyResolution`
+  keeps a `DateTimeOffset?` "activated at" -- no active provider is a real state there -- but derives
+  it from the two events. `TestProviderConnectionResult` is `Succeeded | Failed(Message)`, wire
+  `{kind:0}` / `{kind:1, message}`; being a top-level response it uses `[JsonPolymorphic]` (minimal
+  APIs serialize a top-level value by runtime type, which skips a base-type converter). The frontend
+  keeps a local `unreachable` state for a test request that itself failed. `ExecutionOutcome` carries
+  `DraftEvents` (a list), and `AiSessionHistoryBuilder` drops its lazy `List<>?`.
 
 ## Phase 6: drop `Before?` from events
 

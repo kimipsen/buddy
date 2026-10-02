@@ -39,9 +39,9 @@ public sealed class MealplanAiAssistantEventShapeTests
         "Mealplans/ActiveProviderChanged.json");
 
     [Fact]
-    public void ActiveProviderChanged_ToNone() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new ActiveProviderChanged(FixedCredentialId, null, FixedGuardianId, FixedInstant),
-        "Mealplans/ActiveProviderChanged_ToNone.json");
+    public void ActiveProviderCleared() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new ActiveProviderCleared(FixedCredentialId, FixedGuardianId, FixedInstant),
+        "Mealplans/ActiveProviderCleared.json");
 
     [Fact]
     public void AiSessionStarted() => EventShapeTestSupport.AssertMatchesGoldenFile(

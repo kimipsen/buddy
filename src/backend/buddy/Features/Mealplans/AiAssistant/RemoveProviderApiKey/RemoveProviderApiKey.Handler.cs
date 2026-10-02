@@ -42,7 +42,7 @@ public static class RemoveProviderApiKeyHandler
 
         if (existing.ActiveProvider == command.Provider)
         {
-            newEvents.Add(new ActiveProviderChanged(credentialId, null, userId, now));
+            newEvents.Add(new ActiveProviderCleared(credentialId, userId, now));
         }
 
         await credentials.AppendAsync(credentialId, newEvents, cancellationToken);

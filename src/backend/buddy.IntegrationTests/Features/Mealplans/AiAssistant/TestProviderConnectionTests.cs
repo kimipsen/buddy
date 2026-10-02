@@ -30,8 +30,8 @@ public sealed class TestProviderConnectionTests(BuddyApiFixture fixture)
         });
 
         var result = response.ReadAsJson<TestProviderConnectionResultDto>();
-        Assert.False(result.IsSuccessful);
-        Assert.False(string.IsNullOrWhiteSpace(result.ErrorMessage));
+        Assert.Equal(1, result.Kind);
+        Assert.False(string.IsNullOrWhiteSpace(result.Message));
     }
 
     [Fact]
@@ -48,8 +48,8 @@ public sealed class TestProviderConnectionTests(BuddyApiFixture fixture)
         });
 
         var result = response.ReadAsJson<TestProviderConnectionResultDto>();
-        Assert.False(result.IsSuccessful);
-        Assert.False(string.IsNullOrWhiteSpace(result.ErrorMessage));
+        Assert.Equal(1, result.Kind);
+        Assert.False(string.IsNullOrWhiteSpace(result.Message));
     }
 
     [Fact]
@@ -66,8 +66,8 @@ public sealed class TestProviderConnectionTests(BuddyApiFixture fixture)
         });
 
         var result = response.ReadAsJson<TestProviderConnectionResultDto>();
-        Assert.False(result.IsSuccessful);
-        Assert.False(string.IsNullOrWhiteSpace(result.ErrorMessage));
+        Assert.Equal(1, result.Kind);
+        Assert.False(string.IsNullOrWhiteSpace(result.Message));
     }
 
     [Fact]

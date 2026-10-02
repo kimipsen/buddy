@@ -73,11 +73,11 @@ public static class TestProviderConnectionHandler
                     []),
                 cancellationToken);
 
-            return new Result<TestProviderConnectionResult>.Success(new TestProviderConnectionResult(true, null));
+            return new Result<TestProviderConnectionResult>.Success(new TestProviderConnectionResult.Succeeded());
         }
         catch (AiProviderException ex)
         {
-            return new Result<TestProviderConnectionResult>.Success(new TestProviderConnectionResult(false, DescribeFailure(ex)));
+            return new Result<TestProviderConnectionResult>.Success(new TestProviderConnectionResult.Failed(DescribeFailure(ex)));
         }
     }
 

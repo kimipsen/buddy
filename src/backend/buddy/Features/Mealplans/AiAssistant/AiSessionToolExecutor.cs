@@ -11,9 +11,9 @@ namespace buddy.Features.Mealplans;
 
 public static class AiSessionToolExecutor
 {
-    // DraftEvent is null exactly when IsError is true, or when the tool is read-only (there's
-    // nothing to persist against the session stream in either case).
-    public sealed record ExecutionOutcome(string ResultJson, bool IsError, MealplanAiSessionEvent? DraftEvent);
+    // DraftEvents is empty when IsError is true, or when the tool is read-only (there's nothing to
+    // persist against the session stream in either case).
+    public sealed record ExecutionOutcome(string ResultJson, bool IsError, IReadOnlyList<MealplanAiSessionEvent> DraftEvents);
 
     public static async Task<ExecutionOutcome> ExecuteAsync(
         AiRequestedToolCall call,
@@ -33,7 +33,7 @@ public static class AiSessionToolExecutor
             AiSessionTools.ClearDraftAssignment => ExecuteClearDraftAssignment(call, sessionId, now),
             AiSessionTools.GetCalendarConflicts => await ExecuteGetCalendarConflictsAsync(
                 call, session, callerId, calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken),
-            _ => new ExecutionOutcome(Error($"Unknown tool: {call.ToolName}"), true, null),
+            _ => new ExecutionOutcome(Error($"Unknown tool: {call.ToolName}"), true, []),
         };
 
     private static ExecutionOutcome ExecuteProposeAssignment(
@@ -41,62 +41,62 @@ public static class AiSessionToolExecutor
     {
         if (!TryParseArguments(call.ArgumentsJson, out var args, out var parseError))
         {
-            return new ExecutionOutcome(Error(parseError), true, null);
+            return new ExecutionOutcome(Error(parseError), true, []);
         }
 
         if (!TryGetDate(args, "date", out var date, out var dateError))
         {
-            return new ExecutionOutcome(Error(dateError), true, null);
+            return new ExecutionOutcome(Error(dateError), true, []);
         }
 
         if (!TryGetSlot(args, out var slot, out var slotError))
         {
-            return new ExecutionOutcome(Error(slotError), true, null);
+            return new ExecutionOutcome(Error(slotError), true, []);
         }
 
         if (!args.TryGetProperty("meal_id", out var mealIdElement) || !Guid.TryParse(mealIdElement.GetString(), out var mealGuid))
         {
-            return new ExecutionOutcome(Error("\"meal_id\" must be a valid meal id from the available meal library."), true, null);
+            return new ExecutionOutcome(Error("\"meal_id\" must be a valid meal id from the available meal library."), true, []);
         }
 
         var mealId = new MealId(mealGuid);
 
         if (date < session.From || date > session.To)
         {
-            return new ExecutionOutcome(Error($"{date:yyyy-MM-dd} is outside the requested range {session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd}."), true, null);
+            return new ExecutionOutcome(Error($"{date:yyyy-MM-dd} is outside the requested range {session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd}."), true, []);
         }
 
         if (!session.RequestedSlots.Contains(slot))
         {
-            return new ExecutionOutcome(Error($"{slot} was not one of the requested meal slots for this session."), true, null);
+            return new ExecutionOutcome(Error($"{slot} was not one of the requested meal slots for this session."), true, []);
         }
 
         if (!familyMealIds.Contains(mealId))
         {
-            return new ExecutionOutcome(Error("That meal id is not in the family's available meal library."), true, null);
+            return new ExecutionOutcome(Error("That meal id is not in the family's available meal library."), true, []);
         }
 
-        return new ExecutionOutcome(Ok, false, new AiDraftAssignmentSet(sessionId, date, slot, mealId, now));
+        return new ExecutionOutcome(Ok, false, [new AiDraftAssignmentSet(sessionId, date, slot, mealId, now)]);
     }
 
     private static ExecutionOutcome ExecuteClearDraftAssignment(AiRequestedToolCall call, MealplanAiSessionId sessionId, DateTimeOffset now)
     {
         if (!TryParseArguments(call.ArgumentsJson, out var args, out var parseError))
         {
-            return new ExecutionOutcome(Error(parseError), true, null);
+            return new ExecutionOutcome(Error(parseError), true, []);
         }
 
         if (!TryGetDate(args, "date", out var date, out var dateError))
         {
-            return new ExecutionOutcome(Error(dateError), true, null);
+            return new ExecutionOutcome(Error(dateError), true, []);
         }
 
         if (!TryGetSlot(args, out var slot, out var slotError))
         {
-            return new ExecutionOutcome(Error(slotError), true, null);
+            return new ExecutionOutcome(Error(slotError), true, []);
         }
 
-        return new ExecutionOutcome(Ok, false, new AiDraftAssignmentCleared(sessionId, date, slot, now));
+        return new ExecutionOutcome(Ok, false, [new AiDraftAssignmentCleared(sessionId, date, slot, now)]);
     }
 
     private static async Task<ExecutionOutcome> ExecuteGetCalendarConflictsAsync(
@@ -106,23 +106,23 @@ public static class AiSessionToolExecutor
     {
         if (!TryParseArguments(call.ArgumentsJson, out var args, out var parseError))
         {
-            return new ExecutionOutcome(Error(parseError), true, null);
+            return new ExecutionOutcome(Error(parseError), true, []);
         }
 
         if (!TryGetDate(args, "from", out var from, out var fromError))
         {
-            return new ExecutionOutcome(Error(fromError), true, null);
+            return new ExecutionOutcome(Error(fromError), true, []);
         }
 
         if (!TryGetDate(args, "to", out var to, out var toError))
         {
-            return new ExecutionOutcome(Error(toError), true, null);
+            return new ExecutionOutcome(Error(toError), true, []);
         }
 
         if (to < from || from < session.From || to > session.To)
         {
             return new ExecutionOutcome(
-                Error($"The range must be within the session's requested dates ({session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd})."), true, null);
+                Error($"The range must be within the session's requested dates ({session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd})."), true, []);
         }
 
         var occurrences = await CalendarConflictLookup.FindOccurrencesAsync(callerId, from, to, calendars, calendarItems, taskTemplates, groups, cancellationToken);
@@ -134,7 +134,7 @@ public static class AiSessionToolExecutor
             allDay = o.IsAllDay
         });
 
-        return new ExecutionOutcome(JsonSerializer.Serialize(new { status = "ok", events }), false, null);
+        return new ExecutionOutcome(JsonSerializer.Serialize(new { status = "ok", events }), false, []);
     }
 
     private static bool TryParseArguments(string argumentsJson, out JsonElement args, out string error)

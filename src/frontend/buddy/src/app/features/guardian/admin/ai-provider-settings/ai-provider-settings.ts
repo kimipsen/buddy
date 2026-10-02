@@ -19,6 +19,10 @@ const PROVIDER_LABEL_KEYS: Record<AiProvider, string> = {
   2: 'admin.aiProviders.names.gemini',
 };
 
+// What the settings page shows after a test: the API's answer, or that the test request itself
+// failed (no message to show).
+type ConnectionTestOutcome = TestProviderConnectionResult | { kind: 'unreachable' };
+
 @Component({
   selector: 'app-ai-provider-settings',
   imports: [FormsModule, TranslatePipe],
@@ -53,7 +57,7 @@ export class AiProviderSettingsComponent implements OnInit {
   protected readonly removeError = signal<string | null>(null);
 
   protected readonly testingProvider = signal<AiProvider | null>(null);
-  protected readonly testResults = signal<Map<AiProvider, TestProviderConnectionResult>>(new Map());
+  protected readonly testResults = signal<Map<AiProvider, ConnectionTestOutcome>>(new Map());
 
   private childId: string | null = null;
 
@@ -169,13 +173,13 @@ export class AiProviderSettingsComponent implements OnInit {
       const result = await this.aiAssistant.testProviderConnection(childId, provider);
       this.setTestResult(provider, result);
     } catch {
-      this.setTestResult(provider, { isSuccessful: false, errorMessage: null });
+      this.setTestResult(provider, { kind: 'unreachable' });
     } finally {
       this.testingProvider.set(null);
     }
   }
 
-  private setTestResult(provider: AiProvider, result: TestProviderConnectionResult): void {
+  private setTestResult(provider: AiProvider, result: ConnectionTestOutcome): void {
     this.testResults.update((current) => new Map(current).set(provider, result));
   }
 

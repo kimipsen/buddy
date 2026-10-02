@@ -37,6 +37,7 @@ public static class MealplansFeature
         typeof(ProviderApiKeySet),
         typeof(ProviderApiKeyRemoved),
         typeof(ActiveProviderChanged),
+        typeof(ActiveProviderCleared),
         typeof(AiSessionStarted),
         typeof(AiUserMessageSent),
         typeof(AiToolInvocationRecorded),

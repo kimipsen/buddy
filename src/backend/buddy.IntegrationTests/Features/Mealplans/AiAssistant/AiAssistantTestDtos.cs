@@ -7,7 +7,8 @@ internal sealed record AiProviderSettingsEntryDto(AiProvider Provider, string La
 
 internal sealed record AiProviderSettingsDto(IReadOnlyList<AiProviderSettingsEntryDto> Providers, AiProvider? ActiveProvider);
 
-internal sealed record TestProviderConnectionResultDto(bool IsSuccessful, string? ErrorMessage);
+// TestProviderConnectionResult read flat: kind 0 succeeded, kind 1 failed with a message.
+internal sealed record TestProviderConnectionResultDto(int Kind, string? Message = null);
 
 // Matches AiSessionView / AiSessionTranscriptEntry / AiSessionDraftEntry (Features/Mealplans/AiAssistant/Types).
 internal sealed record AiSessionTranscriptEntryDto(AiChatMessageRole Role, string Text, DateTimeOffset OccurredAt);

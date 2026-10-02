@@ -9,6 +9,7 @@ namespace buddy.Features.Mealplans;
 public sealed record AiProviderCredential(
     AiCredentialId Id,
     ImmutableDictionary<AiProvider, StoredApiKey> Providers,
+    // Null when no provider is active: none chosen yet, or the active one's key was removed.
     AiProvider? ActiveProvider)
 {
     public static AiProviderCredential? Rehydrate(IEnumerable<AiProviderCredentialEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
@@ -42,6 +43,7 @@ public sealed record AiProviderCredential(
             Providers = credential.Providers.Remove(removed.Provider)
         },
         ActiveProviderChanged changed => credential with { ActiveProvider = changed.Provider },
+        ActiveProviderCleared => credential with { ActiveProvider = null },
         AiCredentialsInitialized => throw EventReplay.AlreadyStarted(nameof(AiProviderCredential), @event.EventType)
     };
 }

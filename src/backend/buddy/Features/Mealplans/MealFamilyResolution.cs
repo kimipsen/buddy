@@ -81,8 +81,8 @@ public static class MealFamilyResolution
     //      someone else in a family the caller has left is not inherited.
     //
     // The winner is the most recently activated candidate: the one whose current active provider
-    // was set last (OccurredAt of its latest ActiveProviderChanged, which must have a non-null
-    // Provider). Credentials with no active provider rank below every activated one. Ties, and the
+    // was set last (OccurredAt of its latest ActiveProviderChanged, unless an ActiveProviderCleared
+    // came after it). Credentials with no active provider rank below every activated one. Ties, and the
     // order among never-/no-longer-activated credentials, fall back to the larger (newer, UUIDv7)
     // credential id. This replaces "first index row found", which over a HashSet was arbitrary as
     // soon as two families with a credential each merged.
@@ -136,10 +136,12 @@ public static class MealFamilyResolution
 
         foreach (var @event in events)
         {
-            if (@event is ActiveProviderChanged changed)
+            activatedAt = @event switch
             {
-                activatedAt = changed.Provider is null ? null : changed.OccurredAt;
-            }
+                ActiveProviderChanged changed => changed.OccurredAt,
+                ActiveProviderCleared => null,
+                _ => activatedAt,
+            };
         }
 
         return activatedAt;
@@ -150,6 +152,7 @@ public static class MealFamilyResolution
         {
             ProviderApiKeySet set => set.Key.AddedBy == guardianId,
             ActiveProviderChanged changed => changed.ChangedBy == guardianId,
+            ActiveProviderCleared cleared => cleared.ClearedBy == guardianId,
             ProviderApiKeyRemoved removed => removed.RemovedBy == guardianId,
             AiCredentialsInitialized => false,
         });

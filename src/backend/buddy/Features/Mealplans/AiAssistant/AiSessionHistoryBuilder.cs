@@ -8,7 +8,7 @@ public static class AiSessionHistoryBuilder
     public static IReadOnlyList<AiChatMessage> Build(IEnumerable<MealplanAiSessionEvent> events)
     {
         List<AiChatMessage> messages = [];
-        List<AiToolInvocation>? pendingToolInvocations = null;
+        List<AiToolInvocation> pendingToolInvocations = [];
 
         foreach (var @event in events)
         {
@@ -19,15 +19,15 @@ public static class AiSessionHistoryBuilder
                     break;
 
                 case AiToolInvocationRecorded tool:
-                    (pendingToolInvocations ??= []).Add(new AiToolInvocation(tool.ToolCallId, tool.ToolName, tool.ArgumentsJson, tool.ResultJson, tool.IsError));
+                    pendingToolInvocations.Add(new AiToolInvocation(tool.ToolCallId, tool.ToolName, tool.ArgumentsJson, tool.ResultJson, tool.IsError));
                     break;
 
                 // Flushes whatever tool invocations accumulated since the last assistant message --
                 // events for one turn are always appended in (tool invocations)*, then this, in
                 // that order, so nothing from a later turn can be pending here yet.
                 case AiAssistantMessageRecorded assistantMessage:
-                    messages.Add(new AiChatMessage(AiChatMessageRole.Assistant, assistantMessage.Text, pendingToolInvocations ?? []));
-                    pendingToolInvocations = null;
+                    messages.Add(new AiChatMessage(AiChatMessageRole.Assistant, assistantMessage.Text, pendingToolInvocations));
+                    pendingToolInvocations = [];
                     break;
             }
         }

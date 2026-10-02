@@ -175,10 +175,7 @@ public static class SendAiSessionMessageHandler
                 newEvents.Add(new AiToolInvocationRecorded(sessionId, toolCall.ToolCallId, toolCall.ToolName, toolCall.ArgumentsJson, outcome.ResultJson, outcome.IsError, now));
                 turnInvocations.Add(new AiToolInvocation(toolCall.ToolCallId, toolCall.ToolName, toolCall.ArgumentsJson, outcome.ResultJson, outcome.IsError));
 
-                if (outcome.DraftEvent is { } draftEvent)
-                {
-                    newEvents.Add(draftEvent);
-                }
+                newEvents.AddRange(outcome.DraftEvents);
             }
 
             history.Add(new AiChatMessage(AiChatMessageRole.Assistant, completion.Text, turnInvocations));

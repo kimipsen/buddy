@@ -6,7 +6,8 @@ public union AiProviderCredentialEvent(
     AiCredentialsInitialized,
     ProviderApiKeySet,
     ProviderApiKeyRemoved,
-    ActiveProviderChanged
+    ActiveProviderChanged,
+    ActiveProviderCleared
 )
 {
     public static AiProviderCredentialEvent FromPayload(object payload) => payload switch
@@ -15,6 +16,7 @@ public union AiProviderCredentialEvent(
         ProviderApiKeySet e => e,
         ProviderApiKeyRemoved e => e,
         ActiveProviderChanged e => e,
+        ActiveProviderCleared e => e,
         _ => throw new ArgumentException($"Unknown AI credential event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -24,6 +26,7 @@ public union AiProviderCredentialEvent(
         ProviderApiKeySet => nameof(ProviderApiKeySet),
         ProviderApiKeyRemoved => nameof(ProviderApiKeyRemoved),
         ActiveProviderChanged => nameof(ActiveProviderChanged),
+        ActiveProviderCleared => nameof(ActiveProviderCleared),
     };
 }
 
@@ -38,6 +41,8 @@ public sealed record ProviderApiKeySet(AiCredentialId Id, AiProvider Provider, S
 
 public sealed record ProviderApiKeyRemoved(AiCredentialId Id, AiProvider Provider, UserId RemovedBy, DateTimeOffset OccurredAt);
 
-// Provider is null when the removed provider was the active one, leaving the family with no
-// active provider until a guardian picks (or adds) another.
-public sealed record ActiveProviderChanged(AiCredentialId Id, AiProvider? Provider, UserId ChangedBy, DateTimeOffset OccurredAt);
+public sealed record ActiveProviderChanged(AiCredentialId Id, AiProvider Provider, UserId ChangedBy, DateTimeOffset OccurredAt);
+
+// Appended alongside ProviderApiKeyRemoved when the removed provider was the active one, leaving
+// the family with no active provider until a guardian picks (or adds) another.
+public sealed record ActiveProviderCleared(AiCredentialId Id, UserId ClearedBy, DateTimeOffset OccurredAt);

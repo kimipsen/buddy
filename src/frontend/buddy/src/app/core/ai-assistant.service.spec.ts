@@ -125,9 +125,9 @@ describe('AiAssistantService', () => {
       const req = httpMock.expectOne(`${base()}/ai/providers/0/test-connection`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ apiKey: 'sk-ant-candidate' });
-      req.flush({ isSuccessful: true, errorMessage: null });
+      req.flush({ kind: 0 });
 
-      await expect(promise).resolves.toEqual({ isSuccessful: true, errorMessage: null });
+      await expect(promise).resolves.toEqual({ kind: 0 });
     });
 
     it('POSTs a null api key to test the already-stored key', async () => {
@@ -135,11 +135,11 @@ describe('AiAssistantService', () => {
 
       const req = httpMock.expectOne(`${base()}/ai/providers/0/test-connection`);
       expect(req.request.body).toEqual({ apiKey: null });
-      req.flush({ isSuccessful: false, errorMessage: 'Incorrect API key provided.' });
+      req.flush({ kind: 1, message: 'Incorrect API key provided.' });
 
       await expect(promise).resolves.toEqual({
-        isSuccessful: false,
-        errorMessage: 'Incorrect API key provided.',
+        kind: 1,
+        message: 'Incorrect API key provided.',
       });
     });
   });

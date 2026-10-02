@@ -46,9 +46,9 @@ describe('AiProviderSettingsComponent', () => {
       ),
       removeProviderApiKey: vi.fn(async () => settings()),
       setActiveProvider: vi.fn(async () => settings({ activeProvider: 1 })),
-      testProviderConnection: vi.fn(
-        async () => ({ isSuccessful: true, errorMessage: null }) as TestProviderConnectionResult,
-      ),
+      testProviderConnection: vi.fn(async (): Promise<TestProviderConnectionResult> => ({
+        kind: 0,
+      })),
       ...stubs.aiAssistant,
     };
 
@@ -215,9 +215,9 @@ describe('AiProviderSettingsComponent', () => {
     const { fixture, aiAssistant } = await setup({
       aiAssistant: {
         listProviders: vi.fn(async () => configured),
-        testProviderConnection: vi.fn(async () => ({
-          isSuccessful: false,
-          errorMessage: 'Incorrect API key provided.',
+        testProviderConnection: vi.fn(async (): Promise<TestProviderConnectionResult> => ({
+          kind: 1,
+          message: 'Incorrect API key provided.',
         })),
       },
     });

@@ -109,7 +109,7 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
   // Stub a successful test-connection response -- never lets the real request reach the backend
   // endpoint (and therefore never the real Anthropic API).
   await page.route('**/ai/providers/*/test-connection', async (route) => {
-    await route.fulfill({ json: { isSuccessful: true, errorMessage: null } });
+    await route.fulfill({ json: { kind: 0 } });
   });
 
   await Promise.all([
@@ -124,7 +124,7 @@ test('guardian adds AI provider keys, switches the active one, tests a connectio
   await page.unroute('**/ai/providers/*/test-connection');
   await page.route('**/ai/providers/*/test-connection', async (route) => {
     await route.fulfill({
-      json: { isSuccessful: false, errorMessage: 'Incorrect API key provided.' },
+      json: { kind: 1, message: 'Incorrect API key provided.' },
     });
   });
 

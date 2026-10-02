@@ -29,10 +29,8 @@ export interface AiProviderSettings {
   activeProvider: AiProvider | null;
 }
 
-export interface TestProviderConnectionResult {
-  isSuccessful: boolean;
-  errorMessage: string | null;
-}
+// kind 0 = the provider answered; 1 = it rejected the key (bad key, no quota, ...) with a message.
+export type TestProviderConnectionResult = { kind: 0 } | { kind: 1; message: string };
 
 export interface AiSessionTranscriptEntry {
   role: AiChatMessageRole;
