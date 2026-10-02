@@ -7,8 +7,9 @@ Authorization: Bearer {{guardianToken}}
 Content-Type: application/json
 
 {
-  "Kind": "Guardian",
-  "GuardianId": "{{guardianId}}"
+  "assignee": { "kind": 0, "guardianId": "{{guardianId}}" },
+  "time": "08:00:00",
+  "notes": "Bring an umbrella"
 }
 
 ###
@@ -19,7 +20,7 @@ Authorization: Bearer {{guardianToken}}
 Content-Type: application/json
 
 {
-  "Kind": "SelfEscort"
+  "assignee": { "kind": 1 }
 }
 
 ###
@@ -30,8 +31,7 @@ Authorization: Bearer {{guardianToken}}
 Content-Type: application/json
 
 {
-  "Kind": "Sibling",
-  "SiblingChildId": "{{siblingChildId}}"
+  "assignee": { "kind": 2, "siblingChildId": "{{siblingChildId}}" }
 }
 
 ###
@@ -42,10 +42,7 @@ Authorization: Bearer {{guardianToken}}
 Content-Type: application/json
 
 {
-  "Kind": "Playdate",
-  "PlaydateHostName": "Mia's mom",
-  "PlaydateLocation": "Mia's house",
-  "PlaydateContactInfo": "+45 12 34 56 78"
+  "assignee": { "kind": 3, "hostName": "Mia's mom", "location": "Mia's house", "contactInfo": "+45 12 34 56 78" }
 }
 
 ###

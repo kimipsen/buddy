@@ -28,12 +28,7 @@ public static class AssignPickupEndpoint
                 new UserId(childId),
                 date,
                 slot,
-                request.Kind,
-                request.GuardianId is { } guardianId ? new UserId(guardianId) : null,
-                request.SiblingChildId is { } siblingChildId ? new UserId(siblingChildId) : null,
-                request.PlaydateHostName,
-                request.PlaydateLocation,
-                request.PlaydateContactInfo,
+                request.Assignee.ToDomain(),
                 request.Time,
                 FreeText.Normalize(request.Notes));
 
@@ -53,12 +48,4 @@ public static class AssignPickupEndpoint
     }
 }
 
-public sealed record AssignPickupRequest(
-    PickupAssigneeKind Kind,
-    Guid? GuardianId = null,
-    Guid? SiblingChildId = null,
-    string? PlaydateHostName = null,
-    string? PlaydateLocation = null,
-    string? PlaydateContactInfo = null,
-    TimeOnly? Time = null,
-    string? Notes = null);
+public sealed record AssignPickupRequest(PickupAssigneeDto Assignee, TimeOnly? Time = null, string? Notes = null);

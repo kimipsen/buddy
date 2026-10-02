@@ -50,14 +50,9 @@ describe('ManagePickups', () => {
 
   function occurrence(overrides: Partial<PickupOccurrence> = {}): PickupOccurrence {
     return {
+      assignee: { kind: 0, guardianId: 'guardian-1' },
       date: weekStart,
       slot: 0,
-      kind: 0,
-      guardianId: 'guardian-1',
-      siblingChildId: null,
-      playdateHostName: null,
-      playdateLocation: null,
-      playdateContactInfo: null,
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -199,7 +194,11 @@ describe('ManagePickups', () => {
   });
 
   it('keys an occurrence by date and slot, so it only shows in its own cell', async () => {
-    const dropOff = occurrence({ date: weekStart, slot: 0, guardianId: 'guardian-1' });
+    const dropOff = occurrence({
+      date: weekStart,
+      slot: 0,
+      assignee: { kind: 0, guardianId: 'guardian-1' },
+    });
 
     const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [dropOff]) } });
     await settle(fixture);
@@ -281,10 +280,9 @@ describe('ManagePickups', () => {
   describe('assigning a pickup', () => {
     it('sends the exact childId/date/slot/request to the service and shows the result once it resolves', async () => {
       const assignedOccurrence = occurrence({
+        assignee: { kind: 0, guardianId: 'guardian-1' },
         date: weekStart,
         slot: 0,
-        kind: 0,
-        guardianId: 'guardian-1',
       });
       const assignPickup = vi.fn(async () => assignedOccurrence);
 
@@ -311,12 +309,7 @@ describe('ManagePickups', () => {
       await settle(fixture);
 
       const expectedRequest: AssignPickupRequest = {
-        kind: 0,
-        guardianId: 'guardian-1',
-        siblingChildId: null,
-        playdateHostName: null,
-        playdateLocation: null,
-        playdateContactInfo: null,
+        assignee: { kind: 0, guardianId: 'guardian-1' },
         time: null,
         notes: '',
       };
@@ -327,7 +320,11 @@ describe('ManagePickups', () => {
     });
 
     it('routes the day and slot of the specific cell that was edited, not just the first one', async () => {
-      const assignedOccurrence = occurrence({ date: isoDateOffset(2), slot: 1, kind: 1 });
+      const assignedOccurrence = occurrence({
+        assignee: { kind: 1 },
+        date: isoDateOffset(2),
+        slot: 1,
+      });
       const assignPickup = vi.fn(async () => assignedOccurrence);
 
       const { fixture, pickups } = await setup({ pickups: { assignPickup } });
@@ -350,7 +347,7 @@ describe('ManagePickups', () => {
         'child-1',
         isoDateOffset(2),
         1,
-        expect.objectContaining({ kind: 1 }),
+        expect.objectContaining({ assignee: { kind: 1 } }),
       );
     });
 
@@ -394,10 +391,9 @@ describe('ManagePickups', () => {
   describe('clearing a pickup', () => {
     it('sends the exact childId/date/slot to the service and reverts the cell once it resolves', async () => {
       const existing = occurrence({
+        assignee: { kind: 0, guardianId: 'guardian-1' },
         date: isoDateOffset(1),
         slot: 1,
-        kind: 0,
-        guardianId: 'guardian-1',
       });
       const clearPickup = vi.fn(async () => undefined);
 
@@ -420,7 +416,11 @@ describe('ManagePickups', () => {
     });
 
     it('shows the translated error and keeps the assignment when clearing fails', async () => {
-      const existing = occurrence({ date: weekStart, slot: 0, kind: 0, guardianId: 'guardian-1' });
+      const existing = occurrence({
+        assignee: { kind: 0, guardianId: 'guardian-1' },
+        date: weekStart,
+        slot: 0,
+      });
       const clearPickup = vi.fn(async () => Promise.reject(new Error('boom')));
 
       const { fixture } = await setup({

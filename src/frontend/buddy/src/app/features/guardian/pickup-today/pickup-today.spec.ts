@@ -35,14 +35,9 @@ describe('PickupToday', () => {
 
   function occurrence(overrides: Partial<PickupOccurrence> = {}): PickupOccurrence {
     return {
+      assignee: { kind: 1 },
       date: today,
       slot: 0,
-      kind: 1,
-      guardianId: null,
-      siblingChildId: null,
-      playdateHostName: null,
-      playdateLocation: null,
-      playdateContactInfo: null,
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -153,7 +148,7 @@ describe('PickupToday', () => {
   });
 
   it('renders a self-escort pickup with its translated label', async () => {
-    const selfEscort = occurrence({ slot: 1, kind: 1 });
+    const selfEscort = occurrence({ assignee: { kind: 1 }, slot: 1 });
 
     const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [selfEscort]) } });
     await settle(fixture);
@@ -164,7 +159,7 @@ describe('PickupToday', () => {
   });
 
   it('renders a drop-off assigned to a sibling with its translated label', async () => {
-    const sibling = occurrence({ slot: 0, kind: 2, siblingChildId: 'sibling-1' });
+    const sibling = occurrence({ assignee: { kind: 2, siblingChildId: 'sibling-1' }, slot: 0 });
 
     const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [sibling]) } });
     await settle(fixture);
@@ -175,7 +170,9 @@ describe('PickupToday', () => {
   });
 
   it('renders a playdate pickup with the host name, untranslated', async () => {
-    const playdate = occurrence({ kind: 3, playdateHostName: 'The Andersens' });
+    const playdate = occurrence({
+      assignee: { kind: 3, hostName: 'The Andersens', location: '', contactInfo: '' },
+    });
 
     const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [playdate]) } });
     await settle(fixture);
@@ -185,7 +182,7 @@ describe('PickupToday', () => {
   });
 
   it('resolves a guardian assignee to their given name using that child’s guardian list', async () => {
-    const assignedToGina = occurrence({ kind: 0, guardianId: 'guardian-1' });
+    const assignedToGina = occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' } });
 
     const { fixture } = await setup({
       guardians: {
@@ -204,7 +201,7 @@ describe('PickupToday', () => {
   });
 
   it('falls back to a generic "guardian" label when the assigned guardian id cannot be resolved', async () => {
-    const assignedToUnknown = occurrence({ kind: 0, guardianId: 'missing-guardian' });
+    const assignedToUnknown = occurrence({ assignee: { kind: 0, guardianId: 'missing-guardian' } });
 
     const { fixture } = await setup({
       guardians: {
@@ -222,7 +219,7 @@ describe('PickupToday', () => {
   });
 
   it('does not show the child name when the guardian has only one linked child', async () => {
-    const dropOff = occurrence({ slot: 0, kind: 1 });
+    const dropOff = occurrence({ assignee: { kind: 1 }, slot: 0 });
 
     const { fixture } = await setup({
       guardians: {
@@ -244,8 +241,8 @@ describe('PickupToday', () => {
 
     const listSchedule = vi.fn(async (childId: string) =>
       childId === 'child-1'
-        ? [occurrence({ slot: 1, kind: 1 })]
-        : [occurrence({ slot: 0, kind: 1 })],
+        ? [occurrence({ assignee: { kind: 1 }, slot: 1 })]
+        : [occurrence({ assignee: { kind: 1 }, slot: 0 })],
     );
 
     const { fixture } = await setup({
@@ -273,8 +270,8 @@ describe('PickupToday', () => {
 
     const listSchedule = vi.fn(async (childId: string) =>
       childId === 'child-1'
-        ? [occurrence({ slot: 0, kind: 0, guardianId: 'guardian-1' })]
-        : [occurrence({ slot: 1, kind: 0, guardianId: 'guardian-1' })],
+        ? [occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' }, slot: 0 })]
+        : [occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' }, slot: 1 })],
     );
     const listChildGuardians = vi.fn(async (childId: string) =>
       childId === 'child-1'
@@ -328,7 +325,7 @@ describe('PickupToday', () => {
     const children = Array.from({ length: childCount }, (_, i) =>
       child({ id: `child-${i}`, name: { givenName: `Kid${i}`, familyName: 'Test' } }),
     );
-    const gate = gatedCalls(() => [occurrence({ kind: 1 })]);
+    const gate = gatedCalls(() => [occurrence({ assignee: { kind: 1 } })]);
     const listSchedule = vi.fn((childId: string) => gate.call(childId));
     const listChildGuardians = vi.fn(async () => [guardian()]);
 

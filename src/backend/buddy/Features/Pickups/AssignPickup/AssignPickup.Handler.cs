@@ -35,10 +35,7 @@ public static class AssignPickupHandler
             return new Result<PickupOccurrence>.Validation(ValidationProblem.Of(relationshipError));
         }
 
-        var after = new PickupAssignment(
-            command.Kind, command.GuardianId, command.SiblingChildId,
-            command.PlaydateHostName, command.PlaydateLocation, command.PlaydateContactInfo,
-            command.Time, userId, command.Notes);
+        var after = new PickupAssignment(command.Assignee, command.Time, userId, command.Notes);
         var now = DateTimeOffset.UtcNow;
 
         var scheduleId = await pickups.FindIdForChildAsync(command.ChildId, cancellationToken);
@@ -78,30 +75,21 @@ public static class AssignPickupHandler
     // Returns a validation message, or null if the assignee is acceptable. Deliberately a small
     // local check against IGuardianLinkEventStore rather than a dependency on Mealplans'
     // MealFamilyResolution -- see docs/backend/analysis/pickup-schedules.md#question-3.
-    private static async Task<string?> ValidateRelationshipAsync(AssignPickup command, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
-    {
-        switch (command.Kind)
+    private static async Task<string?> ValidateRelationshipAsync(AssignPickup command, IGuardianLinkEventStore guardians, CancellationToken cancellationToken) =>
+        command.Assignee switch
         {
-            case PickupAssigneeKind.Guardian:
-                var link = await guardians.FindActiveLinkAsync(command.ChildId, command.GuardianId!, cancellationToken);
-                return link is null ? "guardianId is not an active guardian of this child." : null;
-
-            case PickupAssigneeKind.Sibling:
-                var siblingChildId = command.SiblingChildId!;
-
-                if (siblingChildId == command.ChildId)
-                {
-                    return "A child cannot be their own sibling escort.";
-                }
-
-                return await IsSiblingAsync(command.ChildId, siblingChildId, guardians, cancellationToken)
+            PickupAssignee.Guardian guardian =>
+                await guardians.FindActiveLinkAsync(command.ChildId, guardian.GuardianId, cancellationToken) is null
+                    ? "guardianId is not an active guardian of this child."
+                    : null,
+            PickupAssignee.Sibling sibling when sibling.SiblingChildId == command.ChildId =>
+                "A child cannot be their own sibling escort.",
+            PickupAssignee.Sibling sibling =>
+                await IsSiblingAsync(command.ChildId, sibling.SiblingChildId, guardians, cancellationToken)
                     ? null
-                    : "siblingChildId does not share an active guardian with this child.";
-
-            default:
-                return null;
-        }
-    }
+                    : "siblingChildId does not share an active guardian with this child.",
+            PickupAssignee.SelfEscort or PickupAssignee.Playdate => null,
+        };
 
     private static async Task<bool> IsSiblingAsync(UserId childId, UserId otherChildId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {

@@ -29,7 +29,7 @@ public sealed class PickupScheduleSnapshotTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.SelfEscort })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "DropOff");
@@ -39,7 +39,7 @@ public sealed class PickupScheduleSnapshotTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom" })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom" } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");

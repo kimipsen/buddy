@@ -12,31 +12,31 @@ export type PickupSlot = 0 | 1;
 // 2 = Sibling, 3 = Playdate.
 export type PickupAssigneeKind = 0 | 1 | 2 | 3;
 
-// Only GuardianId/SiblingChildId/Playdate* meaningful for their matching kind are ever set --
-// mirrors the backend's flat PickupAssignment shape (see
-// docs/backend/analysis/pickup-schedules.md#question-3).
+// Who handles a slot, discriminated by `kind` -- each case carries only its own fields, matching
+// the backend's PickupAssigneeDto. A playdate's location/contactInfo are '' when not given.
+export type PickupAssignee =
+  | { kind: 0; guardianId: string }
+  | { kind: 1 }
+  | { kind: 2; siblingChildId: string }
+  | { kind: 3; hostName: string; location: string; contactInfo: string };
+
+// The playdate host's name, or '' for any other kind -- lets templates show it without narrowing.
+export function playdateHostName(assignee: PickupAssignee): string {
+  return assignee.kind === 3 ? assignee.hostName : '';
+}
+
 export interface PickupOccurrence {
   date: string;
   slot: PickupSlot;
-  kind: PickupAssigneeKind;
-  guardianId: string | null;
-  siblingChildId: string | null;
-  playdateHostName: string | null;
-  playdateLocation: string | null;
-  playdateContactInfo: string | null;
+  assignee: PickupAssignee;
   time: string | null;
   notes: string;
   assignedBy: string;
 }
 
 export interface AssignPickupRequest {
-  kind: PickupAssigneeKind;
-  guardianId?: string | null;
-  siblingChildId?: string | null;
-  playdateHostName?: string | null;
-  playdateLocation?: string | null;
-  playdateContactInfo?: string | null;
-  time?: string | null;
+  assignee: PickupAssignee;
+  time: string | null;
   notes: string;
 }
 

@@ -163,12 +163,9 @@ describe('assembleWeekPlan', () => {
   describe('pickup rows', () => {
     const pickup = (overrides: Partial<PickupOccurrence>) =>
       ({
+        assignee: { kind: 0, guardianId: 'guardian-1' },
         date: '2026-09-28',
         slot: 0,
-        kind: 0,
-        guardianId: null,
-        siblingChildId: null,
-        playdateHostName: null,
         ...overrides,
       }) as PickupOccurrence;
 
@@ -177,11 +174,15 @@ describe('assembleWeekPlan', () => {
         [
           'signe',
           [
-            pickup({ slot: 0, kind: 0, guardianId: 'dad' }),
-            pickup({ slot: 1, kind: 0, guardianId: 'mum' }),
-            pickup({ date: '2026-09-29', slot: 0, kind: 1 }),
-            pickup({ date: '2026-09-29', slot: 1, kind: 2, siblingChildId: 'viggo' }),
-            pickup({ date: '2026-09-30', slot: 1, kind: 3, playdateHostName: 'Emma' }),
+            pickup({ assignee: { kind: 0, guardianId: 'dad' }, slot: 0 }),
+            pickup({ assignee: { kind: 0, guardianId: 'mum' }, slot: 1 }),
+            pickup({ assignee: { kind: 1 }, date: '2026-09-29', slot: 0 }),
+            pickup({ assignee: { kind: 2, siblingChildId: 'viggo' }, date: '2026-09-29', slot: 1 }),
+            pickup({
+              assignee: { kind: 3, hostName: 'Emma', location: '', contactInfo: '' },
+              date: '2026-09-30',
+              slot: 1,
+            }),
           ],
         ],
       ]);

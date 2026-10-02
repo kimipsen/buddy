@@ -2,22 +2,7 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Pickups;
 
-// GuardianId/SiblingChildId/Playdate* are only meaningful for their matching Kind -- see
-// AssignPickupValidator (each Kind carries its own fields) and AssignPickupHandler's
-// ValidateRelationshipAsync (the guardian/sibling really is related to the child), which is
-// where that's enforced at write time; nothing here
-// stops a caller from constructing an inconsistent combination directly, so validation is the
-// only guard (see Types/PickupAssigneeKind.cs for why this isn't a closed union instead).
 // Time is optional -- a guardian can record "pickup at 15:15 today, early dismissal" for
 // precision, but it isn't required to make an assignment meaningful; PickupSlot already conveys
-// "morning" vs. "afternoon" on its own.
-public sealed record PickupAssignment(
-    PickupAssigneeKind Kind,
-    UserId? GuardianId,
-    UserId? SiblingChildId,
-    string? PlaydateHostName,
-    string? PlaydateLocation,
-    string? PlaydateContactInfo,
-    TimeOnly? Time,
-    UserId AssignedBy,
-    string Notes);
+// "morning" vs. "afternoon" on its own. Notes is free text, "" meaning none.
+public sealed record PickupAssignment(PickupAssignee Assignee, TimeOnly? Time, UserId AssignedBy, string Notes);

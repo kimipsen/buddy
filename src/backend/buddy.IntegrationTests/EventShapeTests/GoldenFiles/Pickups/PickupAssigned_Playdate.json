@@ -4,12 +4,12 @@
   "Slot": "PickUp",
   "Before": null,
   "After": {
-    "Kind": "Playdate",
-    "GuardianId": null,
-    "SiblingChildId": null,
-    "PlaydateHostName": "Mia's mom",
-    "PlaydateLocation": "Mia's house",
-    "PlaydateContactInfo": "+45 12 34 56 78",
+    "Assignee": {
+      "Kind": "Playdate",
+      "HostName": "Mia's mom",
+      "Location": "Mia's house",
+      "ContactInfo": "+45 12 34 56 78"
+    },
     "Time": null,
     "AssignedBy": "00000000-0000-0000-0000-000000000001",
     "Notes": ""

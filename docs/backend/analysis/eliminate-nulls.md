@@ -455,6 +455,27 @@ PickupAssignment(PickupAssignee Assignee, TimeOnly? Time, UserId AssignedBy, str
   - frontend: `pickups.service.ts` and `pickup-cell.ts`, which loses its 8 `?? ''` and
     3 `|| null`.
 
+**As built (5.1):**
+- **Domain.** `PickupAssignee` is a C# `union` of `Guardian(UserId)`, `SelfEscort`,
+  `Sibling(UserId)` and `Playdate(HostName, Location, ContactInfo)`. Marten reads and writes it
+  through `PickupAssigneeJsonConverter`, with an explicit `Kind`. `PickupAssignment` is
+  `(Assignee, Time?, AssignedBy, Notes)`.
+- **Wire.** `PickupAssigneeDto` is an object with a numeric `kind`, read by its own converter
+  instead of `[JsonPolymorphic]`. With an abstract base, a missing `kind` throws
+  `NotSupportedException`, which surfaces as a 500 rather than a 400. A missing or unknown `kind` is
+  a 400, and `kind` may come anywhere in the object. Field errors keep the outer path
+  (`assignee.guardianId`).
+- **Handler and validator.** The relationship check is an exhaustive `switch` over the union.
+  The validator only checks the playdate host name and the free-text lengths.
+- **Frontend.** `PickupAssignee` is a TypeScript discriminated union. The components' kind
+  constants are literal-typed (`0 satisfies PickupAssigneeKind`) so narrowing works, and
+  `playdateHostName(assignee)` serves the templates.
+- **Known gaps.**
+  - The OpenAPI document shows `assignee` as an empty schema, because a custom converter hides the
+    cases from the schema generator. A schema transformer could restore it.
+  - Pickup events stored in the old flat shape load as an empty assignee and then return 500.
+    Like Phases 3-4, a database from before this change needs a reset.
+
 ### 5.2 Calendar item schedule
 
 ```

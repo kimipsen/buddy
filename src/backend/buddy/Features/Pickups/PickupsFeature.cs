@@ -55,6 +55,10 @@ public static class PickupsFeature
                     // serializer options here are separate from Program.cs's, so this needs its
                     // own registration.
                     json.Converters.Add(new ValueTupleJsonConverterFactory());
+
+                    // PickupAssignee's cases need an explicit Kind discriminator to round-trip (see
+                    // PickupAssigneeJsonConverter).
+                    json.Converters.Add(new PickupAssigneeJsonConverter());
                 });
 
             // Inline snapshot of PickupSchedule, kept transactionally consistent with every event

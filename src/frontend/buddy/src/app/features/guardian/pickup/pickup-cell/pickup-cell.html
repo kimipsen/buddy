@@ -113,7 +113,7 @@
     (click)="startEditing()"
   >
     <span class="flex items-center gap-1.5 font-medium">
-      @switch (occurrence.kind) {
+      @switch (occurrence.assignee.kind) {
         @case (guardianKind) {
           <span aria-hidden="true">👤</span>
           {{ summaryGuardianName() ?? ('pickup.cell.kind.guardian' | translate) }}
@@ -128,7 +128,7 @@
         }
         @case (playdateKind) {
           <span aria-hidden="true">🎉</span>
-          {{ occurrence.playdateHostName }}
+          {{ summaryPlaydateHost() }}
         }
       }
     </span>

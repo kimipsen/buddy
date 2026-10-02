@@ -8,12 +8,16 @@ namespace buddy.IntegrationTests.Features.Pickups;
 internal sealed record PickupOccurrenceDto(
     DateOnly Date,
     PickupSlot Slot,
-    PickupAssigneeKind Kind,
-    Guid? GuardianId,
-    Guid? SiblingChildId,
-    string? PlaydateHostName,
-    string? PlaydateLocation,
-    string? PlaydateContactInfo,
+    PickupAssigneeTestDto Assignee,
     TimeOnly? Time,
-    string? Notes,
+    string Notes,
     Guid AssignedBy);
+
+// PickupAssigneeDto read flat: "kind" plus whichever case fields the response carries.
+internal sealed record PickupAssigneeTestDto(
+    PickupAssigneeKind Kind,
+    Guid? GuardianId = null,
+    Guid? SiblingChildId = null,
+    string? HostName = null,
+    string? Location = null,
+    string? ContactInfo = null);

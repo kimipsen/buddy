@@ -25,7 +25,7 @@ public sealed class ListPickupScheduleTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.SelfEscort })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
@@ -40,7 +40,7 @@ public sealed class ListPickupScheduleTests(BuddyApiFixture fixture)
         });
 
         var occurrence = Assert.Single(response.ReadAsJson<List<PickupOccurrenceDto>>());
-        Assert.Equal(PickupAssigneeKind.SelfEscort, occurrence.Kind);
+        Assert.Equal(PickupAssigneeKind.SelfEscort, occurrence.Assignee.Kind);
     }
 
     [Fact]

@@ -139,6 +139,12 @@ async function cleanUpGuardianOwnedData(
 
       const response = await api.get('/users/me/children', { headers });
 
+      // 403 is user_not_provisioned: this seeded guardian has no backend user yet (e.g. after a
+      // database reset), so there are no children to clean up.
+      if (response.status() === 403) {
+        continue;
+      }
+
       if (!response.ok()) {
         console.warn(
           `[e2e cleanup] listing ${guardian.username}'s children failed: ${response.status()}`,

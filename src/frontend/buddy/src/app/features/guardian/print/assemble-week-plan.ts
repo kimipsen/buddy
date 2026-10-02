@@ -34,6 +34,7 @@ const PICK_UP = 1;
 const PICKUP_GUARDIAN = 0;
 const PICKUP_SELF_ESCORT = 1;
 const PICKUP_SIBLING = 2;
+const PICKUP_PLAYDATE = 3;
 
 const BLANK: WeekPlanCell = { type: 'blank' };
 const MARK: WeekPlanCell = { type: 'mark' };
@@ -164,23 +165,21 @@ function pickupLabel(
   const { names } = context.sources;
   const { labels } = context.options;
 
-  switch (occurrence.kind) {
+  const { assignee } = occurrence;
+
+  switch (assignee.kind) {
     case PICKUP_GUARDIAN:
       return {
-        text: names.get(occurrence.guardianId ?? '') ?? '',
+        text: names.get(assignee.guardianId) ?? '',
         icon: null,
-        color: context.colors.get(occurrence.guardianId ?? '') ?? null,
+        color: context.colors.get(assignee.guardianId) ?? null,
       };
     case PICKUP_SELF_ESCORT:
       return { text: labels.selfEscort, icon: null, color: null };
     case PICKUP_SIBLING:
-      return { text: names.get(occurrence.siblingChildId ?? '') ?? '', icon: null, color: null };
-    default:
-      return {
-        text: `${labels.playdate}: ${occurrence.playdateHostName ?? ''}`,
-        icon: null,
-        color: null,
-      };
+      return { text: names.get(assignee.siblingChildId) ?? '', icon: null, color: null };
+    case PICKUP_PLAYDATE:
+      return { text: `${labels.playdate}: ${assignee.hostName}`, icon: null, color: null };
   }
 }
 

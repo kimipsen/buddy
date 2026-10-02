@@ -57,19 +57,21 @@ slot. Clients construct their week or day grid and treat a missing
 
 ## Assignee model
 
-`AssignPickup` accepts a `Kind` plus fields used by that kind:
+`AssignPickup` takes an `assignee` object whose numeric `kind` picks the case,
+carrying only that case's fields (the domain's `PickupAssignee` union, on the wire
+`PickupAssigneeDto`):
 
-| Kind | Required data | Validation |
-| --- | --- | --- |
-| `Guardian` | `GuardianId` | Must identify an active guardian of the child. |
-| `SelfEscort` | None | Records that the child goes without an escort. |
-| `Sibling` | `SiblingChildId` | Must be a different child who shares at least one active guardian with the scheduled child. |
-| `Playdate` | `PlaydateHostName` | Host name is required; location and contact information are optional free text. |
+| `kind` | Case | Fields | Validation |
+| --- | --- | --- | --- |
+| `0` | `Guardian` | `guardianId` | Must identify an active guardian of the child. |
+| `1` | `SelfEscort` | None | Records that the child goes without an escort. |
+| `2` | `Sibling` | `siblingChildId` | Must be a different child who shares at least one active guardian with the scheduled child. |
+| `3` | `Playdate` | `hostName`, `location`, `contactInfo` | Host name is required; location and contact information are optional free text (`""` when not given). |
 
-Every assignment can also carry an optional local wall-clock `Time` and
-`Notes`. The backend validates fields that belong to the selected kind and
-ignores no relationship checks: changing the discriminator changes which
-relationship must be proven.
+A missing or unknown `kind`, or a case without its required field, is a
+`400 validation_error`. Every assignment can also carry an optional local
+wall-clock `time` and `notes` (`""` meaning none). The relationship check
+depends on the case: a guardian must be linked, a sibling must share a guardian.
 
 ## Core lifecycle
 

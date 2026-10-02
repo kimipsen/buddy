@@ -23,7 +23,7 @@ public sealed class PickupEventShapeTests
     public void PickupAssigned_with_a_guardian_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
             FixedScheduleId, FixedDate, PickupSlot.DropOff, Before: null,
-            new PickupAssignment(PickupAssigneeKind.Guardian, FixedGuardianId, null, null, null, null, new TimeOnly(8, 0), FixedGuardianId, "Bring an umbrella"),
+            new PickupAssignment(new PickupAssignee.Guardian(FixedGuardianId), new TimeOnly(8, 0), FixedGuardianId, "Bring an umbrella"),
             FixedInstant),
         "Pickups/PickupAssigned_Guardian.json");
 
@@ -31,7 +31,7 @@ public sealed class PickupEventShapeTests
     public void PickupAssigned_with_a_self_escort_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
             FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
-            new PickupAssignment(PickupAssigneeKind.SelfEscort, null, null, null, null, null, null, FixedGuardianId, ""),
+            new PickupAssignment(new PickupAssignee.SelfEscort(), null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_SelfEscort.json");
 
@@ -39,7 +39,7 @@ public sealed class PickupEventShapeTests
     public void PickupAssigned_with_a_sibling_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
             FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
-            new PickupAssignment(PickupAssigneeKind.Sibling, null, FixedSiblingId, null, null, null, null, FixedGuardianId, ""),
+            new PickupAssignment(new PickupAssignee.Sibling(FixedSiblingId), null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_Sibling.json");
 
@@ -47,7 +47,7 @@ public sealed class PickupEventShapeTests
     public void PickupAssigned_with_a_playdate_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
             FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
-            new PickupAssignment(PickupAssigneeKind.Playdate, null, null, "Mia's mom", "Mia's house", "+45 12 34 56 78", null, FixedGuardianId, ""),
+            new PickupAssignment(new PickupAssignee.Playdate("Mia's mom", "Mia's house", "+45 12 34 56 78"), null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_Playdate.json");
 
@@ -55,7 +55,7 @@ public sealed class PickupEventShapeTests
     public void PickupCleared() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupCleared(
             FixedScheduleId, FixedDate, PickupSlot.PickUp,
-            new PickupAssignment(PickupAssigneeKind.SelfEscort, null, null, null, null, null, null, FixedGuardianId, ""),
+            new PickupAssignment(new PickupAssignee.SelfEscort(), null, FixedGuardianId, ""),
             FixedGuardianId,
             FixedInstant),
         "Pickups/PickupCleared.json");

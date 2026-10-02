@@ -6,6 +6,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
   AssignPickupRequest,
+  PickupAssignee,
   PickupAssigneeKind,
   PickupOccurrence,
 } from '../../../../core/pickups.service';
@@ -16,10 +17,10 @@ import {
 } from '../../../../shared/segmented-control/segmented-control';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 
-const GUARDIAN: PickupAssigneeKind = 0;
-const SELF_ESCORT: PickupAssigneeKind = 1;
-const SIBLING: PickupAssigneeKind = 2;
-const PLAYDATE: PickupAssigneeKind = 3;
+const GUARDIAN = 0 satisfies PickupAssigneeKind;
+const SELF_ESCORT = 1 satisfies PickupAssigneeKind;
+const SIBLING = 2 satisfies PickupAssigneeKind;
+const PLAYDATE = 3 satisfies PickupAssigneeKind;
 
 // The weekly grid renders many `app-pickup-cell` instances at once, so form-control ids need a
 // per-instance suffix to stay unique across all of them (see `instanceId` below).
@@ -83,19 +84,30 @@ export class PickupCell {
   });
 
   protected readonly summaryGuardianName = computed(() => {
-    const occurrence = this.occurrence();
+    const assignee = this.occurrence()?.assignee;
+    if (assignee?.kind !== GUARDIAN) {
+      return null;
+    }
     return (
-      this.guardians().find((guardian) => guardian.id === occurrence?.guardianId)?.name.givenName ??
+      this.guardians().find((guardian) => guardian.id === assignee.guardianId)?.name.givenName ??
       null
     );
   });
 
   protected readonly summarySiblingName = computed(() => {
-    const occurrence = this.occurrence();
+    const assignee = this.occurrence()?.assignee;
+    if (assignee?.kind !== SIBLING) {
+      return null;
+    }
     return (
-      this.siblings().find((sibling) => sibling.id === occurrence?.siblingChildId)?.name
-        .givenName ?? null
+      this.siblings().find((sibling) => sibling.id === assignee.siblingChildId)?.name.givenName ??
+      null
     );
+  });
+
+  protected readonly summaryPlaydateHost = computed(() => {
+    const assignee = this.occurrence()?.assignee;
+    return assignee?.kind === PLAYDATE ? assignee.hostName : '';
   });
 
   protected startEditing(): void {
@@ -104,13 +116,14 @@ export class PickupCell {
     }
 
     const occurrence = this.occurrence();
+    const assignee = occurrence?.assignee;
 
-    this.kind.set(occurrence?.kind ?? GUARDIAN);
-    this.guardianId.set(occurrence?.guardianId ?? '');
-    this.siblingChildId.set(occurrence?.siblingChildId ?? '');
-    this.playdateHostName.set(occurrence?.playdateHostName ?? '');
-    this.playdateLocation.set(occurrence?.playdateLocation ?? '');
-    this.playdateContactInfo.set(occurrence?.playdateContactInfo ?? '');
+    this.kind.set(assignee?.kind ?? GUARDIAN);
+    this.guardianId.set(assignee?.kind === GUARDIAN ? assignee.guardianId : '');
+    this.siblingChildId.set(assignee?.kind === SIBLING ? assignee.siblingChildId : '');
+    this.playdateHostName.set(assignee?.kind === PLAYDATE ? assignee.hostName : '');
+    this.playdateLocation.set(assignee?.kind === PLAYDATE ? assignee.location : '');
+    this.playdateContactInfo.set(assignee?.kind === PLAYDATE ? assignee.contactInfo : '');
     this.time.set(occurrence?.time?.slice(0, 5) ?? '');
     this.notes.set(occurrence?.notes ?? '');
     this.editing.set(true);
@@ -126,17 +139,30 @@ export class PickupCell {
     }
 
     this.assign.emit({
-      kind: this.kind(),
-      guardianId: this.kind() === GUARDIAN ? this.guardianId() : null,
-      siblingChildId: this.kind() === SIBLING ? this.siblingChildId() : null,
-      playdateHostName: this.kind() === PLAYDATE ? this.playdateHostName().trim() : null,
-      playdateLocation: this.kind() === PLAYDATE ? this.playdateLocation().trim() || null : null,
-      playdateContactInfo:
-        this.kind() === PLAYDATE ? this.playdateContactInfo().trim() || null : null,
+      assignee: this.draftAssignee(),
       time: this.time() ? `${this.time()}:00` : null,
       notes: this.notes().trim(),
     });
     this.editing.set(false);
+  }
+
+  // Only the selected kind's fields are sent -- the others stay in the form but never reach the API.
+  private draftAssignee(): PickupAssignee {
+    switch (this.kind()) {
+      case GUARDIAN:
+        return { kind: GUARDIAN, guardianId: this.guardianId() };
+      case SELF_ESCORT:
+        return { kind: SELF_ESCORT };
+      case SIBLING:
+        return { kind: SIBLING, siblingChildId: this.siblingChildId() };
+      case PLAYDATE:
+        return {
+          kind: PLAYDATE,
+          hostName: this.playdateHostName().trim(),
+          location: this.playdateLocation().trim(),
+          contactInfo: this.playdateContactInfo().trim(),
+        };
+    }
   }
 
   protected clearAssignment(): void {

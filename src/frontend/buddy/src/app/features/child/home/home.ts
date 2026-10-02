@@ -26,6 +26,7 @@ import {
   PickupAssigneeKind,
   PickupOccurrence,
   PickupsService,
+  playdateHostName,
 } from '../../../core/pickups.service';
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
 import { UserDatePipe } from '../../../core/user-date.pipe';
@@ -52,10 +53,10 @@ const MEAL_SLOTS: MealSlot[] = [0, 1, 2, 3];
 const MAX_STARS = 5;
 const STARS = Array.from({ length: MAX_STARS }, (_, index) => index + 1);
 
-const GUARDIAN: PickupAssigneeKind = 0;
-const SELF_ESCORT: PickupAssigneeKind = 1;
-const SIBLING: PickupAssigneeKind = 2;
-const PLAYDATE: PickupAssigneeKind = 3;
+const GUARDIAN = 0 satisfies PickupAssigneeKind;
+const SELF_ESCORT = 1 satisfies PickupAssigneeKind;
+const SIBLING = 2 satisfies PickupAssigneeKind;
+const PLAYDATE = 3 satisfies PickupAssigneeKind;
 
 const PICKUP_SLOT_LABELS = {
   0: 'child.home.pickup.slots.dropOff',
@@ -182,17 +183,21 @@ export class ChildHome implements OnInit, OnDestroy {
     clearInterval(this.nowIntervalId);
   }
 
+  protected readonly playdateHostName = playdateHostName;
+
   protected assigneeName(occurrence: PickupOccurrence): string | null {
-    if (occurrence.kind === this.guardianKind) {
+    const { assignee } = occurrence;
+
+    if (assignee.kind === GUARDIAN) {
       return (
-        this.guardianList().find((guardian) => guardian.id === occurrence.guardianId)?.name
+        this.guardianList().find((guardian) => guardian.id === assignee.guardianId)?.name
           .givenName ?? null
       );
     }
 
-    if (occurrence.kind === this.siblingKind) {
+    if (assignee.kind === SIBLING) {
       return (
-        this.siblingList().find((sibling) => sibling.id === occurrence.siblingChildId)?.name
+        this.siblingList().find((sibling) => sibling.id === assignee.siblingChildId)?.name
           .givenName ?? null
       );
     }

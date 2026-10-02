@@ -1,19 +1,13 @@
 namespace buddy.Features.Pickups;
 
-// The read/wire shape for one assigned slot -- adds Date/Slot to PickupAssignment's fields and
-// unwraps its UserId? fields to raw Guid?, the same flattening MedicineScheduleResponse applies
-// to its domain type. Only assigned slots are ever represented -- there is no "unplanned" entry;
-// a date/slot absent from a ListPickupSchedule response is unplanned, the same sparse convention
-// MealPlanExpansion uses.
+// The read/wire shape for one assigned slot -- PickupAssignment plus its Date/Slot, with the
+// assignee as PickupAssigneeDto. Only assigned slots are ever represented -- there is no
+// "unplanned" entry; a date/slot absent from a ListPickupSchedule response is unplanned, the same
+// sparse convention MealPlanExpansion uses.
 public sealed record PickupOccurrence(
     DateOnly Date,
     PickupSlot Slot,
-    PickupAssigneeKind Kind,
-    Guid? GuardianId,
-    Guid? SiblingChildId,
-    string? PlaydateHostName,
-    string? PlaydateLocation,
-    string? PlaydateContactInfo,
+    PickupAssigneeDto Assignee,
     TimeOnly? Time,
     string Notes,
     Guid AssignedBy)
@@ -21,12 +15,7 @@ public sealed record PickupOccurrence(
     public static PickupOccurrence FromAssignment(DateOnly date, PickupSlot slot, PickupAssignment assignment) => new(
         date,
         slot,
-        assignment.Kind,
-        assignment.GuardianId?.Value,
-        assignment.SiblingChildId?.Value,
-        assignment.PlaydateHostName,
-        assignment.PlaydateLocation,
-        assignment.PlaydateContactInfo,
+        PickupAssigneeDto.FromDomain(assignment.Assignee),
         assignment.Time,
         assignment.Notes,
         assignment.AssignedBy.Value);

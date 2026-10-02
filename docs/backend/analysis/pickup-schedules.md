@@ -1,6 +1,9 @@
 # Pickup and Drop-off Schedules
 
-Status: Implemented
+Status: Implemented. Later change ([eliminate-nulls.md, Phase 5.1](eliminate-nulls.md#51-pickups-pickupassignee)):
+the flat `Kind` + optional fields described in Question 3 were replaced by a `PickupAssignee`
+union with an explicit-discriminator converter -- the round-trip problem that question
+describes is what the converter solves.
 
 ## Context
 

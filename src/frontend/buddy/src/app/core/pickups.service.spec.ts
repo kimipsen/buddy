@@ -19,14 +19,9 @@ describe('PickupsService', () => {
 
   function occurrence(overrides: Partial<PickupOccurrence> = {}): PickupOccurrence {
     return {
+      assignee: { kind: 0, guardianId: 'guardian-1' },
       date: '2026-08-26',
       slot: 0,
-      kind: 0,
-      guardianId: 'guardian-1',
-      siblingChildId: null,
-      playdateHostName: null,
-      playdateLocation: null,
-      playdateContactInfo: null,
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -93,8 +88,12 @@ describe('PickupsService', () => {
 
   describe('assignPickup', () => {
     it('PUTs a guardian assignment with date/slot params', async () => {
-      const request: AssignPickupRequest = { kind: 0, guardianId: 'guardian-2', notes: '' };
-      const created = occurrence({ kind: 0, guardianId: 'guardian-2' });
+      const request: AssignPickupRequest = {
+        assignee: { kind: 0, guardianId: 'guardian-2' },
+        time: null,
+        notes: '',
+      };
+      const created = occurrence({ assignee: { kind: 0, guardianId: 'guardian-2' } });
 
       const promise = service.assignPickup(childId, '2026-08-26', 1, request);
 
@@ -112,7 +111,7 @@ describe('PickupsService', () => {
     });
 
     it('serializes slot 0 (DropOff) as the string "0"', async () => {
-      const request: AssignPickupRequest = { kind: 1, notes: '' };
+      const request: AssignPickupRequest = { assignee: { kind: 1 }, time: null, notes: '' };
 
       const promise = service.assignPickup(childId, '2026-08-26', 0, request);
 
@@ -120,26 +119,19 @@ describe('PickupsService', () => {
         (r) => r.url === `${base()}/assignments` && r.params.get('slot') === '0',
       );
       expect(req.request.params.get('slot')).toBe('0');
-      req.flush(occurrence({ slot: 0, kind: 1, guardianId: null }));
+      req.flush(occurrence({ assignee: { kind: 1 }, slot: 0 }));
 
       await promise;
     });
 
     it('sends a playdate assignment with its full detail fields', async () => {
       const request: AssignPickupRequest = {
-        kind: 3,
-        playdateHostName: 'Alex',
-        playdateLocation: 'Park',
-        playdateContactInfo: '555-1234',
+        assignee: { kind: 3, hostName: 'Alex', location: 'Park', contactInfo: '555-1234' },
         time: '15:30',
         notes: 'Bring cleats',
       };
       const created = occurrence({
-        kind: 3,
-        guardianId: null,
-        playdateHostName: 'Alex',
-        playdateLocation: 'Park',
-        playdateContactInfo: '555-1234',
+        assignee: { kind: 3, hostName: 'Alex', location: 'Park', contactInfo: '555-1234' },
         time: '15:30',
         notes: 'Bring cleats',
       });
@@ -154,8 +146,12 @@ describe('PickupsService', () => {
     });
 
     it('sends a sibling assignment', async () => {
-      const request: AssignPickupRequest = { kind: 2, siblingChildId: 'child-2', notes: '' };
-      const created = occurrence({ kind: 2, guardianId: null, siblingChildId: 'child-2' });
+      const request: AssignPickupRequest = {
+        assignee: { kind: 2, siblingChildId: 'child-2' },
+        time: null,
+        notes: '',
+      };
+      const created = occurrence({ assignee: { kind: 2, siblingChildId: 'child-2' } });
 
       const promise = service.assignPickup(childId, '2026-08-26', 1, request);
 
@@ -167,7 +163,11 @@ describe('PickupsService', () => {
     });
 
     it('rejects when the assignment is refused', async () => {
-      const request: AssignPickupRequest = { kind: 0, guardianId: 'guardian-2', notes: '' };
+      const request: AssignPickupRequest = {
+        assignee: { kind: 0, guardianId: 'guardian-2' },
+        time: null,
+        notes: '',
+      };
 
       const promise = service.assignPickup(childId, '2026-08-26', 1, request);
 

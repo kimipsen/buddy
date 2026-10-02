@@ -28,14 +28,9 @@ describe('PickupCell', () => {
 
   function occurrence(overrides: Partial<PickupOccurrence> = {}): PickupOccurrence {
     return {
+      assignee: { kind: 0, guardianId: 'guardian-1' },
       date: '2026-08-26',
       slot: 0,
-      kind: 0,
-      guardianId: null,
-      siblingChildId: null,
-      playdateHostName: null,
-      playdateLocation: null,
-      playdateContactInfo: null,
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -172,7 +167,7 @@ describe('PickupCell', () => {
     it('shows the assigned guardian’s given name and formatted time when the guardian can be resolved', async () => {
       const { compiled } = await setup({
         guardians: [guardian('g1', 'Anna')],
-        occurrence: occurrence({ kind: 0, guardianId: 'g1', time: '14:30:00' }),
+        occurrence: occurrence({ assignee: { kind: 0, guardianId: 'g1' }, time: '14:30:00' }),
       });
 
       expect(compiled.textContent).toContain('Anna');
@@ -183,14 +178,14 @@ describe('PickupCell', () => {
     it('falls back to the generic "guardian" label when the assigned guardian id cannot be resolved', async () => {
       const { compiled } = await setup({
         guardians: [],
-        occurrence: occurrence({ kind: 0, guardianId: 'missing-guardian' }),
+        occurrence: occurrence({ assignee: { kind: 0, guardianId: 'missing-guardian' } }),
       });
 
       expect(compiled.textContent).toContain('A guardian');
     });
 
     it('shows the self-escort label and no time when none is set', async () => {
-      const { compiled } = await setup({ occurrence: occurrence({ kind: 1 }) });
+      const { compiled } = await setup({ occurrence: occurrence({ assignee: { kind: 1 } }) });
 
       expect(compiled.textContent).toContain('Goes alone');
       expect(compiled.querySelector('span.text-xs.text-slate-500')).toBeNull();
@@ -199,7 +194,7 @@ describe('PickupCell', () => {
     it('shows the assigned sibling’s given name when the sibling can be resolved', async () => {
       const { compiled } = await setup({
         siblings: [sibling('s1', 'Leo')],
-        occurrence: occurrence({ kind: 2, siblingChildId: 's1' }),
+        occurrence: occurrence({ assignee: { kind: 2, siblingChildId: 's1' } }),
       });
 
       expect(compiled.textContent).toContain('Leo');
@@ -209,7 +204,7 @@ describe('PickupCell', () => {
     it('falls back to the generic "sibling" label when the assigned sibling id cannot be resolved', async () => {
       const { compiled } = await setup({
         siblings: [],
-        occurrence: occurrence({ kind: 2, siblingChildId: 'missing-sibling' }),
+        occurrence: occurrence({ assignee: { kind: 2, siblingChildId: 'missing-sibling' } }),
       });
 
       expect(compiled.textContent).toContain('A sibling');
@@ -217,27 +212,35 @@ describe('PickupCell', () => {
 
     it('shows the playdate host name', async () => {
       const { compiled } = await setup({
-        occurrence: occurrence({ kind: 3, playdateHostName: 'Casper' }),
+        occurrence: occurrence({
+          assignee: { kind: 3, hostName: 'Casper', location: '', contactInfo: '' },
+        }),
       });
 
       expect(compiled.textContent).toContain('Casper');
     });
 
     it('shows a clear button that is enabled by default', async () => {
-      const { compiled } = await setup({ occurrence: occurrence({ kind: 1 }) });
+      const { compiled } = await setup({ occurrence: occurrence({ assignee: { kind: 1 } }) });
 
       expect(findButton(compiled, 'Clear')?.disabled).toBe(false);
     });
 
     it('hides the clear button and disables the summary button when disabled', async () => {
-      const { compiled } = await setup({ disabled: true, occurrence: occurrence({ kind: 1 }) });
+      const { compiled } = await setup({
+        disabled: true,
+        occurrence: occurrence({ assignee: { kind: 1 } }),
+      });
 
       expect(findButton(compiled, 'Clear')).toBeUndefined();
       expect(findButton(compiled, 'Goes alone')?.disabled).toBe(true);
     });
 
     it('keeps the clear button visible but disables both buttons while saving', async () => {
-      const { compiled } = await setup({ saving: true, occurrence: occurrence({ kind: 1 }) });
+      const { compiled } = await setup({
+        saving: true,
+        occurrence: occurrence({ assignee: { kind: 1 } }),
+      });
 
       expect(findButton(compiled, 'Clear')?.disabled).toBe(true);
       expect(findButton(compiled, 'Goes alone')?.disabled).toBe(true);
@@ -246,7 +249,9 @@ describe('PickupCell', () => {
 
   describe('clearing an assignment', () => {
     it('emits clear and does not open the edit form', async () => {
-      const { compiled, onClear, onAssign } = await setup({ occurrence: occurrence({ kind: 1 }) });
+      const { compiled, onClear, onAssign } = await setup({
+        occurrence: occurrence({ assignee: { kind: 1 } }),
+      });
 
       findButton(compiled, 'Clear')!.click();
 
@@ -281,10 +286,7 @@ describe('PickupCell', () => {
 
     it('pre-fills every field from the existing occurrence for a playdate assignment', async () => {
       const existing = occurrence({
-        kind: 3,
-        playdateHostName: 'Casper',
-        playdateLocation: 'The park',
-        playdateContactInfo: '555-1234',
+        assignee: { kind: 3, hostName: 'Casper', location: 'The park', contactInfo: '555-1234' },
         time: '09:15:00',
         notes: 'Bring snacks',
       });
@@ -350,16 +352,7 @@ describe('PickupCell', () => {
 
       expect(onAssign).toHaveBeenCalledTimes(1);
       const request: AssignPickupRequest = onAssign.mock.calls[0][0];
-      expect(request).toEqual({
-        kind: 0,
-        guardianId: 'g1',
-        siblingChildId: null,
-        playdateHostName: null,
-        playdateLocation: null,
-        playdateContactInfo: null,
-        time: null,
-        notes: '',
-      });
+      expect(request).toEqual({ assignee: { kind: 0, guardianId: 'g1' }, time: null, notes: '' });
 
       fixture.detectChanges();
       expect(selects(compiled)).toHaveLength(0);
@@ -378,9 +371,8 @@ describe('PickupCell', () => {
       findButton(compiled, 'Save')!.click();
 
       const request: AssignPickupRequest = onAssign.mock.calls[0][0];
-      expect(request.kind).toBe(2);
-      expect(request.siblingChildId).toBe('s1');
-      expect(request.guardianId).toBeNull();
+      // Only the sibling case's own field is sent -- no stray guardianId from the form.
+      expect(request.assignee).toEqual({ kind: 2, siblingChildId: 's1' });
     });
 
     it('allows saving a self-escort assignment immediately, with no id fields required', async () => {
@@ -395,16 +387,7 @@ describe('PickupCell', () => {
       findButton(compiled, 'Save')!.click();
 
       const request: AssignPickupRequest = onAssign.mock.calls[0][0];
-      expect(request).toEqual({
-        kind: 1,
-        guardianId: null,
-        siblingChildId: null,
-        playdateHostName: null,
-        playdateLocation: null,
-        playdateContactInfo: null,
-        time: null,
-        notes: '',
-      });
+      expect(request).toEqual({ assignee: { kind: 1 }, time: null, notes: '' });
     });
 
     it('disables save for a playdate with only whitespace in the host name, and trims the saved fields', async () => {
@@ -428,11 +411,13 @@ describe('PickupCell', () => {
       findButton(compiled, 'Save')!.click();
 
       const request: AssignPickupRequest = onAssign.mock.calls[0][0];
-      expect(request.kind).toBe(3);
-      expect(request.playdateHostName).toBe('Casper');
-      // Blank optional fields collapse to null rather than an empty/whitespace string.
-      expect(request.playdateLocation).toBeNull();
-      expect(request.playdateContactInfo).toBe('555-1234');
+      // Text is trimmed, and a blank optional field is sent as '' ("not given").
+      expect(request.assignee).toEqual({
+        kind: 3,
+        hostName: 'Casper',
+        location: '',
+        contactInfo: '555-1234',
+      });
     });
 
     it('trims notes and sends null for a blank notes field', async () => {
@@ -488,7 +473,7 @@ describe('PickupCell', () => {
 
   describe('cancelling the edit form', () => {
     it('closes the form without emitting and leaves the original assignment untouched', async () => {
-      const existing = occurrence({ kind: 1 });
+      const existing = occurrence({ assignee: { kind: 1 } });
       const { fixture, compiled, onAssign, onClear } = await setup({ occurrence: existing });
 
       findButton(compiled, 'Goes alone')!.click();

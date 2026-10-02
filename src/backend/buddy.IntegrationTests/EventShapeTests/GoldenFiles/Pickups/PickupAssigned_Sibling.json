@@ -4,12 +4,10 @@
   "Slot": "PickUp",
   "Before": null,
   "After": {
-    "Kind": "Sibling",
-    "GuardianId": null,
-    "SiblingChildId": "00000000-0000-0000-0000-000000000004",
-    "PlaydateHostName": null,
-    "PlaydateLocation": null,
-    "PlaydateContactInfo": null,
+    "Assignee": {
+      "Kind": "Sibling",
+      "SiblingChildId": "00000000-0000-0000-0000-000000000004"
+    },
     "Time": null,
     "AssignedBy": "00000000-0000-0000-0000-000000000001",
     "Notes": ""

@@ -2,9 +2,12 @@ using Alba;
 
 using buddy.Common;
 using buddy.Features.Pickups;
+using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Xunit;
 
@@ -24,7 +27,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.Guardian, GuardianId = guardianId, Notes = "Bring an umbrella" })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Guardian, GuardianId = guardianId }, Notes = "Bring an umbrella" })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "DropOff");
@@ -34,8 +37,8 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var occurrence = response.ReadAsJson<PickupOccurrenceDto>();
         Assert.Equal(today, occurrence.Date);
         Assert.Equal(PickupSlot.DropOff, occurrence.Slot);
-        Assert.Equal(PickupAssigneeKind.Guardian, occurrence.Kind);
-        Assert.Equal(guardianId, occurrence.GuardianId);
+        Assert.Equal(PickupAssigneeKind.Guardian, occurrence.Assignee.Kind);
+        Assert.Equal(guardianId, occurrence.Assignee.GuardianId);
         Assert.Equal("Bring an umbrella", occurrence.Notes);
     }
 
@@ -49,14 +52,14 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.SelfEscort })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
             _.StatusCodeShouldBeOk();
         });
 
-        Assert.Equal(PickupAssigneeKind.SelfEscort, response.ReadAsJson<PickupOccurrenceDto>().Kind);
+        Assert.Equal(PickupAssigneeKind.SelfEscort, response.ReadAsJson<PickupOccurrenceDto>().Assignee.Kind);
     }
 
     [Fact]
@@ -70,7 +73,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.Sibling, SiblingChildId = alice.Id })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Sibling, SiblingChildId = alice.Id } })
                 .ToUrl($"/pickups/children/{bob.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
@@ -78,8 +81,8 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         });
 
         var occurrence = response.ReadAsJson<PickupOccurrenceDto>();
-        Assert.Equal(PickupAssigneeKind.Sibling, occurrence.Kind);
-        Assert.Equal(alice.Id, occurrence.SiblingChildId);
+        Assert.Equal(PickupAssigneeKind.Sibling, occurrence.Assignee.Kind);
+        Assert.Equal(alice.Id, occurrence.Assignee.SiblingChildId);
     }
 
     [Fact]
@@ -92,7 +95,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateLocation = "Mia's house" })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom", Location = "Mia's house" } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
@@ -100,9 +103,9 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         });
 
         var occurrence = response.ReadAsJson<PickupOccurrenceDto>();
-        Assert.Equal(PickupAssigneeKind.Playdate, occurrence.Kind);
-        Assert.Equal("Mia's mom", occurrence.PlaydateHostName);
-        Assert.Equal("Mia's house", occurrence.PlaydateLocation);
+        Assert.Equal(PickupAssigneeKind.Playdate, occurrence.Assignee.Kind);
+        Assert.Equal("Mia's mom", occurrence.Assignee.HostName);
+        Assert.Equal("Mia's house", occurrence.Assignee.Location);
     }
 
     [Fact]
@@ -115,7 +118,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.SelfEscort })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
@@ -125,14 +128,14 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom" })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom" } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
             _.StatusCodeShouldBeOk();
         });
 
-        Assert.Equal(PickupAssigneeKind.Playdate, response.ReadAsJson<PickupOccurrenceDto>().Kind);
+        Assert.Equal(PickupAssigneeKind.Playdate, response.ReadAsJson<PickupOccurrenceDto>().Assignee.Kind);
 
         var listResponse = await fixture.Host.Scenario(_ =>
         {
@@ -142,7 +145,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         });
 
         var occurrence = Assert.Single(listResponse.ReadAsJson<List<PickupOccurrenceDto>>());
-        Assert.Equal(PickupAssigneeKind.Playdate, occurrence.Kind);
+        Assert.Equal(PickupAssigneeKind.Playdate, occurrence.Assignee.Kind);
     }
 
     [Fact]
@@ -156,7 +159,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.Guardian, GuardianId = unrelatedUserId })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Guardian, GuardianId = unrelatedUserId } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "DropOff");
@@ -180,7 +183,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {firstGuardianToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.Sibling, SiblingChildId = unrelatedChild.Id })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Sibling, SiblingChildId = unrelatedChild.Id } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
@@ -203,7 +206,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {childToken}");
-            _.Put.Json(new { Kind = PickupAssigneeKind.SelfEscort })
+            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");
@@ -212,13 +215,64 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Re_assigning_an_identical_playdate_appends_no_event()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+        var body = new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom", Location = "Mia's house" }, Notes = "Snacks" };
+
+        await AssignAsync(guardianToken, childId, body, 200);
+        await AssignAsync(guardianToken, childId, body, 200);
+
+        // PickupAssignee is a union of records, so the handler's before == after check compares the
+        // case's values, not references: the second identical write is a no-op.
+        var store = fixture.Host.Services.GetRequiredService<IPickupScheduleEventStore>();
+        var scheduleId = await store.FindIdForChildAsync(new UserId(childId), CancellationToken.None);
+        Assert.NotNull(scheduleId);
+        var events = await store.ReadAsync(scheduleId, CancellationToken.None);
+        Assert.Equal(["PickupScheduleCreated", "PickupAssigned"], events.Select(e => e.EventType));
+    }
+
+    [Fact]
+    public async Task An_unknown_assignee_kind_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = 9 } }, 400);
+
+        Assert.Equal("validation_error", response.ReadAsJson<ErrorEnvelope>().Code);
+    }
+
+    [Fact]
+    public async Task An_assignee_without_a_kind_is_rejected()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { GuardianId = Guid.NewGuid() } }, 400);
+
+        Assert.Equal("validation_error", response.ReadAsJson<ErrorEnvelope>().Code);
+    }
+
+    [Fact]
+    public async Task The_assignee_kind_may_come_after_its_fields()
+    {
+        var (guardianToken, childId) = await CreateChildAsync();
+
+        // PickupAssigneeDtoJsonConverter reads the whole object, so "kind" need not come first.
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { HostName = "Mia's mom", Kind = PickupAssigneeKind.Playdate } }, 200);
+
+        var assignee = response.ReadAsJson<PickupOccurrenceDto>().Assignee;
+        Assert.Equal(PickupAssigneeKind.Playdate, assignee.Kind);
+        Assert.Equal("", assignee.Location);
+    }
+
+    [Fact]
     public async Task A_guardian_assignee_without_a_guardian_id_is_rejected()
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Guardian }, 400);
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Guardian } }, 400);
 
-        AssertValidationError(response, "GuardianId");
+        AssertValidationError(response, "assignee.guardianId");
     }
 
     [Fact]
@@ -226,9 +280,9 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Sibling }, 400);
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Sibling } }, 400);
 
-        AssertValidationError(response, "SiblingChildId");
+        AssertValidationError(response, "assignee.siblingChildId");
     }
 
     [Fact]
@@ -236,9 +290,9 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "" }, 400);
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "" } }, 400);
 
-        AssertValidationError(response, "PlaydateHostName");
+        AssertValidationError(response, "Assignee.HostName");
     }
 
     [Fact]
@@ -246,10 +300,10 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = new string('h', 200) }, 200);
-        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = new string('h', 201) }, 400);
+        await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = new string('h', 200) } }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = new string('h', 201) } }, 400);
 
-        AssertValidationError(response, "PlaydateHostName");
+        AssertValidationError(response, "Assignee.HostName");
     }
 
     [Fact]
@@ -257,7 +311,7 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.SelfEscort, PlaydateHostName = new string('h', 201) }, 200);
+        await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort, HostName = new string('h', 201) } }, 200);
     }
 
     [Fact]
@@ -265,10 +319,10 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateLocation = new string('l', 200) }, 200);
-        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateLocation = new string('l', 201) }, 400);
+        await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom", Location = new string('l', 200) } }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom", Location = new string('l', 201) } }, 400);
 
-        AssertValidationError(response, "PlaydateLocation");
+        AssertValidationError(response, "Assignee.Location");
     }
 
     [Fact]
@@ -276,10 +330,10 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateContactInfo = new string('c', 2000) }, 200);
-        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.Playdate, PlaydateHostName = "Mia's mom", PlaydateContactInfo = new string('c', 2001) }, 400);
+        await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom", ContactInfo = new string('c', 2000) } }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.Playdate, HostName = "Mia's mom", ContactInfo = new string('c', 2001) } }, 400);
 
-        AssertValidationError(response, "PlaydateContactInfo");
+        AssertValidationError(response, "Assignee.ContactInfo");
     }
 
     [Fact]
@@ -287,8 +341,8 @@ public sealed class AssignPickupTests(BuddyApiFixture fixture)
     {
         var (guardianToken, childId) = await CreateChildAsync();
 
-        await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.SelfEscort, Notes = new string('n', 2000) }, 200);
-        var response = await AssignAsync(guardianToken, childId, new { Kind = PickupAssigneeKind.SelfEscort, Notes = new string('n', 2001) }, 400);
+        await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort }, Notes = new string('n', 2000) }, 200);
+        var response = await AssignAsync(guardianToken, childId, new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort }, Notes = new string('n', 2001) }, 400);
 
         AssertValidationError(response, "Notes");
     }

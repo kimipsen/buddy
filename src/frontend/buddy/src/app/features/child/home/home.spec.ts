@@ -537,14 +537,9 @@ describe('ChildHome', () => {
       },
     ];
     const occurrence: PickupOccurrence = {
+      assignee: { kind: 0, guardianId: 'guardian-1' },
       date: today,
       slot: 0,
-      kind: 0,
-      guardianId: 'guardian-1',
-      siblingChildId: null,
-      playdateHostName: null,
-      playdateLocation: null,
-      playdateContactInfo: null,
       time: '08:00:00',
       notes: '',
       assignedBy: 'guardian-1',
@@ -566,14 +561,9 @@ describe('ChildHome', () => {
       { id: 'sib-1', name: { givenName: 'Sam', familyName: 'S' } },
     ];
     const occurrence: PickupOccurrence = {
+      assignee: { kind: 2, siblingChildId: 'sib-1' },
       date: today,
       slot: 1,
-      kind: 2,
-      guardianId: null,
-      siblingChildId: 'sib-1',
-      playdateHostName: null,
-      playdateLocation: null,
-      playdateContactInfo: null,
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -1193,14 +1183,9 @@ describe('ChildHome', () => {
   describe('pickup assignee names', () => {
     function pickup(overrides: Partial<PickupOccurrence>): PickupOccurrence {
       return {
+        assignee: { kind: 0, guardianId: 'guardian-1' },
         date: today,
         slot: 0,
-        kind: 0,
-        guardianId: null,
-        siblingChildId: null,
-        playdateHostName: null,
-        playdateLocation: null,
-        playdateContactInfo: null,
         time: null,
         notes: '',
         assignedBy: 'guardian-1',
@@ -1235,8 +1220,8 @@ describe('ChildHome', () => {
         },
         pickups: {
           listSchedule: vi.fn(async () => [
-            pickup({ slot: 0, kind: 0, guardianId: 'guardian-2' }),
-            pickup({ slot: 1, kind: 2, siblingChildId: 'sib-2' }),
+            pickup({ assignee: { kind: 0, guardianId: 'guardian-2' }, slot: 0 }),
+            pickup({ assignee: { kind: 2, siblingChildId: 'sib-2' }, slot: 1 }),
           ]),
         },
       });
@@ -1257,8 +1242,8 @@ describe('ChildHome', () => {
         },
         pickups: {
           listSchedule: vi.fn(async () => [
-            pickup({ slot: 0, kind: 0, guardianId: 'guardian-9' }),
-            pickup({ slot: 1, kind: 2, siblingChildId: 'sib-1' }),
+            pickup({ assignee: { kind: 0, guardianId: 'guardian-9' }, slot: 0 }),
+            pickup({ assignee: { kind: 2, siblingChildId: 'sib-1' }, slot: 1 }),
           ]),
         },
       });

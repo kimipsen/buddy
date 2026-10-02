@@ -2,33 +2,42 @@ using FluentValidation;
 
 namespace buddy.Features.Pickups;
 
-// Structural validation only: does the request carry the fields its own Kind needs. Relationship
+// Structural validation only. Which fields a kind carries is the PickupAssignee union's job now;
+// what is left is a playdate host name being present and the free-text lengths. Relationship
 // validation (is GuardianId actually a guardian, is SiblingChildId actually a sibling) needs async
 // DB-backed lookups and deliberately stays in AssignPickupHandler.ValidateRelationshipAsync,
-// running after PickupAuthorization.CheckManage -- see docs/backend/analysis/validation-rules.md
-// and the accompanying plan for why that one isn't converted here.
+// running after PickupAuthorization.CheckManage -- see docs/backend/analysis/validation-rules.md.
 public sealed class AssignPickupValidator : AbstractValidator<AssignPickup>
 {
     public AssignPickupValidator()
     {
-        RuleFor(x => x.GuardianId)
-            .NotNull()
-            .WithMessage("A guardian assignee requires guardianId.")
-            .When(x => x.Kind == PickupAssigneeKind.Guardian);
+        RuleFor(x => x.Assignee).Custom((assignee, context) =>
+        {
+            if (assignee is not PickupAssignee.Playdate playdate)
+            {
+                return;
+            }
 
-        RuleFor(x => x.SiblingChildId)
-            .NotNull()
-            .WithMessage("A sibling assignee requires siblingChildId.")
-            .When(x => x.Kind == PickupAssigneeKind.Sibling);
+            if (playdate.HostName.Length == 0)
+            {
+                context.AddFailure("Assignee.HostName", "A playdate assignee requires hostName.");
+            }
+            else if (playdate.HostName.Length > 200)
+            {
+                context.AddFailure("Assignee.HostName", "hostName must be 200 characters or fewer.");
+            }
 
-        RuleFor(x => x.PlaydateHostName)
-            .NotEmpty()
-            .WithMessage("A playdate assignee requires playdateHostName.")
-            .MaximumLength(200)
-            .When(x => x.Kind == PickupAssigneeKind.Playdate);
+            if (playdate.Location.Length > 200)
+            {
+                context.AddFailure("Assignee.Location", "location must be 200 characters or fewer.");
+            }
 
-        RuleFor(x => x.PlaydateLocation).MaximumLength(200);
-        RuleFor(x => x.PlaydateContactInfo).MaximumLength(2000);
+            if (playdate.ContactInfo.Length > 2000)
+            {
+                context.AddFailure("Assignee.ContactInfo", "contactInfo must be 2000 characters or fewer.");
+            }
+        });
+
         RuleFor(x => x.Notes).MaximumLength(2000);
     }
 }

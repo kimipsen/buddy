@@ -12,13 +12,14 @@ import {
   PickupAssigneeKind,
   PickupOccurrence,
   PickupsService,
+  playdateHostName,
 } from '../../../core/pickups.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
-const GUARDIAN: PickupAssigneeKind = 0;
-const SELF_ESCORT: PickupAssigneeKind = 1;
-const SIBLING: PickupAssigneeKind = 2;
-const PLAYDATE: PickupAssigneeKind = 3;
+const GUARDIAN = 0 satisfies PickupAssigneeKind;
+const SELF_ESCORT = 1 satisfies PickupAssigneeKind;
+const SIBLING = 2 satisfies PickupAssigneeKind;
+const PLAYDATE = 3 satisfies PickupAssigneeKind;
 
 const SLOT_LABELS = {
   0: 'dashboard.pickup.slots.dropOff',
@@ -54,10 +55,14 @@ export class PickupToday implements OnInit {
     void this.loadToday();
   }
 
+  protected readonly playdateHostName = playdateHostName;
+
   protected assigneeName(row: PickupRow): string | null {
-    if (row.kind === this.guardianKind) {
+    const { assignee } = row;
+
+    if (assignee.kind === GUARDIAN) {
       return (
-        this.childGuardiansById.get(row.childId)?.find((g) => g.id === row.guardianId)?.name
+        this.childGuardiansById.get(row.childId)?.find((g) => g.id === assignee.guardianId)?.name
           .givenName ?? null
       );
     }

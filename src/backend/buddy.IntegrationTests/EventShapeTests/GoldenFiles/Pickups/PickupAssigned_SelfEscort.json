@@ -4,12 +4,9 @@
   "Slot": "PickUp",
   "Before": null,
   "After": {
-    "Kind": "SelfEscort",
-    "GuardianId": null,
-    "SiblingChildId": null,
-    "PlaydateHostName": null,
-    "PlaydateLocation": null,
-    "PlaydateContactInfo": null,
+    "Assignee": {
+      "Kind": "SelfEscort"
+    },
     "Time": null,
     "AssignedBy": "00000000-0000-0000-0000-000000000001",
     "Notes": ""

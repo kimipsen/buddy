@@ -401,7 +401,7 @@
                 >
                 <span class="flex flex-col items-end gap-0.5">
                   <span class="flex items-center gap-2 text-lg font-semibold">
-                    @switch (occurrence.kind) {
+                    @switch (occurrence.assignee.kind) {
                       @case (guardianKind) {
                         <span aria-hidden="true">👤</span>
                         {{
@@ -421,7 +421,7 @@
                       }
                       @case (playdateKind) {
                         <span aria-hidden="true">🎉</span>
-                        {{ occurrence.playdateHostName }}
+                        {{ playdateHostName(occurrence.assignee) }}
                       }
                     }
                   </span>

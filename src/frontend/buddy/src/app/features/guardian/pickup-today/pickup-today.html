@@ -39,7 +39,7 @@
             }
           </span>
           <span class="flex items-center gap-2 text-sm font-medium">
-            @switch (row.kind) {
+            @switch (row.assignee.kind) {
               @case (guardianKind) {
                 <span aria-hidden="true">👤</span>
                 {{ assigneeName(row) ?? ('dashboard.pickup.kind.guardian' | translate) }}
@@ -54,7 +54,7 @@
               }
               @case (playdateKind) {
                 <span aria-hidden="true">🎉</span>
-                {{ row.playdateHostName }}
+                {{ playdateHostName(row.assignee) }}
               }
             }
           </span>
