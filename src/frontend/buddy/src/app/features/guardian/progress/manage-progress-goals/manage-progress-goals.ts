@@ -119,16 +119,17 @@ export class ManageProgressGoals implements OnInit {
 
     try {
       const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
 
-      if (children.length === 0) {
+      if (!firstChild) {
         this.hasChildren.set(false);
         return;
       }
 
       this.hasChildren.set(true);
       this.children.set(children);
-      this.selectedChildId.set(children[0].id);
-      await this.loadGoalPosts(children[0].id);
+      this.selectedChildId.set(firstChild.id);
+      await this.loadGoalPosts(firstChild.id);
     } catch {
       this.error.set('progress.manageProgressGoals.loadError');
     } finally {

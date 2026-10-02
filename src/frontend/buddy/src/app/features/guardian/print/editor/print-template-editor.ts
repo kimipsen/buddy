@@ -11,6 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { swapped } from '../../../../core/array-utils';
 import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
 import { nextWeekdayOnOrAfter, todayIsoDate } from '../../../../core/date-utils';
 import {
@@ -405,9 +406,7 @@ export class PrintTemplateEditor implements OnInit {
       if (target < 0 || target >= rows.length) {
         return rows;
       }
-      const next = [...rows];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
+      return swapped(rows, index, target);
     });
   }
 

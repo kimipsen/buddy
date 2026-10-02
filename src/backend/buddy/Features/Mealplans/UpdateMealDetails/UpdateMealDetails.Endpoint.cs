@@ -48,4 +48,4 @@ public static class UpdateMealDetailsEndpoint
     }
 }
 
-public sealed record UpdateMealDetailsRequest(string Name, string? Description, string Icon, string Color);
+public sealed record UpdateMealDetailsRequest(string Name, string Icon, string Color, string? Description = null);

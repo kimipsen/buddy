@@ -56,12 +56,12 @@ public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options) : IEma
             mail.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable,
             cancellationToken);
 
-        // Only authenticate when both a username is configured and the server actually
-        // advertises support for it -- lets Mailpit's unauthenticated SMTP keep working
-        // even if placeholder credentials are set in the environment.
-        if (!string.IsNullOrEmpty(mail.Username) && client.Capabilities.HasFlag(SmtpCapabilities.Authentication))
+        // Only authenticate when credentials are configured and the server actually advertises
+        // support for it -- lets Mailpit's unauthenticated SMTP keep working even if placeholder
+        // credentials are set in the environment.
+        if (mail.Credentials is { } credentials && client.Capabilities.HasFlag(SmtpCapabilities.Authentication))
         {
-            await client.AuthenticateAsync(mail.Username, mail.Password ?? "", cancellationToken);
+            await client.AuthenticateAsync(credentials.Username, credentials.Password, cancellationToken);
         }
 
         await client.SendAsync(message, cancellationToken);

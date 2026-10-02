@@ -77,6 +77,8 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
         { "rows", [] },
         { "rows", [.. Enumerable.Range(0, 13).Select(_ => BlankRow())] },
         { "rows[0].label", [new { Kind = Pickup, Label = "", HeightWeight = 1, ChildId = Guid.NewGuid() }] },
+        // Omitted entirely: rejected while binding the body (RespectRequiredConstructorParameters).
+        { "rows[0].label", [new { Kind = Blank, HeightWeight = 1 }] },
         { "rows[0].label", [BlankRow(new string('x', 41))] },
         { "rows[0].heightWeight", [new { Kind = Blank, Label = "", HeightWeight = 0 }] },
         { "rows[0].heightWeight", [new { Kind = Blank, Label = "", HeightWeight = 6 }] },
@@ -107,12 +109,12 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
     }
 
     [Fact]
-    public async Task A_blank_row_may_omit_its_label()
+    public async Task A_blank_row_may_have_an_empty_label()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var template = await CreateAsync(fixture, token);
 
-        await ReplaceRowsAsync(fixture, token, template.Id, [new { Kind = Blank, HeightWeight = 1 }]);
+        await ReplaceRowsAsync(fixture, token, template.Id, [new { Kind = Blank, Label = "", HeightWeight = 1 }]);
 
         Assert.Equal("", Assert.Single((await GetAsync(fixture, token, template.Id)).Rows).Label);
     }

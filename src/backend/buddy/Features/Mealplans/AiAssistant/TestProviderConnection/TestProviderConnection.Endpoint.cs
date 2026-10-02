@@ -39,4 +39,4 @@ public static class TestProviderConnectionEndpoint
     }
 }
 
-public sealed record TestProviderConnectionRequest(string? ApiKey);
+public sealed record TestProviderConnectionRequest(string? ApiKey = null);

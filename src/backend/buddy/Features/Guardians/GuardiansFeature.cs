@@ -1,3 +1,4 @@
+using buddy.Common.Configuration;
 using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
@@ -16,7 +17,7 @@ public static class GuardiansFeature
             options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
         });
 
-        services.Configure<KeycloakAdminOptions>(configuration.GetSection(KeycloakAdminOptions.SectionName));
+        services.AddValidatedOptions<KeycloakAdminOptions>(KeycloakAdminOptions.SectionName);
 
         services.AddSingleton<IGuardianLinkEventStore, MartenGuardianLinkEventStore>();
         services.AddSingleton<IGuardianInviteEventStore, MartenGuardianInviteEventStore>();

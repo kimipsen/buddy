@@ -16,7 +16,7 @@ import { ChildSummary, GuardiansService } from '../../../../core/guardians.servi
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealplanAccessTier } from '../../../../core/mealplans.service';
 
-const ROLE_LABELS: Record<number, string> = {
+const ROLE_LABELS: Record<GroupRole, string> = {
   0: 'admin.manageGroups.roles.owner',
   1: 'admin.manageGroups.roles.admin',
   2: 'admin.manageGroups.roles.member',
@@ -44,13 +44,15 @@ const POLICY_ROWS: { key: GroupRoleName; role: GroupRole }[] = [
 
 // None (0), Manage (2), and View (3) are the three valid group-policy values for meal plans --
 // Rate (1) is the child's own tier and is rejected by the backend, so it's never offered here.
-const MEALPLAN_TIER_LABELS: Record<number, string> = {
+type GroupMealplanTier = Exclude<MealplanAccessTier, 1>;
+
+const MEALPLAN_TIER_LABELS: Record<GroupMealplanTier, string> = {
   0: 'admin.manageGroups.mealplanPolicy.tiers.none',
   2: 'admin.manageGroups.mealplanPolicy.tiers.manage',
   3: 'admin.manageGroups.mealplanPolicy.tiers.view',
 };
 
-const MEALPLAN_TIERS: MealplanAccessTier[] = [0, 3, 2];
+const MEALPLAN_TIERS: GroupMealplanTier[] = [0, 3, 2];
 
 @Component({
   selector: 'app-manage-groups',

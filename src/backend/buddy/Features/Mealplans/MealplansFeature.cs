@@ -1,3 +1,4 @@
+using buddy.Common.Configuration;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -115,7 +116,7 @@ public static class MealplansFeature
         services.AddDataProtection();
         services.AddSingleton<IApiKeyCipher, DataProtectionApiKeyCipher>();
 
-        services.Configure<AiAssistantModelOptions>(configuration.GetSection(AiAssistantModelOptions.SectionName));
+        services.AddValidatedOptions<AiAssistantModelOptions>(AiAssistantModelOptions.SectionName);
 
         // Each is a typed HttpClient (see AddHttpClient<TClient>()'s own transient lifetime), so
         // AiProviderRegistry -- which holds all three -- stays transient too rather than becoming

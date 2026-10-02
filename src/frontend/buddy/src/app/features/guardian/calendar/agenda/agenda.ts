@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { firstAndLast } from '../../../../core/array-utils';
 import {
   AssignableMember,
   CalendarItemKind,
@@ -26,7 +27,13 @@ import {
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
-import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../../core/task-run';
+import {
+  AgendaEntry,
+  TaskRun,
+  groupTaskRuns,
+  isTaskRun,
+  occurrenceKey,
+} from '../../../../core/task-run';
 import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
 import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
@@ -474,7 +481,7 @@ export class CalendarAgenda implements OnInit {
     return groupTaskRuns(this.occurrencesFor(date));
   }
 
-  protected isRun(entry: AgendaEntry): boolean {
+  protected isRun(entry: AgendaEntry): entry is TaskRun {
     return isTaskRun(entry);
   }
 
@@ -848,8 +855,9 @@ export class CalendarAgenda implements OnInit {
     this.error.set(null);
 
     try {
-      const from = this.days()[0].date;
-      const to = this.days().at(-1)!.date;
+      const [first, last] = firstAndLast(this.days());
+      const from = first.date;
+      const to = last.date;
 
       const [myCalendars, occurrences] = await Promise.all([
         this.calendars.listMyCalendars(),

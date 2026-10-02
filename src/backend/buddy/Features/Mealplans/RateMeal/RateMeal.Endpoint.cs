@@ -39,4 +39,4 @@ public static class RateMealEndpoint
     }
 }
 
-public sealed record RateMealRequest(int Stars, string? Comment);
+public sealed record RateMealRequest(int Stars, string? Comment = null);

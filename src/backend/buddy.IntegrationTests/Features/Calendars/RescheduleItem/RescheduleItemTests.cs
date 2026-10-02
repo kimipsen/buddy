@@ -28,7 +28,8 @@ public sealed class RescheduleItemTests(BuddyApiFixture fixture)
             _.Patch.Json(new
             {
                 StartsAt = new { Date = newDay, Time = new TimeOnly(14, 0) },
-                EndsAt = new { Date = newDay, Time = new TimeOnly(15, 0) }
+                EndsAt = new { Date = newDay, Time = new TimeOnly(15, 0) },
+                IsAllDay = false
             }).ToUrl($"/calendars/{calendarId}/items/{item.Id}/schedule");
             _.StatusCodeShouldBeOk();
         });

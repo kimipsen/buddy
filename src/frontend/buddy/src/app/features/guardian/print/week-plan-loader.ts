@@ -39,7 +39,7 @@ export class WeekPlanLoader {
 
     const meals = new Map<string, MealplanScope>();
     for (const row of rows.filter(
-      (r) => r.kind === PRINT_ROW_KIND.meal && (r.childId || r.mealGroupId),
+      (r) => r.kind === PRINT_ROW_KIND.meal && (Boolean(r.childId) || Boolean(r.mealGroupId)),
     )) {
       // The group scope's name and tier only matter to the meal planner UI; listMealPlan uses the id.
       const scope: MealplanScope = row.mealGroupId

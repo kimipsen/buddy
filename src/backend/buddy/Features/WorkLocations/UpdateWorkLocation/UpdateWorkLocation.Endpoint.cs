@@ -20,7 +20,7 @@ public static class UpdateWorkLocationEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = UpdateWorkLocation.FromClaims(principal, new WorkLocationId(locationId), request.Name ?? "", request.Icon ?? "", request.Color ?? "");
+            var command = UpdateWorkLocation.FromClaims(principal, new WorkLocationId(locationId), request.Name, request.Icon, request.Color);
             var result = await bus.InvokeAsync<Result<WorkLocationSummary>>(command, cancellationToken);
 
             return result switch

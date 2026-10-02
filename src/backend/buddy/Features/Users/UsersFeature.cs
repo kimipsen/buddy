@@ -1,6 +1,7 @@
-using buddy.Common.Postgres;
 using System.Security.Claims;
 
+using buddy.Common.Configuration;
+using buddy.Common.Postgres;
 using buddy.Features.Guardians;
 using buddy.Serialization;
 
@@ -56,7 +57,7 @@ public static class UsersFeature
             options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
         });
 
-        services.Configure<KeycloakOptions>(configuration.GetSection(KeycloakOptions.SectionName));
+        services.AddValidatedOptions<KeycloakOptions>(KeycloakOptions.SectionName);
         // Shared process-wide pool -- see PostgresDataSource.
         services.AddPostgresDataSource(configuration);
 

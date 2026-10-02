@@ -73,7 +73,7 @@
             <ul class="mt-4 space-y-3">
               @for (entry of groupedOccurrencesFor(day.date); track rowTrackKey(entry)) {
                 @if (isMeal(entry)) {
-                  @let meal = $any(entry).meal;
+                  @let meal = entry.meal;
                   <li
                     class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
                   >
@@ -91,7 +91,7 @@
                     >
                   </li>
                 } @else if (isRun(entry)) {
-                  @let run = $any(entry);
+                  @let run = entry;
                   <li
                     class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
                   >
@@ -161,7 +161,7 @@
                     </ul>
                   </li>
                 } @else {
-                  @let occurrence = $any(entry);
+                  @let occurrence = entry;
                   <li
                     class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
                   >

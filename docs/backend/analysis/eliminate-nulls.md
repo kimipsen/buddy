@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Proposed (not yet implemented)
+Status: Phase 0 implemented (see [Phase 0, As built](#as-built)); phases 1-7 proposed.
 
 ## Context
 
@@ -128,6 +128,44 @@ The phases run in this order. Each phase is its own PR, and each is green on its
    `AddOptions<T>().BindConfiguration(...).Validate(...).ValidateOnStart()`. Today `required string`
    options are only checked at compile time; the binder can still leave them null.
    - Group `MailOptions.Username`/`Password` into `SmtpCredentials? Credentials`.
+
+### As built
+
+Phase 0 is implemented. Where the build differs from the plan above:
+
+- **`noUncheckedIndexedAccess` and the three ESLint null rules apply to production code only.**
+  The flag is set in `tsconfig.app.json`, and the rules are turned off for `*.spec.ts` and `e2e/`.
+  Specs index into `mock.calls` and DOM queries (about 190 index errors and 825
+  `querySelector(...)!`), where a miss should just fail the test. Forcing them to comply would add
+  hundreds of `!` for no safety.
+- **Index access** was fixed with small total helpers instead of `!`:
+  - `core/array-utils.ts` (`firstAndLast`, `swapped`, `NonEmptyArray`). `TaskRun.subtasks` and
+    `TaskRollup.occurrences` are now `NonEmptyArray`.
+  - `const [firstChild] = children; if (!firstChild)` narrowing.
+  - `as const` tuples for `GROUP_ROLE_NAMES` / `DEFAULT_COLOR_SWATCHES`.
+  - `weekName(week)` instead of `WEEK_NAMES[week]`.
+  - One shared `parseIsoDate` instead of three copies.
+- **`$any`:**
+  - The row templates narrow through type-guard methods (`isRun(entry): entry is TaskRun`).
+  - Inputs use template reference variables.
+  - The events list gets a `TypedUserEvent` union built once at load (`toTypedUserEvent`).
+- **Request binding** (`RequestBindingFailureMiddleware`, with `RouteHandlerOptions.ThrowOnBadRequest`):
+  - JSON failures name the field path (`days[0].locationId`).
+  - Route, query and missing-body failures get a fixed message, so the framework's text, which
+    echoes the input, never reaches clients.
+  - Every genuinely optional nullable request parameter now has `= null`, because
+    `RespectRequiredConstructorParameters` otherwise makes it required.
+  - `RespectNullableAnnotations` also applies when writing responses. A non-nullable response
+    member that holds null now fails serialization instead of sending `null`. That is intended
+    while no stored data predates a field.
+- **Options:**
+  - `AddValidatedOptions<T>` (`Common/Configuration/ValidatedOptions.cs`) does data annotations
+    plus `ValidateOnStart`.
+  - Mail credentials moved to `Mail:Credentials:Username/Password`
+    (`Mail__Credentials__*` in `.devcontainer/docker-compose.yml` and the Azure deploy).
+  - Both values blank means unauthenticated sending.
+  - The checked-in `appsettings.json` ships a placeholder connection string, so a missing
+    `ConnectionStrings` still only fails at the first database call.
 
 ## Phase 1: non-null caller id
 

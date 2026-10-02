@@ -19,7 +19,7 @@ public static class AddWorkLocationEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = AddWorkLocation.FromClaims(principal, request.Name ?? "", request.Icon ?? "", request.Color ?? "");
+            var command = AddWorkLocation.FromClaims(principal, request.Name, request.Icon, request.Color);
             var result = await bus.InvokeAsync<Result<WorkLocationSummary>>(command, cancellationToken);
 
             return result switch
@@ -37,4 +37,4 @@ public static class AddWorkLocationEndpoint
 }
 
 // Shared by AddWorkLocation and UpdateWorkLocation.
-public sealed record WorkLocationRequest(string? Name, string? Icon, string? Color);
+public sealed record WorkLocationRequest(string Name, string Icon, string Color);

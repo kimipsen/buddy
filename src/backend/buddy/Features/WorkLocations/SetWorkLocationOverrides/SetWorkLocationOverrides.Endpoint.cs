@@ -40,4 +40,4 @@ public static class SetWorkLocationOverridesEndpoint
     }
 }
 
-public sealed record SetWorkLocationOverridesRequest(DateOnly From, DateOnly To, Guid? LocationId);
+public sealed record SetWorkLocationOverridesRequest(DateOnly From, DateOnly To, Guid? LocationId = null);

@@ -45,4 +45,4 @@ public static class AddSubtaskEndpoint
     }
 }
 
-public sealed record AddSubtaskRequest(string Title, string? Icon, TimeSpan Duration, int? Position);
+public sealed record AddSubtaskRequest(string Title, TimeSpan Duration, string? Icon = null, int? Position = null);

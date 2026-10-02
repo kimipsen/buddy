@@ -43,7 +43,8 @@ export class Stepper {
     }
   }
 
-  protected setValue(raw: number): void {
+  // ngModel on a number input emits null when the field is cleared.
+  protected setValue(raw: number | null): void {
     if (raw === null || Number.isNaN(raw)) {
       return;
     }

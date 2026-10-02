@@ -46,4 +46,4 @@ public static class StartAiSessionEndpoint
     }
 }
 
-public sealed record StartAiSessionRequest(DateOnly From, DateOnly To, IReadOnlyCollection<MealSlot> Slots, IReadOnlyCollection<Guid> MustIncludeMealIds, string? Notes);
+public sealed record StartAiSessionRequest(DateOnly From, DateOnly To, IReadOnlyCollection<MealSlot> Slots, IReadOnlyCollection<Guid> MustIncludeMealIds, string? Notes = null);

@@ -46,4 +46,4 @@ public static class RescheduleMedicineEndpoint
     }
 }
 
-public sealed record RescheduleMedicineRequest(IReadOnlyList<TimeOnly> Times, DateOnly StartDate, DateOnly? EndDate);
+public sealed record RescheduleMedicineRequest(IReadOnlyList<TimeOnly> Times, DateOnly StartDate, DateOnly? EndDate = null);

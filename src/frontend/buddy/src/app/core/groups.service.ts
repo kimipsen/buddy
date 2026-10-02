@@ -30,7 +30,12 @@ export interface GroupMember {
 // so this policy's keys are string role names, while CalendarRole values stay numeric.
 export type GroupRoleName = 'Owner' | 'Admin' | 'Member';
 
-export const GROUP_ROLE_NAMES: readonly GroupRoleName[] = ['Owner', 'Admin', 'Member'];
+// Indexed by GroupRole's ordinal (0 = Owner, 1 = Admin, 2 = Member).
+export const GROUP_ROLE_NAMES = [
+  'Owner',
+  'Admin',
+  'Member',
+] as const satisfies readonly GroupRoleName[];
 
 export type CalendarPermissionPolicy = Record<GroupRoleName, CalendarRole>;
 

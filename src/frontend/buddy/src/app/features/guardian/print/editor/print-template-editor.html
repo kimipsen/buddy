@@ -72,7 +72,7 @@
                 id="template-weekday"
                 class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                 [ngModel]="startWeekday()"
-                (ngModelChange)="startWeekday.set(+$event)"
+                (ngModelChange)="startWeekday.set($event)"
               >
                 @for (day of weekdays; track day) {
                   <option [ngValue]="day">{{ weekdayNames().get(day) }}</option>
@@ -160,7 +160,7 @@
                         [id]="'row-kind-' + draft.key"
                         class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                         [ngModel]="draft.row.kind"
-                        (ngModelChange)="changeKind(draft.key, +$event)"
+                        (ngModelChange)="changeKind(draft.key, $event)"
                       >
                         @for (kindValue of kinds; track kindValue) {
                           <option [ngValue]="kindValue">
@@ -477,7 +477,7 @@
                 id="new-row-kind"
                 class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                 [ngModel]="newKind()"
-                (ngModelChange)="newKind.set(+$event)"
+                (ngModelChange)="newKind.set($event)"
               >
                 @for (kindValue of kinds; track kindValue) {
                   <option [ngValue]="kindValue">{{ kindLabels[kindValue] | translate }}</option>

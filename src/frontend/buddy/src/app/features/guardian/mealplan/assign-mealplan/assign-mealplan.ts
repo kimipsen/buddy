@@ -8,7 +8,8 @@ import {
 } from '@angular/cdk/drag-drop';
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 
-import { toIsoDate, todayIsoDate } from '../../../../core/date-utils';
+import { firstAndLast } from '../../../../core/array-utils';
+import { parseIsoDate, toIsoDate, todayIsoDate } from '../../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
@@ -47,14 +48,6 @@ interface NamedRating {
   childName: string;
   stars: number;
   comment: string | null;
-}
-
-// Parsed as local-timezone components rather than `new Date(isoDate)` -- the latter parses an
-// unqualified "YYYY-MM-DD" as UTC midnight, which can land on the wrong calendar day once
-// formatted back in a timezone behind UTC.
-function parseIsoDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return new Date(year, month - 1, day);
 }
 
 function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
@@ -315,9 +308,10 @@ export class AssignMealplan implements OnInit {
     this.entriesByKey.set({});
 
     try {
+      const [first, last] = firstAndLast(this.days());
       const [, entries] = await Promise.all([
         this.mealplans.listMeals(scope),
-        this.mealplans.listMealPlan(scope, this.days()[0].date, this.days().at(-1)!.date),
+        this.mealplans.listMealPlan(scope, first.date, last.date),
       ]);
 
       const byKey: Partial<Record<string, MealPlanEntry>> = {};

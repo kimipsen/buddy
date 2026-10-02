@@ -143,7 +143,7 @@ Gmail SMTP needs nothing beyond a Google account.
    Keycloak deploy without outbound email (same as before this feature
    existed), with a warning printed either way.
 
-`deploy.sh` sets `Mail__Host`/`Mail__Port`/`Mail__Username`/`Mail__Password`/
+`deploy.sh` sets `Mail__Host`/`Mail__Port`/`Mail__Credentials__Username`/`Mail__Credentials__Password`/
 `Mail__FromAddress` on the `api` app (password via a `mail-smtp-password`
 Container App secret, same as every other credential in this script), and —
 once the `buddy` realm exists (step 4, "Configure the realm") — configures Keycloak's Realm

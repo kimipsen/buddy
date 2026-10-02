@@ -82,7 +82,8 @@ public sealed class UpdateEmailTests(BuddyApiFixture fixture)
 
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
-        Assert.Contains("Value", error.Details.Keys);
+        // Rejected while binding the body (RespectNullableAnnotations), keyed by the JSON field.
+        Assert.Equal(["email"], error.Details.Keys);
     }
 
     [Fact]

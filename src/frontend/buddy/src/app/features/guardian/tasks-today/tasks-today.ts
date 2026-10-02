@@ -5,6 +5,7 @@ import {
   CalendarOccurrence,
   CalendarsService,
 } from '../../../core/calendars.service';
+import { NonEmptyArray } from '../../../core/array-utils';
 import { toIsoDateInTimeZone } from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
@@ -34,7 +35,7 @@ export interface TaskRollup {
   isAllDay: boolean;
   completedCount: number;
   totalCount: number;
-  occurrences: CalendarOccurrence[];
+  occurrences: NonEmptyArray<CalendarOccurrence>;
 }
 
 function toRollup(entry: AgendaEntry): TaskRollup {
@@ -57,9 +58,8 @@ function toRollup(entry: AgendaEntry): TaskRollup {
 
   // "Overdue" for the whole run reads off its LAST subtask's due time -- that's when the entire
   // routine should have been finished, not when its first step was due.
-  const last = entry.subtasks.reduce(
-    (latest, occurrence) => ((occurrence.dueAt ?? '') > (latest.dueAt ?? '') ? occurrence : latest),
-    entry.subtasks[0],
+  const last = entry.subtasks.reduce((latest, occurrence) =>
+    (occurrence.dueAt ?? '') > (latest.dueAt ?? '') ? occurrence : latest,
   );
 
   return {

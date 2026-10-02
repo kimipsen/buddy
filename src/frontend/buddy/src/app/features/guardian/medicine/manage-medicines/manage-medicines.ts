@@ -208,17 +208,18 @@ export class ManageMedicines implements OnInit {
 
     try {
       const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
 
-      if (children.length === 0) {
+      if (!firstChild) {
         this.hasChildren.set(false);
         return;
       }
 
       this.hasChildren.set(true);
       this.children.set(children);
-      this.selectedChildId.set(children[0].id);
-      await this.loadSchedules(children[0].id);
-      await this.loadSharing(children[0].id);
+      this.selectedChildId.set(firstChild.id);
+      await this.loadSchedules(firstChild.id);
+      await this.loadSharing(firstChild.id);
     } catch {
       this.error.set('medicine.manageMedicines.loadError');
     } finally {

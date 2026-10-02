@@ -33,7 +33,7 @@ export class ManageWorkLocations {
 
   protected readonly newName = signal('');
   protected readonly newIcon = signal(DEFAULT_ICON);
-  protected readonly newColor = signal(DEFAULT_COLOR_SWATCHES[6]);
+  protected readonly newColor = signal<string>(DEFAULT_COLOR_SWATCHES[6]);
 
   protected readonly editingId = signal<string | null>(null);
   protected readonly editName = signal('');

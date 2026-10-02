@@ -1,3 +1,4 @@
+import { firstAndLast } from '../../../core/array-utils';
 import {
   addDaysIso,
   buildDateRangeIso,
@@ -65,8 +66,9 @@ interface RowContext {
 
 // "Uge 40" for a Monday start; any other start spans two ISO weeks: "Uge 40–41".
 function weekLabel(dates: string[], word: string): string {
-  const first = isoWeekNumber(dates[0]);
-  const last = isoWeekNumber(dates[dates.length - 1]);
+  const [firstDate, lastDate] = firstAndLast(dates);
+  const first = isoWeekNumber(firstDate);
+  const last = isoWeekNumber(lastDate);
   return first === last ? `${word} ${first}` : `${word} ${first}–${last}`;
 }
 
@@ -131,7 +133,7 @@ function pickupCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell[]
   if (!row.childId) {
     return blankRow(context.dates);
   }
-  const occurrences = context.sources.pickups.get(row.childId ?? '');
+  const occurrences = context.sources.pickups.get(row.childId);
   if (!occurrences) {
     return null;
   }
@@ -186,7 +188,7 @@ function workLocationCells(row: PrintTemplateRow, context: RowContext): WeekPlan
   if (!row.guardianId) {
     return blankRow(context.dates);
   }
-  const days = context.sources.workDays.get(row.guardianId ?? '');
+  const days = context.sources.workDays.get(row.guardianId);
   if (!days) {
     return null;
   }
@@ -209,13 +211,16 @@ function workLocationCells(row: PrintTemplateRow, context: RowContext): WeekPlan
 }
 
 function calendarCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell[] | null {
-  const loaded = (row.calendarIds ?? []).map((id) => context.sources.occurrences.get(id));
-  if (loaded.some((occurrences) => !occurrences)) {
+  const calendarIds = row.calendarIds ?? [];
+  const loaded = calendarIds
+    .map((id) => context.sources.occurrences.get(id))
+    .filter((occurrences) => occurrences !== undefined && occurrences !== null);
+  if (loaded.length !== calendarIds.length) {
     return null;
   }
 
   const filter = row.titleFilter?.toLowerCase() ?? null;
-  const occurrences = dedupe(loaded.flatMap((o) => o!))
+  const occurrences = dedupe(loaded.flat())
     .filter((o) => !row.assignedToId || o.assignedTo === row.assignedToId)
     .filter((o) => row.kind !== PRINT_ROW_KIND.taskChecklist || o.kind === TASK_KIND)
     .filter(
@@ -254,15 +259,20 @@ function calendarCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell
       return { type: 'checklist', ...limit([...groups.values()], row.maxItems) };
     }
 
-    const items = onDay.map((o): WeekPlanItem => ({
-      time:
-        row.showTime && !o.isAllDay && startsOn(o, date, timeZone)
-          ? toTimeInTimeZone(new Date(start(o)!), timeZone)
-          : null,
-      text: o.title,
-      assignee:
-        row.showAssignee && o.assignedTo ? (context.sources.names.get(o.assignedTo) ?? null) : null,
-    }));
+    const items = onDay.map((o): WeekPlanItem => {
+      const startsAt = start(o);
+      return {
+        time:
+          row.showTime && !o.isAllDay && startsAt !== null && startsOn(o, date, timeZone)
+            ? toTimeInTimeZone(new Date(startsAt), timeZone)
+            : null,
+        text: o.title,
+        assignee:
+          row.showAssignee && o.assignedTo
+            ? (context.sources.names.get(o.assignedTo) ?? null)
+            : null,
+      };
+    });
     return { type: 'list', ...limit(items, row.maxItems) };
   });
 }

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace buddy.Features.Guardians;
 
 // Config for the confidential-client service account used to call Keycloak's Admin API when a
@@ -10,14 +12,21 @@ public sealed class KeycloakAdminOptions
 {
     public const string SectionName = "Authentication:KeycloakAdmin";
 
+    [Required]
     public required string Realm { get; init; }
 
+    [Required]
     public required string TokenEndpoint { get; init; }
 
     // Base URL for this realm's Admin REST API, e.g. "http://keycloak:8080/admin/realms/buddy".
+    [Required]
     public required string AdminBaseUrl { get; init; }
 
+    [Required]
     public required string ClientId { get; init; }
 
+    // Empty is allowed: appsettings.json ships "" and deployments override it. Only a missing
+    // key fails startup; an empty secret fails at the first Admin API call, as before.
+    [Required(AllowEmptyStrings = true)]
     public required string ClientSecret { get; init; }
 }

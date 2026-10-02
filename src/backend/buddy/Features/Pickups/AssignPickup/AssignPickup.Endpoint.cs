@@ -55,10 +55,10 @@ public static class AssignPickupEndpoint
 
 public sealed record AssignPickupRequest(
     PickupAssigneeKind Kind,
-    Guid? GuardianId,
-    Guid? SiblingChildId,
-    string? PlaydateHostName,
-    string? PlaydateLocation,
-    string? PlaydateContactInfo,
-    TimeOnly? Time,
-    string? Notes);
+    Guid? GuardianId = null,
+    Guid? SiblingChildId = null,
+    string? PlaydateHostName = null,
+    string? PlaydateLocation = null,
+    string? PlaydateContactInfo = null,
+    TimeOnly? Time = null,
+    string? Notes = null);

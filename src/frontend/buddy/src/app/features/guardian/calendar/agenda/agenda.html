@@ -100,7 +100,7 @@
               <ul class="space-y-2">
                 @for (entry of groupedOccurrencesFor(day.date); track entry.itemId) {
                   @if (isRun(entry)) {
-                    @let run = $any(entry);
+                    @let run = entry;
                     <li
                       class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm"
                     >
@@ -185,7 +185,7 @@
                       </ul>
                     </li>
                   } @else {
-                    @let occurrence = $any(entry);
+                    @let occurrence = entry;
                     <li
                       class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm"
                     >

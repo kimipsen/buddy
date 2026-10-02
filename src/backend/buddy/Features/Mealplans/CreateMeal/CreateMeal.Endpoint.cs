@@ -46,7 +46,7 @@ public static class CreateMealEndpoint
     }
 }
 
-public sealed record CreateMealRequest(string Name, string? Description, string Icon, string Color);
+public sealed record CreateMealRequest(string Name, string Icon, string Color, string? Description = null);
 
 public sealed record MealRatingResponse(Guid ChildId, int Stars, string? Comment, DateTimeOffset RatedAt);
 

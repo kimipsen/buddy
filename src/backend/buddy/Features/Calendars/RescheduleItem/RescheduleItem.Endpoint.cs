@@ -46,4 +46,4 @@ public static class RescheduleItemEndpoint
     }
 }
 
-public sealed record RescheduleItemRequest(StartsAt? StartsAt, EndsAt? EndsAt, DueDate? DueDate, bool IsAllDay);
+public sealed record RescheduleItemRequest(bool IsAllDay, StartsAt? StartsAt = null, EndsAt? EndsAt = null, DueDate? DueDate = null);

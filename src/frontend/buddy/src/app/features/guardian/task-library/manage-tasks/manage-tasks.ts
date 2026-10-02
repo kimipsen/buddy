@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { swapped } from '../../../../core/array-utils';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { Subtask, TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
@@ -270,8 +271,11 @@ export class ManageTasks implements OnInit {
       return;
     }
 
-    const order = template.subtasks.map((subtask) => subtask.id);
-    [order[index], order[targetIndex]] = [order[targetIndex], order[index]];
+    const order = swapped(
+      template.subtasks.map((subtask) => subtask.id),
+      index,
+      targetIndex,
+    );
 
     this.reorderingTemplateId.set(template.id);
     this.subtaskError.set(null);
@@ -291,16 +295,17 @@ export class ManageTasks implements OnInit {
 
     try {
       const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
 
-      if (children.length === 0) {
+      if (!firstChild) {
         this.hasChildren.set(false);
         return;
       }
 
       this.hasChildren.set(true);
       this.children.set(children);
-      this.selectedChildId.set(children[0].id);
-      await this.loadTemplates(children[0].id);
+      this.selectedChildId.set(firstChild.id);
+      await this.loadTemplates(firstChild.id);
     } catch {
       this.error.set('taskLibrary.manageTasks.loadError');
     } finally {

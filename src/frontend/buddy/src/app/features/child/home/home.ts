@@ -9,7 +9,13 @@ import {
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
+import {
+  AgendaEntry,
+  TaskRun,
+  groupTaskRuns,
+  isTaskRun,
+  occurrenceKey,
+} from '../../../core/task-run';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import {
   DoseStatus,
@@ -43,7 +49,8 @@ const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
 };
 
 const MEAL_SLOTS: MealSlot[] = [0, 1, 2, 3];
-const STARS = [1, 2, 3, 4, 5];
+const MAX_STARS = 5;
+const STARS = Array.from({ length: MAX_STARS }, (_, index) => index + 1);
 
 const GUARDIAN: PickupAssigneeKind = 0;
 const SELF_ESCORT: PickupAssigneeKind = 1;
@@ -204,7 +211,7 @@ export class ChildHome implements OnInit, OnDestroy {
     return occurrenceKey(task);
   }
 
-  protected isRun(entry: AgendaEntry): boolean {
+  protected isRun(entry: AgendaEntry): entry is TaskRun {
     return isTaskRun(entry);
   }
 
@@ -336,7 +343,7 @@ export class ChildHome implements OnInit, OnDestroy {
   }
 
   protected async saveComment(entry: MealPlanEntry): Promise<void> {
-    const starCount = entry.rating?.stars ?? STARS.at(-1)!;
+    const starCount = entry.rating?.stars ?? MAX_STARS;
     await this.submitRating(entry, starCount, this.commentDraft().trim() || null);
     this.cancelEditing();
   }
@@ -361,8 +368,7 @@ export class ChildHome implements OnInit, OnDestroy {
         const next = { ...current };
 
         for (const [slot, existing] of Object.entries(next)) {
-          // Stryker disable next-line OptionalChaining: entriesBySlot only ever holds defined entries (loadMeals assigns real entries only), so `existing` is never undefined
-          if (existing?.mealId === entry.mealId) {
+          if (existing.mealId === entry.mealId) {
             next[Number(slot) as MealSlot] = { ...existing, rating: myRating };
           }
         }

@@ -43,8 +43,9 @@ export class MealplanToday implements OnInit {
 
     try {
       const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
 
-      if (children.length === 0) {
+      if (!firstChild) {
         this.hasChildren.set(false);
         return;
       }
@@ -53,7 +54,7 @@ export class MealplanToday implements OnInit {
 
       const today = todayIsoDate();
       const entries = await this.mealplans.listMealPlan(
-        { kind: 'family', childId: children[0].id },
+        { kind: 'family', childId: firstChild.id },
         today,
         today,
       );

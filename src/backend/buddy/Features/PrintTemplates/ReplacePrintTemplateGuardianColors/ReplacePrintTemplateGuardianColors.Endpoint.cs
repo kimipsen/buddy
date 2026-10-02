@@ -22,13 +22,14 @@ public static class ReplacePrintTemplateGuardianColorsEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            if (request.Colors?.Any(c => c is null) == true)
+            // RespectNullableAnnotations doesn't cover collection elements, so this stays.
+            if (request.Colors.Any(c => c is null))
             {
                 return TypedResults.BadRequest(Common.Validation.ValidationProblem.Of("colors must not contain null entries.").ToEnvelope(httpContext));
             }
 
-            var colors = (request.Colors ?? [])
-                .Select(c => new GuardianColor(new UserId(c.GuardianId), new Color((c.Color ?? "").Trim())))
+            var colors = request.Colors
+                .Select(c => new GuardianColor(new UserId(c.GuardianId), new Color(c.Color.Trim())))
                 .ToList();
             var command = ReplacePrintTemplateGuardianColors.FromClaims(principal, new PrintTemplateId(templateId), colors);
             var result = await bus.InvokeAsync<Result<PrintTemplateResponse>>(command, cancellationToken);
@@ -48,6 +49,6 @@ public static class ReplacePrintTemplateGuardianColorsEndpoint
     }
 }
 
-public sealed record ReplacePrintTemplateGuardianColorsRequest(IReadOnlyList<GuardianColorRequest>? Colors);
+public sealed record ReplacePrintTemplateGuardianColorsRequest(IReadOnlyList<GuardianColorRequest> Colors);
 
-public sealed record GuardianColorRequest(Guid GuardianId, string? Color);
+public sealed record GuardianColorRequest(Guid GuardianId, string Color);

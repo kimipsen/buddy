@@ -206,14 +206,15 @@ export class MealplanAiAssistant implements OnInit {
 
     try {
       const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
 
-      if (children.length === 0) {
+      if (!firstChild) {
         this.hasChildren.set(false);
         return;
       }
 
       this.hasChildren.set(true);
-      this.childId = children[0].id;
+      this.childId = firstChild.id;
 
       const providers = await this.aiAssistant.listProviders(this.childId);
       this.hasProviderConfigured.set(providers.activeProvider !== null);

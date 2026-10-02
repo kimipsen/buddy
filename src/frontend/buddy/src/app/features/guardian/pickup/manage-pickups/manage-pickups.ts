@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { firstAndLast } from '../../../../core/array-utils';
 import { toIsoDate } from '../../../../core/date-utils';
 import {
   ChildSummary,
@@ -144,16 +145,17 @@ export class ManagePickups implements OnInit {
 
     try {
       const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
 
-      if (children.length === 0) {
+      if (!firstChild) {
         this.hasChildren.set(false);
         return;
       }
 
       this.hasChildren.set(true);
       this.children.set(children);
-      this.selectedChildId.set(children[0].id);
-      await this.loadForChild(children[0].id);
+      this.selectedChildId.set(firstChild.id);
+      await this.loadForChild(firstChild.id);
     } catch {
       this.error.set('pickup.assign.loadError');
     } finally {
@@ -167,10 +169,10 @@ export class ManagePickups implements OnInit {
     this.entriesByKey.set({});
 
     try {
-      const week = this.week();
+      const [first, last] = firstAndLast(this.week());
       const [childGuardians, occurrences] = await Promise.all([
         this.guardians.listChildGuardians(childId),
-        this.pickups.listSchedule(childId, week[0].date, week.at(-1)!.date),
+        this.pickups.listSchedule(childId, first.date, last.date),
       ]);
 
       // A newer call (from switching the child again before this one resolved) may have already

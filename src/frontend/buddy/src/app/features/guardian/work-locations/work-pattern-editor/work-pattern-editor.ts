@@ -17,14 +17,19 @@ import {
 import {
   MAX_CYCLE_WEEKS,
   WEEKDAYS_MONDAY_FIRST,
-  WEEK_NAMES,
   anchorForCurrentWeek,
   cycleWeekOf,
   patternKey,
+  weekName,
 } from '../work-pattern';
 
 // Sunday 2026-10-04 + n days walks Sunday..Saturday, matching DayOfWeek ordinals.
 const A_SUNDAY = new Date(2026, 9, 4);
+
+function shortDayName(day: Weekday, locale: string): string {
+  const date = new Date(A_SUNDAY.getFullYear(), A_SUNDAY.getMonth(), A_SUNDAY.getDate() + day);
+  return date.toLocaleDateString(locale, { weekday: 'short' });
+}
 
 // Draft of the cycle length, "which week is this week" and the week x weekday grid. The draft
 // resets whenever the page reloads the schedule; nothing is sent until Save.
@@ -41,7 +46,6 @@ export class WorkPatternEditor {
   readonly changed = output<void>();
 
   protected readonly weekdays = WEEKDAYS_MONDAY_FIRST;
-  protected readonly weekNames = WEEK_NAMES;
   private readonly today = todayIsoDate();
 
   protected readonly cycleWeeks = linkedSignal(() => this.schedule().pattern.cycleWeeks);
@@ -88,22 +92,19 @@ export class WorkPatternEditor {
 
   protected readonly dayNames = computed(() => {
     const locale = this.translation.language();
-    return WEEKDAYS_MONDAY_FIRST.map((day) => {
-      const date = new Date(A_SUNDAY.getFullYear(), A_SUNDAY.getMonth(), A_SUNDAY.getDate() + day);
-      return date.toLocaleDateString(locale, { weekday: 'short' });
-    });
+    return WEEKDAYS_MONDAY_FIRST.map((day) => shortDayName(day, locale));
   });
 
   protected weekLabel(week: number): string {
     return this.translation.translate('workLocations.pattern.weekName', {
-      name: WEEK_NAMES[week],
+      name: weekName(week),
     });
   }
 
-  protected cellLabel(week: number, dayIndex: number): string {
+  protected cellLabel(week: number, day: Weekday): string {
     return this.translation.translate('workLocations.pattern.dayLabel', {
       week: this.weekLabel(week),
-      day: this.dayNames()[dayIndex],
+      day: shortDayName(day, this.translation.language()),
     });
   }
 

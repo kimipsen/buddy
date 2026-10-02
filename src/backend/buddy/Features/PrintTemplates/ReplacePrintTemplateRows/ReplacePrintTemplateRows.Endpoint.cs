@@ -20,15 +20,14 @@ public static class ReplacePrintTemplateRowsEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            // Null entries can't reach the validator (its row rules would dereference them). An
-            // omitted label reads as empty, which a Blank row allows and every other kind rejects.
-            if (request.Rows?.Any(row => row is null) == true)
+            // Null entries can't reach the validator (its row rules would dereference them), and
+            // RespectNullableAnnotations doesn't cover collection elements, so this stays.
+            if (request.Rows.Any(row => row is null))
             {
                 return TypedResults.BadRequest(Common.Validation.ValidationProblem.Of("rows must not contain null entries.").ToEnvelope(httpContext));
             }
 
-            IReadOnlyList<PrintTemplateRow> rows = [.. (request.Rows ?? []).Select(row => row with { Label = row.Label ?? "" })];
-            var command = ReplacePrintTemplateRows.FromClaims(principal, new PrintTemplateId(templateId), rows);
+            var command = ReplacePrintTemplateRows.FromClaims(principal, new PrintTemplateId(templateId), request.Rows);
             var result = await bus.InvokeAsync<Result<PrintTemplateResponse>>(command, cancellationToken);
 
             return result switch
@@ -48,4 +47,4 @@ public static class ReplacePrintTemplateRowsEndpoint
 
 // Rows bind straight to PrintTemplateRow: ids arrive as bare Guids (StronglyTypedIdJsonConverterFactory)
 // and enums as ordinals, the same shape GetPrintTemplate returns.
-public sealed record ReplacePrintTemplateRowsRequest(IReadOnlyList<PrintTemplateRow>? Rows);
+public sealed record ReplacePrintTemplateRowsRequest(IReadOnlyList<PrintTemplateRow> Rows);

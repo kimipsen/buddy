@@ -84,6 +84,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             _.Post.Json(new
             {
                 Kind = CalendarItemKind.Task,
+                IsAllDay = false,
                 Title = "File taxes",
                 Icon = "task",
                 Color = "#ff0000",
@@ -107,6 +108,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
             Kind = CalendarItemKind.Event,
+            IsAllDay = false,
             Title = "Incomplete",
             Icon = "calendar",
             Color = "#00ff00",
@@ -126,6 +128,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
             Kind = CalendarItemKind.Event,
+            IsAllDay = false,
             Title = "Incomplete",
             Icon = "calendar",
             Color = "#00ff00",
@@ -148,6 +151,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
             Kind = CalendarItemKind.Event,
+            IsAllDay = false,
             Title = "Backwards",
             Icon = "calendar",
             Color = "#00ff00",
@@ -169,6 +173,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
             Kind = CalendarItemKind.Task,
+            IsAllDay = false,
             Title = "No due date",
             Icon = "task",
             Color = "#ff0000"
@@ -186,6 +191,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
             Kind = CalendarItemKind.Task,
+            IsAllDay = false,
             Title = new string('t', 201),
             Icon = "task",
             Color = "#ff0000",
@@ -217,6 +223,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
             Kind = CalendarItemKind.Task,
+            IsAllDay = false,
             Title = "Water plants",
             Icon = "task",
             Color = "#ff0000",
@@ -302,6 +309,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
         var error = await PostInvalidItemAsync(ownerToken, calendarId, new
         {
             Kind = CalendarItemKind.Event,
+            IsAllDay = false,
             Title = "Standup",
             Icon = "calendar",
             Color = "#00ff00",

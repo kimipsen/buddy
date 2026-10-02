@@ -1,5 +1,6 @@
 using buddy.Common.Concurrency;
 using buddy.Common.Idempotency;
+using buddy.Common.Validation;
 using buddy.Email;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
@@ -42,7 +43,18 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new StronglyTypedIdJsonConverterFactory());
     options.SerializerOptions.Converters.Add(new ValueTupleJsonConverterFactory());
+
+    // Honest request DTOs: a request record's non-nullable member can't arrive as null, and a
+    // constructor parameter without a default must be present in the body. Optional fields are
+    // nullable with `= null`. HTTP only -- each Marten store keeps its own serializer options.
+    options.SerializerOptions.RespectNullableAnnotations = true;
+    options.SerializerOptions.RespectRequiredConstructorParameters = true;
 });
+
+// Without this, minimal APIs answer an unreadable body with a bare 400 outside Development.
+// Throwing lets RequestBindingFailureMiddleware render it as the same ErrorEnvelope a validator
+// failure gets.
+builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = true);
 
 var frontendOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
@@ -100,6 +112,8 @@ app.UseAuthorization();
 // Outside UseIdempotencyKeys: a request that lost a concurrency race gets 409 and its
 // Idempotency-Key released, so the client can retry it with the same key.
 app.UseConcurrencyConflicts();
+// Also outside UseIdempotencyKeys, for the same reason: a rejected body releases its key.
+app.UseRequestBindingFailures();
 app.UseIdempotencyKeys();
 
 app.MapHealthChecks("/health");

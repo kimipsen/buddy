@@ -26,7 +26,18 @@ module.exports = defineConfig([
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
     rules: {
+      // Null-safety guardrails (docs/backend/analysis/eliminate-nulls.md, Phase 0). These need
+      // type information, hence projectService above.
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-unnecessary-condition': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
       '@angular-eslint/directive-selector': [
         'error',
         {
@@ -52,6 +63,11 @@ module.exports = defineConfig([
     files: ['src/**/*.spec.ts', 'src/test-setup.ts'],
     rules: {
       '@typescript-eslint/no-empty-function': 'off',
+      // Specs assert on DOM queries and mock calls (`querySelector(...)!`, `mock.calls[0]!`), where
+      // a miss should just fail the test; the null-safety rules target production code.
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
     },
   },
   {
@@ -61,6 +77,9 @@ module.exports = defineConfig([
     files: ['e2e/**/*.ts'],
     rules: {
       'no-empty-pattern': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
     },
   },
   {

@@ -122,8 +122,9 @@
                       class="w-full rounded-xl border-2 border-slate-200 dark:border-slate-800 p-3 text-base focus:border-emerald-400 focus:outline-none dark:bg-slate-800 dark:text-slate-100"
                       rows="2"
                       [placeholder]="'child.mealplan.notePlaceholder' | translate"
+                      #commentInput
                       [value]="commentDraft()"
-                      (input)="setComment($any($event.target).value)"
+                      (input)="setComment(commentInput.value)"
                     ></textarea>
                     <div class="flex justify-end gap-2">
                       <button
@@ -246,7 +247,7 @@
           <ul class="mt-4 space-y-3">
             @for (entry of groupedTasks(); track entry.itemId) {
               @if (isRun(entry)) {
-                @let run = $any(entry);
+                @let run = entry;
                 <li
                   class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
                 >
@@ -291,7 +292,7 @@
                   </ul>
                 </li>
               } @else {
-                @let task = $any(entry);
+                @let task = entry;
                 <li
                   class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
                 >

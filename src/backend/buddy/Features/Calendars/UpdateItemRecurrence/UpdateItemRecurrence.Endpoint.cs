@@ -39,4 +39,4 @@ public static class UpdateItemRecurrenceEndpoint
     }
 }
 
-public sealed record UpdateItemRecurrenceRequest(RecurrenceRuleRequest? Recurrence);
+public sealed record UpdateItemRecurrenceRequest(RecurrenceRuleRequest? Recurrence = null);

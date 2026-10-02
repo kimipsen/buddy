@@ -185,6 +185,6 @@ export function exampleRows(input: ExampleInputs): PrintTemplateRow[] {
 
   // A big family can overflow the backend's 12-row limit: drop the rows past it but keep the
   // trailing notes row. Labels built from long names are cut to the backend's label limit.
-  const capped = rows.length > 12 ? [...rows.slice(0, 11), rows[rows.length - 1]] : rows;
+  const capped = rows.length > 12 ? [...rows.slice(0, 11), ...rows.slice(-1)] : rows;
   return capped.map((row) => ({ ...row, label: row.label.slice(0, MAX_LABEL_LENGTH) }));
 }

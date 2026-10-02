@@ -40,4 +40,4 @@ public static class AssignMealToSlotEndpoint
     }
 }
 
-public sealed record AssignMealToSlotRequest(Guid MealId, string? Notes);
+public sealed record AssignMealToSlotRequest(Guid MealId, string? Notes = null);

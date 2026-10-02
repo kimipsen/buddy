@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { UserEventItem, UserEventsService } from '../../../core/user-events.service';
+import { UserEventsService } from '../../../core/user-events.service';
 import { EmailUpdatedEvent } from './event-types/email-updated-event';
 import { EmailVerificationRequestedEvent } from './event-types/email-verification-requested-event';
 import { EmailVerifiedEvent } from './event-types/email-verified-event';
@@ -11,6 +11,7 @@ import { TimeZoneUpdatedEvent } from './event-types/timezone-updated-event';
 import { UnknownEvent } from './event-types/unknown-event';
 import { UserCreatedEvent } from './event-types/user-created-event';
 import { UserDeletedEvent } from './event-types/user-deleted-event';
+import { TypedUserEvent, toTypedUserEvent } from './event-types/user-event.model';
 
 const EVENTS_PAGE_SIZE = 5;
 
@@ -37,7 +38,7 @@ export class EventsList implements OnInit {
   private readonly pageCursors: (string | null)[] = [null];
   private currentPageIndex = 0;
 
-  protected readonly events = signal<UserEventItem[]>([]);
+  protected readonly events = signal<TypedUserEvent[]>([]);
   protected readonly eventsLoading = signal(true);
   protected readonly eventsError = signal<string | null>(null);
   protected readonly hasPreviousPage = signal(false);
@@ -67,7 +68,7 @@ export class EventsList implements OnInit {
 
       this.currentPageIndex = pageIndex;
       this.pageCursors[pageIndex + 1] = page.nextCursor;
-      this.events.set(page.items);
+      this.events.set(page.items.map(toTypedUserEvent));
       this.hasPreviousPage.set(pageIndex > 0);
       this.hasNextPage.set(page.nextCursor !== null);
     } catch {

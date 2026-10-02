@@ -12,7 +12,7 @@ export function todayIsoDate(): string {
 // unqualified "YYYY-MM-DD" as UTC midnight, which can land on the wrong calendar day once
 // formatted back in a timezone behind UTC.
 export function parseIsoDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split('-').map(Number);
+  const [year = NaN, month = NaN, day = NaN] = isoDate.split('-').map(Number);
   return new Date(year, month - 1, day);
 }
 
@@ -103,7 +103,7 @@ export function toTimeInTimeZone(date: Date, timeZone: string): string {
 // Adds a whole number of minutes to a "HH:mm" wall-clock time, wrapping across midnight -- used to
 // derive a task's expected end time from its scheduled start time and a duration in minutes.
 export function addMinutesToTime(time: string, minutes: number): string {
-  const [hours, mins] = time.split(':').map(Number);
+  const [hours = NaN, mins = NaN] = time.split(':').map(Number);
   const wrapped = (((hours * 60 + mins + minutes) % 1440) + 1440) % 1440;
   return `${String(Math.floor(wrapped / 60)).padStart(2, '0')}:${String(wrapped % 60).padStart(2, '0')}`;
 }
@@ -112,7 +112,7 @@ export function addMinutesToTime(time: string, minutes: number): string {
 // Thursday), so 2026-12-31 is week 53 and 2027-01-04 is week 1. Computed on UTC components so the
 // local time zone and DST never shift the day.
 export function isoWeekNumber(isoDate: string): number {
-  const [year, month, day] = isoDate.split('-').map(Number);
+  const [year = NaN, month = NaN, day = NaN] = isoDate.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   const weekday = date.getUTCDay() || 7;
   // Move to the Thursday of this week; its year is the ISO week-numbering year.

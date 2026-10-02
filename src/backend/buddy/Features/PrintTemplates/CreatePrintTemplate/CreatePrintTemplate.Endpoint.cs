@@ -22,7 +22,7 @@ public static class CreatePrintTemplateEndpoint
         {
             var command = CreatePrintTemplate.FromClaims(
                 principal,
-                request.Name ?? "",
+                request.Name,
                 request.GroupId is { } groupId ? new GroupId(groupId) : null);
             var result = await bus.InvokeAsync<Result<PrintTemplateResponse>>(command, cancellationToken);
 
@@ -40,4 +40,4 @@ public static class CreatePrintTemplateEndpoint
     }
 }
 
-public sealed record CreatePrintTemplateRequest(string? Name, Guid? GroupId);
+public sealed record CreatePrintTemplateRequest(string Name, Guid? GroupId = null);

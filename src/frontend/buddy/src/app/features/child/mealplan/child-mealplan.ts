@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { toIsoDate, todayIsoDate } from '../../../core/date-utils';
+import { firstAndLast } from '../../../core/array-utils';
+import { parseIsoDate, toIsoDate, todayIsoDate } from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
@@ -16,19 +17,12 @@ const SLOT_LABELS: Record<MealSlot, string> = {
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
 const DAYS_AHEAD = 7;
-const STARS = [1, 2, 3, 4, 5];
+const MAX_STARS = 5;
+const STARS = Array.from({ length: MAX_STARS }, (_, index) => index + 1);
 
 interface PlannerDay {
   date: string;
   label: string;
-}
-
-// Parsed as local-timezone components rather than `new Date(isoDate)`, matching the same fix in
-// the guardian assign-mealplan screen -- an unqualified "YYYY-MM-DD" otherwise parses as UTC
-// midnight and can land on the wrong calendar day.
-function parseIsoDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return new Date(year, month - 1, day);
 }
 
 function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
@@ -151,7 +145,7 @@ export class ChildMealplan implements OnInit {
   }
 
   protected async saveComment(entry: MealPlanEntry): Promise<void> {
-    const starCount = entry.rating?.stars ?? STARS.at(-1)!;
+    const starCount = entry.rating?.stars ?? MAX_STARS;
     await this.submitRating(entry, starCount, this.commentDraft().trim() || null);
     this.cancelEditing();
   }
@@ -198,11 +192,11 @@ export class ChildMealplan implements OnInit {
     try {
       const me = await this.users.ensureCurrentUser();
       this.childId = me.id;
-      const days = this.days();
+      const [first, last] = firstAndLast(this.days());
       const entries = await this.mealplans.listMealPlan(
         { kind: 'family', childId: me.id },
-        days[0].date,
-        days.at(-1)!.date,
+        first.date,
+        last.date,
       );
       const byKey: Partial<Record<string, MealPlanEntry>> = {};
 

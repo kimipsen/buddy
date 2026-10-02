@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { firstAndLast } from '../../../core/array-utils';
 import {
   CalendarItemKind,
   CalendarOccurrence,
@@ -8,6 +9,7 @@ import {
   CalendarsService,
 } from '../../../core/calendars.service';
 import {
+  parseIsoDate,
   toIsoDate,
   todayIsoDate,
   toIsoDateInTimeZone,
@@ -16,7 +18,13 @@ import {
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
-import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
+import {
+  AgendaEntry,
+  TaskRun,
+  groupTaskRuns,
+  isTaskRun,
+  occurrenceKey,
+} from '../../../core/task-run';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
 import { Toggle } from '../../../shared/toggle/toggle';
@@ -59,14 +67,6 @@ type ChildAgendaRow = AgendaEntry | MealRow;
 
 function isMealRow(row: ChildAgendaRow): row is MealRow {
   return 'meal' in row;
-}
-
-// Parsed as local-timezone components rather than `new Date(isoDate)` -- the latter parses an
-// unqualified "YYYY-MM-DD" as UTC midnight, which can land on the wrong calendar day once
-// formatted back in a timezone behind UTC. Mirrors the guardian agenda's identical helper.
-function parseIsoDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return new Date(year, month - 1, day);
 }
 
 function buildDays(anchorIsoDate: string, locale: string): AgendaDay[] {
@@ -240,11 +240,11 @@ export class ChildCalendar {
     return rows.sort((a, b) => sortKeyFor(a, timeZoneId).localeCompare(sortKeyFor(b, timeZoneId)));
   }
 
-  protected isRun(entry: ChildAgendaRow): boolean {
+  protected isRun(entry: ChildAgendaRow): entry is TaskRun {
     return !isMealRow(entry) && isTaskRun(entry);
   }
 
-  protected isMeal(entry: ChildAgendaRow): boolean {
+  protected isMeal(entry: ChildAgendaRow): entry is MealRow {
     return isMealRow(entry);
   }
 
@@ -330,8 +330,9 @@ export class ChildCalendar {
     this.error.set(null);
 
     try {
-      const from = this.days()[0].date;
-      const to = this.days().at(-1)!.date;
+      const [first, last] = firstAndLast(this.days());
+      const from = first.date;
+      const to = last.date;
       const me = await this.users.ensureCurrentUser();
 
       const [myCalendars, occurrences, mealEntries] = await Promise.all([

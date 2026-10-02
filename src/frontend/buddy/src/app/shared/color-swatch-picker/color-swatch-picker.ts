@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 
 // A curated, evenly-spaced set of hues (Tailwind's 500 shade) -- distinguishable at a glance and
 // legible as both a small dot and a fill, in light and dark mode alike.
-export const DEFAULT_COLOR_SWATCHES: readonly string[] = [
+export const DEFAULT_COLOR_SWATCHES = [
   '#f43f5e', // rose
   '#f97316', // orange
   '#f59e0b', // amber
@@ -13,7 +13,7 @@ export const DEFAULT_COLOR_SWATCHES: readonly string[] = [
   '#6366f1', // indigo
   '#a855f7', // purple
   '#ec4899', // pink
-];
+] as const;
 
 // Replaces the native `<input type="color">` used for medicine schedules, calendars, task
 // templates, and meals (see docs/frontend/analysis/visual-specification.md) -- a preset grid keeps

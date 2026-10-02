@@ -53,8 +53,8 @@ public sealed record ScheduleTaskFromTemplateRequest(
     Guid TaskTemplateId,
     DateOnly StartDate,
     TimeOnly StartTime,
-    RecurrenceRuleRequest? Recurrence,
-    Guid? AssignedTo,
     string Title,
-    string? Icon,
-    string Color);
+    string Color,
+    RecurrenceRuleRequest? Recurrence = null,
+    Guid? AssignedTo = null,
+    string? Icon = null);

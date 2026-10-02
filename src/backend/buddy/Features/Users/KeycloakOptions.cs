@@ -1,11 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace buddy.Features.Users;
 
 public sealed class KeycloakOptions
 {
     public const string SectionName = "Authentication:Keycloak";
 
+    [Required]
     public required string Authority { get; init; }
 
+    // Empty is allowed: it turns audience validation off (see UsersFeature).
+    [Required(AllowEmptyStrings = true)]
     public required string Audience { get; init; }
 
     public bool RequireHttpsMetadata { get; init; } = true;

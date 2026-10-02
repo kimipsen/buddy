@@ -1,3 +1,4 @@
+import { NonEmptyArray } from './array-utils';
 import { CalendarOccurrence } from './calendars.service';
 
 // A "run" is every subtask occurrence a single ScheduleTaskFromTemplate-created CalendarItem
@@ -14,7 +15,7 @@ export interface TaskRun {
   calendarName: string;
   color: string;
   icon: string;
-  subtasks: CalendarOccurrence[];
+  subtasks: NonEmptyArray<CalendarOccurrence>;
 }
 
 // One row in a grouped agenda: either a run of subtask occurrences, or any other occurrence
@@ -51,25 +52,26 @@ export function groupTaskRuns(occurrences: CalendarOccurrence[]): AgendaEntry[] 
     }
 
     const key = `${occurrence.itemId}|${dateKeyOf(occurrence)}`;
-    let run = runsByKey.get(key);
+    const existing = runsByKey.get(key);
 
-    if (!run) {
-      run = {
-        itemId: occurrence.itemId,
-        parentTitle: occurrence.parentTitle,
-        calendarId: occurrence.calendarId,
-        calendarName: occurrence.calendarName,
-        color: occurrence.color,
-        // The parent's own effective icon, not the (possibly subtask-specific) icon of whichever
-        // subtask happens to appear first -- see CalendarItemOccurrence.parentIcon.
-        icon: occurrence.parentIcon ?? occurrence.icon,
-        subtasks: [],
-      };
-      runsByKey.set(key, run);
-      entries.push(run);
+    if (existing) {
+      existing.subtasks.push(occurrence);
+      continue;
     }
 
-    run.subtasks.push(occurrence);
+    const run: TaskRun = {
+      itemId: occurrence.itemId,
+      parentTitle: occurrence.parentTitle,
+      calendarId: occurrence.calendarId,
+      calendarName: occurrence.calendarName,
+      color: occurrence.color,
+      // The parent's own effective icon, not the (possibly subtask-specific) icon of whichever
+      // subtask happens to appear first -- see CalendarItemOccurrence.parentIcon.
+      icon: occurrence.parentIcon ?? occurrence.icon,
+      subtasks: [occurrence],
+    };
+    runsByKey.set(key, run);
+    entries.push(run);
   }
 
   return entries;

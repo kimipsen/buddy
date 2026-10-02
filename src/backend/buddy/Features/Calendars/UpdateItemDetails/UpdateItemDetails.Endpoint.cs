@@ -46,4 +46,4 @@ public static class UpdateItemDetailsEndpoint
     }
 }
 
-public sealed record UpdateItemDetailsRequest(string Title, string? Icon, string Color);
+public sealed record UpdateItemDetailsRequest(string Title, string Color, string? Icon = null);

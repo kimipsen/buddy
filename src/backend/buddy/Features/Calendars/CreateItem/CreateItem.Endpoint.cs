@@ -51,18 +51,18 @@ public static class CreateItemEndpoint
     }
 }
 
-public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until);
+public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until = null);
 
 public sealed record CreateItemRequest(
     CalendarItemKind Kind,
     string Title,
-    string? Icon,
     string Color,
-    StartsAt? StartsAt,
-    EndsAt? EndsAt,
-    DueDate? DueDate,
     bool IsAllDay,
-    RecurrenceRuleRequest? Recurrence,
+    string? Icon = null,
+    StartsAt? StartsAt = null,
+    EndsAt? EndsAt = null,
+    DueDate? DueDate = null,
+    RecurrenceRuleRequest? Recurrence = null,
     // Only meaningful for a Task -- ignored for an Event. Null means unassigned.
     Guid? AssignedTo = null);
 

@@ -23,31 +23,31 @@
         <div class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3">
           @switch (event.type) {
             @case ('UserCreated') {
-              <app-user-created-event [data]="$any(event.data)" />
+              <app-user-created-event [data]="event.data" />
             }
             @case ('UserDeleted') {
-              <app-user-deleted-event [data]="$any(event.data)" />
+              <app-user-deleted-event [data]="event.data" />
             }
             @case ('NameUpdated') {
-              <app-name-updated-event [data]="$any(event.data)" />
+              <app-name-updated-event [data]="event.data" />
             }
             @case ('EmailUpdated') {
-              <app-email-updated-event [data]="$any(event.data)" />
+              <app-email-updated-event [data]="event.data" />
             }
             @case ('EmailVerificationRequested') {
-              <app-email-verification-requested-event [data]="$any(event.data)" />
+              <app-email-verification-requested-event [data]="event.data" />
             }
             @case ('EmailVerified') {
-              <app-email-verified-event [data]="$any(event.data)" />
+              <app-email-verified-event [data]="event.data" />
             }
             @case ('TimeZoneUpdated') {
-              <app-timezone-updated-event [data]="$any(event.data)" />
+              <app-timezone-updated-event [data]="event.data" />
             }
             @case ('LanguageUpdated') {
-              <app-language-updated-event [data]="$any(event.data)" />
+              <app-language-updated-event [data]="event.data" />
             }
             @default {
-              <app-unknown-event [type]="event.type" [data]="event.data" />
+              <app-unknown-event [type]="event.rawType" [data]="event.data" />
             }
           }
         </div>

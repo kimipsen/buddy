@@ -324,8 +324,8 @@ if [[ "$MAIL_CONFIGURED" == true ]]; then
     Mail__Host=smtp.gmail.com
     Mail__Port=587
     Mail__UseSsl=false
-    "Mail__Username=$GMAIL_SMTP_USER"
-    Mail__Password=secretref:mail-smtp-password
+    "Mail__Credentials__Username=$GMAIL_SMTP_USER"
+    Mail__Credentials__Password=secretref:mail-smtp-password
     "Mail__FromAddress=$GMAIL_SMTP_USER"
   )
 fi

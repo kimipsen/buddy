@@ -491,3 +491,12 @@ e.g. a resend-cooldown rejection). `requestId` is `HttpContext.TraceIdentifier`.
 `NotFound`/`Forbidden` outcomes are unaffected — they keep their existing,
 endpoint-specific mappings (some deliberately collapse `Forbidden` into `404`
 for privacy). Keep the schema stable for clients.
+
+A request body that can't be bound renders through the same envelope with
+`code: "validation_error"` (`buddy.Common.Validation.RequestBindingFailureMiddleware`,
+enabled by `RouteHandlerOptions.ThrowOnBadRequest`). The HTTP JSON options set
+`RespectRequiredConstructorParameters` and `RespectNullableAnnotations`, so an
+omitted request-record parameter without a default, or `null` for a non-nullable
+one, is rejected before the handler runs. Here `details` keys are the JSON path
+of the field (`name`, `days[0].locationId`), or `""` for malformed JSON.
+Optional request fields are nullable with a `= null` default.

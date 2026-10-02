@@ -20,7 +20,8 @@ public static class ReplaceWorkPatternEndpoint
             CancellationToken cancellationToken) =>
         {
             // A null element can't reach the validator (it would throw building the domain record).
-            if (request.Days?.Any(d => d is null) == true)
+            // RespectNullableAnnotations doesn't cover collection elements, so this stays.
+            if (request.Days.Any(d => d is null))
             {
                 return TypedResults.BadRequest(Common.Validation.ValidationProblem.Of("days must not contain null entries.").ToEnvelope(httpContext));
             }
@@ -28,7 +29,7 @@ public static class ReplaceWorkPatternEndpoint
             var pattern = new WorkPattern(
                 request.CycleWeeks,
                 request.AnchorMonday,
-                [.. (request.Days ?? []).Select(d => new WorkPatternDay(d.Week, d.Day, new WorkLocationId(d.LocationId)))]);
+                [.. request.Days.Select(d => new WorkPatternDay(d.Week, d.Day, new WorkLocationId(d.LocationId)))]);
             var command = ReplaceWorkPattern.FromClaims(principal, pattern);
             var result = await bus.InvokeAsync<Result<WorkPatternResponse>>(command, cancellationToken);
 
@@ -46,4 +47,4 @@ public static class ReplaceWorkPatternEndpoint
     }
 }
 
-public sealed record ReplaceWorkPatternRequest(int CycleWeeks, DateOnly AnchorMonday, IReadOnlyList<WorkPatternDayDto>? Days);
+public sealed record ReplaceWorkPatternRequest(int CycleWeeks, DateOnly AnchorMonday, IReadOnlyList<WorkPatternDayDto> Days);

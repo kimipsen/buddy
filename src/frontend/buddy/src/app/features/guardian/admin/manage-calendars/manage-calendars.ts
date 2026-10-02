@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
+  CalendarRole,
   CalendarSummary,
   CalendarsService,
   IcalTokenSummary,
@@ -11,7 +12,7 @@ import { browserTimeZoneId, listTimeZoneIds } from '../../../../core/date-utils'
 import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
-const ROLE_LABELS: Record<number, string> = {
+const ROLE_LABELS: Record<CalendarRole, string> = {
   0: 'admin.manageCalendars.roles.owner',
   1: 'admin.manageCalendars.roles.contributor',
   2: 'admin.manageCalendars.roles.viewer',
@@ -296,9 +297,9 @@ export class ManageCalendars implements OnInit {
       const manageable = groups.filter((group) => group.role === 0 || group.role === 1);
       this.manageableGroups.set(manageable);
 
-      // Stryker disable next-line ConditionalExpression,EqualityOperator: with no manageable group, manageable[0].id throws into the catch below, which leaves the same empty state
-      if (manageable.length > 0) {
-        this.newCalendarGroupId.set(manageable[0].id);
+      const [firstManageable] = manageable;
+      if (firstManageable) {
+        this.newCalendarGroupId.set(firstManageable.id);
       }
     } catch {
       // manageableGroups stays empty, so the create form degrades to the needs-group hint.

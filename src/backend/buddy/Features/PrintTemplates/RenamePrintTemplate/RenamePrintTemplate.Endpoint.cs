@@ -20,7 +20,7 @@ public static class RenamePrintTemplateEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = RenamePrintTemplate.FromClaims(principal, new PrintTemplateId(templateId), request.Name ?? "");
+            var command = RenamePrintTemplate.FromClaims(principal, new PrintTemplateId(templateId), request.Name);
             var result = await bus.InvokeAsync<Result<PrintTemplateResponse>>(command, cancellationToken);
 
             return result switch
@@ -38,4 +38,4 @@ public static class RenamePrintTemplateEndpoint
     }
 }
 
-public sealed record RenamePrintTemplateRequest(string? Name);
+public sealed record RenamePrintTemplateRequest(string Name);

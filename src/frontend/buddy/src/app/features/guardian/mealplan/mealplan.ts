@@ -142,22 +142,23 @@ export class GuardianMealplan implements OnInit {
 
     try {
       const children = await this.guardians.listMyChildren();
+      const [firstChild] = children;
 
-      if (children.length === 0) {
+      if (!firstChild) {
         this.hasChildren.set(false);
         return;
       }
 
       this.hasChildren.set(true);
-      this.familyChildId = children[0].id;
+      this.familyChildId = firstChild.id;
 
-      const familyScope: FamilyMealplanScope = { kind: 'family', childId: children[0].id };
+      const familyScope: FamilyMealplanScope = { kind: 'family', childId: firstChild.id };
       this.familyScope.set(familyScope);
       this.selectedScope.set(familyScope);
 
       const [groups, sharedGroup] = await Promise.all([
         this.groupsService.listMyGroups(),
-        this.mealplans.getSharedGroup(children[0].id),
+        this.mealplans.getSharedGroup(firstChild.id),
       ]);
 
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
@@ -188,17 +189,16 @@ export class GuardianMealplan implements OnInit {
       PER_ITEM_REQUEST_CONCURRENCY,
       async (group) => {
         try {
-          return await this.groupsService.getGroup(group.id);
+          return { group, detail: await this.groupsService.getGroup(group.id) };
         } catch {
-          return null;
+          return { group, detail: null };
         }
       },
     );
 
     const candidates: GroupMealplanScope[] = [];
 
-    groups.forEach((group, index) => {
-      const detail = details[index];
+    details.forEach(({ group, detail }) => {
       const roleName: GroupRoleName = GROUP_ROLE_NAMES[group.role];
       const accessTier = detail?.mealplanPermissionPolicy[roleName];
 
@@ -207,10 +207,19 @@ export class GuardianMealplan implements OnInit {
       }
     });
 
-    const statuses = await mapWithConcurrency(candidates, PER_ITEM_REQUEST_CONCURRENCY, (scope) =>
-      this.mealplans.getGroupMealplanStatus(scope.groupId).catch(() => ({ hasSharedPlan: false })),
+    const statuses = await mapWithConcurrency(
+      candidates,
+      PER_ITEM_REQUEST_CONCURRENCY,
+      async (scope) => {
+        const status = await this.mealplans
+          .getGroupMealplanStatus(scope.groupId)
+          .catch(() => ({ hasSharedPlan: false }));
+        return { scope, hasSharedPlan: status.hasSharedPlan };
+      },
     );
 
-    this.groupScopes.set(candidates.filter((_, index) => statuses[index].hasSharedPlan));
+    this.groupScopes.set(
+      statuses.filter((status) => status.hasSharedPlan).map((status) => status.scope),
+    );
   }
 }

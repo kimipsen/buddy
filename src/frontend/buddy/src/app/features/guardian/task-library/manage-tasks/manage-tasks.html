@@ -62,16 +62,18 @@
                     name="editTemplateName"
                     aria-label="{{ 'taskLibrary.manageTasks.form.namePlaceholder' | translate }}"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                    #templateNameInput
                     [value]="editTemplateName()"
-                    (input)="editTemplateName.set($any($event.target).value)"
+                    (input)="editTemplateName.set(templateNameInput.value)"
                   />
                   <input
                     type="text"
                     name="editTemplateIcon"
                     aria-label="{{ 'taskLibrary.manageTasks.form.iconPlaceholder' | translate }}"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                    #templateIconInput
                     [value]="editTemplateIcon()"
-                    (input)="editTemplateIcon.set($any($event.target).value)"
+                    (input)="editTemplateIcon.set(templateIconInput.value)"
                   />
                 </div>
 

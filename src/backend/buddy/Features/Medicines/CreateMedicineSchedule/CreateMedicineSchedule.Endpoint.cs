@@ -56,7 +56,7 @@ public sealed record CreateMedicineScheduleRequest(
     string Color,
     IReadOnlyList<TimeOnly> Times,
     DateOnly StartDate,
-    DateOnly? EndDate);
+    DateOnly? EndDate = null);
 
 public sealed record MedicineScheduleResponse(
     MedicineId Id,

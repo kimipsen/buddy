@@ -18,28 +18,32 @@ public sealed class CreateCalendarTests(BuddyApiFixture fixture)
     [Fact]
     public async Task Omitting_the_group_is_rejected()
     {
-        // GroupId is required -- a calendar is always group-owned now. An omitted GroupId binds
-        // to an empty Guid, which resolves to no group at all, collapsing into the same Forbidden
-        // "not a manager of this group" already returns for any other unmanaged group.
+        // GroupId is required -- a calendar is always group-owned now. An omitted GroupId is
+        // rejected while binding the body (RespectRequiredConstructorParameters).
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Json(new { Name = "No group", TimeZoneId = CalendarTestHelpers.DefaultTimeZone }).ToUrl("/calendars/");
-            _.StatusCodeShouldBe(403);
+            _.StatusCodeShouldBe(400);
         });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal(["groupId"], error.Details.Keys);
     }
 
     [Fact]
     public async Task Rejects_an_unrecognized_time_zone()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
 
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Post.Json(new { Name = "Bad TZ", TimeZoneId = "Not/A_Real_Zone" }).ToUrl("/calendars/");
+            _.Post.Json(new { Name = "Bad TZ", TimeZoneId = "Not/A_Real_Zone", GroupId = groupId }).ToUrl("/calendars/");
             _.StatusCodeShouldBe(400);
         });
 

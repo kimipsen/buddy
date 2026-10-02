@@ -42,4 +42,4 @@ public static class ConfigureGoalPostsEndpoint
 
 public sealed record ConfigureGoalPostsRequest(IReadOnlyList<GoalPostRequest> GoalPosts);
 
-public sealed record GoalPostRequest(int Threshold, string Icon, string? Label);
+public sealed record GoalPostRequest(int Threshold, string Icon, string? Label = null);

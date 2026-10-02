@@ -18,10 +18,12 @@ export function isSupportedLanguage(value: string): value is Language {
 // (e.g. "da" from "da-DK"), mirroring the backend's SupportedLanguages.ResolveFromAcceptLanguageHeader,
 // which is what actually decides a new user's stored language from the Accept-Language header.
 export function detectBrowserLanguage(): Language {
-  const candidates = navigator.languages?.length ? navigator.languages : [navigator.language];
+  // lib.dom types navigator.languages as always present, but some embedded browsers omit it.
+  const languages = navigator.languages as readonly string[] | undefined;
+  const candidates = languages?.length ? languages : [navigator.language];
 
   for (const candidate of candidates) {
-    const primarySubtag = candidate.split('-')[0].toLowerCase();
+    const [primarySubtag = ''] = candidate.toLowerCase().split('-');
 
     if (isSupportedLanguage(primarySubtag)) {
       return primarySubtag;

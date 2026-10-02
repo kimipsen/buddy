@@ -58,10 +58,10 @@ export class DeleteAccount {
   // dialog. While a delete is in flight both buttons are disabled and focus rests on the panel.
   @HostListener('document:keydown.tab', ['$event'])
   @HostListener('document:keydown.shift.tab', ['$event'])
-  protected onTab(event: KeyboardEvent): void {
+  protected onTab(event: Event): void {
     const panel = this.panel()?.nativeElement;
 
-    if (!panel) {
+    if (!panel || !(event instanceof KeyboardEvent)) {
       return;
     }
 

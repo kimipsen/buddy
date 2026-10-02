@@ -22,8 +22,8 @@ services:
     environment:
       MAIL__HOST: mailpit
       MAIL__PORT: "1025"
-      MAIL__USERNAME: ${MAILPIT_USERNAME}
-      MAIL__PASSWORD: ${MAILPIT_PASSWORD}
+      MAIL__CREDENTIALS__USERNAME: ${MAILPIT_USERNAME}
+      MAIL__CREDENTIALS__PASSWORD: ${MAILPIT_PASSWORD}
     
     # Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
     # user: root

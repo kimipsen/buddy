@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace buddy.Features.Mealplans;
 
 // Defaults are known-good models as of this feature's authoring, not necessarily each provider's
@@ -8,9 +10,12 @@ public sealed class AiAssistantModelOptions
 {
     public const string SectionName = "AiAssistant";
 
+    [Required]
     public string OpenAiModel { get; init; } = "gpt-4.1";
 
+    [Required]
     public string GeminiModel { get; init; } = "gemini-2.5-flash";
 
+    [Required]
     public string AnthropicModel { get; init; } = "claude-sonnet-5";
 }

@@ -6,7 +6,10 @@ export const MAX_CYCLE_WEEKS = 4;
 // Monday-first display order, as backend DayOfWeek ordinals (0 = Sunday).
 export const WEEKDAYS_MONDAY_FIRST: readonly Weekday[] = [1, 2, 3, 4, 5, 6, 0];
 
-export const WEEK_NAMES: readonly string[] = ['A', 'B', 'C', 'D'];
+// Week 0 of the cycle is "A", week 1 "B", ... up to MAX_CYCLE_WEEKS.
+export function weekName(week: number): string {
+  return String.fromCharCode('A'.charCodeAt(0) + week);
+}
 
 function weeksBetween(fromMonday: string, toMonday: string): number {
   const ms = parseIsoDate(toMonday).getTime() - parseIsoDate(fromMonday).getTime();

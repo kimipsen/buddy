@@ -46,4 +46,4 @@ public static class UpdateSubtaskEndpoint
     }
 }
 
-public sealed record UpdateSubtaskRequest(string Title, string? Icon, TimeSpan Duration);
+public sealed record UpdateSubtaskRequest(string Title, TimeSpan Duration, string? Icon = null);

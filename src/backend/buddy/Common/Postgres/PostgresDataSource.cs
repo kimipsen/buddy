@@ -1,8 +1,8 @@
 using System.Data.Common;
 
+using buddy.Common.Configuration;
 using buddy.Features.Users;
 
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 using Npgsql;
@@ -33,12 +33,17 @@ public static class PostgresDataSource
     // Idempotent: every feature calls it, so each one stays self-contained, and the first call wins.
     public static IServiceCollection AddPostgresDataSource(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<PostgresOptions>(configuration.GetSection(PostgresOptions.SectionName));
+        if (services.Any(descriptor => descriptor.ServiceType == typeof(NpgsqlDataSource)))
+        {
+            return services;
+        }
+
+        services.AddValidatedOptions<PostgresOptions>(PostgresOptions.SectionName);
 
         // Resolved lazily (first store resolution), so configuration overrides added after the
         // features register -- e.g. the integration-test fixture's Testcontainers connection
         // string -- are what the pool is built from.
-        services.TryAddSingleton(serviceProvider =>
+        services.AddSingleton(serviceProvider =>
         {
             var postgres = serviceProvider.GetRequiredService<IOptionsMonitor<PostgresOptions>>().CurrentValue;
             return new NpgsqlDataSourceBuilder(WithDefaults(postgres.Postgres)).Build();
