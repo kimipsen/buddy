@@ -140,7 +140,7 @@ public static class MealFamilyResolution
             {
                 ActiveProviderChanged changed => changed.OccurredAt,
                 ActiveProviderCleared => null,
-                _ => activatedAt,
+                AiCredentialsInitialized or ProviderApiKeySet or ProviderApiKeyRemoved => activatedAt,
             };
         }
 

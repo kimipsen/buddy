@@ -67,7 +67,7 @@ public sealed class IdempotencyKeyRepository(IIdempotencyStore store)
     }
 
     // Completed rows are kept for `completedRetention` so a delayed retry can still replay them;
-    // InProgress rows older than `inProgressTimeout` are treated as abandoned (the process that
+    // rows with no stored response yet (in progress) older than `inProgressTimeout` are treated as abandoned (the process that
     // reserved them crashed or was killed before completing) and cleared so the key becomes
     // claimable again. Runs in bounded batches so one pass never holds an unbounded transaction.
     public async Task<int> DeleteExpiredAsync(TimeSpan completedRetention, TimeSpan inProgressTimeout, CancellationToken cancellationToken)

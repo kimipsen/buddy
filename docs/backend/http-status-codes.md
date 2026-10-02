@@ -262,8 +262,8 @@ retries a transient failure (network error or `5xx`) with that same key instead 
 - A concurrent request still holding the same key: `409 idempotency_key_in_progress`.
 - Malformed key (empty, or over 200 characters): `400 invalid_idempotency_key`.
 
-Completed entries are kept for 24h, then swept by a background cleanup pass; an `InProgress`
-entry whose owning request never completed (a crash mid-request) is swept after 5 minutes so the
+Completed entries are kept for 24h, then swept by a background cleanup pass; an entry with no stored
+response yet whose owning request never completed (a crash mid-request) is swept after 5 minutes so the
 key becomes claimable again.
 
 ## Endpoint Status Mapping

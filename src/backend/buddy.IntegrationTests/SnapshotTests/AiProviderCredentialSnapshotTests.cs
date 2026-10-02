@@ -57,6 +57,14 @@ public sealed class AiProviderCredentialSnapshotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
 
+        // ProviderApiKeyRemoved + ActiveProviderCleared: OpenAi was the active provider.
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Delete.Url($"/mealplans/children/{child.Id}/ai/providers/OpenAi/key");
+            _.StatusCodeShouldBeOk();
+        });
+
         var credentials = fixture.Host.Services.GetRequiredService<IAiCredentialEventStore>();
         var id = await credentials.FindIdForChildAsync(new UserId(child.Id), CancellationToken.None);
         Assert.NotNull(id);
@@ -68,5 +76,6 @@ public sealed class AiProviderCredentialSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(replayed);
         Assert.NotNull(snapshot);
         Assert.Equivalent(replayed, snapshot, strict: true);
+        Assert.Null(snapshot.ActiveProvider);
     }
 }

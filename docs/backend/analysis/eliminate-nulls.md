@@ -766,7 +766,8 @@ Committed per group.
   Calendars endpoints do, instead of `Icon("")`. Both TaskTemplate validators reject a blank
   template icon (`Icon.Value`, matching `UpdateCalendarIconValidator`).
 - **Existing databases need a reset**: stored `ActiveProviderChanged` events with a null
-  `Provider` and idempotency records with the old flat shape no longer read.
+  `Provider` no longer read. Old-shape idempotency rows read as in progress (a retry gets a 409
+  instead of a replay) until the cleanup sweeps them, within about 20 minutes.
 
 ## Phase 6: drop `Before?` from events
 
