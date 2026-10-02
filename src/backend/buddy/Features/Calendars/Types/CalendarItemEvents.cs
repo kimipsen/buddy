@@ -91,8 +91,8 @@ public sealed record RecurrenceUpdated(CalendarItemId Id, RecurrenceRule? Before
 
 // OccurrenceDate keys a single occurrence of a (possibly recurring) task, mirroring
 // MedicineSchedule.DoseLog's per-occurrence keying -- completing today's instance of a daily task
-// must not mark every future occurrence complete too. SubtaskId additionally keys a single
-// subtask within a template-scheduled task's occurrence -- null for a plain (non-template) task.
-public sealed record TaskCompletionChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt, Guid? SubtaskId);
+// must not mark every future occurrence complete too. Target says whether it was the whole plain
+// task or one subtask of a template-scheduled task's occurrence.
+public sealed record TaskCompletionChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt, CompletionTarget Target);
 
 public sealed record ItemDeleted(CalendarItemId Id, UserId ModifiedBy, DateTimeOffset OccurredAt);

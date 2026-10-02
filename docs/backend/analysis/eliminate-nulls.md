@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-4 and 5.1-5.2 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
+Status: Phases 0-4 and 5.1-5.3 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
 
 ## Context
 
@@ -545,6 +545,23 @@ OccurrenceKey(CalendarItemId ItemId, DateOnly Date, CompletionTarget Target)
   `PATCH .../items/{itemId}/subtasks/{subtaskId}/completion`. That removes the two-way
   "template ⇔ subtask id" check in `SetTaskCompletion.Handler` and its `Result<CalendarItem>?`
   sentinel.
+
+#### As built (5.3)
+
+- **Types.** `CompletionTarget` and `CompletionKey` live in `Calendars/Types/CompletionTarget.cs`;
+  `OccurrenceKey` in `Progress/Types/OccurrenceKey.cs`. Field names are `OccurrenceDate`, matching
+  the events. `CompletionTargetJsonConverter` persists the union as `{"Kind":"WholeTask"}` or
+  `{"Kind":"Subtask","SubtaskId":...}`, in both the events and the snapshots.
+- **Converters.** `CalendarsFeature` and `ProgressFeature` register `CompletionTargetJsonConverter`
+  instead of `ValueTupleJsonConverterFactory`. The factory stays: Medicines, Mealplans, Pickups
+  and the HTTP options still use it.
+- **Route split.** `SetTaskCompletion` (whole task) and `SetSubtaskCompletion` share one handler;
+  the body is `{ date, isCompleted }`. The handler switches over `(task.Source, command.Target)`:
+  a template task as a whole, or a subtask of a plain task, is a 400; an unknown subtask is a 404.
+- **Frontend.** `CalendarsService.setTaskCompletion` keeps its signature and picks the route from
+  `subtaskId`.
+- **Existing databases need a reset.** Stored `TaskCompletionChanged`, `StarAwarded` and
+  `StarRevoked` events carry `SubtaskId`, not `Target`, and no longer deserialize.
 
 ### 5.4 `CalendarItemOccurrence`
 

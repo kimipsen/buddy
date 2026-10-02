@@ -21,7 +21,7 @@ sequenceDiagram
     participant Store as Progress event store
 
     Child->>App: Mark a task complete
-    App->>API: PATCH /calendars/{calendarId}/items/{itemId}/completion
+    App->>API: PATCH /calendars/{calendarId}/items/{itemId}[/subtasks/{subtaskId}]/completion
     API->>Calendars: SetTaskCompletion command
     Calendars->>Calendars: Append TaskCompletionChanged
     alt Item has an assignee
@@ -97,7 +97,8 @@ account is provisioned. It contains:
 
 - `ProgressStarted`, appended once, establishing the aggregate and its child.
 - `StarAwarded`, appended on a `false→true` completion transition, keyed by
-  `(ItemId, OccurrenceDate, SubtaskId)`.
+  an `OccurrenceKey(ItemId, OccurrenceDate, Target)`, where `Target` is a
+  `CompletionTarget`: the whole task, or one subtask.
 - `StarRevoked`, appended on a `true→false` transition for the same key,
   mirroring `TaskCompletionChanged`'s own `Before`/`After` toggle semantics
   rather than a separate "undo" event.
@@ -110,8 +111,8 @@ account is provisioned. It contains:
   replace, not a partial update — see
   [configurable-goal-posts.md](../analysis/configurable-goal-posts.md)).
 
-`AwardedOccurrences` is a sparse set keyed by item, occurrence date, and
-optional subtask, so a plain task and each independently-completable subtask
+`AwardedOccurrences` is a sparse set of `OccurrenceKey` (item, occurrence
+date, and completion target), so a plain task and each independently-completable subtask
 of a template-scheduled task earn and revoke their own star. Re-awarding an
 already-awarded key, or re-revoking a key that isn't currently awarded, is a
 no-op: `RecordStarChangeHandler` compares `command.IsCompleted` against
@@ -143,7 +144,7 @@ receives `200 OK` with zero stars and no milestones, never `404 Not Found`
 
 - `ProgressStarted` — starts a child's stream on their first completion or
   first goal-post configuration.
-- `StarAwarded` — one star for one `(ItemId, OccurrenceDate, SubtaskId)`.
+- `StarAwarded` — one star for one `(ItemId, OccurrenceDate, Target)`.
 - `StarRevoked` — removes the star for that same key.
 - `MilestoneUnlocked` — records a goal-post threshold newly crossed.
 - `GoalPostsConfigured` — guardian-authored, full-replace list of goal

@@ -9,7 +9,7 @@ public static class RecordStarChangeHandler
         var existing = ChildProgress.Rehydrate(existingEvents);
         var current = existing ?? ChildProgress.Initial(id, command.ChildId);
 
-        var occurrence = (command.ItemId, command.OccurrenceDate, command.SubtaskId);
+        var occurrence = new OccurrenceKey(command.ItemId, command.OccurrenceDate, command.Target);
         var alreadyAwarded = current.AwardedOccurrences.Contains(occurrence);
 
         // Mirrors SetTaskCompletionHandler's own before == after guard -- nothing changed for
@@ -29,7 +29,7 @@ public static class RecordStarChangeHandler
 
         if (command.IsCompleted)
         {
-            newEvents.Add(new StarAwarded(id, command.ItemId, command.OccurrenceDate, now, command.SubtaskId));
+            newEvents.Add(new StarAwarded(id, command.ItemId, command.OccurrenceDate, now, command.Target));
 
             var crossed = GoalPostResolver.AtThreshold(current.GoalPosts, current.TotalStars + 1);
 
@@ -40,7 +40,7 @@ public static class RecordStarChangeHandler
         }
         else
         {
-            newEvents.Add(new StarRevoked(id, command.ItemId, command.OccurrenceDate, now, command.SubtaskId));
+            newEvents.Add(new StarRevoked(id, command.ItemId, command.OccurrenceDate, now, command.Target));
         }
 
         if (existing is null)

@@ -61,12 +61,9 @@ public static class CalendarsFeature
                 {
                     json.Converters.Add(new StronglyTypedIdJsonConverterFactory());
 
-                    // CalendarItem.CompletionLog is keyed by (DateOnly OccurrenceDate, Guid?
-                    // SubtaskId) -- a System.ValueTuple dictionary key that plain
-                    // System.Text.Json can't handle. Calendar itself has no tuple fields, but
-                    // both snapshot documents share this one StoreOptions/serializer, so the
-                    // converter is registered once here for both.
-                    json.Converters.Add(new ValueTupleJsonConverterFactory());
+                    // CompletionTarget (TaskCompletionChanged, CalendarItem.CompletionLog) needs an
+                    // explicit Kind discriminator -- see CompletionTargetJsonConverter.
+                    json.Converters.Add(new CompletionTargetJsonConverter());
 
                     // CalendarItem.Schedule (ItemSchedule) needs an explicit Kind discriminator to
                     // round-trip through the snapshot -- see ItemScheduleJsonConverter.

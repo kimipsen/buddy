@@ -16,9 +16,8 @@ public sealed record CalendarItemSnapshot(Guid Id, CalendarItem CalendarItem);
 // append (see CalendarsFeature.AddCalendarsFeature: options.Projections.Register(new
 // CalendarItemSnapshotProjection(), ...)). Stored in the shared "snapshots" schema, never the
 // "calendars" event schema -- it is derived, rebuildable state, not a second source of truth.
-// CalendarItem.CompletionLog is keyed by a ValueTuple, which plain System.Text.Json can't handle
-// as a dictionary key -- see ValueTupleJsonConverterFactory, registered on the same StoreOptions
-// this projection's document is stored under.
+// CalendarItem.CompletionLog holds CompletionKey, whose CompletionTarget union needs
+// CompletionTargetJsonConverter, registered on the same StoreOptions this document is stored under.
 public sealed class CalendarItemSnapshotProjection : SingleStreamProjection<CalendarItemSnapshot, Guid>
 {
     public static CalendarItemSnapshot Create(EventItemCreated created) =>

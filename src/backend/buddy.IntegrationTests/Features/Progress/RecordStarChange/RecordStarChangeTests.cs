@@ -62,8 +62,8 @@ public sealed class RecordStarChangeTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Patch.Json(new { Date = date, IsCompleted = isCompleted, SubtaskId = subtaskId })
-                .ToUrl($"/calendars/{calendarId}/items/{itemId}/completion");
+            _.Patch.Json(new { Date = date, IsCompleted = isCompleted })
+                .ToUrl($"/calendars/{calendarId}/items/{itemId}/subtasks/{subtaskId}/completion");
             _.StatusCodeShouldBeOk();
         });
     }

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using buddy.Features.Calendars;
 using buddy.Features.Pickups;
 using buddy.Serialization;
 
@@ -19,9 +20,9 @@ internal static class EventShapeTestSupport
     // Mirrors the System.Text.Json configuration the *Feature.cs files pass to
     // options.UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString, ...) for their
     // Marten stores -- enums as their name, strongly-typed ids unwrapped to their raw value, and
-    // the union of the extra converters individual stores register: ValueTuples
-    // (Calendars, Medicines, Mealplans, Pickups, Progress) and PickupAssignee (Pickups). Each extra
-    // converter only handles its own type, so registering all of them here can't change
+    // the union of the extra converters individual stores register: ValueTuples (Medicines,
+    // Mealplans, Pickups), PickupAssignee (Pickups) and CompletionTarget (Calendars, Progress).
+    // Each extra converter only handles its own type, so registering all of them here can't change
     // the shape of an event from a store that doesn't register it.
     public static JsonSerializerOptions CreateEventSerializerOptions() => new()
     {
@@ -30,7 +31,8 @@ internal static class EventShapeTestSupport
             new JsonStringEnumConverter(),
             new StronglyTypedIdJsonConverterFactory(),
             new ValueTupleJsonConverterFactory(),
-            new PickupAssigneeJsonConverter()
+            new PickupAssigneeJsonConverter(),
+            new CompletionTargetJsonConverter()
         }
     };
 
@@ -52,6 +54,17 @@ internal static class EventShapeTestSupport
         var expected = Reformat(File.ReadAllText(goldenPath), options);
 
         Assert.Equal(expected, actualFormatted);
+    }
+
+    // The golden files pin the written shape; this pins the read side for events whose shape goes
+    // through a hand-written converter, so a converter that writes correctly but reads back a
+    // different value still fails. Only for events whose equality is structural (no collections).
+    public static void AssertGoldenFileReadsBackAs<TEvent>(TEvent expected, string goldenFileName)
+    {
+        var goldenPath = Path.Combine(AppContext.BaseDirectory, "EventShapeTests", "GoldenFiles", goldenFileName);
+        var actual = JsonSerializer.Deserialize<TEvent>(File.ReadAllText(goldenPath), CreateEventSerializerOptions());
+
+        Assert.Equal(expected, actual);
     }
 
     private static string Reformat(string json, JsonSerializerOptions options)

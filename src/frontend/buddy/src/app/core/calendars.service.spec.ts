@@ -471,7 +471,7 @@ describe('CalendarsService', () => {
   });
 
   describe('setTaskCompletion', () => {
-    it('PATCHes the completion endpoint with date, isCompleted, and a null subtaskId when none is given, and resolves with the result', async () => {
+    it('PATCHes the item completion endpoint with date and isCompleted when no subtaskId is given, and resolves with the result', async () => {
       const completion: TaskCompletion = {
         itemId: 'task-1',
         occurrenceDate: '2026-08-26',
@@ -482,7 +482,7 @@ describe('CalendarsService', () => {
 
       const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/completion`);
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: true, subtaskId: null });
+      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: true });
       req.flush(completion);
 
       await expect(promise).resolves.toEqual(completion);
@@ -498,13 +498,13 @@ describe('CalendarsService', () => {
       const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', false);
 
       const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/completion`);
-      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: false, subtaskId: null });
+      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: false });
       req.flush(completion);
 
       await expect(promise).resolves.toEqual(completion);
     });
 
-    it('threads a given subtaskId through to the request body, to complete one subtask of a template-scheduled task', async () => {
+    it('PATCHes the subtask completion endpoint when a subtaskId is given, to complete one subtask of a template-scheduled task', async () => {
       const completion: TaskCompletion = {
         itemId: 'task-1',
         occurrenceDate: '2026-08-26',
@@ -513,12 +513,11 @@ describe('CalendarsService', () => {
 
       const promise = service.setTaskCompletion('cal-1', 'task-1', '2026-08-26', true, 'subtask-1');
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/completion`);
-      expect(req.request.body).toEqual({
-        date: '2026-08-26',
-        isCompleted: true,
-        subtaskId: 'subtask-1',
-      });
+      const req = httpMock.expectOne(
+        `${apiBaseUrl}/calendars/cal-1/items/task-1/subtasks/subtask-1/completion`,
+      );
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ date: '2026-08-26', isCompleted: true });
       req.flush(completion);
 
       await expect(promise).resolves.toEqual(completion);

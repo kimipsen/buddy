@@ -1,4 +1,5 @@
 using buddy.Common.Postgres;
+using buddy.Features.Calendars;
 using buddy.Serialization;
 
 using JasperFx.Events;
@@ -53,11 +54,9 @@ public static class ProgressFeature
                 {
                     json.Converters.Add(new StronglyTypedIdJsonConverterFactory());
 
-                    // ChildProgress.AwardedOccurrences is an ImmutableHashSet of 3-element tuples
-                    // (CalendarItemId, DateOnly, Guid?). Plain System.Text.Json silently serializes
-                    // a ValueTuple set element as "{}" (ItemN are public fields, not properties) --
-                    // a real data-loss trap, not a missing feature. This converter fixes it.
-                    json.Converters.Add(new ValueTupleJsonConverterFactory());
+                    // StarAwarded/StarRevoked and ChildProgress.AwardedOccurrences carry Calendars'
+                    // CompletionTarget -- see CompletionTargetJsonConverter.
+                    json.Converters.Add(new CompletionTargetJsonConverter());
                 });
 
             // Inline snapshot of ChildProgress, kept transactionally consistent with every event

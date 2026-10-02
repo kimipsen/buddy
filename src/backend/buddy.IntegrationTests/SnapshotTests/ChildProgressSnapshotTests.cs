@@ -18,9 +18,9 @@ namespace buddy.IntegrationTests.SnapshotTests;
 // exactly consistent with a full replay-from-events rehydration after a sequence of commands --
 // the invariant docs/backend/analysis/event-stream-snapshots.md relies on to say events remain
 // the single source of truth and the snapshot is just a derived, quicker-to-read cache of the
-// same state. Also exercises the ValueTupleJsonConverterFactory round-trip directly:
-// ChildProgress.AwardedOccurrences is an ImmutableHashSet of 3-element tuples, which plain
-// System.Text.Json would silently serialize as empty objects without that converter.
+// same state. Also exercises the CompletionTargetJsonConverter round-trip directly:
+// ChildProgress.AwardedOccurrences is an ImmutableHashSet of OccurrenceKey, whose CompletionTarget
+// union plain System.Text.Json can't serialize without that converter.
 [Collection(BuddyApiCollection.Name)]
 public sealed class ChildProgressSnapshotTests(BuddyApiFixture fixture)
 {
@@ -95,15 +95,15 @@ public sealed class ChildProgressSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(snapshot);
         Assert.Equivalent(replayed, snapshot, strict: true);
 
-        // Direct assertion on the tuple-set round-trip: ChildProgress.AwardedOccurrences is an
-        // ImmutableHashSet<(CalendarItemId, DateOnly, Guid?)>. Plain System.Text.Json silently
-        // serializes a tuple set element as "{}" without ValueTupleJsonConverterFactory, which
+        // Direct assertion on the set round-trip: ChildProgress.AwardedOccurrences is an
+        // ImmutableHashSet<OccurrenceKey>. A set element whose CompletionTarget didn't round-trip
+        // could collapse the same way on both sides, which
         // Assert.Equivalent alone wouldn't distinguish from a correctly-populated set if both
         // sides happened to collapse the same way -- so assert directly that the snapshot's set is
         // non-empty and contains the expected surviving occurrence (the first task's star, which
         // was never revoked).
         Assert.NotEmpty(snapshot!.AwardedOccurrences);
-        Assert.Contains((new CalendarItemId(firstTask!.Id), dueDate, (Guid?)null), snapshot.AwardedOccurrences);
-        Assert.DoesNotContain((new CalendarItemId(secondTask!.Id), dueDate, (Guid?)null), snapshot.AwardedOccurrences);
+        Assert.Contains(new OccurrenceKey(new CalendarItemId(firstTask!.Id), dueDate, new CompletionTarget.WholeTask()), snapshot.AwardedOccurrences);
+        Assert.DoesNotContain(new OccurrenceKey(new CalendarItemId(secondTask!.Id), dueDate, new CompletionTarget.WholeTask()), snapshot.AwardedOccurrences);
     }
 }

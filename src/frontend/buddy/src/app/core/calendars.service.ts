@@ -335,9 +335,8 @@ export class CalendarsService {
     this.todayCache = null;
   }
 
-  // subtaskId is required to complete one subtask of a template-scheduled task, and must be
-  // omitted (null) for a plain task -- matches SetTaskCompletionRequest.SubtaskId. Defaults to
-  // null so every existing (pre-TaskLibrary) call site keeps working unchanged.
+  // subtaskId completes one subtask of a template-scheduled task (its own route); omitted (null),
+  // the plain task is completed as a whole. The API rejects the wrong one for the task's kind.
   async setTaskCompletion(
     calendarId: string,
     itemId: string,
@@ -345,15 +344,11 @@ export class CalendarsService {
     isCompleted: boolean,
     subtaskId: string | null = null,
   ): Promise<TaskCompletion> {
+    const itemUrl = `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}`;
+    const url =
+      subtaskId === null ? `${itemUrl}/completion` : `${itemUrl}/subtasks/${subtaskId}/completion`;
     const completion = await firstValueFrom(
-      this.http.patch<TaskCompletion>(
-        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/completion`,
-        {
-          date,
-          isCompleted,
-          subtaskId,
-        },
-      ),
+      this.http.patch<TaskCompletion>(url, { date, isCompleted }),
     );
     this.todayCache = null;
     return completion;

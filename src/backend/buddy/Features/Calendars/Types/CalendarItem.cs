@@ -18,7 +18,8 @@ public sealed record CalendarItem(
     Color Color,
     ItemSchedule Schedule,
     RecurrenceRule? Recurrence,
-    ImmutableDictionary<(DateOnly OccurrenceDate, Guid? SubtaskId), bool> CompletionLog,
+    // Completed occurrences only -- "not completed" is the implicit default, so it is absence.
+    ImmutableHashSet<CompletionKey> CompletionLog,
     UserId LastModifiedBy,
     bool IsDeleted)
 {
@@ -78,15 +79,14 @@ public sealed record CalendarItem(
             ItemSchedule.Event => throw new InvalidOperationException($"TaskRescheduled on event item {item.Id.Value}."),
         },
         RecurrenceUpdated recurrence => item with { Recurrence = recurrence.After, LastModifiedBy = recurrence.ModifiedBy },
-        // Sparse log, same rule as MedicineSchedule.DoseLog: "not completed" is the
-        // implicit default, so a not-completed entry is removed rather than stored. Keyed
-        // by (OccurrenceDate, SubtaskId) so a template-scheduled task's subtasks complete
-        // independently; a plain non-template task always keys as (date, null).
+        // Sparse log, same rule as MedicineSchedule.DoseLog: only completed occurrences are
+        // stored. Keyed by (OccurrenceDate, Target) so a template-scheduled task's subtasks
+        // complete independently; a plain task keys as (date, WholeTask).
         TaskCompletionChanged completion => item with
         {
             CompletionLog = completion.After
-                ? item.CompletionLog.SetItem((completion.OccurrenceDate, completion.SubtaskId), true)
-                : item.CompletionLog.Remove((completion.OccurrenceDate, completion.SubtaskId)),
+                ? item.CompletionLog.Add(new CompletionKey(completion.OccurrenceDate, completion.Target))
+                : item.CompletionLog.Remove(new CompletionKey(completion.OccurrenceDate, completion.Target)),
             LastModifiedBy = completion.ModifiedBy
         },
         ItemDeleted deleted => item with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },
@@ -96,5 +96,5 @@ public sealed record CalendarItem(
     private static CalendarItem New(
         CalendarItemId id, CalendarId calendarId, UserId createdBy, string title, Icon? icon, Color color, ItemSchedule schedule, RecurrenceRule? recurrence) =>
         new(id, calendarId, createdBy, title, icon, color, schedule, recurrence,
-            ImmutableDictionary<(DateOnly, Guid?), bool>.Empty, createdBy, IsDeleted: false);
+            ImmutableHashSet<CompletionKey>.Empty, createdBy, IsDeleted: false);
 }

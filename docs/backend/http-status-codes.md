@@ -307,6 +307,8 @@ Notes:
 | `PATCH /calendars/{calendarId}/items/{itemId}/details` | `200` | `401`, `403`, `404` | `403` for viewer/non-contributor. |
 | `PATCH /calendars/{calendarId}/items/{itemId}/schedule` | `200` | `400`, `401`, `403`, `404` | `400` for invalid period/due-date transition rules. |
 | `PATCH /calendars/{calendarId}/items/{itemId}/recurrence` | `200` | `400`, `401`, `403`, `404` | `400` for invalid recurrence values. |
+| `PATCH /calendars/{calendarId}/items/{itemId}/completion` | `200` | `400`, `401`, `403`, `404` | `400` for a future occurrence or a template-scheduled task (completed per subtask); `403` for a viewer completing a task not assigned to them. |
+| `PATCH /calendars/{calendarId}/items/{itemId}/subtasks/{subtaskId}/completion` | `200` | `400`, `401`, `403`, `404` | `400` for a future occurrence or a plain task; `404` also for an unknown subtask. |
 | `DELETE /calendars/{calendarId}/items/{itemId}` | `204` | `401`, `403`, `404` | Idempotent deletion behavior recommended. |
 | `POST /calendars/{calendarId}/ical-tokens` | `200` | `401`, `403`, `404` | Token issuance for authorized member. |
 | `GET /calendars/{calendarId}/ical-tokens` | `200` | `401`, `403`, `404` | Token summary listing for authorized member. |

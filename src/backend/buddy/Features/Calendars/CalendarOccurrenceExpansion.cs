@@ -88,7 +88,7 @@ public static class CalendarOccurrenceExpansion
         foreach (var date in RecurrenceExpansion.ExpandDates(due.Date, item.Recurrence, from, to))
         {
             var dueAt = TimeZoneResolution.ResolveInstant(zoneId, date.ToDateTime(due.Time));
-            var isCompleted = item.CompletionLog.GetValueOrDefault((date, (Guid?)null), false);
+            var isCompleted = item.CompletionLog.Contains(new CompletionKey(date, new CompletionTarget.WholeTask()));
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
@@ -118,7 +118,7 @@ public static class CalendarOccurrenceExpansion
 
                 var startsAt = TimeZoneResolution.ResolveInstant(zoneId, startLocal);
                 var endsAt = TimeZoneResolution.ResolveInstant(zoneId, endLocal);
-                var isCompleted = item.CompletionLog.GetValueOrDefault((date, subtask.Id.Value), false);
+                var isCompleted = item.CompletionLog.Contains(new CompletionKey(date, new CompletionTarget.Subtask(subtask.Id.Value)));
 
                 occurrences.Add(new CalendarItemOccurrence(
                     item.Id, item.Kind, subtask.Title, subtask.Icon?.Value ?? item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,

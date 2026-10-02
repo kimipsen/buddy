@@ -69,7 +69,8 @@ sequenceDiagram
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/details` | Updates an item's name, description, or visual metadata. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/schedule` | Reschedules an item or changes time/date placement. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings. |
-| `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a task occurrence complete or incomplete; template tasks require a subtask ID and track each subtask independently. Rejects marking a future occurrence complete. |
+| `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a plain task occurrence complete or incomplete. A template-scheduled task is rejected (400): it is completed one subtask at a time. Rejects marking a future occurrence complete. |
+| `PATCH` | `/calendars/{calendarId}/items/{itemId}/subtasks/{subtaskId}/completion` | Marks one subtask of a template-scheduled task occurrence complete or incomplete; each subtask is tracked independently. A plain task is rejected (400); an unknown subtask is 404. Rejects marking a future occurrence complete. |
 | `DELETE` | `/calendars/{calendarId}/items/{itemId}` | Soft-deletes an item. |
 | `POST` | `/calendars/{calendarId}/ical-tokens` | Creates an iCal feed token. |
 | `GET` | `/calendars/{calendarId}/ical-tokens` | Lists active iCal token metadata. |

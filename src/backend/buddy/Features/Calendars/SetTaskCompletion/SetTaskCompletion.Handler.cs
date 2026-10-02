@@ -73,14 +73,14 @@ public static class SetTaskCompletionHandler
             return futureError;
         }
 
-        var before = item.CompletionLog.GetValueOrDefault((command.OccurrenceDate, command.SubtaskId), false);
+        var before = item.CompletionLog.Contains(new CompletionKey(command.OccurrenceDate, command.Target));
 
         if (before == command.IsCompleted)
         {
             return new Result<CalendarItem>.Success(item);
         }
 
-        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow, command.SubtaskId);
+        var completionChanged = new TaskCompletionChanged(command.ItemId, command.OccurrenceDate, before, command.IsCompleted, userId, DateTimeOffset.UtcNow, command.Target);
 
         await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
 
@@ -89,38 +89,35 @@ public static class SetTaskCompletionHandler
         return new Result<CalendarItem>.Success(CalendarItem.Replay([.. itemEvents, completionChanged]));
     }
 
-    // The two completion modes never mix: a template-scheduled task always requires a SubtaskId
-    // (its occurrences complete independently -- see CalendarOccurrenceExpansion), a plain task
-    // never accepts one. Also rejects a stale id from an out-of-date client (a subtask removed, or
-    // the whole template hard-deleted, since the template's last fetch) rather than silently
-    // writing a phantom completion entry for a subtask that no longer exists.
+    // The two completion modes never mix: a template-scheduled task completes per subtask (its
+    // occurrences complete independently -- see CalendarOccurrenceExpansion), a plain task as a
+    // whole. Also rejects a stale subtask id from an out-of-date client (a subtask removed, or the
+    // whole template hard-deleted, since the template's last fetch) rather than silently writing a
+    // phantom completion entry for a subtask that no longer exists.
     private static async Task<Result<CalendarItem>?> ValidateSubtaskAsync(
         ItemSchedule.Task task, SetTaskCompletion command, ITaskTemplateEventStore templates, CancellationToken cancellationToken)
     {
-        var fromTemplate = task.Source is TaskSource.FromTemplate t ? t : null;
-
-        if (fromTemplate is not null && command.SubtaskId is null)
+        switch (task.Source, command.Target)
         {
-            return new Result<CalendarItem>.Validation(ValidationProblem.Of("A subtask id is required to complete a template-scheduled task."));
+            case (TaskSource.FromTemplate, CompletionTarget.WholeTask):
+                return new Result<CalendarItem>.Validation(ValidationProblem.Of("A template-scheduled task is completed one subtask at a time."));
+
+            case (TaskSource.Freeform, CompletionTarget.Subtask):
+                return new Result<CalendarItem>.Validation(ValidationProblem.Of("Only a template-scheduled task has subtasks."));
+
+            case (TaskSource.FromTemplate fromTemplate, CompletionTarget.Subtask subtask):
+                var template = TaskTemplate.Rehydrate(await templates.ReadAsync(new TaskTemplateId(fromTemplate.TaskTemplateId), cancellationToken));
+
+                if (template is null || !template.Subtasks.Any(s => s.Id.Value == subtask.SubtaskId))
+                {
+                    return new Result<CalendarItem>.NotFound();
+                }
+
+                return null;
+
+            default:
+                return null;
         }
-
-        if (fromTemplate is null && command.SubtaskId is not null)
-        {
-            return new Result<CalendarItem>.Validation(ValidationProblem.Of("A subtask id is only valid for a template-scheduled task."));
-        }
-
-        if (fromTemplate is not null && command.SubtaskId is { } subtaskId)
-        {
-            var templateEvents = await templates.ReadAsync(new TaskTemplateId(fromTemplate.TaskTemplateId), cancellationToken);
-            var template = TaskTemplate.Rehydrate(templateEvents);
-
-            if (template is null || !template.Subtasks.Any(s => s.Id.Value == subtaskId))
-            {
-                return new Result<CalendarItem>.NotFound();
-            }
-        }
-
-        return null;
     }
 
     // A future occurrence can't already have happened -- only checked when marking complete,
@@ -156,7 +153,7 @@ public static class SetTaskCompletionHandler
 
         try
         {
-            await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted, command.SubtaskId), cancellationToken);
+            await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted, command.Target), cancellationToken);
         }
         catch
         {

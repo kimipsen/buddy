@@ -13,10 +13,9 @@ namespace buddy.IntegrationTests.SnapshotTests;
 // Verifies the inline Marten snapshot (CalendarItemSnapshotProjection, schema "snapshots") stays
 // exactly consistent with a full replay-from-events rehydration after a sequence of commands --
 // same invariant as CalendarSnapshotTests/GroupSnapshotTests. Deliberately includes a
-// TaskCompletionChanged step: CalendarItem.CompletionLog is keyed by a ValueTuple
-// ((DateOnly OccurrenceDate, Guid? SubtaskId)), which plain System.Text.Json can't serialize as a
-// dictionary key without ValueTupleJsonConverterFactory -- this is the one command sequence that
-// actually exercises that converter through the snapshot projection's storage round-trip.
+// TaskCompletionChanged step: CalendarItem.CompletionLog is a set of CompletionKey, whose
+// CompletionTarget union only round-trips through CompletionTargetJsonConverter -- this is the one
+// command sequence that exercises that converter through the snapshot projection's storage.
 [Collection(BuddyApiCollection.Name)]
 public sealed class CalendarItemSnapshotTests(BuddyApiFixture fixture)
 {

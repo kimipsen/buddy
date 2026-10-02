@@ -10,7 +10,7 @@ public sealed record ChildProgress(
     ProgressId Id,
     UserId ChildId,
     int TotalStars,
-    ImmutableHashSet<(CalendarItemId ItemId, DateOnly OccurrenceDate, Guid? SubtaskId)> AwardedOccurrences,
+    ImmutableHashSet<OccurrenceKey> AwardedOccurrences,
     ImmutableHashSet<int> UnlockedMilestones,
     ImmutableArray<GoalPost> GoalPosts)
 {
@@ -20,7 +20,7 @@ public sealed record ChildProgress(
         id,
         childId,
         0,
-        ImmutableHashSet<(CalendarItemId, DateOnly, Guid?)>.Empty,
+        ImmutableHashSet<OccurrenceKey>.Empty,
         ImmutableHashSet<int>.Empty,
         ImmutableArray<GoalPost>.Empty);
 
@@ -46,12 +46,12 @@ public sealed record ChildProgress(
         StarAwarded awarded => progress with
         {
             TotalStars = progress.TotalStars + 1,
-            AwardedOccurrences = progress.AwardedOccurrences.Add((awarded.SourceItemId, awarded.OccurrenceDate, awarded.SubtaskId))
+            AwardedOccurrences = progress.AwardedOccurrences.Add(new OccurrenceKey(awarded.SourceItemId, awarded.OccurrenceDate, awarded.Target))
         },
         StarRevoked revoked => progress with
         {
             TotalStars = progress.TotalStars - 1,
-            AwardedOccurrences = progress.AwardedOccurrences.Remove((revoked.SourceItemId, revoked.OccurrenceDate, revoked.SubtaskId))
+            AwardedOccurrences = progress.AwardedOccurrences.Remove(new OccurrenceKey(revoked.SourceItemId, revoked.OccurrenceDate, revoked.Target))
         },
         MilestoneUnlocked milestone => progress with
         {

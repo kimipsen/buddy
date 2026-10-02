@@ -111,7 +111,7 @@ ChildProgress(
     ProgressId Id,               // ProgressId.Value == ChildId.Value -- see below
     UserId ChildId,
     int TotalStars,
-    ImmutableHashSet<(CalendarItemId ItemId, DateOnly OccurrenceDate, Guid? SubtaskId)> AwardedOccurrences,
+    ImmutableHashSet<OccurrenceKey> AwardedOccurrences,  // (ItemId, OccurrenceDate, CompletionTarget Target)
     ImmutableHashSet<int> UnlockedMilestones)
 ```
 

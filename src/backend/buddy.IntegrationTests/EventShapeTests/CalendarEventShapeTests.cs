@@ -126,14 +126,21 @@ public sealed class CalendarEventShapeTests
 
     [Fact]
     public void TaskCompletionChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskCompletionChanged(FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant, SubtaskId: null),
+        new TaskCompletionChanged(FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant, new CompletionTarget.WholeTask()),
         "Calendars/TaskCompletionChanged.json");
 
     [Fact]
     public void TaskCompletionChanged_ForSubtask() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new TaskCompletionChanged(
             FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant,
-            SubtaskId: Guid.Parse("00000000-0000-0000-0000-000000000060")),
+            new CompletionTarget.Subtask(Guid.Parse("00000000-0000-0000-0000-000000000060"))),
+        "Calendars/TaskCompletionChanged_ForSubtask.json");
+
+    [Fact]
+    public void TaskCompletionChanged_ForSubtask_ReadsBack() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(
+        new TaskCompletionChanged(
+            FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant,
+            new CompletionTarget.Subtask(Guid.Parse("00000000-0000-0000-0000-000000000060"))),
         "Calendars/TaskCompletionChanged_ForSubtask.json");
 
     [Fact]

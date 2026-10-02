@@ -253,6 +253,7 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    [CoversEndpoint("SetSubtaskCompletion")]
     public async Task Completing_one_subtask_of_a_template_scheduled_task_does_not_complete_its_sibling()
     {
         var (calendarId, _, guardianToken, itemId, firstSubtaskId, secondSubtaskId, startDate) = await ScheduleTemplateTaskAsync();
@@ -260,8 +261,8 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Patch.Json(new { Date = startDate, IsCompleted = true, SubtaskId = firstSubtaskId })
-                .ToUrl($"/calendars/{calendarId}/items/{itemId}/completion");
+            _.Patch.Json(new { Date = startDate, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{itemId}/subtasks/{firstSubtaskId}/completion");
             _.StatusCodeShouldBeOk();
         });
 
@@ -279,6 +280,44 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Un_completing_a_subtask_clears_only_that_subtask()
+    {
+        var (calendarId, _, guardianToken, itemId, firstSubtaskId, _, startDate) = await ScheduleTemplateTaskAsync();
+        var url = $"/calendars/{calendarId}/items/{itemId}/subtasks/{firstSubtaskId}/completion";
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Date = startDate, IsCompleted = true }).ToUrl(url);
+            _.StatusCodeShouldBeOk();
+        });
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Date = startDate, IsCompleted = false }).ToUrl(url);
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.False(response.ReadAsJson<TaskCompletionResponseDto>().IsCompleted);
+    }
+
+    [Fact]
+    public async Task A_stranger_completing_a_subtask_gets_not_found()
+    {
+        var (calendarId, _, _, itemId, firstSubtaskId, _, startDate) = await ScheduleTemplateTaskAsync();
+        var (_, strangerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {strangerToken}");
+            _.Patch.Json(new { Date = startDate, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{itemId}/subtasks/{firstSubtaskId}/completion");
+            _.StatusCodeShouldBe(404);
+        });
+    }
+
+    [Fact]
     public async Task A_stale_subtask_id_is_rejected()
     {
         var (calendarId, _, guardianToken, itemId, _, _, startDate) = await ScheduleTemplateTaskAsync();
@@ -286,14 +325,14 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Patch.Json(new { Date = startDate, IsCompleted = true, SubtaskId = Guid.CreateVersion7() })
-                .ToUrl($"/calendars/{calendarId}/items/{itemId}/completion");
+            _.Patch.Json(new { Date = startDate, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{itemId}/subtasks/{Guid.CreateVersion7()}/completion");
             _.StatusCodeShouldBe(404);
         });
     }
 
     [Fact]
-    public async Task Completing_a_template_scheduled_task_without_a_subtask_id_is_rejected()
+    public async Task Completing_a_template_scheduled_task_as_a_whole_is_rejected()
     {
         var (calendarId, _, guardianToken, itemId, _, _, startDate) = await ScheduleTemplateTaskAsync();
 
@@ -307,7 +346,7 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
     }
 
     [Fact]
-    public async Task Completing_a_plain_task_with_a_subtask_id_is_rejected()
+    public async Task Completing_a_subtask_of_a_plain_task_is_rejected()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
@@ -318,8 +357,8 @@ public sealed class SetTaskCompletionTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Patch.Json(new { Date = dueDate, IsCompleted = true, SubtaskId = Guid.CreateVersion7() })
-                .ToUrl($"/calendars/{calendarId}/items/{task.Id}/completion");
+            _.Patch.Json(new { Date = dueDate, IsCompleted = true })
+                .ToUrl($"/calendars/{calendarId}/items/{task.Id}/subtasks/{Guid.CreateVersion7()}/completion");
             _.StatusCodeShouldBe(400);
         });
     }

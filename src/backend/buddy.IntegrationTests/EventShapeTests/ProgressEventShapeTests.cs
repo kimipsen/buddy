@@ -22,22 +22,32 @@ public sealed class ProgressEventShapeTests
 
     [Fact]
     public void StarAwarded() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant, SubtaskId: null),
+        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant, new CompletionTarget.WholeTask()),
         "Progress/StarAwarded.json");
 
     [Fact]
     public void StarAwarded_ForSubtask() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant, FixedSubtaskId),
+        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant, new CompletionTarget.Subtask(FixedSubtaskId)),
+        "Progress/StarAwarded_ForSubtask.json");
+
+    [Fact]
+    public void StarAwarded_ReadsBack() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(
+        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant, new CompletionTarget.WholeTask()),
+        "Progress/StarAwarded.json");
+
+    [Fact]
+    public void StarAwarded_ForSubtask_ReadsBack() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(
+        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant, new CompletionTarget.Subtask(FixedSubtaskId)),
         "Progress/StarAwarded_ForSubtask.json");
 
     [Fact]
     public void StarRevoked() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new StarRevoked(FixedProgressId, FixedItemId, FixedDate, FixedInstant, SubtaskId: null),
+        new StarRevoked(FixedProgressId, FixedItemId, FixedDate, FixedInstant, new CompletionTarget.WholeTask()),
         "Progress/StarRevoked.json");
 
     [Fact]
     public void StarRevoked_ForSubtask() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new StarRevoked(FixedProgressId, FixedItemId, FixedDate, FixedInstant, FixedSubtaskId),
+        new StarRevoked(FixedProgressId, FixedItemId, FixedDate, FixedInstant, new CompletionTarget.Subtask(FixedSubtaskId)),
         "Progress/StarRevoked_ForSubtask.json");
 
     [Fact]
