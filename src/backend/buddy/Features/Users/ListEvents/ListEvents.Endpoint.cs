@@ -25,8 +25,7 @@ public static class ListUserEventsEndpoint
             var command = GetUserEvents.FromClaims(
                 principal,
                 new EventsPageRequest(
-                    AfterVersion: decoded.Direction == CursorDirection.After ? decoded.Version : null,
-                    BeforeVersion: decoded.Direction == CursorDirection.Before ? decoded.Version : null,
+                    decoded,
                     PageSize: Math.Clamp(pageSize ?? EventsPageRequest.DefaultPageSize, 1, EventsPageRequest.MaxPageSize)));
 
             var page = await bus.InvokeAsync<UserEventsPage>(command, cancellationToken);

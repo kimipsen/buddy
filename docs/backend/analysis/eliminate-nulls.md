@@ -755,6 +755,8 @@ Committed per group.
   200 `{groupId, groupName}` (both non-null) or 204. The frontend services return the body or null
   for the 204. `UpdateMedicineDetailsHandler.UpdateForChildAsync` and
   `RescheduleMedicineHandler.RescheduleForChildAsync` return `Result<MedicineSchedule>`.
+- **Users.** `EventsPageRequest` carries one `DecodedCursor Position` (made public, with
+  `CursorDirection`) instead of `long? AfterVersion` / `BeforeVersion`; no cursor is `After 0`.
 
 ## Phase 6: drop `Before?` from events
 

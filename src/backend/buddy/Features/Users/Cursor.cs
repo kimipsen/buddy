@@ -1,12 +1,14 @@
 namespace buddy.Features.Users;
 
-internal enum CursorDirection : byte
+public enum CursorDirection : byte
 {
     After = 0,
     Before = 1
 }
 
-internal readonly record struct DecodedCursor(long Version, CursorDirection Direction);
+// Where a page starts: after Version (forward) or before it (backward). No cursor is the first page,
+// forward from the start of the stream (After 0).
+public readonly record struct DecodedCursor(long Version, CursorDirection Direction);
 
 internal static class Cursor
 {

@@ -2,9 +2,7 @@ using System.Security.Claims;
 
 namespace buddy.Features.Users;
 
-// Exactly one of AfterVersion/BeforeVersion is set by the endpoint, per the decoded cursor's
-// direction. Neither set means "first page" (forward from the start of the stream).
-public sealed record EventsPageRequest(long? AfterVersion, long? BeforeVersion, int PageSize)
+public sealed record EventsPageRequest(DecodedCursor Position, int PageSize)
 {
     public const int DefaultPageSize = 50;
     public const int MaxPageSize = 200;

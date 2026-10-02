@@ -6,9 +6,14 @@ public static class GetUserEventsHandler
     {
         var userId = query.UserId;
 
-        return query.Page.BeforeVersion is { } beforeVersion
-            ? await HandleBackward(userId, beforeVersion, query.Page.PageSize, events, cancellationToken)
-            : await HandleForward(userId, query.Page.AfterVersion ?? 0, query.Page.PageSize, events, cancellationToken);
+        var position = query.Page.Position;
+
+        return position.Direction switch
+        {
+            CursorDirection.Before => await HandleBackward(userId, position.Version, query.Page.PageSize, events, cancellationToken),
+            CursorDirection.After => await HandleForward(userId, position.Version, query.Page.PageSize, events, cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(query), position.Direction, "Unknown cursor direction."),
+        };
     }
 
     private static async Task<UserEventsPage> HandleForward(UserId userId, long afterVersion, int pageSize, IUserEventStore events, CancellationToken cancellationToken)
