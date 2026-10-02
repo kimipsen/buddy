@@ -1,6 +1,6 @@
 ---
 name: mutation-fix-backend
-description: Run Stryker.NET (dotnet-stryker) on a few backend source files or one feature slice, triage the surviving and uncovered mutants, strengthen the xunit/Alba integration tests in buddy.IntegrationTests to kill the relevant ones, and re-run on the same files until nothing relevant survives, then send a push notification with the outcome. Use for "run the backend mutation tests and fix survivors", "kill the surviving mutants in the CreateChild handler", "mutation-test this feature", "harden the backend tests with Stryker". For frontend (StrykerJS) use mutation-fix instead.
+description: Run Stryker.NET (dotnet-stryker) on a few backend source files or one feature slice, triage the surviving and uncovered mutants, strengthen the xunit/Alba integration tests in buddy.IntegrationTests to kill the relevant ones, and re-run on the same files until nothing relevant survives, with a status update every 5 minutes while Stryker runs, then send a push notification with the outcome. Use for "run the backend mutation tests and fix survivors", "kill the surviving mutants in the CreateChild handler", "mutation-test this feature", "harden the backend tests with Stryker". For frontend (StrykerJS) use mutation-fix instead.
 ---
 
 # Backend Mutation Fix Loop
@@ -32,10 +32,22 @@ node ../../../.claude/skills/mutation-fix-backend/scoped-config.mjs --out <scrat
 The script copies `stryker-config.json`, replaces the `mutate` list with your files or globs (it keeps the `!obj`/`!bin`/generated-file excludes), makes the solution path absolute, and adds the `Json` reporter. The checked-in config only has Progress/Html/cleartext, which produce no machine-readable report. It keeps `language-version: Preview` from the checked-in config. That setting is required: with `latest` the run crashes. Then run:
 
 ```bash
-STRYKER_LOG=<scratchpad>/stryker-round-1.log ./run-stryker.sh -f <scratchpad>/stryker-scoped.json -O StrykerOutput/mutation-fix --skip-version-check > /dev/null 2> <scratchpad>/stryker-round-1.err
+STRYKER_LOG=<scratchpad>/stryker-round-1.log ./run-stryker.sh -f <scratchpad>/stryker-scoped.json -O StrykerOutput/mutation-fix --skip-version-check > /dev/null 2> <scratchpad>/stryker-round-1.err; echo $? > <scratchpad>/stryker-round-1.log.exit
 ```
 
-Run it with `run_in_background: true` and a generous timeout (at least 60 minutes for a feature slice). Wait for the completion notification; don't poll.
+Run it with `run_in_background: true` and a generous timeout (at least 60 minutes for a feature slice). The trailing `echo $? > ….log.exit` tells the status updates when the run is over. Start the status updates (below), then wait for the completion notification. Don't poll the log yourself.
+
+**Status updates every 5 minutes.** Right after starting each round, load the `Monitor` tool if it isn't loaded yet (`ToolSearch` with `select:Monitor`) and start it with `timeout_ms: 1800000`, a description such as `mutation-fix-backend round 1 progress`, and:
+
+```bash
+"$(git rev-parse --show-toplevel)/.claude/skills/mutation-fix/progress.sh" <scratchpad>/stryker-round-1.log
+```
+
+The script is shared with the frontend `mutation-fix` skill. Every 5 minutes it prints one line with the elapsed time and the latest progress line from the log (the `Testing mutant N / M` progress once mutants are being tested, otherwise the last log line, e.g. the build or initial test run). It adds `WARNING: no log output for Nm, may be hung` once the log hasn't changed for 10 minutes, and it exits with a `finished with exit N` line once the `.exit` file appears. Optional arguments: interval and stall threshold in seconds (defaults `300 600`). The ~3-minute build, initial test run and mutant compile phase can be quiet, so a single stall warning early in a round isn't unusual.
+
+- Relay each event to the user as one short line of chat text, e.g. `Stryker round 1: testing mutant 13/30 (K 11, S 2), running 9m.` That's the whole reply. Don't start triage or other work from a progress event, don't run `dotnet build`/`dotnet test` because of one (see the shared `bin/` note below), and don't send a push notification for it.
+- A Monitor ends after 30 minutes. When it expires and the `.exit` file still doesn't exist, start it again with the same command. Elapsed time counts from the log's creation, so it carries on across re-arms.
+- On a `may be hung` warning, check that the run's still alive (`ps -ef | grep -c '[S]tryker.CLI'`, `docker ps` for its Testcontainers, and the end of the log) and tell the user what you found. Don't kill the run unless they ask.
 
 - `-O StrykerOutput/mutation-fix` gives every round the same output folder, so the report is always at `StrykerOutput/mutation-fix/reports/mutation-report.json`, with the HTML report next to it in `mutation-report.html`. `StrykerOutput/` is git-ignored. Each run overwrites the folder, so copy the report after round 1 (`cp StrykerOutput/mutation-fix/reports/mutation-report.json <scratchpad>/round-1.json`). You need it for the before score.
 - Check the exit code first. On a non-zero exit, `stryker-round-N.err` says why (no tests discovered, initial test run failed, mutated build failed, crash, or no mutants in scope). Stop, report the error and notify (step 6). Don't try to fix unrelated breakage silently. On exit 0, the end of the log has the Killed/Survived/Timeout counts and the score.
@@ -84,7 +96,7 @@ Fix any failing test before you move on. Then run the whole suite once (`dotnet 
 
 ## 4. Re-run Stryker on the same files
 
-Regenerate the scoped config with only the files that still have relevant survivors. Then run step 1's `./run-stryker.sh -f ... -O StrykerOutput/mutation-fix` command again in the background, with `STRYKER_LOG` set to `stryker-round-N.log`. Stryker.NET has no incremental cache in this setup (the baseline is disabled), so each run retests every mutant in scope. That is why the scope should shrink each round. Then go back to step 2 with the same file list. A file you dropped from scope will show as "not in report", which is expected. Take its final numbers from the round where it was last run.
+Regenerate the scoped config with only the files that still have relevant survivors. Then run step 1's `./run-stryker.sh -f ... -O StrykerOutput/mutation-fix` command again in the background, with `STRYKER_LOG` set to `stryker-round-N.log` and the exit code written to `stryker-round-N.log.exit`, and start the 5-minute status updates on that log. Stryker.NET has no incremental cache in this setup (the baseline is disabled), so each run retests every mutant in scope. That is why the scope should shrink each round. Then go back to step 2 with the same file list. A file you dropped from scope will show as "not in report", which is expected. Take its final numbers from the round where it was last run.
 
 Stop looping when any of these is true:
 - no relevant survivors remain (only suppressed equivalent mutants or reported "not worth it" ones);
@@ -114,4 +126,4 @@ A cycle takes long enough that the user has usually walked away, so end every cy
 
 Also notify, in the same format, whenever the loop stops early and needs the user: Docker isn't running, Stryker fails before it tests mutants (`run-stryker.sh` exits non-zero), or a survivor points to a real bug and needs their go-ahead before production code changes.
 
-Send only one notification per cycle, plus these early stops. Don't notify after the individual Stryker runs in steps 1 and 4. If the tool says the notification wasn't sent (for example because the user is at the terminal), that's fine. Don't retry.
+Send only one notification per cycle, plus these early stops. Don't notify after the individual Stryker runs in steps 1 and 4, or for the 5-minute status updates (those are chat lines only). If the tool says the notification wasn't sent (for example because the user is at the terminal), that's fine. Don't retry.

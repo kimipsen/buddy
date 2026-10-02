@@ -1,6 +1,6 @@
 ---
 name: mutation-fix
-description: Run the next batch of frontend mutation tests (task test:mutation:frontend:batch), triage the surviving and uncovered mutants, strengthen the Angular/Vitest specs to kill the relevant ones, and re-run Stryker on the same files until nothing relevant survives, then send a push notification with the outcome. Use for "run the mutation tests and fix survivors", "kill the surviving mutants", "work through the next mutation batch".
+description: Run the next batch of frontend mutation tests (task test:mutation:frontend:batch), triage the surviving and uncovered mutants, strengthen the Angular/Vitest specs to kill the relevant ones, and re-run Stryker on the same files until nothing relevant survives, with a status update every 5 minutes while Stryker runs, then send a push notification with the outcome. Use for "run the mutation tests and fix survivors", "kill the surviving mutants", "work through the next mutation batch".
 ---
 
 # Mutation Fix Loop
@@ -14,10 +14,22 @@ Arguments (optional, free text): `BATCH_SIZE=N`, `CONCURRENCY=N`, `MAX_ROUNDS=N`
 From the repo root:
 
 ```bash
-task test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=2]
+task test:mutation:frontend:batch [BATCH_SIZE=5] [CONCURRENCY=2] > <scratchpad>/batch.log 2>&1; echo $? > <scratchpad>/batch.log.exit
 ```
 
-This is slow (every mutant re-runs `npm test`). Run it with `run_in_background: true` and a generous timeout, redirect output to a log file in the scratchpad, and wait for the completion notification — do not poll.
+This is slow (every mutant re-runs `npm test`). Run it with `run_in_background: true` and a generous timeout, redirect output to a log file in the scratchpad, write the exit code next to it so the status updates know when it ends, and start the status updates (below). Then wait for the completion notification. Don't poll the log yourself.
+
+**Status updates every 5 minutes.** Right after starting a background Stryker run (here and in step 4), load the `Monitor` tool if it isn't loaded yet (`ToolSearch` with `select:Monitor`) and start it with `timeout_ms: 1800000`, a description such as `mutation-fix batch progress`, and:
+
+```bash
+"$(git rev-parse --show-toplevel)/.claude/skills/mutation-fix/progress.sh" <scratchpad>/batch.log
+```
+
+Every 5 minutes it prints one line with the elapsed time, the batch (`Running batch 46-50 of 103`) and Stryker's latest progress (`Mutation testing 72% (elapsed: ~1h 4m, remaining: ~25m) 324/450 tested (139 survived, 0 timed out)`). It adds `WARNING: no log output for Nm, may be hung` once the log hasn't changed for 10 minutes, and it exits with a `finished with exit N` line once the `.exit` file appears. Optional arguments: interval and stall threshold in seconds (defaults `300 600`).
+
+- Relay each event to the user as one short line of chat text, e.g. `Mutation run: 72% (324/450 tested, 139 survived), ~25m left, running 64m.` That's the whole reply. Don't start triage or other work from a progress event, and don't send a push notification for it.
+- A Monitor ends after 30 minutes. When it expires and the `.exit` file still doesn't exist, start it again with the same command. Elapsed time counts from the log's creation, so it carries on across re-arms.
+- On a `may be hung` warning, check that the run's still alive (`ps -ef | grep -c '[s]tryker'`, and the end of the log) and tell the user what you found. Don't kill the run unless they ask.
 
 - Take the batch's file list from the `Running batch X-Y of Z:` lines in the output. **Remember it**: it's the scope for the rest of the loop.
 - If the output says `All N files have been covered`, stop and tell the user (and notify, see step 6); they can start over with `task test:mutation:frontend:batch -- --reset`.
@@ -73,7 +85,7 @@ Fix any failing test before moving on — a failing initial test run makes Stryk
 npx stryker run --mutate "<file1>,<file2>,..." --incremental --force --concurrency <same as step 1, default 2>
 ```
 
-Run it in the background as in step 1. **`--force` is required.** This project uses the command test runner with coverage analysis off, so Stryker can't see that a spec changed: without `--force` it reuses every cached result ("N of N mutant result(s) are reused"), finishes in seconds and reports the same survivors. `--force` re-tests every mutant in the listed files, and `--incremental` still writes the fresh results to `reports/stryker-incremental.json`. Because every mutant in those files gets retested, pass only the files that still have survivors.
+Run it in the background as in step 1, with its own log and exit file (`> <scratchpad>/round-N.log 2>&1; echo $? > <scratchpad>/round-N.log.exit`), and start the 5-minute status updates on that log. **`--force` is required.** This project uses the command test runner with coverage analysis off, so Stryker can't see that a spec changed: without `--force` it reuses every cached result ("N of N mutant result(s) are reused"), finishes in seconds and reports the same survivors. `--force` re-tests every mutant in the listed files, and `--incremental` still writes the fresh results to `reports/stryker-incremental.json`. Because every mutant in those files gets retested, pass only the files that still have survivors.
 
 Then go back to step 2 with the same file list.
 
@@ -104,4 +116,4 @@ A cycle takes long enough that the user has usually walked away, so end every cy
 
 Also notify (same format) whenever the loop stops early and needs the user: every file covered, Stryker failing before it tests mutants, or a survivor that points to a real bug and needs their go-ahead before production code changes.
 
-Send only one notification per cycle, plus these early stops. Don't notify after the individual Stryker runs in steps 1 and 4. If the tool says the notification wasn't sent (for example because the user is at the terminal), that's fine; don't retry.
+Send only one notification per cycle, plus these early stops. Don't notify after the individual Stryker runs in steps 1 and 4, or for the 5-minute status updates (those are chat lines only). If the tool says the notification wasn't sent (for example because the user is at the terminal), that's fine; don't retry.
