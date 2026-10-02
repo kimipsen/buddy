@@ -60,9 +60,9 @@ public sealed class PickupScheduleSnapshotTests(BuddyApiFixture fixture)
 
         Assert.NotNull(id);
 
-        var events = await pickups.ReadAsync(id!, CancellationToken.None);
+        var events = await pickups.ReadAsync(id, CancellationToken.None);
         var replayed = PickupSchedule.Rehydrate(events);
-        var snapshot = await pickups.FindSnapshotAsync(id!, CancellationToken.None);
+        var snapshot = await pickups.FindSnapshotAsync(id, CancellationToken.None);
 
         Assert.NotNull(replayed);
         Assert.NotNull(snapshot);
