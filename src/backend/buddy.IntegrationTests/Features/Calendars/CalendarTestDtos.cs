@@ -61,14 +61,34 @@ internal sealed record CalendarItemOccurrenceDto(
     string Icon,
     string? IconOverride,
     string Color,
-    DateTimeOffset? StartsAt,
-    DateTimeOffset? EndsAt,
-    DateTimeOffset? DueAt,
+    OccurrenceTimingDto Timing,
+    DateTimeOffset SortAt,
     bool IsAllDay,
     bool IsCompleted,
     Guid CreatedBy,
     Guid LastModifiedBy,
     Guid? AssignedTo,
-    string? ParentTitle,
-    Guid? SubtaskId,
-    string? ParentIcon);
+    RoutineDto? Routine)
+{
+    // Shortcuts into Timing and Routine for the assertions -- the response itself nests them.
+    public DateTimeOffset? StartsAt => Timing.StartsAt;
+
+    public DateTimeOffset? EndsAt => Timing.EndsAt;
+
+    public DateTimeOffset? DueAt => Timing.DueAt;
+
+    public Guid? SubtaskId => Routine?.SubtaskId;
+
+    public string? ParentTitle => Routine?.ParentTitle;
+
+    public string? ParentIcon => Routine?.ParentIcon;
+}
+
+// OccurrenceTiming read flat: "kind" (0 timed, 1 due) plus whichever case fields it carries.
+internal sealed record OccurrenceTimingDto(
+    int Kind,
+    DateTimeOffset? StartsAt = null,
+    DateTimeOffset? EndsAt = null,
+    DateTimeOffset? DueAt = null);
+
+internal sealed record RoutineDto(Guid SubtaskId, string ParentTitle, string ParentIcon);

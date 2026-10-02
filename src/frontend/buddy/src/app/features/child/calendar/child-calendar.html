@@ -141,20 +141,13 @@
                             <span aria-hidden="true">{{ subtask.icon }}</span>
                             {{ subtask.title }}
                           </span>
-                          @if (subtask.startsAt) {
+                          @if (subtask.timing.kind === 0) {
                             <span
                               class="whitespace-nowrap text-sm font-semibold text-slate-500 dark:text-slate-400"
                             >
-                              {{ subtask.startsAt | userDate: 'shortTime' }}
-                              @if (subtask.endsAt) {
-                                – {{ subtask.endsAt | userDate: 'shortTime' }}
-                              }
+                              {{ subtask.timing.startsAt | userDate: 'shortTime' }}
+                              – {{ subtask.timing.endsAt | userDate: 'shortTime' }}
                             </span>
-                          } @else if (subtask.dueAt) {
-                            <span
-                              class="whitespace-nowrap text-sm font-semibold text-slate-500 dark:text-slate-400"
-                              >{{ subtask.dueAt | userDate: 'shortTime' }}</span
-                            >
                           }
                         </li>
                       }
@@ -216,19 +209,17 @@
                         class="whitespace-nowrap text-sm font-semibold text-slate-500 dark:text-slate-400"
                         >{{ 'child.calendar.allDay' | translate }}</span
                       >
-                    } @else if (occurrence.startsAt) {
+                    } @else if (occurrence.timing.kind === 0) {
                       <span
                         class="whitespace-nowrap text-sm font-semibold text-slate-500 dark:text-slate-400"
                       >
-                        {{ occurrence.startsAt | userDate: 'shortTime' }}
-                        @if (occurrence.endsAt) {
-                          – {{ occurrence.endsAt | userDate: 'shortTime' }}
-                        }
+                        {{ occurrence.timing.startsAt | userDate: 'shortTime' }}
+                        – {{ occurrence.timing.endsAt | userDate: 'shortTime' }}
                       </span>
-                    } @else if (occurrence.dueAt) {
+                    } @else {
                       <span
                         class="whitespace-nowrap text-sm font-semibold text-slate-500 dark:text-slate-400"
-                        >{{ occurrence.dueAt | userDate: 'shortTime' }}</span
+                        >{{ occurrence.timing.dueAt | userDate: 'shortTime' }}</span
                       >
                     }
                   </li>

@@ -57,10 +57,10 @@ module.exports = defineConfig([
     },
   },
   {
-    // Specs and the test setup use intentional no-op stubs (`async () => {}` for
+    // Specs, spec helpers (src/testing) and the test setup use intentional no-op stubs (`async () => {}` for
     // Promise<void> service methods, matchMedia listener stubs), so empty functions
     // are expected there. Production code still gets the rule.
-    files: ['src/**/*.spec.ts', 'src/test-setup.ts'],
+    files: ['src/**/*.spec.ts', 'src/test-setup.ts', 'src/testing/**/*.ts'],
     rules: {
       '@typescript-eslint/no-empty-function': 'off',
       // Specs assert on DOM queries and mock calls (`querySelector(...)!`, `mock.calls[0]!`), where

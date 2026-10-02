@@ -13,6 +13,7 @@ import { toIsoDateInTimeZone } from '../../../core/date-utils';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { PER_ITEM_REQUEST_CONCURRENCY } from '../../../core/map-with-concurrency';
 import { TasksToday } from './tasks-today';
+import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
 
 describe('TasksToday', () => {
   const currentUser: CurrentUser = {
@@ -26,8 +27,8 @@ describe('TasksToday', () => {
 
   const today = toIsoDateInTimeZone(new Date(), currentUser.timeZoneId);
 
-  function task(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
-    return {
+  function task(overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {}): CalendarOccurrence {
+    return nestOccurrence<CalendarOccurrence>({
       itemId: 'task-1',
       kind: 1,
       title: 'Clean room',
@@ -45,7 +46,7 @@ describe('TasksToday', () => {
       calendarId: 'cal-1',
       calendarName: 'Home',
       ...overrides,
-    };
+    });
   }
 
   interface Stubs {
@@ -287,7 +288,7 @@ describe('TasksToday', () => {
     function subtaskOf(
       run: string,
       subtaskId: string,
-      overrides: Partial<CalendarOccurrence> = {},
+      overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
     ): CalendarOccurrence {
       return task({ itemId: run, subtaskId, parentTitle: 'Morning routine', ...overrides });
     }
@@ -297,19 +298,19 @@ describe('TasksToday', () => {
         subtaskOf('run-1', 'sub-1', {
           title: 'Brush teeth',
           isCompleted: true,
-          dueAt: `${today}T08:00:00Z`,
+          startsAt: `${today}T08:00:00Z`,
           isAllDay: false,
         }),
         subtaskOf('run-1', 'sub-2', {
           title: 'Get dressed',
           isCompleted: false,
-          dueAt: `${today}T08:10:00Z`,
+          startsAt: `${today}T08:10:00Z`,
           isAllDay: false,
         }),
         subtaskOf('run-1', 'sub-3', {
           title: 'Eat breakfast',
           isCompleted: false,
-          dueAt: `${today}T08:20:00Z`,
+          startsAt: `${today}T08:20:00Z`,
           isAllDay: false,
         }),
       ];
@@ -329,12 +330,12 @@ describe('TasksToday', () => {
       const subtasks = [
         subtaskOf('run-1', 'sub-1', {
           title: 'Brush teeth',
-          dueAt: `${today}T08:00:00Z`,
+          startsAt: `${today}T08:00:00Z`,
           isAllDay: false,
         }),
         subtaskOf('run-1', 'sub-2', {
           title: 'Get dressed',
-          dueAt: `${today}T08:10:00Z`,
+          startsAt: `${today}T08:10:00Z`,
           isAllDay: false,
         }),
       ];
@@ -352,12 +353,12 @@ describe('TasksToday', () => {
       const notYetOverdue = [
         subtaskOf('run-1', 'sub-1', {
           title: 'Brush teeth',
-          dueAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          startsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
           isAllDay: false,
         }),
         subtaskOf('run-1', 'sub-2', {
           title: 'Eat breakfast',
-          dueAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          startsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
           isAllDay: false,
         }),
       ];
@@ -376,12 +377,12 @@ describe('TasksToday', () => {
       const bothOverdue = [
         subtaskOf('run-2', 'sub-1', {
           title: 'Brush teeth',
-          dueAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          startsAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           isAllDay: false,
         }),
         subtaskOf('run-2', 'sub-2', {
           title: 'Eat breakfast',
-          dueAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          startsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
           isAllDay: false,
         }),
       ];

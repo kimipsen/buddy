@@ -82,10 +82,8 @@ function buildDays(anchorIsoDate: string, locale: string): AgendaDay[] {
   });
 }
 
-// Exactly one of startsAt/dueAt is ever set per the backend's Event-vs-Task invariant.
-function instantFor(occurrence: CalendarOccurrence): Date | null {
-  const value = occurrence.startsAt ?? occurrence.dueAt;
-  return value ? new Date(value) : null;
+function instantFor(occurrence: CalendarOccurrence): Date {
+  return new Date(occurrence.sortAt);
 }
 
 // A wall-clock "HH:mm" sort key comparable across both real-timestamped rows (tasks/events, via
@@ -97,9 +95,7 @@ function sortKeyFor(row: ChildAgendaRow, timeZoneId: string): string {
   }
 
   const occurrence = isTaskRun(row) ? row.subtasks[0] : row;
-  const instant = instantFor(occurrence);
-  // Stryker disable next-line StringLiteral: unreachable -- occurrencesByDate drops every occurrence without a startsAt/dueAt, so instant is never null here
-  return instant ? toTimeInTimeZone(instant, timeZoneId) : '';
+  return toTimeInTimeZone(instantFor(occurrence), timeZoneId);
 }
 
 // Read-only child counterpart to the guardian's CalendarAgenda: same week-window and
@@ -143,22 +139,13 @@ export class ChildCalendar {
         continue;
       }
 
-      const instant = instantFor(occurrence);
-
-      if (!instant) {
-        continue;
-      }
-
-      const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
+      const date = toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId());
       const occurrencesForDate = (byDate[date] ??= []);
       occurrencesForDate.push(occurrence);
     }
 
     for (const dayOccurrences of Object.values(byDate)) {
-      // Stryker disable next-line StringLiteral: unreachable -- only occurrences with a startsAt or dueAt are grouped above
-      dayOccurrences.sort((a, b) =>
-        (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''),
-      );
+      dayOccurrences.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
     }
 
     return byDate;
@@ -224,7 +211,7 @@ export class ChildCalendar {
   }
 
   // Folds a day's occurrences and meal-plan entries into one time-ordered list of agenda rows --
-  // a template-scheduled task's subtask occurrences (sharing an itemId + parentTitle) render as
+  // a template-scheduled task's subtask occurrences (sharing an itemId, each with a routine) render as
   // one bracketed block instead of one row each, and meals are interleaved among tasks/events by
   // wall-clock slot time (see sortKeyFor). Occurrence grouping mirrors the guardian agenda's
   // identical logic (see core/task-run.ts); meals have no backend equivalent to merge with --
@@ -265,8 +252,7 @@ export class ChildCalendar {
   // just the UI affordance so a child never sees an actionable checkbox for a day that hasn't
   // arrived yet, not the source of truth.
   protected canCompleteTask(occurrence: CalendarOccurrence): boolean {
-    const instant = instantFor(occurrence);
-    return !!instant && toIsoDateInTimeZone(instant, this.users.timeZoneId()) <= todayIsoDate();
+    return toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId()) <= todayIsoDate();
   }
 
   protected isCalendarHidden(calendarId: string): boolean {
@@ -288,19 +274,13 @@ export class ChildCalendar {
   }
 
   protected async toggleTask(occurrence: CalendarOccurrence): Promise<void> {
-    const instant = instantFor(occurrence);
-
-    if (!instant) {
-      return;
-    }
-
     const isCompleted = !occurrence.isCompleted;
 
     if (isCompleted && !this.canCompleteTask(occurrence)) {
       return;
     }
 
-    const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
+    const date = toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId());
     const key = occurrenceKey(occurrence);
 
     this.savingTaskId.set(key);
@@ -311,7 +291,7 @@ export class ChildCalendar {
         occurrence.itemId,
         date,
         isCompleted,
-        occurrence.subtaskId ?? null,
+        occurrence.routine?.subtaskId ?? null,
       );
       this.occurrences.update((current) =>
         current.map((existing) =>

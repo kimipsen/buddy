@@ -12,6 +12,7 @@ import {
 import { WorkDay, WorkLocation } from '../../../core/work-locations.service';
 import { assembleWeekPlan } from './assemble-week-plan';
 import { WeekPlanSources } from './week-plan-model';
+import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
 
 const TZ = 'Europe/Copenhagen';
 const OPTIONS = {
@@ -59,8 +60,10 @@ function sources(overrides: Partial<WeekPlanSources> = {}): WeekPlanSources {
   };
 }
 
-function occurrence(overrides: Partial<CalendarItemOccurrence>): CalendarItemOccurrence {
-  return {
+function occurrence(
+  overrides: Partial<FlatOccurrence<CalendarItemOccurrence>>,
+): CalendarItemOccurrence {
+  return nestOccurrence<CalendarItemOccurrence>({
     itemId: 'i',
     kind: 0,
     title: 'Item',
@@ -76,7 +79,7 @@ function occurrence(overrides: Partial<CalendarItemOccurrence>): CalendarItemOcc
     lastModifiedBy: 'dad',
     assignedTo: null,
     ...overrides,
-  };
+  });
 }
 
 describe('assembleWeekPlan', () => {
@@ -316,7 +319,7 @@ describe('assembleWeekPlan', () => {
             title: 'Brush',
             parentTitle: 'Morgenrutine',
             subtaskId: 's1',
-            dueAt: '2026-09-28T05:00:00Z',
+            startsAt: '2026-09-28T05:00:00Z',
             assignedTo: 'viggo',
           }),
           occurrence({
@@ -325,7 +328,7 @@ describe('assembleWeekPlan', () => {
             title: 'Dress',
             parentTitle: 'Morgenrutine',
             subtaskId: 's2',
-            dueAt: '2026-09-28T05:10:00Z',
+            startsAt: '2026-09-28T05:10:00Z',
             assignedTo: 'viggo',
           }),
         ],

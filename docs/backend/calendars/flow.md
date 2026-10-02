@@ -91,7 +91,7 @@ expanding; edits to the template also affect those existing items.
 
 The read model for listing belongs to the calendar index: the API loads calendar membership and permissions to decide whether the current principal can view or mutate the calendar. When a caller asks for occurrences, the system rehydrates the relevant aggregate and expands the calendar graph into a date-window view rather than persisting every computed occurrence.
 
-A task-item occurrence expanded from a template carries a `ParentIcon` alongside `ParentTitle` and `SubtaskId`, so a client can group same-item, same-day subtask occurrences into one visual "task run" without a second lookup. The frontend does exactly this (`task-run.ts`), and keys each run by an `occurrenceKey`/`dateKeyOf` pair that includes the occurrence date, so completing one day's instance of a recurring task only toggles that day.
+An occurrence's `Timing` is `{ kind: 0, startsAt, endsAt }` for an event and for each subtask of a template-scheduled task, or `{ kind: 1, dueAt }` for a plain task; `SortAt` is the start or due instant, which is what lists sort and date occurrences by. A task-item occurrence expanded from a template carries a `Routine` (`SubtaskId`, `ParentTitle`, `ParentIcon`), so a client can group same-item, same-day subtask occurrences into one visual "task run" without a second lookup. The frontend does exactly this (`task-run.ts`), and keys each run by an `occurrenceKey`/`dateKeyOf` pair that includes the occurrence date, so completing one day's instance of a recurring task only toggles that day.
 
 ## Authorization model
 

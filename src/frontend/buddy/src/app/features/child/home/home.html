@@ -368,12 +368,10 @@
                   <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{
                     'child.home.events.allDay' | translate
                   }}</span>
-                } @else if (event.startsAt) {
+                } @else if (event.timing.kind === 0) {
                   <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                    {{ event.startsAt | userDate: 'shortTime' }}
-                    @if (event.endsAt) {
-                      – {{ event.endsAt | userDate: 'shortTime' }}
-                    }
+                    {{ event.timing.startsAt | userDate: 'shortTime' }}
+                    – {{ event.timing.endsAt | userDate: 'shortTime' }}
                   </span>
                 }
               </li>

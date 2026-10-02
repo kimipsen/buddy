@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-4 and 5.1-5.3 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
+Status: Phases 0-4 and 5.1-5.4 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
 
 ## Context
 
@@ -576,6 +576,33 @@ Routine(Guid SubtaskId, string ParentTitle, string ParentIcon)
   `child-calendar.ts`, `tasks-today.ts`, `events-today.ts` and `task-run.ts`.
 - `Routine?` stays nullable, because "not a routine subtask" is the normal case.
 - Check while doing this: for subtask occurrences, `IconOverride` carries the *parent's* override.
+
+#### As built (5.4)
+
+- **Shape.** `OccurrenceTiming` is an abstract record pair (`Timed`, `Due`) with
+  `OccurrenceTimingJsonConverter` (`KindDiscriminatedJsonConverter`): wire `{ kind: 0, startsAt,
+  endsAt }` or `{ kind: 1, dueAt }`. It is a DTO-style hierarchy rather than a C# union because the
+  occurrence is a response type, never persisted. `SortAt` is a computed property, serialized as
+  `sortAt`. `Routine(SubtaskId, ParentTitle, ParentIcon)` replaces the three nullable fields.
+- **Behaviour change.** A routine subtask used to carry `StartsAt`, `EndsAt` *and* `DueAt` (= its
+  start). It is now `Timed` only. The frontend reads `sortAt` where it read that `dueAt`
+  (tasks-today overdue rollup, child home task order), so it orders and flags overdue the same way.
+- **Checked.** For a subtask occurrence, `IconOverride` is indeed the parent item's override; the
+  record's comment now says so.
+- **Consumers.** `IcalFeedWriter` switches on `(Kind, Timing)`: an event must be timed; any task
+  becomes a VTODO due at `SortAt`. The meal plan assistant and the expansion sort use `SortAt`.
+  Frontend: `startsAt ?? dueAt ?? ''` chains, the `Date | null` `instantFor` helpers and their
+  dead null branches are gone; templates switch on `timing.kind`.
+- **Specs.** `src/testing/occurrence-fixture.ts` (`nestOccurrence`) lets spec fixtures keep the flat
+  `startsAt`/`dueAt`/`subtaskId`/`parentTitle` fields and nests them the way the backend does.
+  It throws on a routine subtask without a `startsAt`, so subtask fixtures are timed as in
+  production. Tests of impossible states (an occurrence with no instant at all) were deleted, and
+  the subtask rows' unreachable due-time template branches removed. `GetIcalFeedTests` now covers
+  the VTODO arm too.
+- **Noticed, not changed.** The guardian `events-today` widget shows an event's start time even
+  when it is all-day (an all-day event's `startsAt` is local midnight); the child home doesn't. That was already the behaviour,
+  since real all-day events always had a `startsAt`; the deleted "no startsAt" test only made it
+  look covered.
 
 ### 5.5 Recurrence
 

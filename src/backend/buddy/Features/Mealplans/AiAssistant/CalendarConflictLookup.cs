@@ -43,7 +43,7 @@ public static class CalendarConflictLookup
                 calendarId, calendar.TimeZoneId, calendar.Icon, from, to, items, templates, cancellationToken));
         }
 
-        occurrences.Sort((a, b) => (a.StartsAt ?? a.DueAt)!.Value.CompareTo((b.StartsAt ?? b.DueAt)!.Value));
+        occurrences.Sort((a, b) => a.SortAt.CompareTo(b.SortAt));
 
         return occurrences;
     }

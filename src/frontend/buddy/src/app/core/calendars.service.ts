@@ -145,31 +145,29 @@ export interface CalendarItemOccurrence {
   // Raw override -- null if this occurrence's icon came from the calendar's default.
   iconOverride: string | null;
   color: string;
-  startsAt: string | null;
-  endsAt: string | null;
-  dueAt: string | null;
+  // An event, and each subtask of a routine, spans a window; a plain task is due at one instant.
+  timing: OccurrenceTiming;
+  // The instant this occurrence sorts and is dated by: the window's start, or the due instant.
+  sortAt: string;
   isAllDay: boolean;
   isCompleted: boolean;
   createdBy: string;
   lastModifiedBy: string;
   assignedTo: string | null;
-  // The parent item's own Title, set only when this occurrence is one subtask of a
-  // template-scheduled task (title above is the subtask's own title in that case). Null for every
-  // other occurrence -- lets the frontend group a routine's subtask occurrences under their
-  // shared parent. Optional (matching the backend's own "additive trailing field" comment on
-  // CalendarItemOccurrence) so every existing CalendarItemOccurrence/CalendarOccurrence object
-  // literal outside this step's scope (agenda/tasks-today/events-today/child-calendar/home specs)
-  // keeps compiling unchanged.
-  parentTitle?: string | null;
-  // The subtask's own id, set only for a template-scheduled task's per-subtask occurrence --
-  // required by setTaskCompletion to target the right subtask. Null otherwise. Optional for the
-  // same back-compat reason as parentTitle.
-  subtaskId?: string | null;
-  // The parent item's own effective icon, set alongside parentTitle -- icon above is the
-  // *subtask's* own icon (which can legitimately differ between sibling subtasks), so it's the
-  // wrong value for a grouped run's header. Null for every other occurrence. Optional for the
-  // same back-compat reason as parentTitle.
-  parentIcon?: string | null;
+  // Set only when this occurrence is one subtask of a template-scheduled task.
+  routine: Routine | null;
+}
+
+export type OccurrenceTiming =
+  { kind: 0; startsAt: string; endsAt: string } | { kind: 1; dueAt: string };
+
+// title on the occurrence is the subtask's own; parentTitle and parentIcon (the parent's
+// effective icon, which a grouped run's header uses instead of any one subtask's icon) let a
+// client group a routine's subtask occurrences. subtaskId targets setTaskCompletion.
+export interface Routine {
+  subtaskId: string;
+  parentTitle: string;
+  parentIcon: string;
 }
 
 export interface TaskCompletion {

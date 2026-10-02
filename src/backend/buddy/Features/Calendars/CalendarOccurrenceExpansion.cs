@@ -59,7 +59,7 @@ public static class CalendarOccurrenceExpansion
             }
         }
 
-        occurrences.Sort((a, b) => (a.StartsAt ?? a.DueAt)!.Value.CompareTo((b.StartsAt ?? b.DueAt)!.Value));
+        occurrences.Sort((a, b) => a.SortAt.CompareTo(b.SortAt));
 
         return occurrences;
     }
@@ -76,8 +76,8 @@ public static class CalendarOccurrenceExpansion
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
-                startsAt, endsAt, null, period.IsAllDay, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value, AssignedTo: null,
-                ParentTitle: null, SubtaskId: null, ParentIcon: null));
+                new OccurrenceTiming.Timed(startsAt, endsAt), period.IsAllDay, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value,
+                AssignedTo: null, Routine: null));
         }
     }
 
@@ -92,8 +92,8 @@ public static class CalendarOccurrenceExpansion
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
-                null, null, dueAt, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value, task.AssignedTo?.Value,
-                ParentTitle: null, SubtaskId: null, ParentIcon: null));
+                new OccurrenceTiming.Due(dueAt), due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value, task.AssignedTo?.Value,
+                Routine: null));
         }
     }
 
@@ -122,8 +122,8 @@ public static class CalendarOccurrenceExpansion
 
                 occurrences.Add(new CalendarItemOccurrence(
                     item.Id, item.Kind, subtask.Title, subtask.Icon?.Value ?? item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
-                    startsAt, endsAt, startsAt, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value, task.AssignedTo?.Value,
-                    ParentTitle: item.Title, SubtaskId: subtask.Id.Value, ParentIcon: item.Icon?.Value ?? calendarIcon.Value));
+                    new OccurrenceTiming.Timed(startsAt, endsAt), due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value,
+                    task.AssignedTo?.Value, new Routine(subtask.Id.Value, item.Title, item.Icon?.Value ?? calendarIcon.Value)));
 
                 offset += subtask.Duration;
             }

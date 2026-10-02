@@ -248,22 +248,19 @@ function calendarCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell
       // per item, so two different tasks that happen to share a title stay two tick boxes.
       const groups = new Map<string, string>();
       for (const o of onDay) {
-        const key = o.parentTitle
-          ? `${o.itemId}|routine`
-          : `${o.itemId}|${o.subtaskId ?? ''}|${start(o)}`;
+        const key = o.routine ? `${o.itemId}|routine` : `${o.itemId}||${o.sortAt}`;
         if (!groups.has(key)) {
-          groups.set(key, o.parentTitle ?? o.title);
+          groups.set(key, o.routine?.parentTitle ?? o.title);
         }
       }
       return { type: 'checklist', ...limit([...groups.values()], row.maxItems) };
     }
 
     const items = onDay.map((o): WeekPlanItem => {
-      const startsAt = start(o);
       return {
         time:
-          row.showTime && !o.isAllDay && startsAt !== null && startsOn(o, date, timeZone)
-            ? toTimeInTimeZone(new Date(startsAt), timeZone)
+          row.showTime && !o.isAllDay && startsOn(o, date, timeZone)
+            ? toTimeInTimeZone(new Date(o.sortAt), timeZone)
             : null,
         text: o.title,
         assignee:
@@ -286,7 +283,7 @@ function limit<T>(items: T[], maxItems: number | null): { items: T[]; overflow: 
 function dedupe(occurrences: CalendarItemOccurrence[]): CalendarItemOccurrence[] {
   const seen = new Set<string>();
   return occurrences.filter((o) => {
-    const key = `${o.itemId}|${o.subtaskId ?? ''}|${start(o)}`;
+    const key = `${o.itemId}|${o.routine?.subtaskId ?? ''}|${o.sortAt}`;
     if (seen.has(key)) {
       return false;
     }
@@ -295,29 +292,20 @@ function dedupe(occurrences: CalendarItemOccurrence[]): CalendarItemOccurrence[]
   });
 }
 
-function start(o: CalendarItemOccurrence): string | null {
-  return o.startsAt ?? o.dueAt;
-}
-
 function startsOn(o: CalendarItemOccurrence, date: string, timeZone: string): boolean {
-  const value = start(o);
-  return !!value && toIsoDateInTimeZone(new Date(value), timeZone) === date;
+  return toIsoDateInTimeZone(new Date(o.sortAt), timeZone) === date;
 }
 
 // Every local date an occurrence touches: [startsAt, endsAt) for events (endsAt is exclusive, so
 // an all-day event ending at midnight doesn't spill into the next day), the due date for tasks.
 function coveredDates(o: CalendarItemOccurrence, timeZone: string): string[] {
-  const value = start(o);
-  if (!value) {
-    return [];
-  }
-
-  const first = toIsoDateInTimeZone(new Date(value), timeZone);
-  if (!o.startsAt || !o.endsAt || new Date(o.endsAt) <= new Date(o.startsAt)) {
+  const first = toIsoDateInTimeZone(new Date(o.sortAt), timeZone);
+  const { timing } = o;
+  if (timing.kind !== 0 || new Date(timing.endsAt) <= new Date(timing.startsAt)) {
     return [first];
   }
 
-  const last = toIsoDateInTimeZone(new Date(new Date(o.endsAt).getTime() - 1), timeZone);
+  const last = toIsoDateInTimeZone(new Date(new Date(timing.endsAt).getTime() - 1), timeZone);
   const dates = [first];
   for (let date = first; date < last;) {
     date = addDaysIso(date, 1);
@@ -330,7 +318,7 @@ function byAllDayThenStart(a: CalendarItemOccurrence, b: CalendarItemOccurrence)
   if (a.isAllDay !== b.isAllDay) {
     return a.isAllDay ? -1 : 1;
   }
-  return new Date(start(a) ?? 0).getTime() - new Date(start(b) ?? 0).getTime();
+  return new Date(a.sortAt).getTime() - new Date(b.sortAt).getTime();
 }
 
 function text(value: WeekPlanText): WeekPlanCell {

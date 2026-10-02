@@ -8,7 +8,7 @@ import {
   CalendarsService,
   TaskCompletion,
 } from '../../../core/calendars.service';
-import { todayIsoDate } from '../../../core/date-utils';
+import { addDaysIso, todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { Meal, MealPlanEntry, MealplansService } from '../../../core/mealplans.service';
 import { MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
@@ -16,6 +16,7 @@ import { PickupOccurrence, PickupsService } from '../../../core/pickups.service'
 import { ProgressService } from '../../../core/progress.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildHome } from './home';
+import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
 
 describe('ChildHome', () => {
   const currentUser: CurrentUser = {
@@ -43,17 +44,17 @@ describe('ChildHome', () => {
     return { promise, resolve, reject };
   }
 
-  function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
-    return {
+  function occurrence(
+    overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
+  ): CalendarOccurrence {
+    return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
       kind: 1,
       title: 'Item',
       icon: '🧹',
       iconOverride: null,
       color: '#000',
-      startsAt: null,
-      endsAt: null,
-      dueAt: null,
+      dueAt: `${today}T12:00:00Z`,
       isAllDay: false,
       isCompleted: false,
       createdBy: 'guardian-1',
@@ -62,7 +63,7 @@ describe('ChildHome', () => {
       calendarId: 'cal-1',
       calendarName: 'Home',
       ...overrides,
-    };
+    });
   }
 
   function doseOccurrence(overrides: Partial<MedicineDoseOccurrence> = {}): MedicineDoseOccurrence {
@@ -351,16 +352,14 @@ describe('ChildHome', () => {
   });
 
   it("toggles a task's completion", async () => {
-    const task: CalendarOccurrence = {
+    const task = nestOccurrence<CalendarOccurrence>({
       itemId: 'task-1',
       kind: 1,
       title: 'Clean room',
       icon: '🧹',
       iconOverride: null,
       color: '#000',
-      startsAt: null,
-      endsAt: null,
-      dueAt: null,
+      dueAt: `${today}T09:00:00Z`,
       isAllDay: false,
       isCompleted: false,
       createdBy: 'guardian-1',
@@ -368,7 +367,7 @@ describe('ChildHome', () => {
       assignedTo: 'child-1',
       calendarId: 'cal-1',
       calendarName: 'Home',
-    };
+    });
     const completion: TaskCompletion = {
       itemId: 'task-1',
       occurrenceDate: today,
@@ -391,16 +390,15 @@ describe('ChildHome', () => {
 
   it('completing one subtask of a template-scheduled run does not flip its sibling subtasks (the compound-key fix)', async () => {
     function subtask(subtaskId: string, title: string): CalendarOccurrence {
-      return {
+      return nestOccurrence<CalendarOccurrence>({
         itemId: 'run-1',
         kind: 1,
         title,
         icon: '🧹',
         iconOverride: null,
         color: '#000',
-        startsAt: null,
-        endsAt: null,
-        dueAt: null,
+        startsAt: `${today}T07:00:00Z`,
+        endsAt: `${today}T07:10:00Z`,
         isAllDay: false,
         isCompleted: false,
         createdBy: 'guardian-1',
@@ -410,7 +408,7 @@ describe('ChildHome', () => {
         calendarName: 'Home',
         parentTitle: 'Morning routine',
         subtaskId,
-      };
+      });
     }
 
     const subtasks = [subtask('sub-1', 'Brush teeth'), subtask('sub-2', 'Get dressed')];
@@ -450,16 +448,15 @@ describe('ChildHome', () => {
 
   it("groups a template-scheduled run's subtasks under their parent task's title", async () => {
     function subtask(subtaskId: string, title: string): CalendarOccurrence {
-      return {
+      return nestOccurrence<CalendarOccurrence>({
         itemId: 'run-1',
         kind: 1,
         title,
         icon: '🧹',
         iconOverride: null,
         color: '#000',
-        startsAt: null,
-        endsAt: null,
-        dueAt: null,
+        startsAt: `${today}T07:00:00Z`,
+        endsAt: `${today}T07:10:00Z`,
         isAllDay: false,
         isCompleted: false,
         createdBy: 'guardian-1',
@@ -469,7 +466,7 @@ describe('ChildHome', () => {
         calendarName: 'Home',
         parentTitle: 'Go to bed',
         subtaskId,
-      };
+      });
     }
 
     const subtasks = [subtask('sub-1', 'Brush teeth'), subtask('sub-2', 'Put on pajamas')];
@@ -486,7 +483,7 @@ describe('ChildHome', () => {
   });
 
   it("shows today's events including their time", async () => {
-    const event: CalendarOccurrence = {
+    const event = nestOccurrence<CalendarOccurrence>({
       itemId: 'event-1',
       kind: 0,
       title: 'Soccer practice',
@@ -503,7 +500,7 @@ describe('ChildHome', () => {
       assignedTo: null,
       calendarId: 'cal-1',
       calendarName: 'Home',
-    };
+    });
 
     const { fixture } = await setup({
       calendars: { listTodayOccurrences: vi.fn(async () => [event]) },
@@ -921,9 +918,8 @@ describe('ChildHome', () => {
     const taskTitles = (compiled: HTMLElement) =>
       sectionRows(compiled, 'Tasks today').map((row) => rowText(row));
 
-    it('lists only tasks, those with a due time first in due order, then undated ones in their original order', async () => {
+    it('lists only tasks, in due order', async () => {
       const occurrences = [
-        occurrence({ itemId: 't-a', title: 'Alpha', dueAt: null }),
         occurrence({ itemId: 't-b', title: 'Bravo', dueAt: `${today}T10:00:00Z` }),
         occurrence({
           itemId: 'e-1',
@@ -934,9 +930,7 @@ describe('ChildHome', () => {
           endsAt: `${today}T16:00:00Z`,
         }),
         occurrence({ itemId: 't-c', title: 'Charlie', dueAt: `${today}T09:00:00Z` }),
-        occurrence({ itemId: 't-d', title: 'Delta', dueAt: null }),
         occurrence({ itemId: 't-e', title: 'Echo', dueAt: `${today}T11:00:00Z` }),
-        occurrence({ itemId: 't-f', title: 'Foxtrot', dueAt: null }),
       ];
       const { fixture } = await setup({
         calendars: { listTodayOccurrences: vi.fn(async () => occurrences) },
@@ -947,9 +941,6 @@ describe('ChildHome', () => {
         '🧹 Charlie',
         '🧹 Bravo',
         '🧹 Echo',
-        '🧹 Alpha',
-        '🧹 Delta',
-        '🧹 Foxtrot',
       ]);
     });
 
@@ -1027,9 +1018,20 @@ describe('ChildHome', () => {
     const gradient = (percent: number) =>
       `linear-gradient(to right, rgb(203, 213, 225) ${percent}%, transparent ${percent}%) transparent`;
 
-    it('lists only events, timed ones first by start, then untimed ones in their original order', async () => {
+    // An all-day event starts at the day's local midnight, so it sorts ahead of the timed ones.
+    it('lists only events, in start order', async () => {
+      const allDay = (itemId: string, title: string) =>
+        occurrence({
+          itemId,
+          kind: 0,
+          title,
+          icon: '⚽',
+          isAllDay: true,
+          startsAt: at('00:00:00'),
+          endsAt: `${addDaysIso(today, 1)}T00:00:00Z`,
+        });
       const { fixture } = await setupEvents([
-        occurrence({ itemId: 'e-a', kind: 0, title: 'Alpha', icon: '⚽', isAllDay: true }),
+        allDay('e-a', 'Alpha'),
         occurrence({
           itemId: 'e-b',
           kind: 0,
@@ -1047,7 +1049,7 @@ describe('ChildHome', () => {
           startsAt: at('14:00:00'),
           endsAt: at('15:00:00'),
         }),
-        occurrence({ itemId: 'e-d', kind: 0, title: 'Delta', icon: '⚽', isAllDay: true }),
+        allDay('e-d', 'Delta'),
         occurrence({
           itemId: 'e-e',
           kind: 0,
@@ -1056,13 +1058,13 @@ describe('ChildHome', () => {
           startsAt: at('16:00:00'),
           endsAt: at('17:00:00'),
         }),
-        occurrence({ itemId: 'e-f', kind: 0, title: 'Foxtrot', icon: '⚽', isAllDay: true }),
+        allDay('e-f', 'Foxtrot'),
       ]);
 
       const titles = sectionRows(fixture.nativeElement as HTMLElement, 'Events today').map(
         (row) => rowText(row).split(' ')[1],
       );
-      expect(titles).toEqual(['Charlie', 'Echo', 'Bravo', 'Alpha', 'Delta', 'Foxtrot']);
+      expect(titles).toEqual(['Alpha', 'Delta', 'Foxtrot', 'Charlie', 'Echo', 'Bravo']);
     });
 
     it('marks past, ongoing, and upcoming events from the current time', async () => {
@@ -1124,7 +1126,6 @@ describe('ChildHome', () => {
           startsAt: at('00:00:00'),
           endsAt: at('23:59:00'),
         }),
-        occurrence({ itemId: 'untimed', kind: 0, title: 'Untimed', icon: '⚽' }),
       ]);
 
       const states = sectionRows(fixture.nativeElement as HTMLElement, 'Events today').map(
@@ -1138,7 +1139,6 @@ describe('ChildHome', () => {
         { title: '⚽ StartsNow', isPast: false, background: gradient(0) },
         { title: '⚽ Instant ✓', isPast: true, background: '' },
         { title: '⚽ Upcoming', isPast: false, background: '' },
-        { title: '⚽ Untimed', isPast: false, background: '' },
       ]);
     });
 

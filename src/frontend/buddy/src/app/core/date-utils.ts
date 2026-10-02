@@ -75,7 +75,7 @@ export function browserTimeZoneId(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
-// Groups a resolved instant (e.g. a calendar occurrence's startsAt/dueAt) by calendar day in a
+// Groups a resolved instant (e.g. a calendar occurrence's sortAt) by calendar day in a
 // specific IANA time zone -- unlike toIsoDate, which reads the browser's own local time zone via
 // Date getters, this must use the zone the occurrence is actually being viewed in (the signed-in
 // user's stored time zone, the same one UserDatePipe renders with). "en-CA" formats as

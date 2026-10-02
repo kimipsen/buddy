@@ -52,6 +52,27 @@ public sealed class GetIcalFeedTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_task_is_written_as_a_todo_due_at_its_due_instant()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, "Feed Task");
+        var issued = await CalendarTestHelpers.CreateIcalTokenAsync(fixture, token, calendarId);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.Get.Url($"/calendars/{calendarId}/ical/{issued.Token}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var ics = response.ReadAsText();
+        Assert.Contains("BEGIN:VTODO", ics);
+        Assert.Contains("SUMMARY:Feed Task", ics);
+        Assert.Matches(@"DUE:\d{8}T\d{6}Z", ics);
+        Assert.DoesNotContain("BEGIN:VEVENT", ics);
+    }
+
+    [Fact]
     public async Task An_invalid_token_returns_not_found()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();

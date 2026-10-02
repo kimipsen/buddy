@@ -89,10 +89,11 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
         // Back-to-back: the second subtask starts exactly when the first ends.
         Assert.Equal(first.EndsAt, second.StartsAt);
 
-        // DueAt is populated the same way a plain task's is, so existing overdue-filtering/
-        // frontend logic keyed off it keeps working without special-casing.
-        Assert.Equal(first.StartsAt, first.DueAt);
-        Assert.Equal(second.StartsAt, second.DueAt);
+        // A subtask is timed (kind 0) with no due instant of its own; it sorts by its start.
+        Assert.Equal(0, first.Timing.Kind);
+        Assert.Null(first.DueAt);
+        Assert.Equal(first.StartsAt, first.SortAt);
+        Assert.Equal(second.StartsAt, second.SortAt);
     }
 
     [Fact]

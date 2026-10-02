@@ -31,7 +31,7 @@ export interface TaskRollup {
   icon: string;
   color: string;
   assignedTo: string | null;
-  dueAt: string | null;
+  dueAt: string;
   isAllDay: boolean;
   completedCount: number;
   totalCount: number;
@@ -48,7 +48,7 @@ function toRollup(entry: AgendaEntry): TaskRollup {
       icon: entry.icon,
       color: entry.color,
       assignedTo: entry.assignedTo,
-      dueAt: entry.dueAt,
+      dueAt: entry.sortAt,
       isAllDay: entry.isAllDay,
       completedCount: entry.isCompleted ? 1 : 0,
       totalCount: 1,
@@ -56,10 +56,10 @@ function toRollup(entry: AgendaEntry): TaskRollup {
     };
   }
 
-  // "Overdue" for the whole run reads off its LAST subtask's due time -- that's when the entire
-  // routine should have been finished, not when its first step was due.
+  // "Overdue" for the whole run reads off its LAST subtask's start -- that's when the entire
+  // routine should have been under way, not when its first step was.
   const last = entry.subtasks.reduce((latest, occurrence) =>
-    (occurrence.dueAt ?? '') > (latest.dueAt ?? '') ? occurrence : latest,
+    occurrence.sortAt > latest.sortAt ? occurrence : latest,
   );
 
   return {
@@ -70,7 +70,7 @@ function toRollup(entry: AgendaEntry): TaskRollup {
     icon: entry.icon,
     color: entry.color,
     assignedTo: last.assignedTo,
-    dueAt: last.dueAt,
+    dueAt: last.sortAt,
     isAllDay: last.isAllDay,
     completedCount: entry.subtasks.filter((occurrence) => occurrence.isCompleted).length,
     totalCount: entry.subtasks.length,
@@ -135,7 +135,7 @@ export class TasksToday implements OnInit {
         task.itemId,
         date,
         isCompleted,
-        task.subtaskId ?? null,
+        task.routine?.subtaskId ?? null,
       );
 
       const applyCompletion = (existing: TaskRollup): TaskRollup =>
@@ -171,7 +171,7 @@ export class TasksToday implements OnInit {
       const rollups = groupTaskRuns(tasks).map(toRollup);
       const now = Date.now();
       const isOverdue = (rollup: TaskRollup) =>
-        !rollup.isAllDay && rollup.dueAt !== null && new Date(rollup.dueAt).getTime() < now;
+        !rollup.isAllDay && new Date(rollup.dueAt).getTime() < now;
 
       this.overdue.set(rollups.filter(isOverdue));
       this.dueToday.set(rollups.filter((rollup) => !isOverdue(rollup)));

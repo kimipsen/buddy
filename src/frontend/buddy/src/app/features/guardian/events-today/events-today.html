@@ -34,9 +34,9 @@
             }
           </span>
           <span class="text-xs text-slate-400">{{ event.calendarName }}</span>
-          @if (event.startsAt) {
+          @if (event.timing.kind === 0) {
             <span class="ml-auto text-xs font-semibold text-slate-500 dark:text-slate-400">{{
-              event.startsAt | userDate: 'shortTime'
+              event.timing.startsAt | userDate: 'shortTime'
             }}</span>
           }
         </li>

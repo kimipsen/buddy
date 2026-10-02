@@ -6,13 +6,16 @@ import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.se
 import { todayIsoDate } from '../../../core/date-utils';
 import { UsersService } from '../../../core/users.service';
 import { EventsToday } from './events-today';
+import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
 
 describe('EventsToday', () => {
   const today = todayIsoDate();
 
   // kind 0 = Event, 1 = Task -- see CalendarItemKind in calendars.service.ts.
-  function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
-    return {
+  function occurrence(
+    overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
+  ): CalendarOccurrence {
+    return nestOccurrence<CalendarOccurrence>({
       itemId: 'event-1',
       kind: 0,
       title: 'Dentist',
@@ -30,7 +33,7 @@ describe('EventsToday', () => {
       calendarId: 'cal-1',
       calendarName: 'Home',
       ...overrides,
-    };
+    });
   }
 
   interface Stubs {
@@ -133,25 +136,6 @@ describe('EventsToday', () => {
     // The template's ml-auto span only renders `@if (event.startsAt)`.
     const timeSpan = item?.querySelector('.ml-auto');
     expect(timeSpan?.textContent?.trim()).not.toBe('');
-  });
-
-  it('omits the time span for an event with no startsAt', async () => {
-    const untimed = occurrence({
-      itemId: 'untimed',
-      title: 'Field trip',
-      startsAt: null,
-      isAllDay: true,
-    });
-    const { fixture } = await setup({
-      calendars: { listTodayOccurrences: vi.fn(async () => [untimed]) },
-    });
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    const item = Array.from(compiled.querySelectorAll('li')).find((li) =>
-      li.textContent?.includes('Field trip'),
-    );
-    expect(item?.querySelector('.ml-auto')).toBeFalsy();
   });
 
   it('shows only events, filtering out tasks from the same mixed response', async () => {

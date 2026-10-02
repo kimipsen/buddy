@@ -256,7 +256,7 @@ export class ChildHome implements OnInit, OnDestroy {
         task.itemId,
         todayIsoDate(),
         isCompleted,
-        task.subtaskId ?? null,
+        task.routine?.subtaskId ?? null,
       );
       this.tasks.update((current) =>
         current.map((existing) =>
@@ -408,43 +408,31 @@ export class ChildHome implements OnInit, OnDestroy {
 
     const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
 
-    tasks.sort((a, b) => {
-      if (a.dueAt === null) {
-        // Stryker disable next-line ConditionalExpression,EqualityOperator: this branch only returns 0 or 1 and V8's Array.prototype.sort only checks the comparator result with `< 0`, so every variant sorts the same
-        return b.dueAt === null ? 0 : 1;
-      }
-
-      return b.dueAt === null ? -1 : a.dueAt.localeCompare(b.dueAt);
-    });
+    tasks.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
 
     this.tasks.set(tasks);
 
     const events = occurrences.filter((occurrence) => occurrence.kind === EVENT_KIND);
 
-    events.sort((a, b) => {
-      if (a.startsAt === null) {
-        // Stryker disable next-line ConditionalExpression,EqualityOperator: this branch only returns 0 or 1 and V8's Array.prototype.sort only checks the comparator result with `< 0`, so every variant sorts the same
-        return b.startsAt === null ? 0 : 1;
-      }
-
-      return b.startsAt === null ? -1 : a.startsAt.localeCompare(b.startsAt);
-    });
+    events.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
 
     this.events.set(events);
   }
 
-  // All-day events have no startsAt/endsAt to measure against, so they never read as past or
+  // All-day events have no time of day to measure against, so they never read as past or
   // ongoing here -- they stay "current" for the whole day, same as their allDay badge implies.
   private eventProgress(
     event: CalendarOccurrence,
     nowMs: number,
   ): { isPast: boolean; isOngoing: boolean; progressPercent: number } {
-    if (event.isAllDay || event.startsAt === null) {
+    const { timing } = event;
+
+    if (event.isAllDay || timing.kind !== 0) {
       return { isPast: false, isOngoing: false, progressPercent: 0 };
     }
 
-    const startMs = new Date(event.startsAt).getTime();
-    const endMs = event.endsAt !== null ? new Date(event.endsAt).getTime() : startMs;
+    const startMs = new Date(timing.startsAt).getTime();
+    const endMs = new Date(timing.endsAt).getTime();
 
     if (nowMs >= endMs) {
       return { isPast: true, isOngoing: false, progressPercent: 100 };

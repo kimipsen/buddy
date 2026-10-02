@@ -56,18 +56,20 @@ export class EventsToday implements OnInit, OnDestroy {
     return `linear-gradient(to right, rgb(203 213 225) ${clamped}%, transparent ${clamped}%)`;
   }
 
-  // All-day events have no startsAt/endsAt to measure against, so they never read as past or
+  // All-day events have no time of day to measure against, so they never read as past or
   // ongoing here -- they stay "current" for the whole day, same as their allDay badge implies.
   private eventProgress(
     event: CalendarOccurrence,
     nowMs: number,
   ): { isPast: boolean; isOngoing: boolean; progressPercent: number } {
-    if (event.isAllDay || event.startsAt === null) {
+    const { timing } = event;
+
+    if (event.isAllDay || timing.kind !== 0) {
       return { isPast: false, isOngoing: false, progressPercent: 0 };
     }
 
-    const startMs = new Date(event.startsAt).getTime();
-    const endMs = event.endsAt !== null ? new Date(event.endsAt).getTime() : startMs;
+    const startMs = new Date(timing.startsAt).getTime();
+    const endMs = new Date(timing.endsAt).getTime();
 
     if (nowMs >= endMs) {
       return { isPast: true, isOngoing: false, progressPercent: 100 };
@@ -91,7 +93,7 @@ export class EventsToday implements OnInit, OnDestroy {
       this.events.set(
         occurrences
           .filter((occurrence) => occurrence.kind === EVENT_KIND)
-          .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? '')),
+          .sort((a, b) => a.sortAt.localeCompare(b.sortAt)),
       );
     } catch {
       this.error.set('dashboard.events.loadError');

@@ -4,14 +4,17 @@ import { describe, expect, it } from 'vitest';
 import { CalendarOccurrence } from '../../../../../core/calendars.service';
 import { AgendaDay } from '../agenda';
 import { MonthGrid } from './month-grid';
+import { FlatOccurrence, nestOccurrence } from '../../../../../../testing/occurrence-fixture';
 
 describe('MonthGrid', () => {
   function day(date: string, isCurrentMonth = true): AgendaDay {
     return { date, label: String(Number(date.slice(-2))), isCurrentMonth };
   }
 
-  function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
-    return {
+  function occurrence(
+    overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
+  ): CalendarOccurrence {
+    return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
       kind: 0,
       title: 'Dentist',
@@ -29,7 +32,7 @@ describe('MonthGrid', () => {
       calendarId: 'cal-1',
       calendarName: 'Home',
       ...overrides,
-    };
+    });
   }
 
   async function setup(inputs: {

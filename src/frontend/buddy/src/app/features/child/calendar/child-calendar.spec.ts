@@ -12,6 +12,7 @@ import { toIsoDate, todayIsoDate } from '../../../core/date-utils';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildCalendar } from './child-calendar';
+import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
 
 describe('ChildCalendar', () => {
   const today = todayIsoDate();
@@ -36,8 +37,10 @@ describe('ChildCalendar', () => {
     return { id: 'cal-1', name: 'Home', icon: '🏠', role: 2, ...overrides };
   }
 
-  function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
-    return {
+  function occurrence(
+    overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
+  ): CalendarOccurrence {
+    return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
       kind: 0,
       title: 'Dentist',
@@ -55,7 +58,7 @@ describe('ChildCalendar', () => {
       calendarId: 'cal-1',
       calendarName: 'Home',
       ...overrides,
-    };
+    });
   }
 
   function mealEntry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
@@ -509,9 +512,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         title: 'Brush teeth',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:00:00Z`,
+        startsAt: `${today}T08:00:00Z`,
       }),
       occurrence({
         itemId: 'run-1',
@@ -519,9 +520,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         title: 'Get dressed',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:10:00Z`,
+        startsAt: `${today}T08:10:00Z`,
       }),
       occurrence({
         itemId: 'run-1',
@@ -529,9 +528,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-3',
         parentTitle: 'Morning routine',
         title: 'Eat breakfast',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:20:00Z`,
+        startsAt: `${today}T08:20:00Z`,
       }),
     ];
 
@@ -556,9 +553,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-3',
         parentTitle: 'Morning routine',
         title: 'Eat breakfast',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:20:00Z`,
+        startsAt: `${today}T08:20:00Z`,
       }),
       occurrence({
         itemId: 'run-1',
@@ -566,9 +561,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         title: 'Brush teeth',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:00:00Z`,
+        startsAt: `${today}T08:00:00Z`,
       }),
       occurrence({
         itemId: 'run-1',
@@ -576,9 +569,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         title: 'Get dressed',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:10:00Z`,
+        startsAt: `${today}T08:10:00Z`,
       }),
     ];
 
@@ -605,9 +596,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         title: 'Brush teeth',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:00:00Z`,
+        startsAt: `${today}T08:00:00Z`,
       }),
       occurrence({
         itemId: 'run-1',
@@ -615,9 +604,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         title: 'Get dressed',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:10:00Z`,
+        startsAt: `${today}T08:10:00Z`,
       }),
       occurrence({
         itemId: 'run-1',
@@ -625,9 +612,7 @@ describe('ChildCalendar', () => {
         subtaskId: 'sub-3',
         parentTitle: 'Morning routine',
         title: 'Eat breakfast',
-        startsAt: null,
-        endsAt: null,
-        dueAt: `${today}T08:20:00Z`,
+        startsAt: `${today}T08:20:00Z`,
       }),
     ];
 

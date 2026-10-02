@@ -42,19 +42,19 @@ public sealed class CalendarOccurrenceExpansionTests
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
             FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
 
-        var ordered = occurrences.OrderBy(o => o.StartsAt).ToArray();
+        var ordered = occurrences.OrderBy(o => o.SortAt).ToArray();
         Assert.Equal(2, ordered.Length);
 
         Assert.Equal("Brush teeth", ordered[0].Title);
-        Assert.Equal("Morning routine", ordered[0].ParentTitle);
-        Assert.Equal(TimeSpan.FromMinutes(10), ordered[0].EndsAt!.Value - ordered[0].StartsAt!.Value);
+        Assert.Equal("Morning routine", ordered[0].Routine?.ParentTitle);
+        Assert.Equal(TimeSpan.FromMinutes(10), Duration(ordered[0]));
 
         Assert.Equal("Get dressed", ordered[1].Title);
-        Assert.Equal(ordered[0].EndsAt, ordered[1].StartsAt);
-        Assert.Equal(TimeSpan.FromMinutes(15), ordered[1].EndsAt!.Value - ordered[1].StartsAt!.Value);
+        Assert.Equal(Timed(ordered[0]).EndsAt, Timed(ordered[1]).StartsAt);
+        Assert.Equal(TimeSpan.FromMinutes(15), Duration(ordered[1]));
 
-        // DueAt mirrors StartsAt, same as a plain task's occurrence.
-        Assert.Equal(ordered[0].StartsAt, ordered[0].DueAt);
+        // A subtask sorts by its start.
+        Assert.Equal(Timed(ordered[0]).StartsAt, ordered[0].SortAt);
     }
 
     // ParentIcon must read off the parent item (falling back to the calendar), never the
@@ -76,7 +76,7 @@ public sealed class CalendarOccurrenceExpansionTests
 
         var occurrence = Assert.Single(occurrences);
         Assert.Equal("toothbrush", occurrence.Icon);
-        Assert.Equal("moon", occurrence.ParentIcon);
+        Assert.Equal("moon", occurrence.Routine?.ParentIcon);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
             FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
 
-        Assert.Equal(CalendarIcon.Value, Assert.Single(occurrences).ParentIcon);
+        Assert.Equal(CalendarIcon.Value, Assert.Single(occurrences).Routine?.ParentIcon);
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), added);
 
         var before = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
-        Assert.Equal(TimeSpan.FromMinutes(10), Assert.Single(before).EndsAt!.Value - Assert.Single(before).StartsAt!.Value);
+        Assert.Equal(TimeSpan.FromMinutes(10), Duration(Assert.Single(before)));
 
         // No new CalendarItem event at all -- only the template changes.
         var updated = new SubtaskUpdated(FixedTemplateId, subtaskId, added.Subtask, added.Subtask with { Duration = TimeSpan.FromMinutes(20) }, FixedUserId, DateTimeOffset.UtcNow);
@@ -111,7 +111,7 @@ public sealed class CalendarOccurrenceExpansionTests
 
         var after = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
         var afterOccurrence = Assert.Single(after);
-        Assert.Equal(TimeSpan.FromMinutes(20), afterOccurrence.EndsAt!.Value - afterOccurrence.StartsAt!.Value);
+        Assert.Equal(TimeSpan.FromMinutes(20), Duration(afterOccurrence));
     }
 
     [Fact]
@@ -162,22 +162,28 @@ public sealed class CalendarOccurrenceExpansionTests
 
         var occurrences = (await CalendarOccurrenceExpansion.ExpandAsync(
             FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None))
-            .OrderBy(o => o.StartsAt)
+            .OrderBy(o => o.SortAt)
             .ToArray();
 
         Assert.Equal(3, occurrences.Length);
 
         var expectedStart = new DateTimeOffset(2026, 3, 29, 0, 0, 0, TimeSpan.Zero);
-        Assert.Equal(expectedStart, occurrences[0].StartsAt);
-        Assert.Equal(expectedStart.AddMinutes(30), occurrences[0].EndsAt);
+        Assert.Equal(expectedStart, Timed(occurrences[0]).StartsAt);
+        Assert.Equal(expectedStart.AddMinutes(30), Timed(occurrences[0]).EndsAt);
 
-        Assert.Equal(expectedStart.AddMinutes(30), occurrences[1].StartsAt);
+        Assert.Equal(expectedStart.AddMinutes(30), Timed(occurrences[1]).StartsAt);
         // The correct, DST-aware boundary -- 30 real minutes elapsed, not the naive 90.
-        Assert.Equal(expectedStart.AddMinutes(60), occurrences[1].EndsAt);
+        Assert.Equal(expectedStart.AddMinutes(60), Timed(occurrences[1]).EndsAt);
 
-        Assert.Equal(expectedStart.AddMinutes(60), occurrences[2].StartsAt);
-        Assert.Equal(expectedStart.AddMinutes(90), occurrences[2].EndsAt);
+        Assert.Equal(expectedStart.AddMinutes(60), Timed(occurrences[2]).StartsAt);
+        Assert.Equal(expectedStart.AddMinutes(90), Timed(occurrences[2]).EndsAt);
     }
+
+    private static OccurrenceTiming.Timed Timed(CalendarItemOccurrence occurrence) =>
+        Assert.IsType<OccurrenceTiming.Timed>(occurrence.Timing);
+
+    private static TimeSpan Duration(CalendarItemOccurrence occurrence) =>
+        Timed(occurrence).EndsAt - Timed(occurrence).StartsAt;
 }
 
 internal sealed class FakeCalendarItemEventStore : ICalendarItemEventStore

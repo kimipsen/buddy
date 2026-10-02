@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
 
@@ -20,36 +22,36 @@ public static class IcalFeedWriter
 
         foreach (var occurrence in occurrences)
         {
-            if (occurrence.Kind == CalendarItemKind.Event)
+            switch (occurrence.Kind, occurrence.Timing)
             {
-                calendar.Events.Add(new IcsEvent
-                {
-                    Uid = BuildUid(occurrence.ItemId, occurrence.StartsAt!.Value),
-                    Summary = occurrence.Title,
-                    // An all-day event is written with date-only (VALUE=DATE) start/end -- the
-                    // occurrence's own local date, not UtcDateTime, so the day doesn't shift across a
-                    // UTC boundary. CalendarEvent.IsAllDay is computed from DtStart/DtEnd having no
-                    // time component, so nothing else needs to be set for it to read as all-day.
-                    DtStart = occurrence.IsAllDay
-                        ? new CalDateTime(DateOnly.FromDateTime(occurrence.StartsAt.Value.DateTime))
-                        : new CalDateTime(occurrence.StartsAt.Value.UtcDateTime, "UTC"),
-                    DtEnd = occurrence.IsAllDay
-                        ? new CalDateTime(DateOnly.FromDateTime(occurrence.EndsAt!.Value.DateTime))
-                        : new CalDateTime(occurrence.EndsAt!.Value.UtcDateTime, "UTC"),
-                    DtStamp = stamp,
-                });
-            }
-            else
-            {
-                calendar.Todos.Add(new IcsTodo
-                {
-                    Uid = BuildUid(occurrence.ItemId, occurrence.DueAt!.Value),
-                    Summary = occurrence.Title,
-                    Due = occurrence.IsAllDay
-                        ? new CalDateTime(DateOnly.FromDateTime(occurrence.DueAt!.Value.DateTime))
-                        : new CalDateTime(occurrence.DueAt!.Value.UtcDateTime, "UTC"),
-                    DtStamp = stamp,
-                });
+                case (CalendarItemKind.Event, OccurrenceTiming.Timed timed):
+                    calendar.Events.Add(new IcsEvent
+                    {
+                        Uid = BuildUid(occurrence.ItemId, timed.StartsAt),
+                        Summary = occurrence.Title,
+                        // An all-day event is written with date-only (VALUE=DATE) start/end -- the
+                        // occurrence's own local date, not UtcDateTime, so the day doesn't shift across
+                        // a UTC boundary. CalendarEvent.IsAllDay is computed from DtStart/DtEnd having
+                        // no time component, so nothing else needs to be set for it to read as all-day.
+                        DtStart = ToCalDateTime(timed.StartsAt, occurrence.IsAllDay),
+                        DtEnd = ToCalDateTime(timed.EndsAt, occurrence.IsAllDay),
+                        DtStamp = stamp,
+                    });
+                    break;
+
+                // A plain task is due at its instant; a routine subtask is a to-do due at its start.
+                case (CalendarItemKind.Task, _):
+                    calendar.Todos.Add(new IcsTodo
+                    {
+                        Uid = BuildUid(occurrence.ItemId, occurrence.SortAt),
+                        Summary = occurrence.Title,
+                        Due = ToCalDateTime(occurrence.SortAt, occurrence.IsAllDay),
+                        DtStamp = stamp,
+                    });
+                    break;
+
+                default:
+                    throw new UnreachableException($"An event occurrence must be timed: {occurrence.ItemId.Value}.");
             }
         }
 
@@ -57,6 +59,9 @@ public static class IcalFeedWriter
         // for a non-null Calendar instance.
         return new CalendarSerializer().SerializeToString(calendar)!;
     }
+
+    private static CalDateTime ToCalDateTime(DateTimeOffset instant, bool isAllDay) =>
+        isAllDay ? new CalDateTime(DateOnly.FromDateTime(instant.DateTime)) : new CalDateTime(instant.UtcDateTime, "UTC");
 
     // Each occurrence of a recurring item needs its own UID (RFC 5545 identifies a single
     // VEVENT/VTODO by UID) -- item id plus resolved instant is stable across regenerations of the

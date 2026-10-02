@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { CalendarOccurrence } from './calendars.service';
 import { TaskRun, groupTaskRuns, isTaskRun, occurrenceKey } from './task-run';
+import { FlatOccurrence, nestOccurrence } from '../../testing/occurrence-fixture';
 
 describe('task-run', () => {
-  function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
-    return {
+  function occurrence(
+    overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
+  ): CalendarOccurrence {
+    return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
       kind: 1,
       title: 'Brush teeth',
@@ -26,7 +29,7 @@ describe('task-run', () => {
       subtaskId: null,
       parentIcon: null,
       ...overrides,
-    };
+    });
   }
 
   describe('groupTaskRuns', () => {
@@ -38,8 +41,15 @@ describe('task-run', () => {
       expect(entries).toEqual([event]);
     });
 
-    it('passes a plain hand-entered task (no parentTitle) through unchanged, ungrouped', () => {
-      const task = occurrence({ itemId: 'task-1', kind: 1, parentTitle: null, subtaskId: null });
+    it('passes a plain hand-entered task (no routine) through unchanged, ungrouped', () => {
+      const task = occurrence({
+        itemId: 'task-1',
+        kind: 1,
+        startsAt: null,
+        dueAt: '2026-08-27T09:00:00Z',
+        parentTitle: null,
+        subtaskId: null,
+      });
 
       const entries = groupTaskRuns([task]);
 
@@ -105,21 +115,6 @@ describe('task-run', () => {
       expect(run.icon).toBe('🌞');
     });
 
-    it('falls back to the first subtask icon when parentIcon is absent', () => {
-      const subtask = occurrence({
-        itemId: 'run-1',
-        subtaskId: 'sub-1',
-        parentTitle: 'Morning routine',
-        icon: '🪥',
-        parentIcon: undefined,
-      });
-
-      const entries = groupTaskRuns([subtask]);
-
-      const run = entries[0] as TaskRun;
-      expect(run.icon).toBe('🪥');
-    });
-
     it('keeps a run and an unrelated ordinary occurrence as separate entries, in encounter order', () => {
       const event = occurrence({ itemId: 'event-1', kind: 0, parentTitle: null });
       const subtask1 = occurrence({
@@ -171,66 +166,36 @@ describe('task-run', () => {
   });
 
   describe('occurrenceKey', () => {
-    it('keys a plain occurrence (no subtaskId) by its itemId alone', () => {
-      const base = { startsAt: '2026-08-27T08:00:00Z', dueAt: null };
-      expect(occurrenceKey({ itemId: 'item-1', subtaskId: null, ...base })).toBe(
-        'item-1::2026-08-27',
-      );
-      expect(occurrenceKey({ itemId: 'item-1', subtaskId: undefined, ...base })).toBe(
-        'item-1::2026-08-27',
-      );
+    const sortAt = '2026-08-27T08:00:00Z';
+    const routine = (subtaskId: string) => ({
+      subtaskId,
+      parentTitle: 'Morning',
+      parentIcon: '🌅',
+    });
+
+    it('keys a plain occurrence (no routine) by its itemId and date alone', () => {
+      expect(occurrenceKey({ itemId: 'item-1', routine: null, sortAt })).toBe('item-1::2026-08-27');
     });
 
     it('gives two subtask occurrences sharing an itemId distinct keys', () => {
-      const base = { startsAt: '2026-08-27T08:00:00Z', dueAt: null };
-      const keyA = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-1', ...base });
-      const keyB = occurrenceKey({ itemId: 'run-1', subtaskId: 'sub-2', ...base });
+      const keyA = occurrenceKey({ itemId: 'run-1', routine: routine('sub-1'), sortAt });
+      const keyB = occurrenceKey({ itemId: 'run-1', routine: routine('sub-2'), sortAt });
 
       expect(keyA).not.toBe(keyB);
+      expect(keyA).toBe('run-1:sub-1:2026-08-27');
     });
 
     it('gives the same occurrence the same key on repeated calls', () => {
-      const base = {
-        itemId: 'run-1',
-        subtaskId: 'sub-1',
-        startsAt: '2026-08-27T08:00:00Z',
-        dueAt: null,
-      };
-      const a = occurrenceKey(base);
-      const b = occurrenceKey(base);
+      const base = { itemId: 'run-1', routine: routine('sub-1'), sortAt };
 
-      expect(a).toBe(b);
+      expect(occurrenceKey(base)).toBe(occurrenceKey(base));
     });
 
     it('gives two occurrences of the same recurring item on different days distinct keys', () => {
-      const day1 = {
-        itemId: 'recurring-1',
-        subtaskId: null,
-        startsAt: '2026-08-27T08:00:00Z',
-        dueAt: null,
-      };
-      const day2 = {
-        itemId: 'recurring-1',
-        subtaskId: null,
-        startsAt: '2026-08-28T08:00:00Z',
-        dueAt: null,
-      };
+      const day1 = { itemId: 'recurring-1', routine: null, sortAt: '2026-08-27T08:00:00Z' };
+      const day2 = { itemId: 'recurring-1', routine: null, sortAt: '2026-08-28T08:00:00Z' };
 
       expect(occurrenceKey(day1)).not.toBe(occurrenceKey(day2));
-    });
-
-    it('falls back to dueAt, then to an empty date part, when startsAt is missing', () => {
-      expect(
-        occurrenceKey({
-          itemId: 'task-1',
-          subtaskId: null,
-          startsAt: null,
-          dueAt: '2026-08-29T17:00:00Z',
-        }),
-      ).toBe('task-1::2026-08-29');
-      expect(
-        occurrenceKey({ itemId: 'task-1', subtaskId: null, startsAt: null, dueAt: null }),
-      ).toBe('task-1::');
     });
   });
 });

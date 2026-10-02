@@ -13,6 +13,7 @@ import { ChildSummary, GuardiansService } from '../../../../core/guardians.servi
 import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
 import { UsersService } from '../../../../core/users.service';
 import { CalendarAgenda } from './agenda';
+import { FlatOccurrence, nestOccurrence } from '../../../../../testing/occurrence-fixture';
 
 describe('CalendarAgenda', () => {
   const today = todayIsoDate();
@@ -40,8 +41,10 @@ describe('CalendarAgenda', () => {
   // local calendar day. Since occurrencesByDate groups by toIsoDateInTimeZone(instant, 'UTC') (the
   // UsersService stub below fixes timeZoneId to 'UTC'), and buildDays' day.date strings never go
   // through any time zone conversion, this keeps fixtures and day buckets aligned everywhere.
-  function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
-    return {
+  function occurrence(
+    overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
+  ): CalendarOccurrence {
+    return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
       kind: 0,
       title: 'Dentist',
@@ -59,7 +62,7 @@ describe('CalendarAgenda', () => {
       calendarId: 'cal-1',
       calendarName: 'Home',
       ...overrides,
-    };
+    });
   }
 
   function taskTemplate(overrides: Partial<TaskTemplate> = {}): TaskTemplate {
@@ -318,25 +321,6 @@ describe('CalendarAgenda', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Buy groceries');
     expect(compiled.textContent).not.toContain('Nothing planned this week.');
-  });
-
-  it('omits an occurrence with neither startsAt nor dueAt from every day bucket', async () => {
-    const broken = occurrence({
-      itemId: 'broken',
-      title: 'Ghost item',
-      startsAt: null,
-      endsAt: null,
-      dueAt: null,
-    });
-
-    const { fixture } = await setup({
-      calendars: { listOccurrencesInRange: vi.fn(async () => [broken]) },
-    });
-    await settle(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Nothing planned this week.');
-    expect(compiled.textContent).not.toContain('Ghost item');
   });
 
   it('renders "All day" instead of a time range for an all-day occurrence', async () => {
@@ -1203,13 +1187,13 @@ describe('CalendarAgenda', () => {
   // ----- Template-scheduled task runs (grouped rendering + the compound-key fix) -----
 
   describe('template-scheduled task runs', () => {
-    function subtaskOccurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
+    function subtaskOccurrence(
+      overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
+    ): CalendarOccurrence {
       return occurrence({
         itemId: 'run-1',
         kind: 1,
         parentTitle: 'Morning routine',
-        startsAt: null,
-        endsAt: null,
         ...overrides,
       });
     }
@@ -1219,17 +1203,17 @@ describe('CalendarAgenda', () => {
         subtaskOccurrence({
           subtaskId: 'sub-1',
           title: 'Brush teeth',
-          dueAt: `${today}T08:00:00Z`,
+          startsAt: `${today}T08:00:00Z`,
         }),
         subtaskOccurrence({
           subtaskId: 'sub-2',
           title: 'Get dressed',
-          dueAt: `${today}T08:10:00Z`,
+          startsAt: `${today}T08:10:00Z`,
         }),
         subtaskOccurrence({
           subtaskId: 'sub-3',
           title: 'Eat breakfast',
-          dueAt: `${today}T08:20:00Z`,
+          startsAt: `${today}T08:20:00Z`,
         }),
       ];
 
@@ -1254,17 +1238,17 @@ describe('CalendarAgenda', () => {
         subtaskOccurrence({
           subtaskId: 'sub-1',
           title: 'Brush teeth',
-          dueAt: `${today}T08:00:00Z`,
+          startsAt: `${today}T08:00:00Z`,
         }),
         subtaskOccurrence({
           subtaskId: 'sub-2',
           title: 'Get dressed',
-          dueAt: `${today}T08:10:00Z`,
+          startsAt: `${today}T08:10:00Z`,
         }),
         subtaskOccurrence({
           subtaskId: 'sub-3',
           title: 'Eat breakfast',
-          dueAt: `${today}T08:20:00Z`,
+          startsAt: `${today}T08:20:00Z`,
         }),
       ];
 
@@ -1309,13 +1293,13 @@ describe('CalendarAgenda', () => {
         subtaskOccurrence({
           subtaskId: 'sub-1',
           title: 'Brush teeth',
-          dueAt: `${today}T08:00:00Z`,
+          startsAt: `${today}T08:00:00Z`,
           calendarId: 'cal-1',
         }),
         subtaskOccurrence({
           subtaskId: 'sub-2',
           title: 'Get dressed',
-          dueAt: `${today}T08:10:00Z`,
+          startsAt: `${today}T08:10:00Z`,
           calendarId: 'cal-1',
         }),
       ];

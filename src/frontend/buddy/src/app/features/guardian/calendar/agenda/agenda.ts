@@ -102,10 +102,8 @@ function buildMonthDays(anchorIsoDate: string): AgendaDay[] {
   }));
 }
 
-// Exactly one of startsAt/dueAt is ever set per the backend's Event-vs-Task invariant.
-function instantFor(occurrence: CalendarOccurrence): Date | null {
-  const value = occurrence.startsAt ?? occurrence.dueAt;
-  return value ? new Date(value) : null;
+function instantFor(occurrence: CalendarOccurrence): Date {
+  return new Date(occurrence.sortAt);
 }
 
 function toDatePart(date: string, time: string): DatePart {
@@ -288,21 +286,13 @@ export class CalendarAgenda implements OnInit {
         continue;
       }
 
-      const instant = instantFor(occurrence);
-
-      if (!instant) {
-        continue;
-      }
-
-      const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
+      const date = toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId());
       const occurrencesForDate = (byDate[date] ??= []);
       occurrencesForDate.push(occurrence);
     }
 
     for (const dayOccurrences of Object.values(byDate)) {
-      dayOccurrences.sort((a, b) =>
-        (a.startsAt ?? a.dueAt ?? '').localeCompare(b.startsAt ?? b.dueAt ?? ''),
-      );
+      dayOccurrences.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
     }
 
     return byDate;
@@ -475,7 +465,7 @@ export class CalendarAgenda implements OnInit {
   }
 
   // Folds a day's occurrences into agenda rows -- a template-scheduled task's subtask occurrences
-  // (sharing an itemId + parentTitle) render as one bracketed TaskRun block instead of one row
+  // (sharing an itemId, each with a routine) render as one bracketed TaskRun block instead of one row
   // each; every other occurrence is unaffected. See core/task-run.ts.
   protected groupedOccurrencesFor(date: string): AgendaEntry[] {
     return groupTaskRuns(this.occurrencesFor(date));
@@ -560,24 +550,17 @@ export class CalendarAgenda implements OnInit {
   // just the UI affordance so a guardian never sees an actionable checkbox for a day that hasn't
   // arrived yet, not the source of truth.
   protected canCompleteTask(occurrence: CalendarOccurrence): boolean {
-    const instant = instantFor(occurrence);
-    return !!instant && toIsoDateInTimeZone(instant, this.users.timeZoneId()) <= todayIsoDate();
+    return toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId()) <= todayIsoDate();
   }
 
   protected async toggleTaskCompletion(occurrence: CalendarOccurrence): Promise<void> {
-    const instant = instantFor(occurrence);
-
-    if (!instant) {
-      return;
-    }
-
     const isCompleted = !occurrence.isCompleted;
 
     if (isCompleted && !this.canCompleteTask(occurrence)) {
       return;
     }
 
-    const date = toIsoDateInTimeZone(instant, this.users.timeZoneId());
+    const date = toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId());
     const key = occurrenceKey(occurrence);
 
     this.savingTaskId.set(key);
@@ -588,7 +571,7 @@ export class CalendarAgenda implements OnInit {
         occurrence.itemId,
         date,
         isCompleted,
-        occurrence.subtaskId ?? null,
+        occurrence.routine?.subtaskId ?? null,
       );
       this.occurrences.update((current) =>
         current.map((existing) =>
@@ -647,22 +630,20 @@ export class CalendarAgenda implements OnInit {
 
     const timeZoneId = this.users.timeZoneId();
 
-    if (occurrence.startsAt) {
-      const startsAt = new Date(occurrence.startsAt);
+    const { timing } = occurrence;
+
+    if (timing.kind === 0) {
+      const startsAt = new Date(timing.startsAt);
       this.editStartDate.set(toIsoDateInTimeZone(startsAt, timeZoneId));
       this.editStartTime.set(toTimeInTimeZone(startsAt, timeZoneId));
-    }
 
-    if (occurrence.endsAt) {
-      const endsAt = new Date(occurrence.endsAt);
+      const endsAt = new Date(timing.endsAt);
       const endDate = toIsoDateInTimeZone(endsAt, timeZoneId);
       // Stored EndsAt is exclusive for an all-day event -- show the last inclusive day instead.
       this.editEndDate.set(occurrence.isAllDay ? addDaysIso(endDate, -1) : endDate);
       this.editEndTime.set(toTimeInTimeZone(endsAt, timeZoneId));
-    }
-
-    if (occurrence.dueAt) {
-      const dueAt = new Date(occurrence.dueAt);
+    } else {
+      const dueAt = new Date(timing.dueAt);
       this.editDueDate.set(toIsoDateInTimeZone(dueAt, timeZoneId));
       this.editDueTime.set(toTimeInTimeZone(dueAt, timeZoneId));
     }
