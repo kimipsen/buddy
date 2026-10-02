@@ -27,7 +27,8 @@ public static class UpdateSubtaskEndpoint
                 new TaskTemplateId(templateId),
                 new SubtaskId(subtaskId),
                 request.Title,
-                request.Icon is null ? null : new Icon(request.Icon),
+                // Blank means "inherit the template's icon", the same as omitting it -- as Calendars does.
+                request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
                 request.Duration);
 
             var result = await bus.InvokeAsync<Result<TaskTemplate>>(command, cancellationToken);

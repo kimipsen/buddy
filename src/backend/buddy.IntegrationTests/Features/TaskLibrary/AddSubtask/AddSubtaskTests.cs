@@ -61,6 +61,21 @@ public sealed class AddSubtaskTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_subtask_with_a_blank_icon_inherits_the_templates_icon()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(template);
+
+        var updated = await TaskLibraryTestHelpers.AddSubtaskAsync(
+            fixture, guardianToken, template.Id, new AddSubtaskOptions(Icon: " "));
+
+        Assert.NotNull(updated);
+        Assert.Null(Assert.Single(updated.Subtasks).Icon);
+    }
+
+    [Fact]
     public async Task A_subtask_with_zero_duration_is_rejected()
     {
         var (guardianToken, templateId) = await CreateTemplateAsync();

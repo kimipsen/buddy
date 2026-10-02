@@ -49,6 +49,23 @@ public sealed class CreateTaskTemplateTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_task_template_with_a_blank_icon_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Name = "Morning", Icon = " ", Color = "#ffaa00" })
+                .ToUrl($"/task-templates/children/{child.Id}");
+            _.StatusCodeShouldBe(400);
+        });
+
+        Assert.Contains("Icon.Value", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+    }
+
+    [Fact]
     public async Task A_task_template_name_of_200_characters_is_accepted()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

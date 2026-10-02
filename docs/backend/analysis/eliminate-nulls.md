@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-4 and 5.1-5.7 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
+Status: Phases 0-5 implemented (see each "As built"); Phases 6-7 proposed.
 
 ## Context
 
@@ -762,6 +762,11 @@ Committed per group.
   `children-overview.ts` reads it directly.
 - **Pickups.** `AssignPickupHandler.ValidateRelationshipAsync` returns `ValidationProblem?`, the
   same shape as `ValidateCommandAsync`.
+- **TaskLibrary.** `AddSubtask` / `UpdateSubtask` map a blank icon to "inherit" (null), as the
+  Calendars endpoints do, instead of `Icon("")`. Both TaskTemplate validators reject a blank
+  template icon (`Icon.Value`, matching `UpdateCalendarIconValidator`).
+- **Existing databases need a reset**: stored `ActiveProviderChanged` events with a null
+  `Provider` and idempotency records with the old flat shape no longer read.
 
 ## Phase 6: drop `Before?` from events
 
