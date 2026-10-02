@@ -7,7 +7,7 @@ namespace buddy.Features.Mealplans;
 // it repeats near-verbatim across a session's turns (see the AI mealplan plan's caching note).
 public static class AiSessionPromptBuilder
 {
-    public static string Build(MealplanAiSession session, IReadOnlyCollection<Meal> familyMeals, IReadOnlyCollection<MealId> mustIncludeMealIds, string? notes)
+    public static string Build(MealplanAiSession session, IReadOnlyCollection<Meal> familyMeals, IReadOnlyCollection<MealId> mustIncludeMealIds, string notes)
     {
         var builder = new StringBuilder();
 

@@ -37,7 +37,7 @@ public static class AssignMealToSlotHandler
     // Shared with AssignMealToSlotForGroupHandler -- see CreateMealHandler.CreateForChildAsync
     // for the same pattern and rationale.
     internal static async Task<Result<MealPlanEntry>> AssignForChildAsync(
-        UserId childId, DateOnly date, MealSlot slot, MealId mealId, string? notes, UserId assignedBy,
+        UserId childId, DateOnly date, MealSlot slot, MealId mealId, string notes, UserId assignedBy,
         IMealPlanEventStore mealPlans, IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
         var mealEvents = await meals.ReadAsync(mealId, cancellationToken);

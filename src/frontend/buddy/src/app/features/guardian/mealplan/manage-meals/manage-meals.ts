@@ -117,7 +117,7 @@ export class ManageMeals {
     try {
       await this.mealplans.createMeal(this.scope(), {
         name,
-        description: this.newMealDescription().trim() || null,
+        description: this.newMealDescription().trim(),
         icon,
         color,
       });

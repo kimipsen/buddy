@@ -37,7 +37,7 @@ describe('PickupCell', () => {
       playdateLocation: null,
       playdateContactInfo: null,
       time: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       ...overrides,
     };
@@ -358,7 +358,7 @@ describe('PickupCell', () => {
         playdateLocation: null,
         playdateContactInfo: null,
         time: null,
-        notes: null,
+        notes: '',
       });
 
       fixture.detectChanges();
@@ -403,7 +403,7 @@ describe('PickupCell', () => {
         playdateLocation: null,
         playdateContactInfo: null,
         time: null,
-        notes: null,
+        notes: '',
       });
     });
 

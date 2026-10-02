@@ -172,7 +172,7 @@ describe('AiAssistantService', () => {
         to: '2026-08-03',
         slots: [2],
         mustIncludeMealIds: [],
-        notes: null,
+        notes: '',
       };
 
       const promise = service.startSession(childId, request);

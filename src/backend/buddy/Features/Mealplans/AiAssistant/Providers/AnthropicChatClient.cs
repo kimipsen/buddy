@@ -56,7 +56,7 @@ public sealed class AnthropicChatClient(HttpClient httpClient, IOptionsMonitor<A
                 .Select(b => new AiRequestedToolCall(b.Id!, b.Name!, b.Input!.Value.GetRawText()))
         ];
 
-        return new AiChatCompletionResult(text.Length == 0 ? null : text, toolCalls);
+        return new AiChatCompletionResult(text, toolCalls);
     }
 
     // Anthropic requires every tool_use block a turn produced to be answered by tool_result blocks
@@ -70,7 +70,7 @@ public sealed class AnthropicChatClient(HttpClient httpClient, IOptionsMonitor<A
         {
             if (turn.Role == AiChatMessageRole.User)
             {
-                messages.Add(new AnthropicMessage("user", [AnthropicContentBlock.OfText(turn.Text ?? "")]));
+                messages.Add(new AnthropicMessage("user", [AnthropicContentBlock.OfText(turn.Text)]));
                 continue;
             }
 
@@ -83,7 +83,7 @@ public sealed class AnthropicChatClient(HttpClient httpClient, IOptionsMonitor<A
                     [.. turn.ToolInvocations.Select(t => AnthropicContentBlock.OfToolResult(t.ToolCallId, t.ResultJson, t.IsError))]));
             }
 
-            if (!string.IsNullOrEmpty(turn.Text))
+            if (turn.Text.Length > 0)
             {
                 messages.Add(new AnthropicMessage("assistant", [AnthropicContentBlock.OfText(turn.Text)]));
             }

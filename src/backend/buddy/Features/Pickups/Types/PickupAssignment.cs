@@ -20,4 +20,4 @@ public sealed record PickupAssignment(
     string? PlaydateContactInfo,
     TimeOnly? Time,
     UserId AssignedBy,
-    string? Notes);
+    string Notes);

@@ -28,7 +28,7 @@ export type MealplanScope =
 
 export interface MealRating {
   stars: number;
-  comment: string | null;
+  comment: string;
   ratedAt: string;
 }
 
@@ -40,7 +40,7 @@ export interface MealPlanEntry {
   icon: string;
   color: string;
   rating: MealRating | null;
-  notes: string | null;
+  notes: string;
   assignedBy: string;
   allRatings: MealRatingSummary[];
 }
@@ -48,7 +48,7 @@ export interface MealPlanEntry {
 export interface MealRatingSummary {
   childId: string;
   stars: number;
-  comment: string | null;
+  comment: string;
   ratedAt: string;
 }
 
@@ -58,7 +58,7 @@ export interface MealRatingSummary {
 export interface Meal {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
   icon: string;
   color: string;
   isArchived: boolean;
@@ -85,7 +85,7 @@ export interface IssuedMealplanIcalToken {
 
 export interface MealDetails {
   name: string;
-  description?: string | null;
+  description: string;
   icon: string;
   color: string;
 }
@@ -115,7 +115,7 @@ export class MealplansService {
 
   // Always a family-side, child-only action -- only the child themself may rate their own meals
   // (MealplanAuthorization.CheckRate), so this is never called with a group scope.
-  rateMeal(childId: string, mealId: string, stars: number, comment?: string | null): Promise<Meal> {
+  rateMeal(childId: string, mealId: string, stars: number, comment: string): Promise<Meal> {
     return firstValueFrom(
       this.http.put<Meal>(
         `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/meals/${mealId}/rating`,
@@ -162,7 +162,7 @@ export class MealplansService {
     date: string,
     slot: MealSlot,
     mealId: string,
-    notes?: string | null,
+    notes: string,
   ): Promise<MealPlanEntry> {
     return firstValueFrom(
       this.http.put<MealPlanEntry>(

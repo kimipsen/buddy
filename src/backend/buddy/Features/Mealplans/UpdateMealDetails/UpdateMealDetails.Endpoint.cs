@@ -28,7 +28,7 @@ public static class UpdateMealDetailsEndpoint
                 new UserId(childId),
                 new MealId(mealId),
                 request.Name,
-                request.Description,
+                FreeText.Normalize(request.Description),
                 new Icon(request.Icon),
                 new Color(request.Color));
 

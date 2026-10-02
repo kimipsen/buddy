@@ -13,7 +13,7 @@ public sealed record Meal(
     MealId Id,
     UserId CreatedBy,
     string Name,
-    string? Description,
+    string Description,
     Icon Icon,
     Color Color,
     bool IsArchived,

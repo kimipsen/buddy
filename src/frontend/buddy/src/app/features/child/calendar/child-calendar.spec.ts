@@ -67,7 +67,7 @@ describe('ChildCalendar', () => {
       icon: '🥞',
       color: '#ffaa00',
       rating: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
       ...overrides,

@@ -29,7 +29,7 @@ describe('ManageMeals', () => {
     return {
       id: 'meal-1',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#fff',
       isArchived: false,
@@ -287,7 +287,7 @@ describe('ManageMeals', () => {
 
       expect(mealplans.createMeal).toHaveBeenCalledWith(familyScope, {
         name: 'Waffles',
-        description: null,
+        description: '',
         icon: '🧇',
         color: '#123456',
       });

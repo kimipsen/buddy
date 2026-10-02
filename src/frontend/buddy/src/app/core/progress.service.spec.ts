@@ -96,7 +96,7 @@ describe('ProgressService', () => {
   describe('configureGoalPosts', () => {
     it('PUTs the full goal post list wrapped in { goalPosts } and returns the updated summary', async () => {
       const goalPosts: GoalPost[] = [
-        { threshold: 10, icon: 'balloon', label: null },
+        { threshold: 10, icon: 'balloon', label: '' },
         { threshold: 25, icon: 'bike', label: 'New bike' },
       ];
       const body = summary({ goalPosts });

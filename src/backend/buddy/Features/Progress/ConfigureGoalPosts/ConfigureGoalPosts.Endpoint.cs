@@ -22,7 +22,7 @@ public static class ConfigureGoalPostsEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var goalPosts = request.GoalPosts.Select(p => new GoalPost(p.Threshold, p.Icon, p.Label)).ToImmutableArray();
+            var goalPosts = request.GoalPosts.Select(p => new GoalPost(p.Threshold, p.Icon, FreeText.Normalize(p.Label))).ToImmutableArray();
             var command = ConfigureGoalPosts.FromClaims(principal, new UserId(childId), goalPosts);
             var result = await bus.InvokeAsync<Result<ProgressSummary>>(command, cancellationToken);
 

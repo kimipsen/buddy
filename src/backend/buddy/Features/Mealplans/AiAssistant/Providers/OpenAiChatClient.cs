@@ -51,7 +51,7 @@ public sealed class OpenAiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
             ? []
             : [.. message.ToolCalls.Select(c => new AiRequestedToolCall(c.Id, c.Function.Name, c.Function.Arguments))];
 
-        return new AiChatCompletionResult(string.IsNullOrEmpty(message.Content) ? null : message.Content, toolCalls);
+        return new AiChatCompletionResult(message.Content ?? "", toolCalls);
     }
 
     // OpenAI represents a tool round trip as an assistant message carrying tool_calls, followed by
@@ -65,7 +65,7 @@ public sealed class OpenAiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
         {
             if (turn.Role == AiChatMessageRole.User)
             {
-                messages.Add(new OpenAiMessage("user", turn.Text ?? "", null, null));
+                messages.Add(new OpenAiMessage("user", turn.Text, null, null));
                 continue;
             }
 
@@ -73,7 +73,7 @@ public sealed class OpenAiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
             {
                 messages.Add(new OpenAiMessage(
                     "assistant",
-                    string.IsNullOrEmpty(turn.Text) ? null : turn.Text,
+                    turn.Text.Length == 0 ? null : turn.Text,
                     [.. turn.ToolInvocations.Select(t => new OpenAiToolCall(t.ToolCallId, "function", new OpenAiFunctionCall(t.ToolName, t.ArgumentsJson)))],
                     null));
 
@@ -85,7 +85,7 @@ public sealed class OpenAiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
                 continue;
             }
 
-            if (!string.IsNullOrEmpty(turn.Text))
+            if (turn.Text.Length > 0)
             {
                 messages.Add(new OpenAiMessage("assistant", turn.Text, null, null));
             }

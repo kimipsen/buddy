@@ -42,7 +42,7 @@ public static class CreateMealHandler
     // new meal is indexed under childId regardless of which route created it, same as any
     // guardian-created meal.
     internal static async Task<Meal> CreateForChildAsync(
-        UserId childId, UserId createdBy, string name, string? description, Icon icon, Color color, IMealEventStore meals, CancellationToken cancellationToken)
+        UserId childId, UserId createdBy, string name, string description, Icon icon, Color color, IMealEventStore meals, CancellationToken cancellationToken)
     {
         var mealId = MealId.New();
         var now = DateTimeOffset.UtcNow;

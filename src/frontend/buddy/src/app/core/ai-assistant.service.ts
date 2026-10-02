@@ -62,7 +62,7 @@ export interface StartAiSessionRequest {
   to: string;
   slots: MealSlot[];
   mustIncludeMealIds: string[];
-  notes: string | null;
+  notes: string;
 }
 
 @Injectable({ providedIn: 'root' })

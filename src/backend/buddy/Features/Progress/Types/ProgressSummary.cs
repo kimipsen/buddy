@@ -23,4 +23,4 @@ public sealed record ProgressSummary(
     }
 }
 
-public sealed record GoalPostResponse(int Threshold, string Icon, string? Label);
+public sealed record GoalPostResponse(int Threshold, string Icon, string Label);

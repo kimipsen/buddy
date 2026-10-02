@@ -59,7 +59,7 @@ describe('ManagePickups', () => {
       playdateLocation: null,
       playdateContactInfo: null,
       time: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       ...overrides,
     };
@@ -318,7 +318,7 @@ describe('ManagePickups', () => {
         playdateLocation: null,
         playdateContactInfo: null,
         time: null,
-        notes: null,
+        notes: '',
       };
       expect(pickups.assignPickup).toHaveBeenCalledWith('child-1', weekStart, 0, expectedRequest);
 

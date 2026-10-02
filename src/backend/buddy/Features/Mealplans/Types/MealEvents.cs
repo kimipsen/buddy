@@ -37,7 +37,7 @@ public sealed record MealCreated(
     UserId ChildId,
     UserId CreatedBy,
     string Name,
-    string? Description,
+    string Description,
     Icon Icon,
     Color Color,
     DateTimeOffset OccurredAt);

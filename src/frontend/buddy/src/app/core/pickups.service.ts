@@ -25,7 +25,7 @@ export interface PickupOccurrence {
   playdateLocation: string | null;
   playdateContactInfo: string | null;
   time: string | null;
-  notes: string | null;
+  notes: string;
   assignedBy: string;
 }
 
@@ -37,7 +37,7 @@ export interface AssignPickupRequest {
   playdateLocation?: string | null;
   playdateContactInfo?: string | null;
   time?: string | null;
-  notes?: string | null;
+  notes: string;
 }
 
 @Injectable({ providedIn: 'root' })

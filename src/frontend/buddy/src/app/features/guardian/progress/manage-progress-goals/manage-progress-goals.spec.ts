@@ -26,8 +26,8 @@ describe('ManageProgressGoals', () => {
       nextGoalThreshold: 5,
       nextGoalIcon: '🌱',
       goalPosts: [
-        { threshold: 5, icon: '🌱', label: null },
-        { threshold: 10, icon: '🌿', label: null },
+        { threshold: 5, icon: '🌱', label: '' },
+        { threshold: 10, icon: '🌿', label: '' },
       ],
       ...overrides,
     };
@@ -191,8 +191,8 @@ describe('ManageProgressGoals', () => {
     await settle(fixture);
 
     expect(progress.configureGoalPosts).toHaveBeenCalledWith('child-1', [
-      { threshold: 3, icon: '🌱', label: null },
-      { threshold: 10, icon: '🌿', label: null },
+      { threshold: 3, icon: '🌱', label: '' },
+      { threshold: 10, icon: '🌿', label: '' },
     ]);
     expect(compiled.textContent).toContain('Goal posts saved.');
   });

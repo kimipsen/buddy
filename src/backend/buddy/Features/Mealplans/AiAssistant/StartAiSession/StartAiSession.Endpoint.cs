@@ -28,7 +28,7 @@ public static class StartAiSessionEndpoint
                 request.To,
                 request.Slots,
                 [.. request.MustIncludeMealIds.Select(id => new MealId(id))],
-                request.Notes);
+                FreeText.Normalize(request.Notes));
 
             var result = await bus.InvokeAsync<Result<AiSessionView>>(command, cancellationToken);
 

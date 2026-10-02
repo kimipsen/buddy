@@ -35,7 +35,7 @@ public static class AssignPickupEndpoint
                 request.PlaydateLocation,
                 request.PlaydateContactInfo,
                 request.Time,
-                request.Notes);
+                FreeText.Normalize(request.Notes));
 
             var result = await bus.InvokeAsync<Result<PickupOccurrence>>(command, cancellationToken);
 

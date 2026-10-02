@@ -7,7 +7,7 @@ import { RuntimeConfigService } from './runtime-config.service';
 export interface GoalPost {
   threshold: number;
   icon: string;
-  label: string | null;
+  label: string;
 }
 
 export interface ProgressSummary {

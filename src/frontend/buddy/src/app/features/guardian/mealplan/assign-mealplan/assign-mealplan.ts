@@ -211,7 +211,7 @@ export class AssignMealplan implements OnInit {
 
     try {
       if (mealId) {
-        const entry = await this.mealplans.assignMealToSlot(scope, date, slot, mealId);
+        const entry = await this.mealplans.assignMealToSlot(scope, date, slot, mealId, '');
         this.entriesByKey.update((current) => ({ ...current, [key]: entry }));
       } else {
         await this.mealplans.clearMealSlot(scope, date, slot);
@@ -269,12 +269,14 @@ export class AssignMealplan implements OnInit {
           target.date,
           target.slot,
           sourceMealId,
+          '',
         );
         const sourceEntry = await this.mealplans.assignMealToSlot(
           scope,
           source.date,
           source.slot,
           targetMealId,
+          '',
         );
         this.entriesByKey.update((current) => ({
           ...current,
@@ -287,6 +289,7 @@ export class AssignMealplan implements OnInit {
           target.date,
           target.slot,
           sourceMealId,
+          '',
         );
         await this.mealplans.clearMealSlot(scope, source.date, source.slot);
         this.entriesByKey.update((current) => {

@@ -8,15 +8,15 @@ namespace buddy.Features.Progress;
 // list exists in exactly one place. See docs/backend/analysis/configurable-goal-posts.md.
 public static class GoalPostResolver
 {
-    // Falls back to the scale gamified-progress.md originally shipped, for a child whose guardian
-    // hasn't configured anything yet -- zero migration needed for existing ChildProgress streams.
+    // The scale gamified-progress.md describes, used for a child whose guardian hasn't configured
+    // anything yet. No captions ("" means none).
     public static readonly ImmutableArray<GoalPost> DefaultGoalPosts =
     [
-        new GoalPost(5, "🌱", null),
-        new GoalPost(10, "🌿", null),
-        new GoalPost(25, "🪴", null),
-        new GoalPost(50, "🌳", null),
-        new GoalPost(100, "🏆", null)
+        new GoalPost(5, "🌱", ""),
+        new GoalPost(10, "🌿", ""),
+        new GoalPost(25, "🪴", ""),
+        new GoalPost(50, "🌳", ""),
+        new GoalPost(100, "🏆", "")
     ];
 
     public static ImmutableArray<GoalPost> Effective(ImmutableArray<GoalPost> configured) =>

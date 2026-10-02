@@ -183,6 +183,31 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_goal_post_label_of_100_characters_is_accepted_and_101_is_rejected()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "⭐", new string('l', 100))], expectedStatus: 200);
+        var response = await PutGoalPostsAsync(childId, guardianToken, [new GoalPostBody(1, "⭐", new string('l', 101))], expectedStatus: 400);
+
+        AssertValidationErrorOn(response, "GoalPosts[0].Label");
+    }
+
+    [Fact]
+    public async Task A_missing_or_blank_goal_post_label_comes_back_as_empty()
+    {
+        var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();
+
+        var response = await PutGoalPostsAsync(
+            childId, guardianToken, [new GoalPostBody(1, "🥉", null), new GoalPostBody(2, "🥈", "  ")], expectedStatus: 200);
+
+        var labels = response.ReadAsJson<ProgressSummaryBody>().GoalPosts.Select(post => post.Label);
+        Assert.Equal(["", ""], labels);
+    }
+
+    private sealed record ProgressSummaryBody(IReadOnlyList<GoalPostBody> GoalPosts);
+
+    [Fact]
     public async Task A_goal_post_with_an_empty_icon_is_rejected()
     {
         var (_, childId, guardianToken, _) = await CreateChildWithCalendarAsync();

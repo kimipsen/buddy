@@ -37,7 +37,7 @@ public static class UpdateMealDetailsHandler
     // Shared with UpdateMealDetailsForGroupHandler -- see CreateMealHandler.CreateForChildAsync
     // for the same pattern and rationale.
     internal static async Task<Result<Meal>> UpdateForChildAsync(
-        UserId childId, MealId mealId, UserId modifiedBy, string name, string? description, Icon icon, Color color,
+        UserId childId, MealId mealId, UserId modifiedBy, string name, string description, Icon icon, Color color,
         IMealEventStore meals, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
         var events = await meals.ReadAsync(mealId, cancellationToken);

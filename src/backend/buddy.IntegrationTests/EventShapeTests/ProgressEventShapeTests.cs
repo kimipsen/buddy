@@ -47,6 +47,6 @@ public sealed class ProgressEventShapeTests
 
     [Fact]
     public void GoalPostsConfigured() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new GoalPostsConfigured(FixedProgressId, [new GoalPost(5, "star", "Movie night"), new GoalPost(20, "trophy", null)], FixedInstant),
+        new GoalPostsConfigured(FixedProgressId, [new GoalPost(5, "star", "Movie night"), new GoalPost(20, "trophy", "")], FixedInstant),
         "Progress/GoalPostsConfigured.json");
 }

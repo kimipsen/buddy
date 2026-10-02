@@ -15,7 +15,7 @@ function toRow(goalPost: GoalPost): GoalPostRow {
   return {
     threshold: String(goalPost.threshold),
     icon: goalPost.icon,
-    label: goalPost.label ?? '',
+    label: goalPost.label,
   };
 }
 
@@ -100,7 +100,7 @@ export class ManageProgressGoals implements OnInit {
       const goalPosts: GoalPost[] = this.rows().map((row) => ({
         threshold: Number(row.threshold),
         icon: row.icon.trim(),
-        label: row.label.trim() || null,
+        label: row.label.trim(),
       }));
 
       const summary = await this.progressService.configureGoalPosts(childId, goalPosts);

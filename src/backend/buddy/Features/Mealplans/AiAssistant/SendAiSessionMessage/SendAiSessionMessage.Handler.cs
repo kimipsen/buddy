@@ -143,7 +143,7 @@ public static class SendAiSessionMessageHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        string? finalText = null;
+        var finalText = "";
 
         for (var iteration = 0; iteration < MaxToolLoopIterations; iteration++)
         {
@@ -160,7 +160,7 @@ public static class SendAiSessionMessageHandler
 
             if (completion.ToolCalls.Count == 0)
             {
-                finalText = completion.Text ?? "";
+                finalText = completion.Text;
                 break;
             }
 
@@ -189,6 +189,6 @@ public static class SendAiSessionMessageHandler
             }
         }
 
-        return new Result<string>.Success(finalText ?? "");
+        return new Result<string>.Success(finalText);
     }
 }

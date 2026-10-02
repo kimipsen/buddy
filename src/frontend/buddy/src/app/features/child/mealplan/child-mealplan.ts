@@ -141,19 +141,19 @@ export class ChildMealplan implements OnInit {
   // Tapping a star rates immediately with whatever comment is already on file -- a quick
   // reaction shouldn't require opening the comment form first.
   protected async rate(entry: MealPlanEntry, starCount: number): Promise<void> {
-    await this.submitRating(entry, starCount, entry.rating?.comment ?? null);
+    await this.submitRating(entry, starCount, entry.rating?.comment ?? '');
   }
 
   protected async saveComment(entry: MealPlanEntry): Promise<void> {
     const starCount = entry.rating?.stars ?? MAX_STARS;
-    await this.submitRating(entry, starCount, this.commentDraft().trim() || null);
+    await this.submitRating(entry, starCount, this.commentDraft().trim());
     this.cancelEditing();
   }
 
   private async submitRating(
     entry: MealPlanEntry,
     starCount: number,
-    comment: string | null,
+    comment: string,
   ): Promise<void> {
     if (!this.childId) {
       return;

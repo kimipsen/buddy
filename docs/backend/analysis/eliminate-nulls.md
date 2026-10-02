@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-3 implemented (see each phase's "As built"); phases 4-7 proposed.
+Status: Phases 0-4 implemented (see each phase's "As built"); phases 5-7 proposed.
 
 ## Context
 
@@ -386,6 +386,40 @@ otherwise treat `null` and `""` as a change.
 
 Rejected: keeping `string?` and normalizing `""` to `null`. That keeps the nullable for no domain
 reason, and the frontend already converts with `?? ''` when displaying.
+
+### As built (Phase 4)
+
+- **One normalizer: `Common/FreeText.Normalize`.** It turns a value into `value?.Trim() ?? ""`.
+  Every endpoint that takes one of these fields applies it once:
+  - CreateMeal, CreateMealForGroup, UpdateMealDetails, UpdateMealDetailsForGroup
+  - RateMeal
+  - AssignMealToSlot, AssignMealToSlotForGroup
+  - AssignPickup
+  - StartAiSession
+  - ConfigureGoalPosts
+- **Request fields stay optional.** Request DTOs keep `string? X = null`, because the field may be
+  omitted. Commands, domain records, events and responses are non-null `string`.
+- **AI text is non-null too.** The three provider adapters return `""` instead of `null` for a
+  completion with no text. The tool loop starts `finalText` at `""`. The provider wire DTOs stay
+  nullable, since that's an external shape.
+- **Label length rule.** `GoalPost.Label` gets `MaximumLength(100)`.
+- **Frontend.**
+  - The matching fields in `mealplans.service.ts`, `pickups.service.ts`, `ai-assistant.service.ts`
+    and `progress.service.ts` are `string`, and the requests send `''` rather than `null`.
+  - `rateMeal`/`assignMealToSlot` take the text as a required argument. The meal grid and
+    drag-and-drop send `''`, which matches the old "no notes" behavior.
+  - Six `|| null` conversions and one `?? ''` are gone. The two `rate()` calls now fall back to
+    `?? ''` instead of `?? null`, because `rating` itself is still optional.
+  - The remaining `|| null` sites (icon, `until`, `endDate`, `assignedTo`, the playdate fields) are
+    genuinely optional or belong to Phase 5.
+- **Golden files.** `"Notes": null` and `"Label": null` became `""` in four pickup files and in
+  `GoalPostsConfigured`.
+- **The meal-plan iCal feed** still omits `DESCRIPTION` for a slot without notes (`""` maps to `null`
+  for Ical.Net).
+- **Existing databases need a reset.** Marten loads a stored `"Notes": null` into the non-null
+  property. The HTTP serializer (`RespectNullableAnnotations`) then refuses to write it, so the
+  request returns 500. That fits this plan's baseline (no data predates these fields). A database
+  holding rows from before Phases 3-4 has to be recreated, because it isn't migrated.
 
 ## Phase 5: unions instead of correlated nullable fields
 

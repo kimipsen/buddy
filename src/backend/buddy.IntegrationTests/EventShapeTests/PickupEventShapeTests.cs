@@ -31,7 +31,7 @@ public sealed class PickupEventShapeTests
     public void PickupAssigned_with_a_self_escort_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
             FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
-            new PickupAssignment(PickupAssigneeKind.SelfEscort, null, null, null, null, null, null, FixedGuardianId, null),
+            new PickupAssignment(PickupAssigneeKind.SelfEscort, null, null, null, null, null, null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_SelfEscort.json");
 
@@ -39,7 +39,7 @@ public sealed class PickupEventShapeTests
     public void PickupAssigned_with_a_sibling_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
             FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
-            new PickupAssignment(PickupAssigneeKind.Sibling, null, FixedSiblingId, null, null, null, null, FixedGuardianId, null),
+            new PickupAssignment(PickupAssigneeKind.Sibling, null, FixedSiblingId, null, null, null, null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_Sibling.json");
 
@@ -47,7 +47,7 @@ public sealed class PickupEventShapeTests
     public void PickupAssigned_with_a_playdate_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
             FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
-            new PickupAssignment(PickupAssigneeKind.Playdate, null, null, "Mia's mom", "Mia's house", "+45 12 34 56 78", null, FixedGuardianId, null),
+            new PickupAssignment(PickupAssigneeKind.Playdate, null, null, "Mia's mom", "Mia's house", "+45 12 34 56 78", null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_Playdate.json");
 
@@ -55,7 +55,7 @@ public sealed class PickupEventShapeTests
     public void PickupCleared() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupCleared(
             FixedScheduleId, FixedDate, PickupSlot.PickUp,
-            new PickupAssignment(PickupAssigneeKind.SelfEscort, null, null, null, null, null, null, FixedGuardianId, null),
+            new PickupAssignment(PickupAssigneeKind.SelfEscort, null, null, null, null, null, null, FixedGuardianId, ""),
             FixedGuardianId,
             FixedInstant),
         "Pickups/PickupCleared.json");

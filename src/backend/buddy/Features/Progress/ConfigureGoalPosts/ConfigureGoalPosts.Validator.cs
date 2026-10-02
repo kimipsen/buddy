@@ -17,6 +17,8 @@ public sealed class ConfigureGoalPostsValidator : AbstractValidator<ConfigureGoa
         {
             post.RuleFor(p => p.Threshold).GreaterThan(0);
             post.RuleFor(p => p.Icon).NotEmpty();
+            // Optional caption; "" means none (FreeText). Kept short -- it labels a badge.
+            post.RuleFor(p => p.Label).MaximumLength(100);
         });
     }
 

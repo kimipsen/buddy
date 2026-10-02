@@ -28,7 +28,7 @@ describe('PickupsService', () => {
       playdateLocation: null,
       playdateContactInfo: null,
       time: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       ...overrides,
     };
@@ -93,7 +93,7 @@ describe('PickupsService', () => {
 
   describe('assignPickup', () => {
     it('PUTs a guardian assignment with date/slot params', async () => {
-      const request: AssignPickupRequest = { kind: 0, guardianId: 'guardian-2' };
+      const request: AssignPickupRequest = { kind: 0, guardianId: 'guardian-2', notes: '' };
       const created = occurrence({ kind: 0, guardianId: 'guardian-2' });
 
       const promise = service.assignPickup(childId, '2026-08-26', 1, request);
@@ -112,7 +112,7 @@ describe('PickupsService', () => {
     });
 
     it('serializes slot 0 (DropOff) as the string "0"', async () => {
-      const request: AssignPickupRequest = { kind: 1 };
+      const request: AssignPickupRequest = { kind: 1, notes: '' };
 
       const promise = service.assignPickup(childId, '2026-08-26', 0, request);
 
@@ -154,7 +154,7 @@ describe('PickupsService', () => {
     });
 
     it('sends a sibling assignment', async () => {
-      const request: AssignPickupRequest = { kind: 2, siblingChildId: 'child-2' };
+      const request: AssignPickupRequest = { kind: 2, siblingChildId: 'child-2', notes: '' };
       const created = occurrence({ kind: 2, guardianId: null, siblingChildId: 'child-2' });
 
       const promise = service.assignPickup(childId, '2026-08-26', 1, request);
@@ -167,7 +167,7 @@ describe('PickupsService', () => {
     });
 
     it('rejects when the assignment is refused', async () => {
-      const request: AssignPickupRequest = { kind: 0, guardianId: 'guardian-2' };
+      const request: AssignPickupRequest = { kind: 0, guardianId: 'guardian-2', notes: '' };
 
       const promise = service.assignPickup(childId, '2026-08-26', 1, request);
 

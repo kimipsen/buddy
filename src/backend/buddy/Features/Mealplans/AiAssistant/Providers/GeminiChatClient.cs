@@ -56,7 +56,7 @@ public sealed class GeminiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
                 .Select(p => new AiRequestedToolCall(p.FunctionCall!.Name, p.FunctionCall.Name, p.FunctionCall.Args.GetRawText()))
         ];
 
-        return new AiChatCompletionResult(text.Length == 0 ? null : text, toolCalls);
+        return new AiChatCompletionResult(text, toolCalls);
     }
 
     // A function-call turn becomes a "model"-role content with functionCall parts, followed by a
@@ -70,7 +70,7 @@ public sealed class GeminiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
         {
             if (turn.Role == AiChatMessageRole.User)
             {
-                contents.Add(new GeminiContent("user", [new GeminiPart(Text: turn.Text ?? "")]));
+                contents.Add(new GeminiContent("user", [new GeminiPart(Text: turn.Text)]));
                 continue;
             }
 
@@ -83,7 +83,7 @@ public sealed class GeminiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
                     [.. turn.ToolInvocations.Select(t => new GeminiPart(FunctionResponse: new GeminiFunctionResponse(t.ToolName, ParseJson(t.ResultJson))))]));
             }
 
-            if (!string.IsNullOrEmpty(turn.Text))
+            if (turn.Text.Length > 0)
             {
                 contents.Add(new GeminiContent("model", [new GeminiPart(Text: turn.Text)]));
             }

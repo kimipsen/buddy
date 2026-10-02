@@ -11,10 +11,10 @@ public sealed record StartAiSession(
     DateOnly To,
     IReadOnlyCollection<MealSlot> RequestedSlots,
     IReadOnlyCollection<MealId> MustIncludeMealIds,
-    string? Notes)
+    string Notes)
 {
     public static StartAiSession FromClaims(
         ClaimsPrincipal principal, UserId childId, DateOnly from, DateOnly to,
-        IReadOnlyCollection<MealSlot> requestedSlots, IReadOnlyCollection<MealId> mustIncludeMealIds, string? notes) =>
+        IReadOnlyCollection<MealSlot> requestedSlots, IReadOnlyCollection<MealId> mustIncludeMealIds, string notes) =>
         new(principal.GetRequiredUserId(), childId, from, to, requestedSlots, mustIncludeMealIds, notes);
 }

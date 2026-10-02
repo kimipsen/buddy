@@ -37,6 +37,39 @@ public sealed class RateMealTests(BuddyApiFixture fixture)
         Assert.Equal("Loved it!", rating.Comment);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("   ")]
+    public async Task A_missing_or_blank_comment_is_stored_as_empty_and_re_rating_with_either_is_a_no_op(string? blank)
+    {
+        // Free text is normalized at the endpoint (FreeText): null, missing and whitespace-only all
+        // become "", so RateMeal's before == after idempotency check can't see them as different.
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+        var url = $"/mealplans/children/{child.Id}/meals/{meal.Id}/rating";
+
+        var first = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Stars = 4, Comment = blank }).ToUrl(url);
+            _.StatusCodeShouldBeOk();
+        });
+        var firstRating = Assert.Single(first.ReadAsJson<MealDto>().Ratings);
+        Assert.Equal("", firstRating.Comment);
+
+        var second = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Put.Json(new { Stars = 4, Comment = blank is null ? "  " : null }).ToUrl(url);
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(firstRating.RatedAt, Assert.Single(second.ReadAsJson<MealDto>().Ratings).RatedAt);
+    }
+
     [Fact]
     public async Task Rating_the_same_meal_with_the_same_stars_and_comment_again_does_not_change_RatedAt()
     {

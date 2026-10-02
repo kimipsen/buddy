@@ -83,7 +83,7 @@ describe('ChildHome', () => {
     return {
       id: 'meal-1',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#f00',
       isArchived: false,
@@ -117,7 +117,7 @@ describe('ChildHome', () => {
       icon: '🥞',
       color: '#f00',
       rating: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
       ...overrides,
@@ -259,11 +259,11 @@ describe('ChildHome', () => {
     const rateMeal = vi.fn(async () => ({
       id: 'meal-1',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#f00',
       isArchived: false,
-      ratings: [{ childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' }],
+      ratings: [{ childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' }],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
     }));
@@ -282,7 +282,7 @@ describe('ChildHome', () => {
     starButtons[3].click();
     await settle(fixture);
 
-    expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-1', 4, null);
+    expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-1', 4, '');
     expect(starButtons[3].classList.contains('text-amber-400')).toBe(true);
     expect(starButtons[8].classList.contains('text-amber-400')).toBe(true);
   });
@@ -291,7 +291,7 @@ describe('ChildHome', () => {
     const rateMeal = vi.fn(async () => ({
       id: 'meal-1',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#f00',
       isArchived: false,
@@ -546,7 +546,7 @@ describe('ChildHome', () => {
       playdateLocation: null,
       playdateContactInfo: null,
       time: '08:00:00',
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
     };
 
@@ -575,7 +575,7 @@ describe('ChildHome', () => {
       playdateLocation: null,
       playdateContactInfo: null,
       time: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
     };
 
@@ -732,9 +732,7 @@ describe('ChildHome', () => {
       expect(lunchStars().some((button) => button.disabled)).toBe(false);
 
       pending.resolve(
-        ratedMeal([
-          { childId: 'child-1', stars: 2, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
-        ]),
+        ratedMeal([{ childId: 'child-1', stars: 2, comment: '', ratedAt: '2026-01-01T00:00:00Z' }]),
       );
       await settle(fixture);
 
@@ -747,7 +745,7 @@ describe('ChildHome', () => {
         .mockRejectedValueOnce(new Error('boom'))
         .mockResolvedValueOnce(
           ratedMeal([
-            { childId: 'child-1', stars: 3, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+            { childId: 'child-1', stars: 3, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
           ]),
         );
       const { fixture } = await setup({
@@ -783,7 +781,7 @@ describe('ChildHome', () => {
       const rateMeal = vi.fn(async () =>
         ratedMeal([
           { childId: 'sibling-1', stars: 1, comment: 'Yuck', ratedAt: '2026-01-01T00:00:00Z' },
-          { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+          { childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
         ]),
       );
       const entries = [
@@ -838,9 +836,7 @@ describe('ChildHome', () => {
 
     it('saves a whitespace-only note as no comment, keeping the existing star count', async () => {
       const rateMeal = vi.fn(async () =>
-        ratedMeal([
-          { childId: 'child-1', stars: 2, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
-        ]),
+        ratedMeal([{ childId: 'child-1', stars: 2, comment: '', ratedAt: '2026-01-01T00:00:00Z' }]),
       );
       const entry = mealEntry({
         rating: { stars: 2, comment: 'Old note', ratedAt: '2026-01-01T00:00:00Z' },
@@ -862,7 +858,7 @@ describe('ChildHome', () => {
       findButtonByText(compiled, 'Save')!.click();
       await settle(fixture);
 
-      expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-1', 2, null);
+      expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-1', 2, '');
     });
   });
 
@@ -1206,7 +1202,7 @@ describe('ChildHome', () => {
         playdateLocation: null,
         playdateContactInfo: null,
         time: null,
-        notes: null,
+        notes: '',
         assignedBy: 'guardian-1',
         ...overrides,
       };

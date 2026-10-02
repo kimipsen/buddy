@@ -26,7 +26,7 @@ public static class CreateMealForGroupEndpoint
                 principal,
                 new GroupId(groupId),
                 request.Name,
-                request.Description,
+                FreeText.Normalize(request.Description),
                 new Icon(request.Icon),
                 new Color(request.Color));
 

@@ -134,7 +134,7 @@ export class PickupCell {
       playdateContactInfo:
         this.kind() === PLAYDATE ? this.playdateContactInfo().trim() || null : null,
       time: this.time() ? `${this.time()}:00` : null,
-      notes: this.notes().trim() || null,
+      notes: this.notes().trim(),
     });
     this.editing.set(false);
   }

@@ -44,7 +44,7 @@ describe('PickupToday', () => {
       playdateLocation: null,
       playdateContactInfo: null,
       time: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       ...overrides,
     };

@@ -152,7 +152,7 @@ describe('MealplanAiAssistant', () => {
 
     expect(aiAssistant.startSession).toHaveBeenCalledWith(
       'child-1',
-      expect.objectContaining({ slots: [2], mustIncludeMealIds: [], notes: null }),
+      expect.objectContaining({ slots: [2], mustIncludeMealIds: [], notes: '' }),
     );
     expect(fixture.nativeElement.textContent).toContain('Drafting');
   });

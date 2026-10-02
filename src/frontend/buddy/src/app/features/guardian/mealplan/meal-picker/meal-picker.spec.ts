@@ -9,7 +9,7 @@ describe('MealPicker', () => {
     return {
       id: 'meal-1',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#fff',
       isArchived: false,

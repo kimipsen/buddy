@@ -45,7 +45,7 @@ describe('MealplansService', () => {
       icon: '🥞',
       color: '#fff',
       rating: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
       ...overrides,
@@ -56,7 +56,7 @@ describe('MealplansService', () => {
     return {
       id: 'meal-1',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#fff',
       isArchived: false,
@@ -157,18 +157,6 @@ describe('MealplansService', () => {
 
       await expect(promise).resolves.toEqual(ratedMeal);
     });
-
-    it('defaults comment to undefined when not provided', async () => {
-      const promise = service.rateMeal('child-1', 'meal-1', 3);
-
-      const req = httpMock.expectOne(
-        `${apiBaseUrl}/mealplans/children/child-1/meals/meal-1/rating`,
-      );
-      expect(req.request.body).toEqual({ stars: 3, comment: undefined });
-      req.flush(meal());
-
-      await promise;
-    });
   });
 
   describe('listMeals', () => {
@@ -213,11 +201,17 @@ describe('MealplansService', () => {
         name: 'Waffles',
         icon: '🧇',
         color: '#eee',
+        description: '',
       });
 
       const req = httpMock.expectOne(`${familyBase()}/meals`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ name: 'Waffles', icon: '🧇', color: '#eee' });
+      expect(req.request.body).toEqual({
+        name: 'Waffles',
+        icon: '🧇',
+        color: '#eee',
+        description: '',
+      });
       req.flush(created);
 
       await expect(promise).resolves.toEqual(created);
@@ -236,6 +230,7 @@ describe('MealplansService', () => {
         name: 'Toast',
         icon: '🍞',
         color: '#111',
+        description: '',
       });
       httpMock
         .expectOne((r) => r.url === `${familyBase()}/meals` && r.method === 'POST')
@@ -258,11 +253,17 @@ describe('MealplansService', () => {
         name: 'Fluffy Pancakes',
         icon: '🥞',
         color: '#fff',
+        description: '',
       });
 
       const req = httpMock.expectOne(`${familyBase()}/meals/meal-1/details`);
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ name: 'Fluffy Pancakes', icon: '🥞', color: '#fff' });
+      expect(req.request.body).toEqual({
+        name: 'Fluffy Pancakes',
+        icon: '🥞',
+        color: '#fff',
+        description: '',
+      });
       req.flush(updated);
 
       await expect(promise).resolves.toEqual(updated);
@@ -281,6 +282,7 @@ describe('MealplansService', () => {
         name: 'Fluffy Pancakes',
         icon: '🥞',
         color: '#fff',
+        description: '',
       });
       httpMock.expectOne(`${familyBase()}/meals/meal-1/details`).flush(updated);
       await promise;
@@ -339,12 +341,12 @@ describe('MealplansService', () => {
     });
 
     it('serializes slot 0 (Breakfast) as the string "0" in query params', async () => {
-      const promise = service.assignMealToSlot(familyScope, '2026-08-26', 0, 'meal-1');
+      const promise = service.assignMealToSlot(familyScope, '2026-08-26', 0, 'meal-1', '');
 
       const req = httpMock.expectOne(
         (r) => r.url === `${familyBase()}/plan` && r.params.get('slot') === '0',
       );
-      expect(req.request.body).toEqual({ mealId: 'meal-1', notes: undefined });
+      expect(req.request.body).toEqual({ mealId: 'meal-1', notes: '' });
       req.flush(entry({ slot: 0 }));
 
       await promise;

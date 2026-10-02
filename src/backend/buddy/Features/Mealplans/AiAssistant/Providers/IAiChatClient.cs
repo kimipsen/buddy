@@ -19,7 +19,7 @@ public enum AiChatMessageRole
 // calls it made (with their already-executed results) and whatever text preceded/followed them --
 // each provider adapter reconstructs its own wire format (Anthropic tool_use/tool_result blocks,
 // OpenAI function calls, ...) from this shape (see AnthropicChatClient).
-public sealed record AiChatMessage(AiChatMessageRole Role, string? Text, IReadOnlyList<AiToolInvocation> ToolInvocations);
+public sealed record AiChatMessage(AiChatMessageRole Role, string Text, IReadOnlyList<AiToolInvocation> ToolInvocations);
 
 public sealed record AiToolInvocation(string ToolCallId, string ToolName, string ArgumentsJson, string ResultJson, bool IsError);
 
@@ -33,6 +33,6 @@ public sealed record AiChatCompletionRequest(
 
 // One round of the provider responding: either it's done (Text present, no ToolCalls) or it wants
 // to call tools (ToolCalls present; Text may still carry a preamble the model said first).
-public sealed record AiChatCompletionResult(string? Text, IReadOnlyList<AiRequestedToolCall> ToolCalls);
+public sealed record AiChatCompletionResult(string Text, IReadOnlyList<AiRequestedToolCall> ToolCalls);
 
 public sealed record AiRequestedToolCall(string ToolCallId, string ToolName, string ArgumentsJson);

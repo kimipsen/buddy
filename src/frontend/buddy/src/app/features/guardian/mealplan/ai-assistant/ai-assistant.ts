@@ -106,7 +106,7 @@ export class MealplanAiAssistant implements OnInit {
         to: this.toDate(),
         slots,
         mustIncludeMealIds: [],
-        notes: this.notes().trim() || null,
+        notes: this.notes().trim(),
       });
       this.session.set(session);
       this.lastOutcome.set(null);

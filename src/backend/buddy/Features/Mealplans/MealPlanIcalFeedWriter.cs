@@ -33,7 +33,8 @@ public static class MealPlanIcalFeedWriter
             {
                 Uid = BuildUid(entry),
                 Summary = $"{entry.Slot}: {entry.MealName}",
-                Description = entry.Notes,
+                // "" means no notes; Ical.Net writes an empty DESCRIPTION line for "" but omits null.
+                Description = entry.Notes.Length == 0 ? null : entry.Notes,
                 DtStart = new CalDateTime(start),
                 DtEnd = new CalDateTime(start.Add(EventDuration)),
                 DtStamp = stamp,

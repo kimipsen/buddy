@@ -23,7 +23,7 @@ public static class AssignMealToSlotEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = AssignMealToSlot.FromClaims(principal, new UserId(childId), date, slot, new MealId(request.MealId), request.Notes);
+            var command = AssignMealToSlot.FromClaims(principal, new UserId(childId), date, slot, new MealId(request.MealId), FreeText.Normalize(request.Notes));
             var result = await bus.InvokeAsync<Result<MealPlanEntry>>(command, cancellationToken);
 
             return result switch

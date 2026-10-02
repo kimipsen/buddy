@@ -25,7 +25,7 @@ describe('MealplanToday', () => {
       icon: '🥞',
       color: '#000',
       rating: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
       ...overrides,

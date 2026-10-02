@@ -43,7 +43,7 @@ describe('AssignMealplan', () => {
     return {
       id: 'meal-1',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#fff',
       isArchived: false,
@@ -66,7 +66,7 @@ describe('AssignMealplan', () => {
       icon: '🥞',
       color: '#fff',
       rating: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
       ...overrides,
@@ -261,11 +261,12 @@ describe('AssignMealplan', () => {
         today,
         1,
         'meal-2',
+        '',
       );
       expect(pickerInput(compiled, today, 1).value).toBe('🌮 Tacos');
     });
 
-    it('does not send notes -- the grid has no control for entering them', async () => {
+    it('sends empty notes -- the grid has no control for entering them', async () => {
       const { fixture, mealplans } = await setup();
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
@@ -274,17 +275,14 @@ describe('AssignMealplan', () => {
       mealOption(compiled, today, 0, 'Pancakes').click();
       await settle(fixture);
 
-      // assignMealToSlot's 5th (notes) parameter is simply never passed by the caller here, so
-      // the mock only ever observes 4 arguments -- pinned explicitly since it's easy to lose this
-      // behavior by accident if a "notes" affordance is later bolted onto the call.
+      // The grid has no notes control, so it always sends empty notes ("" means none) -- pinned
+      // explicitly since it's easy to lose this by accident if a notes affordance is bolted on.
       expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(
         familyScope,
         today,
         0,
         'meal-1',
-      );
-      expect((mealplans.assignMealToSlot as ReturnType<typeof vi.fn>).mock.calls[0]).toHaveLength(
-        4,
+        '',
       );
     });
 
@@ -522,7 +520,7 @@ describe('AssignMealplan', () => {
                 {
                   childId: 'unresolved-child',
                   stars: 3,
-                  comment: null,
+                  comment: '',
                   ratedAt: '2026-01-01T00:00:00Z',
                 },
               ],
@@ -550,7 +548,7 @@ describe('AssignMealplan', () => {
               slot: 0,
               mealId: 'meal-1',
               allRatings: [
-                { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+                { childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
               ],
             }),
           ]),
@@ -571,7 +569,7 @@ describe('AssignMealplan', () => {
               slot: 0,
               mealId: 'meal-1',
               allRatings: [
-                { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+                { childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
               ],
             }),
           ]),
@@ -612,6 +610,7 @@ describe('AssignMealplan', () => {
         target.date,
         target.slot,
         'meal-1',
+        '',
       );
       expect(mealplans.clearMealSlot).toHaveBeenCalledExactlyOnceWith(
         familyScope,
@@ -660,6 +659,7 @@ describe('AssignMealplan', () => {
         target.date,
         target.slot,
         'meal-1',
+        '',
       );
       expect(mealplans.assignMealToSlot).toHaveBeenNthCalledWith(
         2,
@@ -667,6 +667,7 @@ describe('AssignMealplan', () => {
         source.date,
         source.slot,
         'meal-2',
+        '',
       );
 
       const compiled = fixture.nativeElement as HTMLElement;

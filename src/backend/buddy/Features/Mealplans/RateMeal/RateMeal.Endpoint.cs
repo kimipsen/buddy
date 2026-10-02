@@ -22,7 +22,7 @@ public static class RateMealEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = RateMeal.FromClaims(principal, new UserId(childId), new MealId(mealId), request.Stars, request.Comment);
+            var command = RateMeal.FromClaims(principal, new UserId(childId), new MealId(mealId), request.Stars, FreeText.Normalize(request.Comment));
             var result = await bus.InvokeAsync<Result<Meal>>(command, cancellationToken);
 
             return result switch

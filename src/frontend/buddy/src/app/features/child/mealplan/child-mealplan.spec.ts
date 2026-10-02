@@ -32,7 +32,7 @@ describe('ChildMealplan', () => {
       icon: '🍽️',
       color: '#f00',
       rating: null,
-      notes: null,
+      notes: '',
       assignedBy: 'guardian-1',
       allRatings: [],
       ...overrides,
@@ -97,7 +97,7 @@ describe('ChildMealplan', () => {
     return {
       id: 'meal-from',
       name: 'Meal meal-from',
-      description: null,
+      description: '',
       icon: '🍽️',
       color: '#f00',
       isArchived: false,
@@ -199,11 +199,11 @@ describe('ChildMealplan', () => {
     const rateMeal = vi.fn(async () => ({
       id: 'meal-shared',
       name: 'Pancakes',
-      description: null,
+      description: '',
       icon: '🥞',
       color: '#f00',
       isArchived: false,
-      ratings: [{ childId: 'child-1', stars: 3, comment: null, ratedAt: '2026-01-01T00:00:00Z' }],
+      ratings: [{ childId: 'child-1', stars: 3, comment: '', ratedAt: '2026-01-01T00:00:00Z' }],
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
     }));
@@ -228,7 +228,7 @@ describe('ChildMealplan', () => {
     starButtons[2].click();
     await settle(fixture);
 
-    expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-shared', 3, null);
+    expect(rateMeal).toHaveBeenCalledWith('child-1', 'meal-shared', 3, '');
     expect(starButtons[2].classList.contains('text-amber-400')).toBe(true);
     expect(starButtons[7].classList.contains('text-amber-400')).toBe(true);
   });
@@ -237,7 +237,7 @@ describe('ChildMealplan', () => {
     const rateMeal = vi.fn(async () => ({
       id: 'meal-from',
       name: 'Meal meal-from',
-      description: null,
+      description: '',
       icon: '🍽️',
       color: '#f00',
       isArchived: false,
@@ -353,13 +353,13 @@ describe('ChildMealplan', () => {
 
     starButtons()[3].click();
     fixture.detectChanges();
-    expect(rateMeal).toHaveBeenLastCalledWith('child-1', 'meal-from', 4, null);
+    expect(rateMeal).toHaveBeenLastCalledWith('child-1', 'meal-from', 4, '');
     expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
     expect(starButtons().every((button) => button.disabled)).toBe(true);
 
     pending.resolve(
       mealWithRatings([
-        { childId: 'child-1', stars: 4, comment: null, ratedAt: '2026-01-01T00:00:00Z' },
+        { childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
       ]),
     );
     await settle(fixture);

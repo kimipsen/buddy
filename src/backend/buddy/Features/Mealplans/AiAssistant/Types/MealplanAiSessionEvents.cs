@@ -52,7 +52,7 @@ public sealed record AiSessionStarted(
     DateOnly To,
     IReadOnlyCollection<MealSlot> RequestedSlots,
     IReadOnlyCollection<MealId> MustIncludeMealIds,
-    string? Notes,
+    string Notes,
     UserId StartedBy,
     DateTimeOffset OccurredAt);
 

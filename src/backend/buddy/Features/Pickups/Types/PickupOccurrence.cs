@@ -15,7 +15,7 @@ public sealed record PickupOccurrence(
     string? PlaydateLocation,
     string? PlaydateContactInfo,
     TimeOnly? Time,
-    string? Notes,
+    string Notes,
     Guid AssignedBy)
 {
     public static PickupOccurrence FromAssignment(DateOnly date, PickupSlot slot, PickupAssignment assignment) => new(

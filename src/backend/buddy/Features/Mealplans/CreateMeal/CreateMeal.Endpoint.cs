@@ -26,7 +26,7 @@ public static class CreateMealEndpoint
                 principal,
                 new UserId(childId),
                 request.Name,
-                request.Description,
+                FreeText.Normalize(request.Description),
                 new Icon(request.Icon),
                 new Color(request.Color));
 
@@ -48,7 +48,7 @@ public static class CreateMealEndpoint
 
 public sealed record CreateMealRequest(string Name, string Icon, string Color, string? Description = null);
 
-public sealed record MealRatingResponse(Guid ChildId, int Stars, string? Comment, DateTimeOffset RatedAt);
+public sealed record MealRatingResponse(Guid ChildId, int Stars, string Comment, DateTimeOffset RatedAt);
 
 // No ChildId -- a Meal is shared by every child in its family (see MealFamilyResolution), so
 // there's no single owning child to report. Ratings is every sibling's own rating, if any, useful
@@ -56,7 +56,7 @@ public sealed record MealRatingResponse(Guid ChildId, int Stars, string? Comment
 public sealed record MealResponse(
     MealId Id,
     string Name,
-    string? Description,
+    string Description,
     string Icon,
     string Color,
     bool IsArchived,

@@ -20,7 +20,7 @@ public sealed record AssignPickup(
     string? PlaydateLocation,
     string? PlaydateContactInfo,
     TimeOnly? Time,
-    string? Notes)
+    string Notes)
 {
     public static AssignPickup FromClaims(
         ClaimsPrincipal principal,
@@ -34,6 +34,6 @@ public sealed record AssignPickup(
         string? playdateLocation,
         string? playdateContactInfo,
         TimeOnly? time,
-        string? notes) =>
+        string notes) =>
         new(principal.GetRequiredUserId(), childId, date, slot, kind, guardianId, siblingChildId, playdateHostName, playdateLocation, playdateContactInfo, time, notes);
 }
