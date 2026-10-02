@@ -11,13 +11,13 @@ export class ProgressBadge {
   readonly totalStars = input.required<number>();
   // Resolved server-side from the child's guardian-configured goal posts (see
   // docs/backend/analysis/configurable-goal-posts.md) -- including extrapolated posts past
-  // whatever the guardian configured, so the badge never plateaus. currentIcon is null before
-  // the child has reached their first goal post.
-  readonly currentIcon = input<string | null>(null);
+  // whatever the guardian configured, so the badge never plateaus. displayIcon is the next goal
+  // post's icon before the child has reached their first.
+  readonly displayIcon = input.required<string>();
   readonly nextGoalThreshold = input<number>(0);
   readonly nextGoalIcon = input<string>('🌱');
 
-  protected readonly stage = computed(() => this.currentIcon() ?? this.nextGoalIcon());
+  protected readonly stage = computed(() => this.displayIcon());
   protected readonly hasNextGoal = computed(() => this.nextGoalThreshold() > this.totalStars());
 
   // A short pulse whenever the count goes up -- immediate feedback at the moment of completion

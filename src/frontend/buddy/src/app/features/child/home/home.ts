@@ -152,7 +152,7 @@ export class ChildHome implements OnInit, OnDestroy {
   protected readonly progress = signal<ProgressSummary>({
     totalStars: 0,
     unlockedMilestones: [],
-    currentIcon: null,
+    displayIcon: '🌱',
     nextGoalThreshold: 0,
     nextGoalIcon: '🌱',
     goalPosts: [],

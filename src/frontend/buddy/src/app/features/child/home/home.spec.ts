@@ -169,7 +169,7 @@ describe('ChildHome', () => {
       getMyProgress: vi.fn(async () => ({
         totalStars: 0,
         unlockedMilestones: [],
-        currentIcon: null,
+        displayIcon: '🌱',
         nextGoalThreshold: 5,
         nextGoalIcon: '🌱',
         goalPosts: [],
@@ -594,7 +594,7 @@ describe('ChildHome', () => {
           getMyProgress: vi.fn(async () => ({
             totalStars: 7,
             unlockedMilestones: [],
-            currentIcon: '🌳',
+            displayIcon: '🌳',
             nextGoalThreshold: 10,
             nextGoalIcon: '🏆',
             goalPosts: [],
@@ -628,7 +628,7 @@ describe('ChildHome', () => {
         .mockResolvedValueOnce({
           totalStars: 1,
           unlockedMilestones: [],
-          currentIcon: null,
+          displayIcon: '🌱',
           nextGoalThreshold: 5,
           nextGoalIcon: '🌱',
           goalPosts: [],
@@ -636,7 +636,7 @@ describe('ChildHome', () => {
         .mockResolvedValueOnce({
           totalStars: 2,
           unlockedMilestones: [],
-          currentIcon: null,
+          displayIcon: '🌱',
           nextGoalThreshold: 5,
           nextGoalIcon: '🌱',
           goalPosts: [],

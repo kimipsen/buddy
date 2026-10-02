@@ -22,7 +22,7 @@ describe('ManageProgressGoals', () => {
     return {
       totalStars: 0,
       unlockedMilestones: [],
-      currentIcon: null,
+      displayIcon: '🌱',
       nextGoalThreshold: 5,
       nextGoalIcon: '🌱',
       goalPosts: [

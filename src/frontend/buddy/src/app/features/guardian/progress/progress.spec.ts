@@ -20,7 +20,7 @@ describe('GuardianProgress', () => {
       getChildProgress: vi.fn(async () => ({
         totalStars: 0,
         unlockedMilestones: [],
-        currentIcon: null,
+        displayIcon: '🌱',
         nextGoalThreshold: 0,
         nextGoalIcon: '🌱',
         goalPosts: [],

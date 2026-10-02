@@ -757,6 +757,9 @@ Committed per group.
   `RescheduleMedicineHandler.RescheduleForChildAsync` return `Result<MedicineSchedule>`.
 - **Users.** `EventsPageRequest` carries one `DecodedCursor Position` (made public, with
   `CursorDirection`) instead of `long? AfterVersion` / `BeforeVersion`; no cursor is `After 0`.
+- **Progress.** `ProgressSummary.CurrentIcon?` became a non-null `DisplayIcon` (the reached goal
+  post's icon, else the next one's). `progress-badge.ts` takes a required `displayIcon`, and
+  `children-overview.ts` reads it directly.
 
 ## Phase 6: drop `Before?` from events
 

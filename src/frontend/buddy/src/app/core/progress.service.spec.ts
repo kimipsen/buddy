@@ -17,7 +17,7 @@ describe('ProgressService', () => {
     return {
       totalStars: 12,
       unlockedMilestones: [5, 10],
-      currentIcon: 'star',
+      displayIcon: 'star',
       nextGoalThreshold: 20,
       nextGoalIcon: 'trophy',
       goalPosts: [{ threshold: 20, icon: 'trophy', label: 'Big prize' }],

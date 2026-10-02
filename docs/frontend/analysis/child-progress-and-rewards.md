@@ -36,8 +36,8 @@ rating (which the child already associates with "how good was this")
 wouldn't.
 
 The badge no longer computes its own icon from `unlockedMilestones().length`:
-`ProgressSummary` now resolves `currentIcon` (the icon of the last goal post
-reached, or `null` before the first one), `nextGoalThreshold`, and
+`ProgressSummary` now resolves `displayIcon` (the icon of the last goal post
+reached, or the next one's before the first), `nextGoalThreshold`, and
 `nextGoalIcon` server-side (`GoalPostResolver`, shared with the milestone
 detection on the write path), so the badge is a thin renderer of whatever
 the backend resolves and never re-derives the extrapolation logic. It shows
@@ -98,8 +98,8 @@ next to the "Linked" badge already there — not a new widget, since the
 guardian dashboard already has exactly one place that lists "my children,"
 and progress is a fact about a child, not a "today" occurrence like the
 other `-today` widgets on that dashboard. The pill's icon is the child's
-`currentIcon` (falling back to `nextGoalIcon` before any goal post is
-reached), the same resolution `progress-badge.ts` uses, rather than a
+`displayIcon` (the next goal post's icon before any is reached), the same
+value `progress-badge.ts` renders, rather than a
 hardcoded `✨` sparkle — so a guardian sees the same goalpost icon the child
 sees. Backed by a new `GET /progress/children/{childId}` endpoint
 ([GetChildProgress.Handler.cs](../../../src/backend/buddy/Features/Progress/GetChildProgress/GetChildProgress.Handler.cs)),

@@ -32,7 +32,7 @@ describe('ChildrenOverview', () => {
       getChildProgress: vi.fn(async () => ({
         totalStars: 0,
         unlockedMilestones: [],
-        currentIcon: null,
+        displayIcon: '🌱',
         nextGoalThreshold: 5,
         nextGoalIcon: '🌱',
         goalPosts: [],
@@ -128,7 +128,7 @@ describe('ChildrenOverview', () => {
         getChildProgress: vi.fn(async () => ({
           totalStars: 3,
           unlockedMilestones: [],
-          currentIcon: '🌱',
+          displayIcon: '🌱',
           nextGoalThreshold: 5,
           nextGoalIcon: '🌿',
           goalPosts: [],
@@ -140,7 +140,7 @@ describe('ChildrenOverview', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('3');
     // The child's current goalpost icon, not a hardcoded star -- see progress-badge.ts for the
-    // same currentIcon-falls-back-to-nextGoalIcon resolution.
+    // same server-resolved displayIcon.
     expect(compiled.textContent).toContain('🌱');
 
     const badges = compiled.querySelectorAll('li > span:last-child > span:last-child');
@@ -162,7 +162,7 @@ describe('ChildrenOverview', () => {
     return {
       totalStars,
       unlockedMilestones: [],
-      currentIcon: '🌱',
+      displayIcon: '🌱',
       nextGoalThreshold: 5,
       nextGoalIcon: '🌿',
       goalPosts: [],

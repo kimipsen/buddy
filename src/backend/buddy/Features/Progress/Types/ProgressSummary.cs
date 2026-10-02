@@ -3,7 +3,8 @@ namespace buddy.Features.Progress;
 public sealed record ProgressSummary(
     int TotalStars,
     IReadOnlyList<int> UnlockedMilestones,
-    string? CurrentIcon,
+    // The reached goal post's icon, or the next one's before the first is reached.
+    string DisplayIcon,
     int NextGoalThreshold,
     string NextGoalIcon,
     IReadOnlyList<GoalPostResponse> GoalPosts)
@@ -16,7 +17,7 @@ public sealed record ProgressSummary(
         return new ProgressSummary(
             progress.TotalStars,
             [.. progress.UnlockedMilestones.OrderBy(threshold => threshold)],
-            current?.Icon,
+            current?.Icon ?? next.Icon,
             next.Threshold,
             next.Icon,
             [.. GoalPostResolver.Effective(configuredGoalPosts).Select(post => new GoalPostResponse(post.Threshold, post.Icon, post.Label))]);

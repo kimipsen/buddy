@@ -60,7 +60,7 @@ export class ChildrenOverview implements OnInit {
         const summary = await this.progressService.getChildProgress(child.id);
         const entry = {
           totalStars: summary.totalStars,
-          icon: summary.currentIcon ?? summary.nextGoalIcon,
+          icon: summary.displayIcon,
         };
 
         this.progressByChildId.update((current) => ({ ...current, [child.id]: entry }));

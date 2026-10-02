@@ -15,8 +15,9 @@ export interface ProgressSummary {
   unlockedMilestones: number[];
   // Resolved server-side (see GoalPostResolver) from the child's guardian-configured goal posts
   // -- or the default scale, if none are configured -- including extrapolated posts past the
-  // configured list, so the frontend never re-derives this logic.
-  currentIcon: string | null;
+  // configured list, so the frontend never re-derives this logic. displayIcon is the reached goal
+  // post's icon, or the next one's before the first is reached.
+  displayIcon: string;
   nextGoalThreshold: number;
   nextGoalIcon: string;
   goalPosts: GoalPost[];

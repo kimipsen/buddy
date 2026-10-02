@@ -251,7 +251,7 @@ public sealed class ConfigureGoalPostsTests(BuddyApiFixture fixture)
         var summary = response.ReadAsJson<ProgressSummary>();
         Assert.Equal(4, summary.TotalStars);
         Assert.Equal([1, 2, 3, 4], summary.UnlockedMilestones);
-        Assert.Equal("🥈", summary.CurrentIcon);
+        Assert.Equal("🥈", summary.DisplayIcon);
         Assert.Equal(5, summary.NextGoalThreshold);
         Assert.Equal("🥉", summary.NextGoalIcon);
     }

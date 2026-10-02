@@ -193,5 +193,7 @@ public sealed class RecordStarChangeTests(BuddyApiFixture fixture)
 
         var afterRevoke = await GetMyProgressAsync(childToken);
         Assert.Equal(0, afterRevoke.TotalStars);
+        // No goal post reached yet: the badge shows the next one's icon.
+        Assert.Equal(afterRevoke.NextGoalIcon, afterRevoke.DisplayIcon);
     }
 }
