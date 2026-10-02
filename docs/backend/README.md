@@ -39,6 +39,8 @@ model or permissions logic.
 - [Guardian-managed child time zone](analysis/child-timezone-settings.md)
 - [Gamified progress](analysis/gamified-progress.md)
 - [Configurable goal posts for progress](analysis/configurable-goal-posts.md)
+- [Week plan print templates](analysis/week-plan-print-templates.md)
+- [Guardian work locations](analysis/work-locations.md)
 
 ## Current focus areas
 

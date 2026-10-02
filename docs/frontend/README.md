@@ -224,6 +224,8 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
   summary, guardian-configurable goal posts, and reward sketch
 - [Pickup planning and daily views](analysis/pickup-planning-and-daily-views.md) — implemented
   guardian planner, guardian dashboard summary, and child read-only view
+- [Week plan printing](analysis/week-plan-printing.md) — proposed A3/A4 landscape print
+  sheet from saved templates, quick print flow, and template editor
 
 ## Local development
 
