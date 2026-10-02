@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using buddy.Features.Calendars;
 using buddy.Serialization;
 
 using Xunit;
@@ -20,8 +19,8 @@ internal static class EventShapeTestSupport
     // options.UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString, ...) for their
     // Marten stores -- enums as their name, strongly-typed ids unwrapped to their raw value, and
     // the union of the extra converters individual stores register: ValueTuples
-    // (Calendars, Medicines, Mealplans, Pickups, Progress) and CalendarOwner (Calendars). Each
-    // extra converter only handles its own type, so registering all of them here can't change
+    // (Calendars, Medicines, Mealplans, Pickups, Progress). Each extra converter only handles its
+    // own type, so registering all of them here can't change
     // the shape of an event from a store that doesn't register it.
     public static JsonSerializerOptions CreateEventSerializerOptions() => new()
     {
@@ -29,8 +28,7 @@ internal static class EventShapeTestSupport
         {
             new JsonStringEnumConverter(),
             new StronglyTypedIdJsonConverterFactory(),
-            new ValueTupleJsonConverterFactory(),
-            new CalendarOwnerJsonConverter()
+            new ValueTupleJsonConverterFactory()
         }
     };
 

@@ -4,7 +4,8 @@ Status: Guardian workflow implemented; child calendar access implemented (view +
 
 The original requirement was to let a user create events in calendars they can
 contribute to and browse occurrences from every calendar they can access,
-whether access is explicit, guardian-derived, or group-derived. The backend
+whether access is explicit or group-derived (guardian-derived access to user-owned
+calendars existed when this was written; user-owned calendars have since been removed). The backend
 already provided that authorization and occurrence expansion. The implemented
 frontend now exposes it to guardians at `/guardian/calendar`.
 
@@ -13,10 +14,9 @@ frontend now exposes it to guardians at `/guardian/calendar`.
 The frontend did not need a new aggregate or permission rule:
 
 - [`CalendarAuthorization.ResolveRole`](../../../src/backend/buddy/Features/Calendars/CalendarAuthorization.cs)
-  resolves explicit membership first, then a group-owned calendar's permission
-  policy, then guardian-derived access to a user-owned calendar.
+  resolves explicit membership first, then the owning group's permission policy.
 - [`ListCalendars.Handler`](../../../src/backend/buddy/Features/Calendars/ListCalendars/ListCalendars.Handler.cs)
-  merges explicit, group-derived, and guardian-derived calendars and returns
+  merges explicit and group-derived calendars and returns
   the effective role for each.
 - `ListOccurrences` expands events and tasks for an arbitrary date range.
 - Item commands already provide create, detail update, rescheduling,

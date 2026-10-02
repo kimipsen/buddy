@@ -233,7 +233,10 @@ aggregate directly. Verified with an explicit round-trip assertion (not just inc
 equivalence-check coverage) in `ChildProgressSnapshotTests.cs`, since `AwardedOccurrences` is
 exactly the "3-tuple hash-set element" shape most likely to silently lose data.
 
-**6b. A discriminated union whose cases share a JSON shape.** `Calendar.Owner` is `CalendarOwner`,
+**6b. A discriminated union whose cases share a JSON shape.** (Historical: `CalendarOwner` and
+its converter were removed in [eliminate-nulls.md, Phase 3](eliminate-nulls.md#phase-3-delete-back-compat-code),
+when calendars became group-owned only. The same fix lives on in
+`PrintTemplates/Types/PrintTemplateOwnerJsonConverter.cs`.) `Calendar.Owner` was `CalendarOwner`,
 a closed `union` with two cases, `User(UserId Value)` and `Group(GroupId Value)`. Both `UserId`
 and `GroupId` flatten to a bare `Guid` via `StronglyTypedIdJsonConverterFactory`, so both cases
 serialize to the *identical* JSON shape `{"Value": "<guid>"}` — the union's own type-classifier
@@ -252,9 +255,7 @@ document. Fixing it took two changes:
   had already hit this exact class of problem and deliberately avoided a union over it. Since
   reshaping `CalendarOwner` itself would be a much larger, riskier change (touching
   `CalendarAuthorization` and every handler that pattern-matches it), the fix instead is a small,
-  narrowly-scoped
-  [`CalendarOwnerJsonConverter`](../../../src/backend/buddy/Features/Calendars/Types/CalendarOwnerJsonConverter.cs)
-  (an explicit `{"Kind":"User"|"Group","Id":"<guid>"}` shape), registered only on the `Calendars`
+  narrowly-scoped `CalendarOwnerJsonConverter` (an explicit `{"Kind":"User"|"Group","Id":"<guid>"}` shape), registered only on the `Calendars`
   module's `StoreOptions` — it doesn't touch `CalendarOwner`'s C# shape or any other module.
   Worth checking for if any *other* module's union ever needs to be JSON-serialized directly in
   the future (none currently do outside their own event payloads, which don't hit this because

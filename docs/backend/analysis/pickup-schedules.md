@@ -77,9 +77,8 @@ aggregate.
 **Decision: a flat `PickupAssigneeKind` enum plus per-case optional fields on
 `PickupAssignment`, not a closed union.**
 
-A closed union of four cases, mirroring `CalendarOwner`'s union-of-records
-shape
-([CalendarOwner.cs](../../../src/backend/buddy/Features/Calendars/Types/CalendarOwner.cs)),
+A closed union of four cases, mirroring the then-existing `CalendarOwner`
+union-of-records shape (since removed; `PrintTemplateOwner` is the same pattern),
 was the first design here, on the reasoning that it makes illegal
 combinations unrepresentable (a `Guardian` case can't carry a stray
 `PlaydateHostName`, etc.). **That was implemented, then reverted after it

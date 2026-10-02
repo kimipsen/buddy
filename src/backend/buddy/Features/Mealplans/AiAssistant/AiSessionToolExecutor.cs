@@ -125,7 +125,7 @@ public static class AiSessionToolExecutor
                 Error($"The range must be within the session's requested dates ({session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd})."), true, null);
         }
 
-        var occurrences = await CalendarConflictLookup.FindOccurrencesAsync(callerId, from, to, calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken);
+        var occurrences = await CalendarConflictLookup.FindOccurrencesAsync(callerId, from, to, calendars, calendarItems, taskTemplates, groups, cancellationToken);
 
         var events = occurrences.Select(o => new
         {

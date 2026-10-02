@@ -4,7 +4,6 @@ using buddy.Features.Users;
 namespace buddy.Features.Calendars;
 
 public union CalendarEvent(
-    CalendarCreated,
     CalendarCreatedForGroup,
     CalendarIconChanged,
     CalendarTransferredToGroup,
@@ -17,7 +16,6 @@ public union CalendarEvent(
 {
     public static CalendarEvent FromPayload(object payload) => payload switch
     {
-        CalendarCreated e => e,
         CalendarCreatedForGroup e => e,
         CalendarIconChanged e => e,
         CalendarTransferredToGroup e => e,
@@ -33,7 +31,6 @@ public union CalendarEvent(
     // CalendarEvent returns "CalendarEvent" for every case -- use this instead.
     public string EventType => this switch
     {
-        CalendarCreated => nameof(CalendarCreated),
         CalendarCreatedForGroup => nameof(CalendarCreatedForGroup),
         CalendarIconChanged => nameof(CalendarIconChanged),
         CalendarTransferredToGroup => nameof(CalendarTransferredToGroup),
@@ -45,21 +42,16 @@ public union CalendarEvent(
     };
 }
 
-public sealed record CalendarCreated(CalendarId CalendarId, UserId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
-
-// Additive sibling to CalendarCreated, used only when a calendar is created for a group instead
-// of a user. CalendarCreated itself is never modified -- old streams are read exactly as stored,
-// with no upcasting. See docs/backend/analysis/group-owned-calendars-and-permissions.md.
-public sealed record CalendarCreatedForGroup(CalendarId CalendarId, GroupId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
+// Every calendar is group-owned (see docs/backend/analysis/group-owned-calendars-and-permissions.md);
+// the creating request's icon (Calendar.DefaultIcon when it gave none) is stored on the event itself.
+public sealed record CalendarCreatedForGroup(CalendarId CalendarId, GroupId GroupId, string Name, Icon Icon, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt);
 
 // Icon is the only calendar-level detail that can change after creation today -- Name and
-// TimeZoneId remain fixed. See Calendar.DefaultIcon for the value assumed until this event first
-// appears in a calendar's stream.
+// TimeZoneId remain fixed.
 public sealed record CalendarIconChanged(CalendarId CalendarId, Icon Icon, UserId ChangedBy, DateTimeOffset OccurredAt);
 
 // The one exception to "ownership is fixed at creation, never transferred" -- a calendar's
-// owning group can be changed afterward (e.g. moving a legacy personally-owned calendar into a
-// group, or moving it from one group to another), gated by CheckOwner on the calendar itself and
+// owning group can be moved to another group afterward, gated by CheckOwner on the calendar itself and
 // GroupAuthorization.CheckManage on NewGroupId (two-sided consent, the same shape
 // ShareMealPlanWithGroup/ShareMedicineWithGroup already use). Calendar.Members is untouched by a
 // transfer -- explicit per-user grants always win over the owning group's policy regardless of
@@ -68,7 +60,7 @@ public sealed record CalendarTransferredToGroup(CalendarId CalendarId, GroupId N
 
 public sealed record CalendarDeleted(CalendarId CalendarId, UserId DeletedBy, DateTimeOffset OccurredAt);
 
-// Role is always Contributor or Viewer -- Owner is assigned only by CalendarCreated.
+// Role is always Contributor or Viewer -- Owner comes only from the owning group's policy.
 public sealed record MemberRoleGranted(CalendarId CalendarId, UserId MemberId, CalendarRole Role, UserId GrantedBy, DateTimeOffset OccurredAt);
 
 public sealed record MemberRoleRevoked(CalendarId CalendarId, UserId MemberId, UserId RevokedBy, DateTimeOffset OccurredAt);

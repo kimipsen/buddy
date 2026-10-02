@@ -156,7 +156,7 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
             linked.GuardianId.Value,
             linked.Kind,
             IsRevoked: false,
-            CreatedAt: DateTimeOffset.UtcNow));
+            linked.OccurredAt));
 
         await session.SaveChangesAsync(cancellationToken);
 

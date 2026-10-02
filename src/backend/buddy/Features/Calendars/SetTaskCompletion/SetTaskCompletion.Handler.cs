@@ -1,7 +1,6 @@
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.Progress;
 using buddy.Features.TaskLibrary;
 
@@ -17,7 +16,6 @@ public static class SetTaskCompletionHandler
         ICalendarItemEventStore items,
         ITaskTemplateEventStore templates,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         IMessageBus bus,
         CancellationToken cancellationToken)
     {
@@ -31,7 +29,7 @@ public static class SetTaskCompletionHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
 
         // NotFound (no resolved role at all) is still denied outright -- only a Forbidden (a
         // resolved role below Contributor, e.g. the Viewer tier a child gets by default under

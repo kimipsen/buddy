@@ -34,30 +34,12 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
         await using var session = store.LightweightSession();
         session.StartTrackedStream(calendarId.Value, payloads);
 
-        // A CalendarIconChanged appended in the same initial batch (CreateCalendarHandler does
-        // this when the caller specifies a custom icon at creation) overrides the default before
-        // the very first document is written -- there's no window where a stale icon is cached.
-        var icon = events.Select(e => e.Value).OfType<CalendarIconChanged>().FirstOrDefault()?.Icon.Value ?? Calendar.DefaultIcon.Value;
-
-        switch (events.FirstOrDefault())
+        if (events.FirstOrDefault().Value is not CalendarCreatedForGroup created)
         {
-            case CalendarCreated created:
-                session.Store(new CalendarMembershipDocument(
-                    CalendarMembershipDocument.BuildId(calendarId.Value, created.OwnerId.Value),
-                    calendarId.Value,
-                    created.OwnerId.Value,
-                    CalendarRole.Owner,
-                    created.Name,
-                    icon));
-                break;
-
-            case CalendarCreatedForGroup created:
-                session.Store(new GroupOwnedCalendarDocument(calendarId.Value, created.OwnerId.Value, created.Name, icon));
-                break;
-
-            default:
-                throw new InvalidOperationException("The first event of a new calendar stream must be CalendarCreated or CalendarCreatedForGroup.");
+            throw new InvalidOperationException("The first event of a new calendar stream must be CalendarCreatedForGroup.");
         }
+
+        session.Store(new GroupOwnedCalendarDocument(calendarId.Value, created.GroupId.Value, created.Name, created.Icon.Value));
 
         await session.SaveChangesAsync(cancellationToken);
 
@@ -125,9 +107,8 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             icon));
     }
 
-    // Upserts the same row (Id = calendarId) with the new GroupId -- whether the calendar was
-    // previously personal (no row yet) or owned by a different group (row already exists), this
-    // is the only write needed either way.
+    // Upserts the same row (Id = calendarId) with the new GroupId -- the only write needed to move
+    // the calendar's index entry to the destination group.
     private static async Task ApplyCalendarTransferredToGroupAsync(IDocumentSession session, CalendarId calendarId, CalendarTransferredToGroup transferred, CancellationToken cancellationToken)
     {
         var (name, icon) = await ResolveCalendarNameAndIconAsync(session, calendarId, cancellationToken);
@@ -164,7 +145,7 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
             session.Delete(member);
         }
 
-        // A no-op for a user-owned calendar -- only group-owned calendars have one of these.
+        // Every calendar has one (written at creation); the null check only guards a missing index row.
         var groupOwned = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken);
 
         if (groupOwned is not null)
@@ -189,13 +170,13 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
 
         if (membership is not null)
         {
-            return (membership.CalendarName, membership.Icon ?? Calendar.DefaultIcon.Value);
+            return (membership.CalendarName, membership.Icon);
         }
 
         var groupOwned = await session.LoadAsync<GroupOwnedCalendarDocument>(calendarId.Value, cancellationToken)
             ?? throw new InvalidOperationException($"No membership or group-owned document found for calendar '{calendarId.Value}'.");
 
-        return (groupOwned.CalendarName, groupOwned.Icon ?? Calendar.DefaultIcon.Value);
+        return (groupOwned.CalendarName, groupOwned.Icon);
     }
 
     public async Task<IReadOnlyCollection<CalendarMembershipDocument>> ListForUserAsync(UserId userId, CancellationToken cancellationToken)
@@ -219,21 +200,6 @@ public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarE
 
         return await session.Query<GroupOwnedCalendarDocument>()
             .Where(d => groupIdValues.Contains(d.GroupId))
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyCollection<CalendarMembershipDocument>> ListOwnedByUsersAsync(IReadOnlyCollection<UserId> userIds, CancellationToken cancellationToken)
-    {
-        if (userIds.Count == 0)
-        {
-            return [];
-        }
-
-        await using var session = store.QuerySession();
-        var userIdValues = userIds.Select(u => u.Value).ToArray();
-
-        return await session.Query<CalendarMembershipDocument>()
-            .Where(d => userIdValues.Contains(d.UserId) && d.Role == CalendarRole.Owner)
             .ToListAsync(cancellationToken);
     }
 }

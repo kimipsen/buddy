@@ -46,14 +46,9 @@ public static class CreateGroupHandler
 
         var groupId = GroupId.New();
         var now = DateTimeOffset.UtcNow;
-        var created = new GroupCreated(groupId, ownerId, command.Name, DefaultCalendarPolicy, now);
-        // GroupCreated can't carry MealplanPermissionPolicy/MedicinePermissionPolicy directly --
-        // it already shipped before either policy existed -- so every newly created group gets
-        // explicit defaults via two more events, appended in the same transaction.
-        var mealplanPolicySet = new GroupMealplanPolicyUpdated(groupId, DefaultMealplanPolicy, ownerId, now);
-        var medicinePolicySet = new GroupMedicinePolicyUpdated(groupId, DefaultMedicinePolicy, ownerId, now);
+        var created = new GroupCreated(groupId, ownerId, command.Name, DefaultCalendarPolicy, DefaultMealplanPolicy, DefaultMedicinePolicy, now);
 
-        var events = await groups.CreateAsync(groupId, [created, mealplanPolicySet, medicinePolicySet], cancellationToken);
+        var events = await groups.CreateAsync(groupId, [created], cancellationToken);
         var group = Group.Replay(events);
         var members = await GroupMemberResolver.ResolveAsync(group, guardians, users, cancellationToken);
 

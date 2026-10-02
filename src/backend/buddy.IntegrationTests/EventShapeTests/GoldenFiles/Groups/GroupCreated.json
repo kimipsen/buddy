@@ -7,5 +7,15 @@
     "Admin": "Contributor",
     "Member": "Viewer"
   },
+  "MealplanPermissionPolicy": {
+    "Owner": "Manage",
+    "Admin": "Manage",
+    "Member": "None"
+  },
+  "MedicinePermissionPolicy": {
+    "Owner": "Manage",
+    "Admin": "Manage",
+    "Member": "None"
+  },
   "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
 }

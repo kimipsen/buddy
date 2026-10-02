@@ -24,9 +24,19 @@ public sealed class GroupEventShapeTests
         .Add(GroupRole.Admin, CalendarRole.Contributor)
         .Add(GroupRole.Member, CalendarRole.Viewer);
 
+    private static readonly ImmutableDictionary<GroupRole, MealplanAccessTier> DefaultMealplanPolicy = ImmutableDictionary<GroupRole, MealplanAccessTier>.Empty
+        .Add(GroupRole.Owner, MealplanAccessTier.Manage)
+        .Add(GroupRole.Admin, MealplanAccessTier.Manage)
+        .Add(GroupRole.Member, MealplanAccessTier.None);
+
+    private static readonly ImmutableDictionary<GroupRole, MedicineAccessTier> DefaultMedicinePolicy = ImmutableDictionary<GroupRole, MedicineAccessTier>.Empty
+        .Add(GroupRole.Owner, MedicineAccessTier.Manage)
+        .Add(GroupRole.Admin, MedicineAccessTier.Manage)
+        .Add(GroupRole.Member, MedicineAccessTier.None);
+
     [Fact]
     public void GroupCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new GroupCreated(FixedGroupId, FixedUserId, "Engineering", DefaultPolicy, FixedInstant),
+        new GroupCreated(FixedGroupId, FixedUserId, "Engineering", DefaultPolicy, DefaultMealplanPolicy, DefaultMedicinePolicy, FixedInstant),
         "Groups/GroupCreated.json");
 
     [Fact]

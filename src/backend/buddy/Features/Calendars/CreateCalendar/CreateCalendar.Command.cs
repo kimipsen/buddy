@@ -6,12 +6,11 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
-// GroupId is required -- a calendar is always group-owned now. CalendarOwner.User and the plain
-// CalendarCreated event stay supported in Calendar.Rehydrate/CalendarAuthorization purely for
-// calendars created before this change; no new one is ever produced.
-public sealed record CreateCalendar(UserId UserId, string Name, TimeZoneId TimeZoneId, GroupId GroupId, Icon? Icon)
+// A calendar is always group-owned. Icon is already resolved: the endpoint substitutes
+// Calendar.DefaultIcon when the request leaves it blank.
+public sealed record CreateCalendar(UserId UserId, string Name, TimeZoneId TimeZoneId, GroupId GroupId, Icon Icon)
 {
-    public static CreateCalendar FromClaims(ClaimsPrincipal principal, string name, TimeZoneId timeZoneId, GroupId groupId, Icon? icon) =>
+    public static CreateCalendar FromClaims(ClaimsPrincipal principal, string name, TimeZoneId timeZoneId, GroupId groupId, Icon icon) =>
         new(principal.GetRequiredUserId(), name, timeZoneId, groupId, icon);
 }
 

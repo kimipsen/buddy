@@ -13,7 +13,7 @@ sequenceDiagram
     User->>App: Create a family group
     App->>API: POST /groups
     API->>Groups: CreateGroup command
-    Groups->>Store: Append GroupCreated
+    Groups->>Store: Append GroupCreated (with calendar, meal plan and medicine policies)
     Store-->>Groups: New group aggregate
     Groups-->>API: Group response
     API-->>App: 200 OK

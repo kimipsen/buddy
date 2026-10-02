@@ -44,7 +44,7 @@ classDiagram
     class Calendar {
         +CalendarId Id
         +string Name
-        +CalendarOwner Owner
+        +GroupId GroupId
         +MemberRoles Members
         +IcalTokens Tokens
         +bool IsDeleted
@@ -129,7 +129,6 @@ classDiagram
 
     GuardianLink --> User : guardianId, childId
     Group --> User : members
-    Calendar --> User : owner, user-owned
     Calendar --> Group : owner, group-owned
     Calendar --> User : members
     CalendarItem --> Calendar : calendarId

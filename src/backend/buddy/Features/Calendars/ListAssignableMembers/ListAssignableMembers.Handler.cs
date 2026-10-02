@@ -1,6 +1,5 @@
 using buddy.Common;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -15,7 +14,6 @@ public static class ListAssignableMembersHandler
         ListAssignableMembers query,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         IUserEventStore users,
         CancellationToken cancellationToken)
     {
@@ -29,7 +27,7 @@ public static class ListAssignableMembersHandler
             return new Result<IReadOnlyCollection<AssignableMemberSummary>>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {
@@ -38,18 +36,11 @@ public static class ListAssignableMembersHandler
 
         var memberIds = new HashSet<UserId>(calendar.Members.Keys);
 
-        if (calendar.Owner is CalendarOwner.Group(var groupId))
-        {
-            var group = Group.Rehydrate(await groups.ReadAsync(groupId, cancellationToken));
+        var group = Group.Rehydrate(await groups.ReadAsync(calendar.GroupId, cancellationToken));
 
-            if (group is not null && !group.IsDeleted)
-            {
-                memberIds.UnionWith(group.Members.Keys);
-            }
-        }
-        else if (calendar.Owner is CalendarOwner.User(var ownerId))
+        if (group is not null && !group.IsDeleted)
         {
-            memberIds.Add(ownerId);
+            memberIds.UnionWith(group.Members.Keys);
         }
 
         var summaries = new List<AssignableMemberSummary>(memberIds.Count);

@@ -17,9 +17,6 @@ public sealed record CalendarSnapshot(Guid Id, Calendar Calendar);
 // "calendars" event schema -- it is derived, rebuildable state, not a second source of truth.
 public sealed class CalendarSnapshotProjection : SingleStreamProjection<CalendarSnapshot, Guid>
 {
-    public static CalendarSnapshot Create(CalendarCreated created) =>
-        new(created.CalendarId.Value, Calendar.Start(CalendarEvent.FromPayload(created)));
-
     public static CalendarSnapshot Create(CalendarCreatedForGroup created) =>
         new(created.CalendarId.Value, Calendar.Start(CalendarEvent.FromPayload(created)));
 

@@ -35,15 +35,9 @@ public static class CreateCalendarHandler
 
         var calendarId = CalendarId.New();
         var now = DateTimeOffset.UtcNow;
-        CalendarEvent created = new CalendarCreatedForGroup(calendarId, command.GroupId, command.Name, command.TimeZoneId, now);
+        var created = new CalendarCreatedForGroup(calendarId, command.GroupId, command.Name, command.Icon, command.TimeZoneId, now);
 
-        // Appended atomically alongside CalendarCreatedForGroup rather than via a separate
-        // UpdateCalendarIcon call, so creating a calendar with a custom icon stays one request.
-        var initialEvents = command.Icon is { } icon && icon != Calendar.DefaultIcon
-            ? (CalendarEvent[])[created, new CalendarIconChanged(calendarId, icon, ownerId, now)]
-            : [created];
-
-        var events = await calendars.CreateAsync(calendarId, initialEvents, cancellationToken);
+        var events = await calendars.CreateAsync(calendarId, [created], cancellationToken);
 
         return new CreateCalendarOutcome.Success(Calendar.Replay(events));
     }

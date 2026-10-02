@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-2 implemented (see each phase's "As built"); phases 3-7 proposed.
+Status: Phases 0-3 implemented (see each phase's "As built"); phases 4-7 proposed.
 
 ## Context
 
@@ -331,6 +331,30 @@ preserved behavior.
 Golden files affected: `CalendarCreatedForGroup`, `CalendarIconChanged` (create-time case
 removed), plus any whose JSON changes because a default disappeared.
 
+### As built (Phase 3)
+
+Everything in the table above is done, plus three changes that follow from it:
+
+- **`GroupCreated` carries all three policies.** `CreateGroup` used to append
+  `GroupMealplanPolicyUpdated` and `GroupMedicinePolicyUpdated` right after `GroupCreated`, because
+  that event "already shipped" before those policies existed. That is the same back-compat
+  reasoning as the create-time `CalendarIconChanged`. Now one `GroupCreated` holds the calendar,
+  meal plan and medicine policies.
+- **`CalendarOwner` is gone.** Without `CalendarCreated` only the `Group` case was left, so
+  `Calendar.Owner` became `GroupId GroupId`.
+  - `CalendarOwnerJsonConverter` is deleted.
+  - `CalendarCreatedForGroup.OwnerId` is renamed `GroupId`.
+  - `CalendarAuthorization` lost the guardian-of-owner branch and its `IGuardianLinkEventStore`
+    parameter. 17 calendar handlers dropped the now-unused dependency.
+- **`DueDateRequest`.** With `DueDate.IsAllDay` required, the create and reschedule requests take
+  `{ date, time }`, which the endpoint maps to `DueDate` using the request's own `isAllDay`. This
+  matches what the frontend already sends.
+
+Kept on purpose: the `= null` defaults on request DTOs. Phase 0 added them for optional wire fields.
+
+Golden files: `CalendarCreated.json` is deleted. `CalendarCreatedForGroup.json` (now with `GroupId` and
+`Icon`) and `GroupCreated.json` (all three policies) changed. Every other event's JSON is unchanged.
+
 ## Phase 4: free text is `string`, `""` means none
 
 **Decision: optional free text is a non-null `string`. Each endpoint trims it and normalizes
@@ -370,7 +394,7 @@ hierarchy with an explicit discriminator.**
 
 - Use `[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]` plus `[JsonDerivedType]`. This
   works for both Marten and HTTP, since both use System.Text.Json. A hand-written converter like
-  [CalendarOwnerJsonConverter](../../../src/backend/buddy/Features/Calendars/Types/CalendarOwnerJsonConverter.cs)
+  [PrintTemplateOwnerJsonConverter](../../../src/backend/buddy/Features/PrintTemplates/Types/PrintTemplateOwnerJsonConverter.cs)
   is the fallback.
 - Don't rely on shape-based inference of a union. The comment in `PickupAssigneeKind.cs` rejected
   unions because of that ambiguity; an explicit discriminator removes it.

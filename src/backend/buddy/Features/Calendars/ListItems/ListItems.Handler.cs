@@ -25,7 +25,7 @@ public static class ListItemsHandler
             return new Result<IReadOnlyCollection<CalendarItem>>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckView(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckView(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

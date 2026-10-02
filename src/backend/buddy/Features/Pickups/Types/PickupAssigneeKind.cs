@@ -1,6 +1,6 @@
 namespace buddy.Features.Pickups;
 
-// The kind of principal responsible for a slot. A closed union (mirroring CalendarOwner) was
+// The kind of principal responsible for a slot. A closed union (like PrintTemplateOwner) was
 // considered and rejected here: the case payloads (GuardianId vs. SiblingChildId vs. the
 // Playdate free-text fields) all serialize as a plain JSON object, and System.Text.Json's union
 // converter can only tell cases apart by their JSON shape -- verified experimentally to throw

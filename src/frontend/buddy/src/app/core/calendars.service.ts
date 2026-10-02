@@ -127,14 +127,8 @@ export interface CalendarItemResponse {
   lastModifiedBy: string;
   assignedTo: string | null;
   // Set when this item was scheduled from a TaskLibrary template (see ScheduleTaskFromTemplate);
-  // null for a freeform item. Optional (rather than a plain `string | null`) for two reasons: (1)
-  // as of this writing the backend's CalendarItemResponse (CreateItem.Endpoint.cs) does not
-  // actually serialize CalendarItem.TaskTemplateId onto this DTO yet, even though the domain type
-  // carries it -- this field is added here for the shape the next step (agenda.ts integration)
-  // will need, but will read as undefined against the real API until that backend gap is closed;
-  // (2) making it optional keeps every existing CalendarItemResponse object literal (e.g. in
-  // calendars.service.spec.ts and any consumer outside this step's scope) compiling unchanged.
-  taskTemplateId?: string | null;
+  // null for a freeform item.
+  taskTemplateId: string | null;
 }
 
 export interface CalendarItemOccurrence {

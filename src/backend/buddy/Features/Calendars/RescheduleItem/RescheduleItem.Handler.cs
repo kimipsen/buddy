@@ -3,7 +3,6 @@ using System.Diagnostics;
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -15,7 +14,6 @@ public static class RescheduleItemHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -28,7 +26,7 @@ public static class RescheduleItemHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {
@@ -76,7 +74,7 @@ public static class RescheduleItemHandler
             return new Result<CalendarItem>.Validation(ValidationProblem.Of("A task requires a due date."));
         }
 
-        var dueDate = command.DueDate with { IsAllDay = command.IsAllDay };
+        var dueDate = command.DueDate;
 
         await items.AppendAsync(
             command.ItemId,

@@ -1,6 +1,5 @@
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.TaskLibrary;
 using buddy.Features.Users;
 
@@ -19,14 +18,13 @@ public static class CalendarConflictLookup
         ICalendarItemEventStore items,
         ITaskTemplateEventStore templates,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         // Reuses the exact same "which calendars can this user see" resolution the Calendars
-        // feature itself uses for its own list view (own + group-derived + linked children's) --
+        // feature itself uses for its own list view (explicit + group-derived memberships) --
         // being in this list already means at least View access, so no separate
         // CalendarAuthorization check is needed per calendar.
-        var memberships = await ListCalendarsHandler.Handle(new ListCalendars(callerId), calendars, groups, guardians, cancellationToken);
+        var memberships = await ListCalendarsHandler.Handle(new ListCalendars(callerId), calendars, groups, cancellationToken);
         var calendarIds = memberships.Select(m => m.CalendarId).Distinct();
 
         List<CalendarItemOccurrence> occurrences = [];

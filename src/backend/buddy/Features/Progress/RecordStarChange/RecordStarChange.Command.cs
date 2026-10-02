@@ -8,4 +8,4 @@ namespace buddy.Features.Progress;
 // for why this is a synchronous cross-feature call rather than a reactive projection.
 // SubtaskId mirrors TaskCompletionChanged.SubtaskId: null for a plain task, set for one subtask of
 // a template-scheduled task, so each subtask earns (and revokes) its own star independently.
-public sealed record RecordStarChange(UserId ChildId, CalendarItemId ItemId, DateOnly OccurrenceDate, bool IsCompleted, Guid? SubtaskId = null);
+public sealed record RecordStarChange(UserId ChildId, CalendarItemId ItemId, DateOnly OccurrenceDate, bool IsCompleted, Guid? SubtaskId);

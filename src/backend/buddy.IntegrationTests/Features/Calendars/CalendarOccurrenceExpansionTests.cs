@@ -32,7 +32,7 @@ public sealed class CalendarOccurrenceExpansionTests
     [Fact]
     public async Task A_daily_template_task_expands_into_back_to_back_subtask_occurrences()
     {
-        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due, new RecurrenceRule(RecurrenceFrequency.Daily, 1, null)));
 
         var subtask1 = SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10));
@@ -63,7 +63,7 @@ public sealed class CalendarOccurrenceExpansionTests
     [Fact]
     public async Task ParentIcon_is_the_items_own_icon_not_the_subtasks()
     {
-        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
         var itemCreated = new TaskItemCreated(
             FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("moon"), Color.New("#ff0000"), due, null, DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, itemCreated);
@@ -82,7 +82,7 @@ public sealed class CalendarOccurrenceExpansionTests
     [Fact]
     public async Task ParentIcon_falls_back_to_the_calendars_icon_when_the_item_has_no_override()
     {
-        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10)));
 
@@ -95,7 +95,7 @@ public sealed class CalendarOccurrenceExpansionTests
     [Fact]
     public async Task Editing_a_subtasks_duration_changes_future_expansion_without_re_scheduling()
     {
-        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
 
         var subtaskId = SubtaskId.New();
@@ -117,7 +117,7 @@ public sealed class CalendarOccurrenceExpansionTests
     [Fact]
     public async Task An_archived_templates_already_scheduled_item_still_expands_normally()
     {
-        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
 
         var archived = new TaskTemplateArchived(FixedTemplateId, FixedUserId, DateTimeOffset.UtcNow);
@@ -131,7 +131,7 @@ public sealed class CalendarOccurrenceExpansionTests
     [Fact]
     public async Task A_missing_template_expands_to_zero_occurrences_without_throwing()
     {
-        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0));
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
         var templates = new FakeTaskTemplateEventStore(); // no stream for FixedTemplateId at all
 
@@ -150,7 +150,7 @@ public sealed class CalendarOccurrenceExpansionTests
     [Fact]
     public async Task A_subtask_straddling_a_dst_transition_computes_correct_boundary_times()
     {
-        var due = new DueDate(new DateOnly(2026, 3, 29), new TimeOnly(1, 0));
+        var due = new DueDate(new DateOnly(2026, 3, 29), new TimeOnly(1, 0), IsAllDay: false);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
 
         var templates = new FakeTaskTemplateEventStore().Add(

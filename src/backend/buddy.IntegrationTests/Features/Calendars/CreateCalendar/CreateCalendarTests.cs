@@ -16,6 +16,58 @@ namespace buddy.IntegrationTests.Features.Calendars.CreateCalendar;
 public sealed class CreateCalendarTests(BuddyApiFixture fixture)
 {
     [Fact]
+    public async Task A_custom_icon_is_stored_on_creation_and_shown_everywhere()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+
+        var created = await CreateWithIconAsync(token, groupId, "🏫");
+
+        Assert.Equal("🏫", created.Icon);
+        Assert.Equal("🏫", (await CalendarTestHelpers.GetCalendarAsync(fixture, token, created.Id)).Icon);
+        Assert.Equal("🏫", (await ListAsync(token)).Single(c => c.Id == created.Id).Icon);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task A_missing_or_blank_icon_falls_back_to_the_default(string? icon)
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
+
+        var created = await CreateWithIconAsync(token, groupId, icon);
+
+        Assert.Equal(Calendar.DefaultIcon.Value, created.Icon);
+        Assert.Equal(Calendar.DefaultIcon.Value, (await ListAsync(token)).Single(c => c.Id == created.Id).Icon);
+    }
+
+    private async Task<CalendarResponseDto> CreateWithIconAsync(string token, Guid groupId, string? icon)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Post.Json(new { Name = "Family", TimeZoneId = CalendarTestHelpers.DefaultTimeZone, GroupId = groupId, Icon = icon }).ToUrl("/calendars/");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<CalendarResponseDto>();
+    }
+
+    private async Task<IReadOnlyCollection<CalendarSummaryDto>> ListAsync(string token)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url("/calendars/");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<IReadOnlyCollection<CalendarSummaryDto>>();
+    }
+
+    [Fact]
     public async Task Omitting_the_group_is_rejected()
     {
         // GroupId is required -- a calendar is always group-owned now. An omitted GroupId is

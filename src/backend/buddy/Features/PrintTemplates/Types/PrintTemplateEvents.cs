@@ -37,8 +37,8 @@ public union PrintTemplateEvent(
     };
 }
 
-// Two sibling creation events rather than one with an owner union inside -- the same split
-// CalendarCreated/CalendarCreatedForGroup use, keeping every persisted event union-free.
+// Two sibling creation events rather than one with an owner union inside, keeping every
+// persisted event union-free.
 public sealed record PrintTemplateCreated(PrintTemplateId Id, UserId OwnerId, string Name, UserId CreatedBy, DateTimeOffset OccurredAt);
 
 public sealed record PrintTemplateCreatedForGroup(PrintTemplateId Id, GroupId OwnerId, string Name, UserId CreatedBy, DateTimeOffset OccurredAt);

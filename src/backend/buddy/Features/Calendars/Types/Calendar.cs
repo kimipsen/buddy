@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 using buddy.Common.Aggregates;
+using buddy.Features.Groups;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -12,13 +13,15 @@ public sealed record Calendar(
     string Name,
     Icon Icon,
     TimeZoneId TimeZoneId,
-    CalendarOwner Owner,
+    // The owning group -- set at creation, changed only by CalendarTransferredToGroup. Ownership is
+    // anchored to the group as a whole; per-user roles come from its CalendarPermissionPolicy (see
+    // CalendarAuthorization), with Members as explicit overrides.
+    GroupId GroupId,
     ImmutableDictionary<UserId, CalendarRole> Members,
     ImmutableDictionary<IcalTokenId, IcalTokenInfo> Tokens,
     bool IsDeleted = false)
 {
-    // Assumed for every calendar until a CalendarIconChanged event first appears in its stream --
-    // CalendarCreated/CalendarCreatedForGroup never carry an icon themselves (see CalendarEvents.cs).
+    // What CreateCalendar stores on CalendarCreatedForGroup when the request gives no icon.
     public static readonly Icon DefaultIcon = new("📅");
 
     // Constant-time per candidate, mirroring VerifyEmailHandler's token comparison -- the caller
@@ -55,20 +58,12 @@ public sealed record Calendar(
     // is that document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
     public static Calendar Start(CalendarEvent @event) => @event switch
     {
-        CalendarCreated created => new Calendar(
-            created.CalendarId,
-            created.Name,
-            DefaultIcon,
-            created.TimeZoneId,
-            new CalendarOwner.User(created.OwnerId),
-            ImmutableDictionary<UserId, CalendarRole>.Empty.Add(created.OwnerId, CalendarRole.Owner),
-            ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
         CalendarCreatedForGroup created => new Calendar(
             created.CalendarId,
             created.Name,
-            DefaultIcon,
+            created.Icon,
             created.TimeZoneId,
-            new CalendarOwner.Group(created.OwnerId),
+            created.GroupId,
             ImmutableDictionary<UserId, CalendarRole>.Empty,
             ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
         _ => throw EventReplay.NotAStartEvent(nameof(Calendar), @event.EventType)
@@ -77,12 +72,12 @@ public sealed record Calendar(
     public static Calendar Advance(Calendar calendar, CalendarEvent @event) => @event switch
     {
         CalendarIconChanged changed => calendar with { Icon = changed.Icon },
-        CalendarTransferredToGroup transferred => calendar with { Owner = new CalendarOwner.Group(transferred.NewGroupId) },
+        CalendarTransferredToGroup transferred => calendar with { GroupId = transferred.NewGroupId },
         MemberRoleGranted granted => calendar with { Members = calendar.Members.SetItem(granted.MemberId, granted.Role) },
         MemberRoleRevoked revoked => calendar with { Members = calendar.Members.Remove(revoked.MemberId) },
         IcalTokenIssued issued => calendar with { Tokens = calendar.Tokens.SetItem(issued.TokenId, new IcalTokenInfo(issued.TokenHash, issued.OccurredAt)) },
         IcalTokenRevoked revoked => calendar with { Tokens = calendar.Tokens.Remove(revoked.TokenId) },
         CalendarDeleted => calendar with { IsDeleted = true },
-        CalendarCreated or CalendarCreatedForGroup => throw EventReplay.AlreadyStarted(nameof(Calendar), @event.EventType)
+        CalendarCreatedForGroup => throw EventReplay.AlreadyStarted(nameof(Calendar), @event.EventType)
     };
 }

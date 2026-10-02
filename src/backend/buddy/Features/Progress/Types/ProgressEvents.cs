@@ -38,14 +38,12 @@ public sealed record ProgressStarted(ProgressId Id, UserId ChildId, DateTimeOffs
 // Mirrors TaskCompletionChanged's own occurrence keying (CalendarItemId + OccurrenceDate +
 // SubtaskId) so a recurring task's daily instances -- and, for a template-scheduled task, each of
 // its independently-completable subtasks -- are awarded independently, not once for the whole
-// series/item. SubtaskId defaults to null (same backward-compatible technique as
-// TaskCompletionChanged.SubtaskId) so existing persisted events, which predate per-subtask
-// completion, still deserialize as a plain task's award.
-public sealed record StarAwarded(ProgressId Id, CalendarItemId SourceItemId, DateOnly OccurrenceDate, DateTimeOffset OccurredAt, Guid? SubtaskId = null);
+// series/item. SubtaskId is null for a plain (non-template) task's award.
+public sealed record StarAwarded(ProgressId Id, CalendarItemId SourceItemId, DateOnly OccurrenceDate, DateTimeOffset OccurredAt, Guid? SubtaskId);
 
 // Mirrors the child un-completing the same occurrence (TaskCompletionChanged After: false) --
 // not a penalty event, the same correction semantics as DoseStatusChanged's After: Pending undo.
-public sealed record StarRevoked(ProgressId Id, CalendarItemId SourceItemId, DateOnly OccurrenceDate, DateTimeOffset OccurredAt, Guid? SubtaskId = null);
+public sealed record StarRevoked(ProgressId Id, CalendarItemId SourceItemId, DateOnly OccurrenceDate, DateTimeOffset OccurredAt, Guid? SubtaskId);
 
 public sealed record MilestoneUnlocked(ProgressId Id, int Threshold, DateTimeOffset OccurredAt);
 

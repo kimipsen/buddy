@@ -1,7 +1,6 @@
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 using FluentValidation;
@@ -16,7 +15,6 @@ public static class UpdateItemRecurrenceHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -34,7 +32,7 @@ public static class UpdateItemRecurrenceHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

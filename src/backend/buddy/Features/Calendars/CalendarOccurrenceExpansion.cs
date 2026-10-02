@@ -74,7 +74,8 @@ public static class CalendarOccurrenceExpansion
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
-                startsAt, endsAt, null, period.IsAllDay, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value, AssignedTo: null));
+                startsAt, endsAt, null, period.IsAllDay, IsCompleted: false, item.CreatedBy.Value, item.LastModifiedBy.Value, AssignedTo: null,
+                ParentTitle: null, SubtaskId: null, ParentIcon: null));
         }
     }
 
@@ -89,7 +90,8 @@ public static class CalendarOccurrenceExpansion
 
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
-                null, null, dueAt, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value, item.AssignedTo?.Value));
+                null, null, dueAt, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value, item.AssignedTo?.Value,
+                ParentTitle: null, SubtaskId: null, ParentIcon: null));
         }
     }
 

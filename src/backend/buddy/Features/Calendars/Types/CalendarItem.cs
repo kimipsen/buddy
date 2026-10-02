@@ -22,14 +22,14 @@ public sealed record CalendarItem(
     ImmutableDictionary<(DateOnly OccurrenceDate, Guid? SubtaskId), bool> CompletionLog,
     UserId LastModifiedBy,
     // Only ever set for a Task -- an Event has no assignee. Null means unassigned.
-    UserId? AssignedTo = null,
-    bool IsDeleted = false,
+    UserId? AssignedTo,
+    bool IsDeleted,
     // Only ever set for a Task, and only when it was scheduled from a TaskLibrary template (see
     // Features/Calendars/ScheduleTaskFromTemplate). A raw Guid, not TaskLibrary's TaskTemplateId
     // type -- Calendars must not take a compile dependency on TaskLibrary's types, the same
     // one-way discipline Mealplans keeps with Calendars' own Icon/Color (Mealplans references
     // them, Calendars never references anything of Mealplans').
-    Guid? TaskTemplateId = null)
+    Guid? TaskTemplateId)
 {
     // Sort key for calendar listings: an event sorts by its own start, a task by its due date.
     // A plain local DateTime is fine here -- it's only used to order items within one calendar,
@@ -64,7 +64,10 @@ public sealed record CalendarItem(
             null,
             created.Recurrence,
             ImmutableDictionary<(DateOnly, Guid?), bool>.Empty,
-            created.CreatedBy),
+            created.CreatedBy,
+            AssignedTo: null,
+            IsDeleted: false,
+            TaskTemplateId: null),
         TaskItemCreated created => new CalendarItem(
             created.Id,
             created.CalendarId,

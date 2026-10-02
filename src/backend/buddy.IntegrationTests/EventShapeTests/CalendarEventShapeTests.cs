@@ -19,8 +19,8 @@ public sealed class CalendarEventShapeTests
 
     private static readonly StartsAt FixedStartsAt = new(new DateOnly(2025, 6, 1), new TimeOnly(9, 0));
     private static readonly EndsAt FixedEndsAt = new(new DateOnly(2025, 6, 1), new TimeOnly(9, 30));
-    private static readonly DueDate FixedDueDate = new(new DateOnly(2025, 6, 1), new TimeOnly(17, 0));
-    private static readonly Period FixedPeriod = Period.TryCreate(FixedStartsAt, FixedEndsAt) is PeriodValidationResult.Valid(var period)
+    private static readonly DueDate FixedDueDate = new(new DateOnly(2025, 6, 1), new TimeOnly(17, 0), IsAllDay: false);
+    private static readonly Period FixedPeriod = Period.TryCreate(FixedStartsAt, FixedEndsAt, isAllDay: false) is PeriodValidationResult.Valid(var period)
         ? period
         : throw new InvalidOperationException();
 
@@ -36,13 +36,8 @@ public sealed class CalendarEventShapeTests
     // -- Calendar-level events (ICalendarEventStore / MartenCalendarEventStore) --
 
     [Fact]
-    public void CalendarCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new CalendarCreated(FixedCalendarId, FixedUserId, "Personal", FixedTimeZone, FixedInstant),
-        "Calendars/CalendarCreated.json");
-
-    [Fact]
     public void CalendarCreatedForGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new CalendarCreatedForGroup(FixedCalendarId, FixedGroupId, "Team Calendar", FixedTimeZone, FixedInstant),
+        new CalendarCreatedForGroup(FixedCalendarId, FixedGroupId, "Team Calendar", Icon.New("star"), FixedTimeZone, FixedInstant),
         "Calendars/CalendarCreatedForGroup.json");
 
     [Fact]
@@ -89,12 +84,12 @@ public sealed class CalendarEventShapeTests
 
     [Fact]
     public void TaskItemCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "File taxes", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant),
+        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "File taxes", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant, AssignedTo: null, TaskTemplateId: null),
         "Calendars/TaskItemCreated.json");
 
     [Fact]
     public void TaskItemCreated_AllDay() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, null, FixedInstant),
+        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, null, FixedInstant, AssignedTo: null, TaskTemplateId: null),
         "Calendars/TaskItemCreated_AllDay.json");
 
     [Fact]
@@ -131,7 +126,7 @@ public sealed class CalendarEventShapeTests
 
     [Fact]
     public void TaskCompletionChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskCompletionChanged(FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant),
+        new TaskCompletionChanged(FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant, SubtaskId: null),
         "Calendars/TaskCompletionChanged.json");
 
     [Fact]

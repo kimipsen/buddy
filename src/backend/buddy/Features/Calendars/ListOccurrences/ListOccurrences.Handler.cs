@@ -40,7 +40,7 @@ public static class ListOccurrencesHandler
             return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckView(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckView(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

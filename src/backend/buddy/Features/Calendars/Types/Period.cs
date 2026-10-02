@@ -16,10 +16,9 @@ public sealed record Period
 
     // JsonConstructor lets System.Text.Json (Marten's event serializer) use this constructor to
     // deserialize a Period read back from the event store without re-running TryCreate's check --
-    // correctly so, since a persisted Period was already validated at write time. IsAllDay defaults
-    // to false so events persisted before this property existed still deserialize.
+    // correctly so, since a persisted Period was already validated at write time.
     [JsonConstructor]
-    private Period(StartsAt startsAt, EndsAt endsAt, bool isAllDay = false)
+    private Period(StartsAt startsAt, EndsAt endsAt, bool isAllDay)
     {
         StartsAt = startsAt;
         EndsAt = endsAt;
@@ -29,7 +28,7 @@ public sealed record Period
     // The only way to construct a Period from new input -- guarantees StartsAt is always before
     // EndsAt for every instance that exists anywhere in the system. The error message lives here,
     // not at each call site, so every caller reports the same wording for the same violation.
-    public static PeriodValidationResult TryCreate(StartsAt startsAt, EndsAt endsAt, bool isAllDay = false) =>
+    public static PeriodValidationResult TryCreate(StartsAt startsAt, EndsAt endsAt, bool isAllDay) =>
         endsAt.Date.ToDateTime(endsAt.Time) <= startsAt.Date.ToDateTime(startsAt.Time)
             ? new PeriodValidationResult.Invalid("An event's end time must be after its start time.")
             : new PeriodValidationResult.Valid(new Period(startsAt, endsAt, isAllDay));

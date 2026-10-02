@@ -1,7 +1,6 @@
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.TaskLibrary;
 using buddy.Features.Users;
 
@@ -18,7 +17,6 @@ public static class ScheduleTaskFromTemplateHandler
         ICalendarItemEventStore items,
         ITaskTemplateEventStore templates,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -36,7 +34,7 @@ public static class ScheduleTaskFromTemplateHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {
@@ -47,7 +45,7 @@ public static class ScheduleTaskFromTemplateHandler
         // the same already-loaded calendar.
         if (command.AssignedTo is { } assignedTo)
         {
-            var assigneeAccess = await CalendarAuthorization.CheckView(calendar, assignedTo, groups, guardians, cancellationToken);
+            var assigneeAccess = await CalendarAuthorization.CheckView(calendar, assignedTo, groups, cancellationToken);
 
             if (assigneeAccess != CalendarAccess.Allowed)
             {

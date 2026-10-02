@@ -30,7 +30,7 @@ public static class CreateItemEndpoint
                 new Color(request.Color),
                 request.StartsAt,
                 request.EndsAt,
-                request.DueDate,
+                request.DueDate?.ToDueDate(request.IsAllDay),
                 request.IsAllDay,
                 request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null,
                 request.AssignedTo is { } assignedTo ? new UserId(assignedTo) : null);
@@ -51,6 +51,13 @@ public static class CreateItemEndpoint
     }
 }
 
+// The wire shape of a task's due date: all-day-ness travels as the request's own IsAllDay flag,
+// not inside this object, so the endpoint builds the domain DueDate from both.
+public sealed record DueDateRequest(DateOnly Date, TimeOnly Time)
+{
+    public DueDate ToDueDate(bool isAllDay) => new(Date, Time, isAllDay);
+}
+
 public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until = null);
 
 public sealed record CreateItemRequest(
@@ -61,7 +68,7 @@ public sealed record CreateItemRequest(
     string? Icon = null,
     StartsAt? StartsAt = null,
     EndsAt? EndsAt = null,
-    DueDate? DueDate = null,
+    DueDateRequest? DueDate = null,
     RecurrenceRuleRequest? Recurrence = null,
     // Only meaningful for a Task -- ignored for an Event. Null means unassigned.
     Guid? AssignedTo = null);
@@ -82,7 +89,7 @@ public sealed record CalendarItemResponse(
     Guid CreatedBy,
     Guid LastModifiedBy,
     Guid? AssignedTo,
-    Guid? TaskTemplateId = null)
+    Guid? TaskTemplateId)
 {
     public static CalendarItemResponse FromItem(CalendarItem item) => new(
         item.Id,

@@ -1,6 +1,9 @@
 # Groups and Group-Owned Calendar Permissions
 
-Status: Implemented
+Status: Implemented. Later change ([eliminate-nulls.md, Phase 3](eliminate-nulls.md#phase-3-delete-back-compat-code)):
+user-owned calendars are gone -- `CalendarCreated`, `CalendarOwner` and the guardian-of-owner role
+were removed, every calendar is group-owned (`Calendar.GroupId`), and `CalendarCreatedForGroup`
+carries the calendar's icon. The user-owned sections below describe the design as it was.
 
 ## Context
 

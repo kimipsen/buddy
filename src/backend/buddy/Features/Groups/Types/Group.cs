@@ -29,18 +29,13 @@ public sealed record Group(
     // document (see Question 4/5 in docs/backend/analysis/event-stream-snapshots.md).
     public static Group Start(GroupEvent @event) => @event switch
     {
-        // MealplanPermissionPolicy starts empty (fails closed) -- GroupCreated is an
-        // already-shipped event and cannot gain a required field retroactively, the same
-        // constraint CalendarPermissionPolicy would have hit if it weren't baked in from
-        // day one. A newly created group gets an explicit policy via a second event
-        // appended in the same transaction (see CreateGroupHandler), not from here.
         GroupCreated created => new Group(
             created.GroupId,
             created.Name,
             ImmutableDictionary<UserId, GroupRole>.Empty.Add(created.OwnerId, GroupRole.Owner),
             created.CalendarPermissionPolicy,
-            ImmutableDictionary<GroupRole, MealplanAccessTier>.Empty,
-            ImmutableDictionary<GroupRole, MedicineAccessTier>.Empty),
+            created.MealplanPermissionPolicy,
+            created.MedicinePermissionPolicy),
         _ => throw EventReplay.NotAStartEvent(nameof(Group), @event.EventType)
     };
 

@@ -1,6 +1,5 @@
 using buddy.Common;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
@@ -12,7 +11,6 @@ public static class UpdateItemDetailsHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -25,7 +23,7 @@ public static class UpdateItemDetailsHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

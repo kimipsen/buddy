@@ -1,7 +1,6 @@
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 using FluentValidation;
@@ -15,7 +14,6 @@ public static class UpdateCalendarIconHandler
         IValidator<UpdateCalendarIcon> validator,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -33,7 +31,7 @@ public static class UpdateCalendarIconHandler
             return new Result<Calendar>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {

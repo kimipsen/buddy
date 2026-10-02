@@ -7,8 +7,8 @@ using buddy.Features.Users;
 namespace buddy.Features.PrintTemplates;
 
 // Both cases wrap exactly one id that flattens to a bare Guid, so System.Text.Json's union
-// converter can't tell them apart -- the same ambiguity CalendarOwnerJsonConverter documents.
-// Same fix: a Kind discriminator plus the raw Guid.
+// converter can't tell them apart (it classifies union cases by JSON shape). The fix: a Kind
+// discriminator plus the raw Guid.
 public sealed class PrintTemplateOwnerJsonConverter : JsonConverter<PrintTemplateOwner>
 {
     public override PrintTemplateOwner Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

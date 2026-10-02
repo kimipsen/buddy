@@ -1,7 +1,7 @@
 namespace buddy.Features.Calendars;
 
-// Owner is assigned only by CalendarCreated -- it is never granted, changed, or revoked through
-// MemberRoleGranted/MemberRoleRevoked, so ownership never transfers.
+// Owner comes only from the owning group's CalendarPermissionPolicy -- it is never granted,
+// changed, or revoked through MemberRoleGranted/MemberRoleRevoked.
 public enum CalendarRole
 {
     Owner,

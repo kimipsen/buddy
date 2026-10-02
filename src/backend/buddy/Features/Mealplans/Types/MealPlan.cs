@@ -21,7 +21,7 @@ public sealed record MealPlan(
     ImmutableDictionary<(DateOnly Date, MealSlot Slot), MealPlanAssignment> Assignments,
     ImmutableDictionary<MealSlot, TimeOnly> SlotTimes,
     ImmutableDictionary<IcalTokenId, IcalTokenInfo> Tokens,
-    GroupId? SharedWithGroupId = null)
+    GroupId? SharedWithGroupId)
 {
     // Constant-time per candidate, mirroring Calendar.FindMatchingToken -- the caller supplies an
     // already-hashed value so the plaintext token is never compared or logged here.
@@ -56,7 +56,8 @@ public sealed record MealPlan(
             created.Id,
             ImmutableDictionary<(DateOnly, MealSlot), MealPlanAssignment>.Empty,
             ImmutableDictionary<MealSlot, TimeOnly>.Empty,
-            ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty),
+            ImmutableDictionary<IcalTokenId, IcalTokenInfo>.Empty,
+            SharedWithGroupId: null),
         _ => throw EventReplay.NotAStartEvent(nameof(MealPlan), @event.EventType)
     };
 

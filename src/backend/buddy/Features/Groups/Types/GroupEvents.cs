@@ -52,10 +52,17 @@ public union GroupEvent(
     };
 }
 
-// CalendarPermissionPolicy is baked in at creation time (not recomputed from a hardcoded default
-// on every rehydrate), so an existing group's default can never silently drift if the default
-// used by CreateGroupHandler changes later.
-public sealed record GroupCreated(GroupId GroupId, UserId OwnerId, string Name, ImmutableDictionary<GroupRole, CalendarRole> CalendarPermissionPolicy, DateTimeOffset OccurredAt);
+// All three permission policies are baked in at creation time (not recomputed from a hardcoded
+// default on every rehydrate), so an existing group's defaults can never silently drift if the
+// defaults used by CreateGroupHandler change later.
+public sealed record GroupCreated(
+    GroupId GroupId,
+    UserId OwnerId,
+    string Name,
+    ImmutableDictionary<GroupRole, CalendarRole> CalendarPermissionPolicy,
+    ImmutableDictionary<GroupRole, MealplanAccessTier> MealplanPermissionPolicy,
+    ImmutableDictionary<GroupRole, MedicineAccessTier> MedicinePermissionPolicy,
+    DateTimeOffset OccurredAt);
 
 public sealed record GroupDeleted(GroupId GroupId, UserId DeletedBy, DateTimeOffset OccurredAt);
 
@@ -71,18 +78,13 @@ public sealed record GroupCalendarPolicyUpdated(GroupId GroupId, ImmutableDictio
 // Full replace, same rule as GroupCalendarPolicyUpdated -- every role must be present. Only
 // MealplanAccessTier.None/Manage are ever valid values here (validated at the API boundary); Rate
 // is reserved for a child's own tier and is never a meaningful group-policy target (see
-// docs/backend/analysis/group-owned-mealplans.md). Appended a second time, right after
-// GroupCreated in the same transaction, for every newly created group -- GroupCreated itself is
-// already shipped and cannot gain a required field retroactively, so a pre-existing group has no
-// entry here until one is set explicitly, which fails closed rather than guessing a default.
+// docs/backend/analysis/group-owned-mealplans.md).
 public sealed record GroupMealplanPolicyUpdated(GroupId GroupId, ImmutableDictionary<GroupRole, MealplanAccessTier> Policy, UserId UpdatedBy, DateTimeOffset OccurredAt);
 
 // Full replace, same rule as GroupMealplanPolicyUpdated -- every role must be present. Only
 // MedicineAccessTier.None/Manage are ever valid values here; Mark is the two-principal
 // (child/guardian) tier and is never a meaningful group-policy target, the same way Rate is
 // excluded from MealplanPermissionPolicy (see docs/backend/analysis/medicine-schedules.md).
-// Appended a second time, right after GroupCreated in the same transaction, for the same reason
-// GroupMealplanPolicyUpdated is.
 public sealed record GroupMedicinePolicyUpdated(GroupId GroupId, ImmutableDictionary<GroupRole, MedicineAccessTier> Policy, UserId UpdatedBy, DateTimeOffset OccurredAt);
 
 // Recorded on the group's own stream (rather than a separate invite aggregate) so an invite's

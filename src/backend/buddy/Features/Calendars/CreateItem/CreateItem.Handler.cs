@@ -3,7 +3,6 @@ using System.Diagnostics;
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 using buddy.Features.Users;
 
 using FluentValidation;
@@ -18,7 +17,6 @@ public static class CreateItemHandler
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -36,7 +34,7 @@ public static class CreateItemHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckContribute(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {
@@ -48,7 +46,7 @@ public static class CreateItemHandler
         // authorization, like every other state-dependent check in this handler.
         if (command.AssignedTo is { } assignedTo)
         {
-            var assigneeAccess = await CalendarAuthorization.CheckView(calendar, assignedTo, groups, guardians, cancellationToken);
+            var assigneeAccess = await CalendarAuthorization.CheckView(calendar, assignedTo, groups, cancellationToken);
 
             if (assigneeAccess != CalendarAccess.Allowed)
             {
@@ -75,9 +73,7 @@ public static class CreateItemHandler
         else
         {
             // DueDate presence is already enforced by CreateItemValidator.
-            var dueDate = command.DueDate! with { IsAllDay = command.IsAllDay };
-
-            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, dueDate, command.Recurrence, now, command.AssignedTo);
+            created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, command.DueDate!, command.Recurrence, now, command.AssignedTo, TaskTemplateId: null);
         }
 
         var events = await items.CreateAsync(itemId, [created], cancellationToken);

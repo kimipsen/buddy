@@ -22,7 +22,7 @@ public sealed class ProgressEventShapeTests
 
     [Fact]
     public void StarAwarded() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant),
+        new StarAwarded(FixedProgressId, FixedItemId, FixedDate, FixedInstant, SubtaskId: null),
         "Progress/StarAwarded.json");
 
     [Fact]
@@ -32,7 +32,7 @@ public sealed class ProgressEventShapeTests
 
     [Fact]
     public void StarRevoked() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new StarRevoked(FixedProgressId, FixedItemId, FixedDate, FixedInstant),
+        new StarRevoked(FixedProgressId, FixedItemId, FixedDate, FixedInstant, SubtaskId: null),
         "Progress/StarRevoked.json");
 
     [Fact]

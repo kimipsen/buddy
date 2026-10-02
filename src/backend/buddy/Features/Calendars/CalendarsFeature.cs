@@ -18,7 +18,6 @@ public static class CalendarsFeature
 
     private static readonly Type[] EventTypes =
     [
-        typeof(CalendarCreated),
         typeof(CalendarCreatedForGroup),
         typeof(CalendarIconChanged),
         typeof(CalendarTransferredToGroup),
@@ -67,12 +66,6 @@ public static class CalendarsFeature
                     // both snapshot documents share this one StoreOptions/serializer, so the
                     // converter is registered once here for both.
                     json.Converters.Add(new ValueTupleJsonConverterFactory());
-
-                    // Calendar.Owner (CalendarOwner) only gets JSON-serialized now that
-                    // CalendarSnapshot makes Calendar itself a stored document -- and its two
-                    // cases collide under System.Text.Json's built-in union shape-based
-                    // classifier (see CalendarOwnerJsonConverter for why).
-                    json.Converters.Add(new CalendarOwnerJsonConverter());
                 });
 
             // Inline snapshots of Calendar and CalendarItem, kept transactionally consistent with

@@ -25,7 +25,7 @@ public static class CreateCalendarEndpoint
                 request.Name,
                 new TimeZoneId(request.TimeZoneId),
                 new GroupId(request.GroupId),
-                request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null);
+                string.IsNullOrWhiteSpace(request.Icon) ? Calendar.DefaultIcon : new Icon(request.Icon));
             var result = await bus.InvokeAsync<CreateCalendarOutcome>(command, cancellationToken);
 
             return result switch

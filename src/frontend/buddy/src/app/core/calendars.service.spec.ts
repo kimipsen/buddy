@@ -323,6 +323,7 @@ describe('CalendarsService', () => {
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: null,
+        taskTemplateId: null,
       };
 
       const promise = service.createItem('cal-1', request);
@@ -360,6 +361,7 @@ describe('CalendarsService', () => {
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: null,
+        taskTemplateId: null,
       } satisfies CalendarItemResponse);
       await createPromise;
 
@@ -396,6 +398,7 @@ describe('CalendarsService', () => {
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: null,
+        taskTemplateId: null,
       };
 
       const promise = service.updateItemDetails('cal-1', 'task-1', request);
@@ -428,6 +431,7 @@ describe('CalendarsService', () => {
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: null,
+        taskTemplateId: null,
       };
 
       const promise = service.rescheduleItem('cal-1', 'task-1', request);
@@ -531,6 +535,7 @@ describe('CalendarsService', () => {
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: 'child-1',
+        taskTemplateId: null,
       };
 
       const promise = service.scheduleTaskFromTemplate('cal-1', request);
@@ -565,6 +570,7 @@ describe('CalendarsService', () => {
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: 'child-1',
+        taskTemplateId: null,
       } satisfies CalendarItemResponse);
       await schedulePromise;
 

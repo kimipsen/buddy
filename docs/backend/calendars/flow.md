@@ -21,7 +21,7 @@ sequenceDiagram
     User->>App: Create a calendar
     App->>API: POST /calendars
     API->>Calendars: CreateCalendar command
-    Calendars->>Store: Append CalendarCreated / CalendarCreatedForGroup
+    Calendars->>Store: Append CalendarCreatedForGroup
     Store-->>Calendars: New aggregate
     Calendars-->>API: Calendar response
     API-->>App: 200 OK
@@ -61,7 +61,7 @@ sequenceDiagram
 | `DELETE` | `/calendars/{calendarId}/members/{memberId}` | Removes a member from the calendar. |
 | `GET` | `/calendars/{calendarId}/assignable-members` | Lists members who can be assigned a task on the calendar. |
 | `PATCH` | `/calendars/{calendarId}/icon` | Updates the calendar's icon. |
-| `PUT` | `/calendars/{calendarId}/group/{groupId}` | Transfers a user-owned calendar to a group. |
+| `PUT` | `/calendars/{calendarId}/group/{groupId}` | Moves a calendar to another group. |
 | `POST` | `/calendars/{calendarId}/items` | Creates an event or task item. |
 | `POST` | `/calendars/{calendarId}/items/from-template` | Schedules a non-empty, active task template owned by the assignee at a specific time. |
 | `GET` | `/calendars/{calendarId}/items` | Lists items in a calendar. |
@@ -78,7 +78,7 @@ sequenceDiagram
 
 ## Core lifecycle
 
-The aggregate is event-sourced and uses a sparse stream of calendar mutations. The create flow appends a `CalendarCreated` or `CalendarCreatedForGroup` event, then later event and task endpoints append item-creation events such as `EventItemCreated` or `TaskItemCreated`.
+The aggregate is event-sourced and uses a sparse stream of calendar mutations. The create flow appends a `CalendarCreatedForGroup` event (carrying the calendar's icon, `📅` by default), then later event and task endpoints append item-creation events such as `EventItemCreated` or `TaskItemCreated`.
 
 A task scheduled from the Task Library stores a template reference rather than
 a copy of its subtasks. Occurrence and iCal reads load the template's current
@@ -96,7 +96,6 @@ Calendar access is resolved against the calendar's member list and, where releva
 
 ## Key event types
 
-- `CalendarCreated`
 - `CalendarCreatedForGroup`
 - `CalendarDeleted`
 - `MemberRoleGranted`

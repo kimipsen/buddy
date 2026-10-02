@@ -8,7 +8,7 @@ This glossary reflects the vocabulary used in the Buddy backend, especially the 
 A stable identity for a user, derived from the authenticated Keycloak subject. The users feature uses the subject as the local user identity and stores the user as an event-sourced aggregate.
 
 ### CalendarId
-The unique identifier for a calendar. A calendar is always owned by a group, can have members, and is stored as an event-sourced aggregate. Calendars created before group-only ownership was introduced can still be owned directly by a user; no new calendar can be.
+The unique identifier for a calendar. A calendar is always owned by a group, can have members, and is stored as an event-sourced aggregate.
 
 ### CalendarItemId
 The unique identifier for an item that belongs to a calendar. A calendar item is either an event or a task.
@@ -106,7 +106,7 @@ The aggregate stores:
 A role attached to a user in a calendar.
 
 Values:
-- Owner: the creator of the calendar.
+- Owner: full control, granted through the owning group's calendar permission policy (by default to the group's owners).
 - Contributor: can create and modify calendar items.
 - Viewer: can read calendar content but cannot change it.
 
@@ -274,7 +274,7 @@ An append-only sequence of domain events that represents the current state of an
 A domain object rebuilt from its event stream, such as a user, calendar, calendar item, or task template.
 
 ### Event
-An immutable message describing a state change. The project names events such as `CalendarCreated`, `MemberRoleGranted`, `ItemDetailsUpdated`, `TaskRescheduled`, and `SubtaskAdded`.
+An immutable message describing a state change. The project names events such as `CalendarCreatedForGroup`, `MemberRoleGranted`, `ItemDetailsUpdated`, `TaskRescheduled`, and `SubtaskAdded`.
 
 ### Rehydration
 The process of rebuilding the latest aggregate state by replaying all relevant events in order.

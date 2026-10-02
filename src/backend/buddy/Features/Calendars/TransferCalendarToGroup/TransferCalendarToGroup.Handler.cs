@@ -1,6 +1,5 @@
 using buddy.Common;
 using buddy.Features.Groups;
-using buddy.Features.Guardians;
 
 namespace buddy.Features.Calendars;
 
@@ -10,7 +9,6 @@ public static class TransferCalendarToGroupHandler
         TransferCalendarToGroup command,
         ICalendarEventStore calendars,
         IGroupEventStore groups,
-        IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -23,7 +21,7 @@ public static class TransferCalendarToGroupHandler
             return new Result<Unit>.NotFound();
         }
 
-        var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, guardians, cancellationToken);
+        var access = await CalendarAuthorization.CheckOwner(calendar, userId, groups, cancellationToken);
 
         if (access != CalendarAccess.Allowed)
         {
@@ -46,7 +44,7 @@ public static class TransferCalendarToGroupHandler
             return groupAccess.ToDeniedResult<Unit>();
         }
 
-        if (calendar.Owner is CalendarOwner.Group(var currentGroupId) && currentGroupId == command.NewGroupId)
+        if (calendar.GroupId == command.NewGroupId)
         {
             // Already there -- idempotent, same rationale as UnshareMealPlanFromGroupHandler's.
             return new Result<Unit>.Success(Unit.Value);

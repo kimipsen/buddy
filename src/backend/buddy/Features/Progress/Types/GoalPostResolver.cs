@@ -30,8 +30,7 @@ public static class GoalPostResolver
 
     // Resolves the goal post at a position in the infinite sequence: index 0..posts.Length-1 are
     // the guardian's own configured posts (Round 1); beyond that, thresholds keep climbing by
-    // Step and icons cycle back through the configured list, with Round counting how many full
-    // passes through that list have happened -- the frontend uses Round to show e.g. "🌳 ×2".
+    // Step and icons cycle back through the configured list (round 2, 3, ...).
     public static ResolvedGoalPost At(ImmutableArray<GoalPost> configured, int index)
     {
         var posts = Effective(configured);
@@ -40,12 +39,12 @@ public static class GoalPostResolver
 
         if (round == 1)
         {
-            return new ResolvedGoalPost(post.Threshold, post.Icon, post.Label, round);
+            return new ResolvedGoalPost(post.Threshold, post.Icon);
         }
 
         var threshold = posts[^1].Threshold + Step(posts) * (index - posts.Length + 1);
 
-        return new ResolvedGoalPost(threshold, post.Icon, post.Label, round);
+        return new ResolvedGoalPost(threshold, post.Icon);
     }
 
     // Finds the goal post -- real or extrapolated -- whose threshold exactly equals `stars`, if
@@ -95,4 +94,4 @@ public static class GoalPostResolver
     }
 }
 
-public sealed record ResolvedGoalPost(int Threshold, string Icon, string? Label, int Round);
+public sealed record ResolvedGoalPost(int Threshold, string Icon);
