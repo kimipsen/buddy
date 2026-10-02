@@ -7,10 +7,7 @@ public static class ResendEmailVerificationHandler
 {
     public static async Task<ResendEmailVerificationOutcome> Handle(ResendEmailVerification command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new ResendEmailVerificationOutcome.NotFound();
-        }
+        var userId = command.UserId;
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);
         var user = User.Rehydrate(existingEvents);

@@ -16,10 +16,7 @@ public static class UpdateChildLanguageHandler
             return new Result<ChildSummary>.Validation(problem);
         }
 
-        if (command.GuardianId is not { } guardianId)
-        {
-            return new Result<ChildSummary>.NotFound();
-        }
+        var guardianId = command.GuardianId;
 
         // Collapsed to NotFound rather than Forbidden -- same "can't distinguish no-such-child from
         // not-your-child" precedent RevokeGuardianLinkHandler follows for this exact lookup.

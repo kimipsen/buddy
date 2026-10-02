@@ -31,6 +31,6 @@ public static class AssignMealToSlotForGroupHandler
         }
 
         return await AssignMealToSlotHandler.AssignForChildAsync(
-            access.AnchorChildId, command.Date, command.Slot, command.MealId, command.Notes, command.UserId!, mealPlans, meals, guardians, cancellationToken);
+            access.AnchorChildId, command.Date, command.Slot, command.MealId, command.Notes, command.UserId, mealPlans, meals, guardians, cancellationToken);
     }
 }

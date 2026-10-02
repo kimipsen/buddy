@@ -20,10 +20,7 @@ public static class SetWorkLocationOverridesHandler
             return new Result<IReadOnlyCollection<WorkDay>>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<WorkDay>>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await WorkLocationAuthorization.CheckManage(userId, guardians, cancellationToken);
 

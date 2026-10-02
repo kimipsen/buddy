@@ -5,8 +5,8 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Medicines;
 
-public sealed record UnshareMedicineFromGroup(UserId? UserId, UserId ChildId, GroupId GroupId)
+public sealed record UnshareMedicineFromGroup(UserId UserId, UserId ChildId, GroupId GroupId)
 {
     public static UnshareMedicineFromGroup FromClaims(ClaimsPrincipal principal, UserId childId, GroupId groupId) =>
-        new(principal.GetUserId(), childId, groupId);
+        new(principal.GetRequiredUserId(), childId, groupId);
 }

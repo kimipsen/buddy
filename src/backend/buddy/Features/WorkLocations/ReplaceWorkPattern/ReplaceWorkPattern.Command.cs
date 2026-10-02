@@ -4,8 +4,8 @@ using buddy.Features.Users;
 
 namespace buddy.Features.WorkLocations;
 
-public sealed record ReplaceWorkPattern(UserId? UserId, WorkPattern Pattern)
+public sealed record ReplaceWorkPattern(UserId UserId, WorkPattern Pattern)
 {
     public static ReplaceWorkPattern FromClaims(ClaimsPrincipal principal, WorkPattern pattern) =>
-        new(principal.GetUserId(), pattern);
+        new(principal.GetRequiredUserId(), pattern);
 }

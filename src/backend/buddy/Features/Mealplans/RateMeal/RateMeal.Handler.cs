@@ -20,10 +20,7 @@ public static class RateMealHandler
             return new Result<Meal>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Meal>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MealplanAuthorization.CheckRate(command.ChildId, userId, guardians, cancellationToken);
 

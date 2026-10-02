@@ -4,10 +4,7 @@ public static class DeleteUserHandler
 {
     public static async Task Handle(DeleteUser command, IUserEventStore events, CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return;
-        }
+        var userId = command.UserId;
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);
         var user = User.Rehydrate(existingEvents);

@@ -22,10 +22,7 @@ public static class UpdateMedicineDetailsHandler
             return new Result<MedicineSchedule>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<MedicineSchedule>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MedicineAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

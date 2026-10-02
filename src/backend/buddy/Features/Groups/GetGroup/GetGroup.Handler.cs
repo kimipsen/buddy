@@ -13,10 +13,7 @@ public static class GetGroupHandler
         IUserEventStore users,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<GroupWithMemberDetails>.NotFound();
-        }
+        var userId = query.UserId;
 
         var group = await groups.FindSnapshotAsync(query.GroupId, cancellationToken);
         var access = GroupAuthorization.CheckView(group, userId);

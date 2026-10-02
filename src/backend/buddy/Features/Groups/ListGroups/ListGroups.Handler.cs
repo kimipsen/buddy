@@ -4,10 +4,7 @@ public static class ListGroupsHandler
 {
     public static async Task<IReadOnlyCollection<GroupMembershipDocument>> Handle(ListGroups query, IGroupEventStore groups, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return [];
-        }
+        var userId = query.UserId;
 
         return await groups.ListForUserAsync(userId, cancellationToken);
     }

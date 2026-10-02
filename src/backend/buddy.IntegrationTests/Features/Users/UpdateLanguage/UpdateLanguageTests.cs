@@ -1,6 +1,7 @@
 using Alba;
 
 using buddy.Common;
+using buddy.Features.Users;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -47,17 +48,19 @@ public sealed class UpdateLanguageTests(BuddyApiFixture fixture)
     }
 
     [Fact]
-    public async Task Returns_not_found_when_the_caller_has_no_buddy_user_yet()
+    public async Task Is_forbidden_when_the_caller_has_no_buddy_user_yet()
     {
         var user = await fixture.CreateUserAsync();
         var token = await fixture.GetAccessTokenAsync(user);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Patch.Json(new { Language = "da" }).ToUrl("/users/me/language");
-            _.StatusCodeShouldBe(404);
+            _.StatusCodeShouldBe(403);
         });
+
+        Assert.Equal(ProvisionedUserMiddleware.ErrorCode, response.ReadAsJson<ErrorEnvelope>().Code);
     }
 
     private sealed record LanguageResponseEnvelope(string Language);

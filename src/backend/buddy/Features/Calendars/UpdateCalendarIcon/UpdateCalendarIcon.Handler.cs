@@ -23,10 +23,7 @@ public static class UpdateCalendarIconHandler
             return new Result<Calendar>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Calendar>.NotFound();
-        }
+        var userId = command.UserId;
 
         var events = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(events);

@@ -20,10 +20,7 @@ public static class ListWorkDaysHandler
             return new Result<IReadOnlyCollection<WorkDay>>.Validation(problem);
         }
 
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<WorkDay>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await WorkLocationAuthorization.CheckView(query.GuardianId, userId, guardians, cancellationToken);
 

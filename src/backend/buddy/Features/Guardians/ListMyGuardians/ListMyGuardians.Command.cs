@@ -4,7 +4,7 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
 
-public sealed record ListMyGuardians(UserId? ChildId)
+public sealed record ListMyGuardians(UserId ChildId)
 {
-    public static ListMyGuardians FromClaims(ClaimsPrincipal principal) => new(principal.GetUserId());
+    public static ListMyGuardians FromClaims(ClaimsPrincipal principal) => new(principal.GetRequiredUserId());
 }

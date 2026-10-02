@@ -12,10 +12,7 @@ public static class GetCurrentAiSessionHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<AiSessionView>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MealplanAuthorization.CheckManage(query.ChildId, userId, guardians, cancellationToken);
 

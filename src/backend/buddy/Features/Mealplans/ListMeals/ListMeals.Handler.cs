@@ -12,10 +12,7 @@ public static class ListMealsHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<Meal>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MealplanAuthorization.CheckView(query.ChildId, userId, guardians, cancellationToken);
 

@@ -30,10 +30,7 @@ public static class ListOccurrencesHandler
             return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.Validation(problem);
         }
 
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<CalendarItemOccurrence>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var calendarEvents = await calendars.ReadAsync(query.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);

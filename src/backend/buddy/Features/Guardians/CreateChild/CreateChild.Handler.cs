@@ -19,10 +19,7 @@ public static class CreateChildHandler
             return new CreateChildOutcome.Validation(problem);
         }
 
-        if (command.GuardianId is not { } guardianId)
-        {
-            return new CreateChildOutcome.Unauthenticated();
-        }
+        var guardianId = command.GuardianId;
 
         var provisioning = await keycloak.CreateChildUserAsync(
             command.GivenName,

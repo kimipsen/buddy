@@ -14,10 +14,7 @@ public static class GetSharedMedicineGroupHandler
     public static async Task<Result<SharedMedicineGroup?>> Handle(
         GetSharedMedicineGroup query, IMedicineSharingEventStore sharing, IGuardianLinkEventStore guardians, IGroupEventStore groups, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<SharedMedicineGroup?>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MedicineAuthorization.CheckManage(query.ChildId, userId, guardians, cancellationToken);
 

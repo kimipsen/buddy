@@ -6,10 +6,7 @@ public static class UpdateNameHandler
 {
     public static async Task<Result<User>> Handle(UpdateName command, IUserEventStore events, CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<User>.NotFound();
-        }
+        var userId = command.UserId;
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);
         var user = User.Rehydrate(existingEvents);

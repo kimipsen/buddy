@@ -19,7 +19,7 @@ public static class StopMedicineScheduleForGroupHandler
             return resolved;
         }
 
-        var stopped = await StopMedicineScheduleHandler.StopForChildAsync(command.ChildId, command.MedicineId, command.UserId!, medicines, cancellationToken);
+        var stopped = await StopMedicineScheduleHandler.StopForChildAsync(command.ChildId, command.MedicineId, command.UserId, medicines, cancellationToken);
 
         return stopped ? new Result<Unit>.Success(Unit.Value) : new Result<Unit>.NotFound();
     }

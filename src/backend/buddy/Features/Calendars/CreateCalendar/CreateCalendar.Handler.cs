@@ -20,10 +20,7 @@ public static class CreateCalendarHandler
             return new CreateCalendarOutcome.Validation(problem);
         }
 
-        if (command.UserId is not { } ownerId)
-        {
-            return new CreateCalendarOutcome.Unauthenticated();
-        }
+        var ownerId = command.UserId;
 
         var group = Group.Rehydrate(await groups.ReadAsync(command.GroupId, cancellationToken));
 

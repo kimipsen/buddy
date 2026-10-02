@@ -23,10 +23,7 @@ public static class ConfigureGoalPostsHandler
             return new Result<ProgressSummary>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<ProgressSummary>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await ProgressAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

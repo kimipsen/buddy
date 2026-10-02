@@ -12,10 +12,7 @@ public static class StopMedicineScheduleHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MedicineAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

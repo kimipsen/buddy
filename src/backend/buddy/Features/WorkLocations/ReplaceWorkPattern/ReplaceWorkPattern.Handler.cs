@@ -20,10 +20,7 @@ public static class ReplaceWorkPatternHandler
             return new Result<WorkPatternResponse>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<WorkPatternResponse>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await WorkLocationAuthorization.CheckManage(userId, guardians, cancellationToken);
 

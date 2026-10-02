@@ -26,22 +26,16 @@ public static class {{UseCase}}Handler
             return new Result<{{Aggregate}}>.Validation(problem);
         }
 
-        // 2. No backend user -> NotFound (not 401; see Result.cs for why).
-        if (command.UserId is not { } userId)
-        {
-            return new Result<{{Aggregate}}>.NotFound();
-        }
-
-        // 3. Domain authorization helper (<Domain>Authorization.cs). Denials map through the
+        // 2. Domain authorization helper (<Domain>Authorization.cs). Denials map through the
         //    helper's ToDeniedResult<T>() so NotFound/Forbidden stay consistent per domain.
-        var access = await {{Authorization}}.{{AccessCheck}}(command.ChildId, userId, guardians, cancellationToken);
+        var access = await {{Authorization}}.{{AccessCheck}}(command.ChildId, command.UserId, guardians, cancellationToken);
 
         if (access != {{Access}}.Allowed)
         {
             return access.ToDeniedResult<{{Aggregate}}>();
         }
 
-        // 4. Load + rehydrate from events (write paths replay; FindSnapshotAsync is for reads).
+        // 3. Load + rehydrate from events (write paths replay; FindSnapshotAsync is for reads).
         var events = await store.ReadAsync(command.{{AggregateId}}, cancellationToken);
         var aggregate = {{Aggregate}}.Rehydrate(events);
 
@@ -51,13 +45,13 @@ public static class {{UseCase}}Handler
             return new Result<{{Aggregate}}>.NotFound();
         }
 
-        // 5. Idempotent by construction: append only when something changes.
+        // 4. Idempotent by construction: append only when something changes.
         if (aggregate.Name == command.Name)
         {
             return new Result<{{Aggregate}}>.Success(aggregate);
         }
 
-        var changed = new {{Event}}(command.{{AggregateId}}, aggregate.Name, command.Name, userId, DateTimeOffset.UtcNow);
+        var changed = new {{Event}}(command.{{AggregateId}}, aggregate.Name, command.Name, command.UserId, DateTimeOffset.UtcNow);
         await store.AppendAsync(command.{{AggregateId}}, [changed], cancellationToken);
 
         // Reuse the aggregate's own fold instead of hand-copying fields with `with { ... }`.

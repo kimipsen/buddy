@@ -13,7 +13,7 @@ public static class CreateCalendarEndpoint
 {
     public static RouteGroupBuilder MapCreateCalendar(this RouteGroupBuilder calendars)
     {
-        calendars.MapPost("/", async Task<Results<Ok<CalendarResponse>, UnauthorizedHttpResult, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
+        calendars.MapPost("/", async Task<Results<Ok<CalendarResponse>, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             CreateCalendarRequest request,
             IMessageBus bus,
@@ -31,7 +31,6 @@ public static class CreateCalendarEndpoint
             return result switch
             {
                 CreateCalendarOutcome.Success(var calendar) => TypedResults.Ok(CalendarResponse.FromCalendar(calendar)),
-                CreateCalendarOutcome.Unauthenticated => TypedResults.Unauthorized(),
                 CreateCalendarOutcome.Forbidden => TypedResults.Forbid(),
                 CreateCalendarOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };

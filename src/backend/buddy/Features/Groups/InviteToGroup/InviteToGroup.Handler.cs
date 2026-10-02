@@ -17,10 +17,7 @@ public static class InviteToGroupHandler
             return new InviteToGroupOutcome.Forbidden();
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new InviteToGroupOutcome.NotFound();
-        }
+        var userId = command.UserId;
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
         var group = Group.Rehydrate(events);

@@ -22,10 +22,7 @@ public static class UpdatePrintTemplateLayoutHandler
             return new Result<PrintTemplateResponse>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<PrintTemplateResponse>.NotFound();
-        }
+        var userId = command.UserId;
 
         var (template, access) = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
 

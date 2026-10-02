@@ -25,10 +25,7 @@ public static class ListMealPlanHandler
             return new Result<IReadOnlyCollection<MealPlanEntry>>.Validation(problem);
         }
 
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<MealPlanEntry>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MealplanAuthorization.CheckView(query.ChildId, userId, guardians, cancellationToken);
 

@@ -38,9 +38,9 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
             return;
         }
 
-        // No backend UserId yet means this can't be a resource-creating call in the first place
-        // (every mutating command requires one) -- fall through rather than keying a cache entry
-        // on nothing.
+        // Only an anonymous POST gets here without a UserId -- ProvisionedUserMiddleware has already
+        // rejected an authenticated caller without one -- so fall through rather than keying a
+        // cache entry on nothing.
         if (context.User.GetUserId() is not { } userId)
         {
             await next(context);

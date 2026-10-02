@@ -13,10 +13,7 @@ public static class ShareMealPlanWithGroupHandler
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var mealplanAccess = await MealplanAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

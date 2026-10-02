@@ -6,10 +6,7 @@ public static class RevokeGuardianLinkHandler
 {
     public static async Task<Result<Unit>> Handle(RevokeGuardianLink command, IGuardianLinkEventStore guardianLinks, CancellationToken cancellationToken)
     {
-        if (command.GuardianId is not { } guardianId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var guardianId = command.GuardianId;
 
         var link = await guardianLinks.FindActiveLinkAsync(command.ChildId, guardianId, cancellationToken);
 

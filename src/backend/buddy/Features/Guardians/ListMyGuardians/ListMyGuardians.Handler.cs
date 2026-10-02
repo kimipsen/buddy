@@ -7,10 +7,7 @@ public static class ListMyGuardiansHandler
     public static async Task<IReadOnlyCollection<GuardianSummary>> Handle(
         ListMyGuardians query, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
     {
-        if (query.ChildId is not { } childId)
-        {
-            return [];
-        }
+        var childId = query.ChildId;
 
         var links = await guardianLinks.ListForChildAsync(childId, cancellationToken);
         var summaries = new List<GuardianSummary>(links.Count);

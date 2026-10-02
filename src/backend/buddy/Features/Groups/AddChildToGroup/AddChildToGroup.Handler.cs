@@ -11,10 +11,7 @@ public static class AddChildToGroupHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         // No relationship to the child at all -- collapsed to NotFound, the same way
         // MealplanAuthorization/MedicineAuthorization treat a non-guardian caller. A group

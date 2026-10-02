@@ -21,10 +21,7 @@ public static class SetProviderApiKeyHandler
             return new Result<AiProviderSettings>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<AiProviderSettings>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MealplanAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

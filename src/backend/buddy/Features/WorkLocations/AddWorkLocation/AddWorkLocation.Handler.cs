@@ -21,10 +21,7 @@ public static class AddWorkLocationHandler
             return new Result<WorkLocationSummary>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<WorkLocationSummary>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await WorkLocationAuthorization.CheckManage(userId, guardians, cancellationToken);
 

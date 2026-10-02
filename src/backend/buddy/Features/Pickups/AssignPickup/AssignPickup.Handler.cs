@@ -21,10 +21,7 @@ public static class AssignPickupHandler
             return new Result<PickupOccurrence>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<PickupOccurrence>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await PickupAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

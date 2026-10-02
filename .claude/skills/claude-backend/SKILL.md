@@ -121,14 +121,13 @@ A read-backward query (`OrderByDescending(e => e.Version).Take(n).ToListAsync()`
 
 ## 6. Commands, handlers, validators - Wolverine + FluentValidation
 
-- Command: `sealed record <UseCase>(UserId? UserId, ...)` plus `static <UseCase> FromClaims(ClaimsPrincipal principal, ...)` using `principal.GetUserId()`. See `AssignPickup.Command.cs`.
+- Command: `sealed record <UseCase>(UserId UserId, ...)` plus `static <UseCase> FromClaims(ClaimsPrincipal principal, ...)` using `principal.GetRequiredUserId()`. See `AssignPickup.Command.cs`. The caller id is never null: `Features/Users/ProvisionedUserMiddleware` answers `403 user_not_provisioned` for an authenticated caller with no Buddy user before any handler runs (only `GET /users/me` opts out, via `.AllowUnprovisionedUser()`), so handlers don't guard for it.
 - Handler: `public static class <UseCase>Handler` with `public static async Task<Result<T>> Handle(<UseCase> command, <deps...>, CancellationToken cancellationToken)`. Wolverine discovers it by convention and injects parameters - no registration.
 - Handler order (from `AssignPickup.Handler.cs`):
   1. `if (await validator.ValidateCommandAsync(command, ct) is { } problem) return new Result<T>.Validation(problem);`
-  2. `if (command.UserId is not { } userId) return new Result<T>.NotFound();`
-  3. Authorization via `<Domain>Authorization.Check*` -> `access.ToDeniedResult<T>()`.
-  4. Async/relationship checks needing the DB -> `ValidationProblem.Of("message")`.
-  5. Load, decide, append (only if changed), return `Success`.
+  2. Authorization via `<Domain>Authorization.Check*(..., command.UserId, ...)` -> `access.ToDeniedResult<T>()`.
+  3. Async/relationship checks needing the DB -> `ValidationProblem.Of("message")`.
+  4. Load, decide, append (only if changed), return `Success`.
 - Validator: `sealed class <UseCase>Validator : AbstractValidator<<UseCase>>`, structural rules only. Auto-registered by `AddValidatorsFromAssemblyContaining<Program>()`. DB-backed rules stay in the handler (see `docs/backend/analysis/validation-rules.md`).
 - Handlers can call other handlers via an injected `IMessageBus` (`SetTaskCompletion.Handler.cs`).
 - Timestamps: `DateTimeOffset.UtcNow` once per handler, reused across the events it emits.
@@ -141,7 +140,7 @@ public union Result<T>(Result<T>.Success, Result<T>.NotFound, Result<T>.Forbidde
 ```
 - Expected outcomes (validation, not found, forbidden, business-rule rejection) are `Result<T>` values, not exceptions. No success payload -> `Result<Unit>`.
 - Throw only for programmer errors, corrupt/unmapped data (`FromPayload` default arm, `UnreachableException` in `ToDeniedResult` for `Allowed`) and infrastructure failures.
-- Outcomes that don't fit the four cases get a feature-specific union (`CreateChildOutcome`, `CreateGroupOutcome` with `Unauthenticated`) - don't add cases to `Result<T>`; every switch over it would need the arm.
+- Outcomes that don't fit the four cases get a feature-specific union (`CreateChildOutcome` with `UsernameUnavailable`, `CreateCalendarOutcome`) - don't add cases to `Result<T>`; every switch over it would need the arm.
 - `ResultExtensions.Reraise<T, TOther>()` converts a failed result to another payload type.
 - No access relationship at all -> `NotFound` (don't reveal existence); relationship but insufficient tier -> `Forbidden`.
 

@@ -7,7 +7,7 @@ using buddy.Features.Users;
 namespace buddy.Features.Medicines;
 
 public sealed record CreateMedicineScheduleForGroup(
-    UserId? UserId,
+    UserId UserId,
     GroupId GroupId,
     UserId ChildId,
     string Name,
@@ -29,5 +29,5 @@ public sealed record CreateMedicineScheduleForGroup(
         IReadOnlyList<TimeOnly> times,
         DateOnly startDate,
         DateOnly? endDate) =>
-        new(principal.GetUserId(), groupId, childId, name, dosage, icon, color, times, startDate, endDate);
+        new(principal.GetRequiredUserId(), groupId, childId, name, dosage, icon, color, times, startDate, endDate);
 }

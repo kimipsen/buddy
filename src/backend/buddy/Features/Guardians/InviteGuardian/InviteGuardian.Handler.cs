@@ -14,10 +14,7 @@ public static class InviteGuardianHandler
         IEmailSender emailSender,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new InviteGuardianOutcome.NotFound();
-        }
+        var userId = command.UserId;
 
         // Any active guardian of this child can invite a co-guardian -- GuardianKind never gates
         // access, so there's no Owner/Admin-style split the way Groups' invite has.

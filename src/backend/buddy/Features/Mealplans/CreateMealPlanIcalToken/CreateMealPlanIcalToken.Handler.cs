@@ -11,10 +11,7 @@ public static class CreateMealPlanIcalTokenHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<IssuedMealPlanIcalToken>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MealplanAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

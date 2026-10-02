@@ -37,19 +37,25 @@ export class UsersService {
 
   /**
    * Resolves the authenticated Keycloak subject to a backend user, creating one on first login.
-   * Every other endpoint tolerates an unprovisioned caller by degrading silently (e.g. empty
-   * lists), but create actions need a real UserId to attribute ownership to -- this must be
-   * called at least once per session before any create action, or those calls 401. Memoized so
-   * repeated calls (e.g. from a route guard firing on every navigation) only hit the network once.
+   * Every other endpoint rejects a caller without one (403 user_not_provisioned), so the route
+   * guards call this before any page loads. Memoized so repeated calls (e.g. a guard firing on
+   * every navigation) only hit the network once -- but a failure is not memoized, so the next
+   * navigation retries instead of leaving the session unprovisioned until a reload.
    */
   ensureCurrentUser(): Promise<CurrentUser> {
     this.currentUserPromise ??= firstValueFrom(
       this.http.get<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me`),
-    ).then((user) => {
-      this.timeZoneState.set(user.timeZoneId);
-      this.i18n.setLanguageFromServer(user.language);
-      return user;
-    });
+    ).then(
+      (user) => {
+        this.timeZoneState.set(user.timeZoneId);
+        this.i18n.setLanguageFromServer(user.language);
+        return user;
+      },
+      (error: unknown) => {
+        this.currentUserPromise = null;
+        throw error;
+      },
+    );
     return this.currentUserPromise;
   }
 

@@ -29,8 +29,8 @@ export const roleRedirectGuard: CanActivateFn = async () => {
 
   try {
     // Provisions the backend user on first login (memoized, so this is a no-op after the first
-    // successful call). Best-effort: a failure here shouldn't block navigation, since read-only
-    // pages work without it -- create actions will surface their own error if it's still missing.
+    // successful call). Best-effort: a failure here doesn't block navigation -- the page shows its
+    // own load error (the API answers 403 user_not_provisioned) and the next navigation retries.
     await users.ensureCurrentUser();
   } catch {
     // Ignored -- see comment above.

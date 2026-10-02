@@ -7,10 +7,7 @@ public static class AcceptGroupInviteHandler
 {
     public static async Task<Result<Unit>> Handle(AcceptGroupInvite command, IGroupEventStore groups, IUserEventStore users, CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var invite = await groups.FindInviteByTokenAsync(command.Token, cancellationToken);
 

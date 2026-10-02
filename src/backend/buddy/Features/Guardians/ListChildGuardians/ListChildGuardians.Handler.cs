@@ -13,10 +13,7 @@ public static class ListChildGuardiansHandler
     public static async Task<Result<IReadOnlyCollection<GuardianSummary>>> Handle(
         ListChildGuardians query, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
     {
-        if (query.CallerId is not { } callerId)
-        {
-            return new Result<IReadOnlyCollection<GuardianSummary>>.NotFound();
-        }
+        var callerId = query.CallerId;
 
         if (await guardianLinks.FindActiveLinkAsync(query.ChildId, callerId, cancellationToken) is null)
         {

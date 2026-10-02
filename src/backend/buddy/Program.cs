@@ -109,6 +109,8 @@ else
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
+// Before the idempotency middleware, so an unprovisioned caller never reserves a key.
+app.UseProvisionedUsers();
 // Outside UseIdempotencyKeys: a request that lost a concurrency race gets 409 and its
 // Idempotency-Key released, so the client can retry it with the same key.
 app.UseConcurrencyConflicts();

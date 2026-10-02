@@ -84,21 +84,26 @@ describe('UsersService', () => {
       await expect(third).resolves.toEqual(currentUser());
     });
 
-    it('propagates a failed request and keeps it memoized rather than retrying', async () => {
+    it('propagates a failed request and retries on the next call instead of memoizing it', async () => {
       const first = service.ensureCurrentUser();
 
-      const req = httpMock.expectOne(`${apiBaseUrl}/users/me`);
-      req.flush('boom', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me`)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
 
       await expect(first).rejects.toBeInstanceOf(HttpErrorResponse);
-
-      // A follow-up call reuses the same rejected promise instead of firing a new request.
-      const second = service.ensureCurrentUser();
-      httpMock.expectNone(`${apiBaseUrl}/users/me`);
-      await expect(second).rejects.toBeInstanceOf(HttpErrorResponse);
-
       expect(service.timeZoneId()).toBe('UTC');
       expect(i18n.setLanguageFromServer).not.toHaveBeenCalled();
+
+      // Every other endpoint answers 403 user_not_provisioned until this succeeds, so a failure
+      // must not stick for the rest of the session.
+      const second = service.ensureCurrentUser();
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me`)
+        .flush(currentUser({ timeZoneId: 'Europe/Copenhagen' }));
+
+      await expect(second).resolves.toEqual(currentUser({ timeZoneId: 'Europe/Copenhagen' }));
+      expect(service.timeZoneId()).toBe('Europe/Copenhagen');
     });
   });
 

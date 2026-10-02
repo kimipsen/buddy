@@ -9,7 +9,7 @@ namespace buddy.Features.Pickups;
 // the same way CreateMedicineSchedule flattens Icon/Color rather than accepting a pre-built value
 // object, since PickupAssignee never crosses the HTTP boundary directly (see PickupAssigneeKind).
 public sealed record AssignPickup(
-    UserId? UserId,
+    UserId UserId,
     UserId ChildId,
     DateOnly Date,
     PickupSlot Slot,
@@ -35,5 +35,5 @@ public sealed record AssignPickup(
         string? playdateContactInfo,
         TimeOnly? time,
         string? notes) =>
-        new(principal.GetUserId(), childId, date, slot, kind, guardianId, siblingChildId, playdateHostName, playdateLocation, playdateContactInfo, time, notes);
+        new(principal.GetRequiredUserId(), childId, date, slot, kind, guardianId, siblingChildId, playdateHostName, playdateLocation, playdateContactInfo, time, notes);
 }

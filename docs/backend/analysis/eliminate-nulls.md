@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phase 0 implemented (see [Phase 0, As built](#as-built)); phases 1-7 proposed.
+Status: Phases 0 and 1 implemented (see each phase's "As built"); phases 2-7 proposed.
 
 ## Context
 
@@ -228,6 +228,27 @@ retries or refreshes on 401 would loop.
 - Frontend: confirm that `AccountService`/`auth.guard.ts` provision via `GET /users/me` before any
   routed page loads. The guards already do this, so 403 should be unreachable in the UI. The e2e
   run in this phase verifies it.
+
+### As built (Phase 1)
+
+- **A middleware, not an endpoint filter.** `Features/Users/ProvisionedUserMiddleware.cs` runs
+  right after `UseAuthorization()` and before the idempotency middleware.
+  - It applies to every endpoint that carries authorization metadata, so the accept-invite
+    endpoints outside the route groups are covered, and a new group can't forget it.
+  - Public endpoints (no `IAuthorizeData`, or `IAllowAnonymous`) pass through.
+  - `GET /users/me` opts out with `.AllowUnprovisionedUser()`.
+- **Commands and handlers.**
+  - All 135 commands and queries take a non-null caller id via `Claims.GetRequiredUserId()`.
+  - The 120 handler guards became plain assignments.
+  - `MealplanGroupAccess` / `MedicineGroupAccess` take a non-null `UserId`.
+  - `CreateGroupOutcome` is gone: the handler returns `GroupWithMemberDetails`. `CreateCalendarOutcome`
+    and `CreateChildOutcome` lost their `Unauthenticated` case.
+- **Behavior change.** For an unprovisioned caller, the list endpoints that used to return 200 `[]`,
+  the 404s, the Create* 401s and `DELETE /users/me`'s silent no-op are all `403 user_not_provisioned`
+  now. The frontend's `authGuard` provisions via `GET /users/me` before any routed page loads.
+- **Tests and docs.** `ProvisionedUserTests` covers one route per group, the provisioning
+  round-trip, a public endpoint, and a missing token. The `claude-backend` / `backend-feature`
+  skills and templates now show the non-null caller id.
 
 ## Phase 2: aggregate folds without null
 

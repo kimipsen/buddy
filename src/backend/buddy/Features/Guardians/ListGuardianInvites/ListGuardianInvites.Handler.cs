@@ -7,10 +7,7 @@ public static class ListGuardianInvitesHandler
     public static async Task<Result<IReadOnlyCollection<GuardianInviteSummary>>> Handle(
         ListGuardianInvites query, IGuardianLinkEventStore guardianLinks, IGuardianInviteEventStore invites, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<GuardianInviteSummary>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var link = await guardianLinks.FindActiveLinkAsync(query.ChildId, userId, cancellationToken);
 

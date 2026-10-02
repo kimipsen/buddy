@@ -15,10 +15,7 @@ public static class DeleteItemHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);

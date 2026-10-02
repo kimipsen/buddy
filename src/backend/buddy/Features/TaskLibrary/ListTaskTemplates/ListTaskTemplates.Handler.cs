@@ -11,10 +11,7 @@ public static class ListTaskTemplatesHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<TaskTemplate>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await TaskLibraryAuthorization.CheckView(query.ChildId, userId, guardians, cancellationToken);
 

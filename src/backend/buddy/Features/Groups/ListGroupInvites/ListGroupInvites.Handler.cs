@@ -6,10 +6,7 @@ public static class ListGroupInvitesHandler
 {
     public static async Task<Result<IReadOnlyCollection<GroupInviteDocument>>> Handle(ListGroupInvites query, IGroupEventStore groups, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<GroupInviteDocument>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var events = await groups.ReadAsync(query.GroupId, cancellationToken);
         var group = Group.Rehydrate(events);

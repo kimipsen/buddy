@@ -6,10 +6,7 @@ public static class RemoveGroupMemberHandler
 {
     public static async Task<Result<Unit>> Handle(RemoveGroupMember command, IGroupEventStore groups, CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
         var group = Group.Rehydrate(events);

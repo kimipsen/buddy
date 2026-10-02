@@ -11,10 +11,7 @@ public static class GetWorkLocationScheduleHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<WorkLocationScheduleResponse>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await WorkLocationAuthorization.CheckView(query.GuardianId, userId, guardians, cancellationToken);
 

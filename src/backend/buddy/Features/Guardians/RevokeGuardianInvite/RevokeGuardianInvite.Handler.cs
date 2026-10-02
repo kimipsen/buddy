@@ -7,10 +7,7 @@ public static class RevokeGuardianInviteHandler
     public static async Task<Result<Unit>> Handle(
         RevokeGuardianInvite command, IGuardianLinkEventStore guardianLinks, IGuardianInviteEventStore invites, CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         // Any active guardian of this child can revoke a pending invite -- no Owner/Admin split,
         // same reasoning as InviteGuardianHandler.

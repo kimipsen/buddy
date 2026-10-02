@@ -20,10 +20,7 @@ public static class CreateTaskTemplateHandler
             return new Result<TaskTemplate>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<TaskTemplate>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await TaskLibraryAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

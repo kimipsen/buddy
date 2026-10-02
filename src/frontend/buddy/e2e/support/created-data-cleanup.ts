@@ -185,7 +185,9 @@ async function deleteDisposableGuardianAccounts(
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      if (!removed.ok() && removed.status() !== 404) {
+      // 403 is user_not_provisioned: the guardian never opened the app, so there's no backend
+      // user to delete.
+      if (!removed.ok() && removed.status() !== 404 && removed.status() !== 403) {
         console.warn(
           `[e2e cleanup] deleting backend user ${guardian.username} failed: ${removed.status()}`,
         );

@@ -20,6 +20,6 @@ public static class ClearMealSlotForGroupHandler
             return resolved.Reraise<MealplanGroupAccess.Resolved, Unit>();
         }
 
-        return await ClearMealSlotHandler.ClearForChildAsync(access.AnchorChildId, command.Date, command.Slot, command.UserId!, mealPlans, guardians, cancellationToken);
+        return await ClearMealSlotHandler.ClearForChildAsync(access.AnchorChildId, command.Date, command.Slot, command.UserId, mealPlans, guardians, cancellationToken);
     }
 }

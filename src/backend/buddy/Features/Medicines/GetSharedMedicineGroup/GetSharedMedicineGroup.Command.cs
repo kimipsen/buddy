@@ -4,7 +4,7 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Medicines;
 
-public sealed record GetSharedMedicineGroup(UserId? UserId, UserId ChildId)
+public sealed record GetSharedMedicineGroup(UserId UserId, UserId ChildId)
 {
-    public static GetSharedMedicineGroup FromClaims(ClaimsPrincipal principal, UserId childId) => new(principal.GetUserId(), childId);
+    public static GetSharedMedicineGroup FromClaims(ClaimsPrincipal principal, UserId childId) => new(principal.GetRequiredUserId(), childId);
 }

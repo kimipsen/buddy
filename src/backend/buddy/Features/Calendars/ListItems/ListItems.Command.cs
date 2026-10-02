@@ -4,7 +4,7 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
-public sealed record ListItems(UserId? UserId, CalendarId CalendarId)
+public sealed record ListItems(UserId UserId, CalendarId CalendarId)
 {
-    public static ListItems FromClaims(ClaimsPrincipal principal, CalendarId calendarId) => new(principal.GetUserId(), calendarId);
+    public static ListItems FromClaims(ClaimsPrincipal principal, CalendarId calendarId) => new(principal.GetRequiredUserId(), calendarId);
 }

@@ -9,10 +9,7 @@ public static class GetCalendarHandler
 {
     public static async Task<Result<Calendar>> Handle(GetCalendar query, ICalendarEventStore calendars, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<Calendar>.NotFound();
-        }
+        var userId = query.UserId;
 
         var calendar = await calendars.FindSnapshotAsync(query.CalendarId, cancellationToken);
         var access = await CalendarAuthorization.CheckView(calendar, userId, groups, guardians, cancellationToken);

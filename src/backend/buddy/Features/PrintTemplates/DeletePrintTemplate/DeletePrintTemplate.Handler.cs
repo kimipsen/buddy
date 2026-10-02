@@ -13,10 +13,7 @@ public static class DeletePrintTemplateHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         // A deleted template is treated as missing, so deleting twice is a 404 the second time --
         // the same rule DeleteCalendar follows.

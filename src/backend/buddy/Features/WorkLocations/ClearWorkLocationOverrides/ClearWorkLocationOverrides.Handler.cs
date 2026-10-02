@@ -20,10 +20,7 @@ public static class ClearWorkLocationOverridesHandler
             return new Result<Unit>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await WorkLocationAuthorization.CheckManage(userId, guardians, cancellationToken);
 

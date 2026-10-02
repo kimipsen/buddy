@@ -11,10 +11,7 @@ public static class ArchiveWorkLocationHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await WorkLocationAuthorization.CheckManage(userId, guardians, cancellationToken);
 

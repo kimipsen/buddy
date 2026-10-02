@@ -31,4 +31,10 @@ public static class ClaimsPrincipalExtensions
     // hasn't gone through GetOrCreateUser via GET /users/me).
     public static UserId? GetUserId(this ClaimsPrincipal principal) =>
         principal.FindFirstValue(Claims.UserId) is { } value ? new UserId(Guid.Parse(value)) : null;
+
+    // For commands and queries behind ProvisionedUserMiddleware, which has already rejected a
+    // caller without a Buddy user -- so a missing claim here is a pipeline bug, not a request error.
+    public static UserId GetRequiredUserId(this ClaimsPrincipal principal) =>
+        principal.GetUserId()
+        ?? throw new InvalidOperationException("No buddy:user_id claim; ProvisionedUserMiddleware should have rejected this request.");
 }

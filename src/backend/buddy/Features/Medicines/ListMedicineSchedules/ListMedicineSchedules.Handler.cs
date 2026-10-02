@@ -12,10 +12,7 @@ public static class ListMedicineSchedulesHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<MedicineSchedule>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MedicineAuthorization.CheckManage(query.ChildId, userId, guardians, cancellationToken);
 

@@ -11,10 +11,7 @@ public static class ListProvidersHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<AiProviderSettings>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MealplanAuthorization.CheckManage(query.ChildId, userId, guardians, cancellationToken);
 

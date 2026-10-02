@@ -21,10 +21,7 @@ public static class VerifyEmailHandler
             return new Result<User>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<User>.NotFound();
-        }
+        var userId = command.UserId;
 
         var existingEvents = await events.ReadAsync(userId, cancellationToken);
         var user = User.Rehydrate(existingEvents);

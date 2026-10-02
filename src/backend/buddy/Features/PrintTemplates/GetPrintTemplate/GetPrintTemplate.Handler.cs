@@ -13,10 +13,7 @@ public static class GetPrintTemplateHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<PrintTemplateResponse>.NotFound();
-        }
+        var userId = query.UserId;
 
         var template = await store.FindSnapshotAsync(query.TemplateId, cancellationToken);
         var access = await PrintTemplateAuthorization.CheckManage(template, userId, groups, guardians, cancellationToken);

@@ -20,10 +20,7 @@ public static class AddSubtaskHandler
             return new Result<TaskTemplate>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<TaskTemplate>.NotFound();
-        }
+        var userId = command.UserId;
 
         var resolved = await TaskTemplateAccess.ResolveForManageAsync(command.TemplateId, userId, templates, guardians, cancellationToken);
 

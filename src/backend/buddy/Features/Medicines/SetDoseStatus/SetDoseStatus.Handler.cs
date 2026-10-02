@@ -13,10 +13,7 @@ public static class SetDoseStatusHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<MedicineDoseOccurrence>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MedicineAuthorization.CheckMark(command.ChildId, userId, guardians, cancellationToken);
 

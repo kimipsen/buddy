@@ -29,7 +29,7 @@ public static class CreateMedicineScheduleForGroupHandler
         }
 
         var schedule = await CreateMedicineScheduleHandler.CreateForChildAsync(
-            command.ChildId, command.UserId!, command.Name, command.Dosage, command.Icon, command.Color, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
+            command.ChildId, command.UserId, command.Name, command.Dosage, command.Icon, command.Color, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
 
         return new Result<MedicineSchedule>.Success(schedule);
     }

@@ -11,10 +11,7 @@ public static class ClearPickupHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await PickupAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

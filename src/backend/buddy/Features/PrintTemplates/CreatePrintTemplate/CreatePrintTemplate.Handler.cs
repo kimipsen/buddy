@@ -23,10 +23,7 @@ public static class CreatePrintTemplateHandler
             return new Result<PrintTemplateResponse>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<PrintTemplateResponse>.NotFound();
-        }
+        var userId = command.UserId;
 
         // Printing is a guardian activity; there is no child tier.
         if (await ChildVisibility.IsChildAsync(userId, guardians, cancellationToken))

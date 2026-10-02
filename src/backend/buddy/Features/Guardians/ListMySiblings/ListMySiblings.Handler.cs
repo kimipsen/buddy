@@ -12,10 +12,7 @@ public static class ListMySiblingsHandler
     public static async Task<IReadOnlyCollection<SiblingSummary>> Handle(
         ListMySiblings query, IGuardianLinkEventStore guardianLinks, IUserEventStore users, CancellationToken cancellationToken)
     {
-        if (query.ChildId is not { } childId)
-        {
-            return [];
-        }
+        var childId = query.ChildId;
 
         var myGuardianLinks = await guardianLinks.ListForChildAsync(childId, cancellationToken);
         var siblingIds = new HashSet<Guid>();

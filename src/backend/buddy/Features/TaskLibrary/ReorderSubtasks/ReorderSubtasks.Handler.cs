@@ -12,10 +12,7 @@ public static class ReorderSubtasksHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<TaskTemplate>.NotFound();
-        }
+        var userId = command.UserId;
 
         var resolved = await TaskTemplateAccess.ResolveForManageAsync(command.TemplateId, userId, templates, guardians, cancellationToken);
 

@@ -17,17 +17,12 @@ public static class MedicineGroupAccess
     public static async Task<Result<Unit>> ResolveAsync(
         GroupId groupId,
         UserId childId,
-        UserId? callerId,
+        UserId callerId,
         IGroupEventStore groups,
         IMedicineSharingEventStore sharing,
         CancellationToken cancellationToken)
     {
-        if (callerId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
-
-        var access = await MedicineGroupAuthorization.CheckManage(groupId, userId, groups, cancellationToken);
+        var access = await MedicineGroupAuthorization.CheckManage(groupId, callerId, groups, cancellationToken);
 
         if (access != MedicineAccess.Allowed)
         {

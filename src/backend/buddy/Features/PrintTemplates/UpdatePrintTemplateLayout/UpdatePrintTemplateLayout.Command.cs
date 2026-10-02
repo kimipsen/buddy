@@ -5,7 +5,7 @@ using buddy.Features.Users;
 namespace buddy.Features.PrintTemplates;
 
 public sealed record UpdatePrintTemplateLayout(
-    UserId? UserId,
+    UserId UserId,
     PrintTemplateId TemplateId,
     PaperSize PaperSize,
     DayOfWeek DefaultStartWeekday,
@@ -13,5 +13,5 @@ public sealed record UpdatePrintTemplateLayout(
 {
     public static UpdatePrintTemplateLayout FromClaims(
         ClaimsPrincipal principal, PrintTemplateId templateId, PaperSize paperSize, DayOfWeek defaultStartWeekday, bool showWeekNumber) =>
-        new(principal.GetUserId(), templateId, paperSize, defaultStartWeekday, showWeekNumber);
+        new(principal.GetRequiredUserId(), templateId, paperSize, defaultStartWeekday, showWeekNumber);
 }

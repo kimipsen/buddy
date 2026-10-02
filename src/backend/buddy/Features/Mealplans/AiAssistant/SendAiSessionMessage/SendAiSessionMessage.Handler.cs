@@ -36,10 +36,7 @@ public static class SendAiSessionMessageHandler
             return new Result<AiSessionView>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<AiSessionView>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MealplanAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

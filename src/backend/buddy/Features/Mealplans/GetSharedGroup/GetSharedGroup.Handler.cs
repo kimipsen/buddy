@@ -13,10 +13,7 @@ public static class GetSharedGroupHandler
     public static async Task<Result<SharedMealplanGroup?>> Handle(
         GetSharedGroup query, IMealPlanEventStore mealPlans, IGuardianLinkEventStore guardians, IGroupEventStore groups, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<SharedMealplanGroup?>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MealplanAuthorization.CheckManage(query.ChildId, userId, guardians, cancellationToken);
 

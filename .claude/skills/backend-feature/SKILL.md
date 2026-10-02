@@ -20,7 +20,7 @@ Arguments (free text): domain, use case name, verb + route, who may call it. Ask
 
 | File | Shape (reference) |
 | --- | --- |
-| `<UseCase>.Command.cs` | `public sealed record <UseCase>(UserId? UserId, ...)` + `static FromClaims(ClaimsPrincipal principal, ...) => new(principal.GetUserId(), ...)`. Queries use the same file name (`ListTodaysDoses.Command.cs`). Ref: `Medicines/SetDoseStatus/SetDoseStatus.Command.cs` |
+| `<UseCase>.Command.cs` | `public sealed record <UseCase>(UserId UserId, ...)` + `static FromClaims(ClaimsPrincipal principal, ...) => new(principal.GetRequiredUserId(), ...)` (never null: `ProvisionedUserMiddleware` rejects an unprovisioned caller with `403 user_not_provisioned` first). Queries use the same file name (`ListTodaysDoses.Command.cs`). Ref: `Medicines/SetDoseStatus/SetDoseStatus.Command.cs` |
 | `<UseCase>.Validator.cs` | `sealed class <UseCase>Validator : AbstractValidator<<UseCase>>`, structural rules only. Shared date-range rule: `this.ValidDateRange(x => x.From, x => x.To, MaxRangeDays)` (`Common/Validation/DateRangeRules.cs`). Validators are registered automatically (`AddValidatorsFromAssemblyContaining<Program>()`). Ref: `Medicines/CreateMedicineSchedule/CreateMedicineSchedule.Validator.cs` |
 | `<UseCase>.Handler.cs` | `public static class <UseCase>Handler { public static async Task<Result<T>> Handle(<UseCase> command, IValidator<<UseCase>> validator, I<X>EventStore store, ..., CancellationToken ct) }`. Wolverine finds it by name. Dependencies are method parameters, not constructor parameters. |
 | `<UseCase>.Endpoint.cs` | `public static RouteGroupBuilder Map<UseCase>(this RouteGroupBuilder group)`, a lambda typed `Task<Results<...>>` that builds the command, calls `bus.InvokeAsync<Result<T>>(command, ct)` and switches over the result; `.WithName("<UseCase>")`. Request/response DTO records go at the bottom of this file. Ref: `Medicines/UpdateMedicineDetails/UpdateMedicineDetails.Endpoint.cs` |
@@ -28,12 +28,11 @@ Arguments (free text): domain, use case name, verb + route, who may call it. Ask
 Handler order (every handler follows it, see `CreateMedicineSchedule.Handler.cs`, `AssignPickup.Handler.cs`):
 
 1. `if (await validator.ValidateCommandAsync(command, ct) is { } problem) return new Result<T>.Validation(problem);`
-2. `if (command.UserId is not { } userId) return new Result<T>.NotFound();`
-3. `var access = await <Domain>Authorization.Check...(...); if (access != <Domain>Access.Allowed) return access.ToDeniedResult<T>();`
-4. Load: `<Aggregate>.Rehydrate(await store.ReadAsync(id, ct))`. Treat `null`, a wrong owner (`schedule.ChildId != command.ChildId`) or a stopped/archived aggregate as `NotFound`.
-5. Checks that need state stay in the handler, after authorization, and return `new Result<T>.Validation(ValidationProblem.Of("..."))`. Example: SetDoseStatus's "no dose at that time". Exception: an active resend cooldown (`Common/RateLimiting/ResendCooldown.IsActive(...)`) is not a validation failure; return `new ResendCooldownActive("...")` from a feature outcome union (`InviteGuardianOutcome`) -> 409.
-6. Compare before and after. Append `[new <Event>(...)]` **only if something changed**. This is what makes PUT/PATCH/DELETE idempotent.
-7. Return `Success(...)`. Use `Result<Unit>` when there is no body.
+2. `var access = await <Domain>Authorization.Check...(...); if (access != <Domain>Access.Allowed) return access.ToDeniedResult<T>();`
+3. Load: `<Aggregate>.Rehydrate(await store.ReadAsync(id, ct))`. Treat `null`, a wrong owner (`schedule.ChildId != command.ChildId`) or a stopped/archived aggregate as `NotFound`.
+4. Checks that need state stay in the handler, after authorization, and return `new Result<T>.Validation(ValidationProblem.Of("..."))`. Example: SetDoseStatus's "no dose at that time". Exception: an active resend cooldown (`Common/RateLimiting/ResendCooldown.IsActive(...)`) is not a validation failure; return `new ResendCooldownActive("...")` from a feature outcome union (`InviteGuardianOutcome`) -> 409.
+5. Compare before and after. Append `[new <Event>(...)]` **only if something changed**. This is what makes PUT/PATCH/DELETE idempotent.
+6. Return `Success(...)`. Use `Result<Unit>` when there is no body.
 
 Result to HTTP mapping (`Common/Result.cs`, `Common/ErrorEnvelope.cs`, `docs/backend/http-status-codes.md`):
 
@@ -47,7 +46,7 @@ Result to HTTP mapping (`Common/Result.cs`, `Common/ErrorEnvelope.cs`, `docs/bac
 - The switch is exhaustive over the union, so don't add a `_ =>` arm. If the route never produces a case, map it to `NotFound` with a comment instead of widening `Results<...>` (`ListMedicineSchedules.Endpoint.cs`, `DeleteItem.Endpoint.cs`).
 - Declare in `Results<...>` exactly the statuses the route returns. OpenAPI is generated from that list.
 - **Creates return `200 Ok`**, not 201: no endpoint uses `TypedResults.Created`. Match this convention.
-- Use a feature-specific outcome union only when a case doesn't fit `Result<T>` (`CreateCalendarOutcome` with `Unauthenticated` → 401).
+- Use a feature-specific outcome union only when a case doesn't fit `Result<T>` (`CreateChildOutcome` with `UsernameUnavailable` → 409).
 
 Wiring:
 
@@ -102,7 +101,7 @@ New domain only:
 - **At least one test per endpoint must carry `[CoversEndpoint("<WithName value>")]`**. Without it, `Meta/EndpointCoverageTests` fails. It also fails on stale names after a rename.
 - Arrange through the API: `fixture.CreateAuthenticatedUserAsync()` → `(User, Token, UserId)`; `GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex")`; `GuardianTestHelpers.CompleteChildLoginAsync(fixture, child)` for a child token; `<Domain>TestHelpers.Create...Async(fixture, token, ..., expectedStatus: 200)`. Add new helpers and response DTOs (`internal sealed record ...Dto`, ids as `Guid`) to `Features/<Domain>/<Domain>TestHelpers.cs` / `<Domain>TestDtos.cs`.
 - Alba: `fixture.Host.Scenario(_ => { _.WithRequestHeader("Authorization", $"Bearer {token}"); _.Put.Json(body).ToUrl(path).QueryString("date", ...); _.StatusCodeShouldBeOk(); })`, then `response.ReadAsJson<Dto>()`. `ToUrl` takes the path literally, so chain query parameters with `.QueryString(...)`. `_.Get.Url("...?from=..")` accepts an inline query.
-- Cover success (assert the body, then read back through a GET where one exists), **and every declared failure status**: 400 (validator rule plus each handler-level check), 403 (e.g. the child on a `Manage` route), 404 (a stranger with no relationship, and an unknown id). Add a 401 test only for a custom `Unauthenticated` outcome.
+- Cover success (assert the body, then read back through a GET where one exists), **and every declared failure status**: 400 (validator rule plus each handler-level check), 403 (e.g. the child on a `Manage` route), 404 (a stranger with no relationship, and an unknown id).
 - Store-level asserts: `fixture.Host.Services.GetRequiredService<I<X>EventStore>()`.
 
 Commands, run from the repo root. Integration tests need Docker (Testcontainers starts Postgres, Keycloak and Mailpit, which takes about 30s):

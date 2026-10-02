@@ -32,7 +32,9 @@ public static class GetCurrentUserEndpoint
                 Result<User>.Validation => TypedResults.NotFound(),
             };
         })
-        .WithName("GetCurrentUser");
+        .WithName("GetCurrentUser")
+        // This is the call that provisions the Buddy user, so it can't require one.
+        .AllowUnprovisionedUser();
 
         return users;
     }

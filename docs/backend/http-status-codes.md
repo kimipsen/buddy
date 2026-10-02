@@ -107,6 +107,13 @@ Typical Buddy use:
 - viewer attempting contributor-only operation
 - contributor attempting owner-only operation
 
+- an authenticated caller with no Buddy user yet (`user_not_provisioned`): the Keycloak token is
+  valid but its subject never called `GET /users/me`, which creates the user.
+  `ProvisionedUserMiddleware` returns this once, before any handler runs, on every authorized
+  endpoint except `GET /users/me` itself. Anonymous endpoints (iCal feeds, invite previews) are
+  not affected. It is `403` rather than `401` because the token is valid, so a client that
+  refreshes its token on `401` would loop.
+
 Security note:
 - if the route uses privacy-preserving existence hiding, you may intentionally return `404` instead of `403`
 
@@ -269,6 +276,8 @@ Notes:
 - `500` remains possible for unexpected failures even when omitted from endpoint-level mappings.
 - `409 concurrency_conflict` is possible on any command endpoint that reads and then appends to
   an event stream (a lost optimistic-concurrency race) and is omitted from the tables below.
+- `403 user_not_provisioned` is possible on every authorized endpoint except `GET /users/me`
+  (see [403 Forbidden](#403-forbidden)) and is omitted from the tables below.
 
 ### Users API (`/users`)
 
@@ -308,7 +317,7 @@ Notes:
 
 | Endpoint | Success | Client error statuses | When to use |
 | --- | --- | --- | --- |
-| `POST /groups` | `200` | `401` | No existing resource to hide behind `404`, so an unauthenticated caller gets `401` directly. |
+| `POST /groups` | `200` | `401` | Creating a group cannot fail for a provisioned caller. |
 | `GET /groups` | `200` | `401` | Lists groups visible to the caller. |
 | `GET /groups/{groupId}` | `200` | `401`, `404` | `404` for unknown group or non-member. |
 | `PUT /groups/{groupId}/members/{memberId}` | `204` | `400`, `401`, `403`, `404` | `400` for attempting to grant `Owner` through this endpoint; `403` for a caller without member-management role. |

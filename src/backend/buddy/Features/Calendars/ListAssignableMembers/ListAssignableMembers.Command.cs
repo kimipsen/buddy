@@ -4,8 +4,8 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
-public sealed record ListAssignableMembers(UserId? UserId, CalendarId CalendarId)
+public sealed record ListAssignableMembers(UserId UserId, CalendarId CalendarId)
 {
     public static ListAssignableMembers FromClaims(ClaimsPrincipal principal, CalendarId calendarId) =>
-        new(principal.GetUserId(), calendarId);
+        new(principal.GetRequiredUserId(), calendarId);
 }

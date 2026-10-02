@@ -7,10 +7,10 @@ using buddy.Features.Users;
 
 namespace buddy.Features.{{Domain}};
 
-// UserId is nullable on purpose: GetUserId() returns null when the token has no backend user
-// yet, and the handler maps that to NotFound (see SetDoseStatusHandler).
-public sealed record {{UseCase}}(UserId? UserId, UserId ChildId, {{AggregateId}} {{AggregateId}}, string Name)
+// UserId is the caller and never null: ProvisionedUserMiddleware rejects a token with no backend
+// user (403 user_not_provisioned) before the endpoint runs.
+public sealed record {{UseCase}}(UserId UserId, UserId ChildId, {{AggregateId}} {{AggregateId}}, string Name)
 {
     public static {{UseCase}} FromClaims(ClaimsPrincipal principal, UserId childId, {{AggregateId}} id, string name) =>
-        new(principal.GetUserId(), childId, id, name);
+        new(principal.GetRequiredUserId(), childId, id, name);
 }

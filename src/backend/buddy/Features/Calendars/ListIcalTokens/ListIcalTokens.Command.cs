@@ -4,9 +4,9 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
-public sealed record ListIcalTokens(UserId? UserId, CalendarId CalendarId)
+public sealed record ListIcalTokens(UserId UserId, CalendarId CalendarId)
 {
-    public static ListIcalTokens FromClaims(ClaimsPrincipal principal, CalendarId calendarId) => new(principal.GetUserId(), calendarId);
+    public static ListIcalTokens FromClaims(ClaimsPrincipal principal, CalendarId calendarId) => new(principal.GetRequiredUserId(), calendarId);
 }
 
 // Never exposes the hash -- just enough for the owner to recognize which token to revoke.

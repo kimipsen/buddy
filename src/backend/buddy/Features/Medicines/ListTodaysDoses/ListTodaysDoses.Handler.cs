@@ -25,10 +25,7 @@ public static class ListTodaysDosesHandler
             return new Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Validation(problem);
         }
 
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<MedicineDoseOccurrence>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await MedicineAuthorization.CheckMark(query.ChildId, userId, guardians, cancellationToken);
 

@@ -9,10 +9,7 @@ public static class ListCalendarsHandler
     public static async Task<IReadOnlyCollection<CalendarMembershipDocument>> Handle(
         ListCalendars query, ICalendarEventStore calendars, IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return [];
-        }
+        var userId = query.UserId;
 
         var explicitMemberships = await calendars.ListForUserAsync(userId, cancellationToken);
         var explicitCalendarIds = explicitMemberships.Select(m => m.CalendarId).ToHashSet();

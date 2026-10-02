@@ -14,10 +14,7 @@ public static class ListPrintTemplatesHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<PrintTemplateSummary>>.NotFound();
-        }
+        var userId = query.UserId;
 
         // A child has no tier at all, so it sees no templates -- not even its group's.
         if (await ChildVisibility.IsChildAsync(userId, guardians, cancellationToken))

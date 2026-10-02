@@ -24,10 +24,7 @@ public static class TestProviderConnectionHandler
             return new Result<TestProviderConnectionResult>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<TestProviderConnectionResult>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MealplanAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

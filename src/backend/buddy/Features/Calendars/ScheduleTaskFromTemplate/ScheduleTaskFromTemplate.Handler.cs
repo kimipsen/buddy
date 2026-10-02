@@ -26,10 +26,7 @@ public static class ScheduleTaskFromTemplateHandler
             return new Result<CalendarItem>.Validation(problem);
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<CalendarItem>.NotFound();
-        }
+        var userId = command.UserId;
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);
         var calendar = Calendar.Rehydrate(calendarEvents);

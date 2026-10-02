@@ -8,10 +8,7 @@ public static class GetChildProgressHandler
     public static async Task<Result<ProgressSummary>> Handle(
         GetChildProgress query, IProgressEventStore progress, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
-        if (query.CallerId is not { } callerId)
-        {
-            return new Result<ProgressSummary>.NotFound();
-        }
+        var callerId = query.CallerId;
 
         var access = await ProgressAuthorization.CheckView(query.ChildId, callerId, guardians, cancellationToken);
 

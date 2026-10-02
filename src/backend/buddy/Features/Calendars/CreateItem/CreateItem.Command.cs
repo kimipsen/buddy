@@ -5,7 +5,7 @@ using buddy.Features.Users;
 namespace buddy.Features.Calendars;
 
 public sealed record CreateItem(
-    UserId? UserId,
+    UserId UserId,
     CalendarId CalendarId,
     CalendarItemKind Kind,
     string Title,
@@ -31,5 +31,5 @@ public sealed record CreateItem(
         bool isAllDay,
         RecurrenceRule? recurrence,
         UserId? assignedTo) =>
-        new(principal.GetUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, isAllDay, recurrence, assignedTo);
+        new(principal.GetRequiredUserId(), calendarId, kind, title, icon, color, startsAt, endsAt, dueDate, isAllDay, recurrence, assignedTo);
 }

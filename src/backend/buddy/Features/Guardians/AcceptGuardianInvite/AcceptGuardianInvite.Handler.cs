@@ -12,10 +12,7 @@ public static class AcceptGuardianInviteHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var invite = await invites.FindInviteByTokenAsync(command.Token, cancellationToken);
 

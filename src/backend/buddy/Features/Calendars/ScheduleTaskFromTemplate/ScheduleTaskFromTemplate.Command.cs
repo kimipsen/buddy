@@ -10,7 +10,7 @@ namespace buddy.Features.Calendars;
 // task: no IsAllDay (a template-scheduled task is never all-day -- StartTime anchors subtask 1),
 // no free-form subtask entry.
 public sealed record ScheduleTaskFromTemplate(
-    UserId? UserId,
+    UserId UserId,
     CalendarId CalendarId,
     Guid TaskTemplateId,
     DateOnly StartDate,
@@ -32,5 +32,5 @@ public sealed record ScheduleTaskFromTemplate(
         string title,
         Icon? icon,
         Color color) =>
-        new(principal.GetUserId(), calendarId, taskTemplateId, startDate, startTime, recurrence, assignedTo, title, icon, color);
+        new(principal.GetRequiredUserId(), calendarId, taskTemplateId, startDate, startTime, recurrence, assignedTo, title, icon, color);
 }

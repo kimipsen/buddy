@@ -21,6 +21,6 @@ public static class ArchiveMealForGroupHandler
             return resolved.Reraise<MealplanGroupAccess.Resolved, Unit>();
         }
 
-        return await ArchiveMealHandler.ArchiveForChildAsync(access.AnchorChildId, command.MealId, command.UserId!, meals, guardians, cancellationToken);
+        return await ArchiveMealHandler.ArchiveForChildAsync(access.AnchorChildId, command.MealId, command.UserId, meals, guardians, cancellationToken);
     }
 }

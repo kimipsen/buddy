@@ -5,10 +5,10 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
 
-public sealed record InviteGuardian(UserId? UserId, UserId ChildId, string Email, GuardianKind Kind)
+public sealed record InviteGuardian(UserId UserId, UserId ChildId, string Email, GuardianKind Kind)
 {
     public static InviteGuardian FromClaims(ClaimsPrincipal principal, UserId childId, string email, GuardianKind kind) =>
-        new(principal.GetUserId(), childId, email, kind);
+        new(principal.GetRequiredUserId(), childId, email, kind);
 }
 
 public sealed record GuardianInviteSummary(Guid Id, string Email, GuardianKind Kind, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt)

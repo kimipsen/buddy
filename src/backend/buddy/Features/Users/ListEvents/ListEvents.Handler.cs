@@ -4,10 +4,7 @@ public static class GetUserEventsHandler
 {
     public static async Task<UserEventsPage> Handle(GetUserEvents query, IUserEventStore events, CancellationToken cancellationToken)
     {
-        if (query.UserId is not { } userId)
-        {
-            return new UserEventsPage([], null, null);
-        }
+        var userId = query.UserId;
 
         return query.Page.BeforeVersion is { } beforeVersion
             ? await HandleBackward(userId, beforeVersion, query.Page.PageSize, events, cancellationToken)

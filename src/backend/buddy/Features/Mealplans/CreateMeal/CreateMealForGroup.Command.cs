@@ -6,8 +6,8 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Mealplans;
 
-public sealed record CreateMealForGroup(UserId? UserId, GroupId GroupId, string Name, string? Description, Icon Icon, Color Color)
+public sealed record CreateMealForGroup(UserId UserId, GroupId GroupId, string Name, string? Description, Icon Icon, Color Color)
 {
     public static CreateMealForGroup FromClaims(ClaimsPrincipal principal, GroupId groupId, string name, string? description, Icon icon, Color color) =>
-        new(principal.GetUserId(), groupId, name, description, icon, color);
+        new(principal.GetRequiredUserId(), groupId, name, description, icon, color);
 }

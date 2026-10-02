@@ -24,10 +24,7 @@ public static class ListPickupScheduleHandler
             return new Result<IReadOnlyCollection<PickupOccurrence>>.Validation(problem);
         }
 
-        if (query.UserId is not { } userId)
-        {
-            return new Result<IReadOnlyCollection<PickupOccurrence>>.NotFound();
-        }
+        var userId = query.UserId;
 
         var access = await PickupAuthorization.CheckView(query.ChildId, userId, guardians, cancellationToken);
 

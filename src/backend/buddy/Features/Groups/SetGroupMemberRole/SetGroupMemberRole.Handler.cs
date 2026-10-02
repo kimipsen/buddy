@@ -12,10 +12,7 @@ public static class SetGroupMemberRoleHandler
             return new Result<Unit>.Forbidden();
         }
 
-        if (command.UserId is not { } userId)
-        {
-            return new Result<Unit>.NotFound();
-        }
+        var userId = command.UserId;
 
         var events = await groups.ReadAsync(command.GroupId, cancellationToken);
         var group = Group.Rehydrate(events);

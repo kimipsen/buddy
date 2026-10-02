@@ -10,20 +10,16 @@ public static class CreateGroupEndpoint
 {
     public static RouteGroupBuilder MapCreateGroup(this RouteGroupBuilder groups)
     {
-        groups.MapPost("/", async Task<Results<Ok<GroupResponse>, UnauthorizedHttpResult>> (
+        groups.MapPost("/", async Task<Ok<GroupResponse>> (
             ClaimsPrincipal principal,
             CreateGroupRequest request,
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
             var command = CreateGroup.FromClaims(principal, request.Name);
-            var result = await bus.InvokeAsync<CreateGroupOutcome>(command, cancellationToken);
+            var group = await bus.InvokeAsync<GroupWithMemberDetails>(command, cancellationToken);
 
-            return result switch
-            {
-                CreateGroupOutcome.Success(var group) => TypedResults.Ok(GroupResponse.FromGroup(group)),
-                CreateGroupOutcome.Unauthenticated => TypedResults.Unauthorized(),
-            };
+            return TypedResults.Ok(GroupResponse.FromGroup(group));
         })
         .WithName("CreateGroup");
 

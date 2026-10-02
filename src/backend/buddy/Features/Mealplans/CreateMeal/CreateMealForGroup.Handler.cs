@@ -31,7 +31,7 @@ public static class CreateMealForGroupHandler
         }
 
         var meal = await CreateMealHandler.CreateForChildAsync(
-            access.AnchorChildId, command.UserId!, command.Name, command.Description, command.Icon, command.Color, meals, cancellationToken);
+            access.AnchorChildId, command.UserId, command.Name, command.Description, command.Icon, command.Color, meals, cancellationToken);
 
         return new Result<Meal>.Success(meal);
     }

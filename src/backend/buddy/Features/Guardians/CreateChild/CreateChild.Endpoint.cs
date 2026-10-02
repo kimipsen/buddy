@@ -13,7 +13,7 @@ public static class CreateChildEndpoint
 {
     public static RouteGroupBuilder MapCreateChild(this RouteGroupBuilder children)
     {
-        children.MapPost("/", async Task<Results<Ok<ChildResponse>, UnauthorizedHttpResult, Conflict<string>, BadRequest<ErrorEnvelope>>> (
+        children.MapPost("/", async Task<Results<Ok<ChildResponse>, Conflict<string>, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             CreateChildRequest request,
             IMessageBus bus,
@@ -32,7 +32,6 @@ public static class CreateChildEndpoint
             {
                 CreateChildOutcome.Success(var child, var link, var username, var temporaryPassword) =>
                     TypedResults.Ok(ChildResponse.FromChild(child, link, username, temporaryPassword)),
-                CreateChildOutcome.Unauthenticated => TypedResults.Unauthorized(),
                 CreateChildOutcome.UsernameUnavailable => TypedResults.Conflict("That username is already in use."),
                 CreateChildOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };

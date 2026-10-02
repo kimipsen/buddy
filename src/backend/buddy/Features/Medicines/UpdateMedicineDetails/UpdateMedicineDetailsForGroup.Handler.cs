@@ -29,7 +29,7 @@ public static class UpdateMedicineDetailsForGroupHandler
         }
 
         var result = await UpdateMedicineDetailsHandler.UpdateForChildAsync(
-            command.ChildId, command.MedicineId, command.UserId!, command.Name, command.Dosage, command.Icon, command.Color, medicines, cancellationToken);
+            command.ChildId, command.MedicineId, command.UserId, command.Name, command.Dosage, command.Icon, command.Color, medicines, cancellationToken);
 
         return result is null ? new Result<MedicineSchedule>.NotFound() : new Result<MedicineSchedule>.Success(result);
     }

@@ -14,10 +14,7 @@ public static class ApplyAiSessionDraftHandler
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } userId)
-        {
-            return new Result<AiSessionView>.NotFound();
-        }
+        var userId = command.UserId;
 
         var access = await MealplanAuthorization.CheckManage(command.ChildId, userId, guardians, cancellationToken);
 

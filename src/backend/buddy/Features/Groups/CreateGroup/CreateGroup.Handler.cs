@@ -34,17 +34,15 @@ public static class CreateGroupHandler
         .Add(GroupRole.Admin, MedicineAccessTier.Manage)
         .Add(GroupRole.Member, MedicineAccessTier.None);
 
-    public static async Task<CreateGroupOutcome> Handle(
+    // Creating a group can't fail for a provisioned caller, so this returns the group directly.
+    public static async Task<GroupWithMemberDetails> Handle(
         CreateGroup command,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
         IUserEventStore users,
         CancellationToken cancellationToken)
     {
-        if (command.UserId is not { } ownerId)
-        {
-            return new CreateGroupOutcome.Unauthenticated();
-        }
+        var ownerId = command.UserId;
 
         var groupId = GroupId.New();
         var now = DateTimeOffset.UtcNow;
@@ -59,6 +57,6 @@ public static class CreateGroupHandler
         var group = Group.Rehydrate(events)!;
         var members = await GroupMemberResolver.ResolveAsync(group, guardians, users, cancellationToken);
 
-        return new CreateGroupOutcome.Success(new GroupWithMemberDetails(group, members));
+        return new GroupWithMemberDetails(group, members);
     }
 }
