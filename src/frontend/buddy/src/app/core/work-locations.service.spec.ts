@@ -63,7 +63,9 @@ describe('WorkLocationsService', () => {
   });
 
   it('GETs resolved work days with from/to params', async () => {
-    const days: WorkDay[] = [{ date: '2026-09-28', location: stil, source: 1 }];
+    const days: WorkDay[] = [
+      { date: '2026-09-28', status: { kind: 2, location: stil, source: 0 } },
+    ];
     const promise = service.listWorkDays('g-1', '2026-09-28', '2026-10-04');
 
     const req = httpMock.expectOne(

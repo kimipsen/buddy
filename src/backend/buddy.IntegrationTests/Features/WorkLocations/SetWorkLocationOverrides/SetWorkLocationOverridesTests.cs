@@ -31,11 +31,11 @@ public sealed class SetWorkLocationOverridesTests(BuddyApiFixture fixture)
 
         var day = Assert.Single(returned);
         Assert.Equal(randers.Id, day.Location?.Id);
-        Assert.Equal(WorkLocationTestHelpers.SourceOverride, day.Source);
+        Assert.Equal(WorkLocationTestHelpers.SourceOverride, day.Status.Source);
 
         var nextFriday = (await WorkLocationTestHelpers.ListDaysAsync(fixture, token, guardianId, friday.AddDays(7), friday.AddDays(7))).Single();
         Assert.Equal(stil.Id, nextFriday.Location?.Id);
-        Assert.Equal(WorkLocationTestHelpers.SourcePattern, nextFriday.Source);
+        Assert.Equal(WorkLocationTestHelpers.SourcePattern, nextFriday.Status.Source);
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public sealed class SetWorkLocationOverridesTests(BuddyApiFixture fixture)
         Assert.All(days.Take(14), d =>
         {
             Assert.Null(d.Location);
-            Assert.Equal(WorkLocationTestHelpers.SourceOverride, d.Source);
+            Assert.Equal(WorkLocationTestHelpers.KindOff, d.Status.Kind);
         });
         Assert.Equal(stil.Id, days[14].Location?.Id);
     }
@@ -73,6 +73,21 @@ public sealed class SetWorkLocationOverridesTests(BuddyApiFixture fixture)
         var newEvents = (await store.ReadAsync(id, CancellationToken.None)).Skip(before).ToList();
         var overridden = Assert.IsType<WorkLocationOverridden>(Assert.Single(newEvents).Value);
         Assert.Equal(Monday.AddDays(2), overridden.Date);
+    }
+
+    [Fact]
+    public async Task Marking_the_same_days_off_again_appends_nothing()
+    {
+        var (_, token, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        await WorkLocationTestHelpers.SetOverridesAsync(fixture, token, Monday, Monday.AddDays(1), locationId: null);
+
+        var store = fixture.Host.Services.GetRequiredService<IWorkLocationScheduleEventStore>();
+        var id = WorkLocationScheduleId.ForGuardian(new UserId(guardianId));
+        var before = (await store.ReadAsync(id, CancellationToken.None)).Count;
+
+        await WorkLocationTestHelpers.SetOverridesAsync(fixture, token, Monday, Monday.AddDays(1), locationId: null);
+
+        Assert.Equal(before, (await store.ReadAsync(id, CancellationToken.None)).Count);
     }
 
     [Fact]

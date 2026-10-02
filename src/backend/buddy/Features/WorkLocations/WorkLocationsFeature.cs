@@ -49,7 +49,14 @@ public static class WorkLocationsFeature
 
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
-                configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+                configure: json =>
+                {
+                    json.Converters.Add(new StronglyTypedIdJsonConverterFactory());
+
+                    // WorkDayOverride (the override events, WorkLocationSchedule.Overrides) needs an
+                    // explicit Kind discriminator -- see WorkDayOverrideJsonConverter.
+                    json.Converters.Add(new WorkDayOverrideJsonConverter());
+                });
 
             // Inline snapshot in the shared "snapshots" schema, registered via Register() for the
             // same reason as PickupsFeature (Projections.Snapshot<T>() throws for a Guid-wrapper

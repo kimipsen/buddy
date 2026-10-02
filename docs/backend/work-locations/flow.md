@@ -54,7 +54,7 @@ sequenceDiagram
 | `PUT` | `/work-locations/me/overrides` | Sets `[from, to]` to one location, or to "off" with `locationId: null`. Returns the resolved days. |
 | `DELETE` | `/work-locations/me/overrides?from=...&to=...` | Clears overrides in the range so those days follow the pattern again. Idempotent. |
 | `GET` | `/work-locations/guardians/{guardianId}` | Locations (archived included) and the pattern. No stream yet reads as an empty one-week pattern. |
-| `GET` | `/work-locations/guardians/{guardianId}/days?from=...&to=...` | One `WorkDay` per date with the location inlined and its `source` (`0` none, `1` pattern, `2` override). |
+| `GET` | `/work-locations/guardians/{guardianId}/days?from=...&to=...` | One `WorkDay` per date with a `status`: `{ kind: 0 }` unplanned, `{ kind: 1 }` off (an override), or `{ kind: 2, location, source }` with the location inlined and `source` `0` pattern or `1` override. |
 
 Ranges are inclusive and limited to `to - from` ≤ 31 days.
 

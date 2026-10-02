@@ -44,7 +44,7 @@ public sealed class ArchiveWorkLocationTests(BuddyApiFixture fixture)
         Assert.Equal(randers.Id, remaining.LocationId);
 
         var days = await WorkLocationTestHelpers.ListDaysAsync(fixture, token, guardianId, Monday, Monday.AddDays(6));
-        Assert.Equal(WorkLocationTestHelpers.SourceNone, days[1].Source);       // Tuesday: was Stil in the pattern
+        Assert.Equal(WorkLocationTestHelpers.KindUnplanned, days[1].Status.Kind);       // Tuesday: was Stil in the pattern
         Assert.Equal(stil.Id, days[2].Location?.Id);                            // Wednesday: override still resolves
         Assert.True(days[2].Location?.IsArchived);
         Assert.Equal(randers.Id, days[4].Location?.Id);                         // Friday: untouched

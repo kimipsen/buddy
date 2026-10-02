@@ -17,7 +17,7 @@ public static class WorkLocationExpansion
         var schedule = await store.FindSnapshotAsync(WorkLocationScheduleId.ForGuardian(guardianId), cancellationToken);
 
         return schedule is null
-            ? EachDate(from, to, date => new WorkDay(date, null, WorkDaySource.None))
+            ? EachDate(from, to, date => new WorkDay(date, new WorkDayStatus.Unplanned()))
             : Expand(schedule, from, to);
     }
 
@@ -40,14 +40,21 @@ public static class WorkLocationExpansion
     {
         if (schedule.Overrides.TryGetValue(date, out var @override))
         {
-            return new WorkDay(date, Summarize(schedule, @override.LocationId), WorkDaySource.Override);
+            return new WorkDay(date, @override switch
+            {
+                WorkDayOverride.AtLocation atLocation => AtLocation(schedule, atLocation.LocationId, WorkDaySource.Override),
+                WorkDayOverride.DayOff => new WorkDayStatus.Off(),
+            });
         }
 
         return schedule.Pattern.LocationFor(date) is { } patternLocationId
-            ? new WorkDay(date, Summarize(schedule, patternLocationId), WorkDaySource.Pattern)
-            : new WorkDay(date, null, WorkDaySource.None);
+            ? new WorkDay(date, AtLocation(schedule, patternLocationId, WorkDaySource.Pattern))
+            : new WorkDay(date, new WorkDayStatus.Unplanned());
     }
 
-    private static WorkLocationSummary? Summarize(WorkLocationSchedule schedule, WorkLocationId? locationId) =>
-        locationId is not null && schedule.FindLocation(locationId) is { } location ? WorkLocationSummary.From(location) : null;
+    // Locations are archived, never removed, and every override or pattern entry was checked
+    // against them when written, so the location is always there.
+    private static WorkDayStatus.AtLocation AtLocation(WorkLocationSchedule schedule, WorkLocationId locationId, WorkDaySource source) =>
+        new(WorkLocationSummary.From(schedule.FindLocation(locationId)
+            ?? throw new InvalidOperationException($"Work location {locationId.Value} is referenced but not in schedule {schedule.Id.Value}.")), source);
 }

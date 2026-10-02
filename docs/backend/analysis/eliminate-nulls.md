@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-4 and 5.1-5.6 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
+Status: Phases 0-4 and 5.1-5.7 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
 
 ## Context
 
@@ -694,6 +694,26 @@ WorkDayStatus   = Unplanned | Off | AtLocation(WorkLocationSummary Location, Wor
   non-null.
 - Blast radius: `WorkLocationOverridden_*`, `WorkLocationOverrideCleared`,
   `WorkLocationScheduleSnapshotTests`, `work-locations.service.ts`.
+
+#### As built (5.7)
+
+- **WorkDayOverride** is a C# union persisted through `WorkDayOverrideJsonConverter`
+  (`{"Kind":"AtLocation","LocationId"}` / `{"Kind":"DayOff"}`), registered in
+  `WorkLocationsFeature` and `EventShapeTestSupport`. The three override golden files changed, and
+  `WorkLocationOverridden_Off` has a read-back test. `WorkLocationOverridden.Before` stays
+  `WorkDayOverride?` until Phase 6.
+- **Unions are value types.** `SetWorkLocationOverridesHandler` reads the existing override with
+  `TryGetValue` into a `WorkDayOverride?`, because `GetValueOrDefault` would hand back a default union
+  instead of null.
+- **WorkDayStatus** is a response-only DTO hierarchy (`KindDiscriminatedJsonConverter`, like
+  `OccurrenceTiming` in 5.4): `{kind:0}` unplanned, `{kind:1}` off, `{kind:2, location, source}`.
+  `WorkDaySource` lost `None` and is now `Pattern = 0, Override = 1`. A referenced location missing
+  from the schedule throws, since locations are archived, never removed.
+- **Wire request unchanged**: `SetWorkLocationOverridesRequest.LocationId: null` still means off.
+  `WorkLocationRequest` and `ReplaceWorkPatternRequest.Days` were already non-null.
+- **Frontend.** `WorkDay.status` union plus `workDayLocation` / `isWorkDayOverride` helpers in
+  `work-locations.service.ts`, used by the overrides page and the week-plan print.
+- **Existing databases need a reset**: stored overrides are the old `{"LocationId": ...}` shape.
 
 ### 5.8 Smaller unions
 

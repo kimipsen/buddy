@@ -3,6 +3,7 @@
   "Date": "2025-06-02",
   "Before": null,
   "After": {
+    "Kind": "AtLocation",
     "LocationId": "00000000-0000-0000-0000-000000000080"
   },
   "OccurredAt": "2025-01-01T12:00:00+00:00"

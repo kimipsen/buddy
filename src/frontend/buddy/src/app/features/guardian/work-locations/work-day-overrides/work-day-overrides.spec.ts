@@ -36,7 +36,7 @@ describe('WorkDayOverrides', () => {
     return Array.from({ length: 28 }, (_, i) => {
       const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
       const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      return { date, location: null, source: 0, ...overrides[i] } as WorkDay;
+      return { date, status: { kind: 0 }, ...overrides[i] } as WorkDay;
     });
   }
 
@@ -76,9 +76,9 @@ describe('WorkDayOverrides', () => {
     const service: Partial<WorkLocationsService> = {
       listWorkDays: vi.fn(async (_id: string, from: string) =>
         days(from, {
-          1: { location: stil, source: 1 },
-          2: { location: null, source: 2 },
-          3: { location: randers, source: 2 },
+          1: { status: { kind: 2, location: stil, source: 0 } },
+          2: { status: { kind: 1 } },
+          3: { status: { kind: 2, location: randers, source: 1 } },
         }),
       ),
       setOverrides: vi.fn(async () => []),

@@ -14,6 +14,7 @@ import {
   PrintTemplate,
   PrintTemplateRow,
 } from '../../../core/print-templates.service';
+import { workDayLocation } from '../../../core/work-locations.service';
 import {
   WeekPlanCell,
   WeekPlanDay,
@@ -193,7 +194,8 @@ function workLocationCells(row: PrintTemplateRow, context: RowContext): WeekPlan
   }
 
   return context.dates.map((date) => {
-    const location = days.find((d) => d.date === date)?.location;
+    const day = days.find((d) => d.date === date);
+    const location = day ? workDayLocation(day) : null;
 
     if (row.workLocationId) {
       return location?.id === row.workLocationId ? MARK : BLANK;

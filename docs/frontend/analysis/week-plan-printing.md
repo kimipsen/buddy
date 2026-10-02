@@ -77,7 +77,7 @@ and are unit-tested in Vitest:
 - **Work location rows:** with `workLocationId`, a day gets a mark when its
   resolved location has that id. Without it, the cell shows the location's
   icon and name in the guardian's template color. A day with no location
-  (`source: None`, or an override to "off") is left blank.
+  (status `unplanned` or `off`) is left blank.
 - **Marker rows:** a day gets a mark if any occurrence on that day matches
   `titleFilter` (case-insensitive contains; no filter means any occurrence).
 - **Filtering:** `assignedToId` keeps only occurrences whose `assignedTo`

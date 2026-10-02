@@ -227,9 +227,9 @@ describe('assembleWeekPlan', () => {
       isArchived: true,
     };
     const days: WorkDay[] = [
-      { date: '2026-09-28', location: stil, source: 1 },
-      { date: '2026-09-29', location: randers, source: 2 },
-      { date: '2026-09-30', location: null, source: 2 },
+      { date: '2026-09-28', status: { kind: 2, location: stil, source: 0 } },
+      { date: '2026-09-29', status: { kind: 2, location: randers, source: 1 } },
+      { date: '2026-09-30', status: { kind: 1 } },
     ];
 
     it('marks only the days at the chosen location, archived locations included', () => {

@@ -8,8 +8,8 @@ import { RuntimeConfigService } from './runtime-config.service';
 // Backend DayOfWeek ordinals (System.DayOfWeek): 0 = Sunday ... 6 = Saturday.
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-// WorkDaySource ordinals: 0 = None (no override, no pattern entry), 1 = Pattern, 2 = Override.
-export type WorkDaySource = 0 | 1 | 2;
+// WorkDaySource ordinals: 0 = Pattern, 1 = Override.
+export type WorkDaySource = 0 | 1;
 
 export interface WorkLocation {
   id: string;
@@ -39,11 +39,23 @@ export interface WorkLocationSchedule {
   pattern: WorkPattern;
 }
 
-// location is null for source None and for an override to "off".
+// kind 0 = unplanned (no override, no pattern entry), 1 = off (an override to "not at any
+// location"), 2 = at a location, from the pattern or an override.
+export type WorkDayStatus =
+  { kind: 0 } | { kind: 1 } | { kind: 2; location: WorkLocation; source: WorkDaySource };
+
 export interface WorkDay {
   date: string;
-  location: WorkLocation | null;
-  source: WorkDaySource;
+  status: WorkDayStatus;
+}
+
+export function workDayLocation(day: WorkDay): WorkLocation | null {
+  return day.status.kind === 2 ? day.status.location : null;
+}
+
+// Whether the day is a per-date exception: an override to off or to a location.
+export function isWorkDayOverride(day: WorkDay): boolean {
+  return day.status.kind === 1 || (day.status.kind === 2 && day.status.source === 1);
 }
 
 export interface WorkLocationDetails {

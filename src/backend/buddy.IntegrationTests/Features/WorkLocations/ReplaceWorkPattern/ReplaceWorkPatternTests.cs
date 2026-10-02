@@ -40,7 +40,7 @@ public sealed class ReplaceWorkPatternTests(BuddyApiFixture fixture)
         var stilDays = days.Where(d => d.Location?.Id == stil.Id).Select(d => d.Date).ToList();
 
         Assert.Equal([Monday.AddDays(1), Monday.AddDays(3), Monday.AddDays(10)], stilDays);
-        Assert.All(days.Where(d => d.Location is not null), d => Assert.Equal(WorkLocationTestHelpers.SourcePattern, d.Source));
+        Assert.All(days.Where(d => d.Location is not null), d => Assert.Equal(WorkLocationTestHelpers.SourcePattern, d.Status.Source));
     }
 
     [Fact]

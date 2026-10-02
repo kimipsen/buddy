@@ -38,15 +38,17 @@ public static class SetWorkLocationOverridesHandler
             return new Result<IReadOnlyCollection<WorkDay>>.Validation(ValidationProblem.Of("locationId must be one of your active work locations."));
         }
 
-        var after = new WorkDayOverride(command.LocationId);
+        WorkDayOverride after = command.LocationId is { } atLocationId
+            ? new WorkDayOverride.AtLocation(atLocationId)
+            : new WorkDayOverride.DayOff();
         var events = new List<WorkLocationEvent>();
 
         // One event per date that actually changes; dates already holding this override emit nothing.
         for (var date = command.From; date <= command.To; date = date.AddDays(1))
         {
-            var before = schedule.Overrides.GetValueOrDefault(date);
+            WorkDayOverride? before = schedule.Overrides.TryGetValue(date, out var existing) ? existing : (WorkDayOverride?)null;
 
-            if (before != after)
+            if (!after.Equals(before))
             {
                 events.Add(new WorkLocationOverridden(schedule.Id, date, before, after, now));
             }

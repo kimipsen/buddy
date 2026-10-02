@@ -16,13 +16,23 @@ internal sealed record WorkPatternDto(int CycleWeeks, DateOnly AnchorMonday, Lis
 
 internal sealed record WorkLocationScheduleDto(Guid GuardianId, List<WorkLocationDto> Locations, WorkPatternDto Pattern);
 
-internal sealed record WorkDayDto(DateOnly Date, WorkLocationDto? Location, int Source);
+internal sealed record WorkDayDto(DateOnly Date, WorkDayStatusDto Status)
+{
+    // Shortcut into Status for the assertions -- only an at-location day has one.
+    public WorkLocationDto? Location => Status.Location;
+}
+
+// WorkDayStatus read flat: "kind" (see the constants below) plus the at-location case's fields.
+internal sealed record WorkDayStatusDto(int Kind, WorkLocationDto? Location = null, int? Source = null);
 
 internal static class WorkLocationTestHelpers
 {
-    public const int SourceNone = 0;
-    public const int SourcePattern = 1;
-    public const int SourceOverride = 2;
+    public const int KindUnplanned = 0;
+    public const int KindOff = 1;
+    public const int KindAtLocation = 2;
+
+    public const int SourcePattern = 0;
+    public const int SourceOverride = 1;
 
     public static async Task<WorkLocationDto> AddLocationAsync(BuddyApiFixture fixture, string token, string name, string icon = "🏢", string color = "#2563eb")
     {

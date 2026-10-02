@@ -39,26 +39,26 @@
           @for (day of week; track day.date) {
             <li
               class="rounded-lg border px-2 py-2"
-              [class.border-amber-300]="day.source === 2"
-              [class.dark:border-amber-700]="day.source === 2"
-              [class.border-slate-200]="day.source !== 2"
-              [class.dark:border-slate-800]="day.source !== 2"
+              [class.border-amber-300]="isOverride(day)"
+              [class.dark:border-amber-700]="isOverride(day)"
+              [class.border-slate-200]="!isOverride(day)"
+              [class.dark:border-slate-800]="!isOverride(day)"
             >
               <p class="text-xs font-medium text-slate-600 dark:text-slate-400">
                 {{ dayLabel(day.date) }}
               </p>
               <p class="mt-1 min-h-5 truncate text-sm font-medium">
-                @if (day.location; as location) {
+                @if (locationOf(day); as location) {
                   <span [style.color]="location.color" aria-hidden="true">●</span>
                   {{ location.icon }} {{ location.name }}
-                } @else if (day.source === 2) {
+                } @else if (day.status.kind === 1) {
                   {{ 'workLocations.overrides.off' | translate }}
                 }
               </p>
               <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                @if (day.source === 2) {
+                @if (isOverride(day)) {
                   {{ 'workLocations.overrides.exception' | translate }}
-                } @else if (day.source === 1) {
+                } @else if (day.status.kind === 2) {
                   {{ 'workLocations.overrides.fromPattern' | translate }}
                 }
               </p>

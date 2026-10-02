@@ -189,13 +189,13 @@ location" every day.
 location or says "no location that day". Overrides always beat the pattern.**
 
 ```
-WorkDayOverride(WorkLocationId? LocationId)   // null = not at any location (day off, holiday, sick)
+WorkDayOverride = AtLocation(WorkLocationId LocationId) | DayOff   // DayOff = day off, holiday, sick
 ```
 
 The resolution order for a date is **override → pattern → nothing**.
 
 - **"No override" is not the same as "override to nothing".** No override
-  means "follow the pattern". An override with a null `LocationId` means
+  means "follow the pattern". A `DayOff` override means
   "the pattern says Stil, but I'm off". This is what makes holidays
   expressible, which calendar recurrence can't do (Question 1).
 - **Set and clear by date range.** A holiday spans many days, so
@@ -301,8 +301,9 @@ recomputed-on-every-call helper with the same contract as
 `PickupScheduleExpansion`. For each date it returns:
 
 ```
-WorkDay(DateOnly Date, WorkLocationSummary? Location, WorkDaySource Source)
-    // WorkDaySource { Pattern, Override, None }
+WorkDay(DateOnly Date, WorkDayStatus Status)
+    // WorkDayStatus = Unplanned | Off | AtLocation(WorkLocationSummary Location, WorkDaySource Source)
+    // WorkDaySource { Pattern, Override } -- see eliminate-nulls.md, Phase 5.7
     // WorkLocationSummary(WorkLocationId Id, string Name, Icon Icon, Color Color, bool IsArchived)
 ```
 
@@ -417,7 +418,7 @@ Plus `EventShapeTests` golden files and a `SnapshotTests` entry.
 
 | Case | Behavior |
 |---|---|
-| Guardian has never used the feature | No stream; reads return no locations and `None` for every day |
+| Guardian has never used the feature | No stream; reads return no locations and `Unplanned` for every day |
 | Pattern references a location that gets archived | Removed from the pattern in the same append as `WorkLocationArchived` |
 | Override references an archived location | Kept; resolves with `IsArchived = true` and still prints |
 | Print template references an archived location | Still prints its marks; the template editor flags the row |
@@ -438,7 +439,7 @@ Plus `EventShapeTests` golden files and a `SnapshotTests` entry.
 | Granularity | Whole days, one location per day |
 | Locations | Per guardian, customizable name + icon + color; archived, never deleted |
 | Recurrence | 1–4 week cycle from an anchor Monday, not ISO parity |
-| Exceptions | Sparse per-date overrides; a null location means "off"; override → pattern → nothing |
+| Exceptions | Sparse per-date overrides, to a location or `DayOff` (`locationId: null` on the wire); override → pattern → nothing |
 | Who sees it | The guardian (Manage) and co-guardians (View); never children |
 | Calendar or iCal exposure | None |
 | Main consumer | The `WorkLocation` row kind in week plan print templates |

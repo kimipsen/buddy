@@ -29,7 +29,7 @@ public sealed class ListWorkDaysTests(BuddyApiFixture fixture)
         Assert.Equal(Enumerable.Range(0, 7).Select(i => Monday.AddDays(i)), days.Select(d => d.Date));
         Assert.Equal(new WorkLocationDto(randers.Id, "Randers", "🚆", "#dc2626", false), days[0].Location);
         Assert.Null(days[1].Location);
-        Assert.Equal(WorkLocationTestHelpers.SourceNone, days[1].Source);
+        Assert.Equal(WorkLocationTestHelpers.KindUnplanned, days[1].Status.Kind);
         Assert.Equal(randers.Id, days[2].Location?.Id);
     }
 

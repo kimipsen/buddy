@@ -13,6 +13,8 @@ import {
   WorkDay,
   WorkLocationSchedule,
   WorkLocationsService,
+  isWorkDayOverride,
+  workDayLocation,
 } from '../../../../core/work-locations.service';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 
@@ -89,19 +91,22 @@ export class WorkDayOverrides {
     });
   }
 
+  protected readonly isOverride = isWorkDayOverride;
+  protected readonly locationOf = workDayLocation;
+
   protected choiceFor(day: WorkDay): string {
-    if (day.source !== 2) {
+    if (!isWorkDayOverride(day)) {
       return FOLLOW_PATTERN;
     }
-    return day.location?.id ?? OFF;
+    return workDayLocation(day)?.id ?? OFF;
   }
 
   // An archived location can still be the day's current exception; keep it selectable so the
   // picker shows the real value instead of silently falling back to the first option.
   protected optionsFor(day: WorkDay): WorkLocationSchedule['locations'] {
     const active = this.active();
-    const current = day.location;
-    return current?.isArchived && day.source === 2 ? [...active, current] : active;
+    const current = workDayLocation(day);
+    return current?.isArchived && isWorkDayOverride(day) ? [...active, current] : active;
   }
 
   protected async choose(date: string, choice: string): Promise<void> {

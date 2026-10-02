@@ -34,11 +34,11 @@ public sealed class ClearWorkLocationOverridesTests(BuddyApiFixture fixture)
         });
 
         var days = await WorkLocationTestHelpers.ListDaysAsync(fixture, token, guardianId, Monday, Monday.AddDays(3));
-        Assert.Equal(WorkLocationTestHelpers.SourceNone, days[0].Source);
-        Assert.Equal(WorkLocationTestHelpers.SourcePattern, days[1].Source);
+        Assert.Equal(WorkLocationTestHelpers.KindUnplanned, days[0].Status.Kind);
+        Assert.Equal(WorkLocationTestHelpers.SourcePattern, days[1].Status.Source);
         Assert.Equal(stil.Id, days[1].Location?.Id);
-        Assert.Equal(WorkLocationTestHelpers.SourceNone, days[2].Source);
-        Assert.Equal(WorkLocationTestHelpers.SourceOverride, days[3].Source);
+        Assert.Equal(WorkLocationTestHelpers.KindUnplanned, days[2].Status.Kind);
+        Assert.Equal(WorkLocationTestHelpers.KindOff, days[3].Status.Kind);
     }
 
     [Fact]
