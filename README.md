@@ -41,8 +41,7 @@ in real time.
 - [x] Profile, calendar, group, child, and account administration
 - [ ] Sleep diary logging for children (proposed, not yet implemented — see
       [Sleep diary](docs/backend/analysis/sleep-diary.md))
-- [ ] Printable A3/A4 week plans from saved templates (backend implemented, print
-      sheet not yet built — see [Week plan print templates](docs/backend/analysis/week-plan-print-templates.md))
+- [x] Printable A3/A4 landscape week plans from saved, shareable templates
 - [x] Guardian work locations with alternating weekly patterns and per-day
       exceptions
 

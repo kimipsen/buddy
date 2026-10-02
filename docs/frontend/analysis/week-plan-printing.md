@@ -1,6 +1,11 @@
 # Week plan printing
 
-Status: Proposed
+Status: Implemented. `PrintTemplatesService`, `isoWeekNumber`/`nextWeekdayOnOrAfter`, the pure
+`assembleWeekPlan`, `WeekPlanLoader`, `WeekPlanSheet`, the print route (outside the shell) and its
+`@page` handling, quick print at `/guardian/print` and the template editor at
+`/guardian/print/templates/:templateId` all shipped, with Vitest specs and a Playwright check that
+A4 and A3 each print as exactly one landscape page. See "Implementation notes" for where the build
+refined this design.
 
 A guardian prints a landscape week plan on A3 or A4 paper from a saved
 template, choosing only the start date. The template model, ownership, and
@@ -226,6 +231,50 @@ The sheet is a real `<table>`-equivalent grid with row and column headers
 (`role="rowheader"` / `columnheader`), so screen readers can read the preview.
 The toolbar is keyboard-reachable, and Print is the default focused action on
 the preview.
+
+## Implementation notes
+
+Where the build settled details this design left open:
+
+- **Events rows list tasks too.** `CalendarEvents` shows every occurrence (events and tasks);
+  only `TaskChecklist` restricts to tasks.
+- **Unavailable calendar rows.** If any one of a row's calendars fails to load, the whole row
+  prints as "not available" rather than a partial list that would look complete.
+- **Checklists print a routine once.** Subtasks scheduled from a task template collapse to one
+  tick box under their `parentTitle`. Grouping is per item id, so two different tasks that share
+  a title stay two tick boxes.
+- **Unfinished rows print blank.** A row with no source picked yet (no calendar, child or
+  location) renders as an empty cell, not "not available"; that note is only for sources the
+  printing guardian can't read.
+- **Pickup cells for screen readers.** The diagonal split is visual only, so each half carries a
+  visually hidden "Drop-off"/"Pick-up" label, and every ✕ mark has a hidden text label.
+- **Work-location text uses the guardian's template color**, falling back to the default ink, not
+  the location's own color.
+- **The editor lists the guardian themself first** among work-location guardians and name
+  colors, even with no children linked.
+- **Client-side limits mirror the backend.** The editor blocks Save on a label over 40
+  characters or more than 10 calendars per row, instead of surfacing the server's `400`.
+- **Stale references can be fixed.** Calendars the guardian can't see stay listed as "unknown"
+  and can be unticked; rows pointing at an archived work location are flagged as stale.
+- **Save status** ("Template saved.") compares the draft with the last saved draft, so it
+  disappears as soon as the guardian edits again.
+- **The example is capped at 12 rows** (the backend limit), always keeping its trailing notes row.
+- **Live preview** is a fixed 384 px wide miniature for both paper sizes; its data refetches
+  (debounced) only when the set of referenced sources changes, not on every keystroke.
+- **Focus.** Print gets focus programmatically once the sheet is ready, instead of the
+  `autofocus` attribute (which the template a11y lint rule rejects). It happens on the first load
+  only; changing the start date doesn't pull focus back.
+- **`@page` lifetime.** The print page injects one `<style data-week-plan-print>` and removes it
+  on destroy; if the page is destroyed before loading finishes, the style is never added, so a
+  stale paper size can't leak into later prints in the tab.
+- **Races.** Quick print and the editor ignore responses for anything but the latest template
+  selection or preview request, and the debounced preview timer is cleared on destroy.
+- **A3 is A4 scaled by √2**, so the type and row proportions are identical on both papers.
+- **Dashboard entry** is a "Print week plan" link in the dashboard header, plus the profile-menu
+  entry.
+- **The e2e journey** uses the example's notes row only, keeping it short (with the
+  work-location setup it took ~19 s and timed out with parallel workers on a cold dev server); what each row kind
+  prints is covered by the `assembleWeekPlan` and `WeekPlanSheet` specs.
 
 ## Open questions
 

@@ -1,0 +1,609 @@
+<section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
+  <a
+    routerLink="/guardian/print"
+    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      class="size-4"
+      aria-hidden="true"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+    </svg>
+    {{ 'print.editor.backLink' | translate }}
+  </a>
+
+  <h2 class="mb-6 text-3xl font-semibold tracking-normal">
+    {{ 'print.editor.title' | translate }}
+  </h2>
+
+  @if (loading()) {
+    <app-loading-spinner [label]="'print.editor.loading' | translate" />
+  } @else if (!template()) {
+    <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ error() ?? 'print.editor.loadError' | translate }}
+    </p>
+  } @else {
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div class="space-y-6">
+        <!-- Header: name and layout -->
+        <div
+          class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+        >
+          <div class="flex flex-col gap-1">
+            <label
+              for="template-name"
+              class="text-xs font-medium text-slate-600 dark:text-slate-400"
+              >{{ 'print.editor.nameLabel' | translate }}</label
+            >
+            <input
+              id="template-name"
+              type="text"
+              maxlength="80"
+              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+            />
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{
+                'print.editor.paperLabel' | translate
+              }}</span>
+              <app-segmented-control
+                [options]="paperOptions()"
+                [selected]="paperSize()"
+                [ariaLabel]="'print.editor.paperLabel' | translate"
+                (selectedChange)="paperSize.set($event)"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <label
+                for="template-weekday"
+                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                >{{ 'print.editor.startLabel' | translate }}</label
+              >
+              <select
+                id="template-weekday"
+                class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                [ngModel]="startWeekday()"
+                (ngModelChange)="startWeekday.set(+$event)"
+              >
+                @for (day of weekdays; track day) {
+                  <option [ngValue]="day">{{ weekdayNames().get(day) }}</option>
+                }
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <app-toggle
+                [checked]="showWeekNumber()"
+                [ariaLabel]="'print.editor.weekNumberLabel' | translate"
+                (checkedChange)="showWeekNumber.set($event)"
+              />
+              <span class="text-sm text-slate-700 dark:text-slate-300">{{
+                'print.editor.weekNumberLabel' | translate
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rows -->
+        <div
+          class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-lg font-semibold">{{ 'print.editor.rowsTitle' | translate }}</h3>
+            <button
+              type="button"
+              class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+              (click)="fillExample()"
+            >
+              {{ 'print.editor.exampleButton' | translate }}
+            </button>
+          </div>
+
+          @if (rows().length === 0) {
+            <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+              {{ 'print.editor.noRows' | translate }}
+            </p>
+          }
+
+          <ol class="mt-4 space-y-3">
+            @for (
+              draft of rows();
+              track draft.key;
+              let index = $index;
+              let first = $first;
+              let last = $last
+            ) {
+              <li
+                class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3"
+              >
+                <app-repeatable-row
+                  [removeLabel]="'print.editor.removeRow' | translate"
+                  (remove)="removeRow(draft.key)"
+                >
+                  <div class="flex flex-wrap items-end gap-3">
+                    <div class="flex gap-1">
+                      <button
+                        type="button"
+                        class="rounded border border-slate-300 dark:border-slate-600 px-1.5 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-40"
+                        [disabled]="first"
+                        [attr.aria-label]="'print.editor.moveUp' | translate"
+                        (click)="move(index, -1)"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded border border-slate-300 dark:border-slate-600 px-1.5 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-40"
+                        [disabled]="last"
+                        [attr.aria-label]="'print.editor.moveDown' | translate"
+                        (click)="move(index, 1)"
+                      >
+                        ↓
+                      </button>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <label
+                        [for]="'row-kind-' + draft.key"
+                        class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                        >{{ 'print.editor.kindLabel' | translate }}</label
+                      >
+                      <select
+                        [id]="'row-kind-' + draft.key"
+                        class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                        [ngModel]="draft.row.kind"
+                        (ngModelChange)="changeKind(draft.key, +$event)"
+                      >
+                        @for (kindValue of kinds; track kindValue) {
+                          <option [ngValue]="kindValue">
+                            {{ kindLabels[kindValue] | translate }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="flex min-w-40 flex-1 flex-col gap-1">
+                      <label
+                        [for]="'row-label-' + draft.key"
+                        class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                        >{{ 'print.editor.rowLabel' | translate }}</label
+                      >
+                      <input
+                        [id]="'row-label-' + draft.key"
+                        type="text"
+                        maxlength="40"
+                        class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                        [ngModel]="draft.row.label"
+                        (ngModelChange)="update(draft.key, { label: $event })"
+                      />
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <span class="text-xs font-medium text-slate-600 dark:text-slate-400">{{
+                        'print.editor.heightLabel' | translate
+                      }}</span>
+                      <app-stepper
+                        [value]="draft.row.heightWeight"
+                        [min]="1"
+                        [max]="maxHeight"
+                        [ariaLabel]="'print.editor.heightLabel' | translate"
+                        [decrementLabel]="'print.editor.heightDecrease' | translate"
+                        [incrementLabel]="'print.editor.heightIncrease' | translate"
+                        (valueChange)="update(draft.key, { heightWeight: $event })"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Kind-specific fields. Fields a kind doesn't use aren't shown, and cleanRow()
+                       clears them before saving. -->
+                  <div class="mt-3 flex flex-wrap items-end gap-3">
+                    @switch (draft.row.kind) {
+                      @case (kind.meal) {
+                        <div class="flex flex-col gap-1">
+                          <label
+                            [for]="'row-meal-scope-' + draft.key"
+                            class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                            >{{ 'print.editor.mealScopeLabel' | translate }}</label
+                          >
+                          <select
+                            [id]="'row-meal-scope-' + draft.key"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                            [ngModel]="mealScope(draft.row)"
+                            (ngModelChange)="setMealScope(draft.key, $event)"
+                          >
+                            <option value="">{{ 'print.editor.choose' | translate }}</option>
+                            @for (child of children(); track child.id) {
+                              <option [value]="'child:' + child.id">
+                                {{ child.name.givenName }}
+                              </option>
+                            }
+                            @for (group of groups(); track group.id) {
+                              <option [value]="'group:' + group.id">{{ group.name }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                          <label
+                            [for]="'row-meal-slot-' + draft.key"
+                            class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                            >{{ 'print.editor.mealSlotLabel' | translate }}</label
+                          >
+                          <select
+                            [id]="'row-meal-slot-' + draft.key"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                            [ngModel]="draft.row.mealSlot"
+                            (ngModelChange)="update(draft.key, { mealSlot: $event })"
+                          >
+                            <option [ngValue]="null">
+                              {{ 'print.editor.choose' | translate }}
+                            </option>
+                            @for (slot of mealSlots; track slot) {
+                              <option [ngValue]="slot">
+                                {{ mealSlotLabels[slot] | translate }}
+                              </option>
+                            }
+                          </select>
+                        </div>
+                      }
+                      @case (kind.pickup) {
+                        <div class="flex flex-col gap-1">
+                          <label
+                            [for]="'row-child-' + draft.key"
+                            class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                            >{{ 'print.editor.childLabel' | translate }}</label
+                          >
+                          <select
+                            [id]="'row-child-' + draft.key"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                            [ngModel]="draft.row.childId"
+                            (ngModelChange)="update(draft.key, { childId: $event })"
+                          >
+                            <option [ngValue]="null">
+                              {{ 'print.editor.choose' | translate }}
+                            </option>
+                            @for (child of children(); track child.id) {
+                              <option [ngValue]="child.id">{{ child.name.givenName }}</option>
+                            }
+                          </select>
+                        </div>
+                      }
+                      @case (kind.workLocation) {
+                        <div class="flex flex-col gap-1">
+                          <label
+                            [for]="'row-guardian-' + draft.key"
+                            class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                            >{{ 'print.editor.guardianLabel' | translate }}</label
+                          >
+                          <select
+                            [id]="'row-guardian-' + draft.key"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                            [ngModel]="draft.row.guardianId"
+                            (ngModelChange)="
+                              update(draft.key, { guardianId: $event, workLocationId: null })
+                            "
+                          >
+                            <option [ngValue]="null">
+                              {{ 'print.editor.choose' | translate }}
+                            </option>
+                            @for (guardian of guardians(); track guardian.id) {
+                              <option [ngValue]="guardian.id">{{ guardianName(guardian) }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                          <label
+                            [for]="'row-location-' + draft.key"
+                            class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                            >{{ 'print.editor.locationLabel' | translate }}</label
+                          >
+                          <select
+                            [id]="'row-location-' + draft.key"
+                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                            [ngModel]="draft.row.workLocationId"
+                            (ngModelChange)="update(draft.key, { workLocationId: $event })"
+                          >
+                            <option [ngValue]="null">
+                              {{ 'print.editor.anyLocation' | translate }}
+                            </option>
+                            @for (location of locationsFor(draft.row); track location.id) {
+                              <option [ngValue]="location.id">
+                                {{ location.icon }} {{ location.name }}
+                              </option>
+                            }
+                          </select>
+                        </div>
+                      }
+                    }
+
+                    @if (usesCalendars(draft.row.kind)) {
+                      <fieldset class="flex flex-col gap-1">
+                        <legend class="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          {{ 'print.editor.calendarsLabel' | translate }}
+                        </legend>
+                        <div class="flex flex-wrap gap-x-4 gap-y-1">
+                          @for (calendar of calendars(); track calendar.id) {
+                            <span
+                              class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                            >
+                              <app-toggle
+                                [checked]="hasCalendar(draft.row, calendar.id)"
+                                [disabled]="calendarLimitReached(draft.row, calendar.id)"
+                                [ariaLabel]="calendar.name"
+                                (checkedChange)="
+                                  toggleCalendar(draft.key, draft.row, calendar.id, $event)
+                                "
+                              />
+                              <span aria-hidden="true">{{ calendar.icon }}</span>
+                              {{ calendar.name }}
+                            </span>
+                          }
+                          @for (unknownId of unknownCalendars(draft.row); track unknownId) {
+                            <span
+                              class="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400"
+                            >
+                              <app-toggle
+                                [checked]="true"
+                                [ariaLabel]="'print.editor.unknownCalendar' | translate"
+                                (checkedChange)="
+                                  toggleCalendar(draft.key, draft.row, unknownId, $event)
+                                "
+                              />
+                              {{ 'print.editor.unknownCalendar' | translate }}
+                            </span>
+                          }
+                        </div>
+                      </fieldset>
+                    }
+
+                    @if (
+                      draft.row.kind === kind.calendarEvents ||
+                      draft.row.kind === kind.taskChecklist
+                    ) {
+                      <div class="flex flex-col gap-1">
+                        <label
+                          [for]="'row-assignee-' + draft.key"
+                          class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                          >{{ 'print.editor.assigneeLabel' | translate }}</label
+                        >
+                        <select
+                          [id]="'row-assignee-' + draft.key"
+                          class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                          [ngModel]="draft.row.assignedToId"
+                          (ngModelChange)="update(draft.key, { assignedToId: $event })"
+                        >
+                          <option [ngValue]="null">{{ 'print.editor.anyone' | translate }}</option>
+                          @for (child of children(); track child.id) {
+                            <option [ngValue]="child.id">{{ child.name.givenName }}</option>
+                          }
+                        </select>
+                      </div>
+                      <div class="flex flex-col gap-1">
+                        <label
+                          [for]="'row-max-' + draft.key"
+                          class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                          >{{ 'print.editor.maxItemsLabel' | translate }}</label
+                        >
+                        <select
+                          [id]="'row-max-' + draft.key"
+                          class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                          [ngModel]="draft.row.maxItems"
+                          (ngModelChange)="update(draft.key, { maxItems: $event })"
+                        >
+                          <option [ngValue]="null">{{ 'print.editor.noLimit' | translate }}</option>
+                          @for (count of maxItemsOptions; track count) {
+                            <option [ngValue]="count">{{ count }}</option>
+                          }
+                        </select>
+                      </div>
+                    }
+
+                    @if (
+                      draft.row.kind === kind.calendarMarker ||
+                      draft.row.kind === kind.calendarEvents
+                    ) {
+                      <div class="flex flex-col gap-1">
+                        <label
+                          [for]="'row-filter-' + draft.key"
+                          class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                          >{{ 'print.editor.titleFilterLabel' | translate }}</label
+                        >
+                        <input
+                          [id]="'row-filter-' + draft.key"
+                          type="text"
+                          maxlength="60"
+                          [placeholder]="'print.editor.titleFilterPlaceholder' | translate"
+                          class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                          [ngModel]="draft.row.titleFilter ?? ''"
+                          (ngModelChange)="update(draft.key, { titleFilter: $event })"
+                        />
+                      </div>
+                    }
+
+                    @if (draft.row.kind === kind.calendarEvents) {
+                      <span
+                        class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        <app-toggle
+                          [checked]="draft.row.showTime"
+                          [ariaLabel]="'print.editor.showTimeLabel' | translate"
+                          (checkedChange)="update(draft.key, { showTime: $event })"
+                        />
+                        {{ 'print.editor.showTimeLabel' | translate }}
+                      </span>
+                      <span
+                        class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        <app-toggle
+                          [checked]="draft.row.showAssignee"
+                          [ariaLabel]="'print.editor.showAssigneeLabel' | translate"
+                          (checkedChange)="update(draft.key, { showAssignee: $event })"
+                        />
+                        {{ 'print.editor.showAssigneeLabel' | translate }}
+                      </span>
+                    }
+                  </div>
+
+                  @if (rowIsStale(draft.row)) {
+                    <p class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+                      {{ 'print.editor.stale' | translate }}
+                    </p>
+                  }
+                  @if (rowProblem(draft.row); as problem) {
+                    <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                      {{ problem | translate }}
+                    </p>
+                  }
+                </app-repeatable-row>
+              </li>
+            }
+          </ol>
+
+          <div class="mt-4 flex flex-wrap items-end gap-3">
+            <div class="flex flex-col gap-1">
+              <label
+                for="new-row-kind"
+                class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                >{{ 'print.editor.newRowLabel' | translate }}</label
+              >
+              <select
+                id="new-row-kind"
+                class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                [ngModel]="newKind()"
+                (ngModelChange)="newKind.set(+$event)"
+              >
+                @for (kindValue of kinds; track kindValue) {
+                  <option [ngValue]="kindValue">{{ kindLabels[kindValue] | translate }}</option>
+                }
+              </select>
+            </div>
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
+              [disabled]="rows().length >= maxRows"
+              (click)="addRow()"
+            >
+              {{ 'print.editor.addRow' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Guardian name colors -->
+        @if (guardians().length > 0) {
+          <div
+            class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+          >
+            <h3 class="text-lg font-semibold">{{ 'print.editor.colorsTitle' | translate }}</h3>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {{ 'print.editor.colorsDescription' | translate }}
+            </p>
+            <ul class="mt-4 space-y-3">
+              @for (guardian of guardians(); track guardian.id) {
+                <li class="flex flex-wrap items-center gap-3">
+                  <span class="w-40 text-sm font-medium">{{ guardianName(guardian) }}</span>
+                  <app-color-swatch-picker
+                    [value]="colors()[guardian.id] ?? ''"
+                    [ariaLabel]="guardianName(guardian)"
+                    (valueChange)="setColor(guardian.id, $event)"
+                  />
+                  @if (colors()[guardian.id]) {
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                      (click)="setColor(guardian.id, null)"
+                    >
+                      {{ 'print.editor.clearColor' | translate }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+            [disabled]="saving() || firstProblem() !== null"
+            (click)="save()"
+          >
+            {{ 'print.editor.saveButton' | translate }}
+          </button>
+          @if (firstProblem(); as problem) {
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ problem | translate }}</p>
+          }
+          @if (savedStatus(); as message) {
+            <p class="text-sm text-emerald-700 dark:text-emerald-400" role="status">
+              {{ message | translate }}
+            </p>
+          }
+          @if (error(); as message) {
+            <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+              {{ message | translate }}
+            </p>
+          }
+
+          <div class="ml-auto flex items-center gap-2">
+            @if (confirmingDelete()) {
+              <span class="text-sm text-slate-700 dark:text-slate-300">{{
+                'print.editor.deleteConfirm' | translate
+              }}</span>
+              <button
+                type="button"
+                class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                [disabled]="saving()"
+                (click)="remove()"
+              >
+                {{ 'print.editor.deleteYes' | translate }}
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                (click)="confirmingDelete.set(false)"
+              >
+                {{ 'print.editor.deleteNo' | translate }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
+                (click)="confirmingDelete.set(true)"
+              >
+                {{ 'print.editor.deleteButton' | translate }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Live preview: the same sheet component the print page uses, scaled down. -->
+      <div class="xl:sticky xl:top-6 xl:self-start">
+        <h3 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {{ 'print.editor.previewTitle' | translate }}
+        </h3>
+        @if (previewModel(); as model) {
+          <div
+            class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm"
+          >
+            <div [style.width.px]="previewBox().width" [style.height.px]="previewBox().height">
+              <div
+                class="origin-top-left [transform:scale(var(--preview-scale))]"
+                [style.--preview-scale]="previewBox().scale"
+              >
+                <app-week-plan-sheet [model]="model" />
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

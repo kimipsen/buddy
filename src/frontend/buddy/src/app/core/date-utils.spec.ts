@@ -6,7 +6,9 @@ import {
   browserTimeZoneId,
   buildDateRangeIso,
   buildMonthGridIso,
+  isoWeekNumber,
   listTimeZoneIds,
+  nextWeekdayOnOrAfter,
   parseIsoDate,
   shiftMonthIso,
   startOfMonthIso,
@@ -262,5 +264,34 @@ describe('addMinutesToTime', () => {
 
   it('wraps offsets longer than a whole day', () => {
     expect(addMinutesToTime('10:00', 1500)).toBe('11:00');
+  });
+});
+
+describe('isoWeekNumber', () => {
+  it.each([
+    ['2026-09-28', 40],
+    ['2026-10-04', 40],
+    ['2026-10-05', 41],
+    ['2026-01-01', 1],
+    ['2026-12-28', 53],
+    ['2026-12-31', 53],
+    ['2027-01-03', 53],
+    ['2027-01-04', 1],
+    ['2024-12-30', 1],
+    ['2021-01-03', 53],
+  ])('puts %s in ISO week %i', (date, week) => {
+    expect(isoWeekNumber(date)).toBe(week);
+  });
+});
+
+describe('nextWeekdayOnOrAfter', () => {
+  it('returns the date itself when it already falls on the weekday', () => {
+    expect(nextWeekdayOnOrAfter('2026-10-05', 1)).toBe('2026-10-05');
+  });
+
+  it('walks forward to the next matching weekday, across a month end', () => {
+    expect(nextWeekdayOnOrAfter('2026-10-02', 0)).toBe('2026-10-04');
+    expect(nextWeekdayOnOrAfter('2026-10-02', 1)).toBe('2026-10-05');
+    expect(nextWeekdayOnOrAfter('2026-10-30', 4)).toBe('2026-11-05');
   });
 });

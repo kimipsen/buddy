@@ -1,0 +1,180 @@
+import {
+  Component,
+  DestroyRef,
+  DOCUMENT,
+  ElementRef,
+  HostListener,
+  Injector,
+  OnInit,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
+import { nextWeekdayOnOrAfter, todayIsoDate } from '../../../../core/date-utils';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+import { PrintTemplate, PrintTemplatesService } from '../../../../core/print-templates.service';
+import { UsersService } from '../../../../core/users.service';
+import { DateSelect } from '../../../../shared/date-select/date-select';
+import { LoadingSpinner } from '../../../../shared/loading-spinner/loading-spinner';
+import { assembleWeekPlan } from '../assemble-week-plan';
+import { WeekPlanLoader } from '../week-plan-loader';
+import { WeekPlanModel } from '../week-plan-model';
+import { PAPER_MM, WeekPlanSheet } from './week-plan-sheet';
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const PX_PER_MM = 96 / 25.4;
+const PREVIEW_GUTTER_PX = 32;
+
+// The printable route, deliberately outside GuardianShell so no navigation ends up on paper.
+// It owns the one global <style> carrying @page -- @page can't be scoped to a component (it has no
+// selector for emulated encapsulation to rewrite) -- adding it on init and removing it on destroy.
+@Component({
+  selector: 'app-week-plan-print-page',
+  imports: [RouterLink, TranslatePipe, DateSelect, LoadingSpinner, WeekPlanSheet],
+  templateUrl: './week-plan-print-page.html',
+})
+export class WeekPlanPrintPage implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly templates = inject(PrintTemplatesService);
+  private readonly loader = inject(WeekPlanLoader);
+  private readonly users = inject(UsersService);
+  private readonly translation = inject(TranslationService);
+  private readonly injector = inject(Injector);
+
+  private readonly printButton = viewChild<ElementRef<HTMLButtonElement>>('printButton');
+
+  protected readonly templateId = this.route.snapshot.paramMap.get('templateId') ?? '';
+  protected readonly template = signal<PrintTemplate | null>(null);
+  protected readonly start = signal('');
+  protected readonly model = signal<WeekPlanModel | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly error = signal<string | null>(null);
+
+  private readonly viewportWidth = signal(this.document.defaultView?.innerWidth ?? 1280);
+  private pageStyle: HTMLStyleElement | null = null;
+  private destroyed = false;
+  private focusedOnce = false;
+
+  // On screen the sheet keeps its millimetre size and is scaled down to fit, so the preview is a
+  // faithful miniature of the paper. The scale is dropped under @media print.
+  protected readonly previewScale = computed(() => {
+    const paper = PAPER_MM[this.model()?.paperSize ?? 0];
+    return Math.min(1, (this.viewportWidth() - PREVIEW_GUTTER_PX) / (paper.width * PX_PER_MM));
+  });
+
+  protected readonly previewSize = computed(() => {
+    const paper = PAPER_MM[this.model()?.paperSize ?? 0];
+    const scale = this.previewScale();
+    return { width: paper.width * PX_PER_MM * scale, height: paper.height * PX_PER_MM * scale };
+  });
+
+  @HostListener('window:resize')
+  protected onResize(): void {
+    this.viewportWidth.set(this.document.defaultView?.innerWidth ?? this.viewportWidth());
+  }
+
+  ngOnInit(): void {
+    this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
+      this.pageStyle?.remove();
+    });
+    void this.load();
+  }
+
+  protected print(): void {
+    this.document.defaultView?.print();
+  }
+
+  protected changeDate(date: string): void {
+    if (!ISO_DATE.test(date)) {
+      return;
+    }
+    void this.router.navigate([], { queryParams: { start: date }, replaceUrl: true });
+    this.start.set(date);
+    void this.render();
+  }
+
+  private async load(): Promise<void> {
+    try {
+      const [template] = await Promise.all([
+        this.templates.get(this.templateId),
+        this.users.ensureCurrentUser(),
+      ]);
+      this.template.set(template);
+      this.applyPageStyle(template);
+
+      // A missing or malformed start falls back to the next default start weekday.
+      const requested = this.route.snapshot.queryParamMap.get('start') ?? '';
+      this.start.set(
+        ISO_DATE.test(requested)
+          ? requested
+          : nextWeekdayOnOrAfter(todayIsoDate(), template.defaultStartWeekday),
+      );
+
+      await this.render();
+    } catch {
+      this.error.set('print.sheet.loadError');
+      this.loading.set(false);
+    }
+  }
+
+  private async render(): Promise<void> {
+    const template = this.template();
+    if (!template) {
+      return;
+    }
+
+    this.loading.set(true);
+    const start = this.start();
+    const sources = await this.loader.load(template, start);
+
+    // A newer date may have been picked while this one loaded.
+    if (start !== this.start()) {
+      return;
+    }
+
+    this.model.set(
+      assembleWeekPlan(template, sources, {
+        start,
+        locale: this.translation.language(),
+        timeZone: this.users.timeZoneId(),
+        labels: {
+          week: this.translation.translate('print.sheet.week'),
+          selfEscort: this.translation.translate('print.sheet.selfEscort'),
+          playdate: this.translation.translate('print.sheet.playdate'),
+        },
+      }),
+    );
+    this.loading.set(false);
+
+    // Print is the default action on the preview: focus it once, when the sheet first appears --
+    // not again on every date change, which would pull focus out of the date input mid-typing.
+    if (!this.focusedOnce) {
+      this.focusedOnce = true;
+      afterNextRender(() => this.printButton()?.nativeElement.focus(), { injector: this.injector });
+    }
+  }
+
+  private applyPageStyle(template: PrintTemplate): void {
+    // Left before the template arrived: adding the style now would outlive the page and set the
+    // paper size for every later print in this tab.
+    if (this.destroyed) {
+      return;
+    }
+    const size = template.paperSize === 1 ? 'A3' : 'A4';
+    this.pageStyle ??= this.document.head.appendChild(this.document.createElement('style'));
+    this.pageStyle.setAttribute('data-week-plan-print', '');
+    // Paper is always white, whatever the app theme: the dark class on <html> must not print.
+    this.pageStyle.textContent =
+      `@page { size: ${size} landscape; margin: 8mm; }\n` +
+      '@media print { html, body { background: #fff !important; color-scheme: light; } }';
+  }
+}

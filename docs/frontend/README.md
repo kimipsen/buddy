@@ -80,6 +80,10 @@ The guardian routes currently include:
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/work-locations` — the guardian's own work locations, alternating weekly pattern, and
   per-day exceptions (used by the printable week plan; never shown to children)
+- `/guardian/print` — quick print: pick a template and a start date, preview, print; create templates
+- `/guardian/print/templates/:templateId` — the print template editor with a live preview
+- `/guardian/print/sheet/:templateId?start=` — the printable sheet, deliberately outside the
+  guardian shell so no navigation ends up on paper
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
   calendar, plus event/task creation
 - `/guardian/task-library` — per-child task template and subtask management
@@ -133,6 +137,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   subscription-token endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
+- `PrintTemplatesService` manages print templates (layout, rows, guardian name colors); the
+  `WeekPlanLoader` in `features/guardian/print` composes a week from the existing services
 - `WorkLocationsService` manages the guardian's work locations, pattern, and exceptions, and lists
   resolved work days for the guardian or a co-guardian
 - `TaskLibraryService` manages per-child task templates and subtasks, and backs the
@@ -228,7 +234,7 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
   summary, guardian-configurable goal posts, and reward sketch
 - [Pickup planning and daily views](analysis/pickup-planning-and-daily-views.md) — implemented
   guardian planner, guardian dashboard summary, and child read-only view
-- [Week plan printing](analysis/week-plan-printing.md) — proposed A3/A4 landscape print
+- [Week plan printing](analysis/week-plan-printing.md) — implemented A3/A4 landscape print
   sheet from saved templates, quick print flow, and template editor
 
 ## Local development

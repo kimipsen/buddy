@@ -107,3 +107,23 @@ export function addMinutesToTime(time: string, minutes: number): string {
   const wrapped = (((hours * 60 + mins + minutes) % 1440) + 1440) % 1440;
   return `${String(Math.floor(wrapped / 60)).padStart(2, '0')}:${String(wrapped % 60).padStart(2, '0')}`;
 }
+
+// ISO-8601 week number (weeks start on Monday; week 1 is the week containing the year's first
+// Thursday), so 2026-12-31 is week 53 and 2027-01-04 is week 1. Computed on UTC components so the
+// local time zone and DST never shift the day.
+export function isoWeekNumber(isoDate: string): number {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const weekday = date.getUTCDay() || 7;
+  // Move to the Thursday of this week; its year is the ISO week-numbering year.
+  date.setUTCDate(date.getUTCDate() + 4 - weekday);
+  const yearStart = Date.UTC(date.getUTCFullYear(), 0, 1);
+  return Math.ceil(((date.getTime() - yearStart) / 86_400_000 + 1) / 7);
+}
+
+// The first date on or after isoDate that falls on `weekday` (0 = Sunday ... 6 = Saturday, the
+// backend's DayOfWeek ordinals) -- isoDate itself when it already matches.
+export function nextWeekdayOnOrAfter(isoDate: string, weekday: number): string {
+  const offset = (weekday - parseIsoDate(isoDate).getDay() + 7) % 7;
+  return addDaysIso(isoDate, offset);
+}

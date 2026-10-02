@@ -9,6 +9,7 @@ export const shell = {
     calendar: 'Calendar',
     progress: 'Progress goals',
     workLocations: 'Work locations',
+    print: 'Print week plan',
     settings: 'Settings',
     signOut: 'Sign out',
     theme: {

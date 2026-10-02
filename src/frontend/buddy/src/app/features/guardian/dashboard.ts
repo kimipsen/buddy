@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ChildrenOverview } from './children-overview/children-overview';
@@ -17,6 +18,7 @@ import { TasksToday } from './tasks-today/tasks-today';
     EventsToday,
     DosesToday,
     PickupToday,
+    RouterLink,
     TranslatePipe,
   ],
   templateUrl: './dashboard.html',

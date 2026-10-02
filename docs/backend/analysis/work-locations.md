@@ -1,9 +1,9 @@
 # Guardian Work Locations
 
-Status: Implemented (backend + guardian screen; the print template `WorkLocation` row kind waits for
-[week-plan-print-templates.md](week-plan-print-templates.md)). `Features/WorkLocations` ships the
-`WorkLocationSchedule` aggregate, all eight slices and routes below, the inline snapshot, golden
-files and integration tests; the frontend ships `WorkLocationsService` and `/guardian/work-locations`.
+Status: Implemented. `Features/WorkLocations` ships the `WorkLocationSchedule` aggregate, all
+eight slices and routes below, the inline snapshot, golden files and integration tests; the
+frontend ships `WorkLocationsService` and `/guardian/work-locations`. The print template
+`WorkLocation` row kind is implemented too; see [week-plan-print-templates.md](week-plan-print-templates.md).
 
 ## Context
 
@@ -336,6 +336,7 @@ uniqueness, location limits, "an active location of this guardian") are handler 
 | Active locations | at most 12 per guardian |
 | `CycleWeeks` | 1–4 |
 | `AnchorMonday` | must be a Monday |
+| `Days` | no null entries (a null element is a `400`, not a server error) |
 | `Days[].Week` | 0 ≤ `Week` < `CycleWeeks`; at most one entry per (`Week`, `Day`) |
 | `Days[].LocationId` | an active location of this guardian |
 | Override `LocationId` | an active location of this guardian, or null |
@@ -441,6 +442,10 @@ Plus `EventShapeTests` golden files and a `SnapshotTests` entry.
 | Who sees it | The guardian (Manage) and co-guardians (View); never children |
 | Calendar or iCal exposure | None |
 | Main consumer | The `WorkLocation` row kind in week plan print templates |
+| Child accounts | Writes are `403` (every write is a `/me` route, so the caller is known); reads of any schedule are `404` |
+| Concurrent edits | Expected-version appends via `StreamVersionTracker`; a true race is `409 concurrency_conflict` |
+| Range cap | `to - from` ≤ 31 days for overrides and day lists, the same shared rule as `ListPickupSchedule` |
+| Computed snapshot properties | `[JsonIgnore]` (`WorkLocation.Details`, `ActiveLocations`), so the snapshot stores only folded state |
 
 ## Remaining open questions
 

@@ -9,6 +9,7 @@ import { login } from './login';
 import { mealplan } from './mealplan';
 import { medicine } from './medicine';
 import { pickup } from './pickup';
+import { print } from './print';
 import { profile } from './profile';
 import { progress } from './progress';
 import { shell } from './shell';
@@ -28,6 +29,7 @@ export const da = {
   mealplan,
   medicine,
   pickup,
+  print,
   profile,
   progress,
   shell,

@@ -1,0 +1,144 @@
+<div
+  class="week-plan-sheet box-border grid overflow-hidden bg-white text-slate-900 [break-inside:avoid]"
+  role="table"
+  [attr.aria-label]="model().weekLabel ?? ('print.sheet.title' | translate)"
+  [style.width.mm]="paper().width"
+  [style.height.mm]="paper().height"
+  [style.font-size.pt]="fontPt()"
+  [style.grid-template-columns]="'12% repeat(7, minmax(0, 1fr))'"
+  [style.grid-template-rows]="gridRows()"
+  style="border-top: 0.25mm solid #94a3b8; border-left: 0.25mm solid #94a3b8"
+>
+  <div role="row" class="contents">
+    <div
+      role="columnheader"
+      class="flex items-center justify-center px-[0.5em] py-[0.6em] text-center text-[1.6em] font-semibold"
+      style="border-right: 0.25mm solid #94a3b8; border-bottom: 0.25mm solid #94a3b8"
+    >
+      {{ model().weekLabel }}
+    </div>
+    @for (day of model().days; track day.date) {
+      <div
+        role="columnheader"
+        class="flex flex-col items-center justify-center px-[0.3em] py-[0.6em] text-center leading-tight"
+        style="border-right: 0.25mm solid #94a3b8; border-bottom: 0.25mm solid #94a3b8"
+      >
+        <span class="text-[1.4em] font-semibold capitalize">{{ day.weekday }}</span>
+        <span class="text-[0.9em] text-slate-500">{{ day.dayLabel }}</span>
+      </div>
+    }
+  </div>
+
+  @for (row of model().rows; track $index) {
+    <div role="row" class="contents">
+      <div
+        role="rowheader"
+        class="flex min-h-0 flex-col justify-center overflow-hidden px-[0.5em] py-[0.3em] text-[1.15em] leading-tight"
+        style="border-right: 0.25mm solid #94a3b8; border-bottom: 0.25mm solid #94a3b8"
+      >
+        <span>{{ row.label }}</span>
+        @if (row.unavailable) {
+          <span class="mt-[0.2em] text-[0.75em] italic text-slate-500">{{
+            'print.sheet.unavailable' | translate
+          }}</span>
+        }
+      </div>
+
+      @for (cell of row.cells; track $index) {
+        <div
+          role="cell"
+          class="relative min-h-0 overflow-hidden px-[0.4em] py-[0.25em] leading-snug"
+          style="border-right: 0.25mm solid #94a3b8; border-bottom: 0.25mm solid #94a3b8"
+        >
+          @switch (cell.type) {
+            @case ('mark') {
+              <span
+                class="absolute inset-0 flex items-center justify-center text-[1.8em] font-light"
+                aria-hidden="true"
+                >✕</span
+              >
+              <span class="sr-only">{{ 'print.sheet.mark' | translate }}</span>
+            }
+            @case ('text') {
+              <span [style.color]="cell.value.color">
+                @if (cell.value.icon) {
+                  <span aria-hidden="true">{{ cell.value.icon }}</span>
+                }
+                {{ cell.value.text }}
+              </span>
+            }
+            @case ('list') {
+              <ul class="space-y-[0.15em]">
+                @for (item of cell.items; track $index) {
+                  <li>
+                    @if (item.time) {
+                      <span class="font-semibold">{{ item.time }}</span>
+                    }
+                    {{ item.text }}
+                    @if (item.assignee) {
+                      <span class="text-slate-500">({{ item.assignee }})</span>
+                    }
+                  </li>
+                }
+                @if (cell.overflow > 0) {
+                  <li class="text-slate-500">+{{ cell.overflow }}</li>
+                }
+              </ul>
+            }
+            @case ('checklist') {
+              <ul class="space-y-[0.2em]">
+                @for (item of cell.items; track $index) {
+                  <li class="flex items-start gap-[0.35em]">
+                    <span
+                      class="mt-[0.15em] inline-block size-[0.9em] shrink-0"
+                      style="border: 0.25mm solid #475569"
+                      aria-hidden="true"
+                    ></span>
+                    <span>{{ item }}</span>
+                  </li>
+                }
+                @if (cell.overflow > 0) {
+                  <li class="text-slate-500">+{{ cell.overflow }}</li>
+                }
+              </ul>
+            }
+            @case ('pickup') {
+              <svg
+                class="pointer-events-none absolute inset-0 size-full"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <line
+                  x1="0"
+                  y1="100"
+                  x2="100"
+                  y2="0"
+                  stroke="#94a3b8"
+                  stroke-width="0.25mm"
+                  vector-effect="non-scaling-stroke"
+                />
+              </svg>
+              @if (cell.dropOff; as dropOff) {
+                <span
+                  class="absolute left-[0.4em] top-[0.25em] text-[1.2em]"
+                  [style.color]="dropOff.color"
+                  ><span class="sr-only">{{ 'print.sheet.dropOff' | translate }}: </span
+                  >{{ dropOff.text }}</span
+                >
+              }
+              @if (cell.pickUp; as pickUp) {
+                <span
+                  class="absolute bottom-[0.25em] right-[0.4em] text-[1.2em]"
+                  [style.color]="pickUp.color"
+                  ><span class="sr-only">{{ 'print.sheet.pickUp' | translate }}: </span
+                  >{{ pickUp.text }}</span
+                >
+              }
+            }
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

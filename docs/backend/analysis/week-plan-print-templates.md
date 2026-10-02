@@ -3,8 +3,8 @@
 Status: Backend implemented. `Features/PrintTemplates` ships the `PrintTemplate` aggregate (user- or
 group-owned), all eight slices and routes below, the index document, the inline snapshot, golden
 files and integration tests, including the `WorkLocation` row kind over
-[work-locations.md](work-locations.md). The print sheet and template editor
-([week-plan-printing.md](../../frontend/analysis/week-plan-printing.md)) are not built yet.
+[work-locations.md](work-locations.md). The print sheet and template editor are built too; see
+[week-plan-printing.md](../../frontend/analysis/week-plan-printing.md).
 
 ## Context
 
@@ -307,7 +307,11 @@ run in the handler (`PrintTemplateReferenceChecks`), as
 | `Row.CalendarIds` | 1–10 distinct ids where required |
 | `Row.TitleFilter` | 1–60 characters when present |
 | `Row.MaxItems` | 1–8 when present |
-| `GuardianColors` | at most one entry per guardian, at most 12 entries, each color 1–32 characters |
+| `GuardianColors` | at most one entry per guardian, at most 12 entries, each color trimmed, 1–32 characters |
+| `Row.CalendarIds` entries | a null id is rejected with `400`, not stored |
+
+Validation error keys use the camelCase JSON path (`rows[2].calendarIds`), so the editor can
+map them to fields. A `Blank` row may omit `label` entirely; the endpoint stores it as `""`.
 
 ## Routes
 
@@ -360,6 +364,9 @@ Status codes follow [http-status-codes.md](../http-status-codes.md):
 | Server-side rendering endpoint | None in v1; composition happens in the frontend |
 | `MealGroupId` write-time check | The caller must be a non-child member of that group (added during implementation, alongside the checks listed under Authorization) |
 | `AssignedToId` write-time check | None: a wrong assignee only filters a row down to nothing, and print-time authorization already covers access |
+| Write-time reference checks | Only over references that are new in the save, so co-editing a group template and keeping a stale row don't block later saves |
+| Wire format for enums | Numeric ordinals (`PaperSize`, `PrintRowKind`, `DayOfWeek` with `0` = Sunday); there is no string enum converter |
+| Concurrent edits | Expected-version appends; a true race is `409 concurrency_conflict`, not last-write-wins |
 | Guardian "away"/office rows | A dedicated `WorkLocation` row kind over [work-locations.md](work-locations.md), not a `CalendarMarker` with a title filter |
 
 ## Remaining open questions
