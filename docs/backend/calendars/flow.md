@@ -68,7 +68,7 @@ sequenceDiagram
 | `GET` | `/calendars/{calendarId}/occurrences` | Recomputes occurrences for a date range; template tasks produce one timed occurrence per current subtask. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/details` | Updates an item's name, description, or visual metadata. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/schedule` | Reschedules an item or changes time/date placement. |
-| `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings. |
+| `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings; `recurrence: null` makes the item one-off again. `400` for an interval below 1 or an `until` before the item's first date. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a plain task occurrence complete or incomplete. A template-scheduled task is rejected (400): it is completed one subtask at a time. Rejects marking a future occurrence complete. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/subtasks/{subtaskId}/completion` | Marks one subtask of a template-scheduled task occurrence complete or incomplete; each subtask is tracked independently. A plain task is rejected (400); an unknown subtask is 404. Rejects marking a future occurrence complete. |
 | `DELETE` | `/calendars/{calendarId}/items/{itemId}` | Soft-deletes an item. |

@@ -65,6 +65,10 @@ public static class CalendarsFeature
                     // explicit Kind discriminator -- see CompletionTargetJsonConverter.
                     json.Converters.Add(new CompletionTargetJsonConverter());
 
+                    // Recurrence (the creation events, RecurrenceUpdated, CalendarItem.Recurrence)
+                    // needs explicit Kind discriminators -- see RecurrenceJsonConverter.
+                    json.Converters.Add(new RecurrenceJsonConverter());
+
                     // CalendarItem.Schedule (ItemSchedule) needs an explicit Kind discriminator to
                     // round-trip through the snapshot -- see ItemScheduleJsonConverter.
                     json.Converters.Add(new ItemScheduleJsonConverter());

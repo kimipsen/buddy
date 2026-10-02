@@ -74,28 +74,28 @@ public sealed class CalendarEventShapeTests
 
     [Fact]
     public void EventItemCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new EventItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Standup", Icon.New("calendar"), Color.New("#00ff00"), FixedPeriod, null, FixedInstant),
+        new EventItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Standup", Icon.New("calendar"), Color.New("#00ff00"), FixedPeriod, new Recurrence.OneOff(), FixedInstant),
         "Calendars/EventItemCreated.json");
 
     [Fact]
     public void EventItemCreated_AllDay() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new EventItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Trip", Icon.New("calendar"), Color.New("#00ff00"), FixedAllDayPeriod, null, FixedInstant),
+        new EventItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Trip", Icon.New("calendar"), Color.New("#00ff00"), FixedAllDayPeriod, new Recurrence.OneOff(), FixedInstant),
         "Calendars/EventItemCreated_AllDay.json");
 
     [Fact]
     public void TaskItemCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "File taxes", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant, AssignedTo: null),
+        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "File taxes", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, new Recurrence.OneOff(), FixedInstant, AssignedTo: null),
         "Calendars/TaskItemCreated.json");
 
     [Fact]
     public void TaskItemCreated_AllDay() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, null, FixedInstant, AssignedTo: null),
+        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, new Recurrence.OneOff(), FixedInstant, AssignedTo: null),
         "Calendars/TaskItemCreated_AllDay.json");
 
     [Fact]
     public void TemplateTaskItemCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new TemplateTaskItemCreated(
-            FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant,
+            FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, new Recurrence.OneOff(), FixedInstant,
             AssignedTo: OtherUserId, TaskTemplateId: Guid.Parse("00000000-0000-0000-0000-000000000050")),
         "Calendars/TemplateTaskItemCreated.json");
 
@@ -121,8 +121,28 @@ public sealed class CalendarEventShapeTests
 
     [Fact]
     public void RecurrenceUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new RecurrenceUpdated(FixedItemId, null, new RecurrenceRule(RecurrenceFrequency.Weekly, 1, null), FixedUserId, FixedInstant),
+        new RecurrenceUpdated(FixedItemId, new Recurrence.OneOff(), new Recurrence.Repeating(RecurrenceFrequency.Weekly, 1, new RecurrenceEnd.Never()), FixedUserId, FixedInstant),
         "Calendars/RecurrenceUpdated.json");
+
+    [Fact]
+    public void RecurrenceUpdated_ToAnEndDate() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RecurrenceUpdated(
+            FixedItemId,
+            new Recurrence.Repeating(RecurrenceFrequency.Weekly, 1, new RecurrenceEnd.Never()),
+            new Recurrence.Repeating(RecurrenceFrequency.Monthly, 2, new RecurrenceEnd.On(new DateOnly(2025, 12, 31))),
+            FixedUserId,
+            FixedInstant),
+        "Calendars/RecurrenceUpdated_ToAnEndDate.json");
+
+    [Fact]
+    public void RecurrenceUpdated_ToAnEndDate_ReadsBack() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(
+        new RecurrenceUpdated(
+            FixedItemId,
+            new Recurrence.Repeating(RecurrenceFrequency.Weekly, 1, new RecurrenceEnd.Never()),
+            new Recurrence.Repeating(RecurrenceFrequency.Monthly, 2, new RecurrenceEnd.On(new DateOnly(2025, 12, 31))),
+            FixedUserId,
+            FixedInstant),
+        "Calendars/RecurrenceUpdated_ToAnEndDate.json");
 
     [Fact]
     public void TaskCompletionChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(

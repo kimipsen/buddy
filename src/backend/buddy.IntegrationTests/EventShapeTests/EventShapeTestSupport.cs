@@ -21,7 +21,7 @@ internal static class EventShapeTestSupport
     // options.UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString, ...) for their
     // Marten stores -- enums as their name, strongly-typed ids unwrapped to their raw value, and
     // the union of the extra converters individual stores register: ValueTuples (Medicines,
-    // Mealplans, Pickups), PickupAssignee (Pickups) and CompletionTarget (Calendars, Progress).
+    // Mealplans, Pickups), PickupAssignee (Pickups), CompletionTarget (Calendars, Progress) and Recurrence (Calendars).
     // Each extra converter only handles its own type, so registering all of them here can't change
     // the shape of an event from a store that doesn't register it.
     public static JsonSerializerOptions CreateEventSerializerOptions() => new()
@@ -32,7 +32,8 @@ internal static class EventShapeTestSupport
             new StronglyTypedIdJsonConverterFactory(),
             new ValueTupleJsonConverterFactory(),
             new PickupAssigneeJsonConverter(),
-            new CompletionTargetJsonConverter()
+            new CompletionTargetJsonConverter(),
+            new RecurrenceJsonConverter()
         }
     };
 

@@ -51,5 +51,5 @@ public sealed record MedicineScheduleRescheduled(MedicineId Id, MedicineWindow B
 public sealed record MedicineScheduleStopped(MedicineId Id, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
 // Also used to undo a mark -- After: DoseStatus.Pending, no separate "unmark" event, the same way
-// RecurrenceUpdated covers both adding and removing a recurrence via After: null.
+// RecurrenceUpdated covers both adding and removing a recurrence via After: Recurrence.OneOff.
 public sealed record DoseStatusChanged(MedicineId Id, DateOnly Date, TimeOnly Time, DoseStatus Before, DoseStatus After, UserId ModifiedBy, DateTimeOffset OccurredAt);

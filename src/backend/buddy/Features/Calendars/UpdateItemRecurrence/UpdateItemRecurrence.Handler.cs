@@ -47,9 +47,19 @@ public static class UpdateItemRecurrenceHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        if (item.Recurrence == command.Recurrence)
+        // Re-sending the stored recurrence is a no-op, even for an item a reschedule has since
+        // moved past its Until.
+        if (item.Recurrence.Equals(command.Recurrence))
         {
             return new Result<CalendarItem>.Success(item);
+        }
+
+        var problems = RecurrenceRules.Problems(command.Recurrence, item.SeedDate).ToArray();
+
+        if (problems.Length > 0)
+        {
+            return new Result<CalendarItem>.Validation(new ValidationProblem(
+                problems.GroupBy(p => p.Key).ToDictionary(g => g.Key, g => g.Select(p => p.Message).ToArray())));
         }
 
         await items.AppendAsync(

@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-4 and 5.1-5.4 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
+Status: Phases 0-4 and 5.1-5.5 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
 
 ## Context
 
@@ -616,6 +616,27 @@ RecurrenceEnd  = Never | On(DateOnly Until)
 - The wire format keeps `recurrence: null` and `until: null` and maps at the endpoint, so no
   frontend change is needed.
 - Add the missing validator rule: `Until` must be on or after the seed date.
+
+#### As built (5.5)
+
+- **Types.** `RecurrenceRule.cs` became `Types/Recurrence.cs` (`Recurrence`, `RecurrenceEnd`).
+  `RecurrenceJsonConverter` persists `{"Kind":"OneOff"}` or `{"Kind":"Repeating","Frequency",
+  "IntervalCount","End":{"Kind":"Never"}|{"Kind":"On","Until"}}` in the events and snapshot,
+  registered in `CalendarsFeature` and `EventShapeTestSupport`. Six golden files changed, plus a new
+  `RecurrenceUpdated_ToAnEndDate.json` with a read-back test.
+- **Wire unchanged.** `RecurrenceRuleRequest.ToRecurrence` / `.From` map at the endpoints, and
+  `CalendarItemResponse.Recurrence` is still `null` for a one-off item. No frontend change.
+- **Rules.** `RecurrenceRules.Problems(recurrence, seed)` holds the interval rule and the new
+  `Until >= seed` rule (`Recurrence.Until`), shared by `CreateItemValidator` (seed: the event's
+  start date or the due date), `ScheduleTaskFromTemplateValidator` (the start date) and
+  `UpdateItemRecurrenceHandler`, which checks `Until` against `CalendarItem.SeedDate` once the item
+  is loaded (its validator only checks the interval).
+- **Equality.** Unions have no `==`; `UpdateItemRecurrenceHandler`'s no-op check uses `Equals`
+  (structural, nested unions included) and runs before the `Until` rule, so re-sending the stored
+  recurrence stays a 200. `CalendarItemSnapshotTests` round-trips a repeating recurrence.
+- **Not covered.** `RescheduleItem` can still move an item's seed past its `Until`; the item then
+  has no occurrences. Rejecting that is a behaviour change left for a decision.
+- **Existing databases need a reset**: stored `Recurrence` values are the old flat shape.
 
 ### 5.6 User
 

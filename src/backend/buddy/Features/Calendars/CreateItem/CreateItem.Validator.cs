@@ -8,10 +8,13 @@ public sealed class CreateItemValidator : AbstractValidator<CreateItem>
     {
         RuleFor(x => x.Title).MaximumLength(200);
 
-        RuleFor(x => x.Recurrence!.IntervalCount)
-            .GreaterThanOrEqualTo(1)
-            .WithMessage("Recurrence interval count must be at least 1.")
-            .When(x => x.Recurrence is not null);
+        RuleFor(x => x.Recurrence).Custom((recurrence, context) =>
+        {
+            foreach (var (key, message) in RecurrenceRules.Problems(recurrence, SeedOf(context.InstanceToValidate.Schedule)))
+            {
+                context.AddFailure(key, message);
+            }
+        });
 
         // Which fields a kind carries is NewItemSchedule's job now. What's left is Period.TryCreate's
         // end-after-start check for an event, expressed here so it fires alongside every other
@@ -25,4 +28,10 @@ public sealed class CreateItemValidator : AbstractValidator<CreateItem>
             }
         });
     }
+
+    private static DateOnly SeedOf(NewItemSchedule schedule) => schedule switch
+    {
+        NewItemSchedule.Event @event => @event.StartsAt.Date,
+        NewItemSchedule.Task task => task.DueDate.Date,
+    };
 }

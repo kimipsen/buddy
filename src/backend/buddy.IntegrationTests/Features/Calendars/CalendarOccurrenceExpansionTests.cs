@@ -20,8 +20,8 @@ public sealed class CalendarOccurrenceExpansionTests
     private static readonly TimeZoneId Copenhagen = TimeZoneId.New("Europe/Copenhagen");
     private static readonly Icon CalendarIcon = Icon.New("calendar");
 
-    private static CalendarItemEvent TaskCreated(DueDate dueDate, RecurrenceRule? recurrence = null) =>
-        new TemplateTaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", null, Color.New("#ff0000"), dueDate, recurrence, DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
+    private static CalendarItemEvent TaskCreated(DueDate dueDate, Recurrence? recurrence = null) =>
+        new TemplateTaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", null, Color.New("#ff0000"), dueDate, recurrence ?? new Recurrence.OneOff(), DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
 
     private static TaskTemplateEvent TemplateCreated() =>
         new TaskTemplateCreated(FixedTemplateId, FixedUserId, FixedUserId, "Morning routine", Icon.New("sunrise"), Color.New("#ffaa00"), DateTimeOffset.UtcNow);
@@ -33,7 +33,7 @@ public sealed class CalendarOccurrenceExpansionTests
     public async Task A_daily_template_task_expands_into_back_to_back_subtask_occurrences()
     {
         var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
-        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due, new RecurrenceRule(RecurrenceFrequency.Daily, 1, null)));
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due, new Recurrence.Repeating(RecurrenceFrequency.Daily, 1, new RecurrenceEnd.Never())));
 
         var subtask1 = SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10));
         var subtask2 = SubtaskAdded("Get dressed", TimeSpan.FromMinutes(15));
@@ -65,7 +65,7 @@ public sealed class CalendarOccurrenceExpansionTests
     {
         var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
         var itemCreated = new TemplateTaskItemCreated(
-            FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("moon"), Color.New("#ff0000"), due, null, DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
+            FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("moon"), Color.New("#ff0000"), due, new Recurrence.OneOff(), DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, itemCreated);
 
         var subtask = new SubtaskAdded(FixedTemplateId, new Subtask(SubtaskId.New(), "Brush teeth", Icon.New("toothbrush"), TimeSpan.FromMinutes(10)), int.MaxValue, FixedUserId, DateTimeOffset.UtcNow);

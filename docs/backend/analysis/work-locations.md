@@ -47,9 +47,9 @@ patterns work, how one-off exceptions work, and who can see the data.
 It is not a new `CalendarItemKind`, a calendar flag, or a print-template
 `TitleFilter` convention.
 
-- **Calendar recurrence can't express it.** `RecurrenceRule` is
-  `Frequency + IntervalCount + Until`
-  ([RecurrenceRule.cs](../../../src/backend/buddy/Features/Calendars/Types/RecurrenceRule.cs)):
+- **Calendar recurrence can't express it.** A repeating `Recurrence` is
+  `Frequency + IntervalCount + End`
+  ([Recurrence.cs](../../../src/backend/buddy/Features/Calendars/Types/Recurrence.cs)):
   no by-weekday list and no exception dates. "Tuesdays and Thursdays" needs
   two items. "Every Tuesday except the week we're on holiday" can't be said at
   all. Widening `RecurrenceRule` for every event and task in the system, for a

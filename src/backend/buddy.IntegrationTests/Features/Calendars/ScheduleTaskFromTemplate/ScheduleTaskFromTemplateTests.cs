@@ -223,6 +223,20 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_recurrence_ending_before_the_start_date_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        // PostInvalidScheduleAsync starts tomorrow, so ending today is before the first occurrence.
+        var error = await PostInvalidScheduleAsync(
+            token, calendarId, Guid.CreateVersion7(), "Morning routine",
+            new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, DateOnly.FromDateTime(DateTime.UtcNow)));
+
+        Assert.Contains("Recurrence.Until", error.Details.Keys);
+    }
+
+    [Fact]
     public async Task A_200_character_title_and_a_recurrence_interval_count_of_one_are_accepted()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

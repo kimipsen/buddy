@@ -1,14 +1,20 @@
 {
   "Id": "00000000-0000-0000-0000-000000000030",
   "Before": {
-    "Kind": "OneOff"
-  },
-  "After": {
     "Kind": "Repeating",
     "Frequency": "Weekly",
     "IntervalCount": 1,
     "End": {
       "Kind": "Never"
+    }
+  },
+  "After": {
+    "Kind": "Repeating",
+    "Frequency": "Monthly",
+    "IntervalCount": 2,
+    "End": {
+      "Kind": "On",
+      "Until": "2025-12-31"
     }
   },
   "ModifiedBy": "00000000-0000-0000-0000-000000000001",

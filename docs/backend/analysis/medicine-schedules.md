@@ -43,7 +43,7 @@ Reasoning:
   capability only medicine schedules need today. Scoping it to a new
   aggregate keeps `Calendars` completely untouched.
 - Requirement 1 needs a "list of times per day" concept that doesn't exist on
-  `RecurrenceRule` ([RecurrenceRule.cs](../../../src/backend/buddy/Features/Calendars/Types/RecurrenceRule.cs))
+  `RecurrenceRule` ([Recurrence.cs](../../../src/backend/buddy/Features/Calendars/Types/Recurrence.cs))
   today. Widening `RecurrenceRule` for every event/task in the system, for a
   need specific to medicine dosing, would be a speculative generalization —
   the kind of change that should wait until a second caller actually needs

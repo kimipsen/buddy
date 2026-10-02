@@ -258,6 +258,57 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_recurrence_ending_before_the_due_date_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var dueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var error = await PostInvalidItemAsync(token, calendarId, new
+        {
+            Title = "Water plants",
+            Icon = "task",
+            Color = "#ff0000",
+            Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 1, Until = (DateOnly?)dueDate.AddDays(-1) },
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Task,
+                IsAllDay = false,
+                DueDate = new { Date = dueDate, Time = new TimeOnly(17, 0) }
+            }
+        });
+
+        Assert.Contains("Recurrence.Until", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_recurrence_ending_on_the_due_date_is_accepted_and_returned()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var dueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, "Water plants", dueDate: dueDate,
+            recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Weekly, 2, dueDate));
+
+        Assert.NotNull(item);
+        Assert.Equal(new RecurrenceRuleDto(RecurrenceFrequency.Weekly, 2, dueDate), item.Recurrence);
+    }
+
+    [Fact]
+    public async Task An_item_without_a_recurrence_is_returned_with_a_null_recurrence()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, "Water plants");
+
+        Assert.NotNull(item);
+        Assert.Null(item.Recurrence);
+    }
+
+    [Fact]
     public async Task A_recurrence_interval_count_of_one_is_accepted()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();

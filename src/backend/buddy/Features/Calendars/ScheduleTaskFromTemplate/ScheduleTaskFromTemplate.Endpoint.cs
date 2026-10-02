@@ -27,7 +27,7 @@ public static class ScheduleTaskFromTemplateEndpoint
                 request.TaskTemplateId,
                 request.StartDate,
                 request.StartTime,
-                request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null,
+                RecurrenceRuleRequest.ToRecurrence(request.Recurrence),
                 request.AssignedTo is { } assignedTo ? new UserId(assignedTo) : null,
                 request.Title,
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,

@@ -17,7 +17,7 @@ public sealed record CalendarItem(
     Icon? Icon,
     Color Color,
     ItemSchedule Schedule,
-    RecurrenceRule? Recurrence,
+    Recurrence Recurrence,
     // Completed occurrences only -- "not completed" is the implicit default, so it is absence.
     ImmutableHashSet<CompletionKey> CompletionLog,
     UserId LastModifiedBy,
@@ -39,6 +39,14 @@ public sealed record CalendarItem(
     {
         ItemSchedule.Event @event => @event.Period.StartsAt.Date.ToDateTime(@event.Period.StartsAt.Time),
         ItemSchedule.Task task => task.DueDate.Date.ToDateTime(task.DueDate.Time),
+    };
+
+    // The date a Recurrence steps from: an event's start date, a task's due date.
+    [JsonIgnore]
+    public DateOnly SeedDate => Schedule switch
+    {
+        ItemSchedule.Event @event => @event.Period.StartsAt.Date,
+        ItemSchedule.Task task => task.DueDate.Date,
     };
 
     public static CalendarItem? Rehydrate(IEnumerable<CalendarItemEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
@@ -94,7 +102,7 @@ public sealed record CalendarItem(
     };
 
     private static CalendarItem New(
-        CalendarItemId id, CalendarId calendarId, UserId createdBy, string title, Icon? icon, Color color, ItemSchedule schedule, RecurrenceRule? recurrence) =>
+        CalendarItemId id, CalendarId calendarId, UserId createdBy, string title, Icon? icon, Color color, ItemSchedule schedule, Recurrence recurrence) =>
         new(id, calendarId, createdBy, title, icon, color, schedule, recurrence,
             ImmutableHashSet<CompletionKey>.Empty, createdBy, IsDeleted: false);
 }

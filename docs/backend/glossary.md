@@ -148,13 +148,16 @@ The start and end timestamps for a period. These values are stored as calendar-l
 ### DueDate
 The date and time due for a task item.
 
-### RecurrenceRule
-Defines how an event or task repeats.
+### Recurrence
+Defines whether and how an event or task repeats: `OneOff` (only on its first date), or
+`Repeating`.
 
-Properties:
+Repeating properties:
 - Frequency: Daily, Weekly, Monthly, or Yearly
-- IntervalCount: how often the recurrence repeats
-- Until: optional end date for the recurrence
+- IntervalCount: how often the recurrence repeats (at least 1)
+- End: `Never`, or `On(Until)`, an inclusive end date no earlier than the item's first date
+
+On the wire a one-off item has `recurrence: null`, and a never-ending one has `until: null`.
 
 ### RecurrenceFrequency
 The recurrence pattern used by a repeating item.
@@ -173,10 +176,10 @@ The visual metadata for an item.
 ## Event and task concepts
 
 ### Event item
-A calendar item whose schedule is represented by a `Period`. It can be repeated using a `RecurrenceRule`.
+A calendar item whose schedule is represented by a `Period`. It can be repeated using a `Recurrence`.
 
 ### Task item
-A calendar item whose schedule is represented by a `DueDate`. It can also repeat using a `RecurrenceRule`.
+A calendar item whose schedule is represented by a `DueDate`. It can also repeat using a `Recurrence`.
 
 A task can be assigned to a calendar member. A task scheduled from a task template also retains the template identifier used to expand the task into its subtasks.
 

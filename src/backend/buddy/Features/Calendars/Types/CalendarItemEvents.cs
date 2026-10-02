@@ -50,7 +50,7 @@ public sealed record EventItemCreated(
     Icon? Icon,
     Color Color,
     Period Period,
-    RecurrenceRule? Recurrence,
+    Recurrence Recurrence,
     DateTimeOffset OccurredAt);
 
 public sealed record TaskItemCreated(
@@ -61,7 +61,7 @@ public sealed record TaskItemCreated(
     Icon? Icon,
     Color Color,
     DueDate DueDate,
-    RecurrenceRule? Recurrence,
+    Recurrence Recurrence,
     DateTimeOffset OccurredAt,
     UserId? AssignedTo);
 
@@ -76,7 +76,7 @@ public sealed record TemplateTaskItemCreated(
     Icon? Icon,
     Color Color,
     DueDate DueDate,
-    RecurrenceRule? Recurrence,
+    Recurrence Recurrence,
     DateTimeOffset OccurredAt,
     UserId? AssignedTo,
     Guid TaskTemplateId);
@@ -87,7 +87,7 @@ public sealed record EventRescheduled(CalendarItemId Id, Period Before, Period A
 
 public sealed record TaskRescheduled(CalendarItemId Id, DueDate Before, DueDate After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
-public sealed record RecurrenceUpdated(CalendarItemId Id, RecurrenceRule? Before, RecurrenceRule? After, UserId ModifiedBy, DateTimeOffset OccurredAt);
+public sealed record RecurrenceUpdated(CalendarItemId Id, Recurrence Before, Recurrence After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
 // OccurrenceDate keys a single occurrence of a (possibly recurring) task, mirroring
 // MedicineSchedule.DoseLog's per-occurrence keying -- completing today's instance of a daily task

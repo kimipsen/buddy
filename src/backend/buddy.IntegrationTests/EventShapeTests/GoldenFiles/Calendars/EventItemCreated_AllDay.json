@@ -16,6 +16,8 @@
     },
     "IsAllDay": true
   },
-  "Recurrence": null,
+  "Recurrence": {
+    "Kind": "OneOff"
+  },
   "OccurredAt": "2025-01-01T12:00:00+00:00"
 }

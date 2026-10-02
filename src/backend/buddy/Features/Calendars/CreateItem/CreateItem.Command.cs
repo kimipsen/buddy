@@ -11,7 +11,7 @@ public sealed record CreateItem(
     Icon? Icon,
     Color Color,
     NewItemSchedule Schedule,
-    RecurrenceRule? Recurrence)
+    Recurrence Recurrence)
 {
     public static CreateItem FromClaims(
         ClaimsPrincipal principal,
@@ -20,6 +20,6 @@ public sealed record CreateItem(
         Icon? icon,
         Color color,
         NewItemSchedule schedule,
-        RecurrenceRule? recurrence) =>
+        Recurrence recurrence) =>
         new(principal.GetRequiredUserId(), calendarId, title, icon, color, schedule, recurrence);
 }

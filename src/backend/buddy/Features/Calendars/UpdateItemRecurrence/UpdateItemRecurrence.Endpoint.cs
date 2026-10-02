@@ -21,7 +21,7 @@ public static class UpdateItemRecurrenceEndpoint
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var recurrence = request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null;
+            var recurrence = RecurrenceRuleRequest.ToRecurrence(request.Recurrence);
             var command = UpdateItemRecurrence.FromClaims(principal, new CalendarId(calendarId), new CalendarItemId(itemId), recurrence);
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 

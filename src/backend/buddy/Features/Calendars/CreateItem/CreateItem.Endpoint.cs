@@ -28,7 +28,7 @@ public static class CreateItemEndpoint
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
                 new Color(request.Color),
                 request.Schedule.ToSchedule(),
-                request.Recurrence is { } r ? new RecurrenceRule(r.Frequency, r.IntervalCount, r.Until) : null);
+                RecurrenceRuleRequest.ToRecurrence(request.Recurrence));
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
@@ -46,7 +46,26 @@ public static class CreateItemEndpoint
     }
 }
 
-public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until = null);
+// The wire form of Recurrence: null for a one-off item, and a null Until for one that never ends.
+public sealed record RecurrenceRuleRequest(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until = null)
+{
+    public static Recurrence ToRecurrence(RecurrenceRuleRequest? request) => request is null
+        ? new Recurrence.OneOff()
+        : new Recurrence.Repeating(
+            request.Frequency,
+            request.IntervalCount,
+            request.Until is { } until ? new RecurrenceEnd.On(until) : new RecurrenceEnd.Never());
+
+    public static RecurrenceRuleRequest? From(Recurrence recurrence) => recurrence switch
+    {
+        Recurrence.OneOff => null,
+        Recurrence.Repeating repeating => new RecurrenceRuleRequest(repeating.Frequency, repeating.IntervalCount, repeating.End switch
+        {
+            RecurrenceEnd.Never => null,
+            RecurrenceEnd.On on => on.Until,
+        }),
+    };
+}
 
 public sealed record CreateItemRequest(
     string Title,
@@ -76,7 +95,7 @@ public sealed record CalendarItemResponse(
         item.Icon?.Value,
         item.Color.Value,
         ItemScheduleResponse.From(item.Schedule),
-        item.Recurrence is { } r ? new RecurrenceRuleRequest(r.Frequency, r.IntervalCount, r.Until) : null,
+        RecurrenceRuleRequest.From(item.Recurrence),
         item.CreatedBy.Value,
         item.LastModifiedBy.Value);
 }

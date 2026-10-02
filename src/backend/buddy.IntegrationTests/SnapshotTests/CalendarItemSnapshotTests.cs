@@ -73,6 +73,33 @@ public sealed class CalendarItemSnapshotTests(BuddyApiFixture fixture)
         await AssertSnapshotMatchesReplayAsync(task!.Id);
     }
 
+    // RecurrenceJsonConverter round-trips a repeating recurrence with an end date.
+    [Fact]
+    public async Task The_snapshot_matches_a_full_replay_for_a_repeating_item()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Snapshot Recurrence");
+        var day = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, ownerToken, calendarId, "Water plants", day);
+        Assert.NotNull(task);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            _.Patch.Json(new { Recurrence = new { Frequency = RecurrenceFrequency.Monthly, IntervalCount = 2, Until = (DateOnly?)day.AddDays(90) } })
+                .ToUrl($"/calendars/{calendarId}/items/{task.Id}/recurrence");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await AssertSnapshotMatchesReplayAsync(task.Id);
+
+        var snapshot = await fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>()
+            .FindSnapshotAsync(new CalendarItemId(task.Id), CancellationToken.None);
+        Assert.Equal(
+            new Recurrence.Repeating(RecurrenceFrequency.Monthly, 2, new RecurrenceEnd.On(day.AddDays(90))),
+            snapshot!.Recurrence);
+    }
+
     private async Task AssertSnapshotMatchesReplayAsync(Guid itemId)
     {
         var items = fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>();

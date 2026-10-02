@@ -2,18 +2,23 @@ namespace buddy.Features.Calendars;
 
 public static class RecurrenceExpansion
 {
-    // Every occurrence date for `rule` starting at `seed`, intersected with [from, to] (both
-    // inclusive). A null rule yields the seed date alone, if it falls in range. Each candidate is
+    // Every occurrence date for `recurrence` starting at `seed`, intersected with [from, to] (both
+    // inclusive). A one-off item yields the seed date alone, if it falls in range. Each candidate is
     // computed as an offset from `seed` (never from the previous candidate), so a clamped monthly
     // occurrence (see AddMonthsClamped) never drags later occurrences off the seed's day-of-month.
-    public static IReadOnlyCollection<DateOnly> ExpandDates(DateOnly seed, RecurrenceRule? rule, DateOnly from, DateOnly to)
+    public static IReadOnlyCollection<DateOnly> ExpandDates(DateOnly seed, Recurrence recurrence, DateOnly from, DateOnly to) => recurrence switch
     {
-        if (rule is null)
-        {
-            return seed >= from && seed <= to ? [seed] : [];
-        }
+        Recurrence.OneOff => seed >= from && seed <= to ? [seed] : [],
+        Recurrence.Repeating repeating => ExpandRepeating(seed, repeating, from, to),
+    };
 
-        var until = rule.Until is { } ruleUntil && ruleUntil < to ? ruleUntil : to;
+    private static List<DateOnly> ExpandRepeating(DateOnly seed, Recurrence.Repeating rule, DateOnly from, DateOnly to)
+    {
+        var until = rule.End switch
+        {
+            RecurrenceEnd.On on when on.Until < to => on.Until,
+            RecurrenceEnd.On or RecurrenceEnd.Never => to,
+        };
         var dates = new List<DateOnly>();
         var step = 0;
         var current = seed;
