@@ -4,7 +4,7 @@ namespace buddy.Common.Concurrency;
 // scope that turns a handler's ReadAsync -> AppendAsync into an expected-version append.
 public static class StreamVersionScopeMiddleware
 {
-    public static IDisposable? Before() => StreamVersionTracker.BeginScope();
+    public static IDisposable Before() => StreamVersionTracker.BeginScope();
 
-    public static void Finally(IDisposable? scope) => scope?.Dispose();
+    public static void Finally(IDisposable scope) => scope.Dispose();
 }

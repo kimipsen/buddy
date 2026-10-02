@@ -5,6 +5,8 @@ using buddy.Common.Idempotency;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Fixtures;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Xunit;
 
 namespace buddy.IntegrationTests.Common.Idempotency;
@@ -96,5 +98,26 @@ public sealed class IdempotencyKeyTests(BuddyApiFixture fixture)
         });
 
         Assert.NotEqual(first.ReadAsJson<GroupResponseDto>().Id, second.ReadAsJson<GroupResponseDto>().Id);
+    }
+
+    [Fact]
+    public async Task Cleanup_removes_expired_completed_keys_but_keeps_a_key_still_in_progress()
+    {
+        var repository = fixture.Host.Services.GetRequiredService<IdempotencyKeyRepository>();
+        var userId = Guid.NewGuid();
+        var completedKey = Guid.NewGuid().ToString();
+        var inProgressKey = Guid.NewGuid().ToString();
+
+        Assert.True(await repository.TryReserveAsync(userId, completedKey, "fingerprint", CancellationToken.None));
+        Assert.True(await repository.TryReserveAsync(userId, inProgressKey, "fingerprint", CancellationToken.None));
+        await repository.CompleteAsync(userId, completedKey, 204, contentType: null, [], CancellationToken.None);
+
+        // Every completed key is past a zero retention; no in-progress key is ten years old.
+        await repository.DeleteExpiredAsync(TimeSpan.Zero, TimeSpan.FromDays(3650), CancellationToken.None);
+
+        Assert.Null(await repository.FindAsync(userId, completedKey, CancellationToken.None));
+        var inProgress = await repository.FindAsync(userId, inProgressKey, CancellationToken.None);
+        Assert.NotNull(inProgress);
+        Assert.Null(inProgress.Response);
     }
 }

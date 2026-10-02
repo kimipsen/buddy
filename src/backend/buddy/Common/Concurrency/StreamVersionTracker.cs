@@ -27,12 +27,12 @@ public static class StreamVersionTracker
 
     public static bool IsTracking => Current.Value is not null;
 
-    // Returns null when a scope is already active: the outer owner closes it.
-    public static IDisposable? BeginScope()
+    // When a scope is already active, returns a no-op: the outer owner closes it.
+    public static IDisposable BeginScope()
     {
         if (Current.Value is not null)
         {
-            return null;
+            return NestedScope.Instance;
         }
 
         Current.Value = new();
@@ -83,5 +83,14 @@ public static class StreamVersionTracker
     private sealed class Scope : IDisposable
     {
         public void Dispose() => Current.Value = null;
+    }
+
+    private sealed class NestedScope : IDisposable
+    {
+        public static readonly NestedScope Instance = new();
+
+        public void Dispose()
+        {
+        }
     }
 }

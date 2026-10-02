@@ -109,22 +109,22 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
             return;
         }
 
-        if (record.Status == IdempotencyStatus.InProgress)
+        if (record.Response is not { } response)
         {
             await WriteConflictAsync(context, "idempotency_key_in_progress", "A request with this Idempotency-Key is already being processed.");
             return;
         }
 
-        context.Response.StatusCode = record.ResponseStatusCode ?? StatusCodes.Status200OK;
+        context.Response.StatusCode = response.StatusCode;
 
-        if (record.ResponseContentType is { } contentType)
+        if (response.ContentType is { } contentType)
         {
             context.Response.ContentType = contentType;
         }
 
-        if (record.ResponseBody is { Length: > 0 } body)
+        if (response.Body.Length > 0)
         {
-            await context.Response.Body.WriteAsync(body, cancellationToken);
+            await context.Response.Body.WriteAsync(response.Body, cancellationToken);
         }
     }
 

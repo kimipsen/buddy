@@ -733,6 +733,16 @@ WorkDayStatus   = Unplanned | Off | AtLocation(WorkLocationSummary Location, Wor
 | `AiSessionHistoryBuilder` `List<>?` lazy init | `[]` |
 | Subtask endpoints: `request.Icon is null ? null : new Icon(...)` | Normalize blank to inherit, as Calendars does. `""` currently becomes `Icon("")`. Also add a blank-icon rule to the TaskTemplate validators |
 
+#### As built (5.8)
+
+Committed per group.
+
+- **Common.** `IdempotencyRecord` lost `Status` and its three nullable response fields for one
+  `CompletedResponse? Response(StatusCode, ContentType?, Body)`: null means in progress, so the
+  status can't disagree with the response. The cleanup query filters on `Response == null` (new
+  test). The replay's `?? 200` is gone. `StreamVersionTracker.BeginScope()` returns a no-op
+  singleton for a nested scope instead of null.
+
 ## Phase 6: drop `Before?` from events
 
 **Decision: drop `Before` from `MealRated`, `MealAssignedToSlot`, `PickupAssigned` and

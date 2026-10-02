@@ -21,7 +21,7 @@ public sealed class IdempotencyKeyRepository(IIdempotencyStore store)
     {
         var record = new IdempotencyRecord(
             IdempotencyRecord.BuildId(userId, key), userId, key, fingerprint,
-            IdempotencyStatus.InProgress, ResponseStatusCode: null, ResponseContentType: null, ResponseBody: null, DateTimeOffset.UtcNow);
+            Response: null, DateTimeOffset.UtcNow);
 
         await using var session = store.LightweightSession();
         session.Insert(record);
@@ -51,13 +51,7 @@ public sealed class IdempotencyKeyRepository(IIdempotencyStore store)
             return;
         }
 
-        session.Store(existing with
-        {
-            Status = IdempotencyStatus.Completed,
-            ResponseStatusCode = statusCode,
-            ResponseContentType = contentType,
-            ResponseBody = responseBody,
-        });
+        session.Store(existing with { Response = new CompletedResponse(statusCode, contentType, responseBody) });
 
         await session.SaveChangesAsync(cancellationToken);
     }
@@ -89,8 +83,8 @@ public sealed class IdempotencyKeyRepository(IIdempotencyStore store)
 
             var staleIds = await session.Query<IdempotencyRecord>()
                 .Where(r =>
-                    (r.Status == IdempotencyStatus.Completed && r.CreatedAt < completedCutoff) ||
-                    (r.Status == IdempotencyStatus.InProgress && r.CreatedAt < inProgressCutoff))
+                    (r.Response != null && r.CreatedAt < completedCutoff) ||
+                    (r.Response == null && r.CreatedAt < inProgressCutoff))
                 .Select(r => r.Id)
                 .Take(1000)
                 .ToListAsync(cancellationToken);
