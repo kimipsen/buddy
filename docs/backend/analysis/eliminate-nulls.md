@@ -760,6 +760,8 @@ Committed per group.
 - **Progress.** `ProgressSummary.CurrentIcon?` became a non-null `DisplayIcon` (the reached goal
   post's icon, else the next one's). `progress-badge.ts` takes a required `displayIcon`, and
   `children-overview.ts` reads it directly.
+- **Pickups.** `AssignPickupHandler.ValidateRelationshipAsync` returns `ValidationProblem?`, the
+  same shape as `ValidateCommandAsync`.
 
 ## Phase 6: drop `Before?` from events
 
