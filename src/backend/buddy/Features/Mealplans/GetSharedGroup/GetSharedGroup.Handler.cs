@@ -4,13 +4,20 @@ using buddy.Features.Guardians;
 
 namespace buddy.Features.Mealplans;
 
-public sealed record SharedMealplanGroup(GroupId Id, string Name);
+// Whether the plan is shared with a group right now. A group that no longer exists counts as not
+// shared.
+public union MealplanGroupShare(MealplanGroupShare.NotShared, MealplanGroupShare.Shared)
+{
+    public sealed record NotShared;
+
+    public sealed record Shared(GroupId Id, string Name);
+}
 
 // The only read path for "is this family's plan currently shared, and with which group" -- gated
 // on Manage tier (guardian only), the same principal who can share/unshare in the first place.
 public static class GetSharedGroupHandler
 {
-    public static async Task<Result<SharedMealplanGroup?>> Handle(
+    public static async Task<Result<MealplanGroupShare>> Handle(
         GetSharedGroup query, IMealPlanEventStore mealPlans, IGuardianLinkEventStore guardians, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         var userId = query.UserId;
@@ -19,14 +26,14 @@ public static class GetSharedGroupHandler
 
         if (access != MealplanAccess.Allowed)
         {
-            return access.ToDeniedResult<SharedMealplanGroup?>();
+            return access.ToDeniedResult<MealplanGroupShare>();
         }
 
         var mealPlanId = await MealFamilyResolution.ResolveFamilyMealPlanIdAsync(query.ChildId, guardians, mealPlans, cancellationToken);
 
         if (mealPlanId is null)
         {
-            return new Result<SharedMealplanGroup?>.Success(null);
+            return new Result<MealplanGroupShare>.Success(new MealplanGroupShare.NotShared());
         }
 
         var plan = await mealPlans.FindSnapshotAsync(mealPlanId, cancellationToken)
@@ -34,11 +41,13 @@ public static class GetSharedGroupHandler
 
         if (plan.SharedWithGroupId is not { } groupId)
         {
-            return new Result<SharedMealplanGroup?>.Success(null);
+            return new Result<MealplanGroupShare>.Success(new MealplanGroupShare.NotShared());
         }
 
         var group = Group.Rehydrate(await groups.ReadAsync(groupId, cancellationToken));
 
-        return new Result<SharedMealplanGroup?>.Success(group is null ? null : new SharedMealplanGroup(groupId, group.Name));
+        return new Result<MealplanGroupShare>.Success(group is null
+            ? new MealplanGroupShare.NotShared()
+            : new MealplanGroupShare.Shared(groupId, group.Name));
     }
 }

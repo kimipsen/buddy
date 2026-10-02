@@ -315,11 +315,11 @@ describe('MedicinesService', () => {
       await expect(promise).resolves.toEqual({ groupId: 'group-1', groupName: 'The Fam' });
     });
 
-    it('returns null when not shared', async () => {
+    it('returns null for a 204 (not shared)', async () => {
       const promise = service.getSharedGroup(childId);
 
       const req = httpMock.expectOne(`${apiBaseUrl}/medicines/children/${childId}/group-share`);
-      req.flush({ groupId: null, groupName: null });
+      req.flush(null, { status: 204, statusText: 'No Content' });
 
       await expect(promise).resolves.toBeNull();
     });

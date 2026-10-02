@@ -410,20 +410,11 @@ describe('MealplansService', () => {
       await expect(promise).resolves.toEqual({ groupId: 'group-1', groupName: 'The Fam' });
     });
 
-    it('returns null when groupId is null', async () => {
+    it('returns null for a 204 (not shared)', async () => {
       const promise = service.getSharedGroup('child-1');
 
       const req = httpMock.expectOne(`${apiBaseUrl}/mealplans/children/child-1/plan/groups`);
-      req.flush({ groupId: null, groupName: null });
-
-      await expect(promise).resolves.toBeNull();
-    });
-
-    it('returns null when groupName is missing but groupId is present', async () => {
-      const promise = service.getSharedGroup('child-1');
-
-      const req = httpMock.expectOne(`${apiBaseUrl}/mealplans/children/child-1/plan/groups`);
-      req.flush({ groupId: 'group-1', groupName: null });
+      req.flush(null, { status: 204, statusText: 'No Content' });
 
       await expect(promise).resolves.toBeNull();
     });

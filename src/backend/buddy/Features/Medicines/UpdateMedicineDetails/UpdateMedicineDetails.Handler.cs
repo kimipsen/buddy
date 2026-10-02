@@ -31,15 +31,13 @@ public static class UpdateMedicineDetailsHandler
             return access.ToDeniedResult<MedicineSchedule>();
         }
 
-        var result = await UpdateForChildAsync(command.ChildId, command.MedicineId, userId, command.Name, command.Dosage, command.Icon, command.Color, medicines, cancellationToken);
-
-        return result is null ? new Result<MedicineSchedule>.NotFound() : new Result<MedicineSchedule>.Success(result);
+        return await UpdateForChildAsync(command.ChildId, command.MedicineId, userId, command.Name, command.Dosage, command.Icon, command.Color, medicines, cancellationToken);
     }
 
     // Shared with UpdateMedicineDetailsForGroupHandler -- everything past authorization is
-    // identical, mirrors CreateMedicineScheduleHandler.CreateForChildAsync. Null means no
-    // matching, non-stopped schedule for this child.
-    internal static async Task<MedicineSchedule?> UpdateForChildAsync(
+    // identical, mirrors CreateMedicineScheduleHandler.CreateForChildAsync. NotFound means
+    // no matching, non-stopped schedule for this child.
+    internal static async Task<Result<MedicineSchedule>> UpdateForChildAsync(
         UserId childId, MedicineId medicineId, UserId modifiedBy, string name, string dosage, Icon icon, Color color, IMedicineEventStore medicines, CancellationToken cancellationToken)
     {
         var events = await medicines.ReadAsync(medicineId, cancellationToken);
@@ -47,7 +45,7 @@ public static class UpdateMedicineDetailsHandler
 
         if (schedule is null || schedule.IsStopped || schedule.ChildId != childId)
         {
-            return null;
+            return new Result<MedicineSchedule>.NotFound();
         }
 
         var before = new MedicineDetails(schedule.Name, schedule.Dosage, schedule.Icon, schedule.Color);
@@ -55,11 +53,11 @@ public static class UpdateMedicineDetailsHandler
 
         if (before == after)
         {
-            return schedule;
+            return new Result<MedicineSchedule>.Success(schedule);
         }
 
         await medicines.AppendAsync(medicineId, [new MedicineDetailsUpdated(medicineId, before, after, modifiedBy, DateTimeOffset.UtcNow)], cancellationToken);
 
-        return schedule with { Name = name, Dosage = dosage, Icon = icon, Color = color, LastModifiedBy = modifiedBy };
+        return new Result<MedicineSchedule>.Success(schedule with { Name = name, Dosage = dosage, Icon = icon, Color = color, LastModifiedBy = modifiedBy });
     }
 }

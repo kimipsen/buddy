@@ -151,13 +151,13 @@ public sealed class MealplanGroupSharingTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(404);
         });
 
-        var afterUnshareResponse = await fixture.Host.Scenario(_ =>
+        // Not shared any more: 204, not a body with null fields.
+        await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
             _.Get.Url($"/mealplans/children/{child.Id}/plan/groups");
-            _.StatusCodeShouldBeOk();
+            _.StatusCodeShouldBe(204);
         });
-        Assert.Null(afterUnshareResponse.ReadAsJson<SharedGroupResponseDto>().GroupId);
     }
 
     [Fact]

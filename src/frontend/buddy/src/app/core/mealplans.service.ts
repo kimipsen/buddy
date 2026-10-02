@@ -198,15 +198,13 @@ export class MealplansService {
     );
   }
 
-  async getSharedGroup(childId: string): Promise<{ groupId: string; groupName: string } | null> {
-    const response = await firstValueFrom(
-      this.http.get<{ groupId: string | null; groupName: string | null }>(
+  // 200 with the group, or 204 (an empty body, so null) when it isn't shared.
+  getSharedGroup(childId: string): Promise<{ groupId: string; groupName: string } | null> {
+    return firstValueFrom(
+      this.http.get<{ groupId: string; groupName: string } | null>(
         `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/plan/groups`,
       ),
     );
-    return response.groupId && response.groupName
-      ? { groupId: response.groupId, groupName: response.groupName }
-      : null;
   }
 
   getGroupMealplanStatus(groupId: string): Promise<GroupMealplanStatus> {

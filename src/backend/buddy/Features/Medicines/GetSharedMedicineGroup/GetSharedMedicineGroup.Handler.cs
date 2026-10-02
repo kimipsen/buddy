@@ -4,14 +4,21 @@ using buddy.Features.Guardians;
 
 namespace buddy.Features.Medicines;
 
-public sealed record SharedMedicineGroup(GroupId Id, string Name);
+// Whether the medicine is shared with a group right now. A group that no longer exists counts as not
+// shared.
+public union MedicineGroupShare(MedicineGroupShare.NotShared, MedicineGroupShare.Shared)
+{
+    public sealed record NotShared;
+
+    public sealed record Shared(GroupId Id, string Name);
+}
 
 // The only read path for "is this child's medicine currently shared, and with which group" --
 // gated on Manage tier (guardian only), the same principal who can share/unshare in the first
 // place. Mirrors GetSharedGroupHandler.
 public static class GetSharedMedicineGroupHandler
 {
-    public static async Task<Result<SharedMedicineGroup?>> Handle(
+    public static async Task<Result<MedicineGroupShare>> Handle(
         GetSharedMedicineGroup query, IMedicineSharingEventStore sharing, IGuardianLinkEventStore guardians, IGroupEventStore groups, CancellationToken cancellationToken)
     {
         var userId = query.UserId;
@@ -20,14 +27,14 @@ public static class GetSharedMedicineGroupHandler
 
         if (access != MedicineAccess.Allowed)
         {
-            return access.ToDeniedResult<SharedMedicineGroup?>();
+            return access.ToDeniedResult<MedicineGroupShare>();
         }
 
         var sharingId = await sharing.FindIdForChildAsync(query.ChildId, cancellationToken);
 
         if (sharingId is null)
         {
-            return new Result<SharedMedicineGroup?>.Success(null);
+            return new Result<MedicineGroupShare>.Success(new MedicineGroupShare.NotShared());
         }
 
         var record = await sharing.FindSnapshotAsync(sharingId, cancellationToken)
@@ -35,11 +42,13 @@ public static class GetSharedMedicineGroupHandler
 
         if (record.SharedWithGroupId is not { } groupId)
         {
-            return new Result<SharedMedicineGroup?>.Success(null);
+            return new Result<MedicineGroupShare>.Success(new MedicineGroupShare.NotShared());
         }
 
         var group = Group.Rehydrate(await groups.ReadAsync(groupId, cancellationToken));
 
-        return new Result<SharedMedicineGroup?>.Success(group is null ? null : new SharedMedicineGroup(groupId, group.Name));
+        return new Result<MedicineGroupShare>.Success(group is null
+            ? new MedicineGroupShare.NotShared()
+            : new MedicineGroupShare.Shared(groupId, group.Name));
     }
 }

@@ -372,7 +372,7 @@ Notes:
 | `GET /mealplans/{mealPlanId}/ical/{token}` | `200` | `404` | Anonymous; a missing plan and a wrong/revoked token both collapse to `404`. |
 | `PUT /mealplans/children/{childId}/plan/groups/{groupId}` | `204` | `401`, `403`, `404` | `403` for the child, or for a caller lacking `Manage` role on the target group -- sharing needs both sides' consent; `404` for no relationship or no group access. |
 | `DELETE /mealplans/children/{childId}/plan/groups/{groupId}` | `204` | `401`, `403`, `404` | Idempotent unshare from a group not currently shared with; `403` for the child attempting to unshare. |
-| `GET /mealplans/children/{childId}/plan/groups` | `200` | `401`, `403`, `404` | `403` for the child attempting to view sharing status. Returns `200` with a null group when nothing is shared. |
+| `GET /mealplans/children/{childId}/plan/groups` | `200`, `204` | `401`, `403`, `404` | `403` for the child attempting to view sharing status. `200` with the group, or `204` when nothing is shared. |
 | `GET /mealplans/groups/{groupId}/plan` | `200` | `400`, `401`, `404` | `400` for an invalid/out-of-range `from`/`to`; no `403` is declared -- group `View` access never returns `Forbidden`. |
 | `PUT /mealplans/groups/{groupId}/plan` | `200` | `400`, `401`, `403`, `404` | `403` for a `View`-tier group member attempting to write; `404` for no group access or a plan not shared with the group. |
 | `DELETE /mealplans/groups/{groupId}/plan` | `204` | `401`, `403`, `404` | `403` for a `View`-tier group member attempting to write; `404` for no group access or a plan not shared with the group. |
@@ -396,7 +396,7 @@ Note: `PUT /groups/{groupId}/mealplan-permission-policy` is documented under the
 | `PUT /medicines/children/{childId}/doses/{medicineId}?date=...&time=...` | `200` | `400`, `401`, `403`, `404` | `400` for an invalid status value; `403` for a caller without `Mark` tier; `404` for no relationship, unknown medicine, or no dose at that date/time. |
 | `PUT /medicines/children/{childId}/group-share/{groupId}` | `204` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no relationship or an ineligible group. |
 | `DELETE /medicines/children/{childId}/group-share/{groupId}` | `204` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no relationship or no active share with that group. |
-| `GET /medicines/children/{childId}/group-share` | `200` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no guardian-child relationship. |
+| `GET /medicines/children/{childId}/group-share` | `200`, `204` | `401`, `403`, `404` | `403` for a caller without `Manage` tier; `404` for no guardian-child relationship. `204` when nothing is shared. |
 | `POST /medicines/groups/{groupId}/children/{childId}/schedules` | `200` | `400`, `401`, `403`, `404` | `403` for a group caller without `Manage`-tier medicine policy -- there is no `View` tier; `404` for a child not shared with the group. |
 | `GET /medicines/groups/{groupId}/children/{childId}/schedules` | `200` | `401`, `403`, `404` | `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group. |
 | `PATCH /medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/details` | `200` | `400`, `401`, `403`, `404` | `403` for a group caller without `Manage`-tier policy; `404` for a child not shared with the group or unknown medicine. |

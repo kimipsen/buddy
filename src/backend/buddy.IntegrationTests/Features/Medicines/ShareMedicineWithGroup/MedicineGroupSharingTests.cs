@@ -147,13 +147,13 @@ public sealed class MedicineGroupSharingTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(404);
         });
 
-        var afterUnshare = await fixture.Host.Scenario(_ =>
+        // Not shared any more: 204, not a body with null fields.
+        await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
             _.Get.Url($"/medicines/children/{child.Id}/group-share");
-            _.StatusCodeShouldBeOk();
+            _.StatusCodeShouldBe(204);
         });
-        Assert.Null(afterUnshare.ReadAsJson<SharedMedicineGroupResponseDto>().GroupId);
     }
 
     [Fact]

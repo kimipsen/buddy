@@ -750,6 +750,11 @@ Committed per group.
   APIs serialize a top-level value by runtime type, which skips a base-type converter). The frontend
   keeps a local `unreachable` state for a test request that itself failed. `ExecutionOutcome` carries
   `DraftEvents` (a list), and `AiSessionHistoryBuilder` drops its lazy `List<>?`.
+- **Sharing reads.** `GetSharedGroup` (meal plan) and `GetSharedMedicineGroup` return
+  `MealplanGroupShare` / `MedicineGroupShare` (`NotShared | Shared(Id, Name)`); the endpoints answer
+  200 `{groupId, groupName}` (both non-null) or 204. The frontend services return the body or null
+  for the 204. `UpdateMedicineDetailsHandler.UpdateForChildAsync` and
+  `RescheduleMedicineHandler.RescheduleForChildAsync` return `Result<MedicineSchedule>`.
 
 ## Phase 6: drop `Before?` from events
 

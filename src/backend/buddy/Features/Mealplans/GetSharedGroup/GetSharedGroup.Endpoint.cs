@@ -14,23 +14,24 @@ public static class GetSharedGroupEndpoint
 {
     public static RouteGroupBuilder MapGetSharedGroup(this RouteGroupBuilder mealplans)
     {
-        mealplans.MapGet("/children/{childId:guid}/plan/groups", async Task<Results<Ok<SharedGroupResponse>, NotFound, ForbidHttpResult>> (
+        mealplans.MapGet("/children/{childId:guid}/plan/groups", async Task<Results<Ok<SharedGroupResponse>, NoContent, NotFound, ForbidHttpResult>> (
             ClaimsPrincipal principal,
             Guid childId,
             IMessageBus bus,
             CancellationToken cancellationToken) =>
         {
             var query = GetSharedGroup.FromClaims(principal, new UserId(childId));
-            var result = await bus.InvokeAsync<Result<SharedMealplanGroup?>>(query, cancellationToken);
+            var result = await bus.InvokeAsync<Result<MealplanGroupShare>>(query, cancellationToken);
 
             return result switch
             {
-                Result<SharedMealplanGroup?>.Success(var group) => TypedResults.Ok(new SharedGroupResponse(group?.Id.Value, group?.Name)),
-                Result<SharedMealplanGroup?>.Forbidden => TypedResults.Forbid(),
-                Result<SharedMealplanGroup?>.NotFound => TypedResults.NotFound(),
+                Result<MealplanGroupShare>.Success(MealplanGroupShare.Shared(var groupId, var groupName)) => TypedResults.Ok(new SharedGroupResponse(groupId.Value, groupName)),
+                Result<MealplanGroupShare>.Success(MealplanGroupShare.NotShared) => TypedResults.NoContent(),
+                Result<MealplanGroupShare>.Forbidden => TypedResults.Forbid(),
+                Result<MealplanGroupShare>.NotFound => TypedResults.NotFound(),
                 // GetSharedGroupHandler never produces Validation -- there's no BadRequest in
                 // this route's declared results, so this collapses to NotFound like the others.
-                Result<SharedMealplanGroup?>.Validation => TypedResults.NotFound(),
+                Result<MealplanGroupShare>.Validation => TypedResults.NotFound(),
             };
         })
         .WithName("GetSharedGroup");
@@ -39,4 +40,5 @@ public static class GetSharedGroupEndpoint
     }
 }
 
-public sealed record SharedGroupResponse(Guid? GroupId, string? GroupName);
+// 204 No Content when the plan isn't shared with a group.
+public sealed record SharedGroupResponse(Guid GroupId, string GroupName);

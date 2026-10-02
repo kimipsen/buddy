@@ -28,9 +28,7 @@ public static class RescheduleMedicineForGroupHandler
             return resolved.Reraise<Unit, MedicineSchedule>();
         }
 
-        var result = await RescheduleMedicineHandler.RescheduleForChildAsync(
+        return await RescheduleMedicineHandler.RescheduleForChildAsync(
             command.ChildId, command.MedicineId, command.UserId, command.Times, command.StartDate, command.EndDate, medicines, cancellationToken);
-
-        return result is null ? new Result<MedicineSchedule>.NotFound() : new Result<MedicineSchedule>.Success(result);
     }
 }
