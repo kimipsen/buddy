@@ -72,8 +72,8 @@ and are unit-tested in Vitest:
   picked is column one. Day headers use the user's locale (`Intl` weekday
   names, matching the en/da dictionaries).
 - **Day bucketing:** an occurrence lands in every column its local
-  `[startsAt, endsAt)` overlaps. Tasks use `dueAt`. All-day items sort first,
-  then by start time.
+  `[timing.startsAt, timing.endsAt)` overlaps. Tasks use `sortAt` (their due instant). All-day
+  items sort first, then by start time.
 - **Work location rows:** with `workLocationId`, a day gets a mark when its
   resolved location has that id. Without it, the cell shows the location's
   icon and name in the guardian's template color. A day with no location
@@ -83,7 +83,7 @@ and are unit-tested in Vitest:
 - **Filtering:** `assignedToId` keeps only occurrences whose `assignedTo`
   matches. `TaskChecklist` additionally keeps only `kind === 'Task'`. For
   routine tasks scheduled from a template, subtasks are grouped under
-  `parentTitle`, as the child agenda already does.
+  `routine.parentTitle`, as the child agenda already does.
 - **Overflow:** a cell shows at most `maxItems` entries, then "+N".
 - **Pickup cells:** the `DropOff` occurrence fills the upper triangle and
   `PickUp` the lower one. `Guardian` shows the guardian's name in their
@@ -241,8 +241,8 @@ Where the build settled details this design left open:
 - **Unavailable calendar rows.** If any one of a row's calendars fails to load, the whole row
   prints as "not available" rather than a partial list that would look complete.
 - **Checklists print a routine once.** Subtasks scheduled from a task template collapse to one
-  tick box under their `parentTitle`. Grouping is per item id, so two different tasks that share
-  a title stay two tick boxes.
+  tick box under their `routine.parentTitle`. Grouping is per item id, so two different tasks that
+  share a title stay two tick boxes.
 - **Unfinished rows print blank.** A row with no source picked yet (no calendar, child or
   location) renders as an empty cell, not "not available"; that note is only for sources the
   printing guardian can't read.

@@ -97,8 +97,9 @@ A single-day all-day event is the `N=1` case of the same rule: UI start = end = 
 ## Occurrence expansion and the flattened `CalendarItemOccurrence`
 
 [`CalendarItemOccurrence`](../../../src/backend/buddy/Features/Calendars/Types/CalendarItemOccurrence.cs)
-is a computed, never-persisted projection — `StartsAt`/`EndsAt`/`DueAt` are already-resolved
-`DateTimeOffset?` instants, not the `Period`/`DueDate` value objects. It needs its own `IsAllDay`
+is a computed, never-persisted projection — its `Timing` (`OccurrenceTiming.Timed`'s
+`StartsAt`/`EndsAt`, or `OccurrenceTiming.Due`'s `DueAt`) carries already-resolved
+`DateTimeOffset` instants, not the `Period`/`DueDate` value objects. It needs its own `IsAllDay`
 property, since the instants alone can't answer "was this all-day" (an instant of exactly midnight
 is indistinguishable from a real midnight-start event, the same ambiguity the flag exists to avoid).
 `AddEventOccurrences`/`AddTaskOccurrences` set it from `item.Period!.IsAllDay` /
@@ -171,11 +172,13 @@ component — `date-select`/`time-select` are reused as-is, just conditionally s
   `CalendarEvent.IsAllDay` is a **read-only, computed** property — it's derived from `DtStart`
   having no time component, not something to set directly. `Todo` has no `IsAllDay` property at
   all; setting `Due` to a date-only `CalDateTime` is sufficient for it to serialize as
-  `DUE;VALUE=DATE:...`. `IcalFeedWriter.cs` uses the occurrence's local date
-  (`DateOnly.FromDateTime(occurrence.StartsAt.Value.DateTime)`, not `.UtcDateTime`) when building
-  these — safe because `TimeZoneResolution.ResolveInstant` constructs the `DateTimeOffset` as
+  `DUE;VALUE=DATE:...`. `IcalFeedWriter.cs` uses the resolved instant's local date
+  (`DateOnly.FromDateTime(instant.DateTime)`, not `.UtcDateTime`) when building these — safe
+  because `TimeZoneResolution.ResolveInstant` constructs the `DateTimeOffset` as
   `new DateTimeOffset(local, offset)`, so `.DateTime` returns the original local wall-clock value
-  unchanged, not a UTC-shifted one.
+  unchanged, not a UTC-shifted one. The instant itself comes from `occurrence.Timing`
+  (`Timed.StartsAt`/`EndsAt`) or `occurrence.SortAt` (a task's due instant), not a nullable
+  `StartsAt`/`DueAt` field.
 
 ## Open questions
 

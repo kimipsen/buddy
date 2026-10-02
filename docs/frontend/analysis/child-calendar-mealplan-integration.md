@@ -28,7 +28,7 @@ for the full rationale.
 
 ## Why meals can't just reuse the existing sort
 
-`CalendarOccurrence` items carry real timestamps (`startsAt`/`dueAt`), which
+`CalendarOccurrence` items carry a real timestamp (`sortAt`), which
 the calendar already sorts lexicographically as ISO instants. A
 `MealPlanEntry`
 ([`core/mealplans.service.ts:35-46`](../../../src/frontend/buddy/src/app/core/mealplans.service.ts))
