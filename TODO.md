@@ -291,3 +291,41 @@ since they cover most day-to-day work. After that, add `e2e-test` and
 `run-buddy`, then `feature-from-analysis`, using Sleep diary as its first
 real test. `mutation-fix-backend`, `sonar-triage` and `deploy` can come
 whenever they're needed.
+
+## Week plan printing and work locations (2026-10-02)
+
+Built and staged: guardian work locations, the print templates backend and the print frontend.
+The design and every decision are in
+[docs/frontend/analysis/week-plan-printing.md](docs/frontend/analysis/week-plan-printing.md),
+[docs/backend/analysis/week-plan-print-templates.md](docs/backend/analysis/week-plan-print-templates.md)
+and [docs/backend/analysis/work-locations.md](docs/backend/analysis/work-locations.md).
+
+Before calling it done:
+- [ ] Commit the staged print-templates backend and print frontend.
+- [ ] Have a Danish speaker review `translations/da/print.ts` and `translations/da/work-locations.ts`.
+  Claude wrote both; check in particular "Forælder" as the label for a guardian.
+- [ ] Print from Safari and check that A3/A4 landscape comes from `@page`. If Safari ignores it
+  and you have to pick the paper in the print dialog, write that down or consider a
+  server-side PDF.
+- [ ] Print from the installed web app on the iPad, through the share sheet.
+- [ ] Print a real week on paper and compare it with the old fridge sheet.
+
+Found along the way:
+- [ ] Some e2e specs fail only in a parallel full run: calendar, groups, task library and AI
+  settings. They pass when run serially. They are unrelated to printing, but a cold dev server
+  with several workers seems to push them over the timeout.
+- [ ] The `db:marten:*` tasks and `MARTEN_SCHEMAS` live only in the git-ignored `taskfile.yml`,
+  not in `taskfile.dist.yml`. `worklocations` and `printtemplates` were added locally, but other
+  clones don't get them. The skills and `CLAUDE.md` still point at `taskfile.yml`.
+  Either move the tasks into `taskfile.dist.yml` or document the local setup.
+
+Deferred until someone asks (each is additive; details are in the docs' open questions):
+- [ ] Print several weeks at once, for example a month as one PDF.
+- [ ] A `TransferPrintTemplateToGroup` slice, for turning a personal template into a shared one.
+- [ ] A configurable span, for example 14 days, if it stays legible on A4.
+- [ ] More row kinds, for example medicine doses and goal-post progress.
+- [ ] Work locations:
+  - A strict ISO-parity cycle mode, for patterns written as "even weeks".
+  - Effective-from dates for pattern changes, so a change doesn't rewrite past days.
+  - A view tier for group members who aren't co-guardians.
+  - Restoring an archived location.
