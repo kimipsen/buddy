@@ -24,7 +24,9 @@ public static class ResendEmailVerificationHandler
 
         var now = DateTimeOffset.UtcNow;
 
-        if (ResendCooldown.IsActive(user.EmailVerificationRequestedAt, now))
+        var lastSentAt = user.EmailVerification is EmailVerification.Pending pending ? pending.RequestedAt : (DateTimeOffset?)null;
+
+        if (ResendCooldown.IsActive(lastSentAt, now))
         {
             return new ResendCooldownActive("A verification email was already sent recently. Try again in a minute.");
         }

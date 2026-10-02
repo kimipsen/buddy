@@ -16,7 +16,7 @@ export interface Email {
 export interface CurrentUser {
   id: string;
   email: Email;
-  userName: string | null;
+  userName: string;
   name: PersonName;
   timeZoneId: string;
   language: string;

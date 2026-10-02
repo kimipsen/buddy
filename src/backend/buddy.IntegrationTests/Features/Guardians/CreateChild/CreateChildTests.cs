@@ -34,6 +34,39 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_child_starts_on_the_guardians_time_zone_and_language()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { TimeZoneId = "Europe/Copenhagen" }).ToUrl("/users/me/timezone");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Language = "da" }).ToUrl("/users/me/language");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        var children = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url("/users/me/children/");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var child = Assert.Single(children.ReadAsJson<ChildSummaryDto[]>());
+        Assert.Equal("Europe/Copenhagen", child.TimeZoneId);
+        Assert.Equal("da", child.Language);
+    }
+
+    [Fact]
     public async Task Rejects_a_username_that_is_already_in_use()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

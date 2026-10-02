@@ -43,12 +43,17 @@ namespace buddy.Features.Users
         };
     }
 
+    // TimeZoneId and Language are the user's starting values: UTC and the browser's language for an
+    // adult (GetOrCreateUserHandler), the creating guardian's for a child (CreateChildHandler).
+    // UserName is the preferred_username claim, or the Keycloak subject when there is none.
     public sealed record UserCreated(
         UserId UserId,
         KeycloakSubject KeycloakSubject,
         Email Email,
-        string? UserName,
+        string UserName,
         Name Name,
+        TimeZoneId TimeZoneId,
+        Language Language,
         DateTimeOffset OccurredAt);
 
     public sealed record UserDeleted(UserId UserId, DateTimeOffset OccurredAt);
@@ -64,15 +69,8 @@ namespace buddy.Features.Users
 
     public sealed record EmailVerified(UserId UserId, DateTimeOffset OccurredAt);
 
-    // No initial value is captured on UserCreated -- a user with no TimeZoneUpdated event yet
-    // implicitly defaults to UTC (see User.Rehydrate), the same "sparse log" convention Medicines'
-    // DoseLog already uses, so this stays additive over the existing UserCreated event shape.
     public sealed record TimeZoneUpdated(UserId UserId, TimeZoneId Before, TimeZoneId After, DateTimeOffset OccurredAt);
 
-    // No initial value is captured on UserCreated -- a user with no LanguageUpdated event yet
-    // implicitly defaults to English (see User.Rehydrate). GetOrCreateUserHandler appends one
-    // right after UserCreated when the browser's Accept-Language header resolves to a different
-    // supported language, the same way it conditionally appends EmailVerificationRequested.
     public sealed record LanguageUpdated(UserId UserId, Language Before, Language After, DateTimeOffset OccurredAt);
 
     public sealed record UserEventEntry(long Version, UserEvent Event);

@@ -36,6 +36,14 @@ public sealed class UserSnapshotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
 
+        // Leaves a pending verification, so EmailVerificationJsonConverter round-trips Pending.
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Email = $"changed-{Guid.NewGuid():N}@buddy.test" }).ToUrl("/users/me/email");
+            _.StatusCodeShouldBeOk();
+        });
+
         var users = fixture.Host.Services.GetRequiredService<IUserEventStore>();
         var id = new UserId(userId);
 
@@ -46,5 +54,7 @@ public sealed class UserSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(replayed);
         Assert.NotNull(snapshot);
         Assert.Equivalent(replayed, snapshot, strict: true);
+        Assert.True(snapshot.EmailVerification is EmailVerification.Pending);
+        Assert.Equal(replayed.EmailVerification, snapshot.EmailVerification);
     }
 }

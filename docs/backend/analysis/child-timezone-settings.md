@@ -1,5 +1,7 @@
 1. # Guardian-Managed Child Time Zone
 
+> Since [eliminate-nulls.md](eliminate-nulls.md) Phase 5.6, `User.TimeZoneId` is required and `ResolvedTimeZoneId` is gone; read the field directly.
+
 Status: Implemented
 
 ## Context

@@ -94,7 +94,14 @@ public static class UsersFeature
 
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
-                configure: json => json.Converters.Add(new StronglyTypedIdJsonConverterFactory()));
+                configure: json =>
+                {
+                    json.Converters.Add(new StronglyTypedIdJsonConverterFactory());
+
+                    // User.EmailVerification needs an explicit Kind discriminator to round-trip
+                    // through the snapshot -- see EmailVerificationJsonConverter.
+                    json.Converters.Add(new EmailVerificationJsonConverter());
+                });
 
             // Inline snapshots of User and GuardianLink, kept transactionally consistent with
             // every event append. Routed to a schema separate from "users" -- they're

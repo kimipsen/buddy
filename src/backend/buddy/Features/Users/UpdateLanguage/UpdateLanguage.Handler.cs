@@ -28,12 +28,12 @@ public static class UpdateLanguageHandler
             return new Result<User>.NotFound();
         }
 
-        if (user.ResolvedLanguage == command.Language)
+        if (user.Language == command.Language)
         {
             return new Result<User>.Success(user);
         }
 
-        var languageUpdated = new LanguageUpdated(userId, user.ResolvedLanguage, command.Language, DateTimeOffset.UtcNow);
+        var languageUpdated = new LanguageUpdated(userId, user.Language, command.Language, DateTimeOffset.UtcNow);
         await events.AppendAsync(userId, [languageUpdated], cancellationToken);
 
         return new Result<User>.Success(user with { Language = command.Language });

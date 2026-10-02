@@ -43,7 +43,7 @@ public static class GetCurrentUserEndpoint
 public sealed record UserResponse(
     UserId Id,
     Email Email,
-    string? UserName,
+    string UserName,
     Name Name,
     TimeZoneId TimeZoneId,
     Language Language)
@@ -53,6 +53,6 @@ public sealed record UserResponse(
         user.Email,
         user.UserName,
         user.Name,
-        user.ResolvedTimeZoneId,
-        user.ResolvedLanguage);
+        user.TimeZoneId,
+        user.Language);
 };

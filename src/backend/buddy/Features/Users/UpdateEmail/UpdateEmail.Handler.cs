@@ -47,13 +47,7 @@ public static class UpdateEmailHandler
 
         await events.AppendAsync(userId, [emailUpdated, verificationRequested], cancellationToken);
 
-        var updated = user with
-        {
-            Email = newEmail,
-            EmailVerificationTokenHash = hash,
-            EmailVerificationRequestedAt = now,
-            EmailVerificationExpiresAt = expiresAt
-        };
+        var updated = user with { Email = newEmail, EmailVerification = new EmailVerification.Pending(hash, now, expiresAt) };
 
         await emailSender.SendEmailVerificationAsync(newEmail.Value, token, cancellationToken);
 

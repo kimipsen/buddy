@@ -14,8 +14,10 @@ export interface UserCreatedData {
   userId: string;
   keycloakSubject: string;
   email: EmailSummary;
-  userName: string | null;
+  userName: string;
   name: NameSummary;
+  timeZoneId: string;
+  language: string;
   occurredAt: string;
 }
 

@@ -1,5 +1,7 @@
 # Guardian-Managed Child Language
 
+> Since [eliminate-nulls.md](eliminate-nulls.md) Phase 5.6, `User.Language` is required and `ResolvedLanguage` is gone; read the field directly.
+
 Status: Implemented
 
 ## Context

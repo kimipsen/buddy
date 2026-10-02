@@ -6,4 +6,7 @@ namespace buddy.Features.Calendars;
 public sealed record TimeZoneId(string Value)
 {
     public static TimeZoneId New(string value) => new(value);
+
+    // A new adult user's starting time zone, until they pick their own.
+    public static readonly TimeZoneId Utc = New("UTC");
 }

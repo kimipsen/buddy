@@ -39,12 +39,12 @@ public static class VerifyEmailHandler
         // These remain handler-side, unconverted checks -- they depend on the loaded user's
         // stored verification state (token hash, expiry), not just the command's own fields, so
         // they can't run as a pure FluentValidation rule the way the Token-required check above does.
-        if (user.EmailVerificationTokenHash is null || user.EmailVerificationExpiresAt is null)
+        if (user.EmailVerification is not EmailVerification.Pending pending)
         {
             return new Result<User>.Validation(ValidationProblem.Of("The verification token is invalid."));
         }
 
-        if (DateTimeOffset.UtcNow > user.EmailVerificationExpiresAt)
+        if (DateTimeOffset.UtcNow > pending.ExpiresAt)
         {
             return new Result<User>.Validation(ValidationProblem.Of("The verification token has expired."));
         }
@@ -53,20 +53,14 @@ public static class VerifyEmailHandler
 
         if (!CryptographicOperations.FixedTimeEquals(
             Encoding.UTF8.GetBytes(submittedHash),
-            Encoding.UTF8.GetBytes(user.EmailVerificationTokenHash)))
+            Encoding.UTF8.GetBytes(pending.TokenHash)))
         {
             return new Result<User>.Validation(ValidationProblem.Of("The verification token is invalid."));
         }
 
         await events.AppendAsync(userId, [new EmailVerified(userId, DateTimeOffset.UtcNow)], cancellationToken);
 
-        var verifiedUser = user with
-        {
-            Email = user.Email with { IsVerified = true },
-            EmailVerificationTokenHash = null,
-            EmailVerificationRequestedAt = null,
-            EmailVerificationExpiresAt = null
-        };
+        var verifiedUser = user with { Email = user.Email with { IsVerified = true }, EmailVerification = new EmailVerification.None() };
 
         return new Result<User>.Success(verifiedUser);
     }

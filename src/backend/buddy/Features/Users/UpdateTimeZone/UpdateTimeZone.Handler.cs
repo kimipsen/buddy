@@ -29,12 +29,12 @@ public static class UpdateTimeZoneHandler
             return new Result<User>.NotFound();
         }
 
-        if (user.ResolvedTimeZoneId == command.TimeZoneId)
+        if (user.TimeZoneId == command.TimeZoneId)
         {
             return new Result<User>.Success(user);
         }
 
-        var timeZoneUpdated = new TimeZoneUpdated(userId, user.ResolvedTimeZoneId, command.TimeZoneId, DateTimeOffset.UtcNow);
+        var timeZoneUpdated = new TimeZoneUpdated(userId, user.TimeZoneId, command.TimeZoneId, DateTimeOffset.UtcNow);
         await events.AppendAsync(userId, [timeZoneUpdated], cancellationToken);
 
         return new Result<User>.Success(user with { TimeZoneId = command.TimeZoneId });

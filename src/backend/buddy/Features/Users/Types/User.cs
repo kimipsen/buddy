@@ -7,21 +7,13 @@ public sealed record User(
     UserId Id,
     KeycloakSubject KeycloakSubject,
     Email Email,
-    string? UserName,
+    string UserName,
     Name Name,
-    bool IsDeleted = false,
-    string? EmailVerificationTokenHash = null,
-    DateTimeOffset? EmailVerificationRequestedAt = null,
-    DateTimeOffset? EmailVerificationExpiresAt = null,
-    // No TimeZoneUpdated event yet implicitly means UTC -- see the comment on that event.
-    TimeZoneId? TimeZoneId = null,
-    // No LanguageUpdated event yet implicitly means English -- see the comment on that event.
-    Language? Language = null)
+    TimeZoneId TimeZoneId,
+    Language Language,
+    EmailVerification EmailVerification,
+    bool IsDeleted)
 {
-    public TimeZoneId ResolvedTimeZoneId => TimeZoneId ?? Calendars.TimeZoneId.New("UTC");
-
-    public Language ResolvedLanguage => Language ?? SupportedLanguages.Default;
-
     public static User? Rehydrate(IEnumerable<UserEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
     public static User Replay(IEnumerable<UserEvent> events) => EventReplay.Replay(events, Start, Advance);
@@ -39,7 +31,11 @@ public sealed record User(
             created.KeycloakSubject,
             created.Email,
             created.UserName,
-            created.Name),
+            created.Name,
+            created.TimeZoneId,
+            created.Language,
+            new EmailVerification.None(),
+            IsDeleted: false),
         _ => throw EventReplay.NotAStartEvent(nameof(User), @event.EventType)
     };
 
@@ -50,26 +46,12 @@ public sealed record User(
         LanguageUpdated languageUpdated => user with { Language = languageUpdated.After },
         // A new address is never covered by a verification of the old one, so any
         // pending verification for the old address is cleared here too.
-        EmailUpdated emailUpdated => user with
-        {
-            Email = emailUpdated.After,
-            EmailVerificationTokenHash = null,
-            EmailVerificationRequestedAt = null,
-            EmailVerificationExpiresAt = null
-        },
+        EmailUpdated emailUpdated => user with { Email = emailUpdated.After, EmailVerification = new EmailVerification.None() },
         EmailVerificationRequested requested => user with
         {
-            EmailVerificationTokenHash = requested.TokenHash,
-            EmailVerificationRequestedAt = requested.OccurredAt,
-            EmailVerificationExpiresAt = requested.ExpiresAt
+            EmailVerification = new EmailVerification.Pending(requested.TokenHash, requested.OccurredAt, requested.ExpiresAt)
         },
-        EmailVerified => user with
-        {
-            Email = user.Email with { IsVerified = true },
-            EmailVerificationTokenHash = null,
-            EmailVerificationRequestedAt = null,
-            EmailVerificationExpiresAt = null
-        },
+        EmailVerified => user with { Email = user.Email with { IsVerified = true }, EmailVerification = new EmailVerification.None() },
         UserDeleted => user with { IsDeleted = true },
         UserCreated => throw EventReplay.AlreadyStarted(nameof(User), @event.EventType)
     };

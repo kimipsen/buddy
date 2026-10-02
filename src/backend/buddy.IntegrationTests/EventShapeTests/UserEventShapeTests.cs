@@ -24,6 +24,8 @@ public sealed class UserEventShapeTests
             UserEmail.Unverified("alice@buddy.test"),
             "alice",
             Name.New("Alice", "Anderson"),
+            TimeZoneId.New("Europe/Copenhagen"),
+            Language.New("da"),
             FixedInstant),
         "Users/UserCreated.json");
 

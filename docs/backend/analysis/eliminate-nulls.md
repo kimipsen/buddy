@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-4 and 5.1-5.5 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
+Status: Phases 0-4 and 5.1-5.6 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
 
 ## Context
 
@@ -652,6 +652,32 @@ RecurrenceEnd  = Never | On(DateOnly Until)
 - Blast radius: `UserCreated.json`, `UserSnapshotTests`, and the VerifyEmail, UpdateEmail and
   ResendEmailVerification handlers and tests. On the frontend, `userName: string` in
   `users.service.ts` and `user-event.model.ts`.
+
+#### As built (5.6)
+
+- **UserCreated** gained `TimeZoneId` and `Language` (before `OccurredAt`); `UserName` is `string`.
+  `GetOrCreateUser.FromClaims` falls back to the subject. `TimeZoneId.Utc` is the adult default.
+  `CreateChildHandler` loads the guardian's snapshot (guaranteed by `ProvisionedUserMiddleware`) for
+  the child's starting values. The extra `LanguageUpdated` on first sign-in is gone.
+- **User** is now positional with no defaults: `TimeZoneId`, `Language` and
+  `EmailVerification` are required; `ResolvedTimeZoneId` / `ResolvedLanguage` are gone (8 call
+  sites now read the fields).
+- **EmailVerification** (`Types/EmailVerification.cs`) persists in the snapshot through
+  `EmailVerificationJsonConverter`, registered in `UsersFeature` and `EventShapeTestSupport`. The
+  events are unchanged: `EmailVerificationRequested` still carries the hash and expiry.
+  `ResendCooldown.IsActive` keeps its shared `DateTimeOffset?` parameter (invites use it too);
+  the resend handler passes `Pending.RequestedAt` or null.
+- **Tests.** `UserCreated.json` gained the two fields; new tests cover a new user's UTC/browser
+  language on `UserCreated` with no follow-up event, a child inheriting the guardian's values, and
+  the snapshot round-tripping a `Pending` verification. The subject fallback isn't covered: the
+  test Keycloak always issues `preferred_username`.
+- **Frontend.** `userName: string` in `users.service.ts` and `user-event.model.ts`, which also
+  gained `timeZoneId` and `language` on `UserCreatedData`.
+- **Existing databases need a reset**: stored `UserCreated` events lack the new fields.
+- **Noticed, not changed.** My profile's time zone `<select>` lists `Intl.supportedValuesOf('timeZone')`,
+  which has no `"UTC"`, so a user still on the default sees no matching option (unchanged from the
+  old implicit default). `e2e/profile-update.spec.ts` restores carol to her original zone and so
+  fails on a freshly reset database, where that is `"UTC"`; it passes once she has a listed zone.
 
 ### 5.7 WorkLocations
 

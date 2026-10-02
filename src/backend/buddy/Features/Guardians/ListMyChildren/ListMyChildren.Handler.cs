@@ -19,7 +19,7 @@ public static class ListMyChildrenHandler
 
             if (User.Rehydrate(childEvents) is { IsDeleted: false } child)
             {
-                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.ResolvedLanguage, child.ResolvedTimeZoneId));
+                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId));
             }
         }
 

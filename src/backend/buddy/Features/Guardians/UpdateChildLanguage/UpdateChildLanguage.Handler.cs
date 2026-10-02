@@ -35,14 +35,14 @@ public static class UpdateChildLanguageHandler
             return new Result<ChildSummary>.NotFound();
         }
 
-        if (child.ResolvedLanguage != command.Language)
+        if (child.Language != command.Language)
         {
-            var languageUpdated = new LanguageUpdated(command.ChildId, child.ResolvedLanguage, command.Language, DateTimeOffset.UtcNow);
+            var languageUpdated = new LanguageUpdated(command.ChildId, child.Language, command.Language, DateTimeOffset.UtcNow);
             await users.AppendAsync(command.ChildId, [languageUpdated], cancellationToken);
             child = child with { Language = command.Language };
         }
 
         return new Result<ChildSummary>.Success(new ChildSummary(
-            child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.ResolvedLanguage, child.ResolvedTimeZoneId));
+            child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId));
     }
 }

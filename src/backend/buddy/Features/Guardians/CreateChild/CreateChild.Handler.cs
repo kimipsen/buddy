@@ -12,6 +12,7 @@ public static class CreateChildHandler
         IValidator<CreateChild> validator,
         IKeycloakAdminClient keycloak,
         IGuardianLinkEventStore guardianLinks,
+        IUserEventStore users,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -20,6 +21,11 @@ public static class CreateChildHandler
         }
 
         var guardianId = command.GuardianId;
+
+        // ProvisionedUserMiddleware guarantees the caller has a Buddy user. A child starts on
+        // the creating guardian's time zone and language.
+        var guardian = await users.FindSnapshotAsync(guardianId, cancellationToken)
+            ?? throw new InvalidOperationException($"No snapshot for the provisioned guardian {guardianId}.");
 
         var provisioning = await keycloak.CreateChildUserAsync(
             command.GivenName,
@@ -46,7 +52,15 @@ public static class CreateChildHandler
         // already produces for any OIDC principal with no email claim -- no schema change needed.
         // Fully qualified: unqualified "Email" here would resolve to the sibling "buddy.Email"
         // namespace (enclosing-namespace lookup wins over the using for buddy.Features.Users).
-        var userCreated = new UserCreated(childId, provisioned.Subject, buddy.Features.Users.Email.Unverified(""), provisioned.Username, Name.New(command.GivenName, command.FamilyName), now);
+        var userCreated = new UserCreated(
+            childId,
+            provisioned.Subject,
+            buddy.Features.Users.Email.Unverified(""),
+            provisioned.Username,
+            Name.New(command.GivenName, command.FamilyName),
+            guardian.TimeZoneId,
+            guardian.Language,
+            now);
         var guardianLinked = new GuardianLinked(linkId, childId, guardianId, command.Kind, now);
 
         var (userEvents, guardianEvents) = await guardianLinks.CreateChildAndLinkAsync(

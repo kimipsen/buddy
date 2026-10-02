@@ -22,11 +22,8 @@ sequenceDiagram
 
     alt New user
         Store-->>Users: No user events
-        Users->>Users: Build UserCreated from token claims
+        Users->>Users: Build UserCreated from token claims (UTC, Accept-Language)
         Users->>Store: Append UserCreated event
-        opt Accept-Language resolves to a supported non-default language
-            Users->>Store: Append LanguageUpdated event
-        end
         opt Email is unverified
             Users->>Store: Append EmailVerificationRequested event
             Users->>Email: Send verification email
@@ -73,7 +70,7 @@ The user stream currently supports these event types:
 - `TimeZoneUpdated`
 - `LanguageUpdated`
 
-The user profile is built from `UserCreated`; `UserDeleted` marks the rehydrated user as deleted. Changing an email appends `EmailUpdated` and starts a new verification request; submitting the existing email leaves the stream unchanged. Verification requests store only a hash of the token in the event stream; the plaintext token is sent through the configured email sender. `EmailVerified` clears the pending verification state. A user with no `TimeZoneUpdated` event yet implicitly defaults to UTC, the same sparse-log convention Medicines' dose status already uses, so `UserCreated` didn't need to change to carry an initial value. `LanguageUpdated` follows the same convention, defaulting to English; on first sign-in, `GetOrCreateUserHandler` resolves the browser's `Accept-Language` header against the supported language set (English, Danish) and appends an initial `LanguageUpdated` right after `UserCreated` when it resolves to a different supported language, mirroring how a conditional `EmailVerificationRequested` is appended alongside it. All event types are registered for persistence and are returned by the event-history endpoint.
+The user profile is built from `UserCreated`; `UserDeleted` marks the rehydrated user as deleted. Changing an email appends `EmailUpdated` and starts a new verification request; submitting the existing email leaves the stream unchanged. Verification requests store only a hash of the token in the event stream; the plaintext token is sent through the configured email sender. The user's `EmailVerification` is `None` or `Pending` (token hash, requested-at, expires-at); `EmailVerificationRequested` sets it, and `EmailVerified` and `EmailUpdated` clear it. `UserCreated` carries the user's starting `TimeZoneId` and `Language`: on first sign-in, `GetOrCreateUserHandler` uses UTC and resolves the browser's `Accept-Language` header against the supported language set (English, Danish, defaulting to English); a child created by a guardian starts on that guardian's time zone and language. `TimeZoneUpdated` and `LanguageUpdated` record later changes. `UserName` is the `preferred_username` claim, or the Keycloak subject when the token has none. All event types are registered for persistence and are returned by the event-history endpoint.
 
 ### Event-history pagination
 

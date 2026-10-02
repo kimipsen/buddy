@@ -32,6 +32,8 @@ describe('UserCreatedEvent', () => {
       email: { value: 'ann@buddy.test', isVerified: true },
       userName: 'auser',
       name: { givenName: 'Ann', familyName: 'A' },
+      timeZoneId: 'UTC',
+      language: 'en',
       occurredAt: '2026-01-15T09:30:00Z',
     });
 
@@ -40,13 +42,15 @@ describe('UserCreatedEvent', () => {
     expect(compiled.textContent).toContain('Jan 15, 2026, 9:30:00 AM');
   });
 
-  it('renders correctly with a null userName, and never surfaces userId or keycloakSubject', async () => {
+  it('never surfaces userId or keycloakSubject', async () => {
     const { compiled } = await setup({
       userId: 'user-1',
       keycloakSubject: 'keycloak-sub-xyz',
       email: { value: 'ann@buddy.test', isVerified: true },
-      userName: null,
+      userName: 'auser',
       name: { givenName: 'Ann', familyName: 'A' },
+      timeZoneId: 'UTC',
+      language: 'en',
       occurredAt: '2026-01-15T09:30:00Z',
     });
 

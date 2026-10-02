@@ -1,7 +1,10 @@
 using Alba;
 
+using buddy.Features.Users;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Xunit;
 
@@ -58,6 +61,13 @@ public sealed class GetCurrentUserTests(BuddyApiFixture fixture)
         var body = response.ReadAsJson<UserProfileResponse>();
 
         Assert.Equal("da", body.Language);
+        Assert.Equal("UTC", body.TimeZoneId);
+
+        // The starting language and time zone ride on UserCreated itself; no follow-up event.
+        var events = await fixture.Host.Services.GetRequiredService<IUserEventStore>()
+            .ReadAsync(new UserId(body.Id), CancellationToken.None);
+        Assert.True(events.First() is UserCreated { Language.Value: "da", TimeZoneId.Value: "UTC" });
+        Assert.DoesNotContain(events, e => e is LanguageUpdated or TimeZoneUpdated);
     }
 
     [Fact]
@@ -79,7 +89,23 @@ public sealed class GetCurrentUserTests(BuddyApiFixture fixture)
         Assert.Equal("en", body.Language);
     }
 
-    private sealed record UserProfileResponse(Guid Id, EmailResponse Email, string? UserName, NameResponse Name, string Language);
+    [Fact]
+    public async Task Concurrent_first_requests_all_get_the_same_new_user()
+    {
+        var user = await fixture.CreateUserAsync();
+        var token = await fixture.GetAccessTokenAsync(user);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => fixture.Host.Scenario(s =>
+        {
+            s.WithRequestHeader("Authorization", $"Bearer {token}");
+            s.Get.Url("/users/me");
+            s.StatusCodeShouldBeOk();
+        })));
+
+        Assert.Single(responses.Select(r => r.ReadAsJson<UserProfileResponse>().Id).Distinct());
+    }
+
+    private sealed record UserProfileResponse(Guid Id, EmailResponse Email, string UserName, NameResponse Name, string Language, string TimeZoneId);
 
     private sealed record EmailResponse(string Value, bool IsVerified);
 

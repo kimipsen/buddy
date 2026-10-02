@@ -36,14 +36,14 @@ public static class UpdateChildTimeZoneHandler
             return new Result<ChildSummary>.NotFound();
         }
 
-        if (child.ResolvedTimeZoneId != command.TimeZoneId)
+        if (child.TimeZoneId != command.TimeZoneId)
         {
-            var timeZoneUpdated = new TimeZoneUpdated(command.ChildId, child.ResolvedTimeZoneId, command.TimeZoneId, DateTimeOffset.UtcNow);
+            var timeZoneUpdated = new TimeZoneUpdated(command.ChildId, child.TimeZoneId, command.TimeZoneId, DateTimeOffset.UtcNow);
             await users.AppendAsync(command.ChildId, [timeZoneUpdated], cancellationToken);
             child = child with { TimeZoneId = command.TimeZoneId };
         }
 
         return new Result<ChildSummary>.Success(new ChildSummary(
-            child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.ResolvedLanguage, child.ResolvedTimeZoneId));
+            child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId));
     }
 }

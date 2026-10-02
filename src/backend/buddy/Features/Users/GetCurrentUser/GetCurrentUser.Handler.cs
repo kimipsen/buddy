@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Email;
+using buddy.Features.Calendars;
 
 namespace buddy.Features.Users;
 
@@ -22,17 +23,19 @@ public static class GetOrCreateUserHandler
             ? Email.Verified(command.Email ?? "")
             : Email.Unverified(command.Email ?? "");
 
-        var created = new UserCreated(UserId.New(), command.Subject, email, command.UserName, command.Name, now);
+        // A new adult starts on UTC (they pick their own zone later) and the browser's language.
+        var created = new UserCreated(
+            UserId.New(),
+            command.Subject,
+            email,
+            command.UserName,
+            command.Name,
+            TimeZoneId.Utc,
+            SupportedLanguages.ResolveFromAcceptLanguageHeader(command.AcceptLanguageHeader),
+            now);
 
         List<UserEvent> initialEvents = [created];
         string? verificationToken = null;
-
-        var detectedLanguage = SupportedLanguages.ResolveFromAcceptLanguageHeader(command.AcceptLanguageHeader);
-
-        if (detectedLanguage != SupportedLanguages.Default)
-        {
-            initialEvents.Add(new LanguageUpdated(created.UserId, SupportedLanguages.Default, detectedLanguage, now));
-        }
 
         if (!email.IsVerified && !string.IsNullOrWhiteSpace(email.Value))
         {
