@@ -129,6 +129,49 @@ describe('ManageCalendars', () => {
     return findButtonByText(compiled, 'Add calendar')!;
   }
 
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  function editIconInput(compiled: HTMLElement): HTMLInputElement | null {
+    return compiled.querySelector<HTMLInputElement>('input[name="editIconValue"]');
+  }
+
+  function moveSelect(compiled: HTMLElement): HTMLSelectElement | null {
+    return compiled.querySelector<HTMLSelectElement>('select[name="moveTargetGroupId"]');
+  }
+
+  function chooseMoveTarget(compiled: HTMLElement, groupId: string): void {
+    const select = moveSelect(compiled)!;
+    select.value = groupId;
+    select.dispatchEvent(new Event('change'));
+  }
+
+  function submitFormOf(element: Element): void {
+    element.closest('form')!.dispatchEvent(new Event('submit'));
+  }
+
+  function buttonsByText(compiled: HTMLElement, text: string): HTMLButtonElement[] {
+    return Array.from(compiled.querySelectorAll('button')).filter(
+      (button) => button.textContent?.trim() === text,
+    );
+  }
+
+  function icalPanelOpen(compiled: HTMLElement): boolean {
+    return findButtonByText(compiled, 'Generate new link') !== undefined;
+  }
+
+  const twoCalendars = () => [
+    calendar({ id: 'cal-1', name: 'Home' }),
+    calendar({ id: 'cal-2', name: 'Work' }),
+  ];
+
   // ----- Calendars list: loading / empty / error -----
 
   it('shows a loading message before the calendars list resolves', async () => {
@@ -1063,5 +1106,556 @@ describe('ManageCalendars', () => {
     await settle(fixture);
 
     expect(compiled.textContent).toContain('Unable to revoke this link.');
+  });
+
+  // ----- In-flight, retry and reset behaviour -----
+
+  describe('create in flight and retry', () => {
+    it('disables the add button while a create is in flight and clears an earlier error', async () => {
+      const pending = deferred<CalendarSummary>();
+      const createCalendar = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({ calendars: { createCalendar } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      setInputValue(nameInput(compiled), 'Home Calendar');
+      await settle(fixture);
+      createForm(compiled).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to create the calendar.');
+      // A failed create releases the button so the guardian can retry.
+      expect(addCalendarButton(compiled).disabled).toBe(false);
+
+      createForm(compiled).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(addCalendarButton(compiled).disabled).toBe(true);
+      expect(compiled.textContent).not.toContain('Unable to create the calendar.');
+
+      pending.resolve(calendar({ id: 'cal-new' }));
+      await settle(fixture);
+    });
+
+    it('clears an earlier load error once a reload after create succeeds', async () => {
+      const listMyCalendars = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValue([calendar({ name: 'Home Calendar' })]);
+      const { fixture } = await setup({ calendars: { listMyCalendars } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Unable to load calendars.');
+
+      setInputValue(nameInput(compiled), 'Home Calendar');
+      await settle(fixture);
+      createForm(compiled).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to load calendars.');
+      expect(findButtonByText(compiled, 'Delete')).toBeTruthy();
+    });
+  });
+
+  describe('change icon in flight and retry', () => {
+    it('enables Save for the pre-filled icon, saves the trimmed value and ignores a blank submit', async () => {
+      const { fixture, calendars } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Change icon')!.click();
+      await settle(fixture);
+      expect(findButtonByText(compiled, 'Save')!.disabled).toBe(false);
+
+      setInputValue(editIconInput(compiled)!, '   ');
+      await settle(fixture);
+      submitFormOf(editIconInput(compiled)!);
+      await settle(fixture);
+      expect(calendars.updateCalendarIcon).not.toHaveBeenCalled();
+
+      setInputValue(editIconInput(compiled)!, ' 🎉 ');
+      await settle(fixture);
+      submitFormOf(editIconInput(compiled)!);
+      await settle(fixture);
+
+      expect(calendars.updateCalendarIcon).toHaveBeenCalledExactlyOnceWith('cal-1', '🎉');
+    });
+
+    it('disables Save while in flight, re-enables it after a failure and hides the error on retry', async () => {
+      const pending = deferred<void>();
+      const updateCalendarIcon = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]), updateCalendarIcon },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Change icon')!.click();
+      await settle(fixture);
+      submitFormOf(editIconInput(compiled)!);
+      await settle(fixture);
+      expect(compiled.textContent).toContain("Unable to change this calendar's icon.");
+      expect(findButtonByText(compiled, 'Save')!.disabled).toBe(false);
+
+      submitFormOf(editIconInput(compiled)!);
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'Save')!.disabled).toBe(true);
+      expect(compiled.textContent).not.toContain("Unable to change this calendar's icon.");
+
+      pending.resolve();
+      await settle(fixture);
+    });
+
+    it('clears an earlier icon error when the form is reopened', async () => {
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [calendar()]),
+          updateCalendarIcon: vi.fn(async () => Promise.reject(new Error('boom'))),
+        },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Change icon')!.click();
+      await settle(fixture);
+      submitFormOf(editIconInput(compiled)!);
+      await settle(fixture);
+      expect(compiled.textContent).toContain("Unable to change this calendar's icon.");
+
+      findButtonByText(compiled, 'Close')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Change icon')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain("Unable to change this calendar's icon.");
+    });
+  });
+
+  describe('move in flight and retry', () => {
+    const target = () => [group({ id: 'g-target', name: 'New Group', role: 0 })];
+
+    it('enables Move once a target is chosen and ignores a submit without one', async () => {
+      const { fixture, calendars } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+        groups: { listMyGroups: vi.fn(async () => target()) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Move to group')!.click();
+      await settle(fixture);
+      submitFormOf(moveSelect(compiled)!);
+      await settle(fixture);
+      expect(calendars.transferToGroup).not.toHaveBeenCalled();
+
+      chooseMoveTarget(compiled, 'g-target');
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'Move')!.disabled).toBe(false);
+    });
+
+    it('disables Move while in flight, re-enables it after a failure and hides the error on retry', async () => {
+      const pending = deferred<void>();
+      const transferToGroup = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]), transferToGroup },
+        groups: { listMyGroups: vi.fn(async () => target()) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Move to group')!.click();
+      await settle(fixture);
+      chooseMoveTarget(compiled, 'g-target');
+      await settle(fixture);
+      submitFormOf(moveSelect(compiled)!);
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to move this calendar.');
+      expect(findButtonByText(compiled, 'Move')!.disabled).toBe(false);
+
+      submitFormOf(moveSelect(compiled)!);
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'Move')!.disabled).toBe(true);
+      expect(compiled.textContent).not.toContain('Unable to move this calendar.');
+
+      pending.resolve();
+      await settle(fixture);
+    });
+
+    it('clears an earlier move error when the form is reopened', async () => {
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [calendar()]),
+          transferToGroup: vi.fn(async () => Promise.reject(new Error('boom'))),
+        },
+        groups: { listMyGroups: vi.fn(async () => target()) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Move to group')!.click();
+      await settle(fixture);
+      chooseMoveTarget(compiled, 'g-target');
+      await settle(fixture);
+      submitFormOf(moveSelect(compiled)!);
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to move this calendar.');
+
+      findButtonByText(compiled, 'Close')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Move to group')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to move this calendar.');
+    });
+  });
+
+  describe('delete in flight and retry', () => {
+    it('closes the prompt after a successful delete even when the calendar is still listed', async () => {
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Delete')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Confirm')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Delete this calendar? This cannot be undone.');
+      expect(findButtonByText(compiled, 'Delete')).toBeTruthy();
+    });
+
+    it('re-enables Confirm after a failure and hides the error while retrying', async () => {
+      const pending = deferred<void>();
+      const deleteCalendar = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]), deleteCalendar },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Delete')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Confirm')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to delete this calendar.');
+      expect(findButtonByText(compiled, 'Confirm')!.disabled).toBe(false);
+
+      findButtonByText(compiled, 'Confirm')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to delete this calendar.');
+
+      pending.resolve();
+      await settle(fixture);
+    });
+
+    it('clears an earlier delete error when delete is requested again', async () => {
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [calendar()]),
+          deleteCalendar: vi.fn(async () => Promise.reject(new Error('boom'))),
+        },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Delete')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Confirm')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Cancel')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to delete this calendar.');
+
+      findButtonByText(compiled, 'Delete')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to delete this calendar.');
+    });
+  });
+
+  describe('iCal in flight and retry', () => {
+    async function openIcal(fixture: Awaited<ReturnType<typeof setup>>['fixture']) {
+      await settle(fixture);
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Subscribe')!.click();
+      await settle(fixture);
+    }
+
+    it('re-enables Generate after a failure and clears the error when generating again', async () => {
+      const pending = deferred<IssuedIcalToken>();
+      const createIcalToken = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]), createIcalToken },
+      });
+      await openIcal(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to generate a subscription link.');
+      expect(findButtonByText(compiled, 'Generate new link')!.disabled).toBe(false);
+
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to generate a subscription link.');
+
+      pending.resolve(issuedToken());
+      await settle(fixture);
+    });
+
+    it('hides the previous feed URL while a replacement link is being generated', async () => {
+      const pending = deferred<IssuedIcalToken>();
+      const createIcalToken = vi
+        .fn()
+        .mockResolvedValueOnce(issuedToken({ subscriptionPath: '/ical/first.ics' }))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]), createIcalToken },
+      });
+      await openIcal(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('https://api.buddy.test/ical/first.ics');
+
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('https://api.buddy.test/ical/first.ics');
+
+      pending.resolve(issuedToken({ subscriptionPath: '/ical/second.ics' }));
+      await settle(fixture);
+      expect(compiled.textContent).toContain('https://api.buddy.test/ical/second.ics');
+    });
+
+    it('forgets the feed URL and the create error once the panel is closed and reopened', async () => {
+      const createIcalToken = vi
+        .fn()
+        .mockResolvedValueOnce(issuedToken({ subscriptionPath: '/ical/first.ics' }))
+        .mockRejectedValueOnce(new Error('boom'));
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]), createIcalToken },
+      });
+      await openIcal(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Close')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).not.toContain('https://api.buddy.test/ical/first.ics');
+
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to generate a subscription link.');
+      findButtonByText(compiled, 'Close')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to generate a subscription link.');
+    });
+
+    it('disables the revoke button in flight, re-enables it after a failure and hides the error on retry', async () => {
+      const pending = deferred<void>();
+      const revokeIcalToken = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({
+        calendars: {
+          listMyCalendars: vi.fn(async () => [calendar()]),
+          listIcalTokens: vi.fn(async () => [icalToken({ tokenId: 'token-a' })]),
+          revokeIcalToken,
+        },
+      });
+      await openIcal(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Revoke')!.click();
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Unable to revoke this link.');
+      expect(findButtonByText(compiled, 'Revoke')!.disabled).toBe(false);
+
+      findButtonByText(compiled, 'Revoke')!.click();
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'Revoke')!.disabled).toBe(true);
+      expect(compiled.textContent).not.toContain('Unable to revoke this link.');
+
+      pending.resolve();
+      await settle(fixture);
+    });
+
+    it('clears an earlier token load error when the panel reloads successfully', async () => {
+      const listIcalTokens = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValue([]);
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]), listIcalTokens },
+      });
+      await openIcal(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Unable to load subscription links.');
+
+      findButtonByText(compiled, 'Close')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Unable to load subscription links.');
+      expect(compiled.textContent).toContain('No subscription links yet.');
+    });
+
+    it('drops the copied confirmation when a later clipboard write fails', async () => {
+      const writeText = vi
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('denied'));
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+      });
+      await openIcal(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Generate new link')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Copy')!.click();
+      await settle(fixture);
+      expect(findButtonByText(compiled, 'Copied')).toBeTruthy();
+
+      findButtonByText(compiled, 'Copied')!.click();
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'Copy')).toBeTruthy();
+      expect(findButtonByText(compiled, 'Copied')).toBeUndefined();
+    });
+  });
+
+  describe('panel switching', () => {
+    it('opening the move panel closes an open iCal panel', async () => {
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+      expect(icalPanelOpen(compiled)).toBe(true);
+
+      findButtonByText(compiled, 'Move to group')!.click();
+      await settle(fixture);
+
+      expect(icalPanelOpen(compiled)).toBe(false);
+    });
+
+    it('opening the change-icon panel closes an open move panel and an open iCal panel', async () => {
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Move to group')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Change icon')!.click();
+      await settle(fixture);
+      expect(moveSelect(compiled)).toBeNull();
+
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Change icon')!.click();
+      await settle(fixture);
+
+      expect(icalPanelOpen(compiled)).toBe(false);
+      expect(editIconInput(compiled)).toBeTruthy();
+    });
+
+    it('opening the iCal panel closes an open move panel', async () => {
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Move to group')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+
+      expect(moveSelect(compiled)).toBeNull();
+      expect(icalPanelOpen(compiled)).toBe(true);
+    });
+
+    it('requesting delete closes an open iCal panel and an open change-icon panel', async () => {
+      const { fixture } = await setup({
+        calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Subscribe')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Delete')!.click();
+      await settle(fixture);
+      expect(icalPanelOpen(compiled)).toBe(false);
+
+      findButtonByText(compiled, 'Cancel')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Change icon')!.click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Delete')!.click();
+      await settle(fixture);
+
+      expect(editIconInput(compiled)).toBeNull();
+    });
+
+    it.each(['Move to group', 'Change icon', 'Subscribe'])(
+      "opening '%s' on another calendar closes a pending delete confirmation",
+      async (action) => {
+        const { fixture } = await setup({
+          calendars: { listMyCalendars: vi.fn(async () => twoCalendars()) },
+        });
+        await settle(fixture);
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        buttonsByText(compiled, 'Delete')[0].click();
+        await settle(fixture);
+        expect(compiled.textContent).toContain('Delete this calendar? This cannot be undone.');
+
+        // cal-1's actions are replaced by the prompt, so the only remaining button is cal-2's.
+        buttonsByText(compiled, action)[0].click();
+        await settle(fixture);
+
+        expect(compiled.textContent).not.toContain('Delete this calendar? This cannot be undone.');
+      },
+    );
   });
 });

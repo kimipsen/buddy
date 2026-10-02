@@ -38,21 +38,28 @@ export class MyProfile implements OnInit {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly currentEmail = signal<string | null>(null);
+  // Stryker disable next-line BooleanLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
   protected readonly currentEmailVerified = signal(false);
 
+  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
   protected readonly givenName = signal('');
+  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
   protected readonly familyName = signal('');
+  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
   protected readonly currentGivenName = signal('');
+  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
   protected readonly currentFamilyName = signal('');
   protected readonly savingName = signal(false);
   protected readonly nameError = signal<string | null>(null);
   protected readonly nameSaved = signal(false);
 
+  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
   protected readonly email = signal('');
   protected readonly savingEmail = signal(false);
   protected readonly emailError = signal<string | null>(null);
   protected readonly emailSaved = signal(false);
 
+  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
   protected readonly timeZoneId = signal('UTC');
   protected readonly currentTimeZoneId = signal<string | null>(null);
   protected readonly savingTimeZone = signal(false);
@@ -161,9 +168,6 @@ export class MyProfile implements OnInit {
   }
 
   private async loadProfile(): Promise<void> {
-    this.loading.set(true);
-    this.loadError.set(null);
-
     try {
       this.applyCurrentUser(await this.users.ensureCurrentUser());
     } catch {

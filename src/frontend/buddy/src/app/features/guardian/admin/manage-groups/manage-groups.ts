@@ -70,6 +70,7 @@ export class ManageGroups implements OnInit {
   protected readonly mealplanTiers = MEALPLAN_TIERS;
 
   protected readonly items = signal<GroupSummary[]>([]);
+  // Stryker disable next-line BooleanLiteral: ngOnInit -> loadGroups sets loading to true before the first render
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
@@ -82,6 +83,7 @@ export class ManageGroups implements OnInit {
   protected readonly invitesLoading = signal<string | null>(null);
   protected readonly invitesError = signal<string | null>(null);
 
+  // Stryker disable next-line StringLiteral: toggleInvitePanel resets it before the invite form is ever rendered
   protected readonly inviteEmail = signal('');
   protected readonly inviteRole = signal<GroupRole>(2);
   protected readonly inviting = signal(false);
@@ -96,12 +98,14 @@ export class ManageGroups implements OnInit {
   protected readonly membersLoading = signal<string | null>(null);
   protected readonly membersError = signal<string | null>(null);
 
+  // Stryker disable next-line StringLiteral: toggleChildrenPanel resets it before the add-child form is ever rendered
   protected readonly selectedChildId = signal('');
   protected readonly addingChild = signal(false);
   protected readonly addChildError = signal<string | null>(null);
 
   protected readonly expandedPolicyGroupId = signal<string | null>(null);
   protected readonly policyDraft = signal<CalendarPermissionPolicy | null>(null);
+  // Stryker disable next-line BooleanLiteral: only read inside the policy panel, and opening it runs loadPolicy, which sets it first
   protected readonly policyLoading = signal(false);
   protected readonly policyLoadError = signal<string | null>(null);
   protected readonly policySaving = signal(false);
@@ -109,6 +113,7 @@ export class ManageGroups implements OnInit {
 
   protected readonly expandedMealplanPolicyGroupId = signal<string | null>(null);
   protected readonly mealplanPolicyDraft = signal<MealplanPermissionPolicy | null>(null);
+  // Stryker disable next-line BooleanLiteral: only read inside the mealplan policy panel, and opening it runs loadMealplanPolicy, which sets it first
   protected readonly mealplanPolicyLoading = signal(false);
   protected readonly mealplanPolicyLoadError = signal<string | null>(null);
   protected readonly mealplanPolicySaving = signal(false);
@@ -282,7 +287,6 @@ export class ManageGroups implements OnInit {
   protected togglePolicyPanel(groupId: string): void {
     if (this.expandedPolicyGroupId() === groupId) {
       this.expandedPolicyGroupId.set(null);
-      this.policyDraft.set(null);
       return;
     }
 
@@ -337,7 +341,6 @@ export class ManageGroups implements OnInit {
   protected toggleMealplanPolicyPanel(groupId: string): void {
     if (this.expandedMealplanPolicyGroupId() === groupId) {
       this.expandedMealplanPolicyGroupId.set(null);
-      this.mealplanPolicyDraft.set(null);
       return;
     }
 

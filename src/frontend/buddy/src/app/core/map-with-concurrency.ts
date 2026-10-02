@@ -22,6 +22,7 @@ export async function mapWithConcurrency<T, R>(
     throw new RangeError(`mapWithConcurrency limit must be a positive integer, got ${limit}`);
   }
 
+  // Stryker disable next-line ArrayDeclaration: every index is assigned before results is returned, so a pre-sized and a growing array end up identical
   const results = new Array<R>(items.length);
   let next = 0;
 

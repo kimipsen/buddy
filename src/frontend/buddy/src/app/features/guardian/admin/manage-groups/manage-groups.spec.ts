@@ -1,4 +1,5 @@
-import { TestBed } from '@angular/core/testing';
+import { WritableSignal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -163,6 +164,35 @@ describe('ManageGroups', () => {
     expect(index, `option "${label}" not found`).toBeGreaterThanOrEqual(0);
     select.selectedIndex = index;
     select.dispatchEvent(new Event('change'));
+  }
+
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  // Panel headings (<h4>) share their copy with the toggle buttons ("Calendar permissions", "Add a
+  // child", ...), so checking for the heading element is how these tests tell an open panel apart.
+  function hasPanelHeading(compiled: HTMLElement, text: string): boolean {
+    return Array.from(compiled.querySelectorAll('h4')).some(
+      (heading) => heading.textContent?.trim() === text,
+    );
+  }
+
+  function headingTexts(compiled: HTMLElement, selector: string): string[] {
+    return Array.from(compiled.querySelectorAll(selector)).map(
+      (heading) => heading.textContent?.trim() ?? '',
+    );
+  }
+
+  async function openPanel(fixture: ComponentFixture<ManageGroups>, buttonText: string) {
+    findButtonByText(fixture.nativeElement as HTMLElement, buttonText)!.click();
+    await settle(fixture);
   }
 
   // ----- Panel loading errors -----
@@ -873,5 +903,563 @@ describe('ManageGroups', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).not.toContain('Unable to load');
+  });
+
+  // ----- In-flight and retry states -----
+
+  it('disables the add-group button while the group is being created', async () => {
+    const pending = deferred<GroupSummary>();
+    const { fixture } = await setup({ groups: { createGroup: vi.fn(() => pending.promise) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    setInputValue(groupNameInput(compiled), 'New House');
+    await settle(fixture);
+    createGroupForm(compiled).dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(addGroupButton(compiled).disabled).toBe(true);
+
+    pending.resolve(group({ id: 'group-new', name: 'New House' }));
+    await settle(fixture);
+  });
+
+  it('re-enables the add-group button after a failure and clears the error on retry', async () => {
+    const pending = deferred<GroupSummary>();
+    const createGroup = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockReturnValueOnce(pending.promise);
+    const { fixture } = await setup({ groups: { createGroup } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    setInputValue(groupNameInput(compiled), 'New House');
+    await settle(fixture);
+    createGroupForm(compiled).dispatchEvent(new Event('submit'));
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to create the group.');
+    expect(addGroupButton(compiled).disabled).toBe(false);
+
+    createGroupForm(compiled).dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Unable to create the group.');
+
+    pending.resolve(group({ id: 'group-new', name: 'New House' }));
+    await settle(fixture);
+  });
+
+  it('clears the groups load error once the reload after creating a group succeeds', async () => {
+    const listMyGroups = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValue([group({ name: 'New House' })]);
+    const { fixture } = await setup({ groups: { listMyGroups } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Unable to load groups.');
+
+    setInputValue(groupNameInput(compiled), 'New House');
+    await settle(fixture);
+    createGroupForm(compiled).dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Unable to load groups.');
+    expect(compiled.querySelector('li')?.textContent).toContain('New House');
+  });
+
+  it('enables the send-invite button once an email is entered', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    setInputValue(
+      compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!,
+      'a@b.test',
+    );
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'Send invite')?.disabled).toBe(false);
+  });
+
+  it('sends the trimmed email with the default Member role', async () => {
+    const { fixture, groups } = await setup();
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    setInputValue(
+      compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!,
+      '  friend@buddy.test  ',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(groups.inviteToGroup).toHaveBeenCalledExactlyOnceWith('group-1', {
+      email: 'friend@buddy.test',
+      role: 2,
+    });
+  });
+
+  // jsdom strips surrounding whitespace from type="email" input values, so the test above can't
+  // prove the trim in sendInvite itself; set the signal directly to reach it.
+  interface ManageGroupsInternals {
+    inviteEmail: WritableSignal<string>;
+    sendInvite(groupId: string): Promise<void>;
+  }
+
+  it('trims the invite email itself before sending it', async () => {
+    const { fixture, groups } = await setup();
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+    const internals = fixture.componentInstance as unknown as ManageGroupsInternals;
+
+    internals.inviteEmail.set('  friend@buddy.test  ');
+    await internals.sendInvite('group-1');
+
+    expect(groups.inviteToGroup).toHaveBeenCalledExactlyOnceWith('group-1', {
+      email: 'friend@buddy.test',
+      role: 2,
+    });
+  });
+
+  it('does not send an invite for a blank email', async () => {
+    const { fixture, groups } = await setup();
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    setInputValue(compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!, '   ');
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(groups.inviteToGroup).not.toHaveBeenCalled();
+  });
+
+  it('re-enables sending after a failure, then disables it and clears the error while retrying', async () => {
+    const pending = deferred<GroupInvite>();
+    const inviteToGroup = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockReturnValueOnce(pending.promise);
+    const { fixture } = await setup({ groups: { inviteToGroup } });
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    setInputValue(
+      compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!,
+      'a@b.test',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to send the invite.');
+    expect(findButtonByText(compiled, 'Send invite')?.disabled).toBe(false);
+
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'Send invite')?.disabled).toBe(true);
+    expect(compiled.textContent).not.toContain('Unable to send the invite.');
+
+    pending.resolve(invite());
+    await settle(fixture);
+  });
+
+  it('resets the role and the send error when the invite panel is reopened', async () => {
+    const inviteToGroup = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValue(invite());
+    const { fixture } = await setup({ groups: { inviteToGroup } });
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    setInputValue(
+      compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!,
+      'a@b.test',
+    );
+    selectByLabel(compiled.querySelector<HTMLSelectElement>('select[name="inviteRole"]')!, 'Admin');
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to send the invite.');
+
+    await openPanel(fixture, 'Close');
+    await openPanel(fixture, 'Invite');
+
+    expect(compiled.textContent).not.toContain('Unable to send the invite.');
+
+    setInputValue(
+      compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!,
+      'b@b.test',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(inviteToGroup).toHaveBeenLastCalledWith('group-1', { email: 'b@b.test', role: 2 });
+  });
+
+  it('shows the invites loading message while invites load', async () => {
+    const pending = deferred<GroupInvite[]>();
+    const { fixture } = await setup({ groups: { listInvites: vi.fn(() => pending.promise) } });
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Loading invites…');
+
+    pending.resolve([]);
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Loading invites…');
+    expect(compiled.textContent).toContain('No pending invites.');
+  });
+
+  it('clears the invites load error when the panel is reopened and the invites load', async () => {
+    const listInvites = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValue([]);
+    const { fixture } = await setup({ groups: { listInvites } });
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Unable to load invites.');
+
+    await openPanel(fixture, 'Close');
+    await openPanel(fixture, 'Invite');
+
+    expect(compiled.textContent).not.toContain('Unable to load invites.');
+    expect(compiled.textContent).toContain('No pending invites.');
+  });
+
+  it('re-enables cancel after a failed revoke and clears the error while retrying', async () => {
+    const pending = deferred<void>();
+    const revokeInvite = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockReturnValueOnce(pending.promise);
+    const { fixture } = await setup({
+      groups: { listInvites: vi.fn(async () => [invite({ id: 'invite-9' })]), revokeInvite },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Invite');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    await openPanel(fixture, 'Cancel');
+    expect(compiled.textContent).toContain('Unable to cancel the invite.');
+    expect(findButtonByText(compiled, 'Cancel')?.disabled).toBe(false);
+
+    await openPanel(fixture, 'Cancel');
+
+    expect(compiled.textContent).not.toContain('Unable to cancel the invite.');
+
+    pending.resolve();
+    await settle(fixture);
+  });
+
+  it('collapses the add-child panel on a second click without reloading members', async () => {
+    const getGroup = vi.fn(async () => groupDetail());
+    const { fixture } = await setup({ groups: { getGroup } });
+    await settle(fixture);
+    await openPanel(fixture, 'Add a child');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(hasPanelHeading(compiled, 'Add a child')).toBe(true);
+
+    await openPanel(fixture, 'Close');
+
+    expect(hasPanelHeading(compiled, 'Add a child')).toBe(false);
+    expect(findButtonByText(compiled, 'Add a child')).toBeTruthy();
+    expect(getGroup).toHaveBeenCalledTimes(1);
+  });
+
+  it('enables the add-child button only once a child is selected', async () => {
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Add a child');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByText(compiled, 'Add to group')?.disabled).toBe(true);
+
+    selectByLabel(
+      compiled.querySelector<HTMLSelectElement>('select[name="selectedChild"]')!,
+      'Sam Kid',
+    );
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'Add to group')?.disabled).toBe(false);
+  });
+
+  it('does not add a child when none is selected', async () => {
+    const { fixture, groups } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Add a child');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(groups.addChildToGroup).not.toHaveBeenCalled();
+  });
+
+  it('resets the child selection after a child is added', async () => {
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Add a child');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    selectByLabel(
+      compiled.querySelector<HTMLSelectElement>('select[name="selectedChild"]')!,
+      'Sam Kid',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'Add to group')?.disabled).toBe(true);
+  });
+
+  it('re-enables adding after a failure, then disables it and clears the error while retrying', async () => {
+    const pending = deferred<void>();
+    const addChildToGroup = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockReturnValueOnce(pending.promise);
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
+      groups: { addChildToGroup },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Add a child');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    selectByLabel(
+      compiled.querySelector<HTMLSelectElement>('select[name="selectedChild"]')!,
+      'Sam Kid',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to add this child to the group.');
+    expect(findButtonByText(compiled, 'Add to group')?.disabled).toBe(false);
+
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'Add to group')?.disabled).toBe(true);
+    expect(compiled.textContent).not.toContain('Unable to add this child to the group.');
+
+    pending.resolve();
+    await settle(fixture);
+  });
+
+  it('resets the selection and the add error when the add-child panel is reopened', async () => {
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child({ id: 'child-1' })]) },
+      groups: { addChildToGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Add a child');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    selectByLabel(
+      compiled.querySelector<HTMLSelectElement>('select[name="selectedChild"]')!,
+      'Sam Kid',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Unable to add this child to the group.');
+
+    await openPanel(fixture, 'Close');
+    await openPanel(fixture, 'Add a child');
+
+    expect(compiled.textContent).not.toContain('Unable to add this child to the group.');
+    expect(findButtonByText(compiled, 'Add to group')?.disabled).toBe(true);
+  });
+
+  it('shows the members loading message while members load', async () => {
+    const pending = deferred<GroupDetail>();
+    const { fixture } = await setup({ groups: { getGroup: vi.fn(() => pending.promise) } });
+    await settle(fixture);
+    await openPanel(fixture, 'Members');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Loading members…');
+
+    pending.resolve(groupDetail());
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Loading members…');
+    expect(compiled.textContent).toContain('This group has no members yet.');
+  });
+
+  it('clears the members load error when the panel is reopened and the members load', async () => {
+    const getGroup = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValue(groupDetail());
+    const { fixture } = await setup({ groups: { getGroup } });
+    await settle(fixture);
+    await openPanel(fixture, 'Members');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Unable to load group members.');
+
+    await openPanel(fixture, 'Close');
+    await openPanel(fixture, 'Members');
+
+    expect(compiled.textContent).not.toContain('Unable to load group members.');
+    expect(compiled.textContent).toContain('This group has no members yet.');
+  });
+
+  it.each([
+    { kind: 'only children', isChild: true, headings: ['Children'] },
+    { kind: 'only guardians', isChild: false, headings: ['Guardians'] },
+  ])('shows just the matching heading when a group has $kind', async ({ isChild, headings }) => {
+    const { fixture } = await setup({
+      groups: { getGroup: vi.fn(async () => groupDetail({ members: [member({ isChild })] })) },
+    });
+    await settle(fixture);
+    await openPanel(fixture, 'Members');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(headingTexts(compiled, 'h5')).toEqual(headings);
+    expect(compiled.querySelectorAll('li li')).toHaveLength(1);
+  });
+
+  it('labels the calendar policy options Owner, Contributor and Viewer', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+    await openPanel(fixture, 'Calendar permissions');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(compiled.querySelectorAll('select')[0].options).map((option) =>
+      option.textContent?.trim(),
+    );
+    expect(labels).toEqual(['Owner', 'Contributor', 'Viewer']);
+  });
+
+  // The calendar and mealplan policy panels share the same open/load/save/close shape.
+  describe.each([
+    {
+      panel: 'Calendar permissions',
+      loadError: 'Unable to load calendar permissions.',
+      saveError: 'Unable to save calendar permissions.',
+      update: 'updateCalendarPermissionPolicy' as const,
+    },
+    {
+      panel: 'Meal plan permissions',
+      loadError: 'Unable to load meal plan permissions.',
+      saveError: 'Unable to save meal plan permissions.',
+      update: 'updateMealplanPermissionPolicy' as const,
+    },
+  ])('$panel panel', ({ panel, loadError, saveError, update }) => {
+    it('shows the loading message while the policy loads', async () => {
+      const pending = deferred<GroupDetail>();
+      const { fixture } = await setup({ groups: { getGroup: vi.fn(() => pending.promise) } });
+      await settle(fixture);
+      await openPanel(fixture, panel);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Loading permissions…');
+      expect(findButtonByText(compiled, 'Save permissions')).toBeUndefined();
+
+      pending.resolve(groupDetail());
+      await settle(fixture);
+
+      expect(compiled.textContent).not.toContain('Loading permissions…');
+      expect(findButtonByText(compiled, 'Save permissions')).toBeTruthy();
+    });
+
+    it('closes the panel on a second click', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      await openPanel(fixture, panel);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(hasPanelHeading(compiled, panel)).toBe(true);
+
+      await openPanel(fixture, 'Close');
+
+      expect(hasPanelHeading(compiled, panel)).toBe(false);
+      expect(findButtonByText(compiled, panel)).toBeTruthy();
+    });
+
+    it('clears the load error when the panel is reopened and the policy loads', async () => {
+      const getGroup = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValue(groupDetail());
+      const { fixture } = await setup({ groups: { getGroup } });
+      await settle(fixture);
+      await openPanel(fixture, panel);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain(loadError);
+
+      await openPanel(fixture, 'Close');
+      await openPanel(fixture, panel);
+
+      expect(compiled.textContent).not.toContain(loadError);
+      expect(findButtonByText(compiled, 'Save permissions')).toBeTruthy();
+    });
+
+    it('clears the save error when the panel is reopened', async () => {
+      const { fixture } = await setup({
+        groups: { [update]: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      });
+      await settle(fixture);
+      await openPanel(fixture, panel);
+      await openPanel(fixture, 'Save permissions');
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain(saveError);
+
+      await openPanel(fixture, 'Close');
+      await openPanel(fixture, panel);
+
+      expect(compiled.textContent).not.toContain(saveError);
+    });
+
+    it('re-enables saving after a failure, then disables it and clears the error while retrying', async () => {
+      const pending = deferred<void>();
+      const save = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockReturnValueOnce(pending.promise);
+      const { fixture } = await setup({ groups: { [update]: save } });
+      await settle(fixture);
+      await openPanel(fixture, panel);
+      await openPanel(fixture, 'Save permissions');
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain(saveError);
+      expect(findButtonByText(compiled, 'Save permissions')?.disabled).toBe(false);
+
+      await openPanel(fixture, 'Save permissions');
+
+      expect(findButtonByText(compiled, 'Save permissions')?.disabled).toBe(true);
+      expect(compiled.textContent).not.toContain(saveError);
+
+      pending.resolve();
+      await settle(fixture);
+
+      expect(findButtonByText(compiled, 'Save permissions')?.disabled).toBe(false);
+    });
   });
 });

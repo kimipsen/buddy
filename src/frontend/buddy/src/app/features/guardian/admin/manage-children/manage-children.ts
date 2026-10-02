@@ -39,6 +39,7 @@ export class ManageChildren implements OnInit {
   protected readonly timeZoneIds = listTimeZoneIds();
 
   protected readonly children = signal<ChildSummary[]>([]);
+  // Stryker disable next-line BooleanLiteral: ngOnInit's loadChildren sets it to true before the first render, so the initial value is never seen
   protected readonly childrenLoading = signal(true);
   protected readonly childrenError = signal<string | null>(null);
 
@@ -59,6 +60,7 @@ export class ManageChildren implements OnInit {
   protected readonly savingTimeZoneChildId = signal<string | null>(null);
   protected readonly timeZoneErrorByChildId = signal<Record<string, string | null>>({});
 
+  // Stryker disable next-line BooleanLiteral: the copy button only renders once lastCreatedChild is set, and addChild resets this to false at the same time
   protected readonly passwordCopied = signal(false);
 
   protected readonly expandedInviteChildId = signal<string | null>(null);
@@ -66,6 +68,7 @@ export class ManageChildren implements OnInit {
   protected readonly invitesLoading = signal<string | null>(null);
   protected readonly invitesError = signal<string | null>(null);
 
+  // Stryker disable next-line StringLiteral: the invite form only renders once toggleInvitePanel has reset this to ''
   protected readonly inviteEmail = signal('');
   protected readonly inviteKind = signal<GuardianKind>(0);
   protected readonly inviting = signal(false);

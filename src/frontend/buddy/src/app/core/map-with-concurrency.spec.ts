@@ -88,4 +88,10 @@ describe('mapWithConcurrency', () => {
   it.each([0, -1, 1.5, Number.NaN])('rejects a non-positive-integer limit (%s)', async (limit) => {
     await expect(mapWithConcurrency([1], limit, async (item) => item)).rejects.toThrow(RangeError);
   });
+
+  it('names the rejected limit in the error message', async () => {
+    await expect(mapWithConcurrency([1], 0, async (item) => item)).rejects.toThrow(
+      'mapWithConcurrency limit must be a positive integer, got 0',
+    );
+  });
 });
