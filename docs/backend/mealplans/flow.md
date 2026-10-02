@@ -114,7 +114,9 @@ happened to be acting through when the first key was added; see "AI credential
 resolution" below for how a request finds it). It's provisioned lazily on the
 first `SetProviderApiKey` call that resolves no credential, with
 `AiCredentialsInitialized`, then accumulates
-`ProviderApiKeySet`/`ProviderApiKeyRemoved`/`ActiveProviderChanged` events.
+`ProviderApiKeySet`/`ProviderApiKeyRemoved`/`ActiveProviderChanged`/`ActiveProviderCleared`
+events (the latter appended alongside `ProviderApiKeyRemoved` when the removed
+provider was the active one).
 Provider API keys (BYOK — bring your own key, for Anthropic, OpenAI, or
 Gemini) are encrypted at rest via the ASP.NET Core Data Protection API before
 being stored; only the encrypted ciphertext and the key's last 4 characters
@@ -144,9 +146,9 @@ index row per credential, naming one child); only the lookup is wide:
    serving the unlinked child's remaining family too. A key set up entirely
    by someone else in a family the caller has left is not inherited.
 2. **Winner: the most recently activated credential.** "Activated" is the
-   `OccurredAt` of the credential's latest `ActiveProviderChanged` event, and
-   only counts while that event's `Provider` is non-null (i.e. the credential
-   currently has an active provider). Re-setting the key of the already-active
+   `OccurredAt` of the credential's latest `ActiveProviderChanged` event, unless
+   an `ActiveProviderCleared` came after it (i.e. the credential currently has
+   an active provider). Re-setting the key of the already-active
    provider is not an activation. Credentials with no active provider rank
    below every activated one; ties and the order among non-activated
    credentials fall back to the larger (newer, UUIDv7) credential id.
