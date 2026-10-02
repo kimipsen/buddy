@@ -12,7 +12,7 @@ using Xunit;
 namespace buddy.IntegrationTests.Common.Configuration;
 
 // The options registrations go through AddValidatedOptions (ValidateOnStart), so the host's
-// startup validation -- the IStartupValidator the generic host runs before serving -- rejects a
+// startup validation -- the IAsyncStartupValidator the generic host runs before serving -- rejects a
 // missing required value. Exercised on a bare ServiceCollection rather than a whole host.
 public sealed class ValidatedOptionsTests
 {
@@ -24,11 +24,11 @@ public sealed class ValidatedOptionsTests
     };
 
     [Fact]
-    public void Valid_mail_settings_pass_startup_validation_without_credentials()
+    public async Task Valid_mail_settings_pass_startup_validation_without_credentials()
     {
         using var provider = BuildMail(ValidMail);
 
-        provider.GetRequiredService<IStartupValidator>().Validate();
+        await provider.GetRequiredService<IAsyncStartupValidator>().ValidateAsync();
 
         Assert.Null(provider.GetRequiredService<IOptions<MailOptions>>().Value.Credentials);
     }
@@ -37,16 +37,16 @@ public sealed class ValidatedOptionsTests
     [InlineData("Mail:Host")]
     [InlineData("Mail:FromAddress")]
     [InlineData("Mail:FrontendBaseUrl")]
-    public void A_missing_required_mail_setting_fails_startup(string key)
+    public async Task A_missing_required_mail_setting_fails_startup(string key)
     {
         using var provider = BuildMail(ValidMail.Where(entry => entry.Key != key));
 
-        var error = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IStartupValidator>().Validate());
+        var error = await Assert.ThrowsAsync<OptionsValidationException>(() => provider.GetRequiredService<IAsyncStartupValidator>().ValidateAsync());
         Assert.Contains(key.Split(':')[1], error.Message);
     }
 
     [Fact]
-    public void Smtp_credentials_bind_as_one_object()
+    public async Task Smtp_credentials_bind_as_one_object()
     {
         using var provider = BuildMail(ValidMail.Concat(new Dictionary<string, string?>
         {
@@ -54,7 +54,7 @@ public sealed class ValidatedOptionsTests
             ["Mail:Credentials:Password"] = "secret",
         }));
 
-        provider.GetRequiredService<IStartupValidator>().Validate();
+        await provider.GetRequiredService<IAsyncStartupValidator>().ValidateAsync();
 
         var credentials = provider.GetRequiredService<IOptions<MailOptions>>().Value.Credentials;
         Assert.NotNull(credentials);
@@ -63,7 +63,7 @@ public sealed class ValidatedOptionsTests
     }
 
     [Fact]
-    public void Blank_smtp_credentials_mean_unauthenticated_sending()
+    public async Task Blank_smtp_credentials_mean_unauthenticated_sending()
     {
         using var provider = BuildMail(ValidMail.Concat(new Dictionary<string, string?>
         {
@@ -71,32 +71,32 @@ public sealed class ValidatedOptionsTests
             ["Mail:Credentials:Password"] = "",
         }));
 
-        provider.GetRequiredService<IStartupValidator>().Validate();
+        await provider.GetRequiredService<IAsyncStartupValidator>().ValidateAsync();
 
         Assert.Null(provider.GetRequiredService<IOptions<MailOptions>>().Value.Credentials);
     }
 
     [Fact]
-    public void A_username_without_a_password_fails_startup()
+    public async Task A_username_without_a_password_fails_startup()
     {
         using var provider = BuildMail(ValidMail.Append(new("Mail:Credentials:Username", "mailer")));
 
-        var error = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IStartupValidator>().Validate());
+        var error = await Assert.ThrowsAsync<OptionsValidationException>(() => provider.GetRequiredService<IAsyncStartupValidator>().ValidateAsync());
         Assert.Contains("Credentials", error.Message);
     }
 
     [Fact]
-    public void A_missing_connection_string_fails_startup()
+    public async Task A_missing_connection_string_fails_startup()
     {
         var services = Services([]);
         services.AddPostgresDataSource(new ConfigurationBuilder().Build());
         using var provider = services.BuildServiceProvider();
 
-        Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IStartupValidator>().Validate());
+        await Assert.ThrowsAsync<OptionsValidationException>(() => provider.GetRequiredService<IAsyncStartupValidator>().ValidateAsync());
     }
 
     [Fact]
-    public void A_missing_keycloak_admin_client_secret_fails_startup_but_an_empty_one_is_allowed()
+    public async Task A_missing_keycloak_admin_client_secret_fails_startup_but_an_empty_one_is_allowed()
     {
         var settings = new Dictionary<string, string?>
         {
@@ -108,12 +108,12 @@ public sealed class ValidatedOptionsTests
 
         using (var missing = BuildKeycloakAdmin(settings))
         {
-            Assert.Throws<OptionsValidationException>(() => missing.GetRequiredService<IStartupValidator>().Validate());
+            await Assert.ThrowsAsync<OptionsValidationException>(() => missing.GetRequiredService<IAsyncStartupValidator>().ValidateAsync());
         }
 
         settings["Authentication:KeycloakAdmin:ClientSecret"] = "";
         using var empty = BuildKeycloakAdmin(settings);
-        empty.GetRequiredService<IStartupValidator>().Validate();
+        await empty.GetRequiredService<IAsyncStartupValidator>().ValidateAsync();
     }
 
     private static ServiceProvider BuildMail(IEnumerable<KeyValuePair<string, string?>> settings)
