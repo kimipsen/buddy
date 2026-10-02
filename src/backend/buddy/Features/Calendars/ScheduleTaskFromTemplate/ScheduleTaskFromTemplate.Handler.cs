@@ -92,7 +92,7 @@ public static class ScheduleTaskFromTemplateHandler
         var itemId = CalendarItemId.New();
         var now = DateTimeOffset.UtcNow;
 
-        var created = new TaskItemCreated(
+        var created = new TemplateTaskItemCreated(
             itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, dueDate, command.Recurrence, now,
             command.AssignedTo, command.TaskTemplateId);
 

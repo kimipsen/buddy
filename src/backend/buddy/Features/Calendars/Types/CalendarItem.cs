@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 using buddy.Common.Aggregates;
 using buddy.Features.Users;
@@ -12,32 +13,32 @@ public sealed record CalendarItem(
     CalendarItemId Id,
     CalendarId CalendarId,
     UserId CreatedBy,
-    CalendarItemKind Kind,
     string Title,
     Icon? Icon,
     Color Color,
-    Period? Period,
-    DueDate? DueDate,
+    ItemSchedule Schedule,
     RecurrenceRule? Recurrence,
     ImmutableDictionary<(DateOnly OccurrenceDate, Guid? SubtaskId), bool> CompletionLog,
     UserId LastModifiedBy,
-    // Only ever set for a Task -- an Event has no assignee. Null means unassigned.
-    UserId? AssignedTo,
-    bool IsDeleted,
-    // Only ever set for a Task, and only when it was scheduled from a TaskLibrary template (see
-    // Features/Calendars/ScheduleTaskFromTemplate). A raw Guid, not TaskLibrary's TaskTemplateId
-    // type -- Calendars must not take a compile dependency on TaskLibrary's types, the same
-    // one-way discipline Mealplans keeps with Calendars' own Icon/Color (Mealplans references
-    // them, Calendars never references anything of Mealplans').
-    Guid? TaskTemplateId)
+    bool IsDeleted)
 {
+    // Derived from Schedule (the wire still sends kind: 0|1), so kept out of the snapshot JSON.
+    [JsonIgnore]
+    public CalendarItemKind Kind => Schedule switch
+    {
+        ItemSchedule.Event => CalendarItemKind.Event,
+        ItemSchedule.Task => CalendarItemKind.Task,
+    };
+
     // Sort key for calendar listings: an event sorts by its own start, a task by its due date.
     // A plain local DateTime is fine here -- it's only used to order items within one calendar,
     // which all share the same time zone, not to resolve an actual instant.
-    // Safe to assume non-null -- Rehydrate always sets Period for Event and DueDate for Task.
-    public DateTime ScheduleKey => Kind == CalendarItemKind.Event
-        ? Period!.StartsAt.Date.ToDateTime(Period.StartsAt.Time)
-        : DueDate!.Date.ToDateTime(DueDate.Time);
+    [JsonIgnore]
+    public DateTime ScheduleKey => Schedule switch
+    {
+        ItemSchedule.Event @event => @event.Period.StartsAt.Date.ToDateTime(@event.Period.StartsAt.Time),
+        ItemSchedule.Task task => task.DueDate.Date.ToDateTime(task.DueDate.Time),
+    };
 
     public static CalendarItem? Rehydrate(IEnumerable<CalendarItemEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
@@ -52,46 +53,30 @@ public sealed record CalendarItem(
     // docs/backend/analysis/event-stream-snapshots.md).
     public static CalendarItem Start(CalendarItemEvent @event) => @event switch
     {
-        EventItemCreated created => new CalendarItem(
-            created.Id,
-            created.CalendarId,
-            created.CreatedBy,
-            CalendarItemKind.Event,
-            created.Title,
-            created.Icon,
-            created.Color,
-            created.Period,
-            null,
-            created.Recurrence,
-            ImmutableDictionary<(DateOnly, Guid?), bool>.Empty,
-            created.CreatedBy,
-            AssignedTo: null,
-            IsDeleted: false,
-            TaskTemplateId: null),
-        TaskItemCreated created => new CalendarItem(
-            created.Id,
-            created.CalendarId,
-            created.CreatedBy,
-            CalendarItemKind.Task,
-            created.Title,
-            created.Icon,
-            created.Color,
-            null,
-            created.DueDate,
-            created.Recurrence,
-            ImmutableDictionary<(DateOnly, Guid?), bool>.Empty,
-            created.CreatedBy,
-            created.AssignedTo,
-            IsDeleted: false,
-            created.TaskTemplateId),
+        EventItemCreated created => New(created.Id, created.CalendarId, created.CreatedBy, created.Title, created.Icon, created.Color,
+            new ItemSchedule.Event(created.Period), created.Recurrence),
+        TaskItemCreated created => New(created.Id, created.CalendarId, created.CreatedBy, created.Title, created.Icon, created.Color,
+            new ItemSchedule.Task(created.DueDate, created.AssignedTo, new TaskSource.Freeform()), created.Recurrence),
+        TemplateTaskItemCreated created => New(created.Id, created.CalendarId, created.CreatedBy, created.Title, created.Icon, created.Color,
+            new ItemSchedule.Task(created.DueDate, created.AssignedTo, new TaskSource.FromTemplate(created.TaskTemplateId)), created.Recurrence),
         _ => throw EventReplay.NotAStartEvent(nameof(CalendarItem), @event.EventType)
     };
 
     public static CalendarItem Advance(CalendarItem item, CalendarItemEvent @event) => @event switch
     {
         ItemDetailsUpdated updated => item with { Title = updated.After.Title, Icon = updated.After.Icon, Color = updated.After.Color, LastModifiedBy = updated.ModifiedBy },
-        EventRescheduled rescheduled => item with { Period = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
-        TaskRescheduled rescheduled => item with { DueDate = rescheduled.After, LastModifiedBy = rescheduled.ModifiedBy },
+        // RescheduleItem only appends the event matching the item's own case, so a mismatch is
+        // corrupt history rather than a request error.
+        EventRescheduled rescheduled => item.Schedule switch
+        {
+            ItemSchedule.Event => item with { Schedule = new ItemSchedule.Event(rescheduled.After), LastModifiedBy = rescheduled.ModifiedBy },
+            ItemSchedule.Task => throw new InvalidOperationException($"EventRescheduled on task item {item.Id.Value}."),
+        },
+        TaskRescheduled rescheduled => item.Schedule switch
+        {
+            ItemSchedule.Task task => item with { Schedule = task with { DueDate = rescheduled.After }, LastModifiedBy = rescheduled.ModifiedBy },
+            ItemSchedule.Event => throw new InvalidOperationException($"TaskRescheduled on event item {item.Id.Value}."),
+        },
         RecurrenceUpdated recurrence => item with { Recurrence = recurrence.After, LastModifiedBy = recurrence.ModifiedBy },
         // Sparse log, same rule as MedicineSchedule.DoseLog: "not completed" is the
         // implicit default, so a not-completed entry is removed rather than stored. Keyed
@@ -105,6 +90,11 @@ public sealed record CalendarItem(
             LastModifiedBy = completion.ModifiedBy
         },
         ItemDeleted deleted => item with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },
-        EventItemCreated or TaskItemCreated => throw EventReplay.AlreadyStarted(nameof(CalendarItem), @event.EventType)
+        EventItemCreated or TaskItemCreated or TemplateTaskItemCreated => throw EventReplay.AlreadyStarted(nameof(CalendarItem), @event.EventType)
     };
+
+    private static CalendarItem New(
+        CalendarItemId id, CalendarId calendarId, UserId createdBy, string title, Icon? icon, Color color, ItemSchedule schedule, RecurrenceRule? recurrence) =>
+        new(id, calendarId, createdBy, title, icon, color, schedule, recurrence,
+            ImmutableDictionary<(DateOnly, Guid?), bool>.Empty, createdBy, IsDeleted: false);
 }

@@ -14,7 +14,7 @@ public static class ChildVisibility
         (await guardians.ListForChildAsync(userId, cancellationToken)).Count > 0;
 
     public static IReadOnlyCollection<CalendarItem> FilterForChild(IReadOnlyCollection<CalendarItem> items, UserId childId) =>
-        [.. items.Where(item => item.Kind == CalendarItemKind.Event || item.AssignedTo == childId)];
+        [.. items.Where(item => item.Schedule is ItemSchedule.Event || (item.Schedule is ItemSchedule.Task task && task.AssignedTo == childId))];
 
     public static IReadOnlyCollection<CalendarItemOccurrence> FilterForChild(IReadOnlyCollection<CalendarItemOccurrence> occurrences, UserId childId) =>
         [.. occurrences.Where(occurrence => occurrence.Kind == CalendarItemKind.Event || occurrence.AssignedTo == childId.Value)];

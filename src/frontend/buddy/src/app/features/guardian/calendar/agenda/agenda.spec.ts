@@ -671,10 +671,12 @@ describe('CalendarAgenda', () => {
       color: '#abcdef',
     });
     expect(calendars.rescheduleItem).toHaveBeenCalledWith('cal-1', 'item-1', {
-      startsAt: { date: today, time: '09:00:00' },
-      endsAt: { date: today, time: '10:00:00' },
-      dueDate: null,
-      isAllDay: false,
+      schedule: {
+        kind: 0,
+        startsAt: { date: today, time: '09:00:00' },
+        endsAt: { date: today, time: '10:00:00' },
+        isAllDay: false,
+      },
     });
     // Success closes the edit form and reloads the week (initial load + this reload).
     expect(calendars.listOccurrencesInRange).toHaveBeenCalledTimes(2);
@@ -706,14 +708,16 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     expect(calendars.rescheduleItem).toHaveBeenCalledWith('cal-1', 'item-1', {
-      startsAt: { date: today, time: '00:00:00' },
-      endsAt: { date: addDays(today, 1), time: '00:00:00' },
-      dueDate: null,
-      isAllDay: true,
+      schedule: {
+        kind: 0,
+        startsAt: { date: today, time: '00:00:00' },
+        endsAt: { date: addDays(today, 1), time: '00:00:00' },
+        isAllDay: true,
+      },
     });
   });
 
-  it('reschedules a task by its due date, leaving startsAt/endsAt null', async () => {
+  it('reschedules a task by its due date', async () => {
     const item = occurrence({
       itemId: 'task-1',
       kind: 1,
@@ -738,10 +742,7 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     expect(calendars.rescheduleItem).toHaveBeenCalledWith('cal-1', 'task-1', {
-      startsAt: null,
-      endsAt: null,
-      dueDate: { date: today, time: '17:00:00' },
-      isAllDay: false,
+      schedule: { kind: 1, dueDate: { date: today, time: '17:00:00' }, isAllDay: false },
     });
   });
 
@@ -826,16 +827,16 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     expect(calendars.createItem).toHaveBeenCalledWith('cal-1', {
-      kind: 0,
       title: 'Piano lesson',
       icon: null,
       color: '#f43f5e',
-      startsAt: { date: today, time: '09:00:00' },
-      endsAt: { date: today, time: '10:00:00' },
-      dueDate: null,
-      isAllDay: false,
+      schedule: {
+        kind: 0,
+        startsAt: { date: today, time: '09:00:00' },
+        endsAt: { date: today, time: '10:00:00' },
+        isAllDay: false,
+      },
       recurrence: null,
-      assignedTo: null,
     });
   });
 
@@ -871,16 +872,16 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
 
     expect(calendars.createItem).toHaveBeenCalledWith('cal-1', {
-      kind: 1,
       title: 'Take out trash',
       icon: null,
       color: '#f43f5e',
-      startsAt: null,
-      endsAt: null,
-      dueDate: { date: today, time: '00:00:00' },
-      isAllDay: true,
+      schedule: {
+        kind: 1,
+        dueDate: { date: today, time: '00:00:00' },
+        isAllDay: true,
+        assignedTo: 'child-1',
+      },
       recurrence: null,
-      assignedTo: 'child-1',
     });
   });
 

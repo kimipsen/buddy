@@ -58,4 +58,32 @@ public sealed class CalendarItemSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(snapshot);
         Assert.Equivalent(replayed, snapshot, strict: true);
     }
+
+    // ItemScheduleJsonConverter round-trips each case: an event's Period, and a task's assignee.
+    [Fact]
+    public async Task The_snapshot_matches_a_full_replay_for_an_event_and_an_assigned_task()
+    {
+        var (_, ownerToken, ownerId) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Snapshot Cases");
+        var day = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(2);
+
+        var @event = await CalendarTestHelpers.CreateEventAsync(fixture, ownerToken, calendarId, isAllDay: true);
+        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, ownerToken, calendarId, "Walk the dog", day, assignedTo: ownerId);
+
+        await AssertSnapshotMatchesReplayAsync(@event!.Id);
+        await AssertSnapshotMatchesReplayAsync(task!.Id);
+    }
+
+    private async Task AssertSnapshotMatchesReplayAsync(Guid itemId)
+    {
+        var items = fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>();
+        var id = new CalendarItemId(itemId);
+
+        var replayed = CalendarItem.Rehydrate(await items.ReadAsync(id, CancellationToken.None));
+        var snapshot = await items.FindSnapshotAsync(id, CancellationToken.None);
+
+        Assert.NotNull(replayed);
+        Assert.NotNull(snapshot);
+        Assert.Equivalent(replayed, snapshot, strict: true);
+    }
 }

@@ -27,6 +27,9 @@ public sealed class CalendarItemSnapshotProjection : SingleStreamProjection<Cale
     public static CalendarItemSnapshot Create(TaskItemCreated created) =>
         new(created.Id.Value, CalendarItem.Start(CalendarItemEvent.FromPayload(created)));
 
+    public static CalendarItemSnapshot Create(TemplateTaskItemCreated created) =>
+        new(created.Id.Value, CalendarItem.Start(CalendarItemEvent.FromPayload(created)));
+
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, ItemDetailsUpdated updated) =>
         current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(updated)) };
 

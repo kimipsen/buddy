@@ -4,9 +4,8 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 
-public sealed record RescheduleItem(UserId UserId, CalendarId CalendarId, CalendarItemId ItemId, StartsAt? StartsAt, EndsAt? EndsAt, DueDate? DueDate, bool IsAllDay)
+public sealed record RescheduleItem(UserId UserId, CalendarId CalendarId, CalendarItemId ItemId, ItemTiming Timing)
 {
-    public static RescheduleItem FromClaims(
-        ClaimsPrincipal principal, CalendarId calendarId, CalendarItemId itemId, StartsAt? startsAt, EndsAt? endsAt, DueDate? dueDate, bool isAllDay) =>
-        new(principal.GetRequiredUserId(), calendarId, itemId, startsAt, endsAt, dueDate, isAllDay);
+    public static RescheduleItem FromClaims(ClaimsPrincipal principal, CalendarId calendarId, CalendarItemId itemId, ItemTiming timing) =>
+        new(principal.GetRequiredUserId(), calendarId, itemId, timing);
 }

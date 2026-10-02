@@ -42,13 +42,16 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Json(new
             {
-                Kind = CalendarItemKind.Event,
                 Title = "Trip",
                 Icon = "calendar",
                 Color = "#00ff00",
-                StartsAt = new { Date = start, Time = TimeOnly.MinValue },
-                EndsAt = new { Date = start.AddDays(3), Time = TimeOnly.MinValue },
-                IsAllDay = true
+                Schedule = new
+                {
+                    Kind = CalendarItemKind.Event,
+                    StartsAt = new { Date = start, Time = TimeOnly.MinValue },
+                    EndsAt = new { Date = start.AddDays(3), Time = TimeOnly.MinValue },
+                    IsAllDay = true
+                }
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBeOk();
         });
@@ -83,12 +86,15 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Json(new
             {
-                Kind = CalendarItemKind.Task,
-                IsAllDay = false,
                 Title = "File taxes",
                 Icon = "task",
                 Color = "#ff0000",
-                DueDate = new { Date = due, Time = new TimeOnly(17, 0) }
+                Schedule = new
+                {
+                    Kind = CalendarItemKind.Task,
+                    IsAllDay = false,
+                    DueDate = new { Date = due, Time = new TimeOnly(17, 0) }
+                }
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBeOk();
         });
@@ -107,15 +113,18 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
-            Kind = CalendarItemKind.Event,
-            IsAllDay = false,
             Title = "Incomplete",
             Icon = "calendar",
             Color = "#00ff00",
-            StartsAt = new { Date = day, Time = new TimeOnly(9, 0) }
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Event,
+                IsAllDay = false,
+                StartsAt = new { Date = day, Time = new TimeOnly(9, 0) }
+            }
         });
 
-        Assert.Contains("EndsAt", error.Details.Keys);
+        Assert.Contains("schedule.endsAt", error.Details.Keys);
     }
 
     [Fact]
@@ -127,15 +136,18 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
-            Kind = CalendarItemKind.Event,
-            IsAllDay = false,
             Title = "Incomplete",
             Icon = "calendar",
             Color = "#00ff00",
-            EndsAt = new { Date = day, Time = new TimeOnly(9, 30) }
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Event,
+                IsAllDay = false,
+                EndsAt = new { Date = day, Time = new TimeOnly(9, 30) }
+            }
         });
 
-        Assert.Contains("StartsAt", error.Details.Keys);
+        Assert.Contains("schedule.startsAt", error.Details.Keys);
     }
 
     [Theory]
@@ -150,18 +162,20 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
-            Kind = CalendarItemKind.Event,
-            IsAllDay = false,
             Title = "Backwards",
             Icon = "calendar",
             Color = "#00ff00",
-            StartsAt = new { Date = day, Time = start },
-            EndsAt = new { Date = day, Time = start.AddMinutes(endOffsetMinutes) }
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Event,
+                IsAllDay = false,
+                StartsAt = new { Date = day, Time = start },
+                EndsAt = new { Date = day, Time = start.AddMinutes(endOffsetMinutes) }
+            }
         });
 
-        // The end-after-start rule validates the whole command (RuleFor(x => x)), so FluentValidation
-        // reports it under the empty property name.
-        Assert.Contains("", error.Details.Keys);
+        // CreateItemValidator reports the end-after-start rule against the schedule.
+        Assert.Contains("Schedule", error.Details.Keys);
     }
 
     [Fact]
@@ -172,14 +186,17 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
-            Kind = CalendarItemKind.Task,
-            IsAllDay = false,
             Title = "No due date",
             Icon = "task",
-            Color = "#ff0000"
+            Color = "#ff0000",
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Task,
+                IsAllDay = false
+            }
         });
 
-        Assert.Contains("DueDate", error.Details.Keys);
+        Assert.Contains("schedule.dueDate", error.Details.Keys);
     }
 
     [Fact]
@@ -190,12 +207,15 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
-            Kind = CalendarItemKind.Task,
-            IsAllDay = false,
             Title = new string('t', 201),
             Icon = "task",
             Color = "#ff0000",
-            DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) }
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Task,
+                IsAllDay = false,
+                DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) }
+            }
         });
 
         Assert.Contains("Title", error.Details.Keys);
@@ -222,13 +242,16 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidItemAsync(token, calendarId, new
         {
-            Kind = CalendarItemKind.Task,
-            IsAllDay = false,
             Title = "Water plants",
             Icon = "task",
             Color = "#ff0000",
-            DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) },
-            Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 0, Until = (DateOnly?)null }
+            Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 0, Until = (DateOnly?)null },
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Task,
+                IsAllDay = false,
+                DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) }
+            }
         });
 
         Assert.Contains("Recurrence.IntervalCount", error.Details.Keys);
@@ -308,19 +331,22 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
 
         var error = await PostInvalidItemAsync(ownerToken, calendarId, new
         {
-            Kind = CalendarItemKind.Event,
-            IsAllDay = false,
             Title = "Standup",
             Icon = "calendar",
             Color = "#00ff00",
-            StartsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 0) },
-            EndsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 30) },
-            AssignedTo = Guid.NewGuid()
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Event,
+                IsAllDay = false,
+                StartsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 0) },
+                EndsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 30) },
+                AssignedTo = Guid.NewGuid()
+            }
         });
 
-        // Asserting the field key matters: without the validator rule, the handler's own
-        // assignee-access check would still reject this random id with a 400 under "".
-        Assert.Contains("AssignedTo", error.Details.Keys);
+        // An event schedule has no assignedTo, and EventScheduleRequest rejects unmapped members,
+        // so this fails at binding under "schedule" -- not the handler's assignee-access check.
+        Assert.Contains("schedule", error.Details.Keys);
     }
 
     private async Task<ErrorEnvelope> PostInvalidItemAsync(string token, Guid calendarId, object body)

@@ -43,44 +43,34 @@ public static class RescheduleItemHandler
 
         var now = DateTimeOffset.UtcNow;
 
-        if (item.Kind == CalendarItemKind.Event)
+        // The timing must match the item's own case: an event is rescheduled with a new span, a
+        // task with a new due date (its assignee and source are kept).
+        switch (item.Schedule, command.Timing)
         {
-            if (command.StartsAt is null || command.EndsAt is null)
-            {
-                return new Result<CalendarItem>.Validation(ValidationProblem.Of("An event requires both a start and an end time."));
-            }
-
-            var periodResult = Period.TryCreate(command.StartsAt, command.EndsAt, command.IsAllDay);
-
-            if (periodResult is not PeriodValidationResult.Valid(var period))
-            {
-                return new Result<CalendarItem>.Validation(ValidationProblem.Of(periodResult switch
+            case (ItemSchedule.Event current, ItemTiming.Event timing):
+                if (Period.TryCreate(timing.StartsAt, timing.EndsAt, timing.IsAllDay) is not PeriodValidationResult.Valid(var period))
                 {
-                    PeriodValidationResult.Invalid(var message) => message,
-                    PeriodValidationResult.Valid => throw new UnreachableException("Already excluded by the enclosing check."),
-                }));
-            }
+                    return new Result<CalendarItem>.Validation(ValidationProblem.Of(Period.TryCreate(timing.StartsAt, timing.EndsAt, timing.IsAllDay) switch
+                    {
+                        PeriodValidationResult.Invalid(var message) => message,
+                        PeriodValidationResult.Valid => throw new UnreachableException("Already excluded by the enclosing check."),
+                    }));
+                }
 
-            await items.AppendAsync(
-                command.ItemId,
-                [new EventRescheduled(command.ItemId, item.Period!, period, userId, now)],
-                cancellationToken);
+                await items.AppendAsync(command.ItemId, [new EventRescheduled(command.ItemId, current.Period, period, userId, now)], cancellationToken);
 
-            return new Result<CalendarItem>.Success(item with { Period = period, LastModifiedBy = userId });
+                return new Result<CalendarItem>.Success(item with { Schedule = new ItemSchedule.Event(period), LastModifiedBy = userId });
+
+            case (ItemSchedule.Task current, ItemTiming.Task timing):
+                await items.AppendAsync(command.ItemId, [new TaskRescheduled(command.ItemId, current.DueDate, timing.DueDate, userId, now)], cancellationToken);
+
+                return new Result<CalendarItem>.Success(item with { Schedule = current with { DueDate = timing.DueDate }, LastModifiedBy = userId });
+
+            case (ItemSchedule.Event, ItemTiming.Task):
+                return new Result<CalendarItem>.Validation(ValidationProblem.Of("An event requires both a start and an end time."));
+
+            default:
+                return new Result<CalendarItem>.Validation(ValidationProblem.Of("A task requires a due date."));
         }
-
-        if (command.DueDate is null)
-        {
-            return new Result<CalendarItem>.Validation(ValidationProblem.Of("A task requires a due date."));
-        }
-
-        var dueDate = command.DueDate;
-
-        await items.AppendAsync(
-            command.ItemId,
-            [new TaskRescheduled(command.ItemId, item.DueDate!, dueDate, userId, now)],
-            cancellationToken);
-
-        return new Result<CalendarItem>.Success(item with { DueDate = dueDate, LastModifiedBy = userId });
     }
 }

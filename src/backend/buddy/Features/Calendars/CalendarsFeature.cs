@@ -26,6 +26,7 @@ public static class CalendarsFeature
         typeof(MemberRoleRevoked),
         typeof(EventItemCreated),
         typeof(TaskItemCreated),
+        typeof(TemplateTaskItemCreated),
         typeof(ItemDetailsUpdated),
         typeof(EventRescheduled),
         typeof(TaskRescheduled),
@@ -66,6 +67,10 @@ public static class CalendarsFeature
                     // both snapshot documents share this one StoreOptions/serializer, so the
                     // converter is registered once here for both.
                     json.Converters.Add(new ValueTupleJsonConverterFactory());
+
+                    // CalendarItem.Schedule (ItemSchedule) needs an explicit Kind discriminator to
+                    // round-trip through the snapshot -- see ItemScheduleJsonConverter.
+                    json.Converters.Add(new ItemScheduleJsonConverter());
                 });
 
             // Inline snapshots of Calendar and CalendarItem, kept transactionally consistent with

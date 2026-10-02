@@ -60,21 +60,24 @@ export interface RecurrenceRuleRequest {
   until: string | null;
 }
 
+// When an item happens, discriminated by `kind` (0 = event, 1 = task) like the backend's
+// ItemTimingRequest. isAllDay=true makes the time-of-day in startsAt/endsAt/dueDate a sentinel.
+export type ItemTiming =
+  | { kind: 0; startsAt: DatePart; endsAt: DatePart; isAllDay: boolean }
+  | { kind: 1; dueDate: DatePart; isAllDay: boolean };
+
+// A new item's schedule: a task may also be assigned to someone (null means unassigned).
+export type ItemSchedule =
+  | Extract<ItemTiming, { kind: 0 }>
+  | (Extract<ItemTiming, { kind: 1 }> & { assignedTo: string | null });
+
 export interface CreateItemRequest {
-  kind: CalendarItemKind;
   title: string;
   // null means "inherit the owning calendar's icon" -- the item stores no override.
   icon: string | null;
   color: string;
-  // Event requires startsAt+endsAt; task requires dueDate -- the other pair stays null.
-  startsAt: DatePart | null;
-  endsAt: DatePart | null;
-  dueDate: DatePart | null;
-  // When true, the time-of-day in startsAt/endsAt/dueDate is a sentinel and should be ignored.
-  isAllDay: boolean;
+  schedule: ItemSchedule;
   recurrence: RecurrenceRuleRequest | null;
-  // Only meaningful for a Task -- ignored for an Event. Null means unassigned.
-  assignedTo: string | null;
 }
 
 // Someone who could be assigned a task on a calendar: an explicit per-calendar grant, or -- for a
@@ -92,12 +95,9 @@ export interface UpdateItemDetailsRequest {
   color: string;
 }
 
+// The timing must match the item's own kind -- an event is rescheduled with an event timing.
 export interface RescheduleItemRequest {
-  // Same Event-vs-Task invariant as CreateItemRequest -- exactly one pair is set.
-  startsAt: DatePart | null;
-  endsAt: DatePart | null;
-  dueDate: DatePart | null;
-  isAllDay: boolean;
+  schedule: ItemTiming;
 }
 
 // Matches ScheduleTaskFromTemplateRequest exactly. startDate/startTime are flat DateOnly/TimeOnly
@@ -118,17 +118,22 @@ export interface ScheduleTaskFromTemplateRequest {
 export interface CalendarItemResponse {
   id: string;
   calendarId: string;
-  kind: CalendarItemKind;
   title: string;
   // Raw override -- null if the item inherits the owning calendar's icon.
   icon: string | null;
   color: string;
+  // A task's source says whether it was entered by hand (0) or scheduled from a template (1).
+  schedule:
+    | { kind: 0; period: { startsAt: DatePart; endsAt: DatePart; isAllDay: boolean } }
+    | {
+        kind: 1;
+        dueDate: DatePart & { isAllDay: boolean };
+        assignedTo: string | null;
+        source: { kind: 0 } | { kind: 1; taskTemplateId: string };
+      };
+  recurrence: RecurrenceRuleRequest | null;
   createdBy: string;
   lastModifiedBy: string;
-  assignedTo: string | null;
-  // Set when this item was scheduled from a TaskLibrary template (see ScheduleTaskFromTemplate);
-  // null for a freeform item.
-  taskTemplateId: string | null;
 }
 
 export interface CalendarItemOccurrence {

@@ -18,16 +18,33 @@ internal sealed record RecurrenceRuleDto(RecurrenceFrequency Frequency, int Inte
 internal sealed record CalendarItemDto(
     Guid Id,
     Guid CalendarId,
-    CalendarItemKind Kind,
     string Title,
     string? Icon,
     string Color,
-    Period? Period,
-    DueDate? DueDate,
+    ItemScheduleDto Schedule,
     RecurrenceRuleDto? Recurrence,
     Guid CreatedBy,
-    Guid LastModifiedBy,
-    Guid? AssignedTo);
+    Guid LastModifiedBy)
+{
+    // Shortcuts into Schedule for the assertions -- the response itself nests them by kind.
+    public CalendarItemKind Kind => Schedule.Kind;
+
+    public Period? Period => Schedule.Period;
+
+    public DueDate? DueDate => Schedule.DueDate;
+
+    public Guid? AssignedTo => Schedule.AssignedTo;
+}
+
+// ItemScheduleResponse read flat: "kind" plus whichever case fields the response carries.
+internal sealed record ItemScheduleDto(
+    CalendarItemKind Kind,
+    Period? Period = null,
+    DueDate? DueDate = null,
+    Guid? AssignedTo = null,
+    TaskSourceDto? Source = null);
+
+internal sealed record TaskSourceDto(int Kind, Guid? TaskTemplateId = null);
 
 internal sealed record AssignableMemberDto(Guid UserId, string GivenName, string FamilyName);
 

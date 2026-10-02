@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-4 implemented (see each phase's "As built"); phases 5-7 proposed.
+Status: Phases 0-4 and 5.1-5.2 implemented (see each "As built"); the rest of Phase 5, and Phases 6-7, proposed.
 
 ## Context
 
@@ -494,6 +494,37 @@ TaskSource   = Freeform | FromTemplate(Guid TaskTemplateId)
   in `RescheduleItem.Handler`.
 - A template-scheduled task gets a separate `TemplateTaskItemCreated(..., Guid TaskTemplateId)`
   event, mirroring the existing Event/Task split. Plain `TaskItemCreated` loses `TaskTemplateId`.
+
+**As built (5.2):**
+- **Domain.** `CalendarItem` holds `ItemSchedule Schedule`: `Event(Period)` or
+  `Task(DueDate, UserId? AssignedTo, TaskSource)`, where `TaskSource` is `Freeform` or
+  `FromTemplate(Guid)`. `Kind` and `ScheduleKey` are computed (`[JsonIgnore]`).
+  `ItemScheduleJsonConverter` persists the union in the snapshot only; the events stay
+  union-free.
+- **Events.** `TemplateTaskItemCreated` is the new creation event for a template-scheduled task.
+  `TaskItemCreated` lost `TaskTemplateId` (golden file `TaskItemCreated_FromTemplate.json` became
+  `TemplateTaskItemCreated.json`).
+- **Commands.** They take small unions: `NewItemSchedule` (create: event span, or task due date
+  plus assignee) and `ItemTiming` (reschedule). The four "this kind needs that field" rules are
+  gone from `CreateItemValidator`; it keeps the end-after-start rule (reported under `Schedule`),
+  the title length and the recurrence interval. `RescheduleItem` switches over `(item.Schedule, command.Timing)`, so a
+  mismatched kind is a 400.
+- **Wire.**
+  - `schedule` objects discriminated by numeric `kind`. Requests use `ItemScheduleRequest` and
+    `ItemTimingRequest`; the response uses `ItemScheduleResponse`, with a nested `source`
+    `{ kind: 0 } | { kind: 1, taskTemplateId }`.
+  - All of them use the shared `Serialization/KindDiscriminatedJsonConverter`, which pickups now
+    use too. It binds each case without `kind`, so a case type can opt into
+    `[JsonUnmappedMemberHandling(Disallow)]`. Three request cases do: both event cases and the task
+    reschedule. So an event with `assignedTo`, or a task reschedule with `assignedTo`, is a 400.
+    The task create case doesn't opt in, so a stray `startsAt` there is ignored, as before. Such
+    a rejection reports the `schedule` path with a generic message, not the offending field.
+- **Frontend.** `ItemTiming` / `ItemSchedule` TypeScript unions in `calendars.service.ts` and the
+  agenda's create/reschedule builders. Nothing reads the item response's schedule today.
+- **Existing databases need a reset.** A `TaskItemCreated` stored before this change with a
+  `TaskTemplateId` would now load as a hand-entered task, silently losing its subtasks. Unlike a
+  snapshot, a projection rebuild doesn't fix this. As with Phases 3-5.1, nothing has been
+  deployed, so a reset is the remedy rather than an upcaster.
 
 ### 5.3 `CompletionTarget`, shared by Calendars and Progress
 

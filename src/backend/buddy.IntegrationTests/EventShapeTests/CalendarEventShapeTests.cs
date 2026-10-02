@@ -84,20 +84,20 @@ public sealed class CalendarEventShapeTests
 
     [Fact]
     public void TaskItemCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "File taxes", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant, AssignedTo: null, TaskTemplateId: null),
+        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "File taxes", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant, AssignedTo: null),
         "Calendars/TaskItemCreated.json");
 
     [Fact]
     public void TaskItemCreated_AllDay() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, null, FixedInstant, AssignedTo: null, TaskTemplateId: null),
+        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, null, FixedInstant, AssignedTo: null),
         "Calendars/TaskItemCreated_AllDay.json");
 
     [Fact]
-    public void TaskItemCreated_FromTemplate() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new TaskItemCreated(
+    public void TemplateTaskItemCreated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new TemplateTaskItemCreated(
             FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, null, FixedInstant,
             AssignedTo: OtherUserId, TaskTemplateId: Guid.Parse("00000000-0000-0000-0000-000000000050")),
-        "Calendars/TaskItemCreated_FromTemplate.json");
+        "Calendars/TemplateTaskItemCreated.json");
 
     [Fact]
     public void ItemDetailsUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(

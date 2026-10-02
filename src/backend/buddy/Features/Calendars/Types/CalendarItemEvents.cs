@@ -5,6 +5,7 @@ namespace buddy.Features.Calendars;
 public union CalendarItemEvent(
     EventItemCreated,
     TaskItemCreated,
+    TemplateTaskItemCreated,
     ItemDetailsUpdated,
     EventRescheduled,
     TaskRescheduled,
@@ -17,6 +18,7 @@ public union CalendarItemEvent(
     {
         EventItemCreated e => e,
         TaskItemCreated e => e,
+        TemplateTaskItemCreated e => e,
         ItemDetailsUpdated e => e,
         EventRescheduled e => e,
         TaskRescheduled e => e,
@@ -30,6 +32,7 @@ public union CalendarItemEvent(
     {
         EventItemCreated => nameof(EventItemCreated),
         TaskItemCreated => nameof(TaskItemCreated),
+        TemplateTaskItemCreated => nameof(TemplateTaskItemCreated),
         ItemDetailsUpdated => nameof(ItemDetailsUpdated),
         EventRescheduled => nameof(EventRescheduled),
         TaskRescheduled => nameof(TaskRescheduled),
@@ -60,10 +63,23 @@ public sealed record TaskItemCreated(
     DueDate DueDate,
     RecurrenceRule? Recurrence,
     DateTimeOffset OccurredAt,
+    UserId? AssignedTo);
+
+// A task scheduled from a TaskLibrary template (ScheduleTaskFromTemplate) -- its own creation event,
+// the same split EventItemCreated/TaskItemCreated already make, so neither carries a field that only
+// the other uses. TaskTemplateId is a raw Guid, not TaskLibrary's TaskTemplateId type.
+public sealed record TemplateTaskItemCreated(
+    CalendarItemId Id,
+    CalendarId CalendarId,
+    UserId CreatedBy,
+    string Title,
+    Icon? Icon,
+    Color Color,
+    DueDate DueDate,
+    RecurrenceRule? Recurrence,
+    DateTimeOffset OccurredAt,
     UserId? AssignedTo,
-    // The TaskLibrary template this item was scheduled from (see ScheduleTaskFromTemplate), if
-    // any -- a raw Guid, not TaskLibrary's TaskTemplateId type (see CalendarItem.TaskTemplateId).
-    Guid? TaskTemplateId);
+    Guid TaskTemplateId);
 
 public sealed record ItemDetailsUpdated(CalendarItemId Id, ItemDetails Before, ItemDetails After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 

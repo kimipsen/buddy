@@ -78,7 +78,9 @@ sequenceDiagram
 
 ## Core lifecycle
 
-The aggregate is event-sourced and uses a sparse stream of calendar mutations. The create flow appends a `CalendarCreatedForGroup` event (carrying the calendar's icon, `📅` by default), then later event and task endpoints append item-creation events such as `EventItemCreated` or `TaskItemCreated`.
+The aggregate is event-sourced and uses a sparse stream of calendar mutations. The create flow appends a `CalendarCreatedForGroup` event (carrying the calendar's icon, `📅` by default), then later event and task endpoints append item-creation events: `EventItemCreated`, `TaskItemCreated`, or `TemplateTaskItemCreated` for a task scheduled from a template.
+
+An item's schedule is a union (`ItemSchedule`): an event has a `Period`; a task has a `DueDate`, an optional assignee and a source (entered by hand, or from a template). On the wire, `POST .../items` and `PATCH .../schedule` take a `schedule` object discriminated by numeric `kind` (`0` = event: `startsAt`, `endsAt`, `isAllDay`; `1` = task: `dueDate`, `isAllDay`, plus `assignedTo` on create). A reschedule must match the item's own kind. An event schedule (create or reschedule) and a task reschedule reject fields they don't have, such as `assignedTo` on an event.
 
 A task scheduled from the Task Library stores a template reference rather than
 a copy of its subtasks. Occurrence and iCal reads load the template's current
@@ -104,6 +106,7 @@ Calendar access is resolved against the calendar's member list and, where releva
 - `CalendarTransferredToGroup`
 - `EventItemCreated`
 - `TaskItemCreated`
+- `TemplateTaskItemCreated`
 - `TaskCompletionChanged`
 - `ItemDetailsUpdated`
 - `EventRescheduled`

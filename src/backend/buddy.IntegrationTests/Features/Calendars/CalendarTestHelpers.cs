@@ -54,13 +54,16 @@ internal static class CalendarTestHelpers
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Json(new
             {
-                Kind = CalendarItemKind.Event,
                 Title = title,
                 Icon = "calendar",
                 Color = "#00ff00",
-                StartsAt = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 0) },
-                EndsAt = new { Date = endDay, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 30) },
-                IsAllDay = isAllDay
+                Schedule = new
+                {
+                    Kind = CalendarItemKind.Event,
+                    StartsAt = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 0) },
+                    EndsAt = new { Date = endDay, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 30) },
+                    IsAllDay = isAllDay
+                }
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(expectedStatus);
         });
@@ -80,14 +83,17 @@ internal static class CalendarTestHelpers
             _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Post.Json(new
             {
-                Kind = CalendarItemKind.Task,
                 Title = title,
                 Icon = "task",
                 Color = "#ff0000",
-                DueDate = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(17, 0) },
-                IsAllDay = isAllDay,
                 Recurrence = recurrence,
-                AssignedTo = assignedTo
+                Schedule = new
+                {
+                    Kind = CalendarItemKind.Task,
+                    DueDate = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(17, 0) },
+                    IsAllDay = isAllDay,
+                    AssignedTo = assignedTo
+                }
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(expectedStatus);
         });

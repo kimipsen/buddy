@@ -29,6 +29,7 @@ public sealed class MartenCalendarItemEventStore(ICalendarsStore store) : ICalen
         {
             EventItemCreated created => created.CalendarId,
             TaskItemCreated created => created.CalendarId,
+            TemplateTaskItemCreated created => created.CalendarId,
             _ => throw new InvalidOperationException("The first event of a new calendar item stream must create the item."),
         };
 

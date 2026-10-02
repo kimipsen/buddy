@@ -8,6 +8,8 @@ using buddy.IntegrationTests.Features.TaskLibrary;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Xunit;
 
 namespace buddy.IntegrationTests.Features.Calendars.ScheduleTaskFromTemplate;
@@ -47,6 +49,15 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
         Assert.Equal(startDate, item.DueDate!.Date);
         Assert.Equal(startTime, item.DueDate.Time);
         Assert.Equal(child.Id, item.AssignedTo);
+        Assert.Equal(new TaskSourceDto(1, template.Id), item.Schedule.Source);
+
+        // The snapshot's ItemScheduleJsonConverter keeps the template source (TaskTemplateId present).
+        var items = fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>();
+        var itemId = new CalendarItemId(item.Id);
+        Assert.Equivalent(
+            CalendarItem.Rehydrate(await items.ReadAsync(itemId, CancellationToken.None)),
+            await items.FindSnapshotAsync(itemId, CancellationToken.None),
+            strict: true);
 
         var response = await fixture.Host.Scenario(_ =>
         {

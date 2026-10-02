@@ -52,8 +52,8 @@ import { TaskPicker } from '../../task-library/task-picker/task-picker';
 export type NewTaskSource = 'manual' | 'template';
 
 const DAYS_AHEAD = 7;
-const EVENT_KIND: CalendarItemKind = 0;
-const TASK_KIND: CalendarItemKind = 1;
+const EVENT_KIND = 0 satisfies CalendarItemKind;
+const TASK_KIND = 1 satisfies CalendarItemKind;
 // Owner (0) or Contributor (1) -- the same tiers CalendarAuthorization.CheckContribute accepts.
 const MAX_CONTRIBUTE_ROLE = 1;
 const DEFAULT_COLOR = '#f43f5e';
@@ -701,10 +701,15 @@ export class CalendarAgenda implements OnInit {
         color,
       });
       await this.calendars.rescheduleItem(occurrence.calendarId, occurrence.itemId, {
-        startsAt: kind === EVENT_KIND ? toDatePart(this.editStartDate(), startTime) : null,
-        endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
-        dueDate: kind === TASK_KIND ? toDatePart(this.editDueDate(), dueTime) : null,
-        isAllDay,
+        schedule:
+          kind === EVENT_KIND
+            ? {
+                kind: EVENT_KIND,
+                startsAt: toDatePart(this.editStartDate(), startTime),
+                endsAt: toDatePart(endDate, endTime),
+                isAllDay,
+              }
+            : { kind: TASK_KIND, dueDate: toDatePart(this.editDueDate(), dueTime), isAllDay },
       });
 
       this.editingItemId.set(null);
@@ -795,16 +800,24 @@ export class CalendarAgenda implements OnInit {
     const dueTime = isAllDay ? '00:00' : this.newDueTime();
 
     await this.calendars.createItem(calendarId, {
-      kind,
       title: this.newTitle().trim(),
       icon: this.newIcon().trim() || null,
       color: this.newColor().trim(),
-      startsAt: kind === EVENT_KIND ? toDatePart(this.newStartDate(), startTime) : null,
-      endsAt: kind === EVENT_KIND ? toDatePart(endDate, endTime) : null,
-      dueDate: kind === TASK_KIND ? toDatePart(this.newDueDate(), dueTime) : null,
-      isAllDay,
+      schedule:
+        kind === EVENT_KIND
+          ? {
+              kind: EVENT_KIND,
+              startsAt: toDatePart(this.newStartDate(), startTime),
+              endsAt: toDatePart(endDate, endTime),
+              isAllDay,
+            }
+          : {
+              kind: TASK_KIND,
+              dueDate: toDatePart(this.newDueDate(), dueTime),
+              isAllDay,
+              assignedTo: this.newAssignedTo() || null,
+            },
       recurrence: this.buildRecurrence(),
-      assignedTo: kind === TASK_KIND && this.newAssignedTo() ? this.newAssignedTo() : null,
     });
   }
 

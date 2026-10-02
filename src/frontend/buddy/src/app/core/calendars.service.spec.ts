@@ -300,30 +300,34 @@ describe('CalendarsService', () => {
 
   describe('createItem', () => {
     const request: CreateItemRequest = {
-      kind: 1,
       title: 'Clean room',
       icon: null,
       color: '#000',
-      startsAt: null,
-      endsAt: null,
-      dueDate: { date: '2026-08-26', time: '00:00' },
-      isAllDay: true,
+      schedule: {
+        kind: 1,
+        dueDate: { date: '2026-08-26', time: '00:00' },
+        isAllDay: true,
+        assignedTo: null,
+      },
       recurrence: null,
-      assignedTo: null,
     };
 
     it('POSTs the item request under the calendar and resolves with the created item', async () => {
       const created: CalendarItemResponse = {
         id: 'task-1',
         calendarId: 'cal-1',
-        kind: 1,
         title: 'Clean room',
         icon: null,
         color: '#000',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null,
-        taskTemplateId: null,
+        schedule: {
+          kind: 1,
+          dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
+          assignedTo: null,
+          source: { kind: 0 },
+        },
+        recurrence: null,
       };
 
       const promise = service.createItem('cal-1', request);
@@ -354,14 +358,18 @@ describe('CalendarsService', () => {
       httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items`).flush({
         id: 'task-1',
         calendarId: 'cal-1',
-        kind: 1,
         title: 'Clean room',
         icon: null,
         color: '#000',
+        schedule: {
+          kind: 1,
+          dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
+          assignedTo: null,
+          source: { kind: 0 },
+        },
+        recurrence: null,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null,
-        taskTemplateId: null,
       } satisfies CalendarItemResponse);
       await createPromise;
 
@@ -391,14 +399,18 @@ describe('CalendarsService', () => {
       const updated: CalendarItemResponse = {
         id: 'task-1',
         calendarId: 'cal-1',
-        kind: 1,
         title: 'Tidy room',
         icon: null,
         color: '#111',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null,
-        taskTemplateId: null,
+        schedule: {
+          kind: 1,
+          dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
+          assignedTo: null,
+          source: { kind: 0 },
+        },
+        recurrence: null,
       };
 
       const promise = service.updateItemDetails('cal-1', 'task-1', request);
@@ -414,24 +426,25 @@ describe('CalendarsService', () => {
 
   describe('rescheduleItem', () => {
     const request: RescheduleItemRequest = {
-      startsAt: null,
-      endsAt: null,
-      dueDate: { date: '2026-08-27', time: '00:00' },
-      isAllDay: true,
+      schedule: { kind: 1, dueDate: { date: '2026-08-27', time: '00:00' }, isAllDay: true },
     };
 
     it('PATCHes the item schedule endpoint and resolves with the updated item', async () => {
       const updated: CalendarItemResponse = {
         id: 'task-1',
         calendarId: 'cal-1',
-        kind: 1,
         title: 'Clean room',
         icon: null,
         color: '#000',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: null,
-        taskTemplateId: null,
+        schedule: {
+          kind: 1,
+          dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
+          assignedTo: null,
+          source: { kind: 0 },
+        },
+        recurrence: null,
       };
 
       const promise = service.rescheduleItem('cal-1', 'task-1', request);
@@ -528,14 +541,18 @@ describe('CalendarsService', () => {
       const created: CalendarItemResponse = {
         id: 'task-1',
         calendarId: 'cal-1',
-        kind: 1,
         title: 'Morning routine',
         icon: '🌅',
         color: '#10b981',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: 'child-1',
-        taskTemplateId: null,
+        schedule: {
+          kind: 1,
+          dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
+          assignedTo: 'child-1',
+          source: { kind: 0 },
+        },
+        recurrence: null,
       };
 
       const promise = service.scheduleTaskFromTemplate('cal-1', request);
@@ -563,14 +580,18 @@ describe('CalendarsService', () => {
       httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/from-template`).flush({
         id: 'task-1',
         calendarId: 'cal-1',
-        kind: 1,
         title: 'Morning routine',
         icon: '🌅',
         color: '#10b981',
+        schedule: {
+          kind: 1,
+          dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
+          assignedTo: 'child-1',
+          source: { kind: 0 },
+        },
+        recurrence: null,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
-        assignedTo: 'child-1',
-        taskTemplateId: null,
       } satisfies CalendarItemResponse);
       await schedulePromise;
 

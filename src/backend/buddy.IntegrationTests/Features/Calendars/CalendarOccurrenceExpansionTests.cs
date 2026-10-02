@@ -21,7 +21,7 @@ public sealed class CalendarOccurrenceExpansionTests
     private static readonly Icon CalendarIcon = Icon.New("calendar");
 
     private static CalendarItemEvent TaskCreated(DueDate dueDate, RecurrenceRule? recurrence = null) =>
-        new TaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", null, Color.New("#ff0000"), dueDate, recurrence, DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
+        new TemplateTaskItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", null, Color.New("#ff0000"), dueDate, recurrence, DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
 
     private static TaskTemplateEvent TemplateCreated() =>
         new TaskTemplateCreated(FixedTemplateId, FixedUserId, FixedUserId, "Morning routine", Icon.New("sunrise"), Color.New("#ffaa00"), DateTimeOffset.UtcNow);
@@ -64,7 +64,7 @@ public sealed class CalendarOccurrenceExpansionTests
     public async Task ParentIcon_is_the_items_own_icon_not_the_subtasks()
     {
         var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
-        var itemCreated = new TaskItemCreated(
+        var itemCreated = new TemplateTaskItemCreated(
             FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("moon"), Color.New("#ff0000"), due, null, DateTimeOffset.UtcNow, null, FixedTemplateId.Value);
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, itemCreated);
 

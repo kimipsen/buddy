@@ -48,12 +48,12 @@ public static class SetTaskCompletionHandler
             return new Result<CalendarItem>.NotFound();
         }
 
-        if (item.Kind != CalendarItemKind.Task)
+        if (item.Schedule is not ItemSchedule.Task task)
         {
             return new Result<CalendarItem>.Validation(ValidationProblem.Of("Only a task can be marked complete."));
         }
 
-        if (await ValidateSubtaskAsync(item, command, templates, cancellationToken) is { } subtaskError)
+        if (await ValidateSubtaskAsync(task, command, templates, cancellationToken) is { } subtaskError)
         {
             return subtaskError;
         }
@@ -61,7 +61,7 @@ public static class SetTaskCompletionHandler
         // A Viewer can still toggle completion on a task assigned specifically to them: marking
         // your own chore done is narrower than the general "create/edit any item" contributor
         // right, so it shouldn't require the group to grant that just for this.
-        var isSelfCompletingOwnTask = item.AssignedTo == userId;
+        var isSelfCompletingOwnTask = task.AssignedTo == userId;
 
         if (access != CalendarAccess.Allowed && !isSelfCompletingOwnTask)
         {
@@ -84,7 +84,7 @@ public static class SetTaskCompletionHandler
 
         await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
 
-        await TryRecordStarChangeAsync(item, command, bus, cancellationToken);
+        await TryRecordStarChangeAsync(task, command, bus, cancellationToken);
 
         return new Result<CalendarItem>.Success(CalendarItem.Replay([.. itemEvents, completionChanged]));
     }
@@ -95,21 +95,23 @@ public static class SetTaskCompletionHandler
     // the whole template hard-deleted, since the template's last fetch) rather than silently
     // writing a phantom completion entry for a subtask that no longer exists.
     private static async Task<Result<CalendarItem>?> ValidateSubtaskAsync(
-        CalendarItem item, SetTaskCompletion command, ITaskTemplateEventStore templates, CancellationToken cancellationToken)
+        ItemSchedule.Task task, SetTaskCompletion command, ITaskTemplateEventStore templates, CancellationToken cancellationToken)
     {
-        if (item.TaskTemplateId is not null && command.SubtaskId is null)
+        var fromTemplate = task.Source is TaskSource.FromTemplate t ? t : null;
+
+        if (fromTemplate is not null && command.SubtaskId is null)
         {
             return new Result<CalendarItem>.Validation(ValidationProblem.Of("A subtask id is required to complete a template-scheduled task."));
         }
 
-        if (item.TaskTemplateId is null && command.SubtaskId is not null)
+        if (fromTemplate is null && command.SubtaskId is not null)
         {
             return new Result<CalendarItem>.Validation(ValidationProblem.Of("A subtask id is only valid for a template-scheduled task."));
         }
 
-        if (item.TaskTemplateId is { } rawTemplateId && command.SubtaskId is { } subtaskId)
+        if (fromTemplate is not null && command.SubtaskId is { } subtaskId)
         {
-            var templateEvents = await templates.ReadAsync(new TaskTemplateId(rawTemplateId), cancellationToken);
+            var templateEvents = await templates.ReadAsync(new TaskTemplateId(fromTemplate.TaskTemplateId), cancellationToken);
             var template = TaskTemplate.Rehydrate(templateEvents);
 
             if (template is null || !template.Subtasks.Any(s => s.Id.Value == subtaskId))
@@ -145,9 +147,9 @@ public static class SetTaskCompletionHandler
     // docs/backend/analysis/gamified-progress.md. The task completion itself has already
     // succeeded by this point; a failure here just leaves the child's star count stale until the
     // next successful, idempotent completion change catches it up.
-    private static async Task TryRecordStarChangeAsync(CalendarItem item, SetTaskCompletion command, IMessageBus bus, CancellationToken cancellationToken)
+    private static async Task TryRecordStarChangeAsync(ItemSchedule.Task task, SetTaskCompletion command, IMessageBus bus, CancellationToken cancellationToken)
     {
-        if (item.AssignedTo is not { } childId)
+        if (task.AssignedTo is not { } childId)
         {
             return;
         }
