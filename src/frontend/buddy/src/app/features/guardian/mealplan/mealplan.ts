@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -19,6 +19,7 @@ import {
   MealplanScope,
   MealplansService,
 } from '../../../core/mealplans.service';
+import { createAction } from '../../../shared/action-state/action-state';
 import { AssignMealplan } from './assign-mealplan/assign-mealplan';
 import { MealplanIcal } from './mealplan-ical/mealplan-ical';
 import { ManageMeals } from './manage-meals/manage-meals';
@@ -29,40 +30,60 @@ const VIEW: MealplanAccessTier = 3;
 type GroupMealplanScope = Extract<MealplanScope, { kind: 'group' }>;
 type FamilyMealplanScope = Extract<MealplanScope, { kind: 'family' }>;
 
+interface SharedGroup {
+  groupId: string;
+  groupName: string;
+}
+
+// What the page loaded for the family scope: the groups it can be shared with, the group it is
+// shared with, and the group scopes to offer.
+interface LoadedGroups {
+  manageableGroups: GroupSummary[];
+  sharedGroup: SharedGroup | null;
+  // Groups the guardian's own GroupRole maps to View or Manage tier for via
+  // MealplanPermissionPolicy, further filtered down to only those a plan has actually been
+  // shared with (via GetGroupMealplanStatus) -- a qualifying-tier group with nothing shared yet
+  // has no meals to show, and clicking into it used to 404.
+  groupScopes: GroupMealplanScope[];
+}
+
+const EMPTY_GROUPS: LoadedGroups = {
+  manageableGroups: [],
+  sharedGroup: null,
+  groupScopes: [],
+};
+
 @Component({
   selector: 'app-guardian-mealplan',
   imports: [RouterLink, FormsModule, ManageMeals, AssignMealplan, MealplanIcal, TranslatePipe],
   templateUrl: './mealplan.html',
 })
-export class GuardianMealplan implements OnInit {
+export class GuardianMealplan {
   private readonly guardians = inject(GuardiansService);
   private readonly groupsService = inject(GroupsService);
   private readonly mealplans = inject(MealplansService);
 
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly hasChildren = signal(true);
-
-  private familyChildId: string | null = null;
-  protected readonly familyScope = signal<FamilyMealplanScope | null>(null);
-  // Groups the guardian's own GroupRole maps to View or Manage tier for via
-  // MealplanPermissionPolicy, further filtered down to only those a plan has actually been
-  // shared with (via GetGroupMealplanStatus) -- a qualifying-tier group with nothing shared yet
-  // has no meals to show, and clicking into it used to 404.
-  protected readonly groupScopes = signal<GroupMealplanScope[]>([]);
-  protected readonly selectedScope = signal<MealplanScope | null>(null);
+  // The first child's family scope, or null when the guardian has no children.
+  protected readonly children = resource({ loader: () => this.loadFamilyScope() });
+  protected readonly familyScope = computed((): FamilyMealplanScope | null =>
+    this.children.hasValue() ? this.children.value() : null,
+  );
+  // Loaded separately from the family scope, so a failure here still shows the family's plan
+  // next to the load error.
+  protected readonly groups = resource({
+    params: () => this.familyScope() ?? undefined,
+    loader: ({ params: familyScope }) => this.loadGroups(familyScope.childId),
+  });
+  // Empty while loading or after a failed load, so the sharing section still renders.
+  protected readonly loaded = computed((): LoadedGroups =>
+    this.groups.hasValue() ? this.groups.value() : EMPTY_GROUPS,
+  );
+  // The family scope until the guardian picks a group scope.
+  protected readonly selectedScope = linkedSignal<MealplanScope | null>(() => this.familyScope());
 
   // Sharing controls -- family scope only, since only a guardian can decide to share/unshare.
-  protected readonly manageableGroups = signal<GroupSummary[]>([]);
-  protected readonly sharedGroupId = signal<string | null>(null);
-  protected readonly sharedGroupName = signal<string | null>(null);
   protected readonly shareTargetGroupId = signal('');
-  protected readonly sharing = signal(false);
-  protected readonly shareError = signal<string | null>(null);
-
-  ngOnInit(): void {
-    void this.load();
-  }
+  protected readonly sharing = createAction();
 
   protected selectScope(scope: MealplanScope): void {
     this.selectedScope.set(scope);
@@ -85,102 +106,84 @@ export class GuardianMealplan implements OnInit {
   }
 
   protected async shareWithGroup(): Promise<void> {
+    const familyScope = this.familyScope();
+    const { manageableGroups } = this.loaded();
     const groupId = this.shareTargetGroupId();
-    const groupName = this.manageableGroups().find((group) => group.id === groupId)?.name;
+    const groupName = manageableGroups.find((group) => group.id === groupId)?.name;
 
-    if (!this.familyChildId || !groupId || !groupName) {
+    if (!familyScope || !groupId || !groupName) {
       return;
     }
 
-    this.sharing.set(true);
-    this.shareError.set(null);
-
-    try {
-      await this.mealplans.shareWithGroup(this.familyChildId, groupId);
-      this.sharedGroupId.set(groupId);
-      this.sharedGroupName.set(groupName);
-      this.shareTargetGroupId.set('');
-      await this.loadGroupScopes();
-    } catch {
-      this.shareError.set('mealplan.sharing.shareError');
-    } finally {
-      this.sharing.set(false);
-    }
+    await this.sharing.run(
+      true,
+      async () => {
+        await this.mealplans.shareWithGroup(familyScope.childId, groupId);
+        this.updatePage({ sharedGroup: { groupId, groupName } });
+        this.shareTargetGroupId.set('');
+        this.updatePage({ groupScopes: await this.loadGroupScopes() });
+      },
+      'mealplan.sharing.shareError',
+    );
   }
 
   protected async unshare(): Promise<void> {
-    const groupId = this.sharedGroupId();
+    const familyScope = this.familyScope();
+    const { sharedGroup } = this.loaded();
 
-    if (!this.familyChildId || !groupId) {
+    if (!familyScope || !sharedGroup) {
       return;
     }
 
-    this.sharing.set(true);
-    this.shareError.set(null);
+    const groupId = sharedGroup.groupId;
 
-    try {
-      await this.mealplans.unshareFromGroup(this.familyChildId, groupId);
-      this.sharedGroupId.set(null);
-      this.sharedGroupName.set(null);
+    await this.sharing.run(
+      true,
+      async () => {
+        await this.mealplans.unshareFromGroup(familyScope.childId, groupId);
+        this.updatePage({ sharedGroup: null });
 
-      const current = this.selectedScope();
-      if (current?.kind === 'group' && current.groupId === groupId) {
-        this.selectedScope.set(this.familyScope());
-      }
+        const current = this.selectedScope();
+        if (current?.kind === 'group' && current.groupId === groupId) {
+          this.selectedScope.set(familyScope);
+        }
 
-      await this.loadGroupScopes();
-    } catch {
-      this.shareError.set('mealplan.sharing.unshareError');
-    } finally {
-      this.sharing.set(false);
-    }
+        this.updatePage({ groupScopes: await this.loadGroupScopes() });
+      },
+      'mealplan.sharing.unshareError',
+    );
   }
 
-  private async load(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  private updatePage(change: Partial<LoadedGroups>): void {
+    this.groups.update((current) => current && { ...current, ...change });
+  }
 
-    try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
+  private async loadFamilyScope(): Promise<FamilyMealplanScope | null> {
+    const [firstChild] = await this.guardians.listMyChildren();
+    return firstChild ? { kind: 'family', childId: firstChild.id } : null;
+  }
 
-      if (!firstChild) {
-        this.hasChildren.set(false);
-        return;
-      }
+  private async loadGroups(childId: string): Promise<LoadedGroups> {
+    const [groups, sharedGroup] = await Promise.all([
+      this.groupsService.listMyGroups(),
+      this.mealplans.getSharedGroup(childId),
+    ]);
 
-      this.hasChildren.set(true);
-      this.familyChildId = firstChild.id;
-
-      const familyScope: FamilyMealplanScope = { kind: 'family', childId: firstChild.id };
-      this.familyScope.set(familyScope);
-      this.selectedScope.set(familyScope);
-
-      const [groups, sharedGroup] = await Promise.all([
-        this.groupsService.listMyGroups(),
-        this.mealplans.getSharedGroup(firstChild.id),
-      ]);
-
+    return {
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
       // backend's own gate.
-      this.manageableGroups.set(groups.filter((g) => g.role === 0 || g.role === 1));
-      this.sharedGroupId.set(sharedGroup?.groupId ?? null);
-      this.sharedGroupName.set(sharedGroup?.groupName ?? null);
-
-      await this.loadGroupScopesFrom(groups);
-    } catch {
-      this.error.set('mealplan.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+      manageableGroups: groups.filter((g) => g.role === 0 || g.role === 1),
+      sharedGroup,
+      groupScopes: await this.loadGroupScopesFrom(groups),
+    };
   }
 
-  private async loadGroupScopes(): Promise<void> {
+  private async loadGroupScopes(): Promise<GroupMealplanScope[]> {
     const groups = await this.groupsService.listMyGroups();
-    await this.loadGroupScopesFrom(groups);
+    return this.loadGroupScopesFrom(groups);
   }
 
-  private async loadGroupScopesFrom(groups: GroupSummary[]): Promise<void> {
+  private async loadGroupScopesFrom(groups: GroupSummary[]): Promise<GroupMealplanScope[]> {
     // One GetGroup per group, then one status call per candidate group: both bounded so a
     // guardian in many groups doesn't burst the API. Each is best-effort per group (a failure
     // just drops that group from the scope list), as before.
@@ -218,8 +221,6 @@ export class GuardianMealplan implements OnInit {
       },
     );
 
-    this.groupScopes.set(
-      statuses.filter((status) => status.hasSharedPlan).map((status) => status.scope),
-    );
+    return statuses.filter((status) => status.hasSharedPlan).map((status) => status.scope);
   }
 }

@@ -12,36 +12,42 @@
     >
   </div>
 
-  @if (loading()) {
+  @if (plan.isLoading()) {
     <app-loading-spinner [label]="'dashboard.mealplan.loading' | translate" />
-  } @else if (error(); as message) {
-    <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-  } @else if (!hasChildren()) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">
-      {{ 'dashboard.mealplan.noChildren' | translate }}
+  } @else if (plan.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'dashboard.mealplan.loadError' | translate }}
     </p>
-  } @else {
-    <ul class="space-y-3">
-      @for (slot of slots; track slot) {
-        <li
-          class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3"
-        >
-          <span
-            class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
-            >{{ slotLabels[slot] | translate }}</span
+  } @else if (plan.hasValue()) {
+    @let loaded = plan.value();
+
+    @if (!loaded.hasChildren) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'dashboard.mealplan.noChildren' | translate }}
+      </p>
+    } @else {
+      <ul class="space-y-3">
+        @for (slot of slots; track slot) {
+          <li
+            class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3"
           >
-          @if (entriesBySlot()[slot]; as entry) {
-            <span class="flex items-center gap-2 text-sm font-medium">
-              <span class="text-lg leading-none">{{ entry.icon }}</span>
-              {{ entry.mealName }}
-            </span>
-          } @else {
-            <span class="text-sm text-slate-400">{{
-              'dashboard.mealplan.notPlanned' | translate
-            }}</span>
-          }
-        </li>
-      }
-    </ul>
+            <span
+              class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >{{ slotLabels[slot] | translate }}</span
+            >
+            @if (loaded.entriesBySlot[slot]; as entry) {
+              <span class="flex items-center gap-2 text-sm font-medium">
+                <span class="text-lg leading-none">{{ entry.icon }}</span>
+                {{ entry.mealName }}
+              </span>
+            } @else {
+              <span class="text-sm text-slate-400">{{
+                'dashboard.mealplan.notPlanned' | translate
+              }}</span>
+            }
+          </li>
+        }
+      </ul>
+    }
   }
 </section>

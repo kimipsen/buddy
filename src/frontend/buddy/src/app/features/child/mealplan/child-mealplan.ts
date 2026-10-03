@@ -1,4 +1,12 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  linkedSignal,
+  resource,
+  signal,
+  untracked,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { firstAndLast } from '../../../core/array-utils';
@@ -7,6 +15,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { UsersService } from '../../../core/users.service';
+import { createAction } from '../../../shared/action-state/action-state';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   0: 'dashboard.mealplan.slots.breakfast',
@@ -19,6 +28,13 @@ const SLOTS: MealSlot[] = [0, 1, 2, 3];
 const DAYS_AHEAD = 7;
 const MAX_STARS = 5;
 const STARS = Array.from({ length: MAX_STARS }, (_, index) => index + 1);
+
+// What one week's load produced: the signed-in child (whose ratings this screen shows and
+// submits) and that week's entries keyed by date and slot.
+interface LoadedWeek {
+  childId: string;
+  entriesByKey: Partial<Record<string, MealPlanEntry>>;
+}
 
 interface PlannerDay {
   date: string;
@@ -51,7 +67,7 @@ function defaultAnchor(): string {
   imports: [RouterLink, TranslatePipe],
   templateUrl: './child-mealplan.html',
 })
-export class ChildMealplan implements OnInit {
+export class ChildMealplan {
   private readonly mealplans = inject(MealplansService);
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
@@ -64,34 +80,31 @@ export class ChildMealplan implements OnInit {
     buildDays(this.anchorDate(), this.translation.language()),
   );
 
-  protected readonly entriesByKey = signal<Partial<Record<string, MealPlanEntry>>>({});
-  protected readonly hasAnyEntries = computed(() => Object.keys(this.entriesByKey()).length > 0);
-  // Stryker disable next-line BooleanLiteral: ngOnInit -> load() sets loading(true) synchronously before the first render, so the initial value is never observed
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly savingKey = signal<string | null>(null);
+  protected readonly week = resource({
+    params: () => this.anchorDate(),
+    loader: ({ params }) => this.load(params),
+  });
+  protected readonly hasAnyEntries = computed(
+    () => this.week.hasValue() && Object.keys(this.week.value().entriesByKey).length > 0,
+  );
+  protected readonly rating = createAction<string>();
 
   // Which entry's rating form is expanded, plus its in-progress comment text -- stars submit
   // immediately on tap (see rate()), but a comment needs an explicit Save so typing doesn't fire a
-  // request per keystroke.
+  // request per keystroke. The draft starts from the entry's comment on file each time a form
+  // opens; a rating saved while it's open doesn't overwrite what's being typed.
   protected readonly editingKey = signal<string | null>(null);
-  // Stryker disable next-line StringLiteral: the draft is only read while editing (textarea / saveComment), and startEditing() always overwrites it first
-  protected readonly commentDraft = signal('');
-
-  private childId: string | null = null;
-
-  ngOnInit(): void {
-    void this.load();
-  }
+  protected readonly commentDraft = linkedSignal(() => {
+    const key = this.editingKey();
+    return key === null ? '' : (untracked(() => this.entryAt(key))?.rating?.comment ?? '');
+  });
 
   protected previousWeek(): void {
     this.shiftWeek(-DAYS_AHEAD);
-    void this.load();
   }
 
   protected nextWeek(): void {
     this.shiftWeek(DAYS_AHEAD);
-    void this.load();
   }
 
   private shiftWeek(offsetDays: number): void {
@@ -102,6 +115,8 @@ export class ChildMealplan implements OnInit {
       anchor.getDate() + offsetDays,
     );
     this.anchorDate.set(toIsoDate(shifted));
+    // A rating error belongs to the week it happened in.
+    this.rating.clearError();
   }
 
   protected key(date: string, slot: MealSlot): string {
@@ -110,8 +125,12 @@ export class ChildMealplan implements OnInit {
 
   protected entriesForDay(date: string): MealPlanEntry[] {
     return this.slots
-      .map((slot) => this.entriesByKey()[this.key(date, slot)])
+      .map((slot) => this.entryAt(this.key(date, slot)))
       .filter((entry): entry is MealPlanEntry => entry !== undefined);
+  }
+
+  private entryAt(key: string): MealPlanEntry | undefined {
+    return this.week.hasValue() ? this.week.value().entriesByKey[key] : undefined;
   }
 
   // Nothing to rate before it's actually been served.
@@ -125,13 +144,10 @@ export class ChildMealplan implements OnInit {
 
   protected startEditing(entry: MealPlanEntry): void {
     this.editingKey.set(this.key(entry.date, entry.slot));
-    this.commentDraft.set(entry.rating?.comment ?? '');
   }
 
   protected cancelEditing(): void {
     this.editingKey.set(null);
-    // Stryker disable next-line StringLiteral,CallExpression: editingKey is null afterwards, so the draft is unread until startEditing() overwrites it
-    this.commentDraft.set('');
   }
 
   protected setComment(value: string): void {
@@ -155,60 +171,55 @@ export class ChildMealplan implements OnInit {
     starCount: number,
     comment: string,
   ): Promise<void> {
-    if (!this.childId) {
+    if (!this.week.hasValue()) {
       return;
     }
 
+    const { childId } = this.week.value();
     const key = this.key(entry.date, entry.slot);
-    this.savingKey.set(key);
-    this.error.set(null);
+    const anchorDate = this.anchorDate();
 
-    try {
-      const meal = await this.mealplans.rateMeal(this.childId, entry.mealId, starCount, comment);
-      const myRating = meal.ratings.find((rating) => rating.childId === this.childId) ?? null;
+    await this.rating.run(
+      key,
+      async () => {
+        const meal = await this.mealplans.rateMeal(childId, entry.mealId, starCount, comment);
+        const myRating = meal.ratings.find((rating) => rating.childId === childId) ?? null;
 
-      this.entriesByKey.update((current) => {
-        const next = { ...current };
+        // If the child moved to another week meanwhile, that week's own load already has fresh
+        // data -- writing this one back would cancel it (while loading) or throw (after an error).
+        if (this.anchorDate() !== anchorDate || !this.week.hasValue() || this.week.isLoading()) {
+          return;
+        }
 
-        for (const [entryKey, existing] of Object.entries(next)) {
+        const current = this.week.value();
+        const entriesByKey = { ...current.entriesByKey };
+
+        for (const [entryKey, existing] of Object.entries(entriesByKey)) {
           if (existing?.mealId === entry.mealId) {
-            next[entryKey] = { ...existing, rating: myRating };
+            entriesByKey[entryKey] = { ...existing, rating: myRating };
           }
         }
 
-        return next;
-      });
-    } catch {
-      this.error.set('child.mealplan.rateError');
-    } finally {
-      this.savingKey.set(null);
-    }
+        this.week.set({ ...current, entriesByKey });
+      },
+      'child.mealplan.rateError',
+    );
   }
 
-  private async load(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  private async load(anchorDate: string): Promise<LoadedWeek> {
+    const me = await this.users.ensureCurrentUser();
+    const [first, last] = firstAndLast(buildDays(anchorDate, this.translation.language()));
+    const entries = await this.mealplans.listMealPlan(
+      { kind: 'family', childId: me.id },
+      first.date,
+      last.date,
+    );
+    const entriesByKey: Partial<Record<string, MealPlanEntry>> = {};
 
-    try {
-      const me = await this.users.ensureCurrentUser();
-      this.childId = me.id;
-      const [first, last] = firstAndLast(this.days());
-      const entries = await this.mealplans.listMealPlan(
-        { kind: 'family', childId: me.id },
-        first.date,
-        last.date,
-      );
-      const byKey: Partial<Record<string, MealPlanEntry>> = {};
-
-      for (const entry of entries) {
-        byKey[this.key(entry.date, entry.slot)] = entry;
-      }
-
-      this.entriesByKey.set(byKey);
-    } catch {
-      this.error.set('child.mealplan.loadError');
-    } finally {
-      this.loading.set(false);
+    for (const entry of entries) {
+      entriesByKey[this.key(entry.date, entry.slot)] = entry;
     }
+
+    return { childId: me.id, entriesByKey };
   }
 }

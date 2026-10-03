@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, resource, signal } from '@angular/core';
 
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -17,13 +17,11 @@ export const PROGRESS_REQUEST_CONCURRENCY = 4;
   imports: [TranslatePipe, LoadingSpinner],
   templateUrl: './children-overview.html',
 })
-export class ChildrenOverview implements OnInit {
+export class ChildrenOverview {
   private readonly guardians = inject(GuardiansService);
   private readonly progressService = inject(ProgressService);
 
-  protected readonly children = signal<ChildSummary[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly children = resource({ loader: () => this.loadChildren() });
 
   // Keyed by child ID rather than joined onto ChildSummary -- progress can fail or load slower
   // per child without blocking the (more important) name/linked-status list from rendering.
@@ -31,23 +29,10 @@ export class ChildrenOverview implements OnInit {
     Record<string, { totalStars: number; icon: string }>
   >({});
 
-  ngOnInit(): void {
-    void this.loadChildren();
-  }
-
-  private async loadChildren(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      const children = await this.guardians.listMyChildren();
-      this.children.set(children);
-      void this.loadProgress(children);
-    } catch {
-      this.error.set('dashboard.children.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+  private async loadChildren(): Promise<ChildSummary[]> {
+    const children = await this.guardians.listMyChildren();
+    void this.loadProgress(children);
+    return children;
   }
 
   // Best-effort, like tasks-today's assignee-name lookup: a guardian without an active link to a

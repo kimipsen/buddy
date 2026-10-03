@@ -427,6 +427,64 @@ describe('ChildMealplan', () => {
     expect(rateMeal).toHaveBeenCalledExactlyOnceWith('child-1', 'meal-from', 5, 'Yum');
   });
 
+  describe('a rating that resolves after switching week', () => {
+    async function rateThenSwitchWeek(nextWeek: Promise<MealPlanEntry[]>) {
+      const pendingRating = deferred<Meal>();
+      const listMealPlan = vi
+        .fn()
+        .mockImplementationOnce(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')])
+        .mockReturnValueOnce(nextWeek);
+      const rateMeal = vi.fn(() => pendingRating.promise);
+      const { fixture } = await setup({ mealplans: { listMealPlan, rateMeal } });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      compiled.querySelector<HTMLButtonElement>('button[aria-label^="Rate"]')!.click();
+      findButtonByText(compiled, '← Previous week')?.click();
+      await settle(fixture);
+
+      return { fixture, compiled, pendingRating };
+    }
+
+    const savedRating = () =>
+      mealWithRatings([
+        { childId: 'child-1', stars: 1, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
+      ]);
+
+    it('leaves the new week loading and then shows it', async () => {
+      const nextWeek = deferred<MealPlanEntry[]>();
+      const { fixture, compiled, pendingRating } = await rateThenSwitchWeek(nextWeek.promise);
+
+      pendingRating.resolve(savedRating());
+      await settle(fixture);
+      expect(compiled.textContent).toContain('Loading your meals…');
+
+      nextWeek.resolve([entryAt(addDaysIso(todayIsoDate(), -14), 0, 'meal-older')]);
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Meal meal-older');
+      expect(compiled.textContent).not.toContain('Meal meal-from');
+      expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
+    });
+
+    it("keeps the new week's load error and shows no rating error", async () => {
+      const { fixture, compiled, pendingRating } = await rateThenSwitchWeek(
+        Promise.reject(new Error('boom')),
+      );
+      expect(compiled.textContent).toContain(
+        'Something went wrong loading your meals. Try again in a bit.',
+      );
+
+      pendingRating.resolve(savedRating());
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain(
+        'Something went wrong loading your meals. Try again in a bit.',
+      );
+      expect(compiled.textContent).not.toContain('Unable to save your rating. Try again.');
+    });
+  });
+
   it('clears a load error once a later week loads successfully', async () => {
     const listMealPlan = vi
       .fn()

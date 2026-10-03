@@ -50,6 +50,18 @@ describe('RuntimeConfigService', () => {
     expect(fetchMock).toHaveBeenCalledWith('/config/runtime-config.json', { cache: 'no-cache' });
   });
 
+  it('rejects a config missing a required field instead of loading it', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ ...config, keycloak: { ...config.keycloak, realm: undefined } }),
+    });
+
+    await expect(service.load()).rejects.toThrow('Runtime config is missing');
+    expect(() => service.apiBaseUrl).toThrow('Runtime config has not been loaded.');
+  });
+
   it('exposes apiBaseUrl and keycloak from the fetched config once load() resolves', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

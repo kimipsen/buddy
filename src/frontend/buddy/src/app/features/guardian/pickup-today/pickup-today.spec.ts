@@ -76,17 +76,15 @@ describe('PickupToday', () => {
   }
 
   // loadToday chains more than one await (listMyChildren, then a mapWithConcurrency over per-child
-  // listSchedule/listChildGuardians Promise.all pairs) before the signals
-  // driving the template settle -- a single whenStable() flush isn't always enough, so flush a
-  // generous fixed number of times rather than guessing when it's "probably" done.
-  async function settle(fixture: {
-    detectChanges: () => void;
-    whenStable: () => Promise<boolean>;
-  }) {
+  // listSchedule/listChildGuardians Promise.all pairs) before the resource driving the template
+  // settles. whenStable() would wait for the resource's pending load, which never finishes while a
+  // test holds a request open, so a macrotask flush is used instead, repeated to cover any depth of
+  // chained awaits.
+  async function settle(fixture: { detectChanges: () => void }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
-      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
       fixture.detectChanges();
     }
   }

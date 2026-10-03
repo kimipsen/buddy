@@ -26,13 +26,19 @@
     <h2 class="mt-2 text-3xl font-semibold tracking-normal">{{ 'print.title' | translate }}</h2>
   </div>
 
-  @if (error(); as message) {
-    <p class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
-      {{ message | translate }}
-    </p>
+  @if (creating.state(); as state) {
+    @if (state.status === 'error') {
+      <p class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ state.message | translate }}
+      </p>
+    } @else if (loadFailed()) {
+      <p class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ 'print.list.loadError' | translate }}
+      </p>
+    }
   }
 
-  @if (loading()) {
+  @if (page.isLoading()) {
     <app-loading-spinner [label]="'print.list.loading' | translate" />
   } @else {
     <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -87,13 +93,14 @@
             <button
               type="button"
               class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-              [disabled]="!selected() || !start()"
+              [disabled]="!selected.hasValue() || !start()"
               (click)="preview()"
             >
               {{ 'print.list.previewButton' | translate }}
             </button>
 
-            @if (selected(); as current) {
+            @if (selected.hasValue()) {
+              @let current = selected.value();
               <a
                 [routerLink]="['/guardian/print/templates', current.id]"
                 class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
@@ -149,7 +156,7 @@
         <button
           type="submit"
           class="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-          [disabled]="creating() || !newName().trim()"
+          [disabled]="creating.busy() || !newName().trim()"
         >
           {{ 'print.list.createButton' | translate }}
         </button>

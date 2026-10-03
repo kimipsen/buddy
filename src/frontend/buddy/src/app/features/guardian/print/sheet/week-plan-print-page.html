@@ -22,7 +22,8 @@
       {{ 'print.sheet.backLink' | translate }}
     </a>
 
-    @if (template(); as current) {
+    @if (template.hasValue()) {
+      @let current = template.value();
       <span class="text-sm font-semibold">{{ current.name }}</span>
       <div class="ml-auto flex flex-wrap items-center gap-3">
         <div class="w-40">
@@ -42,7 +43,7 @@
           type="button"
           #printButton
           class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-          [disabled]="loading() || !model()"
+          [disabled]="sheet.isLoading() || !model()"
           (click)="print()"
         >
           {{ 'print.sheet.printButton' | translate }}
@@ -51,9 +52,11 @@
     }
   </div>
 
-  @if (error(); as message) {
-    <p class="p-6 text-sm text-red-600 dark:text-red-400" role="alert">{{ message | translate }}</p>
-  } @else if (loading() && !model()) {
+  @if (loadFailed()) {
+    <p class="p-6 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ 'print.sheet.loadError' | translate }}
+    </p>
+  } @else if (!model()) {
     <div class="p-6">
       <app-loading-spinner [label]="'print.sheet.loading' | translate" />
     </div>

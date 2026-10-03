@@ -10,28 +10,32 @@
     >
   </div>
 
-  @if (loading()) {
+  @if (today.isLoading()) {
     <app-loading-spinner [label]="'dashboard.doses.loading' | translate" />
-  } @else {
-    @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+  } @else if (today.error()) {
+    <p class="mb-3 text-sm text-red-600 dark:text-red-400">
+      {{ 'dashboard.doses.loadError' | translate }}
+    </p>
+  } @else if (today.hasValue()) {
+    @let loaded = today.value();
+
+    @if (saving.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      }
     }
 
-    @if (!hasChildren()) {
-      @if (!error()) {
-        <p class="text-sm text-slate-500 dark:text-slate-400">
-          {{ 'dashboard.doses.noChildren' | translate }}
-        </p>
-      }
-    } @else if (doses().length === 0) {
-      @if (!error()) {
-        <p class="text-sm text-slate-500 dark:text-slate-400">
-          {{ 'dashboard.doses.empty' | translate }}
-        </p>
-      }
+    @if (!loaded.hasChildren) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'dashboard.doses.noChildren' | translate }}
+      </p>
+    } @else if (loaded.doses.length === 0) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'dashboard.doses.empty' | translate }}
+      </p>
     } @else {
       <ul class="space-y-3">
-        @for (dose of doses(); track key(dose)) {
+        @for (dose of loaded.doses; track key(dose)) {
           <li
             class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3"
           >
@@ -44,7 +48,7 @@
               {{ dose.name }}
               <span class="text-xs font-normal text-slate-500 dark:text-slate-400">
                 {{ dose.time.slice(0, 5) }}
-                @if (multipleChildren()) {
+                @if (loaded.multipleChildren) {
                   · {{ dose.childName }}
                 }
               </span>
@@ -55,7 +59,7 @@
                 <button
                   type="button"
                   class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-                  [disabled]="savingKey() === key(dose)"
+                  [disabled]="saving.isBusy(key(dose))"
                   (click)="setStatus(dose, taken)"
                 >
                   {{ 'dashboard.doses.markTaken' | translate }}
@@ -63,7 +67,7 @@
                 <button
                   type="button"
                   class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
-                  [disabled]="savingKey() === key(dose)"
+                  [disabled]="saving.isBusy(key(dose))"
                   (click)="setStatus(dose, skipped)"
                 >
                   {{ 'dashboard.doses.skip' | translate }}
@@ -78,7 +82,7 @@
                 <button
                   type="button"
                   class="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-50"
-                  [disabled]="savingKey() === key(dose)"
+                  [disabled]="saving.isBusy(key(dose))"
                   (click)="setStatus(dose, pending)"
                 >
                   {{ 'dashboard.doses.undo' | translate }}
@@ -93,7 +97,7 @@
                 <button
                   type="button"
                   class="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-50"
-                  [disabled]="savingKey() === key(dose)"
+                  [disabled]="saving.isBusy(key(dose))"
                   (click)="setStatus(dose, pending)"
                 >
                   {{ 'dashboard.doses.undo' | translate }}

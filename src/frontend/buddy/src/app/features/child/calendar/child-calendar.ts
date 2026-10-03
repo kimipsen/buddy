@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { firstAndLast } from '../../../core/array-utils';
@@ -27,9 +27,9 @@ import {
 } from '../../../core/task-run';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
+import { createAction } from '../../../shared/action-state/action-state';
 import { Toggle } from '../../../shared/toggle/toggle';
 
-const EVENT_KIND: CalendarItemKind = 0;
 const TASK_KIND: CalendarItemKind = 1;
 const DAYS_AHEAD = 7;
 
@@ -50,6 +50,14 @@ const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
   2: 'dashboard.mealplan.slots.dinner',
   3: 'dashboard.mealplan.slots.snack',
 };
+
+// What one week's load produced: the calendars the child can see (for the filter) plus that
+// week's occurrences and meal-plan entries.
+interface LoadedWeek {
+  myCalendars: CalendarSummary[];
+  occurrences: CalendarOccurrence[];
+  mealEntries: MealPlanEntry[];
+}
 
 interface AgendaDay {
   date: string;
@@ -112,7 +120,6 @@ export class ChildCalendar {
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
 
-  protected readonly eventKind = EVENT_KIND;
   protected readonly taskKind = TASK_KIND;
   protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
 
@@ -121,14 +128,25 @@ export class ChildCalendar {
     buildDays(this.anchorDate(), this.translation.language()),
   );
 
-  protected readonly myCalendars = signal<CalendarSummary[]>([]);
-  protected readonly occurrences = signal<CalendarOccurrence[]>([]);
-  protected readonly mealEntries = signal<MealPlanEntry[]>([]);
+  protected readonly week = resource({
+    params: () => this.anchorDate(),
+    loader: ({ params }) => this.loadWeek(params),
+  });
+  // The filter keeps showing the last calendars that loaded while another week loads (or fails),
+  // rather than disappearing and reappearing on every week change.
+  protected readonly myCalendars = linkedSignal<CalendarSummary[] | undefined, CalendarSummary[]>({
+    source: () => (this.week.hasValue() ? this.week.value().myCalendars : undefined),
+    computation: (next, previous) => next ?? previous?.value ?? [],
+  });
   protected readonly hiddenCalendarIds = signal<Set<string>>(new Set());
-  // Stryker disable next-line BooleanLiteral: the constructor's effect calls loadWeek(), which sets loading(true), before the template first renders
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly savingTaskId = signal<string | null>(null);
+  protected readonly savingTask = createAction<string>();
+
+  private readonly occurrences = computed(() =>
+    this.week.hasValue() ? this.week.value().occurrences : [],
+  );
+  private readonly mealEntries = computed(() =>
+    this.week.hasValue() ? this.week.value().mealEntries : [],
+  );
 
   protected readonly occurrencesByDate = computed(() => {
     const hidden = this.hiddenCalendarIds();
@@ -163,9 +181,9 @@ export class ChildCalendar {
   });
 
   // Checked against the currently displayed `days()`, not every key `occurrencesByDate()`/
-  // `mealEntriesByDate()` happens to hold -- both signals can briefly retain items from an
-  // out-of-range fetch (e.g. stale data while navigating between weeks), which would otherwise
-  // suppress the empty state without any row actually being rendered.
+  // `mealEntriesByDate()` happens to hold -- an occurrence can land on a date outside the window
+  // once converted into the viewer's time zone, which would otherwise suppress the empty state
+  // without any row actually being rendered.
   protected readonly hasAnyVisibleOccurrence = computed(() => {
     const byDate = this.occurrencesByDate();
     const mealsByDate = this.mealEntriesByDate();
@@ -173,16 +191,6 @@ export class ChildCalendar {
       (day) => (byDate[day.date] ?? []).length > 0 || (mealsByDate[day.date] ?? []).length > 0,
     );
   });
-
-  constructor() {
-    effect(() => {
-      // Read anchorDate() here (not just inside loadWeek()) so the effect re-runs when the
-      // visible week changes.
-      // Stryker disable next-line CallExpression: redundant with loadWeek() reading days() (and so anchorDate()) synchronously before its first await
-      this.anchorDate();
-      void this.loadWeek();
-    });
-  }
 
   protected previousWeek(): void {
     this.shiftWeek(-DAYS_AHEAD);
@@ -200,6 +208,8 @@ export class ChildCalendar {
       anchor.getDate() + offsetDays,
     );
     this.anchorDate.set(toIsoDate(shifted));
+    // A task-update error belongs to the week it happened in.
+    this.savingTask.clearError();
   }
 
   protected occurrencesFor(date: string): CalendarOccurrence[] {
@@ -282,52 +292,48 @@ export class ChildCalendar {
 
     const date = toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId());
     const key = occurrenceKey(occurrence);
+    const anchorDate = this.anchorDate();
 
-    this.savingTaskId.set(key);
+    await this.savingTask.run(
+      key,
+      async () => {
+        await this.calendars.setTaskCompletion(
+          occurrence.calendarId,
+          occurrence.itemId,
+          date,
+          isCompleted,
+          occurrence.routine?.subtaskId ?? null,
+        );
+        // If the child moved to another week meanwhile, that week's own load already has fresh
+        // data -- writing this one back would cancel it (while loading) or throw (after an error).
+        if (this.anchorDate() !== anchorDate || !this.week.hasValue() || this.week.isLoading()) {
+          return;
+        }
 
-    try {
-      await this.calendars.setTaskCompletion(
-        occurrence.calendarId,
-        occurrence.itemId,
-        date,
-        isCompleted,
-        occurrence.routine?.subtaskId ?? null,
-      );
-      this.occurrences.update((current) =>
-        current.map((existing) =>
-          occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
-        ),
-      );
-    } catch {
-      this.error.set('child.calendar.taskUpdateError');
-    } finally {
-      this.savingTaskId.set(null);
-    }
+        const current = this.week.value();
+        this.week.set({
+          ...current,
+          occurrences: current.occurrences.map((existing) =>
+            occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
+          ),
+        });
+      },
+      'child.calendar.taskUpdateError',
+    );
   }
 
-  private async loadWeek(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  private async loadWeek(anchorDate: string): Promise<LoadedWeek> {
+    const [first, last] = firstAndLast(buildDays(anchorDate, this.translation.language()));
+    const from = first.date;
+    const to = last.date;
+    const me = await this.users.ensureCurrentUser();
 
-    try {
-      const [first, last] = firstAndLast(this.days());
-      const from = first.date;
-      const to = last.date;
-      const me = await this.users.ensureCurrentUser();
+    const [myCalendars, occurrences, mealEntries] = await Promise.all([
+      this.calendars.listMyCalendars(),
+      this.calendars.listOccurrencesInRange(from, to),
+      this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to),
+    ]);
 
-      const [myCalendars, occurrences, mealEntries] = await Promise.all([
-        this.calendars.listMyCalendars(),
-        this.calendars.listOccurrencesInRange(from, to),
-        this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to),
-      ]);
-
-      this.myCalendars.set(myCalendars);
-      this.occurrences.set(occurrences);
-      this.mealEntries.set(mealEntries);
-    } catch {
-      this.error.set('child.calendar.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    return { myCalendars, occurrences, mealEntries };
   }
 }

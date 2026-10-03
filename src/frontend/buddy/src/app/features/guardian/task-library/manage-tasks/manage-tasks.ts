@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { swapped } from '../../../../core/array-utils';
-import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
+import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { Subtask, TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
+import { createAction } from '../../../../shared/action-state/action-state';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { Stepper } from '../../../../shared/stepper/stepper';
 
@@ -33,16 +34,35 @@ function formatDuration(totalMinutes: number): string {
   imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Stepper],
   templateUrl: './manage-tasks.html',
 })
-export class ManageTasks implements OnInit {
+export class ManageTasks {
   private readonly guardians = inject(GuardiansService);
   private readonly taskLibrary = inject(TaskLibraryService);
 
-  protected readonly hasChildren = signal(true);
-  protected readonly children = signal<ChildSummary[]>([]);
-  protected readonly selectedChildId = signal<string | null>(null);
+  protected readonly children = resource({ loader: () => this.guardians.listMyChildren() });
+  protected readonly childList = computed(() =>
+    this.children.hasValue() ? this.children.value() : [],
+  );
+  protected readonly selectedChildId = linkedSignal(() => this.childList()[0]?.id);
 
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  // Fetches the selected child's templates into the shared service state (read via templates
+  // below); idle until a child is selected.
+  private readonly templatesLoad = resource({
+    params: () => {
+      const childId = this.selectedChildId();
+      return childId ? { childId } : undefined;
+    },
+    loader: ({ params }) => this.taskLibrary.listTaskTemplates(params.childId),
+  });
+
+  protected readonly loading = computed(
+    () => this.children.isLoading() || this.templatesLoad.isLoading(),
+  );
+  protected readonly hasChildren = computed(
+    () => !this.children.hasValue() || this.children.value().length > 0,
+  );
+  protected readonly loadFailed = computed(
+    () => !!this.children.error() || !!this.templatesLoad.error(),
+  );
 
   // Reads straight from the shared service state, so a create/archive/subtask-edit from anywhere
   // else on the page (there's nowhere else yet, but mirrors ManageMeals's contract) shows up here
@@ -57,50 +77,41 @@ export class ManageTasks implements OnInit {
   protected readonly newTemplateName = signal('');
   protected readonly newTemplateIcon = signal(DEFAULT_ICON);
   protected readonly newTemplateColor = signal(DEFAULT_COLOR);
-  protected readonly creating = signal(false);
-  protected readonly createError = signal<string | null>(null);
+  protected readonly creating = createAction();
 
-  protected readonly archivingTemplateId = signal<string | null>(null);
+  protected readonly archiving = createAction<string>();
 
   protected readonly editingTemplateId = signal<string | null>(null);
   protected readonly editTemplateName = signal('');
   protected readonly editTemplateIcon = signal('');
   protected readonly editTemplateColor = signal(DEFAULT_COLOR);
-  protected readonly savingTemplateId = signal<string | null>(null);
-  protected readonly templateError = signal<string | null>(null);
+  protected readonly savingTemplate = createAction<string>();
 
   protected readonly newSubtaskTitle = signal('');
   protected readonly newSubtaskIcon = signal('');
   protected readonly newSubtaskDuration = signal(DEFAULT_SUBTASK_DURATION_MINUTES);
-  protected readonly addingSubtask = signal(false);
-  protected readonly subtaskError = signal<string | null>(null);
 
   protected readonly editingSubtaskId = signal<string | null>(null);
   protected readonly editSubtaskTitle = signal('');
   protected readonly editSubtaskIcon = signal('');
   protected readonly editSubtaskDuration = signal(DEFAULT_SUBTASK_DURATION_MINUTES);
-  protected readonly savingSubtaskId = signal<string | null>(null);
 
-  protected readonly removingSubtaskId = signal<string | null>(null);
-  protected readonly reorderingTemplateId = signal<string | null>(null);
-
-  ngOnInit(): void {
-    void this.loadChildren();
-  }
+  // Every subtask operation shares one error line, so they share one action. Ids: 'add',
+  // 'save:<subtaskId>', 'remove:<subtaskId>', 'reorder:<templateId>'.
+  protected readonly subtasks = createAction<string>();
 
   protected formatDuration(totalMinutes: number): string {
     return formatDuration(totalMinutes);
   }
 
-  protected async onChildChange(childId: string): Promise<void> {
+  protected onChildChange(childId: string): void {
     this.selectedChildId.set(childId);
     this.expandedTemplateId.set(null);
-    await this.loadTemplates(childId);
   }
 
   protected toggleExpanded(templateId: string): void {
     this.expandedTemplateId.set(this.expandedTemplateId() === templateId ? null : templateId);
-    this.subtaskError.set(null);
+    this.subtasks.clearError();
     this.cancelEditSubtask();
     this.cancelEditTemplate();
     this.newSubtaskTitle.set('');
@@ -113,7 +124,7 @@ export class ManageTasks implements OnInit {
     this.editTemplateName.set(template.name);
     this.editTemplateIcon.set(template.icon);
     this.editTemplateColor.set(template.color);
-    this.templateError.set(null);
+    this.savingTemplate.clearError();
   }
 
   protected cancelEditTemplate(): void {
@@ -129,17 +140,14 @@ export class ManageTasks implements OnInit {
       return;
     }
 
-    this.savingTemplateId.set(templateId);
-    this.templateError.set(null);
-
-    try {
-      await this.taskLibrary.updateTaskTemplate(templateId, { name, icon, color });
-      this.editingTemplateId.set(null);
-    } catch {
-      this.templateError.set('taskLibrary.manageTasks.form.updateError');
-    } finally {
-      this.savingTemplateId.set(null);
-    }
+    await this.savingTemplate.run(
+      templateId,
+      async () => {
+        await this.taskLibrary.updateTaskTemplate(templateId, { name, icon, color });
+        this.editingTemplateId.set(null);
+      },
+      'taskLibrary.manageTasks.form.updateError',
+    );
   }
 
   protected async createTemplate(): Promise<void> {
@@ -152,33 +160,33 @@ export class ManageTasks implements OnInit {
       return;
     }
 
-    this.creating.set(true);
-    this.createError.set(null);
-
-    try {
-      const created = await this.taskLibrary.createTaskTemplate(childId, { name, icon, color });
-      this.newTemplateName.set('');
-      this.newTemplateIcon.set(DEFAULT_ICON);
-      this.newTemplateColor.set(DEFAULT_COLOR);
-      this.expandedTemplateId.set(created.id);
-    } catch {
-      this.createError.set('taskLibrary.manageTasks.form.createError');
-    } finally {
-      this.creating.set(false);
-    }
+    await this.creating.run(
+      true,
+      async () => {
+        const created = await this.taskLibrary.createTaskTemplate(childId, { name, icon, color });
+        this.newTemplateName.set('');
+        this.newTemplateIcon.set(DEFAULT_ICON);
+        this.newTemplateColor.set(DEFAULT_COLOR);
+        // Switched child while creating: the service appended the previous child's template to
+        // the new child's list, so refetch that list instead of expanding the stray template.
+        if (this.selectedChildId() !== childId) {
+          this.templatesLoad.reload();
+          return;
+        }
+        this.expandedTemplateId.set(created.id);
+      },
+      'taskLibrary.manageTasks.form.createError',
+    );
   }
 
   protected async archiveTemplate(templateId: string): Promise<void> {
-    this.archivingTemplateId.set(templateId);
-    this.error.set(null);
-
-    try {
-      await this.taskLibrary.archiveTaskTemplate(templateId);
-    } catch {
-      this.error.set('taskLibrary.manageTasks.archiveError');
-    } finally {
-      this.archivingTemplateId.set(null);
-    }
+    await this.archiving.run(
+      templateId,
+      async () => {
+        await this.taskLibrary.archiveTaskTemplate(templateId);
+      },
+      'taskLibrary.manageTasks.archiveError',
+    );
   }
 
   protected async addSubtask(templateId: string): Promise<void> {
@@ -190,19 +198,16 @@ export class ManageTasks implements OnInit {
       return;
     }
 
-    this.addingSubtask.set(true);
-    this.subtaskError.set(null);
-
-    try {
-      await this.taskLibrary.addSubtask(templateId, title, icon || null, durationMinutes);
-      this.newSubtaskTitle.set('');
-      this.newSubtaskIcon.set('');
-      this.newSubtaskDuration.set(DEFAULT_SUBTASK_DURATION_MINUTES);
-    } catch {
-      this.subtaskError.set('taskLibrary.manageTasks.subtasks.addError');
-    } finally {
-      this.addingSubtask.set(false);
-    }
+    await this.subtasks.run(
+      'add',
+      async () => {
+        await this.taskLibrary.addSubtask(templateId, title, icon || null, durationMinutes);
+        this.newSubtaskTitle.set('');
+        this.newSubtaskIcon.set('');
+        this.newSubtaskDuration.set(DEFAULT_SUBTASK_DURATION_MINUTES);
+      },
+      'taskLibrary.manageTasks.subtasks.addError',
+    );
   }
 
   protected startEditSubtask(subtask: Subtask): void {
@@ -210,7 +215,7 @@ export class ManageTasks implements OnInit {
     this.editSubtaskTitle.set(subtask.title);
     this.editSubtaskIcon.set(subtask.icon ?? '');
     this.editSubtaskDuration.set(subtask.durationMinutes);
-    this.subtaskError.set(null);
+    this.subtasks.clearError();
   }
 
   protected cancelEditSubtask(): void {
@@ -226,36 +231,30 @@ export class ManageTasks implements OnInit {
       return;
     }
 
-    this.savingSubtaskId.set(subtaskId);
-    this.subtaskError.set(null);
-
-    try {
-      await this.taskLibrary.updateSubtask(
-        templateId,
-        subtaskId,
-        title,
-        icon || null,
-        durationMinutes,
-      );
-      this.editingSubtaskId.set(null);
-    } catch {
-      this.subtaskError.set('taskLibrary.manageTasks.subtasks.updateError');
-    } finally {
-      this.savingSubtaskId.set(null);
-    }
+    await this.subtasks.run(
+      `save:${subtaskId}`,
+      async () => {
+        await this.taskLibrary.updateSubtask(
+          templateId,
+          subtaskId,
+          title,
+          icon || null,
+          durationMinutes,
+        );
+        this.editingSubtaskId.set(null);
+      },
+      'taskLibrary.manageTasks.subtasks.updateError',
+    );
   }
 
   protected async removeSubtask(templateId: string, subtaskId: string): Promise<void> {
-    this.removingSubtaskId.set(subtaskId);
-    this.subtaskError.set(null);
-
-    try {
-      await this.taskLibrary.removeSubtask(templateId, subtaskId);
-    } catch {
-      this.subtaskError.set('taskLibrary.manageTasks.subtasks.removeError');
-    } finally {
-      this.removingSubtaskId.set(null);
-    }
+    await this.subtasks.run(
+      `remove:${subtaskId}`,
+      async () => {
+        await this.taskLibrary.removeSubtask(templateId, subtaskId);
+      },
+      'taskLibrary.manageTasks.subtasks.removeError',
+    );
   }
 
   // Simplest correct v1 reorder: swap the target row with its neighbor and submit the whole
@@ -277,43 +276,12 @@ export class ManageTasks implements OnInit {
       targetIndex,
     );
 
-    this.reorderingTemplateId.set(template.id);
-    this.subtaskError.set(null);
-
-    try {
-      await this.taskLibrary.reorderSubtasks(template.id, order);
-    } catch {
-      this.subtaskError.set('taskLibrary.manageTasks.subtasks.reorderError');
-    } finally {
-      this.reorderingTemplateId.set(null);
-    }
-  }
-
-  private async loadChildren(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
-
-      if (!firstChild) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-      this.children.set(children);
-      this.selectedChildId.set(firstChild.id);
-      await this.loadTemplates(firstChild.id);
-    } catch {
-      this.error.set('taskLibrary.manageTasks.loadError');
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  private async loadTemplates(childId: string): Promise<void> {
-    await this.taskLibrary.listTaskTemplates(childId);
+    await this.subtasks.run(
+      `reorder:${template.id}`,
+      async () => {
+        await this.taskLibrary.reorderSubtasks(template.id, order);
+      },
+      'taskLibrary.manageTasks.subtasks.reorderError',
+    );
   }
 }

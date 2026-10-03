@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  @if (loading()) {
+  @if (entries.isLoading()) {
     <p class="text-sm text-slate-500 dark:text-slate-400">
       {{ 'mealplan.assign.loading' | translate }}
     </p>
@@ -30,8 +30,14 @@
       {{ 'mealplan.assign.noMeals' | translate }}
     </p>
   } @else {
-    @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    @if (scopeSaveState(); as state) {
+      @if (state.status === 'error') {
+        <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      } @else if (state.status === 'idle' && entries.error()) {
+        <p class="mb-3 text-sm text-red-600 dark:text-red-400">
+          {{ 'mealplan.assign.loadError' | translate }}
+        </p>
+      }
     }
 
     @if (readOnly()) {
@@ -82,7 +88,7 @@
                       [meals]="meals()"
                       [mealId]="mealIdFor(day.date, slot)"
                       [disabled]="
-                        readOnly() || isPastDay(day.date) || savingKey() === key(day.date, slot)
+                        readOnly() || isPastDay(day.date) || saving.isBusy(saveId(day.date, slot))
                       "
                       (mealIdChange)="onSlotChange(day.date, slot, $event)"
                     />
@@ -91,7 +97,7 @@
                         cdkDrag
                         [cdkDragData]="{ date: day.date, slot: slot }"
                         [cdkDragDisabled]="
-                          readOnly() || isPastDay(day.date) || savingKey() !== null
+                          readOnly() || isPastDay(day.date) || scopeSaveState().status === 'busy'
                         "
                         class="pointer-events-none absolute inset-0"
                       >

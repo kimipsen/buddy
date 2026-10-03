@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
+import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { GoalPost, ProgressService } from '../../../../core/progress.service';
+import { GoalPost, ProgressService, ProgressSummary } from '../../../../core/progress.service';
+import { createAction } from '../../../../shared/action-state/action-state';
 
 interface GoalPostRow {
   threshold: string;
@@ -24,29 +25,47 @@ function toRow(goalPost: GoalPost): GoalPostRow {
   imports: [FormsModule, TranslatePipe],
   templateUrl: './manage-progress-goals.html',
 })
-export class ManageProgressGoals implements OnInit {
+export class ManageProgressGoals {
   private readonly guardians = inject(GuardiansService);
   private readonly progressService = inject(ProgressService);
 
-  protected readonly hasChildren = signal(true);
-  protected readonly children = signal<ChildSummary[]>([]);
-  protected readonly selectedChildId = signal<string | null>(null);
+  protected readonly children = resource({ loader: () => this.guardians.listMyChildren() });
+  protected readonly childList = computed(() =>
+    this.children.hasValue() ? this.children.value() : [],
+  );
+  protected readonly selectedChildId = linkedSignal(() => this.childList()[0]?.id);
 
-  protected readonly rows = signal<GoalPostRow[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  // The selected child's progress; idle until a child is selected.
+  protected readonly progress = resource({
+    params: () => {
+      const childId = this.selectedChildId();
+      return childId ? { childId } : undefined;
+    },
+    loader: ({ params }) => this.progressService.getChildProgress(params.childId),
+  });
 
-  protected readonly saving = signal(false);
-  protected readonly saveError = signal<string | null>(null);
+  // The editable draft, reset from the loaded (or just saved) goal posts.
+  protected readonly rows = linkedSignal(() =>
+    this.progress.hasValue() ? this.progress.value().goalPosts.map(toRow) : [],
+  );
+
+  protected readonly loading = computed(
+    () => this.children.isLoading() || this.progress.isLoading(),
+  );
+  protected readonly hasChildren = computed(
+    () => !this.children.hasValue() || this.children.value().length > 0,
+  );
+  protected readonly loadFailed = computed(
+    () => !!this.children.error() || !!this.progress.error(),
+  );
+
+  protected readonly saving = createAction();
   protected readonly saved = signal(false);
 
-  ngOnInit(): void {
-    void this.loadChildren();
-  }
-
-  protected async onChildChange(childId: string): Promise<void> {
+  protected onChildChange(childId: string): void {
     this.selectedChildId.set(childId);
-    await this.loadGoalPosts(childId);
+    this.saved.set(false);
+    this.saving.clearError();
   }
 
   protected addRow(): void {
@@ -92,56 +111,37 @@ export class ManageProgressGoals implements OnInit {
       return;
     }
 
-    this.saving.set(true);
-    this.saveError.set(null);
     this.saved.set(false);
 
-    try {
-      const goalPosts: GoalPost[] = this.rows().map((row) => ({
-        threshold: Number(row.threshold),
-        icon: row.icon.trim(),
-        label: row.label.trim(),
-      }));
+    await this.saving.run(
+      true,
+      async () => {
+        const goalPosts: GoalPost[] = this.rows().map((row) => ({
+          threshold: Number(row.threshold),
+          icon: row.icon.trim(),
+          label: row.label.trim(),
+        }));
 
-      const summary = await this.progressService.configureGoalPosts(childId, goalPosts);
-      this.rows.set(summary.goalPosts.map(toRow));
-      this.saved.set(true);
-    } catch {
-      this.saveError.set('progress.manageProgressGoals.saveError');
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  private async loadChildren(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
-
-      if (!firstChild) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-      this.children.set(children);
-      this.selectedChildId.set(firstChild.id);
-      await this.loadGoalPosts(firstChild.id);
-    } catch {
-      this.error.set('progress.manageProgressGoals.loadError');
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  private async loadGoalPosts(childId: string): Promise<void> {
-    this.saved.set(false);
-    this.saveError.set(null);
-
-    const summary = await this.progressService.getChildProgress(childId);
-    this.rows.set(summary.goalPosts.map(toRow));
+        let summary: ProgressSummary;
+        try {
+          summary = await this.progressService.configureGoalPosts(childId, goalPosts);
+        } catch (error: unknown) {
+          // Switched child while saving: the failed draft is no longer on screen, so its error
+          // would only be misread as being about the new child.
+          if (this.selectedChildId() !== childId) {
+            return;
+          }
+          throw error;
+        }
+        // Switched child while saving: the response is the previous child's goals, and setting it
+        // would cancel or overwrite the new child's load (so the next Save would send them there).
+        if (this.selectedChildId() !== childId || this.progress.isLoading()) {
+          return;
+        }
+        this.progress.set(summary);
+        this.saved.set(true);
+      },
+      'progress.manageProgressGoals.saveError',
+    );
   }
 }

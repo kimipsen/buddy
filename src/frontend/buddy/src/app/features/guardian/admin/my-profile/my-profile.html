@@ -3,11 +3,12 @@
 >
   <h3 class="mb-5 text-lg font-semibold tracking-normal">{{ 'profile.title' | translate }}</h3>
 
-  @if (loading()) {
+  @if (profile.isLoading()) {
     <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'profile.loading' | translate }}</p>
-  } @else if (loadError(); as message) {
-    <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-  } @else {
+  } @else if (profile.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">{{ 'profile.loadError' | translate }}</p>
+  } @else if (profile.hasValue()) {
+    @let current = profile.value();
     <div class="space-y-6">
       <form class="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" (ngSubmit)="saveName()">
         <label class="block">
@@ -40,23 +41,25 @@
           type="submit"
           class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
           [disabled]="
-            savingName() ||
+            nameSave.busy() ||
             !givenName().trim() ||
             !familyName().trim() ||
-            (givenName().trim() === currentGivenName() &&
-              familyName().trim() === currentFamilyName())
+            (givenName().trim() === current.name.givenName &&
+              familyName().trim() === current.name.familyName)
           "
         >
           {{ 'profile.name.save' | translate }}
         </button>
       </form>
 
-      @if (nameError(); as message) {
-        <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-      } @else if (nameSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">
-          {{ 'profile.name.saved' | translate }}
-        </p>
+      @if (nameSave.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+        } @else if (nameSaved()) {
+          <p class="text-sm text-emerald-700 dark:text-emerald-400">
+            {{ 'profile.name.saved' | translate }}
+          </p>
+        }
       }
 
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveEmail()">
@@ -65,7 +68,7 @@
             class="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
           >
             {{ 'profile.email.label' | translate }}
-            @if (currentEmailVerified() && email().trim() === currentEmail()) {
+            @if (current.email.isVerified && email().trim() === current.email.value) {
               <span
                 class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal text-emerald-700 dark:text-emerald-400"
               >
@@ -96,18 +99,20 @@
         <button
           type="submit"
           class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-          [disabled]="savingEmail() || !email().trim() || email().trim() === currentEmail()"
+          [disabled]="emailSave.busy() || !email().trim() || email().trim() === current.email.value"
         >
           {{ 'profile.email.save' | translate }}
         </button>
       </form>
 
-      @if (emailError(); as message) {
-        <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-      } @else if (emailSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">
-          {{ 'profile.email.saved' | translate }}
-        </p>
+      @if (emailSave.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+        } @else if (emailSaved()) {
+          <p class="text-sm text-emerald-700 dark:text-emerald-400">
+            {{ 'profile.email.saved' | translate }}
+          </p>
+        }
       }
 
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveTimeZone()">
@@ -130,18 +135,20 @@
         <button
           type="submit"
           class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-          [disabled]="savingTimeZone() || !timeZoneId() || timeZoneId() === currentTimeZoneId()"
+          [disabled]="timeZoneSave.busy() || !timeZoneId() || timeZoneId() === current.timeZoneId"
         >
           {{ 'profile.timeZone.save' | translate }}
         </button>
       </form>
 
-      @if (timeZoneError(); as message) {
-        <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-      } @else if (timeZoneSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">
-          {{ 'profile.timeZone.saved' | translate }}
-        </p>
+      @if (timeZoneSave.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+        } @else if (timeZoneSaved()) {
+          <p class="text-sm text-emerald-700 dark:text-emerald-400">
+            {{ 'profile.timeZone.saved' | translate }}
+          </p>
+        }
       }
 
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveLanguage()">
@@ -164,18 +171,20 @@
         <button
           type="submit"
           class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-          [disabled]="savingLanguage() || !language() || language() === currentLanguage()"
+          [disabled]="languageSave.busy() || !language() || language() === current.language"
         >
           {{ 'profile.language.save' | translate }}
         </button>
       </form>
 
-      @if (languageError(); as message) {
-        <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-      } @else if (languageSaved()) {
-        <p class="text-sm text-emerald-700 dark:text-emerald-400">
-          {{ 'profile.language.saved' | translate }}
-        </p>
+      @if (languageSave.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+        } @else if (languageSaved()) {
+          <p class="text-sm text-emerald-700 dark:text-emerald-400">
+            {{ 'profile.language.saved' | translate }}
+          </p>
+        }
       }
     </div>
   }

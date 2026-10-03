@@ -21,11 +21,11 @@
     {{ 'print.editor.title' | translate }}
   </h2>
 
-  @if (loading()) {
+  @if (editor.isLoading()) {
     <app-loading-spinner [label]="'print.editor.loading' | translate" />
   } @else if (!template()) {
     <p class="text-sm text-red-600 dark:text-red-400" role="alert">
-      {{ error() ?? 'print.editor.loadError' | translate }}
+      {{ 'print.editor.loadError' | translate }}
     </p>
   } @else {
     <div class="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -532,7 +532,7 @@
           <button
             type="button"
             class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-            [disabled]="saving() || firstProblem() !== null"
+            [disabled]="saving.busy() || firstProblem() !== null"
             (click)="save()"
           >
             {{ 'print.editor.saveButton' | translate }}
@@ -540,15 +540,17 @@
           @if (firstProblem(); as problem) {
             <p class="text-sm text-slate-500 dark:text-slate-400">{{ problem | translate }}</p>
           }
-          @if (savedStatus(); as message) {
+          @if (savedStatus()) {
             <p class="text-sm text-emerald-700 dark:text-emerald-400" role="status">
-              {{ message | translate }}
+              {{ 'print.editor.saved' | translate }}
             </p>
           }
-          @if (error(); as message) {
-            <p class="text-sm text-red-600 dark:text-red-400" role="alert">
-              {{ message | translate }}
-            </p>
+          @if (saving.state(); as state) {
+            @if (state.status === 'error') {
+              <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+                {{ state.message | translate }}
+              </p>
+            }
           }
 
           <div class="ml-auto flex items-center gap-2">
@@ -559,7 +561,7 @@
               <button
                 type="button"
                 class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-                [disabled]="saving()"
+                [disabled]="saving.busy()"
                 (click)="remove()"
               >
                 {{ 'print.editor.deleteYes' | translate }}

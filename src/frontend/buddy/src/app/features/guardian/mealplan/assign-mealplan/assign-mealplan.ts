@@ -6,7 +6,7 @@ import {
   CdkDropList,
   CdkDropListGroup,
 } from '@angular/cdk/drag-drop';
-import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, resource, signal } from '@angular/core';
 
 import { firstAndLast } from '../../../../core/array-utils';
 import { parseIsoDate, toIsoDate, todayIsoDate } from '../../../../core/date-utils';
@@ -21,6 +21,7 @@ import {
   MealSlot,
   MealplansService,
 } from '../../../../core/mealplans.service';
+import { ActionState, createAction } from '../../../../shared/action-state/action-state';
 import { MealPicker } from '../meal-picker/meal-picker';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
@@ -42,6 +43,18 @@ interface PlannerDay {
 interface SlotRef {
   date: string;
   slot: MealSlot;
+}
+
+type EntriesByKey = Partial<Record<string, MealPlanEntry>>;
+
+interface EntriesRequest {
+  scope: MealplanScope;
+  from: string;
+  to: string;
+}
+
+function scopeId(scope: MealplanScope): string {
+  return scope.kind === 'family' ? `family:${scope.childId}` : `group:${scope.groupId}`;
 }
 
 interface NamedRating {
@@ -102,23 +115,43 @@ export class AssignMealplan implements OnInit {
   protected readonly meals = computed<Meal[]>(() =>
     this.mealplans.meals().filter((meal) => !meal.isArchived),
   );
-  protected readonly entriesByKey = signal<Partial<Record<string, MealPlanEntry>>>({});
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly savingKey = signal<string | null>(null);
+  // Ids are `${scopeId}|${date}|${slot}`, so a save only ever shows against its own scope.
+  protected readonly saving = createAction<string>();
+  protected readonly scopeSaveState = computed((): ActionState<string> => {
+    const state = this.saving.state();
+    return state.status === 'idle' || state.id.startsWith(`${scopeId(this.scope())}|`)
+      ? state
+      : { status: 'idle' };
+  });
 
+  // What the entries are fetched for. Compared by value, so relabelling days() (a language switch)
+  // doesn't refetch; a save compares it by identity to tell whether its scope and week still show.
+  private readonly request = computed(
+    (): EntriesRequest => {
+      const [first, last] = firstAndLast(this.days());
+      return { scope: this.scope(), from: first.date, to: last.date };
+    },
+    {
+      equal: (a, b) => scopeId(a.scope) === scopeId(b.scope) && a.from === b.from && a.to === b.to,
+    },
+  );
+
+  // The visible week's entries for the scope. Reloads when the scope or the week changes, which also
+  // drops a save error left over from the previous view.
+  protected readonly entries = resource({
+    params: () => this.request(),
+    loader: ({ params }) => {
+      this.saving.clearError();
+      return this.loadEntries(params.scope, params.from, params.to);
+    },
+  });
+  // Empty while loading or after a failed load, so the grid still renders.
+  protected readonly entriesByKey = computed<EntriesByKey>(() =>
+    this.entries.hasValue() ? this.entries.value() : {},
+  );
   // "My children" resolves independently of which scope is currently selected -- it's used only
   // to label sibling ratings by name, not to determine which plan is being viewed. Loaded once.
   private readonly childNamesById = signal<Record<string, string>>({});
-
-  constructor() {
-    effect(() => {
-      // Read anchorDate() here (not just inside load()) so the effect re-runs when the visible
-      // week changes, not only when the scope does.
-      this.anchorDate();
-      void this.load(this.scope());
-    });
-  }
 
   ngOnInit(): void {
     void this.loadChildNames();
@@ -156,6 +189,10 @@ export class AssignMealplan implements OnInit {
 
   protected key(date: string, slot: MealSlot): string {
     return `${date}|${slot}`;
+  }
+
+  protected saveId(date: string, slot: MealSlot): string {
+    return `${scopeId(this.scope())}|${this.key(date, slot)}`;
   }
 
   // A day that has already happened is a record of what was actually planned, not something to
@@ -204,28 +241,27 @@ export class AssignMealplan implements OnInit {
       return;
     }
 
-    const scope = this.scope();
+    const shown = this.request();
+    const scope = shown.scope;
     const key = this.key(date, slot);
-    this.savingKey.set(key);
-    this.error.set(null);
 
-    try {
-      if (mealId) {
-        const entry = await this.mealplans.assignMealToSlot(scope, date, slot, mealId, '');
-        this.entriesByKey.update((current) => ({ ...current, [key]: entry }));
-      } else {
-        await this.mealplans.clearMealSlot(scope, date, slot);
-        this.entriesByKey.update((current) => {
-          const next = { ...current };
-          delete next[key];
-          return next;
-        });
-      }
-    } catch {
-      this.error.set('mealplan.assign.updateError');
-    } finally {
-      this.savingKey.set(null);
-    }
+    await this.saving.run(
+      `${scopeId(scope)}|${key}`,
+      async () => {
+        if (mealId) {
+          const entry = await this.mealplans.assignMealToSlot(scope, date, slot, mealId, '');
+          this.updateEntries(shown, (current) => ({ ...current, [key]: entry }));
+        } else {
+          await this.mealplans.clearMealSlot(scope, date, slot);
+          this.updateEntries(shown, (current) => {
+            const next = { ...current };
+            delete next[key];
+            return next;
+          });
+        }
+      },
+      'mealplan.assign.updateError',
+    );
   }
 
   // Dragging a meal onto an empty cell moves it; dragging it onto an occupied cell swaps the two,
@@ -235,7 +271,8 @@ export class AssignMealplan implements OnInit {
       return;
     }
 
-    const scope = this.scope();
+    const shown = this.request();
+    const scope = shown.scope;
     const source = event.item.data as SlotRef;
     const target = event.container.data;
 
@@ -257,77 +294,76 @@ export class AssignMealplan implements OnInit {
     const sourceKey = this.key(source.date, source.slot);
     const targetKey = this.key(target.date, target.slot);
 
-    this.savingKey.set(sourceKey);
-    this.error.set(null);
+    await this.saving.run(
+      `${scopeId(scope)}|${sourceKey}`,
+      async () => {
+        if (targetMealId) {
+          // Sequential, not Promise.all: both writes land on the same plan's single event stream,
+          // and appending to it concurrently from two requests causes contention.
+          const targetEntry = await this.mealplans.assignMealToSlot(
+            scope,
+            target.date,
+            target.slot,
+            sourceMealId,
+            '',
+          );
+          const sourceEntry = await this.mealplans.assignMealToSlot(
+            scope,
+            source.date,
+            source.slot,
+            targetMealId,
+            '',
+          );
+          this.updateEntries(shown, (current) => ({
+            ...current,
+            [targetKey]: targetEntry,
+            [sourceKey]: sourceEntry,
+          }));
+        } else {
+          const targetEntry = await this.mealplans.assignMealToSlot(
+            scope,
+            target.date,
+            target.slot,
+            sourceMealId,
+            '',
+          );
+          await this.mealplans.clearMealSlot(scope, source.date, source.slot);
+          this.updateEntries(shown, (current) => {
+            const next = { ...current, [targetKey]: targetEntry };
+            delete next[sourceKey];
+            return next;
+          });
+        }
+      },
+      'mealplan.assign.updateError',
+    );
+  }
 
-    try {
-      if (targetMealId) {
-        // Sequential, not Promise.all: both writes land on the same plan's single event stream,
-        // and appending to it concurrently from two requests causes contention.
-        const targetEntry = await this.mealplans.assignMealToSlot(
-          scope,
-          target.date,
-          target.slot,
-          sourceMealId,
-          '',
-        );
-        const sourceEntry = await this.mealplans.assignMealToSlot(
-          scope,
-          source.date,
-          source.slot,
-          targetMealId,
-          '',
-        );
-        this.entriesByKey.update((current) => ({
-          ...current,
-          [targetKey]: targetEntry,
-          [sourceKey]: sourceEntry,
-        }));
-      } else {
-        const targetEntry = await this.mealplans.assignMealToSlot(
-          scope,
-          target.date,
-          target.slot,
-          sourceMealId,
-          '',
-        );
-        await this.mealplans.clearMealSlot(scope, source.date, source.slot);
-        this.entriesByKey.update((current) => {
-          const next = { ...current, [targetKey]: targetEntry };
-          delete next[sourceKey];
-          return next;
-        });
-      }
-    } catch {
-      this.error.set('mealplan.assign.updateError');
-    } finally {
-      this.savingKey.set(null);
+  // Applies a save's result only if the grid still shows the scope and week it was made for, and
+  // those entries have loaded: setting the resource mid-load would cancel the load.
+  private updateEntries(
+    shown: EntriesRequest,
+    change: (current: EntriesByKey) => EntriesByKey,
+  ): void {
+    const entries = this.entries;
+
+    if (this.request() === shown && entries.hasValue() && !entries.isLoading()) {
+      entries.set(change(entries.value()));
     }
   }
 
-  private async load(scope: MealplanScope): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    this.entriesByKey.set({});
+  private async loadEntries(scope: MealplanScope, from: string, to: string): Promise<EntriesByKey> {
+    const [, entries] = await Promise.all([
+      this.mealplans.listMeals(scope),
+      this.mealplans.listMealPlan(scope, from, to),
+    ]);
 
-    try {
-      const [first, last] = firstAndLast(this.days());
-      const [, entries] = await Promise.all([
-        this.mealplans.listMeals(scope),
-        this.mealplans.listMealPlan(scope, first.date, last.date),
-      ]);
+    const byKey: EntriesByKey = {};
 
-      const byKey: Partial<Record<string, MealPlanEntry>> = {};
-
-      for (const entry of entries) {
-        byKey[this.key(entry.date, entry.slot)] = entry;
-      }
-
-      this.entriesByKey.set(byKey);
-    } catch {
-      this.error.set('mealplan.assign.loadError');
-    } finally {
-      this.loading.set(false);
+    for (const entry of entries) {
+      byKey[this.key(entry.date, entry.slot)] = entry;
     }
+
+    return byKey;
   }
 }

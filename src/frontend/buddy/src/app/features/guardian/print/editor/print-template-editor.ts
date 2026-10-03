@@ -1,10 +1,11 @@
 import {
   Component,
   DestroyRef,
-  OnInit,
   computed,
   effect,
   inject,
+  linkedSignal,
+  resource,
   signal,
   untracked,
 } from '@angular/core';
@@ -42,6 +43,7 @@ import {
   WorkLocation,
   WorkLocationsService,
 } from '../../../../core/work-locations.service';
+import { createAction } from '../../../../shared/action-state/action-state';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { LoadingSpinner } from '../../../../shared/loading-spinner/loading-spinner';
 import { RepeatableRow } from '../../../../shared/repeatable-row/repeatable-row';
@@ -94,6 +96,16 @@ interface DraftRow {
   row: PrintTemplateRow;
 }
 
+// What the editor loads: the template plus everything its rows can refer to.
+interface LoadedEditor {
+  template: PrintTemplate;
+  children: ChildSummary[];
+  calendars: CalendarSummary[];
+  groups: GroupSummary[];
+  guardians: GuardianSummary[];
+  workLocations: ReadonlyMap<string, WorkLocation[]>;
+}
+
 const EMPTY_SOURCES: WeekPlanSources = {
   meals: new Map(),
   pickups: new Map(),
@@ -121,7 +133,7 @@ const EMPTY_SOURCES: WeekPlanSources = {
   ],
   templateUrl: './print-template-editor.html',
 })
-export class PrintTemplateEditor implements OnInit {
+export class PrintTemplateEditor {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly templates = inject(PrintTemplatesService);
@@ -148,32 +160,50 @@ export class PrintTemplateEditor implements OnInit {
   private readonly templateId = this.route.snapshot.paramMap.get('templateId') ?? '';
   private nextKey = 0;
 
-  protected readonly template = signal<PrintTemplate | null>(null);
-  protected readonly loading = signal(true);
-  protected readonly saving = signal(false);
+  // The template plus everything its rows can refer to.
+  protected readonly editor = resource({ loader: () => this.load() });
+  // The template as last loaded or saved; the draft below resets from it.
+  protected readonly template = computed(() =>
+    this.editor.hasValue() ? this.editor.value().template : undefined,
+  );
+  // Shared by Save and Delete: either one disables both, and their errors show in one place.
+  protected readonly saving = createAction();
   protected readonly confirmingDelete = signal(false);
-  protected readonly error = signal<string | null>(null);
-  private readonly status = signal<string | null>(null);
+  private readonly justSaved = signal(false);
   // The draft as last saved -- "Template saved." only shows while the draft still matches it.
   private readonly savedDraft = signal('');
-  protected readonly savedStatus = computed(() =>
-    this.status() && JSON.stringify(this.draftTemplate()) === this.savedDraft()
-      ? this.status()
-      : null,
+  protected readonly savedStatus = computed(
+    () => this.justSaved() && JSON.stringify(this.draftTemplate()) === this.savedDraft(),
   );
 
-  protected readonly children = signal<ChildSummary[]>([]);
-  protected readonly guardians = signal<GuardianSummary[]>([]);
-  protected readonly calendars = signal<CalendarSummary[]>([]);
-  protected readonly groups = signal<GroupSummary[]>([]);
-  protected readonly workLocations = signal<ReadonlyMap<string, WorkLocation[]>>(new Map());
+  protected readonly children = computed(() =>
+    this.editor.hasValue() ? this.editor.value().children : [],
+  );
+  protected readonly guardians = computed(() =>
+    this.editor.hasValue() ? this.editor.value().guardians : [],
+  );
+  protected readonly calendars = computed(() =>
+    this.editor.hasValue() ? this.editor.value().calendars : [],
+  );
+  protected readonly groups = computed(() =>
+    this.editor.hasValue() ? this.editor.value().groups : [],
+  );
+  protected readonly workLocations = computed((): ReadonlyMap<string, WorkLocation[]> =>
+    this.editor.hasValue() ? this.editor.value().workLocations : new Map<string, WorkLocation[]>(),
+  );
 
-  protected readonly name = signal('');
-  protected readonly paperSize = signal<PaperSize>(0);
-  protected readonly startWeekday = signal<Weekday>(1);
-  protected readonly showWeekNumber = signal(true);
-  protected readonly rows = signal<DraftRow[]>([]);
-  protected readonly colors = signal<Record<string, string>>({});
+  protected readonly name = linkedSignal(() => this.template()?.name ?? '');
+  protected readonly paperSize = linkedSignal((): PaperSize => this.template()?.paperSize ?? 0);
+  protected readonly startWeekday = linkedSignal(
+    (): Weekday => this.template()?.defaultStartWeekday ?? 1,
+  );
+  protected readonly showWeekNumber = linkedSignal(() => this.template()?.showWeekNumber ?? true);
+  protected readonly rows = linkedSignal(() =>
+    (this.template()?.rows ?? []).map((row) => this.draft(row)),
+  );
+  protected readonly colors = linkedSignal((): Record<string, string> =>
+    Object.fromEntries((this.template()?.guardianColors ?? []).map((c) => [c.guardianId, c.color])),
+  );
   protected readonly newKind = signal<PrintRowKind>(PRINT_ROW_KIND.blank);
 
   private readonly previewSources = signal<WeekPlanSources>(EMPTY_SOURCES);
@@ -296,10 +326,6 @@ export class PrintTemplateEditor implements OnInit {
       }
       untracked(() => this.schedulePreview());
     });
-  }
-
-  ngOnInit(): void {
-    void this.load();
   }
 
   protected rowIsStale(row: PrintTemplateRow): boolean {
@@ -451,69 +477,53 @@ export class PrintTemplateEditor implements OnInit {
       return;
     }
 
-    this.saving.set(true);
-    this.error.set(null);
+    await this.saving.run(
+      true,
+      async () => {
+        let saved = template;
+        if (draft.name.trim() !== template.name) {
+          saved = await this.templates.rename(template.id, draft.name.trim());
+        }
+        if (
+          draft.paperSize !== template.paperSize ||
+          draft.defaultStartWeekday !== template.defaultStartWeekday ||
+          draft.showWeekNumber !== template.showWeekNumber
+        ) {
+          saved = await this.templates.updateLayout(template.id, {
+            paperSize: draft.paperSize,
+            defaultStartWeekday: draft.defaultStartWeekday,
+            showWeekNumber: draft.showWeekNumber,
+          });
+        }
+        if (JSON.stringify(draft.rows) !== JSON.stringify(template.rows)) {
+          saved = await this.templates.replaceRows(template.id, draft.rows);
+        }
+        if (JSON.stringify(draft.guardianColors) !== JSON.stringify(template.guardianColors)) {
+          saved = await this.templates.replaceColors(template.id, draft.guardianColors);
+        }
 
-    try {
-      let saved = template;
-      if (draft.name.trim() !== template.name) {
-        saved = await this.templates.rename(template.id, draft.name.trim());
-      }
-      if (
-        draft.paperSize !== template.paperSize ||
-        draft.defaultStartWeekday !== template.defaultStartWeekday ||
-        draft.showWeekNumber !== template.showWeekNumber
-      ) {
-        saved = await this.templates.updateLayout(template.id, {
-          paperSize: draft.paperSize,
-          defaultStartWeekday: draft.defaultStartWeekday,
-          showWeekNumber: draft.showWeekNumber,
-        });
-      }
-      if (JSON.stringify(draft.rows) !== JSON.stringify(template.rows)) {
-        saved = await this.templates.replaceRows(template.id, draft.rows);
-      }
-      if (JSON.stringify(draft.guardianColors) !== JSON.stringify(template.guardianColors)) {
-        saved = await this.templates.replaceColors(template.id, draft.guardianColors);
-      }
-
-      this.reset(saved);
-      this.savedDraft.set(JSON.stringify(this.draftTemplate()));
-      this.status.set('print.editor.saved');
-    } catch {
-      this.error.set('print.editor.saveError');
-    } finally {
-      this.saving.set(false);
-    }
+        // Resets the draft to the server's response.
+        this.editor.update((current) => current && { ...current, template: saved });
+        this.savedDraft.set(JSON.stringify(this.draftTemplate()));
+        this.justSaved.set(true);
+      },
+      'print.editor.saveError',
+    );
   }
 
   protected async remove(): Promise<void> {
-    this.saving.set(true);
-    this.error.set(null);
-
-    try {
-      await this.templates.delete(this.templateId);
-      await this.router.navigate(['/guardian/print']);
-    } catch {
-      this.error.set('print.editor.deleteError');
-      this.saving.set(false);
-    }
+    await this.saving.run(
+      true,
+      async () => {
+        await this.templates.delete(this.templateId);
+        await this.router.navigate(['/guardian/print']);
+      },
+      'print.editor.deleteError',
+    );
   }
 
   private draft(row: PrintTemplateRow): DraftRow {
     return { key: this.nextKey++, row };
-  }
-
-  private reset(template: PrintTemplate): void {
-    this.template.set(template);
-    this.name.set(template.name);
-    this.paperSize.set(template.paperSize);
-    this.startWeekday.set(template.defaultStartWeekday);
-    this.showWeekNumber.set(template.showWeekNumber);
-    this.rows.set(template.rows.map((row) => this.draft(row)));
-    this.colors.set(
-      Object.fromEntries(template.guardianColors.map((c) => [c.guardianId, c.color])),
-    );
   }
 
   private schedulePreview(): void {
@@ -536,44 +546,40 @@ export class PrintTemplateEditor implements OnInit {
     }
   }
 
-  private async load(): Promise<void> {
-    try {
-      const [template, children, calendars, groups, me] = await Promise.all([
-        this.templates.get(this.templateId),
-        this.guardiansService.listMyChildren(),
-        this.calendarsService.listMyCalendars(),
-        this.groupsService.listMyGroups(),
-        this.users.ensureCurrentUser(),
-      ]);
-      this.children.set(children);
-      this.calendars.set(calendars);
-      this.groups.set(groups);
+  private async load(): Promise<LoadedEditor> {
+    const [template, children, calendars, groups, me] = await Promise.all([
+      this.templates.get(this.templateId),
+      this.guardiansService.listMyChildren(),
+      this.calendarsService.listMyCalendars(),
+      this.groupsService.listMyGroups(),
+      this.users.ensureCurrentUser(),
+    ]);
 
-      // The guardian themself plus every guardian of their children -- the people a work-location
-      // row or a name color can refer to. Themself first, and even without children linked.
-      const lists = await mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, (child) =>
-        this.guardiansService.listChildGuardians(child.id).catch(() => [] as GuardianSummary[]),
-      );
-      const self: GuardianSummary = { id: me.id, name: me.name, guardianLinkId: '', kind: 0 };
-      const guardians = [...new Map([self, ...lists.flat()].map((g) => [g.id, g])).values()];
-      this.guardians.set(guardians);
+    // The guardian themself plus every guardian of their children -- the people a work-location
+    // row or a name color can refer to. Themself first, and even without children linked.
+    const lists = await mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, (child) =>
+      this.guardiansService.listChildGuardians(child.id).catch(() => [] as GuardianSummary[]),
+    );
+    const self: GuardianSummary = { id: me.id, name: me.name, guardianLinkId: '', kind: 0 };
+    const guardians = [...new Map([self, ...lists.flat()].map((g) => [g.id, g])).values()];
 
-      const schedules = await mapWithConcurrency(
-        guardians,
-        PER_ITEM_REQUEST_CONCURRENCY,
-        (guardian) =>
-          this.workLocationsService
-            .getSchedule(guardian.id)
-            .then((s) => [guardian.id, s.locations] as const)
-            .catch(() => [guardian.id, [] as WorkLocation[]] as const),
-      );
-      this.workLocations.set(new Map(schedules));
+    const schedules = await mapWithConcurrency(
+      guardians,
+      PER_ITEM_REQUEST_CONCURRENCY,
+      (guardian) =>
+        this.workLocationsService
+          .getSchedule(guardian.id)
+          .then((s) => [guardian.id, s.locations] as const)
+          .catch(() => [guardian.id, [] as WorkLocation[]] as const),
+    );
 
-      this.reset(template);
-    } catch {
-      this.error.set('print.editor.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    return {
+      template,
+      children,
+      calendars,
+      groups,
+      guardians,
+      workLocations: new Map(schedules),
+    };
   }
 }

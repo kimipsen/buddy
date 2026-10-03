@@ -282,6 +282,100 @@ describe('ManageTasks', () => {
 
       expect(listTaskTemplates).toHaveBeenLastCalledWith('child-b');
     });
+
+    it('replaces the first child’s templates with the newly selected child’s and creates for that child', async () => {
+      const byChild: Record<string, TaskTemplate[]> = {
+        'child-a': [template({ id: 'template-a', name: 'Morning for A' })],
+        'child-b': [template({ id: 'template-b', name: 'Evening for B' })],
+      };
+      const { fixture, taskLibrary, templatesState } = await setup({
+        guardians: {
+          listMyChildren: vi.fn(async () => [child({ id: 'child-a' }), child({ id: 'child-b' })]),
+        },
+      });
+      taskLibrary.listTaskTemplates = vi.fn(async (childId: string) => {
+        templatesState.set(byChild[childId] ?? []);
+        return templatesState();
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Morning for A');
+
+      const select = selectsOutsideForm(compiled)[0];
+      select.value = 'child-b';
+      select.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Evening for B');
+      expect(compiled.textContent).not.toContain('Morning for A');
+
+      setInputValue(templateNameInput(compiled), 'Bedtime routine');
+      fixture.detectChanges();
+      compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(taskLibrary.createTaskTemplate).toHaveBeenCalledWith(
+        'child-b',
+        expect.objectContaining({ name: 'Bedtime routine' }),
+      );
+    });
+  });
+
+  describe('creating while switching child', () => {
+    it('does not expand or keep the previous child’s new template when its create resolves after a switch', async () => {
+      const byChild: Record<string, TaskTemplate[]> = {
+        'child-a': [],
+        'child-b': [template({ id: 'template-b', name: 'Evening for B' })],
+      };
+      let resolveCreate!: () => void;
+      const { fixture, taskLibrary, templatesState } = await setup({
+        guardians: {
+          listMyChildren: vi.fn(async () => [child({ id: 'child-a' }), child({ id: 'child-b' })]),
+        },
+      });
+      taskLibrary.listTaskTemplates = vi.fn(async (childId: string) => {
+        templatesState.set(byChild[childId] ?? []);
+        return templatesState();
+      });
+      // Like the real service: the created template is appended to whatever list is loaded then.
+      taskLibrary.createTaskTemplate = vi.fn(
+        (childId: string, request: TaskTemplateDetails) =>
+          new Promise<TaskTemplate>((resolve) => {
+            resolveCreate = () => {
+              const created = template({ id: 'template-created', ...request });
+              byChild[childId] = [...(byChild[childId] ?? []), created];
+              templatesState.update((current) => [...current, created]);
+              resolve(created);
+            };
+          }),
+      );
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      setInputValue(templateNameInput(compiled), 'Bedtime for A');
+      fixture.detectChanges();
+      compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      const select = selectsOutsideForm(compiled)[0];
+      select.value = 'child-b';
+      select.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      resolveCreate();
+      await settle(fixture);
+
+      expect(taskLibrary.createTaskTemplate).toHaveBeenCalledWith(
+        'child-a',
+        expect.objectContaining({ name: 'Bedtime for A' }),
+      );
+      expect(taskLibrary.listTaskTemplates).toHaveBeenLastCalledWith('child-b');
+      expect(compiled.textContent).toContain('Evening for B');
+      expect(compiled.textContent).not.toContain('Bedtime for A');
+      // Nothing expanded: no subtasks panel.
+      expect(compiled.textContent).not.toContain('Subtasks');
+    });
   });
 
   describe('template rendering', () => {

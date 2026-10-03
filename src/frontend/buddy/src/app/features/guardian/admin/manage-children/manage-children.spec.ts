@@ -83,12 +83,14 @@ describe('ManageChildren', () => {
   // The app runs zoneless, and the stubbed GuardiansService never registers a PendingTasks entry,
   // so fixture.whenStable() resolves immediately without waiting for it. A macrotask flush lets
   // every already-scheduled microtask in the mocked promise chains drain first -- see
-  // docs/testing.md and home.spec.ts. This reliably settles chains of two sequential awaited
-  // service calls (e.g. addChild's createChild -> loadChildren) since nothing in those chains
-  // schedules a further macrotask itself.
+  // docs/testing.md and home.spec.ts. A mutation that reloads a resource (e.g. addChild's
+  // createChild -> children.reload()) only starts the reload on the next change detection, so
+  // flush a second round to let the reloaded value render.
   async function settle(fixture: { detectChanges: () => void }) {
-    fixture.detectChanges();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    for (let round = 0; round < 2; round++) {
+      fixture.detectChanges();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
     fixture.detectChanges();
   }
 

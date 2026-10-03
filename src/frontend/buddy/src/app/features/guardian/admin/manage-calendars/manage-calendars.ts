@@ -1,16 +1,16 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
   CalendarRole,
   CalendarSummary,
   CalendarsService,
-  IcalTokenSummary,
 } from '../../../../core/calendars.service';
 import { browserTimeZoneId, listTimeZoneIds } from '../../../../core/date-utils';
 import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { createAction } from '../../../../shared/action-state/action-state';
 
 const ROLE_LABELS: Record<CalendarRole, string> = {
   0: 'admin.manageCalendars.roles.owner',
@@ -36,64 +36,53 @@ function resolveDefaultTimeZoneId(candidates: readonly string[]): string {
   imports: [FormsModule, DatePipe, TranslatePipe],
   templateUrl: './manage-calendars.html',
 })
-export class ManageCalendars implements OnInit {
+export class ManageCalendars {
   private readonly calendars = inject(CalendarsService);
   private readonly groupsService = inject(GroupsService);
 
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly timeZoneIds = listTimeZoneIds();
 
-  protected readonly items = signal<CalendarSummary[]>([]);
-  // Stryker disable next-line BooleanLiteral: loadCalendars() sets loading to true synchronously from ngOnInit before the first render
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly items = resource({ loader: () => this.calendars.listMyCalendars() });
+
+  // A calendar is always group-owned -- the create form stays hidden behind the needs-group hint
+  // until a manageable group has loaded.
+  private readonly groups = resource({ loader: () => this.loadManageableGroups() });
+  protected readonly manageableGroups = computed<GroupSummary[]>(() => this.groups.value() ?? []);
 
   protected readonly newCalendarName = signal('');
   protected readonly newCalendarIcon = signal(DEFAULT_ICON);
   protected readonly newCalendarTimeZoneId = signal(resolveDefaultTimeZoneId(this.timeZoneIds));
-  protected readonly creating = signal(false);
-  protected readonly createError = signal<string | null>(null);
-
-  // A calendar is always group-owned -- this stays empty (and the create form disabled) until
-  // a manageable group is loaded and selected below.
-  // Stryker disable next-line StringLiteral: the create form only renders once loadManageableGroups has found a manageable group, and it sets this to that group's id in the same step
-  protected readonly newCalendarGroupId = signal('');
-  protected readonly manageableGroups = signal<GroupSummary[]>([]);
+  // Defaults to the first manageable group once they load.
+  protected readonly newCalendarGroupId = linkedSignal(() => this.manageableGroups()[0]?.id ?? '');
+  protected readonly creating = createAction();
 
   protected readonly movingCalendarId = signal<string | null>(null);
   // Stryker disable next-line StringLiteral: startMove() resets it to '' before the move form can render
   protected readonly moveTargetGroupId = signal('');
-  protected readonly moving = signal(false);
-  protected readonly moveError = signal<string | null>(null);
+  protected readonly moving = createAction<string>();
 
   protected readonly editingIconCalendarId = signal<string | null>(null);
   // Stryker disable next-line StringLiteral: startEditIcon() sets it to the calendar's icon before the edit form can render
   protected readonly editIconValue = signal('');
-  protected readonly updatingIcon = signal(false);
-  protected readonly editIconError = signal<string | null>(null);
+  protected readonly updatingIcon = createAction<string>();
 
   protected readonly confirmingDeleteCalendarId = signal<string | null>(null);
-  protected readonly deletingCalendarId = signal<string | null>(null);
-  protected readonly deleteError = signal<string | null>(null);
+  protected readonly deleting = createAction<string>();
 
   protected readonly icalCalendarId = signal<string | null>(null);
-  protected readonly icalTokens = signal<IcalTokenSummary[]>([]);
-  // Stryker disable next-line BooleanLiteral: only read inside the iCal panel, and toggleIcal() runs loadIcalTokens() (which sets it) whenever the panel opens
-  protected readonly icalLoading = signal(false);
-  protected readonly icalError = signal<string | null>(null);
-  protected readonly icalCreating = signal(false);
-  protected readonly icalCreateError = signal<string | null>(null);
-  protected readonly icalRevokingTokenId = signal<string | null>(null);
+  // Loads the open panel's tokens; idle while no panel is open.
+  protected readonly icalTokens = resource({
+    params: () => this.icalCalendarId() ?? undefined,
+    loader: ({ params }) => this.calendars.listIcalTokens(params),
+  });
+  protected readonly icalCreating = createAction();
+  protected readonly icalRevoking = createAction<string>();
   // The plaintext URL is only ever available right after creation -- once this panel closes or a
   // new token is issued, it's gone from the client just like it's gone from the server.
   protected readonly newIcalUrl = signal<string | null>(null);
   // Stryker disable next-line BooleanLiteral: only read next to newIcalUrl, and createIcalToken() resets it to false before a URL can appear
   protected readonly icalCopied = signal(false);
-
-  ngOnInit(): void {
-    void this.loadCalendars();
-    void this.loadManageableGroups();
-  }
 
   protected async createCalendar(): Promise<void> {
     const name = this.newCalendarName().trim();
@@ -106,19 +95,16 @@ export class ManageCalendars implements OnInit {
       return;
     }
 
-    this.creating.set(true);
-    this.createError.set(null);
-
-    try {
-      await this.calendars.createCalendar({ name, timeZoneId, groupId, icon });
-      this.newCalendarName.set('');
-      this.newCalendarIcon.set(DEFAULT_ICON);
-      await this.loadCalendars();
-    } catch {
-      this.createError.set('admin.manageCalendars.createError');
-    } finally {
-      this.creating.set(false);
-    }
+    await this.creating.run(
+      true,
+      async () => {
+        await this.calendars.createCalendar({ name, timeZoneId, groupId, icon });
+        this.newCalendarName.set('');
+        this.newCalendarIcon.set(DEFAULT_ICON);
+        this.items.reload();
+      },
+      'admin.manageCalendars.createError',
+    );
   }
 
   protected startMove(calendarId: string): void {
@@ -133,7 +119,7 @@ export class ManageCalendars implements OnInit {
 
     this.movingCalendarId.set(calendarId);
     this.moveTargetGroupId.set('');
-    this.moveError.set(null);
+    this.moving.clearError();
   }
 
   protected startEditIcon(calendar: CalendarSummary): void {
@@ -148,7 +134,7 @@ export class ManageCalendars implements OnInit {
 
     this.editingIconCalendarId.set(calendar.id);
     this.editIconValue.set(calendar.icon);
-    this.editIconError.set(null);
+    this.updatingIcon.clearError();
   }
 
   protected async confirmEditIcon(calendarId: string): Promise<void> {
@@ -158,18 +144,15 @@ export class ManageCalendars implements OnInit {
       return;
     }
 
-    this.updatingIcon.set(true);
-    this.editIconError.set(null);
-
-    try {
-      await this.calendars.updateCalendarIcon(calendarId, icon);
-      this.editingIconCalendarId.set(null);
-      await this.loadCalendars();
-    } catch {
-      this.editIconError.set('admin.manageCalendars.editIcon.error');
-    } finally {
-      this.updatingIcon.set(false);
-    }
+    await this.updatingIcon.run(
+      calendarId,
+      async () => {
+        await this.calendars.updateCalendarIcon(calendarId, icon);
+        this.editingIconCalendarId.set(null);
+        this.items.reload();
+      },
+      'admin.manageCalendars.editIcon.error',
+    );
   }
 
   protected async confirmMove(calendarId: string): Promise<void> {
@@ -179,25 +162,22 @@ export class ManageCalendars implements OnInit {
       return;
     }
 
-    this.moving.set(true);
-    this.moveError.set(null);
-
-    try {
-      await this.calendars.transferToGroup(calendarId, groupId);
-      this.movingCalendarId.set(null);
-      await this.loadCalendars();
-    } catch {
-      this.moveError.set('admin.manageCalendars.move.error');
-    } finally {
-      this.moving.set(false);
-    }
+    await this.moving.run(
+      calendarId,
+      async () => {
+        await this.calendars.transferToGroup(calendarId, groupId);
+        this.movingCalendarId.set(null);
+        this.items.reload();
+      },
+      'admin.manageCalendars.move.error',
+    );
   }
 
   protected requestDelete(calendarId: string): void {
     this.movingCalendarId.set(null);
     this.icalCalendarId.set(null);
     this.editingIconCalendarId.set(null);
-    this.deleteError.set(null);
+    this.deleting.clearError();
     this.confirmingDeleteCalendarId.set(calendarId);
   }
 
@@ -206,18 +186,15 @@ export class ManageCalendars implements OnInit {
   }
 
   protected async confirmDelete(calendarId: string): Promise<void> {
-    this.deletingCalendarId.set(calendarId);
-    this.deleteError.set(null);
-
-    try {
-      await this.calendars.deleteCalendar(calendarId);
-      this.confirmingDeleteCalendarId.set(null);
-      await this.loadCalendars();
-    } catch {
-      this.deleteError.set('admin.manageCalendars.delete.error');
-    } finally {
-      this.deletingCalendarId.set(null);
-    }
+    await this.deleting.run(
+      calendarId,
+      async () => {
+        await this.calendars.deleteCalendar(calendarId);
+        this.confirmingDeleteCalendarId.set(null);
+        this.items.reload();
+      },
+      'admin.manageCalendars.delete.error',
+    );
   }
 
   protected toggleIcal(calendarId: string): void {
@@ -232,39 +209,36 @@ export class ManageCalendars implements OnInit {
 
     this.icalCalendarId.set(calendarId);
     this.newIcalUrl.set(null);
-    this.icalCreateError.set(null);
-    void this.loadIcalTokens(calendarId);
+    this.icalCreating.clearError();
+    this.icalRevoking.clearError();
   }
 
   protected async createIcalToken(calendarId: string): Promise<void> {
-    this.icalCreating.set(true);
-    this.icalCreateError.set(null);
     this.newIcalUrl.set(null);
     this.icalCopied.set(false);
 
-    try {
-      const issued = await this.calendars.createIcalToken(calendarId);
-      this.newIcalUrl.set(this.calendars.icalFeedUrl(issued.subscriptionPath));
-      await this.loadIcalTokens(calendarId);
-    } catch {
-      this.icalCreateError.set('admin.manageCalendars.ical.createError');
-    } finally {
-      this.icalCreating.set(false);
-    }
+    await this.icalCreating.run(
+      true,
+      async () => {
+        const issued = await this.calendars.createIcalToken(calendarId);
+        this.newIcalUrl.set(this.calendars.icalFeedUrl(issued.subscriptionPath));
+        // The reload replaces whatever the last revoke reported.
+        this.icalRevoking.clearError();
+        this.icalTokens.reload();
+      },
+      'admin.manageCalendars.ical.createError',
+    );
   }
 
   protected async revokeIcalToken(calendarId: string, tokenId: string): Promise<void> {
-    this.icalRevokingTokenId.set(tokenId);
-    this.icalError.set(null);
-
-    try {
-      await this.calendars.revokeIcalToken(calendarId, tokenId);
-      await this.loadIcalTokens(calendarId);
-    } catch {
-      this.icalError.set('admin.manageCalendars.ical.revokeError');
-    } finally {
-      this.icalRevokingTokenId.set(null);
-    }
+    await this.icalRevoking.run(
+      tokenId,
+      async () => {
+        await this.calendars.revokeIcalToken(calendarId, tokenId);
+        this.icalTokens.reload();
+      },
+      'admin.manageCalendars.ical.revokeError',
+    );
   }
 
   protected async copyIcalUrl(url: string): Promise<void> {
@@ -276,46 +250,15 @@ export class ManageCalendars implements OnInit {
     }
   }
 
-  private async loadIcalTokens(calendarId: string): Promise<void> {
-    this.icalLoading.set(true);
-    this.icalError.set(null);
-
-    try {
-      this.icalTokens.set(await this.calendars.listIcalTokens(calendarId));
-    } catch {
-      this.icalError.set('admin.manageCalendars.ical.loadError');
-    } finally {
-      this.icalLoading.set(false);
-    }
-  }
-
-  private async loadManageableGroups(): Promise<void> {
+  private async loadManageableGroups(): Promise<GroupSummary[]> {
     try {
       const groups = await this.groupsService.listMyGroups();
       // Group-owned calendar creation is gated on GroupAuthorization.CheckManage server-side,
       // which only Owners (0) and Admins (1) satisfy.
-      const manageable = groups.filter((group) => group.role === 0 || group.role === 1);
-      this.manageableGroups.set(manageable);
-
-      const [firstManageable] = manageable;
-      if (firstManageable) {
-        this.newCalendarGroupId.set(firstManageable.id);
-      }
+      return groups.filter((group) => group.role === 0 || group.role === 1);
     } catch {
-      // manageableGroups stays empty, so the create form degrades to the needs-group hint.
-    }
-  }
-
-  private async loadCalendars(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      this.items.set(await this.calendars.listMyCalendars());
-    } catch {
-      this.error.set('admin.manageCalendars.loadError');
-    } finally {
-      this.loading.set(false);
+      // No manageable groups, so the create form degrades to the needs-group hint.
+      return [];
     }
   }
 }

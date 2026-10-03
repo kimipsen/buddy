@@ -39,6 +39,32 @@ export class RuntimeConfigService {
       throw new Error(`Unable to load runtime config: ${response.status} ${response.statusText}`);
     }
 
-    this.config = (await response.json()) as RuntimeConfig;
+    const config: unknown = await response.json();
+
+    if (!isRuntimeConfig(config)) {
+      throw new Error(
+        'Runtime config is missing keycloak.authority/realm/clientId/redirectPath or apiBaseUrl.',
+      );
+    }
+
+    this.config = config;
   }
+}
+
+export function isRuntimeConfig(value: unknown): value is RuntimeConfig {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const { keycloak, apiBaseUrl } = value as Record<string, unknown>;
+
+  if (typeof apiBaseUrl !== 'string' || typeof keycloak !== 'object' || keycloak === null) {
+    return false;
+  }
+
+  const fields = keycloak as Record<string, unknown>;
+
+  return ['authority', 'clientId', 'realm', 'redirectPath'].every(
+    (field) => typeof fields[field] === 'string',
+  );
 }

@@ -5,10 +5,12 @@ import {
   ElementRef,
   HostListener,
   Injector,
-  OnInit,
   afterNextRender,
   computed,
+  effect,
   inject,
+  linkedSignal,
+  resource,
   signal,
   viewChild,
 } from '@angular/core';
@@ -32,13 +34,14 @@ const PREVIEW_GUTTER_PX = 32;
 
 // The printable route, deliberately outside GuardianShell so no navigation ends up on paper.
 // It owns the one global <style> carrying @page -- @page can't be scoped to a component (it has no
-// selector for emulated encapsulation to rewrite) -- adding it on init and removing it on destroy.
+// selector for emulated encapsulation to rewrite) -- adding it once the template arrives and
+// removing it on destroy.
 @Component({
   selector: 'app-week-plan-print-page',
   imports: [RouterLink, TranslatePipe, DateSelect, LoadingSpinner, WeekPlanSheet],
   templateUrl: './week-plan-print-page.html',
 })
-export class WeekPlanPrintPage implements OnInit {
+export class WeekPlanPrintPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
@@ -52,15 +55,63 @@ export class WeekPlanPrintPage implements OnInit {
   private readonly printButton = viewChild<ElementRef<HTMLButtonElement>>('printButton');
 
   protected readonly templateId = this.route.snapshot.paramMap.get('templateId') ?? '';
-  protected readonly template = signal<PrintTemplate | null>(null);
-  protected readonly start = signal('');
-  protected readonly model = signal<WeekPlanModel | null>(null);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly template = resource({
+    loader: async ({ abortSignal }) => {
+      const [template] = await Promise.all([
+        this.templates.get(this.templateId),
+        this.users.ensureCurrentUser(),
+      ]);
+      // Left before the template arrived (destroying the page aborts the load): adding the style
+      // now would outlive the page and set the paper size for every later print in this tab.
+      if (!abortSignal.aborted) {
+        this.applyPageStyle(template);
+      }
+      return template;
+    },
+  });
+
+  // A missing or malformed start falls back to the next default start weekday.
+  protected readonly start = linkedSignal(() => {
+    if (!this.template.hasValue()) {
+      return '';
+    }
+    const requested = this.route.snapshot.queryParamMap.get('start') ?? '';
+    return ISO_DATE.test(requested)
+      ? requested
+      : nextWeekdayOnOrAfter(todayIsoDate(), this.template.value().defaultStartWeekday);
+  });
+
+  // Reassembles whenever the date changes; a newer date picked while one loads wins.
+  protected readonly sheet = resource({
+    params: () =>
+      this.template.hasValue() && this.start()
+        ? { template: this.template.value(), start: this.start() }
+        : undefined,
+    loader: async ({ params: { template, start } }) => {
+      const sources = await this.loader.load(template, start);
+      return assembleWeekPlan(template, sources, {
+        start,
+        locale: this.translation.language(),
+        timeZone: this.users.timeZoneId(),
+        labels: {
+          week: this.translation.translate('print.sheet.week'),
+          selfEscort: this.translation.translate('print.sheet.selfEscort'),
+          playdate: this.translation.translate('print.sheet.playdate'),
+        },
+      });
+    },
+  });
+
+  // The sheet on screen: the previous date's stays up while a new date loads.
+  protected readonly model = linkedSignal<WeekPlanModel | undefined, WeekPlanModel | undefined>({
+    source: () => (this.sheet.hasValue() ? this.sheet.value() : undefined),
+    computation: (model, previous) => model ?? previous?.value,
+  });
+
+  protected readonly loadFailed = computed(() => !!this.template.error() || !!this.sheet.error());
 
   private readonly viewportWidth = signal(this.document.defaultView?.innerWidth ?? 1280);
   private pageStyle: HTMLStyleElement | null = null;
-  private destroyed = false;
   private focusedOnce = false;
 
   // On screen the sheet keeps its millimetre size and is scaled down to fit, so the preview is a
@@ -81,12 +132,19 @@ export class WeekPlanPrintPage implements OnInit {
     this.viewportWidth.set(this.document.defaultView?.innerWidth ?? this.viewportWidth());
   }
 
-  ngOnInit(): void {
-    this.destroyRef.onDestroy(() => {
-      this.destroyed = true;
-      this.pageStyle?.remove();
+  constructor() {
+    this.destroyRef.onDestroy(() => this.pageStyle?.remove());
+
+    // Print is the default action on the preview: focus it once, when the sheet first appears --
+    // not again on every date change, which would pull focus out of the date input mid-typing.
+    effect(() => {
+      if (this.model() && !this.focusedOnce) {
+        this.focusedOnce = true;
+        afterNextRender(() => this.printButton()?.nativeElement.focus(), {
+          injector: this.injector,
+        });
+      }
     });
-    void this.load();
   }
 
   protected print(): void {
@@ -99,76 +157,9 @@ export class WeekPlanPrintPage implements OnInit {
     }
     void this.router.navigate([], { queryParams: { start: date }, replaceUrl: true });
     this.start.set(date);
-    void this.render();
-  }
-
-  private async load(): Promise<void> {
-    try {
-      const [template] = await Promise.all([
-        this.templates.get(this.templateId),
-        this.users.ensureCurrentUser(),
-      ]);
-      this.template.set(template);
-      this.applyPageStyle(template);
-
-      // A missing or malformed start falls back to the next default start weekday.
-      const requested = this.route.snapshot.queryParamMap.get('start') ?? '';
-      this.start.set(
-        ISO_DATE.test(requested)
-          ? requested
-          : nextWeekdayOnOrAfter(todayIsoDate(), template.defaultStartWeekday),
-      );
-
-      await this.render();
-    } catch {
-      this.error.set('print.sheet.loadError');
-      this.loading.set(false);
-    }
-  }
-
-  private async render(): Promise<void> {
-    const template = this.template();
-    if (!template) {
-      return;
-    }
-
-    this.loading.set(true);
-    const start = this.start();
-    const sources = await this.loader.load(template, start);
-
-    // A newer date may have been picked while this one loaded.
-    if (start !== this.start()) {
-      return;
-    }
-
-    this.model.set(
-      assembleWeekPlan(template, sources, {
-        start,
-        locale: this.translation.language(),
-        timeZone: this.users.timeZoneId(),
-        labels: {
-          week: this.translation.translate('print.sheet.week'),
-          selfEscort: this.translation.translate('print.sheet.selfEscort'),
-          playdate: this.translation.translate('print.sheet.playdate'),
-        },
-      }),
-    );
-    this.loading.set(false);
-
-    // Print is the default action on the preview: focus it once, when the sheet first appears --
-    // not again on every date change, which would pull focus out of the date input mid-typing.
-    if (!this.focusedOnce) {
-      this.focusedOnce = true;
-      afterNextRender(() => this.printButton()?.nativeElement.focus(), { injector: this.injector });
-    }
   }
 
   private applyPageStyle(template: PrintTemplate): void {
-    // Left before the template arrived: adding the style now would outlive the page and set the
-    // paper size for every later print in this tab.
-    if (this.destroyed) {
-      return;
-    }
     const size = template.paperSize === 1 ? 'A3' : 'A4';
     this.pageStyle ??= this.document.head.appendChild(this.document.createElement('style'));
     this.pageStyle.setAttribute('data-week-plan-print', '');

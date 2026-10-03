@@ -4,7 +4,7 @@
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <h3 class="text-lg font-semibold tracking-normal">{{ 'pickup.assign.title' | translate }}</h3>
 
-    @if (children().length > 1) {
+    @if (childList().length > 1) {
       <label class="sr-only" for="selectedChildId">{{
         'common.selectChildLabel' | translate
       }}</label>
@@ -12,26 +12,32 @@
         id="selectedChildId"
         class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
         [ngModel]="selectedChildId()"
-        (ngModelChange)="onChildChange($event)"
+        (ngModelChange)="selectedChildId.set($event)"
       >
-        @for (child of children(); track child.id) {
+        @for (child of childList(); track child.id) {
           <option [value]="child.id">{{ child.name.givenName }}</option>
         }
       </select>
     }
   </div>
 
-  @if (loading()) {
+  @if (children.isLoading() || schedule.isLoading()) {
     <p class="text-sm text-slate-500 dark:text-slate-400">
       {{ 'pickup.assign.loading' | translate }}
     </p>
-  } @else if (!hasChildren()) {
+  } @else if (children.hasValue() && childList().length === 0) {
     <p class="text-sm text-slate-500 dark:text-slate-400">
       {{ 'pickup.assign.noChildren' | translate }}
     </p>
   } @else {
-    @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    @if (childSaveState(); as state) {
+      @if (state.status === 'error') {
+        <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      } @else if (state.status === 'idle' && (children.error() || schedule.error())) {
+        <p class="mb-3 text-sm text-red-600 dark:text-red-400">
+          {{ 'pickup.assign.loadError' | translate }}
+        </p>
+      }
     }
 
     <div class="overflow-x-auto">
@@ -61,10 +67,10 @@
               @for (slot of slots; track slot) {
                 <td class="align-top">
                   <app-pickup-cell
-                    [guardians]="childGuardians()"
+                    [guardians]="loaded().childGuardians"
                     [siblings]="siblings()"
                     [occurrence]="occurrenceFor(day.date, slot)"
-                    [saving]="savingKey() === key(day.date, slot)"
+                    [saving]="saving.isBusy(saveId(day.date, slot))"
                     (assign)="onAssign(day.date, slot, $event)"
                     (clear)="onClear(day.date, slot)"
                   />

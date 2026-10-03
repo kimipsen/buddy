@@ -284,6 +284,21 @@ describe('MyProfile', () => {
       expect(findSaveButton(compiled, 'name')?.disabled).toBe(false);
     });
 
+    it('keeps an unsaved email edit when the name is saved', async () => {
+      const { fixture, compiled, users } = await setup();
+      users.updateName.mockResolvedValue(
+        withChanges({ name: { givenName: 'Alicia', familyName: 'Anderson' } }),
+      );
+
+      await type(fixture, input(compiled, 'email'), 'alicia@buddy.test');
+      await type(fixture, input(compiled, 'givenName'), 'Alicia');
+      await submit(fixture, findSaveButton(compiled, 'name'));
+
+      expect(compiled.textContent).toContain('Name updated.');
+      expect(input(compiled, 'email').value).toBe('alicia@buddy.test');
+      expect(findSaveButton(compiled, 'email')?.disabled).toBe(false);
+    });
+
     it('does not save when the given name is blank', async () => {
       const { fixture, compiled, users } = await setup();
 

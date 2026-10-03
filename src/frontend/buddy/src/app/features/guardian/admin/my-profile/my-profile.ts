@@ -1,9 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  Component,
+  WritableSignal,
+  computed,
+  inject,
+  linkedSignal,
+  resource,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { listTimeZoneIds } from '../../../../core/date-utils';
 import {
+  DEFAULT_LANGUAGE,
   LANGUAGE_NAMES,
   Language,
   SUPPORTED_LANGUAGES,
@@ -11,13 +20,21 @@ import {
 } from '../../../../core/i18n/language';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { CurrentUser, UsersService } from '../../../../core/users.service';
+import { createAction } from '../../../../shared/action-state/action-state';
+
+// The current user with the stored language narrowed to one the app supports (English otherwise).
+type Profile = Omit<CurrentUser, 'language'> & { language: Language };
+
+function toLanguage(language: string): Language {
+  return isSupportedLanguage(language) ? language : DEFAULT_LANGUAGE;
+}
 
 @Component({
   selector: 'app-my-profile',
   imports: [FormsModule, TranslatePipe],
   templateUrl: './my-profile.html',
 })
-export class MyProfile implements OnInit {
+export class MyProfile {
   private readonly users = inject(UsersService);
 
   // The backend's validation failures now come back as a structured envelope
@@ -35,46 +52,28 @@ export class MyProfile implements OnInit {
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly languageNames = LANGUAGE_NAMES;
 
-  protected readonly loading = signal(true);
-  protected readonly loadError = signal<string | null>(null);
-  protected readonly currentEmail = signal<string | null>(null);
-  // Stryker disable next-line BooleanLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
-  protected readonly currentEmailVerified = signal(false);
+  protected readonly profile = resource({ loader: () => this.loadProfile() });
 
-  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
-  protected readonly givenName = signal('');
-  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
-  protected readonly familyName = signal('');
-  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
-  protected readonly currentGivenName = signal('');
-  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
-  protected readonly currentFamilyName = signal('');
-  protected readonly savingName = signal(false);
-  protected readonly nameError = signal<string | null>(null);
+  // The form fields start from the loaded profile and reset when a save changes the stored value
+  // they mirror. Each one follows only its own stored value, so saving one section keeps unsaved
+  // edits in the others. The form only renders once the profile has loaded, so the fallbacks
+  // never show.
+  protected readonly givenName = this.formField((profile) => profile?.name.givenName ?? '');
+  protected readonly familyName = this.formField((profile) => profile?.name.familyName ?? '');
+  protected readonly email = this.formField((profile) => profile?.email.value ?? '');
+  protected readonly timeZoneId = this.formField((profile) => profile?.timeZoneId ?? '');
+  protected readonly language = this.formField<Language>(
+    (profile) => profile?.language ?? DEFAULT_LANGUAGE,
+  );
+
+  protected readonly nameSave = createAction();
   protected readonly nameSaved = signal(false);
-
-  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
-  protected readonly email = signal('');
-  protected readonly savingEmail = signal(false);
-  protected readonly emailError = signal<string | null>(null);
+  protected readonly emailSave = createAction();
   protected readonly emailSaved = signal(false);
-
-  // Stryker disable next-line StringLiteral: overwritten by applyCurrentUser before the form renders (it's hidden while loading or on a load error)
-  protected readonly timeZoneId = signal('UTC');
-  protected readonly currentTimeZoneId = signal<string | null>(null);
-  protected readonly savingTimeZone = signal(false);
-  protected readonly timeZoneError = signal<string | null>(null);
+  protected readonly timeZoneSave = createAction();
   protected readonly timeZoneSaved = signal(false);
-
-  protected readonly language = signal<Language>('en');
-  protected readonly currentLanguage = signal<Language | null>(null);
-  protected readonly savingLanguage = signal(false);
-  protected readonly languageError = signal<string | null>(null);
+  protected readonly languageSave = createAction();
   protected readonly languageSaved = signal(false);
-
-  ngOnInit(): void {
-    void this.loadProfile();
-  }
 
   protected async saveName(): Promise<void> {
     const givenName = this.givenName().trim();
@@ -84,20 +83,16 @@ export class MyProfile implements OnInit {
       return;
     }
 
-    this.savingName.set(true);
-    this.nameError.set(null);
     this.nameSaved.set(false);
-
-    try {
-      const updated = await this.users.updateName(givenName, familyName);
-      this.currentGivenName.set(updated.name.givenName);
-      this.currentFamilyName.set(updated.name.familyName);
-      this.nameSaved.set(true);
-    } catch {
-      this.nameError.set('profile.name.error');
-    } finally {
-      this.savingName.set(false);
-    }
+    await this.nameSave.run(
+      true,
+      async () => {
+        const updated = await this.users.updateName(givenName, familyName);
+        this.patchProfile({ name: updated.name });
+        this.nameSaved.set(true);
+      },
+      'profile.name.error',
+    );
   }
 
   protected async saveEmail(): Promise<void> {
@@ -107,20 +102,16 @@ export class MyProfile implements OnInit {
       return;
     }
 
-    this.savingEmail.set(true);
-    this.emailError.set(null);
     this.emailSaved.set(false);
-
-    try {
-      const updated = await this.users.updateEmail(email);
-      this.currentEmail.set(updated.email.value);
-      this.currentEmailVerified.set(updated.email.isVerified);
-      this.emailSaved.set(true);
-    } catch (error) {
-      this.emailError.set(this.apiErrorMessage(error, 'profile.email.error'));
-    } finally {
-      this.savingEmail.set(false);
-    }
+    await this.emailSave.run(
+      true,
+      async () => {
+        const updated = await this.users.updateEmail(email);
+        this.patchProfile({ email: updated.email });
+        this.emailSaved.set(true);
+      },
+      (error) => this.apiErrorMessage(error, 'profile.email.error'),
+    );
   }
 
   protected async saveTimeZone(): Promise<void> {
@@ -130,19 +121,16 @@ export class MyProfile implements OnInit {
       return;
     }
 
-    this.savingTimeZone.set(true);
-    this.timeZoneError.set(null);
     this.timeZoneSaved.set(false);
-
-    try {
-      const updated = await this.users.updateTimeZone(timeZoneId);
-      this.currentTimeZoneId.set(updated.timeZoneId);
-      this.timeZoneSaved.set(true);
-    } catch (error) {
-      this.timeZoneError.set(this.apiErrorMessage(error, 'profile.timeZone.error'));
-    } finally {
-      this.savingTimeZone.set(false);
-    }
+    await this.timeZoneSave.run(
+      true,
+      async () => {
+        const updated = await this.users.updateTimeZone(timeZoneId);
+        this.patchProfile({ timeZoneId: updated.timeZoneId });
+        this.timeZoneSaved.set(true);
+      },
+      (error) => this.apiErrorMessage(error, 'profile.timeZone.error'),
+    );
   }
 
   protected async saveLanguage(): Promise<void> {
@@ -152,44 +140,31 @@ export class MyProfile implements OnInit {
       return;
     }
 
-    this.savingLanguage.set(true);
-    this.languageError.set(null);
     this.languageSaved.set(false);
-
-    try {
-      const updated = await this.users.updateLanguage(language);
-      this.currentLanguage.set(isSupportedLanguage(updated.language) ? updated.language : 'en');
-      this.languageSaved.set(true);
-    } catch (error) {
-      this.languageError.set(this.apiErrorMessage(error, 'profile.language.error'));
-    } finally {
-      this.savingLanguage.set(false);
-    }
+    await this.languageSave.run(
+      true,
+      async () => {
+        const updated = await this.users.updateLanguage(language);
+        this.patchProfile({ language: toLanguage(updated.language) });
+        this.languageSaved.set(true);
+      },
+      (error) => this.apiErrorMessage(error, 'profile.language.error'),
+    );
   }
 
-  private async loadProfile(): Promise<void> {
-    try {
-      this.applyCurrentUser(await this.users.ensureCurrentUser());
-    } catch {
-      this.loadError.set('profile.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+  private async loadProfile(): Promise<Profile> {
+    const user = await this.users.ensureCurrentUser();
+    return { ...user, language: toLanguage(user.language) };
   }
 
-  private applyCurrentUser(user: CurrentUser): void {
-    this.givenName.set(user.name.givenName);
-    this.familyName.set(user.name.familyName);
-    this.currentGivenName.set(user.name.givenName);
-    this.currentFamilyName.set(user.name.familyName);
-    this.email.set(user.email.value);
-    this.currentEmail.set(user.email.value);
-    this.currentEmailVerified.set(user.email.isVerified);
-    this.timeZoneId.set(user.timeZoneId);
-    this.currentTimeZoneId.set(user.timeZoneId);
+  // A computed source only notifies when the field's value actually changes, so replacing the
+  // profile object for another section's save doesn't reset this field.
+  private formField<T>(read: (profile: Profile | undefined) => T): WritableSignal<T> {
+    const stored = computed(() => read(this.profile.value()));
+    return linkedSignal({ source: stored, computation: (value) => value });
+  }
 
-    const language = isSupportedLanguage(user.language) ? user.language : 'en';
-    this.language.set(language);
-    this.currentLanguage.set(language);
+  private patchProfile(changes: Partial<Profile>): void {
+    this.profile.update((current) => current && { ...current, ...changes });
   }
 }

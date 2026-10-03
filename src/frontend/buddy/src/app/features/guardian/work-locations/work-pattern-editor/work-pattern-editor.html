@@ -90,18 +90,22 @@
       <button
         type="button"
         class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-        [disabled]="saving()"
+        [disabled]="saving.busy()"
         (click)="save()"
       >
         {{ 'workLocations.pattern.saveButton' | translate }}
       </button>
-      @if (status(); as message) {
+      @if (saved()) {
         <p class="text-sm text-emerald-700 dark:text-emerald-400" role="status">
-          {{ message | translate }}
+          {{ 'workLocations.pattern.saved' | translate }}
         </p>
       }
-      @if (error(); as message) {
-        <p class="text-sm text-red-600 dark:text-red-400" role="alert">{{ message | translate }}</p>
+      @if (saving.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+            {{ state.message | translate }}
+          </p>
+        }
       }
     </div>
   }

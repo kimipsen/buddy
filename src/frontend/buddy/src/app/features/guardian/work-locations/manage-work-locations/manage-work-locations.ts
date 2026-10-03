@@ -11,6 +11,7 @@ import {
   ColorSwatchPicker,
   DEFAULT_COLOR_SWATCHES,
 } from '../../../../shared/color-swatch-picker/color-swatch-picker';
+import { createAction } from '../../../../shared/action-state/action-state';
 
 const DEFAULT_ICON = '🏢';
 
@@ -40,8 +41,7 @@ export class ManageWorkLocations {
   protected readonly editIcon = signal('');
   protected readonly editColor = signal('');
 
-  protected readonly saving = signal(false);
-  protected readonly error = signal<string | null>(null);
+  protected readonly saving = createAction();
 
   protected async add(): Promise<void> {
     await this.run('workLocations.locations.saveError', async () => {
@@ -60,7 +60,7 @@ export class ManageWorkLocations {
     this.editName.set(location.name);
     this.editIcon.set(location.icon);
     this.editColor.set(location.color);
-    this.error.set(null);
+    this.saving.clearError();
   }
 
   protected cancelEdit(): void {
@@ -85,16 +85,13 @@ export class ManageWorkLocations {
   }
 
   private async run(errorKey: string, action: () => Promise<unknown>): Promise<void> {
-    this.saving.set(true);
-    this.error.set(null);
-
-    try {
-      await action();
-      this.changed.emit();
-    } catch {
-      this.error.set(errorKey);
-    } finally {
-      this.saving.set(false);
-    }
+    await this.saving.run(
+      true,
+      async () => {
+        await action();
+        this.changed.emit();
+      },
+      errorKey,
+    );
   }
 }

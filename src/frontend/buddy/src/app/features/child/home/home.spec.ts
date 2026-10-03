@@ -255,6 +255,23 @@ describe('ChildHome', () => {
     expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
   });
 
+  it('still renders the other sections, with the load error, when only meals fail to load', async () => {
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      medicines: { listDoses: vi.fn(async () => [doseOccurrence({ name: 'Morning' })]) },
+      calendars: {
+        listTodayOccurrences: vi.fn(async () => [occurrence({ itemId: 'task-1', title: 'Clean' })]),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Something went wrong. Try again in a bit.');
+    expect(rowText(sectionRows(compiled, 'Medicine today')[0])).toContain('Morning');
+    expect(compiled.textContent).toContain('Clean');
+    expect(compiled.textContent).not.toContain('Nothing to show yet');
+  });
+
   it('rates a meal and reflects the rating on every slot sharing that meal', async () => {
     const entries = [mealEntry({ slot: 0 }), mealEntry({ slot: 1 })];
     const rateMeal = vi.fn(async () => ({
@@ -660,6 +677,9 @@ describe('ChildHome', () => {
       expect(rowText(compiled.querySelector('app-progress-badge')!)).toContain('1 stars');
 
       findButtonByAriaLabel(compiled, 'Mark done')!.click();
+      await settle(fixture);
+      // The progress resource's reload starts on that settle's change detection, so its result
+      // needs one more flush to render.
       await settle(fixture);
 
       expect(getMyProgress).toHaveBeenCalledTimes(2);

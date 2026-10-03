@@ -132,6 +132,35 @@ describe('GuardianMealplan', () => {
     expect(compiled.querySelector('app-manage-meals')).toBeFalsy();
   });
 
+  it('still renders the family plan next to the error when loading the groups fails', async () => {
+    const { fixture, mealplans } = await setup({
+      groups: { listMyGroups: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Unable to load the meal plan.');
+    expect(compiled.querySelector('app-mealplan-ical')).toBeTruthy();
+    expect(compiled.querySelector('app-manage-meals')).toBeTruthy();
+    expect(compiled.querySelector('app-assign-mealplan')).toBeTruthy();
+    expect(mealplans.listMeals).toHaveBeenCalledWith({ kind: 'family', childId: 'child-1' });
+    expect(compiled.textContent).toContain(
+      'Create a group, or become an admin of one, to share this meal plan.',
+    );
+  });
+
+  it('still renders the family plan next to the error when loading the shared group fails', async () => {
+    const { fixture } = await setup({
+      mealplans: { getSharedGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Unable to load the meal plan.');
+    expect(compiled.querySelector('app-manage-meals')).toBeTruthy();
+    expect(compiled.querySelector('app-assign-mealplan')).toBeTruthy();
+  });
+
   it('hides the scope toggle when the guardian has no qualifying group scopes', async () => {
     const { fixture } = await setup();
     await settle(fixture);

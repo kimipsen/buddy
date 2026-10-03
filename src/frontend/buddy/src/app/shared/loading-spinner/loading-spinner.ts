@@ -5,5 +5,5 @@ import { Component, input } from '@angular/core';
   templateUrl: './loading-spinner.html',
 })
 export class LoadingSpinner {
-  readonly label = input<string | null>(null);
+  readonly label = input('');
 }

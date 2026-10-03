@@ -6,7 +6,7 @@
       {{ 'taskLibrary.manageTasks.title' | translate }}
     </h3>
 
-    @if (children().length > 1) {
+    @if (childList().length > 1) {
       <label class="sr-only" for="selectedChildId">{{
         'common.selectChildLabel' | translate
       }}</label>
@@ -16,7 +16,7 @@
         [ngModel]="selectedChildId()"
         (ngModelChange)="onChildChange($event)"
       >
-        @for (child of children(); track child.id) {
+        @for (child of childList(); track child.id) {
           <option [value]="child.id">{{ child.name.givenName }}</option>
         }
       </select>
@@ -32,8 +32,14 @@
       {{ 'taskLibrary.manageTasks.noChildrenLinked' | translate }}
     </p>
   } @else {
-    @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    @if (loadFailed()) {
+      <p class="mb-3 text-sm text-red-600 dark:text-red-400">
+        {{ 'taskLibrary.manageTasks.loadError' | translate }}
+      </p>
+    } @else if (archiving.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      }
     }
 
     @if (templates().length === 0) {
@@ -88,7 +94,7 @@
                     type="submit"
                     class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                     [disabled]="
-                      savingTemplateId() === template.id ||
+                      savingTemplate.isBusy(template.id) ||
                       !editTemplateName().trim() ||
                       !editTemplateIcon().trim()
                     "
@@ -98,15 +104,19 @@
                   <button
                     type="button"
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
-                    [disabled]="savingTemplateId() === template.id"
+                    [disabled]="savingTemplate.isBusy(template.id)"
                     (click)="cancelEditTemplate()"
                   >
                     {{ 'taskLibrary.manageTasks.form.cancel' | translate }}
                   </button>
                 </div>
 
-                @if (templateError(); as message) {
-                  <p class="text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
+                @if (savingTemplate.state(); as state) {
+                  @if (state.status === 'error') {
+                    <p class="text-xs text-red-600 dark:text-red-400">
+                      {{ state.message | translate }}
+                    </p>
+                  }
                 }
               </form>
             } @else {
@@ -163,7 +173,7 @@
                     <button
                       type="button"
                       class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50"
-                      [disabled]="archivingTemplateId() === template.id"
+                      [disabled]="archiving.isBusy(template.id)"
                       (click)="archiveTemplate(template.id)"
                     >
                       {{ 'taskLibrary.manageTasks.archive' | translate }}
@@ -181,10 +191,12 @@
                   {{ 'taskLibrary.manageTasks.subtasks.title' | translate }}
                 </h4>
 
-                @if (subtaskError(); as message) {
-                  <p class="mb-2 text-sm text-red-600 dark:text-red-400">
-                    {{ message | translate }}
-                  </p>
+                @if (subtasks.state(); as state) {
+                  @if (state.status === 'error') {
+                    <p class="mb-2 text-sm text-red-600 dark:text-red-400">
+                      {{ state.message | translate }}
+                    </p>
+                  }
                 }
 
                 @if (template.subtasks.length === 0) {
@@ -233,7 +245,7 @@
                               type="button"
                               class="rounded-lg bg-slate-950 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                               [disabled]="
-                                savingSubtaskId() === subtask.id || !editSubtaskTitle().trim()
+                                subtasks.isBusy('save:' + subtask.id) || !editSubtaskTitle().trim()
                               "
                               (click)="saveSubtask(template.id, subtask.id)"
                             >
@@ -266,7 +278,9 @@
                                 [attr.aria-label]="
                                   'taskLibrary.manageTasks.subtasks.moveUp' | translate
                                 "
-                                [disabled]="index === 0 || reorderingTemplateId() === template.id"
+                                [disabled]="
+                                  index === 0 || subtasks.isBusy('reorder:' + template.id)
+                                "
                                 (click)="moveSubtask(template, index, -1)"
                               >
                                 ↑
@@ -279,7 +293,7 @@
                                 "
                                 [disabled]="
                                   index === template.subtasks.length - 1 ||
-                                  reorderingTemplateId() === template.id
+                                  subtasks.isBusy('reorder:' + template.id)
                                 "
                                 (click)="moveSubtask(template, index, 1)"
                               >
@@ -295,7 +309,7 @@
                               <button
                                 type="button"
                                 class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50"
-                                [disabled]="removingSubtaskId() === subtask.id"
+                                [disabled]="subtasks.isBusy('remove:' + subtask.id)"
                                 (click)="removeSubtask(template.id, subtask.id)"
                               >
                                 {{ 'taskLibrary.manageTasks.subtasks.remove' | translate }}
@@ -344,7 +358,9 @@
                     type="submit"
                     class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                     [disabled]="
-                      addingSubtask() || !newSubtaskTitle().trim() || newSubtaskDuration() <= 0
+                      subtasks.isBusy('add') ||
+                      !newSubtaskTitle().trim() ||
+                      newSubtaskDuration() <= 0
                     "
                   >
                     {{ 'taskLibrary.manageTasks.subtasks.addButton' | translate }}
@@ -390,14 +406,16 @@
       <button
         type="submit"
         class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-        [disabled]="creating() || !newTemplateName().trim() || !newTemplateIcon().trim()"
+        [disabled]="creating.busy() || !newTemplateName().trim() || !newTemplateIcon().trim()"
       >
         {{ 'taskLibrary.manageTasks.form.submit' | translate }}
       </button>
     </form>
 
-    @if (createError(); as message) {
-      <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    @if (creating.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      }
     }
   }
 </section>

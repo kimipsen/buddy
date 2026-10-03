@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, resource, signal } from '@angular/core';
 
 import {
   AssignableMember,
@@ -14,6 +14,7 @@ import {
 } from '../../../core/map-with-concurrency';
 import { AgendaEntry, groupTaskRuns, isTaskRun, occurrenceKey } from '../../../core/task-run';
 import { UsersService } from '../../../core/users.service';
+import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Toggle } from '../../../shared/toggle/toggle';
 
@@ -78,30 +79,32 @@ function toRollup(entry: AgendaEntry): TaskRollup {
   };
 }
 
+// What the widget loaded: the signed-in guardian (to decide which tasks they may toggle) and
+// today's tasks split into overdue and still due.
+interface LoadedTasks {
+  currentUserId: string;
+  overdue: TaskRollup[];
+  dueToday: TaskRollup[];
+}
+
 @Component({
   selector: 'app-tasks-today',
   imports: [TranslatePipe, LoadingSpinner, Toggle],
   templateUrl: './tasks-today.html',
 })
-export class TasksToday implements OnInit {
+export class TasksToday {
   private readonly calendars = inject(CalendarsService);
   private readonly users = inject(UsersService);
 
-  private currentUserId: string | null = null;
-
-  protected readonly overdue = signal<TaskRollup[]>([]);
-  protected readonly dueToday = signal<TaskRollup[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly savingTaskId = signal<string | null>(null);
+  protected readonly tasks = resource({ loader: () => this.loadTasks() });
+  protected readonly saving = createAction<string>();
   protected readonly memberNamesById = signal<Record<string, string>>({});
 
-  ngOnInit(): void {
-    void this.loadTasks();
-  }
-
   protected canToggle(rollup: TaskRollup): boolean {
-    return rollup.assignedTo === null || rollup.assignedTo === this.currentUserId;
+    return (
+      rollup.assignedTo === null ||
+      (this.tasks.hasValue() && rollup.assignedTo === this.tasks.value().currentUserId)
+    );
   }
 
   // Best-effort: falls back to null (rendered as nothing) when the guardian can only view the
@@ -127,61 +130,58 @@ export class TasksToday implements OnInit {
     const date = toIsoDateInTimeZone(new Date(), this.users.timeZoneId());
     const key = occurrenceKey(task);
 
-    this.savingTaskId.set(key);
+    await this.saving.run(
+      key,
+      async () => {
+        await this.calendars.setTaskCompletion(
+          task.calendarId,
+          task.itemId,
+          date,
+          isCompleted,
+          task.routine?.subtaskId ?? null,
+        );
 
-    try {
-      await this.calendars.setTaskCompletion(
-        task.calendarId,
-        task.itemId,
-        date,
-        isCompleted,
-        task.routine?.subtaskId ?? null,
-      );
+        const applyCompletion = (existing: TaskRollup): TaskRollup =>
+          existing.itemId === rollup.itemId
+            ? {
+                ...existing,
+                completedCount: isCompleted ? 1 : 0,
+                occurrences: [{ ...task, isCompleted }],
+              }
+            : existing;
 
-      const applyCompletion = (existing: TaskRollup): TaskRollup =>
-        existing.itemId === rollup.itemId
-          ? {
-              ...existing,
-              completedCount: isCompleted ? 1 : 0,
-              occurrences: [{ ...task, isCompleted }],
-            }
-          : existing;
-
-      this.overdue.update((current) => current.map(applyCompletion));
-      this.dueToday.update((current) => current.map(applyCompletion));
-    } catch {
-      this.error.set('dashboard.tasks.taskUpdateError');
-    } finally {
-      this.savingTaskId.set(null);
-    }
+        this.tasks.update(
+          (current) =>
+            current && {
+              ...current,
+              overdue: current.overdue.map(applyCompletion),
+              dueToday: current.dueToday.map(applyCompletion),
+            },
+        );
+      },
+      'dashboard.tasks.taskUpdateError',
+    );
   }
 
-  private async loadTasks(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  private async loadTasks(): Promise<LoadedTasks> {
+    const [me, occurrences] = await Promise.all([
+      this.users.ensureCurrentUser(),
+      this.calendars.listTodayOccurrences(),
+    ]);
 
-    try {
-      const [me, occurrences] = await Promise.all([
-        this.users.ensureCurrentUser(),
-        this.calendars.listTodayOccurrences(),
-      ]);
-      this.currentUserId = me.id;
+    const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
+    const rollups = groupTaskRuns(tasks).map(toRollup);
+    const now = Date.now();
+    const isOverdue = (rollup: TaskRollup) =>
+      !rollup.isAllDay && new Date(rollup.dueAt).getTime() < now;
 
-      const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
-      const rollups = groupTaskRuns(tasks).map(toRollup);
-      const now = Date.now();
-      const isOverdue = (rollup: TaskRollup) =>
-        !rollup.isAllDay && new Date(rollup.dueAt).getTime() < now;
+    void this.loadAssigneeNames(tasks);
 
-      this.overdue.set(rollups.filter(isOverdue));
-      this.dueToday.set(rollups.filter((rollup) => !isOverdue(rollup)));
-
-      void this.loadAssigneeNames(tasks);
-    } catch {
-      this.error.set('dashboard.tasks.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    return {
+      currentUserId: me.id,
+      overdue: rollups.filter(isOverdue),
+      dueToday: rollups.filter((rollup) => !isOverdue(rollup)),
+    };
   }
 
   private async loadAssigneeNames(tasks: CalendarOccurrence[]): Promise<void> {

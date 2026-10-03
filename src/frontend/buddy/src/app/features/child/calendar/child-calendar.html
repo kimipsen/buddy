@@ -28,12 +28,22 @@
   </header>
 
   <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
-    @if (error(); as message) {
+    @if (week.error()) {
       <p
         class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400"
       >
-        {{ message | translate }}
+        {{ 'child.calendar.loadError' | translate }}
       </p>
+    }
+
+    @if (savingTask.state(); as state) {
+      @if (state.status === 'error') {
+        <p
+          class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400"
+        >
+          {{ state.message | translate }}
+        </p>
+      }
     }
 
     @if (myCalendars().length > 1) {
@@ -59,7 +69,7 @@
       </div>
     }
 
-    @if (loading()) {
+    @if (week.isLoading()) {
       <p class="text-lg font-semibold text-slate-500 dark:text-slate-400">
         {{ 'child.calendar.loading' | translate }}
       </p>
@@ -118,7 +128,7 @@
                             [class.border-slate-300]="!subtask.isCompleted"
                             [class.dark:border-slate-600]="!subtask.isCompleted"
                             [disabled]="
-                              savingTaskId() === keyFor(subtask) ||
+                              savingTask.isBusy(keyFor(subtask)) ||
                               (!subtask.isCompleted && !canCompleteTask(subtask))
                             "
                             [attr.aria-label]="
@@ -168,7 +178,7 @@
                         [class.border-slate-300]="!occurrence.isCompleted"
                         [class.dark:border-slate-600]="!occurrence.isCompleted"
                         [disabled]="
-                          savingTaskId() === keyFor(occurrence) ||
+                          savingTask.isBusy(keyFor(occurrence)) ||
                           (!occurrence.isCompleted && !canCompleteTask(occurrence))
                         "
                         [attr.aria-label]="

@@ -14,6 +14,7 @@ import {
   SegmentedControl,
   SegmentedControlOption,
 } from '../../../../shared/segmented-control/segmented-control';
+import { createAction } from '../../../../shared/action-state/action-state';
 import {
   MAX_CYCLE_WEEKS,
   WEEKDAYS_MONDAY_FIRST,
@@ -63,9 +64,9 @@ export class WorkPatternEditor {
     return cells;
   });
 
-  protected readonly saving = signal(false);
-  protected readonly status = signal<string | null>(null);
-  protected readonly error = signal<string | null>(null);
+  protected readonly saving = createAction();
+  // Whether the draft on screen is the one just saved; any edit clears it.
+  protected readonly saved = signal(false);
 
   protected readonly active = computed(() =>
     this.schedule().locations.filter((l) => !l.isArchived),
@@ -114,18 +115,18 @@ export class WorkPatternEditor {
 
   protected setCell(week: number, day: Weekday, locationId: string): void {
     this.cells.update((cells) => ({ ...cells, [patternKey(week, day)]: locationId }));
-    this.status.set(null);
+    this.saved.set(false);
   }
 
   protected setCycleWeeks(count: number): void {
     this.cycleWeeks.set(count);
     this.currentWeek.update((week) => Math.min(week, count - 1));
-    this.status.set(null);
+    this.saved.set(false);
   }
 
   protected setCurrentWeek(week: number): void {
     this.currentWeek.set(week);
-    this.status.set(null);
+    this.saved.set(false);
   }
 
   protected async save(): Promise<void> {
@@ -150,18 +151,16 @@ export class WorkPatternEditor {
         ? stored.anchorMonday
         : anchorForCurrentWeek(this.today, this.currentWeek());
 
-    this.saving.set(true);
-    this.error.set(null);
-    this.status.set(null);
+    this.saved.set(false);
 
-    try {
-      await this.workLocations.replacePattern({ cycleWeeks, anchorMonday, days });
-      this.status.set('workLocations.pattern.saved');
-      this.changed.emit();
-    } catch {
-      this.error.set('workLocations.pattern.saveError');
-    } finally {
-      this.saving.set(false);
-    }
+    await this.saving.run(
+      true,
+      async () => {
+        await this.workLocations.replacePattern({ cycleWeeks, anchorMonday, days });
+        this.saved.set(true);
+        this.changed.emit();
+      },
+      'workLocations.pattern.saveError',
+    );
   }
 }

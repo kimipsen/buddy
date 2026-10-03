@@ -42,9 +42,13 @@ describe('MealplanIcal', () => {
     return { fixture, mealplans: mealplansStub };
   }
 
+  // A mutation that reloads the token list (create, revoke) only starts the reload on the next
+  // change detection, so flush a second macrotask round to let the reloaded list render.
   async function settle(fixture: { detectChanges: () => void }) {
-    fixture.detectChanges();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    for (let round = 0; round < 2; round++) {
+      fixture.detectChanges();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
     fixture.detectChanges();
   }
 

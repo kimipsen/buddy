@@ -31,15 +31,18 @@
     </p>
   </div>
 
-  @if (loading()) {
-    <app-loading-spinner [label]="'workLocations.loading' | translate" />
-  } @else if (error(); as message) {
-    <p class="text-sm text-red-600 dark:text-red-400" role="alert">{{ message | translate }}</p>
-  } @else if (schedule(); as current) {
+  @if (schedule.hasValue()) {
+    @let current = schedule.value();
     <div class="space-y-6">
-      <app-manage-work-locations class="block" [schedule]="current" (changed)="load()" />
-      <app-work-pattern-editor class="block" [schedule]="current" (changed)="load()" />
+      <app-manage-work-locations class="block" [schedule]="current" (changed)="reload()" />
+      <app-work-pattern-editor class="block" [schedule]="current" (changed)="reload()" />
       <app-work-day-overrides class="block" [schedule]="current" />
     </div>
+  } @else if (schedule.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ 'workLocations.loadError' | translate }}
+    </p>
+  } @else {
+    <app-loading-spinner [label]="'workLocations.loading' | translate" />
   }
 </section>

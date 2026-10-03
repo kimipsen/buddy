@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, resource, signal } from '@angular/core';
 
 import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -25,9 +25,7 @@ export interface EventView extends CalendarOccurrence {
 export class EventsToday implements OnInit, OnDestroy {
   private readonly calendars = inject(CalendarsService);
 
-  protected readonly events = signal<CalendarOccurrence[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly events = resource({ loader: () => this.loadEvents() });
 
   // Ticks on an interval (rather than reading Date.now() directly in the template) so the
   // ongoing-event progress fill and past/done state actually update while the dashboard sits
@@ -37,11 +35,11 @@ export class EventsToday implements OnInit, OnDestroy {
 
   protected readonly eventsView = computed<EventView[]>(() => {
     const nowMs = this.now();
-    return this.events().map((event) => ({ ...event, ...this.eventProgress(event, nowMs) }));
+    const events = this.events.hasValue() ? this.events.value() : [];
+    return events.map((event) => ({ ...event, ...this.eventProgress(event, nowMs) }));
   });
 
   ngOnInit(): void {
-    void this.loadEvents();
     this.nowIntervalId = setInterval(() => this.now.set(Date.now()), NOW_REFRESH_INTERVAL_MS);
   }
 
@@ -83,22 +81,11 @@ export class EventsToday implements OnInit, OnDestroy {
     return { isPast: false, isOngoing: true, progressPercent };
   }
 
-  private async loadEvents(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  private async loadEvents(): Promise<CalendarOccurrence[]> {
+    const occurrences = await this.calendars.listTodayOccurrences();
 
-    try {
-      const occurrences = await this.calendars.listTodayOccurrences();
-
-      this.events.set(
-        occurrences
-          .filter((occurrence) => occurrence.kind === EVENT_KIND)
-          .sort((a, b) => a.sortAt.localeCompare(b.sortAt)),
-      );
-    } catch {
-      this.error.set('dashboard.events.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    return occurrences
+      .filter((occurrence) => occurrence.kind === EVENT_KIND)
+      .sort((a, b) => a.sortAt.localeCompare(b.sortAt));
   }
 }

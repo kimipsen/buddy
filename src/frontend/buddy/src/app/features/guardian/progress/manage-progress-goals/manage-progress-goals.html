@@ -6,7 +6,7 @@
       {{ 'progress.manageProgressGoals.title' | translate }}
     </h3>
 
-    @if (children().length > 1) {
+    @if (childList().length > 1) {
       <label class="sr-only" for="selectedChildId">{{
         'common.selectChildLabel' | translate
       }}</label>
@@ -16,7 +16,7 @@
         [ngModel]="selectedChildId()"
         (ngModelChange)="onChildChange($event)"
       >
-        @for (child of children(); track child.id) {
+        @for (child of childList(); track child.id) {
           <option [value]="child.id">{{ child.name.givenName }}</option>
         }
       </select>
@@ -32,8 +32,10 @@
       {{ 'progress.manageProgressGoals.noChildrenLinked' | translate }}
     </p>
   } @else {
-    @if (error(); as message) {
-      <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    @if (loadFailed()) {
+      <p class="mb-3 text-sm text-red-600 dark:text-red-400">
+        {{ 'progress.manageProgressGoals.loadError' | translate }}
+      </p>
     }
 
     <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">
@@ -95,7 +97,7 @@
       <button
         type="button"
         class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-        [disabled]="saving() || !canSave()"
+        [disabled]="saving.busy() || !canSave()"
         (click)="save()"
       >
         {{ 'progress.manageProgressGoals.submit' | translate }}
@@ -108,8 +110,10 @@
       }
     </div>
 
-    @if (saveError(); as message) {
-      <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
+    @if (saving.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      }
     }
   }
 </section>

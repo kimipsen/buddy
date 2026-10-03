@@ -110,18 +110,15 @@ describe('ManageGroups', () => {
     return { fixture, groups: groupsStub, guardians: guardiansStub };
   }
 
-  // loadGroups/loadMyChildren/loadInvites/etc. each chain at least one await before the signals
-  // driving the template settle, and some flows (createGroup -> loadGroups, sendInvite ->
-  // loadInvites) chain two mocked service calls back to back -- mirrors tasks-today.spec.ts's
-  // settle() since a single whenStable() flush isn't always enough for a stubbed service chain.
-  async function settle(fixture: {
-    detectChanges: () => void;
-    whenStable: () => Promise<boolean>;
-  }) {
+  // Each resource load chains at least one await before the template settles, and some flows
+  // (createGroup -> items.reload(), sendInvite -> invites.reload()) chain a mutation and a reload
+  // back to back, so flush several macrotask rounds. whenStable() can't be used: it waits for a
+  // resource's pending load, which never ends in the tests that hold a load open with deferred().
+  async function settle(fixture: { detectChanges: () => void }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
-      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
       fixture.detectChanges();
     }
   }

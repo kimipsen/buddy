@@ -183,6 +183,23 @@ describe('WorkDayOverrides', () => {
     expect(compiled.querySelector('select[aria-label="Location on Mon, Oct 26"]')).toBeNull();
   });
 
+  it('keeps the loaded weeks on screen while the next weeks load', async () => {
+    let resolve!: (days: WorkDay[]) => void;
+    const { fixture, compiled, service } = await setup();
+    service.listWorkDays = vi.fn(() => new Promise<WorkDay[]>((r) => (resolve = r)));
+
+    button(compiled, 'Later').click();
+    await settle(fixture);
+
+    expect(compiled.querySelector('select[aria-label="Location on Mon, Sep 28"]')).toBeTruthy();
+
+    resolve(days('2026-10-26'));
+    await settle(fixture);
+
+    expect(compiled.querySelector('select[aria-label="Location on Mon, Oct 26"]')).toBeTruthy();
+    expect(compiled.querySelector('select[aria-label="Location on Mon, Sep 28"]')).toBeNull();
+  });
+
   it('keeps Apply disabled for a range that ends before it starts', async () => {
     const { fixture, compiled } = await setup();
     const [from] = Array.from(compiled.querySelectorAll<HTMLElement>('app-date-select'));

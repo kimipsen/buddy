@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-6 implemented (see each "As built"); Phase 7 proposed.
+Status: Phases 0-7 implemented (see each "As built").
 
 ## Context
 
@@ -833,6 +833,31 @@ even forgets to reset `loading` on retry.
    - `agenda`'s `newRepeat: RecurrenceFrequency | null` gets a `'none'` member.
    - Add runtime guards `isTokenSet()` (token-storage) and `isRuntimeConfig()` for the unvalidated
      `JSON.parse(...) as T` casts.
+
+### As built (Phase 7)
+
+- **Loads** use `resource()` in about 35 components: the loader returns everything the view needs
+  in one value, and templates branch on `isLoading()` / `error()` / `hasValue()` with `@let`.
+  Where a list must stay on screen while the next one loads (agenda, child calendar, work-day
+  overrides, the week-plan sheet), a `linkedSignal` holds the last loaded value. Sections that
+  could fail independently before still do (child home's meals/doses/calendar; the meal plan's
+  sharing lookup is separate from the family plan).
+- **Mutations** use `createAction<Id>()` (`src/app/shared/action-state`): idle, busy for one id,
+  or failed for one id with a message (an i18n key or an API message). It is overlap-safe: a
+  later run's success never clears an earlier run's failure. `clearError()` resets only an error.
+- **Writing back after a mutation** checks that the resource still has a value, isn't loading,
+  and still holds the same child/week/scope the request was for. Otherwise the result is skipped,
+  because `update()` throws in the error state and `set()` cancels a load in flight.
+- **Smaller fixes as planned:** selected child is a `linkedSignal` of the first child; the shared
+  group is one value; per-child error maps delete the key; `stepper` `max` defaults to `Infinity`;
+  `loading-spinner` `label` defaults to `''`; agenda's repeat choice has `'none'`;
+  `isTokenSet()` and `isRuntimeConfig()` guard the two `JSON.parse` casts.
+- **Visible differences** (intended): a busy button re-enables when the follow-up reload starts,
+  not when it ends; each action shows its own error instead of one shared slot; switching child
+  shows the loading text instead of the previous child's data (which before could be saved to the
+  new child); load failures that used to be unhandled rejections (medicine schedules after a child
+  switch, the week-plan sheet) now show their load error; after a profile save, the field shows
+  the value the server stored (trimmed).
 
 ## Testing
 

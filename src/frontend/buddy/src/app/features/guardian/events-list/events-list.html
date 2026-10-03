@@ -9,68 +9,76 @@
     >
   </div>
 
-  @if (eventsLoading()) {
+  @if (page.isLoading()) {
     <p class="text-sm text-slate-500 dark:text-slate-400">
       {{ 'events.list.loading' | translate }}
     </p>
-  } @else if (eventsError(); as message) {
-    <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-  } @else if (events().length === 0) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'events.list.empty' | translate }}</p>
-  } @else {
-    <div class="space-y-3">
-      @for (event of events(); track $index) {
-        <div class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3">
-          @switch (event.type) {
-            @case ('UserCreated') {
-              <app-user-created-event [data]="event.data" />
-            }
-            @case ('UserDeleted') {
-              <app-user-deleted-event [data]="event.data" />
-            }
-            @case ('NameUpdated') {
-              <app-name-updated-event [data]="event.data" />
-            }
-            @case ('EmailUpdated') {
-              <app-email-updated-event [data]="event.data" />
-            }
-            @case ('EmailVerificationRequested') {
-              <app-email-verification-requested-event [data]="event.data" />
-            }
-            @case ('EmailVerified') {
-              <app-email-verified-event [data]="event.data" />
-            }
-            @case ('TimeZoneUpdated') {
-              <app-timezone-updated-event [data]="event.data" />
-            }
-            @case ('LanguageUpdated') {
-              <app-language-updated-event [data]="event.data" />
-            }
-            @default {
-              <app-unknown-event [type]="event.rawType" [data]="event.data" />
-            }
-          }
-        </div>
-      }
-    </div>
+  } @else if (page.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'events.list.loadError' | translate }}
+    </p>
+  } @else if (page.hasValue()) {
+    @let loaded = page.value();
 
-    <div class="mt-4 flex items-center justify-between">
-      <button
-        type="button"
-        class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-950 dark:hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-        [disabled]="!hasPreviousPage()"
-        (click)="previousPage()"
-      >
-        {{ 'events.list.previous' | translate }}
-      </button>
-      <button
-        type="button"
-        class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-950 dark:hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-        [disabled]="!hasNextPage()"
-        (click)="nextPage()"
-      >
-        {{ 'events.list.next' | translate }}
-      </button>
-    </div>
+    @if (loaded.events.length === 0) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'events.list.empty' | translate }}
+      </p>
+    } @else {
+      <div class="space-y-3">
+        @for (event of loaded.events; track $index) {
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3">
+            @switch (event.type) {
+              @case ('UserCreated') {
+                <app-user-created-event [data]="event.data" />
+              }
+              @case ('UserDeleted') {
+                <app-user-deleted-event [data]="event.data" />
+              }
+              @case ('NameUpdated') {
+                <app-name-updated-event [data]="event.data" />
+              }
+              @case ('EmailUpdated') {
+                <app-email-updated-event [data]="event.data" />
+              }
+              @case ('EmailVerificationRequested') {
+                <app-email-verification-requested-event [data]="event.data" />
+              }
+              @case ('EmailVerified') {
+                <app-email-verified-event [data]="event.data" />
+              }
+              @case ('TimeZoneUpdated') {
+                <app-timezone-updated-event [data]="event.data" />
+              }
+              @case ('LanguageUpdated') {
+                <app-language-updated-event [data]="event.data" />
+              }
+              @default {
+                <app-unknown-event [type]="event.rawType" [data]="event.data" />
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <div class="mt-4 flex items-center justify-between">
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-950 dark:hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+          [disabled]="!loaded.hasPreviousPage"
+          (click)="previousPage()"
+        >
+          {{ 'events.list.previous' | translate }}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-950 dark:hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+          [disabled]="!loaded.hasNextPage"
+          (click)="nextPage()"
+        >
+          {{ 'events.list.next' | translate }}
+        </button>
+      </div>
+    }
   }
 </section>

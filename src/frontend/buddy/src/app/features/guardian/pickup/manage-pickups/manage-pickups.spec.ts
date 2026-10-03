@@ -91,14 +91,17 @@ describe('ManagePickups', () => {
     return { fixture, guardians: guardiansStub, pickups: pickupsStub };
   }
 
-  // loadChildren and loadForChild each chain more than one await (a Promise.all of two mocked
-  // service calls) before the signals driving the template settle -- see docs/testing.md's
-  // zoneless-async note. A macrotask flush reliably drains any depth of chained awaits as long as
-  // nothing in the chain schedules a further macrotask itself, which is the case here.
+  // The children resource and then the selected child's schedule resource (a Promise.all of two
+  // mocked service calls) each resolve before the template settles, and the second only starts
+  // once change detection has run the first's result through -- see docs/testing.md's
+  // zoneless-async note. A few macrotask rounds, each followed by detectChanges(), drain both.
   async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
     fixture.detectChanges();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    fixture.detectChanges();
+
+    for (let i = 0; i < 3; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+    }
   }
 
   function cells(fixture: ComponentFixture<unknown>): HTMLElement[] {
@@ -385,6 +388,71 @@ describe('ManagePickups', () => {
       const buttonAfterFailure = cellAt(fixture, 0, 0).querySelector<HTMLButtonElement>('button')!;
       expect(buttonAfterFailure.disabled).toBe(false);
       expect(buttonAfterFailure.textContent).toContain('Not planned');
+    });
+  });
+
+  describe('a save that resolves after switching child', () => {
+    async function startSaveThenSwitchChild() {
+      const childA = child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } });
+      const childB = child({ id: 'child-2', name: { givenName: 'Robin', familyName: 'Kid' } });
+      const pending = deferred<PickupOccurrence>();
+      const assignPickup = vi.fn(() => pending.promise);
+
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [childA, childB]) },
+        pickups: { assignPickup },
+      });
+      await settle(fixture);
+
+      // Start a "goes alone" save on child A's first cell and leave it in flight.
+      const cell = cellAt(fixture, 0, 0);
+      cell.querySelector<HTMLButtonElement>('button')!.click();
+      fixture.detectChanges();
+      selectKind(cell, 'Goes alone');
+      fixture.detectChanges();
+      Array.from(cell.querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Save')!
+        .click();
+      fixture.detectChanges();
+      expect(assignPickup).toHaveBeenCalledWith('child-1', weekStart, 0, expect.anything());
+
+      // Switch to child B and let its (empty) schedule finish loading first.
+      const picker = (fixture.nativeElement as HTMLElement).querySelector(
+        'select#selectedChildId',
+      ) as HTMLSelectElement;
+      picker.value = 'child-2';
+      picker.dispatchEvent(new Event('change'));
+      await settle(fixture);
+
+      return { fixture, pending };
+    }
+
+    it("doesn't disable child B's cell while child A's save is in flight", async () => {
+      const { fixture } = await startSaveThenSwitchChild();
+
+      expect(cellAt(fixture, 0, 0).querySelector<HTMLButtonElement>('button')!.disabled).toBe(
+        false,
+      );
+    });
+
+    it("keeps child A's result out of child B's grid", async () => {
+      const { fixture, pending } = await startSaveThenSwitchChild();
+
+      pending.resolve(occurrence({ assignee: { kind: 1 }, date: weekStart, slot: 0 }));
+      await settle(fixture);
+
+      expect(cellAt(fixture, 0, 0).textContent).toContain('Not planned');
+    });
+
+    it("doesn't show child A's save error while child B is selected", async () => {
+      const { fixture, pending } = await startSaveThenSwitchChild();
+
+      pending.reject(new Error('boom'));
+      await settle(fixture);
+
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+        'Unable to update this slot.',
+      );
     });
   });
 

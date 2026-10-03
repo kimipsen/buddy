@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -16,6 +16,7 @@ import {
   isWorkDayOverride,
   workDayLocation,
 } from '../../../../core/work-locations.service';
+import { createAction } from '../../../../shared/action-state/action-state';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 
 const WEEKS_SHOWN = 4;
@@ -40,10 +41,26 @@ export class WorkDayOverrides {
   protected readonly off = OFF;
 
   protected readonly start = signal(startOfWeekIso(todayIsoDate()));
-  protected readonly days = signal<WorkDay[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly savingDate = signal<string | null>(null);
-  protected readonly error = signal<string | null>(null);
+  // Reloads whenever the page hands over a new schedule or the window moves. Paging quickly
+  // overlaps loads; resource only keeps the latest one, so an older response arriving last can't
+  // show the wrong weeks.
+  protected readonly days = resource({
+    params: () => ({ schedule: this.schedule(), start: this.start() }),
+    loader: ({ params }) =>
+      this.workLocations.listWorkDays(
+        params.schedule.guardianId,
+        params.start,
+        addDaysIso(params.start, WEEKS_SHOWN * 7 - 1),
+      ),
+  });
+  // The weeks on screen: the last loaded ones stay up while the next weeks load (or fail to), so
+  // paging doesn't blank the grid. Undefined only until the first load finishes.
+  protected readonly shownDays = linkedSignal<WorkDay[] | undefined, WorkDay[] | undefined>({
+    source: () => (this.days.hasValue() ? this.days.value() : undefined),
+    computation: (days, previous) => days ?? previous?.value,
+  });
+  // Keyed by the day (or the range's first day) being saved.
+  protected readonly saving = createAction<string>();
 
   protected readonly rangeFrom = signal(todayIsoDate());
   protected readonly rangeTo = signal(todayIsoDate());
@@ -52,26 +69,14 @@ export class WorkDayOverrides {
     () => !!this.rangeFrom() && !!this.rangeTo() && this.rangeTo() >= this.rangeFrom(),
   );
 
-  // Paging or picking quickly overlaps loads; only the latest one may write the grid, so an older
-  // response arriving last can't show the wrong weeks.
-  private latestLoad = 0;
-
   protected readonly active = computed(() =>
     this.schedule().locations.filter((l) => !l.isArchived),
   );
 
   protected readonly weeks = computed(() => {
-    const days = this.days();
+    const days = this.shownDays() ?? [];
     return Array.from({ length: WEEKS_SHOWN }, (_, w) => days.slice(w * 7, w * 7 + 7));
   });
-
-  constructor() {
-    effect(() => {
-      this.schedule();
-      this.start();
-      untracked(() => void this.load());
-    });
-  }
 
   protected shift(weeks: number): void {
     this.start.update((start) => addDaysIso(start, weeks * 7));
@@ -130,40 +135,13 @@ export class WorkDayOverrides {
   }
 
   private async save(date: string, action: () => Promise<unknown>): Promise<void> {
-    this.savingDate.set(date);
-    this.error.set(null);
-
-    try {
-      await action();
-      await this.load();
-    } catch {
-      this.error.set('workLocations.overrides.saveError');
-    } finally {
-      this.savingDate.set(null);
-    }
-  }
-
-  private async load(): Promise<void> {
-    const start = this.start();
-    const load = ++this.latestLoad;
-
-    try {
-      const days = await this.workLocations.listWorkDays(
-        this.schedule().guardianId,
-        start,
-        addDaysIso(start, WEEKS_SHOWN * 7 - 1),
-      );
-      if (load === this.latestLoad) {
-        this.days.set(days);
-      }
-    } catch {
-      if (load === this.latestLoad) {
-        this.error.set('workLocations.overrides.loadError');
-      }
-    } finally {
-      if (load === this.latestLoad) {
-        this.loading.set(false);
-      }
-    }
+    await this.saving.run(
+      date,
+      async () => {
+        await action();
+        this.days.reload();
+      },
+      'workLocations.overrides.saveError',
+    );
   }
 }

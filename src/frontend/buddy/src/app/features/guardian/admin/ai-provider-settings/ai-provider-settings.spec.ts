@@ -65,14 +65,13 @@ describe('AiProviderSettingsComponent', () => {
     return { fixture, guardians: guardiansStub, aiAssistant: aiAssistantStub };
   }
 
-  async function settle(fixture: {
-    detectChanges: () => void;
-    whenStable: () => Promise<boolean>;
-  }) {
+  // The settings load in a resource(), which whenStable() waits on, so a test that holds the load
+  // open would never settle. Flush macrotasks instead, repeated to cover chained awaits.
+  async function settle(fixture: { detectChanges: () => void }) {
     fixture.detectChanges();
 
     for (let i = 0; i < 10; i++) {
-      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
       fixture.detectChanges();
     }
   }
@@ -113,7 +112,6 @@ describe('AiProviderSettingsComponent', () => {
     fixture: {
       nativeElement: HTMLElement;
       detectChanges: () => void;
-      whenStable: () => Promise<boolean>;
     },
     value: string,
   ) {

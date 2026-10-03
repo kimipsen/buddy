@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -10,6 +10,7 @@ import {
 } from '../../../../core/ai-assistant.service';
 import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { createAction } from '../../../../shared/action-state/action-state';
 
 const PROVIDERS: readonly AiProvider[] = [0, 1, 2];
 
@@ -23,55 +24,42 @@ const PROVIDER_LABEL_KEYS: Record<AiProvider, string> = {
 // failed (no message to show).
 type ConnectionTestOutcome = TestProviderConnectionResult | { kind: 'unreachable' };
 
+// What the page loaded: no linked child to configure, or the first child's provider settings.
+type LoadedSettings =
+  | { hasChildren: false }
+  | {
+      hasChildren: true;
+      childId: string;
+      configured: Map<AiProvider, AiProviderSettingsEntry>;
+      activeProvider: AiProvider | null;
+    };
+
 @Component({
   selector: 'app-ai-provider-settings',
   imports: [FormsModule, TranslatePipe],
   templateUrl: './ai-provider-settings.html',
 })
-export class AiProviderSettingsComponent implements OnInit {
+export class AiProviderSettingsComponent {
   private readonly guardians = inject(GuardiansService);
   private readonly aiAssistant = inject(AiAssistantService);
 
   protected readonly providerList = PROVIDERS;
   protected readonly providerLabelKeys = PROVIDER_LABEL_KEYS;
 
-  // Stryker disable next-line BooleanLiteral: load() sets loading to true synchronously in ngOnInit, before the first render reads it
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly hasChildren = signal(true);
-
-  protected readonly configured = signal<Map<AiProvider, AiProviderSettingsEntry>>(new Map());
-  protected readonly activeProvider = signal<AiProvider | null>(null);
+  protected readonly settings = resource({ loader: () => this.loadSettings() });
 
   protected readonly editingProvider = signal<AiProvider | null>(null);
   // Stryker disable next-line StringLiteral: the input is only rendered/submittable after startEdit(), which always resets it to ''
   protected readonly apiKeyInput = signal('');
-  protected readonly saving = signal(false);
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saving = createAction<AiProvider>();
 
-  protected readonly settingActiveProvider = signal<AiProvider | null>(null);
-  protected readonly activeError = signal<string | null>(null);
+  protected readonly settingActive = createAction<AiProvider>();
 
   protected readonly confirmingRemoveProvider = signal<AiProvider | null>(null);
-  protected readonly removing = signal(false);
-  protected readonly removeError = signal<string | null>(null);
+  protected readonly removing = createAction<AiProvider>();
 
   protected readonly testingProvider = signal<AiProvider | null>(null);
   protected readonly testResults = signal<Map<AiProvider, ConnectionTestOutcome>>(new Map());
-
-  private childId: string | null = null;
-
-  ngOnInit(): void {
-    void this.load();
-  }
-
-  protected isConfigured(provider: AiProvider): boolean {
-    return this.configured().has(provider);
-  }
-
-  protected entryFor(provider: AiProvider): AiProviderSettingsEntry | undefined {
-    return this.configured().get(provider);
-  }
 
   protected startEdit(provider: AiProvider): void {
     this.confirmingRemoveProvider.set(null);
@@ -84,34 +72,30 @@ export class AiProviderSettingsComponent implements OnInit {
 
     this.editingProvider.set(provider);
     this.apiKeyInput.set('');
-    this.saveError.set(null);
+    this.saving.clearError();
   }
 
-  protected async saveKey(provider: AiProvider): Promise<void> {
-    const childId = this.childId;
+  protected async saveKey(childId: string, provider: AiProvider): Promise<void> {
     const apiKey = this.apiKeyInput().trim();
 
-    if (!childId || !apiKey) {
+    if (!apiKey) {
       return;
     }
 
-    this.saving.set(true);
-    this.saveError.set(null);
-
-    try {
-      const settings = await this.aiAssistant.setProviderApiKey(childId, provider, apiKey);
-      this.applySettings(settings);
-      this.editingProvider.set(null);
-    } catch {
-      this.saveError.set('admin.aiProviders.saveError');
-    } finally {
-      this.saving.set(false);
-    }
+    await this.saving.run(
+      provider,
+      async () => {
+        const settings = await this.aiAssistant.setProviderApiKey(childId, provider, apiKey);
+        this.applySettings(settings);
+        this.editingProvider.set(null);
+      },
+      'admin.aiProviders.saveError',
+    );
   }
 
   protected requestRemove(provider: AiProvider): void {
     this.editingProvider.set(null);
-    this.removeError.set(null);
+    this.removing.clearError();
     this.confirmingRemoveProvider.set(provider);
   }
 
@@ -119,54 +103,30 @@ export class AiProviderSettingsComponent implements OnInit {
     this.confirmingRemoveProvider.set(null);
   }
 
-  protected async confirmRemove(provider: AiProvider): Promise<void> {
-    const childId = this.childId;
-
-    if (!childId) {
-      return;
-    }
-
-    this.removing.set(true);
-    this.removeError.set(null);
-
-    try {
-      const settings = await this.aiAssistant.removeProviderApiKey(childId, provider);
-      this.applySettings(settings);
-      this.confirmingRemoveProvider.set(null);
-    } catch {
-      this.removeError.set('admin.aiProviders.remove.error');
-    } finally {
-      this.removing.set(false);
-    }
+  protected async confirmRemove(childId: string, provider: AiProvider): Promise<void> {
+    await this.removing.run(
+      provider,
+      async () => {
+        const settings = await this.aiAssistant.removeProviderApiKey(childId, provider);
+        this.applySettings(settings);
+        this.confirmingRemoveProvider.set(null);
+      },
+      'admin.aiProviders.remove.error',
+    );
   }
 
-  protected async makeActive(provider: AiProvider): Promise<void> {
-    const childId = this.childId;
-
-    if (!childId) {
-      return;
-    }
-
-    this.settingActiveProvider.set(provider);
-    this.activeError.set(null);
-
-    try {
-      const settings = await this.aiAssistant.setActiveProvider(childId, provider);
-      this.applySettings(settings);
-    } catch {
-      this.activeError.set('admin.aiProviders.activeError');
-    } finally {
-      this.settingActiveProvider.set(null);
-    }
+  protected async makeActive(childId: string, provider: AiProvider): Promise<void> {
+    await this.settingActive.run(
+      provider,
+      async () => {
+        const settings = await this.aiAssistant.setActiveProvider(childId, provider);
+        this.applySettings(settings);
+      },
+      'admin.aiProviders.activeError',
+    );
   }
 
-  protected async testConnection(provider: AiProvider): Promise<void> {
-    const childId = this.childId;
-
-    if (!childId) {
-      return;
-    }
-
+  protected async testConnection(childId: string, provider: AiProvider): Promise<void> {
     this.testingProvider.set(provider);
 
     try {
@@ -192,32 +152,27 @@ export class AiProviderSettingsComponent implements OnInit {
   }
 
   private applySettings(settings: AiProviderSettingsData): void {
-    this.configured.set(new Map(settings.providers.map((entry) => [entry.provider, entry])));
-    this.activeProvider.set(settings.activeProvider);
+    this.settings.update((current) =>
+      current?.hasChildren ? { ...current, ...this.toProviders(settings) } : current,
+    );
   }
 
-  private async load(): Promise<void> {
-    this.loading.set(true);
-    // Stryker disable next-line CallExpression: load() only runs once from ngOnInit while error still holds its initial null
-    this.error.set(null);
+  private toProviders(settings: AiProviderSettingsData) {
+    return {
+      configured: new Map(settings.providers.map((entry) => [entry.provider, entry])),
+      activeProvider: settings.activeProvider,
+    };
+  }
 
-    try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
+  private async loadSettings(): Promise<LoadedSettings> {
+    const [firstChild] = await this.guardians.listMyChildren();
 
-      if (!firstChild) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-      this.childId = firstChild.id;
-
-      this.applySettings(await this.aiAssistant.listProviders(this.childId));
-    } catch {
-      this.error.set('admin.aiProviders.loadError');
-    } finally {
-      this.loading.set(false);
+    if (!firstChild) {
+      return { hasChildren: false };
     }
+
+    const settings = await this.aiAssistant.listProviders(firstChild.id);
+
+    return { hasChildren: true, childId: firstChild.id, ...this.toProviders(settings) };
   }
 }

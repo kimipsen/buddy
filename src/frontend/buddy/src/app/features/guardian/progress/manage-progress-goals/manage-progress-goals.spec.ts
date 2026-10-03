@@ -197,6 +197,131 @@ describe('ManageProgressGoals', () => {
     expect(compiled.textContent).toContain('Goal posts saved.');
   });
 
+  it('replaces the rows with the newly selected child’s goal posts and saves for that child', async () => {
+    const { fixture, progress } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({ id: 'child-1' }),
+          child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } }),
+        ]),
+      },
+      progress: {
+        getChildProgress: vi.fn(async (childId: string) =>
+          childId === 'child-2'
+            ? summary({ goalPosts: [{ threshold: 20, icon: '🌳', label: 'Tree' }] })
+            : summary(),
+        ),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(rowInputs(compiled, 0).threshold.value).toBe('5');
+
+    const select = compiled.querySelector<HTMLSelectElement>('#selectedChildId')!;
+    select.value = 'child-2';
+    select.dispatchEvent(new Event('change'));
+    await settle(fixture);
+
+    expect(progress.getChildProgress).toHaveBeenLastCalledWith('child-2');
+    expect(compiled.querySelectorAll('input[type="number"]')).toHaveLength(1);
+    expect(rowInputs(compiled, 0).threshold.value).toBe('20');
+    expect(rowInputs(compiled, 0).icon.value).toBe('🌳');
+
+    findButtonByText(compiled, 'Save goal posts')!.click();
+    await settle(fixture);
+
+    expect(progress.configureGoalPosts).toHaveBeenCalledWith('child-2', [
+      { threshold: 20, icon: '🌳', label: 'Tree' },
+    ]);
+  });
+
+  it('keeps the newly selected child’s goal posts when a save for the previous child resolves late', async () => {
+    let resolveSave!: (summary: ProgressSummary) => void;
+    const { fixture, progress } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({ id: 'child-1' }),
+          child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } }),
+        ]),
+      },
+      progress: {
+        getChildProgress: vi.fn(async (childId: string) =>
+          childId === 'child-2'
+            ? summary({ goalPosts: [{ threshold: 20, icon: '🌳', label: 'Tree' }] })
+            : summary(),
+        ),
+        configureGoalPosts: vi.fn(
+          () => new Promise<ProgressSummary>((resolve) => (resolveSave = resolve)),
+        ),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Save goal posts')!.click();
+    await settle(fixture);
+
+    const select = compiled.querySelector<HTMLSelectElement>('#selectedChildId')!;
+    select.value = 'child-2';
+    select.dispatchEvent(new Event('change'));
+    await settle(fixture);
+
+    resolveSave(
+      summary({
+        goalPosts: [
+          { threshold: 5, icon: '🌱', label: '' },
+          { threshold: 10, icon: '🌿', label: '' },
+        ],
+      }),
+    );
+    await settle(fixture);
+
+    expect(compiled.querySelectorAll('input[type="number"]')).toHaveLength(1);
+    expect(rowInputs(compiled, 0).threshold.value).toBe('20');
+    expect(compiled.textContent).not.toContain('Goal posts saved.');
+
+    findButtonByText(compiled, 'Save goal posts')!.click();
+    await settle(fixture);
+
+    expect(progress.configureGoalPosts).toHaveBeenLastCalledWith('child-2', [
+      { threshold: 20, icon: '🌳', label: 'Tree' },
+    ]);
+  });
+
+  it('does not show a failed save for the previous child once another child is selected', async () => {
+    let rejectSave!: (error: Error) => void;
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({ id: 'child-1' }),
+          child({ id: 'child-2', name: { givenName: 'Alex', familyName: 'Kid' } }),
+        ]),
+      },
+      progress: {
+        configureGoalPosts: vi.fn(
+          () => new Promise<ProgressSummary>((_resolve, reject) => (rejectSave = reject)),
+        ),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Save goal posts')!.click();
+    await settle(fixture);
+
+    const select = compiled.querySelector<HTMLSelectElement>('#selectedChildId')!;
+    select.value = 'child-2';
+    select.dispatchEvent(new Event('change'));
+    await settle(fixture);
+
+    rejectSave(new Error('boom'));
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Unable to save goal posts.');
+    expect(findButtonByText(compiled, 'Save goal posts')!.disabled).toBe(false);
+  });
+
   it('shows a translated error and keeps editing when saving fails', async () => {
     const { fixture } = await setup({
       progress: { configureGoalPosts: vi.fn(async () => Promise.reject(new Error('boom'))) },

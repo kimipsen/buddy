@@ -53,10 +53,19 @@ describe('token-storage', () => {
       expect(readStoredTokens(sessionStorage)).toEqual(tokens);
     });
 
-    it('parses a stored JSON value even if it does not structurally match TokenSet', () => {
+    it('returns null for stored JSON that is not a TokenSet', () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ unexpected: true }));
 
-      expect(readStoredTokens(localStorage)).toEqual({ unexpected: true });
+      expect(readStoredTokens(localStorage)).toBeNull();
+    });
+
+    it('returns null when a TokenSet field has the wrong type', () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ accessToken: 'a', refreshToken: 1, idToken: null, expiresAt: 1 }),
+      );
+
+      expect(readStoredTokens(localStorage)).toBeNull();
     });
   });
 

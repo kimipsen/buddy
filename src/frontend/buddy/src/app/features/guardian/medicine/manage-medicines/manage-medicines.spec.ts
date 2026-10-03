@@ -643,29 +643,5 @@ describe('ManageMedicines', () => {
       expect(compiled.textContent).toContain('Unable to unshare from this group.');
       expect(compiled.textContent).toContain('Shared with');
     });
-
-    // The real MedicinesService.getSharedGroup (see medicines.service.ts) only ever resolves a
-    // fully-populated { groupId, groupName } pair or null -- but the component reads groupId and
-    // groupName as two independent optional fields off whatever it gets back, and the template
-    // falls back to the raw id (`sharedGroupName() ?? groupId`) when the name is missing. Stubbing
-    // past the service's own guard exercises that template fallback directly.
-    it('falls back to the raw group id when a shared group has no resolved name', async () => {
-      const { fixture } = await setup({
-        medicines: {
-          getSharedGroup: vi.fn(
-            async () =>
-              ({ groupId: 'group-9', groupName: null }) as unknown as {
-                groupId: string;
-                groupName: string;
-              },
-          ),
-        },
-      });
-      await settle(fixture);
-
-      const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.textContent).toContain('Shared with');
-      expect(compiled.textContent).toContain('group-9');
-    });
   });
 });

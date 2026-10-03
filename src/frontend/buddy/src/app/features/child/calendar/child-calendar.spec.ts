@@ -324,6 +324,61 @@ describe('ChildCalendar', () => {
     expect(findButtonByAriaLabel(compiled, 'Mark not done')?.disabled).toBe(false);
   });
 
+  it('leaves the newly selected week loading, then shows it, when a completion resolves after switching week', async () => {
+    const task = occurrence({
+      itemId: 'task-1',
+      kind: 1,
+      title: 'Feed the cat',
+      startsAt: null,
+      endsAt: null,
+      dueAt: `${today}T17:00:00Z`,
+    });
+    let resolveSave!: () => void;
+    const setTaskCompletion = vi.fn(
+      () =>
+        new Promise<{ itemId: string; occurrenceDate: string; isCompleted: boolean }>((resolve) => {
+          resolveSave = () =>
+            resolve({ itemId: 'task-1', occurrenceDate: today, isCompleted: true });
+        }),
+    );
+    let resolveNextWeek!: (occurrences: CalendarOccurrence[]) => void;
+    const listOccurrencesInRange = vi
+      .fn()
+      .mockResolvedValueOnce([task])
+      .mockReturnValueOnce(
+        new Promise<CalendarOccurrence[]>((resolve) => (resolveNextWeek = resolve)),
+      );
+    const { fixture } = await setup({
+      calendars: { listOccurrencesInRange, setTaskCompletion },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'Mark done')!.click();
+    Array.from(compiled.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Next week'))
+      ?.click();
+    await settle(fixture);
+
+    resolveSave();
+    await settle(fixture);
+    expect(compiled.textContent).toContain('Loading your calendar…');
+
+    resolveNextWeek([
+      occurrence({
+        itemId: 'event-2',
+        title: 'Swimming',
+        startsAt: `${addDays(today, 8)}T09:00:00Z`,
+        endsAt: `${addDays(today, 8)}T10:00:00Z`,
+      }),
+    ]);
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Swimming');
+    expect(compiled.textContent).not.toContain('Feed the cat');
+    expect(compiled.textContent).not.toContain('Loading your calendar…');
+  });
+
   it('shows an error and leaves the task unchanged when saving its completion fails', async () => {
     const task = occurrence({
       itemId: 'task-1',

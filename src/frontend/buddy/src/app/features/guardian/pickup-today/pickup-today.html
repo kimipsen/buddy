@@ -12,54 +12,60 @@
     >
   </div>
 
-  @if (loading()) {
+  @if (today.isLoading()) {
     <app-loading-spinner [label]="'dashboard.pickup.loading' | translate" />
-  } @else if (error(); as message) {
-    <p class="text-sm text-red-600 dark:text-red-400">{{ message | translate }}</p>
-  } @else if (!hasChildren()) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">
-      {{ 'dashboard.pickup.noChildren' | translate }}
+  } @else if (today.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'dashboard.pickup.loadError' | translate }}
     </p>
-  } @else if (rows().length === 0) {
-    <p class="text-sm text-slate-500 dark:text-slate-400">
-      {{ 'dashboard.pickup.empty' | translate }}
-    </p>
-  } @else {
-    <ul class="space-y-3">
-      @for (row of rows(); track row.childId + row.slot) {
-        <li
-          class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3"
-        >
-          <span
-            class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+  } @else if (today.hasValue()) {
+    @let loaded = today.value();
+
+    @if (!loaded.hasChildren) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'dashboard.pickup.noChildren' | translate }}
+      </p>
+    } @else if (loaded.rows.length === 0) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'dashboard.pickup.empty' | translate }}
+      </p>
+    } @else {
+      <ul class="space-y-3">
+        @for (row of loaded.rows; track row.childId + row.slot) {
+          <li
+            class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3"
           >
-            {{ slotLabels[row.slot] | translate }}
-            @if (multipleChildren()) {
-              · {{ row.childName }}
-            }
-          </span>
-          <span class="flex items-center gap-2 text-sm font-medium">
-            @switch (row.assignee.kind) {
-              @case (guardianKind) {
-                <span aria-hidden="true">👤</span>
-                {{ assigneeName(row) ?? ('dashboard.pickup.kind.guardian' | translate) }}
+            <span
+              class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              {{ slotLabels[row.slot] | translate }}
+              @if (loaded.multipleChildren) {
+                · {{ row.childName }}
               }
-              @case (selfEscortKind) {
-                <span aria-hidden="true">🚶</span>
-                {{ 'dashboard.pickup.kind.selfEscort' | translate }}
+            </span>
+            <span class="flex items-center gap-2 text-sm font-medium">
+              @switch (row.assignee.kind) {
+                @case (guardianKind) {
+                  <span aria-hidden="true">👤</span>
+                  {{ row.assigneeName ?? ('dashboard.pickup.kind.guardian' | translate) }}
+                }
+                @case (selfEscortKind) {
+                  <span aria-hidden="true">🚶</span>
+                  {{ 'dashboard.pickup.kind.selfEscort' | translate }}
+                }
+                @case (siblingKind) {
+                  <span aria-hidden="true">🧒</span>
+                  {{ 'dashboard.pickup.kind.sibling' | translate }}
+                }
+                @case (playdateKind) {
+                  <span aria-hidden="true">🎉</span>
+                  {{ playdateHostName(row.assignee) }}
+                }
               }
-              @case (siblingKind) {
-                <span aria-hidden="true">🧒</span>
-                {{ 'dashboard.pickup.kind.sibling' | translate }}
-              }
-              @case (playdateKind) {
-                <span aria-hidden="true">🎉</span>
-                {{ playdateHostName(row.assignee) }}
-              }
-            }
-          </span>
-        </li>
-      }
-    </ul>
+            </span>
+          </li>
+        }
+      </ul>
+    }
   }
 </section>

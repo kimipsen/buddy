@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, resource } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { todayIsoDate } from '../../../core/date-utils';
@@ -16,59 +16,47 @@ const SLOT_LABELS: Record<MealSlot, string> = {
 
 const SLOTS: MealSlot[] = [0, 1, 2, 3];
 
+// What the widget loaded: whether the guardian has children at all, and the first child's meals
+// for today keyed by slot.
+interface LoadedPlan {
+  hasChildren: boolean;
+  entriesBySlot: Partial<Record<MealSlot, MealPlanEntry>>;
+}
+
 @Component({
   selector: 'app-mealplan-today',
   imports: [RouterLink, TranslatePipe, LoadingSpinner],
   templateUrl: './mealplan-today.html',
 })
-export class MealplanToday implements OnInit {
+export class MealplanToday {
   private readonly guardians = inject(GuardiansService);
   private readonly mealplans = inject(MealplansService);
 
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
 
-  protected readonly entriesBySlot = signal<Partial<Record<MealSlot, MealPlanEntry>>>({});
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly hasChildren = signal(true);
+  protected readonly plan = resource({ loader: () => this.loadPlan() });
 
-  ngOnInit(): void {
-    void this.loadPlan();
-  }
+  private async loadPlan(): Promise<LoadedPlan> {
+    const children = await this.guardians.listMyChildren();
+    const [firstChild] = children;
 
-  private async loadPlan(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
-
-      if (!firstChild) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-
-      const today = todayIsoDate();
-      const entries = await this.mealplans.listMealPlan(
-        { kind: 'family', childId: firstChild.id },
-        today,
-        today,
-      );
-      const bySlot: Partial<Record<MealSlot, MealPlanEntry>> = {};
-
-      for (const entry of entries) {
-        bySlot[entry.slot] = entry;
-      }
-
-      this.entriesBySlot.set(bySlot);
-    } catch {
-      this.error.set('dashboard.mealplan.loadError');
-    } finally {
-      this.loading.set(false);
+    if (!firstChild) {
+      return { hasChildren: false, entriesBySlot: {} };
     }
+
+    const today = todayIsoDate();
+    const entries = await this.mealplans.listMealPlan(
+      { kind: 'family', childId: firstChild.id },
+      today,
+      today,
+    );
+    const entriesBySlot: Partial<Record<MealSlot, MealPlanEntry>> = {};
+
+    for (const entry of entries) {
+      entriesBySlot[entry.slot] = entry;
+    }
+
+    return { hasChildren: true, entriesBySlot };
   }
 }

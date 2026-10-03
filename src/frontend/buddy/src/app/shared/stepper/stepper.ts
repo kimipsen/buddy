@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 export class Stepper {
   readonly value = input.required<number>();
   readonly min = input(1);
-  readonly max = input<number | null>(null);
+  readonly max = input(Infinity);
   readonly step = input(1);
   readonly disabled = input(false);
   readonly ariaLabel = input('');
@@ -27,8 +27,7 @@ export class Stepper {
   }
 
   protected canIncrement(): boolean {
-    const max = this.max();
-    return !this.disabled() && (max === null || this.value() + this.step() <= max);
+    return !this.disabled() && this.value() + this.step() <= this.max();
   }
 
   protected decrement(): void {
@@ -49,8 +48,7 @@ export class Stepper {
       return;
     }
 
-    const max = this.max();
-    const clamped = Math.min(max ?? Infinity, Math.max(this.min(), raw));
+    const clamped = Math.min(this.max(), Math.max(this.min(), raw));
     this.valueChange.emit(clamped);
   }
 }

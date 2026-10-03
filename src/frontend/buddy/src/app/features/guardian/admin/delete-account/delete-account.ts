@@ -12,6 +12,7 @@ import {
 import { AuthService } from '../../../../core/auth.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { UsersService } from '../../../../core/users.service';
+import { createAction } from '../../../../shared/action-state/action-state';
 
 @Component({
   selector: 'app-delete-account',
@@ -28,18 +29,17 @@ export class DeleteAccount {
   private readonly cancelButton = viewChild<ElementRef<HTMLButtonElement>>('cancelButton');
 
   protected readonly confirmOpen = signal(false);
-  protected readonly deleting = signal(false);
-  protected readonly error = signal<string | null>(null);
+  protected readonly deleting = createAction();
 
   protected openConfirm(): void {
-    this.error.set(null);
+    this.deleting.reset();
     this.confirmOpen.set(true);
     // Start on Cancel, the safe choice, once the dialog has rendered.
     afterNextRender(() => this.cancelButton()?.nativeElement.focus(), { injector: this.injector });
   }
 
   protected closeConfirm(): void {
-    if (this.deleting()) {
+    if (this.deleting.busy()) {
       return;
     }
 
@@ -82,15 +82,15 @@ export class DeleteAccount {
   }
 
   protected async confirmDelete(): Promise<void> {
-    this.deleting.set(true);
-    this.error.set(null);
-
-    try {
-      await this.users.deleteCurrentUser();
-      this.auth.logout();
-    } catch {
-      this.error.set('admin.deleteAccount.error');
-      this.deleting.set(false);
-    }
+    // logout() navigates away to Keycloak, so the dialog never renders the idle state that
+    // follows a successful delete.
+    await this.deleting.run(
+      true,
+      async () => {
+        await this.users.deleteCurrentUser();
+        this.auth.logout();
+      },
+      'admin.deleteAccount.error',
+    );
   }
 }

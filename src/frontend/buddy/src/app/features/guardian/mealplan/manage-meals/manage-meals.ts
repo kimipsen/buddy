@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -8,6 +8,7 @@ import {
   MealplanScope,
   MealplansService,
 } from '../../../../core/mealplans.service';
+import { createAction } from '../../../../shared/action-state/action-state';
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
@@ -36,8 +37,15 @@ export class ManageMeals {
     return scope.kind === 'group' ? scope.groupName : null;
   });
 
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  // Refreshes the shared meal library for the scope; the list itself is read from meals below. A
+  // scope change also drops an archive error left over from the previous scope.
+  protected readonly library = resource({
+    params: () => this.scope(),
+    loader: ({ params: scope }) => {
+      this.archiving.reset();
+      return this.mealplans.listMeals(scope);
+    },
+  });
 
   // Reads straight from the shared service state, so a meal created/archived from the mealplan
   // grid on the same page (or vice versa) shows up here without a manual refetch.
@@ -83,16 +91,8 @@ export class ManageMeals {
   protected readonly newMealDescription = signal('');
   protected readonly newMealIcon = signal('🍽️');
   protected readonly newMealColor = signal(DEFAULT_COLOR);
-  protected readonly creating = signal(false);
-  protected readonly createError = signal<string | null>(null);
-
-  protected readonly archivingMealId = signal<string | null>(null);
-
-  constructor() {
-    effect(() => {
-      void this.load(this.scope());
-    });
-  }
+  protected readonly creating = createAction();
+  protected readonly archiving = createAction<string>();
 
   protected previousPage(): void {
     this.currentPage.set(Math.max(this.page() - 1, 0));
@@ -111,52 +111,31 @@ export class ManageMeals {
       return;
     }
 
-    this.creating.set(true);
-    this.createError.set(null);
-
-    try {
-      await this.mealplans.createMeal(this.scope(), {
-        name,
-        description: this.newMealDescription().trim(),
-        icon,
-        color,
-      });
-      this.newMealName.set('');
-      this.newMealDescription.set('');
-      this.newMealIcon.set('🍽️');
-      this.newMealColor.set(DEFAULT_COLOR);
-      // Jump to the last page so the newly created meal (appended at the end) is visible.
-      this.currentPage.set(this.totalPages() - 1);
-    } catch {
-      this.createError.set('mealplan.manageMeals.createError');
-    } finally {
-      this.creating.set(false);
-    }
+    await this.creating.run(
+      true,
+      async () => {
+        await this.mealplans.createMeal(this.scope(), {
+          name,
+          description: this.newMealDescription().trim(),
+          icon,
+          color,
+        });
+        this.newMealName.set('');
+        this.newMealDescription.set('');
+        this.newMealIcon.set('🍽️');
+        this.newMealColor.set(DEFAULT_COLOR);
+        // Jump to the last page so the newly created meal (appended at the end) is visible.
+        this.currentPage.set(this.totalPages() - 1);
+      },
+      'mealplan.manageMeals.createError',
+    );
   }
 
   protected async archiveMeal(mealId: string): Promise<void> {
-    this.archivingMealId.set(mealId);
-    this.error.set(null);
-
-    try {
-      await this.mealplans.archiveMeal(this.scope(), mealId);
-    } catch {
-      this.error.set('mealplan.manageMeals.archiveError');
-    } finally {
-      this.archivingMealId.set(null);
-    }
-  }
-
-  private async load(scope: MealplanScope): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      await this.mealplans.listMeals(scope);
-    } catch {
-      this.error.set('mealplan.manageMeals.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    await this.archiving.run(
+      mealId,
+      () => this.mealplans.archiveMeal(this.scope(), mealId),
+      'mealplan.manageMeals.archiveError',
+    );
   }
 }

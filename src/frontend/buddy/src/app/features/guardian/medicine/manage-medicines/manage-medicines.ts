@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { todayIsoDate } from '../../../../core/date-utils';
@@ -6,11 +6,41 @@ import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MedicineSchedule, MedicinesService } from '../../../../core/medicines.service';
+import { ActionState, createAction } from '../../../../shared/action-state/action-state';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { RepeatableRow } from '../../../../shared/repeatable-row/repeatable-row';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
 
 const DEFAULT_COLOR = '#f43f5e';
+
+interface SharedGroup {
+  groupId: string;
+  groupName: string;
+}
+
+// What the page shows for the selected child: its active schedules and its group-sharing state.
+interface ChildMedicines {
+  schedules: MedicineSchedule[];
+  manageableGroups: GroupSummary[];
+  sharedGroup: SharedGroup | null;
+}
+
+const EMPTY_CHILD_MEDICINES: ChildMedicines = {
+  schedules: [],
+  manageableGroups: [],
+  sharedGroup: null,
+};
+
+// An action's state as the selected child sees it: another child's run shows as idle. Ids are the
+// child id, or `${childId}|${scheduleId}` for a stop.
+function stateForChild(
+  state: ActionState<string>,
+  childId: string | undefined,
+): ActionState<string> {
+  return state.status === 'idle' || state.id === childId || state.id.startsWith(`${childId}|`)
+    ? state
+    : { status: 'idle' };
+}
 
 function withSeconds(time: string): string {
   return time.length === 5 ? `${time}:00` : time;
@@ -25,18 +55,26 @@ function withoutSeconds(time: string): string {
   imports: [FormsModule, TranslatePipe, ColorSwatchPicker, RepeatableRow, TimeSelect],
   templateUrl: './manage-medicines.html',
 })
-export class ManageMedicines implements OnInit {
+export class ManageMedicines {
   private readonly guardians = inject(GuardiansService);
   private readonly medicines = inject(MedicinesService);
   private readonly groupsService = inject(GroupsService);
 
-  protected readonly hasChildren = signal(true);
-  protected readonly children = signal<ChildSummary[]>([]);
-  protected readonly selectedChildId = signal<string | null>(null);
+  protected readonly children = resource({ loader: () => this.guardians.listMyChildren() });
+  protected readonly childList = computed((): ChildSummary[] =>
+    this.children.hasValue() ? this.children.value() : [],
+  );
+  // The first child until the guardian picks another.
+  protected readonly selectedChildId = linkedSignal(() => this.childList()[0]?.id);
 
-  protected readonly schedules = signal<MedicineSchedule[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly childMedicines = resource({
+    params: () => this.selectedChildId(),
+    loader: ({ params: childId }) => this.loadChildMedicines(childId),
+  });
+  // Empty while loading or after a failed load, so the page still renders.
+  protected readonly loaded = computed((): ChildMedicines =>
+    this.childMedicines.hasValue() ? this.childMedicines.value() : EMPTY_CHILD_MEDICINES,
+  );
 
   protected readonly newName = signal('');
   protected readonly newDosage = signal('');
@@ -45,73 +83,59 @@ export class ManageMedicines implements OnInit {
   protected readonly newTimes = signal<string[]>(['08:00']);
   protected readonly newStartDate = signal(todayIsoDate());
   protected readonly newEndDate = signal('');
-  protected readonly creating = signal(false);
-  protected readonly createError = signal<string | null>(null);
+  protected readonly creating = createAction<string>();
+  protected readonly createState = computed(() =>
+    stateForChild(this.creating.state(), this.selectedChildId()),
+  );
 
-  protected readonly stoppingScheduleId = signal<string | null>(null);
+  protected readonly stopping = createAction<string>();
+  protected readonly stopState = computed(() =>
+    stateForChild(this.stopping.state(), this.selectedChildId()),
+  );
   protected readonly confirmingStopScheduleId = signal<string | null>(null);
 
-  protected readonly manageableGroups = signal<GroupSummary[]>([]);
-  protected readonly sharedGroupId = signal<string | null>(null);
-  protected readonly sharedGroupName = signal<string | null>(null);
   protected readonly shareTargetGroupId = signal('');
-  protected readonly sharing = signal(false);
-  protected readonly shareError = signal<string | null>(null);
-
-  ngOnInit(): void {
-    void this.loadChildren();
-  }
-
-  protected async onChildChange(childId: string): Promise<void> {
-    this.selectedChildId.set(childId);
-    await this.loadSchedules(childId);
-    await this.loadSharing(childId);
-  }
+  protected readonly sharing = createAction<string>();
+  protected readonly shareState = computed(() =>
+    stateForChild(this.sharing.state(), this.selectedChildId()),
+  );
 
   protected async shareWithGroup(): Promise<void> {
     const childId = this.selectedChildId();
     const groupId = this.shareTargetGroupId();
-    const groupName = this.manageableGroups().find((group) => group.id === groupId)?.name;
+    const groupName = this.loaded().manageableGroups.find((group) => group.id === groupId)?.name;
 
     if (!childId || !groupId || !groupName) {
       return;
     }
 
-    this.sharing.set(true);
-    this.shareError.set(null);
-
-    try {
-      await this.medicines.shareWithGroup(childId, groupId);
-      this.sharedGroupId.set(groupId);
-      this.sharedGroupName.set(groupName);
-      this.shareTargetGroupId.set('');
-    } catch {
-      this.shareError.set('medicine.manageMedicines.sharing.shareError');
-    } finally {
-      this.sharing.set(false);
-    }
+    await this.sharing.run(
+      childId,
+      async () => {
+        await this.medicines.shareWithGroup(childId, groupId);
+        this.updateChildMedicines(childId, { sharedGroup: { groupId, groupName } });
+        this.shareTargetGroupId.set('');
+      },
+      'medicine.manageMedicines.sharing.shareError',
+    );
   }
 
   protected async unshareFromGroup(): Promise<void> {
     const childId = this.selectedChildId();
-    const groupId = this.sharedGroupId();
+    const groupId = this.loaded().sharedGroup?.groupId;
 
     if (!childId || !groupId) {
       return;
     }
 
-    this.sharing.set(true);
-    this.shareError.set(null);
-
-    try {
-      await this.medicines.unshareFromGroup(childId, groupId);
-      this.sharedGroupId.set(null);
-      this.sharedGroupName.set(null);
-    } catch {
-      this.shareError.set('medicine.manageMedicines.sharing.unshareError');
-    } finally {
-      this.sharing.set(false);
-    }
+    await this.sharing.run(
+      childId,
+      async () => {
+        await this.medicines.unshareFromGroup(childId, groupId);
+        this.updateChildMedicines(childId, { sharedGroup: null });
+      },
+      'medicine.manageMedicines.sharing.unshareError',
+    );
   }
 
   protected addTimeField(): void {
@@ -139,42 +163,43 @@ export class ManageMedicines implements OnInit {
       return;
     }
 
-    this.creating.set(true);
-    this.createError.set(null);
+    await this.creating.run(
+      childId,
+      async () => {
+        await this.medicines.createSchedule(childId, {
+          name,
+          dosage,
+          icon,
+          color,
+          times: times.map(withSeconds),
+          startDate,
+          endDate: this.newEndDate().trim() || null,
+        });
+        this.newName.set('');
+        this.newDosage.set('');
+        this.newIcon.set('💊');
+        this.newColor.set(DEFAULT_COLOR);
+        this.newTimes.set(['08:00']);
+        this.newStartDate.set(todayIsoDate());
+        this.newEndDate.set('');
+        this.updateChildMedicines(childId, { schedules: await this.loadSchedules(childId) });
+      },
+      'medicine.manageMedicines.form.createError',
+    );
+  }
 
-    try {
-      await this.medicines.createSchedule(childId, {
-        name,
-        dosage,
-        icon,
-        color,
-        times: times.map(withSeconds),
-        startDate,
-        endDate: this.newEndDate().trim() || null,
-      });
-      this.newName.set('');
-      this.newDosage.set('');
-      this.newIcon.set('💊');
-      this.newColor.set(DEFAULT_COLOR);
-      this.newTimes.set(['08:00']);
-      this.newStartDate.set(todayIsoDate());
-      this.newEndDate.set('');
-      await this.loadSchedules(childId);
-    } catch {
-      this.createError.set('medicine.manageMedicines.form.createError');
-    } finally {
-      this.creating.set(false);
-    }
+  protected stopId(scheduleId: string): string {
+    return `${this.selectedChildId()}|${scheduleId}`;
   }
 
   protected requestStop(scheduleId: string): void {
-    this.error.set(null);
+    this.stopping.clearError();
     this.confirmingStopScheduleId.set(scheduleId);
   }
 
   protected cancelStop(): void {
     this.confirmingStopScheduleId.set(null);
-    this.error.set(null);
+    this.stopping.clearError();
   }
 
   protected async confirmStop(scheduleId: string): Promise<void> {
@@ -184,56 +209,48 @@ export class ManageMedicines implements OnInit {
       return;
     }
 
-    this.stoppingScheduleId.set(scheduleId);
-    this.error.set(null);
-
-    try {
-      await this.medicines.stopSchedule(childId, scheduleId);
-      this.confirmingStopScheduleId.set(null);
-      await this.loadSchedules(childId);
-    } catch {
-      this.error.set('medicine.manageMedicines.stopError');
-    } finally {
-      this.stoppingScheduleId.set(null);
-    }
+    await this.stopping.run(
+      `${childId}|${scheduleId}`,
+      async () => {
+        await this.medicines.stopSchedule(childId, scheduleId);
+        this.confirmingStopScheduleId.set(null);
+        this.updateChildMedicines(childId, { schedules: await this.loadSchedules(childId) });
+      },
+      'medicine.manageMedicines.stopError',
+    );
   }
 
   protected formatTime(time: string): string {
     return withoutSeconds(time);
   }
 
-  private async loadChildren(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  // Applies a mutation's result only if the page still shows the child it was made for, and that
+  // child's data has loaded: setting the resource mid-load would cancel the load.
+  private updateChildMedicines(childId: string, change: Partial<ChildMedicines>): void {
+    const childMedicines = this.childMedicines;
 
-    try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
-
-      if (!firstChild) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-      this.children.set(children);
-      this.selectedChildId.set(firstChild.id);
-      await this.loadSchedules(firstChild.id);
-      await this.loadSharing(firstChild.id);
-    } catch {
-      this.error.set('medicine.manageMedicines.loadError');
-    } finally {
-      this.loading.set(false);
+    if (
+      this.selectedChildId() === childId &&
+      childMedicines.hasValue() &&
+      !childMedicines.isLoading()
+    ) {
+      childMedicines.set({ ...childMedicines.value(), ...change });
     }
   }
 
-  private async loadSchedules(childId: string): Promise<void> {
-    this.schedules.set(
-      (await this.medicines.listSchedules(childId)).filter((schedule) => !schedule.isStopped),
-    );
+  private async loadChildMedicines(childId: string): Promise<ChildMedicines> {
+    const schedules = await this.loadSchedules(childId);
+    return { schedules, ...(await this.loadSharing(childId)) };
   }
 
-  private async loadSharing(childId: string): Promise<void> {
+  private async loadSchedules(childId: string): Promise<MedicineSchedule[]> {
+    return (await this.medicines.listSchedules(childId)).filter((schedule) => !schedule.isStopped);
+  }
+
+  // Best-effort: a failure shows the page as not shared, with no groups to share with.
+  private async loadSharing(
+    childId: string,
+  ): Promise<Pick<ChildMedicines, 'manageableGroups' | 'sharedGroup'>> {
     try {
       const [groups, sharedGroup] = await Promise.all([
         this.groupsService.listMyGroups(),
@@ -242,13 +259,9 @@ export class ManageMedicines implements OnInit {
 
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
       // backend's two-sided consent for ShareMedicineWithGroup.
-      this.manageableGroups.set(groups.filter((g) => g.role === 0 || g.role === 1));
-      this.sharedGroupId.set(sharedGroup?.groupId ?? null);
-      this.sharedGroupName.set(sharedGroup?.groupName ?? null);
+      return { manageableGroups: groups.filter((g) => g.role === 0 || g.role === 1), sharedGroup };
     } catch {
-      this.manageableGroups.set([]);
-      this.sharedGroupId.set(null);
-      this.sharedGroupName.set(null);
+      return { manageableGroups: [], sharedGroup: null };
     }
   }
 }

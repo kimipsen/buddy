@@ -13,10 +13,10 @@
   <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
     <app-progress-badge
       class="block"
-      [totalStars]="progress().totalStars"
-      [displayIcon]="progress().displayIcon"
-      [nextGoalThreshold]="progress().nextGoalThreshold"
-      [nextGoalIcon]="progress().nextGoalIcon"
+      [totalStars]="badge().totalStars"
+      [displayIcon]="badge().displayIcon"
+      [nextGoalThreshold]="badge().nextGoalThreshold"
+      [nextGoalIcon]="badge().nextGoalIcon"
     />
 
     <div class="flex flex-wrap gap-3">
@@ -89,7 +89,7 @@
                         [class.dark:text-slate-600]="
                           entry.rating === null || starCount > entry.rating.stars
                         "
-                        [disabled]="savingSlot() === entry.slot"
+                        [disabled]="rating.isBusy(entry.slot)"
                         [attr.aria-label]="
                           'child.mealplan.starLabel' | translate: { count: starCount }
                         "
@@ -137,7 +137,7 @@
                       <button
                         type="button"
                         class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-                        [disabled]="savingSlot() === entry.slot"
+                        [disabled]="rating.isBusy(entry.slot)"
                         (click)="saveComment(entry)"
                       >
                         {{ 'child.mealplan.save' | translate }}
@@ -185,7 +185,7 @@
                     <button
                       type="button"
                       class="rounded-2xl bg-emerald-600 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      [disabled]="savingDose.isBusy(doseKey(dose))"
                       (click)="setDoseStatus(dose, taken)"
                     >
                       {{ 'child.home.medicine.markTaken' | translate }}
@@ -193,7 +193,7 @@
                     <button
                       type="button"
                       class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
-                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      [disabled]="savingDose.isBusy(doseKey(dose))"
                       (click)="setDoseStatus(dose, skipped)"
                     >
                       {{ 'child.home.medicine.skip' | translate }}
@@ -208,7 +208,7 @@
                     <button
                       type="button"
                       class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
-                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      [disabled]="savingDose.isBusy(doseKey(dose))"
                       (click)="setDoseStatus(dose, pending)"
                     >
                       {{ 'child.home.medicine.undo' | translate }}
@@ -223,7 +223,7 @@
                     <button
                       type="button"
                       class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
-                      [disabled]="savingDoseKey() === doseKey(dose)"
+                      [disabled]="savingDose.isBusy(doseKey(dose))"
                       (click)="setDoseStatus(dose, pending)"
                     >
                       {{ 'child.home.medicine.undo' | translate }}
@@ -266,7 +266,7 @@
                           [class.text-white]="subtask.isCompleted"
                           [class.border-slate-300]="!subtask.isCompleted"
                           [class.dark:border-slate-600]="!subtask.isCompleted"
-                          [disabled]="savingTaskId() === keyFor(subtask)"
+                          [disabled]="savingTask.isBusy(keyFor(subtask))"
                           [attr.aria-label]="
                             (subtask.isCompleted
                               ? 'child.home.tasks.markNotDone'
@@ -304,7 +304,7 @@
                     [class.text-white]="task.isCompleted"
                     [class.border-slate-300]="!task.isCompleted"
                     [class.dark:border-slate-600]="!task.isCompleted"
-                    [disabled]="savingTaskId() === keyFor(task)"
+                    [disabled]="savingTask.isBusy(keyFor(task))"
                     [attr.aria-label]="
                       (task.isCompleted
                         ? 'child.home.tasks.markNotDone'

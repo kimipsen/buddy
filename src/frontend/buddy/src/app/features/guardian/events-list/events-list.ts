@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, resource, signal } from '@angular/core';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { UserEventsService } from '../../../core/user-events.service';
@@ -31,50 +31,40 @@ const EVENTS_PAGE_SIZE = 5;
   ],
   templateUrl: './events-list.html',
 })
-export class EventsList implements OnInit {
+export class EventsList {
   private readonly userEvents = inject(UserEventsService);
 
   // Cursor used to fetch each page already visited, keyed by page index (page 0 has no cursor).
   private readonly pageCursors: (string | null)[] = [null];
-  private currentPageIndex = 0;
+  private readonly pageIndex = signal(0);
 
-  protected readonly events = signal<TypedUserEvent[]>([]);
-  protected readonly eventsLoading = signal(true);
-  protected readonly eventsError = signal<string | null>(null);
-  protected readonly hasPreviousPage = signal(false);
-  protected readonly hasNextPage = signal(false);
-
-  ngOnInit(): void {
-    void this.loadPage(0);
-  }
+  protected readonly page = resource({
+    params: () => this.pageIndex(),
+    loader: ({ params }) => this.loadPage(params),
+  });
 
   protected previousPage(): void {
-    void this.loadPage(this.currentPageIndex - 1);
+    this.pageIndex.update((index) => index - 1);
   }
 
   protected nextPage(): void {
-    void this.loadPage(this.currentPageIndex + 1);
+    this.pageIndex.update((index) => index + 1);
   }
 
-  private async loadPage(pageIndex: number): Promise<void> {
-    this.eventsLoading.set(true);
-    this.eventsError.set(null);
+  private async loadPage(
+    pageIndex: number,
+  ): Promise<{ events: TypedUserEvent[]; hasPreviousPage: boolean; hasNextPage: boolean }> {
+    const page = await this.userEvents.listCurrentUserEvents(
+      this.pageCursors[pageIndex] ?? null,
+      EVENTS_PAGE_SIZE,
+    );
 
-    try {
-      const page = await this.userEvents.listCurrentUserEvents(
-        this.pageCursors[pageIndex] ?? null,
-        EVENTS_PAGE_SIZE,
-      );
+    this.pageCursors[pageIndex + 1] = page.nextCursor;
 
-      this.currentPageIndex = pageIndex;
-      this.pageCursors[pageIndex + 1] = page.nextCursor;
-      this.events.set(page.items.map(toTypedUserEvent));
-      this.hasPreviousPage.set(pageIndex > 0);
-      this.hasNextPage.set(page.nextCursor !== null);
-    } catch {
-      this.eventsError.set('events.list.loadError');
-    } finally {
-      this.eventsLoading.set(false);
-    }
+    return {
+      events: page.items.map(toTypedUserEvent),
+      hasPreviousPage: pageIndex > 0,
+      hasNextPage: page.nextCursor !== null,
+    };
   }
 }

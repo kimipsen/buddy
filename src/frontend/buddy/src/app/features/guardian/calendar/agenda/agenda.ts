@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { firstAndLast } from '../../../../core/array-utils';
@@ -37,6 +37,7 @@ import {
 import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.service';
 import { UsersService } from '../../../../core/users.service';
 import { UserDatePipe } from '../../../../core/user-date.pipe';
+import { createAction } from '../../../../shared/action-state/action-state';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 import {
@@ -66,6 +67,17 @@ export interface AgendaDay {
 }
 
 export type ViewMode = 'day' | 'workweek' | 'week' | 'month';
+
+// The create form's Repeat choice: 'none' posts no recurrence rule at all.
+export type RepeatChoice = RecurrenceFrequency | 'none';
+
+// What one load of the visible range returns: the guardian's calendars and the range's occurrences.
+interface LoadedWeek {
+  myCalendars: CalendarSummary[];
+  occurrences: CalendarOccurrence[];
+}
+
+const NOTHING_LOADED: LoadedWeek = { myCalendars: [], occurrences: [] };
 
 const WORKWEEK_DAYS = 5;
 
@@ -141,7 +153,7 @@ function formatDuration(totalMinutes: number): string {
   ],
   templateUrl: './agenda.html',
 })
-export class CalendarAgenda implements OnInit {
+export class CalendarAgenda {
   private readonly calendars = inject(CalendarsService);
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
@@ -163,7 +175,7 @@ export class CalendarAgenda implements OnInit {
 
   // The rendered day list for Day/Work week/Week, and the full month grid (including
   // leading/trailing days from adjacent months) for Month -- also the sole source of the fetch
-  // range in loadWeek() below, which just reads the first/last date here regardless of mode.
+  // range in `range` below, which just reads the first/last date here regardless of mode.
   protected readonly days = computed(() => {
     const anchor = this.anchorDate();
     const locale = this.translation.language();
@@ -239,18 +251,41 @@ export class CalendarAgenda implements OnInit {
       })[this.viewMode()],
   );
 
-  protected readonly myCalendars = signal<CalendarSummary[]>([]);
+  // The fetched date range. Compared by value so relabelling days() (a language switch) doesn't
+  // refetch the same range.
+  private readonly range = computed(
+    () => {
+      const [first, last] = firstAndLast(this.days());
+      return { from: first.date, to: last.date };
+    },
+    { equal: (a, b) => a.from === b.from && a.to === b.to },
+  );
+
+  protected readonly week = resource({
+    params: () => this.range(),
+    loader: ({ params }) => this.loadWeek(params.from, params.to),
+  });
+
+  // What the agenda renders: the last range that loaded, kept through a later load or a failed one
+  // (so the create form doesn't vanish while navigating), and patched locally after a task toggle
+  // or a delete.
+  private readonly shown = linkedSignal<LoadedWeek | undefined, LoadedWeek>({
+    source: () => (this.week.hasValue() ? this.week.value() : undefined),
+    computation: (loaded, previous) => loaded ?? previous?.value ?? NOTHING_LOADED,
+  });
+
+  protected readonly myCalendars = computed(() => this.shown().myCalendars);
   protected readonly eligibleCalendars = computed<CalendarSummary[]>(() =>
     this.myCalendars().filter((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE),
   );
 
-  protected readonly occurrences = signal<CalendarOccurrence[]>([]);
+  protected readonly occurrences = computed(() => this.shown().occurrences);
   protected readonly hiddenCalendarIds = signal<Set<string>>(new Set());
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly savingTaskId = signal<string | null>(null);
+  // Keyed by occurrenceKey; its error shows above the agenda list.
+  protected readonly savingTask = createAction<string>();
   protected readonly confirmingDeleteItemId = signal<string | null>(null);
-  protected readonly deletingItemId = signal<string | null>(null);
+  // Keyed by itemId; its error shows above the agenda list.
+  protected readonly deleting = createAction<string>();
 
   protected readonly editingItemId = signal<string | null>(null);
   protected readonly editTitle = signal('');
@@ -264,8 +299,7 @@ export class CalendarAgenda implements OnInit {
   protected readonly editDueTime = signal('');
   protected readonly editIsAllDay = signal(false);
   protected readonly editingKind = signal<CalendarItemKind>(EVENT_KIND);
-  protected readonly saving = signal(false);
-  protected readonly editError = signal<string | null>(null);
+  protected readonly savingEdit = createAction<string>();
 
   protected readonly canSubmitEdit = computed(() => {
     if (!this.editTitle().trim() || !this.editColor().trim()) {
@@ -307,7 +341,15 @@ export class CalendarAgenda implements OnInit {
     return this.days().some((day) => (byDate[day.date] ?? []).length > 0);
   });
 
-  protected readonly newCalendarId = signal('');
+  // Defaults to the first calendar the guardian can contribute to, once one has loaded; a pick
+  // (or that default) is kept across later loads.
+  protected readonly newCalendarId = linkedSignal<CalendarSummary[], string>({
+    source: this.eligibleCalendars,
+    computation: (eligible, previous) => {
+      const picked = previous?.value ?? '';
+      return picked !== '' ? picked : (eligible[0]?.id ?? '');
+    },
+  });
   protected readonly newKind = signal<CalendarItemKind>(EVENT_KIND);
   protected readonly newTitle = signal('');
   // Empty means "inherit the selected calendar's icon" -- see calendarIconFor().
@@ -320,12 +362,11 @@ export class CalendarAgenda implements OnInit {
   protected readonly newDueDate = signal(todayIsoDate());
   protected readonly newDueTime = signal('09:00');
   protected readonly newIsAllDay = signal(false);
-  protected readonly newRepeat = signal<RecurrenceFrequency | null>(null);
+  protected readonly newRepeat = signal<RepeatChoice>('none');
   protected readonly newIntervalCount = signal(1);
   protected readonly newUntil = signal('');
   protected readonly newAssignedTo = signal('');
-  protected readonly creating = signal(false);
-  protected readonly createError = signal<string | null>(null);
+  protected readonly creating = createAction();
 
   // Only meaningful when newKind() === TASK_KIND -- 'template' swaps the free-form title/icon/
   // color entry for a TaskPicker over the selected assignee's TaskLibrary and posts through
@@ -340,14 +381,14 @@ export class CalendarAgenda implements OnInit {
     this.taskLibrary.templates().filter((template) => !template.isArchived),
   );
 
-  protected readonly selectedTaskTemplate = computed(
-    () => this.taskTemplates().find((template) => template.id === this.newTaskTemplateId()) ?? null,
+  protected readonly selectedTaskTemplate = computed(() =>
+    this.taskTemplates().find((template) => template.id === this.newTaskTemplateId()),
   );
 
   protected readonly assignableMembers = signal<AssignableMember[]>([]);
   // Used only to tell whether the selected assignee is one of the guardian's own children (and
   // if so, which childId) -- AssignableMember carries no child/guardian discriminator of its own.
-  private readonly children = signal<ChildSummary[]>([]);
+  private readonly children = resource({ loader: () => this.loadChildren() });
   // Merged across every calendar the guardian has assigned members for, keyed by userId -- used to
   // label an occurrence's assignee in the agenda list, not just the picker on the create form.
   private readonly memberNamesById = signal<Record<string, string>>({});
@@ -368,15 +409,6 @@ export class CalendarAgenda implements OnInit {
 
   constructor() {
     effect(() => {
-      // Read anchorDate()/viewMode() here (not just inside loadWeek()) so the effect re-runs
-      // whenever the visible range changes, in either dimension -- same pattern as
-      // assign-mealplan.ts.
-      this.anchorDate();
-      this.viewMode();
-      void this.loadWeek();
-    });
-
-    effect(() => {
       // The assignable set is per-calendar (group membership differs by calendar), so a previous
       // selection may no longer be valid once the calendar changes -- clear it here rather than
       // in resetForm(), which only runs after a successful submit.
@@ -392,7 +424,9 @@ export class CalendarAgenda implements OnInit {
       // -- scheduleTaskFromTemplate falls back to the caller (this guardian) as the owning pivot
       // when unassigned, and guardians never own templates themselves -- so those cases clear the
       // list instead of leaving the previous assignee's templates showing.
-      const child = this.children().find((candidate) => candidate.id === this.newAssignedTo());
+      const child = (this.children.value() ?? []).find(
+        (candidate) => candidate.id === this.newAssignedTo(),
+      );
 
       if (child) {
         void this.taskLibrary.listTaskTemplates(child.id);
@@ -400,10 +434,6 @@ export class CalendarAgenda implements OnInit {
         this.taskLibrary.clearTemplates();
       }
     });
-  }
-
-  ngOnInit(): void {
-    void this.loadChildren();
   }
 
   protected formatDuration(totalMinutes: number): string {
@@ -417,6 +447,7 @@ export class CalendarAgenda implements OnInit {
   }
 
   protected setViewMode(mode: ViewMode): void {
+    this.clearListErrors();
     this.viewMode.set(mode);
   }
 
@@ -430,6 +461,7 @@ export class CalendarAgenda implements OnInit {
   }
 
   protected goToToday(): void {
+    this.clearListErrors();
     this.anchorDate.set(todayIsoDate());
   }
 
@@ -442,6 +474,8 @@ export class CalendarAgenda implements OnInit {
   }
 
   private shiftPeriod(direction: 1 | -1): void {
+    this.clearListErrors();
+
     switch (this.viewMode()) {
       case 'day':
         this.anchorDate.set(addDaysIso(this.anchorDate(), direction));
@@ -485,6 +519,7 @@ export class CalendarAgenda implements OnInit {
   // Month view is overview/navigation only (see the "Rendering" section in docs/frontend/analysis/
   // guardian-full-calendar-views.md) -- picking a day there always drills into Day view for it.
   protected onMonthDaySelected(date: string): void {
+    this.clearListErrors();
     this.anchorDate.set(date);
     this.viewMode.set('day');
   }
@@ -562,31 +597,30 @@ export class CalendarAgenda implements OnInit {
 
     const date = toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId());
     const key = occurrenceKey(occurrence);
+    const range = this.range();
 
-    this.savingTaskId.set(key);
-
-    try {
-      await this.calendars.setTaskCompletion(
-        occurrence.calendarId,
-        occurrence.itemId,
-        date,
-        isCompleted,
-        occurrence.routine?.subtaskId ?? null,
-      );
-      this.occurrences.update((current) =>
-        current.map((existing) =>
-          occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
-        ),
-      );
-    } catch {
-      this.error.set('calendar.agenda.taskUpdateError');
-    } finally {
-      this.savingTaskId.set(null);
-    }
+    await this.savingTask.run(
+      key,
+      async () => {
+        await this.calendars.setTaskCompletion(
+          occurrence.calendarId,
+          occurrence.itemId,
+          date,
+          isCompleted,
+          occurrence.routine?.subtaskId ?? null,
+        );
+        this.patchOccurrences(range, (occurrences) =>
+          occurrences.map((existing) =>
+            occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
+          ),
+        );
+      },
+      'calendar.agenda.taskUpdateError',
+    );
   }
 
   protected requestDeleteItem(itemId: string): void {
-    this.error.set(null);
+    this.clearListErrors();
     this.editingItemId.set(null);
     this.confirmingDeleteItemId.set(itemId);
   }
@@ -601,26 +635,26 @@ export class CalendarAgenda implements OnInit {
   protected async confirmDeleteItem(
     occurrence: Pick<CalendarOccurrence, 'itemId' | 'calendarId'>,
   ): Promise<void> {
-    this.deletingItemId.set(occurrence.itemId);
-    this.error.set(null);
+    this.clearListErrors();
+    const range = this.range();
 
-    try {
-      await this.calendars.deleteItem(occurrence.calendarId, occurrence.itemId);
-      this.confirmingDeleteItemId.set(null);
-      this.occurrences.update((current) =>
-        current.filter((existing) => existing.itemId !== occurrence.itemId),
-      );
-    } catch {
-      this.error.set('calendar.agenda.delete.error');
-    } finally {
-      this.deletingItemId.set(null);
-    }
+    await this.deleting.run(
+      occurrence.itemId,
+      async () => {
+        await this.calendars.deleteItem(occurrence.calendarId, occurrence.itemId);
+        this.confirmingDeleteItemId.set(null);
+        this.patchOccurrences(range, (occurrences) =>
+          occurrences.filter((existing) => existing.itemId !== occurrence.itemId),
+        );
+      },
+      'calendar.agenda.delete.error',
+    );
   }
 
   protected startEditItem(occurrence: CalendarOccurrence): void {
-    this.error.set(null);
+    this.clearListErrors();
     this.confirmingDeleteItemId.set(null);
-    this.editError.set(null);
+    this.savingEdit.clearError();
     this.editingItemId.set(occurrence.itemId);
     this.editingKind.set(occurrence.kind);
     this.editTitle.set(occurrence.title);
@@ -666,40 +700,37 @@ export class CalendarAgenda implements OnInit {
     const color = this.editColor().trim();
     const isAllDay = this.editIsAllDay();
 
-    this.saving.set(true);
-    this.editError.set(null);
-
     // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
     const startTime = isAllDay ? '00:00' : this.editStartTime();
     const endTime = isAllDay ? '00:00' : this.editEndTime();
     const endDate = isAllDay ? addDaysIso(this.editEndDate(), 1) : this.editEndDate();
     const dueTime = isAllDay ? '00:00' : this.editDueTime();
 
-    try {
-      await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, {
-        title,
-        icon: icon || null,
-        color,
-      });
-      await this.calendars.rescheduleItem(occurrence.calendarId, occurrence.itemId, {
-        schedule:
-          kind === EVENT_KIND
-            ? {
-                kind: EVENT_KIND,
-                startsAt: toDatePart(this.editStartDate(), startTime),
-                endsAt: toDatePart(endDate, endTime),
-                isAllDay,
-              }
-            : { kind: TASK_KIND, dueDate: toDatePart(this.editDueDate(), dueTime), isAllDay },
-      });
+    await this.savingEdit.run(
+      occurrence.itemId,
+      async () => {
+        await this.calendars.updateItemDetails(occurrence.calendarId, occurrence.itemId, {
+          title,
+          icon: icon || null,
+          color,
+        });
+        await this.calendars.rescheduleItem(occurrence.calendarId, occurrence.itemId, {
+          schedule:
+            kind === EVENT_KIND
+              ? {
+                  kind: EVENT_KIND,
+                  startsAt: toDatePart(this.editStartDate(), startTime),
+                  endsAt: toDatePart(endDate, endTime),
+                  isAllDay,
+                }
+              : { kind: TASK_KIND, dueDate: toDatePart(this.editDueDate(), dueTime), isAllDay },
+        });
 
-      this.editingItemId.set(null);
-      await this.loadWeek();
-    } catch {
-      this.editError.set('calendar.agenda.edit.error');
-    } finally {
-      this.saving.set(false);
-    }
+        this.editingItemId.set(null);
+        this.reloadWeek();
+      },
+      'calendar.agenda.edit.error',
+    );
   }
 
   // 'manual' is the default and only ever needs clearing newTaskTemplateId (so a leftover pick
@@ -739,23 +770,20 @@ export class CalendarAgenda implements OnInit {
     const calendarId = this.newCalendarId();
     const kind = this.newKind();
 
-    this.creating.set(true);
-    this.createError.set(null);
+    await this.creating.run(
+      true,
+      async () => {
+        if (kind === TASK_KIND && this.newTaskSource() === 'template') {
+          await this.createTaskFromTemplate(calendarId);
+        } else {
+          await this.createManualItem(calendarId, kind);
+        }
 
-    try {
-      if (kind === TASK_KIND && this.newTaskSource() === 'template') {
-        await this.createTaskFromTemplate(calendarId);
-      } else {
-        await this.createManualItem(calendarId, kind);
-      }
-
-      this.resetForm();
-      await this.loadWeek();
-    } catch {
-      this.createError.set('calendar.agenda.form.createError');
-    } finally {
-      this.creating.set(false);
-    }
+        this.resetForm();
+        this.reloadWeek();
+      },
+      'calendar.agenda.form.createError',
+    );
   }
 
   private async createTaskFromTemplate(calendarId: string): Promise<void> {
@@ -805,7 +833,7 @@ export class CalendarAgenda implements OnInit {
   private buildRecurrence(): RecurrenceRuleRequest | null {
     const frequency = this.newRepeat();
 
-    if (frequency === null) {
+    if (frequency === 'none') {
       return null;
     }
 
@@ -827,7 +855,7 @@ export class CalendarAgenda implements OnInit {
     this.newDueDate.set(todayIsoDate());
     this.newDueTime.set('09:00');
     this.newIsAllDay.set(false);
-    this.newRepeat.set(null);
+    this.newRepeat.set('none');
     this.newIntervalCount.set(1);
     this.newUntil.set('');
     this.newAssignedTo.set('');
@@ -835,43 +863,47 @@ export class CalendarAgenda implements OnInit {
     this.newTaskTemplateId.set('');
   }
 
-  private async loadChildren(): Promise<void> {
+  // A fresh load also replaces whatever the last task toggle or delete reported.
+  private clearListErrors(): void {
+    this.savingTask.clearError();
+    this.deleting.clearError();
+  }
+
+  // Applies a mutation's result to the shown occurrences, unless the visible range changed while
+  // the request ran -- that range's own load then supplies fresh data instead. `range` keeps its
+  // identity while the dates are unchanged (its equal function), so identity is the check.
+  private patchOccurrences(
+    range: ReturnType<typeof this.range>,
+    patch: (occurrences: CalendarOccurrence[]) => CalendarOccurrence[],
+  ): void {
+    if (this.range() !== range) {
+      return;
+    }
+
+    this.shown.update((current) => ({ ...current, occurrences: patch(current.occurrences) }));
+  }
+
+  private reloadWeek(): void {
+    this.clearListErrors();
+    this.week.reload();
+  }
+
+  private async loadChildren(): Promise<ChildSummary[]> {
     try {
-      this.children.set(await this.guardians.listMyChildren());
+      return await this.guardians.listMyChildren();
     } catch {
       // The template picker is a nice-to-have on the create form -- if this fails, manual task
       // creation still works, just without template-based scheduling as an option.
+      return [];
     }
   }
 
-  private async loadWeek(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  private async loadWeek(from: string, to: string): Promise<LoadedWeek> {
+    const [myCalendars, occurrences] = await Promise.all([
+      this.calendars.listMyCalendars(),
+      this.calendars.listOccurrencesInRange(from, to),
+    ]);
 
-    try {
-      const [first, last] = firstAndLast(this.days());
-      const from = first.date;
-      const to = last.date;
-
-      const [myCalendars, occurrences] = await Promise.all([
-        this.calendars.listMyCalendars(),
-        this.calendars.listOccurrencesInRange(from, to),
-      ]);
-
-      this.myCalendars.set(myCalendars);
-      this.occurrences.set(occurrences);
-
-      if (!this.newCalendarId()) {
-        const firstEligible = myCalendars.find((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE);
-
-        if (firstEligible) {
-          this.newCalendarId.set(firstEligible.id);
-        }
-      }
-    } catch {
-      this.error.set('calendar.agenda.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    return { myCalendars, occurrences };
   }
 }

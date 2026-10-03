@@ -1,20 +1,18 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { CalendarRole } from '../../../../core/calendars.service';
 import {
-  CalendarPermissionPolicy,
-  GroupInvite,
   GroupMember,
   GroupRole,
   GroupRoleName,
   GroupSummary,
   GroupsService,
-  MealplanPermissionPolicy,
 } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealplanAccessTier } from '../../../../core/mealplans.service';
+import { createAction } from '../../../../shared/action-state/action-state';
 
 const ROLE_LABELS: Record<GroupRole, string> = {
   0: 'admin.manageGroups.roles.owner',
@@ -59,7 +57,7 @@ const MEALPLAN_TIERS: GroupMealplanTier[] = [0, 3, 2];
   imports: [FormsModule, TranslatePipe],
   templateUrl: './manage-groups.html',
 })
-export class ManageGroups implements OnInit {
+export class ManageGroups {
   private readonly groups = inject(GroupsService);
   private readonly guardians = inject(GuardiansService);
 
@@ -71,60 +69,67 @@ export class ManageGroups implements OnInit {
   protected readonly mealplanTierLabels = MEALPLAN_TIER_LABELS;
   protected readonly mealplanTiers = MEALPLAN_TIERS;
 
-  protected readonly items = signal<GroupSummary[]>([]);
-  // Stryker disable next-line BooleanLiteral: ngOnInit -> loadGroups sets loading to true before the first render
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly items = resource({ loader: () => this.groups.listMyGroups() });
 
   protected readonly newGroupName = signal('');
-  protected readonly creating = signal(false);
-  protected readonly createError = signal<string | null>(null);
+  protected readonly creating = createAction();
 
   protected readonly expandedGroupId = signal<string | null>(null);
-  protected readonly invitesByGroupId = signal<Record<string, GroupInvite[]>>({});
-  protected readonly invitesLoading = signal<string | null>(null);
-  protected readonly invitesError = signal<string | null>(null);
+  // The pending invites of the group whose invite panel is open; idle while none is.
+  protected readonly invites = resource({
+    params: () => this.expandedGroupId() ?? undefined,
+    loader: ({ params: groupId }) => this.groups.listInvites(groupId),
+  });
 
   // Stryker disable next-line StringLiteral: toggleInvitePanel resets it before the invite form is ever rendered
   protected readonly inviteEmail = signal('');
   protected readonly inviteRole = signal<GroupRole>(2);
-  protected readonly inviting = signal(false);
-  protected readonly inviteError = signal<string | null>(null);
+  protected readonly inviting = createAction();
+  protected readonly revokingInvite = createAction<string>();
 
-  protected readonly revokingInviteId = signal<string | null>(null);
+  // The children panel simply shows no candidates if this fails -- manage-children already
+  // surfaces a dedicated load error for the guardian's own children list.
+  protected readonly myChildren = resource({
+    loader: () => this.guardians.listMyChildren().catch((): ChildSummary[] => []),
+  });
 
-  protected readonly myChildren = signal<ChildSummary[]>([]);
-  protected readonly expandedChildrenGroupId = signal<string | null>(null);
+  // The members panel and the add-child panel each load the members of the group they're open on.
   protected readonly expandedMembersGroupId = signal<string | null>(null);
-  protected readonly membersByGroupId = signal<Record<string, GroupMember[]>>({});
-  protected readonly membersLoading = signal<string | null>(null);
-  protected readonly membersError = signal<string | null>(null);
+  protected readonly members = resource({
+    params: () => this.expandedMembersGroupId() ?? undefined,
+    loader: ({ params: groupId }) => this.loadMembers(groupId),
+  });
+
+  protected readonly expandedChildrenGroupId = signal<string | null>(null);
+  protected readonly childrenPanelMembers = resource({
+    params: () => this.expandedChildrenGroupId() ?? undefined,
+    loader: ({ params: groupId }) => this.loadMembers(groupId),
+  });
 
   // Stryker disable next-line StringLiteral: toggleChildrenPanel resets it before the add-child form is ever rendered
   protected readonly selectedChildId = signal('');
-  protected readonly addingChild = signal(false);
-  protected readonly addChildError = signal<string | null>(null);
+  protected readonly addingChild = createAction();
 
+  // The loaded policy doubles as the draft the selects edit until it is saved.
   protected readonly expandedPolicyGroupId = signal<string | null>(null);
-  protected readonly policyDraft = signal<CalendarPermissionPolicy | null>(null);
-  // Stryker disable next-line BooleanLiteral: only read inside the policy panel, and opening it runs loadPolicy, which sets it first
-  protected readonly policyLoading = signal(false);
-  protected readonly policyLoadError = signal<string | null>(null);
-  protected readonly policySaving = signal(false);
-  protected readonly policySaveError = signal<string | null>(null);
+  protected readonly policyDraft = resource({
+    params: () => this.expandedPolicyGroupId() ?? undefined,
+    loader: async ({ params: groupId }) => {
+      const group = await this.groups.getGroup(groupId);
+      return { ...group.calendarPermissionPolicy };
+    },
+  });
+  protected readonly policySaving = createAction();
 
   protected readonly expandedMealplanPolicyGroupId = signal<string | null>(null);
-  protected readonly mealplanPolicyDraft = signal<MealplanPermissionPolicy | null>(null);
-  // Stryker disable next-line BooleanLiteral: only read inside the mealplan policy panel, and opening it runs loadMealplanPolicy, which sets it first
-  protected readonly mealplanPolicyLoading = signal(false);
-  protected readonly mealplanPolicyLoadError = signal<string | null>(null);
-  protected readonly mealplanPolicySaving = signal(false);
-  protected readonly mealplanPolicySaveError = signal<string | null>(null);
-
-  ngOnInit(): void {
-    void this.loadGroups();
-    void this.loadMyChildren();
-  }
+  protected readonly mealplanPolicyDraft = resource({
+    params: () => this.expandedMealplanPolicyGroupId() ?? undefined,
+    loader: async ({ params: groupId }) => {
+      const group = await this.groups.getGroup(groupId);
+      return { ...group.mealplanPermissionPolicy };
+    },
+  });
+  protected readonly mealplanPolicySaving = createAction();
 
   protected canManage(group: GroupSummary): boolean {
     return group.role === 0 || group.role === 1;
@@ -137,18 +142,15 @@ export class ManageGroups implements OnInit {
       return;
     }
 
-    this.creating.set(true);
-    this.createError.set(null);
-
-    try {
-      await this.groups.createGroup({ name });
-      this.newGroupName.set('');
-      await this.loadGroups();
-    } catch {
-      this.createError.set('admin.manageGroups.createError');
-    } finally {
-      this.creating.set(false);
-    }
+    await this.creating.run(
+      true,
+      async () => {
+        await this.groups.createGroup({ name });
+        this.newGroupName.set('');
+        this.items.reload();
+      },
+      'admin.manageGroups.createError',
+    );
   }
 
   protected toggleInvitePanel(groupId: string): void {
@@ -160,8 +162,8 @@ export class ManageGroups implements OnInit {
     this.expandedGroupId.set(groupId);
     this.inviteEmail.set('');
     this.inviteRole.set(2);
-    this.inviteError.set(null);
-    void this.loadInvites(groupId);
+    this.inviting.clearError();
+    this.revokingInvite.clearError();
   }
 
   protected async sendInvite(groupId: string): Promise<void> {
@@ -171,36 +173,27 @@ export class ManageGroups implements OnInit {
       return;
     }
 
-    this.inviting.set(true);
-    this.inviteError.set(null);
-
-    try {
-      await this.groups.inviteToGroup(groupId, { email, role: this.inviteRole() });
-      this.inviteEmail.set('');
-      await this.loadInvites(groupId);
-    } catch {
-      this.inviteError.set('admin.manageGroups.invite.sendError');
-    } finally {
-      this.inviting.set(false);
-    }
+    await this.inviting.run(
+      true,
+      async () => {
+        await this.groups.inviteToGroup(groupId, { email, role: this.inviteRole() });
+        this.inviteEmail.set('');
+        this.revokingInvite.clearError();
+        this.invites.reload();
+      },
+      'admin.manageGroups.invite.sendError',
+    );
   }
 
   protected async revokeInvite(groupId: string, inviteId: string): Promise<void> {
-    this.revokingInviteId.set(inviteId);
-    this.invitesError.set(null);
-
-    try {
-      await this.groups.revokeInvite(groupId, inviteId);
-      await this.loadInvites(groupId);
-    } catch {
-      this.invitesError.set('admin.manageGroups.invite.cancelError');
-    } finally {
-      this.revokingInviteId.set(null);
-    }
-  }
-
-  protected invitesFor(groupId: string): GroupInvite[] {
-    return this.invitesByGroupId()[groupId] ?? [];
+    await this.revokingInvite.run(
+      inviteId,
+      async () => {
+        await this.groups.revokeInvite(groupId, inviteId);
+        this.invites.reload();
+      },
+      'admin.manageGroups.invite.cancelError',
+    );
   }
 
   protected toggleChildrenPanel(groupId: string): void {
@@ -211,25 +204,20 @@ export class ManageGroups implements OnInit {
 
     this.expandedChildrenGroupId.set(groupId);
     this.selectedChildId.set('');
-    this.addChildError.set(null);
-    void this.loadMembers(groupId);
+    this.addingChild.clearError();
   }
 
-  protected availableChildrenFor(groupId: string): ChildSummary[] {
-    const memberIds = new Set(this.membersFor(groupId).map((m) => m.userId));
-    return this.myChildren().filter((child) => !memberIds.has(child.id));
+  protected availableChildren(members: GroupMember[]): ChildSummary[] {
+    const memberIds = new Set(members.map((m) => m.userId));
+    return (this.myChildren.value() ?? []).filter((child) => !memberIds.has(child.id));
   }
 
-  protected membersFor(groupId: string): GroupMember[] {
-    return this.membersByGroupId()[groupId] ?? [];
+  protected guardianMembers(members: GroupMember[]): GroupMember[] {
+    return members.filter((m) => !m.isChild);
   }
 
-  protected guardianMembersFor(groupId: string): GroupMember[] {
-    return this.membersFor(groupId).filter((m) => !m.isChild);
-  }
-
-  protected childMembersFor(groupId: string): GroupMember[] {
-    return this.membersFor(groupId).filter((m) => m.isChild);
+  protected childMembers(members: GroupMember[]): GroupMember[] {
+    return members.filter((m) => m.isChild);
   }
 
   protected toggleMembersPanel(groupId: string): void {
@@ -239,7 +227,6 @@ export class ManageGroups implements OnInit {
     }
 
     this.expandedMembersGroupId.set(groupId);
-    void this.loadMembers(groupId);
   }
 
   protected async addChild(groupId: string): Promise<void> {
@@ -249,41 +236,25 @@ export class ManageGroups implements OnInit {
       return;
     }
 
-    this.addingChild.set(true);
-    this.addChildError.set(null);
+    await this.addingChild.run(
+      true,
+      async () => {
+        await this.groups.addChildToGroup(groupId, childId);
+        this.selectedChildId.set('');
+        this.childrenPanelMembers.reload();
 
-    try {
-      await this.groups.addChildToGroup(groupId, childId);
-      this.selectedChildId.set('');
-      await this.loadMembers(groupId);
-    } catch {
-      this.addChildError.set('admin.manageGroups.children.addError');
-    } finally {
-      this.addingChild.set(false);
-    }
+        // The members panel shows the new child too when it's open on the same group.
+        if (this.expandedMembersGroupId() === groupId) {
+          this.members.reload();
+        }
+      },
+      'admin.manageGroups.children.addError',
+    );
   }
 
-  private async loadMembers(groupId: string): Promise<void> {
-    this.membersLoading.set(groupId);
-    this.membersError.set(null);
-
-    try {
-      const group = await this.groups.getGroup(groupId);
-      this.membersByGroupId.update((byGroupId) => ({ ...byGroupId, [groupId]: group.members }));
-    } catch {
-      this.membersError.set('admin.manageGroups.children.loadError');
-    } finally {
-      this.membersLoading.set(null);
-    }
-  }
-
-  private async loadMyChildren(): Promise<void> {
-    try {
-      this.myChildren.set(await this.guardians.listMyChildren());
-    } catch {
-      // The children panel simply shows no candidates if this fails -- manage-children already
-      // surfaces a dedicated load error for the guardian's own children list.
-    }
+  private async loadMembers(groupId: string): Promise<GroupMember[]> {
+    const group = await this.groups.getGroup(groupId);
+    return group.members;
   }
 
   protected togglePolicyPanel(groupId: string): void {
@@ -293,51 +264,25 @@ export class ManageGroups implements OnInit {
     }
 
     this.expandedPolicyGroupId.set(groupId);
-    this.policyLoadError.set(null);
-    this.policySaveError.set(null);
-    void this.loadPolicy(groupId);
+    this.policySaving.clearError();
   }
 
   protected setDraftRole(roleKey: GroupRoleName, calendarRole: CalendarRole): void {
-    const draft = this.policyDraft();
-
-    if (!draft) {
-      return;
-    }
-
-    this.policyDraft.set({ ...draft, [roleKey]: calendarRole });
+    this.policyDraft.update((draft) => draft && { ...draft, [roleKey]: calendarRole });
   }
 
   protected async savePolicy(groupId: string): Promise<void> {
-    const draft = this.policyDraft();
-
-    if (!draft) {
+    if (!this.policyDraft.hasValue()) {
       return;
     }
 
-    this.policySaving.set(true);
-    this.policySaveError.set(null);
+    const draft = this.policyDraft.value();
 
-    try {
-      await this.groups.updateCalendarPermissionPolicy(groupId, draft);
-    } catch {
-      this.policySaveError.set('admin.manageGroups.policy.saveError');
-    } finally {
-      this.policySaving.set(false);
-    }
-  }
-
-  private async loadPolicy(groupId: string): Promise<void> {
-    this.policyLoading.set(true);
-
-    try {
-      const group = await this.groups.getGroup(groupId);
-      this.policyDraft.set({ ...group.calendarPermissionPolicy });
-    } catch {
-      this.policyLoadError.set('admin.manageGroups.policy.loadError');
-    } finally {
-      this.policyLoading.set(false);
-    }
+    await this.policySaving.run(
+      true,
+      () => this.groups.updateCalendarPermissionPolicy(groupId, draft),
+      'admin.manageGroups.policy.saveError',
+    );
   }
 
   protected toggleMealplanPolicyPanel(groupId: string): void {
@@ -347,77 +292,24 @@ export class ManageGroups implements OnInit {
     }
 
     this.expandedMealplanPolicyGroupId.set(groupId);
-    this.mealplanPolicyLoadError.set(null);
-    this.mealplanPolicySaveError.set(null);
-    void this.loadMealplanPolicy(groupId);
+    this.mealplanPolicySaving.clearError();
   }
 
   protected setMealplanDraftTier(roleKey: GroupRoleName, tier: MealplanAccessTier): void {
-    const draft = this.mealplanPolicyDraft();
-
-    if (!draft) {
-      return;
-    }
-
-    this.mealplanPolicyDraft.set({ ...draft, [roleKey]: tier });
+    this.mealplanPolicyDraft.update((draft) => draft && { ...draft, [roleKey]: tier });
   }
 
   protected async saveMealplanPolicy(groupId: string): Promise<void> {
-    const draft = this.mealplanPolicyDraft();
-
-    if (!draft) {
+    if (!this.mealplanPolicyDraft.hasValue()) {
       return;
     }
 
-    this.mealplanPolicySaving.set(true);
-    this.mealplanPolicySaveError.set(null);
+    const draft = this.mealplanPolicyDraft.value();
 
-    try {
-      await this.groups.updateMealplanPermissionPolicy(groupId, draft);
-    } catch {
-      this.mealplanPolicySaveError.set('admin.manageGroups.mealplanPolicy.saveError');
-    } finally {
-      this.mealplanPolicySaving.set(false);
-    }
-  }
-
-  private async loadMealplanPolicy(groupId: string): Promise<void> {
-    this.mealplanPolicyLoading.set(true);
-
-    try {
-      const group = await this.groups.getGroup(groupId);
-      this.mealplanPolicyDraft.set({ ...group.mealplanPermissionPolicy });
-    } catch {
-      this.mealplanPolicyLoadError.set('admin.manageGroups.mealplanPolicy.loadError');
-    } finally {
-      this.mealplanPolicyLoading.set(false);
-    }
-  }
-
-  private async loadInvites(groupId: string): Promise<void> {
-    this.invitesLoading.set(groupId);
-    this.invitesError.set(null);
-
-    try {
-      const invites = await this.groups.listInvites(groupId);
-      this.invitesByGroupId.update((byGroupId) => ({ ...byGroupId, [groupId]: invites }));
-    } catch {
-      this.invitesError.set('admin.manageGroups.invite.loadError');
-    } finally {
-      this.invitesLoading.set(null);
-    }
-  }
-
-  private async loadGroups(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      this.items.set(await this.groups.listMyGroups());
-    } catch {
-      this.error.set('admin.manageGroups.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    await this.mealplanPolicySaving.run(
+      true,
+      () => this.groups.updateMealplanPermissionPolicy(groupId, draft),
+      'admin.manageGroups.mealplanPolicy.saveError',
+    );
   }
 }

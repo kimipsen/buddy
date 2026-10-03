@@ -1,15 +1,12 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { nextWeekdayOnOrAfter, todayIsoDate } from '../../../core/date-utils';
 import { GroupSummary, GroupsService } from '../../../core/groups.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import {
-  PrintTemplate,
-  PrintTemplateSummary,
-  PrintTemplatesService,
-} from '../../../core/print-templates.service';
+import { PrintTemplate, PrintTemplatesService } from '../../../core/print-templates.service';
+import { createAction } from '../../../shared/action-state/action-state';
 import { DateSelect } from '../../../shared/date-select/date-select';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { readLastTemplateId, writeLastTemplateId } from './last-template-storage';
@@ -23,59 +20,79 @@ const PERSONAL = '';
   imports: [FormsModule, RouterLink, TranslatePipe, DateSelect, LoadingSpinner],
   templateUrl: './print.html',
 })
-export class GuardianPrint implements OnInit {
+export class GuardianPrint {
   private readonly templates = inject(PrintTemplatesService);
   private readonly groups = inject(GroupsService);
   private readonly router = inject(Router);
 
   protected readonly personal = PERSONAL;
-  protected readonly list = signal<PrintTemplateSummary[]>([]);
-  protected readonly groupList = signal<GroupSummary[]>([]);
-  protected readonly selected = signal<PrintTemplate | null>(null);
-  // What the dropdown shows. Preview/Edit use `selected`, which is cleared while a new choice
-  // loads, so they can never act on a different template than the one displayed.
-  protected readonly selectedId = signal('');
-  private latestSelect = 0;
-  protected readonly start = signal(todayIsoDate());
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+
+  // The templates to choose from and the groups a new one can belong to. Groups are best-effort:
+  // without them the owner picker just offers "Just me".
+  protected readonly page = resource({
+    loader: async () => {
+      const [list, groups] = await Promise.all([
+        this.templates.list(),
+        this.groups.listMyGroups().catch(() => [] as GroupSummary[]),
+      ]);
+      return { list, groups };
+    },
+  });
+  protected readonly list = computed(() => (this.page.hasValue() ? this.page.value().list : []));
+  protected readonly groupList = computed(() =>
+    this.page.hasValue() ? this.page.value().groups : [],
+  );
+
+  // What the dropdown shows: the remembered template, else the first. Preview/Edit use `selected`,
+  // which has no value while a new choice loads, so they can never act on a different template
+  // than the one displayed.
+  protected readonly selectedId = linkedSignal(() => {
+    const list = this.list();
+    const remembered = readLastTemplateId();
+    return (list.find((t) => t.id === remembered) ?? list[0])?.id ?? '';
+  });
+  protected readonly selected = resource({
+    params: () => {
+      const templateId = this.selectedId();
+      return templateId ? { templateId } : undefined;
+    },
+    loader: async ({ params, abortSignal }) => {
+      const template = await this.templates.get(params.templateId);
+      if (!abortSignal.aborted) {
+        writeLastTemplateId(params.templateId);
+      }
+      return template;
+    },
+  });
+  private readonly selectedTemplate = computed((): PrintTemplate | undefined =>
+    this.selected.hasValue() ? this.selected.value() : undefined,
+  );
+  // Pre-set to the selected template's default start weekday on or after today; kept as is while a
+  // new choice loads.
+  protected readonly start = linkedSignal<PrintTemplate | undefined, string>({
+    source: this.selectedTemplate,
+    computation: (template, previous) =>
+      template
+        ? nextWeekdayOnOrAfter(todayIsoDate(), template.defaultStartWeekday)
+        : (previous?.value ?? todayIsoDate()),
+  });
+  protected readonly loadFailed = computed(() => !!this.page.error() || !!this.selected.error());
 
   protected readonly newName = signal('');
   protected readonly newOwner = signal(PERSONAL);
-  protected readonly creating = signal(false);
+  protected readonly creating = createAction();
 
   protected readonly groupNames = computed(
     () => new Map(this.groupList().map((g) => [g.id, g.name])),
   );
 
-  ngOnInit(): void {
-    void this.load();
-  }
-
-  protected async select(templateId: string): Promise<void> {
-    this.error.set(null);
+  protected select(templateId: string): void {
     this.selectedId.set(templateId);
-    this.selected.set(null);
-    const request = ++this.latestSelect;
-
-    try {
-      const template = await this.templates.get(templateId);
-      if (request !== this.latestSelect) {
-        return;
-      }
-      this.selected.set(template);
-      // Pre-set to the template's default start weekday on or after today.
-      this.start.set(nextWeekdayOnOrAfter(todayIsoDate(), template.defaultStartWeekday));
-      writeLastTemplateId(templateId);
-    } catch {
-      if (request === this.latestSelect) {
-        this.error.set('print.list.loadError');
-      }
-    }
+    this.creating.clearError();
   }
 
   protected preview(): void {
-    const template = this.selected();
+    const template = this.selectedTemplate();
     if (template) {
       void this.router.navigate(['/guardian/print/sheet', template.id], {
         queryParams: { start: this.start() },
@@ -84,38 +101,14 @@ export class GuardianPrint implements OnInit {
   }
 
   protected async create(): Promise<void> {
-    this.creating.set(true);
-    this.error.set(null);
-
-    try {
-      const created = await this.templates.create(this.newName().trim(), this.newOwner() || null);
-      writeLastTemplateId(created.id);
-      await this.router.navigate(['/guardian/print/templates', created.id]);
-    } catch {
-      this.error.set('print.list.createError');
-    } finally {
-      this.creating.set(false);
-    }
-  }
-
-  private async load(): Promise<void> {
-    try {
-      const [list, groups] = await Promise.all([
-        this.templates.list(),
-        this.groups.listMyGroups().catch(() => [] as GroupSummary[]),
-      ]);
-      this.list.set(list);
-      this.groupList.set(groups);
-
-      const remembered = readLastTemplateId();
-      const initial = list.find((t) => t.id === remembered) ?? list[0];
-      if (initial) {
-        await this.select(initial.id);
-      }
-    } catch {
-      this.error.set('print.list.loadError');
-    } finally {
-      this.loading.set(false);
-    }
+    await this.creating.run(
+      true,
+      async () => {
+        const created = await this.templates.create(this.newName().trim(), this.newOwner() || null);
+        writeLastTemplateId(created.id);
+        await this.router.navigate(['/guardian/print/templates', created.id]);
+      },
+      'print.list.createError',
+    );
   }
 }

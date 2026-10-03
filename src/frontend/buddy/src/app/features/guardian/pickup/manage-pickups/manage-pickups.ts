@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, resource } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { firstAndLast } from '../../../../core/array-utils';
@@ -16,6 +16,7 @@ import {
   PickupSlot,
   PickupsService,
 } from '../../../../core/pickups.service';
+import { ActionState, createAction } from '../../../../shared/action-state/action-state';
 import { PickupCell } from '../pickup-cell/pickup-cell';
 
 const SLOT_LABELS: Record<PickupSlot, string> = {
@@ -25,6 +26,22 @@ const SLOT_LABELS: Record<PickupSlot, string> = {
 
 const SLOTS: PickupSlot[] = [0, 1];
 const DAYS_AHEAD = 7;
+
+type EntriesByKey = Partial<Record<string, PickupOccurrence>>;
+
+// What the grid shows for the selected child: who can be assigned, and the week's occurrences.
+interface ChildSchedule {
+  childGuardians: GuardianSummary[];
+  entriesByKey: EntriesByKey;
+}
+
+interface ScheduleRequest {
+  childId: string;
+  from: string;
+  to: string;
+}
+
+const EMPTY_SCHEDULE: ChildSchedule = { childGuardians: [], entriesByKey: {} };
 
 interface WeekDay {
   date: string;
@@ -49,7 +66,7 @@ function buildWeek(locale: string): WeekDay[] {
   imports: [FormsModule, PickupCell, TranslatePipe],
   templateUrl: './manage-pickups.html',
 })
-export class ManagePickups implements OnInit {
+export class ManagePickups {
   private readonly guardians = inject(GuardiansService);
   private readonly pickups = inject(PickupsService);
   private readonly translation = inject(TranslationService);
@@ -58,35 +75,69 @@ export class ManagePickups implements OnInit {
   protected readonly slotLabels = SLOT_LABELS;
   protected readonly week = computed(() => buildWeek(this.translation.language()));
 
-  protected readonly hasChildren = signal(true);
-  protected readonly children = signal<ChildSummary[]>([]);
-  protected readonly selectedChildId = signal<string | null>(null);
+  protected readonly children = resource({ loader: () => this.guardians.listMyChildren() });
+  protected readonly childList = computed((): ChildSummary[] =>
+    this.children.hasValue() ? this.children.value() : [],
+  );
+  // The first child until the guardian picks another.
+  protected readonly selectedChildId = linkedSignal(() => this.childList()[0]?.id);
 
-  protected readonly childGuardians = signal<GuardianSummary[]>([]);
   protected readonly siblings = computed((): ChildSummary[] =>
-    this.children().filter((child) => child.id !== this.selectedChildId()),
+    this.childList().filter((child) => child.id !== this.selectedChildId()),
   );
 
-  protected readonly entriesByKey = signal<Partial<Record<string, PickupOccurrence>>>({});
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly savingKey = signal<string | null>(null);
+  // Ids are `${childId}|${date}|${slot}`, so a save only ever shows against its own child.
+  protected readonly saving = createAction<string>();
+  protected readonly childSaveState = computed((): ActionState<string> => {
+    const state = this.saving.state();
+    return state.status === 'idle' || state.id.startsWith(`${this.selectedChildId()}|`)
+      ? state
+      : { status: 'idle' };
+  });
 
-  ngOnInit(): void {
-    void this.loadChildren();
-  }
+  // What the schedule is fetched for. Compared by value, so relabelling week() (a language switch)
+  // doesn't refetch; a save compares it by identity to tell whether its child and week still show.
+  private readonly request = computed(
+    (): ScheduleRequest | undefined => {
+      const childId = this.selectedChildId();
+
+      if (!childId) {
+        return undefined;
+      }
+
+      const [first, last] = firstAndLast(this.week());
+      return { childId, from: first.date, to: last.date };
+    },
+    {
+      equal: (a, b) => a?.childId === b?.childId && a?.from === b?.from && a?.to === b?.to,
+    },
+  );
+
+  // Switching child cancels the previous child's load, so a slow response can't overwrite the
+  // newer selection's data (see selectChildIfPresent in e2e/support/guardian-data.ts). It also
+  // drops a save error left over from the previous child.
+  protected readonly schedule = resource({
+    params: () => this.request(),
+    loader: ({ params }) => {
+      this.saving.clearError();
+      return this.loadSchedule(params.childId, params.from, params.to);
+    },
+  });
+  // Empty while loading or after a failed load, so the grid still renders.
+  protected readonly loaded = computed((): ChildSchedule =>
+    this.schedule.hasValue() ? this.schedule.value() : EMPTY_SCHEDULE,
+  );
 
   protected key(date: string, slot: PickupSlot): string {
     return `${date}|${slot}`;
   }
 
-  protected occurrenceFor(date: string, slot: PickupSlot): PickupOccurrence | null {
-    return this.entriesByKey()[this.key(date, slot)] ?? null;
+  protected saveId(date: string, slot: PickupSlot): string {
+    return `${this.selectedChildId()}|${this.key(date, slot)}`;
   }
 
-  protected async onChildChange(childId: string): Promise<void> {
-    this.selectedChildId.set(childId);
-    await this.loadForChild(childId);
+  protected occurrenceFor(date: string, slot: PickupSlot): PickupOccurrence | null {
+    return this.loaded().entriesByKey[this.key(date, slot)] ?? null;
   }
 
   protected async onAssign(
@@ -94,113 +145,73 @@ export class ManagePickups implements OnInit {
     slot: PickupSlot,
     request: AssignPickupRequest,
   ): Promise<void> {
-    const childId = this.selectedChildId();
+    const shown = this.request();
 
-    if (!childId) {
+    if (!shown) {
       return;
     }
 
     const key = this.key(date, slot);
-    this.savingKey.set(key);
-    this.error.set(null);
 
-    try {
-      const occurrence = await this.pickups.assignPickup(childId, date, slot, request);
-      this.entriesByKey.update((current) => ({ ...current, [key]: occurrence }));
-    } catch {
-      this.error.set('pickup.assign.updateError');
-    } finally {
-      this.savingKey.set(null);
-    }
+    await this.saving.run(
+      `${shown.childId}|${key}`,
+      async () => {
+        const occurrence = await this.pickups.assignPickup(shown.childId, date, slot, request);
+        this.updateEntries(shown, (current) => ({ ...current, [key]: occurrence }));
+      },
+      'pickup.assign.updateError',
+    );
   }
 
   protected async onClear(date: string, slot: PickupSlot): Promise<void> {
-    const childId = this.selectedChildId();
+    const shown = this.request();
 
-    if (!childId) {
+    if (!shown) {
       return;
     }
 
     const key = this.key(date, slot);
-    this.savingKey.set(key);
-    this.error.set(null);
 
-    try {
-      await this.pickups.clearPickup(childId, date, slot);
-      this.entriesByKey.update((current) => {
-        const next = { ...current };
-        delete next[key];
-        return next;
-      });
-    } catch {
-      this.error.set('pickup.assign.updateError');
-    } finally {
-      this.savingKey.set(null);
+    await this.saving.run(
+      `${shown.childId}|${key}`,
+      async () => {
+        await this.pickups.clearPickup(shown.childId, date, slot);
+        this.updateEntries(shown, (current) => {
+          const next = { ...current };
+          delete next[key];
+          return next;
+        });
+      },
+      'pickup.assign.updateError',
+    );
+  }
+
+  // Applies a save's result only if the grid still shows the child and week it was made for, and
+  // that schedule has loaded: setting the resource mid-load would cancel the load.
+  private updateEntries(
+    shown: ScheduleRequest,
+    change: (current: EntriesByKey) => EntriesByKey,
+  ): void {
+    const schedule = this.schedule;
+
+    if (this.request() === shown && schedule.hasValue() && !schedule.isLoading()) {
+      const current = schedule.value();
+      schedule.set({ ...current, entriesByKey: change(current.entriesByKey) });
     }
   }
 
-  private async loadChildren(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
+  private async loadSchedule(childId: string, from: string, to: string): Promise<ChildSchedule> {
+    const [childGuardians, occurrences] = await Promise.all([
+      this.guardians.listChildGuardians(childId),
+      this.pickups.listSchedule(childId, from, to),
+    ]);
 
-    try {
-      const children = await this.guardians.listMyChildren();
-      const [firstChild] = children;
+    const entriesByKey: EntriesByKey = {};
 
-      if (!firstChild) {
-        this.hasChildren.set(false);
-        return;
-      }
-
-      this.hasChildren.set(true);
-      this.children.set(children);
-      this.selectedChildId.set(firstChild.id);
-      await this.loadForChild(firstChild.id);
-    } catch {
-      this.error.set('pickup.assign.loadError');
-    } finally {
-      this.loading.set(false);
+    for (const occurrence of occurrences) {
+      entriesByKey[this.key(occurrence.date, occurrence.slot)] = occurrence;
     }
-  }
 
-  private async loadForChild(childId: string): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    this.entriesByKey.set({});
-
-    try {
-      const [first, last] = firstAndLast(this.week());
-      const [childGuardians, occurrences] = await Promise.all([
-        this.guardians.listChildGuardians(childId),
-        this.pickups.listSchedule(childId, first.date, last.date),
-      ]);
-
-      // A newer call (from switching the child again before this one resolved) may have already
-      // superseded this request -- applying this response now would silently overwrite the newer
-      // selection's data with this now-stale child's, even though the dropdown still shows the
-      // right one selected. See selectChildIfPresent's own comment in e2e/support/guardian-data.ts
-      // for how this surfaced.
-      if (this.selectedChildId() !== childId) {
-        return;
-      }
-
-      this.childGuardians.set(childGuardians);
-
-      const byKey: Partial<Record<string, PickupOccurrence>> = {};
-
-      for (const occurrence of occurrences) {
-        byKey[this.key(occurrence.date, occurrence.slot)] = occurrence;
-      }
-
-      this.entriesByKey.set(byKey);
-    } catch {
-      if (this.selectedChildId() === childId) {
-        this.error.set('pickup.assign.loadError');
-      }
-    } finally {
-      if (this.selectedChildId() === childId) {
-        this.loading.set(false);
-      }
-    }
+    return { childGuardians, entriesByKey };
   }
 }
