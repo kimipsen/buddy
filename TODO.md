@@ -1,5 +1,12 @@
 # TODO
 
+## Shared color picker
+
+- [ ] Create a common color picker and use it everywhere a color can be
+  set. Standardize on a fixed palette of selectable colored circles,
+  replacing the existing color square/wheel and other inconsistent
+  color-selection controls.
+
 ## Event-stream snapshots rollout — done
 
 All 14 event-sourced aggregates now have an inline Marten snapshot
