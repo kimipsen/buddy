@@ -108,6 +108,16 @@ describe('TasksToday', () => {
     return checkbox.getAttribute('aria-checked') === 'true';
   }
 
+  // Text of the section under the given heading ('Overdue' / 'Due today'), or null if not shown.
+  function sectionText(compiled: HTMLElement, heading: string): string | null {
+    const label = Array.from(compiled.querySelectorAll('p')).find(
+      (p) => p.textContent?.trim() === heading,
+    );
+    return label?.parentElement?.textContent ?? null;
+  }
+
+  const anHourAgo = () => new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
   it('shows the loading spinner while tasks are loading', async () => {
     const { fixture } = await setup();
     fixture.detectChanges();
@@ -177,6 +187,54 @@ describe('TasksToday', () => {
     expect(compiled.textContent).toContain('Past due chore');
     expect(compiled.textContent).toContain('Due today');
     expect(compiled.textContent).toContain('Later chore');
+  });
+
+  it('never shows a finished task as overdue, even one finished after its due time', async () => {
+    const finishedLate = task({
+      title: 'Finished late',
+      isAllDay: false,
+      dueAt: anHourAgo(),
+      isCompleted: true,
+    });
+
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [finishedLate]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(sectionText(compiled, 'Overdue')).toBeNull();
+    expect(sectionText(compiled, 'Due today')).toContain('Finished late');
+  });
+
+  it('moves an overdue task out of Overdue when it is marked done, and back when undone', async () => {
+    const pastDue = task({ title: 'Past due chore', isAllDay: false, dueAt: anHourAgo() });
+    const setTaskCompletion = vi.fn(async () => ({
+      itemId: 'task-1',
+      occurrenceDate: today,
+      isCompleted: true,
+    }));
+
+    const { fixture } = await setup({
+      calendars: { listTodayOccurrences: vi.fn(async () => [pastDue]), setTaskCompletion },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(sectionText(compiled, 'Overdue')).toContain('Past due chore');
+    expect(sectionText(compiled, 'Due today')).toBeNull();
+
+    findCheckbox(compiled, 'Past due chore')!.click();
+    await settle(fixture);
+
+    expect(sectionText(compiled, 'Overdue')).toBeNull();
+    expect(sectionText(compiled, 'Due today')).toContain('Past due chore');
+
+    findCheckbox(compiled, 'Past due chore')!.click();
+    await settle(fixture);
+
+    expect(sectionText(compiled, 'Overdue')).toContain('Past due chore');
+    expect(sectionText(compiled, 'Due today')).toBeNull();
   });
 
   it('shows a completed task with a checked, strikethrough checkbox', async () => {
@@ -394,6 +452,37 @@ describe('TasksToday', () => {
 
       const compiled = fixture.nativeElement as HTMLElement;
       expect(compiled.textContent).toContain('Overdue');
+    });
+
+    it('is still overdue while only some of its subtasks are done', async () => {
+      const halfDone = [
+        subtaskOf('run-3', 'sub-1', { startsAt: anHourAgo(), isAllDay: false, isCompleted: true }),
+        subtaskOf('run-3', 'sub-2', { startsAt: anHourAgo(), isAllDay: false }),
+      ];
+
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => halfDone) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(sectionText(compiled, 'Overdue')).toContain('Morning routine');
+    });
+
+    it('is never overdue once every subtask is done, even past its due time', async () => {
+      const allDone = [
+        subtaskOf('run-4', 'sub-1', { startsAt: anHourAgo(), isAllDay: false, isCompleted: true }),
+        subtaskOf('run-4', 'sub-2', { startsAt: anHourAgo(), isAllDay: false, isCompleted: true }),
+      ];
+
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => allDone) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(sectionText(compiled, 'Overdue')).toBeNull();
+      expect(sectionText(compiled, 'Due today')).toContain('Morning routine');
     });
   });
 

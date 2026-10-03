@@ -1,4 +1,4 @@
-import { Component, inject, resource, signal } from '@angular/core';
+import { Component, computed, inject, resource, signal } from '@angular/core';
 
 import {
   AssignableMember,
@@ -79,12 +79,22 @@ function toRollup(entry: AgendaEntry): TaskRollup {
   };
 }
 
-// What the widget loaded: the signed-in guardian (to decide which tasks they may toggle) and
-// today's tasks split into overdue and still due.
+// What the widget loaded: the signed-in guardian (to decide which tasks they may toggle), today's
+// tasks, and when they were loaded (the "now" overdue is measured against).
 interface LoadedTasks {
   currentUserId: string;
-  overdue: TaskRollup[];
-  dueToday: TaskRollup[];
+  rollups: TaskRollup[];
+  loadedAt: number;
+}
+
+// A finished task is never overdue, however late it was finished -- only an unfinished, timed one
+// whose due time has passed.
+function isOverdue(rollup: TaskRollup, now: number): boolean {
+  return (
+    rollup.completedCount < rollup.totalCount &&
+    !rollup.isAllDay &&
+    new Date(rollup.dueAt).getTime() < now
+  );
 }
 
 @Component({
@@ -99,6 +109,18 @@ export class TasksToday {
   protected readonly tasks = resource({ loader: () => this.loadTasks() });
   protected readonly saving = createAction<string>();
   protected readonly memberNamesById = signal<Record<string, string>>({});
+
+  // Derived rather than split once at load, so toggling a task moves it between the sections.
+  protected readonly sections = computed(() => {
+    const { rollups, loadedAt } = this.tasks.hasValue()
+      ? this.tasks.value()
+      : { rollups: [], loadedAt: 0 };
+
+    return {
+      overdue: rollups.filter((rollup) => isOverdue(rollup, loadedAt)),
+      dueToday: rollups.filter((rollup) => !isOverdue(rollup, loadedAt)),
+    };
+  });
 
   protected canToggle(rollup: TaskRollup): boolean {
     return (
@@ -151,12 +173,7 @@ export class TasksToday {
             : existing;
 
         this.tasks.update(
-          (current) =>
-            current && {
-              ...current,
-              overdue: current.overdue.map(applyCompletion),
-              dueToday: current.dueToday.map(applyCompletion),
-            },
+          (current) => current && { ...current, rollups: current.rollups.map(applyCompletion) },
         );
       },
       'dashboard.tasks.taskUpdateError',
@@ -170,17 +187,12 @@ export class TasksToday {
     ]);
 
     const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
-    const rollups = groupTaskRuns(tasks).map(toRollup);
-    const now = Date.now();
-    const isOverdue = (rollup: TaskRollup) =>
-      !rollup.isAllDay && new Date(rollup.dueAt).getTime() < now;
-
     void this.loadAssigneeNames(tasks);
 
     return {
       currentUserId: me.id,
-      overdue: rollups.filter(isOverdue),
-      dueToday: rollups.filter((rollup) => !isOverdue(rollup)),
+      rollups: groupTaskRuns(tasks).map(toRollup),
+      loadedAt: Date.now(),
     };
   }
 

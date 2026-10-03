@@ -129,6 +129,35 @@ describe('WeekPlanSheet', () => {
     expect(labels).toEqual(['Drop-off:', 'Pick-up:']);
   });
 
+  it('keeps a long pickup label small enough to stay on its side of the diagonal', async () => {
+    const pickupRow = model().rows[0];
+    const root = await render(
+      model({
+        rows: [
+          {
+            ...pickupRow,
+            cells: [
+              {
+                type: 'pickup',
+                dropOff: { text: 'Far', icon: null, color: null },
+                pickUp: { text: 'Playdate: Oscar’s family', icon: null, color: null },
+              },
+              ...pickupRow.cells.slice(1),
+            ],
+          },
+        ],
+      }),
+    );
+    const [dropOff, pickUp] = Array.from(
+      root.querySelectorAll('[role="cell"]')[0].querySelectorAll<HTMLElement>(':scope > span'),
+    );
+
+    expect(dropOff.style.fontSize).toBe('1.2em');
+    expect(pickUp.style.fontSize).toBe('0.9em');
+    expect(pickUp.classList).toContain('text-right');
+    expect(pickUp.classList).toContain('line-clamp-2');
+  });
+
   it('leaves the week corner empty when the week number is hidden', async () => {
     const root = await render(model({ weekLabel: null }));
 

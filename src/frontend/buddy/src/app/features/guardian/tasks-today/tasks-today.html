@@ -12,21 +12,19 @@
       {{ 'dashboard.tasks.loadError' | translate }}
     </p>
   } @else if (tasks.hasValue()) {
-    @let loaded = tasks.value();
-
     @if (saving.state(); as state) {
       @if (state.status === 'error') {
         <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
       }
     }
 
-    @if (loaded.overdue.length === 0 && loaded.dueToday.length === 0) {
+    @if (sections().overdue.length === 0 && sections().dueToday.length === 0) {
       <p class="text-sm text-slate-500 dark:text-slate-400">
         {{ 'dashboard.tasks.empty' | translate }}
       </p>
     } @else {
       <div class="space-y-4">
-        @if (loaded.overdue.length > 0) {
+        @if (sections().overdue.length > 0) {
           <div>
             <p
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400"
@@ -34,7 +32,7 @@
               {{ 'dashboard.tasks.overdue' | translate }}
             </p>
             <ul class="space-y-2">
-              @for (rollup of loaded.overdue; track rollup.itemId) {
+              @for (rollup of sections().overdue; track rollup.itemId) {
                 <li
                   class="flex items-center gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm font-medium"
                 >
@@ -71,7 +69,7 @@
           </div>
         }
 
-        @if (loaded.dueToday.length > 0) {
+        @if (sections().dueToday.length > 0) {
           <div>
             <p
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
@@ -79,7 +77,7 @@
               {{ 'dashboard.tasks.dueToday' | translate }}
             </p>
             <ul class="space-y-2">
-              @for (rollup of loaded.dueToday; track rollup.itemId) {
+              @for (rollup of sections().dueToday; track rollup.itemId) {
                 <li
                   class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm font-medium"
                 >
