@@ -67,6 +67,18 @@ tasks:
     cmds:
       - npm run test:e2e
 
+  docs:screenshots:
+    desc: >-
+      Regenerate the page screenshots in docs/screenshots (and its README.md).
+      Seeds a fresh demo family (guardian demo.sara, child demo.emil) through
+      the API, then captures every page listed in
+      src/frontend/buddy/screenshots/pages.ts. Needs Postgres, Keycloak, and
+      Mailpit running (already true in the devcontainer); starts the API and
+      Angular dev server itself, or reuses them if they're already running.
+    dir: src/frontend/buddy
+    cmds:
+      - npm run screenshots
+
   test:mutation:
     desc: Run all mutation tests (backend, then frontend)
     cmds:

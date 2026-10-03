@@ -9,6 +9,7 @@
     "test": "ng test",
     "test:mutation": "stryker run",
     "test:e2e": "playwright test",
+    "screenshots": "playwright test -c playwright.screenshots.config.ts",
     "lint": "ng lint",
     "format:check": "prettier --check .",
     "format": "prettier --write ."

@@ -48,7 +48,8 @@ App root: `src/frontend/buddy`. All paths below are relative to it unless they s
 6. **i18n keys in both en and da** — follow the `i18n` skill (`.claude/skills/i18n/SKILL.md`) and run its parity check.
 7. **E2E**: for a new user-visible workflow, add or extend a Playwright spec in `e2e/` (use `loginAs(SEEDED_USERS.x)` from `e2e/support/auth-fixture.ts` and helpers in `e2e/support/guardian-data.ts`; see `e2e/medicine-dose-status.spec.ts`). If you change English copy, update e2e selectors that match it.
 8. **Docs**: tick/add the item in the root `README.md` `## Features` list, and update `docs/frontend/README.md` (routes, responsibilities, shared services) when routes or services change.
-9. Run the commands below.
+9. **Screenshots**: a new route goes in `screenshots/pages.ts`, with demo data seeded in `screenshots/demo-family.ts`. Then run `task docs:screenshots` and look at the PNG (see the `doc-screenshots` skill). `src/app/screenshot-coverage.spec.ts` fails for a route without one. For a visible change to an existing page, re-run the screenshots too.
+10. Run the commands below.
 
 ## Commands (from `src/frontend/buddy`)
 

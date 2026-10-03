@@ -4,6 +4,7 @@ This folder contains the project-level documentation for Buddy.
 
 ## Start here
 
+- [Screenshots](screenshots/README.md) — what every page looks like
 - [Architecture](architecture.md) — C4 context and container diagrams
 - [Backend overview](backend/README.md)
 - [Users flow](backend/users/flow.md)

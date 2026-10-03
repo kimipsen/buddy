@@ -329,3 +329,19 @@ Deferred until someone asks (each is additive; details are in the docs' open que
   - Effective-from dates for pattern changes, so a change doesn't rewrite past days.
   - A view tier for group members who aren't co-guardians.
   - Restoring an archived location.
+
+## Bugs found while generating the docs screenshots (2026-10-03)
+
+Found while seeding the demo family for `task docs:screenshots`. Not fixed yet.
+
+- [ ] **Completed tasks stay "Overdue" on the guardian dashboard.** In
+  `src/frontend/buddy/src/app/features/guardian/tasks-today/tasks-today.ts`, `isOverdue` only
+  checks `dueAt < now`. It never looks at `completedCount === totalCount`, so a routine shows
+  "4 of 4 done" in the red Overdue group, and a finished plain task does too once its due time
+  passes. Repro: complete every subtask of a template task scheduled earlier today, then open
+  `/guardian`. See `docs/screenshots/guardian-dashboard.png`.
+- [ ] **Playdate text overflows the pickup cell on the printed week plan.** On
+  `/guardian/print/sheet/:templateId`, a pickup row whose afternoon slot is a playdate renders
+  "Playdate: Oscar's family" larger than the guardian names. The text wraps across the diagonal
+  divider and out of the lower half of the cell. See `docs/screenshots/guardian-print-sheet.png`
+  (Thursday).

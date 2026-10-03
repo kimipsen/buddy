@@ -24,6 +24,7 @@ This skill coordinates other project skills and doesn't repeat their conventions
 | `i18n` | en and da strings and the parity check |
 | `e2e-test` | Playwright specs in `src/frontend/buddy/e2e/` |
 | `run-buddy` | launch the app to look at the feature |
+| `doc-screenshots` | add the feature's pages to the documentation screenshots |
 | `backend-aware-review` | review the finished diff |
 
 If one of them isn't installed yet, follow the existing code next to where you're working and say
@@ -170,6 +171,12 @@ In short:
 - Update `docs/frontend/README.md` (routes, services, responsibilities, analysis bullet) and
   `docs/backend/README.md` (add a `docs/backend/<feature>/flow.md` under "Start here" if you
   wrote one, as every shipped feature has).
+- Load `doc-screenshots` and add every new page/route to `src/frontend/buddy/screenshots/pages.ts`.
+  Seed its data in `screenshots/demo-family.ts` so the page doesn't show an empty state. Run
+  `task docs:screenshots`, then look at the new PNGs. `src/app/screenshot-coverage.spec.ts` fails
+  `task test` for a route that has neither a screenshot nor an entry in `UNCAPTURED_ROUTES`. A
+  feature with no new route but a visible change to an existing page (a new dashboard widget, say)
+  still needs the screenshots re-run and the affected seed data added.
 - For a new aggregate or schema, also update `aggregate-roots.md`, `domain-model-diagram.md`, the
   aggregate count in `event-stream-snapshots.md`, and `MARTEN_SCHEMAS` in `taskfile.yml`.
 
@@ -181,7 +188,7 @@ Summarize:
 - the user's answers to the open questions;
 - tests added (backend, frontend, e2e) and the last `task test` result;
 - review findings fixed and left;
-- the doc and README changes.
+- the doc and README changes, and the new or updated screenshots.
 
 Don't commit unless the user asks.
 

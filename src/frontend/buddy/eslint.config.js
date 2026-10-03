@@ -74,7 +74,7 @@ module.exports = defineConfig([
     // Playwright requires fixtures to destructure their first argument
     // (`async ({}, use) => ...`); it parses the parameter list to resolve
     // fixture dependencies, so the empty pattern cannot be removed.
-    files: ['e2e/**/*.ts'],
+    files: ['e2e/**/*.ts', 'screenshots/**/*.ts'],
     rules: {
       'no-empty-pattern': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',

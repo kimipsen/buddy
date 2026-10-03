@@ -29,6 +29,7 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 | UI strings (en + da) | `i18n` |
 | Playwright e2e | `e2e-test` |
 | Run / screenshot the app | `run-buddy` |
+| Docs screenshots of every page (`task docs:screenshots`) | `doc-screenshots` |
 | Full feature from a design doc | `feature-from-analysis` |
 | Review a diff | `backend-aware-review` |
 | Mutation testing | `mutation-fix` (frontend), `mutation-fix-backend` |
@@ -39,6 +40,7 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 
 ## Conventions
 
+- Every page appears in the documentation screenshots (`docs/screenshots`). A new route or a visible change to a page means updating `src/frontend/buddy/screenshots/pages.ts` (plus demo data in `demo-family.ts`) and running `task docs:screenshots`. `src/app/screenshot-coverage.spec.ts` enforces the route list. See the `doc-screenshots` skill.
 - Plan before non-trivial changes. Design docs live in `docs/backend/analysis/` and `docs/frontend/analysis/`.
 - Change tests rather than production code when hardening specs; ask before changing production code for a bug a test uncovers.
 - Never commit secrets. `appsettings.*.json` and `.env` are git-ignored.
