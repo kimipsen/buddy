@@ -58,7 +58,7 @@ public static class RateMealHandler
 
         var after = new MealRating(command.Stars, command.Comment, DateTimeOffset.UtcNow);
 
-        await meals.AppendAsync(command.MealId, [new MealRated(command.MealId, userId, before, after, after.RatedAt)], cancellationToken);
+        await meals.AppendAsync(command.MealId, [new MealRated(command.MealId, userId, after, after.RatedAt)], cancellationToken);
 
         return new Result<Meal>.Success(meal with { Ratings = meal.Ratings.SetItem(userId, after), LastModifiedBy = userId });
     }

@@ -62,7 +62,7 @@ public sealed record WorkLocationSchedule(
         WorkPatternReplaced replaced => schedule with { Pattern = replaced.After },
         WorkLocationOverridden overridden => schedule with
         {
-            Overrides = schedule.Overrides.SetItem(overridden.Date, overridden.After)
+            Overrides = schedule.Overrides.SetItem(overridden.Date, overridden.Override)
         },
         WorkLocationOverrideCleared cleared => schedule with
         {

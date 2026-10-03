@@ -80,8 +80,8 @@ created lazily on the first assignment rather than when the child account is
 provisioned. The stream contains:
 
 - `PickupScheduleCreated`, which establishes the schedule and child.
-- `PickupAssigned`, which inserts or replaces `(Date, Slot)` and records its
-  before/after assignment for audit.
+- `PickupAssigned`, which inserts or replaces `(Date, Slot)` with the new
+  assignment (the replaced one is already earlier in the stream).
 - `PickupCleared`, which removes an existing key and records who cleared it.
 
 The current aggregate stores assignments in a sparse dictionary. Assigning the

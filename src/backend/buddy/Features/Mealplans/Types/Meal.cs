@@ -60,7 +60,7 @@ public sealed record Meal(
         // meal, so one Meal can hold one rating per child rather than a single value.
         MealRated rated => meal with
         {
-            Ratings = meal.Ratings.SetItem(rated.ChildId, rated.After),
+            Ratings = meal.Ratings.SetItem(rated.ChildId, rated.Rating),
             LastModifiedBy = rated.ChildId
         },
         MealCreated => throw EventReplay.AlreadyStarted(nameof(Meal), @event.EventType)

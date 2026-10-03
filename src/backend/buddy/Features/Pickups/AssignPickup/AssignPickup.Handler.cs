@@ -48,7 +48,7 @@ public static class AssignPickupHandler
                 newId,
                 [
                     new PickupScheduleCreated(newId, command.ChildId, now),
-                    new PickupAssigned(newId, command.Date, command.Slot, Before: null, after, now)
+                    new PickupAssigned(newId, command.Date, command.Slot, after, now)
                 ],
                 cancellationToken);
         }
@@ -65,7 +65,7 @@ public static class AssignPickupHandler
 
             if (!unchanged)
             {
-                await pickups.AppendAsync(scheduleId, [new PickupAssigned(scheduleId, command.Date, command.Slot, before, after, now)], cancellationToken);
+                await pickups.AppendAsync(scheduleId, [new PickupAssigned(scheduleId, command.Date, command.Slot, after, now)], cancellationToken);
             }
         }
 

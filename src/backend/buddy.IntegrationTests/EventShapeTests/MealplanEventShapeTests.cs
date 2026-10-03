@@ -38,7 +38,7 @@ public sealed class MealplanEventShapeTests
 
     [Fact]
     public void MealRated() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new MealRated(FixedMealId, FixedChildId, null, new MealRating(5, "Loved it!", FixedInstant), FixedInstant),
+        new MealRated(FixedMealId, FixedChildId, new MealRating(5, "Loved it!", FixedInstant), FixedInstant),
         "Mealplans/MealRated.json");
 
     [Fact]
@@ -50,8 +50,7 @@ public sealed class MealplanEventShapeTests
     public void MealAssignedToSlot() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new MealAssignedToSlot(
             FixedMealPlanId, FixedDate, MealSlot.Dinner,
-            Before: null,
-            After: new MealPlanAssignment(FixedMealId, FixedGuardianId, "No cilantro"),
+            new MealPlanAssignment(FixedMealId, FixedGuardianId, "No cilantro"),
             FixedInstant),
         "Mealplans/MealAssignedToSlot.json");
 

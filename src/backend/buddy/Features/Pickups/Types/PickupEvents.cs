@@ -29,8 +29,9 @@ public union PickupEvent(
 // CreateChild, the same way MealPlanCreated/MedicineSchedule are decoupled from child creation.
 public sealed record PickupScheduleCreated(PickupScheduleId Id, UserId ChildId, DateTimeOffset OccurredAt);
 
-// Always overwrites (Before/After, no separate "reassign" event) -- no confirmation step
-// server-side, the same rule MealAssignedToSlot uses.
-public sealed record PickupAssigned(PickupScheduleId Id, DateOnly Date, PickupSlot Slot, PickupAssignment? Before, PickupAssignment After, DateTimeOffset OccurredAt);
+// Always overwrites (no separate "reassign" event) -- no confirmation step server-side, the same
+// rule MealAssignedToSlot uses. The assignment replaced isn't carried: it is already in the stream,
+// and nothing reads it.
+public sealed record PickupAssigned(PickupScheduleId Id, DateOnly Date, PickupSlot Slot, PickupAssignment Assignment, DateTimeOffset OccurredAt);
 
 public sealed record PickupCleared(PickupScheduleId Id, DateOnly Date, PickupSlot Slot, PickupAssignment Before, UserId ModifiedBy, DateTimeOffset OccurredAt);

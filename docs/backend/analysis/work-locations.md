@@ -201,9 +201,9 @@ The resolution order for a date is **override → pattern → nothing**.
 - **Set and clear by date range.** A holiday spans many days, so
   `SetWorkLocationOverrides` and `ClearWorkLocationOverrides` take
   `[from, to]` (`to - from` at most 31, the shared `ValidDateRange` rule) and append one event per date that
-  actually changes, in a single append. Each per-date event carries
-  `Before`/`After`, so the fold and the history stay as simple as
-  `PickupAssigned`/`PickupCleared`. Dates whose value wouldn't change emit
+  actually changes, in a single append. Each per-date event carries the
+  new override (not the one it replaced -- see eliminate-nulls.md, Phase 6),
+  so the fold stays as simple as `PickupAssigned`/`PickupCleared`. Dates whose value wouldn't change emit
   nothing.
 - **Always overwrite**, with no confirmation step, the same rule as
   `PickupAssigned` and `MealAssignedToSlot`.
@@ -261,7 +261,7 @@ WorkLocationArchived(WorkLocationScheduleId Id, WorkLocationId LocationId, DateT
 WorkPatternReplaced(WorkLocationScheduleId Id, WorkPattern Before, WorkPattern After, DateTimeOffset OccurredAt)
 
 WorkLocationOverridden(WorkLocationScheduleId Id, DateOnly Date,
-    WorkDayOverride? Before, WorkDayOverride After, DateTimeOffset OccurredAt)
+    WorkDayOverride Override, DateTimeOffset OccurredAt)
 
 WorkLocationOverrideCleared(WorkLocationScheduleId Id, DateOnly Date,
     WorkDayOverride Before, DateTimeOffset OccurredAt)

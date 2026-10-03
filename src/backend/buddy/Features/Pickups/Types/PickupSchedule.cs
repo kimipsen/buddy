@@ -40,7 +40,7 @@ public sealed record PickupSchedule(
         // MealPlan.Assignments/MedicineSchedule.DoseLog.
         PickupAssigned assigned => schedule with
         {
-            Assignments = schedule.Assignments.SetItem((assigned.Date, assigned.Slot), assigned.After)
+            Assignments = schedule.Assignments.SetItem((assigned.Date, assigned.Slot), assigned.Assignment)
         },
         PickupCleared cleared => schedule with
         {

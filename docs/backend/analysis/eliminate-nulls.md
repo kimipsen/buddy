@@ -1,6 +1,6 @@
 # Eliminating avoidable nulls
 
-Status: Phases 0-5 implemented (see each "As built"); Phases 6-7 proposed.
+Status: Phases 0-6 implemented (see each "As built"); Phase 7 proposed.
 
 ## Context
 
@@ -785,6 +785,17 @@ Not in scope: events whose `Before` is non-null and *is* part of the event's mea
 non-null on both sides in Phase 5.5.
 
 Golden files: `MealRated`, `MealAssignedToSlot`, `PickupAssigned_*`, `WorkLocationOverridden_*`.
+
+### As built (Phase 6)
+
+- The four events dropped `Before`, and `After` was renamed for what it holds: `MealRated.Rating`,
+  `MealAssignedToSlot.Assignment`, `PickupAssigned.Assignment`, `WorkLocationOverridden.Override`.
+  The handlers still compare against the current value to skip no-op appends; that value now
+  comes only from the folded aggregate. `SetWorkLocationOverridesHandler` no longer needs a
+  nullable `WorkDayOverride?` for it.
+- Six golden files changed. The analysis docs (`mealplans.md`, `pickup-schedules.md`,
+  `work-locations.md`) show the new shapes.
+- **Existing databases need a reset**: stored events carry `Before`/`After`, not the new names.
 
 ## Phase 7: frontend state
 

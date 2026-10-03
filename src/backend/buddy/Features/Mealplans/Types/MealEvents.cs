@@ -51,5 +51,6 @@ public sealed record MealArchived(MealId Id, UserId ModifiedBy, DateTimeOffset O
 // The only event a child, rather than a guardian, ever appends (see MealplanAuthorization).
 // ChildId is both the rating's subject and its actor -- only that child can ever rate for
 // themself, so there's no separate "RatedBy" to carry. No separate "unrate" event -- a changed
-// opinion simply appends another MealRated with a new After.
-public sealed record MealRated(MealId Id, UserId ChildId, MealRating? Before, MealRating After, DateTimeOffset OccurredAt);
+// opinion simply appends another MealRated with the new Rating. The rating replaced isn't
+// carried: it is already in the stream, and nothing reads it.
+public sealed record MealRated(MealId Id, UserId ChildId, MealRating Rating, DateTimeOffset OccurredAt);

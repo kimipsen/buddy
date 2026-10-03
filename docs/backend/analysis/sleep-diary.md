@@ -296,8 +296,8 @@ SleepDiaryShareTokenCreated(SleepDiaryShareTokenId, UserId ChildId, string Token
 SleepDiaryShareTokenRevoked(SleepDiaryShareTokenId, UserId ModifiedBy, DateTimeOffset OccurredAt)
 ```
 
-`SleepEntryLogged` always overwrites the whole day (`Before`/`After`, no
-per-field patching) — same no-confirmation-server-side rule
+`SleepEntryLogged` always overwrites the whole day (carrying only the new
+entry, no per-field patching) — same no-confirmation-server-side rule
 `MealAssignedToSlot`/`PickupAssigned` already use; re-editing an
 already-logged day is expected (a guardian fills in more detail the next
 morning) rather than an exceptional case needing its own event.

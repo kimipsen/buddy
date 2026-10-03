@@ -52,7 +52,9 @@ public union MealPlanEvent(
 // (see docs/backend/analysis/mealplans.md).
 public sealed record MealPlanCreated(MealPlanId Id, UserId ChildId, DateTimeOffset OccurredAt);
 
-public sealed record MealAssignedToSlot(MealPlanId Id, DateOnly Date, MealSlot Slot, MealPlanAssignment? Before, MealPlanAssignment After, DateTimeOffset OccurredAt);
+// Sets or overwrites the slot. The assignment replaced isn't carried: it is already in the stream,
+// and nothing reads it.
+public sealed record MealAssignedToSlot(MealPlanId Id, DateOnly Date, MealSlot Slot, MealPlanAssignment Assignment, DateTimeOffset OccurredAt);
 
 public sealed record MealSlotCleared(MealPlanId Id, DateOnly Date, MealSlot Slot, MealPlanAssignment Before, UserId ModifiedBy, DateTimeOffset OccurredAt);
 

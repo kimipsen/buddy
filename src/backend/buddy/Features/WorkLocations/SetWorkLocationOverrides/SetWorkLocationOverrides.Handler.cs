@@ -46,11 +46,9 @@ public static class SetWorkLocationOverridesHandler
         // One event per date that actually changes; dates already holding this override emit nothing.
         for (var date = command.From; date <= command.To; date = date.AddDays(1))
         {
-            WorkDayOverride? before = schedule.Overrides.TryGetValue(date, out var existing) ? existing : (WorkDayOverride?)null;
-
-            if (!after.Equals(before))
+            if (!schedule.Overrides.TryGetValue(date, out var existing) || !existing.Equals(after))
             {
-                events.Add(new WorkLocationOverridden(schedule.Id, date, before, after, now));
+                events.Add(new WorkLocationOverridden(schedule.Id, date, after, now));
             }
         }
 

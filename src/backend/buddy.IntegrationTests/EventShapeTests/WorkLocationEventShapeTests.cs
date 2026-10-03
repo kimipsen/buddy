@@ -55,17 +55,17 @@ public sealed class WorkLocationEventShapeTests
 
     [Fact]
     public void WorkLocationOverridden_to_a_location() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new WorkLocationOverridden(FixedScheduleId, FixedDate, Before: null, new WorkDayOverride.AtLocation(FixedLocationId), FixedInstant),
+        new WorkLocationOverridden(FixedScheduleId, FixedDate, new WorkDayOverride.AtLocation(FixedLocationId), FixedInstant),
         "WorkLocations/WorkLocationOverridden_Location.json");
 
     [Fact]
     public void WorkLocationOverridden_to_off() => EventShapeTestSupport.AssertMatchesGoldenFile(
-        new WorkLocationOverridden(FixedScheduleId, FixedDate, new WorkDayOverride.AtLocation(FixedLocationId), new WorkDayOverride.DayOff(), FixedInstant),
+        new WorkLocationOverridden(FixedScheduleId, FixedDate, new WorkDayOverride.DayOff(), FixedInstant),
         "WorkLocations/WorkLocationOverridden_Off.json");
 
     [Fact]
     public void WorkLocationOverridden_to_off_ReadsBack() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(
-        new WorkLocationOverridden(FixedScheduleId, FixedDate, new WorkDayOverride.AtLocation(FixedLocationId), new WorkDayOverride.DayOff(), FixedInstant),
+        new WorkLocationOverridden(FixedScheduleId, FixedDate, new WorkDayOverride.DayOff(), FixedInstant),
         "WorkLocations/WorkLocationOverridden_Off.json");
 
     [Fact]

@@ -67,7 +67,7 @@ public sealed record MealPlan(
         // for a year is one small stream, not one entry per possible date/slot.
         MealAssignedToSlot assigned => plan with
         {
-            Assignments = plan.Assignments.SetItem((assigned.Date, assigned.Slot), assigned.After)
+            Assignments = plan.Assignments.SetItem((assigned.Date, assigned.Slot), assigned.Assignment)
         },
         MealSlotCleared cleared => plan with
         {

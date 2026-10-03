@@ -22,7 +22,7 @@ public sealed class PickupEventShapeTests
     [Fact]
     public void PickupAssigned_with_a_guardian_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
-            FixedScheduleId, FixedDate, PickupSlot.DropOff, Before: null,
+            FixedScheduleId, FixedDate, PickupSlot.DropOff,
             new PickupAssignment(new PickupAssignee.Guardian(FixedGuardianId), new TimeOnly(8, 0), FixedGuardianId, "Bring an umbrella"),
             FixedInstant),
         "Pickups/PickupAssigned_Guardian.json");
@@ -30,7 +30,7 @@ public sealed class PickupEventShapeTests
     [Fact]
     public void PickupAssigned_with_a_self_escort_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
-            FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
+            FixedScheduleId, FixedDate, PickupSlot.PickUp,
             new PickupAssignment(new PickupAssignee.SelfEscort(), null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_SelfEscort.json");
@@ -38,7 +38,7 @@ public sealed class PickupEventShapeTests
     [Fact]
     public void PickupAssigned_with_a_sibling_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
-            FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
+            FixedScheduleId, FixedDate, PickupSlot.PickUp,
             new PickupAssignment(new PickupAssignee.Sibling(FixedSiblingId), null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_Sibling.json");
@@ -46,7 +46,7 @@ public sealed class PickupEventShapeTests
     [Fact]
     public void PickupAssigned_with_a_playdate_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new PickupAssigned(
-            FixedScheduleId, FixedDate, PickupSlot.PickUp, Before: null,
+            FixedScheduleId, FixedDate, PickupSlot.PickUp,
             new PickupAssignment(new PickupAssignee.Playdate("Mia's mom", "Mia's house", "+45 12 34 56 78"), null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_Playdate.json");

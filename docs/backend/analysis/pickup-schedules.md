@@ -195,7 +195,7 @@ enum PickupSlot { DropOff, PickUp }
 
 ### Events
 
-Following the existing `Before`/`After` convention for mutations
+Following the existing event conventions for mutations
 ([MealPlan events](mealplans.md#mealplan-events),
 [medicine-schedules.md](medicine-schedules.md#events)):
 
@@ -204,15 +204,15 @@ PickupScheduleCreated(PickupScheduleId, UserId ChildId, DateTimeOffset OccurredA
     // Lazily appended by the first AssignPickup call for a child with no stream yet,
     // exactly as MealPlanCreated is -- not provisioned as part of CreateChild.
 
-PickupAssigned(PickupScheduleId, DateOnly Date, PickupSlot Slot, PickupAssignment? Before,
-    PickupAssignment After, DateTimeOffset OccurredAt)
+PickupAssigned(PickupScheduleId, DateOnly Date, PickupSlot Slot, PickupAssignment Assignment,
+    DateTimeOffset OccurredAt)
 
 PickupCleared(PickupScheduleId, DateOnly Date, PickupSlot Slot, PickupAssignment Before,
     UserId ModifiedBy, DateTimeOffset OccurredAt)
 ```
 
-`PickupAssigned` always overwrites (`Before`/`After`, no separate "reassign"
-event) — same rule `MealAssignedToSlot` uses: no confirmation step
+`PickupAssigned` always overwrites (no separate "reassign" event, and the
+replaced assignment isn't carried -- see eliminate-nulls.md, Phase 6) — same rule `MealAssignedToSlot` uses: no confirmation step
 server-side, "are you sure you want to change today's pickup" is a client UX
 concern.
 

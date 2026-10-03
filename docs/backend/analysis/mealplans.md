@@ -181,14 +181,14 @@ MealDetailsUpdated(MealId, MealDetails Before, MealDetails After, UserId Modifie
 MealArchived(MealId, UserId ModifiedBy, DateTimeOffset OccurredAt)
     // soft "delete" -- same shape as MedicineScheduleStopped / ItemDeleted
 
-MealRated(MealId, UserId ChildId, MealRating? Before, MealRating After, DateTimeOffset OccurredAt)
+MealRated(MealId, UserId ChildId, MealRating Rating, DateTimeOffset OccurredAt)
     // ChildId is both the rating's subject and its actor -- only that child can ever
     // rate for themself (see Authorization), so there's no separate "RatedBy" to carry.
 ```
 
 `MealRated` is the only event a child (rather than a guardian) ever appends —
 see "Authorization" below. There is no separate "unrate" event; a child
-re-rating simply appends another `MealRated` with a new `After`, same as
+re-rating simply appends another `MealRated` with the new `Rating`, same as
 `DoseStatusChanged` doubling as both mark and undo.
 
 ### `MealPlan` (new aggregate, one singleton stream per family)
@@ -219,8 +219,8 @@ MealPlanCreated(MealPlanId, UserId ChildId, DateTimeOffset OccurredAt)
     // ChildId records which child the creating guardian was acting through -- needed to
     // seed the plan's first MealPlanIndexDocument row, but not projected onto MealPlan.
 
-MealAssignedToSlot(MealPlanId, DateOnly Date, MealSlot Slot, MealId MealId, UserId AssignedBy,
-    string? Notes, MealPlanAssignment? Before, DateTimeOffset OccurredAt)
+MealAssignedToSlot(MealPlanId, DateOnly Date, MealSlot Slot, MealPlanAssignment Assignment,
+    DateTimeOffset OccurredAt)
 
 MealSlotCleared(MealPlanId, DateOnly Date, MealSlot Slot, MealPlanAssignment Before,
     UserId ModifiedBy, DateTimeOffset OccurredAt)
@@ -366,7 +366,7 @@ Resolution:
 |---|---|
 | Assigning an archived `Meal` to a slot | `Validation` — archived meals are read-only history, not choosable going forward |
 | Clearing a slot that has no assignment | Idempotent no-op (`Success`, no event appended) — a guardian double-tapping "clear" shouldn't produce an error |
-| Assigning a slot that already has a meal | Always overwrites (`Before`/`After` on `MealAssignedToSlot`) — no confirmation step server-side; "are you sure you want to replace Tacos?" is a client UX concern |
+| Assigning a slot that already has a meal | Always overwrites (`MealAssignedToSlot` carries only the new assignment) — no confirmation step server-side; "are you sure you want to replace Tacos?" is a client UX concern |
 | Guardian's `GuardianLink` revoked | Immediately drops to `NotFound` for that guardian, same as `Calendar`/`Medicines` today; the child's own Rate-tier access is unaffected |
 | Two guardians assign the same slot at nearly the same time | Both events append to the `MealPlan` stream in order; the last one wins for current state, neither write is lost from history — same benefit event sourcing already gives elsewhere |
 | Child rates an archived `Meal` | Allowed — an opinion of the dish doesn't depend on whether it's still in active rotation |

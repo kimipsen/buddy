@@ -53,8 +53,8 @@ public sealed record WorkLocationArchived(WorkLocationScheduleId Id, WorkLocatio
 
 public sealed record WorkPatternReplaced(WorkLocationScheduleId Id, WorkPattern Before, WorkPattern After, DateTimeOffset OccurredAt);
 
-// One event per date, even when a whole range is set at once, so Before/After stay per-date like
-// PickupAssigned.
-public sealed record WorkLocationOverridden(WorkLocationScheduleId Id, DateOnly Date, WorkDayOverride? Before, WorkDayOverride After, DateTimeOffset OccurredAt);
+// One event per date, even when a whole range is set at once, like PickupAssigned. The override
+// replaced isn't carried: it is already in the stream, and nothing reads it.
+public sealed record WorkLocationOverridden(WorkLocationScheduleId Id, DateOnly Date, WorkDayOverride Override, DateTimeOffset OccurredAt);
 
 public sealed record WorkLocationOverrideCleared(WorkLocationScheduleId Id, DateOnly Date, WorkDayOverride Before, DateTimeOffset OccurredAt);

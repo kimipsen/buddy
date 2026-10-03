@@ -76,7 +76,7 @@ public static class AssignMealToSlotHandler
                 newId,
                 [
                     new MealPlanCreated(newId, childId, now),
-                    new MealAssignedToSlot(newId, date, slot, Before: null, after, now)
+                    new MealAssignedToSlot(newId, date, slot, after, now)
                 ],
                 cancellationToken);
         }
@@ -88,7 +88,7 @@ public static class AssignMealToSlotHandler
 
             if (before is null || before.MealId != after.MealId || before.Notes != after.Notes)
             {
-                await mealPlans.AppendAsync(mealPlanId, [new MealAssignedToSlot(mealPlanId, date, slot, before, after, now)], cancellationToken);
+                await mealPlans.AppendAsync(mealPlanId, [new MealAssignedToSlot(mealPlanId, date, slot, after, now)], cancellationToken);
             }
         }
 
