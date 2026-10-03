@@ -1,5 +1,14 @@
 # TODO
 
+## Invitation documentation
+
+- [ ] Update the documentation to state that invitations can only be accepted
+  by accounts with a verified email address.
+
+## Group deletion
+
+- [ ] Add functionality to delete a group.
+
 ## Guardian onboarding
 
 - [ ] Implement the [guardian onboarding guide](docs/frontend/analysis/guardian-onboarding.md)
