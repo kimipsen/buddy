@@ -214,6 +214,8 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 
 ## Design analysis
 
+- [Guardian onboarding](analysis/guardian-onboarding.md) -- proposed first-login
+  setup guide for guardians with no groups or children, with resumable progress
 - [Visual specification](analysis/visual-specification.md) — proposed data-type-to-component
   map and guardian/child visual language, applied to the Sleep Diary as a worked example
 - [Installing Buddy on a kid's iPad](analysis/ipad-installation.md) — PWA vs. native install

@@ -23,6 +23,8 @@ in real time.
 
 ### Guardian
 
+- [ ] Guided setup for guardians with no groups or children (proposed, not yet
+  implemented -- see [Guardian onboarding](docs/frontend/analysis/guardian-onboarding.md))
 - [x] Create child accounts and manage guardian/child relationships
 - [x] Shared calendars: day, work-week, rolling-week, and month views, with
       event/task creation across personal and group-owned calendars
