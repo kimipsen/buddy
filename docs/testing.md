@@ -51,6 +51,18 @@ itself. Most specs authenticate via a fast direct-grant token fetch
 form; `e2e/login.spec.ts` is the one spec that drives the real form, to prove
 the redirect/PKCE flow itself still works.
 
+### Documentation screenshots
+
+`task docs:screenshots` (`npm run screenshots` in `src/frontend/buddy`) seeds a fresh demo family
+and uses a separate Playwright config
+(`src/frontend/buddy/playwright.screenshots.config.ts`) to capture every page listed in
+`src/frontend/buddy/screenshots/pages.ts` into `docs/screenshots/`, regenerating
+[docs/screenshots/README.md](screenshots/README.md). It needs the same Postgres, Keycloak, and
+Mailpit prerequisites as the e2e suite.
+`src/frontend/buddy/src/app/screenshot-coverage.spec.ts` runs as part of the regular Vitest suite
+and fails when a route is missing from `pages.ts` (or its documented
+`UNCAPTURED_ROUTES` exceptions). See the `doc-screenshots` skill for details.
+
 ### Waiting for async work in component tests
 
 The frontend has no `zone.js` dependency and runs zoneless. Component tests
