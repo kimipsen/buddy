@@ -1,5 +1,13 @@
 # TODO
 
+## Guardian onboarding
+
+- [ ] Implement the [guardian onboarding guide](docs/frontend/analysis/guardian-onboarding.md)
+  for users logging in with no groups and no linked children: create one group,
+  add one or more children, optionally invite other guardians/parents, create
+  a shared calendar, schedule a task with multiple subtasks, and set up a meal
+  plan. Include resumable progress and confirm the plan's open questions first.
+
 ## Shared color picker
 
 - [ ] Create a common color picker and use it everywhere a color can be
