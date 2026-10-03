@@ -137,6 +137,10 @@ both — just bigger.
   `print:hidden`.
 - The pickup diagonal is an absolutely positioned inline SVG line, which
   prints crisply at any size, unlike a rotated border.
+- Each half's label is capped at 70% of the cell width and two lines
+  (`line-clamp-2`), so it stays on its own side of the diagonal; a label over
+  10 characters (e.g. `"Playdate: Oscar's family"`) prints at 0.9em instead
+  of the usual 1.2em (`pickupLabelEm` in `week-plan-sheet.ts`).
 
 ### Ink and theme
 
