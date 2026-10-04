@@ -90,6 +90,7 @@ describe('ManageGroups', () => {
       getGroup: vi.fn(async () => groupDetail()),
       updateCalendarPermissionPolicy: vi.fn(async () => undefined),
       updateMealplanPermissionPolicy: vi.fn(async () => undefined),
+      deleteGroup: vi.fn(async () => undefined),
       ...stubs.groups,
     };
     const guardiansStub: Partial<GuardiansService> = {
@@ -1458,5 +1459,105 @@ describe('ManageGroups', () => {
 
       expect(findButtonByText(compiled, 'Save permissions')?.disabled).toBe(false);
     });
+  });
+
+  // ----- Delete flow -----
+
+  it('shows a Delete button only for a group the caller owns', async () => {
+    const { fixture } = await setup({
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 1 })]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByText(compiled, 'Delete')).toBeUndefined();
+  });
+
+  it('shows a confirmation prompt instead of deleting immediately', async () => {
+    const { fixture, groups } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain(
+      'Delete this group? It will be hidden from everyone, including you.',
+    );
+    expect(findButtonByText(compiled, 'Confirm')).toBeTruthy();
+    expect(groups.deleteGroup).not.toHaveBeenCalled();
+  });
+
+  it('cancels the delete confirmation without deleting', async () => {
+    const { fixture, groups } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+
+    findButtonByText(compiled, 'Cancel')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain(
+      'Delete this group? It will be hidden from everyone, including you.',
+    );
+    expect(groups.deleteGroup).not.toHaveBeenCalled();
+    expect(findButtonByText(compiled, 'Delete')).toBeTruthy();
+  });
+
+  it('deletes the group on confirm, closes the prompt, and reloads the list', async () => {
+    let loadCount = 0;
+    const listMyGroups = vi.fn(async () => (loadCount++ === 0 ? [group()] : []));
+    const { fixture, groups } = await setup({ groups: { listMyGroups } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+
+    findButtonByText(compiled, 'Confirm')!.click();
+    await settle(fixture);
+
+    expect(groups.deleteGroup).toHaveBeenCalledWith('group-1');
+    expect(listMyGroups).toHaveBeenCalledTimes(2);
+    expect(compiled.textContent).toContain('No groups yet. Create one below.');
+  });
+
+  it('shows an error and keeps the confirmation prompt open when deleting fails', async () => {
+    const { fixture } = await setup({
+      groups: { deleteGroup: vi.fn(async () => Promise.reject(new Error('boom'))) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+
+    findButtonByText(compiled, 'Confirm')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Unable to delete this group.');
+    expect(findButtonByText(compiled, 'Confirm')).toBeTruthy();
+    expect(findButtonByText(compiled, 'Cancel')).toBeTruthy();
+  });
+
+  it('disables the confirm and cancel buttons while a delete is in flight', async () => {
+    const pending = deferred<void>();
+    const { fixture } = await setup({ groups: { deleteGroup: vi.fn(() => pending.promise) } });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Delete')!.click();
+    await settle(fixture);
+
+    findButtonByText(compiled, 'Confirm')!.click();
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'Confirm')?.disabled).toBe(true);
+    expect(findButtonByText(compiled, 'Cancel')?.disabled).toBe(true);
+
+    pending.resolve();
+    await settle(fixture);
   });
 });

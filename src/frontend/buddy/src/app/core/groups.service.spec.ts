@@ -190,6 +190,18 @@ describe('GroupsService', () => {
     });
   });
 
+  describe('deleteGroup', () => {
+    it('DELETEs the group and resolves', async () => {
+      const promise = service.deleteGroup('group-1');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/groups/group-1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await expect(promise).resolves.toBeNull();
+    });
+  });
+
   describe('getGroup', () => {
     it('GETs the group detail and resolves it', async () => {
       const detail: GroupDetail = {

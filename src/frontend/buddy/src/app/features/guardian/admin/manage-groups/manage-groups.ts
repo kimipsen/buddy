@@ -131,8 +131,37 @@ export class ManageGroups {
   });
   protected readonly mealplanPolicySaving = createAction();
 
+  protected readonly confirmingDeleteGroupId = signal<string | null>(null);
+  protected readonly deleting = createAction<string>();
+
   protected canManage(group: GroupSummary): boolean {
     return group.role === 0 || group.role === 1;
+  }
+
+  // Deleting a group is owner-only, unlike the admin-or-owner actions gated by canManage.
+  protected isOwner(group: GroupSummary): boolean {
+    return group.role === 0;
+  }
+
+  protected requestDelete(groupId: string): void {
+    this.deleting.clearError();
+    this.confirmingDeleteGroupId.set(groupId);
+  }
+
+  protected cancelDelete(): void {
+    this.confirmingDeleteGroupId.set(null);
+  }
+
+  protected async confirmDelete(groupId: string): Promise<void> {
+    await this.deleting.run(
+      groupId,
+      async () => {
+        await this.groups.deleteGroup(groupId);
+        this.confirmingDeleteGroupId.set(null);
+        this.items.reload();
+      },
+      'admin.manageGroups.delete.error',
+    );
   }
 
   protected async createGroup(): Promise<void> {

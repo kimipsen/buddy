@@ -7,7 +7,7 @@
 
 ## Group deletion
 
-- [ ] Add functionality to delete a group.
+- [x] Add functionality to delete a group.
 
 ## Guardian onboarding
 

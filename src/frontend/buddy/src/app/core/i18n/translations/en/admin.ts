@@ -73,6 +73,13 @@ export const admin = {
         manage: 'Full access',
       },
     },
+    delete: {
+      button: 'Delete',
+      confirmPrompt: 'Delete this group? It will be hidden from everyone, including you.',
+      confirmButton: 'Confirm',
+      cancelButton: 'Cancel',
+      error: 'Unable to delete this group.',
+    },
   },
   manageChildren: {
     title: 'Children',

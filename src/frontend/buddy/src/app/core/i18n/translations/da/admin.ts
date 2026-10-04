@@ -73,6 +73,13 @@ export const admin = {
         manage: 'Fuld adgang',
       },
     },
+    delete: {
+      button: 'Slet',
+      confirmPrompt: 'Slet denne gruppe? Den skjules for alle, også dig selv.',
+      confirmButton: 'Bekræft',
+      cancelButton: 'Annuller',
+      error: 'Kunne ikke slette gruppen.',
+    },
   },
   manageChildren: {
     title: 'Børn',
