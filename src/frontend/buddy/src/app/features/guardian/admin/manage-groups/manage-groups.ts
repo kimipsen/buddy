@@ -245,11 +245,11 @@ export class ManageGroups {
   }
 
   protected guardianMembers(members: GroupMember[]): GroupMember[] {
-    return members.filter((m) => !m.isChild);
+    return sortByMemberName(members.filter((m) => !m.isChild));
   }
 
   protected childMembers(members: GroupMember[]): GroupMember[] {
-    return members.filter((m) => m.isChild);
+    return sortByMemberName(members.filter((m) => m.isChild));
   }
 
   protected toggleMembersPanel(groupId: string): void {
@@ -344,4 +344,10 @@ export class ManageGroups {
       'admin.manageGroups.mealplanPolicy.saveError',
     );
   }
+}
+
+function sortByMemberName(members: GroupMember[]): GroupMember[] {
+  return [...members].sort((a, b) =>
+    `${a.givenName} ${a.familyName}`.localeCompare(`${b.givenName} ${b.familyName}`),
+  );
 }
