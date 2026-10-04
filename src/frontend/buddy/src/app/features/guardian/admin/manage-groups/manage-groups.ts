@@ -1,6 +1,7 @@
 import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { sortByName } from '../../../../core/array-utils';
 import { CalendarRole } from '../../../../core/calendars.service';
 import {
   GroupMember,
@@ -69,7 +70,9 @@ export class ManageGroups {
   protected readonly mealplanTierLabels = MEALPLAN_TIER_LABELS;
   protected readonly mealplanTiers = MEALPLAN_TIERS;
 
-  protected readonly items = resource({ loader: () => this.groups.listMyGroups() });
+  protected readonly items = resource({
+    loader: () => this.groups.listMyGroups().then(sortByName),
+  });
 
   protected readonly newGroupName = signal('');
   protected readonly creating = createAction();

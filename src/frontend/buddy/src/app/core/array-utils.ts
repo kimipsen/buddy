@@ -15,6 +15,12 @@ export function firstAndLast<T>(items: readonly T[]): [T, T] {
   return [first, last];
 }
 
+// A copy of items sorted by their `name` field, locale-aware (admin lists want "Åse" to sort next
+// to "Ask", not after "Zoe").
+export function sortByName<T extends { name: string }>(items: readonly T[]): T[] {
+  return [...items].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // A copy of items with the elements at i and j exchanged.
 export function swapped<T>(items: readonly T[], i: number, j: number): T[] {
   const a = items[i];

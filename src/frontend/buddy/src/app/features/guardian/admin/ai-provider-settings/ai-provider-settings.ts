@@ -12,7 +12,9 @@ import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { createAction } from '../../../../shared/action-state/action-state';
 
-const PROVIDERS: readonly AiProvider[] = [0, 1, 2];
+// Ordered to match the alphabetical order of their translated display names ("Anthropic (Claude)",
+// "Google (Gemini)", "OpenAI (ChatGPT)"), like the other admin lists.
+const PROVIDERS: readonly AiProvider[] = [0, 2, 1];
 
 const PROVIDER_LABEL_KEYS: Record<AiProvider, string> = {
   0: 'admin.aiProviders.names.anthropic',

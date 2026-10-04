@@ -38,7 +38,9 @@ export class ManageChildren {
   protected readonly languageNames = LANGUAGE_NAMES;
   protected readonly timeZoneIds = listTimeZoneIds();
 
-  protected readonly children = resource({ loader: () => this.guardians.listMyChildren() });
+  protected readonly children = resource({
+    loader: () => this.guardians.listMyChildren().then(sortByChildName),
+  });
 
   protected readonly newChildGivenName = signal('');
   protected readonly newChildFamilyName = signal('');
@@ -235,4 +237,12 @@ export class ManageChildren {
 
 function withoutKey(byChildId: Record<string, string>, childId: string): Record<string, string> {
   return Object.fromEntries(Object.entries(byChildId).filter(([id]) => id !== childId));
+}
+
+function sortByChildName(children: ChildSummary[]): ChildSummary[] {
+  return [...children].sort((a, b) =>
+    `${a.name.givenName} ${a.name.familyName}`.localeCompare(
+      `${b.name.givenName} ${b.name.familyName}`,
+    ),
+  );
 }

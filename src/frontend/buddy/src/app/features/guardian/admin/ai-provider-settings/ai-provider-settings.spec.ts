@@ -96,8 +96,12 @@ describe('AiProviderSettingsComponent', () => {
     return { promise, resolve, reject };
   }
 
+  // Rows render in PROVIDERS order (alphabetical by display name: Anthropic, Google/Gemini,
+  // OpenAI), not by the AiProvider enum's numeric ordinal.
+  const ROW_POSITION: Record<0 | 1 | 2, number> = { 0: 0, 2: 1, 1: 2 };
+
   function row(compiled: HTMLElement, provider: 0 | 1 | 2): HTMLElement {
-    return compiled.querySelectorAll<HTMLElement>('li')[provider];
+    return compiled.querySelectorAll<HTMLElement>('li')[ROW_POSITION[provider]];
   }
 
   function rowButton(
