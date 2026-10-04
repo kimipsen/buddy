@@ -131,7 +131,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   send a chat message, apply or discard the draft)
 - `CalendarsService` lists accessible calendars and occurrences and manages
   calendar items and task completion
-- `GroupsService` manages group membership, invitations, and sharing policies
+- `GroupsService` manages group membership, invitations, sharing policies, and
+  group deletion
 - `GuardiansService` calls the backend guardian endpoints
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, and iCal
   subscription-token endpoints
