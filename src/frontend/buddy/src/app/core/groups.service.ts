@@ -122,7 +122,9 @@ export class GroupsService {
   }
 
   deleteGroup(groupId: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}`));
+    return firstValueFrom(
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}`),
+    );
   }
 
   getGroup(groupId: string): Promise<GroupDetail> {
