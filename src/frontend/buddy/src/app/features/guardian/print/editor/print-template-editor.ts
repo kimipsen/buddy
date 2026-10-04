@@ -201,7 +201,7 @@ export class PrintTemplateEditor {
   protected readonly rows = linkedSignal(() =>
     (this.template()?.rows ?? []).map((row) => this.draft(row)),
   );
-  protected readonly colors = linkedSignal((): Record<string, string> =>
+  protected readonly colors = linkedSignal((): Partial<Record<string, string>> =>
     Object.fromEntries((this.template()?.guardianColors ?? []).map((c) => [c.guardianId, c.color])),
   );
   protected readonly newKind = signal<PrintRowKind>(PRINT_ROW_KIND.blank);
@@ -248,10 +248,9 @@ export class PrintTemplateEditor {
       defaultStartWeekday: this.startWeekday(),
       showWeekNumber: this.showWeekNumber(),
       rows: this.rows().map((draft) => cleanRow(draft.row)),
-      guardianColors: Object.entries(this.colors()).map(([guardianId, color]) => ({
-        guardianId,
-        color,
-      })),
+      guardianColors: Object.entries(this.colors()).flatMap(([guardianId, color]) =>
+        color === undefined ? [] : [{ guardianId, color }],
+      ),
     };
   });
 

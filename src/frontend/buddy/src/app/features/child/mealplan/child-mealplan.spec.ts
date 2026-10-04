@@ -428,12 +428,12 @@ describe('ChildMealplan', () => {
   });
 
   describe('a rating that resolves after switching week', () => {
-    async function rateThenSwitchWeek(nextWeek: Promise<MealPlanEntry[]>) {
+    async function rateThenSwitchWeek(nextWeek: () => Promise<MealPlanEntry[]>) {
       const pendingRating = deferred<Meal>();
       const listMealPlan = vi
         .fn()
         .mockImplementationOnce(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')])
-        .mockReturnValueOnce(nextWeek);
+        .mockImplementationOnce(nextWeek);
       const rateMeal = vi.fn(() => pendingRating.promise);
       const { fixture } = await setup({ mealplans: { listMealPlan, rateMeal } });
       await settle(fixture);
@@ -453,7 +453,7 @@ describe('ChildMealplan', () => {
 
     it('leaves the new week loading and then shows it', async () => {
       const nextWeek = deferred<MealPlanEntry[]>();
-      const { fixture, compiled, pendingRating } = await rateThenSwitchWeek(nextWeek.promise);
+      const { fixture, compiled, pendingRating } = await rateThenSwitchWeek(() => nextWeek.promise);
 
       pendingRating.resolve(savedRating());
       await settle(fixture);
@@ -468,7 +468,7 @@ describe('ChildMealplan', () => {
     });
 
     it("keeps the new week's load error and shows no rating error", async () => {
-      const { fixture, compiled, pendingRating } = await rateThenSwitchWeek(
+      const { fixture, compiled, pendingRating } = await rateThenSwitchWeek(() =>
         Promise.reject(new Error('boom')),
       );
       expect(compiled.textContent).toContain(
