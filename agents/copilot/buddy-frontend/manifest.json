@@ -1,0 +1,28 @@
+{
+  "name": "buddy-frontend",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Buddy Angular 22 frontend conventions for components, routes, services, styling, accessibility, theming, and Vitest specs in src/frontend/buddy.",
+  "tags": [
+    "copilot",
+    "angular",
+    "frontend",
+    "signals",
+    "tailwind",
+    "vitest",
+    "playwright",
+    "i18n"
+  ],
+  "frameworks": [
+    "angular@22",
+    "tailwindcss@4",
+    "vitest"
+  ],
+  "preferences": [
+    "signals",
+    "standalone-components",
+    "zoneless",
+    "template-driven-forms",
+    "typed-i18n"
+  ]
+}

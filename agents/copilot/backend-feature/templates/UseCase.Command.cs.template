@@ -1,0 +1,16 @@
+// -> src/backend/buddy/Features/{{Domain}}/{{UseCase}}/{{UseCase}}.Command.cs
+// Derived from Medicines/UpdateMedicineDetails. Queries use the same file name and shape
+// (ListTodaysDoses.Command.cs); only Mealplans/GetGroupMealplanStatus uses `.Query.cs`.
+using System.Security.Claims;
+
+using buddy.Features.Users;
+
+namespace buddy.Features.{{Domain}};
+
+// UserId is the caller and never null: ProvisionedUserMiddleware rejects a token with no backend
+// user (403 user_not_provisioned) before the endpoint runs.
+public sealed record {{UseCase}}(UserId UserId, UserId ChildId, {{AggregateId}} {{AggregateId}}, string Name)
+{
+    public static {{UseCase}} FromClaims(ClaimsPrincipal principal, UserId childId, {{AggregateId}} id, string name) =>
+        new(principal.GetRequiredUserId(), childId, id, name);
+}

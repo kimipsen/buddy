@@ -1,0 +1,27 @@
+{
+  "name": "run-buddy",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Run the Buddy app locally in the devcontainer, health-check services, take screenshots, inspect Marten events, read Mailpit email, and stop the servers safely.",
+  "tags": [
+    "copilot",
+    "devcontainer",
+    "dotnet",
+    "angular",
+    "playwright",
+    "mailpit",
+    "postgres",
+    "keycloak"
+  ],
+  "frameworks": [
+    "dotnet@11",
+    "angular@22",
+    "playwright"
+  ],
+  "preferences": [
+    "real-stack",
+    "safe-port-stop",
+    "screenshots",
+    "marten-inspection"
+  ]
+}

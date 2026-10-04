@@ -1,0 +1,27 @@
+{
+  "name": "backend-feature",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Step-by-step workflow for adding a Buddy .NET backend vertical slice, events, aggregates, docs, and Alba integration tests.",
+  "tags": [
+    "copilot",
+    "dotnet",
+    "backend",
+    "marten",
+    "wolverine",
+    "event-sourcing",
+    "alba",
+    "vertical-slices"
+  ],
+  "frameworks": [
+    "dotnet@11",
+    "marten@9",
+    "wolverinefx@6"
+  ],
+  "preferences": [
+    "vertical-slices",
+    "event-sourcing",
+    "compile-verified-templates",
+    "result-pattern"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "e2e-test",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Guidance for writing, running, and debugging Buddy Playwright end-to-end tests against the real API, Keycloak, Postgres, and Mailpit.",
+  "tags": [
+    "copilot",
+    "playwright",
+    "e2e",
+    "frontend",
+    "keycloak",
+    "mailpit",
+    "testing"
+  ],
+  "frameworks": [
+    "playwright",
+    "angular@22",
+    "dotnet@11"
+  ],
+  "preferences": [
+    "real-backend",
+    "data-isolation",
+    "trace-triage",
+    "role-based-locators"
+  ]
+}

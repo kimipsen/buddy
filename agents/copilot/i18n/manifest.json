@@ -1,0 +1,7 @@
+{
+  "name": "i18n",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Manage Buddy's typed English and Danish UI translations, wire keys into Angular code, and verify parity with the bundled checker.",
+  "tags": ["copilot", "i18n", "angular", "translations", "english", "danish", "frontend"]
+}

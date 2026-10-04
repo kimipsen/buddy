@@ -1,0 +1,15 @@
+{
+  "name": "backend-aware-review",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Review Buddy diffs with backend-aware .NET checks plus general review for frontend, docs, config, and other files",
+  "tags": [
+    "copilot",
+    "review",
+    "dotnet",
+    "backend",
+    "frontend",
+    "marten",
+    "wolverine"
+  ]
+}

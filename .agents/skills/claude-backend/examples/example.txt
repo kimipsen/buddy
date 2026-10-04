@@ -1,0 +1,10 @@
+Example prompts that exercise this skill against the Buddy backend.
+
+1. New use case on an existing aggregate
+"Add a `PauseMedicineSchedule` use case to Features/Medicines: a guardian can pause a schedule until a given date. Plan first. Add the event to the Medicines event union, the Command/Validator/Handler/Endpoint files, the Result -> HTTP mapping, the `.http` entry, and integration tests that cover success, 404, 403 and validation."
+
+2. New aggregate
+"Plan a `SleepDiaryEntry` aggregate for the proposed sleep diary (docs/backend/analysis/sleep-diary.md). Use a sealed-record ID type, a top-level event union, a Marten event store interface and implementation, an inline snapshot projection in the `snapshots` schema, and EventShapeTests/SnapshotTests coverage."
+
+3. Read-path change
+"`ListMedicineSchedules` is slow for families with many schedules. Review the Marten query and snapshot usage and propose a fix with a test."

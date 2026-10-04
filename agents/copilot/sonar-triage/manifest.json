@@ -1,0 +1,7 @@
+{
+  "name": "sonar-triage",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Triage Buddy SonarCloud/SonarQube findings, verify them against the code, fix only the real issues, and report verdicts with recommended Sonar actions.",
+  "tags": ["copilot", "sonarcloud", "sonarqube", "triage", "csharp", "typescript", "quality"]
+}

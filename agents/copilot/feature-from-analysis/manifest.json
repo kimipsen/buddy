@@ -1,0 +1,15 @@
+{
+  "name": "feature-from-analysis",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Build a Buddy feature end to end from an analysis doc, or write a new analysis doc in the house style",
+  "tags": [
+    "copilot",
+    "buddy",
+    "analysis",
+    "backend",
+    "frontend",
+    "e2e",
+    "documentation"
+  ]
+}

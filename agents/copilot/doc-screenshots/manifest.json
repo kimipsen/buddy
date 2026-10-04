@@ -1,0 +1,7 @@
+{
+  "name": "doc-screenshots",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Regenerate, extend, or debug Buddy's documentation screenshots by seeding demo data, capturing every page with Playwright, and keeping screenshot coverage current.",
+  "tags": ["copilot", "screenshots", "playwright", "documentation", "angular", "frontend"]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "claude-backend",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Buddy .NET backend conventions for vertical-slice features, Marten event sourcing, Wolverine handlers, minimal APIs, Result<T>, and integration tests",
+  "tags": [
+    "copilot",
+    "dotnet",
+    "backend",
+    "marten",
+    "wolverine",
+    "event-sourcing",
+    "postgresql"
+  ],
+  "frameworks": [
+    "dotnet@11",
+    "marten@9",
+    "wolverinefx@6"
+  ],
+  "preferences": [
+    "event-sourcing",
+    "vertical-slices",
+    "custom-id-types",
+    "uuidv7",
+    "result-pattern",
+    "csharp-unions"
+  ]
+}

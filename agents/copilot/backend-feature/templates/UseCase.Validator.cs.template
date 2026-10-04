@@ -1,0 +1,16 @@
+// -> src/backend/buddy/Features/{{Domain}}/{{UseCase}}/{{UseCase}}.Validator.cs
+// Structural, state-free rules only. Anything that needs a store read (a time that must exist on
+// the schedule, a resend cooldown) stays in the handler and returns
+// Result<T>.Validation(ValidationProblem.Of("...")) -- see SetDoseStatusHandler.
+// Picked up by AddValidatorsFromAssemblyContaining<Program>() in Program.cs; no registration.
+using FluentValidation;
+
+namespace buddy.Features.{{Domain}};
+
+public sealed class {{UseCase}}Validator : AbstractValidator<{{UseCase}}>
+{
+    public {{UseCase}}Validator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+    }
+}

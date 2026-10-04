@@ -1,0 +1,103 @@
+// -> src/backend/buddy.IntegrationTests/Features/{{Domain}}/{{UseCase}}/{{UseCase}}Tests.cs
+// Derived from Features/Medicines/SetDoseStatus/SetDoseStatusTests.cs. Arrange through the real
+// API via the domain's <Domain>TestHelpers / GuardianTestHelpers, never by writing events
+// directly. Response bodies deserialize into the domain's <Domain>TestDtos.cs records
+// (strongly-typed ids are raw Guids on the wire).
+using Alba;
+
+using buddy.IntegrationTests.Features.Guardians;
+using buddy.IntegrationTests.Fixtures;
+using buddy.IntegrationTests.Meta;
+
+using Xunit;
+
+namespace buddy.IntegrationTests.Features.{{Domain}}.{{UseCase}};
+
+[Collection(BuddyApiCollection.Name)]
+public sealed class {{UseCase}}Tests(BuddyApiFixture fixture)
+{
+    [Fact]
+    [CoversEndpoint("{{UseCase}}")] // Required by Meta/EndpointCoverageTests for every .WithName(...).
+    public async Task A_guardian_can_{{snake_use_case}}()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var created = await {{CreateAggregateAsync}}(fixture, guardianToken, child.Id);
+        Assert.NotNull(created);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Name = "Renamed" }).ToUrl($"{{testUrl}}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var body = response.ReadAsJson<{{ResponseDto}}>();
+        Assert.Equal("Renamed", body.Name);
+    }
+
+    [Fact]
+    public async Task An_empty_name_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var created = await {{CreateAggregateAsync}}(fixture, guardianToken, child.Id);
+        Assert.NotNull(created);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Name = "" }).ToUrl($"{{testUrl}}");
+            _.StatusCodeShouldBe(400);
+        });
+    }
+
+    [Fact]
+    public async Task The_child_themself_is_forbidden()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var created = await {{CreateAggregateAsync}}(fixture, guardianToken, child.Id);
+        Assert.NotNull(created);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {childToken}");
+            _.Patch.Json(new { Name = "Renamed" }).ToUrl($"{{testUrl}}");
+            _.StatusCodeShouldBe(403);
+        });
+    }
+
+    [Fact]
+    public async Task A_third_party_with_no_guardian_link_gets_not_found()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var (_, strangerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var created = await {{CreateAggregateAsync}}(fixture, guardianToken, child.Id);
+        Assert.NotNull(created);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {strangerToken}");
+            _.Patch.Json(new { Name = "Renamed" }).ToUrl($"{{testUrl}}");
+            _.StatusCodeShouldBe(404);
+        });
+    }
+
+    [Fact]
+    public async Task An_unknown_id_gets_not_found()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var created = new { Id = Guid.NewGuid() };
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { Name = "Renamed" }).ToUrl($"{{testUrl}}");
+            _.StatusCodeShouldBe(404);
+        });
+    }
+}

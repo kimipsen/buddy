@@ -1,0 +1,15 @@
+{
+  "name": "mutation-fix-backend",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Run backend Stryker.NET rounds, triage survivors, strengthen Alba/xUnit integration tests, and rerun until relevant mutants are killed",
+  "tags": [
+    "copilot",
+    "mutation-testing",
+    "backend",
+    "dotnet",
+    "xunit",
+    "alba",
+    "stryker"
+  ]
+}

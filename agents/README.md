@@ -15,7 +15,10 @@ than combining overlapping instructions by default.
   visual planning artifacts.
 - [Copilot documentation skill](copilot/README.md) — creates and updates
   architecture records, API/service documentation, component documentation,
-  changelog entries, and related templates.
+  changelog entries, and related templates. It also bundles Copilot-format
+  ports of every Buddy project skill (backend, frontend, e2e, i18n,
+  deploy, mutation testing, Sonar triage, and more) as sibling packages
+  under `copilot/<skill-name>/`; see `copilot/README.md` for the list.
 - [GitHub Pilot skill](github-pilot/README.md) — supports patch suggestions,
   pair-programming prompts, PR descriptions, review checklists, tests, and
   migration guidance.

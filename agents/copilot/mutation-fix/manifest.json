@@ -1,0 +1,14 @@
+{
+  "name": "mutation-fix",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Run frontend Stryker batches, triage survivors, strengthen Angular/Vitest specs, and rerun until relevant mutants are killed",
+  "tags": [
+    "copilot",
+    "mutation-testing",
+    "frontend",
+    "angular",
+    "vitest",
+    "stryker"
+  ]
+}

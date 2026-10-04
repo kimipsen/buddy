@@ -1,0 +1,7 @@
+{
+  "name": "deploy",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Deploy Buddy to production on the Oracle VM docker-compose stack or Azure Container Apps, with prerequisite checks, explicit approval, verification, and rollback guidance.",
+  "tags": ["copilot", "deploy", "production", "docker", "azure", "keycloak", "postgresql"]
+}

@@ -1,0 +1,60 @@
+// -> src/backend/buddy/Features/{{Domain}}/{{UseCase}}/{{UseCase}}.Handler.cs
+// Derived from Medicines/UpdateMedicineDetails + SetDoseStatus. Wolverine discovers the static
+// class by its *Handler name and the static Handle method; every parameter after the message is
+// resolved from DI (stores, IValidator<T>) or is the CancellationToken.
+using buddy.Common;
+using buddy.Common.Validation;
+using buddy.Features.Guardians;
+using buddy.Features.Users;
+
+using FluentValidation;
+
+namespace buddy.Features.{{Domain}};
+
+public static class {{UseCase}}Handler
+{
+    public static async Task<Result<{{Aggregate}}>> Handle(
+        {{UseCase}} command,
+        IValidator<{{UseCase}}> validator,
+        {{EventStore}} store,
+        IGuardianLinkEventStore guardians,
+        CancellationToken cancellationToken)
+    {
+        // 1. Structural validation first.
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<{{Aggregate}}>.Validation(problem);
+        }
+
+        // 2. Domain authorization helper (<Domain>Authorization.cs). Denials map through the
+        //    helper's ToDeniedResult<T>() so NotFound/Forbidden stay consistent per domain.
+        var access = await {{Authorization}}.{{AccessCheck}}(command.ChildId, command.UserId, guardians, cancellationToken);
+
+        if (access != {{Access}}.Allowed)
+        {
+            return access.ToDeniedResult<{{Aggregate}}>();
+        }
+
+        // 3. Load + rehydrate from events (write paths replay; FindSnapshotAsync is for reads).
+        var events = await store.ReadAsync(command.{{AggregateId}}, cancellationToken);
+        var aggregate = {{Aggregate}}.Rehydrate(events);
+
+        // Wrong child == unknown id: never reveal another child's resource.
+        if (aggregate is null || aggregate.ChildId != command.ChildId)
+        {
+            return new Result<{{Aggregate}}>.NotFound();
+        }
+
+        // 4. Idempotent by construction: append only when something changes.
+        if (aggregate.Name == command.Name)
+        {
+            return new Result<{{Aggregate}}>.Success(aggregate);
+        }
+
+        var changed = new {{Event}}(command.{{AggregateId}}, aggregate.Name, command.Name, command.UserId, DateTimeOffset.UtcNow);
+        await store.AppendAsync(command.{{AggregateId}}, [changed], cancellationToken);
+
+        // Reuse the aggregate's own fold instead of hand-copying fields with `with { ... }`.
+        return new Result<{{Aggregate}}>.Success({{Aggregate}}.Advance(aggregate, changed));
+    }
+}
