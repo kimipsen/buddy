@@ -29,6 +29,14 @@ export const admin = {
         'Unable to send the invite. The email may already be a member, or an invite was already sent recently.',
       cancelButton: 'Cancel',
       cancelError: 'Unable to cancel the invite.',
+      sentTo: 'Invite sent to {email}.',
+      linkLabel: 'Invite link',
+      copyLink: 'Copy link',
+      copiedLink: 'Copied!',
+      shareLink: 'Share',
+      linkHint:
+        'You can also send this link yourself, for example by text message. It works for 7 days, and only for someone who signs in with {email}.',
+      shareText: 'Join {group} on Buddy',
     },
     members: {
       showButton: 'Members',

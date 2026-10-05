@@ -106,7 +106,9 @@ describe('PrintTemplateEditor', () => {
           provide: CalendarsService,
           useValue: {
             listMyCalendars: vi.fn(async () => [
+              { id: 'school', name: 'Skole', icon: '🏫', role: 0 },
               { id: 'family', name: 'Familie', icon: '📅', role: 0 },
+              { id: 'work', name: 'Arbejde', icon: '💼', role: 0 },
             ]),
           },
         },
@@ -361,6 +363,19 @@ describe('PrintTemplateEditor', () => {
     expect(templates.replaceRows).toHaveBeenCalledWith('t-1', [
       expect.objectContaining({ label: 'Aftaler', calendarIds: ['family'] }),
     ]);
+  });
+
+  it('lists the calendars to load from sorted by name', async () => {
+    const { root } = await setup({
+      ...template,
+      rows: [emptyRow(PRINT_ROW_KIND.calendarEvents, 'Aftaler')],
+    });
+
+    const calendarNames = new Set(['Skole', 'Familie', 'Arbejde']);
+    const labels = Array.from(root.querySelectorAll('button[role="switch"]'))
+      .map((b) => b.getAttribute('aria-label'))
+      .filter((label) => calendarNames.has(label ?? ''));
+    expect(labels).toEqual(['Arbejde', 'Familie', 'Skole']);
   });
 
   it('flags a work-location row whose location was archived', async () => {

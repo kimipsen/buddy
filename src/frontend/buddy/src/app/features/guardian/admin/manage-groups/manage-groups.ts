@@ -9,9 +9,11 @@ import {
   GroupRoleName,
   GroupSummary,
   GroupsService,
+  SentGroupInvite,
 } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { MealplanAccessTier } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 
@@ -61,6 +63,7 @@ const MEALPLAN_TIERS: GroupMealplanTier[] = [0, 3, 2];
 export class ManageGroups {
   private readonly groups = inject(GroupsService);
   private readonly guardians = inject(GuardiansService);
+  private readonly translation = inject(TranslationService);
 
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly invitableRoles = INVITABLE_ROLES;
@@ -89,6 +92,11 @@ export class ManageGroups {
   protected readonly inviteRole = signal<GroupRole>(2);
   protected readonly inviting = createAction();
   protected readonly revokingInvite = createAction<string>();
+  // The invite just sent from the open panel, whose link the inviter can copy or share themself
+  // (SMS, chat). Gone once the panel closes: the server keeps only the token's hash.
+  protected readonly sentInvite = signal<SentGroupInvite | null>(null);
+  protected readonly inviteLinkCopied = signal(false);
+  protected readonly canShareInviteLink = typeof navigator.share === 'function';
 
   // The children panel simply shows no candidates if this fails -- manage-children already
   // surfaces a dedicated load error for the guardian's own children list.
@@ -194,6 +202,7 @@ export class ManageGroups {
     this.expandedGroupId.set(groupId);
     this.inviteEmail.set('');
     this.inviteRole.set(2);
+    this.sentInvite.set(null);
     this.inviting.clearError();
     this.revokingInvite.clearError();
   }
@@ -208,13 +217,37 @@ export class ManageGroups {
     await this.inviting.run(
       true,
       async () => {
-        await this.groups.inviteToGroup(groupId, { email, role: this.inviteRole() });
+        const invite = await this.groups.inviteToGroup(groupId, { email, role: this.inviteRole() });
+        this.sentInvite.set(invite);
+        this.inviteLinkCopied.set(false);
         this.inviteEmail.set('');
         this.revokingInvite.clearError();
         this.invites.reload();
       },
       'admin.manageGroups.invite.sendError',
     );
+  }
+
+  protected async copyInviteLink(url: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(url);
+      this.inviteLinkCopied.set(true);
+    } catch {
+      this.inviteLinkCopied.set(false);
+    }
+  }
+
+  protected async shareInviteLink(url: string, groupName: string): Promise<void> {
+    try {
+      await navigator.share({
+        text: this.translation.translate('admin.manageGroups.invite.shareText', {
+          group: groupName,
+        }),
+        url,
+      });
+    } catch {
+      // Dismissing the share sheet rejects too; the link is still there to copy.
+    }
   }
 
   protected async revokeInvite(groupId: string, inviteId: string): Promise<void> {

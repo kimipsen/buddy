@@ -35,7 +35,7 @@ internal static partial class GroupTestHelpers
         return response.ReadAsJson<GroupResponseDto>();
     }
 
-    public static async Task<GroupInviteResponseDto> InviteToGroupAsync(BuddyApiFixture fixture, string ownerToken, Guid groupId, string email, GroupRole role)
+    public static async Task<SentGroupInviteResponseDto> InviteToGroupAsync(BuddyApiFixture fixture, string ownerToken, Guid groupId, string email, GroupRole role)
     {
         var response = await fixture.Host.Scenario(_ =>
         {
@@ -44,7 +44,7 @@ internal static partial class GroupTestHelpers
             _.StatusCodeShouldBeOk();
         });
 
-        return response.ReadAsJson<GroupInviteResponseDto>();
+        return response.ReadAsJson<SentGroupInviteResponseDto>();
     }
 
     // Invite + accept in one call, for tests that just need a second member in the group and don't

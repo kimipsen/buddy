@@ -9,6 +9,7 @@ public static class InviteToGroupHandler
         InviteToGroup command,
         IGroupEventStore groups,
         IEmailSender emailSender,
+        FrontendLinks links,
         CancellationToken cancellationToken)
     {
         if (command.Role == GroupRole.Owner)
@@ -57,6 +58,6 @@ public static class InviteToGroupHandler
 
         await emailSender.SendGroupInviteEmailAsync(normalizedEmail, group.Name, token, cancellationToken);
 
-        return new InviteToGroupOutcome.Success(new GroupInviteSummary(inviteId, normalizedEmail, command.Role, now, expiresAt));
+        return new InviteToGroupOutcome.Success(new GroupInviteSummary(inviteId, normalizedEmail, command.Role, now, expiresAt, links.GroupInvite(token)));
     }
 }

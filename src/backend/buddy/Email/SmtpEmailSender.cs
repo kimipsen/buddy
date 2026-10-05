@@ -7,17 +7,17 @@ using MimeKit;
 
 namespace buddy.Email;
 
-public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options) : IEmailSender
+public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options, FrontendLinks links) : IEmailSender
 {
     public Task SendEmailVerificationAsync(string emailAddress, string token, CancellationToken cancellationToken)
     {
-        var link = BuildLink("verify-email", token);
+        var link = links.EmailVerification(token);
         return SendAsync(emailAddress, "Verify your email address", $"Verify your email address by clicking the link below:\n\n{link}", cancellationToken);
     }
 
     public Task SendGroupInviteEmailAsync(string emailAddress, string groupName, string token, CancellationToken cancellationToken)
     {
-        var link = BuildLink("invite", token);
+        var link = links.GroupInvite(token);
         return SendAsync(
             emailAddress,
             $"You've been invited to join {groupName}",
@@ -27,16 +27,13 @@ public sealed class SmtpEmailSender(IOptionsMonitor<MailOptions> options) : IEma
 
     public Task SendGuardianInviteEmailAsync(string emailAddress, string childGivenName, string token, CancellationToken cancellationToken)
     {
-        var link = BuildLink("guardian-invite", token);
+        var link = links.GuardianInvite(token);
         return SendAsync(
             emailAddress,
             $"You've been invited to help manage {childGivenName}'s account",
             $"You've been invited to help manage {childGivenName}'s account. Click the link below to accept:\n\n{link}",
             cancellationToken);
     }
-
-    private string BuildLink(string path, string token) =>
-        $"{options.CurrentValue.FrontendBaseUrl.TrimEnd('/')}/{path}/{Uri.EscapeDataString(token)}";
 
     private async Task SendAsync(string emailAddress, string subject, string body, CancellationToken cancellationToken)
     {

@@ -13,7 +13,7 @@ public static class InviteToGroupEndpoint
 {
     public static RouteGroupBuilder MapInviteToGroup(this RouteGroupBuilder groups)
     {
-        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<GroupInviteResponse>, NotFound, ForbidHttpResult, Conflict<ErrorEnvelope>>> (
+        groups.MapPost("/{groupId:guid}/invites", async Task<Results<Ok<SentGroupInviteResponse>, NotFound, ForbidHttpResult, Conflict<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             Guid groupId,
             InviteToGroupRequest request,
@@ -26,7 +26,7 @@ public static class InviteToGroupEndpoint
 
             return result switch
             {
-                InviteToGroupOutcome.Success(var invite) => TypedResults.Ok(GroupInviteResponse.FromSummary(invite)),
+                InviteToGroupOutcome.Success(var invite) => TypedResults.Ok(SentGroupInviteResponse.FromSummary(invite)),
                 InviteToGroupOutcome.Forbidden => TypedResults.Forbid(),
                 InviteToGroupOutcome.NotFound => TypedResults.NotFound(),
                 ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
@@ -40,8 +40,11 @@ public static class InviteToGroupEndpoint
 
 public sealed record InviteToGroupRequest(string Email, GroupRole Role);
 
-public sealed record GroupInviteResponse(Guid Id, string Email, GroupRole Role, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt)
+public sealed record GroupInviteResponse(Guid Id, string Email, GroupRole Role, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt);
+
+// GroupInviteResponse plus the shareable link, which exists only at send time (see GroupInviteSummary).
+public sealed record SentGroupInviteResponse(Guid Id, string Email, GroupRole Role, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt, string InviteUrl)
 {
-    public static GroupInviteResponse FromSummary(GroupInviteSummary summary) =>
-        new(summary.Id, summary.Email, summary.Role, summary.InvitedAt, summary.ExpiresAt);
+    public static SentGroupInviteResponse FromSummary(GroupInviteSummary summary) =>
+        new(summary.Id, summary.Email, summary.Role, summary.InvitedAt, summary.ExpiresAt, summary.InviteUrl);
 }

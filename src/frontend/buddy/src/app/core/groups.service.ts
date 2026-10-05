@@ -66,6 +66,12 @@ export interface GroupInvite {
   expiresAt: string;
 }
 
+// The response to sending an invite: the invite plus the link the email carries, so the inviter
+// can share it themself. Only available here -- the server keeps just the token's hash.
+export interface SentGroupInvite extends GroupInvite {
+  inviteUrl: string;
+}
+
 export interface GroupInvitePreview {
   groupName: string;
 }
@@ -91,9 +97,9 @@ export class GroupsService {
     );
   }
 
-  inviteToGroup(groupId: string, request: InviteToGroupRequest): Promise<GroupInvite> {
+  inviteToGroup(groupId: string, request: InviteToGroupRequest): Promise<SentGroupInvite> {
     return firstValueFrom(
-      postIdempotent<GroupInvite>(
+      postIdempotent<SentGroupInvite>(
         this.http,
         `${this.runtimeConfig.apiBaseUrl}/groups/${groupId}/invites`,
         request,

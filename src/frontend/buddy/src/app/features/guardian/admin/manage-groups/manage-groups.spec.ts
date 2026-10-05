@@ -82,9 +82,10 @@ describe('ManageGroups', () => {
         async (request) => ({ id: 'group-new', name: request.name, role: 0 }) as GroupSummary,
       ),
       listInvites: vi.fn(async () => []),
-      inviteToGroup: vi.fn(async (_groupId, request) =>
-        invite({ email: request.email, role: request.role }),
-      ),
+      inviteToGroup: vi.fn(async (_groupId, request) => ({
+        ...invite({ email: request.email, role: request.role }),
+        inviteUrl: 'http://localhost:4300/invite/tok-1',
+      })),
       revokeInvite: vi.fn(async () => undefined),
       addChildToGroup: vi.fn(async () => undefined),
       getGroup: vi.fn(async () => groupDetail()),
@@ -452,6 +453,96 @@ describe('ManageGroups', () => {
     });
     expect(listInvites).toHaveBeenCalledTimes(2);
     expect(emailInput.value).toBe('');
+  });
+
+  async function sendInviteFrom(fixture: ComponentFixture<ManageGroups>): Promise<HTMLElement> {
+    await settle(fixture);
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Invite')!.click();
+    await settle(fixture);
+    setInputValue(
+      compiled.querySelector<HTMLInputElement>('input[name="inviteEmail"]')!,
+      'friend@buddy.test',
+    );
+    await settle(fixture);
+    compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+    return compiled;
+  }
+
+  it('shows the sent invite’s link so the inviter can share it themself', async () => {
+    const { fixture } = await setup();
+    const compiled = await sendInviteFrom(fixture);
+
+    expect(compiled.textContent).toContain('Invite sent to friend@buddy.test.');
+    expect(compiled.textContent).toContain('only for someone who signs in with friend@buddy.test');
+    const link = compiled.querySelector<HTMLInputElement>('#inviteLink-group-1')!;
+    expect(link.readOnly).toBe(true);
+    expect(link.value).toBe('http://localhost:4300/invite/tok-1');
+  });
+
+  it('copies the invite link to the clipboard and confirms it', async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { fixture } = await setup();
+    const compiled = await sendInviteFrom(fixture);
+
+    findButtonByText(compiled, 'Copy link')!.click();
+    await settle(fixture);
+
+    expect(writeText).toHaveBeenCalledWith('http://localhost:4300/invite/tok-1');
+    expect(findButtonByText(compiled, 'Copied!')).toBeTruthy();
+  });
+
+  it('keeps offering to copy when the clipboard write fails', async () => {
+    const writeText = vi.fn(async () => Promise.reject(new Error('denied')));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { fixture } = await setup();
+    const compiled = await sendInviteFrom(fixture);
+
+    findButtonByText(compiled, 'Copy link')!.click();
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'Copy link')).toBeTruthy();
+    expect(findButtonByText(compiled, 'Copied!')).toBeUndefined();
+  });
+
+  it('offers no Share button where the browser can’t share', async () => {
+    const { fixture } = await setup();
+    const compiled = await sendInviteFrom(fixture);
+
+    expect(findButtonByText(compiled, 'Share')).toBeUndefined();
+  });
+
+  it('shares the invite link through the device’s share sheet where available', async () => {
+    const share = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+    try {
+      const { fixture } = await setup();
+      const compiled = await sendInviteFrom(fixture);
+
+      findButtonByText(compiled, 'Share')!.click();
+      await settle(fixture);
+
+      expect(share).toHaveBeenCalledWith({
+        text: 'Join Home on Buddy',
+        url: 'http://localhost:4300/invite/tok-1',
+      });
+    } finally {
+      delete (navigator as { share?: unknown }).share;
+    }
+  });
+
+  it('forgets the sent link when the invite panel is closed and reopened', async () => {
+    const { fixture } = await setup();
+    const compiled = await sendInviteFrom(fixture);
+
+    findButtonByText(compiled, 'Close')!.click();
+    await settle(fixture);
+    findButtonByText(compiled, 'Invite')!.click();
+    await settle(fixture);
+
+    expect(compiled.querySelector('#inviteLink-group-1')).toBeNull();
   });
 
   it('only offers Admin and Member as invitable roles, never Owner', async () => {

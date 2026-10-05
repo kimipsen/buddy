@@ -24,4 +24,6 @@ internal sealed record GroupSummaryDto(Guid Id, string Name, GroupRole Role);
 
 internal sealed record GroupInviteResponseDto(Guid Id, string Email, GroupRole Role, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt);
 
+internal sealed record SentGroupInviteResponseDto(Guid Id, string Email, GroupRole Role, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt, string InviteUrl);
+
 internal sealed record GroupInvitePreviewResponseDto(string GroupName);

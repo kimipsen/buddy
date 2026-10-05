@@ -11,6 +11,7 @@ import {
   GroupSummary,
   GroupsService,
   MealplanPermissionPolicy,
+  SentGroupInvite,
 } from './groups.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -128,12 +129,13 @@ describe('GroupsService', () => {
 
   describe('inviteToGroup', () => {
     it('POSTs the invite request and resolves the created invite', async () => {
-      const invite: GroupInvite = {
+      const invite: SentGroupInvite = {
         id: 'invite-2',
         email: 'c@d.test',
         role: 1,
         invitedAt: '2026-08-01T00:00:00Z',
         expiresAt: '2026-08-08T00:00:00Z',
+        inviteUrl: 'http://localhost:4300/invite/tok',
       };
 
       const promise = service.inviteToGroup('group-1', { email: 'c@d.test', role: 1 });

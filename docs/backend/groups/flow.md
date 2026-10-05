@@ -56,7 +56,7 @@ sequenceDiagram
     API->>Groups: InviteToGroup command
     Groups->>Store: Append GroupInviteCreated
     Groups->>Mail: Send invite email with token
-    Groups-->>API: Invite summary
+    Groups-->>API: Invite summary + invite link
     API-->>App: 200 OK
 
     Invitee->>App: Open invite link
@@ -88,7 +88,7 @@ sequenceDiagram
 | `PUT` | `/groups/{groupId}/medicine-permission-policy` | Updates how group roles map to medicine access tiers. |
 | `PUT` | `/groups/{groupId}/children/{childId}` | An active guardian of `childId` adds them directly as a Member -- no invite/accept step (see below). |
 | `DELETE` | `/groups/{groupId}` | Deletes the group when the caller is authorized. |
-| `POST` | `/groups/{groupId}/invites` | Owner/admin invites a guardian by email; sends a token via email. Re-inviting the same email within a minute returns `409 resend_cooldown`. |
+| `POST` | `/groups/{groupId}/invites` | Owner/admin invites a guardian by email; sends a token via email. The response also carries `inviteUrl`, the same link the email holds, so the inviter can share it themself (SMS, chat); it is only available here, since the invite stores just the token's hash. Re-inviting the same email within a minute returns `409 resend_cooldown`; a later re-invite issues a new link and the old one stops working. |
 | `GET` | `/groups/{groupId}/invites` | Lists pending invites for the group (owner/admin only). |
 | `DELETE` | `/groups/{groupId}/invites/{inviteId}` | Revokes a pending invite. |
 | `GET` | `/invites/{token}/preview` | Unauthenticated: returns the group name for an invite link, so the app can show "You've been invited to X" before login. |

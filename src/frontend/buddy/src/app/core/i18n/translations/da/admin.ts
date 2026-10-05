@@ -29,6 +29,14 @@ export const admin = {
         'Kunne ikke sende invitationen. E-mailen er muligvis allerede medlem, eller en invitation blev allerede sendt for nylig.',
       cancelButton: 'Annuller',
       cancelError: 'Kunne ikke annullere invitationen.',
+      sentTo: 'Invitation sendt til {email}.',
+      linkLabel: 'Invitationslink',
+      copyLink: 'Kopiér link',
+      copiedLink: 'Kopieret!',
+      shareLink: 'Del',
+      linkHint:
+        'Du kan også selv sende linket, fx som sms. Det virker i 7 dage, og kun for en, der logger ind med {email}.',
+      shareText: 'Bliv medlem af {group} på Buddy',
     },
     members: {
       showButton: 'Medlemmer',
@@ -220,7 +228,7 @@ export const admin = {
     },
   },
   deleteAccount: {
-    title: 'Faresone',
+    title: 'Farezone',
     description: 'Sletning af din konto fjerner din adgang permanent. Dette kan ikke fortrydes.',
     deleteButton: 'Slet min konto',
     confirmTitle: 'Slet din konto?',

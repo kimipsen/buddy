@@ -475,6 +475,25 @@ describe('ChildCalendar', () => {
     expect(compiled.textContent).toContain('School');
   });
 
+  it('lists the calendar filter toggles sorted by name', async () => {
+    const { fixture } = await setup({
+      calendars: {
+        listMyCalendars: vi.fn(async () => [
+          calendarSummary({ id: 'cal-2', name: 'School' }),
+          calendarSummary({ id: 'cal-1', name: 'Home' }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const labels = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button[role="switch"]'),
+    )
+      .map((b) => b.getAttribute('aria-label'))
+      .filter((label) => label === 'Home' || label === 'School');
+    expect(labels).toEqual(['Home', 'School']);
+  });
+
   it('hides occurrences for a calendar toggled off', async () => {
     const first = occurrence({
       itemId: 'a',

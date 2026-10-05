@@ -29,6 +29,29 @@ public sealed class InviteToGroupTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task The_response_carries_the_emailed_link_so_the_inviter_can_share_it_themself()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Team");
+        var (invitee, inviteeToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var invite = await GroupTestHelpers.InviteToGroupAsync(fixture, ownerToken, groupId, invitee.Email, GroupRole.Member);
+        var emailedToken = await GroupTestHelpers.ReadInviteTokenAsync(fixture, invitee.Email);
+
+        Assert.EndsWith($"/invite/{emailedToken}", invite.InviteUrl);
+
+        // The shared link works on its own: accepting with the token taken from it joins the group.
+        var sharedToken = invite.InviteUrl[(invite.InviteUrl.LastIndexOf('/') + 1)..];
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/invites/{sharedToken}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+    }
+
+    [Fact]
     public async Task Inviting_as_owner_is_rejected()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();

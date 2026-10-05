@@ -24,6 +24,7 @@ public static class EmailServiceCollectionExtensions
                 mail => mail.Credentials is null
                     || Validator.TryValidateObject(mail.Credentials, new ValidationContext(mail.Credentials), null, validateAllProperties: true),
                 $"{MailOptions.SectionName}:Credentials needs both a Username and a Password.");
+        services.AddSingleton<FrontendLinks>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
         return services;
