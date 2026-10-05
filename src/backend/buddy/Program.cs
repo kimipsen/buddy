@@ -12,6 +12,7 @@ using buddy.Features.Pickups;
 using buddy.Features.PrintTemplates;
 using buddy.Features.WorkLocations;
 using buddy.Features.Progress;
+using buddy.Features.SleepDiaries;
 using buddy.Features.TaskLibrary;
 using buddy.Features.Users;
 using buddy.Serialization;
@@ -94,6 +95,8 @@ builder.Services.AddWorkLocationsFeature(builder.Configuration);
 // After Guardians, Groups, Calendars and WorkLocations: its write-time reference checks read their stores.
 builder.Services.AddPrintTemplatesFeature(builder.Configuration);
 builder.Services.AddProgressFeature(builder.Configuration);
+// After Users and Guardians: authorization reads IGuardianLinkEventStore, the shared view IUserEventStore.
+builder.Services.AddSleepDiariesFeature(builder.Configuration);
 
 var app = builder.Build();
 
@@ -135,5 +138,6 @@ app.MapPickupsFeature();
 app.MapWorkLocationsFeature();
 app.MapPrintTemplatesFeature();
 app.MapProgressFeature();
+app.MapSleepDiariesFeature();
 
 await app.RunAsync();

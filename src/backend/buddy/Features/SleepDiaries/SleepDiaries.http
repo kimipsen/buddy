@@ -1,0 +1,73 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Log a night (guardian only) -- full overwrite of that date's entry
+
+PUT {{buddy_HostAddress}}/sleep-diary/children/{{childId}}/entries/2026-03-02
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "routineStartTime": "19:00",
+  "ritualStartTime": "19:30",
+  "ritualEndTime": "20:10",
+  "bedTime": "20:15",
+  "fellAsleepTime": "20:45",
+  "nightWakeUps": [{ "startTime": "03:30", "durationMinutes": 30 }],
+  "morningWakeTime": "06:30",
+  "isTired": true,
+  "naps": [{ "startTime": "13:00", "durationMinutes": 45 }],
+  "totalSleepMinutes": 555,
+  "remarks": "Cried for 20 minutes before settling"
+}
+
+###
+
+# Clear a night (idempotent)
+DELETE {{buddy_HostAddress}}/sleep-diary/children/{{childId}}/entries/2026-03-02
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Diary-wide sleep hygiene notes
+PUT {{buddy_HostAddress}}/sleep-diary/children/{{childId}}/hygiene-notes
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "notes": "No screens after 19:00, blackout curtains"
+}
+
+###
+
+# List logged nights in a range (max 92 days)
+GET {{buddy_HostAddress}}/sleep-diary/children/{{childId}}/entries?from=2026-03-02&to=2026-03-15
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Create a share link for a clinician -- the token is returned only once
+POST {{buddy_HostAddress}}/sleep-diary/children/{{childId}}/share-links
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "expiresAt": "2026-11-05T00:00:00Z"
+}
+
+###
+
+# List live share links
+GET {{buddy_HostAddress}}/sleep-diary/children/{{childId}}/share-links
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Revoke a share link
+DELETE {{buddy_HostAddress}}/sleep-diary/children/{{childId}}/share-links/{{shareLinkId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# The shared view -- no Authorization header; defaults to the last 14 days
+GET {{buddy_HostAddress}}/sleep-diary/shared/{{shareToken}}?from=2026-03-02&to=2026-03-15

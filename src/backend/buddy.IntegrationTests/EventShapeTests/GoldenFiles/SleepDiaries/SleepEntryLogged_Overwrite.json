@@ -1,0 +1,43 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000003",
+  "Date": "2025-06-01",
+  "Before": {
+    "RoutineStartTime": null,
+    "RitualStartTime": null,
+    "RitualEndTime": null,
+    "BedTime": "20:00:00",
+    "FellAsleepTime": null,
+    "NightWakeUps": [],
+    "MorningWakeTime": "07:00:00",
+    "IsTired": false,
+    "Naps": [],
+    "TotalSleepDuration": null,
+    "Remarks": "",
+    "LoggedBy": "00000000-0000-0000-0000-000000000001"
+  },
+  "After": {
+    "RoutineStartTime": "19:00:00",
+    "RitualStartTime": "19:30:00",
+    "RitualEndTime": "20:10:00",
+    "BedTime": "20:15:00",
+    "FellAsleepTime": "20:45:00",
+    "NightWakeUps": [
+      {
+        "StartTime": "03:30:00",
+        "Duration": "00:30:00"
+      }
+    ],
+    "MorningWakeTime": "06:30:00",
+    "IsTired": true,
+    "Naps": [
+      {
+        "StartTime": "13:00:00",
+        "Duration": "00:45:00"
+      }
+    ],
+    "TotalSleepDuration": "09:15:00",
+    "Remarks": "Cried before settling",
+    "LoggedBy": "00000000-0000-0000-0000-000000000001"
+  },
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

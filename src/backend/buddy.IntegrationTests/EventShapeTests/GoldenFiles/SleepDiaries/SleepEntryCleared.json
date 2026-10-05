@@ -1,0 +1,20 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000003",
+  "Date": "2025-06-01",
+  "Before": {
+    "RoutineStartTime": null,
+    "RitualStartTime": null,
+    "RitualEndTime": null,
+    "BedTime": "20:00:00",
+    "FellAsleepTime": null,
+    "NightWakeUps": [],
+    "MorningWakeTime": "07:00:00",
+    "IsTired": false,
+    "Naps": [],
+    "TotalSleepDuration": null,
+    "Remarks": "",
+    "LoggedBy": "00000000-0000-0000-0000-000000000001"
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

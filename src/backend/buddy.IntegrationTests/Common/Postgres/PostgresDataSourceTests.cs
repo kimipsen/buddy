@@ -9,6 +9,7 @@ using buddy.Features.Pickups;
 using buddy.Features.PrintTemplates;
 using buddy.Features.WorkLocations;
 using buddy.Features.Progress;
+using buddy.Features.SleepDiaries;
 using buddy.Features.TaskLibrary;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Fixtures;
@@ -90,6 +91,7 @@ public sealed class PostgresDataSourceHostTests(BuddyApiFixture fixture)
         typeof(IBabysittersStore),
         typeof(IPrintTemplatesStore),
         typeof(IProgressStore),
+        typeof(ISleepDiariesStore),
         typeof(IIdempotencyStore)
     ];
 
