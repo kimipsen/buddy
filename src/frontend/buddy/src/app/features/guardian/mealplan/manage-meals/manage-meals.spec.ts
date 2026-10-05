@@ -109,8 +109,8 @@ describe('ManageMeals', () => {
     return compiled.querySelector('input[name="mealIcon"]')!;
   }
 
-  function colorInput(compiled: HTMLElement): HTMLInputElement {
-    return compiled.querySelector('input[name="mealColor"]')!;
+  function colorSwatch(compiled: HTMLElement, color: string): HTMLButtonElement {
+    return compiled.querySelector(`app-color-swatch-picker [role="radio"][aria-label="${color}"]`)!;
   }
 
   it('shows a loading message while meals are loading', async () => {
@@ -279,7 +279,7 @@ describe('ManageMeals', () => {
       const compiled = fixture.nativeElement as HTMLElement;
       setInputValue(nameInput(compiled), '  Waffles  ');
       setInputValue(iconInput(compiled), ' 🧇 ');
-      setInputValue(colorInput(compiled), '#123456');
+      colorSwatch(compiled, '#0ea5e9').click();
       fixture.detectChanges();
 
       compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
@@ -289,7 +289,7 @@ describe('ManageMeals', () => {
         name: 'Waffles',
         description: '',
         icon: '🧇',
-        color: '#123456',
+        color: '#0ea5e9',
       });
     });
 

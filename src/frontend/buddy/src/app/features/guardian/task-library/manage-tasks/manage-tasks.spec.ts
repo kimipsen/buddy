@@ -452,6 +452,28 @@ describe('ManageTasks', () => {
       expect(compiled.textContent).toContain('Subtasks');
     });
 
+    it('submits the color picked from the swatch list', async () => {
+      const { fixture, taskLibrary } = await setup();
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      setInputValue(templateNameInput(compiled), 'Bedtime routine');
+      setInputValue(templateIconInput(compiled), '🌙');
+      compiled
+        .querySelector<HTMLButtonElement>(
+          'app-color-swatch-picker [role="radio"][aria-label="#0ea5e9"]',
+        )!
+        .click();
+      fixture.detectChanges();
+      compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(taskLibrary.createTaskTemplate).toHaveBeenCalledWith(
+        'child-1',
+        expect.objectContaining({ color: '#0ea5e9' }),
+      );
+    });
+
     it('resets the form after a successful create', async () => {
       const { fixture } = await setup();
       await settle(fixture);

@@ -374,7 +374,7 @@
     }
 
     <form
-      class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_5rem_4rem_auto]"
+      class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_5rem_auto]"
       (ngSubmit)="createTemplate()"
     >
       <input
@@ -395,14 +395,13 @@
         [ngModel]="newTemplateIcon()"
         (ngModelChange)="newTemplateIcon.set($event)"
       />
-      <input
-        type="color"
-        name="templateColor"
-        aria-label="{{ 'common.colorLabel' | translate }}"
-        class="h-full w-full rounded-lg border border-slate-300 dark:border-slate-600 p-1"
-        [ngModel]="newTemplateColor()"
-        (ngModelChange)="newTemplateColor.set($event)"
-      />
+      <div class="sm:col-span-2 lg:col-span-full lg:row-start-2">
+        <app-color-swatch-picker
+          [value]="newTemplateColor()"
+          [ariaLabel]="'common.colorLabel' | translate"
+          (valueChange)="newTemplateColor.set($event)"
+        />
+      </div>
       <button
         type="submit"
         class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
