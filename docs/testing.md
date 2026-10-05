@@ -56,7 +56,8 @@ the redirect/PKCE flow itself still works.
 `task docs:screenshots` (`npm run screenshots` in `src/frontend/buddy`) seeds a fresh demo family
 and uses a separate Playwright config
 (`src/frontend/buddy/playwright.screenshots.config.ts`) to capture every page listed in
-`src/frontend/buddy/screenshots/pages.ts` into `docs/screenshots/`, regenerating
+`src/frontend/buddy/screenshots/pages.ts`, once at desktop size (1280×800) into `docs/screenshots/`
+and once as an iPhone 15 into `docs/screenshots/mobile/`, regenerating
 [docs/screenshots/README.md](screenshots/README.md). It needs the same Postgres, Keycloak, and
 Mailpit prerequisites as the e2e suite.
 `src/frontend/buddy/src/app/screenshot-coverage.spec.ts` runs as part of the regular Vitest suite

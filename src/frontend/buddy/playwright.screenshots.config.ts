@@ -4,6 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
 // from playwright.config.ts so the e2e suite never runs it. It seeds its own demo family
 // (screenshots/demo-family.ts) and starts the API and dev server itself, reusing them when they're
 // already running.
+//
+// Two projects capture every page twice: `desktop` into docs/screenshots/ and `mobile` (an
+// iPhone 15 profile) into docs/screenshots/mobile/. Both share the one seeded demo family.
 export default defineConfig({
   testDir: './screenshots',
   globalSetup: require.resolve('./screenshots/global-setup'),
@@ -15,14 +18,28 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   use: {
-    ...devices['Desktop Chrome'],
     baseURL: 'http://localhost:4300',
-    viewport: { width: 1280, height: 800 },
     colorScheme: 'light',
     locale: 'en-GB',
     timezoneId: 'Europe/Copenhagen',
     ignoreHTTPSErrors: true,
   },
+  projects: [
+    {
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: 'mobile',
+      use: {
+        ...devices['iPhone 15'],
+        // Emulated in Chromium (the only browser the devcontainer installs) rather than WebKit.
+        // 2x instead of the device's 3x keeps full-page PNGs a reasonable size in the repo.
+        defaultBrowserType: 'chromium',
+        deviceScaleFactor: 2,
+      },
+    },
+  ],
   webServer: [
     {
       command: 'npm start',

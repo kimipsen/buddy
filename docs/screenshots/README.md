@@ -5,7 +5,8 @@
 
 Every page of Buddy, signed in as the demo guardian Sara Holm or her son Emil. The data is a
 demo family seeded fresh for each run, so dates are relative to the day the screenshots were
-taken.
+taken. Each page is shown on a desktop browser (1280×800) and on a phone (iPhone 15,
+393×852).
 
 ## Login
 
@@ -13,11 +14,15 @@ The sign-in page. Authentication is handled by Keycloak.
 
 ![Login](login.png)
 
+<img src="mobile/login.png" alt="Login on a phone" width="320">
+
 ## Guardian dashboard
 
 Today at a glance: meals, tasks, events, medicine, pickups and the children.
 
 ![Guardian dashboard](guardian-dashboard.png)
+
+<img src="mobile/guardian-dashboard.png" alt="Guardian dashboard on a phone" width="320">
 
 ## Calendar
 
@@ -25,11 +30,15 @@ Shared family calendars with events and tasks.
 
 ![Calendar](guardian-calendar.png)
 
+<img src="mobile/guardian-calendar.png" alt="Calendar on a phone" width="320">
+
 ## Task library
 
 Reusable routines broken into small, timed steps.
 
 ![Task library](guardian-task-library.png)
+
+<img src="mobile/guardian-task-library.png" alt="Task library on a phone" width="320">
 
 ## Progress
 
@@ -37,11 +46,15 @@ Completed tasks earn progress towards rewards the guardian sets up.
 
 ![Progress](guardian-progress.png)
 
+<img src="mobile/guardian-progress.png" alt="Progress on a phone" width="320">
+
 ## Meal plan
 
 The week's meals per slot, picked from the child's meal library.
 
 ![Meal plan](guardian-mealplan.png)
+
+<img src="mobile/guardian-mealplan.png" alt="Meal plan on a phone" width="320">
 
 ## Meal plan AI assistant
 
@@ -49,11 +62,15 @@ Plan meals with an AI provider of your choice (needs an API key).
 
 ![Meal plan AI assistant](guardian-mealplan-ai-assistant.png)
 
+<img src="mobile/guardian-mealplan-ai-assistant.png" alt="Meal plan AI assistant on a phone" width="320">
+
 ## Medicine
 
 Medicine schedules and daily dose tracking.
 
 ![Medicine](guardian-medicine.png)
+
+<img src="mobile/guardian-medicine.png" alt="Medicine on a phone" width="320">
 
 ## Pickup & drop-off
 
@@ -61,11 +78,15 @@ Who takes and fetches the child each day.
 
 ![Pickup & drop-off](guardian-pickup.png)
 
+<img src="mobile/guardian-pickup.png" alt="Pickup & drop-off on a phone" width="320">
+
 ## Babysitters
 
 Saved babysitters and nannies that any of a child’s guardians can plan for a pickup or drop-off.
 
 ![Babysitters](guardian-babysitters.png)
+
+<img src="mobile/guardian-babysitters.png" alt="Babysitters on a phone" width="320">
 
 ## Work locations
 
@@ -73,11 +94,15 @@ Where each guardian works on which weekday, as a repeating pattern.
 
 ![Work locations](guardian-work-locations.png)
 
+<img src="mobile/guardian-work-locations.png" alt="Work locations on a phone" width="320">
+
 ## Print templates
 
 Templates for a printable week plan.
 
 ![Print templates](guardian-print.png)
+
+<img src="mobile/guardian-print.png" alt="Print templates on a phone" width="320">
 
 ## Print template editor
 
@@ -85,11 +110,15 @@ Choose which rows the printed week plan shows.
 
 ![Print template editor](guardian-print-template-editor.png)
 
+<img src="mobile/guardian-print-template-editor.png" alt="Print template editor on a phone" width="320">
+
 ## Printable week plan
 
 The week plan as it comes out on paper.
 
 ![Printable week plan](guardian-print-sheet.png)
+
+<img src="mobile/guardian-print-sheet.png" alt="Printable week plan on a phone" width="320">
 
 ## Settings
 
@@ -97,11 +126,15 @@ Profile, children, groups, calendars and sharing.
 
 ![Settings](guardian-admin.png)
 
+<img src="mobile/guardian-admin.png" alt="Settings on a phone" width="320">
+
 ## Child: today
 
 The child's own view of today's tasks and events.
 
 ![Child: today](child-home.png)
+
+<img src="mobile/child-home.png" alt="Child: today on a phone" width="320">
 
 ## Child: meal plan
 
@@ -109,11 +142,15 @@ The child's view of the week's meals.
 
 ![Child: meal plan](child-mealplan.png)
 
+<img src="mobile/child-mealplan.png" alt="Child: meal plan on a phone" width="320">
+
 ## Child: calendar
 
 The child's calendar.
 
 ![Child: calendar](child-calendar.png)
+
+<img src="mobile/child-calendar.png" alt="Child: calendar on a phone" width="320">
 
 ## Group invite
 
@@ -121,8 +158,12 @@ What someone invited to a group sees before signing in.
 
 ![Group invite](invite-group.png)
 
+<img src="mobile/invite-group.png" alt="Group invite on a phone" width="320">
+
 ## Guardian invite
 
 What an invited co-guardian sees before signing in.
 
 ![Guardian invite](invite-guardian.png)
+
+<img src="mobile/invite-guardian.png" alt="Guardian invite on a phone" width="320">

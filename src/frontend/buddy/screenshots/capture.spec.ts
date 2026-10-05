@@ -4,16 +4,16 @@ import { join } from 'node:path';
 
 import { KEYCLOAK_URL, browserTokenSet } from './demo-family';
 import { type DemoFamily, SCREENSHOT_PAGES } from './pages';
-import { SCREENSHOTS_DIR } from './screenshots-dir';
+import { screenshotsDirFor } from './screenshots-dir';
 
 const demo = JSON.parse(process.env['BUDDY_DEMO_FAMILY'] ?? 'null') as DemoFamily | null;
 
-test.beforeAll(() => {
+test.beforeAll(({}, testInfo) => {
   if (!demo) {
     throw new Error('BUDDY_DEMO_FAMILY is not set; run through playwright.screenshots.config.ts');
   }
 
-  mkdirSync(SCREENSHOTS_DIR, { recursive: true });
+  mkdirSync(screenshotsDirFor(testInfo.project.name), { recursive: true });
 });
 
 test.beforeEach(async ({ context }) => {
@@ -29,7 +29,7 @@ test.beforeEach(async ({ context }) => {
 });
 
 for (const entry of SCREENSHOT_PAGES) {
-  test(entry.name, async ({ page }) => {
+  test(entry.name, async ({ page }, testInfo) => {
     const path = entry.path ? entry.path(demo!) : entry.route;
     test.skip(path === null, 'No data to show this page with (see the demo seed warnings)');
 
@@ -60,7 +60,7 @@ for (const entry of SCREENSHOT_PAGES) {
     expect(errors, 'server errors while loading the page').toEqual([]);
 
     await page.screenshot({
-      path: join(SCREENSHOTS_DIR, `${entry.name}.png`),
+      path: join(screenshotsDirFor(testInfo.project.name), `${entry.name}.png`),
       fullPage: entry.fullPage ?? true,
       animations: 'disabled',
     });
