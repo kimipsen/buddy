@@ -1,4 +1,5 @@
 import { admin } from './admin';
+import { babysitters } from './babysitters';
 import { calendar } from './calendar';
 import { child } from './child';
 import { common } from './common';
@@ -19,6 +20,7 @@ import { workLocations } from './work-locations';
 
 export const en = {
   admin,
+  babysitters,
   calendar,
   child,
   common,

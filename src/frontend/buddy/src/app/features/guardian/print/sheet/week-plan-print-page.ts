@@ -116,6 +116,7 @@ export class WeekPlanPrintPage {
           week: this.translation.translate('print.sheet.week'),
           selfEscort: this.translation.translate('print.sheet.selfEscort'),
           playdate: this.translation.translate('print.sheet.playdate'),
+          babysitter: this.translation.translate('print.sheet.babysitter'),
         },
         includeSubtasks: this.includeSubtasks(),
       });

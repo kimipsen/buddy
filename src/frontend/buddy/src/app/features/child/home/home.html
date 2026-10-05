@@ -421,6 +421,13 @@
                         <span aria-hidden="true">🎉</span>
                         {{ playdateHostName(occurrence.assignee) }}
                       }
+                      @case (babysitterKind) {
+                        <span aria-hidden="true">🧑‍🍼</span>
+                        {{
+                          babysitterName(occurrence.assignee) ||
+                            ('child.home.pickup.kind.babysitter' | translate)
+                        }}
+                      }
                     }
                   </span>
                   @if (occurrence.time) {

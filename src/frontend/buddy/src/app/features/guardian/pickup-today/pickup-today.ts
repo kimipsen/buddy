@@ -12,6 +12,7 @@ import {
   PickupAssigneeKind,
   PickupOccurrence,
   PickupsService,
+  babysitterName,
   playdateHostName,
 } from '../../../core/pickups.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
@@ -20,6 +21,7 @@ const GUARDIAN = 0 satisfies PickupAssigneeKind;
 const SELF_ESCORT = 1 satisfies PickupAssigneeKind;
 const SIBLING = 2 satisfies PickupAssigneeKind;
 const PLAYDATE = 3 satisfies PickupAssigneeKind;
+const BABYSITTER = 4 satisfies PickupAssigneeKind;
 
 const SLOT_LABELS = {
   0: 'dashboard.pickup.slots.dropOff',
@@ -54,11 +56,13 @@ export class PickupToday {
   protected readonly selfEscortKind = SELF_ESCORT;
   protected readonly siblingKind = SIBLING;
   protected readonly playdateKind = PLAYDATE;
+  protected readonly babysitterKind = BABYSITTER;
   protected readonly slotLabels = SLOT_LABELS;
 
   protected readonly today = resource({ loader: () => this.loadToday() });
 
   protected readonly playdateHostName = playdateHostName;
+  protected readonly babysitterName = babysitterName;
 
   private async loadToday(): Promise<LoadedPickups> {
     const children = await this.guardians.listMyChildren();

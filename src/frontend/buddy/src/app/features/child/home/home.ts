@@ -36,6 +36,7 @@ import {
   PickupAssigneeKind,
   PickupOccurrence,
   PickupsService,
+  babysitterName,
   playdateHostName,
 } from '../../../core/pickups.service';
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
@@ -68,6 +69,7 @@ const GUARDIAN = 0 satisfies PickupAssigneeKind;
 const SELF_ESCORT = 1 satisfies PickupAssigneeKind;
 const SIBLING = 2 satisfies PickupAssigneeKind;
 const PLAYDATE = 3 satisfies PickupAssigneeKind;
+const BABYSITTER = 4 satisfies PickupAssigneeKind;
 
 const PICKUP_SLOT_LABELS = {
   0: 'child.home.pickup.slots.dropOff',
@@ -120,6 +122,7 @@ export class ChildHome implements OnInit, OnDestroy {
   protected readonly selfEscortKind = SELF_ESCORT;
   protected readonly siblingKind = SIBLING;
   protected readonly playdateKind = PLAYDATE;
+  protected readonly babysitterKind = BABYSITTER;
   protected readonly pickupSlotLabels = PICKUP_SLOT_LABELS;
 
   // Best-effort lookups for pickup assignee names: a failure just falls back to the generic label.
@@ -267,6 +270,7 @@ export class ChildHome implements OnInit, OnDestroy {
   }
 
   protected readonly playdateHostName = playdateHostName;
+  protected readonly babysitterName = babysitterName;
 
   protected assigneeName(occurrence: PickupOccurrence): string | null {
     const { assignee } = occurrence;

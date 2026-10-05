@@ -179,6 +179,25 @@ describe('PickupToday', () => {
     expect(compiled.textContent).toContain('The Andersens');
   });
 
+  it('renders a babysitter pickup with the resolved name, or the generic label without one', async () => {
+    const named = occurrence({
+      assignee: { kind: 4, guardianId: 'guardian-1', babysitterId: 'b1', name: 'Anna' },
+    });
+    const unnamed = occurrence({
+      slot: 1,
+      assignee: { kind: 4, guardianId: 'guardian-1', babysitterId: 'b2', name: '' },
+    });
+
+    const { fixture } = await setup({
+      pickups: { listSchedule: vi.fn(async () => [named, unnamed]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Anna');
+    expect(compiled.textContent).toContain('Babysitter');
+  });
+
   it('resolves a guardian assignee to their given name using that child’s guardian list', async () => {
     const assignedToGina = occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' } });
 

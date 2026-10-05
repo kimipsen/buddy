@@ -7,7 +7,7 @@
 
 ## Pickup/drop-off options
 
-- [ ] Expand the pickup/drop-off options to include nanny/babysitter.
+- [x] Expand the pickup/drop-off options to include nanny/babysitter.
 
 ## Invitation documentation
 
@@ -28,7 +28,7 @@
 
 ## Shared color picker
 
-- [ ] Create a common color picker and use it everywhere a color can be
+- [x] Create a common color picker and use it everywhere a color can be
   set. Standardize on a fixed palette of selectable colored circles,
   replacing the existing color square/wheel and other inconsistent
   color-selection controls.

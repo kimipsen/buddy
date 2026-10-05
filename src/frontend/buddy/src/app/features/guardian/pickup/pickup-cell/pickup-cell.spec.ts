@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
+import { ChildBabysitter } from '../../../../core/babysitters.service';
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
 import { AssignPickupRequest, PickupOccurrence } from '../../../../core/pickups.service';
 import { PickupCell } from './pickup-cell';
@@ -38,7 +40,12 @@ describe('PickupCell', () => {
     };
   }
 
+  function babysitter(guardianId: string, id: string, name: string): ChildBabysitter {
+    return { guardianId, id, name, contactInfo: '' };
+  }
+
   interface Options {
+    babysitters?: ChildBabysitter[];
     guardians?: GuardianSummary[];
     siblings?: ChildSummary[];
     occurrence?: PickupOccurrence | null;
@@ -47,7 +54,10 @@ describe('PickupCell', () => {
   }
 
   async function setup(options: Options = {}) {
-    await TestBed.configureTestingModule({ imports: [PickupCell] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [PickupCell],
+      providers: [provideRouter([])],
+    }).compileComponents();
 
     const fixture = TestBed.createComponent(PickupCell);
     const onAssign = vi.fn();
@@ -57,6 +67,9 @@ describe('PickupCell', () => {
 
     fixture.componentRef.setInput('guardians', options.guardians ?? []);
     fixture.componentRef.setInput('siblings', options.siblings ?? []);
+    if (options.babysitters !== undefined) {
+      fixture.componentRef.setInput('babysitters', options.babysitters);
+    }
     if (options.occurrence !== undefined) {
       fixture.componentRef.setInput('occurrence', options.occurrence);
     }
@@ -220,6 +233,26 @@ describe('PickupCell', () => {
       expect(compiled.textContent).toContain('Casper');
     });
 
+    it('shows the babysitter’s resolved name', async () => {
+      const { compiled } = await setup({
+        occurrence: occurrence({
+          assignee: { kind: 4, guardianId: 'g1', babysitterId: 'b1', name: 'Anna' },
+        }),
+      });
+
+      expect(compiled.textContent).toContain('Anna');
+    });
+
+    it('falls back to the generic "babysitter" label when the name no longer resolves', async () => {
+      const { compiled } = await setup({
+        occurrence: occurrence({
+          assignee: { kind: 4, guardianId: 'g1', babysitterId: 'b1', name: '' },
+        }),
+      });
+
+      expect(findButton(compiled, 'Babysitter')).toBeTruthy();
+    });
+
     it('shows a clear button that is enabled by default', async () => {
       const { compiled } = await setup({ occurrence: occurrence({ assignee: { kind: 1 } }) });
 
@@ -329,6 +362,77 @@ describe('PickupCell', () => {
       fixture.detectChanges();
 
       expect(compiled.textContent).toContain('No siblings linked yet.');
+    });
+  });
+
+  describe('picking a babysitter', () => {
+    it('shows a "no babysitters" hint with a link to manage them when none are saved', async () => {
+      const { fixture, compiled } = await setup({ babysitters: [] });
+
+      findButton(compiled, 'Not planned')!.click();
+      fixture.detectChanges();
+      selectKind(compiled, 'Babysitter');
+      fixture.detectChanges();
+
+      expect(compiled.textContent).toContain('No babysitters saved yet.');
+      const link = compiled.querySelector<HTMLAnchorElement>('a[href="/guardian/babysitters"]');
+      expect(link?.textContent?.trim()).toBe('Manage babysitters');
+      expect(findButton(compiled, 'Save')?.disabled).toBe(true);
+    });
+
+    it('emits the chosen babysitter with its owning guardian', async () => {
+      const { fixture, compiled, onAssign } = await setup({
+        babysitters: [babysitter('g1', 'b1', 'Anna'), babysitter('g2', 'b2', 'Bo')],
+      });
+
+      findButton(compiled, 'Not planned')!.click();
+      fixture.detectChanges();
+      selectKind(compiled, 'Babysitter');
+      fixture.detectChanges();
+      expect(findButton(compiled, 'Save')?.disabled).toBe(true);
+      selectByValue(selects(compiled)[0], 'g2|b2');
+      fixture.detectChanges();
+
+      findButton(compiled, 'Save')!.click();
+
+      const request: AssignPickupRequest = onAssign.mock.calls[0][0];
+      expect(request.assignee).toEqual({
+        kind: 4,
+        guardianId: 'g2',
+        babysitterId: 'b2',
+        name: 'Bo',
+      });
+    });
+
+    it('pre-selects the assigned babysitter when editing', async () => {
+      const { fixture, compiled } = await setup({
+        babysitters: [babysitter('g1', 'b1', 'Anna')],
+        occurrence: occurrence({
+          assignee: { kind: 4, guardianId: 'g1', babysitterId: 'b1', name: 'Anna' },
+        }),
+      });
+
+      findButton(compiled, 'Anna')!.click();
+      await settle(fixture);
+
+      expect(selectedKindLabel(compiled)).toBe('Babysitter');
+      expect(selects(compiled)[0].value).toBe('g1|b1');
+      expect(findButton(compiled, 'Save')?.disabled).toBe(false);
+    });
+
+    it('cannot re-save a babysitter who has left the list (archived)', async () => {
+      const { fixture, compiled } = await setup({
+        babysitters: [],
+        occurrence: occurrence({
+          assignee: { kind: 4, guardianId: 'g1', babysitterId: 'b1', name: 'Anna' },
+        }),
+      });
+
+      findButton(compiled, 'Anna')!.click();
+      await settle(fixture);
+
+      expect(findButton(compiled, 'Save')?.disabled).toBe(true);
+      expect(compiled.textContent).toContain('This babysitter was removed. Choose someone else.');
     });
   });
 

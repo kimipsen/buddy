@@ -47,6 +47,18 @@ Content-Type: application/json
 
 ###
 
+# Assign Thursday's pickup to a saved babysitter (guardian only). guardianId is whose list the
+# babysitter is on (GET /babysitters/children/{childId}); "name" comes back resolved.
+PUT {{buddy_HostAddress}}/pickups/children/{{childId}}/assignments?date=2025-06-05&slot=PickUp
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "assignee": { "kind": 4, "guardianId": "{{guardianId}}", "babysitterId": "{{babysitterId}}" }
+}
+
+###
+
 # Clear a slot (guardian only)
 DELETE {{buddy_HostAddress}}/pickups/children/{{childId}}/assignments?date=2025-06-04&slot=PickUp
 Authorization: Bearer {{guardianToken}}

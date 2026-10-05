@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Common.Validation;
+using buddy.Features.Babysitters;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
 
@@ -14,6 +15,7 @@ public static class AssignPickupHandler
         IValidator<AssignPickup> validator,
         IPickupScheduleEventStore pickups,
         IGuardianLinkEventStore guardians,
+        IBabysitterListEventStore babysitters,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -30,7 +32,7 @@ public static class AssignPickupHandler
             return access.ToDeniedResult<PickupOccurrence>();
         }
 
-        if (await ValidateRelationshipAsync(command, guardians, cancellationToken) is { } relationshipProblem)
+        if (await ValidateRelationshipAsync(command, guardians, babysitters, cancellationToken) is { } relationshipProblem)
         {
             return new Result<PickupOccurrence>.Validation(relationshipProblem);
         }
@@ -69,13 +71,16 @@ public static class AssignPickupHandler
             }
         }
 
-        return new Result<PickupOccurrence>.Success(PickupOccurrence.FromAssignment(command.Date, command.Slot, after));
+        var babysitterNames = await BabysitterNames.LoadAsync([after.Assignee], babysitters, cancellationToken);
+
+        return new Result<PickupOccurrence>.Success(PickupOccurrence.FromAssignment(command.Date, command.Slot, after, babysitterNames));
     }
 
     // Returns a validation message, or null if the assignee is acceptable. Deliberately a small
     // local check against IGuardianLinkEventStore rather than a dependency on Mealplans'
     // MealFamilyResolution -- see docs/backend/analysis/pickup-schedules.md#question-3.
-    private static async Task<ValidationProblem?> ValidateRelationshipAsync(AssignPickup command, IGuardianLinkEventStore guardians, CancellationToken cancellationToken) =>
+    private static async Task<ValidationProblem?> ValidateRelationshipAsync(
+        AssignPickup command, IGuardianLinkEventStore guardians, IBabysitterListEventStore babysitters, CancellationToken cancellationToken) =>
         command.Assignee switch
         {
             PickupAssignee.Guardian guardian =>
@@ -88,8 +93,20 @@ public static class AssignPickupHandler
                 await IsSiblingAsync(command.ChildId, sibling.SiblingChildId, guardians, cancellationToken)
                     ? null
                     : ValidationProblem.Of("siblingChildId does not share an active guardian with this child."),
+            PickupAssignee.Babysitter babysitter =>
+                await guardians.FindActiveLinkAsync(command.ChildId, babysitter.GuardianId, cancellationToken) is null
+                    ? ValidationProblem.Of("guardianId is not an active guardian of this child.")
+                    : await IsActiveBabysitterAsync(babysitter, babysitters, cancellationToken)
+                        ? null
+                        : ValidationProblem.Of("babysitterId is not an active babysitter of that guardian."),
             PickupAssignee.SelfEscort or PickupAssignee.Playdate => null,
         };
+
+    // Archived babysitters can't be picked for a new assignment; slots already pointing at one keep
+    // resolving (docs/backend/analysis/babysitters.md, Question 3).
+    private static async Task<bool> IsActiveBabysitterAsync(PickupAssignee.Babysitter babysitter, IBabysitterListEventStore babysitters, CancellationToken cancellationToken) =>
+        await babysitters.FindSnapshotAsync(BabysitterListId.ForGuardian(babysitter.GuardianId), cancellationToken) is { } list
+            && list.FindActive(babysitter.BabysitterId) is not null;
 
     private static async Task<bool> IsSiblingAsync(UserId childId, UserId otherChildId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {

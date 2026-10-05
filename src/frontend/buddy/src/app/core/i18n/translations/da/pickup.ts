@@ -12,6 +12,7 @@ export const pickup = {
     noChildren: 'Tilknyt et barn under Indstillinger, før du planlægger afhentning.',
     loadError: 'Kunne ikke indlæse afhentningsplanen.',
     updateError: 'Kunne ikke opdatere denne tid.',
+    manageBabysittersLink: 'Administrer babysittere',
   },
   cell: {
     notPlanned: 'Ikke planlagt',
@@ -23,6 +24,7 @@ export const pickup = {
       selfEscort: 'Går selv',
       sibling: 'En søskende',
       playdate: 'Legeaftale',
+      babysitter: 'Babysitter',
     },
     kindLabel: 'Afhentningstype',
     timeLabel: 'Afhentningstidspunkt',
@@ -33,5 +35,9 @@ export const pickup = {
     playdateLocationPlaceholder: 'Sted (valgfrit)',
     playdateContactPlaceholder: 'Kontaktoplysninger (valgfrit)',
     notesPlaceholder: 'Noter (valgfrit)',
+    selectBabysitterPlaceholder: 'Vælg en babysitter',
+    babysitterRemoved: 'Denne babysitter er fjernet. Vælg en anden.',
+    noBabysitters: 'Ingen babysittere gemt endnu.',
+    manageBabysittersLink: 'Administrer babysittere',
   },
 };

@@ -20,4 +20,6 @@ internal sealed record PickupAssigneeTestDto(
     Guid? SiblingChildId = null,
     string? HostName = null,
     string? Location = null,
-    string? ContactInfo = null);
+    string? ContactInfo = null,
+    Guid? BabysitterId = null,
+    string? Name = null);

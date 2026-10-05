@@ -1,3 +1,4 @@
+using buddy.Features.Babysitters;
 using buddy.Features.Pickups;
 using buddy.Features.Users;
 
@@ -50,6 +51,16 @@ public sealed class PickupEventShapeTests
             new PickupAssignment(new PickupAssignee.Playdate("Mia's mom", "Mia's house", "+45 12 34 56 78"), null, FixedGuardianId, ""),
             FixedInstant),
         "Pickups/PickupAssigned_Playdate.json");
+
+    [Fact]
+    public void PickupAssigned_with_a_babysitter_assignee() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new PickupAssigned(
+            FixedScheduleId, FixedDate, PickupSlot.PickUp,
+            new PickupAssignment(
+                new PickupAssignee.Babysitter(FixedGuardianId, new BabysitterId(Guid.Parse("00000000-0000-0000-0000-000000000090"))),
+                new TimeOnly(15, 30), FixedGuardianId, ""),
+            FixedInstant),
+        "Pickups/PickupAssigned_Babysitter.json");
 
     [Fact]
     public void PickupCleared() => EventShapeTestSupport.AssertMatchesGoldenFile(

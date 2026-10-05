@@ -580,6 +580,13 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       ],
     });
 
+    // Babysitters ---------------------------------------------------------------------------
+    const maja = await api.post<Named>('/babysitters/me', {
+      name: 'Maja',
+      contactInfo: '+45 20 30 40 50',
+    });
+    await api.post('/babysitters/me', { name: 'Freja', contactInfo: 'freja@example.com' });
+
     // Pickups -------------------------------------------------------------------------------
     for (const date of planDays.filter(isWeekday).map(isoDate)) {
       const weekday = weekdayOf(date);
@@ -592,7 +599,9 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         assignee:
           weekday === 4
             ? { kind: 3, hostName: 'Oscar’s family', location: 'Birkevej 12', contactInfo: '' }
-            : { kind: 0, guardianId: me.id },
+            : weekday === 3
+              ? { kind: 4, guardianId: me.id, babysitterId: maja.id }
+              : { kind: 0, guardianId: me.id },
         time: weekday === 2 || weekday === 4 ? '17:30:00' : '15:00:00',
         notes: weekday === 2 ? 'After football' : null,
       });

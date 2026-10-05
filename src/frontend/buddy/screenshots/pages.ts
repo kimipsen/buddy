@@ -104,6 +104,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     route: '/guardian/pickup',
   },
   {
+    name: 'guardian-babysitters',
+    title: 'Babysitters',
+    description:
+      'Saved babysitters and nannies that any of a child’s guardians can plan for a pickup or drop-off.',
+    as: 'guardian',
+    route: '/guardian/babysitters',
+    waitFor: 'Freja',
+  },
+  {
     name: 'guardian-work-locations',
     title: 'Work locations',
     description: 'Where each guardian works on which weekday, as a repeating pattern.',

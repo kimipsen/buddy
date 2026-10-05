@@ -12,10 +12,10 @@ public sealed record PickupOccurrence(
     string Notes,
     Guid AssignedBy)
 {
-    public static PickupOccurrence FromAssignment(DateOnly date, PickupSlot slot, PickupAssignment assignment) => new(
+    public static PickupOccurrence FromAssignment(DateOnly date, PickupSlot slot, PickupAssignment assignment, BabysitterNames babysitterNames) => new(
         date,
         slot,
-        PickupAssigneeDto.FromDomain(assignment.Assignee),
+        PickupAssigneeDto.FromDomain(assignment.Assignee, babysitterNames),
         assignment.Time,
         assignment.Notes,
         assignment.AssignedBy.Value);

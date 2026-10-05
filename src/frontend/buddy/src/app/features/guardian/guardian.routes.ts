@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { GuardianAdmin } from './admin/admin';
+import { GuardianBabysitters } from './babysitters/babysitters';
 import { GuardianCalendar } from './calendar/calendar';
 import { GuardianDashboard } from './dashboard';
 import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
@@ -29,6 +30,7 @@ export const GUARDIAN_ROUTES: Routes = [
       { path: 'medicine', component: GuardianMedicine },
       { path: 'progress', component: GuardianProgress },
       { path: 'pickup', component: GuardianPickup },
+      { path: 'babysitters', component: GuardianBabysitters },
       { path: 'work-locations', component: GuardianWorkLocations },
       { path: 'print', component: GuardianPrint },
       { path: 'print/templates/:templateId', component: PrintTemplateEditor },

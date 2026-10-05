@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Common.Validation;
+using buddy.Features.Babysitters;
 using buddy.Features.Guardians;
 
 using FluentValidation;
@@ -16,6 +17,7 @@ public static class ListPickupScheduleHandler
         ListPickupSchedule query,
         IValidator<ListPickupSchedule> validator,
         IPickupScheduleEventStore pickups,
+        IBabysitterListEventStore babysitters,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
@@ -33,7 +35,7 @@ public static class ListPickupScheduleHandler
             return access.ToDeniedResult<IReadOnlyCollection<PickupOccurrence>>();
         }
 
-        var occurrences = await PickupScheduleExpansion.ExpandAsync(query.ChildId, query.From, query.To, pickups, cancellationToken);
+        var occurrences = await PickupScheduleExpansion.ExpandAsync(query.ChildId, query.From, query.To, pickups, babysitters, cancellationToken);
 
         return new Result<IReadOnlyCollection<PickupOccurrence>>.Success(occurrences);
     }

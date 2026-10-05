@@ -2,6 +2,7 @@ import { Component, computed, inject, linkedSignal, resource } from '@angular/co
 import { FormsModule } from '@angular/forms';
 
 import { firstAndLast } from '../../../../core/array-utils';
+import { BabysittersService, ChildBabysitter } from '../../../../core/babysitters.service';
 import { toIsoDate } from '../../../../core/date-utils';
 import {
   ChildSummary,
@@ -32,6 +33,7 @@ type EntriesByKey = Partial<Record<string, PickupOccurrence>>;
 // What the grid shows for the selected child: who can be assigned, and the week's occurrences.
 interface ChildSchedule {
   childGuardians: GuardianSummary[];
+  childBabysitters: ChildBabysitter[];
   entriesByKey: EntriesByKey;
 }
 
@@ -41,7 +43,11 @@ interface ScheduleRequest {
   to: string;
 }
 
-const EMPTY_SCHEDULE: ChildSchedule = { childGuardians: [], entriesByKey: {} };
+const EMPTY_SCHEDULE: ChildSchedule = {
+  childGuardians: [],
+  childBabysitters: [],
+  entriesByKey: {},
+};
 
 interface WeekDay {
   date: string;
@@ -67,6 +73,7 @@ function buildWeek(locale: string): WeekDay[] {
   templateUrl: './manage-pickups.html',
 })
 export class ManagePickups {
+  private readonly babysitters = inject(BabysittersService);
   private readonly guardians = inject(GuardiansService);
   private readonly pickups = inject(PickupsService);
   private readonly translation = inject(TranslationService);
@@ -201,8 +208,10 @@ export class ManagePickups {
   }
 
   private async loadSchedule(childId: string, from: string, to: string): Promise<ChildSchedule> {
-    const [childGuardians, occurrences] = await Promise.all([
+    const [childGuardians, childBabysitters, occurrences] = await Promise.all([
       this.guardians.listChildGuardians(childId),
+      // Best effort: without babysitters the grid still works, only the babysitter picker is empty.
+      this.babysitters.listForChild(childId).catch((): ChildBabysitter[] => []),
       this.pickups.listSchedule(childId, from, to),
     ]);
 
@@ -212,6 +221,6 @@ export class ManagePickups {
       entriesByKey[this.key(occurrence.date, occurrence.slot)] = occurrence;
     }
 
-    return { childGuardians, entriesByKey };
+    return { childGuardians, childBabysitters, entriesByKey };
   }
 }

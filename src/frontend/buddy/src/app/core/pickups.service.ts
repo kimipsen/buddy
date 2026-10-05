@@ -9,20 +9,28 @@ import { RuntimeConfigService } from './runtime-config.service';
 export type PickupSlot = 0 | 1;
 
 // PickupAssigneeKind values match the backend's enum ordinals: 0 = Guardian, 1 = SelfEscort,
-// 2 = Sibling, 3 = Playdate.
-export type PickupAssigneeKind = 0 | 1 | 2 | 3;
+// 2 = Sibling, 3 = Playdate, 4 = Babysitter.
+export type PickupAssigneeKind = 0 | 1 | 2 | 3 | 4;
 
 // Who handles a slot, discriminated by `kind` -- each case carries only its own fields, matching
-// the backend's PickupAssigneeDto. A playdate's location/contactInfo are '' when not given.
+// the backend's PickupAssigneeDto. A playdate's location/contactInfo are '' when not given. A
+// babysitter is a saved entry on guardianId's list; its name is resolved by the server on every
+// response ('' when it no longer resolves) and ignored when sent.
 export type PickupAssignee =
   | { kind: 0; guardianId: string }
   | { kind: 1 }
   | { kind: 2; siblingChildId: string }
-  | { kind: 3; hostName: string; location: string; contactInfo: string };
+  | { kind: 3; hostName: string; location: string; contactInfo: string }
+  | { kind: 4; guardianId: string; babysitterId: string; name: string };
 
 // The playdate host's name, or '' for any other kind -- lets templates show it without narrowing.
 export function playdateHostName(assignee: PickupAssignee): string {
   return assignee.kind === 3 ? assignee.hostName : '';
+}
+
+// The babysitter's resolved name, or '' for any other kind (or an unresolvable babysitter).
+export function babysitterName(assignee: PickupAssignee): string {
+  return assignee.kind === 4 ? assignee.name : '';
 }
 
 export interface PickupOccurrence {

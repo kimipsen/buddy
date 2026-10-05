@@ -1,0 +1,23 @@
+export const babysitters = {
+  backLink: 'Back to dashboard',
+  eyebrow: 'Babysitters',
+  title: 'Your babysitters and nannies.',
+  intro:
+    'Save the people who pick up or drop off your children. Every guardian of a child can choose them in the pickup planner.',
+  loading: 'Loading babysitters…',
+  loadError: 'Unable to load your babysitters.',
+  saveError: 'Unable to save the babysitter.',
+  archiveError: 'Unable to remove the babysitter.',
+  empty: 'No babysitters yet. Add the first one below.',
+  nameLabel: 'Name',
+  namePlaceholder: 'e.g. Anna',
+  contactLabel: 'Contact info (optional)',
+  contactPlaceholder: 'Phone or email',
+  addButton: 'Add babysitter',
+  editButton: 'Edit',
+  saveButton: 'Save',
+  cancelButton: 'Cancel',
+  editLabel: 'Edit {name}',
+  archiveLabel: 'Remove {name}',
+  archiveButton: 'Remove',
+};

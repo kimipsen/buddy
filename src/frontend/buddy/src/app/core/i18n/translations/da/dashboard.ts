@@ -68,6 +68,7 @@ export const dashboard = {
       guardian: 'En voksen',
       selfEscort: 'Går selv',
       sibling: 'En søskende',
+      babysitter: 'Babysitter',
     },
   },
 };

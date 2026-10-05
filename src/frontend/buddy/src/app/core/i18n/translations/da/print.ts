@@ -25,6 +25,7 @@ export const print = {
     week: 'Uge',
     selfEscort: 'Selv',
     playdate: 'Leg',
+    babysitter: 'Babysitter',
     dropOff: 'Aflevering',
     pickUp: 'Afhentning',
     mark: 'Ja',

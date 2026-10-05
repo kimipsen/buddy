@@ -2,6 +2,7 @@ using buddy.Common.Concurrency;
 using buddy.Common.Idempotency;
 using buddy.Common.Validation;
 using buddy.Email;
+using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
@@ -86,6 +87,8 @@ builder.Services.AddTaskLibraryFeature(builder.Configuration);
 builder.Services.AddCalendarsFeature(builder.Configuration);
 builder.Services.AddMedicinesFeature(builder.Configuration);
 builder.Services.AddMealplansFeature(builder.Configuration);
+// Before Pickups: AssignPickup and ListPickupSchedule read IBabysitterListEventStore.
+builder.Services.AddBabysittersFeature(builder.Configuration);
 builder.Services.AddPickupsFeature(builder.Configuration);
 builder.Services.AddWorkLocationsFeature(builder.Configuration);
 // After Guardians, Groups, Calendars and WorkLocations: its write-time reference checks read their stores.
@@ -127,6 +130,7 @@ app.MapTaskLibraryFeature();
 app.MapCalendarsFeature();
 app.MapMedicinesFeature();
 app.MapMealplansFeature();
+app.MapBabysittersFeature();
 app.MapPickupsFeature();
 app.MapWorkLocationsFeature();
 app.MapPrintTemplatesFeature();

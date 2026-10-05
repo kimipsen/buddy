@@ -1,0 +1,195 @@
+<section class="mx-auto max-w-3xl px-6 py-8 sm:px-8">
+  <a
+    routerLink="/guardian"
+    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      class="size-4"
+      aria-hidden="true"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+    </svg>
+    {{ 'babysitters.backLink' | translate }}
+  </a>
+
+  <div class="mb-8">
+    <p
+      class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+    >
+      {{ 'babysitters.eyebrow' | translate }}
+    </p>
+    <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+      {{ 'babysitters.title' | translate }}
+    </h2>
+    <p class="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+      {{ 'babysitters.intro' | translate }}
+    </p>
+  </div>
+
+  @if (list.hasValue()) {
+    <div
+      class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+    >
+      @if (saving.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="mb-3 text-sm text-red-600 dark:text-red-400" role="alert">
+            {{ state.message | translate }}
+          </p>
+        }
+      }
+
+      @if (active().length === 0) {
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ 'babysitters.empty' | translate }}
+        </p>
+      } @else {
+        <ul class="divide-y divide-slate-200 dark:divide-slate-800">
+          @for (babysitter of active(); track babysitter.id) {
+            <li class="py-3">
+              @if (editingId() === babysitter.id) {
+                <div class="flex flex-wrap items-end gap-3">
+                  <div class="flex flex-1 flex-col gap-1">
+                    <label
+                      [for]="'edit-name-' + babysitter.id"
+                      class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                      >{{ 'babysitters.nameLabel' | translate }}</label
+                    >
+                    <input
+                      [id]="'edit-name-' + babysitter.id"
+                      type="text"
+                      maxlength="80"
+                      class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                      [ngModel]="editName()"
+                      (ngModelChange)="editName.set($event)"
+                    />
+                  </div>
+                  <div class="flex flex-1 flex-col gap-1">
+                    <label
+                      [for]="'edit-contact-' + babysitter.id"
+                      class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                      >{{ 'babysitters.contactLabel' | translate }}</label
+                    >
+                    <input
+                      [id]="'edit-contact-' + babysitter.id"
+                      type="text"
+                      maxlength="200"
+                      class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                      [ngModel]="editContactInfo()"
+                      (ngModelChange)="editContactInfo.set($event)"
+                    />
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+                      [disabled]="saving.busy() || !editName().trim()"
+                      (click)="saveEdit(babysitter.id)"
+                    >
+                      {{ 'babysitters.saveButton' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                      (click)="cancelEdit()"
+                    >
+                      {{ 'babysitters.cancelButton' | translate }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="flex items-center gap-3">
+                  <span class="text-lg leading-none" aria-hidden="true">🧑‍🍼</span>
+                  <div class="flex flex-1 flex-col">
+                    <span class="text-sm font-medium">{{ babysitter.name }}</span>
+                    @if (babysitter.contactInfo) {
+                      <span class="text-xs text-slate-500 dark:text-slate-400">{{
+                        babysitter.contactInfo
+                      }}</span>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
+                    [attr.aria-label]="
+                      'babysitters.editLabel' | translate: { name: babysitter.name }
+                    "
+                    [disabled]="saving.busy()"
+                    (click)="startEdit(babysitter)"
+                  >
+                    {{ 'babysitters.editButton' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50"
+                    [attr.aria-label]="
+                      'babysitters.archiveLabel' | translate: { name: babysitter.name }
+                    "
+                    [disabled]="saving.busy()"
+                    (click)="archive(babysitter.id)"
+                  >
+                    {{ 'babysitters.archiveButton' | translate }}
+                  </button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <form class="mt-4 flex flex-wrap items-end gap-3" (ngSubmit)="add()">
+        <div class="flex flex-1 flex-col gap-1">
+          <label
+            for="new-babysitter-name"
+            class="text-xs font-medium text-slate-600 dark:text-slate-400"
+            >{{ 'babysitters.nameLabel' | translate }}</label
+          >
+          <input
+            id="new-babysitter-name"
+            name="newBabysitterName"
+            type="text"
+            maxlength="80"
+            [placeholder]="'babysitters.namePlaceholder' | translate"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+            [ngModel]="newName()"
+            (ngModelChange)="newName.set($event)"
+          />
+        </div>
+        <div class="flex flex-1 flex-col gap-1">
+          <label
+            for="new-babysitter-contact"
+            class="text-xs font-medium text-slate-600 dark:text-slate-400"
+            >{{ 'babysitters.contactLabel' | translate }}</label
+          >
+          <input
+            id="new-babysitter-contact"
+            name="newBabysitterContact"
+            type="text"
+            maxlength="200"
+            [placeholder]="'babysitters.contactPlaceholder' | translate"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+            [ngModel]="newContactInfo()"
+            (ngModelChange)="newContactInfo.set($event)"
+          />
+        </div>
+        <button
+          type="submit"
+          class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+          [disabled]="saving.busy() || !newName().trim()"
+        >
+          {{ 'babysitters.addButton' | translate }}
+        </button>
+      </form>
+    </div>
+  } @else if (list.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ 'babysitters.loadError' | translate }}
+    </p>
+  } @else {
+    <app-loading-spinner [label]="'babysitters.loading' | translate" />
+  }
+</section>

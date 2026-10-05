@@ -1,3 +1,4 @@
+using buddy.Features.Babysitters;
 using buddy.Features.Users;
 
 namespace buddy.Features.Pickups;
@@ -13,6 +14,7 @@ public static class PickupScheduleExpansion
         DateOnly from,
         DateOnly to,
         IPickupScheduleEventStore pickups,
+        IBabysitterListEventStore babysitters,
         CancellationToken cancellationToken)
     {
         var scheduleId = await pickups.FindIdForChildAsync(childId, cancellationToken);
@@ -27,17 +29,12 @@ public static class PickupScheduleExpansion
             return [];
         }
 
-        var occurrences = new List<PickupOccurrence>();
+        var inRange = schedule.Assignments.Where(entry => entry.Key.Date >= from && entry.Key.Date <= to).ToList();
+        var babysitterNames = await BabysitterNames.LoadAsync(inRange.Select(entry => entry.Value.Assignee), babysitters, cancellationToken);
 
-        foreach (var ((date, slot), assignment) in schedule.Assignments)
-        {
-            if (date < from || date > to)
-            {
-                continue;
-            }
-
-            occurrences.Add(PickupOccurrence.FromAssignment(date, slot, assignment));
-        }
+        var occurrences = inRange
+            .Select(entry => PickupOccurrence.FromAssignment(entry.Key.Date, entry.Key.Slot, entry.Value, babysitterNames))
+            .ToList();
 
         occurrences.Sort((a, b) =>
         {

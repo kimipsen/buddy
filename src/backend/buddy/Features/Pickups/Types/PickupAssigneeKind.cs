@@ -7,5 +7,6 @@ public enum PickupAssigneeKind
     Guardian,
     SelfEscort,
     Sibling,
-    Playdate
+    Playdate,
+    Babysitter
 }

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 using buddy.Common;
+using buddy.Features.Babysitters;
 using buddy.Features.Users;
 using buddy.Serialization;
 
@@ -9,7 +10,8 @@ namespace buddy.Features.Pickups;
 
 // The HTTP shape of a PickupAssignee: an object whose numeric "kind" (PickupAssigneeKind) picks
 // the case, with only that case's fields beside it -- e.g. { "kind": 0, "guardianId": "..." } or
-// { "kind": 3, "hostName": "...", "location": "", "contactInfo": "" }. PickupAssigneeDtoJsonConverter
+// { "kind": 3, "hostName": "...", "location": "", "contactInfo": "" }. A babysitter's "name" is
+// output only: ignored on the way in, resolved through BabysitterNames on the way out. PickupAssigneeDtoJsonConverter
 // (a KindDiscriminatedJsonConverter) reads and writes it; a missing or unknown kind fails request
 // binding (400 validation_error).
 [JsonConverter(typeof(PickupAssigneeDtoJsonConverter))]
@@ -22,15 +24,18 @@ public abstract record PickupAssigneeDto
         SiblingAssigneeDto sibling => new PickupAssignee.Sibling(new UserId(sibling.SiblingChildId)),
         PlaydateAssigneeDto playdate => new PickupAssignee.Playdate(
             FreeText.Normalize(playdate.HostName), FreeText.Normalize(playdate.Location), FreeText.Normalize(playdate.ContactInfo)),
+        BabysitterAssigneeDto babysitter => new PickupAssignee.Babysitter(new UserId(babysitter.GuardianId), new BabysitterId(babysitter.BabysitterId)),
         _ => throw new UnreachableException($"Unmapped PickupAssigneeDto case: {GetType().Name}."),
     };
 
-    public static PickupAssigneeDto FromDomain(PickupAssignee assignee) => assignee switch
+    public static PickupAssigneeDto FromDomain(PickupAssignee assignee, BabysitterNames babysitterNames) => assignee switch
     {
         PickupAssignee.Guardian guardian => new GuardianAssigneeDto(guardian.GuardianId.Value),
         PickupAssignee.SelfEscort => new SelfEscortAssigneeDto(),
         PickupAssignee.Sibling sibling => new SiblingAssigneeDto(sibling.SiblingChildId.Value),
         PickupAssignee.Playdate playdate => new PlaydateAssigneeDto(playdate.HostName, playdate.Location, playdate.ContactInfo),
+        PickupAssignee.Babysitter babysitter => new BabysitterAssigneeDto(
+            babysitter.GuardianId.Value, babysitter.BabysitterId.Value, babysitterNames.NameOf(babysitter)),
     };
 }
 
@@ -43,6 +48,9 @@ public sealed record SiblingAssigneeDto(Guid SiblingChildId) : PickupAssigneeDto
 // Location and ContactInfo are optional on the way in; they always come back, "" meaning none.
 public sealed record PlaydateAssigneeDto(string HostName, string? Location = null, string? ContactInfo = null) : PickupAssigneeDto;
 
+// Name is output only ("" when the babysitter can't be resolved any more); a value sent in is ignored.
+public sealed record BabysitterAssigneeDto(Guid GuardianId, Guid BabysitterId, string? Name = null) : PickupAssigneeDto;
+
 public sealed class PickupAssigneeDtoJsonConverter : KindDiscriminatedJsonConverter<PickupAssigneeDto>
 {
     protected override IReadOnlyDictionary<int, Type> Cases { get; } = new Dictionary<int, Type>
@@ -51,5 +59,6 @@ public sealed class PickupAssigneeDtoJsonConverter : KindDiscriminatedJsonConver
         [(int)PickupAssigneeKind.SelfEscort] = typeof(SelfEscortAssigneeDto),
         [(int)PickupAssigneeKind.Sibling] = typeof(SiblingAssigneeDto),
         [(int)PickupAssigneeKind.Playdate] = typeof(PlaydateAssigneeDto),
+        [(int)PickupAssigneeKind.Babysitter] = typeof(BabysitterAssigneeDto),
     };
 }

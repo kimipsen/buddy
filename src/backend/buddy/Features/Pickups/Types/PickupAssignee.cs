@@ -1,3 +1,4 @@
+using buddy.Features.Babysitters;
 using buddy.Features.Users;
 
 namespace buddy.Features.Pickups;
@@ -8,7 +9,7 @@ namespace buddy.Features.Pickups;
 // PickupAssigned/PickupCleared through PickupAssigneeJsonConverter (an explicit Kind
 // discriminator: System.Text.Json's union converter can only tell cases apart by JSON shape).
 // On the wire it is PickupAssigneeDto. See docs/backend/analysis/eliminate-nulls.md, Phase 5.1.
-public union PickupAssignee(PickupAssignee.Guardian, PickupAssignee.SelfEscort, PickupAssignee.Sibling, PickupAssignee.Playdate)
+public union PickupAssignee(PickupAssignee.Guardian, PickupAssignee.SelfEscort, PickupAssignee.Sibling, PickupAssignee.Playdate, PickupAssignee.Babysitter)
 {
     // A specific guardian of the child handles this slot themself.
     public sealed record Guardian(UserId GuardianId);
@@ -22,4 +23,9 @@ public union PickupAssignee(PickupAssignee.Guardian, PickupAssignee.SelfEscort, 
     // Someone outside the family and the app's user model (e.g. a friend's parent). Location and
     // ContactInfo are optional free text: "" means not given.
     public sealed record Playdate(string HostName, string Location, string ContactInfo);
+
+    // A babysitter saved on GuardianId's BabysitterList. The name isn't copied here: it is resolved
+    // from that list on every read, so a rename reaches every slot. See
+    // docs/backend/analysis/babysitters.md, Question 4.
+    public sealed record Babysitter(UserId GuardianId, BabysitterId BabysitterId);
 }

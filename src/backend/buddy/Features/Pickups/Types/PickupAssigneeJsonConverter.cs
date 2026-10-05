@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using buddy.Features.Babysitters;
 using buddy.Features.Users;
 
 namespace buddy.Features.Pickups;
@@ -23,6 +24,8 @@ public sealed class PickupAssigneeJsonConverter : JsonConverter<PickupAssignee>
             nameof(PickupAssignee.SelfEscort) => new PickupAssignee.SelfEscort(),
             nameof(PickupAssignee.Sibling) => new PickupAssignee.Sibling(new UserId(Required(root, "SiblingChildId").GetGuid())),
             nameof(PickupAssignee.Playdate) => new PickupAssignee.Playdate(String(root, "HostName"), String(root, "Location"), String(root, "ContactInfo")),
+            nameof(PickupAssignee.Babysitter) => new PickupAssignee.Babysitter(
+                new UserId(Required(root, "GuardianId").GetGuid()), new BabysitterId(Required(root, "BabysitterId").GetGuid())),
             _ => throw new JsonException($"Unknown PickupAssignee Kind discriminator: '{kind}'.")
         };
     }
@@ -52,6 +55,12 @@ public sealed class PickupAssigneeJsonConverter : JsonConverter<PickupAssignee>
                 writer.WriteString("HostName", playdate.HostName);
                 writer.WriteString("Location", playdate.Location);
                 writer.WriteString("ContactInfo", playdate.ContactInfo);
+                break;
+
+            case PickupAssignee.Babysitter babysitter:
+                writer.WriteString("Kind", nameof(PickupAssignee.Babysitter));
+                writer.WriteString("GuardianId", babysitter.GuardianId.Value);
+                writer.WriteString("BabysitterId", babysitter.BabysitterId.Value);
                 break;
 
             // A default(PickupAssignee) holds no case: refuse it here rather than persisting an

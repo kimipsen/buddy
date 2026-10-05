@@ -9,6 +9,7 @@ export const shell = {
     calendar: 'Kalender',
     progress: 'Mål',
     workLocations: 'Arbejdssteder',
+    babysitters: 'Babysittere',
     print: 'Print ugeplan',
     settings: 'Indstillinger',
     signOut: 'Log ud',

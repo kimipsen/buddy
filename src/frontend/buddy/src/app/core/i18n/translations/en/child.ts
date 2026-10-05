@@ -49,6 +49,7 @@ export const child = {
         guardian: 'A guardian',
         selfEscort: 'You go alone',
         sibling: 'A sibling',
+        babysitter: 'Your babysitter',
       },
     },
   },

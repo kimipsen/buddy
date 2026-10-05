@@ -1,0 +1,23 @@
+export const babysitters = {
+  backLink: 'Tilbage til oversigt',
+  eyebrow: 'Babysittere',
+  title: 'Dine babysittere og barnepiger.',
+  intro:
+    'Gem de personer, der henter eller afleverer dine børn. Alle et barns voksne kan vælge dem i afhentningsplanen.',
+  loading: 'Indlæser babysittere…',
+  loadError: 'Kunne ikke indlæse dine babysittere.',
+  saveError: 'Kunne ikke gemme babysitteren.',
+  archiveError: 'Kunne ikke fjerne babysitteren.',
+  empty: 'Ingen babysittere endnu. Tilføj den første herunder.',
+  nameLabel: 'Navn',
+  namePlaceholder: 'f.eks. Anna',
+  contactLabel: 'Kontaktoplysninger (valgfrit)',
+  contactPlaceholder: 'Telefon eller e-mail',
+  addButton: 'Tilføj babysitter',
+  editButton: 'Rediger',
+  saveButton: 'Gem',
+  cancelButton: 'Annuller',
+  editLabel: 'Rediger {name}',
+  archiveLabel: 'Fjern {name}',
+  archiveButton: 'Fjern',
+};

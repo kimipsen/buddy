@@ -19,7 +19,7 @@ const OPTIONS = {
   start: '2026-09-28',
   locale: 'en',
   timeZone: TZ,
-  labels: { week: 'Week', selfEscort: 'Alone', playdate: 'Playdate' },
+  labels: { week: 'Week', selfEscort: 'Alone', playdate: 'Playdate', babysitter: 'Babysitter' },
   includeSubtasks: false,
 };
 
@@ -209,6 +209,36 @@ describe('assembleWeekPlan', () => {
       // Only the pick-up is planned: the drop-off half stays blank for handwriting.
       expect(wednesday).toMatchObject({ dropOff: null, pickUp: { text: 'Playdate: Emma' } });
       expect(thursday).toEqual({ type: 'blank' });
+    });
+
+    it('prints a babysitter by name, or the babysitter label when the name no longer resolves', () => {
+      const pickups = new Map([
+        [
+          'signe',
+          [
+            pickup({
+              assignee: { kind: 4, guardianId: 'dad', babysitterId: 'b1', name: 'Anna' },
+              slot: 0,
+            }),
+            pickup({
+              assignee: { kind: 4, guardianId: 'dad', babysitterId: 'b2', name: '' },
+              slot: 1,
+            }),
+          ],
+        ],
+      ]);
+
+      const model = assembleWeekPlan(
+        template([row(PRINT_ROW_KIND.pickup, { childId: 'signe' })]),
+        sources({ pickups }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].cells[0]).toEqual({
+        type: 'pickup',
+        dropOff: { text: 'Anna', icon: null, color: null },
+        pickUp: { text: 'Babysitter', icon: null, color: null },
+      });
     });
   });
 

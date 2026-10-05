@@ -1,6 +1,8 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
+import { ChildBabysitter } from '../../../../core/babysitters.service';
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
@@ -21,6 +23,12 @@ const GUARDIAN = 0 satisfies PickupAssigneeKind;
 const SELF_ESCORT = 1 satisfies PickupAssigneeKind;
 const SIBLING = 2 satisfies PickupAssigneeKind;
 const PLAYDATE = 3 satisfies PickupAssigneeKind;
+const BABYSITTER = 4 satisfies PickupAssigneeKind;
+
+// A babysitter is picked by the (owner guardian, babysitter) pair; the select needs one string.
+function babysitterKey(guardianId: string, babysitterId: string): string {
+  return `${guardianId}|${babysitterId}`;
+}
 
 // The weekly grid renders many `app-pickup-cell` instances at once, so form-control ids need a
 // per-instance suffix to stay unique across all of them (see `instanceId` below).
@@ -31,7 +39,7 @@ let nextPickupCellInstanceId = 0;
 // manage-medicines.ts's inline confirm/cancel pattern), so editing happens in place the same way.
 @Component({
   selector: 'app-pickup-cell',
-  imports: [FormsModule, TranslatePipe, TimeOfDayPipe, SegmentedControl, TimeSelect],
+  imports: [FormsModule, RouterLink, TranslatePipe, TimeOfDayPipe, SegmentedControl, TimeSelect],
   templateUrl: './pickup-cell.html',
 })
 export class PickupCell {
@@ -44,10 +52,12 @@ export class PickupCell {
     { value: SELF_ESCORT, label: this.translation.translate('pickup.cell.kind.selfEscort') },
     { value: SIBLING, label: this.translation.translate('pickup.cell.kind.sibling') },
     { value: PLAYDATE, label: this.translation.translate('pickup.cell.kind.playdate') },
+    { value: BABYSITTER, label: this.translation.translate('pickup.cell.kind.babysitter') },
   ]);
 
   readonly guardians = input.required<GuardianSummary[]>();
   readonly siblings = input.required<ChildSummary[]>();
+  readonly babysitters = input<ChildBabysitter[]>([]);
   readonly occurrence = input<PickupOccurrence | null>(null);
   readonly disabled = input(false);
   readonly saving = input(false);
@@ -59,6 +69,8 @@ export class PickupCell {
   protected readonly selfEscortKind = SELF_ESCORT;
   protected readonly siblingKind = SIBLING;
   protected readonly playdateKind = PLAYDATE;
+  protected readonly babysitterKind = BABYSITTER;
+  protected readonly babysitterKey = babysitterKey;
 
   protected readonly editing = signal(false);
   protected readonly kind = signal<PickupAssigneeKind>(GUARDIAN);
@@ -67,6 +79,7 @@ export class PickupCell {
   protected readonly playdateHostName = signal('');
   protected readonly playdateLocation = signal('');
   protected readonly playdateContactInfo = signal('');
+  protected readonly babysitterChoice = signal('');
   protected readonly time = signal('');
   protected readonly notes = signal('');
 
@@ -78,6 +91,8 @@ export class PickupCell {
         return !!this.siblingChildId();
       case PLAYDATE:
         return !!this.playdateHostName().trim();
+      case BABYSITTER:
+        return !!this.chosenBabysitter();
       default:
         return true;
     }
@@ -105,9 +120,25 @@ export class PickupCell {
     );
   });
 
+  // Undefined until one is chosen, and for an archived babysitter that left the list.
+  private readonly chosenBabysitter = computed(() =>
+    this.babysitters().find((b) => babysitterKey(b.guardianId, b.id) === this.babysitterChoice()),
+  );
+
+  // The slot points at a babysitter who has left the list (archived, or their guardian unlinked):
+  // the backend refuses to re-save it, so Save stays disabled and the cell says why.
+  protected readonly babysitterRemoved = computed(
+    () => !!this.babysitterChoice() && !this.chosenBabysitter(),
+  );
+
   protected readonly summaryPlaydateHost = computed(() => {
     const assignee = this.occurrence()?.assignee;
     return assignee?.kind === PLAYDATE ? assignee.hostName : '';
+  });
+
+  protected readonly summaryBabysitterName = computed(() => {
+    const assignee = this.occurrence()?.assignee;
+    return assignee?.kind === BABYSITTER ? assignee.name : '';
   });
 
   protected startEditing(): void {
@@ -124,6 +155,11 @@ export class PickupCell {
     this.playdateHostName.set(assignee?.kind === PLAYDATE ? assignee.hostName : '');
     this.playdateLocation.set(assignee?.kind === PLAYDATE ? assignee.location : '');
     this.playdateContactInfo.set(assignee?.kind === PLAYDATE ? assignee.contactInfo : '');
+    this.babysitterChoice.set(
+      assignee?.kind === BABYSITTER
+        ? babysitterKey(assignee.guardianId, assignee.babysitterId)
+        : '',
+    );
     this.time.set(occurrence?.time?.slice(0, 5) ?? '');
     this.notes.set(occurrence?.notes ?? '');
     this.editing.set(true);
@@ -162,6 +198,17 @@ export class PickupCell {
           location: this.playdateLocation().trim(),
           contactInfo: this.playdateContactInfo().trim(),
         };
+      case BABYSITTER: {
+        // canSave() guarantees a choice from the current list. The server ignores the name and
+        // sends back the one it resolves.
+        const [guardianId = '', babysitterId = ''] = this.babysitterChoice().split('|');
+        return {
+          kind: BABYSITTER,
+          guardianId,
+          babysitterId,
+          name: this.chosenBabysitter()?.name ?? '',
+        };
+      }
     }
   }
 

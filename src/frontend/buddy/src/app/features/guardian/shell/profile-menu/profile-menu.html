@@ -100,6 +100,13 @@
         {{ 'shell.menu.workLocations' | translate }}
       </a>
       <a
+        routerLink="/guardian/babysitters"
+        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        (click)="close()"
+      >
+        {{ 'shell.menu.babysitters' | translate }}
+      </a>
+      <a
         routerLink="/guardian/print"
         class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         (click)="close()"

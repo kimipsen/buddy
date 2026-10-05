@@ -86,6 +86,7 @@ describe('ProfileMenu', () => {
     expect(menuLink(compiled, '/guardian/mealplan')?.textContent?.trim()).toBe('Meal planner');
     expect(menuLink(compiled, '/guardian/medicine')?.textContent?.trim()).toBe('Medicine');
     expect(menuLink(compiled, '/guardian/calendar')?.textContent?.trim()).toBe('Calendar');
+    expect(menuLink(compiled, '/guardian/babysitters')?.textContent?.trim()).toBe('Babysitters');
     expect(menuLink(compiled, '/guardian/admin')?.textContent?.trim()).toBe('Settings');
     expect(signOutButton(compiled)).not.toBeNull();
   });

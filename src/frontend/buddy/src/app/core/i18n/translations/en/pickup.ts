@@ -12,6 +12,7 @@ export const pickup = {
     noChildren: 'Link a child from Settings before planning pickups.',
     loadError: 'Unable to load the pickup schedule.',
     updateError: 'Unable to update this slot.',
+    manageBabysittersLink: 'Manage babysitters',
   },
   cell: {
     notPlanned: 'Not planned',
@@ -23,6 +24,7 @@ export const pickup = {
       selfEscort: 'Goes alone',
       sibling: 'A sibling',
       playdate: 'Playdate',
+      babysitter: 'Babysitter',
     },
     kindLabel: 'Pickup type',
     timeLabel: 'Pickup time',
@@ -33,5 +35,9 @@ export const pickup = {
     playdateLocationPlaceholder: 'Location (optional)',
     playdateContactPlaceholder: 'Contact info (optional)',
     notesPlaceholder: 'Notes (optional)',
+    selectBabysitterPlaceholder: 'Choose a babysitter',
+    babysitterRemoved: 'This babysitter was removed. Choose someone else.',
+    noBabysitters: 'No babysitters saved yet.',
+    manageBabysittersLink: 'Manage babysitters',
   },
 };

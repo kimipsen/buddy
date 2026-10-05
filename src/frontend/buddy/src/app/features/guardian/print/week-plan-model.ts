@@ -77,6 +77,8 @@ export interface WeekPlanLabels {
   week: string;
   selfEscort: string;
   playdate: string;
+  // Printed for a babysitter whose name no longer resolves.
+  babysitter: string;
 }
 
 export interface WeekPlanOptions {

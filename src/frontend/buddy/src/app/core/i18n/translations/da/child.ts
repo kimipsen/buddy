@@ -49,6 +49,7 @@ export const child = {
         guardian: 'En voksen',
         selfEscort: 'Du går selv',
         sibling: 'En søskende',
+        babysitter: 'Din babysitter',
       },
     },
   },

@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
+import { BabysittersService, ChildBabysitter } from '../../../../core/babysitters.service';
 import { toIsoDate } from '../../../../core/date-utils';
 import {
   ChildSummary,
@@ -61,6 +63,7 @@ describe('ManagePickups', () => {
   }
 
   interface Stubs {
+    babysitters?: Partial<BabysittersService>;
     guardians?: Partial<GuardiansService>;
     pickups?: Partial<PickupsService>;
   }
@@ -70,6 +73,10 @@ describe('ManagePickups', () => {
       listMyChildren: vi.fn(async () => [child()]),
       listChildGuardians: vi.fn(async () => [guardian()]),
       ...stubs.guardians,
+    };
+    const babysittersStub: Partial<BabysittersService> = {
+      listForChild: vi.fn(async () => []),
+      ...stubs.babysitters,
     };
     const pickupsStub: Partial<PickupsService> = {
       listSchedule: vi.fn(async () => []),
@@ -81,6 +88,8 @@ describe('ManagePickups', () => {
     await TestBed.configureTestingModule({
       imports: [ManagePickups],
       providers: [
+        provideRouter([]),
+        { provide: BabysittersService, useValue: babysittersStub },
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: PickupsService, useValue: pickupsStub },
       ],
@@ -88,7 +97,12 @@ describe('ManagePickups', () => {
 
     const fixture = TestBed.createComponent(ManagePickups);
 
-    return { fixture, guardians: guardiansStub, pickups: pickupsStub };
+    return {
+      fixture,
+      babysitters: babysittersStub,
+      guardians: guardiansStub,
+      pickups: pickupsStub,
+    };
   }
 
   // The children resource and then the selected child's schedule resource (a Promise.all of two
@@ -185,6 +199,48 @@ describe('ManagePickups', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const rows = compiled.querySelectorAll('tbody tr');
     expect(rows).toHaveLength(7);
+  });
+
+  it("fetches the child's babysitters and offers them in a cell's babysitter picker", async () => {
+    const anna: ChildBabysitter = {
+      guardianId: 'guardian-1',
+      id: 'b-1',
+      name: 'Anna',
+      contactInfo: '',
+    };
+    const { fixture, babysitters } = await setup({
+      babysitters: { listForChild: vi.fn(async () => [anna]) },
+    });
+    await settle(fixture);
+
+    expect(babysitters.listForChild).toHaveBeenCalledWith('child-1');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    Array.from(compiled.querySelectorAll('button'))
+      .find((b) => b.textContent?.trim() === 'Not planned')!
+      .click();
+    await settle(fixture);
+    Array.from(compiled.querySelectorAll<HTMLButtonElement>('button[role="radio"]'))
+      .find((b) => b.textContent?.trim() === 'Babysitter')!
+      .click();
+    await settle(fixture);
+
+    const options = Array.from(compiled.querySelectorAll('select option')).map((o) =>
+      o.textContent?.trim(),
+    );
+    expect(options).toContain('Anna');
+  });
+
+  it('still renders the schedule when only the babysitter list fails to load', async () => {
+    const { fixture } = await setup({
+      babysitters: { listForChild: vi.fn(async () => Promise.reject(new Error('boom'))) },
+      pickups: { listSchedule: vi.fn(async () => [occurrence()]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('Unable to load the pickup schedule.');
+    expect(compiled.textContent).toContain('Gina');
   });
 
   it('renders every slot as "Not planned" when nothing is scheduled', async () => {

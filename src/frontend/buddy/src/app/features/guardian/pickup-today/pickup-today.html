@@ -61,6 +61,12 @@
                   <span aria-hidden="true">🎉</span>
                   {{ playdateHostName(row.assignee) }}
                 }
+                @case (babysitterKind) {
+                  <span aria-hidden="true">🧑‍🍼</span>
+                  {{
+                    babysitterName(row.assignee) || ('dashboard.pickup.kind.babysitter' | translate)
+                  }}
+                }
               }
             </span>
           </li>

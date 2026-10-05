@@ -68,6 +68,7 @@ export const dashboard = {
       guardian: 'A guardian',
       selfEscort: 'Goes alone',
       sibling: 'A sibling',
+      babysitter: 'Babysitter',
     },
   },
 };

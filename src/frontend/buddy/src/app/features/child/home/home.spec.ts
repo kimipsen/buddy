@@ -1275,5 +1275,29 @@ describe('ChildHome', () => {
       ).map(rowText);
       expect(rows).toEqual(['Drop-off👤 A guardian', 'Pickup🧒 A sibling']);
     });
+
+    it('shows a babysitter by the name the server resolved, or “Your babysitter” without one', async () => {
+      const { fixture } = await setup({
+        pickups: {
+          listSchedule: vi.fn(async () => [
+            pickup({
+              assignee: { kind: 4, guardianId: 'g', babysitterId: 'b1', name: 'Anna' },
+              slot: 0,
+            }),
+            pickup({
+              assignee: { kind: 4, guardianId: 'g', babysitterId: 'b2', name: '' },
+              slot: 1,
+            }),
+          ]),
+        },
+      });
+      await settle(fixture);
+
+      const rows = sectionRows(
+        fixture.nativeElement as HTMLElement,
+        'Today’s pickup & drop-off',
+      ).map(rowText);
+      expect(rows).toEqual(['Drop-off🧑‍🍼 Anna', 'Pickup🧑‍🍼 Your babysitter']);
+    });
   });
 });

@@ -37,6 +37,7 @@ const PICKUP_GUARDIAN = 0;
 const PICKUP_SELF_ESCORT = 1;
 const PICKUP_SIBLING = 2;
 const PICKUP_PLAYDATE = 3;
+const PICKUP_BABYSITTER = 4;
 
 const BLANK: WeekPlanCell = { type: 'blank' };
 const MARK: WeekPlanCell = { type: 'mark' };
@@ -182,6 +183,8 @@ function pickupLabel(
       return { text: names.get(assignee.siblingChildId) ?? '', icon: null, color: null };
     case PICKUP_PLAYDATE:
       return { text: `${labels.playdate}: ${assignee.hostName}`, icon: null, color: null };
+    case PICKUP_BABYSITTER:
+      return { text: assignee.name || labels.babysitter, icon: null, color: null };
   }
 }
 
