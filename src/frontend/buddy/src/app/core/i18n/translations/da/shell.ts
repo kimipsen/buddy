@@ -14,6 +14,7 @@ export const shell = {
     print: 'Print ugeplan',
     settings: 'Indstillinger',
     signOut: 'Log ud',
+    version: 'Version {version}',
     theme: {
       label: 'Tema',
       light: 'Lyst',

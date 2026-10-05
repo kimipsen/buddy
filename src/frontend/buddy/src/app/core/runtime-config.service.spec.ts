@@ -76,6 +76,39 @@ describe('RuntimeConfigService', () => {
     expect(service.keycloak).toEqual(config.keycloak);
   });
 
+  it('exposes the build version from the config, and null when the config has none', async () => {
+    expect(service.version).toBeNull();
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => config,
+    });
+    await service.load();
+    expect(service.version).toBeNull();
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ ...config, version: '1.2.0' }),
+    });
+    await service.load();
+    expect(service.version).toBe('1.2.0');
+  });
+
+  it('rejects a config whose version is not a string', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ ...config, version: 120 }),
+    });
+
+    await expect(service.load()).rejects.toThrow('Runtime config is missing');
+  });
+
   it('throws with the response status and status text when the fetch response is not ok', async () => {
     fetchMock.mockResolvedValue({
       ok: false,

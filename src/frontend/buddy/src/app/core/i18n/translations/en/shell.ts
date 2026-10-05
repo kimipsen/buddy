@@ -14,6 +14,7 @@ export const shell = {
     print: 'Print week plan',
     settings: 'Settings',
     signOut: 'Sign out',
+    version: 'Version {version}',
     theme: {
       label: 'Theme',
       light: 'Light',

@@ -11,6 +11,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth.service';
+import { RuntimeConfigService } from '../../../../core/runtime-config.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { THEME_MODES, ThemeMode } from '../../../../core/theme';
 import { ThemeService } from '../../../../core/theme.service';
@@ -25,6 +26,7 @@ export class ProfileMenu {
   protected readonly theme = inject(ThemeService);
 
   protected readonly themeModes = THEME_MODES;
+  protected readonly version = inject(RuntimeConfigService).version;
 
   private readonly injector = inject(Injector);
   private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');

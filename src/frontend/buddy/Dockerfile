@@ -10,6 +10,8 @@ COPY . .
 
 ARG API_BASE_URL
 ARG KEYCLOAK_AUTHORITY
+# From deploy/version.sh (the build context has no .git); shown in the profile menu.
+ARG BUDDY_VERSION=0.0.0-dev
 RUN npm run build -- --configuration production
 
 # Runtime config is fetched by the app at startup (see runtime-config.service.ts),
@@ -21,6 +23,7 @@ RUN node -e " \
   const config = JSON.parse(fs.readFileSync(path, 'utf8')); \
   config.keycloak.authority = process.env.KEYCLOAK_AUTHORITY; \
   config.apiBaseUrl = process.env.API_BASE_URL; \
+  config.version = process.env.BUDDY_VERSION; \
   fs.writeFileSync(path, JSON.stringify(config, null, 2)); \
 "
 

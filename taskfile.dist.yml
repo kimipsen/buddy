@@ -154,8 +154,10 @@ tasks:
       - |
         set -e
         BUDDY_IMAGE_TAG="$(git rev-parse --short=12 HEAD)$(git diff --quiet HEAD -- || echo -dirty)"
-        export BUDDY_IMAGE_TAG
-        echo "Deploying image tag $BUDDY_IMAGE_TAG"
+        BUDDY_VERSION="$(./version.sh)"
+        BUDDY_COMMIT="$(./version.sh --commit)"
+        export BUDDY_IMAGE_TAG BUDDY_VERSION BUDDY_COMMIT
+        echo "Deploying version $BUDDY_VERSION, image tag $BUDDY_IMAGE_TAG"
         docker compose -f docker-compose.prod.yml up -d --build --wait --wait-timeout 600
         # Only reached when every service came up (healthy where it has a healthcheck): :latest = last good deploy.
         for svc in api frontend keycloak; do docker tag "buddy-$svc:$BUDDY_IMAGE_TAG" "buddy-$svc:latest"; done

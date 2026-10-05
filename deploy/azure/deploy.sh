@@ -18,6 +18,10 @@ command -v jq >/dev/null || { echo "jq is required (used to configure Keycloak's
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Build version from git tags (docs/versioning.md), baked into the API and frontend images.
+BUDDY_VERSION="$("$REPO_ROOT/deploy/version.sh")"
+BUDDY_COMMIT="$("$REPO_ROOT/deploy/version.sh" --commit)"
+
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/.env"
 
@@ -295,10 +299,12 @@ else
   echo "!! GMAIL_SMTP_USER / GMAIL_SMTP_APP_PASSWORD not set in .env - the API and Keycloak will deploy without outbound email. See \"Mail\" in README-azure.md." >&2
 fi
 
-echo "==> Building the API image"
+echo "==> Building the API image (version $BUDDY_VERSION)"
 az acr build \
   --registry "$ACR_NAME" \
   --image buddy-api:latest \
+  --build-arg "BUDDY_VERSION=$BUDDY_VERSION" \
+  --build-arg "BUDDY_COMMIT=$BUDDY_COMMIT" \
   --file "$REPO_ROOT/src/backend/buddy/Dockerfile" \
   "$REPO_ROOT/src/backend"
 
@@ -379,6 +385,7 @@ az acr build \
   --image buddy-frontend:latest \
   --build-arg "API_BASE_URL=https://$API_HOSTNAME" \
   --build-arg "KEYCLOAK_AUTHORITY=https://$KEYCLOAK_HOSTNAME" \
+  --build-arg "BUDDY_VERSION=$BUDDY_VERSION" \
   "$REPO_ROOT/src/frontend/buddy"
 
 FRONTEND_DIGEST=$(az acr repository show --name "$ACR_NAME" --image buddy-frontend:latest --query digest -o tsv)

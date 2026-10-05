@@ -8,7 +8,12 @@ WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
 COPY buddy/ buddy/
-RUN dotnet publish buddy/buddy.csproj -c Release -o /app
+# The build context has no .git, so MinVer can't read the tags here: the deploy passes the
+# version from deploy/version.sh instead (defaults keep a bare `docker build` working).
+ARG BUDDY_VERSION=0.0.0-dev
+ARG BUDDY_COMMIT=unknown
+RUN dotnet publish buddy/buddy.csproj -c Release -o /app \
+      -p:MinVerVersionOverride="$BUDDY_VERSION" -p:SourceRevisionId="$BUDDY_COMMIT"
 
 FROM mcr.microsoft.com/dotnet/nightly/aspnet:11.0-preview AS runtime
 

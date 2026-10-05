@@ -10,6 +10,9 @@ export interface KeycloakConfig {
 export interface RuntimeConfig {
   keycloak: KeycloakConfig;
   apiBaseUrl: string;
+  // Build version from git tags, written by the Dockerfile at deploy time (docs/versioning.md).
+  // Absent in local development.
+  version?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +33,11 @@ export class RuntimeConfigService {
     }
 
     return this.config.apiBaseUrl;
+  }
+
+  // Cosmetic, so null (rather than a throw) both before load() and when the config has none.
+  get version(): string | null {
+    return this.config?.version ?? null;
   }
 
   async load(): Promise<void> {
@@ -56,9 +64,13 @@ export function isRuntimeConfig(value: unknown): value is RuntimeConfig {
     return false;
   }
 
-  const { keycloak, apiBaseUrl } = value as Record<string, unknown>;
+  const { keycloak, apiBaseUrl, version } = value as Record<string, unknown>;
 
   if (typeof apiBaseUrl !== 'string' || typeof keycloak !== 'object' || keycloak === null) {
+    return false;
+  }
+
+  if (version !== undefined && typeof version !== 'string') {
     return false;
   }
 

@@ -147,6 +147,7 @@ From anywhere:
 
 ```
 curl -fsS  https://api.yourdomain.com/health          # -> Healthy
+curl -fsS  https://api.yourdomain.com/version         # -> {"version":"1.2.0","commit":"..."}
 curl -fsSI https://app.yourdomain.com/ | head -1       # -> HTTP/2 200
 curl -fsS  https://app.yourdomain.com/config/runtime-config.json   # apiBaseUrl / keycloak.authority
 curl -fsS  https://auth.yourdomain.com/realms/buddy/.well-known/openid-configuration | jq -r .issuer
@@ -157,6 +158,8 @@ curl -fsS  https://auth.yourdomain.com/realms/buddy/.well-known/openid-configura
   says the API process is serving, **not** that Postgres or Keycloak are
   reachable. Keycloak's own `/health/ready` (enabled in the compose build)
   does include its database check; it's only polled inside the network.
+- `/version` should show the version `task deploy` printed (from git tags, see
+  [docs/versioning.md](../docs/versioning.md)).
 - The issuer must be exactly `https://auth.yourdomain.com/realms/buddy` (the
   API's `ValidIssuer`). A 404 for the `buddy` realm means step 5 isn't done.
 - curl without `-k` must succeed; a TLS failure usually means DNS doesn't

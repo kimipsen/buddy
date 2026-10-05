@@ -1,6 +1,7 @@
 using buddy.Common.Concurrency;
 using buddy.Common.Idempotency;
 using buddy.Common.Validation;
+using buddy.Common.Versioning;
 using buddy.Email;
 using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
@@ -125,6 +126,7 @@ app.UseRequestBindingFailures();
 app.UseIdempotencyKeys();
 
 app.MapHealthChecks("/health");
+app.MapVersion();
 
 app.MapUsersFeature();
 app.MapGuardiansFeature();

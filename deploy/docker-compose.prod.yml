@@ -6,6 +6,9 @@
 # Built images are tagged buddy-{api,frontend,keycloak}:${BUDDY_IMAGE_TAG}
 # (default "latest" for a manual `docker compose up`), so earlier builds stay
 # on the host and a rollback can start them again with --no-build.
+#
+# `task deploy` also sets BUDDY_VERSION/BUDDY_COMMIT from deploy/version.sh (git
+# tags, see docs/versioning.md); the api reports them at GET /version.
 
 services:
   caddy:
@@ -34,6 +37,7 @@ services:
       args:
         API_BASE_URL: "https://${API_DOMAIN}"
         KEYCLOAK_AUTHORITY: "https://${AUTH_DOMAIN}"
+        BUDDY_VERSION: "${BUDDY_VERSION:-0.0.0-dev}"
     restart: unless-stopped
     networks:
       - buddy_network
@@ -43,6 +47,9 @@ services:
     build:
       context: ../src/backend
       dockerfile: buddy/Dockerfile
+      args:
+        BUDDY_VERSION: "${BUDDY_VERSION:-0.0.0-dev}"
+        BUDDY_COMMIT: "${BUDDY_COMMIT:-unknown}"
     restart: unless-stopped
     env_file:
       - .env

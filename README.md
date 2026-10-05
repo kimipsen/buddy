@@ -94,6 +94,8 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Testing](docs/testing.md) — commands for frontend, backend, and mutation
   test suites.
 - [Deployment](deploy/README.md) — production Docker Compose and Caddy setup.
+- [Versioning](docs/versioning.md) — release tags (`v1.2.0`) and how the version
+  reaches the API (`GET /version`) and the frontend.
 - [Agent packages](agents/README.md) — reusable coding and documentation skills.
 - [Backend app guide](src/backend/buddy/README.md) — running, configuring, and
   laying out the API implementation.

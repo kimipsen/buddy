@@ -134,6 +134,13 @@
       >
         {{ 'shell.menu.signOut' | translate }}
       </button>
+      @if (version) {
+        <p
+          class="border-t border-slate-200 px-4 pb-1 pt-2 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400"
+        >
+          {{ 'shell.menu.version' | translate: { version } }}
+        </p>
+      }
     </div>
   }
 </div>

@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../../../core/auth.service';
+import { RuntimeConfigService } from '../../../../core/runtime-config.service';
 import { ThemeMode } from '../../../../core/theme';
 import { ThemeService } from '../../../../core/theme.service';
 import { ProfileMenu } from './profile-menu';
@@ -12,7 +13,7 @@ import { ProfileMenu } from './profile-menu';
 // component specs in this app), so assertions below check the real English copy from
 // core/i18n/translations/en/shell.ts rather than raw translation keys.
 describe('ProfileMenu', () => {
-  async function setup(initialMode: ThemeMode = 'system') {
+  async function setup(initialMode: ThemeMode = 'system', version: string | null = null) {
     const logout = vi.fn();
     const authStub: Partial<AuthService> = { logout };
     const setMode = vi.fn();
@@ -25,6 +26,7 @@ describe('ProfileMenu', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
         { provide: ThemeService, useValue: themeStub },
+        { provide: RuntimeConfigService, useValue: { version } },
       ],
     }).compileComponents();
 
@@ -89,6 +91,22 @@ describe('ProfileMenu', () => {
     expect(menuLink(compiled, '/guardian/babysitters')?.textContent?.trim()).toBe('Babysitters');
     expect(menuLink(compiled, '/guardian/admin')?.textContent?.trim()).toBe('Settings');
     expect(signOutButton(compiled)).not.toBeNull();
+  });
+
+  it('shows the build version at the bottom of the menu when the runtime config has one', async () => {
+    const { fixture, compiled } = await setup('system', '1.2.0');
+
+    fireClick(fixture, toggleButton(compiled));
+
+    expect(compiled.querySelector('p.border-t')?.textContent?.trim()).toBe('Version 1.2.0');
+  });
+
+  it('shows no version line when the runtime config has none', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+
+    expect(compiled.textContent).not.toContain('Version');
   });
 
   it('closes the menu when the toggle is clicked again', async () => {
