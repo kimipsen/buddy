@@ -235,31 +235,103 @@ describe('PickupToday', () => {
     expect(compiled.textContent).not.toContain('Gina');
   });
 
-  it('does not show the child name when the guardian has only one linked child', async () => {
-    const dropOff = occurrence({ assignee: { kind: 1 }, slot: 0 });
+  // Each body row as [child, drop-off, pickup] cell texts.
+  function tableRows(fixture: { nativeElement: unknown }): string[][] {
+    return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr')).map(
+      (tr) => Array.from(tr.children).map((cell) => cell.textContent?.trim() ?? ''),
+    );
+  }
 
+  it('renders a table with drop-off and pickup column headers, drop-off first', async () => {
     const { fixture } = await setup({
-      guardians: {
-        listMyChildren: vi.fn(async () => [
-          child({ id: 'child-1', name: { givenName: 'Charlie', familyName: 'C' } }),
-        ]),
-      },
-      pickups: { listSchedule: vi.fn(async () => [dropOff]) },
+      pickups: { listSchedule: vi.fn(async () => [occurrence({ slot: 0 })]) },
     });
     await settle(fixture);
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).not.toContain('Charlie');
+    const headers = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('thead th[scope="col"]'),
+    ).map((th) => th.textContent?.trim());
+    expect(headers).toEqual(['Child', 'Drop-off', 'Pickup']);
   });
 
-  it('labels each row with its child’s name when the guardian has multiple children, and sorts drop-off before pickup', async () => {
+  it('shows the child as a row header even when the guardian has only one linked child', async () => {
+    const { fixture } = await setup({
+      pickups: { listSchedule: vi.fn(async () => [occurrence({ slot: 0 })]) },
+    });
+    await settle(fixture);
+
+    const rowHeader = (fixture.nativeElement as HTMLElement).querySelector('tbody th[scope="row"]');
+    expect(rowHeader?.textContent?.trim()).toBe('Charlie');
+  });
+
+  it('puts each slot in its own column and marks an unplanned slot as not planned', async () => {
+    const pickupOnly = occurrence({ assignee: { kind: 1 }, slot: 1 });
+
+    const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [pickupOnly]) } });
+    await settle(fixture);
+
+    const [row] = tableRows(fixture);
+    expect(row[0]).toBe('Charlie');
+    expect(row[1]).toContain('Not planned');
+    expect(row[2]).toContain('Goes alone');
+    expect(row[2]).not.toContain('Not planned');
+  });
+
+  it('shows one row per child, sorted by child name, with drop-off and pickup side by side', async () => {
+    const charlie = child({ id: 'child-1', name: { givenName: 'Charlie', familyName: 'C' } });
+    const dana = child({ id: 'child-2', name: { givenName: 'Dana', familyName: 'D' } });
+
+    // Pickup returned before drop-off, and Dana listed before Charlie, so neither input order
+    // matches the expected output.
+    const listSchedule = vi.fn(async (childId: string) => [
+      occurrence({ assignee: { kind: 1 }, slot: 1 }),
+      occurrence({
+        assignee: childId === 'child-1' ? { kind: 2, siblingChildId: 'sibling-1' } : { kind: 1 },
+        slot: 0,
+      }),
+    ]);
+
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [dana, charlie]) },
+      pickups: { listSchedule },
+    });
+    await settle(fixture);
+
+    const rows = tableRows(fixture);
+    expect(rows.map((row) => row[0])).toEqual(['Charlie', 'Dana']);
+    expect(rows[0][1]).toContain('A sibling');
+    expect(rows[0][2]).toContain('Goes alone');
+    expect(rows[1][1]).toContain('Goes alone');
+  });
+
+  it('orders same-named children by id so the order is stable', async () => {
+    const first = child({ id: 'child-a', name: { givenName: 'Sam', familyName: 'A' } });
+    const second = child({ id: 'child-b', name: { givenName: 'Sam', familyName: 'B' } });
+
+    const listSchedule = vi.fn(async (childId: string) => [
+      occurrence({
+        assignee: childId === 'child-a' ? { kind: 1 } : { kind: 2, siblingChildId: 'sibling-1' },
+        slot: 0,
+      }),
+    ]);
+
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [second, first]) },
+      pickups: { listSchedule },
+    });
+    await settle(fixture);
+
+    const rows = tableRows(fixture);
+    expect(rows[0][1]).toContain('Goes alone');
+    expect(rows[1][1]).toContain('A sibling');
+  });
+
+  it('leaves out children with nothing planned today', async () => {
     const charlie = child({ id: 'child-1', name: { givenName: 'Charlie', familyName: 'C' } });
     const dana = child({ id: 'child-2', name: { givenName: 'Dana', familyName: 'D' } });
 
     const listSchedule = vi.fn(async (childId: string) =>
-      childId === 'child-1'
-        ? [occurrence({ assignee: { kind: 1 }, slot: 1 })]
-        : [occurrence({ assignee: { kind: 1 }, slot: 0 })],
+      childId === 'child-1' ? [] : [occurrence({ slot: 1 })],
     );
 
     const { fixture } = await setup({
@@ -268,17 +340,7 @@ describe('PickupToday', () => {
     });
     await settle(fixture);
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Charlie');
-    expect(compiled.textContent).toContain('Dana');
-
-    const rows = Array.from(compiled.querySelectorAll('li')).map((li) => li.textContent ?? '');
-    expect(rows).toHaveLength(2);
-    // Dana's drop-off (slot 0) sorts ahead of Charlie's pickup (slot 1), across children.
-    expect(rows[0]).toContain('Dana');
-    expect(rows[0]).toContain('Drop-off');
-    expect(rows[1]).toContain('Charlie');
-    expect(rows[1]).toContain('Pickup');
+    expect(tableRows(fixture).map((row) => row[0])).toEqual(['Dana']);
   });
 
   it('keeps each child’s guardian assignees resolved against that same child’s guardian list, not another child’s', async () => {
@@ -302,10 +364,9 @@ describe('PickupToday', () => {
     });
     await settle(fixture);
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const rows = Array.from(compiled.querySelectorAll('li')).map((li) => li.textContent ?? '');
-    expect(rows.find((text) => text.includes('Charlie'))).toContain('Gina');
-    expect(rows.find((text) => text.includes('Dana'))).toContain('Peter');
+    const rows = tableRows(fixture);
+    expect(rows.find((row) => row[0] === 'Charlie')?.[1]).toContain('Gina');
+    expect(rows.find((row) => row[0] === 'Dana')?.[2]).toContain('Peter');
   });
 
   // Holds every call open until released, tracking how many are in flight at once.

@@ -11,6 +11,7 @@ import {
 import {
   PickupAssigneeKind,
   PickupOccurrence,
+  PickupSlot,
   PickupsService,
   babysitterName,
   playdateHostName,
@@ -28,19 +29,31 @@ const SLOT_LABELS = {
   1: 'dashboard.pickup.slots.pickUp',
 } as const;
 
+// Table columns, drop-off first; each value is the slot ordinal the column shows.
+const SLOTS = [0, 1] as const satisfies readonly PickupSlot[];
+
 // assigneeName is the assigned guardian's given name, resolved against that child's own guardian
 // list; null when the assignee isn't a guardian or the id can't be resolved.
-type PickupRow = PickupOccurrence & {
+type PickupCell = PickupOccurrence & { assigneeName: string | null };
+
+// One table row: a child and today's occurrence per slot (indexed by slot), null where unplanned.
+interface ChildPickups {
   childId: string;
   childName: string;
-  assigneeName: string | null;
-};
+  bySlot: Record<PickupSlot, PickupCell | null>;
+}
 
-// What the widget loaded: whether the guardian has children at all, and today's pickups across them.
+// Child name first, so every guardian sees the same order whatever order their children come
+// back in; childId breaks ties between same-named children.
+function byChild(a: ChildPickups, b: ChildPickups): number {
+  return a.childName.localeCompare(b.childName) || a.childId.localeCompare(b.childId);
+}
+
+// What the widget loaded: whether the guardian has children at all, and one row per child with
+// something planned today.
 interface LoadedPickups {
   hasChildren: boolean;
-  multipleChildren: boolean;
-  rows: PickupRow[];
+  rows: ChildPickups[];
 }
 
 @Component({
@@ -58,6 +71,7 @@ export class PickupToday {
   protected readonly playdateKind = PLAYDATE;
   protected readonly babysitterKind = BABYSITTER;
   protected readonly slotLabels = SLOT_LABELS;
+  protected readonly slots = SLOTS;
 
   protected readonly today = resource({ loader: () => this.loadToday() });
 
@@ -68,7 +82,7 @@ export class PickupToday {
     const children = await this.guardians.listMyChildren();
 
     if (children.length === 0) {
-      return { hasChildren: false, multipleChildren: false, rows: [] };
+      return { hasChildren: false, rows: [] };
     }
 
     const today = todayIsoDate();
@@ -83,19 +97,22 @@ export class PickupToday {
           this.pickups.listSchedule(child.id, today, today),
           this.guardians.listChildGuardians(child.id),
         ]);
-        return occurrences.map((occurrence) => ({
-          ...occurrence,
-          childId: child.id,
-          childName: child.name.givenName,
-          assigneeName: this.assigneeName(occurrence, childGuardians),
-        }));
+        const bySlot: ChildPickups['bySlot'] = { 0: null, 1: null };
+        for (const occurrence of occurrences) {
+          bySlot[occurrence.slot] = {
+            ...occurrence,
+            assigneeName: this.assigneeName(occurrence, childGuardians),
+          };
+        }
+        return { childId: child.id, childName: child.name.givenName, bySlot };
       },
     );
 
     return {
       hasChildren: true,
-      multipleChildren: children.length > 1,
-      rows: perChild.flat().sort((a, b) => a.slot - b.slot),
+      rows: perChild
+        .filter((row) => row.bySlot[0] !== null || row.bySlot[1] !== null)
+        .sort(byChild),
     };
   }
 

@@ -60,6 +60,8 @@ export const dashboard = {
     loadError: 'Kunne ikke indlæse dagens afhentningsplan.',
     noChildren: 'Tilknyt et barn under Indstillinger for at planlægge deres afhentning.',
     empty: 'Intet planlagt for i dag.',
+    child: 'Barn',
+    notPlanned: 'Ikke planlagt',
     slots: {
       dropOff: 'Aflevering',
       pickUp: 'Afhentning',

@@ -30,48 +30,76 @@
         {{ 'dashboard.pickup.empty' | translate }}
       </p>
     } @else {
-      <ul class="space-y-3">
-        @for (row of loaded.rows; track row.childId + row.slot) {
-          <li
-            class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3"
+      <table class="w-full table-fixed text-sm">
+        <thead>
+          <tr
+            class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
           >
-            <span
-              class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
-            >
-              {{ slotLabels[row.slot] | translate }}
-              @if (loaded.multipleChildren) {
-                · {{ row.childName }}
+            <th scope="col" class="w-1/4 pb-2 pr-3 font-semibold">
+              <span class="sr-only">{{ 'dashboard.pickup.child' | translate }}</span>
+            </th>
+            @for (slot of slots; track slot) {
+              <th scope="col" class="pb-2 pr-3 font-semibold last:pr-0">
+                {{ slotLabels[slot] | translate }}
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          @for (row of loaded.rows; track row.childId) {
+            <tr>
+              <th scope="row" class="truncate py-3 pr-3 text-left font-semibold">
+                {{ row.childName }}
+              </th>
+              @for (slot of slots; track slot) {
+                @let cell = row.bySlot[slot];
+                <td class="py-3 pr-3 font-medium last:pr-0">
+                  @if (cell) {
+                    <span class="flex min-w-0 items-center gap-2">
+                      @switch (cell.assignee.kind) {
+                        @case (guardianKind) {
+                          <span aria-hidden="true">👤</span>
+                          <span class="truncate">{{
+                            cell.assigneeName ?? ('dashboard.pickup.kind.guardian' | translate)
+                          }}</span>
+                        }
+                        @case (selfEscortKind) {
+                          <span aria-hidden="true">🚶</span>
+                          <span class="truncate">{{
+                            'dashboard.pickup.kind.selfEscort' | translate
+                          }}</span>
+                        }
+                        @case (siblingKind) {
+                          <span aria-hidden="true">🧒</span>
+                          <span class="truncate">{{
+                            'dashboard.pickup.kind.sibling' | translate
+                          }}</span>
+                        }
+                        @case (playdateKind) {
+                          <span aria-hidden="true">🎉</span>
+                          <span class="truncate">{{ playdateHostName(cell.assignee) }}</span>
+                        }
+                        @case (babysitterKind) {
+                          <span aria-hidden="true">🧑‍🍼</span>
+                          <span class="truncate">{{
+                            babysitterName(cell.assignee) ||
+                              ('dashboard.pickup.kind.babysitter' | translate)
+                          }}</span>
+                        }
+                      }
+                    </span>
+                  } @else {
+                    <span class="text-slate-400 dark:text-slate-500">
+                      <span aria-hidden="true">—</span>
+                      <span class="sr-only">{{ 'dashboard.pickup.notPlanned' | translate }}</span>
+                    </span>
+                  }
+                </td>
               }
-            </span>
-            <span class="flex items-center gap-2 text-sm font-medium">
-              @switch (row.assignee.kind) {
-                @case (guardianKind) {
-                  <span aria-hidden="true">👤</span>
-                  {{ row.assigneeName ?? ('dashboard.pickup.kind.guardian' | translate) }}
-                }
-                @case (selfEscortKind) {
-                  <span aria-hidden="true">🚶</span>
-                  {{ 'dashboard.pickup.kind.selfEscort' | translate }}
-                }
-                @case (siblingKind) {
-                  <span aria-hidden="true">🧒</span>
-                  {{ 'dashboard.pickup.kind.sibling' | translate }}
-                }
-                @case (playdateKind) {
-                  <span aria-hidden="true">🎉</span>
-                  {{ playdateHostName(row.assignee) }}
-                }
-                @case (babysitterKind) {
-                  <span aria-hidden="true">🧑‍🍼</span>
-                  {{
-                    babysitterName(row.assignee) || ('dashboard.pickup.kind.babysitter' | translate)
-                  }}
-                }
-              }
-            </span>
-          </li>
-        }
-      </ul>
+            </tr>
+          }
+        </tbody>
+      </table>
     }
   }
 </section>

@@ -60,6 +60,8 @@ export const dashboard = {
     loadError: 'Unable to load today’s pickup schedule.',
     noChildren: 'Link a child from Settings to plan their pickups.',
     empty: 'Nothing planned for today.',
+    child: 'Child',
+    notPlanned: 'Not planned',
     slots: {
       dropOff: 'Drop-off',
       pickUp: 'Pickup',
