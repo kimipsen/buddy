@@ -170,3 +170,35 @@ tasks:
         msg: "deploy/azure/.env not found — copy deploy/azure/.env.example to deploy/azure/.env and fill in real values first."
     cmds:
       - ./deploy.sh
+
+  release:
+    desc: 'Tag HEAD as a release (annotated vX.Y.Z tag, read by MinVer) and push HEAD + tag to every git remote. Usage: task release VERSION=1.2.0 (or task release -- 1.2.0)'
+    vars:
+      # Accept "1.2.0" or "v1.2.0"; the tag always gets the "v" prefix.
+      VERSION_RAW: '{{.VERSION | default .CLI_ARGS | trim}}'
+      TAG: 'v{{trimPrefix "v" .VERSION_RAW}}'
+    preconditions:
+      - sh: '[ -n "{{.VERSION_RAW}}" ]'
+        msg: 'Specify a version: task release VERSION=1.2.0 (or task release -- 1.2.0)'
+      - sh: 'echo "{{.TAG}}" | grep -Eq "^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$"'
+        msg: '"{{.VERSION_RAW}}" is not a semantic version like 1.2.0 or 1.3.0-rc.1'
+      - sh: 'git diff --quiet HEAD -- && [ -z "$(git ls-files --others --exclude-standard)" ]'
+        msg: 'Working tree is not clean; commit or stash your changes first.'
+      - sh: '! git rev-parse -q --verify "refs/tags/{{.TAG}}" >/dev/null'
+        msg: 'Tag {{.TAG}} already exists locally.'
+    cmds:
+      - |
+        set -e
+        for remote in $(git remote); do
+          if git ls-remote --exit-code --tags "$remote" "refs/tags/{{.TAG}}" >/dev/null 2>&1; then
+            echo "Tag {{.TAG}} already exists on $remote." >&2
+            exit 1
+          fi
+        done
+        echo "Tagging $(git log -1 --format='%h %s') as {{.TAG}}"
+        git tag -a "{{.TAG}}" -m "Release {{trimPrefix "v" .TAG}}"
+        # Same as `git pushall {{.TAG}}`: push the current branch and the tag to every remote.
+        for remote in $(git remote); do
+          echo "Pushing HEAD and {{.TAG}} to $remote"
+          git push "$remote" HEAD "refs/tags/{{.TAG}}"
+        done
