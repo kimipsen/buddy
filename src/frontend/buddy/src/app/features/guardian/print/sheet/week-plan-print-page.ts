@@ -23,6 +23,7 @@ import { PrintTemplate, PrintTemplatesService } from '../../../../core/print-tem
 import { UsersService } from '../../../../core/users.service';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 import { LoadingSpinner } from '../../../../shared/loading-spinner/loading-spinner';
+import { Toggle } from '../../../../shared/toggle/toggle';
 import { assembleWeekPlan } from '../assemble-week-plan';
 import { WeekPlanLoader } from '../week-plan-loader';
 import { WeekPlanModel } from '../week-plan-model';
@@ -38,7 +39,7 @@ const PREVIEW_GUTTER_PX = 32;
 // removing it on destroy.
 @Component({
   selector: 'app-week-plan-print-page',
-  imports: [RouterLink, TranslatePipe, DateSelect, LoadingSpinner, WeekPlanSheet],
+  imports: [RouterLink, TranslatePipe, DateSelect, LoadingSpinner, Toggle, WeekPlanSheet],
   templateUrl: './week-plan-print-page.html',
 })
 export class WeekPlanPrintPage {
@@ -81,14 +82,32 @@ export class WeekPlanPrintPage {
       : nextWeekdayOnOrAfter(todayIsoDate(), this.template.value().defaultStartWeekday);
   });
 
-  // Reassembles whenever the date changes; a newer date picked while one loads wins.
+  // Print a routine's subtasks under its parent title; kept in the URL like the start date.
+  protected readonly includeSubtasks = signal(
+    this.route.snapshot.queryParamMap.get('subtasks') === '1',
+  );
+
+  // Refetches whenever the date changes; a newer date picked while one loads wins.
   protected readonly sheet = resource({
     params: () =>
       this.template.hasValue() && this.start()
         ? { template: this.template.value(), start: this.start() }
         : undefined,
-    loader: async ({ params: { template, start } }) => {
-      const sources = await this.loader.load(template, start);
+    loader: async ({ params: { template, start } }) => ({
+      template,
+      start,
+      sources: await this.loader.load(template, start),
+    }),
+  });
+
+  // The sheet on screen: the previous date's stays up while a new date loads. Toggling subtasks
+  // only reassembles what's already fetched.
+  protected readonly model = linkedSignal<WeekPlanModel | undefined, WeekPlanModel | undefined>({
+    source: () => {
+      if (!this.sheet.hasValue()) {
+        return undefined;
+      }
+      const { template, start, sources } = this.sheet.value();
       return assembleWeekPlan(template, sources, {
         start,
         locale: this.translation.language(),
@@ -98,13 +117,9 @@ export class WeekPlanPrintPage {
           selfEscort: this.translation.translate('print.sheet.selfEscort'),
           playdate: this.translation.translate('print.sheet.playdate'),
         },
+        includeSubtasks: this.includeSubtasks(),
       });
     },
-  });
-
-  // The sheet on screen: the previous date's stays up while a new date loads.
-  protected readonly model = linkedSignal<WeekPlanModel | undefined, WeekPlanModel | undefined>({
-    source: () => (this.sheet.hasValue() ? this.sheet.value() : undefined),
     computation: (model, previous) => model ?? previous?.value,
   });
 
@@ -155,8 +170,21 @@ export class WeekPlanPrintPage {
     if (!ISO_DATE.test(date)) {
       return;
     }
-    void this.router.navigate([], { queryParams: { start: date }, replaceUrl: true });
+    void this.router.navigate([], {
+      queryParams: { start: date },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
     this.start.set(date);
+  }
+
+  protected setIncludeSubtasks(include: boolean): void {
+    void this.router.navigate([], {
+      queryParams: { subtasks: include ? '1' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    this.includeSubtasks.set(include);
   }
 
   private applyPageStyle(template: PrintTemplate): void {

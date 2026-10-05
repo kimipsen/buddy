@@ -2,7 +2,7 @@
 
 ## Print functionality
 
-- [ ] Include subtasks in printed output and add a toggle to turn their
+- [x] Include subtasks in printed output and add a toggle to turn their
   inclusion on/off. Printing currently ignores subtasks and offers no toggle.
 
 ## Pickup/drop-off options

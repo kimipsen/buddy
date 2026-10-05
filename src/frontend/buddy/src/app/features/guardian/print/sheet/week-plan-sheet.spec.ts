@@ -39,10 +39,10 @@ describe('WeekPlanSheet', () => {
           cells: [
             {
               type: 'list',
-              items: [{ time: '16:00', text: 'Kor', assignee: 'Signe' }],
+              items: [{ time: '16:00', text: 'Kor', assignee: 'Signe', subtasks: [] }],
               overflow: 2,
             },
-            { type: 'checklist', items: ['Affald + pant'], overflow: 0 },
+            { type: 'checklist', items: [{ text: 'Affald + pant', subtasks: [] }], overflow: 0 },
             { type: 'mark' },
             { type: 'text', value: { text: 'Stil', icon: '🏢', color: '#0ea5e9' } },
             ...Array(3).fill({ type: 'blank' }),
@@ -118,6 +118,38 @@ describe('WeekPlanSheet', () => {
     expect(cells[9].textContent).toContain('✕');
     expect(cells[9].querySelector('.sr-only')?.textContent).toBe('Yes');
     expect(cells[10].textContent).toContain('Stil');
+  });
+
+  it('prints a routine’s subtasks nested under its parent, with their own tick boxes', async () => {
+    const activities = model().rows[1];
+    const root = await render(
+      model({
+        rows: [
+          {
+            ...activities,
+            cells: [
+              {
+                type: 'list',
+                items: [{ time: null, text: 'Morgenrutine', assignee: null, subtasks: ['Brush'] }],
+                overflow: 0,
+              },
+              {
+                type: 'checklist',
+                items: [{ text: 'Morgenrutine', subtasks: ['Brush', 'Dress'] }],
+                overflow: 0,
+              },
+              ...activities.cells.slice(2),
+            ],
+          },
+        ],
+      }),
+    );
+    const [list, checklist] = Array.from(root.querySelectorAll('[role="cell"]'));
+
+    expect(list.querySelector('li ul li')?.textContent?.trim()).toBe('– Brush');
+    const nested = Array.from(checklist.querySelectorAll('li ul li'));
+    expect(nested.map((li) => li.textContent?.trim())).toEqual(['Brush', 'Dress']);
+    expect(nested.every((li) => li.querySelector('span[aria-hidden="true"]'))).toBe(true);
   });
 
   it('tells screen readers which pickup name is the drop-off and which the pick-up', async () => {

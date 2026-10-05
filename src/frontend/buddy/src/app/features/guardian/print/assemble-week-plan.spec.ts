@@ -20,6 +20,7 @@ const OPTIONS = {
   locale: 'en',
   timeZone: TZ,
   labels: { week: 'Week', selfEscort: 'Alone', playdate: 'Playdate' },
+  includeSubtasks: false,
 };
 
 function template(rows: PrintTemplateRow[], overrides: Partial<PrintTemplate> = {}): PrintTemplate {
@@ -366,7 +367,7 @@ describe('assembleWeekPlan', () => {
 
       expect(tuesday).toEqual({
         type: 'list',
-        items: [{ time: '16:00', text: 'Kor', assignee: null }],
+        items: [{ time: '16:00', text: 'Kor', assignee: null, subtasks: [] }],
         overflow: 0,
       });
       // The all-day trip covers Wed and Thu (end is exclusive) and sorts before timed items.
@@ -402,7 +403,7 @@ describe('assembleWeekPlan', () => {
 
       expect(model.rows[0].cells[1]).toEqual({
         type: 'list',
-        items: [{ time: null, text: 'Kor', assignee: 'Signe' }],
+        items: [{ time: null, text: 'Kor', assignee: 'Signe', subtasks: [] }],
         overflow: 0,
       });
       expect(model.rows[0].cells[2]).toMatchObject({ items: [{ text: 'Dans' }] });
@@ -429,15 +430,97 @@ describe('assembleWeekPlan', () => {
 
       expect(model.rows[0].cells[0]).toEqual({
         type: 'checklist',
-        items: ['Morgenrutine', 'Affald + pant'],
+        items: [
+          { text: 'Morgenrutine', subtasks: [] },
+          { text: 'Affald + pant', subtasks: [] },
+        ],
         overflow: 0,
       });
       expect(model.rows[0].cells[3]).toEqual({
         type: 'checklist',
-        items: ['Lektier'],
+        items: [{ text: 'Lektier', subtasks: [] }],
         overflow: 0,
       });
       expect(model.rows[0].cells[1]).toEqual({ type: 'blank' });
+    });
+
+    it('lists a routine’s subtasks under its parent title in checklists when asked', () => {
+      const model = assembleWeekPlan(
+        template([
+          row(PRINT_ROW_KIND.taskChecklist, { calendarIds: ['family'], assignedToId: 'viggo' }),
+        ]),
+        sources({ occurrences }),
+        { ...OPTIONS, includeSubtasks: true },
+      );
+
+      expect(model.rows[0].cells[0]).toEqual({
+        type: 'checklist',
+        items: [
+          { text: 'Morgenrutine', subtasks: ['Brush', 'Dress'] },
+          { text: 'Affald + pant', subtasks: [] },
+        ],
+        overflow: 0,
+      });
+    });
+
+    it('prints a routine once in events rows, timed by its first subtask', () => {
+      const model = assembleWeekPlan(
+        template([
+          row(PRINT_ROW_KIND.calendarEvents, {
+            calendarIds: ['family'],
+            assignedToId: 'viggo',
+            showTime: true,
+          }),
+        ]),
+        sources({ occurrences }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].cells[0]).toEqual({
+        type: 'list',
+        items: [
+          { time: '07:00', text: 'Morgenrutine', assignee: null, subtasks: [] },
+          { time: '18:00', text: 'Affald + pant', assignee: null, subtasks: [] },
+        ],
+        overflow: 0,
+      });
+    });
+
+    it('lists a routine’s subtasks under its parent title in events rows when asked', () => {
+      const model = assembleWeekPlan(
+        template([
+          row(PRINT_ROW_KIND.calendarEvents, { calendarIds: ['family'], assignedToId: 'viggo' }),
+        ]),
+        sources({ occurrences }),
+        { ...OPTIONS, includeSubtasks: true },
+      );
+
+      expect(model.rows[0].cells[0]).toMatchObject({
+        items: [
+          { text: 'Morgenrutine', subtasks: ['Brush', 'Dress'] },
+          { text: 'Affald + pant', subtasks: [] },
+        ],
+      });
+    });
+
+    it('counts a routine with its subtasks as one item against maxItems', () => {
+      const model = assembleWeekPlan(
+        template([
+          row(PRINT_ROW_KIND.taskChecklist, {
+            calendarIds: ['family'],
+            assignedToId: 'viggo',
+            maxItems: 1,
+          }),
+        ]),
+        sources({ occurrences }),
+        { ...OPTIONS, includeSubtasks: true },
+      );
+
+      expect(model.rows[0].cells[0]).toEqual({
+        type: 'checklist',
+        items: [{ text: 'Morgenrutine', subtasks: ['Brush', 'Dress'] }],
+        overflow: 1,
+      });
     });
 
     it('keeps two different tasks that share a title as two tick boxes', () => {
@@ -459,7 +542,10 @@ describe('assembleWeekPlan', () => {
 
       expect(model.rows[0].cells[0]).toEqual({
         type: 'checklist',
-        items: ['Støvsug', 'Støvsug'],
+        items: [
+          { text: 'Støvsug', subtasks: [] },
+          { text: 'Støvsug', subtasks: [] },
+        ],
         overflow: 0,
       });
     });

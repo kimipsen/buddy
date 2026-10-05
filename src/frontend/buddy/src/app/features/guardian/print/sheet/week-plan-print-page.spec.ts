@@ -38,7 +38,11 @@ describe('WeekPlanPrintPage', () => {
     document.head.querySelectorAll('style[data-week-plan-print]').forEach((s) => s.remove());
   });
 
-  async function setup(start: string | null, get = vi.fn(async () => template)) {
+  async function setup(
+    start: string | null,
+    get = vi.fn(async () => template),
+    query: Record<string, string> = {},
+  ) {
     const load = vi.fn(async () => ({
       meals: new Map(),
       pickups: new Map(),
@@ -56,7 +60,7 @@ describe('WeekPlanPrintPage', () => {
           useValue: {
             snapshot: {
               paramMap: convertToParamMap({ templateId: 't-1' }),
-              queryParamMap: convertToParamMap(start ? { start } : {}),
+              queryParamMap: convertToParamMap({ ...(start ? { start } : {}), ...query }),
             },
           },
         },
@@ -129,8 +133,44 @@ describe('WeekPlanPrintPage', () => {
     expect(load).toHaveBeenLastCalledWith(template, '2026-10-12');
     expect(navigate).toHaveBeenCalledWith([], {
       queryParams: { start: '2026-10-12' },
+      queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  });
+
+  it('toggles subtasks without refetching, keeping the choice in the URL', async () => {
+    const { fixture, load, root } = await setup('2026-10-05');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const toggle = root.querySelector<HTMLButtonElement>('app-toggle button')!;
+
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(toggle.getAttribute('aria-label')).toBe('Include subtasks');
+
+    toggle.click();
+    await settle(fixture);
+
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(navigate).toHaveBeenCalledWith([], {
+      queryParams: { subtasks: '1' },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+
+    toggle.click();
+    await settle(fixture);
+
+    expect(navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { subtasks: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('starts with subtasks included when the URL asks for them', async () => {
+    const { root } = await setup('2026-10-05', undefined, { subtasks: '1' });
+
+    expect(root.querySelector('app-toggle button')?.getAttribute('aria-checked')).toBe('true');
   });
 
   it('focuses Print once the sheet is ready', async () => {

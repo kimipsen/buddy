@@ -19,10 +19,18 @@ export interface WeekPlanText {
   color: string | null;
 }
 
+// subtasks: the titles of a template-scheduled routine's subtasks, printed under its parent
+// title. Empty for every other item, and for routines when subtasks are left out.
 export interface WeekPlanItem {
   time: string | null;
   text: string;
   assignee: string | null;
+  subtasks: string[];
+}
+
+export interface WeekPlanCheckItem {
+  text: string;
+  subtasks: string[];
 }
 
 export type WeekPlanCell =
@@ -30,7 +38,7 @@ export type WeekPlanCell =
   | { type: 'mark' }
   | { type: 'text'; value: WeekPlanText }
   | { type: 'list'; items: WeekPlanItem[]; overflow: number }
-  | { type: 'checklist'; items: string[]; overflow: number }
+  | { type: 'checklist'; items: WeekPlanCheckItem[]; overflow: number }
   | { type: 'pickup'; dropOff: WeekPlanText | null; pickUp: WeekPlanText | null };
 
 export interface WeekPlanRow {
@@ -76,4 +84,6 @@ export interface WeekPlanOptions {
   locale: string;
   timeZone: string;
   labels: WeekPlanLabels;
+  // Print a routine's subtasks under its parent title, or just the parent title.
+  includeSubtasks: boolean;
 }

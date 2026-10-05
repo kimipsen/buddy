@@ -35,6 +35,7 @@ export const print = {
     changeDate: 'First day',
     editTemplate: 'Edit template',
     printButton: 'Print',
+    includeSubtasks: 'Include subtasks',
   },
   editor: {
     title: 'Edit print template',

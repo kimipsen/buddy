@@ -17,6 +17,7 @@ import {
 import { workDayLocation } from '../../../core/work-locations.service';
 import {
   WeekPlanCell,
+  WeekPlanCheckItem,
   WeekPlanDay,
   WeekPlanItem,
   WeekPlanModel,
@@ -245,34 +246,60 @@ function calendarCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell
       return MARK;
     }
 
+    const entries = groupRoutines(onDay, context.options.includeSubtasks);
+
     if (row.kind === PRINT_ROW_KIND.taskChecklist) {
-      // A routine scheduled from a task template prints once, under its parent title. Grouping is
-      // per item, so two different tasks that happen to share a title stay two tick boxes.
-      const groups = new Map<string, string>();
-      for (const o of onDay) {
-        const key = o.routine ? `${o.itemId}|routine` : `${o.itemId}||${o.sortAt}`;
-        if (!groups.has(key)) {
-          groups.set(key, o.routine?.parentTitle ?? o.title);
-        }
-      }
-      return { type: 'checklist', ...limit([...groups.values()], row.maxItems) };
+      const items = entries.map(({ text, subtasks }): WeekPlanCheckItem => ({ text, subtasks }));
+      return { type: 'checklist', ...limit(items, row.maxItems) };
     }
 
-    const items = onDay.map((o): WeekPlanItem => {
+    const items = entries.map(({ first: o, text, subtasks }): WeekPlanItem => {
       return {
         time:
           row.showTime && !o.isAllDay && startsOn(o, date, timeZone)
             ? toTimeInTimeZone(new Date(o.sortAt), timeZone)
             : null,
-        text: o.title,
+        text,
         assignee:
           row.showAssignee && o.assignedTo
             ? (context.sources.names.get(o.assignedTo) ?? null)
             : null,
+        subtasks,
       };
     });
     return { type: 'list', ...limit(items, row.maxItems) };
   });
+}
+
+interface CellEntry {
+  // The occurrence the entry is timed and assigned by: a routine's earliest subtask.
+  first: CalendarItemOccurrence;
+  text: string;
+  subtasks: string[];
+}
+
+// A routine scheduled from a task template prints once, under its parent title, at the position
+// of its first subtask; its subtasks' titles follow it only when asked for. Grouping is per item,
+// so two different tasks that happen to share a title stay two entries.
+function groupRoutines(onDay: CalendarItemOccurrence[], includeSubtasks: boolean): CellEntry[] {
+  const routines = new Map<string, CellEntry>();
+  const entries: CellEntry[] = [];
+  for (const o of onDay) {
+    if (!o.routine) {
+      entries.push({ first: o, text: o.title, subtasks: [] });
+      continue;
+    }
+    let entry = routines.get(o.itemId);
+    if (!entry) {
+      entry = { first: o, text: o.routine.parentTitle, subtasks: [] };
+      routines.set(o.itemId, entry);
+      entries.push(entry);
+    }
+    if (includeSubtasks) {
+      entry.subtasks.push(o.title);
+    }
+  }
+  return entries;
 }
 
 function limit<T>(items: T[], maxItems: number | null): { items: T[]; overflow: number } {

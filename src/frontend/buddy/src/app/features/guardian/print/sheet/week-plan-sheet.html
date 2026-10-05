@@ -78,6 +78,13 @@
                     @if (item.assignee) {
                       <span class="text-slate-500">({{ item.assignee }})</span>
                     }
+                    @if (item.subtasks.length > 0) {
+                      <ul class="pl-[0.8em] text-[0.9em]">
+                        @for (subtask of item.subtasks; track $index) {
+                          <li>– {{ subtask }}</li>
+                        }
+                      </ul>
+                    }
                   </li>
                 }
                 @if (cell.overflow > 0) {
@@ -88,13 +95,29 @@
             @case ('checklist') {
               <ul class="space-y-[0.2em]">
                 @for (item of cell.items; track $index) {
-                  <li class="flex items-start gap-[0.35em]">
-                    <span
-                      class="mt-[0.15em] inline-block size-[0.9em] shrink-0"
-                      style="border: 0.25mm solid #475569"
-                      aria-hidden="true"
-                    ></span>
-                    <span>{{ item }}</span>
+                  <li>
+                    <div class="flex items-start gap-[0.35em]">
+                      <span
+                        class="mt-[0.15em] inline-block size-[0.9em] shrink-0"
+                        style="border: 0.25mm solid #475569"
+                        aria-hidden="true"
+                      ></span>
+                      <span>{{ item.text }}</span>
+                    </div>
+                    @if (item.subtasks.length > 0) {
+                      <ul class="mt-[0.1em] space-y-[0.1em] pl-[1.25em] text-[0.9em]">
+                        @for (subtask of item.subtasks; track $index) {
+                          <li class="flex items-start gap-[0.35em]">
+                            <span
+                              class="mt-[0.2em] inline-block size-[0.75em] shrink-0"
+                              style="border: 0.25mm solid #475569"
+                              aria-hidden="true"
+                            ></span>
+                            <span>{{ subtask }}</span>
+                          </li>
+                        }
+                      </ul>
+                    }
                   </li>
                 }
                 @if (cell.overflow > 0) {

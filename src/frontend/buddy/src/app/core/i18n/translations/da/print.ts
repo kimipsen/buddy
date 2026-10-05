@@ -35,6 +35,7 @@ export const print = {
     changeDate: 'Første dag',
     editTemplate: 'Rediger skabelon',
     printButton: 'Print',
+    includeSubtasks: 'Medtag deltrin',
   },
   editor: {
     title: 'Rediger printskabelon',

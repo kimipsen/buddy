@@ -244,9 +244,15 @@ Where the build settled details this design left open:
   only `TaskChecklist` restricts to tasks.
 - **Unavailable calendar rows.** If any one of a row's calendars fails to load, the whole row
   prints as "not available" rather than a partial list that would look complete.
-- **Checklists print a routine once.** Subtasks scheduled from a task template collapse to one
-  tick box under their `routine.parentTitle`. Grouping is per item id, so two different tasks that
-  share a title stay two tick boxes.
+- **A routine prints once.** In checklist and events rows alike, subtasks scheduled from a task
+  template collapse to one entry under their `routine.parentTitle`, timed and assigned by the
+  first subtask. Grouping is per item id, so two different tasks that share a title stay two
+  entries.
+- **Subtasks are a print-time toggle.** The print page's "Include subtasks" switch (off by
+  default, kept in the URL as `?subtasks=1`) lists a routine's subtask titles under its parent:
+  each with its own smaller tick box in checklists, as indented lines in events rows. A routine
+  still counts as one entry against `maxItems`. Toggling reassembles the fetched week without
+  refetching; the editor preview always prints without subtasks.
 - **Unfinished rows print blank.** A row with no source picked yet (no calendar, child or
   location) renders as an empty cell, not "not available"; that note is only for sources the
   printing guardian can't read.

@@ -286,6 +286,7 @@ export class PrintTemplateEditor {
             selfEscort: this.translation.translate('print.sheet.selfEscort'),
             playdate: this.translation.translate('print.sheet.playdate'),
           },
+          includeSubtasks: false,
         })
       : null;
   });
