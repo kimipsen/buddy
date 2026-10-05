@@ -280,7 +280,7 @@ describe('ManagePickups', () => {
     expect(compiled.querySelector('select')).toBeNull();
   });
 
-  it('renders a child picker and switches the schedule when there is more than one child', async () => {
+  it('renders a child picker sorted by name and switches the schedule when there is more than one child', async () => {
     const childA = child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } });
     const childB = child({ id: 'child-2', name: { givenName: 'Robin', familyName: 'Kid' } });
     const listChildGuardians = vi.fn(async () => [guardian()]);
@@ -296,19 +296,21 @@ describe('ManagePickups', () => {
     const picker = compiled.querySelector('select') as HTMLSelectElement;
     expect(picker).toBeTruthy();
     expect(Array.from(picker.options).map((option) => option.textContent?.trim())).toEqual([
-      'Sam',
       'Robin',
+      'Sam',
     ]);
+    // The first child by name is selected by default, not the first one the API returned.
+    expect(picker.value).toBe('child-2');
 
     listChildGuardians.mockClear();
     listSchedule.mockClear();
 
-    picker.value = 'child-2';
+    picker.value = 'child-1';
     picker.dispatchEvent(new Event('change'));
     await settle(fixture);
 
-    expect(guardians.listChildGuardians).toHaveBeenCalledWith('child-2');
-    expect(pickups.listSchedule).toHaveBeenCalledWith('child-2', weekStart, weekEnd);
+    expect(guardians.listChildGuardians).toHaveBeenCalledWith('child-1');
+    expect(pickups.listSchedule).toHaveBeenCalledWith('child-1', weekStart, weekEnd);
   });
 
   it('excludes the selected child from the sibling list passed to each cell', async () => {
@@ -320,7 +322,7 @@ describe('ManagePickups', () => {
     });
     await settle(fixture);
 
-    // childA (Sam) is selected by default (first child returned) -- only childB (Robin) should be
+    // childB (Robin) is selected by default (first by name) -- only childA (Sam) should be
     // offered as a sibling to assign pickup/drop-off to.
     const cell = cellAt(fixture, 0, 0);
     cell.querySelector<HTMLButtonElement>('button')!.click();
@@ -333,7 +335,7 @@ describe('ManagePickups', () => {
     const siblingOptionLabels = Array.from(siblingSelect.options)
       .map((option) => option.textContent?.trim())
       .filter((label) => label && label !== 'Choose a sibling');
-    expect(siblingOptionLabels).toEqual(['Robin']);
+    expect(siblingOptionLabels).toEqual(['Sam']);
   });
 
   describe('assigning a pickup', () => {
@@ -449,8 +451,9 @@ describe('ManagePickups', () => {
 
   describe('a save that resolves after switching child', () => {
     async function startSaveThenSwitchChild() {
+      // Named so child A also sorts first and is selected by default.
       const childA = child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } });
-      const childB = child({ id: 'child-2', name: { givenName: 'Robin', familyName: 'Kid' } });
+      const childB = child({ id: 'child-2', name: { givenName: 'Tove', familyName: 'Kid' } });
       const pending = deferred<PickupOccurrence>();
       const assignPickup = vi.fn(() => pending.promise);
 

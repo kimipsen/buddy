@@ -9,6 +9,21 @@
 
 - [x] Expand the pickup/drop-off options to include nanny/babysitter.
 
+## Consistent list sorting
+
+- [ ] Make sure lists are sorted the same way everywhere. Names should use one
+  locale-aware order (`sortByName` / `sortByChildName` in `core/array-utils.ts`),
+  and the default selection should be the first item in that order, not the
+  first one the API returned. Today the order is mixed:
+  - Sorted by full name: manage-children, pickup/drop-off (fixed 2026-10-05).
+  - Sorted by "given family" with their own comparator: manage-groups members
+    (`sortByMemberName`), pickup-today (`childName`, with an id tiebreak).
+  - API order (`ListForGuardianAsync`, ordered by link `CreatedAt`):
+    task library, progress goals, sleep diary, medicines, meal plan
+    assign/today/AI assistant, doses today, children overview, agenda, print
+    editor and week plan, manage-groups' "add child" list.
+  - Decide whether to sort in the backend instead, so every client gets one order.
+
 ## Invitation documentation
 
 - [ ] Update the documentation to state that invitations can only be accepted

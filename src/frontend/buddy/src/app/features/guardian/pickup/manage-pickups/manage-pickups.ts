@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal, resource } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { firstAndLast } from '../../../../core/array-utils';
+import { firstAndLast, sortByChildName } from '../../../../core/array-utils';
 import { BabysittersService, ChildBabysitter } from '../../../../core/babysitters.service';
 import { toIsoDate } from '../../../../core/date-utils';
 import {
@@ -82,7 +82,9 @@ export class ManagePickups {
   protected readonly slotLabels = SLOT_LABELS;
   protected readonly week = computed(() => buildWeek(this.translation.language()));
 
-  protected readonly children = resource({ loader: () => this.guardians.listMyChildren() });
+  protected readonly children = resource({
+    loader: () => this.guardians.listMyChildren().then(sortByChildName),
+  });
   protected readonly childList = computed((): ChildSummary[] =>
     this.children.hasValue() ? this.children.value() : [],
   );

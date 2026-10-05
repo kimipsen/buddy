@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { sortByChildName } from '../../../../core/array-utils';
 import { listTimeZoneIds } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import {
@@ -237,12 +238,4 @@ export class ManageChildren {
 
 function withoutKey(byChildId: Record<string, string>, childId: string): Record<string, string> {
   return Object.fromEntries(Object.entries(byChildId).filter(([id]) => id !== childId));
-}
-
-function sortByChildName(children: ChildSummary[]): ChildSummary[] {
-  return [...children].sort((a, b) =>
-    `${a.name.givenName} ${a.name.familyName}`.localeCompare(
-      `${b.name.givenName} ${b.name.familyName}`,
-    ),
-  );
 }

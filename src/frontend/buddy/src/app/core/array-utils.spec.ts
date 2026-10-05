@@ -1,4 +1,4 @@
-import { firstAndLast, swapped } from './array-utils';
+import { firstAndLast, sortByChildName, swapped } from './array-utils';
 
 describe('firstAndLast', () => {
   it('returns the first and last items', () => {
@@ -11,6 +11,21 @@ describe('firstAndLast', () => {
 
   it('throws for an empty array', () => {
     expect(() => firstAndLast([])).toThrow(RangeError);
+  });
+});
+
+describe('sortByChildName', () => {
+  const named = (givenName: string, familyName: string) => ({ name: { givenName, familyName } });
+
+  it('sorts by given name, then family name, without changing the input', () => {
+    const children = [named('Sam', 'Kid'), named('Robin', 'Zed'), named('Robin', 'Abe')];
+
+    expect(sortByChildName(children)).toEqual([
+      named('Robin', 'Abe'),
+      named('Robin', 'Zed'),
+      named('Sam', 'Kid'),
+    ]);
+    expect(children[0]).toEqual(named('Sam', 'Kid'));
   });
 });
 

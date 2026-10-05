@@ -21,6 +21,17 @@ export function sortByName<T extends { name: string }>(items: readonly T[]): T[]
   return [...items].sort((a, b) => a.name.localeCompare(b.name));
 }
 
+// A copy of children sorted by full name ("given family"), locale-aware like sortByName.
+export function sortByChildName<T extends { name: { givenName: string; familyName: string } }>(
+  children: readonly T[],
+): T[] {
+  return [...children].sort((a, b) =>
+    `${a.name.givenName} ${a.name.familyName}`.localeCompare(
+      `${b.name.givenName} ${b.name.familyName}`,
+    ),
+  );
+}
+
 // A copy of items with the elements at i and j exchanged.
 export function swapped<T>(items: readonly T[], i: number, j: number): T[] {
   const a = items[i];
