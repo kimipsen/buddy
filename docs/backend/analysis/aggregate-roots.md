@@ -36,6 +36,8 @@ flowchart TB
         PrintTemplate["PrintTemplate\nPrintTemplateId(Guid)"]
         TaskTemplate["TaskTemplate\nTaskTemplateId(Guid)"]
         ChildProgress["ChildProgress\nProgressId(Guid)"]
+        SleepDiary["SleepDiary\nSleepDiaryId(Guid)"]
+        SleepDiaryShareToken["SleepDiaryShareToken\nSleepDiaryShareTokenId(Guid)"]
     end
 
     GuardianLink -- "guardianId, childId : UserId" --> User
@@ -66,6 +68,8 @@ flowchart TB
     TaskTemplate -- "createdBy / lastModifiedBy" --> User
     ChildProgress -- "childId (Id == ChildId, no index needed)" --> User
     ChildProgress -. "awardedOccurrences : CalendarItemId" .-> CalendarItem
+    SleepDiary -- "childId (Id == ChildId, no index needed)" --> User
+    SleepDiaryShareToken -- "childId, createdBy" --> User
 
     GuardianLink -. "family resolved at read time" .-> MealPlan
     GuardianLink -. "family resolved at read time" .-> Meal
@@ -109,5 +113,7 @@ flowchart TB
 | PrintTemplate | `Features/PrintTemplates/Types/PrintTemplate.cs` | `PrintTemplateId(Guid)` | `owner` → User or Group; rows' `childId` / `guardianId` / `assignedToId` → User, `mealGroupId` → Group, `calendarIds` → Calendar, `workLocationId` → a WorkLocationSchedule location (references only, never access grants) |
 | TaskTemplate | `Features/TaskLibrary/Types/TaskTemplate.cs` | `TaskTemplateId(Guid)` | `createdBy` / `lastModifiedBy` → User; owning `childId` lives in `TaskTemplateIndexDocument`, not the aggregate itself |
 | ChildProgress | `Features/Progress/Types/ChildProgress.cs` | `ProgressId(Guid)`, equal to the child's `UserId` | `childId` → User; `awardedOccurrences` → CalendarItem (computed reference, not a foreign-key relationship) |
+| SleepDiary | `Features/SleepDiaries/Types/SleepDiary.cs` | `SleepDiaryId(Guid)`, equal to the child's `UserId` | `childId` → User; entries' `loggedBy` → User |
+| SleepDiaryShareToken | `Features/SleepDiaries/Types/SleepDiaryShareToken.cs` | `SleepDiaryShareTokenId(Guid)` | `childId` / `createdBy` → User; found by token hash through `SleepDiaryShareTokenDocument` |
 
 `CalendarItem` also stores an optional `taskTemplateId` (a raw `Guid`, not `TaskLibrary`'s `TaskTemplateId` type) when it was scheduled from a template — see `Features/Calendars/Types/CalendarItem.cs`.

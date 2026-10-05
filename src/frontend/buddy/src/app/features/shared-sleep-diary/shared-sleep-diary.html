@@ -1,0 +1,174 @@
+<main
+  class="min-h-dvh bg-slate-100 dark:bg-slate-950 text-slate-950 dark:text-slate-50 print:bg-white print:text-black"
+>
+  <div class="mx-auto max-w-7xl px-6 py-8 sm:px-8 print:max-w-none print:p-0">
+    @if (diary.isLoading()) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'sleepDiary.shared.loading' | translate }}
+      </p>
+    } @else if (notFound()) {
+      <p class="text-sm text-slate-600 dark:text-slate-300">
+        {{ 'sleepDiary.shared.notFound' | translate }}
+      </p>
+    } @else if (diary.error()) {
+      <p class="text-sm text-red-600 dark:text-red-400">
+        {{ 'sleepDiary.shared.loadError' | translate }}
+      </p>
+    } @else if (diary.hasValue()) {
+      @let shared = diary.value();
+
+      <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p
+            class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400 print:text-black"
+          >
+            {{ 'sleepDiary.shared.eyebrow' | translate }}
+          </p>
+          <h1 class="mt-2 text-3xl font-semibold tracking-normal">
+            {{
+              'sleepDiary.shared.title'
+                | translate: { name: shared.childGivenName + ' ' + shared.childFamilyName }
+            }}
+          </h1>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-300 print:text-black">
+            {{ shared.from | date: 'longDate' }} – {{ shared.to | date: 'longDate' }}
+          </p>
+          @if (shared.expiresAt; as expiresAt) {
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 print:hidden">
+              {{
+                'sleepDiary.shared.expires'
+                  | translate: { date: (expiresAt | date: 'mediumDate') ?? '' }
+              }}
+            </p>
+          }
+        </div>
+
+        <div class="flex flex-wrap gap-3 print:hidden">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500"
+            (click)="previous()"
+          >
+            {{ 'sleepDiary.shared.previous' | translate }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500"
+            (click)="next()"
+          >
+            {{ 'sleepDiary.shared.next' | translate }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400"
+            (click)="print()"
+          >
+            {{ 'sleepDiary.shared.print' | translate }}
+          </button>
+        </div>
+      </header>
+
+      <div
+        class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm print:overflow-visible print:border-black print:shadow-none"
+      >
+        <table class="w-full min-w-[960px] border-collapse text-left text-xs print:min-w-0">
+          <thead>
+            <tr
+              class="bg-slate-50 dark:bg-slate-800 font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 print:bg-white print:text-black"
+            >
+              @for (
+                column of [
+                  'date',
+                  'weekend',
+                  'routineStart',
+                  'ritual',
+                  'bedTime',
+                  'fellAsleep',
+                  'wakeUps',
+                  'morningWake',
+                  'tired',
+                  'naps',
+                  'total',
+                  'remarks',
+                ];
+                track column
+              ) {
+                <th
+                  scope="col"
+                  class="border-b border-slate-200 dark:border-slate-700 px-2 py-2 print:border-black"
+                >
+                  {{ 'sleepDiary.shared.columns.' + column | translate }}
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.date) {
+              <tr
+                class="border-b border-slate-100 dark:border-slate-800 align-top print:border-black"
+              >
+                <th scope="row" class="px-2 py-2 font-medium whitespace-nowrap">{{ row.label }}</th>
+                <td class="px-2 py-2">
+                  {{
+                    (row.isWeekend ? 'sleepDiary.shared.yes' : 'sleepDiary.shared.no') | translate
+                  }}
+                </td>
+                @if (row.entry; as entry) {
+                  <td class="px-2 py-2">{{ entry.routineStartTime | timeOfDay }}</td>
+                  <td class="px-2 py-2 whitespace-nowrap">
+                    @if (entry.ritualStartTime || entry.ritualEndTime) {
+                      {{ entry.ritualStartTime | timeOfDay }}–{{ entry.ritualEndTime | timeOfDay }}
+                    }
+                  </td>
+                  <td class="px-2 py-2">{{ entry.bedTime | timeOfDay }}</td>
+                  <td class="px-2 py-2">{{ entry.fellAsleepTime | timeOfDay }}</td>
+                  <td class="px-2 py-2">
+                    @for (wakeUp of entry.nightWakeUps; track $index) {
+                      <div class="whitespace-nowrap">
+                        {{ wakeUp.startTime | timeOfDay }} · {{ wakeUp.durationMinutes }} min
+                      </div>
+                    }
+                  </td>
+                  <td class="px-2 py-2">{{ entry.morningWakeTime | timeOfDay }}</td>
+                  <td class="px-2 py-2">
+                    {{
+                      (entry.isTired ? 'sleepDiary.shared.yes' : 'sleepDiary.shared.no') | translate
+                    }}
+                  </td>
+                  <td class="px-2 py-2">
+                    @for (nap of entry.naps; track $index) {
+                      <div class="whitespace-nowrap">
+                        {{ nap.startTime | timeOfDay }} · {{ nap.durationMinutes }} min
+                      </div>
+                    }
+                  </td>
+                  <td class="px-2 py-2 whitespace-nowrap">
+                    @if (entry.totalSleepMinutes !== null) {
+                      {{ 'sleepDiary.duration' | translate: duration(entry.totalSleepMinutes) }}
+                    }
+                  </td>
+                  <td class="px-2 py-2">{{ entry.remarks }}</td>
+                } @else {
+                  @for (blank of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track blank) {
+                    <td class="px-2 py-2"></td>
+                  }
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <section
+        class="mt-6 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm print:border-black print:shadow-none"
+      >
+        <h2 class="text-sm font-semibold">{{ 'sleepDiary.shared.hygieneTitle' | translate }}</h2>
+        <p
+          class="mt-1 whitespace-pre-line text-sm text-slate-700 dark:text-slate-300 print:text-black"
+        >
+          {{ shared.sleepHygieneNotes || ('sleepDiary.shared.noHygiene' | translate) }}
+        </p>
+      </section>
+    }
+  </div>
+</main>

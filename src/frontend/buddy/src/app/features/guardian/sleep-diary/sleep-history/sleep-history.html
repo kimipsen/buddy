@@ -1,0 +1,83 @@
+<section
+  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+>
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">
+      {{ 'sleepDiary.history.title' | translate }}
+    </h3>
+    <ng-content />
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[640px] text-left text-sm">
+      <thead>
+        <tr
+          class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+        >
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.date' | translate }}</th>
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.bedTime' | translate }}</th>
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.fellAsleep' | translate }}</th>
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.wakeUps' | translate }}</th>
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.morningWake' | translate }}</th>
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.naps' | translate }}</th>
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.total' | translate }}</th>
+          <th scope="col" class="py-2 pr-3">{{ 'sleepDiary.history.tired' | translate }}</th>
+          <th scope="col" class="py-2">
+            <span class="sr-only">{{ 'sleepDiary.history.edit' | translate }}</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.date) {
+          <tr
+            class="border-t border-slate-100 dark:border-slate-800"
+            [class.bg-emerald-50]="row.date === selectedDate()"
+            [class.dark:bg-emerald-950]="row.date === selectedDate()"
+            [attr.aria-current]="row.date === selectedDate() ? 'date' : null"
+          >
+            <th
+              scope="row"
+              class="py-2 pr-3 font-medium"
+              [class.text-slate-500]="row.isWeekend"
+              [class.dark:text-slate-400]="row.isWeekend"
+            >
+              {{ row.label }}
+            </th>
+            @if (row.entry; as entry) {
+              <td class="py-2 pr-3">{{ entry.bedTime | timeOfDay }}</td>
+              <td class="py-2 pr-3">{{ entry.fellAsleepTime | timeOfDay }}</td>
+              <td class="py-2 pr-3">{{ entry.nightWakeUps.length || '' }}</td>
+              <td class="py-2 pr-3">{{ entry.morningWakeTime | timeOfDay }}</td>
+              <td class="py-2 pr-3">{{ entry.naps.length || '' }}</td>
+              <td class="py-2 pr-3">
+                @if (entry.totalSleepMinutes !== null) {
+                  @let parts = split(entry.totalSleepMinutes);
+                  {{ 'sleepDiary.duration' | translate: parts }}
+                }
+              </td>
+              <td class="py-2 pr-3">
+                @if (entry.isTired) {
+                  {{ 'sleepDiary.history.yes' | translate }}
+                }
+              </td>
+            } @else {
+              <td colspan="7" class="py-2 pr-3 text-slate-400 dark:text-slate-500">
+                {{ 'sleepDiary.history.notLogged' | translate }}
+              </td>
+            }
+            <td class="py-2 text-right">
+              <button
+                type="button"
+                class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                [attr.aria-label]="('sleepDiary.history.edit' | translate) + ' ' + row.label"
+                (click)="selectDate.emit(row.date)"
+              >
+                {{ 'sleepDiary.history.edit' | translate }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -417,6 +417,21 @@ Note: `PUT /groups/{groupId}/medicine-permission-policy` is documented under the
 
 A babysitter assignee (`kind` 4) is also `400` on `PUT` when its `guardianId` isn't an active guardian of the child or its `babysitterId` isn't an active babysitter on that guardian's list.
 
+### Sleep Diary API (`/sleep-diary`)
+
+Guardian-only: every route under `/sleep-diary/children/{childId}` answers `404` to anyone who isn't an active guardian of the child, the child included, so there is no `403`.
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `PUT /sleep-diary/children/{childId}/entries/{date}` | `200` | `400`, `401`, `404` | `400` for more than 20 wake-ups or naps, a duration outside 1-720 minutes, a total outside 0-1440 minutes, or remarks over 2000 characters. Full overwrite; identical content is a no-op `200`. |
+| `DELETE /sleep-diary/children/{childId}/entries/{date}` | `204` | `401`, `404` | Idempotent: a night with nothing logged still returns `204`. |
+| `PUT /sleep-diary/children/{childId}/hygiene-notes` | `204` | `400`, `401`, `404` | `400` for notes over 4000 characters. |
+| `GET /sleep-diary/children/{childId}/entries?from=...&to=...` | `200` | `400`, `401`, `404` | `400` for `to` before `from` or a range longer than 92 days. |
+| `POST /sleep-diary/children/{childId}/share-links` | `200` | `400`, `401`, `404` | `400` for an `expiresAt` in the past or more than 365 days away. Covered by `Idempotency-Key`. |
+| `GET /sleep-diary/children/{childId}/share-links` | `200` | `401`, `404` | Live links only. |
+| `DELETE /sleep-diary/children/{childId}/share-links/{shareLinkId}` | `204` | `401`, `404` | Idempotent; `404` for an unknown link or one belonging to another child. |
+| `GET /sleep-diary/shared/{token}?from=...&to=...` | `200` | `400`, `404` | Anonymous. `404` for an unknown, revoked or expired token, all alike; `400` for an invalid range. |
+
 ### Babysitters API (`/babysitters`)
 
 | Endpoint | Success | Client error statuses | When to use |

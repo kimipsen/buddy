@@ -145,7 +145,7 @@ rather than aspirational.
 | Toggle switch | Native `<input type="checkbox">` | Every boolean field, including the Sleep Diary's "seemed tired" flag |
 | Styled dropdown / segmented control | Raw `<select>` | Enums like `PickupAssigneeKind`, medicine schedules |
 | Repeatable row group | Nothing -- not yet built | Sleep Diary night wake-ups and naps (variable count per day) |
-| Time-range control | Two separate `time-select` instances, unlinked | Bedtime-ritual window |
+| Time-range control | Built: `shared/time-range` (first used by the Sleep Diary) | Bedtime-ritual window |
 | Stepper | Free-typed number/text input | Dosage, quantities |
 | Modal / dialog | None -- explicitly avoided; editing happens inline | Only introduce one if a future flow can't be done inline; otherwise keep the inline-edit convention |
 
@@ -156,8 +156,8 @@ fourth semantic color doesn't mean auditing every template by hand.
 
 ## Worked example: Sleep Diary
 
-[Sleep Diary](../../backend/analysis/sleep-diary.md) is proposed but not yet
-built, and its data model touches nearly every row in the map above on one
+[Sleep Diary](../../backend/analysis/sleep-diary.md) (built: `/guardian/sleep-diary`) shows
+why; its data model touches nearly every row in the map above on one
 screen:
 
 | Field | Data type | Guardian entry | Child view | Notes |
@@ -170,7 +170,7 @@ screen:
 | Night wake-ups (variable count) | Repeatable time+duration entries | Stacked rows, "+ Add wake-up" | Tally badge, e.g. "1 wake-up" | First real use case for the repeatable-row component |
 | Daytime naps (variable count) | Repeatable time+duration entries | Same repeatable-row component as wake-ups | Nap count or a simple nap icon per nap taken | Reuses the wake-up component -- same shape of data |
 | Morning wake time | Single time | Time field | Rounded time chip | The one sleep-related time worth showing a child directly -- it frames their day |
-| Total time slept | Computed duration | Read-only pill, not editable | Large number with a progress ring against an age-appropriate target | Never let a guardian type this directly -- it's derived from the times above |
+| Total time slept | Guardian estimate, prefilled | Hours + minutes fields prefilled with a suggestion computed from the times above, plus "Use suggestion" once edited | Large number with a progress ring against an age-appropriate target | Built as an editable estimate, not a read-only pill: parents estimate overnight sleep, so the backend stores the guardian's number ([sleep-diary.md](../../backend/analysis/sleep-diary.md), Question 3) |
 | Per-day remarks | Long free text | Auto-expanding textarea | Not shown | |
 | Sleep hygiene note (diary-wide, not per day) | Long free text | Auto-expanding textarea, placed outside the daily entry -- visually separated so it reads as a setting, not a log row | Not shown | Keeping it out of the per-day table avoids implying it changes nightly |
 

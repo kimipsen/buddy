@@ -14,6 +14,7 @@ import { print } from './print';
 import { profile } from './profile';
 import { progress } from './progress';
 import { shell } from './shell';
+import { sleepDiary } from './sleep-diary';
 import { taskLibrary } from './task-library';
 import { verifyEmail } from './verify-email';
 import { workLocations } from './work-locations';
@@ -35,6 +36,7 @@ export const en = {
   profile,
   progress,
   shell,
+  sleepDiary,
   taskLibrary,
   verifyEmail,
   workLocations,

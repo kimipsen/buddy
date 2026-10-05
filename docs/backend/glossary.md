@@ -276,6 +276,20 @@ A guardian's saved babysitters and nannies. One per guardian; its id equals the 
 ### Babysitter
 A saved entry on a `BabysitterList`: a name and optional free-text contact info. Removing one archives it so pickup slots that refer to it keep their name. A pickup slot refers to one as `PickupAssignee.Babysitter(GuardianId, BabysitterId)` and the name is resolved on every read.
 
+## Sleep diary domain
+
+### SleepDiary
+A child's one, open-ended sleep log (`Features/SleepDiaries`), modelled on a sleep clinic's paper registration form. Its `SleepDiaryId` equals the child's `UserId`, like `ProgressId`. Holds a sparse `DateOnly -> SleepEntry` map and the diary-wide `SleepHygieneNotes`. Guardian-only: the child has no access at all.
+
+### SleepEntry
+One night: routine start, bedtime-ritual window, lies-down and fell-asleep times, night wake-ups, morning wake time, whether the child seemed tired, daytime naps, the guardian's estimate of total sleep and remarks. Every field is optional; logging a night always overwrites the whole day.
+
+### SleepInterval
+A night wake-up or a daytime nap: a start time plus a duration.
+
+### SleepDiaryShareToken
+A hashed, revocable link with an optional expiry that lets someone outside the app (a doctor) read one child's diary without a Buddy account. Modelled on `IcalToken`, which never expires.
+
 ## Event-sourced concepts
 
 ### Event stream

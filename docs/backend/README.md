@@ -16,6 +16,7 @@ Backend documentation for the Buddy API.
 - [Print templates flow](print-templates/flow.md)
 - [Task Library flow](task-library/flow.md)
 - [Progress flow](progress/flow.md)
+- [Sleep diary flow](sleep-diary/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
 

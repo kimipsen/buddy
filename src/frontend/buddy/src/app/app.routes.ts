@@ -5,6 +5,7 @@ import { roleRedirectGuard } from './core/role.guard';
 import { AcceptGuardianInvite } from './features/invite/accept-guardian-invite';
 import { AcceptInvite } from './features/invite/accept-invite';
 import { Login } from './features/login/login';
+import { SharedSleepDiary } from './features/shared-sleep-diary/shared-sleep-diary';
 import { VerifyEmail } from './features/verify-email/verify-email';
 
 export const routes: Routes = [
@@ -29,6 +30,12 @@ export const routes: Routes = [
     // see pending-verify-email-token.ts for how login then returns here.
     path: 'verify-email/:token',
     component: VerifyEmail,
+  },
+  {
+    // Not behind authGuard -- a clinician opening a share link has no Buddy account; the token in
+    // the URL is the only credential (see GetSharedSleepDiary on the backend).
+    path: 'shared/sleep-diary/:token',
+    component: SharedSleepDiary,
   },
   {
     path: 'guardian',

@@ -1,12 +1,11 @@
 # Sleep Diary
 
-Status: Implemented (backend). `Features/SleepDiaries` ships the `SleepDiary`
-and `SleepDiaryShareToken` aggregates, the eight slices and routes below
-(including `ListSleepDiaryShareLinks`, needed to show which share links are
-still live but not called out in the original slice table), inline
-snapshots, golden files and integration tests. No guardian-facing frontend
-feature exists yet beyond the `sleep-diary.service.ts` API client — see
-"Frontend" below.
+Status: Implemented. `Features/SleepDiaries` ships the `SleepDiary` and
+`SleepDiaryShareToken` aggregates (schema `sleepdiaries`, inline snapshots), the seven slices
+below plus `ListSleepDiaryShareLinks`, the guardian page `/guardian/sleep-diary` (day-entry form,
+14-night history, hygiene notes, share links) and the public, printable share view
+`/shared/sleep-diary/:token`. See [the flow doc](../sleep-diary/flow.md) and "Implementation
+notes" near the end for where the code differs from this design.
 
 ## Context
 
@@ -381,24 +380,14 @@ date-keyed slots.
 
 ## Frontend
 
-No day-log/diary feature exists yet under
-`src/frontend/buddy/src/app/features/guardian/`. The existing guardian
-features there (`medicine/`, `mealplan/`) share one layout worth reusing: a
-top-level `<feature>.ts`/`.html`/`.spec.ts` overview page plus one subfolder
-per capability (e.g. `manage-medicines/`), backed by a single
-`core/<feature>.service.ts` and i18n strings under
-`core/i18n/translations/{en,da}/<feature>.ts`. A `sleep-diary/` guardian
-feature would follow the same shape — likely a day-entry-form subfolder plus
-a history/review subfolder — with a corresponding `core/sleep-diary.service.ts`.
-`SleepEntry`'s `TimeOnly`/`TimeSpan` fields already have a direct precedent
-to reuse for form binding and JSON shape:
-`MedicineSchedule`'s `MedicineWindow`
-([MedicineWindow.cs](../../../src/backend/buddy/Features/Medicines/Types/MedicineWindow.cs))
-already carries `IReadOnlyList<TimeOnly> Times`/`DateOnly StartDate` the same
-way. There is no existing frontend concept for a public, unauthenticated
-share view (the token-gated `GetSharedSleepDiary` page from Question 5) —
-that would be a new, logged-out route, unlike every other guardian/child
-page in the app today.
+Built in the shape this section proposed: `core/sleep-diary.service.ts`, a guardian page
+`features/guardian/sleep-diary/` with one subfolder per capability (`sleep-entry-form/`,
+`sleep-history/`, `hygiene-notes/`, `share-links/`), and strings in
+`core/i18n/translations/{en,da}/sleep-diary.ts`. Times bind as `"HH:mm"` like `MedicineSchedule`'s
+dose times. The share view is the app's first page for a reader with no account,
+`features/shared-sleep-diary/` at `/shared/sleep-diary/:token`, outside `authGuard`: a printable
+table with the paper form's columns and a Print button. The share link's URL is the frontend page,
+not the API route.
 
 ## Failure and edge-case behavior
 
@@ -430,6 +419,12 @@ page in the app today.
 | Sharing with someone outside the app | A hashed, revocable token reusing `IcalToken`'s generation/hashing, with an added optional `ExpiresAt` (unlike `IcalToken`, which is deliberately indefinite) |
 | Does a sleep diary show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface, matching every prior per-child feature's stance |
 | Recurrence / auto-generated future entries | None — every entry is explicit, for a specific past-or-today date; there is no "occurrence" concept here at all |
+| v1 scope | Everything, share links and the public view included (settled with the product owner at implementation time) |
+| Where `IcalToken`'s generate/hash helper lives | Duplicated as `SleepDiaryShareSecret` in `Features/SleepDiaries/Types/SleepDiaryShareToken.cs`, keeping the slice free of a dependency on `Calendars` |
+| `TotalSleepDuration` in the UI (this doc vs. the visual specification's "read-only pill") | This doc wins: an editable field the form prefills with a suggestion (fell asleep, or else lies down, to morning wake, minus the wake-ups) until the guardian types their own; "Use suggestion" switches back |
+| Bedtime-ritual input | A new shared `app-time-range` control (two `app-time-select`s joined by an arrow) |
+| Shared view: PDF or printable page | A printable HTML page laid out like the paper form, with a Print button; no generated PDF |
+| Shared view date range | The reader pages by 14 days; without `from`/`to` the server shows the last 14 days ending today. At most 92 days per request, same limit as `ListSleepDiaryEntries` |
 
 ## Remaining open questions
 
@@ -464,6 +459,29 @@ page in the app today.
   or duplicated verbatim into `Features/SleepDiary` the way vertical slices
   in this codebase generally prefer local duplication over a new
   cross-feature dependency. Worth deciding at implementation time, not here.
+
+## Implementation notes
+
+Where the code differs from the text above:
+
+- The folder and namespace are `Features/SleepDiaries` (plural like `Medicines`/`Pickups`), so the
+  `SleepDiary` type doesn't share its name with its namespace.
+- `SleepDiaryAccess` has only `Allowed` and `NotFound`: with one tier there is no case that would
+  be `Forbidden`.
+- `SleepDiary` has no `LastModifiedBy`; each entry carries `LoggedBy` and every event its author.
+- Following [eliminate-nulls.md](eliminate-nulls.md), `SleepHygieneNotes` and `Remarks` are
+  non-null strings where `""` means none, so `SleepHygieneNotesUpdated.Before/After` are `string`.
+- `SleepEntryLogged` has no separate `LoggedBy`; it is `After.LoggedBy`. Saving content identical to
+  the stored night (by either guardian) appends nothing, which keeps the `PUT` idempotent.
+- `ListSleepDiaryShareLinks` (`GET /sleep-diary/children/{childId}/share-links`) was added: the
+  token is shown once, so revoking needs a list of live links (not revoked, not expired).
+- Durations travel over HTTP as whole minutes (`durationMinutes`, `totalSleepMinutes`); the domain
+  and the persisted events keep `TimeSpan`.
+- `ListSleepDiaryEntries` returns the diary-wide notes alongside the entries, and reads the inline
+  snapshot. The shared view also returns the child's name and the link's expiry.
+- Validation bounds: at most 20 wake-ups and 20 naps, each 1-720 minutes; total 0-1440 minutes;
+  remarks 2000 characters, hygiene notes 4000; a share link's `expiresAt` must be in the future and
+  at most 365 days away.
 
 ## Diagram
 

@@ -24,6 +24,7 @@ The top-level route setup is in [src/frontend/buddy/src/app/app.routes.ts](../..
 
 - `/login` for unauthenticated users
 - `/invite/:token` for viewing and accepting group invitations, including the logged-out preview path
+- `/shared/sleep-diary/:token` — the read-only, printable sleep diary a guardian shared with a doctor; no login, the token is the only credential
 - `/verify-email/:token` for completing email verification, including the logged-out verification path
 - `/guardian` for guardian dashboard screens
 - `/child` for child-focused screens
@@ -59,6 +60,8 @@ Current responsibilities:
 - start a chat-based AI assistant session to draft meal-plan assignments over a
   date range, then apply or discard the resulting draft
 - manage pickup and drop-off assignments for linked children
+- keep a sleep diary per child (one row per night, diary-wide sleep hygiene notes) and share it
+  with a doctor through a revocable, optionally expiring link
 - browse day, work-week, rolling-week, and month calendar views and create events/tasks across
   every calendar they can contribute to, personal or group-owned
 - create, edit, and archive per-child task templates and their timed subtasks, and schedule them
@@ -78,6 +81,7 @@ The guardian routes currently include:
   meal-plan assignments
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
+- `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
 - `/guardian/babysitters` — the guardian's saved babysitters and nannies, which any of a child's
   guardians can pick in the pickup planner
 - `/guardian/work-locations` — the guardian's own work locations, alternating weekly pattern, and
@@ -140,6 +144,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   subscription-token endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
+- `SleepDiaryService` logs, clears, and lists sleep diary nights, saves the hygiene notes, manages
+  share links, and reads a shared diary anonymously by token
 - `BabysittersService` manages the guardian's own babysitters and lists the babysitters a child's
   guardians can pick for that child
 - `PrintTemplatesService` manages print templates (layout, rows, guardian name colors); the
@@ -243,6 +249,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
   guardian planner, guardian dashboard summary, and child read-only view
 - [Week plan printing](analysis/week-plan-printing.md) — implemented A3/A4 landscape print
   sheet from saved templates, quick print flow, and template editor
+- [Sleep diary](../backend/analysis/sleep-diary.md) — implemented guardian page and the public
+  share view; the [visual specification](analysis/visual-specification.md)'s Sleep Diary example
+  drove its controls (toggle, repeatable rows, the new `shared/time-range`)
 
 ## Local development
 

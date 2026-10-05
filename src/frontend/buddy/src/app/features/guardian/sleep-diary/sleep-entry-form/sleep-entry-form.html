@@ -1,0 +1,220 @@
+@let current = draft();
+@let state = action.state();
+
+<section
+  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">{{ 'sleepDiary.form.title' | translate }}</h3>
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-slate-500 dark:text-slate-400">{{
+        'sleepDiary.form.dateLabel' | translate
+      }}</span>
+      <app-date-select
+        [value]="date()"
+        [ariaLabel]="'sleepDiary.form.dateLabel' | translate"
+        (valueChange)="$event && dateChange.emit($event)"
+      />
+    </div>
+  </div>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <p class="mb-1 text-sm font-medium">{{ 'sleepDiary.form.routineStart' | translate }}</p>
+      <app-time-select
+        [value]="current.routineStartTime"
+        [ariaLabel]="'sleepDiary.form.routineStart' | translate"
+        (valueChange)="setTime('routineStartTime', $event)"
+      />
+    </div>
+
+    <div>
+      <p class="mb-1 text-sm font-medium">{{ 'sleepDiary.form.ritual' | translate }}</p>
+      <app-time-range
+        [start]="current.ritualStartTime"
+        [end]="current.ritualEndTime"
+        [startLabel]="'sleepDiary.form.ritualStart' | translate"
+        [endLabel]="'sleepDiary.form.ritualEnd' | translate"
+        (startChange)="setTime('ritualStartTime', $event)"
+        (endChange)="setTime('ritualEndTime', $event)"
+      />
+    </div>
+
+    <div>
+      <p class="mb-1 text-sm font-medium">{{ 'sleepDiary.form.bedTime' | translate }}</p>
+      <app-time-select
+        [value]="current.bedTime"
+        [ariaLabel]="'sleepDiary.form.bedTime' | translate"
+        (valueChange)="setTime('bedTime', $event)"
+      />
+    </div>
+
+    <div>
+      <p class="mb-1 text-sm font-medium">{{ 'sleepDiary.form.fellAsleep' | translate }}</p>
+      <app-time-select
+        [value]="current.fellAsleepTime"
+        [ariaLabel]="'sleepDiary.form.fellAsleep' | translate"
+        (valueChange)="setTime('fellAsleepTime', $event)"
+      />
+    </div>
+
+    @for (group of intervalGroups; track group.field) {
+      <div>
+        <p class="mb-1 text-sm font-medium">{{ group.title | translate }}</p>
+        <div class="space-y-2">
+          @for (interval of current[group.field]; track $index; let i = $index) {
+            <app-repeatable-row
+              [removeLabel]="'sleepDiary.form.remove' | translate"
+              (remove)="removeInterval(group.field, i)"
+            >
+              <div class="flex items-center gap-2">
+                <app-time-select
+                  class="flex-1"
+                  [value]="interval.startTime"
+                  [ariaLabel]="group.timeLabel | translate"
+                  (valueChange)="updateInterval(group.field, i, { startTime: $event })"
+                />
+                <input
+                  type="number"
+                  min="1"
+                  max="720"
+                  class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                  [attr.aria-label]="'sleepDiary.form.durationMinutes' | translate"
+                  [ngModel]="interval.durationMinutes"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="setDuration(group.field, i, $event)"
+                />
+                <span class="text-xs text-slate-500 dark:text-slate-400" aria-hidden="true"
+                  >min</span
+                >
+              </div>
+            </app-repeatable-row>
+          }
+        </div>
+        <button
+          type="button"
+          class="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+          (click)="addInterval(group.field)"
+        >
+          {{ group.addLabel | translate }}
+        </button>
+      </div>
+    }
+
+    <div>
+      <p class="mb-1 text-sm font-medium">{{ 'sleepDiary.form.morningWake' | translate }}</p>
+      <app-time-select
+        [value]="current.morningWakeTime"
+        [ariaLabel]="'sleepDiary.form.morningWake' | translate"
+        (valueChange)="setTime('morningWakeTime', $event)"
+      />
+    </div>
+
+    <div class="flex items-center gap-3 self-end">
+      <app-toggle
+        [checked]="current.isTired"
+        [ariaLabel]="'sleepDiary.form.tired' | translate"
+        (checkedChange)="setTired($event)"
+      />
+      <span class="text-sm font-medium">{{ 'sleepDiary.form.tired' | translate }}</span>
+    </div>
+
+    <div class="sm:col-span-2">
+      <p class="mb-1 text-sm font-medium">{{ 'sleepDiary.form.totalSleep' | translate }}</p>
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          type="number"
+          min="0"
+          max="24"
+          class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [attr.aria-label]="'sleepDiary.form.totalHours' | translate"
+          [ngModel]="totalParts()?.hours"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="setTotal('hours', $event)"
+        />
+        <span class="text-sm text-slate-500 dark:text-slate-400" aria-hidden="true">h</span>
+        <input
+          type="number"
+          min="0"
+          max="59"
+          class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [attr.aria-label]="'sleepDiary.form.totalMinutes' | translate"
+          [ngModel]="totalParts()?.minutes"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="setTotal('minutes', $event)"
+        />
+        <span class="text-sm text-slate-500 dark:text-slate-400" aria-hidden="true">min</span>
+
+        @if (canUseSuggestion()) {
+          @let suggested = splitSuggestion();
+          <button
+            type="button"
+            class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+            (click)="useSuggestion()"
+          >
+            {{
+              'sleepDiary.form.useSuggestion'
+                | translate
+                  : {
+                      value:
+                        ('sleepDiary.duration'
+                        | translate: { hours: suggested.hours, minutes: suggested.minutes }),
+                    }
+            }}
+          </button>
+        }
+      </div>
+      @if (showsSuggestion()) {
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          {{ 'sleepDiary.form.suggested' | translate }}
+        </p>
+      }
+    </div>
+
+    <div class="sm:col-span-2">
+      <label class="mb-1 block text-sm font-medium" for="sleepRemarks">{{
+        'sleepDiary.form.remarks' | translate
+      }}</label>
+      <textarea
+        id="sleepRemarks"
+        rows="2"
+        maxlength="2000"
+        class="field-sizing-content min-h-16 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+        [placeholder]="'sleepDiary.form.remarksPlaceholder' | translate"
+        [ngModel]="current.remarks"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="setRemarks($event)"
+      ></textarea>
+    </div>
+  </div>
+
+  @if (state.status === 'error') {
+    <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+  }
+
+  <div class="mt-5 flex flex-wrap items-center gap-3">
+    <button
+      type="button"
+      class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+      [disabled]="locked() || action.busy()"
+      (click)="save()"
+    >
+      {{ 'sleepDiary.form.save' | translate }}
+    </button>
+    @if (entry()) {
+      <button
+        type="button"
+        class="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
+        [disabled]="locked() || action.busy()"
+        (click)="clear()"
+      >
+        {{ 'sleepDiary.form.clear' | translate }}
+      </button>
+    }
+    @if (justSaved()) {
+      <span class="text-sm text-emerald-700 dark:text-emerald-400" role="status">{{
+        'sleepDiary.form.saved' | translate
+      }}</span>
+    }
+  </div>
+</section>

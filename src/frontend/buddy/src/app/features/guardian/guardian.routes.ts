@@ -13,6 +13,7 @@ import { GuardianPrint } from './print/print';
 import { WeekPlanPrintPage } from './print/sheet/week-plan-print-page';
 import { GuardianProgress } from './progress/progress';
 import { GuardianShell } from './shell/guardian-shell';
+import { GuardianSleepDiary } from './sleep-diary/sleep-diary';
 import { GuardianTaskLibrary } from './task-library/task-library';
 import { GuardianWorkLocations } from './work-locations/work-locations';
 
@@ -28,6 +29,7 @@ export const GUARDIAN_ROUTES: Routes = [
       { path: 'mealplan', component: GuardianMealplan },
       { path: 'mealplan/ai-assistant', component: MealplanAiAssistant },
       { path: 'medicine', component: GuardianMedicine },
+      { path: 'sleep-diary', component: GuardianSleepDiary },
       { path: 'progress', component: GuardianProgress },
       { path: 'pickup', component: GuardianPickup },
       { path: 'babysitters', component: GuardianBabysitters },

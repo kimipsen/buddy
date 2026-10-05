@@ -14,6 +14,7 @@ export interface DemoFamily {
   printTemplateId: string;
   groupInviteToken: string | null;
   guardianInviteToken: string | null;
+  sleepDiaryShareToken: string | null;
 }
 
 export interface ScreenshotPage {
@@ -95,6 +96,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'guardian',
     route: '/guardian/medicine',
     waitFor: 'Methylphenidate',
+  },
+  {
+    name: 'guardian-sleep-diary',
+    title: 'Sleep diary',
+    description:
+      'Log a night in the same fields as a sleep clinic’s form, review the last 14 nights, keep the diary-wide sleep hygiene notes and share a read-only link with a doctor.',
+    as: 'guardian',
+    route: '/guardian/sleep-diary',
+    waitFor: '9 h 25 min',
   },
   {
     name: 'guardian-pickup',
@@ -189,6 +199,17 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     route: '/guardian-invite/:token',
     path: (demo) =>
       demo.guardianInviteToken ? `/guardian-invite/${demo.guardianInviteToken}` : null,
+  },
+  {
+    name: 'shared-sleep-diary',
+    title: 'Shared sleep diary',
+    description:
+      'What a doctor sees from a share link, with no login: a printable 14-day table laid out like the clinic’s paper sleep registration.',
+    as: 'anonymous',
+    route: '/shared/sleep-diary/:token',
+    path: (demo) =>
+      demo.sleepDiaryShareToken ? `/shared/sleep-diary/${demo.sleepDiaryShareToken}` : null,
+    waitFor: 'Sleep diary for Emil',
   },
 ];
 

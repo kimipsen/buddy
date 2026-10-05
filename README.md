@@ -41,8 +41,8 @@ in real time.
 - [x] Group and calendar sharing/permissions management
 - [x] Configurable goal posts and gamified progress tracking for children
 - [x] Profile, calendar, group, child, and account administration
-- [ ] Sleep diary logging for children (proposed, not yet implemented — see
-      [Sleep diary](docs/backend/analysis/sleep-diary.md))
+- [x] Sleep diary logging for children, with a revocable, expiring share link
+      that lets a doctor read a printable 14-day view without an account
 - [x] Printable A3/A4 landscape week plans from saved, shareable templates
 - [x] Guardian work locations with alternating weekly patterns and per-day
       exceptions

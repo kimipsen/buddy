@@ -1,0 +1,134 @@
+<section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
+  <a
+    routerLink="/guardian"
+    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      class="size-4"
+      aria-hidden="true"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+    </svg>
+    {{ 'sleepDiary.backLink' | translate }}
+  </a>
+
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p
+        class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+      >
+        {{ 'sleepDiary.eyebrow' | translate }}
+      </p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+        {{ 'sleepDiary.title' | translate }}
+      </h2>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'sleepDiary.intro' | translate }}
+      </p>
+    </div>
+
+    @if (childList().length > 1) {
+      <div>
+        <label class="sr-only" for="sleepDiaryChildId">{{
+          'common.selectChildLabel' | translate
+        }}</label>
+        <select
+          id="sleepDiaryChildId"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="selectedChildId()"
+          (ngModelChange)="selectChild($event)"
+        >
+          @for (child of childList(); track child.id) {
+            <option [value]="child.id">{{ child.name.givenName }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  @if (children.isLoading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'sleepDiary.loading' | translate }}</p>
+  } @else if (children.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">{{ 'sleepDiary.loadError' | translate }}</p>
+  } @else if (selectedChildId(); as childId) {
+    @if (diary.error()) {
+      <p class="mb-4 text-sm text-red-600 dark:text-red-400">
+        {{ 'sleepDiary.loadError' | translate }}
+      </p>
+    }
+
+    <!-- Saving a night or the notes overwrites them, so a form showing blanks because the diary
+         failed to load could silently erase what is stored: hidden on error, and read-only while a
+         load is in flight (it stays mounted then, so paging the history keeps a half-typed night). -->
+    @if (!diary.error()) {
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <app-sleep-entry-form
+          class="block"
+          [childId]="childId"
+          [date]="selectedDate()"
+          [entry]="selectedEntry()"
+          [locked]="!diary.hasValue()"
+          (dateChange)="selectDate($event)"
+          (saved)="onSaved($event)"
+          (cleared)="onCleared($event)"
+        />
+
+        <div class="space-y-6">
+          <app-hygiene-notes
+            class="block"
+            [childId]="childId"
+            [notes]="loaded().sleepHygieneNotes"
+            [locked]="!diary.hasValue()"
+            (saved)="onNotesSaved($event)"
+          />
+          <app-sleep-share-links class="block" [childId]="childId" />
+        </div>
+      </div>
+    }
+
+    <!-- Full width: the history has a column per field and would scroll sideways in a half. -->
+    <div class="mt-6">
+      @if (diary.isLoading()) {
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ 'sleepDiary.loading' | translate }}
+        </p>
+      } @else {
+        <app-sleep-history
+          class="block"
+          [days]="days()"
+          [entries]="entriesByDate()"
+          [selectedDate]="selectedDate()"
+          (selectDate)="selectDate($event)"
+        >
+          <div class="flex gap-3">
+            <button
+              type="button"
+              class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+              (click)="shiftRange(-14)"
+            >
+              {{ 'sleepDiary.range.previous' | translate }}
+            </button>
+            @if (canGoForward()) {
+              <button
+                type="button"
+                class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                (click)="shiftRange(14)"
+              >
+                {{ 'sleepDiary.range.next' | translate }}
+              </button>
+            }
+          </div>
+        </app-sleep-history>
+      }
+    </div>
+  } @else {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'sleepDiary.noChildren' | translate }}
+    </p>
+  }
+</section>

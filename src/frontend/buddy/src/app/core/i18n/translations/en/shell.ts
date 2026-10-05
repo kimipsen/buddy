@@ -6,6 +6,7 @@ export const shell = {
     mealPlanner: 'Meal planner',
     taskLibrary: 'Task library',
     medicine: 'Medicine',
+    sleepDiary: 'Sleep diary',
     calendar: 'Calendar',
     progress: 'Progress goals',
     workLocations: 'Work locations',

@@ -557,6 +557,71 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       })
       .catch(warn);
 
+    // Sleep diary ---------------------------------------------------------------------------
+    // Ten nights ending last night (the form opens on tonight, still blank), varied a little so
+    // the history and the shared table read like a real fortnight.
+    const nights = [
+      { bed: '20:00', asleep: '20:30', wake: '06:30', wakeUps: [], total: 600, tired: false },
+      {
+        bed: '20:15',
+        asleep: '21:00',
+        wake: '06:45',
+        wakeUps: [['02:10', 20]],
+        total: 565,
+        tired: false,
+      },
+      {
+        bed: '20:00',
+        asleep: '20:40',
+        wake: '06:10',
+        wakeUps: [
+          ['03:30', 30],
+          ['05:00', 10],
+        ],
+        total: 530,
+        tired: true,
+      },
+      { bed: '19:45', asleep: '20:15', wake: '06:30', wakeUps: [], total: 615, tired: false },
+      {
+        bed: '20:30',
+        asleep: '21:30',
+        wake: '07:00',
+        wakeUps: [['01:00', 15]],
+        total: 555,
+        tired: true,
+      },
+    ] as const;
+    for (let back = 1; back <= 10; back++) {
+      const night = nights[back % nights.length];
+      await api.put(`/sleep-diary/children/${emil.id}/entries/${inDays(-back)}`, {
+        routineStartTime: '19:00',
+        ritualStartTime: '19:20',
+        ritualEndTime: '19:50',
+        bedTime: night.bed,
+        fellAsleepTime: night.asleep,
+        nightWakeUps: night.wakeUps.map(([startTime, durationMinutes]) => ({
+          startTime,
+          durationMinutes,
+        })),
+        morningWakeTime: night.wake,
+        isTired: night.tired,
+        naps: [],
+        totalSleepMinutes: night.total,
+        remarks: night.tired ? 'Took a long time to settle after the ritual.' : '',
+      });
+    }
+    await api.put(`/sleep-diary/children/${emil.id}/hygiene-notes`, {
+      notes: 'No screens after 18:30. Blackout curtains. Same bedtime song every night.',
+    });
+    const sleepShare = await api
+      .post<{ token: string }>(`/sleep-diary/children/${emil.id}/share-links`, {
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .catch((error: unknown) => {
+        warn(error);
+        return null;
+      });
+
     // Work locations ------------------------------------------------------------------------
     const office = await api.post<Named>('/work-locations/me/locations', {
       name: 'Office',
@@ -666,6 +731,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       printTemplateId: template.id,
       groupInviteToken: await inviteTokenFromMail('demo.invitee@buddy.test', 'invite'),
       guardianInviteToken: await inviteTokenFromMail('demo.coparent@buddy.test', 'guardian-invite'),
+      sleepDiaryShareToken: sleepShare?.token ?? null,
     };
   } finally {
     await api.dispose();

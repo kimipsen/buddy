@@ -72,6 +72,14 @@ Medicine schedules and daily dose tracking.
 
 <img src="mobile/guardian-medicine.png" alt="Medicine on a phone" width="320">
 
+## Sleep diary
+
+Log a night in the same fields as a sleep clinic’s form, review the last 14 nights, keep the diary-wide sleep hygiene notes and share a read-only link with a doctor.
+
+![Sleep diary](guardian-sleep-diary.png)
+
+<img src="mobile/guardian-sleep-diary.png" alt="Sleep diary on a phone" width="320">
+
 ## Pickup & drop-off
 
 Who takes and fetches the child each day.
@@ -167,3 +175,11 @@ What an invited co-guardian sees before signing in.
 ![Guardian invite](invite-guardian.png)
 
 <img src="mobile/invite-guardian.png" alt="Guardian invite on a phone" width="320">
+
+## Shared sleep diary
+
+What a doctor sees from a share link, with no login: a printable 14-day table laid out like the clinic’s paper sleep registration.
+
+![Shared sleep diary](shared-sleep-diary.png)
+
+<img src="mobile/shared-sleep-diary.png" alt="Shared sleep diary on a phone" width="320">

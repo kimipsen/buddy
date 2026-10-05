@@ -133,6 +133,21 @@ classDiagram
         +AwardedOccurrences AwardedOccurrences
     }
 
+    class SleepDiary {
+        +SleepDiaryId Id
+        +UserId ChildId
+        +Entries Entries
+        +string SleepHygieneNotes
+    }
+
+    class SleepDiaryShareToken {
+        +SleepDiaryShareTokenId Id
+        +UserId ChildId
+        +string TokenHash
+        +DateTimeOffset? ExpiresAt
+        +bool IsRevoked
+    }
+
     GuardianLink --> User : guardianId, childId
     Group --> User : members
     Calendar --> Group : owner, group-owned
@@ -156,6 +171,8 @@ classDiagram
     TaskTemplate --> User : createdBy, lastModifiedBy
     ChildProgress --> User : childId
     ChildProgress ..> CalendarItem : awardedOccurrences
+    SleepDiary --> User : childId, entries' loggedBy
+    SleepDiaryShareToken --> User : childId, createdBy
 ```
 
 Solid arrows are a stored reference (the tail aggregate holds the head

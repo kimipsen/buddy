@@ -1,0 +1,15 @@
+<div class="flex items-center gap-2">
+  <app-time-select
+    class="flex-1"
+    [value]="start()"
+    [ariaLabel]="startLabel()"
+    (valueChange)="startChange.emit($event)"
+  />
+  <span class="text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
+  <app-time-select
+    class="flex-1"
+    [value]="end()"
+    [ariaLabel]="endLabel()"
+    (valueChange)="endChange.emit($event)"
+  />
+</div>
