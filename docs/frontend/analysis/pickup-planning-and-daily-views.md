@@ -66,9 +66,11 @@ the server succeeds.
 
 [`PickupToday`](../../../src/frontend/buddy/src/app/features/guardian/pickup-today/pickup-today.ts)
 is the guardian dashboard summary. It loads today's schedule and guardian list
-for every linked child in parallel, flattens the results, and sorts by slot.
-The row includes the child name when the guardian has multiple children and
-links to the full pickup planner.
+for every linked child in parallel and renders a table with one row per child
+(sorted by child name, then child id) and one column per slot, drop-off
+before pickup. A child is omitted entirely when neither slot has anything
+planned today; an included child's empty slot shows "Not planned" instead of
+an assignee. The widget links to the full pickup planner.
 
 [`ChildHome`](../../../src/frontend/buddy/src/app/features/child/home/home.ts)
 loads the signed-in child's schedule for today. It resolves guardian and
