@@ -10,7 +10,7 @@ describe('SegmentedControl', () => {
     onSelectedChange: ReturnType<typeof vi.fn>;
   }
 
-  async function setup(selected: number): Promise<Setup> {
+  async function setup(selected: number, wrap?: boolean): Promise<Setup> {
     await TestBed.configureTestingModule({ imports: [SegmentedControl] }).compileComponents();
 
     const fixture = TestBed.createComponent(SegmentedControl<number>);
@@ -23,11 +23,34 @@ describe('SegmentedControl', () => {
       { value: 2, label: 'Sibling' },
     ]);
     fixture.componentRef.setInput('selected', selected);
+    if (wrap !== undefined) {
+      fixture.componentRef.setInput('wrap', wrap);
+    }
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     return { compiled, buttons: Array.from(compiled.querySelectorAll('button')), onSelectedChange };
   }
+
+  it('renders one joined, clipped bar by default', async () => {
+    const { compiled, buttons } = await setup(0);
+    const group = compiled.querySelector('[role="radiogroup"]')!;
+
+    expect(group.classList).toContain('overflow-hidden');
+    expect(group.classList).not.toContain('flex-wrap');
+    expect(buttons[0].classList).toContain('flex-1');
+  });
+
+  it('lets the options wrap onto more lines when wrap is set, so none is clipped', async () => {
+    const { compiled, buttons } = await setup(1, true);
+    const group = compiled.querySelector('[role="radiogroup"]')!;
+
+    expect(group.classList).toContain('flex-wrap');
+    expect(group.classList).not.toContain('overflow-hidden');
+    expect(buttons[0].classList).toContain('rounded-md');
+    expect(buttons[0].classList).toContain('border-slate-300');
+    expect(buttons[1].classList).toContain('border-emerald-500');
+  });
 
   it('renders one radio button per option', async () => {
     const { buttons } = await setup(0);

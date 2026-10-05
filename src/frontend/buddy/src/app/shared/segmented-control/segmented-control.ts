@@ -18,6 +18,9 @@ export class SegmentedControl<T> {
   readonly options = input.required<SegmentedControlOption<T>[]>();
   readonly selected = input.required<T>();
   readonly ariaLabel = input('');
+  // Lets the options flow onto more lines instead of one joined bar, for a narrow container where
+  // the labels don't fit side by side (the pickup cell's five assignee kinds, longer in Danish).
+  readonly wrap = input(false);
 
   readonly selectedChange = output<T>();
 

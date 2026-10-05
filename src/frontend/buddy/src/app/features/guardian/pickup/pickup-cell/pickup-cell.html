@@ -5,6 +5,7 @@
     <app-segmented-control
       [options]="kindOptions()"
       [selected]="kind()"
+      [wrap]="true"
       [ariaLabel]="'pickup.cell.kindLabel' | translate"
       (selectedChange)="kind.set($event)"
     />
