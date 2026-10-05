@@ -56,7 +56,7 @@ compared in memory only:
 Exit 0 means every required key is filled and none is a placeholder, except
 `KEYCLOAK_ADMIN_CLI_SECRET`, whose placeholder is legitimate on a first boot (it's reported with
 a `note:` line but doesn't fail). Keys that are blank in `.env.example`
-(`GMAIL_SMTP_USER`, `GMAIL_SMTP_APP_PASSWORD`, `*_CUSTOM_DOMAIN`) are reported as optional. Never
+(`BREVO_SMTP_LOGIN`, `BREVO_SMTP_KEY`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`, `*_CUSTOM_DOMAIN`) are reported as optional. Never
 `cat`, `source`-and-echo, or grep values out of a `.env` into the conversation. The only values
 you may read are non-secret ones you need for the next steps: domains, `RESOURCE_GROUP`,
 `LOCATION`, `ACR_NAME`, `CONTAINERAPPS_ENV`, the `*_CUSTOM_DOMAIN` values. Read them one key at a
@@ -67,7 +67,7 @@ time (`grep -E '^RESOURCE_GROUP=' deploy/azure/.env | cut -d= -f2-`). Things to 
   README step 5, Azure README step 4). The API deploys, but its Keycloak admin calls (creating
   child accounts) won't work. The checker can't tell whether a non-placeholder value is the
   *current* secret.
-- Azure, blank `GMAIL_SMTP_*`: the deploy works but sends no email (verification, invites,
+- Azure, blank `BREVO_SMTP_*` or `MAIL_FROM_ADDRESS`: the deploy works but sends no email (verification, invites,
   Keycloak password resets).
 
 **Tools.**
@@ -113,7 +113,7 @@ Send one message that states:
     Container Apps env; these cost money) or an update (rebuilds all three images in ACR and rolls
     a new revision of `keycloak`, `api` and `frontend`; re-applies secrets and env vars from
     `.env`; binds any `*_CUSTOM_DOMAIN` that's set; updates the `buddy` realm's SMTP settings if
-    Gmail is configured). `deploy.sh` reads the Postgres server's public network access and only
+    Brevo is configured). `deploy.sh` reads the Postgres server's public network access and only
     runs `az postgres flexible-server update --public-access Enabled` if it's off (the apps reach
     Postgres over its public endpoint, firewalled to Azure services); VNet-integrated servers are
     left alone.

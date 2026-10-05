@@ -30,10 +30,14 @@ source "$SCRIPT_DIR/.env"
 : "${API_CUSTOM_DOMAIN:=}"
 : "${KEYCLOAK_CUSTOM_DOMAIN:=}"
 
-# Outbound email (Gmail SMTP) - optional, blank means the API/Keycloak deploy
-# without it. See "Mail" in README-azure.md for how to set up an App Password.
-: "${GMAIL_SMTP_USER:=}"
-: "${GMAIL_SMTP_APP_PASSWORD:=}"
+# Outbound email (Brevo SMTP relay) - optional, blank means the API/Keycloak
+# deploy without it. See "Mail" in README-azure.md for how to get an SMTP key.
+: "${BREVO_SMTP_LOGIN:=}"
+: "${BREVO_SMTP_KEY:=}"
+: "${MAIL_FROM_ADDRESS:=}"
+: "${MAIL_FROM_NAME:=Buddy}"
+BREVO_SMTP_HOST=smtp-relay.brevo.com
+BREVO_SMTP_PORT=587
 
 containerapp_exists() {
   local name=$1
@@ -289,14 +293,14 @@ fi
 
 bind_custom_domain keycloak "$KEYCLOAK_CUSTOM_DOMAIN" "$KEYCLOAK_FQDN"
 
-# Outbound email goes through Gmail SMTP, configured entirely via .env (no
-# Azure resource involved - see "Mail" in README-azure.md for why this
+# Outbound email goes through Brevo's SMTP relay, configured entirely via .env
+# (no Azure resource involved - see "Mail" in README-azure.md for why this
 # replaced an earlier Azure Communication Services / Entra app approach).
-if [[ -n "$GMAIL_SMTP_USER" && -n "$GMAIL_SMTP_APP_PASSWORD" ]]; then
+if [[ -n "$BREVO_SMTP_LOGIN" && -n "$BREVO_SMTP_KEY" && -n "$MAIL_FROM_ADDRESS" ]]; then
   MAIL_CONFIGURED=true
 else
   MAIL_CONFIGURED=false
-  echo "!! GMAIL_SMTP_USER / GMAIL_SMTP_APP_PASSWORD not set in .env - the API and Keycloak will deploy without outbound email. See \"Mail\" in README-azure.md." >&2
+  echo "!! BREVO_SMTP_LOGIN / BREVO_SMTP_KEY / MAIL_FROM_ADDRESS not all set in .env - the API and Keycloak will deploy without outbound email. See \"Mail\" in README-azure.md." >&2
 fi
 
 echo "==> Building the API image (version $BUDDY_VERSION)"
@@ -327,12 +331,13 @@ API_ENV_VARS=(
 )
 if [[ "$MAIL_CONFIGURED" == true ]]; then
   API_ENV_VARS+=(
-    Mail__Host=smtp.gmail.com
-    Mail__Port=587
+    "Mail__Host=$BREVO_SMTP_HOST"
+    "Mail__Port=$BREVO_SMTP_PORT"
     Mail__UseSsl=false
-    "Mail__Credentials__Username=$GMAIL_SMTP_USER"
+    "Mail__Credentials__Username=$BREVO_SMTP_LOGIN"
     Mail__Credentials__Password=secretref:mail-smtp-password
-    "Mail__FromAddress=$GMAIL_SMTP_USER"
+    "Mail__FromAddress=$MAIL_FROM_ADDRESS"
+    "Mail__FromName=$MAIL_FROM_NAME"
   )
 fi
 
@@ -341,7 +346,7 @@ API_SECRETS=(
   "keycloak-admin-cli-secret=$KEYCLOAK_ADMIN_CLI_SECRET"
 )
 if [[ "$MAIL_CONFIGURED" == true ]]; then
-  API_SECRETS+=("mail-smtp-password=$GMAIL_SMTP_APP_PASSWORD")
+  API_SECRETS+=("mail-smtp-password=$BREVO_SMTP_KEY")
 fi
 
 if containerapp_exists api; then
@@ -422,7 +427,7 @@ if [[ "$MAIL_CONFIGURED" != true ]]; then
 else
   # Keycloak sends its own mail (password resets, address verification, etc.)
   # and has no idea about the API's Mail__* config above - point its "buddy"
-  # realm at the same Gmail SMTP credentials via the Admin REST API. The
+  # realm at the same Brevo SMTP credentials via the Admin REST API. The
   # realm itself is a manual, post-deploy step (README-azure.md, step 4), so
   # on a first run this just skips with a note to rerun once it exists.
   echo "==> Configuring the buddy realm's SMTP settings in Keycloak"
@@ -441,15 +446,18 @@ else
     echo "==> The buddy realm doesn't exist yet (see README-azure.md, step 4) - skipping SMTP configuration for now. Rerun ./deploy.sh once it's created."
   else
     UPDATED_REALM=$(echo "$CURRENT_REALM" | jq \
-      --arg user "$GMAIL_SMTP_USER" \
-      --arg password "$GMAIL_SMTP_APP_PASSWORD" \
-      --arg from "$GMAIL_SMTP_USER" \
-      '.smtpServer = {host: "smtp.gmail.com", port: "587", from: $from, ssl: "false", starttls: "true", auth: "true", user: $user, password: $password}')
+      --arg host "$BREVO_SMTP_HOST" \
+      --arg port "$BREVO_SMTP_PORT" \
+      --arg user "$BREVO_SMTP_LOGIN" \
+      --arg password "$BREVO_SMTP_KEY" \
+      --arg from "$MAIL_FROM_ADDRESS" \
+      --arg fromName "$MAIL_FROM_NAME" \
+      '.smtpServer = {host: $host, port: $port, from: $from, fromDisplayName: $fromName, ssl: "false", starttls: "true", auth: "true", user: $user, password: $password}')
     if curl -sf -X PUT "https://$KEYCLOAK_HOSTNAME/admin/realms/buddy" \
         -H "Authorization: Bearer $KC_ADMIN_TOKEN" \
         -H "Content-Type: application/json" \
         -d "$UPDATED_REALM" -o /dev/null; then
-      echo "==> Keycloak's buddy realm now sends email through Gmail SMTP"
+      echo "==> Keycloak's buddy realm now sends email through Brevo SMTP"
     else
       echo "!! Failed to update the buddy realm's SMTP settings. Rerun ./deploy.sh to retry." >&2
     fi

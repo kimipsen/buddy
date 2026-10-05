@@ -71,13 +71,13 @@ This, in order:
 6. Builds the Keycloak image (`quay.io/keycloak/keycloak:21.1.1` + the
    `themes/buddy` theme) via `az acr build` — builds happen in Azure, no
    local Docker daemon required — and deploys it.
-7. Builds and deploys the API image, wired up with Gmail SMTP if
-   `GMAIL_SMTP_USER`/`GMAIL_SMTP_APP_PASSWORD` are set in `.env` — see "Mail"
-   below.
+7. Builds and deploys the API image, wired up with Brevo SMTP if
+   `BREVO_SMTP_LOGIN`/`BREVO_SMTP_KEY`/`MAIL_FROM_ADDRESS` are set in `.env` —
+   see "Mail" below.
 8. Builds the frontend image with `API_BASE_URL`/`KEYCLOAK_AUTHORITY` passed
    as build args (baked into `runtime-config.json` at build time, same as the
    Oracle setup), and deploys it.
-9. Points Keycloak's `buddy` realm at the same Gmail SMTP credentials via its
+9. Points Keycloak's `buddy` realm at the same Brevo SMTP credentials via its
    Admin REST API, so Keycloak's own emails (password resets, address
    verification) send too — skipped with a note on the very first run, since
    the realm doesn't exist until you finish step 4 ("Configure the realm").
@@ -116,8 +116,8 @@ automatically:
 
 Outbound email (the API's `IEmailSender`/`SmtpEmailSender` — verification and
 invite emails — and Keycloak's own password-reset/address-verification mail)
-goes through **Gmail SMTP**, configured entirely via `.env`, no Azure resource
-involved.
+goes through **Brevo's SMTP relay** (`smtp-relay.brevo.com:587`, STARTTLS),
+configured entirely via `.env`, no Azure resource involved.
 
 This replaced an earlier Azure Communication Services (ACS) approach: ACS
 Email's SMTP AUTH requires a Microsoft Entra app registration scoped to the
@@ -125,26 +125,32 @@ ACS resource, which needs a directory permission that `Contributor` on the
 resource group doesn't grant — in a managed tenant, getting that permission
 (or the RBAC rights to assign the app its role) can mean waiting on an admin,
 which wasn't worth it here just to send a handful of transactional emails.
-Gmail SMTP needs nothing beyond a Google account.
+After that it used Gmail SMTP with an App Password, which limited sending to
+about 500 mails a day from a personal `@gmail.com` address. Brevo's free plan
+(300 mails/day) lets you send from your own verified domain.
 
 **Setup:**
 
-1. Enable 2-Step Verification on the Gmail account you want to send from
-   (Google Account > Security) — required for the next step to be available.
-2. Create an [App Password](https://myaccount.google.com/apppasswords) for
-   it. This is a 16-character password scoped to SMTP, distinct from your
-   normal Gmail password — that won't work here.
-3. In `.env`, set:
+1. Create a [Brevo](https://www.brevo.com) account.
+2. Verify the address you want to send from (Senders, Domains & Dedicated
+   IPs > Senders), or better, authenticate the whole domain (Domains: add
+   the DKIM/DMARC DNS records Brevo shows) so mail doesn't land in spam.
+3. Under SMTP & API > SMTP, note the **SMTP login** (looks like
+   `1a2b3c001@smtp-brevo.com`, not your account email) and generate an
+   **SMTP key**. An API key (`xkeysib-…`) won't work for SMTP.
+4. In `.env`, set:
    ```
-   GMAIL_SMTP_USER=you@gmail.com
-   GMAIL_SMTP_APP_PASSWORD=<the 16-character app password>
+   BREVO_SMTP_LOGIN=1a2b3c001@smtp-brevo.com
+   BREVO_SMTP_KEY=<the SMTP key>
+   MAIL_FROM_ADDRESS=noreply@yourdomain.com
+   MAIL_FROM_NAME=Buddy
    ```
-4. Run `./deploy.sh`. Both are optional — leave them blank and the API and
-   Keycloak deploy without outbound email (same as before this feature
-   existed), with a warning printed either way.
+5. Run `./deploy.sh`. All of these are optional. If the login, key or from
+   address is blank, the API and Keycloak deploy without outbound email and
+   the script prints a warning. `MAIL_FROM_NAME` defaults to `Buddy`.
 
 `deploy.sh` sets `Mail__Host`/`Mail__Port`/`Mail__Credentials__Username`/`Mail__Credentials__Password`/
-`Mail__FromAddress` on the `api` app (password via a `mail-smtp-password`
+`Mail__FromAddress`/`Mail__FromName` on the `api` app (password via a `mail-smtp-password`
 Container App secret, same as every other credential in this script), and —
 once the `buddy` realm exists (step 4, "Configure the realm") — configures Keycloak's Realm
 Settings > Email to match via the Admin REST API. On the very first
@@ -153,14 +159,9 @@ note and skips — rerun `./deploy.sh` after finishing step 4 to pick it up (or
 set it manually in Realm Settings > Email if you'd rather not rerun the whole
 script).
 
-**Limitations of Gmail SMTP**: sending quotas are low (around 500/day for a
-regular account) and mail comes from a personal-looking `@gmail.com` address
-— fine for a small app's transactional volume, not meant as a long-term
-production mail provider. If you outgrow it, look at a dedicated transactional
-email provider (Azure Communication Services once the Entra permission is
-sorted, SendGrid, Postmark, etc.) — since `IEmailSender`/`MailOptions` is
-plain SMTP already, most providers are a drop-in `.env` change (`Mail__Host`
-etc.) rather than a code change.
+Since `IEmailSender`/`MailOptions` is plain SMTP, switching to another
+provider later (Postmark, SendGrid, ACS) means changing the host and
+credentials in `deploy.sh`/`.env`, not the code.
 
 ## 6. Custom domains (optional)
 

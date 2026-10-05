@@ -17,7 +17,7 @@
 #                in memory only.
 #   EXTRA        in .env but not in .env.example
 # A key whose value is blank in .env.example is optional (the Azure example
-# leaves GMAIL_SMTP_* and *_CUSTOM_DOMAIN blank on purpose).
+# leaves BREVO_SMTP_*, MAIL_FROM_* and *_CUSTOM_DOMAIN blank on purpose).
 #
 # Exit code: 0 = every required key is set and none is a placeholder, except
 # KEYCLOAK_ADMIN_CLI_SECRET (a placeholder there is legitimate on a first boot,
