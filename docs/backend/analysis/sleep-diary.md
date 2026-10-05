@@ -1,6 +1,12 @@
 # Sleep Diary
 
-Status: Proposed (not yet implemented)
+Status: Implemented (backend). `Features/SleepDiaries` ships the `SleepDiary`
+and `SleepDiaryShareToken` aggregates, the eight slices and routes below
+(including `ListSleepDiaryShareLinks`, needed to show which share links are
+still live but not called out in the original slice table), inline
+snapshots, golden files and integration tests. No guardian-facing frontend
+feature exists yet beyond the `sleep-diary.service.ts` API client — see
+"Frontend" below.
 
 ## Context
 
@@ -351,6 +357,7 @@ convention `MealPlanExpansion` and `PickupScheduleExpansion` already use.
 | `ListSleepDiaryEntries` | Manage | `[from, to]` date range → the guardian's own review view |
 | `CreateSleepDiaryShareLink` | Manage | Optional `ExpiresAt`. Returns the plaintext token once (never retrievable again, same convention as any other one-time secret in this codebase); emits `SleepDiaryShareTokenCreated` |
 | `RevokeSleepDiaryShareLink` | Manage | Emits `SleepDiaryShareTokenRevoked` |
+| `ListSleepDiaryShareLinks` | Manage | Lists still-live share links (not revoked, not expired) so a guardian can find one to revoke — the plaintext token is only ever shown once, at creation |
 | `GetSharedSleepDiary` | *(unauthenticated, token-gated)* | Resolves `SleepDiaryShareTokenDocument` by hash, checks `!IsRevoked && (ExpiresAt is null || ExpiresAt > now)`, then reads the same data `ListSleepDiaryEntries` would, rendered for an external reader |
 
 ## Routes
@@ -361,6 +368,7 @@ DELETE /sleep-diary/children/{childId}/entries/{date}      ClearSleepEntry
 PUT    /sleep-diary/children/{childId}/hygiene-notes        UpdateSleepHygieneNotes
 GET    /sleep-diary/children/{childId}/entries              ListSleepDiaryEntries   (from, to as query params)
 POST   /sleep-diary/children/{childId}/share-links           CreateSleepDiaryShareLink
+GET    /sleep-diary/children/{childId}/share-links           ListSleepDiaryShareLinks
 DELETE /sleep-diary/children/{childId}/share-links/{id}      RevokeSleepDiaryShareLink
 GET    /sleep-diary/shared/{token}                            GetSharedSleepDiary   (no auth)
 ```
