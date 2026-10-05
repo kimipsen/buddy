@@ -32,6 +32,7 @@ flowchart TB
         MedicineSharing["MedicineSharing\nMedicineSharingId(Guid)"]
         PickupSchedule["PickupSchedule\nPickupScheduleId(Guid)"]
         WorkLocationSchedule["WorkLocationSchedule\nWorkLocationScheduleId(Guid)"]
+        BabysitterList["BabysitterList\nBabysitterListId(Guid)"]
         PrintTemplate["PrintTemplate\nPrintTemplateId(Guid)"]
         TaskTemplate["TaskTemplate\nTaskTemplateId(Guid)"]
         ChildProgress["ChildProgress\nProgressId(Guid)"]
@@ -57,6 +58,8 @@ flowchart TB
     MedicineSharing -- "sharedWithGroupId" --> Group
     PickupSchedule -- "childId (stored)" --> User
     PickupSchedule -- "assignments: guardianId / siblingChildId / assignedBy" --> User
+    PickupSchedule -- "assignments: babysitterId (on guardianId's list)" --> BabysitterList
+    BabysitterList -- "guardianId (stored, equals stream id)" --> User
     WorkLocationSchedule -- "guardianId (stored, equals stream id)" --> User
     PrintTemplate -- "owner (user or group); rows reference children, groups, calendars, work locations" --> User
     PrintTemplate -- "owner group" --> Group
@@ -100,7 +103,8 @@ flowchart TB
 | Meal | `Features/Mealplans/Types/Meal.cs` | `MealId(Guid)` | `createdBy` / `lastModifiedBy` → User; `ratings` (keys) → User |
 | MedicineSchedule | `Features/Medicines/Types/MedicineSchedule.cs` | `MedicineId(Guid)` | `childId`, `createdBy` / `lastModifiedBy` → User |
 | MedicineSharing | `Features/Medicines/Types/MedicineSharing.cs` | `MedicineSharingId(Guid)` | `childId` → User; `sharedWithGroupId` → Group |
-| PickupSchedule | `Features/Pickups/Types/PickupSchedule.cs` | `PickupScheduleId(Guid)` | `childId` → User; assignments' `guardianId` / `siblingChildId` / `assignedBy` → User |
+| PickupSchedule | `Features/Pickups/Types/PickupSchedule.cs` | `PickupScheduleId(Guid)` | `childId` → User; assignments' `guardianId` / `siblingChildId` / `assignedBy` → User; a babysitter assignment's `babysitterId` → a BabysitterList entry |
+| BabysitterList | `Features/Babysitters/Types/BabysitterList.cs` | `BabysitterListId(Guid)`, equal to the guardian's `UserId` | `guardianId` → User |
 | WorkLocationSchedule | `Features/WorkLocations/Types/WorkLocationSchedule.cs` | `WorkLocationScheduleId(Guid)`, equal to the guardian's `UserId` | `guardianId` → User |
 | PrintTemplate | `Features/PrintTemplates/Types/PrintTemplate.cs` | `PrintTemplateId(Guid)` | `owner` → User or Group; rows' `childId` / `guardianId` / `assignedToId` → User, `mealGroupId` → Group, `calendarIds` → Calendar, `workLocationId` → a WorkLocationSchedule location (references only, never access grants) |
 | TaskTemplate | `Features/TaskLibrary/Types/TaskTemplate.cs` | `TaskTemplateId(Guid)` | `createdBy` / `lastModifiedBy` → User; owning `childId` lives in `TaskTemplateIndexDocument`, not the aggregate itself |

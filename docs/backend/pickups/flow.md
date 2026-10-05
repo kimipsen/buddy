@@ -1,8 +1,8 @@
 # Pickups Flow
 
 The pickups feature stores a per-child plan for two dated slots: `DropOff` and
-`PickUp`. A guardian can assign a guardian, the child themself, a sibling, or a
-playdate host to either slot. An absent assignment means “not planned”; an
+`PickUp`. A guardian can assign a guardian, the child themself, a sibling, a
+playdate host, or a saved babysitter to either slot. An absent assignment means “not planned”; an
 explicit `SelfEscort` assignment means the guardian deliberately decided that
 the child needs no escort.
 
@@ -67,11 +67,14 @@ carrying only that case's fields (the domain's `PickupAssignee` union, on the wi
 | `1` | `SelfEscort` | None | Records that the child goes without an escort. |
 | `2` | `Sibling` | `siblingChildId` | Must be a different child who shares at least one active guardian with the scheduled child. |
 | `3` | `Playdate` | `hostName`, `location`, `contactInfo` | Host name is required; location and contact information are optional free text (`""` when not given). |
+| `4` | `Babysitter` | `guardianId`, `babysitterId`, `name` | `guardianId` must be an active guardian of the child and `babysitterId` an active babysitter on that guardian's list ([babysitters flow](../babysitters/flow.md)). `name` is output only: ignored on `PUT`, resolved from the list on every response (`""` when it no longer resolves). |
 
 A missing or unknown `kind`, or a case without its required field, is a
 `400 validation_error`. Every assignment can also carry an optional local
 wall-clock `time` and `notes` (`""` meaning none). The relationship check
-depends on the case: a guardian must be linked, a sibling must share a guardian.
+depends on the case: a guardian must be linked, a sibling must share a guardian, a
+babysitter must be on an active guardian's list. Archived babysitters can't be newly
+assigned, but slots already pointing at one keep resolving the name.
 
 ## Core lifecycle
 

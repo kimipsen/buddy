@@ -415,6 +415,18 @@ Note: `PUT /groups/{groupId}/medicine-permission-policy` is documented under the
 | `DELETE /pickups/children/{childId}/assignments?date=...&slot=...` | `204` | `401`, `403`, `404` | Idempotent: clearing an already-empty slot still returns `204`; `403` for a child attempting a write. |
 | `GET /pickups/children/{childId}/schedule?from=...&to=...` | `200` | `400`, `401`, `404` | `400` for a date range longer than 31 days or otherwise invalid. |
 
+A babysitter assignee (`kind` 4) is also `400` on `PUT` when its `guardianId` isn't an active guardian of the child or its `babysitterId` isn't an active babysitter on that guardian's list.
+
+### Babysitters API (`/babysitters`)
+
+| Endpoint | Success | Client error statuses | When to use |
+| --- | --- | --- | --- |
+| `GET /babysitters/me` | `200` | `401`, `403` | The caller's own list, archived babysitters included and flagged; `403` for a child account. |
+| `POST /babysitters/me` | `200` | `400`, `401`, `403` | `400` for a blank/oversized name, oversized contact info, a name already used by an active babysitter, or a 21st active babysitter; `403` for a child account. |
+| `PATCH /babysitters/me/{babysitterId}` | `200` | `400`, `401`, `403`, `404` | `404` for an unknown or archived babysitter; unchanged details are an idempotent `200` with no event. |
+| `DELETE /babysitters/me/{babysitterId}` | `204` | `401`, `403`, `404` | Archives (never deletes). Idempotent on an already-archived babysitter; `404` for an unknown one. |
+| `GET /babysitters/children/{childId}` | `200` | `401`, `404` | Active babysitters of every active guardian of the child; `404` unless the caller is an active guardian of the child (the child included). |
+
 ### Work Locations API (`/work-locations`)
 
 | Endpoint | Success | Client error statuses | When to use |

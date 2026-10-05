@@ -34,8 +34,8 @@ in real time.
 - [x] Private iCal subscription links for the family's meal plan
 - [x] Chat-based AI assistant that drafts meal-plan assignments, with
       BYOK AI provider settings management
-- [x] Pickup and drop-off scheduling (guardian, sibling, self-escort, and
-      playdate assignments)
+- [x] Pickup and drop-off scheduling (guardian, sibling, self-escort,
+      playdate, and babysitter assignments)
 - [x] Reusable task library with ordered, timed subtasks, schedulable onto a
       calendar
 - [x] Group and calendar sharing/permissions management
@@ -46,8 +46,7 @@ in real time.
 - [x] Printable A3/A4 landscape week plans from saved, shareable templates
 - [x] Guardian work locations with alternating weekly patterns and per-day
       exceptions
-- [ ] Saved babysitters/nannies for pickup and drop-off (proposed, not yet
-      implemented — see [Babysitters](docs/backend/analysis/babysitters.md))
+- [x] Saved babysitters/nannies for pickup and drop-off
 
 ### Child
 
@@ -125,8 +124,11 @@ deploy/      Production Docker Compose and Caddy deployment
   breakfast, lunch, dinner, and snacks, with meal rating and archival
   functionality.
 - **Pickup schedule** — a per-child weekly plan for pickup and drop-off slots,
-  with explicit guardian, sibling, self-escort, and playdate assignments. See
-  [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md).
+  with explicit guardian, sibling, self-escort, playdate, and babysitter
+  assignments. See [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md).
+- **Babysitter list** — each guardian's saved babysitters and nannies, which any
+  of a child's guardians can pick for a pickup slot. See
+  [Babysitters](docs/backend/analysis/babysitters.md).
 - **Task library** — a child-specific collection of reusable task templates
   with ordered, timed subtasks that a guardian can schedule onto a calendar.
   See [Task Library flow](docs/backend/task-library/flow.md).
@@ -142,6 +144,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Medicines flow](docs/backend/medicines/flow.md)
 - [Mealplans flow](docs/backend/mealplans/flow.md)
 - [Pickups flow](docs/backend/pickups/flow.md)
+- [Babysitters flow](docs/backend/babysitters/flow.md)
 - [Task Library flow](docs/backend/task-library/flow.md)
 - [Progress flow](docs/backend/progress/flow.md)
 - [Glossary](docs/backend/glossary.md)
@@ -163,6 +166,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Group-shared meal plans](docs/backend/analysis/group-owned-mealplans.md)
 - [Meal plan iCal feed](docs/backend/analysis/mealplan-ical-feed.md)
 - [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md)
+- [Babysitters](docs/backend/analysis/babysitters.md)
 - [Gamified progress](docs/backend/analysis/gamified-progress.md)
 
 ## Getting started

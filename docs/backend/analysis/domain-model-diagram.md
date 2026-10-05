@@ -104,6 +104,12 @@ classDiagram
         +DateOverrides Overrides
     }
 
+    class BabysitterList {
+        +BabysitterListId Id
+        +UserId GuardianId
+        +Babysitter[] Babysitters
+    }
+
     class PrintTemplate {
         +PrintTemplateId Id
         +PrintTemplateOwner Owner
@@ -143,6 +149,8 @@ classDiagram
     MedicineSharing --> Group : sharedWithGroupId
     PickupSchedule --> User : childId, assignments
     WorkLocationSchedule --> User : guardianId
+    BabysitterList --> User : guardianId
+    PickupSchedule ..> BabysitterList : babysitter assignments
     PrintTemplate --> User : owner or rows
     PrintTemplate --> Group : owner
     TaskTemplate --> User : createdBy, lastModifiedBy

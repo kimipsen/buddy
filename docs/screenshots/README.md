@@ -61,6 +61,12 @@ Who takes and fetches the child each day.
 
 ![Pickup & drop-off](guardian-pickup.png)
 
+## Babysitters
+
+Saved babysitters and nannies that any of a child’s guardians can plan for a pickup or drop-off.
+
+![Babysitters](guardian-babysitters.png)
+
 ## Work locations
 
 Where each guardian works on which weekday, as a repeating pattern.

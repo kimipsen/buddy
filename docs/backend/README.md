@@ -11,6 +11,7 @@ Backend documentation for the Buddy API.
 - [Medicines flow](medicines/flow.md)
 - [Mealplans flow](mealplans/flow.md)
 - [Pickups flow](pickups/flow.md)
+- [Babysitters flow](babysitters/flow.md)
 - [Work locations flow](work-locations/flow.md)
 - [Print templates flow](print-templates/flow.md)
 - [Task Library flow](task-library/flow.md)

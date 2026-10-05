@@ -268,6 +268,14 @@ A one-off exception for a single date: a different location, or no location at a
 ### Co-guardian
 Another guardian who holds an active `GuardianLink` to at least one of the same children. Co-guardians can view each other's work locations.
 
+## Babysitter domain
+
+### BabysitterList
+A guardian's saved babysitters and nannies. One per guardian; its id equals the guardian's `UserId`. Any active guardian of a child can pick from the lists of all that child's active guardians when planning a pickup or drop-off.
+
+### Babysitter
+A saved entry on a `BabysitterList`: a name and optional free-text contact info. Removing one archives it so pickup slots that refer to it keep their name. A pickup slot refers to one as `PickupAssignee.Babysitter(GuardianId, BabysitterId)` and the name is resolved on every read.
+
 ## Event-sourced concepts
 
 ### Event stream

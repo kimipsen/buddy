@@ -1,6 +1,10 @@
 # Babysitters
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `Features/Babysitters` ships the `BabysitterList` aggregate, the five slices
+and routes below, the inline snapshot, golden files and integration tests; `Pickups` gains the
+`PickupAssignee.Babysitter` case (wire `kind` 4) with names resolved through `BabysitterNames`.
+The frontend ships `BabysittersService`, `/guardian/babysitters`, a "Babysitter" kind in the pickup
+planner, and babysitter names on the dashboard, the child home and the printed week plan.
 
 ## Context
 
@@ -121,9 +125,10 @@ PickupAssigneeDto, kind 4 = Babysitter:
   what a guardian fixing a typo expects. Copying the name into `PickupAssigned` would make the
   slot show the old spelling forever. `ListPickupSchedule` and `AssignPickup` both resolve
   names through one `BabysitterNames` lookup that loads each distinct owner's snapshot once per
-  request. An id that no longer resolves (the owner deleted their account) comes back with
-  `name: ""`, and clients fall back to the generic "Babysitter" label, as they already do for a
-  guardian they can't find.
+  request. Archived babysitters keep resolving, and so does a deleted account's list
+  (`UserDeleted` leaves the stream in place). Only an id missing from its owner's list would come
+  back with `name: ""`; clients then fall back to the generic "Babysitter" label, as they already
+  do for a guardian they can't find.
 - **The child sees the name, not the contact info.** Children can view their own pickup schedule
   ([pickups flow, Authorization model](../pickups/flow.md#authorization-model)), and "Anna picks
   you up" is the point of the feature. Contact info stays on the guardian-only list routes.
@@ -148,11 +153,13 @@ see a babysitter's name, through the pickup schedule.**
 
 - **Write routes are `/me` routes,** like `WorkLocations`, so the handler never takes a guardian
   id to write to.
-- **The per-child read reuses the pickup rule.** `GET /babysitters/children/{childId}` is
+- **The per-child read applies the pickup rule.** `GET /babysitters/children/{childId}` is
   allowed exactly when `PickupAuthorization.CheckManage` would allow writing that child's
   pickups: the caller is an active guardian of the child. That is the only place the dropdown is
-  used, so the two rules can't drift apart. It uses `IGuardianLinkEventStore.ListForChildAsync`
-  to find the guardians and loads each one's snapshot.
+  used. `BabysitterAuthorization.CheckPick` repeats that one `FindActiveLinkAsync` check rather
+  than calling into `Pickups`, which already depends on this feature for names. It uses
+  `IGuardianLinkEventStore.ListForChildAsync` to find the guardians and loads each one's
+  snapshot.
 - **Co-parents see each other's babysitters (requirement 2),** but only through a shared child.
   Two guardians with no child in common never see each other's lists.
 - **A revoked link takes effect immediately.** The child route lists current guardians on
@@ -235,8 +242,11 @@ The pickup routes don't change; `kind` 4 is accepted by the existing
 - **Pickup planner:** `pickup-cell` gets a fifth segment, "Babysitter", with a select of the
   child's babysitters (`ListChildBabysitters`, loaded once per child on the pickup page). With
   none saved, it shows a hint linking to `/guardian/babysitters`.
-- **Pickup views:** the guardian `pickup-today` card, the child home, and the printed week plan
-  show 🧑‍🍼 and the resolved name, falling back to "Babysitter".
+- **Pickup views:** the guardian `pickup-today` card and the child home show 🧑‍🍼 and the
+  resolved name; the printed week plan prints the name (no icon, like the other pickup kinds).
+  All fall back to "Babysitter".
+- **Re-saving an archived babysitter's slot** keeps Save disabled in the cell, with a hint that
+  the babysitter was removed, matching the backend's `400`.
 - **i18n:** `core/i18n/translations/{en,da}/babysitters.ts` ("Babysitters" / "Babysittere"),
   plus new pickup, dashboard, child home and print keys.
 - **Screenshots:** the new page in `screenshots/pages.ts`, and a seeded babysitter with one
@@ -266,7 +276,7 @@ Plus `EventShapeTests` golden files and a `SnapshotTests` entry.
 | Re-saving a slot whose babysitter is archived | `400`; the guardian picks someone else |
 | Babysitter renamed | Every slot shows the new name on the next read |
 | Owner's link to the child revoked | Their babysitters leave the child's picker; assigned slots keep the name |
-| Owner deletes their account | Slots resolve to `name: ""` and show the generic label |
+| Owner deletes their account | The list stays in place, so slots keep the name; the owner's link is gone, so their babysitters leave the picker |
 | Two babysitters with the same name | Rejected among active ones; an archived name can be reused |
 | Archive an already-archived babysitter | Idempotent `204`, no event |
 | Update with unchanged content | `200`, no event |
