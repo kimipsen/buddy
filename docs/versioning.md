@@ -5,9 +5,12 @@ Buddy's version comes from git tags. Nothing in the repo stores a version number
 ## Cutting a release
 
 ```bash
-git tag -a v1.2.0 -m "Buddy 1.2.0"
-git push origin v1.2.0
+task release VERSION=1.2.0   # or: task release -- 1.2.0
 ```
+
+This tags `HEAD` as an annotated `v1.2.0` tag and pushes `HEAD` plus the tag to every git
+remote. It refuses to run if the working tree is dirty, the version isn't a valid SemVer, or
+the tag already exists locally or on any remote.
 
 Tags are `v` + [SemVer](https://semver.org): `v1.2.0`, or `v1.3.0-rc.1` for a pre-release.
 Deploy from the tagged commit to ship exactly that version.
