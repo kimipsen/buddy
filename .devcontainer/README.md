@@ -116,7 +116,10 @@ task --list
 
 The `db:marten:*` tasks inspect or clear tables in the `users` schema. The
 `db:marten:clear-events` task is destructive and does not reset every feature
-schema.
+schema. To clear every table in every user schema instead, use
+`scripts/clear-database.sh` (`--drop` also drops the schemas themselves,
+`--dry-run` only lists what would be cleared); see the script's header for
+details.
 
 Run tests using the [testing guide](../docs/testing.md).
 
