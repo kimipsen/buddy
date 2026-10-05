@@ -44,6 +44,7 @@ model or permissions logic.
 - [Configurable goal posts for progress](analysis/configurable-goal-posts.md)
 - [Week plan print templates](analysis/week-plan-print-templates.md)
 - [Guardian work locations](analysis/work-locations.md)
+- [Babysitters](analysis/babysitters.md)
 
 ## Current focus areas
 

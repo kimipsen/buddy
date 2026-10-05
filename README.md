@@ -46,6 +46,8 @@ in real time.
 - [x] Printable A3/A4 landscape week plans from saved, shareable templates
 - [x] Guardian work locations with alternating weekly patterns and per-day
       exceptions
+- [ ] Saved babysitters/nannies for pickup and drop-off (proposed, not yet
+      implemented — see [Babysitters](docs/backend/analysis/babysitters.md))
 
 ### Child
 
