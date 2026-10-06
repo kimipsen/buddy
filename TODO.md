@@ -401,3 +401,57 @@ Found along the way:
   groups (`--include 'src/app/core/**/*.spec.ts'` and so on). The specs wait with `settle()`
   loops and real timers. Consider limiting the Vitest worker count, or raising the per-test
   timeout for the unit-test builder.
+
+## Best-practice gap review (2026-10-06)
+
+### Security and privacy
+
+- [ ] **Containers run as root.** `src/backend/buddy/Dockerfile` and `src/frontend/buddy/Dockerfile`
+  create an `aspnet`/`caddy` user but never switch to it with `USER`. Add the line; Caddy then
+  needs a port above 1024 or `cap_net_bind_service`.
+- [ ] **No security headers.** `deploy/Caddyfile` only reverse-proxies. Add
+  `Strict-Transport-Security`, `Content-Security-Policy` (including the Keycloak origin),
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy` and `frame-ancestors`/`X-Frame-Options`.
+- [ ] **GDPR for special-category health data** (medicines, sleep diaries, ADHD context about
+  children):
+  - Right to erasure in the event store. Consider crypto-shredding (per-subject encryption key,
+    delete the key) or Marten stream archiving/data masking.
+  - Data export for users.
+  - Audit log of who read or changed a child's medical data.
+  - Check what personal data the meal-plan AI assistant sends to Anthropic, and whether a DPA is
+    in place.
+- [ ] **Security scanning in CI.** Add CodeQL, an `npm audit` / `dotnet list package --vulnerable`
+  gate and a container image scan (e.g. Trivy).
+- [ ] **GitHub Actions hardening.** Set least-privilege `permissions:` in every workflow (only
+  mutation-testing has them) and pin actions by commit SHA instead of tag.
+
+### Operability
+
+- [ ] **Observability.** The backend has only 3 `ILogger` usages and no OpenTelemetry. Add tracing
+  and metrics (Marten and Wolverine both emit OpenTelemetry data) and structured logs with a
+  correlation ID.
+- [ ] **Global exception handler.** No `AddProblemDetails`/`IExceptionHandler`, so unexpected
+  exceptions get the default 500 instead of an `ErrorEnvelope`.
+- [ ] **Readiness health checks.** `/health` is liveness only. Check Postgres (and Keycloak), and
+  add healthchecks for the `api` and `frontend` containers in `deploy/docker-compose.prod.yml`.
+- [ ] **Automated backups.** Backups on the Oracle VM are manual `pg_dump` commands
+  (`deploy/README.md` §7). Schedule them, copy them off the VM, and test a restore regularly.
+- [ ] **Pin the .NET preview images by digest** (`dotnet/nightly/sdk:11.0-preview`) so production
+  builds can be reproduced.
+
+### Build reproducibility
+
+- [ ] **Pin toolchain versions.** Add a `global.json` for the .NET SDK and `engines`/`.nvmrc` for
+  Node. CI uses Node 24, but the frontend Dockerfile uses `node:26-alpine`.
+- [ ] **Drop `--legacy-peer-deps`** from `npm ci` in the frontend Dockerfile and fix the
+  peer-dependency conflicts it hides.
+- [ ] **Enable .NET analyzers.** Set `AnalysisLevel` (e.g. `latest-recommended`) and
+  `EnforceCodeStyleInBuild` in `src/backend/Directory.Build.props`.
+
+### Process
+
+- [ ] **Code coverage in CI** for backend and frontend, reported on PRs.
+- [ ] **Repo hygiene files.** `SECURITY.md` and `LICENSE` (important if the repo is public);
+  `CODEOWNERS` and a PR template are optional for a solo project.
+- [ ] **Pre-commit lint/format hook** (husky/lint-staged or a Taskfile hook), so Prettier and
+  ESLint problems show up before CI.
