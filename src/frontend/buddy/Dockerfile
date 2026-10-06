@@ -29,9 +29,22 @@ RUN node -e " \
 
 FROM caddy:2-alpine AS runtime
 
+# Caddy writes its state under /data and /config (XDG_DATA_HOME/XDG_CONFIG_HOME in the base
+# image), so the non-root user must own them.
 RUN if ! id -u caddy >/dev/null 2>&1; then \
       addgroup -S caddy && adduser -S -G caddy caddy; \
-    fi
+    fi \
+    && chown -R caddy:caddy /data /config
+
+# The Caddyfile reads these for the Content-Security-Policy's connect-src/form-action, so the
+# policy names the same API and Keycloak origins as runtime-config.json.
+ARG API_BASE_URL
+ARG KEYCLOAK_AUTHORITY
+ENV API_BASE_URL=$API_BASE_URL \
+    KEYCLOAK_AUTHORITY=$KEYCLOAK_AUTHORITY
 
 COPY --from=build /app/dist/buddy/browser /usr/share/caddy
 COPY Caddyfile /etc/caddy/Caddyfile
+
+# The caddy binary carries cap_net_bind_service in the base image, so :80 still binds.
+USER caddy

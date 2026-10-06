@@ -1,6 +1,21 @@
 :80 {
 	root * /usr/share/caddy
 	encode gzip
+
+	header {
+		# Sent to the browser over the edge proxy's HTTPS (deploy/Caddyfile, or Azure ingress).
+		# No includeSubDomains: the app's domain may share a parent with unrelated hosts.
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		# Report-only until two things are fixed: the inline theme script in index.html, and the
+		# onload handler Angular's critical-CSS inlining adds to the stylesheet <link>. Enforced,
+		# this policy blocks both. Violations show in the browser console.
+		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' {$API_BASE_URL} {$KEYCLOAK_AUTHORITY}; form-action 'self' {$KEYCLOAK_AUTHORITY}; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+	}
+
 	try_files {path} /index.html
 	file_server
 }

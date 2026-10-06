@@ -406,12 +406,21 @@ Found along the way:
 
 ### Security and privacy
 
-- [ ] **Containers run as root.** `src/backend/buddy/Dockerfile` and `src/frontend/buddy/Dockerfile`
-  create an `aspnet`/`caddy` user but never switch to it with `USER`. Add the line; Caddy then
-  needs a port above 1024 or `cap_net_bind_service`.
-- [ ] **No security headers.** `deploy/Caddyfile` only reverse-proxies. Add
-  `Strict-Transport-Security`, `Content-Security-Policy` (including the Keycloak origin),
-  `X-Content-Type-Options: nosniff`, `Referrer-Policy` and `frame-ancestors`/`X-Frame-Options`.
+- [x] **Containers run as root.** Both Dockerfiles now switch to their `aspnet`/`caddy` user.
+  Caddy keeps :80 (the base image gives its binary `cap_net_bind_service`) and owns `/data` and
+  `/config`; `aspnet` has a home directory for the Data Protection key ring.
+- [ ] **Data Protection keys aren't persisted.** `AddDataProtection()` in `MealplansFeature`
+  stores its key ring in the container's home directory, so every redeploy (new container) loses
+  it and stored AI-provider API keys can no longer be decrypted. Persist the keys (Postgres via a
+  Marten-backed `IXmlRepository`, or a volume) and protect them at rest.
+- [x] **Security headers.** The app's headers are in `src/frontend/buddy/Caddyfile` (so they also
+  apply on Azure); the API's are in `deploy/Caddyfile`. Keycloak sends its own.
+- [ ] **Enforce the app's Content-Security-Policy.** It is report-only for now. Two things break
+  under enforcement: the inline theme script in `index.html` (move it to a file, or add its hash)
+  and the `onload` handler Angular's critical-CSS inlining puts on the stylesheet `<link>`
+  (disable `inlineCritical`, or allow it with `'unsafe-hashes'`). Then switch the header to
+  `Content-Security-Policy`. The API on Azure has no edge proxy, so it gets no security headers
+  there yet.
 - [ ] **GDPR for special-category health data** (medicines, sleep diaries, ADHD context about
   children):
   - Right to erasure in the event store. Consider crypto-shredding (per-subject encryption key,
@@ -422,8 +431,8 @@ Found along the way:
     in place.
 - [ ] **Security scanning in CI.** Add CodeQL, an `npm audit` / `dotnet list package --vulnerable`
   gate and a container image scan (e.g. Trivy).
-- [ ] **GitHub Actions hardening.** Set least-privilege `permissions:` in every workflow (only
-  mutation-testing has them) and pin actions by commit SHA instead of tag.
+- [x] **Least-privilege `permissions:`** (`contents: read`) in every workflow.
+- [ ] **Pin GitHub Actions by commit SHA** instead of tag (Dependabot keeps SHA pins updated).
 
 ### Operability
 
@@ -441,8 +450,10 @@ Found along the way:
 
 ### Build reproducibility
 
-- [ ] **Pin toolchain versions.** Add a `global.json` for the .NET SDK and `engines`/`.nvmrc` for
-  Node. CI uses Node 24, but the frontend Dockerfile uses `node:26-alpine`.
+- [x] **Pin the .NET SDK.** `global.json` at the repo root pins the devcontainer's SDK, and the
+  workflows install it via `global-json-file` (CI was on rc.1 while the devcontainer ran preview.7).
+- [ ] **Pin the Node version.** Add `engines`/`.nvmrc`. CI uses Node 24, but the frontend
+  Dockerfile uses `node:26-alpine`.
 - [ ] **Drop `--legacy-peer-deps`** from `npm ci` in the frontend Dockerfile and fix the
   peer-dependency conflicts it hides.
 - [ ] **Enable .NET analyzers.** Set `AnalysisLevel` (e.g. `latest-recommended`) and

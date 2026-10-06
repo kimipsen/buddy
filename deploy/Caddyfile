@@ -1,4 +1,13 @@
 {$API_DOMAIN} {
+	# The API only serves JSON (and .ics feeds), never a page, so nothing may load or frame it.
+	# The app's own headers live in src/frontend/buddy/Caddyfile, so they apply on Azure too;
+	# Keycloak sends its own (realm Security Defenses).
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+	}
 	reverse_proxy api:8080
 }
 

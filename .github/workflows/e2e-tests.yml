@@ -19,16 +19,20 @@ on:
       - ".devcontainer/postgres/**"
       - ".github/workflows/e2e-tests.yml"
 
+# Least privilege for the GITHUB_TOKEN; a job that needs more asks for it itself.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
+      # Same SDK as the devcontainer, pinned in global.json at the repo root.
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "11.0.x"
-          dotnet-quality: "preview"
+          global-json-file: global.json
 
       # package.json has no engines/volta field for node-version-file to read, so pin the major
       # explicitly -- the devcontainer's Node LTS (24), within Angular 22's supported range.

@@ -17,8 +17,10 @@ RUN dotnet publish buddy/buddy.csproj -c Release -o /app \
 
 FROM mcr.microsoft.com/dotnet/nightly/aspnet:11.0-preview AS runtime
 
+# A home directory, because Data Protection (MealplansFeature) keeps its key ring under
+# ~/.aspnet when nothing else is configured; without one the keys would live only in memory.
 RUN if ! id -u aspnet >/dev/null 2>&1; then \
-			groupadd --system aspnet && useradd --system --gid aspnet aspnet; \
+			groupadd --system aspnet && useradd --system --gid aspnet --create-home aspnet; \
 		fi
 
 WORKDIR /app
@@ -26,4 +28,5 @@ COPY --from=build /app .
 
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
+USER aspnet
 ENTRYPOINT ["dotnet", "buddy.dll"]
