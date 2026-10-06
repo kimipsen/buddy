@@ -39,6 +39,7 @@ model or permissions logic.
 - [Meal plans](analysis/mealplans.md)
 - [Group-shared meal plans](analysis/group-owned-mealplans.md)
 - [Meal plan iCal feed](analysis/mealplan-ical-feed.md)
+- [Importing historical meal plans](analysis/mealplan-import.md)
 - [Conditional GET with ETags](analysis/conditional-get-etags.md)
 - [Rate limiting](analysis/rate-limiting.md)
 - [Pickup and drop-off schedules](analysis/pickup-schedules.md)

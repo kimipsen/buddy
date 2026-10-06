@@ -34,6 +34,8 @@ in real time.
 - [x] Private iCal subscription links for the family's meal plan
 - [x] Chat-based AI assistant that drafts meal-plan assignments, with
       BYOK AI provider settings management
+- [ ] Import historical meal plans from notes and other systems (proposed, not yet
+      implemented -- see [Importing historical meal plans](docs/backend/analysis/mealplan-import.md))
 - [x] Pickup and drop-off scheduling (guardian, sibling, self-escort,
       playdate, and babysitter assignments)
 - [x] Reusable task library with ordered, timed subtasks, schedulable onto a
@@ -168,6 +170,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Meal plans](docs/backend/analysis/mealplans.md)
 - [Group-shared meal plans](docs/backend/analysis/group-owned-mealplans.md)
 - [Meal plan iCal feed](docs/backend/analysis/mealplan-ical-feed.md)
+- [Importing historical meal plans](docs/backend/analysis/mealplan-import.md)
 - [Pickup and drop-off schedules](docs/backend/analysis/pickup-schedules.md)
 - [Babysitters](docs/backend/analysis/babysitters.md)
 - [Gamified progress](docs/backend/analysis/gamified-progress.md)
