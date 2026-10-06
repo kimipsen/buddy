@@ -29,6 +29,7 @@ public static class SendAiSessionMessageHandler
         ICalendarItemEventStore calendarItems,
         ITaskTemplateEventStore taskTemplates,
         IGroupEventStore groups,
+        ILogger<SendAiSessionMessage> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -76,6 +77,7 @@ public static class SendAiSessionMessageHandler
         }
         catch (NotSupportedException ex)
         {
+            logger.AiProviderUnsupported(ex, activeProvider);
             return new Result<AiSessionView>.Validation(ValidationProblem.Of(ex.Message));
         }
 
@@ -104,7 +106,7 @@ public static class SendAiSessionMessageHandler
 
         var toolLoopResult = await RunToolLoopAsync(
             apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, familyMealIds, userId,
-            calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken);
+            calendars, calendarItems, taskTemplates, groups, guardians, activeProvider, logger, cancellationToken);
 
         if (toolLoopResult is not Result<string>.Success(var finalText))
         {
@@ -141,6 +143,8 @@ public static class SendAiSessionMessageHandler
         ITaskTemplateEventStore taskTemplates,
         IGroupEventStore groups,
         IGuardianLinkEventStore guardians,
+        AiProvider provider,
+        ILogger logger,
         CancellationToken cancellationToken)
     {
         var finalText = "";
@@ -155,6 +159,7 @@ public static class SendAiSessionMessageHandler
             }
             catch (AiProviderException ex)
             {
+                logger.AiProviderRequestFailed(ex, provider, sessionId.Value, ex.StatusCode);
                 return new Result<string>.Validation(ValidationProblem.Of($"The AI provider request failed: {ex.Message}"));
             }
 

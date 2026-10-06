@@ -131,6 +131,7 @@ A read-backward query (`OrderByDescending(e => e.Version).Take(n).ToListAsync()`
 - Validator: `sealed class <UseCase>Validator : AbstractValidator<<UseCase>>`, structural rules only. Auto-registered by `AddValidatorsFromAssemblyContaining<Program>()`. DB-backed rules stay in the handler (see `docs/backend/analysis/validation-rules.md`).
 - Handlers can call other handlers via an injected `IMessageBus` (`SetTaskCompletion.Handler.cs`).
 - Timestamps: `DateTimeOffset.UtcNow` once per handler, reused across the events it emits.
+- Logging: an access/account change or a swallowed failure gets a `[LoggerMessage]` method in the domain's `<Domain>Log.cs` (stable EventId in the domain's range), called after the append. The handler takes `ILogger<TheCommand>` (static handler classes can't be a type argument). IDs only, never personal data or secrets -- see `docs/backend/observability.md`.
 
 ## 7. Result pattern and endpoints
 

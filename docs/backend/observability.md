@@ -79,3 +79,43 @@ Monitor's OTLP ingestion. The SDK reads the other standard variables itself, for
 
 Health probes are left out of traces: they would arrive every few seconds and bury real
 requests. Tests: `buddy.IntegrationTests/Common/Observability/`.
+
+## What the API logs
+
+Besides the framework's own logs (requests, unhandled exceptions, health check failures), the API
+writes these. Every one is a source-generated `[LoggerMessage]` method in a `<Domain>Log.cs` file
+next to the feature, with a stable EventId, so logs can be filtered by event rather than by
+message text.
+
+| EventIds | File | What |
+|---|---|---|
+| 1001–1006 | `Features/Users/UsersLog.cs` | Account provisioned or deleted, email changed or verified, rejected verification attempts, calls before provisioning |
+| 2001–2007 | `Features/Guardians/GuardiansLog.cs` | Child accounts created; guardian invites sent, accepted, refused, revoked; guardian links given up; Keycloak admin API failures |
+| 3001–3007 | `Features/Groups/GroupsLog.cs` | Group invites sent, accepted, refused, revoked; members removed or given a role; groups deleted |
+| 4001–4006 | `Features/Calendars/CalendarsLog.cs` | Calendar members removed or given a role, calendars deleted, iCal tokens issued or revoked; a failed star-count update (swallowed on purpose, so it's logged) |
+| 5001–5003 | `Features/SleepDiaries/SleepDiariesLog.cs` | Share links created or revoked, and every view of a shared diary |
+| 6001–6008 | `Features/Mealplans/MealplansLog.cs` | AI provider keys set or removed, active provider changed, provider failures, meal plan iCal tokens |
+| 7001–7002 | `Email/EmailLog.cs` | Each email sent (by kind), or the SMTP failure |
+
+Existing framework-adjacent logs: unbindable requests (`RequestBindingFailureMiddleware`),
+concurrency conflicts (`ConcurrencyConflictMiddleware`), rate-limit rejections
+(`RateLimitingFeature`) and idempotency cleanup (`IdempotencyCleanupService`).
+
+### Rules for new log lines
+
+- **IDs only.** Never log an email address, a name, a username, a password, a token or a share
+  link, an API key, a provider's response body, or what someone wrote: notes, diary entries,
+  messages to the AI assistant. Buddy holds children's health data, and logs are kept and copied
+  more widely than the database. `AuditLogTests` fails if a known name or address shows up in
+  any log line.
+- **Log after the change is saved**, and only when something changed. The idempotent no-op paths
+  don't log.
+- **Levels:**
+  - Information: an access or account change worth an audit trail.
+  - Warning: something failed or was refused, and it's worth a look (a provider error, an invite
+    accepted from the wrong account, a swallowed failure).
+  - Error: an infrastructure call failed and the request fails with it.
+- **Handlers are static classes**, so they take `ILogger<TheCommand>` as a parameter. Wolverine
+  injects it, and the log category becomes the use case's name.
+- **EventIds:** use the next free number in the domain's range. A new domain gets the next
+  thousand.

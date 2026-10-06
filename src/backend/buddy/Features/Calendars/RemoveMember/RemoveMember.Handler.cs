@@ -6,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class RemoveMemberHandler
 {
-    public static async Task<Result<Unit>> Handle(RemoveMember command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RemoveMember command, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<RemoveMember> logger, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -40,6 +40,8 @@ public static class RemoveMemberHandler
             command.CalendarId,
             [new MemberRoleRevoked(command.CalendarId, command.MemberId, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
+
+        logger.CalendarMemberRemoved(command.MemberId.Value, command.CalendarId.Value, userId.Value);
 
         return new Result<Unit>.Success(Unit.Value);
     }

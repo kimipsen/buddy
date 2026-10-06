@@ -9,6 +9,7 @@ public static class RevokeMealPlanIcalTokenHandler
         RevokeMealPlanIcalToken command,
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
+        ILogger<RevokeMealPlanIcalToken> logger,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -39,6 +40,8 @@ public static class RevokeMealPlanIcalTokenHandler
             mealPlanId,
             [new MealPlanIcalTokenRevoked(mealPlanId, command.TokenId, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
+
+        logger.MealPlanIcalTokenRevoked(command.TokenId.Value, mealPlanId.Value, userId.Value);
 
         return new Result<Unit>.Success(Unit.Value);
     }

@@ -17,6 +17,7 @@ public static class TestProviderConnectionHandler
         IGuardianLinkEventStore guardians,
         IApiKeyCipher cipher,
         IAiProviderRegistry providerRegistry,
+        ILogger<TestProviderConnection> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -60,6 +61,7 @@ public static class TestProviderConnectionHandler
         }
         catch (NotSupportedException ex)
         {
+            logger.AiProviderUnsupported(ex, command.Provider);
             return new Result<TestProviderConnectionResult>.Validation(ValidationProblem.Of(ex.Message));
         }
 
@@ -77,6 +79,9 @@ public static class TestProviderConnectionHandler
         }
         catch (AiProviderException ex)
         {
+            // Information, not Warning: a wrong or expired key is the usual cause, and this is
+            // the user checking exactly that.
+            logger.AiProviderConnectionTestFailed(command.Provider, userId.Value, ex.StatusCode);
             return new Result<TestProviderConnectionResult>.Success(new TestProviderConnectionResult.Failed(DescribeFailure(ex)));
         }
     }

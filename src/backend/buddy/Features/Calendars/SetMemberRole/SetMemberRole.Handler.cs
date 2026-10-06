@@ -6,7 +6,7 @@ namespace buddy.Features.Calendars;
 
 public static class SetMemberRoleHandler
 {
-    public static async Task<Result<Unit>> Handle(SetMemberRole command, ICalendarEventStore calendars, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(SetMemberRole command, ICalendarEventStore calendars, IGroupEventStore groups, ILogger<SetMemberRole> logger, CancellationToken cancellationToken)
     {
         if (command.Role == CalendarRole.Owner)
         {
@@ -41,6 +41,8 @@ public static class SetMemberRoleHandler
             command.CalendarId,
             [new MemberRoleGranted(command.CalendarId, command.MemberId, command.Role, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
+
+        logger.CalendarMemberRoleSet(command.MemberId.Value, command.CalendarId.Value, command.Role, userId.Value);
 
         return new Result<Unit>.Success(Unit.Value);
     }

@@ -215,3 +215,8 @@ The frontend is available at `http://localhost:4300`. See the
 [frontend app guide](src/frontend/buddy/README.md) for build and runtime
 configuration details, and the [testing guide](docs/testing.md) for test
 commands.
+
+## License and security
+
+Buddy is released under the [MIT License](LICENSE). To report a security
+problem, follow [SECURITY.md](SECURITY.md); please don't open a public issue.

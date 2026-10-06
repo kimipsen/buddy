@@ -12,6 +12,7 @@ public static class InviteGuardianHandler
         IGuardianInviteEventStore invites,
         IUserEventStore users,
         IEmailSender emailSender,
+        ILogger<InviteGuardian> logger,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -57,6 +58,8 @@ public static class InviteGuardianHandler
         }
 
         await emailSender.SendGuardianInviteEmailAsync(normalizedEmail, child.Name.GivenName, token, cancellationToken);
+
+        logger.GuardianInviteSent(inviteId.Value, command.Kind, command.ChildId.Value, userId.Value);
 
         return new InviteGuardianOutcome.Success(new GuardianInviteSummary(inviteId.Value, normalizedEmail, command.Kind, now, expiresAt));
     }

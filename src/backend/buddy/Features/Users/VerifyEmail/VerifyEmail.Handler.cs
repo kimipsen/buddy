@@ -14,6 +14,7 @@ public static class VerifyEmailHandler
         VerifyEmail command,
         IValidator<VerifyEmail> validator,
         IUserEventStore events,
+        ILogger<VerifyEmail> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -41,11 +42,13 @@ public static class VerifyEmailHandler
         // they can't run as a pure FluentValidation rule the way the Token-required check above does.
         if (user.EmailVerification is not EmailVerification.Pending pending)
         {
+            logger.EmailVerificationRejected(userId.Value, "no verification pending");
             return new Result<User>.Validation(ValidationProblem.Of("The verification token is invalid."));
         }
 
         if (DateTimeOffset.UtcNow > pending.ExpiresAt)
         {
+            logger.EmailVerificationRejected(userId.Value, "token expired");
             return new Result<User>.Validation(ValidationProblem.Of("The verification token has expired."));
         }
 
@@ -55,10 +58,13 @@ public static class VerifyEmailHandler
             Encoding.UTF8.GetBytes(submittedHash),
             Encoding.UTF8.GetBytes(pending.TokenHash)))
         {
+            logger.EmailVerificationRejected(userId.Value, "token mismatch");
             return new Result<User>.Validation(ValidationProblem.Of("The verification token is invalid."));
         }
 
         await events.AppendAsync(userId, [new EmailVerified(userId, DateTimeOffset.UtcNow)], cancellationToken);
+
+        logger.EmailVerified(userId.Value);
 
         var verifiedUser = user with { Email = user.Email with { IsVerified = true }, EmailVerification = new EmailVerification.None() };
 

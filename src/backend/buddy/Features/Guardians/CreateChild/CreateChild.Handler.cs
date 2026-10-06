@@ -13,6 +13,7 @@ public static class CreateChildHandler
         IKeycloakAdminClient keycloak,
         IGuardianLinkEventStore guardianLinks,
         IUserEventStore users,
+        ILogger<CreateChild> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -68,6 +69,8 @@ public static class CreateChildHandler
 
         var child = User.Replay(userEvents);
         var link = GuardianLink.Replay(guardianEvents);
+
+        logger.ChildCreated(childId.Value, guardianId.Value);
 
         return new CreateChildOutcome.Success(child, link, provisioned.Username, provisioned.TemporaryPassword);
     }

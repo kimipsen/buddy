@@ -10,6 +10,7 @@ public static class AcceptGuardianInviteHandler
         IGuardianInviteEventStore invites,
         IUserEventStore users,
         IGuardianLinkEventStore guardians,
+        ILogger<AcceptGuardianInvite> logger,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -47,6 +48,7 @@ public static class AcceptGuardianInviteHandler
 
         if (!user.Email.IsVerified || GuardianInviteDocument.NormalizeEmail(user.Email.Value) != invite.InvitedEmail)
         {
+            logger.GuardianInviteEmailMismatch(invite.Id, userId.Value);
             return new Result<Unit>.Forbidden();
         }
 
@@ -61,6 +63,8 @@ public static class AcceptGuardianInviteHandler
             linkId,
             [linked],
             cancellationToken);
+
+        logger.GuardianInviteAccepted(invite.Id, userId.Value, invite.ChildId);
 
         return new Result<Unit>.Success(Unit.Value);
     }

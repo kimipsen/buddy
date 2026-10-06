@@ -13,6 +13,7 @@ public static class CreateSleepDiaryShareLinkHandler
         IValidator<CreateSleepDiaryShareLink> validator,
         ISleepDiaryShareTokenEventStore shareTokens,
         IGuardianLinkEventStore guardians,
+        ILogger<CreateSleepDiaryShareLink> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -37,6 +38,8 @@ public static class CreateSleepDiaryShareLinkHandler
             id,
             [new SleepDiaryShareTokenCreated(id, command.ChildId, hash, command.UserId, command.ExpiresAt, now)],
             cancellationToken);
+
+        logger.ShareLinkCreated(id.Value, command.ChildId.Value, command.UserId.Value, command.ExpiresAt);
 
         return new Result<IssuedSleepDiaryShareLink>.Success(new IssuedSleepDiaryShareLink(id, token, now, command.ExpiresAt));
     }

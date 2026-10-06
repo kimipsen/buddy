@@ -9,6 +9,7 @@ public static class RemoveProviderApiKeyHandler
         RemoveProviderApiKey command,
         IAiCredentialEventStore credentials,
         IGuardianLinkEventStore guardians,
+        ILogger<RemoveProviderApiKey> logger,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -46,6 +47,8 @@ public static class RemoveProviderApiKeyHandler
         }
 
         await credentials.AppendAsync(credentialId, newEvents, cancellationToken);
+
+        logger.AiProviderKeyRemoved(command.Provider, command.ChildId.Value, userId.Value);
 
         var updated = AiProviderCredential.Replay([.. existingEvents, .. newEvents]);
 

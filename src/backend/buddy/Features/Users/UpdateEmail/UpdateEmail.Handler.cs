@@ -13,6 +13,7 @@ public static class UpdateEmailHandler
         IValidator<UpdateEmail> validator,
         IUserEventStore events,
         IEmailSender emailSender,
+        ILogger<UpdateEmail> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -46,6 +47,8 @@ public static class UpdateEmailHandler
         var verificationRequested = new EmailVerificationRequested(userId, hash, expiresAt, now);
 
         await events.AppendAsync(userId, [emailUpdated, verificationRequested], cancellationToken);
+
+        logger.EmailChanged(userId.Value);
 
         var updated = user with { Email = newEmail, EmailVerification = new EmailVerification.Pending(hash, now, expiresAt) };
 

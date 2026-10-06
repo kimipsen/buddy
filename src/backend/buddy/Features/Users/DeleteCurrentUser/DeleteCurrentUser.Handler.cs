@@ -2,7 +2,7 @@ namespace buddy.Features.Users;
 
 public static class DeleteUserHandler
 {
-    public static async Task Handle(DeleteUser command, IUserEventStore events, CancellationToken cancellationToken)
+    public static async Task Handle(DeleteUser command, IUserEventStore events, ILogger<DeleteUser> logger, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -15,5 +15,7 @@ public static class DeleteUserHandler
         }
 
         await events.AppendAsync(userId, [new UserDeleted(userId, DateTimeOffset.UtcNow)], cancellationToken);
+
+        logger.UserDeleted(userId.Value);
     }
 }

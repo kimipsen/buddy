@@ -4,7 +4,7 @@ namespace buddy.Features.Groups;
 
 public static class RevokeGroupInviteHandler
 {
-    public static async Task<Result<Unit>> Handle(RevokeGroupInvite command, IGroupEventStore groups, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(RevokeGroupInvite command, IGroupEventStore groups, ILogger<RevokeGroupInvite> logger, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -46,6 +46,8 @@ public static class RevokeGroupInviteHandler
             command.GroupId,
             [new GroupInviteRevoked(command.GroupId, invite.Id, userId, DateTimeOffset.UtcNow)],
             cancellationToken);
+
+        logger.GroupInviteRevoked(invite.Id, command.GroupId.Value, userId.Value);
 
         return new Result<Unit>.Success(Unit.Value);
     }

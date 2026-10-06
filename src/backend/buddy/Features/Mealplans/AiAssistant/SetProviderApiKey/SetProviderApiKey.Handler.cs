@@ -14,6 +14,7 @@ public static class SetProviderApiKeyHandler
         IAiCredentialEventStore credentials,
         IGuardianLinkEventStore guardians,
         IApiKeyCipher cipher,
+        ILogger<SetProviderApiKey> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
@@ -49,6 +50,8 @@ public static class SetProviderApiKeyHandler
 
             await credentials.CreateAsync(newId, events, cancellationToken);
 
+            logger.AiProviderKeySet(command.Provider, command.ChildId.Value, userId.Value);
+
             return new Result<AiProviderSettings>.Success(AiProviderSettings.FromCredential(AiProviderCredential.Replay(events)));
         }
 
@@ -63,6 +66,8 @@ public static class SetProviderApiKeyHandler
         }
 
         await credentials.AppendAsync(credentialId, newEvents, cancellationToken);
+
+        logger.AiProviderKeySet(command.Provider, command.ChildId.Value, userId.Value);
 
         var updated = AiProviderCredential.Replay([.. existingEvents, .. newEvents]);
 

@@ -12,7 +12,7 @@ public static class DeleteGroupHandler
     // atomicity here: CalendarAuthorization's resolution already treats a deleted/unresolvable
     // group as "no access" for everyone, so nobody retains access via this group in the window
     // between GroupDeleted and its calendars being individually marked deleted.
-    public static async Task<Result<Unit>> Handle(DeleteGroup command, IGroupEventStore groups, ICalendarEventStore calendars, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(DeleteGroup command, IGroupEventStore groups, ICalendarEventStore calendars, ILogger<DeleteGroup> logger, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -40,6 +40,8 @@ public static class DeleteGroupHandler
             var calendarId = new CalendarId(calendar.Id);
             await calendars.AppendAsync(calendarId, [new CalendarDeleted(calendarId, userId, DateTimeOffset.UtcNow)], cancellationToken);
         }
+
+        logger.GroupDeleted(command.GroupId.Value, userId.Value, owned.Count);
 
         return new Result<Unit>.Success(Unit.Value);
     }

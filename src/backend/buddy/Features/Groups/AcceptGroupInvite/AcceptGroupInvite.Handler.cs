@@ -5,7 +5,7 @@ namespace buddy.Features.Groups;
 
 public static class AcceptGroupInviteHandler
 {
-    public static async Task<Result<Unit>> Handle(AcceptGroupInvite command, IGroupEventStore groups, IUserEventStore users, CancellationToken cancellationToken)
+    public static async Task<Result<Unit>> Handle(AcceptGroupInvite command, IGroupEventStore groups, IUserEventStore users, ILogger<AcceptGroupInvite> logger, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -52,6 +52,7 @@ public static class AcceptGroupInviteHandler
             // Covers both a mismatched email and an unverified one -- an unverified address could
             // be claimed by someone other than its real owner, so it can't be trusted to accept an
             // invite that was sent to it.
+            logger.GroupInviteEmailMismatch(invite.Id, userId.Value);
             return new Result<Unit>.Forbidden();
         }
 
@@ -76,6 +77,8 @@ public static class AcceptGroupInviteHandler
                 new GroupInviteAccepted(groupId, invite.Id, userId, now)
             ],
             cancellationToken);
+
+        logger.GroupInviteAccepted(invite.Id, userId.Value, invite.Role, groupId.Value);
 
         return new Result<Unit>.Success(Unit.Value);
     }

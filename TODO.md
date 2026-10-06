@@ -442,8 +442,8 @@ Found along the way:
 - [ ] **Run an OTLP backend in production** (Collector, Grafana, Azure Monitor...) and set
   `OTEL_EXPORTER_OTLP_ENDPOINT`; until then nothing is exported. Consider an Aspire dashboard
   service in the devcontainer for local traces.
-- [ ] **More logging.** The backend still has only a handful of `ILogger` calls; log the decisions
-  worth investigating later (rejected invites, AI provider failures, email delivery).
+- [x] **More logging.** Audit-style logs for account and access changes, plus logs for swallowed
+  and infrastructure failures; IDs only (docs/backend/observability.md, `AuditLogTests`).
 - [ ] **Global exception handler.** No `AddProblemDetails`/`IExceptionHandler`, so unexpected
   exceptions get the default 500 instead of an `ErrorEnvelope`.
 - [x] **Readiness health checks.** `/health/ready` checks Postgres (503) and Keycloak (degraded,
@@ -469,7 +469,9 @@ Found along the way:
 ### Process
 
 - [ ] **Code coverage in CI** for backend and frontend, reported on PRs.
-- [ ] **Repo hygiene files.** `SECURITY.md` and `LICENSE` (important if the repo is public);
-  `CODEOWNERS` and a PR template are optional for a solo project.
+- [x] **Repo hygiene files.** MIT `LICENSE`, `SECURITY.md` (GitHub private reporting),
+  `.github/CODEOWNERS` and a PR template.
+- [ ] **Enable private vulnerability reporting** in the GitHub repo settings (Security > Private
+  vulnerability reporting); `SECURITY.md` points reporters there.
 - [ ] **Pre-commit lint/format hook** (husky/lint-staged or a Taskfile hook), so Prettier and
   ESLint problems show up before CI.

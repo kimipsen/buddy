@@ -9,6 +9,7 @@ public static class CreateMealPlanIcalTokenHandler
         CreateMealPlanIcalToken command,
         IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
+        ILogger<CreateMealPlanIcalToken> logger,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -46,6 +47,8 @@ public static class CreateMealPlanIcalTokenHandler
 
             await mealPlans.AppendAsync(planId, [new MealPlanIcalTokenIssued(planId, tokenId, hash, userId, now)], cancellationToken);
         }
+
+        logger.MealPlanIcalTokenIssued(tokenId.Value, planId.Value, userId.Value);
 
         return new Result<IssuedMealPlanIcalToken>.Success(new IssuedMealPlanIcalToken(tokenId, token, planId));
     }

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace buddy.Features.Guardians;
 
-public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<KeycloakAdminOptions> options) : IKeycloakAdminClient
+public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<KeycloakAdminOptions> options, ILogger<KeycloakAdminClient> logger) : IKeycloakAdminClient
 {
     // Every child account is tagged with this realm role so RP-side/token-based checks can tell a
     // child principal apart from a guardian one without a GuardianLink lookup. Must exist as a
@@ -51,7 +51,7 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
             return new KeycloakCreateUserResult.UsernameUnavailable();
         }
 
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response, "create user");
 
         var location = response.Headers.Location
             ?? throw new InvalidOperationException("Keycloak did not return a Location header for the created user.");
@@ -74,7 +74,7 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
         availableRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         using var availableResponse = await httpClient.SendAsync(availableRequest, cancellationToken);
-        availableResponse.EnsureSuccessStatusCode();
+        EnsureSuccess(availableResponse, "list available realm roles");
 
         var availableRoles = await availableResponse.Content.ReadFromJsonAsync<JsonElement[]>(cancellationToken) ?? [];
         var childRole = availableRoles.FirstOrDefault(role => role.GetProperty("name").GetString() == ChildRoleName);
@@ -90,7 +90,7 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
         assignRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         using var assignResponse = await httpClient.SendAsync(assignRequest, cancellationToken);
-        assignResponse.EnsureSuccessStatusCode();
+        EnsureSuccess(assignResponse, "assign child role");
     }
 
     // Client-credentials grant for this confidential client's own service account -- the
@@ -106,11 +106,23 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
             ["client_secret"] = admin.ClientSecret
         }), cancellationToken);
 
-        response.EnsureSuccessStatusCode();
+        EnsureSuccess(response, "service account token");
 
         var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
 
         return payload.GetProperty("access_token").GetString()
             ?? throw new InvalidOperationException("Keycloak admin token response had no access_token.");
+    }
+
+    // Throws like EnsureSuccessStatusCode, after logging which call failed: the exception alone
+    // only carries the status code, not whether it was the token, the user or the role mapping.
+    private void EnsureSuccess(HttpResponseMessage response, string operation)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.KeycloakAdminRequestFailed(operation, (int)response.StatusCode);
+        }
+
+        response.EnsureSuccessStatusCode();
     }
 }

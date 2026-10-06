@@ -15,7 +15,7 @@ namespace buddy.Features.Users;
 // checked: public ones (iCal feeds, invite previews) and the provisioning endpoint itself
 // (AllowUnprovisionedUser) pass through.
 // See docs/backend/analysis/eliminate-nulls.md, Phase 1.
-public sealed class ProvisionedUserMiddleware(RequestDelegate next, IOptions<JsonOptions> jsonOptions)
+public sealed class ProvisionedUserMiddleware(RequestDelegate next, IOptions<JsonOptions> jsonOptions, ILogger<ProvisionedUserMiddleware> logger)
 {
     public const string ErrorCode = "user_not_provisioned";
 
@@ -31,6 +31,8 @@ public sealed class ProvisionedUserMiddleware(RequestDelegate next, IOptions<Jso
             await next(context);
             return;
         }
+
+        logger.UnprovisionedCallerRejected(context.Request.Method, context.Request.Path);
 
         context.Response.StatusCode = StatusCodes.Status403Forbidden;
 

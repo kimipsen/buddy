@@ -1,0 +1,3 @@
+# Default owner for everything in the repository. GitHub requests this owner's review on every
+# pull request; it only blocks merging when branch protection requires code-owner review.
+* @kimipsen

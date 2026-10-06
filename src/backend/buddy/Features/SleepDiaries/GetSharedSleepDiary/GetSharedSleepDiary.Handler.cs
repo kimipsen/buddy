@@ -14,6 +14,7 @@ public static class GetSharedSleepDiaryHandler
         ISleepDiaryShareTokenEventStore shareTokens,
         ISleepDiaryEventStore diaries,
         IUserEventStore users,
+        ILogger<GetSharedSleepDiary> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
@@ -39,6 +40,8 @@ public static class GetSharedSleepDiaryHandler
 
         // Current data on every request, not a copy taken when the link was made.
         var diary = await diaries.FindSnapshotAsync(SleepDiaryId.ForChild(childId), cancellationToken);
+
+        logger.SharedDiaryViewed(link.ChildId, link.Id);
 
         return new Result<SharedSleepDiary>.Success(new SharedSleepDiary(
             child.Name,

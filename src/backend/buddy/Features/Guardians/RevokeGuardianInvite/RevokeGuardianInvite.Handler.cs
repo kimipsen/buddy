@@ -5,7 +5,7 @@ namespace buddy.Features.Guardians;
 public static class RevokeGuardianInviteHandler
 {
     public static async Task<Result<Unit>> Handle(
-        RevokeGuardianInvite command, IGuardianLinkEventStore guardianLinks, IGuardianInviteEventStore invites, CancellationToken cancellationToken)
+        RevokeGuardianInvite command, IGuardianLinkEventStore guardianLinks, IGuardianInviteEventStore invites, ILogger<RevokeGuardianInvite> logger, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -38,6 +38,8 @@ public static class RevokeGuardianInviteHandler
         }
 
         await invites.AppendAsync(new GuardianInviteId(invite.Id), [new GuardianInviteRevoked(new GuardianInviteId(invite.Id), userId, DateTimeOffset.UtcNow)], cancellationToken);
+
+        logger.GuardianInviteRevoked(invite.Id, command.ChildId.Value, userId.Value);
 
         return new Result<Unit>.Success(Unit.Value);
     }

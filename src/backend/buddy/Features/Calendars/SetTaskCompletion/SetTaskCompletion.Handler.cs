@@ -17,6 +17,7 @@ public static class SetTaskCompletionHandler
         ITaskTemplateEventStore templates,
         IGroupEventStore groups,
         IMessageBus bus,
+        ILogger<SetTaskCompletion> logger,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
@@ -84,7 +85,7 @@ public static class SetTaskCompletionHandler
 
         await items.AppendAsync(command.ItemId, [completionChanged], cancellationToken);
 
-        await TryRecordStarChangeAsync(task, command, bus, cancellationToken);
+        await TryRecordStarChangeAsync(task, command, bus, logger, cancellationToken);
 
         return new Result<CalendarItem>.Success(CalendarItem.Replay([.. itemEvents, completionChanged]));
     }
@@ -144,7 +145,8 @@ public static class SetTaskCompletionHandler
     // docs/backend/analysis/gamified-progress.md. The task completion itself has already
     // succeeded by this point; a failure here just leaves the child's star count stale until the
     // next successful, idempotent completion change catches it up.
-    private static async Task TryRecordStarChangeAsync(ItemSchedule.Task task, SetTaskCompletion command, IMessageBus bus, CancellationToken cancellationToken)
+    private static async Task TryRecordStarChangeAsync(
+        ItemSchedule.Task task, SetTaskCompletion command, IMessageBus bus, ILogger logger, CancellationToken cancellationToken)
     {
         if (task.AssignedTo is not { } childId)
         {
@@ -155,9 +157,14 @@ public static class SetTaskCompletionHandler
         {
             await bus.InvokeAsync(new RecordStarChange(childId, command.ItemId, command.OccurrenceDate, command.IsCompleted, command.Target), cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
-            // Deliberately swallowed -- see the comment above.
+            // Deliberately swallowed -- see the comment above. Logged, so a stale star count can
+            // be traced back to its cause; a cancelled request isn't a failure worth reporting.
+            if (exception is not OperationCanceledException)
+            {
+                logger.StarChangeFailed(exception, childId.Value, command.ItemId.Value);
+            }
         }
     }
 }

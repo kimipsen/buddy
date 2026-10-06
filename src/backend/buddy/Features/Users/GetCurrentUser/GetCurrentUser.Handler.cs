@@ -6,7 +6,7 @@ namespace buddy.Features.Users;
 
 public static class GetOrCreateUserHandler
 {
-    public static async Task<Result<User>> Handle(GetOrCreateUser command, IUserEventStore events, IEmailSender emailSender, CancellationToken cancellationToken)
+    public static async Task<Result<User>> Handle(GetOrCreateUser command, IUserEventStore events, IEmailSender emailSender, ILogger<GetOrCreateUser> logger, CancellationToken cancellationToken)
     {
         var userId = await events.FindUserIdAsync(command.Subject, cancellationToken);
 
@@ -46,6 +46,12 @@ public static class GetOrCreateUserHandler
 
         var resultEvents = await events.CreateAsync(command.Subject, created.UserId, initialEvents, cancellationToken);
         var user = User.Replay(resultEvents);
+
+        // A concurrent first sign-in may have won the race; then this call created nothing.
+        if (user.Id == created.UserId)
+        {
+            logger.UserProvisioned(user.Id.Value, email.IsVerified);
+        }
 
         if (verificationToken is not null)
         {
