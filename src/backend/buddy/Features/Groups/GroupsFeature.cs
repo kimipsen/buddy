@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -78,7 +79,8 @@ public static class GroupsFeature
         var groups = endpoints.MapGroup("/groups")
             .WithTags("Groups")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         groups.MapCreateGroup();
         groups.MapGetGroup();
@@ -100,7 +102,8 @@ public static class GroupsFeature
         // to itself rather than inheriting "/groups"'s blanket RequireAuthorization().
         var invites = endpoints.MapGroup("/invites")
             .WithTags("Groups")
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         invites.MapPreviewGroupInvite();
         invites.MapAcceptGroupInvite();

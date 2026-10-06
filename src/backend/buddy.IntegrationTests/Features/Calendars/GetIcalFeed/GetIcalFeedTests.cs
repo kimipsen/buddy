@@ -34,6 +34,19 @@ public sealed class GetIcalFeedTests(BuddyApiFixture fixture)
         Assert.Contains("X-WR-CALNAME:Personal", ics);
         Assert.Contains("REFRESH-INTERVAL;VALUE=DURATION:PT1H", ics);
         Assert.Contains("X-PUBLISHED-TTL:PT1H", ics);
+
+        // An unchanged feed renders byte-identically (DTSTAMP is per day, not per request), so a
+        // calendar app sending the ETag back gets a 304 instead of the whole feed.
+        var etag = response.Context.Response.Headers.ETag.ToString();
+        Assert.NotEmpty(etag);
+
+        var revalidated = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("If-None-Match", etag);
+            _.Get.Url($"/calendars/{calendarId}/ical/{issued.Token}");
+            _.StatusCodeShouldBe(304);
+        });
+        Assert.Equal("private, no-cache", revalidated.Context.Response.Headers.CacheControl.ToString());
     }
 
     [Fact]

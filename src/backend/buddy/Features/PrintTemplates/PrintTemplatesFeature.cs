@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -76,7 +77,8 @@ public static class PrintTemplatesFeature
         var printTemplates = endpoints.MapGroup("/print-templates")
             .WithTags("PrintTemplates")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         printTemplates.MapCreatePrintTemplate();
         printTemplates.MapListPrintTemplates();

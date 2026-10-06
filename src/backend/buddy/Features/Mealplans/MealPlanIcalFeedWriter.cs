@@ -21,7 +21,10 @@ public static class MealPlanIcalFeedWriter
         var calendar = new IcsCalendar();
         IcalSubscription.Describe(calendar, "Meal Plan");
 
-        var stamp = new CalDateTime(DateTime.UtcNow, "UTC");
+        // Start of the UTC day, not UtcNow: an unchanged feed must render byte-identically within a
+        // day or its ETag never matches. The feed window rolls daily anyway (see
+        // docs/backend/analysis/conditional-get-etags.md).
+        var stamp = new CalDateTime(DateTime.UtcNow.Date, "UTC");
 
         foreach (var entry in entries)
         {

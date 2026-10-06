@@ -254,6 +254,8 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Sleep diary](../backend/analysis/sleep-diary.md) — implemented guardian page and the public
   share view; the [visual specification](analysis/visual-specification.md)'s Sleep Diary example
   drove its controls (toggle, repeatable rows, the new `shared/time-range`)
+- [Expired sessions during in-app navigation](analysis/expired-session-handling.md) — proposed
+  redirect to `/login` with a "session expired" notice when the Keycloak session ends mid-use
 
 ## Local development
 

@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -87,7 +88,8 @@ public static class PickupsFeature
         var pickups = endpoints.MapGroup("/pickups")
             .WithTags("Pickups")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         pickups.MapAssignPickup();
         pickups.MapClearPickup();

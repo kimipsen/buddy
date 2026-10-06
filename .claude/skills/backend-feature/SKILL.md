@@ -50,7 +50,7 @@ Result to HTTP mapping (`Common/Result.cs`, `Common/ErrorEnvelope.cs`, `docs/bac
 
 Wiring:
 
-- Add `group.Map<UseCase>();` to `Map<Domain>Feature` in `<Domain>Feature.cs`. The group already applies `.WithTags("<Domain>")`, `.RequireAuthorization()` and `.WithGroupName(OpenApiDocumentName)`, and the feature has its own OpenAPI document (`services.AddOpenApi(OpenApiDocumentName, ...)`). `Program.cs` changes only for a new domain (step 3).
+- Add `group.Map<UseCase>();` to `Map<Domain>Feature` in `<Domain>Feature.cs`. The group already applies `.WithTags("<Domain>")`, `.RequireAuthorization()`, `.WithGroupName(OpenApiDocumentName)` and `.WithETag()` (conditional GET: a GET gets an `ETag` and answers a matching `If-None-Match` with `304`, nothing to do in the endpoint), and the feature has its own OpenAPI document (`services.AddOpenApi(OpenApiDocumentName, ...)`). `Program.cs` changes only for a new domain (step 3).
 - Anonymous routes are the exception and need `.AllowAnonymous()` (the iCal feeds only).
 - **Idempotency:** nothing to do per endpoint. `Common/Idempotency/IdempotencyKeyMiddleware.cs` covers every POST that carries an `Idempotency-Key` header, and the frontend sends one through `postIdempotent`. PUT/PATCH/DELETE get idempotency from step 6.
 - **Rate limiting:** there is no ASP.NET rate limiter. Throttling is the shared handler check `Common/RateLimiting/ResendCooldown`; the handler returns `ResendCooldownActive` (a case of a feature-specific outcome union, e.g. `InviteToGroupOutcome`) and the endpoint maps it with `cooldown.ToConflict(httpContext)` → `409` with the `resend_cooldown` envelope. Declare `Conflict<ErrorEnvelope>` in `Results<...>`.
@@ -90,7 +90,7 @@ Mirror Medicines/MedicineSchedule file for file:
 New domain only:
 
 - [ ] `I<Domain>Store : IDocumentStore`.
-- [ ] `<Domain>Feature.cs` with `OpenApiDocumentName`, `EventTypes`, `AddMartenStore<I<Domain>Store>` (`DatabaseSchemaName = "<domain>"`, `StreamIdentity.AsGuid`, `AddEventTypes`), plus `Add<Domain>Feature`/`Map<Domain>Feature`.
+- [ ] `<Domain>Feature.cs` with `OpenApiDocumentName`, `EventTypes`, `AddMartenStore<I<Domain>Store>` (`DatabaseSchemaName = "<domain>"`, `StreamIdentity.AsGuid`, `AddEventTypes`), plus `Add<Domain>Feature`/`Map<Domain>Feature`. Every `MapGroup(...)` chain ends with `.WithETag()`; `Meta/ETagCoverageTests` fails on a GET without it.
 - [ ] `Program.cs`: add `Add<Domain>Feature(builder.Configuration)` **after** every feature it depends on (Guardians before anything that uses `IGuardianLinkEventStore`), and add `app.Map<Domain>Feature()`.
 - [ ] `taskfile.yml`: add the schema to `MARTEN_SCHEMAS`.
 - [ ] Create `docs/backend/<domain>/flow.md` and link it in `docs/backend/README.md`.

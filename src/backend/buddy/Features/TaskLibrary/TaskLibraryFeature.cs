@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -78,7 +79,8 @@ public static class TaskLibraryFeature
         var taskTemplates = endpoints.MapGroup("/task-templates")
             .WithTags("TaskLibrary")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         taskTemplates.MapCreateTaskTemplate();
         taskTemplates.MapUpdateTaskTemplate();

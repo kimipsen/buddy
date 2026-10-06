@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common.Configuration;
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Features.Guardians;
 using buddy.Serialization;
@@ -133,7 +134,8 @@ public static class UsersFeature
         var users = endpoints.MapGroup("/users")
             .WithTags("Users")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         users.MapGetCurrentUser();
         users.MapListCurrentUserEvents();

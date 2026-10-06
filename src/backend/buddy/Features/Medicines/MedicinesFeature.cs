@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -89,7 +90,8 @@ public static class MedicinesFeature
         var medicines = endpoints.MapGroup("/medicines")
             .WithTags("Medicines")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         medicines.MapCreateMedicineSchedule();
         medicines.MapUpdateMedicineDetails();

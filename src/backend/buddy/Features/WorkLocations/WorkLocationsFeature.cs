@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -77,7 +78,8 @@ public static class WorkLocationsFeature
         var workLocations = endpoints.MapGroup("/work-locations")
             .WithTags("WorkLocations")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         workLocations.MapAddWorkLocation();
         workLocations.MapUpdateWorkLocation();

@@ -1,4 +1,5 @@
 using buddy.Common.Configuration;
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -135,7 +136,8 @@ public static class MealplansFeature
         var mealplans = endpoints.MapGroup("/mealplans")
             .WithTags("Mealplans")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         mealplans.MapCreateMeal();
         mealplans.MapUpdateMealDetails();

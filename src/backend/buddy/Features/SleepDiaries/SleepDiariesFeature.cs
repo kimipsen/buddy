@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -71,7 +72,8 @@ public static class SleepDiariesFeature
         var sleepDiary = endpoints.MapGroup("/sleep-diary")
             .WithTags("SleepDiary")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         sleepDiary.MapLogSleepEntry();
         sleepDiary.MapClearSleepEntry();

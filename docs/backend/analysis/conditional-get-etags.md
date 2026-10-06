@@ -1,6 +1,6 @@
 # Conditional GET with ETags
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `ETagMiddleware` + `.WithETag()` (`Common/Http/ETagMiddleware.cs`) on all 18 feature route groups, a per-day `DTSTAMP` in both iCal writers, `ETagMiddlewareTests` and `Meta/ETagCoverageTests`. `If-Match` / `412` on writes is out of scope.
 
 ## Context
 
@@ -94,9 +94,12 @@ meta test fails for any GET endpoint without a decision.** The marker is an endp
 the same mechanism as
 [`AllowUnprovisionedUserMetadata`](../../../src/backend/buddy/Features/Users/ProvisionedUserMiddleware.cs).
 
-With 13 feature groups, opting every group in is 13 one-line changes. That covers all 47 GET
-endpoints today, including both iCal feeds, which live in the `calendars` and `mealplans` groups.
-`/health` and `/version` are mapped outside any feature group and stay out of scope.
+The 13 features map 18 route groups (Guardians has four, Groups two), so opting every group in is
+18 one-line changes. That covers all 47 GET endpoints today, including both iCal feeds, which live
+in the `calendars` and `mealplans` groups. `/version` and the Development-only OpenAPI document are
+mapped outside any feature group and are on the exclusion list. `/health` needs no entry, because
+`MapHealthChecks` maps it for every method rather than as a GET, and the middleware ignores it
+anyway since it has no marker.
 
 The meta test follows the shape of `Meta/EndpointCoverageTests.cs`: it enumerates every GET route
 and fails for one that has neither the marker nor an entry in an explicit exclusion list. A new
@@ -394,30 +397,20 @@ conditional requests itself.
 |---|---|
 | How is the ETag computed? | SHA-256 of the rendered `200` body in one middleware, because it can't go stale |
 | Version-based ETags? | Deferred; possible later per hot endpoint, on the meta test's exclusion list |
-| Which endpoints? | Every GET in the 13 feature groups, opted in per route group; a meta test forces a decision for new GETs |
+| Which endpoints? | Every GET in the 18 feature route groups, opted in per group; a meta test forces a decision for new GETs |
 | Strong or weak? | Strong: the hashed bytes are the bytes sent |
 | Cache headers | `private, no-cache` unless the endpoint sets its own, so data is never stale and never in a shared cache |
 | Frontend changes | None; the browser cache handles `If-None-Match` for `XMLHttpRequest` |
 | iCal feeds | `DTSTAMP` = start of the UTC day, so unchanged feeds hash identically |
+| `If-Match` / `412` on writes? | Out of scope: needs version-based tags, and server-side conflicts already return `409 concurrency_conflict` |
+| Response compression? | None today; a comment in `ETagMiddleware` says it must run outside the middleware and the tags then become weak |
+| `HEAD`? | Not supported: minimal-API `MapGet` doesn't answer `HEAD` |
 
 ## Remaining open questions
 
-- **`If-Match` on PUT/PATCH/DELETE (optimistic concurrency over HTTP).**
-  [http-status-codes.md](../http-status-codes.md#412-precondition-failed) already reserves `412` for
-  it. It would need a version-based ETag (a body hash of a GET can't be checked cheaply on a write),
-  so it builds on the deferred option above. Lean: out of scope. Server-side conflicts are already
-  caught by `StreamVersionScopeMiddleware` (`409 concurrency_conflict`). `If-Match` would only add
-  detection of lost updates between two browser tabs.
-- **Response compression.** If `UseResponseCompression()` or a Caddy `encode` is ever added, it
-  must sit *outside* this middleware so the hash is of the uncompressed body, and the ETag should
-  become weak (`W/"..."`), since the bytes on the wire then differ by encoding. Lean: no
-  compression today, so no change now, but a comment in `ETagMiddleware` should say this.
-- **`HEAD` requests.** Minimal-API `MapGet` doesn't answer `HEAD`, so there is nothing to tag.
-  Lean: leave it.
 - **Does any calendar app send `If-None-Match` for subscribed feeds?** Not verified. If none do, the
-  feed half of this proposal saves nothing (the Angular half still applies). Lean: build it anyway,
-  since it costs one line per feed group, and check the API logs for `304`s on `/ical/` routes after
-  it ships.
+  feed half of this saves nothing (the Angular half still applies). Check the API logs for `304`s on
+  `/ical/` routes now that it has shipped.
 
 ## Diagram
 

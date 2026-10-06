@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -66,7 +67,8 @@ public static class BabysittersFeature
         var babysitters = endpoints.MapGroup("/babysitters")
             .WithTags("Babysitters")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         babysitters.MapListMyBabysitters();
         babysitters.MapAddBabysitter();

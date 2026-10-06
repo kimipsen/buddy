@@ -142,6 +142,7 @@ public union Result<T>(Result<T>.Success, Result<T>.NotFound, Result<T>.Forbidde
 
 Endpoint (`AssignPickup.Endpoint.cs`, `ClearPickup.Endpoint.cs`):
 - `public static class <UseCase>Endpoint` with `MapX(this RouteGroupBuilder group)`; the group in `<Domain>Feature.Map<Domain>Feature` adds `.WithTags`, `.RequireAuthorization()`, `.WithGroupName(OpenApiDocumentName)`.
+- Conditional GET: every route group ends with `.WithETag()` (`Common/Http/ETagMiddleware.cs`). The middleware hashes each `200` GET body into a strong `ETag`, answers a matching `If-None-Match` with `304`, and sets `Cache-Control: private, no-cache` unless the endpoint set its own. Endpoints don't change; their output must be deterministic for the same data (no `UtcNow` stamped into a body -- the iCal writers stamp `DTSTAMP` per day for this reason). `Meta/ETagCoverageTests` fails on a GET without the marker that isn't on its exclusion list. See `docs/backend/analysis/conditional-get-etags.md`.
 - Lambda returns `Task<Results<Ok<T>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>>`, builds the command, calls `bus.InvokeAsync<Result<T>>(command, ct)`, and maps with an exhaustive `switch` expression. Validation -> `TypedResults.BadRequest(problem.ToEnvelope(httpContext))`.
 - Request body is a separate `sealed record <UseCase>Request` with primitives (`Guid?`), converted to domain IDs in the endpoint.
 - Every endpoint has `.WithName("<UseCase>")` - the endpoint coverage test keys on it.

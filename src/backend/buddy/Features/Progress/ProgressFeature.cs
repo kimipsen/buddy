@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Features.Calendars;
 using buddy.Serialization;
@@ -84,7 +85,8 @@ public static class ProgressFeature
         var progress = endpoints.MapGroup("/progress")
             .WithTags("Progress")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         progress.MapGetMyProgress();
         progress.MapGetChildProgress();

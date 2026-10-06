@@ -1,4 +1,5 @@
 using buddy.Common.Configuration;
+using buddy.Common.Http;
 using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
@@ -31,7 +32,8 @@ public static class GuardiansFeature
         var children = endpoints.MapGroup("/users/me/children")
             .WithTags(Tag)
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         children.MapCreateChild();
         children.MapListMyChildren();
@@ -46,14 +48,16 @@ public static class GuardiansFeature
         var guardians = endpoints.MapGroup("/users/me/guardians")
             .WithTags(Tag)
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         guardians.MapListMyGuardians();
 
         var siblings = endpoints.MapGroup("/users/me/siblings")
             .WithTags(Tag)
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         siblings.MapListMySiblings();
 
@@ -62,7 +66,8 @@ public static class GuardiansFeature
         // link, while AcceptGuardianInvite needs auth applied only to itself.
         var guardianInvites = endpoints.MapGroup("/guardian-invites")
             .WithTags(Tag)
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         guardianInvites.MapPreviewGuardianInvite();
         guardianInvites.MapAcceptGuardianInvite();

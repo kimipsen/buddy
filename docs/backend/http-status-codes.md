@@ -75,7 +75,7 @@ Typical Buddy use:
 Use with conditional requests (`ETag` or `If-Modified-Since`).
 
 Typical Buddy use:
-- not currently used
+- any GET in a feature route group, when `If-None-Match` matches the current `ETag` (see [Conditional GET (ETag)](#conditional-get-etag))
 
 ### 400 Bad Request
 Use when request syntax or domain validation fails.
@@ -265,6 +265,27 @@ retries a transient failure (network error or `5xx`) with that same key instead 
 Completed entries are kept for 24h, then swept by a background cleanup pass; an entry with no stored
 response yet whose owning request never completed (a crash mid-request) is swept after 5 minutes so the
 key becomes claimable again.
+
+## Conditional GET (ETag)
+
+Every GET endpoint in a feature route group carries an `ETag` on its `200` response
+(`ETagMiddleware`, `buddy.Common.Http`; opted in per route group with `.WithETag()`). The tag is a
+SHA-256 hash of the response body, so it changes whenever any byte of the output changes -- including
+output that depends on the date rather than on events (the iCal feeds' rolling windows, "today"
+endpoints).
+
+- `200` GET: `ETag: "<hash>"` and `Cache-Control: private, no-cache` (unless the endpoint set its
+  own `Cache-Control`, as the iCal feeds do with the same value).
+- A request whose `If-None-Match` matches (weak comparison, a list, or `*`): `304` with no body,
+  the same `ETag` and `Cache-Control`.
+- Any non-`200` status, and every non-GET method: no `ETag`, never `304`.
+- `/version` and the Development-only OpenAPI document are not tagged; `Meta/ETagCoverageTests`
+  holds that exclusion list.
+
+The Angular frontend needs no code for this: the browser's HTTP cache sends `If-None-Match` and
+turns a `304` back into the cached `200`. `no-cache` means every reuse is revalidated, so a
+response is never stale. `If-Match` / `412` on writes is not implemented. Design:
+[conditional-get-etags.md](analysis/conditional-get-etags.md).
 
 ## Endpoint Status Mapping
 

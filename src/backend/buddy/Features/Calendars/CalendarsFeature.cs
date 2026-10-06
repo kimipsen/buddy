@@ -1,3 +1,4 @@
+using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -104,7 +105,8 @@ public static class CalendarsFeature
         var calendars = endpoints.MapGroup("/calendars")
             .WithTags("Calendars")
             .RequireAuthorization()
-            .WithGroupName(OpenApiDocumentName);
+            .WithGroupName(OpenApiDocumentName)
+            .WithETag();
 
         calendars.MapCreateCalendar();
         calendars.MapGetCalendar();

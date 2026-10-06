@@ -1,4 +1,5 @@
 using buddy.Common.Concurrency;
+using buddy.Common.Http;
 using buddy.Common.Idempotency;
 using buddy.Common.Validation;
 using buddy.Common.Versioning;
@@ -124,6 +125,9 @@ app.UseConcurrencyConflicts();
 // Also outside UseIdempotencyKeys, for the same reason: a rejected body releases its key.
 app.UseRequestBindingFailures();
 app.UseIdempotencyKeys();
+// Innermost, after authorization and provisioning: a 304 is only ever computed from a body the
+// caller was allowed to see.
+app.UseETags();
 
 app.MapHealthChecks("/health");
 app.MapVersion();
