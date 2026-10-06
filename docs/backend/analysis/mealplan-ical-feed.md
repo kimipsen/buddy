@@ -154,6 +154,28 @@ with no other use in this feature, addressing a problem (multi-timezone families
 `Uid` is `{mealId:N}-{date:yyyyMMdd}-{slot}@buddy` — deterministic per `(meal, date, slot)`, so it's
 stable across feed regenerations the same way `IcalFeedWriter.BuildUid` is for calendar occurrences.
 
+**Subscription metadata.** `MealPlanIcalFeedWriter` and `IcalFeedWriter` both call
+[`IcalSubscription.Describe`](../../../src/backend/buddy/Common/Ical/IcalSubscription.cs) to set the
+calendar-wide `NAME`/`X-WR-CALNAME` (so a subscribing calendar app shows "Meal Plan" or the
+calendar's own name rather than a blank/generic one) and a `REFRESH-INTERVAL`/`X-PUBLISHED-TTL` of
+one hour (a hint Apple Calendar and Outlook honour; Google Calendar ignores it and polls on its own
+schedule regardless). Both feed endpoints also set `Cache-Control: private, no-cache` on the
+response — the feed is re-rendered on every request and the URL itself carries the token, so neither
+a shared cache nor a client cache should serve a stale copy.
+
+## Frontend: subscribe links
+
+Both the calendars admin screen (`manage-calendars`) and the meal-plan screen (`mealplan-ical`)
+render the issued feed URL through a shared
+[`IcalSubscribeLinks`](../../../src/frontend/buddy/src/app/shared/ical-subscribe-links/ical-subscribe-links.ts)
+component rather than expecting a guardian to copy the URL into their calendar app by hand. It
+offers two links: one on the `webcal://` scheme (rewritten from the feed's `http(s)://` URL), which
+Apple Calendar and Outlook register to open their own subscribe dialog directly, and one to
+`https://calendar.google.com/calendar/r?cid=...` (Google doesn't register for `webcal://`, but
+subscribes to a feed passed as `cid`), opened in a new tab. A hint beneath the links tells the
+guardian to add the link as a subscription rather than importing the downloaded file, since an
+imported file is a one-time copy that never updates.
+
 ## API surface
 
 | Route | Method | Auth | Purpose |

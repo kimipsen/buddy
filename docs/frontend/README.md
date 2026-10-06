@@ -56,7 +56,9 @@ Current responsibilities:
 - create child accounts and capture the one-time temporary password
 - show today's events, tasks, and medicine doses
 - manage meals and assign them to shared meal-plan slots
-- create, list, and revoke private iCal subscription links for the family's meal plan
+- create, list, and revoke private iCal subscription links for the family's meal plan, with
+  one-click `webcal://` and Google Calendar subscribe buttons (also offered for calendar iCal links
+  in the admin area)
 - start a chat-based AI assistant session to draft meal-plan assignments over a
   date range, then apply or discard the resulting draft
 - manage pickup and drop-off assignments for linked children
