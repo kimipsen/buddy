@@ -101,8 +101,8 @@ without being touched, including endpoints added later. Only exemptions are expl
   reject it; it just doesn't authenticate it. It therefore falls into the IP partition, so sending
   garbage tokens can't create fresh per-user buckets.
 
-**Exempt: `/health` only**, via `.DisableRateLimiting()`. The container probes on both platforms
-hit it constantly, and throttling it would make a healthy replica look dead. `/version` stays
+**Exempt: the `/health` and `/health/ready` probes only**, via `.DisableRateLimiting()`. Container
+probes hit them constantly, and throttling it would make a healthy replica look dead. `/version` stays
 covered by the anonymous partition, since the frontend calls it once per load.
 
 Rejected: **opt in per route group, as `.WithETag()` does.** ETags are opt-in because buffering a
@@ -387,7 +387,7 @@ as the example:
   - an anonymous IP over its burst gets `429`, and another IP doesn't;
   - IPv6 addresses in the same `/64` share one bucket;
   - requests with an invalid bearer token drain the IP's bucket;
-  - `/health` never returns `429`;
+  - `/health` and `/health/ready` never return `429`;
   - a throttled `POST /groups` with an `Idempotency-Key` doesn't reserve the key: the same key then
     creates the group on the unthrottled shared host (proves the pipeline order);
   - a `429` carries `Access-Control-Allow-Origin` for an allowed origin;
@@ -402,7 +402,7 @@ as the example:
 - **[`Meta/RateLimitingCoverageTests.cs`](../../../src/backend/buddy.IntegrationTests/Meta/RateLimitingCoverageTests.cs)**,
   mirroring `Meta/ETagCoverageTests.cs`:
   - every endpoint with `DisableRateLimitingAttribute` metadata is on an explicit exemption list
-    (today: `/health`), and the list has no stale entries;
+    (today: `/health` and `/health/ready`), and the list has no stale entries;
   - every `AllowAnonymous` endpoint either has a named policy or is on a list of endpoints that rely
     on the global anonymous bucket alone (`GetSharedSleepDiary`, `GetVersion`). A new anonymous
     endpoint has to make that choice explicitly.
@@ -430,7 +430,7 @@ as the example:
 | Question | Decision |
 |---|---|
 | Mechanism | ASP.NET Core's built-in rate limiter, in memory per replica; no package, no new infrastructure |
-| Which endpoints? | All of them, through a global limiter. `/health` is the only exemption |
+| Which endpoints? | All of them, through a global limiter. The `/health` and `/health/ready` probes are the only exemptions |
 | Partition for authenticated callers | Keycloak subject (per user), not IP: NAT would merge users |
 | Partition for anonymous callers | Client IP, after `UseForwardedHeaders` from known proxy networks only |
 | iCal feeds | Extra `ical-feed` policy keyed by feed id + token hash, not IP: Google polls from shared IPs |

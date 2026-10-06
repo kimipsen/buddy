@@ -16,8 +16,8 @@ namespace buddy.IntegrationTests.Meta;
 [Collection(BuddyApiCollection.Name)]
 public sealed class RateLimitingCoverageTests(BuddyApiFixture fixture)
 {
-    // Container probes hit it constantly; throttling it would make a healthy replica look dead.
-    private static readonly string[] ExemptRoutes = ["/health"];
+    // Container probes hit them constantly; throttling them would make a healthy replica look dead.
+    private static readonly string[] ExemptRoutes = ["/health", "/health/ready"];
 
     // Anonymous endpoints where the global per-IP bucket is enough: /version is tiny, and a shared
     // sleep diary is opened by a person, not polled.

@@ -124,14 +124,16 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
         Assert.Equal(429, await StatusAsync(Get("/version", ip)));
     }
 
-    [Fact]
-    public async Task Health_is_never_rate_limited()
+    [Theory]
+    [InlineData("/health")]
+    [InlineData("/health/ready")]
+    public async Task Health_probes_are_never_rate_limited(string path)
     {
         var ip = NewClientIp();
 
         for (var i = 0; i < IpBurst * 3; i++)
         {
-            Assert.Equal(200, await StatusAsync(Get("/health", ip)));
+            Assert.Equal(200, await StatusAsync(Get(path, ip)));
         }
     }
 

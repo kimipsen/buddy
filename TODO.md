@@ -436,13 +436,20 @@ Found along the way:
 
 ### Operability
 
-- [ ] **Observability.** The backend has only 3 `ILogger` usages and no OpenTelemetry. Add tracing
-  and metrics (Marten and Wolverine both emit OpenTelemetry data) and structured logs with a
-  correlation ID.
+- [x] **Observability.** OpenTelemetry traces, metrics and logs (ASP.NET Core, HttpClient, Npgsql,
+  Wolverine, runtime), exported over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; JSON console
+  logs with TraceId/RequestId outside Development. See `docs/backend/observability.md`.
+- [ ] **Run an OTLP backend in production** (Collector, Grafana, Azure Monitor...) and set
+  `OTEL_EXPORTER_OTLP_ENDPOINT`; until then nothing is exported. Consider an Aspire dashboard
+  service in the devcontainer for local traces.
+- [ ] **More logging.** The backend still has only a handful of `ILogger` calls; log the decisions
+  worth investigating later (rejected invites, AI provider failures, email delivery).
 - [ ] **Global exception handler.** No `AddProblemDetails`/`IExceptionHandler`, so unexpected
   exceptions get the default 500 instead of an `ErrorEnvelope`.
-- [ ] **Readiness health checks.** `/health` is liveness only. Check Postgres (and Keycloak), and
-  add healthchecks for the `api` and `frontend` containers in `deploy/docker-compose.prod.yml`.
+- [x] **Readiness health checks.** `/health/ready` checks Postgres (503) and Keycloak (degraded,
+  still 200); the prod compose file probes it for `api` and `/` for `frontend`.
+- [ ] **Health probes on Azure Container Apps.** `deploy.sh` configures none; use `/health` as the
+  liveness and `/health/ready` as the readiness probe.
 - [ ] **Automated backups.** Backups on the Oracle VM are manual `pg_dump` commands
   (`deploy/README.md` §7). Schedule them, copy them off the VM, and test a restore regularly.
 - [ ] **Pin the .NET preview images by digest** (`dotnet/nightly/sdk:11.0-preview`) so production

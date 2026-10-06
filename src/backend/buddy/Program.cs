@@ -1,6 +1,8 @@
 using buddy.Common.Concurrency;
+using buddy.Common.Health;
 using buddy.Common.Http;
 using buddy.Common.Idempotency;
+using buddy.Common.Observability;
 using buddy.Common.RateLimiting;
 using buddy.Common.Validation;
 using buddy.Common.Versioning;
@@ -25,6 +27,8 @@ using FluentValidation;
 using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddObservabilityFeature();
 
 builder.Host.UseWolverine(opts =>
 {
@@ -76,7 +80,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.ShouldInclude = api => api.GroupName is null;
 });
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecksFeature();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddIdempotencyFeature(builder.Configuration);
 builder.Services.AddForwardedHeadersFromConfiguration(builder.Configuration);
@@ -140,8 +144,8 @@ app.UseIdempotencyKeys();
 // caller was allowed to see.
 app.UseETags();
 
-// Container probes hit it constantly; throttling it would make a healthy replica look dead.
-app.MapHealthChecks("/health").DisableRateLimiting();
+// /health and /health/ready. Container probes hit them constantly, so neither is rate limited.
+app.MapHealthChecksFeature();
 app.MapVersion();
 
 app.MapUsersFeature();

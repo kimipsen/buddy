@@ -121,8 +121,11 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 
     // A second API host on the same Postgres/Keycloak/Mailpit, with extra configuration layered on
     // top of the shared host's -- for tests that need settings the shared host can't have (low rate
-    // limits). The caller owns and disposes it.
-    public Task<IAlbaHost> CreateHostAsync(IReadOnlyDictionary<string, string?> overrides)
+    // limits, a broken dependency) or extra test services (an in-memory telemetry exporter). The
+    // caller owns and disposes it.
+    public Task<IAlbaHost> CreateHostAsync(
+        IReadOnlyDictionary<string, string?> overrides,
+        Action<IServiceCollection>? configureServices = null)
     {
         var merged = new Dictionary<string, string?>(_configOverrides);
 
@@ -131,7 +134,9 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             merged[key] = value;
         }
 
-        return AlbaHost.For<global::Program>(ConfigurationOverride.Create(merged));
+        return AlbaHost.For<global::Program>(
+            builder => builder.ConfigureTestServices(services => configureServices?.Invoke(services)),
+            ConfigurationOverride.Create(merged));
     }
 
     // Real access token for one of the seeded test users (see Fixtures/TestRealm.json), obtained

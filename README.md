@@ -153,6 +153,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Progress flow](docs/backend/progress/flow.md)
 - [Glossary](docs/backend/glossary.md)
 - [HTTP status code semantics](docs/backend/http-status-codes.md)
+- [Health checks and observability](docs/backend/observability.md)
 
 ### Design analyses
 

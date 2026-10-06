@@ -18,6 +18,7 @@ This folder contains the project-level documentation for Buddy.
 - [Progress flow](backend/progress/flow.md)
 - [Glossary](backend/glossary.md)
 - [HTTP status code semantics](backend/http-status-codes.md)
+- [Health checks and observability](backend/observability.md)
 - [Testing](testing.md)
 
 ## Frontend

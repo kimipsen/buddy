@@ -204,7 +204,7 @@ az containerapp list -g "$RESOURCE_GROUP" \
 az containerapp revision list -n api -g "$RESOURCE_GROUP" \
   --query "[].{name:name, active:properties.active, health:properties.healthState, running:properties.runningState, traffic:properties.trafficWeight}" -o table
 
-curl -fsS  https://<api host>/health              # -> Healthy
+curl -fsS  https://<api host>/health/ready        # -> {"status":"Healthy",...}
 curl -fsSI https://<frontend host>/ | head -1     # -> HTTP/2 200
 curl -fsS  https://<frontend host>/config/runtime-config.json   # apiBaseUrl / keycloak.authority point at the right hosts
 curl -fsS  https://<keycloak host>/realms/buddy/.well-known/openid-configuration | jq -r .issuer
@@ -213,15 +213,18 @@ curl -fsS  https://<keycloak host>/realms/buddy/.well-known/openid-configuration
 - `latestRevisionName` should equal `latestReadyRevisionName`; otherwise the
   new revision is still provisioning or failed (`az containerapp logs show -n
   api -g "$RESOURCE_GROUP" --tail 50`).
-- `/health` is the API's anonymous `MapHealthChecks("/health")` endpoint. No
-  checks are registered, so it confirms the app is up and serving, **not**
-  that Postgres or Keycloak are reachable. The OIDC and frontend checks cover
-  those; a real login in the app is the end-to-end test.
+- `/health/ready` checks that the API reaches Postgres (`"Unhealthy"` and a
+  503 if not) and Keycloak's OIDC discovery (`"Degraded"`, still 200, if
+  not). `/health` only confirms the process is serving. A real login in the
+  app is still the end-to-end test. See
+  [docs/backend/observability.md](../docs/backend/observability.md).
 - The issuer must be exactly `https://<keycloak host>/realms/buddy` (the API's
   `ValidIssuer`). A 404 on the `buddy` realm means step 4 hasn't been done.
 
 The apps have no health probes configured, so Container Apps only knows the
-container started. That's why the checks above are manual.
+container started. That's why the checks above are manual. The API's
+`/health` (liveness) and `/health/ready` (readiness) are ready to be used as
+probes, but `deploy.sh` doesn't configure them yet.
 
 ## 8. Rollback
 

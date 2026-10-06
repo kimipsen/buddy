@@ -39,6 +39,12 @@ services:
         KEYCLOAK_AUTHORITY: "https://${AUTH_DOMAIN}"
         BUDDY_VERSION: "${BUDDY_VERSION:-0.0.0-dev}"
     restart: unless-stopped
+    # The caddy image is Alpine, so busybox wget is there.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
       - buddy_network
 
@@ -72,11 +78,14 @@ services:
       ForwardedHeaders__KnownNetworks__0: "10.0.0.0/8"
       ForwardedHeaders__KnownNetworks__1: "172.16.0.0/12"
       ForwardedHeaders__KnownNetworks__2: "192.168.0.0/16"
+      # Optional: an OTLP endpoint (e.g. an OpenTelemetry Collector) to export traces, metrics and
+      # logs to. Empty means telemetry isn't exported (docs/backend/observability.md).
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
     # The aspnet runtime image has no curl/wget; bash's /dev/tcp does the GET.
-    # /health is MapHealthChecks with no registered checks: it says the process
-    # is serving requests, not that Postgres/Keycloak are reachable.
+    # /health/ready answers 503 when Postgres is unreachable; a Keycloak outage only
+    # degrades it (still 200), see Common/Health/HealthChecksFeature.cs.
     healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
       interval: 15s
       timeout: 5s
       retries: 5

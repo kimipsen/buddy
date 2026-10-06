@@ -19,6 +19,7 @@ Backend documentation for the Buddy API.
 - [Sleep diary flow](sleep-diary/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
+- [Health checks and observability](observability.md)
 
 ## Design analysis and decision records
 
