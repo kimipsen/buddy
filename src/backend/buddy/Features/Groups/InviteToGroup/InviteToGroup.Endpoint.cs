@@ -32,6 +32,7 @@ public static class InviteToGroupEndpoint
                 ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
             };
         })
+        .RequireRateLimiting(RateLimitingFeature.OutboundEmailPolicy)
         .WithName("InviteToGroup");
 
         return groups;

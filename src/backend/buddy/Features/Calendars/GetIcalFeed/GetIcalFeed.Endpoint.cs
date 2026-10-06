@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Common.Ical;
+using buddy.Common.RateLimiting;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -35,6 +36,7 @@ public static class GetIcalFeedEndpoint
             };
         })
         .AllowAnonymous()
+        .RequireRateLimiting(RateLimitingFeature.IcalFeedPolicy)
         .WithName("GetCalendarIcalFeed");
 
         return calendars;

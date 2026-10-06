@@ -2,6 +2,7 @@ using System.Security.Claims;
 
 using buddy.Common;
 using buddy.Features.Users;
+using buddy.Common.RateLimiting;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -32,6 +33,7 @@ public static class SendAiSessionMessageEndpoint
                 Result<AiSessionView>.NotFound => TypedResults.NotFound(),
             };
         })
+        .RequireRateLimiting(RateLimitingFeature.AiAssistantPolicy)
         .WithName("SendAiSessionMessage");
 
         return mealplans;

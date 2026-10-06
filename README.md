@@ -64,6 +64,7 @@ in real time.
 - [x] Group invitations and email-verification flows
 - [x] English and Danish localization
 - [x] Light, dark, and system theme selection
+- [x] Per-user and per-feed rate limiting on every API endpoint
 
 ## Repository structure
 

@@ -50,6 +50,14 @@ variables). Notable sections:
 - `AiAssistant` — default model per AI provider for the mealplan AI
   assistant (`OpenAiModel`, `GeminiModel`, `AnthropicModel`); per-family
   provider selection and API keys are stored as events, not configuration.
+- `RateLimiting` — request-rate limits (per user, per client IP, per iCal
+  feed link, and the AI-assistant and outbound-email policies). Defaults live
+  in `Common/RateLimiting/RateLimitingOptions.cs`; override single values,
+  e.g. `RateLimiting__IcalFeed__TokenLimit`. See
+  [rate-limiting.md](../../../docs/backend/analysis/rate-limiting.md).
+- `ForwardedHeaders:KnownNetworks` — CIDR ranges of the reverse proxy whose
+  `X-Forwarded-For` is trusted (loopback is always trusted). Empty locally;
+  both production deployments set it.
 
 Secrets (Keycloak admin client secret, AI provider API keys, etc.) belong in
 user secrets or environment variables in any environment beyond the checked-in

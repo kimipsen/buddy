@@ -1,5 +1,6 @@
 using buddy.Common;
 using buddy.Common.Ical;
+using buddy.Common.RateLimiting;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -35,6 +36,7 @@ public static class GetMealPlanIcalFeedEndpoint
             };
         })
         .AllowAnonymous()
+        .RequireRateLimiting(RateLimitingFeature.IcalFeedPolicy)
         .WithName("GetMealPlanIcalFeed");
 
         return mealplans;

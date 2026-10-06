@@ -32,6 +32,7 @@ public static class InviteGuardianEndpoint
                 ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
             };
         })
+        .RequireRateLimiting(RateLimitingFeature.OutboundEmailPolicy)
         .WithName("InviteGuardian");
 
         return children;

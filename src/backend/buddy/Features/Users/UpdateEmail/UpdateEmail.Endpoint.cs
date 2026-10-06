@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.RateLimiting;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -33,6 +34,7 @@ public static class UpdateCurrentEmailEndpoint
                 Result<User>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
+        .RequireRateLimiting(RateLimitingFeature.OutboundEmailPolicy)
         .WithName("UpdateCurrentEmail");
 
         return users;

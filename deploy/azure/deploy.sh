@@ -328,6 +328,14 @@ API_ENV_VARS=(
   Authentication__KeycloakAdmin__ClientSecret=secretref:keycloak-admin-cli-secret
   "Cors__AllowedOrigins__0=https://$FRONTEND_HOSTNAME"
   "Mail__FrontendBaseUrl=https://$FRONTEND_HOSTNAME"
+  # Trust X-Forwarded-For from the Container Apps ingress (Envoy). Ingress is the only way in -- the
+  # app has no public IP of its own -- and its source address range isn't fixed without a custom
+  # VNet, so this trusts the private and shared (100.64/10) ranges rather than one subnet. Rate
+  # limiting partitions anonymous callers by this address (docs/backend/analysis/rate-limiting.md).
+  ForwardedHeaders__KnownNetworks__0=10.0.0.0/8
+  ForwardedHeaders__KnownNetworks__1=172.16.0.0/12
+  ForwardedHeaders__KnownNetworks__2=192.168.0.0/16
+  ForwardedHeaders__KnownNetworks__3=100.64.0.0/10
 )
 if [[ "$MAIL_CONFIGURED" == true ]]; then
   API_ENV_VARS+=(

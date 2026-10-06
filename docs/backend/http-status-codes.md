@@ -181,11 +181,18 @@ Team rule (resolved):
 Use when request rate exceeds limits.
 
 Typical Buddy use:
-- not currently used: the resend cooldown is a state conflict and returns `409`
+- any endpoint, from the rate limiter (`Common/RateLimiting/RateLimitingFeature`):
+  a caller over its per-user or per-IP bucket, an iCal feed link over its
+  per-link bucket, or a user over the `ai-assistant` / `outbound-email` policy.
+  See the [rate limiting analysis](analysis/rate-limiting.md).
+- not for the resend cooldown: that is a state conflict and returns `409`
   (`resend_cooldown`), see above
 
 Return guidance:
-- include `Retry-After` when known
+- `Retry-After` in whole seconds, plus the `ErrorEnvelope` with code
+  `rate_limited`
+- endpoints don't declare it in their `Results<...>`; the middleware renders it
+  before any endpoint runs
 
 ### 500 Internal Server Error
 Use for unexpected application errors.

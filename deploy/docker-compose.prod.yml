@@ -66,6 +66,12 @@ services:
       Authentication__KeycloakAdmin__ClientSecret: "${KEYCLOAK_ADMIN_CLI_SECRET}"
       Cors__AllowedOrigins__0: "https://${APP_DOMAIN}"
       Mail__FrontendBaseUrl: "https://${APP_DOMAIN}"
+      # Caddy's X-Forwarded-For is trusted from the private bridge network only. The API publishes no
+      # port, so nothing outside buddy_network can reach it to spoof the header. Rate limiting
+      # partitions anonymous callers by this address (docs/backend/analysis/rate-limiting.md).
+      ForwardedHeaders__KnownNetworks__0: "10.0.0.0/8"
+      ForwardedHeaders__KnownNetworks__1: "172.16.0.0/12"
+      ForwardedHeaders__KnownNetworks__2: "192.168.0.0/16"
     # The aspnet runtime image has no curl/wget; bash's /dev/tcp does the GET.
     # /health is MapHealthChecks with no registered checks: it says the process
     # is serving requests, not that Postgres/Keycloak are reachable.

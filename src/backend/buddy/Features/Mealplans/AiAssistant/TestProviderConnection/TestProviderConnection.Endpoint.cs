@@ -2,6 +2,7 @@ using System.Security.Claims;
 
 using buddy.Common;
 using buddy.Features.Users;
+using buddy.Common.RateLimiting;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -33,6 +34,7 @@ public static class TestProviderConnectionEndpoint
                 Result<TestProviderConnectionResult>.NotFound => TypedResults.NotFound(),
             };
         })
+        .RequireRateLimiting(RateLimitingFeature.AiAssistantPolicy)
         .WithName("TestProviderConnection");
 
         return mealplans;

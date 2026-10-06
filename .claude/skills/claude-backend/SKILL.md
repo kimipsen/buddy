@@ -151,6 +151,7 @@ Endpoint (`AssignPickup.Endpoint.cs`, `ClearPickup.Endpoint.cs`):
 - Request body is a separate `sealed record <UseCase>Request` with primitives (`Guid?`), converted to domain IDs in the endpoint.
 - Every endpoint has `.WithName("<UseCase>")` - the endpoint coverage test keys on it.
 - Status codes per `docs/backend/http-status-codes.md`: creates return **200** with the created resource (no endpoint uses 201/`TypedResults.Created`), update 200/204, delete 204. Create-style POSTs are covered by `IdempotencyKeyMiddleware`.
+- Rate limiting: `Common/RateLimiting/RateLimitingFeature` is a global limiter on every endpoint (per Keycloak subject, else per client IP after `UseForwardedHeaders`) plus named policies (`IcalFeedPolicy`, `AiAssistantPolicy`, `OutboundEmailPolicy`) added with `.RequireRateLimiting(...)`; rejections are `429 rate_limited` with `Retry-After`. Limits come from `RateLimiting:*`; the shared test host raises them, `RateLimitingTests` uses its own low-limit host (`fixture.CreateHostAsync`). See `docs/backend/analysis/rate-limiting.md`.
 - Resend throttling: `Common/RateLimiting/ResendCooldown` is the only cooldown (InviteGuardian, InviteToGroup, ResendEmailVerification). The handler returns `ResendCooldownActive` as a case of its feature-specific outcome union; the endpoint renders it with `cooldown.ToConflict(httpContext)` -> `409 resend_cooldown`.
 - Add the request to `<Domain>.http`.
 

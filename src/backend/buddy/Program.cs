@@ -1,6 +1,7 @@
 using buddy.Common.Concurrency;
 using buddy.Common.Http;
 using buddy.Common.Idempotency;
+using buddy.Common.RateLimiting;
 using buddy.Common.Validation;
 using buddy.Common.Versioning;
 using buddy.Email;
@@ -78,6 +79,8 @@ builder.Services.AddOpenApi(options =>
 builder.Services.AddHealthChecks();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddIdempotencyFeature(builder.Configuration);
+builder.Services.AddForwardedHeadersFromConfiguration(builder.Configuration);
+builder.Services.AddRateLimitingFeature();
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
 builder.Services.AddGuardiansFeature(builder.Configuration);
@@ -102,6 +105,10 @@ builder.Services.AddSleepDiariesFeature(builder.Configuration);
 
 var app = builder.Build();
 
+// First: everything after it (the anonymous rate-limit partition, logs) needs the real client IP,
+// not the reverse proxy's.
+app.UseForwardedHeaders();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -116,6 +123,10 @@ else
 
 app.UseCors("Frontend");
 app.UseAuthentication();
+// After authentication (partitions by the validated subject) and CORS (a 429 stays readable by the
+// frontend), before the first store read: a throttled request never reaches provisioning,
+// idempotency or a handler, and never reserves an Idempotency-Key.
+app.UseRateLimiter();
 app.UseAuthorization();
 // Before the idempotency middleware, so an unprovisioned caller never reserves a key.
 app.UseProvisionedUsers();
@@ -129,7 +140,8 @@ app.UseIdempotencyKeys();
 // caller was allowed to see.
 app.UseETags();
 
-app.MapHealthChecks("/health");
+// Container probes hit it constantly; throttling it would make a healthy replica look dead.
+app.MapHealthChecks("/health").DisableRateLimiting();
 app.MapVersion();
 
 app.MapUsersFeature();

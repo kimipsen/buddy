@@ -36,6 +36,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
     private IContainer _mailpit = null!;
     private HttpClient _mailpitClient = null!;
     private readonly Dictionary<string, string> _tokenCache = [];
+    private Dictionary<string, string?> _configOverrides = [];
 
     public IAlbaHost Host { get; private set; } = null!;
 
@@ -81,7 +82,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 
         var adminClientSecret = await SetUpKeycloakAdminServiceAccountAsync(keycloakBaseUrl);
 
-        var configOverrides = new Dictionary<string, string?>
+        _configOverrides = new Dictionary<string, string?>
         {
             ["ConnectionStrings:Postgres"] = _postgres.GetConnectionString(),
             ["Authentication:Keycloak:Authority"] = keycloakAuthority,
@@ -93,7 +94,19 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["Authentication:KeycloakAdmin:ClientId"] = AdminClientId,
             ["Authentication:KeycloakAdmin:ClientSecret"] = adminClientSecret,
             ["Mail:Host"] = _mailpit.Hostname,
-            ["Mail:Port"] = _mailpit.GetMappedPublicPort(1025).ToString()
+            ["Mail:Port"] = _mailpit.GetMappedPublicPort(1025).ToString(),
+
+            // The whole suite shares this host, and under TestServer every anonymous request has the
+            // same (null) client IP -- production limits would throttle unrelated tests. Rate limits
+            // themselves are tested on a separate low-limit host (RateLimitingTests, CreateHostAsync).
+            ["RateLimiting:Authenticated:TokenLimit"] = "1000000",
+            ["RateLimiting:Authenticated:TokensPerPeriod"] = "1000000",
+            ["RateLimiting:Anonymous:TokenLimit"] = "1000000",
+            ["RateLimiting:Anonymous:TokensPerPeriod"] = "1000000",
+            ["RateLimiting:IcalFeed:TokenLimit"] = "1000000",
+            ["RateLimiting:IcalFeed:TokensPerPeriod"] = "1000000",
+            ["RateLimiting:AiAssistant:PermitLimit"] = "1000000",
+            ["RateLimiting:OutboundEmail:PermitLimit"] = "1000000"
         };
 
         Host = await AlbaHost.For<global::Program>(
@@ -103,7 +116,22 @@ public sealed class BuddyApiFixture : IAsyncLifetime
                 services.AddSingleton<MartenUserEventStore>();
                 services.Replace(ServiceDescriptor.Singleton<IUserEventStore, ConcurrentWriterUserEventStore>());
             }),
-            ConfigurationOverride.Create(configOverrides));
+            ConfigurationOverride.Create(_configOverrides));
+    }
+
+    // A second API host on the same Postgres/Keycloak/Mailpit, with extra configuration layered on
+    // top of the shared host's -- for tests that need settings the shared host can't have (low rate
+    // limits). The caller owns and disposes it.
+    public Task<IAlbaHost> CreateHostAsync(IReadOnlyDictionary<string, string?> overrides)
+    {
+        var merged = new Dictionary<string, string?>(_configOverrides);
+
+        foreach (var (key, value) in overrides)
+        {
+            merged[key] = value;
+        }
+
+        return AlbaHost.For<global::Program>(ConfigurationOverride.Create(merged));
     }
 
     // Real access token for one of the seeded test users (see Fixtures/TestRealm.json), obtained

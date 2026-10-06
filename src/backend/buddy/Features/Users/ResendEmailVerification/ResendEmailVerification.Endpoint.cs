@@ -30,6 +30,7 @@ public static class ResendEmailVerificationEndpoint
                 ResendCooldownActive cooldown => cooldown.ToConflict(httpContext),
             };
         })
+        .RequireRateLimiting(RateLimitingFeature.OutboundEmailPolicy)
         .WithName("ResendCurrentUserEmailVerification");
 
         return users;
