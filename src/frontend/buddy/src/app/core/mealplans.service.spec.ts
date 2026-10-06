@@ -489,4 +489,69 @@ describe('MealplansService', () => {
       );
     });
   });
+
+  describe('imports', () => {
+    it('POSTs the text and options to the preview endpoint without an idempotency key', async () => {
+      const preview = { format: 'weekly-note', lines: [], groups: [], warnings: [], emptyDays: 0 };
+
+      const promise = service.previewImport(familyScope, {
+        text: 'Madplan 2026',
+        format: 'auto',
+        weekStart: 0,
+        slot: 2,
+      });
+
+      const req = httpMock.expectOne(`${familyBase()}/imports/preview`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.has('Idempotency-Key')).toBe(false);
+      expect(req.request.body).toEqual({
+        text: 'Madplan 2026',
+        format: 'auto',
+        weekStart: 0,
+        slot: 2,
+      });
+      req.flush(preview);
+
+      await expect(promise).resolves.toEqual(preview);
+    });
+
+    it('POSTs the reviewed entries with an idempotency key on commit', async () => {
+      const result = {
+        importId: 'import-1',
+        imported: 1,
+        createdMeals: 1,
+        archivedMeals: 0,
+        skipped: [],
+      };
+      const request = {
+        format: 'csv' as const,
+        archiveSingleUse: true,
+        entries: [{ date: '2024-01-14', slot: 2 as const, newMealName: 'Lasagne', notes: '' }],
+      };
+
+      const promise = service.commitImport(groupScope, request);
+
+      const req = httpMock.expectOne(`${groupBase()}/imports`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.get('Idempotency-Key')).toBeTruthy();
+      expect(req.request.body).toEqual(request);
+      req.flush(result);
+
+      await expect(promise).resolves.toEqual(result);
+    });
+
+    it('lists imports and reverts one by id', async () => {
+      const listPromise = service.listImports(familyScope);
+      const listReq = httpMock.expectOne(`${familyBase()}/imports`);
+      expect(listReq.request.method).toBe('GET');
+      listReq.flush([]);
+      await expect(listPromise).resolves.toEqual([]);
+
+      const revertPromise = service.revertImport(familyScope, 'import-1');
+      const revertReq = httpMock.expectOne(`${familyBase()}/imports/import-1`);
+      expect(revertReq.request.method).toBe('DELETE');
+      revertReq.flush(null);
+      await expect(revertPromise).resolves.toBeNull();
+    });
+  });
 });

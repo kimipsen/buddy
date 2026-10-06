@@ -532,6 +532,26 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       await assign(3, 'Apple and carrot sticks');
     }
 
+    // One earlier import, so the import page's history has a row to show.
+    await api.post(`/mealplans/children/${emil.id}/imports`, {
+      format: 'weekly-note',
+      archiveSingleUse: true,
+      entries: [
+        'Spaghetti bolognese',
+        'Fish fingers & potatoes',
+        'Pancakes',
+        'Chicken tacos',
+        'Rye bread sandwiches',
+        'Homemade pizza',
+        'Spaghetti bolognese',
+      ].map((meal, index) => ({
+        date: `2025-03-0${index + 2}`,
+        slot: 2,
+        ...(meals[meal] ? { mealId: meals[meal].id } : { newMealName: meal }),
+        notes: '',
+      })),
+    });
+
     // Medicine ------------------------------------------------------------------------------
     const ritalin = await api.post<Named>(`/medicines/children/${emil.id}/schedules`, {
       name: 'Methylphenidate',

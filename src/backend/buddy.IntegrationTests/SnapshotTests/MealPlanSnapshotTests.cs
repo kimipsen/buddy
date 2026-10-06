@@ -70,6 +70,41 @@ public sealed class MealPlanSnapshotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(204);
         });
 
+        // MealPlanEntriesImported, then MealPlanImportReverted (with its MealSlotCleared events).
+        var importResponse = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new
+            {
+                Format = "csv",
+                Entries = new object[]
+                {
+                    new { Date = today.AddDays(-400), Slot = MealSlot.Dinner, MealId = meal.Id, Notes = "+ GS" },
+                    new { Date = today.AddDays(-399), Slot = MealSlot.Lunch, NewMealName = "Imported soup" },
+                },
+            }).ToUrl($"/mealplans/children/{child.Id}/imports");
+            _.StatusCodeShouldBeOk();
+        });
+        var importId = importResponse.ReadAsJson<ImportIdDto>().ImportId;
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new
+            {
+                Format = "csv",
+                Entries = new[] { new { Date = today.AddDays(-398), Slot = MealSlot.Dinner, MealId = meal.Id } },
+            }).ToUrl($"/mealplans/children/{child.Id}/imports");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Delete.Url($"/mealplans/children/{child.Id}/imports/{importId}");
+            _.StatusCodeShouldBe(204);
+        });
+
         var mealPlans = fixture.Host.Services.GetRequiredService<IMealPlanEventStore>();
         var id = await mealPlans.FindIdForChildAsync(new UserId(child.Id), CancellationToken.None);
         Assert.NotNull(id);
@@ -83,3 +118,5 @@ public sealed class MealPlanSnapshotTests(BuddyApiFixture fixture)
         Assert.Equivalent(replayed, snapshot, strict: true);
     }
 }
+
+internal sealed record ImportIdDto(Guid ImportId);

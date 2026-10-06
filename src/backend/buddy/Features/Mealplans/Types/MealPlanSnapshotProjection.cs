@@ -41,4 +41,10 @@ public sealed class MealPlanSnapshotProjection : SingleStreamProjection<MealPlan
 
     public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanIcalTokenRevoked revoked) =>
         current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(revoked)) };
+
+    public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanEntriesImported imported) =>
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(imported)) };
+
+    public MealPlanSnapshot Apply(MealPlanSnapshot current, MealPlanImportReverted reverted) =>
+        current with { MealPlan = MealPlan.Advance(current.MealPlan, MealPlanEvent.FromPayload(reverted)) };
 }

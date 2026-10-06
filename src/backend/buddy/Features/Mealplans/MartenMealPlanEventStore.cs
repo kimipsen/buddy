@@ -76,6 +76,55 @@ public sealed class MartenMealPlanEventStore(IMealplansStore store) : IMealPlanE
         await session.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task RevertImportAsync(
+        MealPlanId id, IReadOnlyCollection<MealPlanEvent> planEvents, IReadOnlyCollection<MealArchived> archivedMeals, CancellationToken cancellationToken)
+    {
+        await using var session = store.LightweightSession();
+
+        session.AppendTracked(id.Value, [.. planEvents.Select(e => e.Value ?? throw new InvalidOperationException("Cannot persist an empty meal plan event."))]);
+
+        foreach (var archived in archivedMeals)
+        {
+            session.AppendTracked(archived.Id.Value, [archived]);
+        }
+
+        await session.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ImportAsync(
+        MealPlanId id, IReadOnlyCollection<MealPlanEvent> planEvents, IReadOnlyCollection<IReadOnlyCollection<MealEvent>> newMeals, CancellationToken cancellationToken)
+    {
+        await using var session = store.LightweightSession();
+
+        foreach (var mealEvents in newMeals)
+        {
+            var created = mealEvents.FirstOrDefault() switch
+            {
+                MealCreated first => first,
+                _ => throw new InvalidOperationException("The first event of a new meal stream must be MealCreated."),
+            };
+
+            session.StartTrackedStream(created.Id.Value, [.. mealEvents.Select(e => e.Value ?? throw new InvalidOperationException("Cannot persist an empty meal event."))]);
+            session.Store(new MealIndexDocument(created.Id.Value, created.ChildId.Value));
+        }
+
+        var payloads = planEvents
+            .Select(e => e.Value ?? throw new InvalidOperationException("Cannot persist an empty meal plan event."))
+            .ToArray();
+
+        if (planEvents.FirstOrDefault() is MealPlanCreated planCreated)
+        {
+            session.StartTrackedStream(id.Value, payloads);
+            session.Store(new MealPlanIndexDocument(id.Value, planCreated.ChildId.Value));
+        }
+        else if (payloads.Length > 0)
+        {
+            session.AppendTracked(id.Value, payloads);
+        }
+
+        await session.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<MealPlanId?> FindIdForChildAsync(UserId childId, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();

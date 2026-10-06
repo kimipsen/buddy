@@ -114,7 +114,8 @@ Formats in v1:
   day names, abbreviated or full, any case). One set of rules, so a second family's note with
   `Uge 12` / `Mandag:` works too.
 - **`csv`**: `date;meal[;slot][;notes]` (`,` or `;` separator, ISO dates or `dd-mm-yyyy`). This is
-  the way out for every other system: anything that exports to a spreadsheet can produce it.
+  the way out for every other system: anything that exports to a spreadsheet can produce it. The
+  slot must be a slot name (`Lunch`, any case); a third column that isn't one is kept as a note.
 
 Rationale:
 
@@ -147,8 +148,10 @@ This is the AI assistant's draft-then-apply flow without the persisted session.
   repeated as often as needed and never needs storing.
 - The commit body is the reviewed draft, not the raw text. That way the server writes exactly what
   the guardian saw and approved, even after manual fixes.
-- ~750 rows is ~100 KB of JSON, which is fine for one request. The commit is capped at 2,000
-  entries; a larger history goes in several commits (one per year, say).
+- ~750 rows is ~100 KB of JSON, which is fine for one request. The commit is capped at 5,000
+  entries (about ten years of dinners), and the client always sends one request. Splitting a
+  review into several commits would create each new meal once per part and judge the single-use
+  rule per part, so a longer history is several separate imports instead.
 
 Rejected: **a persisted `MealPlanImport` aggregate holding the draft between steps** (the
 `MealplanAiSession` shape). It would let a guardian close the tab halfway through the review and
@@ -223,7 +226,8 @@ Running the prototype over the real note turned up three more shorthands, now ha
 - Text after a spaced dash (`Nachos - Sally ikke hjemme`) is a note. That is also why `ikke hjemme`
   only marks an away day at the start of the text.
 
-The `Away` markers are a heuristic tuned to one family's writing. They're two string lists at the
+The `Away` markers match whole words of the normalized key, so `Mormors frikadeller` and
+`Feriepizza` stay dinners. They are a heuristic tuned to one family's writing. They're two string lists at the
 top of `ImportLineClassifier`. A misclassified group costs one click in the review, so they aren't a
 user setting yet; moving them into `MealPlanImportOptions` is additive if another family's notes
 need different words.
@@ -292,9 +296,13 @@ Why one event and not 750 `MealAssignedToSlot`:
   alternative is 683 events that look like someone spent an evening clicking.
   `MealAssignedToSlot.OccurredAt` is always "now", so the history couldn't be backdated honestly
   anyway.
-- **Undo.** `RevertMealPlanImport(importId)` can append a `MealSlotCleared` for each entry whose
-  slot **still** holds the imported assignment. Slots someone has changed since the import are
-  left alone. Without the import id there is nothing to find "the import" by.
+- **Undo.** `RevertMealPlanImport(importId)` appends a `MealSlotCleared` for each entry whose
+  slot was **last written by this import**, found by replaying the stream
+  (`MealPlanImportHistory.EntriesStillFrom`). Slots a guardian changed since, and slots a later
+  import wrote again (even with the same meal), are left alone; comparing assignments by value
+  would clear those too. The clears, the `MealPlanImportReverted` marker and the `MealArchived`
+  events for unused created meals go in one transaction (`IMealPlanEventStore.RevertImportAsync`),
+  so a failed revert can be retried. Without the import id there is nothing to find "the import" by.
 - **Atomicity.** One append either lands or doesn't, with no half-imported 2025.
 
 **Conflict rule: an import never overwrites.** Before writing, the commit handler rehydrates the
@@ -340,7 +348,7 @@ Recovery rules, each reported as a warning with its line number, never silently:
 | Problem | Rule | Warning |
 |---|---|---|
 | Week number > 53, or not greater than the previous week in its section (`U66` after `U5`) | previous week + 1 | `week_number_corrected` |
-| Day lines before any week header (first week of 2024) | the next header's week − 1 | `week_number_inferred` |
+| Day lines before any week header (first week of 2024) | the next header's week − 1; above `U1`, the previous year's last ISO week | `week_number_inferred` |
 | Day line without a day prefix (2025 `U42`) | the next day after the previous line, starting with the week's first day | `day_inferred_from_position` |
 | Two lines for the same day in one week | the last one wins | `duplicate_day` |
 | A year header missing above the first week | the import is rejected: `400`, "Add a year line such as 'Madplan 2026'" | -- |
@@ -355,8 +363,8 @@ review.
 | Slice | Tier | Notes |
 |---|---|---|
 | `PreviewMealPlanImport` (+`ForGroup`) | Manage | Body: `{ text, format?: "auto" \| "weekly-note" \| "csv", weekStart?, slot? }`. Text up to 256 KB. Parses, matches against `MealFamilyResolution`'s library, flags occupied slots. Writes nothing. Returns `{ format, lines[], groups[], warnings[], conflicts[] }` |
-| `CommitMealPlanImport` (+`ForGroup`) | Manage | Body: `{ format, entries: [{ date, slot, mealId? \| newMealName?, notes }], archiveSingleUse }`, at most 2,000 entries. Entries whose `newMealName` normalizes to the same key share one new meal, so a merge in the review is just "send the same name". Creates the new meals, appends one `MealPlanEntriesImported` (creating the `MealPlan` stream when it's missing, as `AssignForChildAsync` does), archives the single-use meals. Returns `{ importId, imported, createdMeals, archivedMeals, skipped[] }` |
-| `RevertMealPlanImport` (+`ForGroup`) | Manage | Clears the slots that still hold the import's assignment, and archives the meals that import created and that nothing else uses. Idempotent |
+| `CommitMealPlanImport` (+`ForGroup`) | Manage | Body: `{ format, entries: [{ date, slot, mealId? \| newMealName?, notes }], archiveSingleUse }`, at most 5,000 entries. Entries whose `newMealName` normalizes to the same key share one new meal, so a merge in the review is just "send the same name". Creates the new meals, appends one `MealPlanEntriesImported` (creating the `MealPlan` stream when it's missing, as `AssignForChildAsync` does), archives the single-use meals. Returns `{ importId, imported, createdMeals, archivedMeals, skipped[] }` |
+| `RevertMealPlanImport` (+`ForGroup`) | Manage | Clears the slots this import was the last to write, and archives the meals that import created and that nothing else uses, in one transaction. Idempotent |
 | `ListMealPlanImports` | Manage | Folded from the stream: `importId`, format, date range, entry count, who imported it and when. Feeds the "Undo import" list |
 
 ## Routes
@@ -420,7 +428,8 @@ Other pieces:
   - revert clears only untouched slots;
   - `NotFound` for a non-guardian or a revoked `GuardianLink`;
   - the group `Manage` tier works, and the group `View` tier gets `NotFound`;
-  - a 2,001-entry commit gets `400`.
+  - a 5,001-entry commit gets `400`, and so does a `null` entry.
+  - reverting an earlier import leaves days a later import wrote with the same meal.
 - A golden file for `MealPlanEntriesImported` in `EventShapeTests`, and a `SnapshotTests` case for
   the new `Apply`.
 - **Playwright**: paste a 3-week note, merge one suggested duplicate, import, open the oldest week
@@ -451,7 +460,7 @@ Other pieces:
 | Meal matching | Exact normalized key automatic; fuzzy matches suggested only; review grouped per distinct name |
 | Non-meal lines | Classified (`Away`, `Leftovers`, `Alternatives`, `Empty`); away and empty days skipped; side notes moved to `Notes` |
 | Write model | One `MealPlanEntriesImported` event per commit on the family's existing stream; never overwrites occupied slots |
-| Undo | `RevertMealPlanImport` clears the slots that still hold the import's assignment |
+| Undo | `RevertMealPlanImport` clears the slots this import was the last to write, in one transaction with archiving its unused meals |
 | Authorization | `Manage`, family and group routes, the same as `AssignMealToSlot` |
 | Dates | `U<n>` = ISO week; `Sø` is the day before that week's Monday (confirmed by the note's author); slot Dinner; both configurable |
 | One-off meals | Archived by default when used fewer than 2 times and not in the last 90 days; a toggle turns it off |

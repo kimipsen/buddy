@@ -100,6 +100,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     route: '/guardian/mealplan/ai-assistant',
   },
   {
+    name: 'guardian-mealplan-import',
+    title: 'Import older meal plans',
+    description:
+      'Paste a note or upload a CSV of earlier plans, review the matched meals, and undo an import.',
+    as: 'guardian',
+    route: '/guardian/mealplan/import',
+    waitFor: '2025-03-02 – 2025-03-08 · 7 days',
+  },
+  {
     name: 'guardian-medicine',
     title: 'Medicine',
     description: 'Medicine schedules and daily dose tracking.',

@@ -69,6 +69,16 @@ public sealed record MealPlan(
         {
             Assignments = plan.Assignments.SetItem((assigned.Date, assigned.Slot), assigned.Assignment)
         },
+        // Same SetItem as MealAssignedToSlot, once per imported entry -- see
+        // docs/backend/analysis/mealplan-import.md, Question 5.
+        MealPlanEntriesImported imported => plan with
+        {
+            Assignments = plan.Assignments.SetItems(imported.Entries.Select(entry =>
+                KeyValuePair.Create((entry.Date, entry.Slot), entry.Assignment)))
+        },
+        // Marker only: the revert's own MealSlotCleared events, appended just before it, already
+        // removed the slots.
+        MealPlanImportReverted => plan,
         MealSlotCleared cleared => plan with
         {
             Assignments = plan.Assignments.Remove((cleared.Date, cleared.Slot))

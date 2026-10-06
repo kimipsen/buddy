@@ -72,6 +72,14 @@ Plan meals with an AI provider of your choice (needs an API key).
 
 <img src="mobile/guardian-mealplan-ai-assistant.png" alt="Meal plan AI assistant on a phone" width="320">
 
+## Import older meal plans
+
+Paste a note or upload a CSV of earlier plans, review the matched meals, and undo an import.
+
+![Import older meal plans](guardian-mealplan-import.png)
+
+<img src="mobile/guardian-mealplan-import.png" alt="Import older meal plans on a phone" width="320">
+
 ## Medicine
 
 Medicine schedules and daily dose tracking.

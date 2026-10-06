@@ -81,7 +81,7 @@ sequenceDiagram
 | `POST` | `/mealplans/children/{childId}/imports/preview` | Parses pasted text (`weekly-note` or `csv`, auto-detected) and matches it against the family's meal library; returns a review draft and writes nothing. |
 | `POST` | `/mealplans/children/{childId}/imports` | Writes a reviewed import: creates the new meals and appends one `MealPlanEntriesImported`, skipping slots that are already planned. |
 | `GET` | `/mealplans/children/{childId}/imports` | Lists the family's imports (date range, entry count, reverted or not). |
-| `DELETE` | `/mealplans/children/{childId}/imports/{importId}` | Undoes an import: clears the slots that still hold what it imported and archives the meals it created that nothing uses any more (idempotent). |
+| `DELETE` | `/mealplans/children/{childId}/imports/{importId}` | Undoes an import in one transaction: clears the slots it was the last to write and archives the meals it created that nothing uses any more (idempotent). |
 
 ## Core lifecycle
 

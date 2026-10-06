@@ -34,6 +34,8 @@ public static class MealplansFeature
         typeof(MealPlanSlotTimeSet),
         typeof(MealPlanIcalTokenIssued),
         typeof(MealPlanIcalTokenRevoked),
+        typeof(MealPlanEntriesImported),
+        typeof(MealPlanImportReverted),
         typeof(AiCredentialsInitialized),
         typeof(ProviderApiKeySet),
         typeof(ProviderApiKeyRemoved),
@@ -169,6 +171,17 @@ public static class MealplansFeature
         mealplans.MapUpdateMealDetailsForGroup();
         mealplans.MapArchiveMealForGroup();
         mealplans.MapGetGroupMealplanStatus();
+
+        // Importing historical plans from notes and other systems -- see
+        // docs/backend/analysis/mealplan-import.md.
+        mealplans.MapPreviewMealPlanImport();
+        mealplans.MapCommitMealPlanImport();
+        mealplans.MapListMealPlanImports();
+        mealplans.MapRevertMealPlanImport();
+        mealplans.MapPreviewMealPlanImportForGroup();
+        mealplans.MapCommitMealPlanImportForGroup();
+        mealplans.MapListMealPlanImportsForGroup();
+        mealplans.MapRevertMealPlanImportForGroup();
 
         // AI assistant: BYOK provider credentials + the chat/tool-calling session loop (see
         // docs/backend/plans -- AI-Assisted Mealplan Generation). OpenAi/Gemini and the calendar

@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -11,7 +13,9 @@ public union MealPlanEvent(
     MealPlanUnsharedFromGroup,
     MealPlanSlotTimeSet,
     MealPlanIcalTokenIssued,
-    MealPlanIcalTokenRevoked
+    MealPlanIcalTokenRevoked,
+    MealPlanEntriesImported,
+    MealPlanImportReverted
 )
 {
     public static MealPlanEvent FromPayload(object payload) => payload switch
@@ -24,6 +28,8 @@ public union MealPlanEvent(
         MealPlanSlotTimeSet e => e,
         MealPlanIcalTokenIssued e => e,
         MealPlanIcalTokenRevoked e => e,
+        MealPlanEntriesImported e => e,
+        MealPlanImportReverted e => e,
         _ => throw new ArgumentException($"Unknown meal plan event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -37,6 +43,8 @@ public union MealPlanEvent(
         MealPlanSlotTimeSet => nameof(MealPlanSlotTimeSet),
         MealPlanIcalTokenIssued => nameof(MealPlanIcalTokenIssued),
         MealPlanIcalTokenRevoked => nameof(MealPlanIcalTokenRevoked),
+        MealPlanEntriesImported => nameof(MealPlanEntriesImported),
+        MealPlanImportReverted => nameof(MealPlanImportReverted),
     };
 }
 
@@ -78,3 +86,24 @@ public sealed record MealPlanSlotTimeSet(MealPlanId Id, MealSlot Slot, TimeOnly 
 public sealed record MealPlanIcalTokenIssued(MealPlanId Id, IcalTokenId TokenId, string Hash, UserId IssuedBy, DateTimeOffset OccurredAt);
 
 public sealed record MealPlanIcalTokenRevoked(MealPlanId Id, IcalTokenId TokenId, UserId RevokedBy, DateTimeOffset OccurredAt);
+
+// One event per import commit, carrying every assignment it wrote -- not one MealAssignedToSlot
+// per day -- so the stream records "these days came from an import" and RevertMealPlanImport can
+// find them again by ImportId (see docs/backend/analysis/mealplan-import.md, Question 5). Folded
+// exactly like that many MealAssignedToSlot. Entries never include a slot that was already
+// occupied when the import ran: an import never overwrites. CreatedMealIds are the meals this
+// commit created, so a revert can archive the ones nothing else uses.
+public sealed record MealPlanEntriesImported(
+    MealPlanId Id,
+    MealPlanImportId ImportId,
+    string Format,
+    ImmutableArray<ImportedMealPlanEntry> Entries,
+    ImmutableArray<MealId> CreatedMealIds,
+    UserId ImportedBy,
+    DateTimeOffset OccurredAt);
+
+public sealed record ImportedMealPlanEntry(DateOnly Date, MealSlot Slot, MealPlanAssignment Assignment);
+
+// Appended after the MealSlotCleared events of a revert. Marks the import as undone so a second
+// revert is a no-op and ListMealPlanImports can show it; it changes no aggregate state itself.
+public sealed record MealPlanImportReverted(MealPlanId Id, MealPlanImportId ImportId, UserId RevertedBy, DateTimeOffset OccurredAt);

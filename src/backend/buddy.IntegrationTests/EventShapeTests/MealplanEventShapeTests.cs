@@ -91,4 +91,23 @@ public sealed class MealplanEventShapeTests
     public void MealPlanIcalTokenRevoked() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new MealPlanIcalTokenRevoked(FixedMealPlanId, FixedTokenId, FixedGuardianId, FixedInstant),
         "Mealplans/MealPlanIcalTokenRevoked.json");
+
+    private static readonly MealPlanImportId FixedImportId = new(Guid.Parse("00000000-0000-0000-0000-000000000063"));
+
+    [Fact]
+    public void MealPlanEntriesImported() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealPlanEntriesImported(
+            FixedMealPlanId,
+            FixedImportId,
+            "weekly-note",
+            [new ImportedMealPlanEntry(FixedDate, MealSlot.Dinner, new MealPlanAssignment(FixedMealId, FixedGuardianId, "+ GS"))],
+            [FixedMealId],
+            FixedGuardianId,
+            FixedInstant),
+        "Mealplans/MealPlanEntriesImported.json");
+
+    [Fact]
+    public void MealPlanImportReverted() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MealPlanImportReverted(FixedMealPlanId, FixedImportId, FixedGuardianId, FixedInstant),
+        "Mealplans/MealPlanImportReverted.json");
 }

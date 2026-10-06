@@ -90,6 +90,100 @@ export interface MealDetails {
   color: string;
 }
 
+// Importing older plans (docs/backend/analysis/mealplan-import.md). Enum ordinals match the
+// backend: ImportLineKind 0 = Meal, 1 = Alternatives, 2 = Leftovers, 3 = Away; ImportGroupAction
+// 0 = Existing, 1 = New, 2 = Skip; ImportWeekStart 0 = Sunday, 1 = Monday.
+export type ImportLineKind = 0 | 1 | 2 | 3;
+export type ImportGroupAction = 0 | 1 | 2;
+export type ImportWeekStart = 0 | 1;
+export type ImportFormat = 'auto' | 'weekly-note' | 'csv';
+
+export interface MealPlanImportPreviewRequest {
+  text: string;
+  format: ImportFormat;
+  weekStart: ImportWeekStart;
+  slot: MealSlot;
+}
+
+export interface MealPlanImportPreviewLine {
+  lineNumber: number;
+  date: string;
+  slot: MealSlot;
+  rawText: string;
+  kind: ImportLineKind;
+  mealName: string;
+  notes: string;
+  key: string;
+  occupied: boolean;
+}
+
+// Every line sharing one normalized meal name. matchedMealId is an exact match in the family's
+// library; suggested* is only a "Did you mean ...?" hint (an existing meal or a more frequent
+// group) and is never applied without the guardian choosing it.
+export interface MealPlanImportPreviewGroup {
+  key: string;
+  name: string;
+  kind: ImportLineKind;
+  count: number;
+  firstDate: string;
+  lastDate: string;
+  defaultAction: ImportGroupAction;
+  matchedMealId: string | null;
+  matchedMealName: string;
+  suggestedMealId: string | null;
+  suggestedGroupKey: string;
+  suggestedName: string;
+}
+
+export interface MealPlanImportWarning {
+  lineNumber: number;
+  code: string;
+  message: string;
+}
+
+export interface MealPlanImportPreview {
+  format: Exclude<ImportFormat, 'auto'>;
+  lines: MealPlanImportPreviewLine[];
+  groups: MealPlanImportPreviewGroup[];
+  warnings: MealPlanImportWarning[];
+  emptyDays: number;
+}
+
+// Either an existing mealId or a newMealName; entries with the same new name share one new meal.
+export interface MealPlanImportEntry {
+  date: string;
+  slot: MealSlot;
+  mealId?: string;
+  newMealName?: string;
+  notes: string;
+}
+
+export interface MealPlanImportCommitRequest {
+  format: Exclude<ImportFormat, 'auto'>;
+  entries: MealPlanImportEntry[];
+  archiveSingleUse: boolean;
+}
+
+export interface MealPlanImportResult {
+  importId: string | null;
+  imported: number;
+  createdMeals: number;
+  archivedMeals: number;
+  skipped: { date: string; slot: MealSlot; reason: string }[];
+}
+
+export interface MealPlanImportSummary {
+  importId: string;
+  format: string;
+  from: string;
+  to: string;
+  entryCount: number;
+  createdMealCount: number;
+  importedBy: string;
+  importedAt: string;
+  reverted: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MealplansService {
   private readonly http = inject(HttpClient);
@@ -242,6 +336,34 @@ export class MealplansService {
         `${this.runtimeConfig.apiBaseUrl}/mealplans/children/${childId}/ical-tokens/${tokenId}`,
       ),
     );
+  }
+
+  // Parses and matches the text against the family's meal library; writes nothing (a POST only
+  // because the text is too long for a query string).
+  previewImport(
+    scope: MealplanScope,
+    request: MealPlanImportPreviewRequest,
+  ): Promise<MealPlanImportPreview> {
+    return firstValueFrom(
+      this.http.post<MealPlanImportPreview>(`${this.base(scope)}/imports/preview`, request),
+    );
+  }
+
+  commitImport(
+    scope: MealplanScope,
+    request: MealPlanImportCommitRequest,
+  ): Promise<MealPlanImportResult> {
+    return firstValueFrom(
+      postIdempotent<MealPlanImportResult>(this.http, `${this.base(scope)}/imports`, request),
+    );
+  }
+
+  listImports(scope: MealplanScope): Promise<MealPlanImportSummary[]> {
+    return firstValueFrom(this.http.get<MealPlanImportSummary[]>(`${this.base(scope)}/imports`));
+  }
+
+  revertImport(scope: MealplanScope, importId: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.base(scope)}/imports/${importId}`));
   }
 
   // subscriptionPath is relative (e.g. "/mealplans/{mealPlanId}/ical/{token}") -- prefix with

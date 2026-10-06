@@ -5,6 +5,7 @@ import { GuardianBabysitters } from './babysitters/babysitters';
 import { GuardianCalendar } from './calendar/calendar';
 import { GuardianDashboard } from './dashboard';
 import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
+import { MealplanImport } from './mealplan/import/mealplan-import';
 import { GuardianMealplan } from './mealplan/mealplan';
 import { GuardianMedicine } from './medicine/medicine';
 import { GuardianPickup } from './pickup/pickup';
@@ -28,6 +29,7 @@ export const GUARDIAN_ROUTES: Routes = [
       { path: '', component: GuardianDashboard },
       { path: 'mealplan', component: GuardianMealplan },
       { path: 'mealplan/ai-assistant', component: MealplanAiAssistant },
+      { path: 'mealplan/import', component: MealplanImport },
       { path: 'medicine', component: GuardianMedicine },
       { path: 'sleep-diary', component: GuardianSleepDiary },
       { path: 'progress', component: GuardianProgress },

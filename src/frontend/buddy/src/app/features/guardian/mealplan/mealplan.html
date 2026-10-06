@@ -27,12 +27,20 @@
         {{ 'mealplan.title' | translate }}
       </h2>
     </div>
-    <a
-      routerLink="/guardian/mealplan/ai-assistant"
-      class="inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-    >
-      {{ 'mealplan.aiAssistant.entryButton' | translate }}
-    </a>
+    <div class="flex flex-wrap gap-2">
+      <a
+        routerLink="/guardian/mealplan/import"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800"
+      >
+        {{ 'mealplan.import.entryButton' | translate }}
+      </a>
+      <a
+        routerLink="/guardian/mealplan/ai-assistant"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+      >
+        {{ 'mealplan.aiAssistant.entryButton' | translate }}
+      </a>
+    </div>
   </div>
 
   @if (children.isLoading() || groups.isLoading()) {

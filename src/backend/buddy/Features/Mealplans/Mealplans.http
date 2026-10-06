@@ -56,3 +56,46 @@ DELETE {{buddy_HostAddress}}/mealplans/children/{{childId}}/plan?date=2025-06-01
 Authorization: Bearer {{guardianToken}}
 
 ###
+
+# Preview an import of an older plan (guardian only; writes nothing). Format: "auto" (default),
+# "weekly-note" or "csv". WeekStart: 0 = Sunday (default), 1 = Monday. Slot: 2 = Dinner (default).
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/imports/preview
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Text": "Madplan 2024\nU3\nSø: Lasagne\nMa: Hotdogs 🌭\nTi: Rester\nOn: Sushi / McD",
+  "Format": "auto"
+}
+
+###
+
+# Commit a reviewed import (guardian only). Each entry is an existing MealId or a NewMealName.
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/imports
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "Format": "weekly-note",
+  "ArchiveSingleUse": true,
+  "Entries": [
+    { "Date": "2024-01-14", "Slot": 2, "MealId": "{{mealId}}" },
+    { "Date": "2024-01-15", "Slot": 2, "NewMealName": "Hotdogs" },
+    { "Date": "2024-01-17", "Slot": 2, "NewMealName": "Sushi", "Notes": "Sushi / McD" }
+  ]
+}
+
+###
+
+# List a family's imports (guardian only)
+GET {{buddy_HostAddress}}/mealplans/children/{{childId}}/imports
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Undo an import: clears only the slots that still hold what it imported (guardian only)
+DELETE {{buddy_HostAddress}}/mealplans/children/{{childId}}/imports/{{importId}}
+Authorization: Bearer {{guardianToken}}
+
+###
