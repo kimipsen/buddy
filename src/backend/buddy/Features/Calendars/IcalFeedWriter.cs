@@ -1,5 +1,7 @@
 using System.Diagnostics;
 
+using buddy.Common.Ical;
+
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
 
@@ -16,7 +18,7 @@ public static class IcalFeedWriter
     public static string Write(string calendarName, IReadOnlyCollection<CalendarItemOccurrence> occurrences)
     {
         var calendar = new IcsCalendar();
-        calendar.AddProperty("X-WR-CALNAME", calendarName);
+        IcalSubscription.Describe(calendar, calendarName);
 
         var stamp = new CalDateTime(DateTime.UtcNow, "UTC");
 

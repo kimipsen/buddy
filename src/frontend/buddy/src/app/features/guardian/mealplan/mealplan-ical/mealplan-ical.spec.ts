@@ -118,6 +118,9 @@ describe('MealplanIcal', () => {
       'https://api.buddy.test/mealplans/plan-1/ical/token-new',
     );
     expect(findButtonByText(compiled, 'Copy link')).toBeTruthy();
+    expect(compiled.querySelector('app-ical-subscribe-links a')!.getAttribute('href')).toBe(
+      'webcal://api.buddy.test/mealplans/plan-1/ical/token-new',
+    );
     expect(mealplans.listIcalTokens).toHaveBeenCalledTimes(2);
   });
 

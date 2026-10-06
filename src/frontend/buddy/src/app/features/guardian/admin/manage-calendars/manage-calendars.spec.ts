@@ -989,6 +989,9 @@ describe('ManageCalendars', () => {
     expect(compiled.textContent).toContain('https://api.buddy.test/ical/token-new.ics');
     expect(compiled.textContent).toContain('Copy this link now -- it will not be shown again.');
     expect(findButtonByText(compiled, 'Copy')).toBeTruthy();
+    expect(compiled.querySelector('app-ical-subscribe-links a')!.getAttribute('href')).toBe(
+      'webcal://api.buddy.test/ical/token-new.ics',
+    );
     // The panel reloads the token list after issuing a new one.
     expect(listIcalTokens).toHaveBeenCalledTimes(2);
   });

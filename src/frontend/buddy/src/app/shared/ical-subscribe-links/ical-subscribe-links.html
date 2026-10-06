@@ -1,0 +1,19 @@
+<p class="mt-2 flex flex-wrap items-center gap-2">
+  <a
+    class="rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300 transition hover:border-emerald-400 dark:hover:border-emerald-500"
+    [href]="webcalUrl()"
+  >
+    {{ 'common.ical.subscribeLink' | translate }}
+  </a>
+  <a
+    class="rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300 transition hover:border-emerald-400 dark:hover:border-emerald-500"
+    target="_blank"
+    rel="noopener noreferrer"
+    [href]="googleUrl()"
+  >
+    {{ 'common.ical.googleLink' | translate }}
+  </a>
+</p>
+<p class="mt-2 text-xs text-emerald-800 dark:text-emerald-300">
+  {{ 'common.ical.subscribeHint' | translate }}
+</p>

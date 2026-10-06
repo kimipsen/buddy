@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Ical;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -14,14 +15,17 @@ public static class GetIcalFeedEndpoint
             Guid calendarId,
             string token,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var query = new GetIcalFeed(new CalendarId(calendarId), token);
             var result = await bus.InvokeAsync<Result<string>>(query, cancellationToken);
 
+            httpContext.Response.Headers.CacheControl = IcalSubscription.CacheControl;
+
             return result switch
             {
-                Result<string>.Success(var icsContent) => TypedResults.Text(icsContent, "text/calendar"),
+                Result<string>.Success(var icsContent) => TypedResults.Text(icsContent, IcalSubscription.ContentType),
                 Result<string>.NotFound => TypedResults.NotFound(),
                 // GetIcalFeedHandler has no access-check or validation concept -- these are
                 // unreachable today, collapsed to NotFound since this route declares no other

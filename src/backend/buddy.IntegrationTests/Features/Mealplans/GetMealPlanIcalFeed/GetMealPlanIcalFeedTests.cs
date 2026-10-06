@@ -39,10 +39,15 @@ public sealed class GetMealPlanIcalFeedTests(BuddyApiFixture fixture)
             _.Get.Url(issued.SubscriptionPath);
             _.StatusCodeShouldBeOk();
             _.ContentTypeShouldBe("text/calendar");
+            _.Header("Cache-Control").SingleValueShouldEqual("private, no-cache");
         });
 
         var ics = response.ReadAsText();
         Assert.Contains("Breakfast: Pancakes", ics);
+        Assert.Contains("NAME:Meal Plan", ics);
+        Assert.Contains("X-WR-CALNAME:Meal Plan", ics);
+        Assert.Contains("REFRESH-INTERVAL;VALUE=DURATION:PT1H", ics);
+        Assert.Contains("X-PUBLISHED-TTL:PT1H", ics);
         // 07:00 is MealSlotDefaultTimes' built-in Breakfast default -- no slot time was configured.
         Assert.Contains($"DTSTART:{today:yyyyMMdd}T070000", ics);
         // Floating local time, not anchored to UTC -- no trailing Z or TZID.

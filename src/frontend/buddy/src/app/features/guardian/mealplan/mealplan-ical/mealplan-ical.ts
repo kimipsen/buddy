@@ -4,10 +4,11 @@ import { Component, computed, inject, input, linkedSignal, resource } from '@ang
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealplansService } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { IcalSubscribeLinks } from '../../../../shared/ical-subscribe-links/ical-subscribe-links';
 
 @Component({
   selector: 'app-mealplan-ical',
-  imports: [DatePipe, TranslatePipe],
+  imports: [DatePipe, TranslatePipe, IcalSubscribeLinks],
   templateUrl: './mealplan-ical.html',
 })
 export class MealplanIcal {

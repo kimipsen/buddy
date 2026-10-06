@@ -1,3 +1,5 @@
+using buddy.Common.Ical;
+
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
 
@@ -17,7 +19,7 @@ public static class MealPlanIcalFeedWriter
     public static string Write(MealPlan plan, IReadOnlyCollection<MealPlanEntry> entries)
     {
         var calendar = new IcsCalendar();
-        calendar.AddProperty("X-WR-CALNAME", "Meal Plan");
+        IcalSubscription.Describe(calendar, "Meal Plan");
 
         var stamp = new CalDateTime(DateTime.UtcNow, "UTC");
 

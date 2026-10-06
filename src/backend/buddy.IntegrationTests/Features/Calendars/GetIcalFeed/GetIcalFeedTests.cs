@@ -25,10 +25,15 @@ public sealed class GetIcalFeedTests(BuddyApiFixture fixture)
             _.Get.Url($"/calendars/{calendarId}/ical/{issued.Token}");
             _.StatusCodeShouldBeOk();
             _.ContentTypeShouldBe("text/calendar");
+            _.Header("Cache-Control").SingleValueShouldEqual("private, no-cache");
         });
 
         var ics = response.ReadAsText();
         Assert.Contains("Feed Event", ics);
+        Assert.Contains("NAME:Personal", ics);
+        Assert.Contains("X-WR-CALNAME:Personal", ics);
+        Assert.Contains("REFRESH-INTERVAL;VALUE=DURATION:PT1H", ics);
+        Assert.Contains("X-PUBLISHED-TTL:PT1H", ics);
     }
 
     [Fact]
