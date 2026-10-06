@@ -444,8 +444,9 @@ Found along the way:
   service in the devcontainer for local traces.
 - [x] **More logging.** Audit-style logs for account and access changes, plus logs for swallowed
   and infrastructure failures; IDs only (docs/backend/observability.md, `AuditLogTests`).
-- [ ] **Global exception handler.** No `AddProblemDetails`/`IExceptionHandler`, so unexpected
-  exceptions get the default 500 instead of an `ErrorEnvelope`.
+- [x] **Global exception handler.** `UnhandledExceptionHandler` turns any unhandled exception into a
+  500 `internal_error` (or 503 `dependency_unavailable` with `Retry-After` when Postgres, Keycloak or
+  SMTP can't be reached) `ErrorEnvelope`, logged with the matching requestId.
 - [x] **Readiness health checks.** `/health/ready` checks Postgres (503) and Keycloak (degraded,
   still 200); the prod compose file probes it for `api` and `/` for `frontend`.
 - [ ] **Health probes on Azure Container Apps.** `deploy.sh` configures none; use `/health` as the

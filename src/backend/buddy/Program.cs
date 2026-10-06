@@ -1,4 +1,5 @@
 using buddy.Common.Concurrency;
+using buddy.Common.Errors;
 using buddy.Common.Health;
 using buddy.Common.Http;
 using buddy.Common.Idempotency;
@@ -81,6 +82,7 @@ builder.Services.AddOpenApi(options =>
     options.ShouldInclude = api => api.GroupName is null;
 });
 builder.Services.AddHealthChecksFeature();
+builder.Services.AddExceptionHandlingFeature();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddIdempotencyFeature(builder.Configuration);
 builder.Services.AddForwardedHeadersFromConfiguration(builder.Configuration);
@@ -112,6 +114,11 @@ var app = builder.Build();
 // First: everything after it (the anonymous rate-limit partition, logs) needs the real client IP,
 // not the reverse proxy's.
 app.UseForwardedHeaders();
+
+// Second, so an exception anywhere below -- authentication, a handler, a store -- ends as a logged
+// 500/503 ErrorEnvelope with the request id. CORS still applies its headers to that response, so
+// the frontend can read it.
+app.UseExceptionHandling();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

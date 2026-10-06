@@ -205,6 +205,11 @@ Return guidance:
 - do not leak stack traces or secrets
 - include correlation/request id for support
 
+Implemented by `buddy.Common.Errors.UnhandledExceptionHandler`: any exception no
+other middleware handles becomes `500` with the `ErrorEnvelope`, code
+`internal_error`, an empty `details`, and the `requestId` that matches the logged
+exception. The message never includes the exception's text or type.
+
 ### 502 Bad Gateway / 503 Service Unavailable / 504 Gateway Timeout
 Use when upstream dependencies fail or are unavailable.
 
@@ -212,6 +217,14 @@ Typical Buddy use:
 - identity provider unavailable
 - SMTP provider outage or timeout
 - database temporarily unavailable
+
+Implemented for `503`: when the exception, or one of its inner exceptions, says a
+dependency couldn't be reached, the same handler answers `503` with code
+`dependency_unavailable` and `Retry-After: 5`. That covers a transient
+`NpgsqlException`, a `SocketException` (SMTP, for example), and an
+`HttpRequestException` for a connection or DNS failure (Keycloak's admin API, AI
+providers). An error status from a dependency, such as Keycloak answering `403`,
+is a `500`: retrying won't help.
 
 ## Decision Checklist
 
@@ -565,6 +578,10 @@ e.g. a resend-cooldown rejection). `requestId` is `HttpContext.TraceIdentifier`.
 `NotFound`/`Forbidden` outcomes are unaffected — they keep their existing,
 endpoint-specific mappings (some deliberately collapse `Forbidden` into `404`
 for privacy). Keep the schema stable for clients.
+
+An unhandled exception renders through the same envelope: `500` with code
+`internal_error`, or `503` with code `dependency_unavailable` (see the 500 and 503
+sections above).
 
 A request body that can't be bound renders through the same envelope with
 `code: "validation_error"` (`buddy.Common.Validation.RequestBindingFailureMiddleware`,

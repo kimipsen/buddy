@@ -82,8 +82,15 @@ requests. Tests: `buddy.IntegrationTests/Common/Observability/`.
 
 ## What the API logs
 
-Besides the framework's own logs (requests, unhandled exceptions, health check failures), the API
-writes these. Every one is a source-generated `[LoggerMessage]` method in a `<Domain>Log.cs` file
+Besides the framework's own logs (requests, health check failures), the API writes these.
+
+Unhandled exceptions are logged at Error by
+`Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware`, and the client gets a 500/503
+`ErrorEnvelope` whose `requestId` matches the log line (`Common/Errors/ExceptionHandlingFeature.cs`).
+An exception from a Wolverine handler also gets Wolverine's own Error entry, under the command's
+name. Both entries share the TraceId.
+
+Every audit-style entry below is a source-generated `[LoggerMessage]` method in a `<Domain>Log.cs` file
 next to the feature, with a stable EventId, so logs can be filtered by event rather than by
 message text.
 
