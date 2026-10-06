@@ -81,6 +81,8 @@ The guardian routes currently include:
 - `/guardian/mealplan` — meal library and meal-plan assignment
 - `/guardian/mealplan/ai-assistant` — chat-based AI assistant for drafting
   meal-plan assignments
+- `/guardian/mealplan/import` — import older meal plans from a pasted note or
+  CSV: preview, per-meal review, import and undo
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
@@ -144,8 +146,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `GroupsService` manages group membership, invitations, sharing policies, and
   group deletion
 - `GuardiansService` calls the backend guardian endpoints
-- `MealplansService` calls meal-library, meal-plan, rating, group-sharing, and iCal
-  subscription-token endpoints
+- `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
+  subscription-token and import (preview, commit, list, undo) endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
 - `SleepDiaryService` logs, clears, and lists sleep diary nights, saves the hygiene notes, manages

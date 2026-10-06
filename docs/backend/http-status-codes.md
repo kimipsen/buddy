@@ -408,6 +408,14 @@ Notes:
 | `POST /mealplans/groups/{groupId}/meals` | `200` | `400`, `401`, `403`, `404` | `403` for a `View`-tier group member; `404` for no group access or an unshared plan. |
 | `PATCH /mealplans/groups/{groupId}/meals/{mealId}/details` | `200` | `400`, `401`, `403`, `404` | `403` for a `View`-tier group member; `404` for no group access, an unshared plan, or a meal outside the family. |
 | `DELETE /mealplans/groups/{groupId}/meals/{mealId}` | `204` | `401`, `403`, `404` | `403` for a `View`-tier group member attempting to archive; `404` for no group access, an unshared plan, or unknown meal. |
+| `POST /mealplans/children/{childId}/imports/preview` | `200` | `400`, `401`, `403`, `404` | Writes nothing. `400` for empty/oversized text, an unknown format, text no format recognises, or a weekly note with a week before any year; `403` for the child; `404` for no guardian-child relationship. |
+| `POST /mealplans/children/{childId}/imports` | `200` | `400`, `401`, `403`, `404` | `200` also when every entry hit an already-planned slot (`importId: null`, all `skipped`). `400` for no entries, more than 2,000, a repeated date/slot, an entry with both or neither of `mealId`/`newMealName`, or a `mealId` outside the family; `403` for the child; `404` for no relationship. Honors `Idempotency-Key`. |
+| `GET /mealplans/children/{childId}/imports` | `200` | `401`, `403`, `404` | `403` for the child; `404` for no relationship. Empty list for a family with no plan yet. |
+| `DELETE /mealplans/children/{childId}/imports/{importId}` | `204` | `401`, `403`, `404` | Idempotent: reverting an already-reverted import still returns `204`; `403` for the child; `404` for no relationship or an unknown import. |
+| `POST /mealplans/groups/{groupId}/imports/preview` | `200` | `400`, `401`, `403`, `404` | As the child-keyed route; `403` for a `View`-tier group member; `404` for no group access or an unshared plan. |
+| `POST /mealplans/groups/{groupId}/imports` | `200` | `400`, `401`, `403`, `404` | As the child-keyed route; `403` for a `View`-tier group member; `404` for no group access or an unshared plan. |
+| `GET /mealplans/groups/{groupId}/imports` | `200` | `401`, `403`, `404` | `403` for a `View`-tier group member; `404` for no group access or an unshared plan. |
+| `DELETE /mealplans/groups/{groupId}/imports/{importId}` | `204` | `401`, `403`, `404` | `403` for a `View`-tier group member; `404` for no group access, an unshared plan, or an unknown import. |
 
 Note: `PUT /groups/{groupId}/mealplan-permission-policy` is documented under the Groups API above, not here.
 

@@ -34,8 +34,7 @@ in real time.
 - [x] Private iCal subscription links for the family's meal plan
 - [x] Chat-based AI assistant that drafts meal-plan assignments, with
       BYOK AI provider settings management
-- [ ] Import historical meal plans from notes and other systems (proposed, not yet
-      implemented -- see [Importing historical meal plans](docs/backend/analysis/mealplan-import.md))
+- [x] Import historical meal plans from notes and CSV files, with review and undo
 - [x] Pickup and drop-off scheduling (guardian, sibling, self-escort,
       playdate, and babysitter assignments)
 - [x] Reusable task library with ordered, timed subtasks, schedulable onto a

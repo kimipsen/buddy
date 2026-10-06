@@ -1,6 +1,6 @@
 # Importing historical meal plans
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `Features/Mealplans/Import/` ships the `weekly-note` and `csv` parsers behind `IMealPlanImportFormat`, the `PreviewMealPlanImport`, `CommitMealPlanImport`, `ListMealPlanImports` and `RevertMealPlanImport` slices (each with a `ForGroup` sibling), and the `MealPlanEntriesImported` and `MealPlanImportReverted` events. The guardian page is `/guardian/mealplan/import` (`MealplanImport`). It works on the family scope of the guardian's first child, the same as the AI assistant page; the group routes are API-only for now.
 
 ## Context
 
@@ -87,19 +87,25 @@ public interface IMealPlanImportFormat
     MealPlanImportFormatId Id { get; }          // "weekly-note", "csv", later "ai"
     // 0..1 confidence that `text` is in this format; the highest score wins auto-detection.
     double Detect(string text);
-    ParsedImport Parse(string text, MealPlanImportOptions options);
+    // Validation when the text can't be read at all, e.g. a week before any year line.
+    Result<ParsedImport> Parse(string text, MealPlanImportOptions options);
 }
 
 public sealed record ParsedImport(
-    IReadOnlyList<ParsedImportLine> Lines,       // one per day line, filled or not
-    IReadOnlyList<ImportWarning> Warnings);      // line number + code + message
+    IReadOnlyList<ParsedImportLine> Lines,       // one per filled day
+    IReadOnlyList<ImportWarning> Warnings,       // line number + code + message
+    int EmptyDays);                              // day lines with nothing after the prefix
 
 public sealed record ParsedImportLine(
     int LineNumber, DateOnly Date, MealSlot Slot, string RawText,
-    ImportLineKind Kind,                         // Meal | Leftovers | Away | Alternatives | Empty
+    ImportLineKind Kind,                         // Meal | Alternatives | Leftovers | Away
     string MealName,                             // cleaned display name
-    string Notes);                               // text moved out of the name: "(Mor ikke hjemme)", "+ GS"
+    string Notes,                                // text moved out of the name: "(Mor ikke hjemme)", "+ GS"
+    string Key);                                 // normalized matching key (Question 3)
 ```
+
+The formats are plain classes in a static `MealPlanImportFormats.All` list, not DI services: they
+are pure functions with no dependencies, the same as `MealPlanExpansion`.
 
 Formats in v1:
 
@@ -163,7 +169,7 @@ For each distinct key, the preview proposes one **resolution**:
 
 | Resolution | When proposed | What commit does |
 |---|---|---|
-| `Existing(mealId)` | the key equals the key of an existing, non-archived meal | assigns that meal |
+| `Existing(mealId)` | the key equals the key of an existing meal (an active one wins over an archived one) | assigns that meal |
 | `New(name)` | no match | creates the meal once, then assigns it |
 | `MergeInto(otherKey)` | never proposed; the guardian picks it | uses the other group's resolution |
 | `Skip` | `Away` / `Empty` lines (Question 4) | writes nothing for those days |
@@ -191,12 +197,12 @@ only once"), checked by default.
 ## Question 4: lines that aren't meals
 
 **Decision: every parsed line gets a `Kind`. Only `Meal` and `Alternatives` lines are proposed for
-import by default. The guardian can change a group's resolution.**
+import by default. The guardian can change a group's resolution.** A day with nothing after its
+prefix (or only emojis and parentheses) produces no line at all and is counted in `EmptyDays`.
 
 | Kind | Detected by | Default |
 |---|---|---|
-| `Empty` | nothing after the day prefix | skipped |
-| `Away` | starts with `-`, or contains a configurable list of markers: `ingen hjemme`, `ikke hjemme` (when that is the whole text), `sommerhus`, `bedstefar`, `juleaften`, and `i <Place>` | skipped, listed in the review |
+| `Away` | starts with `-`; or contains `ingen hjemme`, `sommerhus`, `bedstefar`, `juleaften` and similar; or starts with `ikke hjemme` / `spise(r) hos`; or is `i <Place>` | skipped, listed in the review |
 | `Leftovers` | key starts with `rester`, or is `<meal> rester` | skipped. "Map all leftovers to one meal 'Rester'" is offered as one click |
 | `Alternatives` | ` / ` between two names | the **first** name becomes the meal; the full text goes into `Notes` |
 | `Meal` | everything else | imported |
@@ -207,24 +213,49 @@ from the name into `MealPlanAssignment.Notes`, which already exists and holds up
 So `Spaghetti m. ostepølser + GS 🍝` matches the meal `Spaghetti m. ostepølser`, and its note says
 `+ GS`.
 
-The `Away` markers are a heuristic tuned to one family's writing. They're a list in
-`MealPlanImportOptions`, not code, so a later format, or a later UI setting, can extend it.
+Running the prototype over the real note turned up three more shorthands, now handled in
+[`ImportLineClassifier`](../../../src/backend/buddy/Features/Mealplans/Import/ImportLineClassifier.cs):
+
+- `m/` and `u/` are Danish shorthand for "med"/"uden". They become `m.`/`u.` before
+  alternatives are split, so `Bagels m/ laks` stays one dish.
+- After an arrow (`Tomatsuppe -> Pizza`) the plan changed: the dish after the last arrow is the meal,
+  and the whole text goes into notes.
+- Text after a spaced dash (`Nachos - Sally ikke hjemme`) is a note. That is also why `ikke hjemme`
+  only marks an away day at the start of the text.
+
+The `Away` markers are a heuristic tuned to one family's writing. They're two string lists at the
+top of `ImportLineClassifier`. A misclassified group costs one click in the review, so they aren't a
+user setting yet; moving them into `MealPlanImportOptions` is additive if another family's notes
+need different words.
 
 ## Question 5: how the plan is written
 
 **Decision: one new `MealPlan` event, `MealPlanEntriesImported`, carrying all the assignments of
 one commit, appended in a single transaction together with the `MealCreated` (and, where needed,
-`MealArchived`) events of the new meals.**
+`MealArchived`) events of the new meals.** Meals and plans live in the same Marten store, so
+`IMealPlanEventStore.ImportAsync` writes every new meal stream, its `MealIndexDocument`, and the plan
+events (starting the plan stream with `MealPlanCreated` when the family has none) in one
+`SaveChangesAsync`. A meal archived by the single-use rule is created as `[MealCreated, MealArchived]`
+in its own stream; it never goes through the "cannot assign an archived meal" check.
 
 ```
 MealPlanEntriesImported(
     MealPlanId Id,
     MealPlanImportId ImportId,              // UUIDv7, returned to the client
     MealPlanImportFormatId Format,          // "weekly-note", "csv"
-    ImmutableArray<ImportedEntry> Entries,  // (DateOnly Date, MealSlot Slot, MealPlanAssignment Assignment)
+    ImmutableArray<ImportedMealPlanEntry> Entries,  // (DateOnly Date, MealSlot Slot, MealPlanAssignment Assignment)
+    ImmutableArray<MealId> CreatedMealIds,          // what a revert may archive
     UserId ImportedBy,
     DateTimeOffset OccurredAt)
+
+MealPlanImportReverted(MealPlanId Id, MealPlanImportId ImportId, UserId RevertedBy, DateTimeOffset OccurredAt)
+    // appended after the revert's MealSlotCleared events; makes a second revert a no-op
 ```
+
+**Imports are not aggregate state.** `ListMealPlanImports` and `RevertMealPlanImport` fold them
+straight from the plan's events (`MealPlanImportHistory`). The alternative was adding an `Imports`
+field to `MealPlan`, which would change the shape of every stored `MealPlanSnapshot` for something
+only these two rarely-used slices read.
 
 `MealPlan.Advance` folds it as the same `SetItem` per entry that `MealAssignedToSlot` already does:
 
@@ -242,14 +273,15 @@ MealPlanEntriesImported imported => plan with
 },
 ```
 
-The change is additive and touches 5 places:
+The change is additive and touches 6 places (both new events):
 
 - a new case in the `MealPlanEvent` union and in `FromPayload`/`EventType`
   ([`MealPlanEvents.cs`](../../../src/backend/buddy/Features/Mealplans/Types/MealPlanEvents.cs));
-- the new `Advance` case;
+- the new `Advance` cases (`MealPlanImportReverted` is an explicit `=> plan`);
 - one `Apply` in [`MealPlanSnapshotProjection`](../../../src/backend/buddy/Features/Mealplans/Types/MealPlanSnapshotProjection.cs);
 - registration in `MealplansFeature.cs:30`;
-- a new golden file under `EventShapeTests/GoldenFiles/Mealplans/`.
+- two new golden files under `EventShapeTests/GoldenFiles/Mealplans/`;
+- `IMealPlanEventStore.ImportAsync` for the single-transaction write.
 
 No existing event changes shape. `ListMealPlan`, the iCal feed, the child view and ratings all read
 the folded `Assignments`, so they show imported days without changes.
@@ -322,8 +354,8 @@ review.
 
 | Slice | Tier | Notes |
 |---|---|---|
-| `PreviewMealPlanImport` (+`ForGroup`) | Manage | Body: `{ text, format?: "auto" \| "weekly-note" \| "csv", options? }`. Text up to 256 KB. Parses, matches against `MealFamilyResolution`'s library, flags occupied slots. Writes nothing. Returns `{ format, lines[], groups[], warnings[], conflicts[] }` |
-| `CommitMealPlanImport` (+`ForGroup`) | Manage | Body: `{ format, entries: [{ date, slot, resolution, notes }], archiveSingleUse }`, at most 2,000 entries. Creates the new meals, appends one `MealPlanEntriesImported` (creating the `MealPlan` stream when it's missing, as `AssignForChildAsync` does), archives the single-use meals. Returns `{ importId, imported, createdMeals, archivedMeals, skipped[] }` |
+| `PreviewMealPlanImport` (+`ForGroup`) | Manage | Body: `{ text, format?: "auto" \| "weekly-note" \| "csv", weekStart?, slot? }`. Text up to 256 KB. Parses, matches against `MealFamilyResolution`'s library, flags occupied slots. Writes nothing. Returns `{ format, lines[], groups[], warnings[], conflicts[] }` |
+| `CommitMealPlanImport` (+`ForGroup`) | Manage | Body: `{ format, entries: [{ date, slot, mealId? \| newMealName?, notes }], archiveSingleUse }`, at most 2,000 entries. Entries whose `newMealName` normalizes to the same key share one new meal, so a merge in the review is just "send the same name". Creates the new meals, appends one `MealPlanEntriesImported` (creating the `MealPlan` stream when it's missing, as `AssignForChildAsync` does), archives the single-use meals. Returns `{ importId, imported, createdMeals, archivedMeals, skipped[] }` |
 | `RevertMealPlanImport` (+`ForGroup`) | Manage | Clears the slots that still hold the import's assignment, and archives the meals that import created and that nothing else uses. Idempotent |
 | `ListMealPlanImports` | Manage | Folded from the stream: `importId`, format, date range, entry count, who imported it and when. Feeds the "Undo import" list |
 
@@ -346,7 +378,9 @@ AI format in phase 2 goes under the existing `ai-assistant` policy.
 ## Frontend
 
 A new guardian page, `mealplan/import` (`features/guardian/mealplan/import/`), linked from the
-meal-plan page next to "AI assistant". It follows the
+meal-plan page next to "AI assistant". Like the AI assistant, it works on the family scope of the
+guardian's first child; a group-scope picker can come later, since the API already has the group
+routes. It follows the
 [`ai-assistant`](../../../src/frontend/buddy/src/app/features/guardian/mealplan/ai-assistant/)
 screen's draft-and-apply layout:
 
@@ -359,13 +393,13 @@ screen's draft-and-apply layout:
    - The warnings, with line numbers.
    - The **meal table**, one row per distinct name, sorted by occurrences. Each row has its
      resolution (match / new / merge into… / skip), the "Did you mean" suggestion, and an expandable
-     list of the dates.
+     list of the dates. (Built without the expandable date list; the row shows the first and last date.)
    - The **archive single-use meals** checkbox.
 3. **Done.** Counts, plus links to the oldest imported week and to "Undo this import".
 
 Other pieces:
 
-- Service: `importPreview`, `importCommit` (`postIdempotent`), `listImports` and `revertImport` on
+- Service: `previewImport`, `commitImport` (`postIdempotent`), `listImports` and `revertImport` on
   [`core/mealplans.service.ts`](../../../src/frontend/buddy/src/app/core/mealplans.service.ts),
   using the existing `MealplanScope` for the family/group switch.
 - Strings: `core/i18n/translations/{en,da}/mealplan.ts` under `mealplan.import.*`.
@@ -396,12 +430,13 @@ Other pieces:
 
 | Case | Behavior |
 |---|---|
-| Format can't be detected | `400 import_format_unknown`; the UI asks the guardian to pick one |
+| Format can't be detected | `400 validation_error` with "Choose the format explicitly"; the UI shows it under the preview button |
 | Nothing importable after parsing | Preview succeeds with zero entries; commit is disabled |
 | A slot already holds a meal | Skipped, never overwritten; listed as `occupied` in preview and in the commit result |
 | The same import committed twice | The second time, every slot is occupied, so nothing is written. With the same `Idempotency-Key`, the first response is replayed |
-| `Existing(mealId)` is archived or gone by commit time | That group falls back to `New(name)` and is reported. This doesn't fail the whole commit |
-| A meal name over 200 chars | Truncated at a word boundary for the name; the full text goes into `Notes` |
+| `mealId` is archived by commit time | Allowed: imports may point at archived meals, which is how one-off dishes stay out of the picker |
+| `mealId` is not in the family's library | `400` for the whole commit; nothing is written |
+| A meal name over 200 chars | The parser truncates it at a word boundary and puts the full text in `Notes`; a commit with a longer `newMealName` gets `400` |
 | A guardian edits an imported slot, then reverts the import | That slot keeps the guardian's edit; only untouched slots are cleared |
 | Two guardians import into a family with no `MealPlan` stream yet | Same race as the first `AssignMealToSlot` (`MealPlanEvents.cs:43-53`); accepted for v1 |
 | The `GuardianLink` is revoked mid-review | Commit returns `NotFound` |
@@ -418,19 +453,13 @@ Other pieces:
 | Write model | One `MealPlanEntriesImported` event per commit on the family's existing stream; never overwrites occupied slots |
 | Undo | `RevertMealPlanImport` clears the slots that still hold the import's assignment |
 | Authorization | `Manage`, family and group routes, the same as `AssignMealToSlot` |
-| Dates | `U<n>` = ISO week; `Sø` is the day before that week's Monday; slot Dinner; both configurable |
+| Dates | `U<n>` = ISO week; `Sø` is the day before that week's Monday (confirmed by the note's author); slot Dinner; both configurable |
+| One-off meals | Archived by default when used fewer than 2 times and not in the last 90 days; a toggle turns it off |
+| Leftovers | Skipped by default; one click imports them all as one meal "Rester" |
+| v1 scope | `weekly-note` + `csv`, preview/commit/list/undo, family and group routes; no AI format |
 
 ## Remaining open questions
 
-- **Is `Sø` the Sunday before the Monday, or the Sunday after the Saturday?** The note lists `Sø`
-  first, so the lean is "the week is planned Sunday to Saturday, and `Sø` comes before Monday".
-  The other reading moves 130 Sundays by a week. This needs the author of the note to confirm
-  before anything is built.
-- **Archive meals used only once?** Lean: yes, by default, for meals used fewer than 2 times and
-  not in the last 90 days, with a checkbox to turn it off. The alternative is ~300 one-off meals in
-  the picker.
-- **Should leftovers become a meal?** Lean: skip by default, and offer one "Rester" meal with a
-  click. Some families may want "leftovers" to show in the child's day view.
 - **AI-assisted format (phase 2).** Lean: an `ai` format that sends the text in chunks of about 60
   lines to the family's configured provider, with one tool, `propose_import_line(line_number, date,
   slot, meal_name, kind, notes)`. Its output feeds the same review. It is additive (one more
