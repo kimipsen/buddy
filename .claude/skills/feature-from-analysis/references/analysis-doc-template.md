@@ -35,6 +35,13 @@ not a ticket number.
   `MealAssignedToSlot` full-overwrite rule, the "can't tell private from missing" `NotFound`
   collapse). When the doc breaks a precedent, it says which one and why it doesn't apply here (see
   `sleep-diary.md` Question 2 on deterministic ids vs `mealplans.md`).
+- **Show the size of a refactor with code samples.** When a decision changes existing code (an
+  aggregate, event, handler, endpoint, component, service or signature) rather than only adding
+  new files, include a short before/after pair: the current code, trimmed to the relevant lines and
+  linked with a `file:line` anchor, then the proposed shape. Follow it with one line on the blast
+  radius (call sites, specs or events affected, e.g. "4 handlers and 2 specs construct this
+  record"). The reader should be able to tell a one-line tweak from a rewrite without opening the
+  code. Brand-new code doesn't need this; its signature block is enough.
 - **Name the rejected alternatives.** Each one gets a "considered and rejected, because ..."
   sentence or a bullet.
 - **Domain vocabulary** comes from `docs/backend/glossary.md`: `Manage`/`View` tiers,

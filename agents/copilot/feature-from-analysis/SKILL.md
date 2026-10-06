@@ -209,6 +209,9 @@ big to build without one.
    decision is a `**Decision: ...**` paragraph followed by rationale and rejected alternatives,
    with relative links to real files. End with the decisions table, the open questions and (for
    a design analysis) a mermaid `flowchart TB` diagram.
+   Where the design refactors existing code, add before/after code samples and the number of
+   affected call sites, so the size of the change is visible (see "Show the size of a refactor"
+   in the template).
 5. Register it as described under "When a new doc is added" in the template: the README index
    bullet, plus an unchecked `- [ ]` item in the root `README.md` Features list for a product
    feature.

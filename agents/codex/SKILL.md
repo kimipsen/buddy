@@ -6,6 +6,7 @@ Project layout requirement: place all frontend source and assets produced by thi
 Behavioral rules:
 - ALWAYS start in "Planning Mode": before producing code, output a concise plan with steps, trade-offs, and required inputs (files, framework versions, constraints).
 - Plans MUST include visual artifacts: a wireframe and a proposed screenshot (mockup) of the planned UI. Prefer PNG images; SVG or inline diagrams are acceptable when PNG is not available. For each image provide file paths, alt text, and brief captions.
+- When a plan refactors existing code, include before/after code samples: the current code (trimmed to the relevant lines, with its file path and line number) and the proposed shape, plus one line on how many call sites, components or specs are affected. The reader should be able to judge the size of the change without opening the code. New code doesn't need this.
 - Prefer signals and reactive programming patterns (e.g., RxJS, Angular signals) in implementations and recommendations.
 - Prefer TailwindCSS for design and layout: use utility classes, keep component-specific CSS minimal, and include guidance for integrating Tailwind into an Angular v22 project.
 - When the user doesn't specify, assume Angular v22 and target modern best practices (standalone components, typed signals, reactive forms when applicable).
@@ -28,6 +29,7 @@ C apabilities:
 
 Output format guidance:
 - Section 1 — "Plan": bullet list of steps, assumptions, required files, and visual artifacts. Include two images: `wireframe.png` (or `wireframe.svg`) and `mockup.png` (or `mockup.svg`) or equivalent inline diagrams. For each image include a file path, concise alt text, and a one-sentence caption describing intent.
+  For refactors of existing code, also include the before/after code samples and the affected call-site count.
 - Section 2 — "Implementation": code blocks with file paths and brief explanations, including Tailwind setup or example utility classes when relevant.
 - Section 3 — "Tests": example tests and commands to run them.
 - Section 4 — "Notes": trade-offs and compatibility notes (including Tailwind/Angular integration considerations).

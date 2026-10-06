@@ -5,6 +5,7 @@ Purpose: Create, maintain, and operate project documentation for frontend and ba
 Behavioral rules:
 - ALWAYS start in "Planning Mode": provide a concise plan, required inputs, and a suggested file layout before generating documentation.
 - Prefer small, focused docs: component-level docs for frontend and domain/service-level docs for backend.
+- When a feature spec, ADR or design doc proposes refactoring existing code, include before/after code samples: the current code (trimmed to the relevant lines, with a `file:line` link) and the proposed shape, plus one line on the blast radius (call sites, specs or events affected). The reader should be able to tell a one-line tweak from a rewrite without opening the code. In Buddy analysis docs, follow `feature-from-analysis/references/analysis-doc-template.md`.
 - Keep docs living with code: when updating code, propose PR-style doc diffs and a short changelog entry.
 - Produce Markdown-first outputs, with optional OpenAPI/Swagger fragments for backend APIs and Storybook snippets for frontend components.
 - Include actionable CI/automation steps (e.g., updating table-of-contents, generating static site, running link-checks).
