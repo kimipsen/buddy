@@ -1,4 +1,4 @@
-import { computed, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   ActivatedRouteSnapshot,
@@ -7,10 +7,11 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { authGuard } from './auth.guard';
 import { AuthService } from './auth.service';
+import { takePendingReturnUrl } from './pending-return-url';
 import { UsersService } from './users.service';
 
 describe('authGuard', () => {
@@ -19,10 +20,15 @@ describe('authGuard', () => {
     users?: Partial<UsersService>;
   }
 
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
   function setup(stubs: Stubs = {}) {
     const authStub: Partial<AuthService> = {
       completeLoginRedirect: vi.fn(async () => {}),
-      isAuthenticated: signal(true).asReadonly(),
+      getAccessToken: vi.fn(async () => 'access-token'),
+      sessionExpired: signal(false).asReadonly(),
       ...stubs.auth,
     };
     const usersStub: Partial<UsersService> = {
@@ -43,9 +49,9 @@ describe('authGuard', () => {
     return { authStub, usersStub, router };
   }
 
-  function runGuard() {
+  function runGuard(url = '/guardian/calendar') {
     return TestBed.runInInjectionContext(() =>
-      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+      authGuard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot),
     );
   }
 
@@ -55,25 +61,42 @@ describe('authGuard', () => {
       completeLoginRedirect: vi.fn(async () => {
         calls.push('completeLoginRedirect');
       }),
-      isAuthenticated: computed(() => {
-        calls.push('isAuthenticated');
-        return true;
+      getAccessToken: vi.fn(async () => {
+        calls.push('getAccessToken');
+        return 'access-token';
       }),
     };
     setup({ auth: authStub });
 
     await runGuard();
 
-    expect(calls).toEqual(['completeLoginRedirect', 'isAuthenticated']);
+    expect(calls).toEqual(['completeLoginRedirect', 'getAccessToken']);
   });
 
-  it('redirects to /login when the user is not authenticated', async () => {
-    const { router, usersStub } = setup({ auth: { isAuthenticated: signal(false).asReadonly() } });
+  it('redirects to /login when the user never signed in', async () => {
+    const { router, usersStub } = setup({ auth: { getAccessToken: vi.fn(async () => null) } });
 
     const result = await runGuard();
 
     expect(router.serializeUrl(result as UrlTree)).toBe('/login');
     // Provisioning is skipped entirely for an unauthenticated visitor.
+    expect(usersStub.ensureCurrentUser).not.toHaveBeenCalled();
+    // Only an expired session is sent back where it was.
+    expect(takePendingReturnUrl()).toBeNull();
+  });
+
+  it('redirects an expired session to /login with the reason and remembers the target page', async () => {
+    const { router, usersStub } = setup({
+      auth: {
+        getAccessToken: vi.fn(async () => null),
+        sessionExpired: signal(true).asReadonly(),
+      },
+    });
+
+    const result = await runGuard('/guardian/mealplan?week=2026-W40');
+
+    expect(router.serializeUrl(result as UrlTree)).toBe('/login?reason=session-expired');
+    expect(takePendingReturnUrl()).toBe('/guardian/mealplan?week=2026-W40');
     expect(usersStub.ensureCurrentUser).not.toHaveBeenCalled();
   });
 

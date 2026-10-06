@@ -5,6 +5,7 @@ export const login = {
     'Buddy bruger Keycloak til godkendelse, så jeres organisation styrer identitet, adgang og sessionspolitik ét sted, I kan stole på.',
   footerNote: 'Beskyttet af jeres Keycloak-realm.',
   cardTitle: 'Velkommen tilbage',
+  sessionExpired: 'Din session er udløbet. Log ind igen for at fortsætte.',
   cardSubtitle: 'Fortsæt med din virksomhedskonto for at få adgang til dit dashboard.',
   signInButton: 'Log ind med Keycloak',
   redirectNote:

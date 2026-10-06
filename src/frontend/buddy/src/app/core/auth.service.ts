@@ -20,8 +20,15 @@ export class AuthService {
   private readonly runtimeConfig = inject(RuntimeConfigService);
   private readonly tokens = signal<TokenSet | null>(readStoredTokens(sessionStorage));
   private refreshInFlight: Promise<string | null> | null = null;
+  private readonly sessionExpiredState = signal(false);
 
   readonly isAuthenticated = computed(() => this.tokens() !== null);
+  /**
+   * True once a session that existed has ended on its own (Keycloak rejected the refresh, or the
+   * API rejected the token), as opposed to never having signed in. The interceptor and guards use
+   * it to send the user back to /login; anonymous pages that call the API never set it.
+   */
+  readonly sessionExpired = this.sessionExpiredState.asReadonly();
 
   async completeLoginRedirect(): Promise<void> {
     const searchParams = new URLSearchParams(this.document.location.search);
@@ -100,6 +107,13 @@ export class AuthService {
     this.document.location.href = logoutUrl.toString();
   }
 
+  /** Ends a session that Keycloak or the API rejected. Not used for a deliberate logout. */
+  expireSession(): void {
+    this.tokens.set(null);
+    clearStoredTokens(sessionStorage);
+    this.sessionExpiredState.set(true);
+  }
+
   /** Returns a valid access token for calling the backend, refreshing it first if it's expired or about to expire. */
   async getAccessToken(): Promise<string | null> {
     const current = this.tokens();
@@ -121,8 +135,7 @@ export class AuthService {
 
   private async refreshAccessToken(current: TokenSet): Promise<string | null> {
     if (!current.refreshToken) {
-      this.tokens.set(null);
-      clearStoredTokens(sessionStorage);
+      this.expireSession();
       return null;
     }
 
@@ -136,8 +149,7 @@ export class AuthService {
       this.setTokens(refreshed);
       return refreshed.accessToken;
     } catch {
-      this.tokens.set(null);
-      clearStoredTokens(sessionStorage);
+      this.expireSession();
       return null;
     }
   }
@@ -173,6 +185,7 @@ export class AuthService {
 
   private setTokens(tokens: TokenSet): void {
     this.tokens.set(tokens);
+    this.sessionExpiredState.set(false);
     writeStoredTokens(sessionStorage, tokens);
   }
 

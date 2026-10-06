@@ -123,6 +123,8 @@ The child routes currently include:
 
 The login screen is in [src/frontend/buddy/src/app/features/login](../../src/frontend/buddy/src/app/features/login). It starts the Keycloak redirect flow and keeps the sign-in UX cleanly separated from the rest of the app.
 
+When a session ends mid-use (Keycloak rejects the refresh token, or the API answers 401), the auth interceptor and `authGuard` (which runs as both `canActivate` and `canActivateChild` on `/guardian` and `/child`) send the user to `/login?reason=session-expired`, which shows a notice. After signing in, `roleRedirectGuard` returns them to the interrupted page if it's inside their own role tree (`core/pending-return-url.ts`). See [Expired sessions during in-app navigation](analysis/expired-session-handling.md).
+
 ### Invitation and email verification features
 
 The invitation flow is in [src/frontend/buddy/src/app/features/invite](../../src/frontend/buddy/src/app/features/invite). It supports a public invitation preview and returns the user to the invitation after login so the invitation can be accepted in an authenticated session.
@@ -254,8 +256,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Sleep diary](../backend/analysis/sleep-diary.md) — implemented guardian page and the public
   share view; the [visual specification](analysis/visual-specification.md)'s Sleep Diary example
   drove its controls (toggle, repeatable rows, the new `shared/time-range`)
-- [Expired sessions during in-app navigation](analysis/expired-session-handling.md) — proposed
-  redirect to `/login` with a "session expired" notice when the Keycloak session ends mid-use
+- [Expired sessions during in-app navigation](analysis/expired-session-handling.md) — implemented
+  redirect to `/login` with a "session expired" notice when the Keycloak session ends mid-use, and
+  return to the interrupted page after signing in
 
 ## Local development
 

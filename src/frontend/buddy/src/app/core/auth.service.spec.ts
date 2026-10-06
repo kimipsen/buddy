@@ -111,6 +111,43 @@ describe('AuthService', () => {
 
       expect(service.isAuthenticated()).toBe(true);
     });
+
+    it('does not report an expired session at startup', () => {
+      const { service } = setup();
+
+      expect(service.sessionExpired()).toBe(false);
+    });
+  });
+
+  describe('expireSession', () => {
+    it('clears the stored session and marks it expired', () => {
+      const tokens: TokenSet = {
+        accessToken: 'a',
+        refreshToken: 'r',
+        idToken: null,
+        expiresAt: Date.now() + 100_000,
+      };
+      const { service } = setup({ storedTokens: tokens });
+
+      service.expireSession();
+
+      expect(service.isAuthenticated()).toBe(false);
+      expect(service.sessionExpired()).toBe(true);
+      expect(readStoredTokens(sessionStorage)).toBeNull();
+    });
+
+    it('is reset by the next successful sign-in', async () => {
+      const { service, documentStub } = setup();
+      service.expireSession();
+
+      await service.login();
+      documentStub.location.search = '?code=abc123';
+      stubFetch(jsonResponse({ access_token: 'new-access', expires_in: 300 }));
+      await service.completeLoginRedirect();
+
+      expect(service.sessionExpired()).toBe(false);
+      expect(service.isAuthenticated()).toBe(true);
+    });
   });
 
   describe('login', () => {
@@ -242,6 +279,8 @@ describe('AuthService', () => {
       service.logout();
 
       expect(service.isAuthenticated()).toBe(false);
+      // A deliberate logout isn't an expiry: /login shows no "session expired" notice.
+      expect(service.sessionExpired()).toBe(false);
       expect(readStoredTokens(sessionStorage)).toBeNull();
 
       const url = new URL(documentStub.location.href);
@@ -290,6 +329,8 @@ describe('AuthService', () => {
 
       expect(token).toBeNull();
       expect(fetchMock).not.toHaveBeenCalled();
+      // Never having signed in is not an expiry -- anonymous pages rely on this.
+      expect(service.sessionExpired()).toBe(false);
     });
 
     it('returns the current access token without refreshing when it is not close to expiry', async () => {
@@ -349,6 +390,7 @@ describe('AuthService', () => {
 
       expect(token).toBe('new-access');
       expect(service.isAuthenticated()).toBe(true);
+      expect(service.sessionExpired()).toBe(false);
       expect(readStoredTokens(sessionStorage)?.accessToken).toBe('new-access');
 
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -375,6 +417,7 @@ describe('AuthService', () => {
 
       expect(token).toBeNull();
       expect(service.isAuthenticated()).toBe(false);
+      expect(service.sessionExpired()).toBe(true);
       expect(readStoredTokens(sessionStorage)).toBeNull();
     });
 
@@ -393,6 +436,7 @@ describe('AuthService', () => {
       expect(token).toBeNull();
       expect(fetchMock).not.toHaveBeenCalled();
       expect(service.isAuthenticated()).toBe(false);
+      expect(service.sessionExpired()).toBe(true);
       expect(readStoredTokens(sessionStorage)).toBeNull();
     });
 

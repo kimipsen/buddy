@@ -16,6 +16,14 @@ The sign-in page. Authentication is handled by Keycloak.
 
 <img src="mobile/login.png" alt="Login on a phone" width="320">
 
+## Login after an expired session
+
+Where an expired session lands: the sign-in page with a notice. Signing in returns to the page that was interrupted.
+
+![Login after an expired session](login-session-expired.png)
+
+<img src="mobile/login-session-expired.png" alt="Login after an expired session on a phone" width="320">
+
 ## Guardian dashboard
 
 Today at a glance: meals, tasks, events, medicine, pickups and the children.

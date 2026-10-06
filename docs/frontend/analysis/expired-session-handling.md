@@ -1,6 +1,10 @@
 # Expired sessions during in-app navigation — implementation plan
 
-Status: Proposed (not yet implemented). Read it alongside
+Status: Implemented. `AuthService.sessionExpired`/`expireSession()`, the interceptor's redirect
+on an ended session or a 401, `authGuard` as `canActivate` + `canActivateChild` with a token
+freshness check (same check in `roleRedirectGuard`), the `/login?reason=session-expired` notice, and
+the return-to-page stand-in `pending-return-url.ts`. Keycloak's idle timeout was left at its
+default. Read it alongside
 [`AuthService`](../../../src/frontend/buddy/src/app/core/auth.service.ts),
 [`authInterceptor`](../../../src/frontend/buddy/src/app/core/auth.interceptor.ts),
 [`authGuard`](../../../src/frontend/buddy/src/app/core/auth.guard.ts) and
@@ -277,10 +281,13 @@ Run `node .claude/skills/i18n/check-parity.mjs`.
 - `auth.guard.spec.ts` / `role.guard.spec.ts`: an expired session redirects with the `reason`
   query param; a never-authenticated user redirects without it.
 - `login.spec.ts`: the notice shows only with `reason=session-expired`.
-- e2e (new `e2e/session-expiry.spec.ts`): log in with the existing `loginAs` fixture, then
-  overwrite `buddy_keycloak_tokens` in `sessionStorage` with an `expiresAt` in the past and a
-  bogus refresh token. Click a nav link and expect `/login` plus the notice. This drives the real
-  Keycloak refresh rejection without waiting 30 minutes.
+- e2e (new `e2e/session-expiry.spec.ts`): sign in as a disposable guardian, end their Keycloak
+  sessions through the Admin API (`endKeycloakSessions` in `support/keycloak-admin-client.ts`,
+  which refuses seeded users), and move the browser clock 6 minutes forward with `page.clock`.
+  Then open "Calendar" from the account menu and expect `/login` with the notice. Signing in again
+  through the real Keycloak form must land back on `/guardian/calendar`. Editing `sessionStorage`
+  mid-page doesn't work for this: `AuthService` reads the tokens once at startup and keeps them in
+  memory.
 
 ### 7. Screenshots
 
@@ -316,32 +323,26 @@ The `/login` route is already captured. Add a second entry in
 | Send the doomed request anyway? | No: error it locally with a synthetic 401 and redirect |
 | Where is the check? | Guards (`getAccessToken`, plus `canActivateChild`) before render, interceptor as the backstop for in-page actions |
 | `/login` or straight to Keycloak? | `/login` with a "session expired" notice |
+| Return to the interrupted page after login? | Yes, via `pending-return-url.ts`. Stored by the interceptor (`router.url`) and `authGuard` (the target `state.url`) only for an expired session. `roleRedirectGuard` takes it before the invite checks, so a winning invite still clears it, and honours it only inside the user's own role tree (whole path segments, so `/guardian-invite/...` doesn't count as `/guardian`) |
+| Raise Keycloak's SSO Session Idle? | No, kept at the 30-minute default for now |
 | Silent re-login? | Not possible after the idle timeout: the refresh token and SSO cookie expire together |
 
 ## Remaining open questions
 
-- **Return to the same page after logging in?** Login always lands on the role home route
-  ([role.guard.ts](../../../src/frontend/buddy/src/app/core/role.guard.ts)), and the app has
-  deliberately avoided a general return-URL mechanism so far. It has three narrow stand-ins instead
-  ([pending-invite-token.ts](../../../src/frontend/buddy/src/app/core/pending-invite-token.ts) and
-  siblings). Lean: add a fourth, `pending-return-url.ts`. The interceptor and guards store the
-  current URL before redirecting, and `roleRedirectGuard` consumes it after the invite tokens, only
-  when it starts with the resolved role's prefix (`/guardian` or `/child`). It's small and purely
-  additive, so it can also ship later.
-- **Raise Keycloak's SSO Session Idle?** At 30 minutes, a guardian who minimizes the tab over lunch
-  is always logged out, and so is a child on a shared iPad. Lean: raise SSO Session Idle to around
-  8-12 h in [buddy-realm.json](../../../.devcontainer/keycloak/buddy-realm.json)
-  (`ssoSessionIdleTimeout`) and in prod's admin console. Keep SSO Session Max at 10 h or more.
-  Rejected: `offline_access` tokens, which are long-lived credentials sitting in `sessionStorage`.
-  Independent of this plan.
-- **Unsaved form input on an in-page 401.** The redirect discards it. Lean: accept it for now; the
-  longer idle timeout above makes it rare.
+- **Unsaved form input on an in-page 401.** The redirect discards it. Accepted for now.
+- **Longer Keycloak sessions.** Raising SSO Session Idle (`ssoSessionIdleTimeout` in
+  [buddy-realm.json](../../../.devcontainer/keycloak/buddy-realm.json) and in prod's admin console)
+  was declined for now. It would make expiry rarer, especially for a child on a shared iPad, and
+  needs no frontend change. `offline_access` tokens stay rejected: they're long-lived credentials
+  sitting in `sessionStorage`.
 
 ## Verification
 
 - `npx ng test --watch=false --include` for the five updated specs, then `task test:frontend`.
 - `task test:e2e` including the new `session-expiry.spec.ts`.
-- Manual: sign in as alice, open the dashboard, then in DevTools set `expiresAt` in
-  `sessionStorage.buddy_keycloak_tokens` to `0` and corrupt `refreshToken`. Click "Calendar" and
-  confirm `/login` with the notice. Do the same and press a save button on a page, and confirm the
-  same result.
+- Manual (in-app navigation): sign in, then in the Keycloak admin console (realm `buddy` ->
+  Users -> the user -> Sessions) sign the session out. Wait out the 5-minute access token, then open
+  "Calendar" from the account menu. Expect `/login` with the notice; signing in returns to
+  `/guardian/calendar`.
+- Manual (reload): in DevTools set `expiresAt` in `sessionStorage.buddy_keycloak_tokens` to `0`,
+  corrupt `refreshToken` and reload. Expect the same result.

@@ -5,7 +5,9 @@ import { AccountService } from './account.service';
 import { AuthService } from './auth.service';
 import { takePendingGuardianInviteToken } from './pending-guardian-invite-token';
 import { takePendingInviteToken } from './pending-invite-token';
+import { takePendingReturnUrl } from './pending-return-url';
 import { takePendingVerifyEmailToken } from './pending-verify-email-token';
+import { SESSION_EXPIRED_QUERY_PARAMS } from './session-expired';
 import { UsersService } from './users.service';
 
 // Completes login and sends the user to the UI tree matching their role -- always redirects,
@@ -23,8 +25,12 @@ export const roleRedirectGuard: CanActivateFn = async () => {
 
   await auth.completeLoginRedirect();
 
-  if (!auth.isAuthenticated()) {
-    return router.createUrlTree(['/login']);
+  // Same freshness check as authGuard: a stored but dead session goes to /login, not on to a home
+  // route whose API calls would all fail.
+  if ((await auth.getAccessToken()) === null) {
+    return auth.sessionExpired()
+      ? router.createUrlTree(['/login'], { queryParams: SESSION_EXPIRED_QUERY_PARAMS })
+      : router.createUrlTree(['/login']);
   }
 
   try {
@@ -35,6 +41,10 @@ export const roleRedirectGuard: CanActivateFn = async () => {
   } catch {
     // Ignored -- see comment above.
   }
+
+  // Taken (and so cleared) up front, so a pending invite that wins below doesn't leave it behind
+  // for some later login.
+  const returnUrl = takePendingReturnUrl();
 
   // A guardian who wasn't logged in yet when they opened a group-invite link gets sent through
   // login and would otherwise land on the normal role-based home route, losing the invite. See
@@ -61,6 +71,18 @@ export const roleRedirectGuard: CanActivateFn = async () => {
   }
 
   const role = await account.resolveRole();
+  const home = role === 'child' ? '/child' : '/guardian';
 
-  return router.createUrlTree([role === 'child' ? '/child' : '/guardian']);
+  // Back to the page an expired session interrupted (see pending-return-url.ts), but only inside
+  // this user's own tree: whoever signs in next in this tab may not be who was signed in before.
+  if (returnUrl && isWithin(returnUrl, home)) {
+    return router.parseUrl(returnUrl);
+  }
+
+  return router.createUrlTree([home]);
 };
+
+// '/guardian-invite/...' starts with '/guardian' too, so match whole path segments only.
+function isWithin(url: string, home: string): boolean {
+  return url === home || url.startsWith(`${home}/`) || url.startsWith(`${home}?`);
+}

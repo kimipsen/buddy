@@ -1,4 +1,5 @@
 import { readRuntimeConfig } from './runtime-config';
+import { isSeededUsername } from './seeded-users';
 
 // Provisions (and tears down) a throwaway Keycloak user directly against the buddy realm's Admin
 // REST API -- used by delete-account.spec.ts to get a genuinely fresh, non-seeded guardian account
@@ -129,5 +130,40 @@ export async function deleteKeycloakUser(username: string): Promise<void> {
     });
   } catch {
     // Best-effort only -- see comment above.
+  }
+}
+
+// Ends every Keycloak session of a disposable user (Admin API "Sign out" for that user), which is
+// what an SSO-session idle timeout does: the refresh token stops working while an already-issued
+// access token stays valid until it expires. Used by session-expiry.spec.ts. Refuses the seeded
+// users -- every parallel spec signs in as them, and ending their sessions would break those runs.
+export async function endKeycloakSessions(user: DisposableGuardian): Promise<void> {
+  if (isSeededUsername(user.username)) {
+    throw new Error(`Refusing to end the sessions of seeded user '${user.username}'.`);
+  }
+
+  const { keycloak } = readRuntimeConfig();
+  const adminToken = await getMasterAdminToken(keycloak.authority);
+
+  const lookup = await fetch(
+    `${keycloak.authority}/admin/realms/${keycloak.realm}/users?username=${encodeURIComponent(user.username)}&exact=true`,
+    { headers: { Authorization: `Bearer ${adminToken}` } },
+  );
+  const users = (await lookup.json()) as { id: string }[];
+  const userId = users[0]?.id;
+
+  if (!userId) {
+    throw new Error(`Keycloak user '${user.username}' not found.`);
+  }
+
+  const response = await fetch(
+    `${keycloak.authority}/admin/realms/${keycloak.realm}/users/${userId}/logout`,
+    { method: 'POST', headers: { Authorization: `Bearer ${adminToken}` } },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Ending Keycloak sessions for '${user.username}' failed: ${response.status} ${response.statusText}`,
+    );
   }
 }

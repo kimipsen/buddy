@@ -45,6 +45,16 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     route: '/login',
   },
   {
+    name: 'login-session-expired',
+    title: 'Login after an expired session',
+    description:
+      'Where an expired session lands: the sign-in page with a notice. Signing in returns to the page that was interrupted.',
+    as: 'anonymous',
+    route: '/login',
+    path: () => '/login?reason=session-expired',
+    waitFor: 'Your session expired',
+  },
+  {
     name: 'guardian-dashboard',
     title: 'Guardian dashboard',
     description: 'Today at a glance: meals, tasks, events, medicine, pickups and the children.',

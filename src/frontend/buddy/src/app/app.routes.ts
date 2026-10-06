@@ -39,13 +39,17 @@ export const routes: Routes = [
   },
   {
     path: 'guardian',
+    // canActivateChild too, so the session is checked on every navigation inside the tree, not
+    // only when it's first entered (see auth.guard.ts).
     canActivate: [authGuard],
+    canActivateChild: [authGuard],
     loadChildren: () =>
       import('./features/guardian/guardian.routes').then((m) => m.GUARDIAN_ROUTES),
   },
   {
     path: 'child',
     canActivate: [authGuard],
+    canActivateChild: [authGuard],
     loadChildren: () => import('./features/child/child.routes').then((m) => m.CHILD_ROUTES),
   },
   {
