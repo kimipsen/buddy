@@ -100,6 +100,11 @@ export const admin = {
     linkedBadge: 'Linked',
     remove: 'Remove',
     revokeError: 'Unable to remove this child.',
+    delete: 'Delete',
+    deleteConfirmPrompt: 'Delete {name} and all their data? This can’t be undone.',
+    deleteError: 'Unable to delete this child.',
+    deleteOtherGuardiansError:
+      'Other guardians still have access to this child. Each of them must remove the child before it can be deleted.',
     language: {
       label: 'Language',
       error: "Unable to update this child's language.",
@@ -237,5 +242,14 @@ export const admin = {
     confirmButton: 'Yes, delete my account',
     deletingButton: 'Deleting…',
     error: 'Unable to delete your account.',
+    preview: {
+      loading: 'Checking what else will be deleted…',
+      error: 'Couldn’t check what else will be deleted.',
+      childrenTitle:
+        'These children have no other guardian. Their accounts and data will be deleted too:',
+      groupsHandedOverTitle: 'Groups you own will pass to another member:',
+      handover: '{group}: {name} becomes the owner',
+      groupsDeletedTitle: 'Groups nobody else is in will be deleted, with their calendars:',
+    },
   },
 };

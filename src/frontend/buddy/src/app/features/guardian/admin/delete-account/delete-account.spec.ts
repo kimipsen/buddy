@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../../../core/auth.service';
-import { UsersService } from '../../../../core/users.service';
+import { AccountDeletionPreview, UsersService } from '../../../../core/users.service';
 import { DeleteAccount } from './delete-account';
 
 describe('DeleteAccount', () => {
@@ -14,6 +14,7 @@ describe('DeleteAccount', () => {
   function setup(stubs: Stubs = {}) {
     const usersStub: Partial<UsersService> = {
       deleteCurrentUser: vi.fn(async () => undefined),
+      getAccountDeletionPreview: vi.fn(async () => emptyPreview()),
       ...stubs.users,
     };
     const authStub: Partial<AuthService> = { logout: vi.fn(), ...stubs.auth };
@@ -40,6 +41,95 @@ describe('DeleteAccount', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();
   }
+
+  function emptyPreview(): AccountDeletionPreview {
+    return { childrenErased: [], groupsHandedOver: [], groupsDeleted: [] };
+  }
+
+  describe('the deletion preview', () => {
+    it('lists the children erased and the groups handed over or deleted', async () => {
+      const { fixture, users } = setup({
+        users: {
+          getAccountDeletionPreview: vi.fn(async () => ({
+            childrenErased: [{ id: 'child-1', givenName: 'Ida', familyName: 'Hansen' }],
+            groupsHandedOver: [
+              {
+                id: 'group-1',
+                name: 'Family',
+                newOwner: { id: 'user-2', givenName: 'Ole', familyName: 'Hansen' },
+              },
+            ],
+            groupsDeleted: [{ id: 'group-2', name: 'Book club' }],
+          })),
+        },
+      });
+
+      openDialog(fixture);
+      await settle(fixture);
+
+      const text = dialog(fixture.nativeElement)!.textContent;
+      expect(users.getAccountDeletionPreview).toHaveBeenCalledTimes(1);
+      expect(text).toContain('These children have no other guardian.');
+      expect(text).toContain('Ida Hansen');
+      expect(text).toContain('Family: Ole Hansen becomes the owner');
+      expect(text).toContain('Groups nobody else is in will be deleted, with their calendars:');
+      expect(text).toContain('Book club');
+    });
+
+    it('shows nothing extra when the deletion affects no one else', async () => {
+      const { fixture } = setup();
+
+      openDialog(fixture);
+      await settle(fixture);
+
+      const text = dialog(fixture.nativeElement)!.textContent;
+      expect(text).not.toContain('These children');
+      expect(text).not.toContain('Groups');
+      expect(text).not.toContain('Checking what else will be deleted');
+    });
+
+    it('says it is checking while the preview loads', () => {
+      const { fixture } = setup({
+        users: { getAccountDeletionPreview: vi.fn(() => new Promise<never>(() => undefined)) },
+      });
+
+      openDialog(fixture);
+
+      expect(dialog(fixture.nativeElement)!.textContent).toContain(
+        'Checking what else will be deleted…',
+      );
+    });
+
+    it('still allows the deletion when the preview fails', async () => {
+      const { fixture, users } = setup({
+        users: { getAccountDeletionPreview: vi.fn(async () => Promise.reject(new Error('down'))) },
+      });
+
+      openDialog(fixture);
+      await settle(fixture);
+
+      expect(dialog(fixture.nativeElement)!.textContent).toContain(
+        'Couldn’t check what else will be deleted.',
+      );
+
+      findButtonByText(fixture.nativeElement, 'Yes, delete my account')!.click();
+      await settle(fixture);
+      expect(users.deleteCurrentUser).toHaveBeenCalledTimes(1);
+    });
+
+    it('fetches the preview again each time the dialog opens', async () => {
+      const { fixture, users } = setup();
+
+      openDialog(fixture);
+      await settle(fixture);
+      findButtonByText(fixture.nativeElement, 'Cancel')!.click();
+      fixture.detectChanges();
+      openDialog(fixture);
+      await settle(fixture);
+
+      expect(users.getAccountDeletionPreview).toHaveBeenCalledTimes(2);
+    });
+  });
 
   // The dim layer behind the panel: pointer-only, so it is hidden from assistive tech.
   function backdrop(compiled: HTMLElement): HTMLElement | null {

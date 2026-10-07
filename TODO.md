@@ -427,8 +427,9 @@ Found along the way:
     telemetry, idempotency responses encrypted.
   - [x] Right to erasure in the event store: per-feature erasers (delete or mask), the
     `DELETE /users/me` cascade, `UserErasureService`, the erasure ledger.
-  - [ ] `DeleteChild` endpoint (sole guardian only), plus the frontend: delete-child action and a
-    deletion dialog that lists the children and groups affected.
+  - [x] `DeleteChild` endpoint (sole guardian only) and the account-deletion preview, plus the
+    frontend: a delete-child action and a deletion dialog that lists the children and groups
+    affected.
   - [ ] Data export (`GET /users/me/export`) and a "Download my data" button.
   - [ ] AI assistant: minimization, 30-day retention, disclosure and acknowledgement.
   - [ ] Health-data read audit logs.

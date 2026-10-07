@@ -22,6 +22,9 @@ internal static partial class GuardiansLog
     [LoggerMessage(EventId = 2006, Level = LogLevel.Information, Message = "Guardian {GuardianId} gave up their link to child {ChildId}")]
     public static partial void GuardianLinkRevoked(this ILogger logger, Guid guardianId, Guid childId);
 
+    [LoggerMessage(EventId = 2008, Level = LogLevel.Information, Message = "Guardian {GuardianId} deleted child account {ChildId}")]
+    public static partial void ChildDeleted(this ILogger logger, Guid childId, Guid guardianId);
+
     [LoggerMessage(EventId = 2007, Level = LogLevel.Error, Message = "Keycloak admin request '{Operation}' failed with status {StatusCode}")]
     public static partial void KeycloakAdminRequestFailed(this ILogger logger, string operation, int statusCode);
 }

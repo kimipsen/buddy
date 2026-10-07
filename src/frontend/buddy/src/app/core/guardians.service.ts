@@ -111,6 +111,14 @@ export class GuardiansService {
     );
   }
 
+  // Erases the child's account and all its data. Only the child's sole guardian may; with other
+  // guardians the API answers 409 (child_has_other_guardians).
+  deleteChild(childId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}`),
+    );
+  }
+
   revokeChild(childId: string): Promise<void> {
     return firstValueFrom(
       this.http.delete<void>(

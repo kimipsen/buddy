@@ -46,6 +46,56 @@
         {{ 'admin.deleteAccount.confirmDescription' | translate }}
       </p>
 
+      @if (preview(); as impact) {
+        @if (impact.childrenErased.length > 0) {
+          <p class="mt-3 text-sm font-semibold text-red-700 dark:text-red-300">
+            {{ 'admin.deleteAccount.preview.childrenTitle' | translate }}
+          </p>
+          <ul class="mt-1 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
+            @for (child of impact.childrenErased; track child.id) {
+              <li>{{ child.givenName }} {{ child.familyName }}</li>
+            }
+          </ul>
+        }
+        @if (impact.groupsHandedOver.length > 0) {
+          <p class="mt-3 text-sm text-slate-700 dark:text-slate-300">
+            {{ 'admin.deleteAccount.preview.groupsHandedOverTitle' | translate }}
+          </p>
+          <ul class="mt-1 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
+            @for (group of impact.groupsHandedOver; track group.id) {
+              <li>
+                {{
+                  'admin.deleteAccount.preview.handover'
+                    | translate
+                      : {
+                          group: group.name,
+                          name: group.newOwner.givenName + ' ' + group.newOwner.familyName,
+                        }
+                }}
+              </li>
+            }
+          </ul>
+        }
+        @if (impact.groupsDeleted.length > 0) {
+          <p class="mt-3 text-sm text-slate-700 dark:text-slate-300">
+            {{ 'admin.deleteAccount.preview.groupsDeletedTitle' | translate }}
+          </p>
+          <ul class="mt-1 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
+            @for (group of impact.groupsDeleted; track group.id) {
+              <li>{{ group.name }}</li>
+            }
+          </ul>
+        }
+      } @else if (previewFailed()) {
+        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          {{ 'admin.deleteAccount.preview.error' | translate }}
+        </p>
+      } @else {
+        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          {{ 'admin.deleteAccount.preview.loading' | translate }}
+        </p>
+      }
+
       @if (deleting.state(); as state) {
         @if (state.status === 'error') {
           <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>

@@ -153,6 +153,7 @@ public static class UsersFeature
         users.MapResendCurrentEmailVerification();
         users.MapVerifyCurrentEmail();
         users.MapDeleteCurrentUser();
+        users.MapGetAccountDeletionPreview();
 
         return endpoints;
     }

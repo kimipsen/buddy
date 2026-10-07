@@ -100,6 +100,11 @@ export const admin = {
     linkedBadge: 'Tilknyttet',
     remove: 'Fjern',
     revokeError: 'Kunne ikke fjerne dette barn.',
+    delete: 'Slet',
+    deleteConfirmPrompt: 'Slet {name} og alle barnets data? Det kan ikke fortrydes.',
+    deleteError: 'Kunne ikke slette dette barn.',
+    deleteOtherGuardiansError:
+      'Andre værger har stadig adgang til barnet. De skal hver især fjerne barnet, før det kan slettes.',
     language: {
       label: 'Sprog',
       error: 'Kunne ikke opdatere barnets sprog.',
@@ -238,5 +243,14 @@ export const admin = {
     confirmButton: 'Ja, slet min konto',
     deletingButton: 'Sletter…',
     error: 'Kunne ikke slette din konto.',
+    preview: {
+      loading: 'Tjekker, hvad der ellers bliver slettet…',
+      error: 'Kunne ikke tjekke, hvad der ellers bliver slettet.',
+      childrenTitle: 'Disse børn har ingen anden værge. Deres konti og data bliver også slettet:',
+      groupsHandedOverTitle: 'Grupper, du ejer, overgår til et andet medlem:',
+      handover: '{group}: {name} bliver ejer',
+      groupsDeletedTitle:
+        'Grupper, som ingen andre er med i, bliver slettet sammen med deres kalendere:',
+    },
   },
 };

@@ -2,9 +2,10 @@
 
 Status: Partly implemented. Questions 1-4 and 8 ship: masking rules and an `IPersonalDataEraser`
 per feature (`Common/Erasure`), `UserErasure` and `UserErasureService` (`Features/Privacy`), the
-`DELETE /users/me` cascade, `UserErased`, and the erasure ledger. Not yet built: the `DeleteChild`
-endpoint (the child erasure itself runs, for orphaned children), export (Question 5), the AI changes
-(Question 6) and the health-data audit logs (Question 7). See "Implementation notes" near the end.
+`DELETE /users/me` cascade, `UserErased`, the erasure ledger, `DeleteChild`, the account-deletion
+preview (`GET /users/me/deletion-preview`) and their screens. Not yet built: export (Question 5),
+the AI changes (Question 6) and the health-data audit logs (Question 7). See "Implementation notes"
+near the end.
 
 ## Context
 
@@ -361,6 +362,7 @@ events.
 |---|---|---|
 | `DeleteCurrentUser` (changed) | self, adults only | Lock out, then run `UserErasure`; `204`. A child gets `403` |
 | `DeleteChild` | Manage, sole guardian | `DELETE /users/me/children/{childId}`; `409 child_has_other_guardians` |
+| `GetAccountDeletionPreview` | self | `GET /users/me/deletion-preview`: children erased, groups handed over or deleted; the same rules as the erasure |
 | `ExportPersonalData` | self | `GET /users/me/export`; rate-limit policy `personal-data-export` |
 | `AcknowledgeAiDataSharing` | Manage | `POST /mealplans/children/{childId}/ai-credentials/acknowledgement` |
 
@@ -371,10 +373,11 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 
 - **Admin, "Danger zone":**
   - The delete dialog lists the children who will be erased with the account, and the groups that
-    pass to someone else (the export section can compute both).
+    pass to someone else or are deleted (`GetAccountDeletionPreview`).
   - A "Download my data" button.
-- **Each child's settings:** a "Delete child account" action that is enabled only for the sole
-  guardian, with a hint explaining why when it isn't.
+- **Each child's row in "Children":** a "Delete" action next to "Remove", with an inline
+  confirmation. A child with other guardians gets the `409` explained ("each of them must remove
+  the child first") rather than a hidden button: the list doesn't know who else guards a child.
 - **AI assistant:** the data-sharing notice and an acknowledgement step before the first session.
 - All of this as en and da strings (the `i18n` skill), plus the screenshots.
 
@@ -446,7 +449,7 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 2. Erasure infrastructure: masking rules per feature, `Erased`, the coverage meta test, and the
    erasure step per store.
 3. `DeleteCurrentUser` cascade with `UserErasureService`, group ownership transfer and the ledger.
-4. `DeleteChild`.
+4. `DeleteChild`, the deletion preview, and their screens.
 5. Export.
 6. AI minimization, retention and disclosure.
 7. Health-data audit logs.

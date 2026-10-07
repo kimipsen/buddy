@@ -210,6 +210,28 @@ describe('GuardiansService', () => {
     });
   });
 
+  describe('deleteChild', () => {
+    it('DELETEs the child and resolves', async () => {
+      const promise = service.deleteChild('child-1');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await expect(promise).resolves.toBeNull();
+    });
+
+    it('rejects when the child has other guardians', async () => {
+      const promise = service.deleteChild('child-1');
+
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me/children/child-1`)
+        .flush({ code: 'child_has_other_guardians' }, { status: 409, statusText: 'Conflict' });
+
+      await expect(promise).rejects.toMatchObject({ status: 409 });
+    });
+  });
+
   describe('revokeChild', () => {
     it('DELETEs the guardian link and resolves', async () => {
       const promise = service.revokeChild('child-1');

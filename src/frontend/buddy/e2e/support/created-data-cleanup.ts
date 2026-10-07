@@ -163,6 +163,14 @@ async function cleanUpGuardianOwnedData(
           continue;
         }
 
+        // Erase the child (DeleteChild) so test children don't pile up in the database; a child
+        // another guardian still has answers 409, and is only unlinked from this one.
+        const deleted = await api.delete(`/users/me/children/${child.id}`, { headers });
+
+        if (deleted.ok()) {
+          continue;
+        }
+
         const revoke = await api.delete(`/users/me/children/${child.id}/guardian-link`, {
           headers,
         });

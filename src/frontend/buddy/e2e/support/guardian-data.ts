@@ -52,7 +52,7 @@ export async function createChild(page: Page, prefix = 'E2eChild'): Promise<Crea
   // long-running local dev backend that's already handled a lot of traffic this session.
   await expect(section.getByText(`${givenName} was created.`)).toBeVisible({ timeout: 15_000 });
 
-  // Unlinked from every seeded guardian (and its Keycloak user deleted) after the test -- see
+  // Deleted after the test (or only unlinked, if another guardian has it too) -- see
   // created-data-cleanup.ts and the cleanUpCreatedData auto fixture in auth-fixture.ts. Requires
   // the spec to import `test` from ./support/auth-fixture, which every spec does.
   trackCreatedChild({ givenName, familyName, username });

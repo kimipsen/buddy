@@ -11,7 +11,7 @@ import {
 
 import { AuthService } from '../../../../core/auth.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { UsersService } from '../../../../core/users.service';
+import { AccountDeletionPreview, UsersService } from '../../../../core/users.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 
 @Component({
@@ -31,8 +31,16 @@ export class DeleteAccount {
   protected readonly confirmOpen = signal(false);
   protected readonly deleting = createAction();
 
+  // What the deletion takes with it (children with no other guardian, owned groups), fetched each
+  // time the dialog opens. A failed fetch doesn't block the deletion; the dialog just says so.
+  protected readonly preview = signal<AccountDeletionPreview | null>(null);
+  protected readonly previewFailed = signal(false);
+
   protected openConfirm(): void {
     this.deleting.reset();
+    this.preview.set(null);
+    this.previewFailed.set(false);
+    void this.loadPreview();
     this.confirmOpen.set(true);
     // Start on Cancel, the safe choice, once the dialog has rendered.
     afterNextRender(() => this.cancelButton()?.nativeElement.focus(), { injector: this.injector });
@@ -78,6 +86,14 @@ export class DeleteAccount {
     if (!insideRun || active === (event.shiftKey ? first : last)) {
       event.preventDefault();
       (event.shiftKey ? last : first).focus();
+    }
+  }
+
+  private async loadPreview(): Promise<void> {
+    try {
+      this.preview.set(await this.users.getAccountDeletionPreview());
+    } catch {
+      this.previewFailed.set(true);
     }
   }
 

@@ -52,6 +52,10 @@ export class ManageChildren {
   protected readonly confirmingRevokeChildId = signal<string | null>(null);
   protected readonly revokingChild = createAction<string>();
 
+  // Deleting erases the child's account and data; only the sole guardian may (409 otherwise).
+  protected readonly confirmingDeleteChildId = signal<string | null>(null);
+  protected readonly deletingChild = createAction<string>();
+
   // One save at a time per setting, but each child keeps its own error until its next attempt.
   protected readonly savingLanguageChildId = signal<string | null>(null);
   protected readonly languageErrorByChildId = signal<Record<string, string>>({});
@@ -104,6 +108,7 @@ export class ManageChildren {
 
   protected requestRevoke(childId: string): void {
     this.revokingChild.clearError();
+    this.confirmingDeleteChildId.set(null);
     this.confirmingRevokeChildId.set(childId);
   }
 
@@ -120,6 +125,31 @@ export class ManageChildren {
         this.children.reload();
       },
       'admin.manageChildren.revokeError',
+    );
+  }
+
+  protected requestDelete(childId: string): void {
+    this.deletingChild.clearError();
+    this.confirmingRevokeChildId.set(null);
+    this.confirmingDeleteChildId.set(childId);
+  }
+
+  protected cancelDelete(): void {
+    this.confirmingDeleteChildId.set(null);
+  }
+
+  protected async confirmDelete(childId: string): Promise<void> {
+    await this.deletingChild.run(
+      childId,
+      async () => {
+        await this.guardians.deleteChild(childId);
+        this.confirmingDeleteChildId.set(null);
+        this.children.reload();
+      },
+      (error) =>
+        error instanceof HttpErrorResponse && error.status === 409
+          ? 'admin.manageChildren.deleteOtherGuardiansError'
+          : 'admin.manageChildren.deleteError',
     );
   }
 

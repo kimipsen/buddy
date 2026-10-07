@@ -1,4 +1,5 @@
 using buddy.Common.Erasure;
+using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
 
@@ -18,6 +19,7 @@ namespace buddy.Features.Privacy;
 public sealed class UserErasure(
     IUserEventStore users,
     IGuardianLinkEventStore guardians,
+    IGroupEventStore groups,
     IKeycloakAdminClient keycloak,
     IEnumerable<IPersonalDataEraser> erasers,
     ILogger<UserErasure> logger)
@@ -38,6 +40,66 @@ public sealed class UserErasure(
         {
             logger.ErasureIncomplete(exception, user.Id.Value);
         }
+    }
+
+    // DELETE /users/me/children/{childId}, once DeleteChild has checked the caller is the child's
+    // only guardian. Same contract as DeleteAccountAsync: the lock-out must succeed, the rest is
+    // retried in the background if it doesn't finish here.
+    public async Task DeleteChildAsync(User child, CancellationToken cancellationToken)
+    {
+        await LockAsync(child, cancellationToken);
+
+        try
+        {
+            await EraseChildAsync(child, await FindHeirAsync(child.Id, [child.Id], cancellationToken), cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.ErasureIncomplete(exception, child.Id.Value);
+        }
+    }
+
+    // What deleting this guardian's account would take with it, for the confirmation dialog: the
+    // same orphan and successor rules the erasure itself applies.
+    public async Task<AccountDeletionPreview> PreviewAsync(UserId guardianId, CancellationToken cancellationToken)
+    {
+        List<PreviewPerson> children = [];
+        foreach (var orphan in await FindOrphansAsync(guardianId, cancellationToken))
+        {
+            if (await users.FindSnapshotAsync(orphan, cancellationToken) is { } child)
+            {
+                children.Add(new PreviewPerson(child.Id.Value, child.Name.GivenName, child.Name.FamilyName));
+            }
+        }
+
+        List<GroupHandover> handedOver = [];
+        List<PreviewGroup> deleted = [];
+
+        foreach (var membership in await groups.ListForUserAsync(guardianId, cancellationToken))
+        {
+            var groupId = new GroupId(membership.GroupId);
+            var events = await groups.ReadAsync(groupId, cancellationToken);
+
+            if (Group.Rehydrate(events) is not { IsDeleted: false } group
+                || !group.Members.TryGetValue(guardianId, out var role)
+                || role != GroupRole.Owner)
+            {
+                continue;
+            }
+
+            var successor = await GroupSuccession.FindSuccessorAsync(events, group, guardianId, guardians, users, cancellationToken);
+
+            if (successor is not null && await users.FindSnapshotAsync(successor, cancellationToken) is { } heir)
+            {
+                handedOver.Add(new GroupHandover(groupId.Value, group.Name, new PreviewPerson(heir.Id.Value, heir.Name.GivenName, heir.Name.FamilyName)));
+            }
+            else
+            {
+                deleted.Add(new PreviewGroup(groupId.Value, group.Name));
+            }
+        }
+
+        return new AccountDeletionPreview(children, handedOver, deleted);
     }
 
     // Finishes every erasure that stopped halfway, and re-erases users a backup restore brought back.
@@ -76,20 +138,7 @@ public sealed class UserErasure(
 
     private async Task EraseGuardianAsync(User guardian, CancellationToken cancellationToken)
     {
-        var orphans = new List<UserId>();
-
-        foreach (var link in await guardians.ListForGuardianAsync(guardian.Id, cancellationToken))
-        {
-            var childId = new UserId(link.ChildId);
-            var otherGuardians = (await guardians.ListForChildAsync(childId, cancellationToken))
-                .Select(l => new UserId(l.GuardianId))
-                .Where(id => id != guardian.Id);
-
-            if (!await AnyActiveAsync(otherGuardians, cancellationToken))
-            {
-                orphans.Add(childId);
-            }
-        }
+        var orphans = await FindOrphansAsync(guardian.Id, cancellationToken);
 
         // Heirs first, while every link is still in place: a sibling who is being erased in the
         // same run can't inherit.
@@ -185,6 +234,33 @@ public sealed class UserErasure(
 
         return null;
     }
+
+    // The guardian's children who have no other active guardian.
+    private async Task<IReadOnlyList<UserId>> FindOrphansAsync(UserId guardianId, CancellationToken cancellationToken)
+    {
+        var orphans = new List<UserId>();
+
+        foreach (var link in await guardians.ListForGuardianAsync(guardianId, cancellationToken))
+        {
+            var childId = new UserId(link.ChildId);
+            var otherGuardians = (await guardians.ListForChildAsync(childId, cancellationToken))
+                .Select(l => new UserId(l.GuardianId))
+                .Where(id => id != guardianId);
+
+            if (!await AnyActiveAsync(otherGuardians, cancellationToken))
+            {
+                orphans.Add(childId);
+            }
+        }
+
+        return orphans;
+    }
+
+    // True when the child has an active guardian other than this one -- DeleteChild's 409.
+    public async Task<bool> HasOtherGuardianAsync(UserId childId, UserId guardianId, CancellationToken cancellationToken) =>
+        await AnyActiveAsync(
+            (await guardians.ListForChildAsync(childId, cancellationToken)).Select(l => new UserId(l.GuardianId)).Where(id => id != guardianId),
+            cancellationToken);
 
     private async Task<bool> AnyActiveAsync(IEnumerable<UserId> userIds, CancellationToken cancellationToken)
     {

@@ -244,6 +244,29 @@ describe('UsersService', () => {
     });
   });
 
+  describe('getAccountDeletionPreview', () => {
+    it('GETs the deletion preview', async () => {
+      const preview = {
+        childrenErased: [{ id: 'child-1', givenName: 'Ida', familyName: 'Hansen' }],
+        groupsHandedOver: [
+          {
+            id: 'group-1',
+            name: 'Family',
+            newOwner: { id: 'user-2', givenName: 'Ole', familyName: 'Hansen' },
+          },
+        ],
+        groupsDeleted: [{ id: 'group-2', name: 'Solo' }],
+      };
+
+      const promise = service.getAccountDeletionPreview();
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/deletion-preview`);
+      expect(req.request.method).toBe('GET');
+      req.flush(preview);
+
+      await expect(promise).resolves.toEqual(preview);
+    });
+  });
+
   describe('deleteCurrentUser', () => {
     it('DELETEs the current user and clears the memoized promise so the next call re-fetches', async () => {
       const initial = service.ensureCurrentUser();

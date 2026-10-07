@@ -22,6 +22,20 @@ export interface CurrentUser {
   language: string;
 }
 
+export interface PreviewPerson {
+  id: string;
+  givenName: string;
+  familyName: string;
+}
+
+// GET /users/me/deletion-preview: children erased with the account (no other guardian), owned
+// groups that pass to another member, and owned groups nobody else is left in.
+export interface AccountDeletionPreview {
+  childrenErased: PreviewPerson[];
+  groupsHandedOver: { id: string; name: string; newOwner: PreviewPerson }[];
+  groupsDeleted: { id: string; name: string }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class UsersService {
   private readonly http = inject(HttpClient);
@@ -110,6 +124,15 @@ export class UsersService {
     this.currentUserPromise = Promise.resolve(updated);
     this.i18n.setLanguageFromServer(updated.language);
     return updated;
+  }
+
+  // What deleting the account would also take with it, for the confirmation dialog.
+  getAccountDeletionPreview(): Promise<AccountDeletionPreview> {
+    return firstValueFrom(
+      this.http.get<AccountDeletionPreview>(
+        `${this.runtimeConfig.apiBaseUrl}/users/me/deletion-preview`,
+      ),
+    );
   }
 
   async deleteCurrentUser(): Promise<void> {

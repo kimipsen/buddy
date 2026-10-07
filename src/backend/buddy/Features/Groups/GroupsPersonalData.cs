@@ -8,8 +8,7 @@ using Marten;
 namespace buddy.Features.Groups;
 
 // Groups outlive any one member. An erased member's role is revoked. An erased owner hands the
-// group to its longest-standing admin, else its longest-standing member -- adults only, never a child
-// or a deleted user. A group nobody else is left in is erased: its calendars, its name and its
+// group on (GroupSuccession). A group nobody else is left in is erased: its calendars, its name and its
 // invites masked, then deleted. Invites the person sent or received are revoked and their email
 // masked. See gdpr-data-protection.md, Questions 2 and 4.
 public sealed class GroupsPersonalDataEraser(
@@ -57,7 +56,7 @@ public sealed class GroupsPersonalDataEraser(
             {
                 await groups.AppendAsync(groupId, [new GroupMemberRoleRevoked(groupId, userId, userId, now)], cancellationToken);
             }
-            else if (await FindSuccessorAsync(events, group, userId, cancellationToken) is { } successor)
+            else if (await GroupSuccession.FindSuccessorAsync(events, group, userId, guardians, users, cancellationToken) is { } successor)
             {
                 await groups.AppendAsync(
                     groupId,
@@ -146,50 +145,5 @@ public sealed class GroupsPersonalDataEraser(
         }
 
         await session.SaveChangesAsync(cancellationToken);
-    }
-
-    // The member who has belonged longest without a break, admins before members; children and
-    // deleted users never inherit a group.
-    private async Task<UserId?> FindSuccessorAsync(
-        IReadOnlyCollection<GroupEvent> events,
-        Group group,
-        UserId leaving,
-        CancellationToken cancellationToken)
-    {
-        var joinedAt = new Dictionary<UserId, DateTimeOffset>();
-
-        foreach (var @event in events)
-        {
-            switch (@event)
-            {
-                case GroupCreated created:
-                    joinedAt[created.OwnerId] = created.OccurredAt;
-                    break;
-                case GroupMemberRoleGranted granted:
-                    joinedAt.TryAdd(granted.MemberId, granted.OccurredAt);
-                    break;
-                case GroupMemberRoleRevoked revoked:
-                    joinedAt.Remove(revoked.MemberId);
-                    break;
-            }
-        }
-
-        var others = group.Members.Keys.Where(id => id != leaving).ToArray();
-        var children = (await guardians.FilterChildrenAsync(others, cancellationToken)).ToHashSet();
-
-        var ordered = others
-            .Where(id => !children.Contains(id))
-            .OrderBy(id => group.Members[id] == GroupRole.Admin ? 0 : 1)
-            .ThenBy(id => joinedAt.GetValueOrDefault(id, DateTimeOffset.MaxValue));
-
-        foreach (var candidate in ordered)
-        {
-            if (await users.FindSnapshotAsync(candidate, cancellationToken) is { IsDeleted: false })
-            {
-                return candidate;
-            }
-        }
-
-        return null;
     }
 }

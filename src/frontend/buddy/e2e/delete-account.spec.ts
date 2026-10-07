@@ -1,4 +1,5 @@
 import { SEEDED_USERS, expect, test } from './support/auth-fixture';
+import { createChild } from './support/guardian-data';
 import { createDisposableGuardian, deleteKeycloakUser } from './support/keycloak-admin-client';
 
 // SAFETY: this spec must NEVER delete alice/bob/carol (SEEDED_USERS) -- every other e2e spec in
@@ -23,6 +24,9 @@ test('a disposable guardian account deletes itself from the danger zone, and is 
 
   await loginAs(disposable);
 
+  // A child only this guardian has: the deletion takes it along, and the dialog says so.
+  const child = await createChild(page, 'E2eOrphan');
+
   await page.goto('/guardian/admin');
 
   const profileSection = page.locator('app-my-profile');
@@ -42,6 +46,11 @@ test('a disposable guardian account deletes itself from the danger zone, and is 
   await deleteSection.getByRole('button', { name: 'Delete my account' }).click();
 
   await expect(page.getByRole('heading', { name: 'Delete your account?' })).toBeVisible();
+  const confirmDialog = page.getByRole('dialog');
+  await expect(confirmDialog.getByText('These children have no other guardian.')).toBeVisible();
+  await expect(
+    confirmDialog.getByText(`${child.givenName} ${child.familyName}`, { exact: true }),
+  ).toBeVisible();
 
   // Fail-safe #3: one last check, right at the point of no return, immediately before the
   // destructive click.
@@ -54,8 +63,7 @@ test('a disposable guardian account deletes itself from the danger zone, and is 
   // endpoint and back to /login -- an actual cross-origin round trip, not just a local route change.
   await expect(page).toHaveURL(/\/login$/, { timeout: 15_000 });
 
-  // The buddy backend only soft-deletes its own User aggregate (DeleteCurrentUser.Handler.cs never
-  // calls Keycloak); reclaim the Keycloak identity itself so disposable accounts don't accumulate
-  // in the realm across repeated runs. Best-effort -- see deleteKeycloakUser's own comment.
+  // The backend erases the account, its Keycloak user included (UserErasure); this is a
+  // best-effort fallback in case that step was still pending -- see deleteKeycloakUser's comment.
   await deleteKeycloakUser(disposable.username);
 });

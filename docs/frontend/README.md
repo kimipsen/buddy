@@ -71,6 +71,9 @@ Current responsibilities:
 - manage calendars, groups, children, and the current profile from the admin area
 - manage the family's BYOK AI provider settings (add/remove keys, switch the
   active provider, test a connection) from the admin area
+- delete a child they alone guard (account and data), and delete their own account after a
+  dialog that lists what goes with it: children with no other guardian, and owned groups that
+  pass to another member or are deleted
 - sign out of the current session
 
 The route definition is in [src/frontend/buddy/src/app/features/guardian/guardian.routes.ts](../../src/frontend/buddy/src/app/features/guardian/guardian.routes.ts).
@@ -145,7 +148,7 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   calendar items and task completion
 - `GroupsService` manages group membership, invitations, sharing policies, and
   group deletion
-- `GuardiansService` calls the backend guardian endpoints
+- `GuardiansService` calls the backend guardian endpoints, including deleting a child
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
   subscription-token and import (preview, commit, list, undo) endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
@@ -162,7 +165,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   template picker on the calendar agenda's create-task form
 - `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post
   info for the progress badge, and lets a guardian configure a child's goal posts
-- `UsersService` loads the current profile, language, and email-verification state
+- `UsersService` loads the current profile, language, and email-verification state, the
+  account-deletion preview, and deletes the account
 - `postIdempotent` (`http-idempotency.ts`) wraps `HttpClient.post` for create-style calls
   (calendars, groups, children, meals, medicine schedules, task templates, invites, email
   verification, ...) with a fresh `Idempotency-Key` header per call and retries a transient

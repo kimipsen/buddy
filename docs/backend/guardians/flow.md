@@ -51,6 +51,7 @@ sequenceDiagram
 | `GET` | `/users/me/children` | Lists the current guardian's child accounts, ordered by when the guardian was linked to each child (oldest link first; links without a recorded time last), then by child id. The order is stable, so a client can use the first entry as a default family scope. |
 | `GET` | `/users/me/children/{childId}/guardians` | Lists the active guardians linked to a specific child. |
 | `DELETE` | `/users/me/children/{childId}/guardian-link` | Revokes the guardian-child relationship. |
+| `DELETE` | `/users/me/children/{childId}` | Erases the child's account and all its data, Keycloak account included. Only the child's sole active guardian may: `404` without an active link, `409 child_has_other_guardians` while another guardian remains. Family data anchored to the child passes to a sibling. See [gdpr-data-protection.md](../analysis/gdpr-data-protection.md). |
 | `PATCH` | `/users/me/children/{childId}/language` | An active guardian updates the child's language. |
 | `PATCH` | `/users/me/children/{childId}/timezone` | An active guardian updates the child's time zone. |
 | `GET` | `/users/me/guardians` | Lists guardians linked to the current authenticated user. |
