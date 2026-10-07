@@ -3,6 +3,8 @@
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": false,
+  "loginTheme": "buddy",
+  "emailTheme": "buddy",
   "roles": {
     "realm": [
       { "name": "buddy-child" }

@@ -3,7 +3,7 @@
 /*
  * Restyles Keycloak's inherited "keycloak" theme (PatternFly/Bootstrap based)
  * to match the Buddy app's visual language, targeting the real selectors and
- * theme.properties class hooks from Keycloak 21's base/keycloak login theme.
+ * theme.properties class hooks from Keycloak 26's base/keycloak login theme.
  * Structural layout (grids, spacing scaffolding, icon fonts) is left to the
  * inherited css/login.css; this file only overrides color, radius, shadow,
  * and typography.
@@ -56,6 +56,15 @@ textarea.pf-c-form-control {
   @apply block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500;
 }
 
+/* Password field + show/hide toggle (kcInputGroup, Keycloak 24+). */
+.pf-c-input-group {
+  @apply flex items-stretch;
+}
+
+.pf-c-input-group > .pf-c-form-control {
+  @apply min-w-0 flex-1 rounded-r-none;
+}
+
 .pf-c-form__helper-text.pf-m-error {
   @apply mt-1.5 block text-sm text-red-600;
 }
@@ -89,6 +98,11 @@ textarea.pf-c-form-control {
 
 .pf-c-button.pf-m-control {
   @apply border border-slate-300 bg-white text-slate-700 hover:border-slate-400;
+}
+
+/* Not the full-width action button: an icon-sized segment joined to the input. */
+.pf-c-input-group > .pf-c-button.pf-m-control {
+  @apply h-auto w-auto shrink-0 rounded-l-none border-l-0 px-3 focus:ring-offset-0;
 }
 
 .pf-c-alert {
