@@ -473,10 +473,11 @@ Found along the way:
 
 ### Process
 
-- [ ] **Code coverage in CI** for backend and frontend, reported on PRs.
+- [x] **Code coverage in CI** for backend and frontend: job summary, a PR comment per side, and
+  the full report as an artifact (backend 89% lines / 70% branches, frontend 97% / 92%).
 - [x] **Repo hygiene files.** MIT `LICENSE`, `SECURITY.md` (GitHub private reporting),
   `.github/CODEOWNERS` and a PR template.
-- [ ] **Enable private vulnerability reporting** in the GitHub repo settings (Security > Private
-  vulnerability reporting); `SECURITY.md` points reporters there.
-- [ ] **Pre-commit lint/format hook** (husky/lint-staged or a Taskfile hook), so Prettier and
-  ESLint problems show up before CI.
+- [x] **Enable private vulnerability reporting** on `kimipsen/buddy` (the primary repo);
+  `SECURITY.md` points reporters there.
+- [x] **Pre-commit lint/format hook** in `.devcontainer/git-hooks` (installed by
+  `task hooks:install`): Prettier, ESLint, i18n parity and C# whitespace on staged files.

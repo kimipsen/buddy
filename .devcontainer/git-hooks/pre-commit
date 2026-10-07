@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Installed via `task hooks:install`, which sets core.hooksPath=.devcontainer/git-hooks.
+# Fast checks on the staged files only, so formatting and lint problems show up before CI does.
+# The build, the analyzers and the tests stay in CI. Skip once with `git commit --no-verify`.
+set -euo pipefail
+
+if [[ "${SKIP_PRE_COMMIT:-}" == "1" ]]; then
+  exit 0
+fi
+
+hook_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/pre-commit-checks.sh
+source "$hook_dir/lib/pre-commit-checks.sh"
+
+pre_commit_run

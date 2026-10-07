@@ -170,6 +170,32 @@ verified scoping instructions and expected runtime characteristics.
 - `.github/workflows/mutation-testing.yml` runs mutation testing nightly and on
   demand. See [nightly mutation testing](#nightly-mutation-testing).
 
+### Code coverage
+
+The backend and frontend test workflows also measure line and branch coverage.
+Each one writes the totals to the job summary, and on a pull request keeps one
+comment per side up to date (`.github/scripts/coverage-report.sh`). The full
+report is the run's `backend-coverage` or `frontend-coverage` artifact; the
+frontend one includes an HTML report. Coverage is reported only, and no
+threshold fails a build. Mutation testing is the stronger check of test quality.
+
+To measure locally:
+
+```bash
+# Backend: Cobertura XML under ./coverage (coverlet, the API assembly only)
+dotnet test src/backend/backend.slnx --settings src/backend/coverage.runsettings --results-directory coverage
+
+# Frontend: src/frontend/buddy/coverage/buddy, open index.html for the HTML report
+cd src/frontend/buddy && npx ng test --watch=false --coverage --coverage-reporters=html --coverage-reporters=text-summary
+```
+
+### Pre-commit checks
+
+`task hooks:install` (with `AGENT=none` to skip the AI documentation sync)
+adds a pre-commit hook. It runs Prettier and ESLint on staged frontend files,
+the en/da parity check when translations change, and `dotnet format whitespace`
+on staged C# files. See `.devcontainer/git-hooks/README.md`.
+
 ### Nightly mutation testing
 
 The mutation workflow runs every night at 02:00 UTC and can also be started

@@ -5,11 +5,13 @@ on:
     paths:
       - "src/backend/**"
       - ".github/workflows/backend-tests.yml"
+      - ".github/scripts/coverage-report.sh"
   push:
     branches: [master]
     paths:
       - "src/backend/**"
       - ".github/workflows/backend-tests.yml"
+      - ".github/scripts/coverage-report.sh"
 
 # Least privilege for the GITHUB_TOKEN; a job that needs more asks for it itself.
 permissions:
@@ -18,6 +20,10 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Writes the coverage comment on the pull request.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
 
@@ -33,5 +39,24 @@ jobs:
         run: dotnet build src/backend/backend.slnx --no-restore --configuration Release
 
       # Testcontainers needs a Docker daemon, which the ubuntu-latest runner provides natively.
+      # coverage.runsettings: coverlet, Cobertura format, the API assembly only.
       - name: Test
-        run: dotnet test src/backend/backend.slnx --no-build --configuration Release --logger "console;verbosity=normal"
+        run: >-
+          dotnet test src/backend/backend.slnx --no-build --configuration Release
+          --logger "console;verbosity=normal"
+          --settings src/backend/coverage.runsettings --results-directory coverage
+
+      - name: Coverage report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Empty on a fork's pull request: its token can't comment, so the report goes to the job
+          # summary only.
+          PR_NUMBER: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.number || '' }}
+        run: .github/scripts/coverage-report.sh Backend "$(find coverage -name coverage.cobertura.xml | head -n 1)"
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-coverage
+          path: coverage/**/coverage.cobertura.xml
+          retention-days: 14

@@ -44,5 +44,5 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 - Plan before non-trivial changes. Design docs live in `docs/backend/analysis/` and `docs/frontend/analysis/`.
 - Change tests rather than production code when hardening specs; ask before changing production code for a bug a test uncovers.
 - Never commit secrets. `appsettings.*.json` and `.env` are git-ignored.
-- A post-commit hook (`task hooks:install`) may add a `docs: sync documentation (auto)` commit. Add `[skip-docs]` to the commit message to skip it.
+- `task hooks:install` adds a pre-commit hook (Prettier/ESLint, i18n parity and C# whitespace on staged files; fix what it reports rather than using `--no-verify`) and a post-commit hook that may add a `docs: sync documentation (auto)` commit. Add `[skip-docs]` to the commit message to skip the latter.
 - Stop dev servers by port (`fuser -k -TERM 4300/tcp 5193/tcp 7076/tcp`), not with `pkill -f`, which can match your own shell.

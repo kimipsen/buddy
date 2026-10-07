@@ -1,4 +1,23 @@
-# Documentation-sync git hook
+# Git hooks
+
+Two hooks live here: a `pre-commit` hook with fast format and lint checks, and a
+`post-commit` hook that keeps the documentation in sync.
+
+## pre-commit: format and lint checks
+
+Runs on the staged files only, and only the checks that apply to them:
+
+- Frontend files: Prettier, plus ESLint for `.ts`/`.html` (same config as `ng lint`; warnings
+  don't fail).
+- Translation files under `src/app/core/i18n`: the en/da parity check.
+- C# files: `dotnet format whitespace --verify-no-changes`. Code style and analyzers that need the
+  compiler run in the build, which fails on them.
+
+It takes a few seconds and fails the commit with the command that fixes each problem. Files are
+checked as they are on disk, so a partly staged file is checked with its unstaged changes. Skip
+it for one commit with `git commit --no-verify` or `SKIP_PRE_COMMIT=1 git commit ...`.
+
+## post-commit: documentation sync
 
 A `post-commit` hook that asks an AI coding agent to update `docs/` and
 `README.md` based on the diff of the commit that was just made, then commits
@@ -8,7 +27,7 @@ commit.
 ## Install
 
 ```bash
-task hooks:install AGENT=claude   # or: codex, copilot
+task hooks:install AGENT=claude   # or: codex, copilot, none (pre-commit checks only)
 ```
 
 This points git at this directory (`git config core.hooksPath
