@@ -248,11 +248,16 @@ KEYCLOAK_ENV_VARS=(
   "KC_DB_URL_PROPERTIES=?sslmode=require"
   "KC_DB_USERNAME=$PG_ADMIN_USER"
   KC_DB_PASSWORD=secretref:pg-password
-  "KC_HOSTNAME=$KEYCLOAK_HOSTNAME"
+  # Keycloak 26 (hostname v2) takes the scheme from KC_HOSTNAME when it's a
+  # full URL; a bare hostname makes it use the request's scheme, which is
+  # plain HTTP behind the Container Apps ingress (mixed-content errors in the
+  # admin console). KC_PROXY=edge was removed in 26 - trust X-Forwarded-*.
+  "KC_HOSTNAME=https://$KEYCLOAK_HOSTNAME"
   KC_HTTP_ENABLED=true
-  KC_PROXY=edge
-  "KEYCLOAK_ADMIN=$KEYCLOAK_ADMIN"
-  KEYCLOAK_ADMIN_PASSWORD=secretref:keycloak-admin-password
+  KC_PROXY_HEADERS=xforwarded
+  # KEYCLOAK_ADMIN/_PASSWORD are deprecated in 26; only read on first boot.
+  "KC_BOOTSTRAP_ADMIN_USERNAME=$KEYCLOAK_ADMIN"
+  KC_BOOTSTRAP_ADMIN_PASSWORD=secretref:keycloak-admin-password
 )
 
 if containerapp_exists keycloak; then
@@ -269,6 +274,7 @@ if containerapp_exists keycloak; then
     --resource-group "$RESOURCE_GROUP" \
     --image "$KEYCLOAK_IMAGE" \
     --set-env-vars "${KEYCLOAK_ENV_VARS[@]}" \
+    --remove-env-vars KC_PROXY KEYCLOAK_ADMIN KEYCLOAK_ADMIN_PASSWORD \
     -o none
 else
   echo "==> Deploying Keycloak ($KEYCLOAK_HOSTNAME)"

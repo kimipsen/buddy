@@ -58,7 +58,7 @@ services:
       - buddy_network
 
   keycloak:
-    image: quay.io/keycloak/keycloak:21.1.1
+    image: quay.io/keycloak/keycloak:26.8.0
     restart: unless-stopped
     # Credentials live in .devcontainer/.env (gitignored). See .env.example.
     env_file:

@@ -117,7 +117,7 @@ services:
 
   keycloak:
     image: buddy-keycloak:${BUDDY_IMAGE_TAG:-latest}
-    # Same image as Azure: stock 21.1.1 + `kc.sh build --db=postgres` + the
+    # Same image as Azure: stock 26.x + `kc.sh build --db=postgres` + the
     # buddy theme baked in. The stock image is built for dev-file (H2), and
     # `start --optimized` (the image's CMD) doesn't re-run the build, so the
     # stock image would ignore KC_DB=postgres.
@@ -136,14 +136,18 @@ services:
       KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KC_HOSTNAME: "${AUTH_DOMAIN}"
+      # Full URL so Keycloak 26 (hostname v2) emits https:// links behind Caddy;
+      # KC_PROXY=edge was removed in 26 in favour of KC_PROXY_HEADERS.
+      KC_HOSTNAME: "https://${AUTH_DOMAIN}"
       KC_HTTP_ENABLED: "true"
-      KC_PROXY: edge
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_PROXY_HEADERS: xforwarded
+      # KEYCLOAK_ADMIN/_PASSWORD are deprecated in 26; only read on first boot.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     # No curl in the Keycloak image either. /health/ready includes the DB check.
+    # Since Keycloak 25 health endpoints live on the management port (9000).
     healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
       interval: 15s
       timeout: 5s
       retries: 10

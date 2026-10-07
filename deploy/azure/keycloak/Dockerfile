@@ -12,8 +12,7 @@
 
 FROM quay.io/keycloak/keycloak:26.8.0@sha256:b0f60d489d51c5d113390bdf5461d4c06e6051be026c05549f2e1e10ec352bcc
 
-# Exposes /health, /health/ready, /health/live on the HTTP port (KC 21 has no
-# separate management port). Off by default, so the Azure image is unchanged.
+# Exposes /health, /health/ready, /health/live on the management port (9000). Off by default, so the Azure image is unchanged.
 ARG HEALTH_ENABLED=false
 
 COPY themes/buddy /opt/keycloak/themes/buddy
