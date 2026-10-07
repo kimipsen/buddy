@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v7
 
       # The Node version comes from .nvmrc, the same file the frontend Dockerfile and devcontainer follow.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version-file: src/frontend/buddy/.nvmrc
           cache: "npm"

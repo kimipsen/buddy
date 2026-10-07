@@ -120,7 +120,7 @@ jobs:
       # re-tests mutants whose source or tests changed. With no cache (first run, or evicted
       # after 7 days unused) the committed reports/stryker-incremental.json is used as-is.
       - name: Restore incremental baseline
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: src/frontend/buddy/reports/stryker-incremental.json
           key: stryker-incremental-${{ github.run_id }}
@@ -133,7 +133,7 @@ jobs:
 
       - name: Save incremental baseline
         if: ${{ !cancelled() }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: src/frontend/buddy/reports/stryker-incremental.json
           key: stryker-incremental-${{ github.run_id }}
