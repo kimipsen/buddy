@@ -44,7 +44,8 @@ The screen supports:
   library](task-library.md)), showing a hint with the template's total
   subtask duration and the resulting end time once a due time is set;
 - daily, weekly, monthly, and yearly recurrence with interval and optional end
-  date;
+  date, plus weekday toggles for daily and weekly rules (see [Weekday
+  recurrence rules](../../backend/analysis/recurrence-weekdays.md));
 - editing details, schedule, and recurrence through the corresponding backend
   operations;
 - task completion from the agenda, with the checkbox disabled for occurrences
