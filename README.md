@@ -66,6 +66,7 @@ in real time.
 - [x] English and Danish localization
 - [x] Light, dark, and system theme selection
 - [x] Per-user and per-feed rate limiting on every API endpoint
+- [ ] GDPR: account and child erasure, data export, AI data minimization (proposed, not yet implemented — see [GDPR: erasure, export and data minimization](docs/backend/analysis/gdpr-data-protection.md))
 
 ## Repository structure
 
@@ -157,6 +158,7 @@ deploy/      Production Docker Compose and Caddy deployment
 
 ### Design analyses
 
+- [GDPR: erasure, export and data minimization](docs/backend/analysis/gdpr-data-protection.md)
 - [Group-owned calendars and permissions](docs/backend/analysis/group-owned-calendars-and-permissions.md)
 - [Aggregate roots and their relationships](docs/backend/analysis/aggregate-roots.md)
 - [All-day calendar items](docs/backend/analysis/calendar-all-day-items.md)

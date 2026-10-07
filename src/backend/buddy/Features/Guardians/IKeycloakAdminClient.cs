@@ -15,6 +15,11 @@ public interface IKeycloakAdminClient
         string familyName,
         string username,
         CancellationToken cancellationToken);
+
+    // Deletes the Keycloak account behind a Buddy user (guardian or child), which also erases the
+    // email, name and credentials Keycloak holds. Idempotent: an account that is already gone counts
+    // as deleted. See gdpr-data-protection.md.
+    Task DeleteUserAsync(KeycloakSubject subject, CancellationToken cancellationToken);
 }
 
 // Username is the child's login handle in Keycloak -- the guardian needs it alongside

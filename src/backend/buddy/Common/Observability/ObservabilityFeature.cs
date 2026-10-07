@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using buddy.Common.Health;
 using buddy.Common.Versioning;
 
@@ -15,14 +17,21 @@ namespace buddy.Common.Observability;
 // OTEL_* variables (OTEL_EXPORTER_OTLP_PROTOCOL, OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME...)
 // are read by the SDK itself.
 //
-// Correlation: every log line carries TraceId/SpanId (the host's default ActivityTrackingOptions)
-// and the request's RequestId -- the same value an ErrorEnvelope returns as requestId -- so a
-// user-reported error leads to its logs, and from there to the trace.
+// Correlation: UseObservability makes HttpContext.TraceIdentifier -- the requestId an ErrorEnvelope
+// returns -- the request's trace id, which every log line (TraceId) and span carries. So a
+// user-reported error leads to its logs and its trace.
+//
+// Secret tokens in URL paths (iCal feeds, shared sleep diaries) never leave the process: the span's
+// url.path shows "{token}" instead, and exported logs carry no scopes, because ASP.NET Core's
+// RequestPath scope holds the raw path. See gdpr-data-protection.md, Question 8.
 public static class ObservabilityFeature
 {
     public const string ServiceName = "buddy-api";
 
     public const string OtlpEndpointKey = "OTEL_EXPORTER_OTLP_ENDPOINT";
+
+    // A route parameter with this name is a secret (IcalToken, SleepDiaryShareSecret, group shares).
+    private const string SecretRouteParameter = "token";
 
     // ActivitySource and Meter names: Npgsql covers every Marten query, Wolverine every handler.
     private static readonly string[] Sources = ["Npgsql", "Wolverine"];
@@ -48,8 +57,12 @@ public static class ObservabilityFeature
                 serviceInstanceId: Environment.MachineName))
             .WithTracing(tracing => tracing
                 .AddAspNetCoreInstrumentation(options =>
+                {
                     // Probes poll these every few seconds; tracing them only buries real requests.
-                    options.Filter = context => !context.Request.Path.StartsWithSegments(HealthChecksFeature.LivenessPath))
+                    options.Filter = context => !context.Request.Path.StartsWithSegments(HealthChecksFeature.LivenessPath);
+                    // At the end of the request, once routing has named the token parameter.
+                    options.EnrichWithHttpResponse = (activity, response) => RedactSecretPath(activity, response.HttpContext);
+                })
                 .AddHttpClientInstrumentation()
                 .AddSource(Sources))
             .WithMetrics(metrics => metrics
@@ -59,7 +72,9 @@ public static class ObservabilityFeature
                 .AddMeter(Sources))
             .WithLogging(_ => { }, options =>
             {
-                options.IncludeScopes = true;
+                // No scopes: ASP.NET Core's RequestPath scope holds raw paths, tokens included.
+                // TraceId and SpanId are fields of every exported log record anyway.
+                options.IncludeScopes = false;
                 options.IncludeFormattedMessage = true;
             });
 
@@ -69,5 +84,28 @@ public static class ObservabilityFeature
         }
 
         return builder;
+    }
+
+    // First in the pipeline, so every requestId -- error envelopes included -- is the trace id.
+    public static IApplicationBuilder UseObservability(this IApplicationBuilder app) =>
+        app.Use((context, next) =>
+        {
+            if (Activity.Current is { } activity)
+            {
+                context.TraceIdentifier = activity.TraceId.ToHexString();
+            }
+
+            return next(context);
+        });
+
+    internal static void RedactSecretPath(Activity activity, HttpContext context)
+    {
+        if (context.Request.RouteValues.TryGetValue(SecretRouteParameter, out var value)
+            && value is string token
+            && token.Length > 0
+            && context.Request.Path.Value is { } path)
+        {
+            activity.SetTag("url.path", path.Replace(token, "{token}", StringComparison.Ordinal));
+        }
     }
 }

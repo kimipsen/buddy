@@ -29,6 +29,8 @@ public static class IdempotencyFeature
             return options;
         });
 
+        // Encrypts stored response bodies (IdempotencyKeyRepository). Idempotent with other features' calls.
+        services.AddDataProtection();
         services.AddSingleton<IdempotencyKeyRepository>();
         services.AddHostedService<IdempotencyCleanupService>();
 

@@ -1,11 +1,19 @@
+using System.Security.Cryptography;
+
 using JasperFx;
 
 using Marten;
 
+using Microsoft.AspNetCore.DataProtection;
+
 namespace buddy.Common.Idempotency;
 
-public sealed class IdempotencyKeyRepository(IIdempotencyStore store)
+// Stored response bodies are encrypted with Data Protection: a body can hold personal data, such as
+// the temporary password CreateChild returns, and sits in the database for up to 24 hours.
+public sealed class IdempotencyKeyRepository(IIdempotencyStore store, IDataProtectionProvider dataProtection)
 {
+    private readonly IDataProtector _protector = dataProtection.CreateProtector("buddy.idempotency.response.v1");
+
     public async Task<IdempotencyRecord?> FindAsync(Guid userId, string key, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();
@@ -51,9 +59,31 @@ public sealed class IdempotencyKeyRepository(IIdempotencyStore store)
             return;
         }
 
-        session.Store(existing with { Response = new CompletedResponse(statusCode, contentType, responseBody) });
+        session.Store(existing with { Response = new CompletedResponse(statusCode, contentType, _protector.Protect(responseBody)) });
 
         await session.SaveChangesAsync(cancellationToken);
+    }
+
+    // False when the body can't be decrypted -- the key ring changed since it was stored, or it was
+    // stored unencrypted before encryption existed. The caller must not run the request again.
+    public bool TryReadBody(CompletedResponse response, out byte[] body)
+    {
+        if (response.Body.Length == 0)
+        {
+            body = [];
+            return true;
+        }
+
+        try
+        {
+            body = _protector.Unprotect(response.Body);
+            return true;
+        }
+        catch (CryptographicException)
+        {
+            body = [];
+            return false;
+        }
     }
 
     // Called when the wrapped request throws instead of completing -- drops the reservation so a

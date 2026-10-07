@@ -3,6 +3,7 @@ using System.Diagnostics;
 
 using Alba;
 
+using buddy.Common;
 using buddy.IntegrationTests.Fixtures;
 
 using OpenTelemetry;
@@ -65,6 +66,42 @@ public sealed class ObservabilityTests(BuddyApiFixture fixture) : IAsyncLifetime
 
         Assert.DoesNotContain(Exported(), a => a.Kind == ActivityKind.Server
             && (a.GetTagItem("url.path") as string ?? "").StartsWith("/health", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_secret_token_in_the_path_never_reaches_a_span()
+    {
+        var token = $"secret{Guid.NewGuid():N}";
+
+        await _host.Scenario(_ =>
+        {
+            _.Get.Url($"/sleep-diary/shared/{token}");
+            _.IgnoreStatusCode();
+        });
+
+        var server = await WaitForAsync(a => a.Kind == ActivityKind.Server
+            && (a.GetTagItem("http.route") as string ?? "").Contains("{token}", StringComparison.Ordinal));
+
+        Assert.Equal("/sleep-diary/shared/{token}", server.GetTagItem("url.path"));
+        Assert.DoesNotContain(server.TagObjects, tag => tag.Value is string value && value.Contains(token, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task An_error_responses_request_id_is_its_trace_id()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        var response = await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            // No Name: rejected by request binding with an ErrorEnvelope.
+            _.Post.Json(new { }).ToUrl("/groups/");
+            _.StatusCodeShouldBe(400);
+        });
+        var requestId = response.ReadAsJson<ErrorEnvelope>().RequestId;
+
+        var server = await WaitForAsync(a => a.Kind == ActivityKind.Server && a.TraceId.ToHexString() == requestId);
+        Assert.Equal("POST", server.GetTagItem("http.request.method"));
     }
 
     private Activity[] Exported() => [.. _exported];

@@ -115,6 +115,14 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
             return;
         }
 
+        if (!repository.TryReadBody(response, out var body))
+        {
+            // Running the request again could repeat its effect (a second child account), so the
+            // retry is refused rather than replayed without its original response.
+            await WriteConflictAsync(context, "idempotency_response_unavailable", $"The response to this {HeaderName} can no longer be replayed. Check whether the original request succeeded.");
+            return;
+        }
+
         context.Response.StatusCode = response.StatusCode;
 
         if (response.ContentType is { } contentType)
@@ -122,9 +130,9 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
             context.Response.ContentType = contentType;
         }
 
-        if (response.Body.Length > 0)
+        if (body.Length > 0)
         {
-            await context.Response.Body.WriteAsync(response.Body, cancellationToken);
+            await context.Response.Body.WriteAsync(body, cancellationToken);
         }
     }
 

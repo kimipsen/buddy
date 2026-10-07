@@ -16,15 +16,17 @@ public sealed class UserIdClaimsTransformation(IUserEventStore users) : IClaimsT
             return principal;
         }
 
-        var userId = await users.FindUserIdAsync(principal.GetKeycloakSubject(), CancellationToken.None);
+        var keycloakIdentity = await users.FindIdentityAsync(principal.GetKeycloakSubject(), CancellationToken.None);
 
-        if (userId is null)
+        // A deleted user gets no claim, so ProvisionedUserMiddleware answers 403 for every request
+        // their still-valid token makes.
+        if (keycloakIdentity is not { Deleted: false })
         {
             return principal;
         }
 
         var identity = new ClaimsIdentity();
-        identity.AddClaim(new Claim(Claims.UserId, userId.Value.ToString()));
+        identity.AddClaim(new Claim(Claims.UserId, keycloakIdentity.UserId.Value.ToString()));
         principal.AddIdentity(identity);
 
         return principal;

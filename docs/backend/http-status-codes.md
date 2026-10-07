@@ -574,7 +574,8 @@ built from FluentValidation's `ValidationResult` via
 
 `details` keys are field names as FluentValidation derives them from the
 command's property names (or `""` for a general, non-field-specific error,
-e.g. a resend-cooldown rejection). `requestId` is `HttpContext.TraceIdentifier`.
+e.g. a resend-cooldown rejection). `requestId` is `HttpContext.TraceIdentifier`, which is the
+request's trace id (see [observability.md](observability.md#logs-and-correlation)).
 `NotFound`/`Forbidden` outcomes are unaffected — they keep their existing,
 endpoint-specific mappings (some deliberately collapse `Forbidden` into `404`
 for privacy). Keep the schema stable for clients.

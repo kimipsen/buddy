@@ -101,6 +101,55 @@ public sealed class IdempotencyKeyTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_stored_response_is_encrypted()
+    {
+        var (_, token, userId) = await fixture.CreateAuthenticatedUserAsync();
+        var key = Guid.NewGuid().ToString();
+        const string name = "Encrypted Response Club";
+
+        await PostGroupAsync(token, key, name, expectedStatus: 200);
+
+        var record = await fixture.Host.Services.GetRequiredService<IdempotencyKeyRepository>()
+            .FindAsync(userId, key, CancellationToken.None);
+        var response = record?.Response;
+        Assert.NotNull(response);
+        var stored = System.Text.Encoding.UTF8.GetString(response.Body);
+
+        Assert.DoesNotContain(name, stored);
+    }
+
+    [Fact]
+    public async Task A_stored_response_that_cant_be_decrypted_is_refused_not_run_again()
+    {
+        var (_, token, userId) = await fixture.CreateAuthenticatedUserAsync();
+        var key = Guid.NewGuid().ToString();
+
+        await PostGroupAsync(token, key, "Lost Key Club", expectedStatus: 200);
+
+        // As if the Data Protection key ring had changed since the response was stored.
+        var store = fixture.Host.Services.GetRequiredService<IIdempotencyStore>();
+        await using (var session = store.LightweightSession())
+        {
+            var record = await session.LoadAsync<IdempotencyRecord>(IdempotencyRecord.BuildId(userId, key));
+            session.Store(record! with { Response = record.Response! with { Body = [1, 2, 3] } });
+            await session.SaveChangesAsync();
+        }
+
+        var retry = await PostGroupAsync(token, key, "Lost Key Club", expectedStatus: 409);
+
+        Assert.Equal("idempotency_response_unavailable", retry.ReadAsJson<ErrorEnvelope>().Code);
+    }
+
+    private Task<IScenarioResult> PostGroupAsync(string token, string key, string name, int expectedStatus) =>
+        fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.WithRequestHeader(IdempotencyKeyMiddleware.HeaderName, key);
+            _.Post.Json(new { Name = name }).ToUrl("/groups/");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+    [Fact]
     public async Task Cleanup_removes_expired_completed_keys_but_keeps_a_key_still_in_progress()
     {
         var repository = fixture.Host.Services.GetRequiredService<IdempotencyKeyRepository>();

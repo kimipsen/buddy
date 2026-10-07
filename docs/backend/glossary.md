@@ -48,7 +48,7 @@ The user’s profile name, consisting of:
 The event that creates the local user record from the Keycloak claims and the initial profile data.
 
 ### UserDeleted
-The event that marks the user as deleted. The user aggregate remains in the stream, but it is treated as deleted when rehydrated.
+The event that marks the user as deleted. It is stored together with the `KeycloakIdentity`'s `Deleted` flag, which locks the user out of the API. The user aggregate remains in the stream and is treated as deleted when rehydrated; erasing its personal data is described in [gdpr-data-protection.md](analysis/gdpr-data-protection.md).
 
 ### NameUpdated
 The event that changes the user’s name.

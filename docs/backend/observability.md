@@ -72,10 +72,20 @@ Monitor's OTLP ingestion. The SDK reads the other standard variables itself, for
 
 - In Development, console logs stay human-readable. Everywhere else, they are JSON lines with
   their scopes as fields, so a log shipper can index them.
-- Every log written during a request carries `TraceId` and `SpanId`, which lead to the trace,
-  and `RequestId`.
-- `RequestId` is the same value an error response returns as `requestId` (`ErrorEnvelope`). A
-  user-reported error therefore leads to its log lines, and from there to the whole trace.
+- Every log written during a request carries `TraceId` and `SpanId`, which lead to the trace.
+- An error response's `requestId` (`ErrorEnvelope`) *is* the trace id: `UseObservability` sets
+  `HttpContext.TraceIdentifier` to it at the start of every request. A user-reported error
+  therefore leads straight to its log lines and its trace.
+- Logs exported over OTLP carry no scopes. ASP.NET Core's `RequestPath` scope holds the raw path,
+  and some paths contain secret tokens (below). `TraceId` and `SpanId` are fields of every
+  exported log record anyway. The local JSON console keeps its scopes.
+
+### Secret tokens in URLs
+
+iCal feeds (`/calendars/{id}/ical/{token}`, `/mealplans/{id}/ical/{token}`), shared sleep diaries
+(`/sleep-diary/shared/{token}`) and invite links (`.../{token}/accept`, `.../{token}/preview`) carry
+a secret in the path. A span's `url.path` shows `{token}` in its place (`RedactSecretPath`, keyed on
+the route parameter name `token`). Name a new secret route parameter `token` too, and it's covered.
 
 Health probes are left out of traces: they would arrive every few seconds and bury real
 requests. Tests: `buddy.IntegrationTests/Common/Observability/`.

@@ -65,6 +65,23 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
             new KeycloakProvisionedUser(new KeycloakSubject(subject), username, temporaryPassword));
     }
 
+    public async Task DeleteUserAsync(KeycloakSubject subject, CancellationToken cancellationToken)
+    {
+        var admin = options.CurrentValue;
+        var token = await GetServiceAccountTokenAsync(admin, cancellationToken);
+
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{admin.AdminBaseUrl}/users/{Uri.EscapeDataString(subject.Value)}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return;
+        }
+
+        EnsureSuccess(response, "delete user");
+    }
+
     // Looks up the role via the user's own "available realm roles" list rather than the general
     // /roles/{name} endpoint -- the latter needs "view-realm", but this service account is
     // deliberately scoped to just "manage-users" (see the analysis doc's least-privilege decision),

@@ -288,6 +288,21 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         return [.. roles.Select(role => role.GetProperty("name").GetString()!)];
     }
 
+    // Whether Keycloak still has an account with this username (account deletion removes it).
+    public async Task<bool> KeycloakUserExistsAsync(string username, CancellationToken cancellationToken = default)
+    {
+        var adminToken = await GetAdminTokenAsync(cancellationToken);
+
+        using var client = new HttpClient
+        {
+            BaseAddress = new Uri($"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}")
+        };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var users = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/users?username={Uri.EscapeDataString(username)}&exact=true", cancellationToken);
+        return users.GetArrayLength() > 0;
+    }
+
     private async Task<string> GetAdminTokenAsync(CancellationToken cancellationToken)
     {
         using var client = new HttpClient();

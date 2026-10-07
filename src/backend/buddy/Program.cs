@@ -115,6 +115,9 @@ var app = builder.Build();
 // not the reverse proxy's.
 app.UseForwardedHeaders();
 
+// Makes each request's requestId its trace id; see ObservabilityFeature.
+app.UseObservability();
+
 // Second, so an exception anywhere below -- authentication, a handler, a store -- ends as a logged
 // 500/503 ErrorEnvelope with the request id. CORS still applies its headers to that response, so
 // the frontend can read it.

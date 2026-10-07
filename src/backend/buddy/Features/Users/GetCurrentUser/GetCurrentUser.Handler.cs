@@ -8,9 +8,15 @@ public static class GetOrCreateUserHandler
 {
     public static async Task<Result<User>> Handle(GetOrCreateUser command, IUserEventStore events, IEmailSender emailSender, ILogger<GetOrCreateUser> logger, CancellationToken cancellationToken)
     {
-        var userId = await events.FindUserIdAsync(command.Subject, cancellationToken);
+        var identity = await events.FindIdentityAsync(command.Subject, cancellationToken);
 
-        if (userId is not null)
+        // Never provision a deleted subject again, even while its Keycloak account still exists.
+        if (identity is { Deleted: true })
+        {
+            return new Result<User>.NotFound();
+        }
+
+        if (identity?.UserId is { } userId)
         {
             var existingUser = await events.FindSnapshotAsync(userId, cancellationToken)
                 ?? throw new InvalidOperationException($"No snapshot for userId {userId}, although its index says the stream exists.");

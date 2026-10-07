@@ -8,12 +8,24 @@ namespace buddy.Features.Users;
 
 public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
 {
-    public async Task<UserId?> FindUserIdAsync(KeycloakSubject keycloakSubject, CancellationToken cancellationToken)
+    public async Task<KeycloakIdentity?> FindIdentityAsync(KeycloakSubject keycloakSubject, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();
-        var identity = await session.LoadAsync<KeycloakIdentity>(keycloakSubject.Value, cancellationToken);
 
-        return identity?.UserId;
+        return await session.LoadAsync<KeycloakIdentity>(keycloakSubject.Value, cancellationToken);
+    }
+
+    public async Task DeleteAsync(UserId userId, KeycloakSubject keycloakSubject, IReadOnlyCollection<UserEvent> events, CancellationToken cancellationToken)
+    {
+        var payloads = events
+            .Select(e => e.Value ?? throw new InvalidOperationException("Cannot persist an empty user event."))
+            .ToArray();
+
+        await using var session = store.LightweightSession();
+        session.AppendTracked(userId.Value, payloads);
+        session.Store(new KeycloakIdentity(keycloakSubject.Value, userId, Deleted: true));
+
+        await session.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyCollection<UserEvent>> ReadAsync(UserId userId, CancellationToken cancellationToken)
@@ -85,7 +97,7 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
         catch (DocumentAlreadyExistsException)
         {
             // Lost the race: another request already created this subject. Return what it produced.
-            var winningUserId = await FindUserIdAsync(keycloakSubject, cancellationToken)
+            var winningUserId = (await FindIdentityAsync(keycloakSubject, cancellationToken))?.UserId
                 ?? throw new InvalidOperationException($"Expected an existing Keycloak identity for subject '{keycloakSubject.Value}' after a creation conflict.");
 
             return await ReadAsync(winningUserId, cancellationToken);

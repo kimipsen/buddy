@@ -53,7 +53,7 @@ All users endpoints require a bearer token issued by the configured Keycloak aut
 | `PATCH` | `/users/me/language` | Sets the authenticated user's preferred display language. Returns the updated profile, `404 Not Found` when no local user exists, or `400 Bad Request` for an unsupported language code. |
 | `POST` | `/users/me/email/verify/resend` | Sends another verification email for an unverified address. Returns `204 No Content` for a sent email or an already verified address, `404 Not Found` when no local user exists, or `409 Conflict` during the resend cooldown. |
 | `POST` | `/users/me/email/verify` | Verifies the email using the submitted token. Returns the updated profile, `404 Not Found`, or `400 Bad Request` for an invalid or expired token. |
-| `DELETE` | `/users/me` | Appends `UserDeleted` for an existing, active user. Repeating the request is a no-op and returns `204 No Content`. |
+| `DELETE` | `/users/me` | Appends `UserDeleted` and marks the `KeycloakIdentity` deleted in the same transaction, then deletes the Keycloak account. From then on the user's token gets `403 user_not_provisioned` everywhere (a repeated `DELETE` included) and `GET /users/me` answers `404`. Returns `204 No Content`. Erasing the user's data follows in [gdpr-data-protection.md](../analysis/gdpr-data-protection.md). |
 
 The API passes work to Wolverine handlers rather than accessing the event store directly from the endpoint. The handlers are responsible for looking up the user stream, creating or rehydrating the aggregate, and appending deletion events.
 

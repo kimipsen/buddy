@@ -38,6 +38,7 @@ model or permissions logic.
 - [Child accounts and guardian/parent roles](analysis/child-accounts-and-guardian-roles.md)
 - [Medicine schedules](analysis/medicine-schedules.md)
 - [Meal plans](analysis/mealplans.md)
+- [GDPR: erasure, export and data minimization](analysis/gdpr-data-protection.md)
 - [Group-shared meal plans](analysis/group-owned-mealplans.md)
 - [Meal plan iCal feed](analysis/mealplan-ical-feed.md)
 - [Importing historical meal plans](analysis/mealplan-import.md)

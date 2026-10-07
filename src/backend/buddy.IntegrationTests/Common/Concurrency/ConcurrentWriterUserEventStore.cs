@@ -32,8 +32,11 @@ public sealed class ConcurrentWriterUserEventStore(MartenUserEventStore inner, I
         return events;
     }
 
-    public Task<UserId?> FindUserIdAsync(KeycloakSubject keycloakSubject, CancellationToken cancellationToken) =>
-        inner.FindUserIdAsync(keycloakSubject, cancellationToken);
+    public Task<KeycloakIdentity?> FindIdentityAsync(KeycloakSubject keycloakSubject, CancellationToken cancellationToken) =>
+        inner.FindIdentityAsync(keycloakSubject, cancellationToken);
+
+    public Task DeleteAsync(UserId userId, KeycloakSubject keycloakSubject, IReadOnlyCollection<UserEvent> events, CancellationToken cancellationToken) =>
+        inner.DeleteAsync(userId, keycloakSubject, events, cancellationToken);
 
     public Task<User?> FindSnapshotAsync(UserId userId, CancellationToken cancellationToken) =>
         inner.FindSnapshotAsync(userId, cancellationToken);
