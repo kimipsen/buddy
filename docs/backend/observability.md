@@ -111,7 +111,7 @@ message text.
 | 3001–3007 | `Features/Groups/GroupsLog.cs` | Group invites sent, accepted, refused, revoked; members removed or given a role; groups deleted |
 | 4001–4006 | `Features/Calendars/CalendarsLog.cs` | Calendar members removed or given a role, calendars deleted, iCal tokens issued or revoked; a failed star-count update (swallowed on purpose, so it's logged) |
 | 5001–5003 | `Features/SleepDiaries/SleepDiariesLog.cs` | Share links created or revoked, and every view of a shared diary |
-| 6001–6008 | `Features/Mealplans/MealplansLog.cs` | AI provider keys set or removed, active provider changed, provider failures, meal plan iCal tokens |
+| 6001–6011 | `Features/Mealplans/MealplansLog.cs` | AI provider keys set or removed, active provider changed, provider failures, meal plan iCal tokens, AI conversations erased after 30 days (and a failed sweep), AI data sharing acknowledged |
 | 7001–7002 | `Email/EmailLog.cs` | Each email sent (by kind), or the SMTP failure |
 | 8001–8005 | `Common/CommonLog.cs` | Concurrency conflicts, unbindable requests, rate-limit rejections, idempotency cleanup |
 | 10001–10006 | `Features/Privacy/PrivacyLog.cs` | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep, a personal data export |

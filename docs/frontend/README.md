@@ -85,7 +85,9 @@ The guardian routes currently include:
 - `/guardian` — dashboard and today's operational summary
 - `/guardian/mealplan` — meal library and meal-plan assignment
 - `/guardian/mealplan/ai-assistant` — chat-based AI assistant for drafting
-  meal-plan assignments
+  meal-plan assignments; before the family's first session it shows what is
+  shared with the provider (`AiDataSharingNotice`, also on the settings page)
+  and asks a guardian to acknowledge it
 - `/guardian/mealplan/import` — import older meal plans from a pasted note or
   CSV: preview, per-meal review, import and undo
 - `/guardian/medicine` — medicine schedule management
@@ -144,8 +146,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 
 - `AccountService` resolves whether the user is a guardian or child
 - `AiAssistantService` calls the AI provider-settings and AI mealplan-session
-  endpoints (list/set/remove provider keys, test a connection, start a session,
-  send a chat message, apply or discard the draft)
+  endpoints (list/set/remove provider keys, test a connection, acknowledge data
+  sharing, start a session, send a chat message, apply or discard the draft)
 - `CalendarsService` lists accessible calendars and occurrences and manages
   calendar items and task completion
 - `GroupsService` manages group membership, invitations, sharing policies, and

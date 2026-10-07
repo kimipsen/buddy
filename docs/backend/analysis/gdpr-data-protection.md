@@ -1,11 +1,12 @@
 # GDPR: erasure, export and data minimization
 
-Status: Partly implemented. Questions 1-5 and 8 ship: masking rules, an `IPersonalDataEraser` and
+Status: Partly implemented. Questions 1-6 and 8 ship: masking rules, an `IPersonalDataEraser` and
 an `IPersonalDataExporter` per feature (`Common/Erasure`), `UserErasure`, `UserErasureService` and
 `PersonalDataExport` (`Features/Privacy`), the `DELETE /users/me` cascade, `UserErased`, the
 erasure ledger, `DeleteChild`, the account-deletion preview (`GET /users/me/deletion-preview`), the
-export (`GET /users/me/export`) and their screens. Not yet built: the AI changes (Question 6) and
-the health-data audit logs (Question 7). See "Implementation notes" near the end.
+export (`GET /users/me/export`), the AI minimization, 30-day retention and data-sharing
+acknowledgement, and their screens. Not yet built: the health-data audit logs (Question 7). See
+"Implementation notes" near the end.
 
 ## Context
 
@@ -467,7 +468,7 @@ Each step can ship on its own.
 
 ## Implementation notes
 
-What shipped with steps 1-5, and where it differs from the design above:
+What shipped with steps 1-6, and where it differs from the design above:
 
 - **Infrastructure.** `Common/Erasure`:
   - `Erased.Text` (`"[erased]"`);
@@ -505,6 +506,27 @@ What shipped with steps 1-5, and where it differs from the design above:
   - Tests: `Features/Users/ExportPersonalData/ExportPersonalDataTests.cs` (every section present,
     personal values found, no secret properties; a child gets `account` only; another family's
     data absent), `PersonalDataExporterCoverageTests`, and the rate limit in `RateLimitingTests`.
+- **AI assistant (step 6).** All in `Features/Mealplans/AiAssistant`.
+  - Minimization: `AiSessionPromptBuilder` numbers children by `UserId` order. `CalendarConflictLookup`
+    keeps a title only for an item assigned to the session's child (`AiSessionStarted.ChildId`) or
+    to nobody, in a *family calendar*: one whose owning group's members and explicit calendar
+    members are all family (the session child's family from `MealFamilyResolution` plus their
+    active guardians). Everything else goes out as `"busy"` with its date and time.
+  - Retention: `AiSessionRetention`, run by `AiSessionRetentionService` a minute after startup and
+    then daily, masks a session with the existing masking rules 30 days after its last event. Applying or
+    discarding is always a session's last event, so the index gains `LastActivityAt` only (no
+    separate `ClosedAt`), plus `ContentErasedAt` so an erased session is never picked again. Rows
+    from before this shipped have no `LastActivityAt`; the sweep picks them by `StartedAt` and
+    decides from the stream. An idle session that was never closed is masked too and stays
+    `Drafting`; continuing it sends `"[erased]"` history to the provider. Log events 6009-6010.
+  - Disclosure: `AiDataSharingAcknowledged` on the credential stream,
+    `PUT .../ai/data-sharing-acknowledgement` (`AcknowledgeAiDataSharing`, log 6011), and
+    `DataSharingAcknowledgedAt` on `AiProviderSettings` (and so in the export). `StartAiSession`
+    returns `StartAiSessionOutcome`, whose `DataSharingNotAcknowledged` case is the `409`. One
+    acknowledgement covers the family. `SendAiSessionMessage` doesn't check it, so a session
+    started before this shipped can still be continued. Frontend: `AiDataSharingNotice` on the
+    assistant page (instead of the start form until acknowledged) and on the provider settings.
+  - Tests: `AiDataMinimizationTests`, `AiSessionRetentionTests`, `AcknowledgeAiDataSharingTests`.
 - **Earlier deletions.** Users deleted before this shipped (`UserDeleted` only) are erased by the
   first sweep, which also locks them out.
 - **Tests.** `buddy.IntegrationTests/Features/Privacy/AccountErasureTests.cs`.

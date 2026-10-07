@@ -68,13 +68,14 @@ sequenceDiagram
 | `PUT` | `/mealplans/children/{childId}/plan?date=...&slot=...` | Assigns (or reassigns) a meal to a date/slot on the family's shared plan. |
 | `DELETE` | `/mealplans/children/{childId}/plan?date=...&slot=...` | Clears a planned slot on the family's shared plan (idempotent). |
 | `GET` | `/mealplans/children/{childId}/plan?from=...&to=...` | Lists the family's plan entries in a date range, joined with each meal's current details and `childId`'s own rating. |
-| `GET` | `/mealplans/children/{childId}/ai/providers` | Lists the family's configured AI provider entries (provider, last 4 of the key, added date) and the active provider, never the key itself. |
+| `GET` | `/mealplans/children/{childId}/ai/providers` | Lists the family's configured AI provider entries (provider, last 4 of the key, added date), the active provider and when data sharing was acknowledged, never the key itself. |
+| `PUT` | `/mealplans/children/{childId}/ai/data-sharing-acknowledgement` | Records that a guardian has read what the assistant sends to the provider (`AiDataSharingAcknowledged`, once per family; idempotent). |
 | `PUT` | `/mealplans/children/{childId}/ai/providers/{provider}/key` | Adds or replaces the family's API key for `provider` (BYOK). The first key added for a family becomes the active provider automatically. |
 | `DELETE` | `/mealplans/children/{childId}/ai/providers/{provider}/key` | Removes the family's key for `provider` (idempotent). If `provider` was active, the family is left with no active provider. |
 | `PUT` | `/mealplans/children/{childId}/ai/active-provider/{provider}` | Switches the family's active provider to one that already has a key configured. |
 | `POST` | `/mealplans/children/{childId}/ai/providers/{provider}/test-connection` | Sends a minimal request through `provider` to confirm a key works, either the family's already-stored key or one supplied in the request body before it's ever saved. |
 | `GET` | `/mealplans/children/{childId}/ai/sessions/current` | Returns the family's current AI assistant session (transcript + draft), if one exists. |
-| `POST` | `/mealplans/children/{childId}/ai/sessions` | Starts a new AI assistant session for a date range/slot selection, discarding whatever session was previously current for the family. |
+| `POST` | `/mealplans/children/{childId}/ai/sessions` | Starts a new AI assistant session for a date range/slot selection, discarding whatever session was previously current for the family. `409 ai_data_sharing_not_acknowledged` until the family has acknowledged data sharing. |
 | `POST` | `/mealplans/children/{childId}/ai/sessions/current/messages` | Sends a guardian chat message to the current session and runs the provider's tool-calling loop to update the draft. |
 | `POST` | `/mealplans/children/{childId}/ai/sessions/current/apply` | Commits the current session's draft assignments to the real family plan and marks the session applied. |
 | `POST` | `/mealplans/children/{childId}/ai/sessions/current/discard` | Discards the current session without touching the real plan (idempotent). |
@@ -181,7 +182,12 @@ session's requested range/slots and the family's actual meal library before
 touching the draft), plus a read-only `get_calendar_conflicts` tool that looks up
 the caller's visible calendar occurrences — the one place Mealplans reads from
 Calendars, never the reverse (see
-[docs/backend/analysis/mealplans.md](../analysis/mealplans.md)). `ApplyAiSessionDraft`
+[docs/backend/analysis/mealplans.md](../analysis/mealplans.md)). Only items in
+the session child's family calendars that are assigned to that child or to nobody
+keep their title; everything else is sent as `"busy"` with its time, and the
+prompt names children "child 1", "child 2" rather than by id. `AiSessionRetention`
+masks a session's notes, chat and tool calls 30 days after its last event (see
+[gdpr-data-protection.md](../analysis/gdpr-data-protection.md), Question 6). `ApplyAiSessionDraft`
 commits the session's draft by replaying each entry through the same
 `AssignMealToSlot` write path a manual assignment uses, so authorization and
 domain rules apply identically whether a slot was filled by a guardian or the AI
