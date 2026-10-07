@@ -21,7 +21,4 @@ internal static partial class UsersLog
 
     [LoggerMessage(EventId = 1006, Level = LogLevel.Information, Message = "Rejected {Method} {Path}: the caller has no Buddy user yet")]
     public static partial void UnprovisionedCallerRejected(this ILogger logger, string method, string? path);
-
-    [LoggerMessage(EventId = 1007, Level = LogLevel.Warning, Message = "Deleting the Keycloak account of deleted user {UserId} failed; the user stays locked out of Buddy")]
-    public static partial void KeycloakAccountDeletionFailed(this ILogger logger, Exception exception, Guid userId);
 }

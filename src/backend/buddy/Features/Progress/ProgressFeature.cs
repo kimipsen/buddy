@@ -1,3 +1,4 @@
+using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Features.Calendars;
@@ -40,6 +41,8 @@ public static class ProgressFeature
 
         // Shared process-wide pool -- see PostgresDataSource.
         services.AddPostgresDataSource(configuration);
+        // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
+        services.AddSingleton<IPersonalDataEraser, ProgressPersonalDataEraser>();
 
         services.AddMartenStore<IProgressStore>(serviceProvider =>
         {

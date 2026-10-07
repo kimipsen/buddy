@@ -1,3 +1,4 @@
+using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
@@ -39,6 +40,8 @@ public static class MedicinesFeature
 
         // Shared process-wide pool -- see PostgresDataSource.
         services.AddPostgresDataSource(configuration);
+        // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
+        services.AddSingleton<IPersonalDataEraser, MedicinesPersonalDataEraser>();
 
         services.AddMartenStore<IMedicinesStore>(serviceProvider =>
         {

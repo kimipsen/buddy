@@ -43,4 +43,7 @@ public sealed class UserSnapshotProjection : SingleStreamProjection<UserSnapshot
 
     public UserSnapshot Apply(UserSnapshot current, UserDeleted deleted) =>
         current with { User = User.Advance(current.User, UserEvent.FromPayload(deleted)) };
+
+    public UserSnapshot Apply(UserSnapshot current, UserErased erased) =>
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(erased)) };
 }

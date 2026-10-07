@@ -1,4 +1,5 @@
 using buddy.Common.Configuration;
+using buddy.Common.Erasure;
 using buddy.Common.Http;
 
 namespace buddy.Features.Guardians;
@@ -22,6 +23,8 @@ public static class GuardiansFeature
         services.AddSingleton<IGuardianLinkEventStore, MartenGuardianLinkEventStore>();
         services.AddSingleton<IGuardianInviteEventStore, MartenGuardianInviteEventStore>();
         services.AddHttpClient<IKeycloakAdminClient, KeycloakAdminClient>();
+        // Erases guardian links and invites (docs/backend/analysis/gdpr-data-protection.md).
+        services.AddSingleton<IPersonalDataEraser, GuardiansPersonalDataEraser>();
 
         return services;
     }

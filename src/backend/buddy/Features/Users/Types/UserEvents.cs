@@ -5,6 +5,7 @@ namespace buddy.Features.Users
     public union UserEvent(
         UserCreated,
         UserDeleted,
+        UserErased,
         NameUpdated,
         EmailUpdated,
         EmailVerificationRequested,
@@ -19,6 +20,7 @@ namespace buddy.Features.Users
         {
             UserCreated e => e,
             UserDeleted e => e,
+            UserErased e => e,
             NameUpdated e => e,
             EmailUpdated e => e,
             EmailVerificationRequested e => e,
@@ -34,6 +36,7 @@ namespace buddy.Features.Users
         {
             UserCreated => nameof(UserCreated),
             UserDeleted => nameof(UserDeleted),
+            UserErased => nameof(UserErased),
             NameUpdated => nameof(NameUpdated),
             EmailUpdated => nameof(EmailUpdated),
             EmailVerificationRequested => nameof(EmailVerificationRequested),
@@ -57,6 +60,10 @@ namespace buddy.Features.Users
         DateTimeOffset OccurredAt);
 
     public sealed record UserDeleted(UserId UserId, DateTimeOffset OccurredAt);
+
+    // The end of an erasure that UserDeleted started: the person's data across Buddy is gone or
+    // masked, and so is their Keycloak account (see gdpr-data-protection.md).
+    public sealed record UserErased(UserId UserId, DateTimeOffset OccurredAt);
 
     public sealed record NameUpdated(UserId UserId, Name Before, Name After, DateTimeOffset OccurredAt);
 

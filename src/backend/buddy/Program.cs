@@ -15,6 +15,7 @@ using buddy.Features.Guardians;
 using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Pickups;
+using buddy.Features.Privacy;
 using buddy.Features.PrintTemplates;
 using buddy.Features.Progress;
 using buddy.Features.SleepDiaries;
@@ -42,6 +43,9 @@ builder.Host.UseWolverine(opts =>
     // Same reasoning as above: IAiProviderRegistry ultimately holds a typed HttpClient
     // (AnthropicChatClient), which Wolverine's constructor-codegen can't inline either.
     opts.CodeGeneration.AlwaysUseServiceLocationFor<IAiProviderRegistry>();
+
+    // UserErasure (DeleteCurrentUser) also depends on IKeycloakAdminClient -- same reasoning.
+    opts.CodeGeneration.AlwaysUseServiceLocationFor<UserErasure>();
 
     // Optimistic concurrency: every handler invocation tracks the stream versions its store
     // reads saw, so the matching appends are expected-version appends (see StreamVersionTracker).
@@ -108,6 +112,8 @@ builder.Services.AddPrintTemplatesFeature(builder.Configuration);
 builder.Services.AddProgressFeature(builder.Configuration);
 // After Users and Guardians: authorization reads IGuardianLinkEventStore, the shared view IUserEventStore.
 builder.Services.AddSleepDiariesFeature(builder.Configuration);
+// Last: erasure orchestrates every feature's IPersonalDataEraser.
+builder.Services.AddPrivacyFeature();
 
 var app = builder.Build();
 

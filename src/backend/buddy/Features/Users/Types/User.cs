@@ -12,7 +12,8 @@ public sealed record User(
     TimeZoneId TimeZoneId,
     Language Language,
     EmailVerification EmailVerification,
-    bool IsDeleted)
+    bool IsDeleted,
+    bool IsErased = false)
 {
     public static User? Rehydrate(IEnumerable<UserEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
@@ -53,6 +54,7 @@ public sealed record User(
         },
         EmailVerified => user with { Email = user.Email with { IsVerified = true }, EmailVerification = new EmailVerification.None() },
         UserDeleted => user with { IsDeleted = true },
+        UserErased => user with { IsErased = true },
         UserCreated => throw EventReplay.AlreadyStarted(nameof(User), @event.EventType)
     };
 }

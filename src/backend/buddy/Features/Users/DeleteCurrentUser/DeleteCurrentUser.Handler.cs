@@ -1,40 +1,39 @@
+using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.Features.Privacy;
 
 namespace buddy.Features.Users;
 
 public static class DeleteUserHandler
 {
-    public static async Task Handle(
+    public static async Task<Result<Unit>> Handle(
         DeleteUser command,
         IUserEventStore events,
-        IKeycloakAdminClient keycloak,
+        IGuardianLinkEventStore guardians,
+        UserErasure erasure,
         ILogger<DeleteUser> logger,
         CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
-        var existingEvents = await events.ReadAsync(userId, cancellationToken);
-        var user = User.Rehydrate(existingEvents);
+        var user = User.Rehydrate(await events.ReadAsync(userId, cancellationToken));
 
         if (user is null || user.IsDeleted)
         {
-            return;
+            return new Result<Unit>.Success(Unit.Value);
         }
 
-        // First and in one transaction: the event and the identity's Deleted flag, so the user is
-        // locked out even if the Keycloak call below fails.
-        await events.DeleteAsync(userId, user.KeycloakSubject, [new UserDeleted(userId, DateTimeOffset.UtcNow)], cancellationToken);
+        // A child's account and data are their guardians' to delete (DeleteChild), not the child's.
+        if (await guardians.IsChildAsync(userId, cancellationToken))
+        {
+            return new Result<Unit>.Forbidden();
+        }
+
+        // Locks the user out, then erases them and cascades (gdpr-data-protection.md, Question 2).
+        await erasure.DeleteAccountAsync(user, cancellationToken);
 
         logger.UserDeleted(userId.Value);
 
-        try
-        {
-            await keycloak.DeleteUserAsync(user.KeycloakSubject, cancellationToken);
-        }
-        catch (HttpRequestException exception)
-        {
-            // The deletion itself has happened; the account is locked out of Buddy either way.
-            logger.KeycloakAccountDeletionFailed(exception, userId.Value);
-        }
+        return new Result<Unit>.Success(Unit.Value);
     }
 }

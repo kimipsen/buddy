@@ -1,4 +1,5 @@
 using buddy.Common.Concurrency;
+using buddy.Common.Erasure;
 using buddy.Features.Groups;
 using buddy.Features.Users;
 
@@ -8,6 +9,27 @@ namespace buddy.Features.Calendars;
 
 public sealed class MartenCalendarEventStore(ICalendarsStore store) : ICalendarEventStore
 {
+    public async Task EraseAsync(CalendarId calendarId, CancellationToken cancellationToken)
+    {
+        await store.MaskStreamAsync<CalendarSnapshot>(calendarId.Value, cancellationToken);
+
+        IReadOnlyList<Guid> itemIds;
+
+        // Deleted items too: ListIdsForCalendarAsync skips them, but their titles are still stored.
+        await using (var session = store.QuerySession())
+        {
+            itemIds = await session.Query<CalendarItemIndexDocument>()
+                .Where(d => d.CalendarId == calendarId.Value)
+                .Select(d => d.Id)
+                .ToListAsync(cancellationToken);
+        }
+
+        foreach (var itemId in itemIds)
+        {
+            await store.MaskStreamAsync<CalendarItemSnapshot>(itemId, cancellationToken);
+        }
+    }
+
     public async Task<IReadOnlyCollection<CalendarEvent>> ReadAsync(CalendarId calendarId, CancellationToken cancellationToken)
     {
         await using var session = store.QuerySession();

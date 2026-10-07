@@ -1,6 +1,10 @@
 # GDPR: erasure, export and data minimization
 
-Status: Proposed (not yet implemented)
+Status: Partly implemented. Questions 1-4 and 8 ship: masking rules and an `IPersonalDataEraser`
+per feature (`Common/Erasure`), `UserErasure` and `UserErasureService` (`Features/Privacy`), the
+`DELETE /users/me` cascade, `UserErased`, and the erasure ledger. Not yet built: the `DeleteChild`
+endpoint (the child erasure itself runs, for orphaned children), export (Question 5), the AI changes
+(Question 6) and the health-data audit logs (Question 7). See "Implementation notes" near the end.
 
 ## Context
 
@@ -130,7 +134,8 @@ cascades as described below. A background sweeper finishes any erasure that fail
      `403 user_not_provisioned`, and `GetOrCreateUser` refuses to provision the subject again.
 2. **Children.** For each child linked to the user:
    - If the user is the child's only active guardian, the child is erased too (Question 3). This
-     was the user's decision; the deletion dialog lists those children by name first.
+     was the user's decision. The family data that child anchors passes to a sibling who stays,
+     the heir; the heirs are chosen before anything is revoked.
    - If the child has other active guardians, the user's own `GuardianLink` is revoked
      (`GuardianRevoked`) and the child stays.
 3. **Groups.**
@@ -138,20 +143,26 @@ cascades as described below. A background sweeper finishes any erasure that fail
    - In other groups, the user's role is revoked (`GroupMemberRoleRevoked`), and so are their
      calendar roles (`MemberRoleRevoked`).
 4. **Things that are only theirs.**
-   - Invites they sent that are still pending are revoked.
-   - Share links and iCal tokens they issued are revoked.
-   - AI keys they added are removed (`ProviderApiKeyRemoved`).
+   - Invites they sent or received (any status) are revoked if pending, and their email and the
+     child's first name masked.
+   - Sleep diary share links they created are revoked. iCal tokens stay: a feed belongs to the
+     shared calendar, holds no personal data, and the other members can revoke it.
+   - AI keys they added are removed (`ProviderApiKeyRemoved`), and the encrypted key is masked in
+     the history. AI sessions they started are masked.
    - Their print templates are deleted.
-   - Their babysitter list and work-location schedule are masked and rebuilt. Both streams are
-     keyed by the guardian's `UserId`, so this also erases the babysitters' names and contact
-     details.
+   - Their babysitter list and work-location schedule are deleted. Both streams are keyed by the
+     guardian's `UserId`, so this also erases the babysitters' names and contact details.
 5. **The person.**
-   - Mask the user stream (`UserCreated`, `NameUpdated`, `EmailUpdated`, ...) and rebuild
-     `UserSnapshot`.
    - Delete the Keycloak account through the admin API (`DELETE /admin/realms/buddy/users/{id}`,
      covered by the service account's existing `manage-users` role).
-   - Delete the `KeycloakIdentity` document.
-   - Append `UserErased`, which marks the end of the erasure.
+   - Mask the user stream (`UserCreated`, `NameUpdated`, `EmailUpdated`) and rebuild
+     `UserSnapshot`, then append `UserErased`, which marks the end of the erasure.
+   - Add the user to the erasure ledger (see "Backups").
+   - The flagged `KeycloakIdentity` stays: it holds only the subject id of a Keycloak account that
+     no longer exists, and it keeps that subject from ever being provisioned again.
+
+A child can't delete their own account: `DELETE /users/me` answers `403` for a child, because the
+child's data is their guardians' to erase (Question 3).
 
 Each step is idempotent: revoking a revoked link is a no-op, and masking a masked stream changes
 nothing. So the request runs the steps in order, and if any of them throws, the
@@ -188,43 +199,46 @@ What is erased:
 | Data | How |
 |---|---|
 | The child's user stream and `UserSnapshot`; the Keycloak account | mask + rebuild; admin API delete |
-| Medicine schedules and dose logs, and their group sharing | mask every stream found through `MedicineIndexDocument`/`MedicineSharingIndexDocument`; rebuild |
-| Sleep diary (`SleepDiaryId.ForChild`) and share tokens | mask + rebuild; revoke the share tokens |
-| Progress (`ProgressId.ForChild`): stars, milestones, goal-post labels | mask + rebuild |
-| Pickup schedule (playdate host names, addresses and contacts, notes) | mask + rebuild |
+| Medicine schedules and dose logs, and their group sharing | delete every stream found through `MedicineIndexDocument`/`MedicineSharingIndexDocument`, with snapshots and index documents |
+| Sleep diary (`SleepDiaryId.ForChild`) and share tokens | delete |
+| Progress (`ProgressId.ForChild`): stars, milestones, goal-post labels | delete |
+| Pickup schedule (playdate host names, addresses and contacts, notes) | delete |
 | Meal ratings by the child (`MealRated.Comment`) | mask the comment; the stars stay, keyed by a now-anonymous id |
-| Calendar items assigned to the child | `ItemDeleted`, then mask the title and completion log |
-| Task templates anchored to the child (subtask titles) | mask + rebuild |
-| Guardian links to the child; pending guardian invites for the child (which hold `ChildGivenName`) | revoke; mask the invites |
+| Calendar items assigned to the child | `ItemDeleted`, then mask the title |
+| Group memberships and calendar roles | revoke |
+| Guardian links to the child; guardian invites for the child (which hold `ChildGivenName`) | revoke; mask the invites |
 
-Family-level data that is *anchored* to a child is resolved through all of the guardian's
-children ([MealFamilyResolution.cs](../../../src/backend/buddy/Features/Mealplans/MealFamilyResolution.cs)).
-That covers meals, the meal plan, AI credentials and AI sessions. It is erased with the child only
-when the child has no sibling left under the same guardians; otherwise it stays for the siblings.
-See the open question below.
+Family-level data -- meals, the meal plan, AI credentials and sessions, task templates -- is
+anchored to one child in its index documents (`MealIndexDocument.ChildId`, ...), and
+[MealFamilyResolution.cs](../../../src/backend/buddy/Features/Mealplans/MealFamilyResolution.cs)
+finds it through the *active* guardian links of the whole family. Once an erased child's links are
+revoked, what is anchored to that child would be unreachable for the siblings. So `UserErasure`
+picks an heir first: a sibling under the same guardians who isn't being erased. Each eraser
+re-anchors the child's index documents to the heir, and the events stay as they are. With no heir,
+the family data is deleted with the child (the user's decision "keep while siblings remain").
 
 ## Question 4: a group whose owner leaves
 
-**Decision: ownership passes to the longest-standing admin, else the longest-standing member, as a
-new event `GroupOwnershipTransferred(GroupId, UserId From, UserId To, OccurredAt)`. The group is
-deleted (`GroupDeleted`, plus `CalendarDeleted` for its calendars, as `DeleteGroup` does today) only
-when nobody else is left.**
+**Decision: ownership passes to the longest-standing admin, else the longest-standing member, with
+the events that already exist: `GroupMemberRoleGranted` (the successor, as `Owner`), then
+`GroupMemberRoleRevoked` (the leaving owner). The group is erased and deleted only when nobody else
+is left: its calendars masked and deleted, its name and invites masked, then `GroupDeleted`.**
 
-"Longest-standing" means the earliest `GroupMemberRoleGranted` that is still in effect. The fold
-already sees those events in order, so `Group` gains a `JoinedAt` per member and needs no extra
-lookup. The new owner gets the existing owner rights. Other families keep their shared calendars and
-everything they entered there. This was the user's decision; deleting the group, or blocking the
-deletion until ownership is handed over, were the rejected options.
+- **No new event and no change to `Group`.** A group has no separate owner field: the owner is the
+  member whose role is `Owner`, so a grant plus a revoke is the transfer. `SetGroupMemberRole`
+  refuses to grant `Owner` over the API; the eraser appends the event directly.
+- **"Longest-standing"** is the start of a member's current, unbroken membership. The eraser reads
+  it from the group's events (`GroupCreated`, then each grant and revoke), so `Group` needs no
+  `JoinedAt`.
+- **Who can inherit.** Children and deleted users never inherit a group; if only they are left,
+  the group is erased.
+- **Why.** Other families keep their shared calendars and everything they entered there. This was
+  the user's decision; deleting the group, or blocking the deletion until ownership was handed
+  over, were the rejected options.
 
-```csharp
-// Group.cs today: Members maps a user to a role only
-ImmutableDictionary<UserId, GroupRole> Members
-// proposed: the role plus when it was first granted, to pick the successor
-ImmutableDictionary<UserId, GroupMember> Members   // GroupMember(GroupRole Role, DateTimeOffset JoinedAt)
-```
-
-Blast radius: `Group` and `GroupSnapshot` (rebuilt from events, so no data migration is needed),
-the six handlers that read `group.Members[...]` as a role, and `GroupMemberDetail`.
+The order inside the erasure makes a rerun safe. Each calendar is erased before `CalendarDeleted`,
+which removes the document that finds the calendar. `GroupDeleted` comes last, because it removes
+the membership documents that lead the eraser to the group.
 
 ## Question 5: what does an export contain?
 
@@ -335,7 +349,6 @@ restore brings erased people back. Two measures:
 ```
 UserErased(UserId UserId, DateTimeOffset OccurredAt)
     // the end of an erasure; UserDeleted remains the start
-GroupOwnershipTransferred(GroupId GroupId, UserId From, UserId To, DateTimeOffset OccurredAt)
 AiDataSharingAcknowledged(AiCredentialId Id, UserId AcknowledgedBy, DateTimeOffset OccurredAt)
 ```
 
@@ -346,7 +359,7 @@ events.
 
 | Slice | Tier | Notes |
 |---|---|---|
-| `DeleteCurrentUser` (changed) | self | Lock out, then run `UserErasure`. Still `204` |
+| `DeleteCurrentUser` (changed) | self, adults only | Lock out, then run `UserErasure`; `204`. A child gets `403` |
 | `DeleteChild` | Manage, sole guardian | `DELETE /users/me/children/{childId}`; `409 child_has_other_guardians` |
 | `ExportPersonalData` | self | `GET /users/me/export`; rate-limit policy `personal-data-export` |
 | `AcknowledgeAiDataSharing` | Manage | `POST /mealplans/children/{childId}/ai-credentials/acknowledgement` |
@@ -432,13 +445,51 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 1. Question 8 (no new feature).
 2. Erasure infrastructure: masking rules per feature, `Erased`, the coverage meta test, and the
    erasure step per store.
-3. `DeleteCurrentUser` cascade with `UserErasureService`, plus `GroupOwnershipTransferred`.
+3. `DeleteCurrentUser` cascade with `UserErasureService`, group ownership transfer and the ledger.
 4. `DeleteChild`.
 5. Export.
 6. AI minimization, retention and disclosure.
 7. Health-data audit logs.
 
 Each step can ship on its own.
+
+## Implementation notes
+
+What shipped with steps 1-3, and where it differs from the design above:
+
+- **Infrastructure.** `Common/Erasure`:
+  - `Erased.Text` (`"[erased]"`);
+  - `IPersonalDataEraser` and `ErasureSubject`;
+  - `StreamErasure`, with `DeleteStreamAsync` and `MaskStreamAsync`. Both first make sure the
+    store's event table exists: Marten creates tables lazily, and erasure must also work for a
+    feature the person never used.
+- **Erasers and masking rules.** One `<Domain>PersonalData.cs` per feature: Babysitters,
+  Calendars, Groups, Guardians (covering the Users store), Mealplans, Medicines, Pickups,
+  PrintTemplates, Progress, SleepDiaries, TaskLibrary and WorkLocations.
+  - Masking rules exist only in the four stores that keep shared streams: users, groups,
+    calendars and meal plans.
+  - `PersonalDataEraserCoverageTests` fails for a Marten store without an eraser. The idempotency
+    store is exempt: short-lived and encrypted.
+- **Orchestration.** `Features/Privacy`:
+  - `UserErasure` runs the cascade.
+  - `UserErasureService` sweeps 30 seconds after startup and then every 15 minutes, finishing
+    unfinished erasures and re-erasing ledger entries.
+  - New log events 10001-10005.
+- **Changed from the design:**
+  - Ownership transfer uses the existing events (Question 4).
+  - Family data passes to an heir by re-anchoring index documents (Question 3).
+  - The `KeycloakIdentity` is kept, flagged (Question 2).
+  - iCal tokens a guardian issued are not revoked (Question 2).
+- **Earlier deletions.** Users deleted before this shipped (`UserDeleted` only) are erased by the
+  first sweep, which also locks them out.
+- **Tests.** `buddy.IntegrationTests/Features/Privacy/AccountErasureTests.cs`.
+  `PersonalDataScanner` searches every `mt_events` and `mt_doc_*` table for the erased people's
+  names, emails and free text. The scenarios cover:
+  - a co-guarded child staying with the other guardian;
+  - a group passing to its longest-standing admin;
+  - family data passing to a sibling;
+  - a child's `403`;
+  - the sweep, both for a legacy deletion and for a ledger entry after a restore.
 
 ## Diagram
 

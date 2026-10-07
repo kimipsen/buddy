@@ -421,14 +421,19 @@ Found along the way:
   (disable `inlineCritical`, or allow it with `'unsafe-hashes'`). Then switch the header to
   `Content-Security-Policy`. The API on Azure has no edge proxy, so it gets no security headers
   there yet.
-- [ ] **GDPR for special-category health data** (medicines, sleep diaries, ADHD context about
-  children):
-  - Right to erasure in the event store. Consider crypto-shredding (per-subject encryption key,
-    delete the key) or Marten stream archiving/data masking.
-  - Data export for users.
-  - Audit log of who read or changed a child's medical data.
-  - Check what personal data the meal-plan AI assistant sends to Anthropic, and whether a DPA is
-    in place.
+- [ ] **GDPR for special-category health data** -- design and progress in
+  `docs/backend/analysis/gdpr-data-protection.md` (implementation order there):
+  - [x] Quick fixes: deleted users locked out, Keycloak account deleted, tokens redacted from
+    telemetry, idempotency responses encrypted.
+  - [x] Right to erasure in the event store: per-feature erasers (delete or mask), the
+    `DELETE /users/me` cascade, `UserErasureService`, the erasure ledger.
+  - [ ] `DeleteChild` endpoint (sole guardian only), plus the frontend: delete-child action and a
+    deletion dialog that lists the children and groups affected.
+  - [ ] Data export (`GET /users/me/export`) and a "Download my data" button.
+  - [ ] AI assistant: minimization, 30-day retention, disclosure and acknowledgement.
+  - [ ] Health-data read audit logs.
+  - [ ] Outside the code: privacy notice, record of processing, DPIA, DPAs with the hosting
+    provider; set up 30-day backup rotation.
 - [ ] **Security scanning in CI.** Add CodeQL, an `npm audit` / `dotnet list package --vulnerable`
   gate and a container image scan (e.g. Trivy).
 - [x] **Least-privilege `permissions:`** (`contents: read`) in every workflow.

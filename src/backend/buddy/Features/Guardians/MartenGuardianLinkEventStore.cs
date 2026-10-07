@@ -101,6 +101,13 @@ public sealed class MartenGuardianLinkEventStore(IUsersStore store) : IGuardianL
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<bool> IsChildAsync(UserId userId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        return await session.Query<GuardianLinkDocument>().AnyAsync(d => d.ChildId == userId.Value, cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<UserId>> FilterChildrenAsync(IReadOnlyCollection<UserId> userIds, CancellationToken cancellationToken)
     {
         if (userIds.Count == 0)

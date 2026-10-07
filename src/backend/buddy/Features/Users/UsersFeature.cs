@@ -30,6 +30,7 @@ public static class UsersFeature
     [
         typeof(UserCreated),
         typeof(UserDeleted),
+        typeof(UserErased),
         typeof(NameUpdated),
         typeof(EmailUpdated),
         typeof(EmailVerificationRequested),
@@ -92,6 +93,12 @@ public static class UsersFeature
             options.DatabaseSchemaName = "users";
             options.Events.StreamIdentity = StreamIdentity.AsGuid;
             options.Events.AddEventTypes(EventTypes);
+
+            // What erasure masks in the streams this store keeps (gdpr-data-protection.md).
+            UsersPersonalData.ConfigureMasking(options);
+            // Its own schema, so a restore can export it first and re-import it afterwards.
+            options.Schema.For<ErasureLedgerEntry>().DatabaseSchemaName("erasure");
+            GuardiansPersonalDataEraser.ConfigureMasking(options);
 
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,

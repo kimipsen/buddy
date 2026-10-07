@@ -1,4 +1,5 @@
 using buddy.Common.Concurrency;
+using buddy.Common.Erasure;
 
 using JasperFx;
 
@@ -22,10 +23,51 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
             .ToArray();
 
         await using var session = store.LightweightSession();
-        session.AppendTracked(userId.Value, payloads);
+
+        if (payloads.Length > 0)
+        {
+            session.AppendTracked(userId.Value, payloads);
+        }
+
         session.Store(new KeycloakIdentity(keycloakSubject.Value, userId, Deleted: true));
 
         await session.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task EraseAsync(UserId userId, CancellationToken cancellationToken)
+    {
+        await store.MaskStreamAsync<UserSnapshot>(userId.Value, cancellationToken);
+
+        await using var session = store.LightweightSession();
+        session.AppendTracked(userId.Value, [new UserErased(userId, DateTimeOffset.UtcNow)]);
+        await session.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RecordErasureAsync(UserId userId, CancellationToken cancellationToken)
+    {
+        await using var session = store.LightweightSession();
+        session.Store(new ErasureLedgerEntry(userId.Value, DateTimeOffset.UtcNow));
+        await session.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<UserId>> ListUnfinishedErasuresAsync(CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        var deleted = await session.Query<UserSnapshot>()
+            .Where(s => s.User.IsDeleted && !s.User.IsErased)
+            .Select(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        var ledger = await session.Query<ErasureLedgerEntry>().Select(e => e.Id).ToListAsync(cancellationToken);
+        var restored = ledger.Count == 0
+            ? []
+            : await session.Query<UserSnapshot>()
+                .Where(s => ledger.Contains(s.Id) && !s.User.IsErased)
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken);
+
+        return [.. deleted.Union(restored).Select(id => new UserId(id))];
     }
 
     public async Task<IReadOnlyCollection<UserEvent>> ReadAsync(UserId userId, CancellationToken cancellationToken)

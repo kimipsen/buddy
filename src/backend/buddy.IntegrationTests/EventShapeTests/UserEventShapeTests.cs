@@ -35,6 +35,11 @@ public sealed class UserEventShapeTests
         "Users/UserDeleted.json");
 
     [Fact]
+    public void UserErased() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new UserErased(FixedUserId, FixedInstant),
+        "Users/UserErased.json");
+
+    [Fact]
     public void NameUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new NameUpdated(FixedUserId, Name.New("Alice", "Anderson"), Name.New("Ally", "Anderson"), FixedInstant),
         "Users/NameUpdated.json");

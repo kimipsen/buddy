@@ -50,6 +50,9 @@ The event that creates the local user record from the Keycloak claims and the in
 ### UserDeleted
 The event that marks the user as deleted. It is stored together with the `KeycloakIdentity`'s `Deleted` flag, which locks the user out of the API. The user aggregate remains in the stream and is treated as deleted when rehydrated; erasing its personal data is described in [gdpr-data-protection.md](analysis/gdpr-data-protection.md).
 
+### UserErased
+The event that ends an erasure: the user's personal data across Buddy is deleted or masked, their Keycloak account is gone, and the user stream's own personal fields are masked (`[erased]`). The user stays `IsDeleted` and becomes `IsErased`. See [gdpr-data-protection.md](analysis/gdpr-data-protection.md).
+
 ### NameUpdated
 The event that changes the user’s name.
 

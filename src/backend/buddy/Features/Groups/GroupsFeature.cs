@@ -1,3 +1,4 @@
+using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Serialization;
@@ -41,6 +42,8 @@ public static class GroupsFeature
 
         // Shared process-wide pool -- see PostgresDataSource.
         services.AddPostgresDataSource(configuration);
+        // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
+        services.AddSingleton<IPersonalDataEraser, GroupsPersonalDataEraser>();
 
         services.AddMartenStore<IGroupsStore>(serviceProvider =>
         {
@@ -49,6 +52,9 @@ public static class GroupsFeature
             options.DatabaseSchemaName = "groups";
             options.Events.StreamIdentity = StreamIdentity.AsGuid;
             options.Events.AddEventTypes(EventTypes);
+
+            // What erasure masks in the streams this store keeps (gdpr-data-protection.md).
+            GroupsPersonalDataEraser.ConfigureMasking(options);
 
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,

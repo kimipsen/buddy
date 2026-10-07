@@ -190,12 +190,20 @@ docker compose -f docker-compose.prod.yml exec -T db pg_restore --list < ~/buddy
 ```
 
 Take one before every deploy, and copy them off the VM (`scp`, object
-storage); a backup on the same disk doesn't survive losing the VM.
+storage); a backup on the same disk doesn't survive losing the VM. Delete
+backups after 30 days: they hold the data of people who have since deleted
+their accounts (see the privacy notice and
+[gdpr-data-protection.md](../docs/backend/analysis/gdpr-data-protection.md#backups)).
 
 **Restore** (replaces the current data in that database; take a fresh dump
 first if you might want it back):
 
 ```
+# 0. save the erasure ledger: who has been erased since the backup was taken
+docker compose -f docker-compose.prod.yml exec -T db \
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -c "copy (select id, data from erasure.mt_doc_erasureledgerentry) to stdout"' \
+  > ~/buddy-backups/erasure-ledger-now.tsv
+
 # 1. stop the apps that write to the databases
 docker compose -f docker-compose.prod.yml stop api keycloak
 
@@ -213,9 +221,24 @@ docker compose -f docker-compose.prod.yml exec -T db \
 docker compose -f docker-compose.prod.yml exec -T db \
   sh -c 'pg_restore -U "$POSTGRES_USER" -d keycloak --no-owner --exit-on-error' < ~/buddy-backups/keycloak-<ts>.dump
 
-# 4. start them again
+# 4. put the erasure ledger back (an older backup may not have the table yet)
+docker compose -f docker-compose.prod.yml exec -T db \
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+    -c "create schema if not exists erasure" \
+    -c "create table if not exists erasure.mt_doc_erasureledgerentry (id uuid primary key, data jsonb not null, mt_last_modified timestamptz default transaction_timestamp(), mt_version uuid not null default (md5(random()::text || clock_timestamp()::text))::uuid, mt_dotnet_type varchar)" \
+    -c "create temp table ledger_import (id uuid, data jsonb)" \
+    -c "\copy ledger_import from stdin" \
+    -c "insert into erasure.mt_doc_erasureledgerentry (id, data) select id, data from ledger_import on conflict (id) do nothing"' \
+  < ~/buddy-backups/erasure-ledger-now.tsv
+
+# 5. start them again
 docker compose -f docker-compose.prod.yml up -d --no-build --wait
 ```
+
+About 30 seconds after the API starts, it erases again everyone on the ledger
+whose data the backup brought back, Keycloak accounts included
+(`UserErasureService`). Skip steps 0 and 4
+only if nobody has deleted their account since the backup was taken.
 
 Restore the two databases from the same backup run: the app's users are
 linked to Keycloak user ids, so mixing timestamps can orphan accounts.

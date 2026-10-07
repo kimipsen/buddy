@@ -113,6 +113,8 @@ message text.
 | 5001–5003 | `Features/SleepDiaries/SleepDiariesLog.cs` | Share links created or revoked, and every view of a shared diary |
 | 6001–6008 | `Features/Mealplans/MealplansLog.cs` | AI provider keys set or removed, active provider changed, provider failures, meal plan iCal tokens |
 | 7001–7002 | `Email/EmailLog.cs` | Each email sent (by kind), or the SMTP failure |
+| 8001–8005 | `Common/CommonLog.cs` | Concurrency conflicts, unbindable requests, rate-limit rejections, idempotency cleanup |
+| 10001–10005 | `Features/Privacy/PrivacyLog.cs` | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep |
 
 Existing framework-adjacent logs: unbindable requests (`RequestBindingFailureMiddleware`),
 concurrency conflicts (`ConcurrencyConflictMiddleware`), rate-limit rejections

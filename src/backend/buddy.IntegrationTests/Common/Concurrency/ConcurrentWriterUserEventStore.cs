@@ -38,6 +38,13 @@ public sealed class ConcurrentWriterUserEventStore(MartenUserEventStore inner, I
     public Task DeleteAsync(UserId userId, KeycloakSubject keycloakSubject, IReadOnlyCollection<UserEvent> events, CancellationToken cancellationToken) =>
         inner.DeleteAsync(userId, keycloakSubject, events, cancellationToken);
 
+    public Task EraseAsync(UserId userId, CancellationToken cancellationToken) => inner.EraseAsync(userId, cancellationToken);
+
+    public Task RecordErasureAsync(UserId userId, CancellationToken cancellationToken) => inner.RecordErasureAsync(userId, cancellationToken);
+
+    public Task<IReadOnlyCollection<UserId>> ListUnfinishedErasuresAsync(CancellationToken cancellationToken) =>
+        inner.ListUnfinishedErasuresAsync(cancellationToken);
+
     public Task<User?> FindSnapshotAsync(UserId userId, CancellationToken cancellationToken) =>
         inner.FindSnapshotAsync(userId, cancellationToken);
 

@@ -25,6 +25,10 @@ public interface IGuardianLinkEventStore
 
     // Bulk variant of ListForChildAsync for "which of these UserIds are children" checks (e.g.
     // tagging group members as child vs guardian) -- one IN query instead of N single lookups.
+    // Whether the user is (or was) someone's child -- revoked links count, so an erasure that
+    // stopped after revoking a child's links still knows it is erasing a child.
+    Task<bool> IsChildAsync(UserId userId, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<UserId>> FilterChildrenAsync(IReadOnlyCollection<UserId> userIds, CancellationToken cancellationToken);
 
     // The one atomic operation in this store: creates the child User and the first GuardianLink in
