@@ -330,6 +330,7 @@ Notes:
 | `PATCH /users/me/email` | `200` | `400`, `401`, `404` | `400` for invalid email payload. |
 | `POST /users/me/email/verify/resend` | `204` | `401`, `404`, `409` | `409 resend_cooldown` during the resend cooldown; `204` for already-verified or resend accepted. |
 | `POST /users/me/email/verify` | `200` | `400`, `401`, `404` | `400` for invalid/expired token or malformed request. |
+| `GET /users/me/deletion-preview` | `200` | `401` | Read-only preview of what `DELETE /users/me` would erase or hand over; changes nothing. |
 | `DELETE /users/me` | `204` | `401` | Idempotent delete: repeated deletes remain `204`. |
 
 ### Calendars API (`/calendars`)
@@ -384,6 +385,7 @@ Notes:
 | `GET /users/me/children` | `200` | `401` | Lists the caller's own child accounts. |
 | `GET /users/me/children/{childId}/guardians` | `200` | `401`, `404` | `404` for unknown child or no guardian relationship. |
 | `DELETE /users/me/children/{childId}/guardian-link` | `204` | `401`, `404` | `404` for unknown child or no active link to revoke. |
+| `DELETE /users/me/children/{childId}` | `204` | `401`, `404`, `409` | `404` for unknown child or no active guardian link; `409 child_has_other_guardians` while another guardian remains. |
 | `PATCH /users/me/children/{childId}/language` | `200` | `400`, `401`, `404` | `400` for an unsupported language code. |
 | `PATCH /users/me/children/{childId}/timezone` | `200` | `400`, `401`, `404` | `400` for an invalid time zone id. |
 | `GET /users/me/guardians` | `200` | `401` | Lists guardians linked to the caller. |
