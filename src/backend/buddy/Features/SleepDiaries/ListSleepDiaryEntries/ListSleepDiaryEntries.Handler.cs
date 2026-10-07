@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Observability;
 using buddy.Common.Validation;
 using buddy.Features.Guardians;
 
@@ -17,6 +18,7 @@ public static class ListSleepDiaryEntriesHandler
         IValidator<ListSleepDiaryEntries> validator,
         ISleepDiaryEventStore diaries,
         IGuardianLinkEventStore guardians,
+        ILogger<ListSleepDiaryEntries> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
@@ -32,6 +34,8 @@ public static class ListSleepDiaryEntriesHandler
         }
 
         var diary = await diaries.FindSnapshotAsync(SleepDiaryId.ForChild(query.ChildId), cancellationToken);
+
+        logger.SleepDiaryEntriesRead(query.ChildId.Value, query.From, query.To, query.UserId.Value, HealthDataAccessPath.Guardian);
 
         return new Result<SleepDiaryRange>.Success(SleepDiaryRange.From(diary, query.From, query.To));
     }

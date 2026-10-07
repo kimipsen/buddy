@@ -2,7 +2,10 @@ using System.Collections.Concurrent;
 
 using Alba;
 
+using buddy.Common.Observability;
 using buddy.Features.Guardians;
+using buddy.IntegrationTests.Features.Medicines;
+using buddy.IntegrationTests.Features.SleepDiaries;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 
@@ -99,6 +102,82 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
             .ToArray();
         Assert.True(leaks.Length == 0, $"Logs contain personal data:\n{string.Join("\n", leaks)}");
     }
+
+    [Fact]
+    public async Task Every_read_of_a_childs_medicines_is_logged_with_the_reader_and_the_access_path()
+    {
+        var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Quillon", "Vexmoor");
+        await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, guardianToken, child.Id, new CreateMedicineScheduleOptions(Name: "Zorbitrex"));
+        var groupId = await MedicineTestHelpers.ShareWithNewGroupAsync(fixture, guardianToken, child.Id);
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var childId = child.Id;
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var days = $"from={today:yyyy-MM-dd}&to={today:yyyy-MM-dd}";
+
+        await GetAsync(guardianToken, $"/medicines/children/{childId}/schedules");
+        await GetAsync(guardianToken, $"/medicines/groups/{groupId}/children/{childId}/schedules");
+        await GetAsync(guardianToken, $"/medicines/children/{childId}/doses?{days}");
+        await GetAsync(childToken, $"/medicines/children/{childId}/doses?{days}");
+        await GetAsync(guardianToken, $"/medicines/groups/{groupId}/children/{childId}/doses?{days}");
+
+        var reads = _logs.Entries.Where(e => Equals(e.Property("ChildId"), childId)).ToArray();
+        AssertRead(reads, 9001, guardianId, HealthDataAccessPath.Guardian, null);
+        AssertRead(reads, 9001, guardianId, HealthDataAccessPath.Group, groupId);
+        AssertRead(reads, 9002, guardianId, HealthDataAccessPath.Guardian, null);
+        AssertRead(reads, 9002, childId, HealthDataAccessPath.Self, null);
+        AssertRead(reads, 9002, guardianId, HealthDataAccessPath.Group, groupId);
+        Assert.All(reads, e => Assert.DoesNotContain("Zorbitrex", e.Message, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_denied_read_of_a_childs_medicines_is_not_logged_as_a_read()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var (_, strangerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Quillon", "Vexmoor");
+
+        await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {strangerToken}");
+            _.Get.Url($"/medicines/children/{child.Id}/schedules");
+            _.StatusCodeShouldBe(404);
+        });
+
+        Assert.DoesNotContain(_logs.Entries, e => e.EventId == 9001 && Equals(e.Property("ChildId"), child.Id));
+    }
+
+    [Fact]
+    public async Task Every_read_of_a_childs_sleep_diary_is_logged_with_the_reader_and_the_range()
+    {
+        var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Quillon", "Vexmoor");
+        var night = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
+        await SleepDiaryTestHelpers.LogAsync(fixture, guardianToken, child.Id, night, SleepDiaryTestHelpers.FullNight("Woke at Zorbitrex o'clock"));
+
+        await GetAsync(guardianToken, $"/sleep-diary/children/{child.Id}/entries?from={night.AddDays(-6):yyyy-MM-dd}&to={night:yyyy-MM-dd}");
+
+        var read = Assert.Single(_logs.Entries, e => e.EventId == 5004 && Equals(e.Property("ChildId"), child.Id));
+        Assert.Equal(guardianId, read.Property("UserId"));
+        Assert.Equal(HealthDataAccessPath.Guardian, read.Property("AccessPath"));
+        Assert.Equal(night.AddDays(-6), read.Property("From"));
+        Assert.Equal(night, read.Property("To"));
+        Assert.DoesNotContain("Zorbitrex", read.Message, StringComparison.Ordinal);
+    }
+
+    private static void AssertRead(LogEntry[] reads, int eventId, Guid userId, HealthDataAccessPath accessPath, Guid? groupId) =>
+        Assert.Single(reads, e => e.EventId == eventId
+            && Equals(e.Property("UserId"), userId)
+            && Equals(e.Property("AccessPath"), accessPath)
+            && Equals(e.Property("GroupId"), groupId));
+
+    private async Task GetAsync(string token, string url) =>
+        await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url(url);
+            _.StatusCodeShouldBe(200);
+        });
 
     private async Task<Guid> ProvisionAsync(string token)
     {

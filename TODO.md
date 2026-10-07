@@ -432,7 +432,7 @@ Found along the way:
     affected.
   - [x] Data export (`GET /users/me/export`) and a "Download my data" button.
   - [x] AI assistant: minimization, 30-day retention, disclosure and acknowledgement.
-  - [ ] Health-data read audit logs.
+  - [x] Health-data read audit logs.
   - [ ] Outside the code: privacy notice, record of processing, DPIA, DPAs with the hosting
     provider; set up 30-day backup rotation.
 - [ ] **Security scanning in CI.** Add CodeQL, an `npm audit` / `dotnet list package --vulnerable`

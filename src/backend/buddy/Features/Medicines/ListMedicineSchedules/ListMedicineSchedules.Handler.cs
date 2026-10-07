@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Observability;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
 
@@ -10,6 +11,7 @@ public static class ListMedicineSchedulesHandler
         ListMedicineSchedules query,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
+        ILogger<ListMedicineSchedules> logger,
         CancellationToken cancellationToken)
     {
         var userId = query.UserId;
@@ -22,6 +24,8 @@ public static class ListMedicineSchedulesHandler
         }
 
         var loaded = await ListForChildAsync(query.ChildId, medicines, cancellationToken);
+
+        logger.MedicineSchedulesRead(query.ChildId.Value, userId.Value, HealthDataAccessPath.Guardian, null);
 
         return new Result<IReadOnlyCollection<MedicineSchedule>>.Success(loaded);
     }

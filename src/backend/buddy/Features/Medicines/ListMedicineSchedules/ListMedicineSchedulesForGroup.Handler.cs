@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Observability;
 using buddy.Features.Groups;
 
 namespace buddy.Features.Medicines;
@@ -10,6 +11,7 @@ public static class ListMedicineSchedulesForGroupHandler
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
+        ILogger<ListMedicineSchedulesForGroup> logger,
         CancellationToken cancellationToken)
     {
         var resolved = await MedicineGroupAccess.ResolveAsync(query.GroupId, query.ChildId, query.UserId, groups, sharing, cancellationToken);
@@ -20,6 +22,8 @@ public static class ListMedicineSchedulesForGroupHandler
         }
 
         var loaded = await ListMedicineSchedulesHandler.ListForChildAsync(query.ChildId, medicines, cancellationToken);
+
+        logger.MedicineSchedulesRead(query.ChildId.Value, query.UserId.Value, HealthDataAccessPath.Group, query.GroupId.Value);
 
         return new Result<IReadOnlyCollection<MedicineSchedule>>.Success(loaded);
     }

@@ -1,12 +1,12 @@
 # GDPR: erasure, export and data minimization
 
-Status: Partly implemented. Questions 1-6 and 8 ship: masking rules, an `IPersonalDataEraser` and
+Status: Implemented in the code. Questions 1-8 ship: masking rules, an `IPersonalDataEraser` and
 an `IPersonalDataExporter` per feature (`Common/Erasure`), `UserErasure`, `UserErasureService` and
 `PersonalDataExport` (`Features/Privacy`), the `DELETE /users/me` cascade, `UserErased`, the
 erasure ledger, `DeleteChild`, the account-deletion preview (`GET /users/me/deletion-preview`), the
 export (`GET /users/me/export`), the AI minimization, 30-day retention and data-sharing
-acknowledgement, and their screens. Not yet built: the health-data audit logs (Question 7). See
-"Implementation notes" near the end.
+acknowledgement, the health-data read audit logs, and their screens. What remains is outside the
+code (see "Remaining open questions"). See "Implementation notes" near the end.
 
 ## Context
 
@@ -372,7 +372,7 @@ events.
 | `DeleteChild` | Manage, sole guardian | `DELETE /users/me/children/{childId}`; `409 child_has_other_guardians` |
 | `GetAccountDeletionPreview` | self | `GET /users/me/deletion-preview`: children erased, groups handed over or deleted; the same rules as the erasure |
 | `ExportPersonalData` | self | `GET /users/me/export`; a JSON file (`Content-Disposition: attachment`, enums by name); rate-limit policy `personal-data-export` (1 per 10 minutes) |
-| `AcknowledgeAiDataSharing` | Manage | `POST /mealplans/children/{childId}/ai-credentials/acknowledgement` |
+| `AcknowledgeAiDataSharing` | Manage | `PUT /mealplans/children/{childId}/ai/data-sharing-acknowledgement` |
 
 Background services: `UserErasureService` (finishes interrupted erasures) and
 `AiSessionRetentionService` (masks closed sessions after 30 days).
@@ -468,7 +468,7 @@ Each step can ship on its own.
 
 ## Implementation notes
 
-What shipped with steps 1-6, and where it differs from the design above:
+What shipped with steps 1-7, and where it differs from the design above:
 
 - **Infrastructure.** `Common/Erasure`:
   - `Erased.Text` (`"[erased]"`);
@@ -527,6 +527,13 @@ What shipped with steps 1-6, and where it differs from the design above:
     started before this shipped can still be continued. Frontend: `AiDataSharingNotice` on the
     assistant page (instead of the start form until acknowledged) and on the provider settings.
   - Tests: `AiDataMinimizationTests`, `AiSessionRetentionTests`, `AcknowledgeAiDataSharingTests`.
+- **Health-data audit logs (step 7).** `MedicinesLog` 9001 (schedules) and 9002 (doses, with the
+  date range) and `SleepDiariesLog` 5004 (diary entries, with the date range), written after a
+  successful read only, so a denied request isn't logged as a read. Each carries `ChildId`,
+  `UserId` and `AccessPath` (`Common/Observability/HealthDataAccessPath`): `Guardian`, `Self` (a
+  child reading their own doses, which `CheckMark` allows) or `Group`, with the `GroupId` for a
+  group read. `GetSharedMedicineGroup` only says whether the medicine is shared, so it isn't
+  logged. Tests: `Common/Observability/AuditLogTests.cs`.
 - **Earlier deletions.** Users deleted before this shipped (`UserDeleted` only) are erased by the
   first sweep, which also locks them out.
 - **Tests.** `buddy.IntegrationTests/Features/Privacy/AccountErasureTests.cs`.

@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Observability;
 using buddy.Common.Validation;
 using buddy.Features.Guardians;
 
@@ -18,6 +19,7 @@ public static class ListTodaysDosesHandler
         IValidator<ListTodaysDoses> validator,
         IMedicineEventStore medicines,
         IGuardianLinkEventStore guardians,
+        ILogger<ListTodaysDoses> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
@@ -35,6 +37,10 @@ public static class ListTodaysDosesHandler
         }
 
         var occurrences = await MedicineDoseExpansion.ExpandAsync(query.ChildId, query.From, query.To, medicines, cancellationToken);
+
+        // CheckMark lets the child read their own doses; anyone else got here through a guardian link.
+        var accessPath = userId == query.ChildId ? HealthDataAccessPath.Self : HealthDataAccessPath.Guardian;
+        logger.MedicineDosesRead(query.ChildId.Value, query.From, query.To, userId.Value, accessPath, null);
 
         return new Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Success(occurrences);
     }

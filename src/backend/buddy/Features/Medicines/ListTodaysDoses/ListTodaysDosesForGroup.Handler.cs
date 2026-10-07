@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Common.Observability;
 using buddy.Common.Validation;
 using buddy.Features.Groups;
 
@@ -14,6 +15,7 @@ public static class ListTodaysDosesForGroupHandler
         IMedicineEventStore medicines,
         IMedicineSharingEventStore sharing,
         IGroupEventStore groups,
+        ILogger<ListTodaysDosesForGroup> logger,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateCommandAsync(query, cancellationToken) is { } problem)
@@ -29,6 +31,8 @@ public static class ListTodaysDosesForGroupHandler
         }
 
         var occurrences = await MedicineDoseExpansion.ExpandAsync(query.ChildId, query.From, query.To, medicines, cancellationToken);
+
+        logger.MedicineDosesRead(query.ChildId.Value, query.From, query.To, query.UserId.Value, HealthDataAccessPath.Group, query.GroupId.Value);
 
         return new Result<IReadOnlyCollection<MedicineDoseOccurrence>>.Success(occurrences);
     }
