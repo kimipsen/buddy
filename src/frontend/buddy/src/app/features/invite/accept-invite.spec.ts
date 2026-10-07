@@ -220,6 +220,24 @@ describe('AcceptInvite', () => {
     expect(text(fixture)).not.toContain("You've joined");
   });
 
+  it('asks the user to verify their email when accepting is rejected with email_not_verified', async () => {
+    const notVerified = new HttpErrorResponse({
+      status: 403,
+      error: { code: 'email_not_verified', message: 'Verify your email address first.' },
+    });
+    const { fixture } = await setup({
+      groups: { acceptInvite: vi.fn(async () => Promise.reject(notVerified)) },
+    });
+    await settle(fixture);
+
+    findButton(fixture, 'Accept invite')!.click();
+    await settle(fixture);
+
+    expect(text(fixture)).toContain('Verify your email address before you accept this invite.');
+    expect(text(fixture)).not.toContain('This invite was sent to a different account');
+    expect(text(fixture)).not.toContain("You've joined");
+  });
+
   it('shows a generic error when acceptInvite rejects with a non-403 error', async () => {
     const { fixture } = await setup({
       groups: { acceptInvite: vi.fn(async () => Promise.reject(new Error('boom'))) },

@@ -8,6 +8,8 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { storePendingInviteToken } from '../../core/pending-invite-token';
 import { createAction } from '../../shared/action-state/action-state';
 
+import { isEmailNotVerified } from './email-not-verified';
+
 @Component({
   selector: 'app-accept-invite',
   imports: [TranslatePipe],
@@ -40,10 +42,14 @@ export class AcceptInvite {
         await this.groups.acceptInvite(this.token);
         this.accepted.set(true);
       },
-      (error) =>
-        error instanceof HttpErrorResponse && error.status === 403
+      (error) => {
+        if (isEmailNotVerified(error)) {
+          return 'invite.accept.emailNotVerifiedError';
+        }
+        return error instanceof HttpErrorResponse && error.status === 403
           ? 'invite.accept.wrongAccountError'
-          : 'invite.accept.error',
+          : 'invite.accept.error';
+      },
     );
   }
 

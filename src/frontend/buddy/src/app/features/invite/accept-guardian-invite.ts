@@ -8,6 +8,8 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { storePendingGuardianInviteToken } from '../../core/pending-guardian-invite-token';
 import { createAction } from '../../shared/action-state/action-state';
 
+import { isEmailNotVerified } from './email-not-verified';
+
 const KIND_LABELS: Record<GuardianKind, string> = {
   0: 'invite.guardianPreview.kinds.parent',
   1: 'invite.guardianPreview.kinds.guardian',
@@ -48,10 +50,14 @@ export class AcceptGuardianInvite {
         await this.guardians.acceptGuardianInvite(this.token);
         this.accepted.set(true);
       },
-      (error) =>
-        error instanceof HttpErrorResponse && error.status === 403
+      (error) => {
+        if (isEmailNotVerified(error)) {
+          return 'invite.guardianAccept.emailNotVerifiedError';
+        }
+        return error instanceof HttpErrorResponse && error.status === 403
           ? 'invite.guardianAccept.wrongAccountError'
-          : 'invite.guardianAccept.error',
+          : 'invite.guardianAccept.error';
+      },
     );
   }
 

@@ -9,6 +9,8 @@ export const invite = {
   accept: {
     acceptButton: 'Acceptér invitation',
     error: 'Kunne ikke acceptere denne invitation. Den er muligvis udløbet eller allerede brugt.',
+    emailNotVerifiedError:
+      'Bekræft din e-mailadresse, før du accepterer denne invitation. Åbn linket i bekræftelsesmailen, vi har sendt dig, og vend så tilbage til denne side.',
     wrongAccountError:
       'Denne invitation blev sendt til en anden konto, end den du er logget ind med.',
     successTitle: 'Du er nu medlem af {groupName}.',
@@ -29,6 +31,8 @@ export const invite = {
   guardianAccept: {
     acceptButton: 'Acceptér invitation',
     error: 'Kunne ikke acceptere denne invitation. Den er muligvis udløbet eller allerede brugt.',
+    emailNotVerifiedError:
+      'Bekræft din e-mailadresse, før du accepterer denne invitation. Åbn linket i bekræftelsesmailen, vi har sendt dig, og vend så tilbage til denne side.',
     wrongAccountError:
       'Denne invitation blev sendt til en anden konto, end den du er logget ind med.',
     successTitle: 'Du er nu værge for {childGivenName}.',

@@ -1,6 +1,8 @@
 using Alba;
 
+using buddy.Common;
 using buddy.Features.Guardians;
+using buddy.IntegrationTests.Features.Users;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -84,6 +86,37 @@ public sealed class AcceptGuardianInviteTests(BuddyApiFixture fixture)
             _.WithRequestHeader("Authorization", $"Bearer {someoneElseToken}");
             _.Post.Url($"/guardian-invites/{token}/accept");
             _.StatusCodeShouldBe(403);
+        });
+    }
+
+    [Fact]
+    public async Task An_invitee_with_an_unverified_email_must_verify_it_before_accepting()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var (_, inviteeToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var (unverifiedEmail, verificationToken) = await UserTestHelpers.ChangeToUnverifiedEmailAsync(fixture, inviteeToken);
+
+        await GuardianTestHelpers.InviteGuardianAsync(fixture, guardianToken, child.Id, unverifiedEmail, GuardianKind.Parent);
+        var token = await GuardianTestHelpers.ReadGuardianInviteTokenAsync(fixture, unverifiedEmail);
+
+        var refused = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/guardian-invites/{token}/accept");
+            _.StatusCodeShouldBe(403);
+        });
+
+        Assert.Equal("email_not_verified", refused.ReadAsJson<ErrorEnvelope>().Code);
+
+        // The refused invite stays pending, so the same link works once the email is verified.
+        await UserTestHelpers.VerifyEmailAsync(fixture, inviteeToken, verificationToken);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/guardian-invites/{token}/accept");
+            _.StatusCodeShouldBe(204);
         });
     }
 

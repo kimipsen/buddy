@@ -1,11 +1,10 @@
-using buddy.Common;
 using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
 
 public static class AcceptGuardianInviteHandler
 {
-    public static async Task<Result<Unit>> Handle(
+    public static async Task<AcceptGuardianInviteOutcome> Handle(
         AcceptGuardianInvite command,
         IGuardianInviteEventStore invites,
         IUserEventStore users,
@@ -19,7 +18,7 @@ public static class AcceptGuardianInviteHandler
 
         if (invite is null)
         {
-            return new Result<Unit>.NotFound();
+            return new AcceptGuardianInviteOutcome.NotFound();
         }
 
         // Retrying an already-succeeded accept -- idempotent no-op instead of NotFound, so a
@@ -29,12 +28,12 @@ public static class AcceptGuardianInviteHandler
         if (invite.Status == GuardianInviteStatus.Accepted
             && await guardians.FindActiveLinkAsync(new UserId(invite.ChildId), userId, cancellationToken) is not null)
         {
-            return new Result<Unit>.Success(Unit.Value);
+            return new AcceptGuardianInviteOutcome.Success();
         }
 
         if (invite.Status != GuardianInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
         {
-            return new Result<Unit>.NotFound();
+            return new AcceptGuardianInviteOutcome.NotFound();
         }
 
         // Self-scoped check, not a lookup of someone else -- the same reasoning as
@@ -43,13 +42,19 @@ public static class AcceptGuardianInviteHandler
 
         if (user is null || user.IsDeleted)
         {
-            return new Result<Unit>.NotFound();
+            return new AcceptGuardianInviteOutcome.NotFound();
         }
 
-        if (!user.Email.IsVerified || GuardianInviteDocument.NormalizeEmail(user.Email.Value) != invite.InvitedEmail)
+        if (GuardianInviteDocument.NormalizeEmail(user.Email.Value) != invite.InvitedEmail)
         {
             logger.GuardianInviteEmailMismatch(invite.Id, userId.Value);
-            return new Result<Unit>.Forbidden();
+            return new AcceptGuardianInviteOutcome.Forbidden();
+        }
+
+        if (!user.Email.IsVerified)
+        {
+            logger.GuardianInviteEmailMismatch(invite.Id, userId.Value);
+            return new EmailNotVerified("Verify your email address before accepting this invite.");
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -66,6 +71,6 @@ public static class AcceptGuardianInviteHandler
 
         logger.GuardianInviteAccepted(invite.Id, userId.Value, invite.ChildId);
 
-        return new Result<Unit>.Success(Unit.Value);
+        return new AcceptGuardianInviteOutcome.Success();
     }
 }

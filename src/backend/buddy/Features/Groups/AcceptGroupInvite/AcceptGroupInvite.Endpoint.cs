@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -12,23 +13,22 @@ public static class AcceptGroupInviteEndpoint
 {
     public static RouteGroupBuilder MapAcceptGroupInvite(this RouteGroupBuilder invites)
     {
-        invites.MapPost("/{token}/accept", async Task<Results<NoContent, NotFound, ForbidHttpResult>> (
+        invites.MapPost("/{token}/accept", async Task<Results<NoContent, NotFound, ForbidHttpResult, JsonHttpResult<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             string token,
             IMessageBus bus,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = AcceptGroupInvite.FromClaims(principal, token);
-            var result = await bus.InvokeAsync<Result<Unit>>(command, cancellationToken);
+            var result = await bus.InvokeAsync<AcceptGroupInviteOutcome>(command, cancellationToken);
 
             return result switch
             {
-                Result<Unit>.Success => TypedResults.NoContent(),
-                Result<Unit>.Forbidden => TypedResults.Forbid(),
-                Result<Unit>.NotFound => TypedResults.NotFound(),
-                // AcceptGroupInviteHandler never produces Validation -- there's no BadRequest in
-                // this route's declared results, so this collapses to NotFound like the others.
-                Result<Unit>.Validation => TypedResults.NotFound(),
+                AcceptGroupInviteOutcome.Success => TypedResults.NoContent(),
+                AcceptGroupInviteOutcome.Forbidden => TypedResults.Forbid(),
+                AcceptGroupInviteOutcome.NotFound => TypedResults.NotFound(),
+                EmailNotVerified notVerified => notVerified.ToForbidden(httpContext),
             };
         })
         .RequireAuthorization()

@@ -69,9 +69,12 @@ sequenceDiagram
     App->>API: POST /invites/{token}/accept
     API->>Groups: AcceptGroupInvite command
     Groups->>Groups: Compare invitee's own verified email to the invite
-    alt Email unverified or different from the invite
+    alt Email different from the invite
         Groups-->>API: Forbidden
         API-->>App: 403 Forbidden
+    else Matching but unverified
+        Groups-->>API: EmailNotVerified
+        API-->>App: 403 email_not_verified
     else Verified and matching
         Groups->>Store: Append GroupMemberRoleGranted + GroupInviteAccepted
         Groups-->>API: 204 No Content
@@ -97,7 +100,7 @@ sequenceDiagram
 | `GET` | `/groups/{groupId}/invites` | Lists pending invites for the group (owner/admin only). |
 | `DELETE` | `/groups/{groupId}/invites/{inviteId}` | Revokes a pending invite. |
 | `GET` | `/invites/{token}/preview` | Unauthenticated: returns the group name for an invite link, so the app can show "You've been invited to X" before login. |
-| `POST` | `/invites/{token}/accept` | Authenticated: accepts an invite only if the caller has verified their email address and it matches the invited address; otherwise `403 Forbidden`. |
+| `POST` | `/invites/{token}/accept` | Authenticated: accepts an invite only if the caller has verified their email address and it matches the invited address; otherwise `403 Forbidden` (`403 email_not_verified` when only verification is missing). |
 
 ## Core lifecycle
 
@@ -126,7 +129,7 @@ Group membership is not just a list of names. The group aggregate carries role t
 
 Groups can only be joined by invite -- there is no directory of guardians to browse and no way to add someone by a raw user id (see [child-accounts-and-guardian-roles.md](../analysis/child-accounts-and-guardian-roles.md) for why this codebase deliberately has no "look up a user by email" capability). `InviteToGroup` never resolves the invited email to a `UserId`: it records the email on `GroupInviteCreated` and emails a bearer token, the same shape as `EmailVerificationToken`. `AcceptGroupInvite` is the only place an invite is ever matched to a real account, and it does so by comparing the *authenticated caller's own* verified email against the invite -- a self-scoped check, not a lookup of someone else. This means an invite to an email with no account, or a typo, has no immediate feedback at invite time; it simply sits pending until it expires (7 days).
 
-**The invitee must verify their email address before accepting.** `AcceptGroupInvite` returns `403 Forbidden` when the caller's email is unverified, even if it matches the invited address: an unverified address could have been typed in by someone other than its real owner, so it can't be trusted to claim an invite sent to that address. The invite stays pending, so the invitee can verify their email (`POST /users/me/email/verify`, see [users/flow.md](../users/flow.md)) and then accept the same link, as long as it hasn't expired. Children added through `AddChildToGroup` (below) don't go through invite acceptance, so this rule doesn't apply to them.
+**The invitee must verify their email address before accepting.** `AcceptGroupInvite` returns `403` with the `email_not_verified` error code when the caller's email matches the invited address but is unverified (a different address is a plain `403`): an unverified address could have been typed in by someone other than its real owner, so it can't be trusted to claim an invite sent to that address. The invite stays pending, so the invitee can verify their email (`POST /users/me/email/verify`, see [users/flow.md](../users/flow.md)) and then accept the same link, as long as it hasn't expired. Children added through `AddChildToGroup` (below) don't go through invite acceptance, so this rule doesn't apply to them.
 
 **Children are the one deliberate exception.** `AddChildToGroup` (`PUT /groups/{groupId}/children/{childId}`) adds a child directly, skipping the invite/accept step entirely, provided the caller both manages the group (Owner/Admin) *and* has an active `GuardianLink` to that exact child -- the same two-sided-consent shape `ShareMealPlanWithGroup` already uses. This isn't an account-enumeration risk the way a raw `SetGroupMemberRole` on an arbitrary adult would be: a guardian already has full authority over their own child (the same authority `CreateChild` exercises), so there is nothing to "look up." The child is always granted `GroupRole.Member`, never Owner/Admin.
 

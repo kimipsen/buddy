@@ -9,6 +9,8 @@ export const invite = {
   accept: {
     acceptButton: 'Accept invite',
     error: 'Unable to accept this invite. It may have expired or already been used.',
+    emailNotVerifiedError:
+      'Verify your email address before you accept this invite. Open the link in the verification email we sent you, then come back to this page.',
     wrongAccountError:
       "This invite was sent to a different account than the one you're logged in with.",
     successTitle: "You've joined {groupName}.",
@@ -28,6 +30,8 @@ export const invite = {
   guardianAccept: {
     acceptButton: 'Accept invite',
     error: 'Unable to accept this invite. It may have expired or already been used.',
+    emailNotVerifiedError:
+      'Verify your email address before you accept this invite. Open the link in the verification email we sent you, then come back to this page.',
     wrongAccountError:
       "This invite was sent to a different account than the one you're logged in with.",
     successTitle: "You're now a guardian for {childGivenName}.",

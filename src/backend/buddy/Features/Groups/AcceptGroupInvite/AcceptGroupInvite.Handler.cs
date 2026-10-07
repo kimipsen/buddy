@@ -1,11 +1,10 @@
-using buddy.Common;
 using buddy.Features.Users;
 
 namespace buddy.Features.Groups;
 
 public static class AcceptGroupInviteHandler
 {
-    public static async Task<Result<Unit>> Handle(AcceptGroupInvite command, IGroupEventStore groups, IUserEventStore users, ILogger<AcceptGroupInvite> logger, CancellationToken cancellationToken)
+    public static async Task<AcceptGroupInviteOutcome> Handle(AcceptGroupInvite command, IGroupEventStore groups, IUserEventStore users, ILogger<AcceptGroupInvite> logger, CancellationToken cancellationToken)
     {
         var userId = command.UserId;
 
@@ -13,7 +12,7 @@ public static class AcceptGroupInviteHandler
 
         if (invite is null)
         {
-            return new Result<Unit>.NotFound();
+            return new AcceptGroupInviteOutcome.NotFound();
         }
 
         // Retrying an already-succeeded accept -- idempotent no-op instead of NotFound, so a
@@ -26,13 +25,13 @@ public static class AcceptGroupInviteHandler
 
             if (existingGroup is not null && existingGroup.Members.ContainsKey(userId))
             {
-                return new Result<Unit>.Success(Unit.Value);
+                return new AcceptGroupInviteOutcome.Success();
             }
         }
 
         if (invite.Status != GroupInviteStatus.Pending || invite.ExpiresAt < DateTimeOffset.UtcNow)
         {
-            return new Result<Unit>.NotFound();
+            return new AcceptGroupInviteOutcome.NotFound();
         }
 
         // Self-scoped check, not a lookup of someone else -- reads the caller's own User record
@@ -44,16 +43,22 @@ public static class AcceptGroupInviteHandler
 
         if (user is null || user.IsDeleted)
         {
-            return new Result<Unit>.NotFound();
+            return new AcceptGroupInviteOutcome.NotFound();
         }
 
-        if (!user.Email.IsVerified || GroupInviteDocument.NormalizeEmail(user.Email.Value) != invite.InvitedEmail)
+        if (GroupInviteDocument.NormalizeEmail(user.Email.Value) != invite.InvitedEmail)
         {
-            // Covers both a mismatched email and an unverified one -- an unverified address could
-            // be claimed by someone other than its real owner, so it can't be trusted to accept an
-            // invite that was sent to it.
             logger.GroupInviteEmailMismatch(invite.Id, userId.Value);
-            return new Result<Unit>.Forbidden();
+            return new AcceptGroupInviteOutcome.Forbidden();
+        }
+
+        // The right address, but unverified -- it could be claimed by someone other than its real
+        // owner, so it can't be trusted to accept an invite that was sent to it. The invite stays
+        // pending: once the caller verifies the address, the same link works.
+        if (!user.Email.IsVerified)
+        {
+            logger.GroupInviteEmailMismatch(invite.Id, userId.Value);
+            return new EmailNotVerified("Verify your email address before accepting this invite.");
         }
 
         var groupId = new GroupId(invite.GroupId);
@@ -62,7 +67,7 @@ public static class AcceptGroupInviteHandler
 
         if (group is null || group.IsDeleted)
         {
-            return new Result<Unit>.NotFound();
+            return new AcceptGroupInviteOutcome.NotFound();
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -80,6 +85,6 @@ public static class AcceptGroupInviteHandler
 
         logger.GroupInviteAccepted(invite.Id, userId.Value, invite.Role, groupId.Value);
 
-        return new Result<Unit>.Success(Unit.Value);
+        return new AcceptGroupInviteOutcome.Success();
     }
 }

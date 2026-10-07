@@ -1,4 +1,6 @@
+using buddy.Common;
 using buddy.Features.Groups;
+using buddy.IntegrationTests.Features.Users;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -77,6 +79,40 @@ public sealed class AcceptGroupInviteTests(BuddyApiFixture fixture)
             _.Post.Url($"/invites/{token}/accept");
             _.StatusCodeShouldBe(403);
         });
+    }
+
+    [Fact]
+    public async Task An_invitee_with_an_unverified_email_must_verify_it_before_accepting()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, ownerToken, "Team");
+        var (_, inviteeToken, inviteeId) = await fixture.CreateAuthenticatedUserAsync();
+        var (unverifiedEmail, verificationToken) = await UserTestHelpers.ChangeToUnverifiedEmailAsync(fixture, inviteeToken);
+
+        await GroupTestHelpers.InviteToGroupAsync(fixture, ownerToken, groupId, unverifiedEmail, GroupRole.Member);
+        var token = await GroupTestHelpers.ReadInviteTokenAsync(fixture, unverifiedEmail);
+
+        var refused = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/invites/{token}/accept");
+            _.StatusCodeShouldBe(403);
+        });
+
+        Assert.Equal("email_not_verified", refused.ReadAsJson<ErrorEnvelope>().Code);
+
+        // The refused invite stays pending, so the same link works once the email is verified.
+        await UserTestHelpers.VerifyEmailAsync(fixture, inviteeToken, verificationToken);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {inviteeToken}");
+            _.Post.Url($"/invites/{token}/accept");
+            _.StatusCodeShouldBe(204);
+        });
+
+        var group = await GroupTestHelpers.GetGroupAsync(fixture, ownerToken, groupId);
+        Assert.Contains(group.Members, m => m.UserId == inviteeId);
     }
 
     [Fact]

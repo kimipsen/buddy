@@ -248,6 +248,27 @@ describe('AcceptGuardianInvite', () => {
     );
   });
 
+  it('asks the user to verify their email when accepting is rejected with email_not_verified', async () => {
+    const notVerified = new HttpErrorResponse({
+      status: 403,
+      error: { code: 'email_not_verified', message: 'Verify your email address first.' },
+    });
+    const { fixture } = await setup({
+      guardians: { acceptGuardianInvite: vi.fn(async () => Promise.reject(notVerified)) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    (compiled.querySelector('button') as HTMLButtonElement).click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain(
+      'Verify your email address before you accept this invite.',
+    );
+    expect(compiled.textContent).not.toContain('This invite was sent to a different account');
+    expect(compiled.textContent).not.toContain("You're now a guardian");
+  });
+
   it('does not show the wrong-account error for a non-403 HttpErrorResponse', async () => {
     const serverError = new HttpErrorResponse({ status: 500 });
     const { fixture } = await setup({

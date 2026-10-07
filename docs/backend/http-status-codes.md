@@ -113,6 +113,11 @@ Typical Buddy use:
   endpoint except `GET /users/me` itself. Anonymous endpoints (iCal feeds, invite previews) are
   not affected. It is `403` rather than `401` because the token is valid, so a client that
   refreshes its token on `401` would loop.
+- accepting an invite sent to the caller's own email before they've verified it
+  (`email_not_verified`): `POST /invites/{token}/accept` and
+  `POST /guardian-invites/{token}/accept` return this code with the `ErrorEnvelope` body
+  (`Features/Users/EmailNotVerified`), so the client can ask the user to verify first. An
+  invite sent to a different address is a plain `403` with no body.
 
 Security note:
 - if the route uses privacy-preserving existence hiding, you may intentionally return `404` instead of `403`
@@ -379,7 +384,7 @@ Notes:
 | `GET /groups/{groupId}/invites` | `200` | `401`, `403`, `404` | Owner/admin-only listing of pending invites. |
 | `DELETE /groups/{groupId}/invites/{inviteId}` | `204` | `401`, `403`, `404` | Revokes a pending invite. |
 | `GET /invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |
-| `POST /invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller hasn't verified their email address, or their verified email doesn't match the invite. |
+| `POST /invites/{token}/accept` | `204` | `401`, `403`, `404` | `403 email_not_verified` when the invite is for the caller's email but they haven't verified it; plain `403` when their email doesn't match the invite. |
 
 ### Guardians API (`/users/me/children`, `/users/me/guardians`, `/users/me/siblings`, `/guardian-invites`)
 
@@ -398,7 +403,7 @@ Notes:
 | `GET /users/me/children/{childId}/guardian-invites` | `200` | `401`, `404` | `404` for unknown child or caller without an active guardian link. |
 | `DELETE /users/me/children/{childId}/guardian-invites/{inviteId}` | `204` | `401`, `404` | `404` for unknown invite or caller without an active guardian link. |
 | `GET /guardian-invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |
-| `POST /guardian-invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller hasn't verified their email address, or their verified email doesn't match the invite. |
+| `POST /guardian-invites/{token}/accept` | `204` | `401`, `403`, `404` | `403 email_not_verified` when the invite is for the caller's email but they haven't verified it; plain `403` when their email doesn't match the invite. |
 
 ### Mealplans API (`/mealplans`)
 
