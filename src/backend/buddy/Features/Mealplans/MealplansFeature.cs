@@ -1,4 +1,5 @@
 using buddy.Common.Configuration;
+using buddy.Common.DataProtection;
 using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.Postgres;
@@ -126,9 +127,9 @@ public static class MealplansFeature
         services.AddHostedService<AiSessionRetentionService>();
 
         // Framework-provided at-rest encryption for stored provider API keys -- see
-        // DataProtectionApiKeyCipher. No new dependency: Data Protection ships as part of the
-        // ASP.NET Core shared framework.
-        services.AddDataProtection();
+        // DataProtectionApiKeyCipher. The key ring is persisted in Postgres (DataProtectionFeature),
+        // so stored keys stay readable across redeploys.
+        services.AddDataProtectionFeature(configuration);
         services.AddSingleton<IApiKeyCipher, DataProtectionApiKeyCipher>();
 
         services.AddValidatedOptions<AiAssistantModelOptions>(AiAssistantModelOptions.SectionName);

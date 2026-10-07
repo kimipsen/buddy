@@ -124,7 +124,9 @@ events (the latter appended alongside `ProviderApiKeyRemoved` when the removed
 provider was the active one).
 Provider API keys (BYOK — bring your own key, for Anthropic, OpenAI, or
 Gemini) are encrypted at rest via the ASP.NET Core Data Protection API before
-being stored; only the encrypted ciphertext and the key's last 4 characters
+being stored. The Data Protection key ring is itself kept in Postgres (the
+`dataprotection` schema, `Common/DataProtection/DataProtectionFeature.cs`), so
+stored keys stay decryptable across redeploys and replicas; only the encrypted ciphertext and the key's last 4 characters
 are persisted, and every read-facing response returns the masked
 `AiProviderSettings` shape rather than the credential itself. `TestProviderConnection`
 sends a one-word "OK" round trip through the resolved provider client to confirm a

@@ -1,3 +1,4 @@
+using buddy.Common.DataProtection;
 using buddy.Common.Erasure;
 using buddy.Common.Idempotency;
 using buddy.IntegrationTests.Fixtures;
@@ -20,6 +21,8 @@ public sealed class PersonalDataEraserCoverageTests(BuddyApiFixture fixture)
     {
         // Encrypted response bodies, deleted after 24 hours by IdempotencyCleanupService.
         [typeof(IIdempotencyStore)] = "short-lived and encrypted",
+        // Encryption keys only; nothing about a person.
+        [typeof(IDataProtectionStore)] = "encryption keys, no personal data",
     };
 
     [Fact]

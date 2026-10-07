@@ -1,3 +1,4 @@
+using buddy.Common.DataProtection;
 using buddy.Common.Postgres;
 using buddy.Serialization;
 
@@ -30,7 +31,7 @@ public static class IdempotencyFeature
         });
 
         // Encrypts stored response bodies (IdempotencyKeyRepository). Idempotent with other features' calls.
-        services.AddDataProtection();
+        services.AddDataProtectionFeature(configuration);
         services.AddSingleton<IdempotencyKeyRepository>();
         services.AddHostedService<IdempotencyCleanupService>();
 

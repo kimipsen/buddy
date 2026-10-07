@@ -1,3 +1,4 @@
+using buddy.Common.DataProtection;
 using buddy.Common.Erasure;
 using buddy.Common.Idempotency;
 using buddy.IntegrationTests.Fixtures;
@@ -20,6 +21,8 @@ public sealed class PersonalDataExporterCoverageTests(BuddyApiFixture fixture)
     {
         // Encrypted copies of responses the caller already received, deleted after 24 hours.
         [typeof(IIdempotencyStore)] = "short-lived copies of responses",
+        // Encryption keys only; nothing about a person.
+        [typeof(IDataProtectionStore)] = "encryption keys, no personal data",
     };
 
     [Fact]

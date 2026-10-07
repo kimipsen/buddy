@@ -411,10 +411,13 @@ Found along the way:
 - [x] **Containers run as root.** Both Dockerfiles now switch to their `aspnet`/`caddy` user.
   Caddy keeps :80 (the base image gives its binary `cap_net_bind_service`) and owns `/data` and
   `/config`; `aspnet` has a home directory for the Data Protection key ring.
-- [ ] **Data Protection keys aren't persisted.** `AddDataProtection()` in `MealplansFeature`
-  stores its key ring in the container's home directory, so every redeploy (new container) loses
-  it and stored AI-provider API keys can no longer be decrypted. Persist the keys (Postgres via a
-  Marten-backed `IXmlRepository`, or a volume) and protect them at rest.
+- [x] **Data Protection keys aren't persisted.** The key ring now lives in Postgres (the
+  `dataprotection` schema, `Common/DataProtection/DataProtectionFeature.cs`), so it survives
+  redeploys and is shared by every replica. API keys stored before this change were encrypted with
+  a lost key ring and must be entered again once.
+- [ ] **Encrypt the Data Protection keys at rest.** They are stored unencrypted in the
+  `dataprotection` schema, so anyone who can read the database (or a `pg_dump` backup) can decrypt
+  stored API keys. Add `ProtectKeysWithCertificate` with a certificate from the secret store.
 - [x] **Security headers.** The app's headers are in `src/frontend/buddy/Caddyfile` (so they also
   apply on Azure); the API's are in `deploy/Caddyfile`. Keycloak sends its own.
 - [ ] **Enforce the app's Content-Security-Policy.** It is report-only for now. Two things break

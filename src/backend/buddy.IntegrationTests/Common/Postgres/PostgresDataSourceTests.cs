@@ -1,3 +1,4 @@
+using buddy.Common.DataProtection;
 using buddy.Common.Idempotency;
 using buddy.Common.Postgres;
 using buddy.Features.Babysitters;
@@ -92,7 +93,8 @@ public sealed class PostgresDataSourceHostTests(BuddyApiFixture fixture)
         typeof(IPrintTemplatesStore),
         typeof(IProgressStore),
         typeof(ISleepDiariesStore),
-        typeof(IIdempotencyStore)
+        typeof(IIdempotencyStore),
+        typeof(IDataProtectionStore)
     ];
 
     [Fact]

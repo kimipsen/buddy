@@ -332,8 +332,8 @@ provided they are kept somewhere: see the OTLP item in the TODO.
 - **Redact tokens from traces.** The ASP.NET Core instrumentation's `EnrichWithHttpRequest` replaces
   `url.path` with the route template whenever the route has a `{token}` parameter.
 - **Encrypt stored idempotency responses** with Data Protection, the same as AI keys. A body that
-  can't be decrypted (keys lost on a restart, see the Data Protection item in the TODO) is treated
-  as expired.
+  can't be decrypted (e.g. its key was deleted from the `dataprotection` schema) is treated as
+  expired.
 
 ## Backups
 
