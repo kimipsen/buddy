@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { firstAndLast, sortByName } from '../../../core/array-utils';
+import { firstAndLast } from '../../../core/array-utils';
 import {
   CalendarItemKind,
   CalendarOccurrence,
@@ -329,7 +329,7 @@ export class ChildCalendar {
     const me = await this.users.ensureCurrentUser();
 
     const [myCalendars, occurrences, mealEntries] = await Promise.all([
-      this.calendars.listMyCalendars().then(sortByName),
+      this.calendars.listMyCalendars(),
       this.calendars.listOccurrencesInRange(from, to),
       this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to),
     ]);

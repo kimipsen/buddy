@@ -40,6 +40,24 @@ describe('GuardiansService', () => {
   });
 
   describe('listMyChildren', () => {
+    it('resolves the children sorted by full name', async () => {
+      const child = (id: string, givenName: string): ChildSummary => ({
+        id,
+        name: { givenName, familyName: 'Kid' },
+        guardianLinkId: `link-${id}`,
+        kind: 0,
+        language: 'en',
+        timeZoneId: 'UTC',
+      });
+
+      const promise = service.listMyChildren();
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me/children`)
+        .flush([child('c-1', 'Sam'), child('c-2', 'Robin')]);
+
+      await expect(promise).resolves.toEqual([child('c-2', 'Robin'), child('c-1', 'Sam')]);
+    });
+
     it('GETs the caller’s children and resolves them', async () => {
       const children: ChildSummary[] = [
         {
@@ -81,6 +99,22 @@ describe('GuardiansService', () => {
   });
 
   describe('listMyGuardians', () => {
+    it('resolves the guardians sorted by full name', async () => {
+      const guardian = (id: string, givenName: string): GuardianSummary => ({
+        id,
+        name: { givenName, familyName: 'G' },
+        guardianLinkId: `link-${id}`,
+        kind: 0,
+      });
+
+      const promise = service.listMyGuardians();
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me/guardians`)
+        .flush([guardian('g-1', 'Pat'), guardian('g-2', 'Gina')]);
+
+      await expect(promise).resolves.toEqual([guardian('g-2', 'Gina'), guardian('g-1', 'Pat')]);
+    });
+
     it('GETs the caller’s guardians and resolves them', async () => {
       const guardians: GuardianSummary[] = [
         {
@@ -111,6 +145,22 @@ describe('GuardiansService', () => {
   });
 
   describe('listChildGuardians', () => {
+    it('resolves the guardians sorted by full name', async () => {
+      const guardian = (id: string, givenName: string): GuardianSummary => ({
+        id,
+        name: { givenName, familyName: 'G' },
+        guardianLinkId: `link-${id}`,
+        kind: 0,
+      });
+
+      const promise = service.listChildGuardians('child-1');
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me/children/child-1/guardians`)
+        .flush([guardian('g-1', 'Pat'), guardian('g-2', 'Gina')]);
+
+      await expect(promise).resolves.toEqual([guardian('g-2', 'Gina'), guardian('g-1', 'Pat')]);
+    });
+
     it('GETs the guardians for a specific child and resolves them', async () => {
       const guardians: GuardianSummary[] = [
         {
@@ -141,6 +191,16 @@ describe('GuardiansService', () => {
   });
 
   describe('listMySiblings', () => {
+    it('resolves the siblings sorted by full name', async () => {
+      const sam: SiblingSummary = { id: 's-1', name: { givenName: 'Sam', familyName: 'Kid' } };
+      const alex: SiblingSummary = { id: 's-2', name: { givenName: 'Alex', familyName: 'Kid' } };
+
+      const promise = service.listMySiblings();
+      httpMock.expectOne(`${apiBaseUrl}/users/me/siblings`).flush([sam, alex]);
+
+      await expect(promise).resolves.toEqual([alex, sam]);
+    });
+
     it('GETs the caller’s siblings and resolves them', async () => {
       const siblings: SiblingSummary[] = [
         { id: 'sibling-1', name: { givenName: 'Alex', familyName: 'Kid' } },

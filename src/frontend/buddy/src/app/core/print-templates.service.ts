@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { MealSlot } from './mealplans.service';
 import { RuntimeConfigService } from './runtime-config.service';
@@ -101,7 +102,7 @@ export class PrintTemplatesService {
   }
 
   list(): Promise<PrintTemplateSummary[]> {
-    return firstValueFrom(this.http.get<PrintTemplateSummary[]>(this.base));
+    return firstValueFrom(this.http.get<PrintTemplateSummary[]>(this.base)).then(sortByName);
   }
 
   get(templateId: string): Promise<PrintTemplate> {

@@ -1,7 +1,6 @@
 import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { sortByName } from '../../../../core/array-utils';
 import { CalendarRole } from '../../../../core/calendars.service';
 import {
   GroupMember,
@@ -74,7 +73,7 @@ export class ManageGroups {
   protected readonly mealplanTiers = MEALPLAN_TIERS;
 
   protected readonly items = resource({
-    loader: () => this.groups.listMyGroups().then(sortByName),
+    loader: () => this.groups.listMyGroups(),
   });
 
   protected readonly newGroupName = signal('');
@@ -278,11 +277,11 @@ export class ManageGroups {
   }
 
   protected guardianMembers(members: GroupMember[]): GroupMember[] {
-    return sortByMemberName(members.filter((m) => !m.isChild));
+    return members.filter((m) => !m.isChild);
   }
 
   protected childMembers(members: GroupMember[]): GroupMember[] {
-    return sortByMemberName(members.filter((m) => m.isChild));
+    return members.filter((m) => m.isChild);
   }
 
   protected toggleMembersPanel(groupId: string): void {
@@ -377,10 +376,4 @@ export class ManageGroups {
       'admin.manageGroups.mealplanPolicy.saveError',
     );
   }
-}
-
-function sortByMemberName(members: GroupMember[]): GroupMember[] {
-  return [...members].sort((a, b) =>
-    `${a.givenName} ${a.familyName}`.localeCompare(`${b.givenName} ${b.familyName}`),
-  );
 }

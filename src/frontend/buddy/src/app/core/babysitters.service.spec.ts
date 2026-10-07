@@ -56,6 +56,25 @@ describe('BabysittersService', () => {
     await expect(promise).resolves.toEqual([entry]);
   });
 
+  it('resolves the caller’s babysitters sorted by name', async () => {
+    const zoe = { ...anna, id: 'b-2', name: 'Zoe' };
+    const promise = service.listMine();
+
+    httpMock.expectOne(me).flush([zoe, anna]);
+
+    await expect(promise).resolves.toEqual([anna, zoe]);
+  });
+
+  it('resolves a child’s babysitters sorted by name', async () => {
+    const zoe: ChildBabysitter = { guardianId: 'g-1', id: 'b-2', name: 'Zoe', contactInfo: '' };
+    const bo: ChildBabysitter = { guardianId: 'g-2', id: 'b-1', name: 'Bo', contactInfo: '' };
+    const promise = service.listForChild('c-1');
+
+    httpMock.expectOne(`${apiBaseUrl}/babysitters/children/c-1`).flush([zoe, bo]);
+
+    await expect(promise).resolves.toEqual([bo, zoe]);
+  });
+
   it('POSTs a new babysitter with an idempotency key', async () => {
     const promise = service.add({ name: 'Anna', contactInfo: '123' });
 

@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -107,7 +108,7 @@ export class TaskLibraryService {
   // reflected everywhere else immediately, without each component needing to know about the
   // others -- mirrors MealplansService.meals.
   private readonly templatesState = signal<TaskTemplate[]>([]);
-  readonly templates = this.templatesState.asReadonly();
+  readonly templates = computed(() => sortByName(this.templatesState()));
 
   private base(): string {
     return `${this.runtimeConfig.apiBaseUrl}/task-templates`;
@@ -133,7 +134,7 @@ export class TaskLibraryService {
     );
     const templates = responses.map(fromResponse);
     this.templatesState.set(templates);
-    return templates;
+    return sortByName(templates);
   }
 
   async createTaskTemplate(childId: string, request: TaskTemplateDetails): Promise<TaskTemplate> {

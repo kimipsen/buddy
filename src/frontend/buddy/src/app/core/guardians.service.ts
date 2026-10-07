@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { sortByPersonName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -72,14 +73,14 @@ export class GuardiansService {
   listMyChildren(): Promise<ChildSummary[]> {
     return firstValueFrom(
       this.http.get<ChildSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/children`),
-    );
+    ).then(sortByPersonName);
   }
 
   // A non-empty result means the current user is a child linked to at least one guardian.
   listMyGuardians(): Promise<GuardianSummary[]> {
     return firstValueFrom(
       this.http.get<GuardianSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/guardians`),
-    );
+    ).then(sortByPersonName);
   }
 
   // Unlike listMyGuardians (which only answers "who are the caller's own guardians", i.e. caller
@@ -90,7 +91,7 @@ export class GuardiansService {
       this.http.get<GuardianSummary[]>(
         `${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/guardians`,
       ),
-    );
+    ).then(sortByPersonName);
   }
 
   // The calling child's own siblings (other children sharing at least one of their guardians) --
@@ -98,7 +99,7 @@ export class GuardiansService {
   listMySiblings(): Promise<SiblingSummary[]> {
     return firstValueFrom(
       this.http.get<SiblingSummary[]>(`${this.runtimeConfig.apiBaseUrl}/users/me/siblings`),
-    );
+    ).then(sortByPersonName);
   }
 
   createChild(request: CreateChildRequest): Promise<CreateChildResult> {

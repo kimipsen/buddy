@@ -7,7 +7,6 @@ import {
   CalendarSummary,
   CalendarsService,
 } from '../../../../core/calendars.service';
-import { sortByName } from '../../../../core/array-utils';
 import { browserTimeZoneId, listTimeZoneIds } from '../../../../core/date-utils';
 import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -46,7 +45,7 @@ export class ManageCalendars {
   protected readonly timeZoneIds = listTimeZoneIds();
 
   protected readonly items = resource({
-    loader: () => this.calendars.listMyCalendars().then(sortByName),
+    loader: () => this.calendars.listMyCalendars(),
   });
 
   // A calendar is always group-owned -- the create form stays hidden behind the needs-group hint

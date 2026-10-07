@@ -12,7 +12,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { sortByName, swapped } from '../../../../core/array-utils';
+import { swapped } from '../../../../core/array-utils';
 import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
 import { nextWeekdayOnOrAfter, todayIsoDate } from '../../../../core/date-utils';
 import {
@@ -551,7 +551,7 @@ export class PrintTemplateEditor {
     const [template, children, calendars, groups, me] = await Promise.all([
       this.templates.get(this.templateId),
       this.guardiansService.listMyChildren(),
-      this.calendarsService.listMyCalendars().then(sortByName),
+      this.calendarsService.listMyCalendars(),
       this.groupsService.listMyGroups(),
       this.users.ensureCurrentUser(),
     ]);

@@ -82,6 +82,16 @@ describe('CalendarsService', () => {
   });
 
   describe('listMyCalendars', () => {
+    it('resolves the calendars sorted by name', async () => {
+      const work = calendar({ id: 'cal-2', name: 'Work' });
+      const home = calendar({ id: 'cal-1', name: 'Home' });
+
+      const promise = service.listMyCalendars();
+      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([work, home]);
+
+      await expect(promise).resolves.toEqual([home, work]);
+    });
+
     it('GETs the calendars list and resolves with the response body', async () => {
       const calendars = [calendar(), calendar({ id: 'cal-2', name: 'Work', role: 1 })];
 
@@ -273,6 +283,16 @@ describe('CalendarsService', () => {
   });
 
   describe('listAssignableMembers', () => {
+    it('resolves the members sorted by full name', async () => {
+      const sam: AssignableMember = { userId: 'child-1', givenName: 'Sam', familyName: 'Kid' };
+      const alex: AssignableMember = { userId: 'child-2', givenName: 'Alex', familyName: 'Kid' };
+
+      const promise = service.listAssignableMembers('cal-1');
+      httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/assignable-members`).flush([sam, alex]);
+
+      await expect(promise).resolves.toEqual([alex, sam]);
+    });
+
     it('GETs the assignable-members list for the calendar', async () => {
       const members: AssignableMember[] = [
         { userId: 'child-1', givenName: 'Sam', familyName: 'Kid' },

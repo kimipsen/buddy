@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -37,7 +38,7 @@ export class BabysittersService {
   listMine(): Promise<Babysitter[]> {
     return firstValueFrom(
       this.http.get<Babysitter[]>(`${this.runtimeConfig.apiBaseUrl}/babysitters/me`),
-    );
+    ).then(sortByName);
   }
 
   listForChild(childId: string): Promise<ChildBabysitter[]> {
@@ -45,7 +46,7 @@ export class BabysittersService {
       this.http.get<ChildBabysitter[]>(
         `${this.runtimeConfig.apiBaseUrl}/babysitters/children/${childId}`,
       ),
-    );
+    ).then(sortByName);
   }
 
   add(details: BabysitterDetails): Promise<Babysitter> {

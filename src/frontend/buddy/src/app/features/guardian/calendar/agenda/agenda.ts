@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { firstAndLast, sortByName } from '../../../../core/array-utils';
+import { firstAndLast } from '../../../../core/array-utils';
 import {
   AssignableMember,
   CalendarItemKind,
@@ -900,7 +900,7 @@ export class CalendarAgenda {
 
   private async loadWeek(from: string, to: string): Promise<LoadedWeek> {
     const [myCalendars, occurrences] = await Promise.all([
-      this.calendars.listMyCalendars().then(sortByName),
+      this.calendars.listMyCalendars(),
       this.calendars.listOccurrencesInRange(from, to),
     ]);
 

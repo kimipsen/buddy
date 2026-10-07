@@ -475,7 +475,8 @@ describe('ChildCalendar', () => {
     expect(compiled.textContent).toContain('School');
   });
 
-  it('lists the calendar filter toggles sorted by name', async () => {
+  // CalendarsService.listMyCalendars sorts by name; the page keeps that order.
+  it('lists the calendar filter toggles in the order the service returns them', async () => {
     const { fixture } = await setup({
       calendars: {
         listMyCalendars: vi.fn(async () => [
@@ -491,7 +492,7 @@ describe('ChildCalendar', () => {
     )
       .map((b) => b.getAttribute('aria-label'))
       .filter((label) => label === 'Home' || label === 'School');
-    expect(labels).toEqual(['Home', 'School']);
+    expect(labels).toEqual(['School', 'Home']);
   });
 
   it('hides occurrences for a calendar toggled off', async () => {

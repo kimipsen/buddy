@@ -1,4 +1,4 @@
-import { firstAndLast, sortByChildName, swapped } from './array-utils';
+import { firstAndLast, sortByFullName, sortByName, sortByPersonName, swapped } from './array-utils';
 
 describe('firstAndLast', () => {
   it('returns the first and last items', () => {
@@ -14,13 +14,39 @@ describe('firstAndLast', () => {
   });
 });
 
-describe('sortByChildName', () => {
+describe('sortByName', () => {
+  it('sorts locale-aware by name without changing the input', () => {
+    const items = [{ name: 'Zoe' }, { name: 'ask' }, { name: 'Bo' }];
+
+    expect(sortByName(items)).toEqual([{ name: 'ask' }, { name: 'Bo' }, { name: 'Zoe' }]);
+    expect(items[0]).toEqual({ name: 'Zoe' });
+  });
+});
+
+describe('sortByFullName', () => {
+  it('sorts by given name, then family name, without changing the input', () => {
+    const people = [
+      { givenName: 'Sam', familyName: 'Kid' },
+      { givenName: 'Robin', familyName: 'Zed' },
+      { givenName: 'Robin', familyName: 'Abe' },
+    ];
+
+    expect(sortByFullName(people)).toEqual([
+      { givenName: 'Robin', familyName: 'Abe' },
+      { givenName: 'Robin', familyName: 'Zed' },
+      { givenName: 'Sam', familyName: 'Kid' },
+    ]);
+    expect(people[0]).toEqual({ givenName: 'Sam', familyName: 'Kid' });
+  });
+});
+
+describe('sortByPersonName', () => {
   const named = (givenName: string, familyName: string) => ({ name: { givenName, familyName } });
 
   it('sorts by given name, then family name, without changing the input', () => {
     const children = [named('Sam', 'Kid'), named('Robin', 'Zed'), named('Robin', 'Abe')];
 
-    expect(sortByChildName(children)).toEqual([
+    expect(sortByPersonName(children)).toEqual([
       named('Robin', 'Abe'),
       named('Robin', 'Zed'),
       named('Sam', 'Kid'),

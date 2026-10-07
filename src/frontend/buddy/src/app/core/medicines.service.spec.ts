@@ -70,6 +70,16 @@ describe('MedicinesService', () => {
   });
 
   describe('listSchedules', () => {
+    it('resolves the schedules sorted by name', async () => {
+      const ritalin = schedule({ id: 'sched-2', name: 'Ritalin' });
+      const melatonin = schedule({ id: 'sched-1', name: 'Melatonin' });
+
+      const promise = service.listSchedules(childId);
+      httpMock.expectOne(`${base()}/schedules`).flush([ritalin, melatonin]);
+
+      await expect(promise).resolves.toEqual([melatonin, ritalin]);
+    });
+
     it('GETs schedules for a child', async () => {
       const schedules = [schedule()];
 

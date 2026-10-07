@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { sortByChildName } from '../../../../core/array-utils';
 import { listTimeZoneIds } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import {
@@ -40,7 +39,7 @@ export class ManageChildren {
   protected readonly timeZoneIds = listTimeZoneIds();
 
   protected readonly children = resource({
-    loader: () => this.guardians.listMyChildren().then(sortByChildName),
+    loader: () => this.guardians.listMyChildren(),
   });
 
   protected readonly newChildGivenName = signal('');

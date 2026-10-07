@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -64,7 +65,7 @@ export class MedicinesService {
       this.http.get<MedicineSchedule[]>(
         `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/schedules`,
       ),
-    );
+    ).then(sortByName);
   }
 
   createSchedule(

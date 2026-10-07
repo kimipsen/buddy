@@ -365,7 +365,8 @@ describe('PrintTemplateEditor', () => {
     ]);
   });
 
-  it('lists the calendars to load from sorted by name', async () => {
+  // CalendarsService.listMyCalendars sorts by name; the editor keeps that order.
+  it('lists the calendars to load from in the order the service returns them', async () => {
     const { root } = await setup({
       ...template,
       rows: [emptyRow(PRINT_ROW_KIND.calendarEvents, 'Aftaler')],
@@ -375,7 +376,7 @@ describe('PrintTemplateEditor', () => {
     const labels = Array.from(root.querySelectorAll('button[role="switch"]'))
       .map((b) => b.getAttribute('aria-label'))
       .filter((label) => calendarNames.has(label ?? ''));
-    expect(labels).toEqual(['Arbejde', 'Familie', 'Skole']);
+    expect(labels).toEqual(['Skole', 'Familie', 'Arbejde']);
   });
 
   it('flags a work-location row whose location was archived', async () => {

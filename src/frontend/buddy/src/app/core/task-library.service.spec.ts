@@ -70,6 +70,23 @@ describe('TaskLibraryService', () => {
   });
 
   describe('listTaskTemplates', () => {
+    it('resolves and exposes the templates sorted by name', async () => {
+      const promise = service.listTaskTemplates('child-1');
+      httpMock
+        .expectOne(`${base()}/children/child-1`)
+        .flush([
+          templateResponse({ id: 'template-2', name: 'Pack bag' }),
+          templateResponse({ id: 'template-1', name: 'Get ready' }),
+        ]);
+
+      const sorted = [
+        template({ id: 'template-1', name: 'Get ready' }),
+        template({ id: 'template-2', name: 'Pack bag' }),
+      ];
+      await expect(promise).resolves.toEqual(sorted);
+      expect(service.templates()).toEqual(sorted);
+    });
+
     it('GETs templates for a child, converts wire durations to minutes, and updates the templates signal', async () => {
       const response = templateResponse({
         subtasks: [
@@ -259,8 +276,8 @@ describe('TaskLibraryService', () => {
       await promise;
 
       expect(service.templates()).toEqual([
-        template({ id: 'template-other', name: 'Other' }),
         template({ id: 'template-1', name: 'Get ready fast' }),
+        template({ id: 'template-other', name: 'Other' }),
       ]);
     });
   });

@@ -160,6 +160,17 @@ describe('MealplansService', () => {
   });
 
   describe('listMeals', () => {
+    it('resolves and exposes the meals sorted by name', async () => {
+      const toast = meal({ id: 'meal-2', name: 'Toast' });
+      const pancakes = meal({ id: 'meal-1', name: 'Pancakes' });
+
+      const promise = service.listMeals(familyScope);
+      httpMock.expectOne(`${familyBase()}/meals`).flush([toast, pancakes]);
+
+      await expect(promise).resolves.toEqual([pancakes, toast]);
+      expect(service.meals()).toEqual([pancakes, toast]);
+    });
+
     it('fetches meals for a scope and updates the meals signal', async () => {
       const meals = [meal(), meal({ id: 'meal-2', name: 'Toast' })];
 
@@ -287,7 +298,8 @@ describe('MealplansService', () => {
       httpMock.expectOne(`${familyBase()}/meals/meal-1/details`).flush(updated);
       await promise;
 
-      expect(service.meals()).toEqual([other, updated]);
+      // Re-sorted by name: the renamed "Fluffy Pancakes" still sorts before "Soup".
+      expect(service.meals()).toEqual([updated, other]);
     });
   });
 

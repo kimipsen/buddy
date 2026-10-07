@@ -449,7 +449,8 @@ describe('CalendarAgenda', () => {
     expect(compiled.textContent).toContain('School item');
   });
 
-  it('lists the calendar filter toggles sorted by name', async () => {
+  // CalendarsService.listMyCalendars sorts by name; the page keeps that order.
+  it('lists the calendar filter toggles in the order the service returns them', async () => {
     const { fixture } = await setup({
       calendars: {
         listMyCalendars: vi.fn(async () => [
@@ -465,7 +466,7 @@ describe('CalendarAgenda', () => {
     )
       .map((b) => b.getAttribute('aria-label'))
       .filter((label) => label === 'Home' || label === 'School');
-    expect(labels).toEqual(['Home', 'School']);
+    expect(labels).toEqual(['School', 'Home']);
   });
 
   it('shows the empty state once the only visible calendar is hidden, even though occurrences() is non-empty', async () => {

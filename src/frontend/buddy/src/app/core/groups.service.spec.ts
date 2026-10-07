@@ -8,6 +8,7 @@ import {
   GroupDetail,
   GroupInvite,
   GroupInvitePreview,
+  GroupMember,
   GroupSummary,
   GroupsService,
   MealplanPermissionPolicy,
@@ -41,6 +42,16 @@ describe('GroupsService', () => {
   });
 
   describe('listMyGroups', () => {
+    it('resolves the groups sorted by name', async () => {
+      const work: GroupSummary = { id: 'group-2', name: 'Work', role: 0 };
+      const home: GroupSummary = { id: 'group-1', name: 'Home', role: 0 };
+
+      const promise = service.listMyGroups();
+      httpMock.expectOne(`${apiBaseUrl}/groups`).flush([work, home]);
+
+      await expect(promise).resolves.toEqual([home, work]);
+    });
+
     it('GETs the caller’s groups and resolves them', async () => {
       const groups: GroupSummary[] = [{ id: 'group-1', name: 'Home', role: 0 }];
 
@@ -205,6 +216,35 @@ describe('GroupsService', () => {
   });
 
   describe('getGroup', () => {
+    it('resolves the members sorted by full name', async () => {
+      const sam: GroupMember = {
+        userId: 'u-1',
+        givenName: 'Sam',
+        familyName: 'Kid',
+        role: 2,
+        isChild: true,
+      };
+      const jamie: GroupMember = {
+        userId: 'u-2',
+        givenName: 'Jamie',
+        familyName: 'Adult',
+        role: 0,
+        isChild: false,
+      };
+      const detail: GroupDetail = {
+        id: 'group-1',
+        name: 'Home',
+        members: [sam, jamie],
+        calendarPermissionPolicy: { Owner: 2, Admin: 2, Member: 1 },
+        mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+      };
+
+      const promise = service.getGroup('group-1');
+      httpMock.expectOne(`${apiBaseUrl}/groups/group-1`).flush(detail);
+
+      await expect(promise).resolves.toEqual({ ...detail, members: [jamie, sam] });
+    });
+
     it('GETs the group detail and resolves it', async () => {
       const detail: GroupDetail = {
         id: 'group-1',

@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { RuntimeConfigService } from './runtime-config.service';
 
@@ -193,7 +194,7 @@ export class MealplansService {
   // grid on the same page), so a create/update/archive in one place is reflected everywhere else
   // immediately, without each component needing to know about the others.
   private readonly mealsState = signal<Meal[]>([]);
-  readonly meals = this.mealsState.asReadonly();
+  readonly meals = computed(() => sortByName(this.mealsState()));
 
   private base(scope: MealplanScope): string {
     return scope.kind === 'family'
@@ -221,7 +222,7 @@ export class MealplansService {
   async listMeals(scope: MealplanScope): Promise<Meal[]> {
     const meals = await firstValueFrom(this.http.get<Meal[]>(`${this.base(scope)}/meals`));
     this.mealsState.set(meals);
-    return meals;
+    return sortByName(meals);
   }
 
   async createMeal(scope: MealplanScope, request: MealDetails): Promise<Meal> {

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { todayIsoDate } from './date-utils';
+import { sortByFullName, sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from './map-with-concurrency';
 import { RuntimeConfigService } from './runtime-config.service';
@@ -191,7 +192,7 @@ export class CalendarsService {
   listMyCalendars(): Promise<CalendarSummary[]> {
     return firstValueFrom(
       this.http.get<CalendarSummary[]>(`${this.runtimeConfig.apiBaseUrl}/calendars`),
-    );
+    ).then(sortByName);
   }
 
   createCalendar(request: CreateCalendarRequest): Promise<CalendarSummary> {
@@ -279,7 +280,7 @@ export class CalendarsService {
       this.http.get<AssignableMember[]>(
         `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/assignable-members`,
       ),
-    );
+    ).then(sortByFullName);
   }
 
   async createItem(calendarId: string, request: CreateItemRequest): Promise<CalendarItemResponse> {

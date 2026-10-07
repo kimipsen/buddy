@@ -60,6 +60,16 @@ describe('PrintTemplatesService', () => {
     await expect(promise).resolves.toHaveLength(1);
   });
 
+  it('resolves the template list sorted by name', async () => {
+    const weekend = { id: 't-2', ownerUserId: 'me', ownerGroupId: null, name: 'Weekend' };
+    const school = { id: 't-1', ownerUserId: 'me', ownerGroupId: null, name: 'School week' };
+    const promise = service.list();
+
+    httpMock.expectOne(base).flush([weekend, school]);
+
+    await expect(promise).resolves.toEqual([school, weekend]);
+  });
+
   it('GETs one template', async () => {
     const promise = service.get('t-1');
 

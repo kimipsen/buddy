@@ -280,14 +280,14 @@ describe('ManagePickups', () => {
     expect(compiled.querySelector('select')).toBeNull();
   });
 
-  it('renders a child picker sorted by name and switches the schedule when there is more than one child', async () => {
+  it('renders a child picker in service (name) order and switches the schedule when there is more than one child', async () => {
     const childA = child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } });
     const childB = child({ id: 'child-2', name: { givenName: 'Robin', familyName: 'Kid' } });
     const listChildGuardians = vi.fn(async () => [guardian()]);
     const listSchedule = vi.fn(async () => []);
 
     const { fixture, guardians, pickups } = await setup({
-      guardians: { listMyChildren: vi.fn(async () => [childA, childB]), listChildGuardians },
+      guardians: { listMyChildren: vi.fn(async () => [childB, childA]), listChildGuardians },
       pickups: { listSchedule },
     });
     await settle(fixture);
@@ -299,7 +299,7 @@ describe('ManagePickups', () => {
       'Robin',
       'Sam',
     ]);
-    // The first child by name is selected by default, not the first one the API returned.
+    // The first child in that order is selected by default.
     expect(picker.value).toBe('child-2');
 
     listChildGuardians.mockClear();
@@ -318,11 +318,11 @@ describe('ManagePickups', () => {
     const childB = child({ id: 'child-2', name: { givenName: 'Robin', familyName: 'Kid' } });
 
     const { fixture } = await setup({
-      guardians: { listMyChildren: vi.fn(async () => [childA, childB]) },
+      guardians: { listMyChildren: vi.fn(async () => [childB, childA]) },
     });
     await settle(fixture);
 
-    // childB (Robin) is selected by default (first by name) -- only childA (Sam) should be
+    // childB (Robin) is selected by default (first in the list) -- only childA (Sam) should be
     // offered as a sibling to assign pickup/drop-off to.
     const cell = cellAt(fixture, 0, 0);
     cell.querySelector<HTMLButtonElement>('button')!.click();
@@ -451,7 +451,7 @@ describe('ManagePickups', () => {
 
   describe('a save that resolves after switching child', () => {
     async function startSaveThenSwitchChild() {
-      // Named so child A also sorts first and is selected by default.
+      // Child A comes first, so it is selected by default.
       const childA = child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } });
       const childB = child({ id: 'child-2', name: { givenName: 'Tove', familyName: 'Kid' } });
       const pending = deferred<PickupOccurrence>();

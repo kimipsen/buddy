@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { CalendarRole } from './calendars.service';
+import { sortByFullName, sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { MealplanAccessTier } from './mealplans.service';
 import { RuntimeConfigService } from './runtime-config.service';
@@ -82,7 +83,9 @@ export class GroupsService {
   private readonly runtimeConfig = inject(RuntimeConfigService);
 
   listMyGroups(): Promise<GroupSummary[]> {
-    return firstValueFrom(this.http.get<GroupSummary[]>(`${this.runtimeConfig.apiBaseUrl}/groups`));
+    return firstValueFrom(
+      this.http.get<GroupSummary[]>(`${this.runtimeConfig.apiBaseUrl}/groups`),
+    ).then(sortByName);
   }
 
   createGroup(request: CreateGroupRequest): Promise<GroupSummary> {
@@ -136,7 +139,7 @@ export class GroupsService {
   getGroup(groupId: string): Promise<GroupDetail> {
     return firstValueFrom(
       this.http.get<GroupDetail>(`${this.runtimeConfig.apiBaseUrl}/groups/${groupId}`),
-    );
+    ).then((group) => ({ ...group, members: sortByFullName(group.members) }));
   }
 
   updateCalendarPermissionPolicy(groupId: string, policy: CalendarPermissionPolicy): Promise<void> {
