@@ -379,7 +379,7 @@ Notes:
 | `GET /groups/{groupId}/invites` | `200` | `401`, `403`, `404` | Owner/admin-only listing of pending invites. |
 | `DELETE /groups/{groupId}/invites/{inviteId}` | `204` | `401`, `403`, `404` | Revokes a pending invite. |
 | `GET /invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |
-| `POST /invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller's own verified email doesn't match the invite. |
+| `POST /invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller hasn't verified their email address, or their verified email doesn't match the invite. |
 
 ### Guardians API (`/users/me/children`, `/users/me/guardians`, `/users/me/siblings`, `/guardian-invites`)
 
@@ -398,7 +398,7 @@ Notes:
 | `GET /users/me/children/{childId}/guardian-invites` | `200` | `401`, `404` | `404` for unknown child or caller without an active guardian link. |
 | `DELETE /users/me/children/{childId}/guardian-invites/{inviteId}` | `204` | `401`, `404` | `404` for unknown invite or caller without an active guardian link. |
 | `GET /guardian-invites/{token}/preview` | `200` | `404` | Anonymous; `404` for unknown, accepted, or expired token. |
-| `POST /guardian-invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller's own verified email doesn't match the invite. |
+| `POST /guardian-invites/{token}/accept` | `204` | `401`, `403`, `404` | `403` when the caller hasn't verified their email address, or their verified email doesn't match the invite. |
 
 ### Mealplans API (`/mealplans`)
 

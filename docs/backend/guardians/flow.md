@@ -60,7 +60,7 @@ sequenceDiagram
 | `GET` | `/users/me/children/{childId}/guardian-invites` | Lists this child's pending guardian invites. |
 | `DELETE` | `/users/me/children/{childId}/guardian-invites/{inviteId}` | Revokes a pending guardian invite. |
 | `GET` | `/guardian-invites/{token}/preview` | Unauthenticated preview of who a guardian-invite link is for. |
-| `POST` | `/guardian-invites/{token}/accept` | Authenticated; accepts an invite and creates a new `GuardianLink`. |
+| `POST` | `/guardian-invites/{token}/accept` | Authenticated; accepts an invite and creates a new `GuardianLink`, only if the caller has verified their email address and it matches the invited address; otherwise `403 Forbidden`. |
 
 ## Core lifecycle
 
@@ -78,6 +78,8 @@ This feature is key because it defines who can act on behalf of a child in other
 ## Inviting a co-guardian
 
 `CreateChild` only ever produces the *first* `GuardianLink` for a new child. To bring in a second adult (a co-parent, grandparent, etc.) for a child that already exists, any active guardian can invite one by email via `InviteGuardian`, mirroring the Groups feature's invite/accept/revoke triad: a token is emailed (never the raw token stored, only its hash), the invite lives on its own dedicated event stream (there's no pre-existing aggregate to attach it to, unlike a `Group`), and `AcceptGuardianInvite` requires the accepting caller's own verified email to match the invite before it appends a new `GuardianLinked` event. The inviter chooses the `GuardianKind` (Parent/Guardian) up front; it carries straight through to the resulting link and, as elsewhere in this feature, never gates access.
+
+**The invitee must verify their email address before accepting.** `AcceptGuardianInvite` returns `403 Forbidden` when the caller's email is unverified, even if it matches the invited address, for the same reason as group invites: an unverified address could belong to someone else, and accepting grants guardian authority over a child. The invite stays pending, so the invitee can verify their email (see [users/flow.md](../users/flow.md)) and then accept the same link before it expires.
 
 Because "family" for shared meal plans (and any future guardian-derived calendar access) is resolved transitively from the live `GuardianLink` graph, accepting an invite immediately widens the new guardian's own other children into this child's shared family too — a direct consequence of the existing authority model, not a separate feature to build.
 

@@ -136,7 +136,7 @@ When a session ends mid-use (Keycloak rejects the refresh token, or the API answ
 
 ### Invitation and email verification features
 
-The invitation flow is in [src/frontend/buddy/src/app/features/invite](../../src/frontend/buddy/src/app/features/invite). It supports a public invitation preview and returns the user to the invitation after login so the invitation can be accepted in an authenticated session.
+The invitation flow is in [src/frontend/buddy/src/app/features/invite](../../src/frontend/buddy/src/app/features/invite). It supports a public invitation preview and returns the user to the invitation after login so the invitation can be accepted in an authenticated session. Accepting a group or guardian invite requires a verified email address that matches the invited one; the API answers `403` otherwise, and the page shows the wrong-account error.
 
 The email verification flow is in [src/frontend/buddy/src/app/features/verify-email](../../src/frontend/buddy/src/app/features/verify-email). It uses the same public-route pattern: a user can open a verification link while logged out, sign in if needed, and return to the pending token.
 
