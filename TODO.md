@@ -35,6 +35,14 @@
   a shared calendar, schedule a task with multiple subtasks, and set up a meal
   plan. Include resumable progress and confirm the plan's open questions first.
 
+## In-app help
+
+- [ ] Add in-system help so users can learn how each page and feature works
+  without leaving the app. Consider building it alongside, or reusing parts of,
+  the guardian onboarding guide above (for example, step explanations or a way
+  to replay the guide on demand). Write a design doc in `docs/frontend/analysis/`
+  first.
+
 ## Shared color picker
 
 - [x] Create a common color picker and use it everywhere a color can be
