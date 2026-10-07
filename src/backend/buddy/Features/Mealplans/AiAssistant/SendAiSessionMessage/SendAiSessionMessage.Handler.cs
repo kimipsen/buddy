@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using buddy.Common;
 using buddy.Common.Validation;
 using buddy.Features.Calendars;
@@ -16,7 +18,7 @@ public static class SendAiSessionMessageHandler
     // loop unboundedly against the family's own paid key -- see the AI mealplan plan.
     public const int MaxToolLoopIterations = 20;
 
-    public static async Task<Result<AiSessionView>> Handle(
+    public static async Task<AiSessionOutcome> Handle(
         SendAiSessionMessage command,
         IValidator<SendAiSessionMessage> validator,
         IAiSessionEventStore sessions,
@@ -34,7 +36,7 @@ public static class SendAiSessionMessageHandler
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new Result<AiSessionView>.Validation(problem);
+            return new AiSessionOutcome.Validation(problem);
         }
 
         var userId = command.UserId;
@@ -43,14 +45,14 @@ public static class SendAiSessionMessageHandler
 
         if (access != MealplanAccess.Allowed)
         {
-            return access.ToDeniedResult<AiSessionView>();
+            return AiSessionOutcome.Denied(access);
         }
 
         var sessionId = await AiSessionResolution.ResolveCurrentSessionIdAsync(command.ChildId, guardians, sessions, cancellationToken);
 
         if (sessionId is null)
         {
-            return new Result<AiSessionView>.NotFound();
+            return new AiSessionOutcome.NotFound();
         }
 
         var existingEvents = await sessions.ReadAsync(sessionId, cancellationToken);
@@ -58,7 +60,7 @@ public static class SendAiSessionMessageHandler
 
         if (session.Status != AiSessionStatus.Drafting)
         {
-            return new Result<AiSessionView>.Validation(ValidationProblem.Of("This AI session is no longer active -- start a new one."));
+            return new AiSessionOutcome.Validation(ValidationProblem.Of("This AI session is no longer active -- start a new one."));
         }
 
         var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, userId, guardians, credentials, cancellationToken);
@@ -66,7 +68,13 @@ public static class SendAiSessionMessageHandler
 
         if (credential?.ActiveProvider is not { } activeProvider || !credential.Providers.TryGetValue(activeProvider, out var storedKey))
         {
-            return new Result<AiSessionView>.Validation(ValidationProblem.Of("No active AI provider is configured for this family."));
+            return new AiSessionOutcome.Validation(ValidationProblem.Of("No active AI provider is configured for this family."));
+        }
+
+        // A session started before acknowledgements existed must not keep sending data without one.
+        if (credential.DataSharingAcknowledgedAt is null)
+        {
+            return new AiSessionOutcome.DataSharingNotAcknowledged();
         }
 
         IAiChatClient chatClient;
@@ -78,7 +86,7 @@ public static class SendAiSessionMessageHandler
         catch (NotSupportedException ex)
         {
             logger.AiProviderUnsupported(ex, activeProvider);
-            return new Result<AiSessionView>.Validation(ValidationProblem.Of(ex.Message));
+            return new AiSessionOutcome.Validation(ValidationProblem.Of(ex.Message));
         }
 
         var apiKey = cipher.Unprotect(storedKey.CipherText);
@@ -110,7 +118,10 @@ public static class SendAiSessionMessageHandler
 
         if (toolLoopResult is not Result<string>.Success(var finalText))
         {
-            return toolLoopResult.Reraise<string, AiSessionView>();
+            // RunToolLoopAsync fails only with Validation: the provider rejected the request.
+            return toolLoopResult is Result<string>.Validation(var providerProblem)
+                ? new AiSessionOutcome.Validation(providerProblem)
+                : throw new UnreachableException($"Unexpected tool loop result: {toolLoopResult.GetType().Name}.");
         }
 
         newEvents.Add(new AiAssistantMessageRecorded(sessionId, finalText, DateTimeOffset.UtcNow));
@@ -121,7 +132,7 @@ public static class SendAiSessionMessageHandler
         var updatedSession = MealplanAiSession.Replay(allEvents);
         var view = await AiSessionViewBuilder.BuildAsync(updatedSession, allEvents, meals, cancellationToken);
 
-        return new Result<AiSessionView>.Success(view);
+        return new AiSessionOutcome.Success(view);
     }
 
     // Drives the provider round-trip / tool-call turns, up to MaxToolLoopIterations. Mutates

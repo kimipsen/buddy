@@ -87,4 +87,9 @@ public sealed class MealplanAiAssistantEventShapeTests
     public void AiSessionDiscarded() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new AiSessionDiscarded(FixedSessionId, FixedGuardianId, FixedInstant),
         "Mealplans/AiSessionDiscarded.json");
+
+    [Fact]
+    public void AiSessionExpired() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new AiSessionExpired(FixedSessionId, FixedInstant),
+        "Mealplans/AiSessionExpired.json");
 }

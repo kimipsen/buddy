@@ -2,9 +2,12 @@ using Alba;
 
 using buddy.Common;
 using buddy.Features.Mealplans;
+using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Xunit;
 
@@ -31,7 +34,31 @@ public sealed class AcknowledgeAiDataSharingTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBe(409);
         });
 
-        Assert.Equal(StartAiSessionOutcome.DataSharingNotAcknowledgedCode, response.ReadAsJson<ErrorEnvelope>().Code);
+        Assert.Equal(AiSessionOutcome.DataSharingNotAcknowledgedCode, response.ReadAsJson<ErrorEnvelope>().Code);
+    }
+
+    [Fact]
+    public async Task A_session_started_before_acknowledgements_existed_cannot_be_continued_without_one()
+    {
+        var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id, acknowledgeDataSharing: false);
+
+        // Written straight to the store, as a session from before StartAiSession checked.
+        var sessionId = MealplanAiSessionId.New();
+        await fixture.Host.Services.GetRequiredService<IAiSessionEventStore>().CreateAsync(
+            sessionId,
+            [new AiSessionStarted(sessionId, new UserId(child.Id), From, From, [MealSlot.Dinner], [], "", new UserId(guardianId), DateTimeOffset.UtcNow)],
+            CancellationToken.None);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Text = "Plan five dinners for us." }).ToUrl($"/mealplans/children/{child.Id}/ai/sessions/current/messages");
+            _.StatusCodeShouldBe(409);
+        });
+
+        Assert.Equal(AiSessionOutcome.DataSharingNotAcknowledgedCode, response.ReadAsJson<ErrorEnvelope>().Code);
     }
 
     [Fact]

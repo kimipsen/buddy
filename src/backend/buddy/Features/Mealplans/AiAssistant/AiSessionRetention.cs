@@ -5,8 +5,8 @@ namespace buddy.Features.Mealplans;
 // GDPR Question 6.2 (docs/backend/analysis/gdpr-data-protection.md): 30 days after a session's
 // last activity -- applying or discarding it, or the last message of one that was never closed --
 // its conversation is masked with the store's masking rules (MealplansPersonalDataEraser): the
-// notes, both sides of the chat and the tool calls' arguments and results. The draft, its status
-// and the meal plan it produced stay.
+// notes, both sides of the chat and the tool calls' arguments and results. A session still drafting
+// is closed first (AiSessionExpired). The draft and the meal plan it produced stay.
 public sealed class AiSessionRetention(IMealplansStore store, IAiSessionEventStore sessions, ILogger<AiSessionRetention> logger)
 {
     public static readonly TimeSpan RetentionPeriod = TimeSpan.FromDays(30);
@@ -34,6 +34,14 @@ public sealed class AiSessionRetention(IMealplansStore store, IAiSessionEventSto
             {
                 await sessions.UpdateIndexAsync(index with { LastActivityAt = lastActivityAt }, cancellationToken);
                 continue;
+            }
+
+            // A session nobody closed is closed first, so its erased history can't be continued.
+            if (MealplanAiSession.Replay(events).Status == AiSessionStatus.Drafting)
+            {
+                var sessionId = new MealplanAiSessionId(index.Id);
+                await sessions.AppendAsync(sessionId, [new AiSessionExpired(sessionId, now)], cancellationToken);
+                lastActivityAt = now;
             }
 
             await store.MaskStreamAsync<MealplanAiSessionSnapshot>(index.Id, cancellationToken);

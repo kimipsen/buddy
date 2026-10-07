@@ -76,7 +76,7 @@ sequenceDiagram
 | `POST` | `/mealplans/children/{childId}/ai/providers/{provider}/test-connection` | Sends a minimal request through `provider` to confirm a key works, either the family's already-stored key or one supplied in the request body before it's ever saved. |
 | `GET` | `/mealplans/children/{childId}/ai/sessions/current` | Returns the family's current AI assistant session (transcript + draft), if one exists. |
 | `POST` | `/mealplans/children/{childId}/ai/sessions` | Starts a new AI assistant session for a date range/slot selection, discarding whatever session was previously current for the family. `409 ai_data_sharing_not_acknowledged` until the family has acknowledged data sharing. |
-| `POST` | `/mealplans/children/{childId}/ai/sessions/current/messages` | Sends a guardian chat message to the current session and runs the provider's tool-calling loop to update the draft. |
+| `POST` | `/mealplans/children/{childId}/ai/sessions/current/messages` | Sends a guardian chat message to the current session and runs the provider's tool-calling loop to update the draft. `409 ai_data_sharing_not_acknowledged` like starting a session. |
 | `POST` | `/mealplans/children/{childId}/ai/sessions/current/apply` | Commits the current session's draft assignments to the real family plan and marks the session applied. |
 | `POST` | `/mealplans/children/{childId}/ai/sessions/current/discard` | Discards the current session without touching the real plan (idempotent). |
 | `POST` | `/mealplans/children/{childId}/imports/preview` | Parses pasted text (`weekly-note` or `csv`, auto-detected) and matches it against the family's meal library; returns a review draft and writes nothing. |
@@ -186,7 +186,8 @@ Calendars, never the reverse (see
 the session child's family calendars that are assigned to that child or to nobody
 keep their title; everything else is sent as `"busy"` with its time, and the
 prompt names children "child 1", "child 2" rather than by id. `AiSessionRetention`
-masks a session's notes, chat and tool calls 30 days after its last event (see
+masks a session's notes, chat and tool calls 30 days after its last event, closing
+a session nobody closed with `AiSessionExpired` first (see
 [gdpr-data-protection.md](../analysis/gdpr-data-protection.md), Question 6). `ApplyAiSessionDraft`
 commits the session's draft by replaying each entry through the same
 `AssignMealToSlot` write path a manual assignment uses, so authorization and

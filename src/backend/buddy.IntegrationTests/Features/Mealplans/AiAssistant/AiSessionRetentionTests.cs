@@ -40,6 +40,33 @@ public sealed class AiSessionRetentionTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_idle_session_nobody_closed_is_closed_before_its_conversation_is_erased()
+    {
+        var (guardianToken, childId, sessionId) = await StartSessionAsync();
+
+        await EraseExpiredAsync(DateTimeOffset.UtcNow.AddDays(31));
+
+        var events = await ReadSessionAsync(sessionId);
+        Assert.Equal(nameof(AiSessionExpired), events.Last().EventType);
+        Assert.Equal(AiSessionStatus.Discarded, MealplanAiSession.Replay(events).Status);
+
+        var snapshot = await fixture.Host.Services.GetRequiredService<IAiSessionEventStore>()
+            .FindSnapshotAsync(new MealplanAiSessionId(sessionId), CancellationToken.None);
+        Assert.Equal(AiSessionStatus.Discarded, snapshot!.Status);
+
+        // The expiry is the session's last activity now, and a closed session takes no messages.
+        var index = await FindIndexAsync(sessionId);
+        Assert.Equal(index.ContentErasedAt, index.LastActivityAt);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Text = "Carry on" }).ToUrl($"/mealplans/children/{childId}/ai/sessions/current/messages");
+            _.StatusCodeShouldBe(400);
+        });
+    }
+
+    [Fact]
     public async Task A_session_closed_less_than_30_days_ago_is_kept()
     {
         var (_, _, sessionId) = await StartAndDiscardSessionAsync();
@@ -79,7 +106,7 @@ public sealed class AiSessionRetentionTests(BuddyApiFixture fixture)
         Assert.True(index.LastActivityAt > index.StartedAt);
     }
 
-    private async Task<(string GuardianToken, Guid ChildId, Guid SessionId)> StartAndDiscardSessionAsync()
+    private async Task<(string GuardianToken, Guid ChildId, Guid SessionId)> StartSessionAsync()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
@@ -87,14 +114,21 @@ public sealed class AiSessionRetentionTests(BuddyApiFixture fixture)
         var from = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
         var session = await AiAssistantTestHelpers.StartSessionAsync(fixture, guardianToken, child.Id, from, from.AddDays(2), [MealSlot.Dinner], notes: Notes);
 
+        return (guardianToken, child.Id, session.Id);
+    }
+
+    private async Task<(string GuardianToken, Guid ChildId, Guid SessionId)> StartAndDiscardSessionAsync()
+    {
+        var (guardianToken, childId, sessionId) = await StartSessionAsync();
+
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Post.Url($"/mealplans/children/{child.Id}/ai/sessions/current/discard");
+            _.Post.Url($"/mealplans/children/{childId}/ai/sessions/current/discard");
             _.StatusCodeShouldBeOk();
         });
 
-        return (guardianToken, child.Id, session.Id);
+        return (guardianToken, childId, sessionId);
     }
 
     private async Task<AiSessionViewDto> GetCurrentSessionAsync(string guardianToken, Guid childId)

@@ -7,7 +7,7 @@ namespace buddy.Features.Mealplans;
 
 public static class StartAiSessionHandler
 {
-    public static async Task<StartAiSessionOutcome> Handle(
+    public static async Task<AiSessionOutcome> Handle(
         StartAiSession command,
         IValidator<StartAiSession> validator,
         IAiSessionEventStore sessions,
@@ -18,7 +18,7 @@ public static class StartAiSessionHandler
     {
         if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
         {
-            return new StartAiSessionOutcome.Validation(problem);
+            return new AiSessionOutcome.Validation(problem);
         }
 
         var userId = command.UserId;
@@ -27,26 +27,26 @@ public static class StartAiSessionHandler
 
         if (access != MealplanAccess.Allowed)
         {
-            return access == MealplanAccess.Forbidden ? new StartAiSessionOutcome.Forbidden() : new StartAiSessionOutcome.NotFound();
+            return AiSessionOutcome.Denied(access);
         }
 
         var credentialId = await MealFamilyResolution.ResolveFamilyAiCredentialIdAsync(command.ChildId, userId, guardians, credentials, cancellationToken);
 
         if (credentialId is null)
         {
-            return new StartAiSessionOutcome.Validation(ValidationProblem.Of("No AI provider is configured for this family yet."));
+            return new AiSessionOutcome.Validation(ValidationProblem.Of("No AI provider is configured for this family yet."));
         }
 
         var credential = AiProviderCredential.Replay(await credentials.ReadAsync(credentialId, cancellationToken));
 
         if (credential.ActiveProvider is null)
         {
-            return new StartAiSessionOutcome.Validation(ValidationProblem.Of("No active AI provider is selected for this family yet."));
+            return new AiSessionOutcome.Validation(ValidationProblem.Of("No active AI provider is selected for this family yet."));
         }
 
         if (credential.DataSharingAcknowledgedAt is null)
         {
-            return new StartAiSessionOutcome.DataSharingNotAcknowledged();
+            return new AiSessionOutcome.DataSharingNotAcknowledged();
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -77,6 +77,6 @@ public static class StartAiSessionHandler
         var session = MealplanAiSession.Replay(events);
         var view = await AiSessionViewBuilder.BuildAsync(session, events, meals, cancellationToken);
 
-        return new StartAiSessionOutcome.Success(view);
+        return new AiSessionOutcome.Success(view);
     }
 }

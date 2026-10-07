@@ -97,9 +97,6 @@ These are known and not decided yet. Opinions welcome.
   now. A screen for guardians is deferred: it needs its own retention decision.
 - **Azure restore.** The erasure-ledger steps for restoring an Azure point-in-time backup aren't
   documented yet.
-- **AI sessions started before the acknowledgement existed** can still be continued without it.
-- **An idle AI session** that is wiped after 30 days stays open. Continuing it sends "[erased]"
-  history to the provider.
 
 ## Tell us what you think
 

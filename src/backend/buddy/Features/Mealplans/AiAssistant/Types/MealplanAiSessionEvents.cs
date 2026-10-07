@@ -10,7 +10,8 @@ public union MealplanAiSessionEvent(
     AiDraftAssignmentCleared,
     AiAssistantMessageRecorded,
     AiSessionApplied,
-    AiSessionDiscarded
+    AiSessionDiscarded,
+    AiSessionExpired
 )
 {
     public static MealplanAiSessionEvent FromPayload(object payload) => payload switch
@@ -23,6 +24,7 @@ public union MealplanAiSessionEvent(
         AiAssistantMessageRecorded e => e,
         AiSessionApplied e => e,
         AiSessionDiscarded e => e,
+        AiSessionExpired e => e,
         _ => throw new ArgumentException($"Unknown AI session event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -36,6 +38,7 @@ public union MealplanAiSessionEvent(
         AiAssistantMessageRecorded => nameof(AiAssistantMessageRecorded),
         AiSessionApplied => nameof(AiSessionApplied),
         AiSessionDiscarded => nameof(AiSessionDiscarded),
+        AiSessionExpired => nameof(AiSessionExpired),
     };
 
     public DateTimeOffset OccurredAt => this switch
@@ -48,6 +51,7 @@ public union MealplanAiSessionEvent(
         AiAssistantMessageRecorded e => e.OccurredAt,
         AiSessionApplied e => e.OccurredAt,
         AiSessionDiscarded e => e.OccurredAt,
+        AiSessionExpired e => e.OccurredAt,
     };
 }
 
@@ -88,3 +92,8 @@ public sealed record AiAssistantMessageRecorded(MealplanAiSessionId Id, string T
 public sealed record AiSessionApplied(MealplanAiSessionId Id, UserId AppliedBy, DateTimeOffset OccurredAt);
 
 public sealed record AiSessionDiscarded(MealplanAiSessionId Id, UserId DiscardedBy, DateTimeOffset OccurredAt);
+
+// Appended by AiSessionRetention to a session nobody closed, just before its conversation is erased
+// 30 days after its last activity (GDPR Question 6.2). It closes the session as Discarded, so its
+// "[erased]" history can't be continued or sent to the provider. No user: nobody discarded it.
+public sealed record AiSessionExpired(MealplanAiSessionId Id, DateTimeOffset OccurredAt);

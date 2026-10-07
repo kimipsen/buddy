@@ -36,4 +36,7 @@ public sealed class MealplanAiSessionSnapshotProjection : SingleStreamProjection
 
     public MealplanAiSessionSnapshot Apply(MealplanAiSessionSnapshot current, AiSessionDiscarded discarded) =>
         current with { MealplanAiSession = MealplanAiSession.Advance(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(discarded)) };
+
+    public MealplanAiSessionSnapshot Apply(MealplanAiSessionSnapshot current, AiSessionExpired expired) =>
+        current with { MealplanAiSession = MealplanAiSession.Advance(current.MealplanAiSession, MealplanAiSessionEvent.FromPayload(expired)) };
 }

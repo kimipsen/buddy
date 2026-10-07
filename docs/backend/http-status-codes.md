@@ -146,6 +146,10 @@ Typical Buddy use:
 - `Idempotency-Key` reused with a different request body (`idempotency_key_reused`), or a
   request with that key still in flight (`idempotency_key_in_progress`) -- see
   [Idempotency-Key (POST)](#idempotency-key-post) below
+- the family hasn't acknowledged what the AI assistant shares with its provider
+  (`ai_data_sharing_not_acknowledged`): `POST /mealplans/children/{childId}/ai/sessions` and
+  `POST /mealplans/children/{childId}/ai/sessions/current/messages`, until
+  `PUT /mealplans/children/{childId}/ai/data-sharing-acknowledgement`
 
 ### 410 Gone
 Use when resource used to exist but is permanently removed and this distinction is useful.

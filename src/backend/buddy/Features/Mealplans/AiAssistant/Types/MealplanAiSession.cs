@@ -52,7 +52,7 @@ public sealed record MealplanAiSession(
             Draft = session.Draft.Remove((cleared.Date, cleared.Slot))
         },
         AiSessionApplied => session with { Status = AiSessionStatus.Applied },
-        AiSessionDiscarded => session with { Status = AiSessionStatus.Discarded },
+        AiSessionDiscarded or AiSessionExpired => session with { Status = AiSessionStatus.Discarded },
         // The conversation itself is replayed from the stream by AiSessionHistoryBuilder; the
         // session state only tracks the draft and its status.
         AiUserMessageSent or AiToolInvocationRecorded or AiAssistantMessageRecorded => session,

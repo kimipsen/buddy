@@ -517,14 +517,14 @@ What shipped with steps 1-7, and where it differs from the design above:
     discarding is always a session's last event, so the index gains `LastActivityAt` only (no
     separate `ClosedAt`), plus `ContentErasedAt` so an erased session is never picked again. Rows
     from before this shipped have no `LastActivityAt`; the sweep picks them by `StartedAt` and
-    decides from the stream. An idle session that was never closed is masked too and stays
-    `Drafting`; continuing it sends `"[erased]"` history to the provider. Log events 6009-6010.
+    decides from the stream. A session nobody closed gets `AiSessionExpired` first, which closes it
+    as `Discarded`, so its `"[erased]"` history can't be continued. Log events 6009-6010.
   - Disclosure: `AiDataSharingAcknowledged` on the credential stream,
     `PUT .../ai/data-sharing-acknowledgement` (`AcknowledgeAiDataSharing`, log 6011), and
     `DataSharingAcknowledgedAt` on `AiProviderSettings` (and so in the export). `StartAiSession`
-    returns `StartAiSessionOutcome`, whose `DataSharingNotAcknowledged` case is the `409`. One
-    acknowledgement covers the family. `SendAiSessionMessage` doesn't check it, so a session
-    started before this shipped can still be continued. Frontend: `AiDataSharingNotice` on the
+    and `SendAiSessionMessage` both return `AiSessionOutcome`, whose `DataSharingNotAcknowledged`
+    case is the `409`, so a session started before this shipped can't be continued without it.
+    One acknowledgement covers the family. Frontend: `AiDataSharingNotice` on the
     assistant page (instead of the start form until acknowledged) and on the provider settings.
   - Tests: `AiDataMinimizationTests`, `AiSessionRetentionTests`, `AcknowledgeAiDataSharingTests`.
 - **Health-data audit logs (step 7).** `MedicinesLog` 9001 (schedules) and 9002 (doses, with the

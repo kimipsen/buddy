@@ -31,20 +31,9 @@ public static class StartAiSessionEndpoint
                 [.. request.MustIncludeMealIds.Select(id => new MealId(id))],
                 FreeText.Normalize(request.Notes));
 
-            var outcome = await bus.InvokeAsync<StartAiSessionOutcome>(command, cancellationToken);
+            var outcome = await bus.InvokeAsync<AiSessionOutcome>(command, cancellationToken);
 
-            return outcome switch
-            {
-                StartAiSessionOutcome.Success(var view) => TypedResults.Ok(view),
-                StartAiSessionOutcome.Forbidden => TypedResults.Forbid(),
-                StartAiSessionOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
-                StartAiSessionOutcome.NotFound => TypedResults.NotFound(),
-                StartAiSessionOutcome.DataSharingNotAcknowledged => TypedResults.Conflict(new ErrorEnvelope(
-                    StartAiSessionOutcome.DataSharingNotAcknowledgedCode,
-                    "A guardian has to acknowledge what the assistant shares with the AI provider before the family's first session.",
-                    new Dictionary<string, string[]>(),
-                    httpContext.TraceIdentifier)),
-            };
+            return outcome.ToHttpResult(httpContext);
         })
         .RequireRateLimiting(RateLimitingFeature.AiAssistantPolicy)
         .WithName("StartAiSession");

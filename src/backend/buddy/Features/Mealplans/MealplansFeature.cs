@@ -48,7 +48,8 @@ public static class MealplansFeature
         typeof(AiDraftAssignmentCleared),
         typeof(AiAssistantMessageRecorded),
         typeof(AiSessionApplied),
-        typeof(AiSessionDiscarded)
+        typeof(AiSessionDiscarded),
+        typeof(AiSessionExpired)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
