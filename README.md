@@ -66,7 +66,9 @@ in real time.
 - [x] English and Danish localization
 - [x] Light, dark, and system theme selection
 - [x] Per-user and per-feed rate limiting on every API endpoint
-- [ ] GDPR: account and child erasure, data export, AI data minimization (proposed, not yet implemented — see [GDPR: erasure, export and data minimization](docs/backend/analysis/gdpr-data-protection.md))
+- [x] GDPR: account and child erasure, data export, AI data minimization and retention, and
+      health-data read audit logs. What you still have to do when you run Buddy is in
+      [PRIVACY.md](PRIVACY.md)
 
 ## Repository structure
 
@@ -97,6 +99,8 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Testing](docs/testing.md) — commands for frontend, backend, and mutation
   test suites.
 - [Deployment](deploy/README.md) — production Docker Compose and Caddy setup.
+- [Privacy and GDPR](PRIVACY.md) — what Buddy does with children's data, and the checklist for
+  anyone who runs it.
 - [Versioning](docs/versioning.md) — release tags (`v1.2.0`) and how the version
   reaches the API (`GET /version`) and the frontend.
 - [Agent packages](agents/README.md) — reusable coding and documentation skills.
