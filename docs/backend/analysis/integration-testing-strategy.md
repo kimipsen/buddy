@@ -79,7 +79,7 @@ two trees side by side, before any tooling even runs.
   `WebApplicationFactory` under the hood, so nothing is lost.
 - **Testcontainers.PostgreSql**, **Testcontainers** (generic container) for Keycloak and
   mailpit. No official `Testcontainers.Keycloak` module is needed — a generic
-  `IContainer` built from `quay.io/keycloak/keycloak:21.1.1` (matching the devcontainer's
+  `IContainer` built from `quay.io/keycloak/keycloak:26.8.0` (matching the devcontainer's
   version) with a mounted realm-import file is enough.
 - No new assertion library. Stick to `Assert.*` — the assertions here are mostly "status code
   X, body shape Y", which doesn't benefit much from fluent-assertion sugar, and it avoids
