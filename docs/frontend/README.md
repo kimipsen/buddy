@@ -74,6 +74,8 @@ Current responsibilities:
 - delete a child they alone guard (account and data), and delete their own account after a
   dialog that lists what goes with it: children with no other guardian, and owned groups that
   pass to another member or are deleted
+- download everything Buddy holds about them and their children as a JSON file ("Your data" in
+  the admin area)
 - sign out of the current session
 
 The route definition is in [src/frontend/buddy/src/app/features/guardian/guardian.routes.ts](../../src/frontend/buddy/src/app/features/guardian/guardian.routes.ts).
@@ -100,7 +102,7 @@ The guardian routes currently include:
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
   calendar, plus event/task creation
 - `/guardian/task-library` — per-child task template and subtask management
-- `/guardian/admin` — profile, child, calendar, group, event-history, and account administration
+- `/guardian/admin` — profile, child, calendar, group, event-history, data export, and account administration
 
 ### Child feature
 
@@ -166,7 +168,7 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post
   info for the progress badge, and lets a guardian configure a child's goal posts
 - `UsersService` loads the current profile, language, and email-verification state, the
-  account-deletion preview, and deletes the account
+  account-deletion preview, downloads the personal-data export, and deletes the account
 - `postIdempotent` (`http-idempotency.ts`) wraps `HttpClient.post` for create-style calls
   (calendars, groups, children, meals, medicine schedules, task templates, invites, email
   verification, ...) with a fresh `Idempotency-Key` header per call and retries a transient

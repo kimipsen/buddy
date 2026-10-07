@@ -50,6 +50,7 @@ public static class CalendarsFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, CalendarsPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, CalendarsPersonalDataExporter>();
 
         services.AddMartenStore<ICalendarsStore>(serviceProvider =>
         {

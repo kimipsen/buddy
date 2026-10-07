@@ -267,6 +267,20 @@ describe('UsersService', () => {
     });
   });
 
+  describe('downloadPersonalData', () => {
+    it('GETs the export as a blob', async () => {
+      const file = new Blob(['{"sections":{}}'], { type: 'application/json' });
+
+      const promise = service.downloadPersonalData();
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/export`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      req.flush(file);
+
+      await expect(promise).resolves.toBe(file);
+    });
+  });
+
   describe('deleteCurrentUser', () => {
     it('DELETEs the current user and clears the memoized promise so the next call re-fetches', async () => {
       const initial = service.ensureCurrentUser();

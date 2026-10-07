@@ -36,7 +36,7 @@ public sealed class CalendarsPersonalDataEraser(
     {
         await RevokeMembershipsAsync(child.UserId, cancellationToken);
 
-        foreach (var itemId in await ListItemsAssignedToAsync(child.UserId, cancellationToken))
+        foreach (var itemId in await ListItemsAssignedToAsync(store, child.UserId, cancellationToken))
         {
             var id = new CalendarItemId(itemId);
 
@@ -59,8 +59,9 @@ public sealed class CalendarsPersonalDataEraser(
     }
 
     // The assignee lives inside the item's schedule (CalendarItem.Schedule.AssignedTo), which a LINQ
-    // query over the snapshot can't reach, so this reads the snapshot JSON directly.
-    private async Task<IReadOnlyList<Guid>> ListItemsAssignedToAsync(UserId childId, CancellationToken cancellationToken)
+    // query over the snapshot can't reach, so this reads the snapshot JSON directly. Also used by
+    // CalendarsPersonalDataExporter.
+    internal static async Task<IReadOnlyList<Guid>> ListItemsAssignedToAsync(ICalendarsStore store, UserId childId, CancellationToken cancellationToken)
     {
         // Marten creates tables on first use, and raw SQL doesn't trigger that.
         await store.Storage.Database.EnsureStorageExistsAsync(typeof(CalendarItemSnapshot), cancellationToken);

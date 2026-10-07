@@ -43,6 +43,8 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
             ["RateLimiting:AiAssistant:Window"] = "01:00:00",
             ["RateLimiting:OutboundEmail:PermitLimit"] = "1",
             ["RateLimiting:OutboundEmail:Window"] = "01:00:00",
+            ["RateLimiting:PersonalDataExport:PermitLimit"] = "1",
+            ["RateLimiting:PersonalDataExport:Window"] = "01:00:00",
             ["Cors:AllowedOrigins:0"] = AllowedOrigin,
             ["ForwardedHeaders:KnownNetworks:0"] = TrustedProxyNetwork
         });
@@ -229,6 +231,19 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
         // RateLimitingMiddleware retries the acquire, so a rejected request costs two global tokens.)
         Assert.NotEqual(429, await StatusAsync(Post(url, token)));
         Assert.Equal(429, await StatusAsync(Post(url, token)));
+    }
+
+    [Fact]
+    public async Task A_second_personal_data_export_within_the_window_is_throttled()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var (_, otherToken, _) = await fixture.CreateAuthenticatedUserAsync();
+
+        Assert.Equal(200, await StatusAsync(Get("/users/me/export", token: token)));
+        Assert.Equal(429, await StatusAsync(Get("/users/me/export", token: token)));
+
+        // Per user: someone else's export isn't affected.
+        Assert.Equal(200, await StatusAsync(Get("/users/me/export", token: otherToken)));
     }
 
     [Fact]

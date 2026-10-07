@@ -42,6 +42,7 @@ public static class MedicinesFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, MedicinesPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, MedicinesPersonalDataExporter>();
 
         services.AddMartenStore<IMedicinesStore>(serviceProvider =>
         {

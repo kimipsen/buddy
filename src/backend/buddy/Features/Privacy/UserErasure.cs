@@ -275,6 +275,6 @@ public sealed class UserErasure(
         return false;
     }
 
-    private static string? EmailOf(User user) =>
+    internal static string? EmailOf(User user) =>
         string.IsNullOrWhiteSpace(user.Email.Value) || user.Email.Value == Erased.Text ? null : user.Email.Value;
 }

@@ -1,11 +1,11 @@
 # GDPR: erasure, export and data minimization
 
-Status: Partly implemented. Questions 1-4 and 8 ship: masking rules and an `IPersonalDataEraser`
-per feature (`Common/Erasure`), `UserErasure` and `UserErasureService` (`Features/Privacy`), the
-`DELETE /users/me` cascade, `UserErased`, the erasure ledger, `DeleteChild`, the account-deletion
-preview (`GET /users/me/deletion-preview`) and their screens. Not yet built: export (Question 5),
-the AI changes (Question 6) and the health-data audit logs (Question 7). See "Implementation notes"
-near the end.
+Status: Partly implemented. Questions 1-5 and 8 ship: masking rules, an `IPersonalDataEraser` and
+an `IPersonalDataExporter` per feature (`Common/Erasure`), `UserErasure`, `UserErasureService` and
+`PersonalDataExport` (`Features/Privacy`), the `DELETE /users/me` cascade, `UserErased`, the
+erasure ledger, `DeleteChild`, the account-deletion preview (`GET /users/me/deletion-preview`), the
+export (`GET /users/me/export`) and their screens. Not yet built: the AI changes (Question 6) and
+the health-data audit logs (Question 7). See "Implementation notes" near the end.
 
 ## Context
 
@@ -249,10 +249,13 @@ about every child they are an active guardian of. Each feature contributes a sec
 minutes).**
 
 ```csharp
+public sealed record ExportSubject(UserId UserId, string? Email, IReadOnlyCollection<UserId> Children);
+
 public interface IPersonalDataExporter
 {
+    Type Store { get; }       // the feature's Marten store, for the coverage meta test
     string Section { get; }   // "account", "children", "medicines", "sleepDiary", ...
-    Task<object?> ExportAsync(UserId caller, IReadOnlyCollection<UserId> children, CancellationToken cancellationToken);
+    Task<object?> ExportAsync(ExportSubject subject, CancellationToken cancellationToken);
 }
 ```
 
@@ -263,10 +266,14 @@ public interface IPersonalDataExporter
   and masked placeholders.
 - It is served with `Content-Disposition: attachment; filename="buddy-export-<date>.json"`. The
   frontend adds a "Download my data" button next to "Delete account".
-- Registering exporters like Wolverine handlers (one per feature, found by DI) means a new feature
-  that stores personal data has a clear place to add its section. A meta test like
-  `EventGoldenFileCoverageTests` fails when a feature's events have masking rules but the feature
-  has no exporter.
+- Registering exporters like the erasers (one per feature, found by DI) means a new feature that
+  stores personal data has a clear place to add its section. `PersonalDataExporterCoverageTests`
+  fails for a Marten store without an exporter, the same rule as for erasers.
+- **Shared data is limited to what is the caller's.** A shared calendar exports the items the
+  caller created or last changed and the items assigned to their children, not every item in it;
+  a group exports the caller's and the children's memberships and the invites they sent or
+  received, not the other members. Meals, the meal plan, AI keys and AI sessions belong to the
+  family (`MealFamilyResolution`), so that section is per family rather than per child.
 
 ## Question 6: the AI assistant
 
@@ -363,7 +370,7 @@ events.
 | `DeleteCurrentUser` (changed) | self, adults only | Lock out, then run `UserErasure`; `204`. A child gets `403` |
 | `DeleteChild` | Manage, sole guardian | `DELETE /users/me/children/{childId}`; `409 child_has_other_guardians` |
 | `GetAccountDeletionPreview` | self | `GET /users/me/deletion-preview`: children erased, groups handed over or deleted; the same rules as the erasure |
-| `ExportPersonalData` | self | `GET /users/me/export`; rate-limit policy `personal-data-export` |
+| `ExportPersonalData` | self | `GET /users/me/export`; a JSON file (`Content-Disposition: attachment`, enums by name); rate-limit policy `personal-data-export` (1 per 10 minutes) |
 | `AcknowledgeAiDataSharing` | Manage | `POST /mealplans/children/{childId}/ai-credentials/acknowledgement` |
 
 Background services: `UserErasureService` (finishes interrupted erasures) and
@@ -374,7 +381,9 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 - **Admin, "Danger zone":**
   - The delete dialog lists the children who will be erased with the account, and the groups that
     pass to someone else or are deleted (`GetAccountDeletionPreview`).
-  - A "Download my data" button.
+  - A "Download my data" button, in its own "Your data" section above the danger zone. It fetches
+    the export as a blob (the request needs the bearer token) and saves it through an object URL;
+    a `429` says to wait 10 minutes.
 - **Each child's row in "Children":** a "Delete" action next to "Remove", with an inline
   confirmation. A child with other guardians gets the `409` explained ("each of them must remove
   the child first") rather than a hidden button: the list doesn't know who else guards a child.
@@ -458,7 +467,7 @@ Each step can ship on its own.
 
 ## Implementation notes
 
-What shipped with steps 1-3, and where it differs from the design above:
+What shipped with steps 1-5, and where it differs from the design above:
 
 - **Infrastructure.** `Common/Erasure`:
   - `Erased.Text` (`"[erased]"`);
@@ -483,6 +492,19 @@ What shipped with steps 1-3, and where it differs from the design above:
   - Family data passes to an heir by re-anchoring index documents (Question 3).
   - The `KeycloakIdentity` is kept, flagged (Question 2).
   - iCal tokens a guardian issued are not revoked (Question 2).
+- **Export (step 5).** `IPersonalDataExporter` and `ExportSubject` (`Common/Erasure`), one
+  `<Domain>PersonalDataExport.cs` per feature (Users and Guardians both cover the Users store),
+  orchestrated by `PersonalDataExport` (`Features/Privacy`), log event 10006.
+  - Sections: `account`, `children`, `groups`, `calendars`, `taskLibrary`, `medicines`,
+    `mealplans`, `babysitters`, `pickups`, `workLocations`, `printTemplates`, `progress`,
+    `sleepDiary`. Each reuses the feature's response DTOs where they leave out secrets, so no
+    token hashes, iCal tokens, Keycloak subjects or encrypted AI keys (the last four characters
+    only).
+  - The document is `{ exportedAt, userId, sections }`, indented, enums by name: it is read by
+    people and other services, not by the Buddy frontend.
+  - Tests: `Features/Users/ExportPersonalData/ExportPersonalDataTests.cs` (every section present,
+    personal values found, no secret properties; a child gets `account` only; another family's
+    data absent), `PersonalDataExporterCoverageTests`, and the rate limit in `RateLimitingTests`.
 - **Earlier deletions.** Users deleted before this shipped (`UserDeleted` only) are erased by the
   first sweep, which also locks them out.
 - **Tests.** `buddy.IntegrationTests/Features/Privacy/AccountErasureTests.cs`.

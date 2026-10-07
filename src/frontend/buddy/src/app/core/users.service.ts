@@ -135,6 +135,14 @@ export class UsersService {
     );
   }
 
+  // GET /users/me/export: everything Buddy holds about the user and the children they guard, as a
+  // JSON file. Limited to one export per 10 minutes (429 otherwise).
+  downloadPersonalData(): Promise<Blob> {
+    return firstValueFrom(
+      this.http.get(`${this.runtimeConfig.apiBaseUrl}/users/me/export`, { responseType: 'blob' }),
+    );
+  }
+
   async deleteCurrentUser(): Promise<void> {
     await firstValueFrom(this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/users/me`));
     this.currentUserPromise = null;

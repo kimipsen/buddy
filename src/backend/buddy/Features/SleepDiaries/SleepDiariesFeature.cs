@@ -41,6 +41,7 @@ public static class SleepDiariesFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, SleepDiariesPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, SleepDiariesPersonalDataExporter>();
 
         services.AddMartenStore<ISleepDiariesStore>(serviceProvider =>
         {

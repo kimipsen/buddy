@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common.Configuration;
+using buddy.Common.Erasure;
 using buddy.Common.Http;
 using buddy.Common.Postgres;
 using buddy.Features.Guardians;
@@ -132,6 +133,7 @@ public static class UsersFeature
         });
 
         services.AddSingleton<IUserEventStore, MartenUserEventStore>();
+        services.AddSingleton<IPersonalDataExporter, UsersPersonalDataExporter>();
 
         return services;
     }
@@ -154,6 +156,7 @@ public static class UsersFeature
         users.MapVerifyCurrentEmail();
         users.MapDeleteCurrentUser();
         users.MapGetAccountDeletionPreview();
+        users.MapExportPersonalData();
 
         return endpoints;
     }

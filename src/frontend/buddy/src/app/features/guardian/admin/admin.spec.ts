@@ -90,6 +90,7 @@ describe('GuardianAdmin', () => {
       'app-manage-calendars',
       'app-manage-groups',
       'app-events-list',
+      'app-download-my-data',
       'app-delete-account',
     ];
     for (const selector of selectors) {

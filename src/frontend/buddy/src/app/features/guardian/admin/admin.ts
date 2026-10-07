@@ -5,6 +5,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { EventsList } from '../events-list/events-list';
 import { AiProviderSettingsComponent } from './ai-provider-settings/ai-provider-settings';
 import { DeleteAccount } from './delete-account/delete-account';
+import { DownloadMyData } from './download-my-data/download-my-data';
 import { ManageCalendars } from './manage-calendars/manage-calendars';
 import { ManageChildren } from './manage-children/manage-children';
 import { ManageGroups } from './manage-groups/manage-groups';
@@ -21,6 +22,7 @@ import { MyProfile } from './my-profile/my-profile';
     ManageGroups,
     AiProviderSettingsComponent,
     EventsList,
+    DownloadMyData,
     DeleteAccount,
   ],
   templateUrl: './admin.html',

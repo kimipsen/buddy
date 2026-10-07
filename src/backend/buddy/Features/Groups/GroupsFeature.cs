@@ -44,6 +44,7 @@ public static class GroupsFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, GroupsPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, GroupsPersonalDataExporter>();
 
         services.AddMartenStore<IGroupsStore>(serviceProvider =>
         {

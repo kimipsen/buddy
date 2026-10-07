@@ -183,7 +183,7 @@ Use when request rate exceeds limits.
 Typical Buddy use:
 - any endpoint, from the rate limiter (`Common/RateLimiting/RateLimitingFeature`):
   a caller over its per-user or per-IP bucket, an iCal feed link over its
-  per-link bucket, or a user over the `ai-assistant` / `outbound-email` policy.
+  per-link bucket, or a user over the `ai-assistant` / `outbound-email` / `personal-data-export` policy.
   See the [rate limiting analysis](analysis/rate-limiting.md).
 - not for the resend cooldown: that is a state conflict and returns `409`
   (`resend_cooldown`), see above

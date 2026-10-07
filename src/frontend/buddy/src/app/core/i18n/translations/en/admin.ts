@@ -231,6 +231,15 @@ export const admin = {
       gemini: 'Google (Gemini)',
     },
   },
+  downloadData: {
+    title: 'Your data',
+    description:
+      'Download everything Buddy holds about you and the children you guard, as a JSON file.',
+    button: 'Download my data',
+    downloadingButton: 'Preparing download…',
+    error: 'Unable to download your data.',
+    rateLimited: 'You can download your data once every 10 minutes. Try again later.',
+  },
   deleteAccount: {
     title: 'Danger zone',
     description: 'Deleting your account removes your access permanently. This cannot be undone.',

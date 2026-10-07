@@ -43,6 +43,7 @@ public static class ProgressFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, ProgressPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, ProgressPersonalDataExporter>();
 
         services.AddMartenStore<IProgressStore>(serviceProvider =>
         {

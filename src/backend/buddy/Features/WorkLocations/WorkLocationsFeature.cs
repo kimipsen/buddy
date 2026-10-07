@@ -42,6 +42,7 @@ public static class WorkLocationsFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, WorkLocationsPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, WorkLocationsPersonalDataExporter>();
 
         services.AddMartenStore<IWorkLocationsStore>(serviceProvider =>
         {

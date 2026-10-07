@@ -42,6 +42,7 @@ public static class PrintTemplatesFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, PrintTemplatesPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, PrintTemplatesPersonalDataExporter>();
 
         services.AddMartenStore<IPrintTemplatesStore>(serviceProvider =>
         {

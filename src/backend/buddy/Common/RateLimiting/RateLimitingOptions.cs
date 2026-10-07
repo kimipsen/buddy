@@ -25,8 +25,12 @@ public sealed class RateLimitingOptions
     // Per user, on the endpoints that send email.
     public FixedWindowLimits OutboundEmail { get; set; } = new() { PermitLimit = 20, Window = TimeSpan.FromHours(1) };
 
+    // Per user, on GET /users/me/export (docs/backend/analysis/gdpr-data-protection.md, Question 5).
+    public FixedWindowLimits PersonalDataExport { get; set; } = new() { PermitLimit = 1, Window = TimeSpan.FromMinutes(10) };
+
     public bool IsValid() =>
-        Authenticated.IsValid() && Anonymous.IsValid() && IcalFeed.IsValid() && AiAssistant.IsValid() && OutboundEmail.IsValid();
+        Authenticated.IsValid() && Anonymous.IsValid() && IcalFeed.IsValid() && AiAssistant.IsValid() && OutboundEmail.IsValid()
+        && PersonalDataExport.IsValid();
 }
 
 public sealed class TokenBucketLimits

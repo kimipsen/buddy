@@ -109,6 +109,13 @@ Accept: application/json
 
 ###
 
+# Download everything Buddy holds about you and the children you guard (one per 10 minutes).
+GET {{buddy_HostAddress}}/users/me/export
+Authorization: Bearer {{login.response.body.$.access_token}}
+Accept: application/json
+
+###
+
 # Erase a child's account and data -- only the child's sole guardian (409 child_has_other_guardians otherwise).
 @childId = 00000000-0000-0000-0000-000000000000
 DELETE {{buddy_HostAddress}}/users/me/children/{{childId}}

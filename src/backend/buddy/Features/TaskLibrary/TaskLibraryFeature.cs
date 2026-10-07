@@ -43,6 +43,7 @@ public static class TaskLibraryFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, TaskLibraryPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, TaskLibraryPersonalDataExporter>();
 
         services.AddMartenStore<ITaskLibraryStore>(serviceProvider =>
         {

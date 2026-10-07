@@ -106,7 +106,8 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["RateLimiting:IcalFeed:TokenLimit"] = "1000000",
             ["RateLimiting:IcalFeed:TokensPerPeriod"] = "1000000",
             ["RateLimiting:AiAssistant:PermitLimit"] = "1000000",
-            ["RateLimiting:OutboundEmail:PermitLimit"] = "1000000"
+            ["RateLimiting:OutboundEmail:PermitLimit"] = "1000000",
+            ["RateLimiting:PersonalDataExport:PermitLimit"] = "1000000"
         };
 
         Host = await AlbaHost.For<global::Program>(

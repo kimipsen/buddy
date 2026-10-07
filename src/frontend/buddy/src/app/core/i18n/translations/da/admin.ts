@@ -232,6 +232,15 @@ export const admin = {
       gemini: 'Google (Gemini)',
     },
   },
+  downloadData: {
+    title: 'Dine data',
+    description:
+      'Download alt, hvad Buddy har om dig og de børn, du er værge for, som en JSON-fil.',
+    button: 'Download mine data',
+    downloadingButton: 'Forbereder download…',
+    error: 'Kunne ikke downloade dine data.',
+    rateLimited: 'Du kan downloade dine data én gang hvert 10. minut. Prøv igen senere.',
+  },
   deleteAccount: {
     title: 'Farezone',
     description: 'Sletning af din konto fjerner din adgang permanent. Dette kan ikke fortrydes.',

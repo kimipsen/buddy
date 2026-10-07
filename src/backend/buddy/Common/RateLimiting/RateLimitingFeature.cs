@@ -25,6 +25,7 @@ public static class RateLimitingFeature
     public const string IcalFeedPolicy = "ical-feed";
     public const string AiAssistantPolicy = "ai-assistant";
     public const string OutboundEmailPolicy = "outbound-email";
+    public const string PersonalDataExportPolicy = "personal-data-export";
 
     public static IServiceCollection AddRateLimitingFeature(this IServiceCollection services)
     {
@@ -59,6 +60,10 @@ public static class RateLimitingFeature
 
                 options.AddPolicy(OutboundEmailPolicy, context =>
                     RateLimitPartition.GetFixedWindowLimiter($"email:{CallerKey(context)}", _ => limits.OutboundEmail.ToOptions()));
+
+                // An export reads every feature's store for the caller and all their children.
+                options.AddPolicy(PersonalDataExportPolicy, context =>
+                    RateLimitPartition.GetFixedWindowLimiter($"export:{CallerKey(context)}", _ => limits.PersonalDataExport.ToOptions()));
             });
 
         return services;

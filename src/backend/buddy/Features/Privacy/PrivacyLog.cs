@@ -1,6 +1,6 @@
 namespace buddy.Features.Privacy;
 
-// Erasure progress -- see docs/backend/analysis/gdpr-data-protection.md and
+// Erasure progress and exports -- see docs/backend/analysis/gdpr-data-protection.md and
 // docs/backend/observability.md. IDs only.
 internal static partial class PrivacyLog
 {
@@ -18,4 +18,7 @@ internal static partial class PrivacyLog
 
     [LoggerMessage(EventId = 10005, Level = LogLevel.Error, Message = "An erasure sweep failed")]
     public static partial void ErasureSweepFailed(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 10006, Level = LogLevel.Information, Message = "User {UserId} exported their personal data, including {ChildCount} children")]
+    public static partial void PersonalDataExported(this ILogger logger, Guid userId, int childCount);
 }

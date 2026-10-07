@@ -39,6 +39,7 @@ public static class BabysittersFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, BabysittersPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, BabysittersPersonalDataExporter>();
 
         services.AddMartenStore<IBabysittersStore>(serviceProvider =>
         {

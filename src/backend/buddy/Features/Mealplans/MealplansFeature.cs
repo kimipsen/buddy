@@ -63,6 +63,7 @@ public static class MealplansFeature
         services.AddPostgresDataSource(configuration);
         // Erases this feature's part of a person (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, MealplansPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, MealplansPersonalDataExporter>();
 
         services.AddMartenStore<IMealplansStore>(serviceProvider =>
         {

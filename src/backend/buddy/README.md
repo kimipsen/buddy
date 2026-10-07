@@ -51,7 +51,8 @@ variables). Notable sections:
   assistant (`OpenAiModel`, `GeminiModel`, `AnthropicModel`); per-family
   provider selection and API keys are stored as events, not configuration.
 - `RateLimiting` — request-rate limits (per user, per client IP, per iCal
-  feed link, and the AI-assistant and outbound-email policies). Defaults live
+  feed link, and the AI-assistant, outbound-email and personal-data-export
+  policies). Defaults live
   in `Common/RateLimiting/RateLimitingOptions.cs`; override single values,
   e.g. `RateLimiting__IcalFeed__TokenLimit`. See
   [rate-limiting.md](../../../docs/backend/analysis/rate-limiting.md).

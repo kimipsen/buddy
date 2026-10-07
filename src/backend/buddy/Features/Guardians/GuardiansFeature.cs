@@ -25,6 +25,7 @@ public static class GuardiansFeature
         services.AddHttpClient<IKeycloakAdminClient, KeycloakAdminClient>();
         // Erases guardian links and invites (docs/backend/analysis/gdpr-data-protection.md).
         services.AddSingleton<IPersonalDataEraser, GuardiansPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, GuardiansPersonalDataExporter>();
 
         return services;
     }

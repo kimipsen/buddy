@@ -1,6 +1,6 @@
 # Rate Limiting
 
-Status: Implemented. `RateLimitingFeature` + `RateLimitingOptions` (`Common/RateLimiting/`): a global limiter on every endpoint (per Keycloak subject, else per client IP) plus the `ical-feed`, `ai-assistant` and `outbound-email` policies on 9 endpoints, `429 rate_limited` with `Retry-After`; `UseForwardedHeaders` from `ForwardedHeaders:KnownNetworks` (`Common/Http/ForwardedHeadersSetup.cs`), set in both deployments; `RateLimitingTests` on a separate low-limit host and `Meta/RateLimitingCoverageTests`. No frontend change.
+Status: Implemented. `RateLimitingFeature` + `RateLimitingOptions` (`Common/RateLimiting/`): a global limiter on every endpoint (per Keycloak subject, else per client IP) plus the `ical-feed`, `ai-assistant`, `outbound-email` and `personal-data-export` policies on 10 endpoints, `429 rate_limited` with `Retry-After`; `UseForwardedHeaders` from `ForwardedHeaders:KnownNetworks` (`Common/Http/ForwardedHeadersSetup.cs`), set in both deployments; `RateLimitingTests` on a separate low-limit host and `Meta/RateLimitingCoverageTests`. No frontend change.
 
 ## Context
 
@@ -166,6 +166,13 @@ put its sender reputation at risk. 20 an hour is far above what onboarding a fam
 `GetCurrentUser` also sends a verification email, but only once, on first provisioning, so it's not
 in this policy.
 
+### `personal-data-export`: per user, on the data export
+
+`ExportPersonalData` (`GET /users/me/export`, see [gdpr-data-protection.md](gdpr-data-protection.md),
+Question 5). Partition `export:<sub>`, fixed window of 1 per 10 minutes. One export reads every
+feature's store for the caller and all their children, so a loop over it is the most expensive
+thing a single account can do. Nobody needs their data more often than that.
+
 Rejected: **a stricter global limit instead of named policies.** Lowering the global bucket enough
 to protect the LLM and SMTP endpoints would throttle normal dashboard loads.
 
@@ -298,7 +305,8 @@ override its pool size.
   "Anonymous":     { "TokenLimit": 60,  "TokensPerPeriod": 1, "ReplenishmentPeriod": "00:00:01" },
   "IcalFeed":      { "TokenLimit": 10,  "TokensPerPeriod": 1, "ReplenishmentPeriod": "00:05:00" },
   "AiAssistant":   { "PermitLimit": 20, "Window": "00:01:00" },
-  "OutboundEmail": { "PermitLimit": 20, "Window": "01:00:00" }
+  "OutboundEmail": { "PermitLimit": 20, "Window": "01:00:00" },
+  "PersonalDataExport": { "PermitLimit": 1, "Window": "00:10:00" }
 }
 ```
 
@@ -434,7 +442,7 @@ as the example:
 | Partition for authenticated callers | Keycloak subject (per user), not IP: NAT would merge users |
 | Partition for anonymous callers | Client IP, after `UseForwardedHeaders` from known proxy networks only |
 | iCal feeds | Extra `ical-feed` policy keyed by feed id + token hash, not IP: Google polls from shared IPs |
-| Costly endpoints | `ai-assistant` (3 endpoints, 20/min) and `outbound-email` (4 endpoints, 20/hour) per user |
+| Costly endpoints | `ai-assistant` (3 endpoints, 20/min) `outbound-email` (4 endpoints, 20/hour) and `personal-data-export` (1 endpoint, 1 per 10 min) per user |
 | Pipeline position | After `UseCors` and `UseAuthentication`, before authorization and any store read |
 | Response | `429`, `Retry-After`, `rate_limited` `ErrorEnvelope` |
 | `ResendCooldown` | Unchanged: a per-target state rule (`409`), not a caller rate |
@@ -491,6 +499,7 @@ flowchart TB
             Ical["ical-feed\nfeed id + token hash\n10 / 1 per 5 min"]
             Ai["ai-assistant\nper user, 20 / min"]
             Mail["outbound-email\nper user, 20 / hour"]
+            Export["personal-data-export\nper user, 1 / 10 min"]
             Global -- "yes" --> UserBucket
             Global -- "no" --> IpBucket
             UserBucket --> Named
@@ -498,6 +507,7 @@ flowchart TB
             Named -- "feeds" --> Ical
             Named -- "LLM calls" --> Ai
             Named -- "sends email" --> Mail
+            Named -- "data export" --> Export
         end
         Rest["UseAuthorization -> UseProvisionedUsers -> ...\n-> UseIdempotencyKeys -> UseETags -> handler"]
         Reject["429 Too Many Requests\nRetry-After + rate_limited envelope"]

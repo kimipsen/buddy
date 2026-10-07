@@ -430,7 +430,7 @@ Found along the way:
   - [x] `DeleteChild` endpoint (sole guardian only) and the account-deletion preview, plus the
     frontend: a delete-child action and a deletion dialog that lists the children and groups
     affected.
-  - [ ] Data export (`GET /users/me/export`) and a "Download my data" button.
+  - [x] Data export (`GET /users/me/export`) and a "Download my data" button.
   - [ ] AI assistant: minimization, 30-day retention, disclosure and acknowledgement.
   - [ ] Health-data read audit logs.
   - [ ] Outside the code: privacy notice, record of processing, DPIA, DPAs with the hosting
