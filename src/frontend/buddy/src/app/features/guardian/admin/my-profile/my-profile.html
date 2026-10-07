@@ -115,6 +115,17 @@
         }
       }
 
+      @if (
+        !current.email.isVerified && current.email.value && email().trim() === current.email.value
+      ) {
+        <div class="grid gap-2">
+          <p class="text-sm text-slate-600 dark:text-slate-300">
+            {{ 'profile.email.notVerified' | translate }}
+          </p>
+          <app-resend-verification />
+        </div>
+      }
+
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveTimeZone()">
         <label class="block">
           <span

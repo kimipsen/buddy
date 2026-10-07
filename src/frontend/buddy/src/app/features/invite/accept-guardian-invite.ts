@@ -7,6 +7,7 @@ import { GuardianKind, GuardiansService } from '../../core/guardians.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { storePendingGuardianInviteToken } from '../../core/pending-guardian-invite-token';
 import { createAction } from '../../shared/action-state/action-state';
+import { ResendVerification } from '../../shared/resend-verification/resend-verification';
 
 import { isEmailNotVerified } from './email-not-verified';
 
@@ -17,7 +18,7 @@ const KIND_LABELS: Record<GuardianKind, string> = {
 
 @Component({
   selector: 'app-accept-guardian-invite',
-  imports: [TranslatePipe],
+  imports: [ResendVerification, TranslatePipe],
   templateUrl: './accept-guardian-invite.html',
 })
 export class AcceptGuardianInvite {

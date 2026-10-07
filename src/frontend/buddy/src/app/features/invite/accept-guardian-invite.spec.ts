@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UsersService } from '../../core/users.service';
 import { AuthService } from '../../core/auth.service';
 import { GuardianInvitePreview, GuardiansService } from '../../core/guardians.service';
 import { takePendingGuardianInviteToken } from '../../core/pending-guardian-invite-token';
@@ -46,6 +47,7 @@ describe('AcceptGuardianInvite', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
         { provide: GuardiansService, useValue: guardiansStub },
+        { provide: UsersService, useValue: { resendEmailVerification: vi.fn(async () => {}) } },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ token }) } },
@@ -246,6 +248,7 @@ describe('AcceptGuardianInvite', () => {
     expect(compiled.textContent).toContain(
       "This invite was sent to a different account than the one you're logged in with.",
     );
+    expect(compiled.textContent).not.toContain('Send verification email again');
   });
 
   it('asks the user to verify their email when accepting is rejected with email_not_verified', async () => {
@@ -265,6 +268,7 @@ describe('AcceptGuardianInvite', () => {
     expect(compiled.textContent).toContain(
       'Verify your email address before you accept this invite.',
     );
+    expect(compiled.textContent).toContain('Send verification email again');
     expect(compiled.textContent).not.toContain('This invite was sent to a different account');
     expect(compiled.textContent).not.toContain("You're now a guardian");
   });

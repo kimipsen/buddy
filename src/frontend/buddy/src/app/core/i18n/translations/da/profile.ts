@@ -15,6 +15,7 @@ export const profile = {
     saved: 'E-mail opdateret. Tjek din indbakke for at bekræfte den.',
     error: 'Kunne ikke opdatere din e-mail.',
     verified: 'Bekræftet',
+    notVerified: 'Ikke bekræftet endnu. Åbn linket i bekræftelsesmailen, vi har sendt dig.',
   },
   timeZone: {
     label: 'Tidszone',

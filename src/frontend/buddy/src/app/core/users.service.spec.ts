@@ -186,6 +186,28 @@ describe('UsersService', () => {
     });
   });
 
+  describe('resendEmailVerification', () => {
+    it('POSTs an empty body to the resend endpoint', async () => {
+      const promise = service.resendEmailVerification();
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/email/verify/resend`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
+      req.flush(null, { status: 204, statusText: 'No Content' });
+
+      await expect(promise).resolves.toBeUndefined();
+    });
+
+    it('propagates the 409 during the resend cooldown', async () => {
+      const promise = service.resendEmailVerification();
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/email/verify/resend`);
+      req.flush({ code: 'resend_cooldown' }, { status: 409, statusText: 'Conflict' });
+
+      await expect(promise).rejects.toMatchObject({ status: 409 });
+    });
+  });
+
   describe('updateTimeZone', () => {
     it('PATCHes the new time zone, re-memoizes the current user, and updates the signal', async () => {
       const updated = currentUser({ timeZoneId: 'America/New_York' });

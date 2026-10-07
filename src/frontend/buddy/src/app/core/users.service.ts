@@ -104,6 +104,18 @@ export class UsersService {
     return updated;
   }
 
+  // Sends another verification email for the caller's unverified address. The API answers 409
+  // (resend_cooldown) within a minute of the last one, and 204 for an already verified address.
+  async resendEmailVerification(): Promise<void> {
+    await firstValueFrom(
+      postIdempotent<void>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/users/me/email/verify/resend`,
+        {},
+      ),
+    );
+  }
+
   async updateTimeZone(timeZoneId: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
       this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/timezone`, {

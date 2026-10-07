@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using buddy.Features.Users;
 
@@ -80,6 +81,49 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
         }
 
         EnsureSuccess(response, "delete user");
+    }
+
+    public async Task MarkEmailVerifiedAsync(KeycloakSubject subject, string email, CancellationToken cancellationToken)
+    {
+        var admin = options.CurrentValue;
+        var token = await GetServiceAccountTokenAsync(admin, cancellationToken);
+        var userUrl = $"{admin.AdminBaseUrl}/users/{Uri.EscapeDataString(subject.Value)}";
+
+        using var getRequest = new HttpRequestMessage(HttpMethod.Get, userUrl);
+        getRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var getResponse = await httpClient.SendAsync(getRequest, cancellationToken);
+        if (getResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return;
+        }
+
+        EnsureSuccess(getResponse, "read user");
+
+        var user = await getResponse.Content.ReadFromJsonAsync<JsonObject>(cancellationToken)
+            ?? throw new InvalidOperationException("Keycloak returned an empty user representation.");
+
+        var keycloakEmail = user["email"]?.GetValue<string>();
+        var alreadyVerified = user["emailVerified"]?.GetValue<bool>() ?? false;
+
+        if (alreadyVerified || !string.Equals(keycloakEmail, email, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        // PUT the representation Keycloak just returned with only emailVerified changed, rather than
+        // a partial body: with the user profile feature (Keycloak 24+), attributes missing from an
+        // update can be dropped.
+        user["emailVerified"] = true;
+
+        using var putRequest = new HttpRequestMessage(HttpMethod.Put, userUrl)
+        {
+            Content = JsonContent.Create(user)
+        };
+        putRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var putResponse = await httpClient.SendAsync(putRequest, cancellationToken);
+        EnsureSuccess(putResponse, "mark email verified");
     }
 
     // Looks up the role via the user's own "available realm roles" list rather than the general

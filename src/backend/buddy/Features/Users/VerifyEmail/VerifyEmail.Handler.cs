@@ -1,8 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 using buddy.Common;
 using buddy.Common.Validation;
+using buddy.Features.Guardians;
 
 using FluentValidation;
 
@@ -14,6 +16,7 @@ public static class VerifyEmailHandler
         VerifyEmail command,
         IValidator<VerifyEmail> validator,
         IUserEventStore events,
+        IKeycloakAdminClient keycloak,
         ILogger<VerifyEmail> logger,
         CancellationToken cancellationToken)
     {
@@ -65,6 +68,18 @@ public static class VerifyEmailHandler
         await events.AppendAsync(userId, [new EmailVerified(userId, DateTimeOffset.UtcNow)], cancellationToken);
 
         logger.EmailVerified(userId.Value);
+
+        // Best effort: Buddy's EmailVerified event is what Buddy acts on (invites check it), so a
+        // Keycloak outage mustn't fail a verification that has already been recorded.
+        try
+        {
+            await keycloak.MarkEmailVerifiedAsync(user.KeycloakSubject, user.Email.Value, cancellationToken);
+        }
+        catch (Exception exception) when (exception is HttpRequestException or JsonException or InvalidOperationException
+            || (exception is TaskCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            logger.KeycloakEmailVerifiedSyncFailed(exception, userId.Value);
+        }
 
         var verifiedUser = user with { Email = user.Email with { IsVerified = true }, EmailVerification = new EmailVerification.None() };
 

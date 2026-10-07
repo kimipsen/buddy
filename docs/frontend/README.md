@@ -136,9 +136,11 @@ When a session ends mid-use (Keycloak rejects the refresh token, or the API answ
 
 ### Invitation and email verification features
 
-The invitation flow is in [src/frontend/buddy/src/app/features/invite](../../src/frontend/buddy/src/app/features/invite). It supports a public invitation preview and returns the user to the invitation after login so the invitation can be accepted in an authenticated session. Accepting a group or guardian invite requires a verified email address that matches the invited one; otherwise the API answers `403`. For `403 email_not_verified` the page asks the user to verify their email and come back to the link (`features/invite/email-not-verified.ts`); any other `403` shows the wrong-account error.
+The invitation flow is in [src/frontend/buddy/src/app/features/invite](../../src/frontend/buddy/src/app/features/invite). It supports a public invitation preview and returns the user to the invitation after login so the invitation can be accepted in an authenticated session. Accepting a group or guardian invite requires a verified email address that matches the invited one; otherwise the API answers `403`. For `403 email_not_verified` the page asks the user to verify their email and come back to the link (`features/invite/email-not-verified.ts`) and offers a button that sends the verification email again; any other `403` shows the wrong-account error.
 
 The email verification flow is in [src/frontend/buddy/src/app/features/verify-email](../../src/frontend/buddy/src/app/features/verify-email). It uses the same public-route pattern: a user can open a verification link while logged out, sign in if needed, and return to the pending token.
+
+`shared/resend-verification` is the "Send verification email again" button (`POST /users/me/email/verify/resend`). It appears on the invite pages after a `403 email_not_verified`, and on the profile while the saved email is unverified. A `409 resend_cooldown` shows a "try again shortly" message.
 
 ## Shared services
 
@@ -169,7 +171,8 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   template picker on the calendar agenda's create-task form
 - `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post
   info for the progress badge, and lets a guardian configure a child's goal posts
-- `UsersService` loads the current profile, language, and email-verification state, the
+- `UsersService` loads the current profile, language, and email-verification state, resends the
+  verification email, loads the
   account-deletion preview, downloads the personal-data export, and deletes the account
 - `postIdempotent` (`http-idempotency.ts`) wraps `HttpClient.post` for create-style calls
   (calendars, groups, children, meals, medicine schedules, task templates, invites, email

@@ -21,4 +21,7 @@ internal static partial class UsersLog
 
     [LoggerMessage(EventId = 1006, Level = LogLevel.Information, Message = "Rejected {Method} {Path}: the caller has no Buddy user yet")]
     public static partial void UnprovisionedCallerRejected(this ILogger logger, string method, string? path);
+
+    [LoggerMessage(EventId = 1007, Level = LogLevel.Warning, Message = "User {UserId} verified their email address, but marking it verified in Keycloak failed")]
+    public static partial void KeycloakEmailVerifiedSyncFailed(this ILogger logger, Exception exception, Guid userId);
 }

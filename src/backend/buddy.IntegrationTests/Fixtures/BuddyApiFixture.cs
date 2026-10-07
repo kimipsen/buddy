@@ -208,7 +208,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
     // that mutates a user's own profile, or needs many distinct identities at once (an
     // authorization matrix across owner/contributor/viewer), should mint its own user here
     // rather than compete over a fixed handful of shared accounts.
-    public async Task<TestUser> CreateUserAsync(string? givenName = null, string? familyName = null, CancellationToken cancellationToken = default)
+    public async Task<TestUser> CreateUserAsync(string? givenName = null, string? familyName = null, bool emailVerified = true, CancellationToken cancellationToken = default)
     {
         var suffix = Guid.NewGuid().ToString("N")[..12];
         var username = $"test-{suffix}";
@@ -227,7 +227,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         {
             username,
             email,
-            emailVerified = true,
+            emailVerified,
             enabled = true,
             firstName = givenName ?? "Test",
             lastName = familyName ?? suffix,
@@ -302,6 +302,21 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 
         var users = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/users?username={Uri.EscapeDataString(username)}&exact=true", cancellationToken);
         return users.GetArrayLength() > 0;
+    }
+
+    // Whether Keycloak marks this account's email as verified (VerifyEmail syncs it).
+    public async Task<bool> IsKeycloakEmailVerifiedAsync(string username, CancellationToken cancellationToken = default)
+    {
+        var adminToken = await GetAdminTokenAsync(cancellationToken);
+
+        using var client = new HttpClient
+        {
+            BaseAddress = new Uri($"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}")
+        };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var users = await client.GetFromJsonAsync<JsonElement>($"/admin/realms/{RealmName}/users?username={Uri.EscapeDataString(username)}&exact=true", cancellationToken);
+        return users.EnumerateArray().First().GetProperty("emailVerified").GetBoolean();
     }
 
     private async Task<string> GetAdminTokenAsync(CancellationToken cancellationToken)

@@ -7,12 +7,13 @@ import { GroupsService } from '../../core/groups.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { storePendingInviteToken } from '../../core/pending-invite-token';
 import { createAction } from '../../shared/action-state/action-state';
+import { ResendVerification } from '../../shared/resend-verification/resend-verification';
 
 import { isEmailNotVerified } from './email-not-verified';
 
 @Component({
   selector: 'app-accept-invite',
-  imports: [TranslatePipe],
+  imports: [ResendVerification, TranslatePipe],
   templateUrl: './accept-invite.html',
 })
 export class AcceptInvite {

@@ -15,6 +15,7 @@ export const profile = {
     saved: 'Email updated. Check your inbox to verify it.',
     error: 'Unable to update your email.',
     verified: 'Verified',
+    notVerified: 'Not verified yet. Open the link in the verification email we sent you.',
   },
   timeZone: {
     label: 'Time zone',

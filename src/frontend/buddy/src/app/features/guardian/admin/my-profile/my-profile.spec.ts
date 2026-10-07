@@ -41,6 +41,7 @@ describe('MyProfile', () => {
     updateEmail: ReturnType<typeof vi.fn>;
     updateTimeZone: ReturnType<typeof vi.fn>;
     updateLanguage: ReturnType<typeof vi.fn>;
+    resendEmailVerification: ReturnType<typeof vi.fn>;
   }
 
   async function setup(options: { user?: Promise<CurrentUser>; settleLoad?: boolean } = {}) {
@@ -50,6 +51,7 @@ describe('MyProfile', () => {
       updateEmail: vi.fn(),
       updateTimeZone: vi.fn(),
       updateLanguage: vi.fn(),
+      resendEmailVerification: vi.fn(async () => {}),
     };
 
     await TestBed.configureTestingModule({
@@ -570,6 +572,43 @@ describe('MyProfile', () => {
       await internals(fixture).saveLanguage();
 
       expect(users.updateLanguage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('unverified email', () => {
+    const unverified = withChanges({ email: { value: 'alice@buddy.test', isVerified: false } });
+
+    function resendButton(compiled: HTMLElement): HTMLButtonElement | undefined {
+      return Array.from(compiled.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Send verification email again'),
+      );
+    }
+
+    it('offers to resend the verification email for the saved, unverified address', async () => {
+      const { fixture, compiled, users } = await setup({ user: Promise.resolve(unverified) });
+
+      expect(compiled.textContent).toContain('Not verified yet.');
+      resendButton(compiled)!.click();
+      await settle(fixture);
+
+      expect(users.resendEmailVerification).toHaveBeenCalledTimes(1);
+      expect(compiled.textContent).toContain('Verification email sent. Check your inbox.');
+    });
+
+    it('does not offer a resend for a verified address', async () => {
+      const { compiled } = await setup();
+
+      expect(compiled.textContent).not.toContain('Not verified yet.');
+      expect(resendButton(compiled)).toBeUndefined();
+    });
+
+    it('hides the resend while the email field holds a different address', async () => {
+      const { fixture, compiled } = await setup({ user: Promise.resolve(unverified) });
+
+      (fixture.componentInstance as unknown as MyProfileInternals).email.set('new@buddy.test');
+      await settle(fixture);
+
+      expect(resendButton(compiled)).toBeUndefined();
     });
   });
 });

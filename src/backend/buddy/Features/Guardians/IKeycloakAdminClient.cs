@@ -20,6 +20,12 @@ public interface IKeycloakAdminClient
     // email, name and credentials Keycloak holds. Idempotent: an account that is already gone counts
     // as deleted. See gdpr-data-protection.md.
     Task DeleteUserAsync(KeycloakSubject subject, CancellationToken cancellationToken);
+
+    // Marks the Keycloak account's email as verified once Buddy has verified the same address
+    // (VerifyEmail), so Keycloak and its tokens' email_verified claim agree with Buddy. Does nothing
+    // when the account is gone, has another email (Buddy's UpdateEmail doesn't change Keycloak's),
+    // or is already verified. Compares case-insensitively: Keycloak stores emails lowercased.
+    Task MarkEmailVerifiedAsync(KeycloakSubject subject, string email, CancellationToken cancellationToken);
 }
 
 // Username is the child's login handle in Keycloak -- the guardian needs it alongside

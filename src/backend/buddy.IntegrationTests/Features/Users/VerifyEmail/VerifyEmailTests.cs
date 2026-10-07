@@ -82,6 +82,33 @@ public sealed partial class VerifyEmailTests(BuddyApiFixture fixture)
         Assert.Contains("Token", error.Details.Keys);
     }
 
+    [Fact]
+    public async Task Verifying_the_email_Keycloak_has_also_marks_it_verified_in_Keycloak()
+    {
+        // An unverified Keycloak email gets a verification email on first sign-in (GET /users/me).
+        var user = await fixture.CreateUserAsync(emailVerified: false);
+        var token = await fixture.GetAccessTokenAsync(user);
+        await fixture.GetUserIdAsync(token);
+
+        var verificationToken = await ReadVerificationTokenAsync(user.Email);
+        await UserTestHelpers.VerifyEmailAsync(fixture, token, verificationToken);
+
+        Assert.True(await fixture.IsKeycloakEmailVerifiedAsync(user.Username));
+    }
+
+    [Fact]
+    public async Task Verifying_a_different_email_than_Keycloak_has_leaves_Keycloak_unchanged()
+    {
+        var user = await fixture.CreateUserAsync(emailVerified: false);
+        var token = await fixture.GetAccessTokenAsync(user);
+        await fixture.GetUserIdAsync(token);
+
+        var (_, verificationToken) = await UserTestHelpers.ChangeToUnverifiedEmailAsync(fixture, token);
+        await UserTestHelpers.VerifyEmailAsync(fixture, token, verificationToken);
+
+        Assert.False(await fixture.IsKeycloakEmailVerifiedAsync(user.Username));
+    }
+
     private async Task<string> ReadVerificationTokenAsync(string emailAddress)
     {
         var messages = await fixture.GetMailpitMessagesToAsync(emailAddress);

@@ -21,6 +21,7 @@ import {
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { CurrentUser, UsersService } from '../../../../core/users.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { ResendVerification } from '../../../../shared/resend-verification/resend-verification';
 
 // The current user with the stored language narrowed to one the app supports (English otherwise).
 type Profile = Omit<CurrentUser, 'language'> & { language: Language };
@@ -31,7 +32,7 @@ function toLanguage(language: string): Language {
 
 @Component({
   selector: 'app-my-profile',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, ResendVerification, TranslatePipe],
   templateUrl: './my-profile.html',
 })
 export class MyProfile {

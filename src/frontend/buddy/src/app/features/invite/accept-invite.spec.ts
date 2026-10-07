@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UsersService } from '../../core/users.service';
 import { AuthService } from '../../core/auth.service';
 import { GroupInvitePreview, GroupsService } from '../../core/groups.service';
 import { AcceptInvite } from './accept-invite';
@@ -42,6 +43,7 @@ describe('AcceptInvite', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
         { provide: GroupsService, useValue: groupsStub },
+        { provide: UsersService, useValue: { resendEmailVerification: vi.fn(async () => {}) } },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ token }) } },
@@ -218,6 +220,7 @@ describe('AcceptInvite', () => {
       "This invite was sent to a different account than the one you're logged in with.",
     );
     expect(text(fixture)).not.toContain("You've joined");
+    expect(findButton(fixture, 'Send verification email again')).toBeFalsy();
   });
 
   it('asks the user to verify their email when accepting is rejected with email_not_verified', async () => {
@@ -234,6 +237,7 @@ describe('AcceptInvite', () => {
     await settle(fixture);
 
     expect(text(fixture)).toContain('Verify your email address before you accept this invite.');
+    expect(findButton(fixture, 'Send verification email again')).toBeTruthy();
     expect(text(fixture)).not.toContain('This invite was sent to a different account');
     expect(text(fixture)).not.toContain("You've joined");
   });
