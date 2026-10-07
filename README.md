@@ -88,9 +88,9 @@ deploy/      Production Docker Compose and Caddy deployment
   auth flow, feature layout, and current product status.
 - [Development container](.devcontainer/README.md) — local services,
   environment setup, ports, and first-run Keycloak configuration.
-- [Documentation-sync git hook](.devcontainer/git-hooks/README.md) — opt-in
-  `post-commit` hook that uses Claude, Codex, or GitHub Copilot to keep
-  `docs/` and this README in sync with commits.
+- [Git hooks](.devcontainer/git-hooks/README.md) — opt-in `pre-commit`
+  format/lint checks and a `post-commit` hook that uses Claude, Codex, or
+  GitHub Copilot to keep `docs/` and this README in sync with commits.
 - [Screenshots](docs/screenshots/README.md) — every page of the app with demo
   data; regenerate with `task docs:screenshots`.
 - [Testing](docs/testing.md) — commands for frontend, backend, and mutation
