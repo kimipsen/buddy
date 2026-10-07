@@ -86,15 +86,17 @@ Work through this list before real families use your instance.
     data and sends it there.
   - If the provider is outside the EU/EEA, that is a transfer your notice should cover.
 
+## Decided
+
+- **Free text that names someone stays.** "Pick up Emil" in a shared calendar's item title stays
+  when Emil's account is deleted. It's the family's shared plan, the other members can edit or
+  delete it, and who wrote it is erased.
+- **No access log screen in the app.** Buddy is meant to be run by each family, and that family
+  has someone technical who can read the audit logs. Who has read a child's medicines or sleep
+  diary is in the logs (see "Decide where the logs go" above).
+
 ## Still open
 
-These are known and not decided yet. Opinions welcome.
-
-- **Free text that names someone.** "Pick up Emil" in a shared calendar's item title stays when
-  Emil's account is deleted. It's the family's shared plan and the other members can edit it.
-  The current leaning is to leave it that way.
-- **Viewing access logs in the app.** Who has looked at my child's data is only in the logs for
-  now. A screen for guardians is deferred: it needs its own retention decision.
 - **Azure restore.** The erasure-ledger steps for restoring an Azure point-in-time backup aren't
   documented yet.
 

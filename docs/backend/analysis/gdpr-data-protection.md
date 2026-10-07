@@ -318,9 +318,9 @@ Each logs the reader's `UserId`, the `ChildId` and the access path (guardian lin
 `GetSharedSleepDiary` already logs every view (5003).
 
 A persisted access log that guardians can see in the app ("who viewed my child's data") was
-considered and deferred. It is a feature in its own right, with its own retention question. The
-logs answer the accountability question (Art. 5(2)) now, provided they are kept somewhere: see the
-OTLP item in the TODO.
+considered and rejected (user's decision): Buddy is meant to be run by each family, which has
+someone technical who can read the logs. The logs answer the accountability question (Art. 5(2)),
+provided they are kept somewhere: see the OTLP item in the TODO.
 
 ## Question 8: what to fix right away
 
@@ -436,16 +436,14 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 | AI session retention | Masked 30 days after closing (user's decision) |
 | Erasure execution | In the request, idempotent, with a background sweeper for failures |
 | Export | One JSON document; guardians include their children |
-| Health-data access audit | Structured audit logs now; an in-app access log later |
+| Health-data access audit | Structured audit logs only; no in-app access log. Each family runs its own Buddy and has someone technical who can read the logs (user's decision) |
 | Family data anchored to an erased child (meals, meal plan, AI keys and sessions, task templates) | Erased with the child only when no sibling under the same guardians remains (user's decision) |
 | AI calendar titles | Only items assigned to the session's child or to nobody, in the child's family calendars; the rest are sent as "busy" (user's decision) |
 | Backups | An erasure ledger plus 30-day backup rotation (user's decision); see below |
+| Free text in shared spaces that names an erased person | Stays. It is part of the family's shared plan, the other members can edit or delete it, and the author's identity is erased (user's decision) |
 
 ## Remaining open questions
 
-- **Free text in shared spaces that names a person.** Lean: out of scope. A guardian who wrote
-  "pick up Emil" in a group calendar's item title made that text part of the family's shared plan.
-  The other members can edit or delete it, and the author's identity is erased.
 - **Legal work outside the code.** These are decisions for the controller, not code:
   - a privacy notice;
   - a record of processing activities;
