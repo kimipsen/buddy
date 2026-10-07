@@ -34,8 +34,70 @@ PROMPT
   return 0
 }
 
+# Prints a tree id for HEAD plus the current working-tree state of the given
+# paths (tracked and untracked, honoring .gitignore), built in a throwaway index
+# so the real index is never touched.
+doc_agent_snapshot_tree() {
+  local index="$1"
+  shift
+  rm -f "$index"
+  GIT_INDEX_FILE="$index" git read-tree HEAD &&
+    GIT_INDEX_FILE="$index" git add -A -- "$@" &&
+    GIT_INDEX_FILE="$index" git write-tree
+}
+
+# Commits only the changes the agent made between two snapshot trees. Built on
+# a temporary index from HEAD, so nothing you had staged or left uncommitted
+# (including your own unfinished edits to the same doc files) goes into the
+# doc-sync commit. Agent edits that can't be separated from yours are left
+# uncommitted in the working tree.
+doc_agent_commit_changes() {
+  local work_dir="$1" before="$2" after="$3"
+  local commit_index="$work_dir/commit-index" old_head file
+  local -a changed committed=() skipped=()
+
+  mapfile -t changed < <(git diff --name-only --no-renames "$before" "$after")
+  ((${#changed[@]} > 0)) || return 0
+
+  old_head="$(git rev-parse HEAD)"
+  rm -f "$commit_index"
+  GIT_INDEX_FILE="$commit_index" git read-tree HEAD || return 0
+
+  for file in "${changed[@]}"; do
+    if git diff --binary --no-renames "$before" "$after" -- "$file" |
+      GIT_INDEX_FILE="$commit_index" git apply --cached 2>/dev/null; then
+      committed+=("$file")
+    else
+      skipped+=("$file")
+    fi
+  done
+
+  if ((${#committed[@]} > 0)); then
+    if ! GIT_INDEX_FILE="$commit_index" git commit -q --no-verify -m "$DOC_AGENT_COMMIT_PREFIX"; then
+      echo "post-commit: could not commit the documentation update; the agent's edits are left in the working tree." >&2
+      return 0
+    fi
+
+    # Move the real index forward for the committed files so they don't show
+    # up as staged reversions. Keep anything you had staged in them.
+    for file in "${committed[@]}"; do
+      if git diff --cached --quiet "$old_head" -- "$file"; then
+        git reset -q -- "$file"
+      elif ! git diff --binary --no-renames "$before" "$after" -- "$file" |
+        git apply --cached 2>/dev/null; then
+        echo "post-commit: $file has staged changes that conflict with the doc commit; check 'git diff --cached -- $file'." >&2
+      fi
+    done
+    echo "post-commit: documentation updated and committed (${committed[*]})."
+  fi
+
+  if ((${#skipped[@]} > 0)); then
+    echo "post-commit: left uncommitted because they overlap your own uncommitted changes: ${skipped[*]}" >&2
+  fi
+}
+
 doc_agent_run() {
-  local repo_root commit_msg agent diff prompt_file instruction
+  local repo_root commit_msg agent diff work_dir prompt_file instruction before_tree after_tree
 
   repo_root="$(git rev-parse --show-toplevel)"
   cd "$repo_root" || return 0
@@ -75,9 +137,21 @@ doc_agent_run() {
   # Large commits can produce diffs that exceed the OS argument-length limit,
   # so the prompt (which embeds the full diff) is written to a temp file
   # instead of being passed inline as a CLI argument.
-  prompt_file="$(mktemp -t doc-agent-prompt.XXXXXX)"
-  trap 'rm -f "$prompt_file"' RETURN
+  work_dir="$(mktemp -d -t doc-agent.XXXXXX)"
+  trap 'rm -rf "$work_dir"' RETURN
+  prompt_file="$work_dir/prompt.md"
   doc_agent_build_prompt "$prompt_file" "$commit_msg" "$diff"
+
+  local doc_paths=()
+  [[ -e docs ]] && doc_paths+=(docs)
+  [[ -e README.md ]] && doc_paths+=(README.md)
+  if [[ ${#doc_paths[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  # Snapshot the docs as they are now (including your uncommitted edits), so
+  # only what the agent changes afterwards gets committed.
+  before_tree="$(doc_agent_snapshot_tree "$work_dir/before-index" "${doc_paths[@]}")" || return 0
 
   echo "post-commit: running $agent to check documentation for the last commit..."
 
@@ -116,16 +190,8 @@ doc_agent_run() {
       ;;
   esac
 
-  local doc_paths=()
-  [[ -e docs ]] && doc_paths+=(docs)
-  [[ -e README.md ]] && doc_paths+=(README.md)
-  if [[ ${#doc_paths[@]} -eq 0 ]]; then
-    return 0
-  fi
-
-  if ! git diff --quiet -- "${doc_paths[@]}"; then
-    git add -- "${doc_paths[@]}"
-    git commit -m "$DOC_AGENT_COMMIT_PREFIX" >/dev/null
-    echo "post-commit: documentation updated and committed."
+  after_tree="$(doc_agent_snapshot_tree "$work_dir/after-index" "${doc_paths[@]}")" || return 0
+  if [[ "$before_tree" != "$after_tree" ]]; then
+    doc_agent_commit_changes "$work_dir" "$before_tree" "$after_tree"
   fi
 }

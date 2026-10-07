@@ -57,8 +57,13 @@ removes both settings and restores git's default hook behavior.
    - `claude -p ... --permission-mode acceptEdits --allowedTools Read,Edit,Glob,Grep`
    - `codex exec ... --sandbox workspace-write`
    - `copilot -p ... --allow-tool write --deny-tool shell`
-5. If the agent changed anything under `docs/` or `README.md`, commits those
-   changes as `docs: sync documentation (auto)`.
+5. If the agent changed anything under `docs/` or `README.md`, commits only
+   those changes as `docs: sync documentation (auto)`. The hook snapshots the
+   docs before and after the agent runs and builds the commit in a temporary
+   index from `HEAD`, so whatever you had staged, your uncommitted edits to
+   the same doc files, and anything the agent touched outside the docs stay
+   out of it. An agent edit that overlaps your own uncommitted changes in a
+   file is left uncommitted, and the hook names the file.
 
 If the diff doesn't touch documented behavior, the agent is expected to make
 no changes and no extra commit is created.
