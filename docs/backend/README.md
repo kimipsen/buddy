@@ -31,6 +31,7 @@ model or permissions logic.
 - [Backend domain model diagram](analysis/domain-model-diagram.md)
 - [Group-owned calendars and permissions](analysis/group-owned-calendars-and-permissions.md)
 - [All-day calendar items](analysis/calendar-all-day-items.md)
+- [Weekday recurrence rules](analysis/recurrence-weekdays.md)
 - [Integration testing strategy](analysis/integration-testing-strategy.md)
 - [Mutation testing strategy](analysis/mutation-testing-strategy.md)
 - [Validation rules](analysis/validation-rules.md)

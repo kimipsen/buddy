@@ -322,6 +322,141 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_daily_task_on_chosen_weekdays_occurs_only_on_those_days()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var sunday = NextSunday();
+        DayOfWeek[] schoolDays = [DayOfWeek.Friday, DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday];
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, "Pack school bag", dueDate: sunday,
+            recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, null, schoolDays));
+
+        Assert.NotNull(item);
+        Assert.Equal(
+            new RecurrenceRuleDto(RecurrenceFrequency.Daily, 1, null),
+            item.Recurrence! with { Weekdays = null });
+        Assert.Equal([DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday], item.Recurrence.Weekdays);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/calendars/{calendarId}/occurrences?from={sunday:yyyy-MM-dd}&to={sunday.AddDays(7):yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(
+            [sunday.AddDays(1), sunday.AddDays(2), sunday.AddDays(3), sunday.AddDays(4), sunday.AddDays(5)],
+            response.ReadAsJson<List<CalendarItemOccurrenceDto>>().Select(o => DateOnly.FromDateTime(o.SortAt.UtcDateTime)));
+    }
+
+    [Fact]
+    public async Task Choosing_all_seven_weekdays_is_returned_as_every_day()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, "Water plants",
+            recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, null, Enum.GetValues<DayOfWeek>()));
+
+        Assert.NotNull(item);
+        Assert.Equal(new RecurrenceRuleDto(RecurrenceFrequency.Daily, 1, null), item.Recurrence);
+    }
+
+    [Fact]
+    public async Task A_weekly_task_on_several_days_occurs_on_them_every_other_week()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var sunday = NextSunday();
+        var monday = sunday.AddDays(1);
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, "Swimming", dueDate: monday,
+            recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Weekly, 2, null, [DayOfWeek.Thursday, DayOfWeek.Monday]));
+
+        Assert.NotNull(item);
+        Assert.Equal([DayOfWeek.Monday, DayOfWeek.Thursday], item.Recurrence?.Weekdays);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url($"/calendars/{calendarId}/occurrences?from={monday:yyyy-MM-dd}&to={monday.AddDays(20):yyyy-MM-dd}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(
+            [monday, monday.AddDays(3), monday.AddDays(14), monday.AddDays(17)],
+            response.ReadAsJson<List<CalendarItemOccurrenceDto>>().Select(o => DateOnly.FromDateTime(o.SortAt.UtcDateTime)));
+    }
+
+    [Fact]
+    public async Task A_weekly_rule_keeps_all_seven_weekdays()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var item = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, "Week at dad's",
+            recurrence: new RecurrenceRuleRequest(RecurrenceFrequency.Weekly, 2, null, Enum.GetValues<DayOfWeek>()));
+
+        Assert.NotNull(item);
+        Assert.Equal(7, item.Recurrence?.Weekdays?.Count);
+    }
+
+    public static TheoryData<RecurrenceFrequency, int, int, int[], string> InvalidWeekdayRules => new()
+    {
+        { RecurrenceFrequency.Daily, 1, -1, [], "Recurrence.Weekdays" },
+        { RecurrenceFrequency.Daily, 1, -1, [9], "Recurrence.Weekdays" },
+        { RecurrenceFrequency.Monthly, 1, -1, [1], "Recurrence.Weekdays" },
+        { RecurrenceFrequency.Daily, 2, -1, [1], "Recurrence.IntervalCount" },
+        // Seeded on a Sunday and ending the next day, a Tuesday-only rule never occurs.
+        { RecurrenceFrequency.Daily, 1, 1, [2], "Recurrence.Weekdays" },
+        // Every other week from a Sunday: the next Monday is in the skipped week.
+        { RecurrenceFrequency.Weekly, 2, 7, [1], "Recurrence.Weekdays" },
+    };
+
+    [Theory]
+    [MemberData(nameof(InvalidWeekdayRules))]
+    public async Task An_invalid_weekday_filter_is_rejected(RecurrenceFrequency frequency, int intervalCount, int untilOffset, int[] weekdays, string key)
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var sunday = NextSunday();
+
+        var error = await PostInvalidItemAsync(token, calendarId, new
+        {
+            Title = "Pack school bag",
+            Icon = "task",
+            Color = "#ff0000",
+            Recurrence = new
+            {
+                Frequency = frequency,
+                IntervalCount = intervalCount,
+                Until = untilOffset < 0 ? (DateOnly?)null : sunday.AddDays(untilOffset),
+                Weekdays = weekdays,
+            },
+            Schedule = new
+            {
+                Kind = CalendarItemKind.Task,
+                IsAllDay = false,
+                DueDate = new { Date = sunday, Time = new TimeOnly(17, 0) }
+            }
+        });
+
+        Assert.Equal([key], error.Details.Keys);
+    }
+
+    private static DateOnly NextSunday()
+    {
+        var tomorrow = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        return tomorrow.AddDays((7 - (int)tomorrow.DayOfWeek) % 7);
+    }
+
+    [Fact]
     public async Task A_viewer_cannot_create_items()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();

@@ -11,7 +11,7 @@ internal sealed record CalendarMemberDto(Guid UserId, CalendarRole Role);
 
 internal sealed record CalendarSummaryDto(Guid Id, string Name, string Icon, CalendarRole Role);
 
-internal sealed record RecurrenceRuleDto(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until);
+internal sealed record RecurrenceRuleDto(RecurrenceFrequency Frequency, int IntervalCount, DateOnly? Until, IReadOnlyList<DayOfWeek>? Weekdays = null);
 
 // Icon is null when the item has no override -- it inherits the owning calendar's icon (see
 // CalendarItemResponse). The always-resolved value only shows up on CalendarItemOccurrenceDto.

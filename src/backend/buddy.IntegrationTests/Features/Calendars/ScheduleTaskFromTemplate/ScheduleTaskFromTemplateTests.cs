@@ -237,6 +237,19 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_weekday_filter_on_a_monthly_recurrence_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var error = await PostInvalidScheduleAsync(
+            token, calendarId, Guid.CreateVersion7(), "Morning routine",
+            new RecurrenceRuleRequest(RecurrenceFrequency.Monthly, 1, null, [DayOfWeek.Monday]));
+
+        Assert.Contains("Recurrence.Weekdays", error.Details.Keys);
+    }
+
+    [Fact]
     public async Task A_200_character_title_and_a_recurrence_interval_count_of_one_are_accepted()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

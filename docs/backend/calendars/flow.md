@@ -68,7 +68,7 @@ sequenceDiagram
 | `GET` | `/calendars/{calendarId}/occurrences` | Recomputes occurrences for a date range; template tasks produce one timed occurrence per current subtask. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/details` | Updates an item's name, description, or visual metadata. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/schedule` | Reschedules an item or changes time/date placement. |
-| `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings; `recurrence: null` makes the item one-off again. `400` for an interval below 1 or an `until` before the item's first date. |
+| `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings; `recurrence: null` makes the item one-off again. `400` for an interval below 1, an `until` before the item's first date, or an invalid `weekdays` filter. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a plain task occurrence complete or incomplete. A template-scheduled task is rejected (400): it is completed one subtask at a time. Rejects marking a future occurrence complete. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/subtasks/{subtaskId}/completion` | Marks one subtask of a template-scheduled task occurrence complete or incomplete; each subtask is tracked independently. A plain task is rejected (400); an unknown subtask is 404. Rejects marking a future occurrence complete. |
 | `DELETE` | `/calendars/{calendarId}/items/{itemId}` | Soft-deletes an item. |
@@ -82,6 +82,8 @@ sequenceDiagram
 The aggregate is event-sourced and uses a sparse stream of calendar mutations. The create flow appends a `CalendarCreatedForGroup` event (carrying the calendar's icon, `📅` by default), then later event and task endpoints append item-creation events: `EventItemCreated`, `TaskItemCreated`, or `TemplateTaskItemCreated` for a task scheduled from a template.
 
 An item's schedule is a union (`ItemSchedule`): an event has a `Period`; a task has a `DueDate`, an optional assignee and a source (entered by hand, or from a template). On the wire, `POST .../items` and `PATCH .../schedule` take a `schedule` object discriminated by numeric `kind` (`0` = event: `startsAt`, `endsAt`, `isAllDay`; `1` = task: `dueDate`, `isAllDay`, plus `assignedTo` on create). A reschedule must match the item's own kind. An event schedule (create or reschedule) and a task reschedule reject fields they don't have, such as `assignedTo` on an event.
+
+A recurrence on the wire is `{ frequency, intervalCount, until, weekdays }`. `weekdays` is `null` for no filter (a daily rule every day, a weekly one on the start date's weekday), or a list of day numbers (`0` = Sunday ... `6` = Saturday). A daily rule then runs only on those days and needs `intervalCount` 1; a weekly rule runs on each of them every `intervalCount` Monday-start weeks from the start date's week. Days before the start date, and the start date itself when its weekday isn't listed, are skipped. Monthly and yearly rules don't take `weekdays`, and an `until` must leave at least one occurrence. See [Weekday recurrence rules](../analysis/recurrence-weekdays.md).
 
 A task scheduled from the Task Library stores a template reference rather than
 a copy of its subtasks. Occurrence and iCal reads load the template's current

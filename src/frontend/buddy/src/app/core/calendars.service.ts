@@ -18,6 +18,9 @@ export type CalendarItemKind = 0 | 1;
 // RecurrenceFrequency 0 = Daily, 1 = Weekly, 2 = Monthly, 3 = Yearly.
 export type RecurrenceFrequency = 0 | 1 | 2 | 3;
 
+// Weekday 0 = Sunday ... 6 = Saturday, like the backend's DayOfWeek and Date.getDay().
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
 export interface CalendarSummary {
   id: string;
   name: string;
@@ -55,10 +58,14 @@ export interface DatePart {
   time: string;
 }
 
+// weekdays: null or absent means no filter (daily: every day; weekly: the start date's weekday).
+// Otherwise the days a daily rule is limited to (intervalCount must be 1), or the days a weekly
+// rule repeats on every intervalCount weeks. Not allowed for monthly/yearly.
 export interface RecurrenceRuleRequest {
   frequency: RecurrenceFrequency;
   intervalCount: number;
   until: string | null;
+  weekdays?: Weekday[] | null;
 }
 
 // When an item happens, discriminated by `kind` (0 = event, 1 = task) like the backend's

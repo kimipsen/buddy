@@ -910,8 +910,194 @@ describe('CalendarAgenda', () => {
 
     expect(calendars.createItem).toHaveBeenCalledWith(
       'cal-1',
-      expect.objectContaining({ recurrence: { frequency: 1, intervalCount: 1, until: null } }),
+      expect.objectContaining({
+        recurrence: { frequency: 1, intervalCount: 1, until: null, weekdays: null },
+      }),
     );
+  });
+
+  describe('weekday toggles', () => {
+    const weekdayButtons = (compiled: HTMLElement) =>
+      Array.from(
+        compiled.querySelectorAll<HTMLButtonElement>('[role="group"] button[aria-pressed]'),
+      );
+
+    async function chooseRepeat(
+      fixture: Awaited<ReturnType<typeof setup>>['fixture'],
+      index: number,
+    ) {
+      const compiled = fixture.nativeElement as HTMLElement;
+      setInputValue(
+        compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!,
+        'School bag',
+      );
+      await settle(fixture);
+      selectByIndex(
+        (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
+          'select[name="itemRepeat"]',
+        )!,
+        index, // none(0), daily(1), weekly(2), monthly(3)
+      );
+      await settle(fixture);
+    }
+
+    it('shows every weekday switched on, Monday first, for a daily rule', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+
+      await chooseRepeat(fixture, 1);
+      let buttons = weekdayButtons(fixture.nativeElement as HTMLElement);
+      expect(buttons.map((b) => b.textContent?.trim())).toEqual([
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat',
+        'Sun',
+      ]);
+      expect(buttons.map((b) => b.getAttribute('aria-label'))).toContain('Saturday');
+      expect(buttons.every((b) => b.getAttribute('aria-pressed') === 'true')).toBe(true);
+
+      await chooseRepeat(fixture, 3);
+      buttons = weekdayButtons(fixture.nativeElement as HTMLElement);
+      expect(buttons).toHaveLength(0);
+    });
+
+    // The form's start date defaults to today. Monday-first index of today's weekday:
+    const todayIndex = (new Date().getDay() + 6) % 7;
+
+    it("switches on only the start date's weekday for a weekly rule and sends no filter", async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+      await chooseRepeat(fixture, 2);
+
+      const pressed = weekdayButtons(fixture.nativeElement as HTMLElement).map(
+        (b) => b.getAttribute('aria-pressed') === 'true',
+      );
+      expect(pressed).toEqual([0, 1, 2, 3, 4, 5, 6].map((i) => i === todayIndex));
+
+      createForm(fixture.nativeElement as HTMLElement).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({
+          recurrence: { frequency: 1, intervalCount: 1, until: null, weekdays: null },
+        }),
+      );
+    });
+
+    it('sends the chosen weekdays for a weekly rule and keeps the interval stepper', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+      await chooseRepeat(fixture, 2);
+
+      const otherIndex = (todayIndex + 3) % 7;
+      weekdayButtons(fixture.nativeElement as HTMLElement)[otherIndex].click();
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('app-stepper')).not.toBeNull();
+
+      createForm(compiled).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      // Monday-first index back to the 0 = Sunday numbering the API uses.
+      const toApiDay = (index: number) => (index + 1) % 7;
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({
+          recurrence: {
+            frequency: 1,
+            intervalCount: 1,
+            until: null,
+            weekdays: [toApiDay(todayIndex), toApiDay(otherIndex)].sort((a, b) => a - b),
+          },
+        }),
+      );
+    });
+
+    it('forgets the chosen weekdays when the repeat choice changes', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      await chooseRepeat(fixture, 1);
+      weekdayButtons(fixture.nativeElement as HTMLElement)[0].click();
+      await settle(fixture);
+
+      await chooseRepeat(fixture, 2);
+      await chooseRepeat(fixture, 1);
+
+      expect(
+        weekdayButtons(fixture.nativeElement as HTMLElement).every(
+          (b) => b.getAttribute('aria-pressed') === 'true',
+        ),
+      ).toBe(true);
+    });
+
+    it('sends the chosen weekdays with an interval of one and hides the interval stepper', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+      await chooseRepeat(fixture, 1);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('app-stepper')).not.toBeNull();
+      const buttons = weekdayButtons(compiled);
+      buttons[6].click(); // Sun
+      buttons[5].click(); // Sat
+      await settle(fixture);
+
+      expect(buttons[5].getAttribute('aria-pressed')).toBe('false');
+      expect((fixture.nativeElement as HTMLElement).querySelector('app-stepper')).toBeNull();
+
+      createForm(fixture.nativeElement as HTMLElement).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({
+          recurrence: { frequency: 0, intervalCount: 1, until: null, weekdays: [1, 2, 3, 4, 5] },
+        }),
+      );
+    });
+
+    it('sends no weekday filter while every day is on', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+      await chooseRepeat(fixture, 1);
+
+      const buttons = weekdayButtons(fixture.nativeElement as HTMLElement);
+      buttons[2].click();
+      buttons[2].click();
+      await settle(fixture);
+
+      createForm(fixture.nativeElement as HTMLElement).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({
+          recurrence: { frequency: 0, intervalCount: 1, until: null, weekdays: null },
+        }),
+      );
+    });
+
+    it('blocks submitting with no weekday chosen', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      await chooseRepeat(fixture, 1);
+
+      for (const button of weekdayButtons(fixture.nativeElement as HTMLElement)) {
+        button.click();
+      }
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Choose at least one day.');
+      expect(
+        createForm(compiled).querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled,
+      ).toBe(true);
+    });
   });
 
   it('resets the form and reloads the week after a successful create', async () => {

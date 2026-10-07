@@ -718,7 +718,7 @@
             name="itemRepeat"
             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
             [ngModel]="newRepeat()"
-            (ngModelChange)="newRepeat.set($event)"
+            (ngModelChange)="chooseRepeat($event)"
           >
             <option [ngValue]="'none'">{{ 'calendar.agenda.form.repeat.none' | translate }}</option>
             <option [ngValue]="0">{{ 'calendar.agenda.form.repeat.daily' | translate }}</option>
@@ -728,7 +728,7 @@
           </select>
         </label>
 
-        @if (newRepeat() !== 'none') {
+        @if (newRepeat() !== 'none' && !weekdaysFiltered()) {
           <div class="block">
             <span
               class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
@@ -742,6 +742,8 @@
               (valueChange)="newIntervalCount.set($event)"
             />
           </div>
+        }
+        @if (newRepeat() !== 'none') {
           <div>
             <span
               class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
@@ -756,6 +758,49 @@
           </div>
         }
       </div>
+
+      @if (showsWeekdays()) {
+        <div
+          role="group"
+          [attr.aria-label]="'calendar.agenda.form.repeat.weekdaysLabel' | translate"
+        >
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            aria-hidden="true"
+          >
+            {{ 'calendar.agenda.form.repeat.weekdaysLabel' | translate }}
+          </span>
+          <div class="flex flex-wrap gap-2">
+            @for (toggle of weekdayToggles; track toggle.day) {
+              <button
+                type="button"
+                class="min-w-11 rounded-lg border px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [class.border-emerald-600]="isWeekdayOn(toggle.day)"
+                [class.bg-emerald-600]="isWeekdayOn(toggle.day)"
+                [class.text-white]="isWeekdayOn(toggle.day)"
+                [class.dark:border-emerald-500]="isWeekdayOn(toggle.day)"
+                [class.dark:bg-emerald-600]="isWeekdayOn(toggle.day)"
+                [class.border-slate-300]="!isWeekdayOn(toggle.day)"
+                [class.bg-white]="!isWeekdayOn(toggle.day)"
+                [class.text-slate-700]="!isWeekdayOn(toggle.day)"
+                [class.dark:border-slate-600]="!isWeekdayOn(toggle.day)"
+                [class.dark:bg-slate-800]="!isWeekdayOn(toggle.day)"
+                [class.dark:text-slate-200]="!isWeekdayOn(toggle.day)"
+                [attr.aria-pressed]="isWeekdayOn(toggle.day)"
+                [attr.aria-label]="toggle.nameKey | translate"
+                (click)="toggleWeekday(toggle.day)"
+              >
+                {{ toggle.shortKey | translate }}
+              </button>
+            }
+          </div>
+          @if (shownWeekdays().length === 0) {
+            <p class="mt-1 text-xs text-red-600 dark:text-red-400">
+              {{ 'calendar.agenda.form.repeat.weekdaysEmpty' | translate }}
+            </p>
+          }
+        </div>
+      }
 
       <button
         type="submit"

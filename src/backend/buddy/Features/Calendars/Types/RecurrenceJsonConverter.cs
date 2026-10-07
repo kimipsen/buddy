@@ -6,7 +6,9 @@ namespace buddy.Features.Calendars;
 // Marten's (de)serialization of Recurrence in the calendar item events and snapshot, with explicit
 // Kind discriminators: {"Kind":"OneOff"} or {"Kind":"Repeating","Frequency":"Weekly",
 // "IntervalCount":2,"End":{"Kind":"Never"}}, where End may instead be {"Kind":"On","Until":date}.
-// Frequency goes through the configured options (the stores' JsonStringEnumConverter).
+// Frequency goes through the configured options (the stores' JsonStringEnumConverter). Weekdays is
+// written as day names ("Weekdays":["Monday","Friday"]) only when it isn't None, and a missing
+// property reads as None, so events written before the weekday filter keep their exact shape.
 public sealed class RecurrenceJsonConverter : JsonConverter<Recurrence>
 {
     public override Recurrence Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -21,7 +23,8 @@ public sealed class RecurrenceJsonConverter : JsonConverter<Recurrence>
             nameof(Recurrence.Repeating) => new Recurrence.Repeating(
                 Required(root, "Frequency").Deserialize<RecurrenceFrequency>(options),
                 Required(root, "IntervalCount").GetInt32(),
-                ReadEnd(Required(root, "End"), options)),
+                ReadEnd(Required(root, "End"), options),
+                ReadWeekdays(root)),
             _ => throw new JsonException($"Unknown Recurrence Kind discriminator: '{kind}'."),
         };
     }
@@ -43,6 +46,12 @@ public sealed class RecurrenceJsonConverter : JsonConverter<Recurrence>
                 writer.WriteNumber("IntervalCount", repeating.IntervalCount);
                 writer.WritePropertyName("End");
                 WriteEnd(writer, repeating.End, options);
+
+                if (repeating.Weekdays != Weekdays.None)
+                {
+                    WriteWeekdays(writer, repeating.Weekdays);
+                }
+
                 break;
 
             default:
@@ -85,6 +94,35 @@ public sealed class RecurrenceJsonConverter : JsonConverter<Recurrence>
         }
 
         writer.WriteEndObject();
+    }
+
+    private static Weekdays ReadWeekdays(JsonElement root)
+    {
+        if (!root.TryGetProperty("Weekdays", out var days))
+        {
+            return Weekdays.None;
+        }
+
+        var weekdays = Weekdays.None;
+
+        foreach (var day in days.EnumerateArray())
+        {
+            weekdays |= Enum.Parse<DayOfWeek>(day.GetString() ?? throw new JsonException("Recurrence weekday must be a day name.")).ToWeekday();
+        }
+
+        return weekdays;
+    }
+
+    private static void WriteWeekdays(Utf8JsonWriter writer, Weekdays weekdays)
+    {
+        writer.WriteStartArray("Weekdays");
+
+        foreach (var day in weekdays.ToDays())
+        {
+            writer.WriteStringValue(day.ToString());
+        }
+
+        writer.WriteEndArray();
     }
 
     private static JsonElement Required(JsonElement element, string name) =>

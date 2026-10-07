@@ -1,0 +1,26 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000030",
+  "Before": {
+    "Kind": "Repeating",
+    "Frequency": "Daily",
+    "IntervalCount": 1,
+    "End": {
+      "Kind": "Never"
+    }
+  },
+  "After": {
+    "Kind": "Repeating",
+    "Frequency": "Daily",
+    "IntervalCount": 1,
+    "End": {
+      "Kind": "Never"
+    },
+    "Weekdays": [
+      "Monday",
+      "Wednesday",
+      "Sunday"
+    ]
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

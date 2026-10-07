@@ -11,6 +11,7 @@ import {
   DatePart,
   RecurrenceFrequency,
   RecurrenceRuleRequest,
+  Weekday,
 } from '../../../../core/calendars.service';
 import {
   addDaysIso,
@@ -70,6 +71,51 @@ export type ViewMode = 'day' | 'workweek' | 'week' | 'month';
 
 // The create form's Repeat choice: 'none' posts no recurrence rule at all.
 export type RepeatChoice = RecurrenceFrequency | 'none';
+
+const DAILY: RecurrenceFrequency = 0;
+const WEEKLY: RecurrenceFrequency = 1;
+
+// The daily weekday toggles, Monday first, with the translation keys of their visible
+// abbreviation and their accessible full name.
+export const WEEKDAY_TOGGLES: readonly { day: Weekday; shortKey: string; nameKey: string }[] = [
+  {
+    day: 1,
+    shortKey: 'calendar.agenda.form.repeat.weekdays.monShort',
+    nameKey: 'calendar.agenda.form.repeat.weekdays.mon',
+  },
+  {
+    day: 2,
+    shortKey: 'calendar.agenda.form.repeat.weekdays.tueShort',
+    nameKey: 'calendar.agenda.form.repeat.weekdays.tue',
+  },
+  {
+    day: 3,
+    shortKey: 'calendar.agenda.form.repeat.weekdays.wedShort',
+    nameKey: 'calendar.agenda.form.repeat.weekdays.wed',
+  },
+  {
+    day: 4,
+    shortKey: 'calendar.agenda.form.repeat.weekdays.thuShort',
+    nameKey: 'calendar.agenda.form.repeat.weekdays.thu',
+  },
+  {
+    day: 5,
+    shortKey: 'calendar.agenda.form.repeat.weekdays.friShort',
+    nameKey: 'calendar.agenda.form.repeat.weekdays.fri',
+  },
+  {
+    day: 6,
+    shortKey: 'calendar.agenda.form.repeat.weekdays.satShort',
+    nameKey: 'calendar.agenda.form.repeat.weekdays.sat',
+  },
+  {
+    day: 0,
+    shortKey: 'calendar.agenda.form.repeat.weekdays.sunShort',
+    nameKey: 'calendar.agenda.form.repeat.weekdays.sun',
+  },
+];
+
+const ALL_WEEKDAYS: readonly Weekday[] = [0, 1, 2, 3, 4, 5, 6];
 
 // What one load of the visible range returns: the guardian's calendars and the range's occurrences.
 interface LoadedWeek {
@@ -365,6 +411,41 @@ export class CalendarAgenda {
   protected readonly newRepeat = signal<RepeatChoice>('none');
   protected readonly newIntervalCount = signal(1);
   protected readonly newUntil = signal('');
+  // null until the guardian touches a weekday toggle: a daily rule then runs every day and a
+  // weekly one on the start date's weekday (what the backend does with no weekdays). Reset when
+  // the Repeat choice changes.
+  protected readonly newWeekdays = signal<readonly Weekday[] | null>(null);
+  protected readonly weekdayToggles = WEEKDAY_TOGGLES;
+  private readonly seedWeekday = computed<Weekday | null>(() => {
+    const day = parseIsoDate(
+      this.newKind() === EVENT_KIND ? this.newStartDate() : this.newDueDate(),
+    ).getDay();
+
+    return Number.isNaN(day) ? null : (day as Weekday);
+  });
+  protected readonly shownWeekdays = computed<readonly Weekday[]>(() => {
+    const explicit = this.newWeekdays();
+
+    if (explicit) {
+      return explicit;
+    }
+
+    if (this.newRepeat() === DAILY) {
+      return ALL_WEEKDAYS;
+    }
+
+    const seed = this.seedWeekday();
+
+    return seed === null ? [] : [seed];
+  });
+  protected readonly showsWeekdays = computed(
+    () => this.newRepeat() === DAILY || this.newRepeat() === WEEKLY,
+  );
+  // A daily rule limited to some weekdays steps one day at a time (the backend requires it), so
+  // the "Every" stepper is hidden while any day is off. A weekly rule keeps it (every N weeks).
+  protected readonly weekdaysFiltered = computed(
+    () => this.newRepeat() === DAILY && this.shownWeekdays().length < ALL_WEEKDAYS.length,
+  );
   protected readonly newAssignedTo = signal('');
   protected readonly creating = createAction();
 
@@ -395,6 +476,10 @@ export class CalendarAgenda {
 
   protected readonly canSubmit = computed(() => {
     if (!this.newCalendarId() || !this.newTitle().trim() || !this.newColor().trim()) {
+      return false;
+    }
+
+    if (this.showsWeekdays() && this.shownWeekdays().length === 0) {
       return false;
     }
 
@@ -837,11 +922,29 @@ export class CalendarAgenda {
       return null;
     }
 
+    const filtered = this.weekdaysFiltered();
+    const explicitWeekly = frequency === WEEKLY && this.newWeekdays() !== null;
+
     return {
       frequency,
-      intervalCount: this.newIntervalCount(),
+      intervalCount: filtered ? 1 : this.newIntervalCount(),
       until: this.newUntil().trim() || null,
+      weekdays: filtered || explicitWeekly ? [...this.shownWeekdays()].sort((a, b) => a - b) : null,
     };
+  }
+
+  protected chooseRepeat(choice: RepeatChoice): void {
+    this.newRepeat.set(choice);
+    this.newWeekdays.set(null);
+  }
+
+  protected isWeekdayOn(day: Weekday): boolean {
+    return this.shownWeekdays().includes(day);
+  }
+
+  protected toggleWeekday(day: Weekday): void {
+    const days = this.shownWeekdays();
+    this.newWeekdays.set(days.includes(day) ? days.filter((d) => d !== day) : [...days, day]);
   }
 
   private resetForm(): void {
@@ -858,6 +961,7 @@ export class CalendarAgenda {
     this.newRepeat.set('none');
     this.newIntervalCount.set(1);
     this.newUntil.set('');
+    this.newWeekdays.set(null);
     this.newAssignedTo.set('');
     this.newTaskSource.set('manual');
     this.newTaskTemplateId.set('');

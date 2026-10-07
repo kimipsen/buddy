@@ -140,4 +140,52 @@ public sealed class UpdateItemRecurrenceTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
     }
+
+    [Fact]
+    public async Task A_weekday_filter_can_be_set_and_re_sent_without_appending()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var start = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var item = await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, date: start);
+        Assert.NotNull(item);
+        var body = new { Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 1, Until = (DateOnly?)null, Weekdays = new[] { DayOfWeek.Saturday, DayOfWeek.Sunday } } };
+        var items = fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>();
+        var id = new CalendarItemId(item.Id);
+
+        var first = await PatchAsync();
+        var afterFirst = (await items.ReadAsync(id, CancellationToken.None)).Count;
+        await PatchAsync();
+
+        Assert.Equal([DayOfWeek.Saturday, DayOfWeek.Sunday], first.ReadAsJson<CalendarItemDto>().Recurrence?.Weekdays);
+        Assert.Equal(afterFirst, (await items.ReadAsync(id, CancellationToken.None)).Count);
+
+        Task<IScenarioResult> PatchAsync() => fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(body).ToUrl($"/calendars/{calendarId}/items/{item.Id}/recurrence");
+            _.StatusCodeShouldBeOk();
+        });
+    }
+
+    [Fact]
+    public async Task A_weekday_filter_that_never_occurs_before_its_end_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var start = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var item = await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, date: start);
+        Assert.NotNull(item);
+        var otherDay = start.AddDays(2).DayOfWeek;
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 1, Until = (DateOnly?)start.AddDays(1), Weekdays = new[] { otherDay } } })
+                .ToUrl($"/calendars/{calendarId}/items/{item.Id}/recurrence");
+            _.StatusCodeShouldBe(400);
+        });
+
+        Assert.Contains("Recurrence.Weekdays", response.ReadAsJson<ErrorEnvelope>().Details.Keys);
+    }
 }

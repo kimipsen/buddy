@@ -144,6 +144,19 @@ public sealed class CalendarEventShapeTests
             FixedInstant),
         "Calendars/RecurrenceUpdated_ToAnEndDate.json");
 
+    // Weekdays is written only when it filters; RecurrenceUpdated.json (written without it) must
+    // still read back with no weekday filter.
+    [Fact]
+    public void RecurrenceUpdated_ReadsBack() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(
+        new RecurrenceUpdated(FixedItemId, new Recurrence.OneOff(), new Recurrence.Repeating(RecurrenceFrequency.Weekly, 1, new RecurrenceEnd.Never(), Weekdays.None), FixedUserId, FixedInstant),
+        "Calendars/RecurrenceUpdated.json");
+
+    [Fact]
+    public void RecurrenceUpdated_ToWeekdays() => EventShapeTestSupport.AssertMatchesGoldenFile(RecurrenceUpdatedToWeekdays, "Calendars/RecurrenceUpdated_ToWeekdays.json");
+
+    [Fact]
+    public void RecurrenceUpdated_ToWeekdays_ReadsBack() => EventShapeTestSupport.AssertGoldenFileReadsBackAs(RecurrenceUpdatedToWeekdays, "Calendars/RecurrenceUpdated_ToWeekdays.json");
+
     [Fact]
     public void TaskCompletionChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new TaskCompletionChanged(FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant, new CompletionTarget.WholeTask()),
@@ -172,4 +185,11 @@ public sealed class CalendarEventShapeTests
     public void CalendarTransferredToGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new CalendarTransferredToGroup(FixedCalendarId, FixedGroupId, FixedUserId, FixedInstant),
         "Calendars/CalendarTransferredToGroup.json");
+
+    private static readonly RecurrenceUpdated RecurrenceUpdatedToWeekdays = new(
+        FixedItemId,
+        new Recurrence.Repeating(RecurrenceFrequency.Daily, 1, new RecurrenceEnd.Never()),
+        new Recurrence.Repeating(RecurrenceFrequency.Daily, 1, new RecurrenceEnd.Never(), Weekdays.Sunday | Weekdays.Monday | Weekdays.Wednesday),
+        FixedUserId,
+        FixedInstant);
 }
