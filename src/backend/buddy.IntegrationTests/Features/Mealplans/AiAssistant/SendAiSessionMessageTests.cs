@@ -1,5 +1,3 @@
-using Alba;
-
 using buddy.Common;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;

@@ -10,7 +10,7 @@
 # database vendor, health endpoints) only take effect if they're baked in here
 # by `kc.sh build`. The stock image is built for `dev-file` (embedded H2).
 
-FROM quay.io/keycloak/keycloak:21.1.1
+FROM quay.io/keycloak/keycloak:21.1.1@sha256:8ebb3930c41e8a066c4246eaf351ac09cdc984e11b1f607d6ff4ce10d69dc808
 
 # Exposes /health, /health/ready, /health/live on the HTTP port (KC 21 has no
 # separate management port). Off by default, so the Azure image is unchanged.

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace buddy.Features.Mealplans;
@@ -12,17 +13,17 @@ public static class AiSessionPromptBuilder
         var builder = new StringBuilder();
 
         builder.AppendLine("You are a meal-planning assistant helping a parent or guardian fill in their family's mealplan.");
-        builder.AppendLine($"Requested date range: {session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd}.");
-        builder.AppendLine($"Requested meal slots: {string.Join(", ", session.RequestedSlots)}.");
+        builder.AppendLine(CultureInfo.InvariantCulture, $"Requested date range: {session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd}.");
+        builder.AppendLine(CultureInfo.InvariantCulture, $"Requested meal slots: {string.Join(", ", session.RequestedSlots)}.");
 
         if (mustIncludeMealIds.Count > 0)
         {
-            builder.AppendLine($"The guardian asked to make sure these meal ids appear somewhere in the plan: {string.Join(", ", mustIncludeMealIds.Select(id => id.Value))}.");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"The guardian asked to make sure these meal ids appear somewhere in the plan: {string.Join(", ", mustIncludeMealIds.Select(id => id.Value))}.");
         }
 
         if (!string.IsNullOrWhiteSpace(notes))
         {
-            builder.AppendLine($"Guardian's notes: {notes}");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"Guardian's notes: {notes}");
         }
 
         builder.AppendLine();
@@ -35,7 +36,7 @@ public static class AiSessionPromptBuilder
                 : string.Join("; ", meal.Ratings.Select(r =>
                     $"child {r.Key.Value}: {r.Value.Stars}/5{(string.IsNullOrWhiteSpace(r.Value.Comment) ? "" : $" (\"{r.Value.Comment}\")")}"));
 
-            builder.AppendLine($"- id={meal.Id.Value} name=\"{meal.Name}\" ratings: {ratings}");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"- id={meal.Id.Value} name=\"{meal.Name}\" ratings: {ratings}");
         }
 
         builder.AppendLine();

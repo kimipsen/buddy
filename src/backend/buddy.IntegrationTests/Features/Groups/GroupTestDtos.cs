@@ -1,7 +1,7 @@
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
-using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
+using buddy.Features.Medicines;
 
 namespace buddy.IntegrationTests.Features.Groups;
 

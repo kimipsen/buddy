@@ -95,11 +95,14 @@ public sealed class CsvImportFormat : IMealPlanImportFormat
             .Select((line, index) => (index + 1, line.Trim()))
             .Where(pair => pair.Item2.Length > 0);
 
-    private static char DetectSeparator(IReadOnlyList<string> lines)
+    // In order of preference when a sample line holds equally many of several.
+    private static readonly char[] Separators = [';', '\t', ','];
+
+    private static char DetectSeparator(List<string> lines)
     {
         var sample = lines.Skip(lines.Count > 1 ? 1 : 0).FirstOrDefault() ?? "";
 
-        return new[] { ';', '\t', ',' }.OrderByDescending(c => sample.Count(ch => ch == c)).First();
+        return Separators.OrderByDescending(c => sample.Count(ch => ch == c)).First();
     }
 
     // Names only (Breakfast/Lunch/Dinner/Snack, any case): Enum.TryParse would also take "5" or

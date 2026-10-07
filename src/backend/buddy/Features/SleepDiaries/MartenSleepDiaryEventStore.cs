@@ -1,7 +1,5 @@
 using buddy.Common.Concurrency;
 
-using Marten;
-
 namespace buddy.Features.SleepDiaries;
 
 public sealed class MartenSleepDiaryEventStore(ISleepDiariesStore store) : ISleepDiaryEventStore

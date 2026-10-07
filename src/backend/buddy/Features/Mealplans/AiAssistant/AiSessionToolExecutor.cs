@@ -129,7 +129,7 @@ public static class AiSessionToolExecutor
 
         var events = occurrences.Select(o => new
         {
-            date = o.SortAt.ToString("yyyy-MM-dd"),
+            date = o.SortAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             title = o.Title,
             allDay = o.IsAllDay
         });

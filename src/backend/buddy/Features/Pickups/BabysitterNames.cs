@@ -12,11 +12,11 @@ public sealed class BabysitterNames
 {
     public static readonly BabysitterNames None = new(new Dictionary<BabysitterId, string>());
 
-    private readonly IReadOnlyDictionary<BabysitterId, string> names;
+    private readonly IReadOnlyDictionary<BabysitterId, string> _names;
 
-    private BabysitterNames(IReadOnlyDictionary<BabysitterId, string> names) => this.names = names;
+    private BabysitterNames(IReadOnlyDictionary<BabysitterId, string> names) => _names = names;
 
-    public string NameOf(PickupAssignee.Babysitter babysitter) => names.GetValueOrDefault(babysitter.BabysitterId, "");
+    public string NameOf(PickupAssignee.Babysitter babysitter) => _names.GetValueOrDefault(babysitter.BabysitterId, "");
 
     public static async Task<BabysitterNames> LoadAsync(
         IEnumerable<PickupAssignee> assignees, IBabysitterListEventStore babysitters, CancellationToken cancellationToken)

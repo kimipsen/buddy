@@ -2,8 +2,8 @@ using System.Collections.Immutable;
 
 using buddy.Features.Calendars;
 using buddy.Features.Guardians;
-using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
+using buddy.Features.Medicines;
 using buddy.Features.Users;
 
 namespace buddy.Features.Groups;

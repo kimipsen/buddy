@@ -173,6 +173,7 @@ All backend tests are in `src/backend/buddy.IntegrationTests/` (no separate unit
 - Config through `IConfiguration`/options classes (`Features/Users/PostgresOptions.cs` reads `ConnectionStrings:Postgres`, which feeds the shared `NpgsqlDataSource`). Integration tests override via `ConfigurationOverride` in the fixture.
 - Never commit secrets. `appsettings.*.json` and `.env` are git-ignored; keep local secrets there or in environment variables, keep a placeholder `.env.example` tracked if you introduce env-based config. Production secrets come from CI/CD or a cloud secret store.
 - Central package versions in `src/backend/Directory.Packages.props`; `.csproj` `PackageReference`s carry no version.
+- The .NET analyzers (`AnalysisLevel` latest-recommended) and the `.editorconfig` code style run on every build with warnings as errors: culture-explicit formatting (`CultureInfo.InvariantCulture`), `[LoggerMessage]` instead of `logger.LogX(...)`, `_camelCase` private fields, no unused usings. Fix a finding rather than suppress it; a deliberate repo-wide exception goes in `src/backend/.editorconfig` with its reason.
 
 ## 10. SonarCloud
 

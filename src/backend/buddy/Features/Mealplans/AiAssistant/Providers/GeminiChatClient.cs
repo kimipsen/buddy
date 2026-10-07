@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -41,7 +40,7 @@ public sealed class GeminiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
         var payload = await response.Content.ReadFromJsonAsync<GeminiResponse>(SerializerOptions, cancellationToken)
             ?? throw new InvalidOperationException("Gemini returned an empty response body.");
 
-        var parts = payload.Candidates.FirstOrDefault()?.Content?.Parts ?? [];
+        var parts = (payload.Candidates is [var candidate, ..] ? candidate.Content?.Parts : null) ?? [];
 
         var text = string.Concat(parts.Where(p => p.Text is not null).Select(p => p.Text));
 

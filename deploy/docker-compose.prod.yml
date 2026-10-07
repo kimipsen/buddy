@@ -12,7 +12,7 @@
 
 services:
   caddy:
-    image: caddy:2
+    image: caddy:2@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772
     restart: unless-stopped
     env_file:
       - .env
@@ -99,7 +99,7 @@ services:
       - buddy_network
 
   db:
-    image: postgres:18
+    image: postgres:18@sha256:fc973eb97c9fd04bfa1840e0f510719a584ccb3be8debfe6a4144637a9dfe8cf
     restart: unless-stopped
     env_file:
       - .env

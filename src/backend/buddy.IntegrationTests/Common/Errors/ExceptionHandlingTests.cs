@@ -134,7 +134,7 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
         { new PostgresException("duplicate key", "ERROR", "ERROR", "23505"), false },
         { new HttpRequestException("Forbidden", null, System.Net.HttpStatusCode.Forbidden), false },
         { new InvalidOperationException("bug"), false },
-        { new NullReferenceException(), false }
+        { new KeyNotFoundException(), false }
     };
 
     [Theory]

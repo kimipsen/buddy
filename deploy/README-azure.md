@@ -341,7 +341,6 @@ too (users created since then disappear).
 - **Backups**: unlike the Oracle VM (manual volume snapshots), Flexible
   Server takes automated daily backups with point-in-time restore by default
   — no extra setup needed. See "Rollback" (step 8) for restoring it.
-- The `.NET nightly` SDK/runtime image tags in
-  `../../src/backend/buddy/Dockerfile` track a floating `11.0-preview` tag —
-  pin it to the exact preview version you're relying on before treating this
-  as a long-lived deployment, same caveat as the Oracle guide.
+- Base images are pinned by tag and digest (the .NET tags match
+  `global.json`), so redeploying the same commit rebuilds the same images. See
+  the Oracle guide's notes.

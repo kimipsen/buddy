@@ -119,12 +119,14 @@ public static class RateLimitingFeature
         }
 
         // Partition kind and route only -- never the subject, address or a feed token.
-        context.RequestServices.GetRequiredService<ILoggerFactory>()
-            .CreateLogger(typeof(RateLimitingFeature))
-            .LogInformation(
-                "Rate limit exceeded for {CallerKind} caller on {Endpoint}",
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(RateLimitingFeature));
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.RateLimitExceeded(
                 IsAuthenticated(context) ? "authenticated" : "anonymous",
                 context.GetEndpoint()?.DisplayName ?? $"{context.Request.Method} (unmatched route)");
+        }
 
         var envelope = new ErrorEnvelope(
             ErrorCode,

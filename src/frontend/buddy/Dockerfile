@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1
 
-FROM node:26-alpine AS build
+# Node's major version matches .nvmrc (which CI reads too); the digest pins the exact image.
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts --legacy-peer-deps
+COPY package.json package-lock.json .npmrc .nvmrc ./
+RUN npm ci --ignore-scripts
 
 COPY . .
 
@@ -27,7 +28,7 @@ RUN node -e " \
   fs.writeFileSync(path, JSON.stringify(config, null, 2)); \
 "
 
-FROM caddy:2-alpine AS runtime
+FROM caddy:2-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS runtime
 
 # Caddy writes its state under /data and /config (XDG_DATA_HOME/XDG_CONFIG_HOME in the base
 # image), so the non-root user must own them.

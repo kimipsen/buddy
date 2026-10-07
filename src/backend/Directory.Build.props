@@ -6,5 +6,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- The .NET analyzers' recommended rule set, plus the .editorconfig code style, checked on every
+         build (and so in CI) rather than only in the IDE. Exceptions are in .editorconfig. -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Only so the build can report unnecessary usings (IDE0005), which needs the compiler's
+         documentation-comment pass. The code has no XML doc comments, hence CS1591 off. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 </Project>

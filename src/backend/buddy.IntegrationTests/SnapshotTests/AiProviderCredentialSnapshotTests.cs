@@ -1,9 +1,9 @@
+using Alba;
+
 using buddy.Features.Mealplans;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
-
-using Alba;
 
 using Microsoft.Extensions.DependencyInjection;
 

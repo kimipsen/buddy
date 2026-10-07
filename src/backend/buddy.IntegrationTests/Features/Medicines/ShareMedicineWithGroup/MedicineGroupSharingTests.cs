@@ -4,7 +4,6 @@ using buddy.Features.Groups;
 using buddy.Features.Medicines;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
-using buddy.IntegrationTests.Features.Medicines;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 

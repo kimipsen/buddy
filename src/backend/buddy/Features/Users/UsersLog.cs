@@ -20,5 +20,5 @@ internal static partial class UsersLog
     public static partial void EmailVerificationRejected(this ILogger logger, Guid userId, string reason);
 
     [LoggerMessage(EventId = 1006, Level = LogLevel.Information, Message = "Rejected {Method} {Path}: the caller has no Buddy user yet")]
-    public static partial void UnprovisionedCallerRejected(this ILogger logger, string method, string path);
+    public static partial void UnprovisionedCallerRejected(this ILogger logger, string method, string? path);
 }

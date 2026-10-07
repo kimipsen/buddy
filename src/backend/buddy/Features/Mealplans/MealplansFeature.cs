@@ -8,8 +8,6 @@ using JasperFx.Events.Projections;
 
 using Marten;
 
-using Microsoft.Extensions.Options;
-
 using Npgsql;
 
 using Weasel.Core;

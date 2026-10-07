@@ -453,19 +453,23 @@ Found along the way:
   liveness and `/health/ready` as the readiness probe.
 - [ ] **Automated backups.** Backups on the Oracle VM are manual `pg_dump` commands
   (`deploy/README.md` §7). Schedule them, copy them off the VM, and test a restore regularly.
-- [ ] **Pin the .NET preview images by digest** (`dotnet/nightly/sdk:11.0-preview`) so production
-  builds can be reproduced.
+- [x] **Pin the base images.** Official `sdk:11.0.100-preview.7` / `aspnet:11.0.0-preview.7`
+  (matching `global.json`) instead of floating nightlies; every base and compose image pinned by
+  digest, refreshed by Dependabot.
 
 ### Build reproducibility
 
 - [x] **Pin the .NET SDK.** `global.json` at the repo root pins the devcontainer's SDK, and the
   workflows install it via `global-json-file` (CI was on rc.1 while the devcontainer ran preview.7).
-- [ ] **Pin the Node version.** Add `engines`/`.nvmrc`. CI uses Node 24, but the frontend
-  Dockerfile uses `node:26-alpine`.
-- [ ] **Drop `--legacy-peer-deps`** from `npm ci` in the frontend Dockerfile and fix the
-  peer-dependency conflicts it hides.
-- [ ] **Enable .NET analyzers.** Set `AnalysisLevel` (e.g. `latest-recommended`) and
-  `EnforceCodeStyleInBuild` in `src/backend/Directory.Build.props`.
+- [x] **Pin the Node version.** `.nvmrc` (24) read by CI and matched by the Dockerfile,
+  `engines` + `engine-strict`, and Dependabot no longer bumps the Node major.
+- [x] **Drop `--legacy-peer-deps`.** It hid no conflicts; `npm ci` resolves cleanly without it.
+  Both Docker build contexts now have a `.dockerignore`, so local `node_modules`/`bin`/`obj` can't
+  leak into an image.
+- [x] **Enable .NET analyzers.** `latest-recommended` plus code style enforced on build, findings
+  fixed; deliberate exceptions are in `src/backend/.editorconfig`.
+- [ ] **`npm audit` reports 14 vulnerabilities (3 critical)** in the frontend dependencies; triage
+  them (see the security-scanning item).
 
 ### Process
 

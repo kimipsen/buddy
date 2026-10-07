@@ -1,7 +1,6 @@
 using buddy.Common;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
-using buddy.Features.Users;
 
 namespace buddy.Features.Calendars;
 

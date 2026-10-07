@@ -311,7 +311,8 @@ dotnet_naming_symbols.private_static_fields.applicable_kinds = field
 dotnet_naming_symbols.private_static_fields.applicable_accessibilities = private, protected, protected_internal, private_protected
 dotnet_naming_symbols.private_static_fields.required_modifiers = static
 
-dotnet_naming_symbols.types_and_namespaces.applicable_kinds = namespace, class, struct, interface, enum
+# Not namespaces: the project's root namespace is lowercase "buddy" on purpose.
+dotnet_naming_symbols.types_and_namespaces.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types_and_namespaces.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.types_and_namespaces.required_modifiers = 
 
@@ -319,7 +320,7 @@ dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, meth
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.non_field_members.required_modifiers = 
 
-dotnet_naming_symbols.type_parameters.applicable_kinds = namespace
+dotnet_naming_symbols.type_parameters.applicable_kinds = type_parameter
 dotnet_naming_symbols.type_parameters.applicable_accessibilities = *
 dotnet_naming_symbols.type_parameters.required_modifiers = 
 
@@ -387,3 +388,22 @@ dotnet_naming_style.s_camelcase.required_suffix =
 dotnet_naming_style.s_camelcase.word_separator = 
 dotnet_naming_style.s_camelcase.capitalization = camel_case
 
+# Analyzer exceptions (AnalysisLevel = latest-recommended, see Directory.Build.props).
+[*.cs]
+# Union case names such as ItemSchedule.Event, RecurrenceEnd.On and *GroupShare.Shared are domain
+# terms persisted in event JSON. The rule protects VB callers of a public library; Buddy has none.
+dotnet_diagnostic.CA1716.severity = none
+
+[buddy.IntegrationTests/**.cs]
+# Test names are sentences: A_guardian_can_assign_a_sibling_as_escort.
+dotnet_diagnostic.CA1707.severity = none
+# xunit's [CollectionDefinition] classes are conventionally named *Collection.
+dotnet_diagnostic.CA1711.severity = none
+# xunit owns test-class lifetimes through IAsyncLifetime, not IDisposable.
+dotnet_diagnostic.CA1001.severity = none
+# Performance rules that don't matter for test inputs.
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.CA1869.severity = none
+# Fires on query-parameter names that happen to match a local's name ("date"), which nameof() would
+# wrongly tie together.
+dotnet_diagnostic.CA1507.severity = none

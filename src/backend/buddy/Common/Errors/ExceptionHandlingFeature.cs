@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Sockets;
 
 using Microsoft.AspNetCore.Diagnostics;
@@ -68,14 +69,15 @@ public sealed class UnhandledExceptionHandler(IOptions<JsonOptions> jsonOptions)
 {
     private static readonly IReadOnlyDictionary<string, string[]> NoDetails = new Dictionary<string, string[]>();
 
-    public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        var context = httpContext;
         ErrorEnvelope envelope;
 
         if (ExceptionHandlingFeature.IsDependencyUnavailable(exception))
         {
             context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-            context.Response.Headers.RetryAfter = ((int)ExceptionHandlingFeature.RetryAfter.TotalSeconds).ToString();
+            context.Response.Headers.RetryAfter = ((int)ExceptionHandlingFeature.RetryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
             envelope = new ErrorEnvelope(
                 ExceptionHandlingFeature.DependencyUnavailableCode,
                 "A service Buddy depends on is temporarily unavailable. Please try again shortly.",

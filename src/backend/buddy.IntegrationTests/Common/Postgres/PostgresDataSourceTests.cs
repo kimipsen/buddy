@@ -7,11 +7,11 @@ using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Pickups;
 using buddy.Features.PrintTemplates;
-using buddy.Features.WorkLocations;
 using buddy.Features.Progress;
 using buddy.Features.SleepDiaries;
 using buddy.Features.TaskLibrary;
 using buddy.Features.Users;
+using buddy.Features.WorkLocations;
 using buddy.IntegrationTests.Fixtures;
 
 using Marten;

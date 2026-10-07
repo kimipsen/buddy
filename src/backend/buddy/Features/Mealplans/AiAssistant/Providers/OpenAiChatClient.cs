@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -44,7 +43,7 @@ public sealed class OpenAiChatClient(HttpClient httpClient, IOptionsMonitor<AiAs
         var payload = await response.Content.ReadFromJsonAsync<OpenAiResponse>(SerializerOptions, cancellationToken)
             ?? throw new InvalidOperationException("OpenAI returned an empty response body.");
 
-        var message = payload.Choices.FirstOrDefault()?.Message
+        var message = (payload.Choices is [var choice, ..] ? choice.Message : null)
             ?? throw new InvalidOperationException("OpenAI returned no choices.");
 
         AiRequestedToolCall[] toolCalls = message.ToolCalls is null

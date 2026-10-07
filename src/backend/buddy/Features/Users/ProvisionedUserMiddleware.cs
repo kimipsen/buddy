@@ -32,7 +32,7 @@ public sealed class ProvisionedUserMiddleware(RequestDelegate next, IOptions<Jso
             return;
         }
 
-        logger.UnprovisionedCallerRejected(context.Request.Method, context.Request.Path);
+        logger.UnprovisionedCallerRejected(context.Request.Method, context.Request.Path.Value);
 
         context.Response.StatusCode = StatusCodes.Status403Forbidden;
 

@@ -1,4 +1,3 @@
-using buddy.Common.Aggregates;
 using buddy.Features.Guardians;
 using buddy.Features.Users;
 

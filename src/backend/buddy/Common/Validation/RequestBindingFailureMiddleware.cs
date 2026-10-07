@@ -24,7 +24,7 @@ public sealed partial class RequestBindingFailureMiddleware(RequestDelegate next
         }
         catch (BadHttpRequestException exception) when (!context.Response.HasStarted)
         {
-            logger.LogInformation(exception, "Unbindable request on {Method} {Path}", context.Request.Method, context.Request.Path);
+            logger.UnbindableRequest(exception, context.Request.Method, context.Request.Path.Value);
 
             context.Response.Clear();
             context.Response.StatusCode = exception.StatusCode;

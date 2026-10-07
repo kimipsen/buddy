@@ -25,7 +25,8 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
 
     public string Id => FormatId;
 
-    // Day names -> ISO day of week (Monday = 1 ... Sunday = 7).
+    // Day names -> ISO day of week (Monday = 1 ... Sunday = 7), one line per day on purpose.
+#pragma warning disable IDE0055 // Formatting would put each of the 44 entries on its own line.
     private static readonly Dictionary<string, int> DayNames = new(StringComparer.OrdinalIgnoreCase)
     {
         ["mandag"] = 1, ["man"] = 1, ["ma"] = 1, ["monday"] = 1, ["mon"] = 1, ["mo"] = 1,
@@ -36,6 +37,7 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
         ["lørdag"] = 6, ["lør"] = 6, ["lø"] = 6, ["saturday"] = 6, ["sat"] = 6, ["sa"] = 6,
         ["søndag"] = 7, ["søn"] = 7, ["sø"] = 7, ["sunday"] = 7, ["sun"] = 7, ["su"] = 7,
     };
+#pragma warning restore IDE0055
 
     public double Detect(string text)
     {
@@ -89,15 +91,15 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
     // are held in `pending` until the next week header tells us their week (header - 1).
     private sealed class Parser(MealPlanImportOptions options)
     {
-        private readonly List<ImportWarning> warnings = [];
-        private readonly Dictionary<DateOnly, ParsedImportLine> byDate = [];
-        private readonly List<(int LineNumber, int Position, string Text, bool Inferred)> pending = [];
-        private int emptyDays;
-        private int? year;
-        private int? week;
-        private int previousWeek;
+        private readonly List<ImportWarning> _warnings = [];
+        private readonly Dictionary<DateOnly, ParsedImportLine> _byDate = [];
+        private readonly List<(int LineNumber, int Position, string Text, bool Inferred)> _pending = [];
+        private int _emptyDays;
+        private int? _year;
+        private int? _week;
+        private int _previousWeek;
         // Position (0..6) within the week, in the order the note lists days, of the last day line.
-        private int lastPosition = -1;
+        private int _lastPosition = -1;
 
         public ValidationProblem? Accept(int lineNumber, string line)
         {
@@ -109,16 +111,16 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
             if (YearHeader().Match(line) is { Success: true } yearMatch)
             {
                 FlushPendingWithoutWeek();
-                year = int.Parse(yearMatch.Groups["year"].Value, CultureInfo.InvariantCulture);
-                week = null;
-                previousWeek = 0;
-                lastPosition = -1;
+                _year = int.Parse(yearMatch.Groups["year"].Value, CultureInfo.InvariantCulture);
+                _week = null;
+                _previousWeek = 0;
+                _lastPosition = -1;
                 return null;
             }
 
             if (WeekHeader().Match(line) is { Success: true } weekMatch)
             {
-                if (year is null)
+                if (_year is null)
                 {
                     return ValidationProblem.Of($"Line {lineNumber}: a week comes before any year. Add a year line such as 'Madplan {DateTime.UtcNow.Year}' above it.");
                 }
@@ -136,33 +138,33 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
                 position = PositionOf(isoDay);
                 text = dayText;
             }
-            else if (year is not null && lastPosition < 6 && (week is not null || pending.Count > 0))
+            else if (_year is not null && _lastPosition < 6 && (_week is not null || _pending.Count > 0))
             {
                 // A line with no day name inside a week: the day after the previous line.
-                position = lastPosition + 1;
+                position = _lastPosition + 1;
                 text = line;
                 inferred = true;
             }
             else
             {
-                warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.UnrecognizedLine, $"Line {lineNumber} was not recognised and was ignored: \"{line}\"."));
+                _warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.UnrecognizedLine, $"Line {lineNumber} was not recognised and was ignored: \"{line}\"."));
                 return null;
             }
 
-            if (year is null)
+            if (_year is null)
             {
                 return ValidationProblem.Of($"Line {lineNumber}: a day comes before any year. Add a year line such as 'Madplan {DateTime.UtcNow.Year}' above it.");
             }
 
-            lastPosition = position;
+            _lastPosition = position;
 
-            if (week is null)
+            if (_week is null)
             {
-                pending.Add((lineNumber, position, text, inferred));
+                _pending.Add((lineNumber, position, text, inferred));
             }
             else
             {
-                AddDay(lineNumber, year.Value, week.Value, position, text, inferred);
+                AddDay(lineNumber, _year.Value, _week.Value, position, text, inferred);
             }
 
             return null;
@@ -172,52 +174,52 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
         {
             FlushPendingWithoutWeek();
 
-            return new ParsedImport([.. byDate.Values.OrderBy(l => l.Date).ThenBy(l => l.LineNumber)], warnings, emptyDays);
+            return new ParsedImport([.. _byDate.Values.OrderBy(l => l.Date).ThenBy(l => l.LineNumber)], _warnings, _emptyDays);
         }
 
         private void StartWeek(int lineNumber, int number)
         {
-            var maxWeek = ISOWeek.GetWeeksInYear(year!.Value);
+            var maxWeek = ISOWeek.GetWeeksInYear(_year!.Value);
             var corrected = number;
 
-            if (number < 1 || number > maxWeek || number <= previousWeek)
+            if (number < 1 || number > maxWeek || number <= _previousWeek)
             {
-                corrected = Math.Min(previousWeek + 1, maxWeek);
-                warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.WeekNumberCorrected,
-                    $"Line {lineNumber}: week {number} doesn't follow week {previousWeek}; read as week {corrected}."));
+                corrected = Math.Min(_previousWeek + 1, maxWeek);
+                _warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.WeekNumberCorrected,
+                    $"Line {lineNumber}: week {number} doesn't follow week {_previousWeek}; read as week {corrected}."));
             }
 
-            if (pending.Count > 0)
+            if (_pending.Count > 0)
             {
                 // The week before week 1 is the previous year's last ISO week.
                 var (inferredYear, inferredWeek) = corrected > 1
-                    ? (year.Value, corrected - 1)
-                    : (year.Value - 1, ISOWeek.GetWeeksInYear(year.Value - 1));
-                warnings.Add(new ImportWarning(pending[0].LineNumber, ImportWarningCodes.WeekNumberInferred,
-                    $"Line {pending[0].LineNumber}: days with no week header above them were read as week {inferredWeek} of {inferredYear}."));
+                    ? (_year.Value, corrected - 1)
+                    : (_year.Value - 1, ISOWeek.GetWeeksInYear(_year.Value - 1));
+                _warnings.Add(new ImportWarning(_pending[0].LineNumber, ImportWarningCodes.WeekNumberInferred,
+                    $"Line {_pending[0].LineNumber}: days with no week header above them were read as week {inferredWeek} of {inferredYear}."));
 
-                foreach (var (pendingLine, position, text, inferred) in pending)
+                foreach (var (pendingLine, position, text, inferred) in _pending)
                 {
                     AddDay(pendingLine, inferredYear, inferredWeek, position, text, inferred);
                 }
 
-                pending.Clear();
+                _pending.Clear();
             }
 
-            week = corrected;
-            previousWeek = corrected;
-            lastPosition = -1;
+            _week = corrected;
+            _previousWeek = corrected;
+            _lastPosition = -1;
         }
 
         private void FlushPendingWithoutWeek()
         {
-            foreach (var (lineNumber, _, text, _) in pending)
+            foreach (var (lineNumber, _, text, _) in _pending)
             {
-                warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.UnrecognizedLine,
+                _warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.UnrecognizedLine,
                     $"Line {lineNumber} is not under any week and was ignored: \"{text}\"."));
             }
 
-            pending.Clear();
+            _pending.Clear();
         }
 
         private void AddDay(int lineNumber, int dayYear, int dayWeek, int position, string text, bool inferred)
@@ -227,23 +229,23 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
 
             if (inferred)
             {
-                warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.DayInferredFromPosition,
+                _warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.DayInferredFromPosition,
                     $"Line {lineNumber} has no day name; read as {date:yyyy-MM-dd} from its position in the week."));
             }
 
-            if (byDate.Remove(date))
+            if (_byDate.Remove(date))
             {
-                warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.DuplicateDay,
+                _warnings.Add(new ImportWarning(lineNumber, ImportWarningCodes.DuplicateDay,
                     $"Line {lineNumber}: {date:yyyy-MM-dd} appears twice; the later line wins."));
             }
 
             if (ImportLineClassifier.Classify(text) is not { } classified)
             {
-                emptyDays++;
+                _emptyDays++;
                 return;
             }
 
-            byDate[date] = new ParsedImportLine(lineNumber, date, options.Slot, text, classified.Kind, classified.MealName, classified.Notes, classified.Key);
+            _byDate[date] = new ParsedImportLine(lineNumber, date, options.Slot, text, classified.Kind, classified.MealName, classified.Notes, classified.Key);
         }
 
         // Position in the note's own day order (0 = the week's first listed day).

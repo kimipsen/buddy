@@ -1,7 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
 namespace buddy.Common.Idempotency;
 
 // Idempotency records are the only thing in this codebase that need a TTL rather than an
@@ -27,14 +23,14 @@ public sealed class IdempotencyCleanupService(IServiceScopeFactory scopeFactory,
 
                 if (deleted > 0)
                 {
-                    logger.LogInformation("Deleted {Count} expired idempotency record(s).", deleted);
+                    logger.IdempotencyRecordsDeleted(deleted);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // A failed cleanup pass just leaves the stale rows for the next tick to catch --
                 // never worth taking the whole host down over.
-                logger.LogError(ex, "Idempotency cleanup pass failed.");
+                logger.IdempotencyCleanupFailed(ex);
             }
         }
     }

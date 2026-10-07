@@ -15,6 +15,9 @@
     "format": "prettier --write ."
   },
   "private": true,
+  "engines": {
+    "node": "^24.15.0"
+  },
   "packageManager": "npm@11.17.0",
   "dependencies": {
     "@angular/cdk": "^22.1.5",

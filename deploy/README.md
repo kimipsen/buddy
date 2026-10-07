@@ -267,11 +267,12 @@ remove ones you won't roll back to with `docker image rm buddy-api:<sha> ...`.
 
 ## Notes
 
-- The `.NET nightly` SDK/runtime image tags in
-  `../src/backend/buddy/Dockerfile` track a floating `11.0-preview` tag.
-  Pin it to the exact preview version your devcontainer uses
-  (`dotnet --version`) before relying on this for anything long-lived —
-  a floating preview tag can drift out from under you on a rebuild.
+- Every base image is pinned by tag and digest: the .NET SDK/runtime in
+  `../src/backend/buddy/Dockerfile` (the SDK tag matches `global.json`; bump
+  them together), Node and Caddy in the frontend Dockerfile, and Caddy,
+  Postgres and Keycloak here and in `azure/keycloak/Dockerfile`. A rebuild of
+  the same commit therefore uses the same images. Dependabot refreshes the
+  digests.
 - Backups: see step 7. (An earlier version of this guide tarred a volume
   named `postgres-data`; the real volume is `deploy_postgres-data`, so that
   command backed up a new, empty volume.)

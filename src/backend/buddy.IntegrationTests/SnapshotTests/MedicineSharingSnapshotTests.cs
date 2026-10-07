@@ -1,5 +1,3 @@
-using Alba;
-
 using buddy.Features.Medicines;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Groups;

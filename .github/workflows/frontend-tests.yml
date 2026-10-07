@@ -27,11 +27,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Same Node major as the devcontainer's LTS (and e2e-tests.yml); package.json has no
-      # engines field to read it from.
+      # The Node version comes from .nvmrc, the same file the frontend Dockerfile and devcontainer follow.
       - uses: actions/setup-node@v5
         with:
-          node-version: "24"
+          node-version-file: src/frontend/buddy/.nvmrc
           cache: "npm"
           cache-dependency-path: src/frontend/buddy/package-lock.json
 

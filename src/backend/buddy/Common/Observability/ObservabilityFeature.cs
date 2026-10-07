@@ -2,7 +2,6 @@ using buddy.Common.Health;
 using buddy.Common.Versioning;
 
 using OpenTelemetry;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;

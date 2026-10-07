@@ -1,0 +1,10 @@
+# Keep the image build independent of the machine it runs on: dependencies come from npm ci inside
+# the build, never from a local node_modules, and local build/test output stays out.
+node_modules
+dist
+.angular
+.stryker-tmp
+reports
+test-results
+playwright-report
+*.log

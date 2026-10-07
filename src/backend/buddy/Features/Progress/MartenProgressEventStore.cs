@@ -1,7 +1,5 @@
 using buddy.Common.Concurrency;
 
-using Marten;
-
 namespace buddy.Features.Progress;
 
 public sealed class MartenProgressEventStore(IProgressStore store) : IProgressEventStore

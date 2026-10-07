@@ -24,7 +24,7 @@ public sealed class ConcurrencyConflictMiddleware(RequestDelegate next, IOptions
         }
         catch (ConcurrencyException exception) when (!context.Response.HasStarted)
         {
-            logger.LogInformation(exception, "Concurrent modification on {Method} {Path}", context.Request.Method, context.Request.Path);
+            logger.ConcurrentModification(exception, context.Request.Method, context.Request.Path.Value);
 
             context.Response.Clear();
             context.Response.StatusCode = StatusCodes.Status409Conflict;

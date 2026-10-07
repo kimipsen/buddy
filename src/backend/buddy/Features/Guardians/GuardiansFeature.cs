@@ -1,6 +1,5 @@
 using buddy.Common.Configuration;
 using buddy.Common.Http;
-using buddy.Features.Users;
 
 namespace buddy.Features.Guardians;
 

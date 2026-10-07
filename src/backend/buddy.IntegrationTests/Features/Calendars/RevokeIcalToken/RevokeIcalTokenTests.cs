@@ -1,6 +1,3 @@
-using Alba;
-
-using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 

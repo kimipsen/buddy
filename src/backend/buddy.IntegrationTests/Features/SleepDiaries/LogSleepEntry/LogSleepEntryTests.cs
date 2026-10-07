@@ -156,7 +156,7 @@ public sealed class LogSleepEntryTests(BuddyApiFixture fixture)
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token, "Alex");
 
-        await LogAsync(fixture, token, child.Id, Monday, System.Text.Json.JsonDocument.Parse(json).RootElement, expectedStatus: 400);
+        await LogAsync(fixture, token, child.Id, Monday, System.Text.Json.JsonElement.Parse(json), expectedStatus: 400);
     }
 
     [Fact]

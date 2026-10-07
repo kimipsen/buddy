@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Security.Claims;
 
 using buddy.Common;
-using buddy.Common.Validation;
 using buddy.Features.Mealplans;
 
 using Microsoft.AspNetCore.Http.HttpResults;

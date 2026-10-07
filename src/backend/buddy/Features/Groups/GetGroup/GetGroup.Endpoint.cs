@@ -2,8 +2,8 @@ using System.Security.Claims;
 
 using buddy.Common;
 using buddy.Features.Calendars;
-using buddy.Features.Medicines;
 using buddy.Features.Mealplans;
+using buddy.Features.Medicines;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 

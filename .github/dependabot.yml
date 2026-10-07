@@ -60,8 +60,30 @@ updates:
     directory: "/src/backend/buddy"
     schedule:
       interval: "weekly"
+    # A new SDK tag must land together with global.json (and the runtime tag); Dependabot can't
+    # change those in one PR, so it only refreshes the digests of the pinned tags.
+    ignore:
+      - dependency-name: "dotnet/sdk"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "dotnet/aspnet"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
 
   - package-ecosystem: "docker"
     directory: "/src/frontend/buddy"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # The Node major is pinned in .nvmrc and package.json "engines"; change all three together.
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+
+  # Production compose images (Caddy, Postgres) and the Keycloak image, pinned by digest.
+  - package-ecosystem: "docker-compose"
+    directory: "/deploy"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker"
+    directory: "/deploy/azure/keycloak"
     schedule:
       interval: "weekly"

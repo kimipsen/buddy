@@ -1,6 +1,5 @@
 using buddy.Common;
 using buddy.Common.Validation;
-using buddy.Features.Calendars;
 using buddy.Features.Users;
 
 using FluentValidation;

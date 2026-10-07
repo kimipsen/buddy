@@ -1,5 +1,3 @@
-using Alba;
-
 using buddy.Common.Versioning;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;

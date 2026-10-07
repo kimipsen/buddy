@@ -3,7 +3,6 @@ using Alba;
 using buddy.Common;
 using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Features.Guardians;
-using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 

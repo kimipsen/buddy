@@ -1,5 +1,5 @@
+using System.Globalization;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 using Alba;
@@ -94,7 +94,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             ["Authentication:KeycloakAdmin:ClientId"] = AdminClientId,
             ["Authentication:KeycloakAdmin:ClientSecret"] = adminClientSecret,
             ["Mail:Host"] = _mailpit.Hostname,
-            ["Mail:Port"] = _mailpit.GetMappedPublicPort(1025).ToString(),
+            ["Mail:Port"] = _mailpit.GetMappedPublicPort(1025).ToString(CultureInfo.InvariantCulture),
 
             // The whole suite shares this host, and under TestServer every anonymous request has the
             // same (null) client IP -- production limits would throttle unrelated tests. Rate limits

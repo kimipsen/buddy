@@ -1,7 +1,6 @@
 using buddy.Common.Postgres;
 using buddy.Email;
 using buddy.Features.Guardians;
-using buddy.Features.Users;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 
 using buddy.Common.Aggregates;
-using buddy.Features.Calendars;
 using buddy.Features.Users;
 
 namespace buddy.Features.Progress;

@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using Alba;
 
 using buddy.Features.Groups;
@@ -51,7 +53,7 @@ public sealed class ETagMiddlewareTests(BuddyApiFixture fixture)
         var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Team");
         var etag = await FetchETagAsync(token, groupId);
 
-        await GetGroupAsync(token, groupId, ifNoneMatch: string.Format(headerFormat, etag), expectedStatus: 304);
+        await GetGroupAsync(token, groupId, ifNoneMatch: string.Format(CultureInfo.InvariantCulture, headerFormat, etag), expectedStatus: 304);
     }
 
     [Fact]

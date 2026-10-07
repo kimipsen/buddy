@@ -1,7 +1,6 @@
 using System.Security.Claims;
 
 using buddy.Common;
-using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 

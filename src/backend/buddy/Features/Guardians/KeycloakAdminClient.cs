@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -16,6 +15,9 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
     // realm role in Keycloak already (see Fixtures/TestRealm.json for the test realm) -- this
     // client doesn't create roles, only assigns them.
     private const string ChildRoleName = "buddy-child";
+
+    // The child sets their own password at first login; the generated one is only for that login.
+    private static readonly string[] RequiredActionsForNewChild = ["UPDATE_PASSWORD"];
 
     public async Task<KeycloakCreateUserResult> CreateChildUserAsync(
         string givenName,
@@ -36,7 +38,7 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
                 enabled = true,
                 firstName = givenName,
                 lastName = familyName,
-                requiredActions = new[] { "UPDATE_PASSWORD" },
+                requiredActions = RequiredActionsForNewChild,
                 credentials = new[]
                 {
                     new { type = "password", value = temporaryPassword, temporary = true }

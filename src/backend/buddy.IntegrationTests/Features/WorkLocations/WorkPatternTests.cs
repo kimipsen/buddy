@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using buddy.Features.WorkLocations;
 
 using Xunit;
@@ -15,7 +17,7 @@ public sealed class WorkPatternTests
     [InlineData("2026-10-04", "2026-09-28")] // Sunday belongs to the week that started the Monday before
     [InlineData("2027-01-01", "2026-12-28")]
     public void MondayOnOrBefore_finds_the_weeks_monday(string date, string expected) =>
-        Assert.Equal(DateOnly.Parse(expected), WorkPattern.MondayOnOrBefore(DateOnly.Parse(date)));
+        Assert.Equal(DateOnly.Parse(expected, CultureInfo.InvariantCulture), WorkPattern.MondayOnOrBefore(DateOnly.Parse(date, CultureInfo.InvariantCulture)));
 
     [Theory]
     [InlineData(2, "2026-09-28", 0)]
@@ -30,7 +32,7 @@ public sealed class WorkPatternTests
     {
         var pattern = new WorkPattern(cycleWeeks, new DateOnly(2026, 9, 28), []);
 
-        Assert.Equal(expected, pattern.CycleWeekOf(DateOnly.Parse(date)));
+        Assert.Equal(expected, pattern.CycleWeekOf(DateOnly.Parse(date, CultureInfo.InvariantCulture)));
     }
 
     [Fact]

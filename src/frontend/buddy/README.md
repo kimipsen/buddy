@@ -15,8 +15,10 @@ see the [development container guide](../../../.devcontainer/README.md). It
 provides the Node and Angular toolchain and starts the API's PostgreSQL,
 Keycloak, and Mailpit services.
 
-For development outside the container, use Node 22 and npm 11. The exact npm
-version is declared by `packageManager` in `package.json`. The API and a
+For development outside the container, use the Node major in `.nvmrc` (24) and
+npm 11. `package.json` declares the accepted Node range (`engines`) and the exact
+npm version (`packageManager`), and `.npmrc` makes `npm ci` refuse any other Node
+version. CI and the Dockerfile read the same `.nvmrc`. The API and a
 configured `buddy` Keycloak realm must be running before authenticated flows
 can work.
 

@@ -1,0 +1,7 @@
+# Keep the image build independent of the machine it runs on: restore and build happen inside the
+# image, never on top of a local bin/obj, and test projects and their output stay out.
+**/bin
+**/obj
+buddy.IntegrationTests
+**/TestResults
+**/StrykerOutput

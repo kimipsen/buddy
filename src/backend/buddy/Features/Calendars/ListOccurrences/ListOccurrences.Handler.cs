@@ -3,7 +3,6 @@ using buddy.Common.Validation;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.TaskLibrary;
-using buddy.Features.Users;
 
 using FluentValidation;
 

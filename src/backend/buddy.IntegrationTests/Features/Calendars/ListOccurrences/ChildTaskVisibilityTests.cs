@@ -1,6 +1,5 @@
 using Alba;
 
-using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;

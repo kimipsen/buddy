@@ -1,6 +1,5 @@
 using Alba;
 
-using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 

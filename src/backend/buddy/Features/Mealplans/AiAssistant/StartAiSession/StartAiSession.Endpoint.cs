@@ -1,8 +1,8 @@
 using System.Security.Claims;
 
 using buddy.Common;
-using buddy.Features.Users;
 using buddy.Common.RateLimiting;
+using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 

@@ -1,5 +1,3 @@
-using Alba;
-
 using buddy.IntegrationTests.Fixtures;
 
 namespace buddy.IntegrationTests.Features.TaskLibrary;

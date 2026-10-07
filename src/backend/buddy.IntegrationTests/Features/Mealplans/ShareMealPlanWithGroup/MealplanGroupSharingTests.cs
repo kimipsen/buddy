@@ -4,7 +4,6 @@ using buddy.Features.Groups;
 using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
-using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 

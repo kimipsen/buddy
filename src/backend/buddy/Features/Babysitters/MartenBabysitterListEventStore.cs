@@ -1,7 +1,5 @@
 using buddy.Common.Concurrency;
 
-using Marten;
-
 namespace buddy.Features.Babysitters;
 
 public sealed class MartenBabysitterListEventStore(IBabysittersStore store) : IBabysitterListEventStore

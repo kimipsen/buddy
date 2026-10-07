@@ -1,7 +1,5 @@
 using buddy.Common.Concurrency;
 
-using Marten;
-
 namespace buddy.Features.WorkLocations;
 
 public sealed class MartenWorkLocationScheduleEventStore(IWorkLocationsStore store) : IWorkLocationScheduleEventStore

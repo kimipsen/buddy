@@ -34,11 +34,10 @@ jobs:
         with:
           global-json-file: global.json
 
-      # package.json has no engines/volta field for node-version-file to read, so pin the major
-      # explicitly -- the devcontainer's Node LTS (24), within Angular 22's supported range.
+      # The Node version comes from .nvmrc, the same file the frontend Dockerfile and devcontainer follow.
       - uses: actions/setup-node@v5
         with:
-          node-version: "24"
+          node-version-file: src/frontend/buddy/.nvmrc
           cache: "npm"
           cache-dependency-path: src/frontend/buddy/package-lock.json
 

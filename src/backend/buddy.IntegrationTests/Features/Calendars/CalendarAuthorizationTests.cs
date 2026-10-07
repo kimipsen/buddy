@@ -1,5 +1,3 @@
-using Alba;
-
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.IntegrationTests.Features.Groups;

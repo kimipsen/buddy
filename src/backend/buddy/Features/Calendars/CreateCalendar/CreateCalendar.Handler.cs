@@ -1,6 +1,5 @@
 using buddy.Common.Validation;
 using buddy.Features.Groups;
-using buddy.Features.Users;
 
 using FluentValidation;
 

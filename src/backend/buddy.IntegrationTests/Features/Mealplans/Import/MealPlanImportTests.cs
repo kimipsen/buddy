@@ -1,15 +1,13 @@
 using Alba;
 
-using buddy.Features.Users;
-
-using Microsoft.Extensions.DependencyInjection;
-
 using buddy.Features.Groups;
 using buddy.Features.Mealplans;
-using buddy.IntegrationTests.Features.Groups;
+using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Xunit;
 
