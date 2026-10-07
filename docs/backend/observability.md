@@ -114,7 +114,7 @@ message text.
 | 6001–6008 | `Features/Mealplans/MealplansLog.cs` | AI provider keys set or removed, active provider changed, provider failures, meal plan iCal tokens |
 | 7001–7002 | `Email/EmailLog.cs` | Each email sent (by kind), or the SMTP failure |
 | 8001–8005 | `Common/CommonLog.cs` | Concurrency conflicts, unbindable requests, rate-limit rejections, idempotency cleanup |
-| 10001–10005 | `Features/Privacy/PrivacyLog.cs` | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep |
+| 10001–10006 | `Features/Privacy/PrivacyLog.cs` | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep, a personal data export |
 
 Existing framework-adjacent logs: unbindable requests (`RequestBindingFailureMiddleware`),
 concurrency conflicts (`ConcurrencyConflictMiddleware`), rate-limit rejections
