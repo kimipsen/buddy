@@ -84,6 +84,22 @@ export const mealplan = {
     noChildren: 'Link a child from Settings before using the AI assistant.',
     noProviderConfigured: 'Add an AI provider API key in Settings before starting a session.',
     goToSettings: 'Go to Settings',
+    dataSharing: {
+      title: 'What the assistant shares',
+      intro:
+        'To suggest meals, Buddy sends the following to the AI provider whose API key your family added. The provider handles it under its own terms.',
+      meals: "Your family's meals, with the children's star ratings and comments.",
+      notes: 'The notes you add when you start a session, and everything you write in the chat.',
+      calendar:
+        'Times from your calendars, so the assistant can spot busy days. Titles are only sent for family items that concern the child or nobody; everything else is sent as "busy".',
+      children: 'Children appear as "child 1", "child 2" — never by name or account.',
+      retention:
+        'Buddy deletes the conversation 30 days after a session ends. The meal plan it made stays.',
+      acknowledgeButton: 'I understand, continue',
+      acknowledging: 'Saving…',
+      acknowledgeError: 'Could not save your acknowledgement. Try again.',
+      acknowledgedOn: 'Acknowledged on {date}.',
+    },
     loadError: 'Unable to load the AI assistant.',
     start: {
       title: 'Start a new session',

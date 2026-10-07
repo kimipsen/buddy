@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text;
 
+using buddy.Features.Users;
+
 namespace buddy.Features.Mealplans;
 
 // Builds the system prompt fresh on every turn from the family's current meal library/ratings --
@@ -29,12 +31,15 @@ public static class AiSessionPromptBuilder
         builder.AppendLine();
         builder.AppendLine("Available meals -- only propose meal ids from this list:");
 
-        foreach (var meal in familyMeals.Where(m => !m.IsArchived))
+        var activeMeals = familyMeals.Where(m => !m.IsArchived).ToList();
+        var childAliases = BuildChildAliases(activeMeals);
+
+        foreach (var meal in activeMeals)
         {
             var ratings = meal.Ratings.Count == 0
                 ? "no ratings yet"
-                : string.Join("; ", meal.Ratings.Select(r =>
-                    $"child {r.Key.Value}: {r.Value.Stars}/5{(string.IsNullOrWhiteSpace(r.Value.Comment) ? "" : $" (\"{r.Value.Comment}\")")}"));
+                : string.Join("; ", meal.Ratings.OrderBy(r => childAliases[r.Key]).Select(r =>
+                    $"child {childAliases[r.Key]}: {r.Value.Stars}/5{(string.IsNullOrWhiteSpace(r.Value.Comment) ? "" : $" (\"{r.Value.Comment}\")")}"));
 
             builder.AppendLine(CultureInfo.InvariantCulture, $"- id={meal.Id.Value} name=\"{meal.Name}\" ratings: {ratings}");
         }
@@ -52,4 +57,15 @@ public static class AiSessionPromptBuilder
 
         return builder.ToString();
     }
+
+    // Children are "child 1", "child 2" in the prompt, never their UserId (GDPR Question 6 in
+    // docs/backend/analysis/gdpr-data-protection.md). Numbered in UserId order, so the numbering
+    // stays the same across a session's turns unless a new child rates a meal mid-session.
+    private static Dictionary<UserId, int> BuildChildAliases(IEnumerable<Meal> meals) =>
+        meals
+            .SelectMany(m => m.Ratings.Keys)
+            .Distinct()
+            .Order(Comparer<UserId>.Create((a, b) => a.Value.CompareTo(b.Value)))
+            .Select((childId, index) => (childId, index))
+            .ToDictionary(x => x.childId, x => x.index + 1);
 }

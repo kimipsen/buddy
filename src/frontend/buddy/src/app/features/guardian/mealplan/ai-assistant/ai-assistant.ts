@@ -8,6 +8,7 @@ import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealSlot } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { AiDataSharingNotice } from '../ai-data-sharing-notice/ai-data-sharing-notice';
 
 const DRAFTING = 0;
 
@@ -35,12 +36,13 @@ function addDaysIso(iso: string, days: number): string {
 interface AssistantChild {
   childId: string;
   hasProviderConfigured: boolean;
+  dataSharingAcknowledged: boolean;
   session: AiSessionView | null;
 }
 
 @Component({
   selector: 'app-mealplan-ai-assistant',
-  imports: [RouterLink, FormsModule, TranslatePipe],
+  imports: [RouterLink, FormsModule, TranslatePipe, AiDataSharingNotice],
   templateUrl: './ai-assistant.html',
 })
 export class MealplanAiAssistant {
@@ -182,6 +184,10 @@ export class MealplanAiAssistant {
     this.starting.reset();
   }
 
+  protected onDataSharingAcknowledged(): void {
+    this.assistant.update((current) => current && { ...current, dataSharingAcknowledged: true });
+  }
+
   private childId(): string | undefined {
     return this.assistant.hasValue() ? this.assistant.value()?.childId : undefined;
   }
@@ -204,6 +210,7 @@ export class MealplanAiAssistant {
     return {
       childId,
       hasProviderConfigured: providers.activeProvider !== null,
+      dataSharingAcknowledged: providers.dataSharingAcknowledgedAt !== null,
       session: await this.findDraftingSession(childId),
     };
   }

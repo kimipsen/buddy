@@ -431,7 +431,7 @@ Found along the way:
     frontend: a delete-child action and a deletion dialog that lists the children and groups
     affected.
   - [x] Data export (`GET /users/me/export`) and a "Download my data" button.
-  - [ ] AI assistant: minimization, 30-day retention, disclosure and acknowledgement.
+  - [x] AI assistant: minimization, 30-day retention, disclosure and acknowledgement.
   - [ ] Health-data read audit logs.
   - [ ] Outside the code: privacy notice, record of processing, DPIA, DPAs with the hosting
     provider; set up 30-day backup rotation.

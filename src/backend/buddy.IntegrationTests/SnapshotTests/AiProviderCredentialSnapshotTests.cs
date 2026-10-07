@@ -57,6 +57,13 @@ public sealed class AiProviderCredentialSnapshotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
 
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Url($"/mealplans/children/{child.Id}/ai/data-sharing-acknowledgement");
+            _.StatusCodeShouldBeOk();
+        });
+
         // ProviderApiKeyRemoved + ActiveProviderCleared: OpenAi was the active provider.
         await fixture.Host.Scenario(_ =>
         {
@@ -77,5 +84,6 @@ public sealed class AiProviderCredentialSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(snapshot);
         Assert.Equivalent(replayed, snapshot, strict: true);
         Assert.Null(snapshot.ActiveProvider);
+        Assert.NotNull(snapshot.DataSharingAcknowledgedAt);
     }
 }

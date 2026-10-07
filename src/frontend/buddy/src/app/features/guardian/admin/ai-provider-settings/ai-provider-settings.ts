@@ -11,6 +11,7 @@ import {
 import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { AiDataSharingNotice } from '../../mealplan/ai-data-sharing-notice/ai-data-sharing-notice';
 
 // Ordered to match the alphabetical order of their translated display names ("Anthropic (Claude)",
 // "Google (Gemini)", "OpenAI (ChatGPT)"), like the other admin lists.
@@ -34,11 +35,12 @@ type LoadedSettings =
       childId: string;
       configured: Map<AiProvider, AiProviderSettingsEntry>;
       activeProvider: AiProvider | null;
+      dataSharingAcknowledgedAt: string | null;
     };
 
 @Component({
   selector: 'app-ai-provider-settings',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, AiDataSharingNotice],
   templateUrl: './ai-provider-settings.html',
 })
 export class AiProviderSettingsComponent {
@@ -153,7 +155,7 @@ export class AiProviderSettingsComponent {
     });
   }
 
-  private applySettings(settings: AiProviderSettingsData): void {
+  protected applySettings(settings: AiProviderSettingsData): void {
     this.settings.update((current) =>
       current?.hasChildren ? { ...current, ...this.toProviders(settings) } : current,
     );
@@ -163,6 +165,7 @@ export class AiProviderSettingsComponent {
     return {
       configured: new Map(settings.providers.map((entry) => [entry.provider, entry])),
       activeProvider: settings.activeProvider,
+      dataSharingAcknowledgedAt: settings.dataSharingAcknowledgedAt,
     };
   }
 

@@ -23,7 +23,7 @@ describe('AiProviderSettingsComponent', () => {
   }
 
   function settings(overrides: Partial<AiProviderSettings> = {}): AiProviderSettings {
-    return { providers: [], activeProvider: null, ...overrides };
+    return { providers: [], activeProvider: null, dataSharingAcknowledgedAt: null, ...overrides };
   }
 
   interface Stubs {
@@ -100,8 +100,15 @@ describe('AiProviderSettingsComponent', () => {
   // OpenAI), not by the AiProvider enum's numeric ordinal.
   const ROW_POSITION: Record<0 | 1 | 2, number> = { 0: 0, 2: 1, 1: 2 };
 
+  // The data-sharing notice below the provider list has list items of its own.
+  function providerRows(compiled: HTMLElement): HTMLElement[] {
+    return Array.from(compiled.querySelectorAll<HTMLElement>('li')).filter(
+      (li) => !li.closest('app-ai-data-sharing-notice'),
+    );
+  }
+
   function row(compiled: HTMLElement, provider: 0 | 1 | 2): HTMLElement {
-    return compiled.querySelectorAll<HTMLElement>('li')[ROW_POSITION[provider]];
+    return providerRows(compiled)[ROW_POSITION[provider]];
   }
 
   function rowButton(
@@ -152,6 +159,36 @@ describe('AiProviderSettingsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Unable to load AI provider settings.');
   });
 
+  it('shows what the assistant shares, without an acknowledge button before a provider is active', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    expect(compiled.textContent).toContain('What the assistant shares');
+    expect(findButtonByText(compiled, 'I understand, continue')).toBeUndefined();
+  });
+
+  it('lets a guardian acknowledge data sharing once a provider is active', async () => {
+    const acknowledgeDataSharing = vi.fn(async () =>
+      settings({ activeProvider: 0, dataSharingAcknowledgedAt: '2026-08-02T09:30:00Z' }),
+    );
+    const { fixture } = await setup({
+      aiAssistant: {
+        listProviders: vi.fn(async () => settings({ activeProvider: 0 })),
+        acknowledgeDataSharing,
+      },
+    });
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    findButtonByText(compiled, 'I understand, continue')!.click();
+    await settle(fixture);
+
+    expect(acknowledgeDataSharing).toHaveBeenCalledWith('child-1');
+    expect(compiled.textContent).toContain('Acknowledged on 2026-08-02.');
+    expect(findButtonByText(compiled, 'I understand, continue')).toBeUndefined();
+  });
+
   it('lists all three providers, none configured', async () => {
     const { fixture } = await setup();
     await settle(fixture);
@@ -160,11 +197,9 @@ describe('AiProviderSettingsComponent', () => {
     expect(compiled.textContent).toContain('Anthropic (Claude)');
     expect(compiled.textContent).toContain('OpenAI (ChatGPT)');
     expect(compiled.textContent).toContain('Google (Gemini)');
-    expect(
-      Array.from(compiled.querySelectorAll('li')).filter((li) =>
-        li.textContent?.includes('Add key'),
-      ),
-    ).toHaveLength(3);
+    expect(providerRows(compiled).filter((li) => li.textContent?.includes('Add key'))).toHaveLength(
+      3,
+    );
   });
 
   it('saves a new API key and shows the configured provider as active', async () => {
@@ -287,13 +322,13 @@ describe('AiProviderSettingsComponent', () => {
 
     const compiled: HTMLElement = fixture.nativeElement;
     expect(compiled.textContent).toContain('Loading providers…');
-    expect(compiled.querySelectorAll('li')).toHaveLength(0);
+    expect(providerRows(compiled)).toHaveLength(0);
 
     children.resolve([child()]);
     await settle(fixture);
 
     expect(compiled.textContent).not.toContain('Loading providers…');
-    expect(compiled.querySelectorAll('li')).toHaveLength(3);
+    expect(providerRows(compiled)).toHaveLength(3);
   });
 
   it('shows the load error (not the no-children hint) when listing children fails', async () => {

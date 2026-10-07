@@ -51,6 +51,11 @@
             {{ 'mealplan.aiAssistant.goToSettings' | translate }}
           </a>
         </section>
+      } @else if (!child.dataSharingAcknowledged) {
+        <app-ai-data-sharing-notice
+          [childId]="child.childId"
+          (acknowledged)="onDataSharingAcknowledged()"
+        />
       } @else if (child.session; as current) {
         <div class="space-y-6">
           <section

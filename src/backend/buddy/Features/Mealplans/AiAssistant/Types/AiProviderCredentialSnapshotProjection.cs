@@ -33,4 +33,7 @@ public sealed class AiProviderCredentialSnapshotProjection : SingleStreamProject
 
     public AiProviderCredentialSnapshot Apply(AiProviderCredentialSnapshot current, ActiveProviderCleared cleared) =>
         current with { AiProviderCredential = AiProviderCredential.Advance(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(cleared)) };
+
+    public AiProviderCredentialSnapshot Apply(AiProviderCredentialSnapshot current, AiDataSharingAcknowledged acknowledged) =>
+        current with { AiProviderCredential = AiProviderCredential.Advance(current.AiProviderCredential, AiProviderCredentialEvent.FromPayload(acknowledged)) };
 }

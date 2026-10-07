@@ -1,0 +1,48 @@
+<section
+  aria-labelledby="aiDataSharingTitle"
+  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+>
+  <h3 id="aiDataSharingTitle" class="mb-2 text-lg font-semibold tracking-normal">
+    {{ 'mealplan.aiAssistant.dataSharing.title' | translate }}
+  </h3>
+  <p class="text-sm text-slate-600 dark:text-slate-300">
+    {{ 'mealplan.aiAssistant.dataSharing.intro' | translate }}
+  </p>
+  <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+    <li>{{ 'mealplan.aiAssistant.dataSharing.meals' | translate }}</li>
+    <li>{{ 'mealplan.aiAssistant.dataSharing.notes' | translate }}</li>
+    <li>{{ 'mealplan.aiAssistant.dataSharing.calendar' | translate }}</li>
+  </ul>
+  <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">
+    {{ 'mealplan.aiAssistant.dataSharing.children' | translate }}
+  </p>
+  <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+    {{ 'mealplan.aiAssistant.dataSharing.retention' | translate }}
+  </p>
+
+  @if (acknowledgedAt(); as at) {
+    <p class="mt-4 text-xs text-slate-500 dark:text-slate-400">
+      {{ 'mealplan.aiAssistant.dataSharing.acknowledgedOn' | translate: { date: at.slice(0, 10) } }}
+    </p>
+  } @else if (canAcknowledge()) {
+    <button
+      type="button"
+      class="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+      [disabled]="acknowledging.busy()"
+      (click)="acknowledge()"
+    >
+      {{
+        (acknowledging.busy()
+          ? 'mealplan.aiAssistant.dataSharing.acknowledging'
+          : 'mealplan.aiAssistant.dataSharing.acknowledgeButton'
+        ) | translate
+      }}
+    </button>
+
+    @if (acknowledging.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      }
+    }
+  }
+</section>

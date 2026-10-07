@@ -17,4 +17,10 @@ public interface IAiSessionEventStore
     // (unlike MealPlan/AiProviderCredential) can be superseded by a later one anchored under a
     // different sibling.
     Task<(MealplanAiSessionId Id, DateTimeOffset StartedAt)?> FindLatestForChildAsync(UserId childId, CancellationToken cancellationToken);
+
+    // Sessions whose content isn't erased yet and whose last activity (or, on a row from before
+    // retention existed, whose start) is at or before inactiveSince -- see AiSessionRetention.
+    Task<IReadOnlyCollection<AiSessionIndexDocument>> ListRetentionCandidatesAsync(DateTimeOffset inactiveSince, CancellationToken cancellationToken);
+
+    Task UpdateIndexAsync(AiSessionIndexDocument index, CancellationToken cancellationToken);
 }

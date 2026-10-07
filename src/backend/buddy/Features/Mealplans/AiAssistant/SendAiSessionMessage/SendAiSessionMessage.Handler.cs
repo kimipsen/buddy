@@ -105,7 +105,7 @@ public static class SendAiSessionMessageHandler
         List<MealplanAiSessionEvent> newEvents = [new AiUserMessageSent(sessionId, command.Text, userId, DateTimeOffset.UtcNow)];
 
         var toolLoopResult = await RunToolLoopAsync(
-            apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, familyMealIds, userId,
+            apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, familyMealIds, userId, started.ChildId,
             calendars, calendarItems, taskTemplates, groups, guardians, activeProvider, logger, cancellationToken);
 
         if (toolLoopResult is not Result<string>.Success(var finalText))
@@ -138,6 +138,7 @@ public static class SendAiSessionMessageHandler
         MealplanAiSession session,
         IReadOnlyCollection<MealId> familyMealIds,
         UserId userId,
+        UserId sessionChildId,
         ICalendarEventStore calendars,
         ICalendarItemEventStore calendarItems,
         ITaskTemplateEventStore taskTemplates,
@@ -175,7 +176,7 @@ public static class SendAiSessionMessageHandler
             foreach (var toolCall in completion.ToolCalls)
             {
                 var outcome = await AiSessionToolExecutor.ExecuteAsync(
-                    toolCall, sessionId, session, familyMealIds, userId, calendars, calendarItems, taskTemplates, groups, guardians, now, cancellationToken);
+                    toolCall, sessionId, session, familyMealIds, userId, sessionChildId, calendars, calendarItems, taskTemplates, groups, guardians, now, cancellationToken);
 
                 newEvents.Add(new AiToolInvocationRecorded(sessionId, toolCall.ToolCallId, toolCall.ToolName, toolCall.ArgumentsJson, outcome.ResultJson, outcome.IsError, now));
                 turnInvocations.Add(new AiToolInvocation(toolCall.ToolCallId, toolCall.ToolName, toolCall.ArgumentsJson, outcome.ResultJson, outcome.IsError));

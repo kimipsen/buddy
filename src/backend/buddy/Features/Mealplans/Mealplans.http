@@ -99,3 +99,10 @@ DELETE {{buddy_HostAddress}}/mealplans/children/{{childId}}/imports/{{importId}}
 Authorization: Bearer {{guardianToken}}
 
 ###
+
+# Acknowledge what the AI assistant shares with the family's provider (once per family;
+# StartAiSession answers 409 ai_data_sharing_not_acknowledged until then).
+PUT {{buddy_HostAddress}}/mealplans/children/{{childId}}/ai/data-sharing-acknowledgement
+Authorization: Bearer {{guardianToken}}
+
+###

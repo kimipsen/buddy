@@ -28,6 +28,7 @@ describe('MealplanAiAssistant', () => {
     return {
       providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
       activeProvider: 0,
+      dataSharingAcknowledgedAt: '2026-08-01T00:00:00Z',
       ...overrides,
     };
   }
@@ -121,6 +122,30 @@ describe('MealplanAiAssistant', () => {
       'Add an AI provider API key in Settings before starting a session.',
     );
     expect(compiled.querySelector('form')).toBeNull();
+  });
+
+  it('shows what is shared, instead of the start form, until data sharing is acknowledged', async () => {
+    const acknowledgeDataSharing = vi.fn(async () =>
+      providerSettings({ dataSharingAcknowledgedAt: '2026-08-02T00:00:00Z' }),
+    );
+    const { fixture } = await setup({
+      aiAssistant: {
+        listProviders: vi.fn(async () => providerSettings({ dataSharingAcknowledgedAt: null })),
+        acknowledgeDataSharing,
+      },
+    });
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    expect(compiled.textContent).toContain('What the assistant shares');
+    expect(compiled.querySelector('form')).toBeNull();
+
+    findButtonByText(compiled, 'I understand, continue')!.click();
+    await settle(fixture);
+
+    expect(acknowledgeDataSharing).toHaveBeenCalledWith('child-1');
+    expect(compiled.textContent).not.toContain('What the assistant shares');
+    expect(compiled.textContent).toContain('Start a new session');
   });
 
   it('shows the start form with a default slot selected when there is no current session', async () => {

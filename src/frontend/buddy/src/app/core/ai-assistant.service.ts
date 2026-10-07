@@ -27,6 +27,9 @@ export interface AiProviderSettingsEntry {
 export interface AiProviderSettings {
   providers: AiProviderSettingsEntry[];
   activeProvider: AiProvider | null;
+  // When a guardian acknowledged what the assistant shares with the provider; null until then.
+  // Starting a session is refused (409 ai_data_sharing_not_acknowledged) until it is set.
+  dataSharingAcknowledgedAt: string | null;
 }
 
 // kind 0 = the provider answered; 1 = it rejected the key (bad key, no quota, ...) with a message.
@@ -97,6 +100,15 @@ export class AiAssistantService {
   setActiveProvider(childId: string, provider: AiProvider): Promise<AiProviderSettings> {
     return firstValueFrom(
       this.http.put<AiProviderSettings>(`${this.base(childId)}/ai/active-provider/${provider}`, {}),
+    );
+  }
+
+  acknowledgeDataSharing(childId: string): Promise<AiProviderSettings> {
+    return firstValueFrom(
+      this.http.put<AiProviderSettings>(
+        `${this.base(childId)}/ai/data-sharing-acknowledgement`,
+        {},
+      ),
     );
   }
 

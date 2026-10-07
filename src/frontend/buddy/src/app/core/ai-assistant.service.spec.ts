@@ -23,7 +23,7 @@ describe('AiAssistantService', () => {
   }
 
   function settings(overrides: Partial<AiProviderSettings> = {}): AiProviderSettings {
-    return { providers: [], activeProvider: null, ...overrides };
+    return { providers: [], activeProvider: null, dataSharingAcknowledgedAt: null, ...overrides };
   }
 
   function session(overrides: Partial<AiSessionView> = {}): AiSessionView {
@@ -115,6 +115,21 @@ describe('AiAssistantService', () => {
       req.flush(settings({ activeProvider: 2 }));
 
       await expect(promise).resolves.toMatchObject({ activeProvider: 2 });
+    });
+  });
+
+  describe('acknowledgeDataSharing', () => {
+    it('PUTs to the data-sharing acknowledgement endpoint', async () => {
+      const promise = service.acknowledgeDataSharing(childId);
+
+      const req = httpMock.expectOne(`${base()}/ai/data-sharing-acknowledgement`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({});
+      req.flush(settings({ dataSharingAcknowledgedAt: '2026-08-01T10:00:00Z' }));
+
+      await expect(promise).resolves.toMatchObject({
+        dataSharingAcknowledgedAt: '2026-08-01T10:00:00Z',
+      });
     });
   });
 

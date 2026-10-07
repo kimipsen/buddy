@@ -29,4 +29,13 @@ internal static partial class MealplansLog
 
     [LoggerMessage(EventId = 6008, Level = LogLevel.Information, Message = "iCal feed token {TokenId} for meal plan {MealPlanId} revoked by {UserId}")]
     public static partial void MealPlanIcalTokenRevoked(this ILogger logger, Guid tokenId, Guid mealPlanId, Guid userId);
+
+    [LoggerMessage(EventId = 6009, Level = LogLevel.Information, Message = "Conversation of AI session {SessionId} erased after {RetentionDays} days without activity")]
+    public static partial void AiSessionContentErased(this ILogger logger, Guid sessionId, int retentionDays);
+
+    [LoggerMessage(EventId = 6010, Level = LogLevel.Error, Message = "AI session retention sweep failed; it runs again on the next tick")]
+    public static partial void AiSessionRetentionSweepFailed(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 6011, Level = LogLevel.Information, Message = "AI data sharing for child {ChildId}'s family acknowledged by {UserId}")]
+    public static partial void AiDataSharingAcknowledged(this ILogger logger, Guid childId, Guid userId);
 }

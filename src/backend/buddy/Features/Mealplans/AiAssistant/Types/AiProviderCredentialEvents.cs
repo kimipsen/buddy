@@ -7,7 +7,8 @@ public union AiProviderCredentialEvent(
     ProviderApiKeySet,
     ProviderApiKeyRemoved,
     ActiveProviderChanged,
-    ActiveProviderCleared
+    ActiveProviderCleared,
+    AiDataSharingAcknowledged
 )
 {
     public static AiProviderCredentialEvent FromPayload(object payload) => payload switch
@@ -17,6 +18,7 @@ public union AiProviderCredentialEvent(
         ProviderApiKeyRemoved e => e,
         ActiveProviderChanged e => e,
         ActiveProviderCleared e => e,
+        AiDataSharingAcknowledged e => e,
         _ => throw new ArgumentException($"Unknown AI credential event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -27,6 +29,7 @@ public union AiProviderCredentialEvent(
         ProviderApiKeyRemoved => nameof(ProviderApiKeyRemoved),
         ActiveProviderChanged => nameof(ActiveProviderChanged),
         ActiveProviderCleared => nameof(ActiveProviderCleared),
+        AiDataSharingAcknowledged => nameof(AiDataSharingAcknowledged),
     };
 }
 
@@ -46,3 +49,8 @@ public sealed record ActiveProviderChanged(AiCredentialId Id, AiProvider Provide
 // Appended alongside ProviderApiKeyRemoved when the removed provider was the active one, leaving
 // the family with no active provider until a guardian picks (or adds) another.
 public sealed record ActiveProviderCleared(AiCredentialId Id, UserId ClearedBy, DateTimeOffset OccurredAt);
+
+// A guardian confirmed they have read what the assistant sends to the family's provider (GDPR
+// Question 6.3 in docs/backend/analysis/gdpr-data-protection.md). Once per family: StartAiSession
+// refuses with 409 ai_data_sharing_not_acknowledged until the credential has one.
+public sealed record AiDataSharingAcknowledged(AiCredentialId Id, UserId UserId, DateTimeOffset OccurredAt);

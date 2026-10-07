@@ -85,6 +85,22 @@ export const mealplan = {
     noProviderConfigured:
       'Tilføj en API-nøgle til en AI-udbyder under Indstillinger, før du starter en session.',
     goToSettings: 'Gå til Indstillinger',
+    dataSharing: {
+      title: 'Hvad assistenten deler',
+      intro:
+        'For at foreslå måltider sender Buddy følgende til den AI-udbyder, som din familie har tilføjet en API-nøgle til. Udbyderen behandler det efter sine egne vilkår.',
+      meals: 'Din families måltider med børnenes stjernebedømmelser og kommentarer.',
+      notes: 'De noter, du skriver, når du starter en session, og alt, hvad du skriver i chatten.',
+      calendar:
+        'Tidspunkter fra dine kalendere, så assistenten kan se travle dage. Titler sendes kun for familiens aftaler, der vedrører barnet eller ingen; alt andet sendes som "optaget".',
+      children: 'Børn vises som "barn 1", "barn 2" — aldrig med navn eller konto.',
+      retention:
+        'Buddy sletter samtalen 30 dage efter, at en session er afsluttet. Den madplan, den lavede, bliver.',
+      acknowledgeButton: 'Jeg forstår, fortsæt',
+      acknowledging: 'Gemmer…',
+      acknowledgeError: 'Kunne ikke gemme din bekræftelse. Prøv igen.',
+      acknowledgedOn: 'Bekræftet den {date}.',
+    },
     loadError: 'Kunne ikke indlæse AI-assistenten.',
     start: {
       title: 'Start en ny session',

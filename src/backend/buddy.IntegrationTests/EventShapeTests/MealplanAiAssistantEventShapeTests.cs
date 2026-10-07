@@ -44,6 +44,11 @@ public sealed class MealplanAiAssistantEventShapeTests
         "Mealplans/ActiveProviderCleared.json");
 
     [Fact]
+    public void AiDataSharingAcknowledged() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new AiDataSharingAcknowledged(FixedCredentialId, FixedGuardianId, FixedInstant),
+        "Mealplans/AiDataSharingAcknowledged.json");
+
+    [Fact]
     public void AiSessionStarted() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new AiSessionStarted(FixedSessionId, FixedChildId, FixedFrom, FixedTo, [MealSlot.Lunch, MealSlot.Dinner], [FixedMealId], "No fish on Fridays", FixedGuardianId, FixedInstant),
         "Mealplans/AiSessionStarted.json");

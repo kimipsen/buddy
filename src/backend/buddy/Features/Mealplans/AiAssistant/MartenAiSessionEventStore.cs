@@ -38,7 +38,7 @@ public sealed class MartenAiSessionEventStore(IMealplansStore store) : IAiSessio
 
         await using var session = store.LightweightSession();
         session.StartTrackedStream(id.Value, payloads);
-        session.Store(new AiSessionIndexDocument(id.Value, started.ChildId.Value, started.OccurredAt));
+        session.Store(new AiSessionIndexDocument(id.Value, started.ChildId.Value, started.OccurredAt, events.Max(e => e.OccurredAt)));
 
         await session.SaveChangesAsync(cancellationToken);
 
@@ -59,6 +59,11 @@ public sealed class MartenAiSessionEventStore(IMealplansStore store) : IAiSessio
         await using var session = store.LightweightSession();
         session.AppendTracked(id.Value, payloads);
 
+        if (await session.LoadAsync<AiSessionIndexDocument>(id.Value, cancellationToken) is { } index)
+        {
+            session.Store(index with { LastActivityAt = events.Max(e => e.OccurredAt) });
+        }
+
         await session.SaveChangesAsync(cancellationToken);
     }
 
@@ -72,5 +77,23 @@ public sealed class MartenAiSessionEventStore(IMealplansStore store) : IAiSessio
             .FirstOrDefaultAsync(cancellationToken);
 
         return doc is null ? null : (new MealplanAiSessionId(doc.Id), doc.StartedAt);
+    }
+
+    public async Task<IReadOnlyCollection<AiSessionIndexDocument>> ListRetentionCandidatesAsync(DateTimeOffset inactiveSince, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        return await session.Query<AiSessionIndexDocument>()
+            .Where(d => d.ContentErasedAt == null)
+            .Where(d => (d.LastActivityAt != null && d.LastActivityAt <= inactiveSince) || (d.LastActivityAt == null && d.StartedAt <= inactiveSince))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task UpdateIndexAsync(AiSessionIndexDocument index, CancellationToken cancellationToken)
+    {
+        await using var session = store.LightweightSession();
+        session.Store(index);
+
+        await session.SaveChangesAsync(cancellationToken);
     }
 }

@@ -37,6 +37,18 @@ public union MealplanAiSessionEvent(
         AiSessionApplied => nameof(AiSessionApplied),
         AiSessionDiscarded => nameof(AiSessionDiscarded),
     };
+
+    public DateTimeOffset OccurredAt => this switch
+    {
+        AiSessionStarted e => e.OccurredAt,
+        AiUserMessageSent e => e.OccurredAt,
+        AiToolInvocationRecorded e => e.OccurredAt,
+        AiDraftAssignmentSet e => e.OccurredAt,
+        AiDraftAssignmentCleared e => e.OccurredAt,
+        AiAssistantMessageRecorded e => e.OccurredAt,
+        AiSessionApplied e => e.OccurredAt,
+        AiSessionDiscarded e => e.OccurredAt,
+    };
 }
 
 // Starts a brand new stream every time -- unlike MealPlan/AiProviderCredential (one stream ever,

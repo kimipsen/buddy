@@ -42,7 +42,7 @@ public static class AiSessionTools
             """),
         new AiToolDefinition(
             GetCalendarConflicts,
-            "Look up the family's calendar events in a date range (must be within the session's requested range) before proposing meals for those dates, so you can flag things like dining out or a trip instead of silently overwriting them.",
+            "Look up the family's calendar events in a date range (must be within the session's requested range) before proposing meals for those dates, so you can flag things like dining out or a trip instead of silently overwriting them. Items you may not see the title of are returned with the title \"busy\" and their time.",
             """
             {
               "type": "object",

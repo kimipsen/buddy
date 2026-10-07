@@ -140,7 +140,7 @@ public static class MealFamilyResolution
             {
                 ActiveProviderChanged changed => changed.OccurredAt,
                 ActiveProviderCleared => null,
-                AiCredentialsInitialized or ProviderApiKeySet or ProviderApiKeyRemoved => activatedAt,
+                AiCredentialsInitialized or ProviderApiKeySet or ProviderApiKeyRemoved or AiDataSharingAcknowledged => activatedAt,
             };
         }
 
@@ -154,7 +154,7 @@ public static class MealFamilyResolution
             ActiveProviderChanged changed => changed.ChangedBy == guardianId,
             ActiveProviderCleared cleared => cleared.ClearedBy == guardianId,
             ProviderApiKeyRemoved removed => removed.RemovedBy == guardianId,
-            AiCredentialsInitialized => false,
+            AiCredentialsInitialized or AiDataSharingAcknowledged => false,
         });
 
     private static bool IsPreferred((AiCredentialId Id, DateTimeOffset? ActivatedAt) candidate, (AiCredentialId Id, DateTimeOffset? ActivatedAt) current) =>

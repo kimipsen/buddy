@@ -43,7 +43,8 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
     'Add an AI provider API key in Settings before starting a session.',
   );
   const startHeading = page.getByRole('heading', { name: 'Start a new session' });
-  await expect(noProviderMessage.or(startHeading)).toBeVisible();
+  const dataSharingHeading = page.getByRole('heading', { name: 'What the assistant shares' });
+  await expect(noProviderMessage.or(startHeading).or(dataSharingHeading)).toBeVisible();
   const hasProvider = !(await noProviderMessage.isVisible());
 
   if (!hasProvider) {
@@ -86,7 +87,17 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
     await page.goto('/guardian/mealplan/ai-assistant');
   }
 
-  await expect(page.getByRole('heading', { name: 'Start a new session' })).toBeVisible();
+  // --- Data sharing: before the family's first session the page shows what is sent to the
+  // provider instead of the start form (StartAiSession answers 409 until it's acknowledged). A
+  // repeat local run may find it already acknowledged. ---
+  await expect(startHeading.or(dataSharingHeading)).toBeVisible();
+
+  if (await dataSharingHeading.isVisible()) {
+    await expect(page.getByText('Buddy deletes the conversation 30 days')).toBeVisible();
+    await page.getByRole('button', { name: 'I understand, continue' }).click();
+  }
+
+  await expect(startHeading).toBeVisible();
 
   // --- Slot toggles: Dinner is selected by default (MealplanAiAssistant.selectedSlots starts as
   // Set([2])). Toggle it off to reach zero slots selected (the "choose a slot" guard + disabled

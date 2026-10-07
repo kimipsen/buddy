@@ -40,6 +40,7 @@ public static class MealplansFeature
         typeof(ProviderApiKeyRemoved),
         typeof(ActiveProviderChanged),
         typeof(ActiveProviderCleared),
+        typeof(AiDataSharingAcknowledged),
         typeof(AiSessionStarted),
         typeof(AiUserMessageSent),
         typeof(AiToolInvocationRecorded),
@@ -119,6 +120,10 @@ public static class MealplansFeature
         services.AddSingleton<IAiCredentialEventStore, MartenAiCredentialEventStore>();
         services.AddSingleton<IAiSessionEventStore, MartenAiSessionEventStore>();
 
+        // 30-day retention of AI conversations (GDPR Question 6.2).
+        services.AddScoped<AiSessionRetention>();
+        services.AddHostedService<AiSessionRetentionService>();
+
         // Framework-provided at-rest encryption for stored provider API keys -- see
         // DataProtectionApiKeyCipher. No new dependency: Data Protection ships as part of the
         // ASP.NET Core shared framework.
@@ -197,6 +202,7 @@ public static class MealplansFeature
         mealplans.MapSetActiveProvider();
         mealplans.MapTestProviderConnection();
         mealplans.MapGetCurrentAiSession();
+        mealplans.MapAcknowledgeAiDataSharing();
         mealplans.MapStartAiSession();
         mealplans.MapSendAiSessionMessage();
         mealplans.MapApplyAiSessionDraft();

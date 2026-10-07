@@ -21,6 +21,7 @@ public static class AiSessionToolExecutor
         MealplanAiSession session,
         IReadOnlyCollection<MealId> familyMealIds,
         UserId callerId,
+        UserId sessionChildId,
         ICalendarEventStore calendars,
         ICalendarItemEventStore calendarItems,
         ITaskTemplateEventStore taskTemplates,
@@ -32,7 +33,7 @@ public static class AiSessionToolExecutor
             AiSessionTools.ProposeAssignment => ExecuteProposeAssignment(call, sessionId, session, familyMealIds, now),
             AiSessionTools.ClearDraftAssignment => ExecuteClearDraftAssignment(call, sessionId, now),
             AiSessionTools.GetCalendarConflicts => await ExecuteGetCalendarConflictsAsync(
-                call, session, callerId, calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken),
+                call, session, callerId, sessionChildId, calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken),
             _ => new ExecutionOutcome(Error($"Unknown tool: {call.ToolName}"), true, []),
         };
 
@@ -100,7 +101,7 @@ public static class AiSessionToolExecutor
     }
 
     private static async Task<ExecutionOutcome> ExecuteGetCalendarConflictsAsync(
-        AiRequestedToolCall call, MealplanAiSession session, UserId callerId,
+        AiRequestedToolCall call, MealplanAiSession session, UserId callerId, UserId sessionChildId,
         ICalendarEventStore calendars, ICalendarItemEventStore calendarItems, ITaskTemplateEventStore taskTemplates,
         IGroupEventStore groups, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
@@ -125,13 +126,15 @@ public static class AiSessionToolExecutor
                 Error($"The range must be within the session's requested dates ({session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd})."), true, []);
         }
 
-        var occurrences = await CalendarConflictLookup.FindOccurrencesAsync(callerId, from, to, calendars, calendarItems, taskTemplates, groups, cancellationToken);
+        var conflicts = await CalendarConflictLookup.FindConflictsAsync(
+            callerId, sessionChildId, from, to, calendars, calendarItems, taskTemplates, groups, guardians, cancellationToken);
 
-        var events = occurrences.Select(o => new
+        var events = conflicts.Select(c => new
         {
-            date = o.SortAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            title = o.Title,
-            allDay = o.IsAllDay
+            date = c.At.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            time = c.IsAllDay ? null : c.At.ToString("HH:mm", CultureInfo.InvariantCulture),
+            title = c.Title ?? BusyTitle,
+            allDay = c.IsAllDay
         });
 
         return new ExecutionOutcome(JsonSerializer.Serialize(new { status = "ok", events }), false, []);
@@ -180,6 +183,9 @@ public static class AiSessionToolExecutor
         error = "\"slot\" must be one of Breakfast, Lunch, Dinner, Snack.";
         return false;
     }
+
+    // Sent in place of a title the assistant may not see (CalendarConflictLookup.IsTitleShareable).
+    public const string BusyTitle = "busy";
 
     private const string Ok = """{"status":"ok"}""";
 
