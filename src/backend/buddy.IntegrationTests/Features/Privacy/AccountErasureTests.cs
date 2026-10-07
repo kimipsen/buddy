@@ -191,6 +191,29 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
         });
     }
 
+    [Fact]
+    public async Task The_sweep_erases_a_deleted_user_whose_events_are_gone_but_whose_snapshot_stayed()
+    {
+        var n = Unique();
+        var user = await fixture.CreateUserAsync(givenName: $"Orphan{n}");
+        var token = await fixture.GetAccessTokenAsync(user);
+        var userId = new UserId(await fixture.GetUserIdAsync(token));
+
+        var users = fixture.Host.Services.GetRequiredService<IUserEventStore>();
+        await users.AppendAsync(userId, [new UserDeleted(userId, DateTimeOffset.UtcNow)], CancellationToken.None);
+
+        // As after the users event tables were wiped or partially restored while the snapshots
+        // schema stayed: a deleted, not yet erased snapshot with no stream behind it.
+        var store = fixture.Host.Services.GetRequiredService<IUsersStore>();
+        await store.Advanced.Clean.DeleteSingleEventStreamAsync(userId.Value, ct: CancellationToken.None);
+
+        await FinishUnfinishedErasuresAsync();
+
+        Assert.Null(await users.FindSnapshotAsync(userId, CancellationToken.None));
+        Assert.DoesNotContain(userId, await users.ListUnfinishedErasuresAsync(CancellationToken.None));
+        Assert.Empty(await PersonalDataScanner.FindAsync(fixture, $"Orphan{n}", user.Email));
+    }
+
     private async Task FinishUnfinishedErasuresAsync()
     {
         await using var scope = fixture.Host.Services.CreateAsyncScope();

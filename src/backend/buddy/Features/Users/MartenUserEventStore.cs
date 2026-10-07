@@ -36,7 +36,11 @@ public sealed class MartenUserEventStore(IUsersStore store) : IUserEventStore
 
     public async Task EraseAsync(UserId userId, CancellationToken cancellationToken)
     {
-        await store.MaskStreamAsync<UserSnapshot>(userId.Value, cancellationToken);
+        if (!await store.MaskStreamAsync<UserSnapshot>(userId.Value, cancellationToken))
+        {
+            // No stream, so no UserErased to append: the snapshot is deleted, which finishes the erasure.
+            return;
+        }
 
         await using var session = store.LightweightSession();
         session.AppendTracked(userId.Value, [new UserErased(userId, DateTimeOffset.UtcNow)]);

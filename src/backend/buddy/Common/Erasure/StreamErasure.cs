@@ -32,11 +32,32 @@ public static class StreamErasure
     // applied to its events -- all of them, or those the filter picks -- and the snapshot is rebuilt
     // from the masked events, because masking doesn't run projections. Masking a masked event changes
     // nothing, so this is idempotent too.
-    public static async Task MaskStreamAsync<TSnapshot>(this IDocumentStore store, Guid streamId, CancellationToken cancellationToken, Func<IEvent, bool>? filter = null)
+    //
+    // A snapshot whose stream is gone (events wiped or partially restored while the snapshots schema
+    // stayed) can't be rebuilt -- Marten would store a null document -- so it is deleted instead: it
+    // is the only copy of the personal data left. Returns false in that case, so the caller doesn't
+    // append to a stream that no longer exists.
+    public static async Task<bool> MaskStreamAsync<TSnapshot>(this IDocumentStore store, Guid streamId, CancellationToken cancellationToken, Func<IEvent, bool>? filter = null)
         where TSnapshot : class
     {
+        await EnsureEventStorageAsync(store, cancellationToken);
+
+        await using (var query = store.QuerySession())
+        {
+            if (await query.Events.FetchStreamStateAsync(streamId, cancellationToken) is null)
+            {
+                await using var session = store.LightweightSession();
+                session.Delete<TSnapshot>(streamId);
+                await session.SaveChangesAsync(cancellationToken);
+
+                return false;
+            }
+        }
+
         await store.MaskStreamAsync(streamId, cancellationToken, filter);
         await store.Advanced.RebuildSingleStreamAsync<TSnapshot>(streamId, cancellationToken);
+
+        return true;
     }
 
     // For a stream with no snapshot projection (its read model is a document the caller rewrites).

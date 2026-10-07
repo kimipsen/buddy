@@ -103,17 +103,26 @@ public sealed class UserErasure(
     }
 
     // Finishes every erasure that stopped halfway, and re-erases users a backup restore brought back.
-    // UserErasureService calls it on a timer. Returns how many it finished.
+    // UserErasureService calls it on a timer. One user's failure doesn't hold up the others: it is
+    // logged and that user is found again on the next sweep. Returns how many it finished.
     public async Task<int> FinishUnfinishedAsync(CancellationToken cancellationToken)
     {
-        var unfinished = await users.ListUnfinishedErasuresAsync(cancellationToken);
+        var finished = 0;
 
-        foreach (var userId in unfinished)
+        foreach (var userId in await users.ListUnfinishedErasuresAsync(cancellationToken))
         {
-            await EraseAsync(userId, cancellationToken);
+            try
+            {
+                await EraseAsync(userId, cancellationToken);
+                finished++;
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.ErasureIncomplete(exception, userId.Value);
+            }
         }
 
-        return unfinished.Count;
+        return finished;
     }
 
     // Erases a deleted (or ledger-listed) user, guardian or child. A no-op once erased.

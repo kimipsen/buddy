@@ -423,6 +423,8 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 | `DeleteChild` with co-guardians | `409 child_has_other_guardians`; nothing changes |
 | A group owner deletes their account; nobody else is in the group | The group and its calendars are deleted and erased |
 | A database backup restored after an erasure | The restored data contains the erased user again; the restore procedure re-imports the erasure ledger and the sweeper re-erases everyone on it (see "Backups") |
+| A snapshot whose event stream is gone (events wiped or partially restored, snapshots kept) | The snapshot can't be rebuilt, so `StreamErasure` deletes it instead; for the user stream that finishes the erasure without a `UserErased` |
+| One user's erasure keeps failing | The sweep logs it (10004) and goes on with the other users; that user is retried on the next sweep |
 | An export while an erasure is running | The export reads whatever is masked so far; the caller is locked out anyway |
 
 ## Decisions made
@@ -484,7 +486,8 @@ What shipped with steps 1-7, and where it differs from the design above:
 - **Orchestration.** `Features/Privacy`:
   - `UserErasure` runs the cascade.
   - `UserErasureService` sweeps 30 seconds after startup and then every 15 minutes, finishing
-    unfinished erasures and re-erasing ledger entries.
+    unfinished erasures and re-erasing ledger entries. A failure is logged per user and doesn't
+    stop the sweep.
   - New log events 10001-10005.
 - **Changed from the design:**
   - Ownership transfer uses the existing events (Question 4).
@@ -541,7 +544,8 @@ What shipped with steps 1-7, and where it differs from the design above:
   - a group passing to its longest-standing admin;
   - family data passing to a sibling;
   - a child's `403`;
-  - the sweep, both for a legacy deletion and for a ledger entry after a restore.
+  - the sweep, both for a legacy deletion and for a ledger entry after a restore, and for a
+    deleted user whose snapshot outlived its event stream.
 
 ## Diagram
 

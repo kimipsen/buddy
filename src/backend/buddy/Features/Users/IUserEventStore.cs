@@ -11,7 +11,8 @@ public interface IUserEventStore
 
     // Masks the user's personal fields (UsersPersonalData's rules), rebuilds the snapshot, then
     // appends UserErased -- in that order, so a failure leaves the user not yet IsErased and the
-    // erasure is retried. See gdpr-data-protection.md.
+    // erasure is retried. A snapshot with no stream behind it is deleted instead (StreamErasure).
+    // See gdpr-data-protection.md.
     Task EraseAsync(UserId userId, CancellationToken cancellationToken);
 
     // Adds the user to the erasure ledger (ErasureLedgerEntry, schema "erasure"), which a database
