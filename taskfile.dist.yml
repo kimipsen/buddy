@@ -83,6 +83,27 @@ tasks:
     cmds:
       - npm run screenshots
 
+  db:snapshots:rebuild:
+    desc: >-
+      Rebuild every snapshot projection from its event streams, one Marten
+      store at a time (Marten's `projections rebuild` only does one store per
+      run). Uses the API's own configuration, so it rebuilds whatever database
+      the API points at. Usage: task db:snapshots:rebuild [STORE=marten://igroupsstore/]
+    dir: src/backend/buddy
+    cmds:
+      - dotnet build --nologo -v q
+      - |
+        set -euo pipefail
+        stores="{{.STORE}}"
+        if [ -z "$stores" ]; then
+          stores=$(dotnet run --no-build -- projections list 2>/dev/null | grep -o 'marten://[a-z]*/' | sort -u)
+        fi
+        for store in $stores; do
+          echo "== $store"
+          out=$(dotnet run --no-build -- projections rebuild --store "$store" 2>&1) || { echo "$out"; exit 1; }
+          echo "$out" | grep -E 'Finished rebuilding|No projections|rror' || true
+        done
+
   test:mutation:
     desc: Run all mutation tests (backend, then frontend)
     cmds:

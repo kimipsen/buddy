@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -13,6 +14,9 @@ namespace buddy.Serialization;
 /// </summary>
 public sealed class ValueTupleJsonConverterFactory : JsonConverterFactory
 {
+    // ValueTuple`8 nests items 8+ in a TRest tuple; nothing here uses one, so it isn't handled.
+    private const int MaxArity = 7;
+
     public override bool CanConvert(Type typeToConvert) =>
         typeToConvert.IsGenericType
         && typeToConvert.Namespace == "System"
@@ -20,75 +24,51 @@ public sealed class ValueTupleJsonConverterFactory : JsonConverterFactory
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var elementTypes = typeToConvert.GetGenericArguments();
-        var converterType = elementTypes.Length switch
+        if (typeToConvert.GetGenericArguments().Length > MaxArity)
         {
-            2 => typeof(Converter2<,>).MakeGenericType(elementTypes),
-            3 => typeof(Converter3<,,>).MakeGenericType(elementTypes),
-            _ => throw new NotSupportedException(
-                $"No tuple JSON converter registered for arity {elementTypes.Length} ({typeToConvert}). Add one if a new tuple shape shows up.")
-        };
-
-        return (JsonConverter)Activator.CreateInstance(converterType)!;
-    }
-
-    private sealed class Converter2<T1, T2> : JsonConverter<(T1, T2)>
-    {
-        public override (T1, T2) Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            reader.Read();
-            var item1 = JsonSerializer.Deserialize<T1>(ref reader, options);
-            reader.Read();
-            var item2 = JsonSerializer.Deserialize<T2>(ref reader, options);
-            reader.Read();
-            return (item1!, item2!);
+            throw new NotSupportedException(
+                $"Tuples with more than {MaxArity} items aren't supported ({typeToConvert}).");
         }
 
-        public override void Write(Utf8JsonWriter writer, (T1, T2) value, JsonSerializerOptions options)
+        return (JsonConverter)Activator.CreateInstance(typeof(Converter<>).MakeGenericType(typeToConvert))!;
+    }
+
+    private sealed class Converter<TTuple> : JsonConverter<TTuple>
+        where TTuple : struct, ITuple
+    {
+        private static readonly Type[] ItemTypes = typeof(TTuple).GetGenericArguments();
+
+        public override TTuple Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var items = new object?[ItemTypes.Length];
+            for (var i = 0; i < items.Length; i++)
+            {
+                reader.Read();
+                items[i] = JsonSerializer.Deserialize(ref reader, ItemTypes[i], options);
+            }
+
+            reader.Read();
+            return (TTuple)Activator.CreateInstance(typeof(TTuple), items)!;
+        }
+
+        public override void Write(Utf8JsonWriter writer, TTuple value, JsonSerializerOptions options)
         {
             writer.WriteStartArray();
-            JsonSerializer.Serialize(writer, value.Item1, options);
-            JsonSerializer.Serialize(writer, value.Item2, options);
+            for (var i = 0; i < ItemTypes.Length; i++)
+            {
+                JsonSerializer.Serialize(writer, value[i], ItemTypes[i], options);
+            }
+
             writer.WriteEndArray();
         }
 
         // Same reasoning as StronglyTypedIdJsonConverterFactory.WriteAsPropertyName/ReadAsPropertyName:
         // encode the whole tuple through this converter's own array form and use that as the raw
         // property-name text, rather than hand-rolling a delimiter scheme.
-        public override (T1, T2) ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            JsonSerializer.Deserialize<(T1, T2)>(reader.GetString()!, options);
+        public override TTuple ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+            JsonSerializer.Deserialize<TTuple>(reader.GetString()!, options);
 
-        public override void WriteAsPropertyName(Utf8JsonWriter writer, (T1, T2) value, JsonSerializerOptions options) =>
-            writer.WritePropertyName(JsonSerializer.Serialize(value, options));
-    }
-
-    private sealed class Converter3<T1, T2, T3> : JsonConverter<(T1, T2, T3)>
-    {
-        public override (T1, T2, T3) Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            reader.Read();
-            var item1 = JsonSerializer.Deserialize<T1>(ref reader, options);
-            reader.Read();
-            var item2 = JsonSerializer.Deserialize<T2>(ref reader, options);
-            reader.Read();
-            var item3 = JsonSerializer.Deserialize<T3>(ref reader, options);
-            reader.Read();
-            return (item1!, item2!, item3!);
-        }
-
-        public override void Write(Utf8JsonWriter writer, (T1, T2, T3) value, JsonSerializerOptions options)
-        {
-            writer.WriteStartArray();
-            JsonSerializer.Serialize(writer, value.Item1, options);
-            JsonSerializer.Serialize(writer, value.Item2, options);
-            JsonSerializer.Serialize(writer, value.Item3, options);
-            writer.WriteEndArray();
-        }
-
-        public override (T1, T2, T3) ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            JsonSerializer.Deserialize<(T1, T2, T3)>(reader.GetString()!, options);
-
-        public override void WriteAsPropertyName(Utf8JsonWriter writer, (T1, T2, T3) value, JsonSerializerOptions options) =>
+        public override void WriteAsPropertyName(Utf8JsonWriter writer, TTuple value, JsonSerializerOptions options) =>
             writer.WritePropertyName(JsonSerializer.Serialize(value, options));
     }
 }

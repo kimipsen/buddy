@@ -226,7 +226,8 @@ only serializes properties by default). The second failure mode is a real, silen
 no exception, just an empty object where real data should be. Fixed with a new
 [`ValueTupleJsonConverterFactory`](../../../src/backend/buddy/Serialization/ValueTupleJsonConverterFactory.cs)
 (same shape as `StronglyTypedIdJsonConverterFactory`: writes/reads the tuple as a JSON array,
-and encodes that same array as the property-name string for dictionary-key use), registered
+and encodes that same array as the property-name string for dictionary-key use; any tuple of
+1–7 items), registered
 per-module alongside `StronglyTypedIdJsonConverterFactory` wherever an aggregate needs it, plus
 one line in `Program.cs`'s `ConfigureHttpJsonOptions` for any HTTP response that returns such an
 aggregate directly. Verified with an explicit round-trip assertion (not just incidental
@@ -280,12 +281,28 @@ every module's actual field shapes were exercised, not just `Group`'s.
 
 ## Backfilling existing streams
 
-Streams that predate this feature have no snapshot row yet. Before any read
-path is switched to depend on snapshots for a module, run Marten's
-projection rebuild for that module's snapshot projection — either the
-`Marten.CommandLine` `dotnet run -- marten-projections rebuild` tool, or an
-explicit one-off call to `IProjectionDaemon.RebuildProjection<T>` — so every
-existing stream gets a snapshot before it's relied on.
+Streams that predate a snapshot projection have no snapshot row yet, and a
+lost or corrupt row can be thrown away, since snapshots are derived state.
+Marten's projection rebuild deletes a projection's rows and replays every
+stream into it. `Program.cs` ends with `app.RunJasperFxCommands(args)`, so the
+API binary has the JasperFx command line: with no arguments it runs the API
+as before, and `projections` lists or rebuilds projections. Marten rebuilds
+one store per run, and Buddy has one store per domain, so `--store` takes the
+store's URI (`marten://igroupsstore/`; `projections list` prints them all):
+
+- Locally: `task db:snapshots:rebuild` rebuilds every store, or
+  `task db:snapshots:rebuild STORE=marten://igroupsstore/` just one.
+- In a container: `docker compose run --rm api projections rebuild --store marten://igroupsstore/`
+  (the image's entrypoint is `dotnet buddy.dll`), once per store.
+
+Run it after adding a snapshot projection to an aggregate that already has
+streams in a deployed database, before any read path relies on the snapshot.
+Stop the API while it runs: an inline append during a rebuild can be
+overwritten by the replay.
+
+`SnapshotTests/SnapshotRebuildTests.cs` deletes a snapshot row, rebuilds and
+checks the result against a full replay, and rebuilds every projection in
+every store over the test run's data.
 
 ## Cutting over reads before writes
 
@@ -317,10 +334,9 @@ here because `ImmutableDictionary<TKey,TValue>` has no structural `Equals`
 override, so two `Group` values with identical `Members` content aren't
 `==`-equal; `Assert.Equivalent` does a deep, member-wise comparison instead.
 
-Not yet done, left for the full rollout: a rebuild test (delete/reset the
-snapshot table, rebuild, assert it matches again — no rebuild tooling is
-wired up yet, see "Backfilling existing streams" above) and a golden-file
-shape test for the snapshot document analogous to `EventShapeTests/`.
+The rebuild test is `SnapshotRebuildTests.cs` (see "Backfilling existing
+streams" above). Not done: a golden-file shape test for the snapshot document
+analogous to `EventShapeTests/`.
 
 ## Diagram
 

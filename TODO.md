@@ -86,20 +86,18 @@ Not aggregates (event streams with no rehydrated state, so nothing to
 snapshot): `GuardianInvite` events drive `GuardianInviteDocument` only, same
 as `GroupInvite*` events drive `GroupInviteDocument` off the `Group` stream.
 
-## Follow-ups worth doing, not done here
+## Follow-ups worth doing — done (2026-10-08)
 
-- The aggregates without a single-get handler (`CalendarItem`, `GuardianLink`,
-  `Meal`, `MedicineSchedule`) only have `FindSnapshotAsync` sitting unused on
-  their store. Either a future read path will use it, or it's dead code
-  worth reconsidering.
-- No backfill/rebuild tooling is wired up yet (see the design doc's
-  "Backfilling existing streams" section) — fine for now since this
-  environment has no pre-existing production streams predating the
-  snapshot projections, but needed before any real deployment with existing
-  data.
-- `ValueTupleJsonConverterFactory` only implements arity 2 and 3 (the
-  shapes actually used today); a new tuple shape needs a new `ConverterN`
-  added to it.
+- [x] Unused `FindSnapshotAsync`: `CalendarItem` and `Meal` now have production
+  readers (erasure, export, the AI meal filter). `GuardianLink` and
+  `MedicineSchedule` still have none, but kept: every snapshot test reads
+  through it, and it's the same store contract as the other aggregates.
+- [x] Backfill/rebuild tooling: the API runs the JasperFx command line
+  (`projections list|rebuild --store <uri>`), `task db:snapshots:rebuild`
+  rebuilds every store, `SnapshotRebuildTests` covers it, and
+  `deploy/README.md` has the container command.
+- [x] `ValueTupleJsonConverterFactory` handles any tuple of 1–7 items with one
+  converter (same JSON shape), covered by `ValueTupleJsonConverterFactoryTests`.
 
 ## Claude skills — gap review (2026-09-30)
 

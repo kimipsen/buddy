@@ -311,6 +311,16 @@ remove ones you won't roll back to with `docker image rm buddy-api:<sha> ...`.
   handful). Check usage with
   `docker compose exec db psql -U "$POSTGRES_USER" -c "select count(*), application_name, state from pg_stat_activity group by 2,3"`
   (the API's rows are `buddy`, Keycloak's `PostgreSQL JDBC Driver`).
+- Snapshots: the API keeps a snapshot of each aggregate in the `snapshots`
+  schema, derived from its events. A release that adds a snapshot projection
+  for an aggregate with existing data needs a rebuild, and a lost or suspect
+  snapshot can always be rebuilt. With the API stopped
+  (`docker compose -f docker-compose.prod.yml stop api`), list the stores with
+  `docker compose -f docker-compose.prod.yml run --rm api projections list`,
+  then rebuild each one with
+  `docker compose -f docker-compose.prod.yml run --rm api projections rebuild --store marten://igroupsstore/`
+  and start the API again. See
+  [event-stream-snapshots.md](../docs/backend/analysis/event-stream-snapshots.md#backfilling-existing-streams).
 - Renewing TLS certs, restarting on reboot, and image updates are all your
   responsibility on a self-hosted VM; `restart: unless-stopped` handles
   process crashes/reboots, but not certificate or OS-level maintenance.

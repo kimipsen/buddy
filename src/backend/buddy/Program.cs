@@ -26,6 +26,8 @@ using buddy.Serialization;
 
 using FluentValidation;
 
+using JasperFx;
+
 using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -178,4 +180,6 @@ app.MapPrintTemplatesFeature();
 app.MapProgressFeature();
 app.MapSleepDiariesFeature();
 
-await app.RunAsync();
+// JasperFx command line: no arguments runs the API as before; `projections --rebuild --store <name>`
+// rebuilds snapshot projections (see docs/backend/analysis/event-stream-snapshots.md).
+return await app.RunJasperFxCommands(args);
