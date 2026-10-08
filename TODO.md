@@ -29,12 +29,13 @@
 
 ## Guardian onboarding
 
-- [ ] Implement the [guardian onboarding guide](docs/frontend/analysis/guardian-onboarding.md)
+- [x] Implement the [guardian onboarding guide](docs/frontend/analysis/guardian-onboarding.md)
   for users logging in with no groups and no linked children: create one group,
   add one or more children, optionally invite other guardians/parents, create
   a shared calendar, schedule a task with multiple subtasks, and set up a meal
   plan. Include resumable progress. Open questions settled 2026-10-08 (see the doc's
-  "Decisions made"); step 1, the child-password reset, is done (2026-10-08).
+  "Decisions made"); step 1, the child-password reset, is done (2026-10-08). The guide
+  shipped 2026-10-08.
 
 ## In-app help
 
@@ -91,6 +92,33 @@
   (`task test`), install the hooks (`task hooks:install`), the commit and PR
   conventions (see `.github/pull_request_template.md`), and that every UI string
   needs both English and Danish.
+
+## Menu and settings cleanup
+
+- [ ] Clean up the menu and decide how and where things are configured, so
+  settings live in one predictable place instead of being spread across pages.
+
+## Remove the current user's events view
+
+- [ ] Remove the events list shown under settings. It was only added early on to
+  see what happened. It is `EventsList` (`features/guardian/events-list/`), used
+  by `features/guardian/admin/admin.ts`, and calls `UserEventsService`
+  (`core/user-events.service.ts`). Also remove the backend endpoint it uses,
+  `GET /users/me/events` (`Features/Users/ListEvents/`), its tests, its `.http`
+  entry, its translation keys and its docs screenshot (if it has one).
+
+## Babysitter colors in print templates
+
+- [ ] Let print templates set a color for each babysitter, like they already do
+  for guardians (`guardianColors`). Today a babysitter pickup always prints
+  without a color (`assemble-week-plan.ts`). Needs a picker in the print template
+  editor and a backend change to store the colors on the template.
+
+## Sort tasks by time, then name
+
+- [ ] Sort the tasks in the print view and the calendar by start time, and when
+  two or more start at the same time, by name, so the order is always the same.
+  Reuse the locale-aware name sorting in `core/array-utils.ts`.
 
 ## Mobile app
 
