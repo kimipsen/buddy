@@ -51,6 +51,37 @@
   replacing the existing color square/wheel and other inconsistent
   color-selection controls.
 
+## Remove personal information from the docs
+
+- [ ] Remove my name and other personal details from the documentation, for
+  example the `# Kim Documentation` heading in `docs/README.md`. `git grep -i -E
+  '\bkim\b|ipsen'` finds about 30 more files to check (skills, `.http` files,
+  specs, `.vscode/settings.json`, the Stryker report). Keep the ones that have to
+  name the owner (`LICENSE`, `.github/CODEOWNERS`, the `kimipsen/buddy` repo links).
+
+## Feature flags
+
+- [ ] Add feature flags so each Buddy installation can turn features on or off
+  (for example the AI meal assistant, medicines or printing). Decide where flags
+  live (configuration per installation vs. an admin setting), how the backend
+  enforces them (endpoints and handlers) and how the frontend hides routes and
+  navigation for disabled features. Write a design doc in `docs/backend/analysis/`
+  first.
+
+## Responsive design
+
+- [ ] Make the layout adapt when the window changes between screen sizes
+  (phone, tablet, desktop), for example when resizing the browser or rotating a
+  tablet, not only on first load. Check every page, and extend the docs
+  screenshots with a tablet size if needed.
+
+## Mobile app
+
+- [ ] Build a mobile app for Buddy. Decide the approach first (installable PWA,
+  a wrapper such as Capacitor around the Angular app, or native) and cover login
+  through Keycloak, push notifications and app-store distribution. Write a design
+  doc in `docs/frontend/analysis/` first.
+
 ## Event-stream snapshots rollout — done
 
 All 14 event-sourced aggregates now have an inline Marten snapshot
