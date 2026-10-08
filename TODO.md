@@ -120,6 +120,13 @@
   two or more start at the same time, by name, so the order is always the same.
   Reuse the locale-aware name sorting in `core/array-utils.ts`.
 
+## GitHub link in the menu
+
+- [ ] Add a link to the GitHub repository in the profile menu, next to where the
+  version is shown (`features/guardian/shell/profile-menu/`). Consider making the
+  URL part of the runtime config, so a family running its own fork can point it
+  elsewhere.
+
 ## Mobile app
 
 - [ ] Build a mobile app for Buddy. Decide the approach first (installable PWA,
