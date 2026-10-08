@@ -15,4 +15,4 @@ Read the flagged file yourself before acting on any rule here. For the false pos
 
 ## Real - treat as a bug
 
-- **`csharpsquid:S2201`** ("use the return value") on `events.Reverse()` in event-store code. On `IReadOnlyList<T>`, `.Reverse()` is the non-mutating `Enumerable.Reverse()`; a bare `events.Reverse();` silently does nothing and callers get the wrong order. Use the result: `return [.. events.Reverse().Select(...)];`. This shipped once in `MartenUserEventStore.ReadBackwardAsync`.
+- **`csharpsquid:S2201`** ("use the return value") on `events.Reverse()` in event-store code. On `IReadOnlyList<T>`, `.Reverse()` is the non-mutating `Enumerable.Reverse()`; a bare `events.Reverse();` silently does nothing and callers get the wrong order. Use the result: `return [.. events.Reverse().Select(...)];`. This shipped once in `MartenUserEventStore.ReadBackwardAsync` (since removed with `GET /users/me/events`).

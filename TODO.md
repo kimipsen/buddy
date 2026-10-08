@@ -98,14 +98,14 @@
 - [ ] Clean up the menu and decide how and where things are configured, so
   settings live in one predictable place instead of being spread across pages.
 
-## Remove the current user's events view
+## Remove the current user's events view — done
 
-- [ ] Remove the events list shown under settings. It was only added early on to
-  see what happened. It is `EventsList` (`features/guardian/events-list/`), used
-  by `features/guardian/admin/admin.ts`, and calls `UserEventsService`
-  (`core/user-events.service.ts`). Also remove the backend endpoint it uses,
-  `GET /users/me/events` (`Features/Users/ListEvents/`), its tests, its `.http`
-  entry, its translation keys and its docs screenshot (if it has one).
+- [x] Remove the events list shown under settings. It was only added early on to
+  see what happened. Removed `EventsList` (`features/guardian/events-list/`),
+  `UserEventsService` (`core/user-events.service.ts`) and the `events.*`
+  translation keys, and the backend endpoint `GET /users/me/events`
+  (`Features/Users/ListEvents/`) with its tests, `.http` entries, pagination
+  `Cursor` and the `IUserEventStore` read-forward/backward methods.
 
 ## Babysitter colors in print templates
 

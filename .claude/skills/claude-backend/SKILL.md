@@ -118,7 +118,7 @@ Pattern: `Features/Pickups/Types/PickupScheduleSnapshotProjection.cs`.
 
 ### `Reverse()` gotcha
 
-A read-backward query (`OrderByDescending(e => e.Version).Take(n).ToListAsync()`) returns `IReadOnlyList<T>`. `.Reverse()` on it is `Enumerable.Reverse()` - non-mutating. Use the result: `return [.. events.Reverse().Select(...)];`. A bare `events.Reverse();` silently does nothing. See `MartenUserEventStore.ReadBackwardAsync`.
+A read-backward query (`OrderByDescending(e => e.Version).Take(n).ToListAsync()`) returns `IReadOnlyList<T>`. `.Reverse()` on it is `Enumerable.Reverse()` - non-mutating. Use the result: `return [.. events.Reverse().Select(...)];`. A bare `events.Reverse();` silently does nothing.
 
 ## 6. Commands, handlers, validators - Wolverine + FluentValidation
 

@@ -48,12 +48,6 @@ public sealed class ConcurrentWriterUserEventStore(MartenUserEventStore inner, I
     public Task<User?> FindSnapshotAsync(UserId userId, CancellationToken cancellationToken) =>
         inner.FindSnapshotAsync(userId, cancellationToken);
 
-    public Task<IReadOnlyCollection<UserEventEntry>> ReadForwardAsync(UserId userId, long afterVersion, int take, CancellationToken cancellationToken) =>
-        inner.ReadForwardAsync(userId, afterVersion, take, cancellationToken);
-
-    public Task<IReadOnlyCollection<UserEventEntry>> ReadBackwardAsync(UserId userId, long beforeVersion, int take, CancellationToken cancellationToken) =>
-        inner.ReadBackwardAsync(userId, beforeVersion, take, cancellationToken);
-
     public Task<IReadOnlyCollection<UserEvent>> CreateAsync(KeycloakSubject keycloakSubject, UserId userId, IReadOnlyCollection<UserEvent> events, CancellationToken cancellationToken) =>
         inner.CreateAsync(keycloakSubject, userId, events, cancellationToken);
 

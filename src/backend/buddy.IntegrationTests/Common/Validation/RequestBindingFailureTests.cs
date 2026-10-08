@@ -100,7 +100,7 @@ public sealed class RequestBindingFailureTests(BuddyApiFixture fixture)
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Get.Url("/users/me/events?pageSize=abc");
+            _.Get.Url($"/work-locations/guardians/{Guid.CreateVersion7()}/days?from=abc&to=2026-01-31");
             _.StatusCodeShouldBe(400);
         });
 

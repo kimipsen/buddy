@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { EventsList } from '../events-list/events-list';
 import { AiProviderSettingsComponent } from './ai-provider-settings/ai-provider-settings';
 import { DeleteAccount } from './delete-account/delete-account';
 import { DownloadMyData } from './download-my-data/download-my-data';
@@ -21,7 +20,6 @@ import { MyProfile } from './my-profile/my-profile';
     ManageCalendars,
     ManageGroups,
     AiProviderSettingsComponent,
-    EventsList,
     DownloadMyData,
     DeleteAccount,
   ],

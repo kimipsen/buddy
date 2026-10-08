@@ -4,7 +4,6 @@ import { calendar } from './calendar';
 import { child } from './child';
 import { common } from './common';
 import { dashboard } from './dashboard';
-import { events } from './events';
 import { invite } from './invite';
 import { login } from './login';
 import { mealplan } from './mealplan';
@@ -27,7 +26,6 @@ export const da = {
   child,
   common,
   dashboard,
-  events,
   invite,
   login,
   mealplan,

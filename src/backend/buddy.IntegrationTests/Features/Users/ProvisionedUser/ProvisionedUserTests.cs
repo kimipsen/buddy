@@ -17,7 +17,6 @@ public sealed class ProvisionedUserTests(BuddyApiFixture fixture)
     private const string AnyId = "0191e3a0-0000-7000-8000-000000000001";
 
     [Theory]
-    [InlineData("GET", "/users/me/events")]
     [InlineData("GET", "/users/me/children")]
     [InlineData("GET", "/users/me/guardians")]
     [InlineData("GET", "/users/me/siblings")]

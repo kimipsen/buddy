@@ -6,7 +6,6 @@ import { AuthService } from '../../../core/auth.service';
 import { CalendarsService } from '../../../core/calendars.service';
 import { GroupsService } from '../../../core/groups.service';
 import { GuardiansService } from '../../../core/guardians.service';
-import { UserEventsPage, UserEventsService } from '../../../core/user-events.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { GuardianAdmin } from './admin';
 
@@ -23,8 +22,6 @@ describe('GuardianAdmin', () => {
     timeZoneId: 'UTC',
     language: 'en',
   };
-
-  const eventsPage: UserEventsPage = { items: [], previousCursor: null, nextCursor: null };
 
   // The stubbed services are called directly rather than through HttpClient, so no PendingTasks
   // entry is registered and whenStable() would resolve immediately without waiting for them. A
@@ -54,9 +51,6 @@ describe('GuardianAdmin', () => {
       listIcalTokens: vi.fn(async () => []),
     };
     const groupsStub: Partial<GroupsService> = { listMyGroups: vi.fn(async () => []) };
-    const userEventsStub: Partial<UserEventsService> = {
-      listCurrentUserEvents: vi.fn(async () => eventsPage),
-    };
 
     await TestBed.configureTestingModule({
       imports: [GuardianAdmin],
@@ -67,7 +61,6 @@ describe('GuardianAdmin', () => {
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: CalendarsService, useValue: calendarsStub },
         { provide: GroupsService, useValue: groupsStub },
-        { provide: UserEventsService, useValue: userEventsStub },
       ],
     }).compileComponents();
 
@@ -89,7 +82,6 @@ describe('GuardianAdmin', () => {
       'app-manage-children',
       'app-manage-calendars',
       'app-manage-groups',
-      'app-events-list',
       'app-download-my-data',
       'app-delete-account',
     ];

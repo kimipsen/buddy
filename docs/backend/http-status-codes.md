@@ -39,7 +39,6 @@ Use when returning a representation in the response body.
 
 Typical Buddy use:
 - `GET /users/me`
-- `GET /users/me/events`
 - `GET /calendars/{id}`
 - `GET /calendars/{id}/items`
 
@@ -334,7 +333,6 @@ Notes:
 | Endpoint | Success | Client error statuses | When to use |
 | --- | --- | --- | --- |
 | `GET /users/me` | `200` | `401`, `404` | `404` when local user is deleted or not available for the authenticated subject. |
-| `GET /users/me/events` | `200` | `400`, `401` | `400` for invalid paging cursor or page-size input. |
 | `PATCH /users/me/name` | `200` | `401`, `404` | `404` when local user does not exist or is deleted. |
 | `PATCH /users/me/email` | `200` | `400`, `401`, `404` | `400` for invalid email payload. |
 | `POST /users/me/email/verify/resend` | `204` | `401`, `404`, `409` | `409 resend_cooldown` during the resend cooldown; `204` for already-verified or resend accepted. |

@@ -113,7 +113,7 @@ The guardian routes currently include:
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
   calendar, plus event/task creation
 - `/guardian/task-library` — per-child task template and subtask management
-- `/guardian/admin` — profile, child, calendar, group, event-history, data export, and account administration
+- `/guardian/admin` — profile, child, calendar, group, AI provider, data export, and account administration
 
 ### Child feature
 
@@ -193,8 +193,6 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
   duplicate resource -- see [Idempotency-Key (POST)](../backend/http-status-codes.md#idempotency-key-post)
   for the backend side of this contract
 - `AuthInterceptor` attaches the access token to outgoing requests
-- `UserEventsService` loads a user's recent-events feed, rendered by `EventsList` on
-  `/guardian/admin`
 - `TranslationService` resolves the UI's current language (see Localization below)
 - `ThemeService` resolves the active light/dark theme (see Theming below)
 

@@ -79,7 +79,4 @@ namespace buddy.Features.Users
     public sealed record TimeZoneUpdated(UserId UserId, TimeZoneId Before, TimeZoneId After, DateTimeOffset OccurredAt);
 
     public sealed record LanguageUpdated(UserId UserId, Language Before, Language After, DateTimeOffset OccurredAt);
-
-    public sealed record UserEventEntry(long Version, UserEvent Event);
-
 }

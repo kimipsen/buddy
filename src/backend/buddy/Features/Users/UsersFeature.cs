@@ -154,7 +154,6 @@ public static class UsersFeature
             .WithETag();
 
         users.MapGetCurrentUser();
-        users.MapListCurrentUserEvents();
         users.MapUpdateCurrentName();
         users.MapUpdateCurrentEmail();
         users.MapUpdateCurrentTimeZone();

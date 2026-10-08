@@ -29,33 +29,6 @@ Accept: application/json
 
 ###
 
-GET {{buddy_HostAddress}}/users/me/events
-Authorization: Bearer {{login.response.body.$.access_token}}
-Accept: application/json
-
-###
-
-# @name eventsPage1
-GET {{buddy_HostAddress}}/users/me/events?pageSize=1
-Authorization: Bearer {{login.response.body.$.access_token}}
-Accept: application/json
-
-###
-
-# @name eventsPage2
-GET {{buddy_HostAddress}}/users/me/events?pageSize=1&cursor={{eventsPage1.response.body.$.nextCursor}}
-Authorization: Bearer {{login.response.body.$.access_token}}
-Accept: application/json
-
-###
-
-# Paging backwards from page 2's previousCursor should land back on page 1's items.
-GET {{buddy_HostAddress}}/users/me/events?pageSize=1&cursor={{eventsPage2.response.body.$.previousCursor}}
-Authorization: Bearer {{login.response.body.$.access_token}}
-Accept: application/json
-
-###
-
 PATCH {{buddy_HostAddress}}/users/me/name
 Authorization: Bearer {{login.response.body.$.access_token}}
 Content-Type: application/json
