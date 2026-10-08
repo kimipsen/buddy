@@ -33,7 +33,8 @@
   for users logging in with no groups and no linked children: create one group,
   add one or more children, optionally invite other guardians/parents, create
   a shared calendar, schedule a task with multiple subtasks, and set up a meal
-  plan. Include resumable progress and confirm the plan's open questions first.
+  plan. Include resumable progress. Open questions settled 2026-10-08 (see the doc's
+  "Decisions made"); step 1 is the new child-password reset slice.
 
 ## In-app help
 

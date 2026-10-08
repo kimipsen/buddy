@@ -110,36 +110,53 @@ invitation step.**
 
 `inviteToGroup` does not create a `GuardianLink`, and `inviteGuardian` does not
 add group membership. Track each requested invitation separately, showing
-partial success without resending successful invitations. Default additional
-adult group access to Member; making them Admin requires an explicit choice.
-Do not wait for recipients to accept before allowing setup to continue.
+partial success without resending successful invitations. Do not wait for
+recipients to accept before allowing setup to continue.
+
+**Decision: the invited adult's group role is an explicit choice with no
+preselected default.** Children join a group as Member, and the default
+policies give Member Viewer calendar access and no meal-plan or medicine
+access (`CreateGroup.Handler.cs`), so an adult invited as Member gets a
+child's access: they can see the calendar but not add to it. The form
+names the effect of each role ("Admin: can add to the calendar and manage
+meals"; "Member: can see the calendar") and requires a choice.
 
 **Decision: initialize one family meal plan, not one independent plan per child.**
 
 The existing mealplan service documents the shared family scope. Use a selected
-setup child to resolve that scope. Offer an explicit choice to share the plan
-with the setup group through `shareWithGroup`; do not silently expose meals or
-grant group Manage access. No separate "create mealplan" API is necessary.
+setup child to resolve that scope. Offer an explicit, opt-in (off by default) choice to share the plan with the
+setup group through `shareWithGroup`; do not silently expose meals or grant
+group Manage access. An adult who accepts the guardian invitation can already
+manage the family plan through guardianship, so sharing only matters for
+adults who aren't guardians. No separate "create mealplan" API is necessary.
 
 ## Progress and partial failures
 
-**Decision: persist non-secret progress per authenticated user on the backend;
-keep unsaved form drafts and child temporary passwords out of that record.**
+**Decision: persist a small, non-secret progress document per authenticated
+user and derive each step's completion from current data; keep unsaved form
+drafts and child temporary passwords out of it.**
 
-Proposed progress fields: schema version, Active/Deferred/Completed status,
-current step, group ID, child IDs with membership status, requested invitation
-IDs/statuses, calendar ID, task-template ID, saved subtask IDs, scheduled-item
-ID, and saved meal IDs/assignment coordinates. Save progress after each
-successful domain action, not just at the end of a step. Revalidate access and
-resource existence before resuming; saved IDs are not authorization grants.
+The document is a plain Marten document in the Users store (`IUsersStore`),
+keyed by user ID, with optimistic concurrency: schema version, status
+(Active/Deferred/Completed), the setup group ID, whether invitations were
+explicitly skipped, and the document version. It is not an event-sourced
+aggregate and adds no events to the User stream.
 
-This requires a small new capability; it does not exist in the inspected
-services. Proposed API: `GET /users/me/onboarding` for current progress and
-`PUT /users/me/onboarding` for version-checked progress updates. Derive the
-user ID from authentication, validate referenced resources server-side, and
-return the existing concurrency-conflict response for stale writes.
-Choose its storage within the existing Users conventions before implementation;
-do not introduce an event-sourced onboarding aggregate merely to track a UI step.
+Everything else is derived on load from the setup group, the same way resume
+must revalidate it anyway: children are the group's child members linked to
+the guardian; the calendar is a group-owned calendar of the setup group; the
+task is a template of a setup child scheduled on that calendar; the meal step
+is done when the family plan has an assignment. Saved IDs would not be
+authorization grants, and deriving avoids keeping a second copy of the domain
+in sync. Where derivation is ambiguous (two candidate templates, say), ask the
+guardian to choose; never guess from names.
+
+Proposed API: `GET /users/me/onboarding` for current progress and
+`PUT /users/me/onboarding` for version-checked updates. Derive the user ID from
+authentication, check the group reference server-side, and return the
+existing concurrency-conflict response for stale writes. The Users personal
+data eraser deletes the document and the exporter includes it
+(`PersonalDataEraserCoverageTests`, `PersonalDataExporterCoverageTests`).
 
 Browser-only progress is considered and rejected as the sole record: it cannot
 reliably resume across devices or after browser storage is cleared. Local draft
@@ -147,8 +164,8 @@ storage, if added later, must be user-scoped and must exclude secrets.
 
 Continue using the existing `postIdempotent` helper for create-style POSTs.
 It retries a transient failure with the same key within a call, but is not a
-cross-reload operation journal. If a domain write succeeds but saving progress
-fails, keep the returned resource ID in memory and retry the progress write.
+cross-reload operation journal. Only group creation and status changes write progress; the other steps are
+derived, so a failed progress write after a domain write loses nothing.
 After an interrupted reload, reconcile existing resources and ask the guardian
 to select the intended one where needed; do not automatically repeat a create
 request or guess from matching names.
@@ -157,7 +174,7 @@ request or guess from matching names.
 |---|---|
 | Child creation succeeds but group membership fails | Keep the child ID and retry membership only |
 | Child credentials returned | Show the one-time username/password result using the existing child-account pattern; never put the password in progress, logs, URLs, or browser storage |
-| Reload after child creation | Resume with the existing child; do not recreate the account to retrieve its password; direct to the supported credential recovery flow |
+| Reload after child creation | Resume with the existing child; do not recreate the account to retrieve its password; offer the child-password reset (see "Child password reset") |
 | One of several invitations fails | Keep successful sends and retry only the failed requested invitation |
 | Some subtasks save but a later one fails | Resume the saved template and missing subtasks, not a new template |
 | Scheduling fails | Keep the completed template and retry scheduling only |
@@ -166,6 +183,17 @@ request or guess from matching names.
 | User finishes later | Mark Deferred, keep existing resources, expose Resume setup on the guardian home |
 | Completed user later loses all groups/children | Do not automatically restart a completed guide |
 | User signs out or switches accounts | Clear in-memory guide state and all credentials |
+
+### Child password reset
+
+**Decision: add a child-password reset slice before building the guide.** No
+reset exists today: `CreateChild` returns the temporary password once and
+nothing stores it. A guardian of the child (not a child, not an unrelated
+user) calls a new `POST /users/me/children/{childId}/password-reset`,
+which sets a new temporary password through the Keycloak admin API and returns
+it once, with the same never-logged, never-stored rules as `CreateChild`. It
+is useful outside onboarding (a forgotten password on the child-account page)
+and is what makes "reload after child creation" recoverable.
 
 ## Frontend plan
 
@@ -188,20 +216,21 @@ request or guess from matching names.
 6. Provide keyboard-accessible controls, associated field errors, focus on the
    new step heading, and a live status for save failures. Do not make color the
    only progress signal. Fit the step forms on mobile without horizontal overflow.
-7. Use the shared fixed-circle color picker from [TODO](../../../TODO.md)
-   once available; it is not a blocker for the routing/progress work and this
-   feature must not invent another color-picker variant.
+7. Use the shared fixed-circle color picker in `src/app/shared`; do not
+   invent another color-picker variant.
 
 ## Implementation order
 
-1. Confirm the remaining decisions and progress storage; specify the new API
-   with backend authorization, validation, and concurrency tests.
-2. Implement progress, eligibility, and redirect tests before building forms.
-3. Implement group and child steps, including membership retry and credentials.
-4. Add optional invitations, group-owned calendar setup, task/subtasks and
+1. Add the child-password reset slice (backend, guardian child-account page,
+   tests).
+2. Specify the progress API with backend authorization, validation, and
+   concurrency tests.
+3. Implement progress, eligibility, and redirect tests before building forms.
+4. Implement group and child steps, including membership retry and credentials.
+5. Add optional invitations, group-owned calendar setup, task/subtasks and
    scheduling, then meal assignments and optional plan sharing.
-5. Add resume/defer, resource reconciliation, and completion summary.
-6. Run scoped tests, full repository gates, and the real-browser journeys;
+6. Add resume/defer, derived-progress reconciliation, and completion summary.
+7. Run scoped tests, full repository gates, and the real-browser journeys;
    update documentation screenshots before marking the feature implemented.
 
 ## Testing and verification
@@ -214,7 +243,9 @@ request or guess from matching names.
   permission checks, multiple ordered subtasks, one schedule operation, meal
   assignment, optional sharing, back navigation, and all partial-failure rows above.
 - Backend integration tests for the new progress capability: authenticated
-  user isolation, invalid references, stale versions, and supported transitions.
+  user isolation, invalid references, stale versions, and supported transitions;
+  for the password reset: guardian allowed, child and unrelated user denied,
+  password never logged.
   Existing domain APIs remain the authorization authority.
 - Playwright: a fresh guardian completes every step with two children and
   optional invitations; verify saved memberships, calendar visibility, routine
@@ -245,26 +276,16 @@ request or guess from matching names.
 | Automatic audience | Guardians with neither groups nor linked children |
 | Scope | One group, at least one child, optional adult invitations, shared calendar, multi-subtask scheduled task, meal plan |
 | Resume | User-scoped persisted progress; eligibility alone is insufficient |
+| Progress storage | Small version-checked document in the Users store (status, setup group, invite skip); step completion derived from current data (2026-10-08) |
 | Invitation semantics | Separate group membership and child guardianship; acceptance does not block |
+| Invited adult's role | Explicit choice in the form, no preselected default, effect of each role explained (2026-10-08) |
 | Calendar sharing | Existing group ownership and permission policy |
 | Tasks | One per-child template with at least two timed subtasks, scheduled once |
-| Meals | Existing family scope; at least one assignment, optional explicit group sharing |
-| Leaving early | Defer and resume; keep created resources |
+| Meals | Existing family scope; at least one assignment; group sharing opt-in, off by default (2026-10-08) |
+| Leaving early | "Finish later" marks the guide Deferred; resume entry on the guardian home; created resources kept (2026-10-08) |
+| Lost child credentials | New guardian-only child-password reset slice, built first (2026-10-08) |
 
-## Remaining open questions
-
-- **Progress storage.** Confirm a user-scoped record following existing Users
-  persistence conventions versus adding progress to the User event stream.
-  Lean: the smallest version-checked record, without a new domain aggregate.
-- **Exit behavior.** Confirm the proposed finish-later option and resume entry
-  versus requiring every non-invitation step before entering the dashboard.
-  Lean: allow defer to avoid trapping a guardian during interrupted setup.
-- **Adult permissions and meal sharing defaults.** Confirm Member as the
-  default invited-adult group role and opt-in meal-plan sharing. Review the
-  existing policy's effect on children before settling any onboarding default.
-- **Lost one-time child credentials.** Verify and document the supported
-  recovery/reset path before implementation; if none exists, define that
-  follow-up rather than pretending a saved password can be retrieved.
+No open questions remain.
 
 ## Diagram
 
