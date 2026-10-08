@@ -91,6 +91,8 @@ The frontend's `runtime-config.json` (authority/API URL) is baked in at
 **build time** from `API_DOMAIN`/`AUTH_DOMAIN` in `.env` — see
 `src/frontend/buddy/Dockerfile`. If you change either domain later, you need
 to rebuild the `frontend` image (rerun `task deploy`), not just restart it.
+The same goes for the optional `REPOSITORY_URL` (the profile menu's GitHub
+link, for a family running its own fork).
 
 **Upgrading from the stock Keycloak image.** Earlier versions of this
 compose file ran `quay.io/keycloak/keycloak:21.1.1` with `start --optimized`

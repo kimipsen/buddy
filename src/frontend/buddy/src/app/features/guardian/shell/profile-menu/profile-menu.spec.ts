@@ -13,7 +13,11 @@ import { ProfileMenu } from './profile-menu';
 // component specs in this app), so assertions below check the real English copy from
 // core/i18n/translations/en/shell.ts rather than raw translation keys.
 describe('ProfileMenu', () => {
-  async function setup(initialMode: ThemeMode = 'system', version: string | null = null) {
+  async function setup(
+    initialMode: ThemeMode = 'system',
+    version: string | null = null,
+    repositoryUrl = 'https://github.com/kimipsen/buddy',
+  ) {
     const logout = vi.fn();
     const authStub: Partial<AuthService> = { logout };
     const setMode = vi.fn();
@@ -26,7 +30,7 @@ describe('ProfileMenu', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
         { provide: ThemeService, useValue: themeStub },
-        { provide: RuntimeConfigService, useValue: { version } },
+        { provide: RuntimeConfigService, useValue: { version, repositoryUrl } },
       ],
     }).compileComponents();
 
@@ -98,7 +102,7 @@ describe('ProfileMenu', () => {
 
     fireClick(fixture, toggleButton(compiled));
 
-    expect(compiled.querySelector('p.border-t')?.textContent?.trim()).toBe('Version 1.2.0');
+    expect(compiled.querySelector('.border-t p')?.textContent?.trim()).toBe('Version 1.2.0');
   });
 
   it('shows no version line when the runtime config has none', async () => {
@@ -107,6 +111,29 @@ describe('ProfileMenu', () => {
     fireClick(fixture, toggleButton(compiled));
 
     expect(compiled.textContent).not.toContain('Version');
+  });
+
+  it('links to the repository from the runtime config in a new tab', async () => {
+    const { fixture, compiled } = await setup('system', null, 'https://example.test/fork');
+
+    fireClick(fixture, toggleButton(compiled));
+
+    const link = menuLink(compiled, 'https://example.test/fork');
+    expect(link?.textContent?.replace(/\s+/g, ' ').trim()).toBe('GitHub (opens in a new tab)');
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('closes the menu when the repository link is clicked', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+    const link = menuLink(compiled, 'https://github.com/kimipsen/buddy')!;
+    // Keep jsdom from attempting navigation for target="_blank".
+    link.addEventListener('click', (event) => event.preventDefault());
+    fireClick(fixture, link);
+
+    expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
   });
 
   it('closes the menu when the toggle is clicked again', async () => {

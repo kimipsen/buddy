@@ -98,6 +98,39 @@ describe('RuntimeConfigService', () => {
     expect(service.version).toBe('1.2.0');
   });
 
+  it('exposes the repository URL from the config, and the kimipsen/buddy default without one', async () => {
+    expect(service.repositoryUrl).toBe('https://github.com/kimipsen/buddy');
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => config,
+    });
+    await service.load();
+    expect(service.repositoryUrl).toBe('https://github.com/kimipsen/buddy');
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ ...config, repositoryUrl: 'https://github.com/someone/buddy' }),
+    });
+    await service.load();
+    expect(service.repositoryUrl).toBe('https://github.com/someone/buddy');
+  });
+
+  it('rejects a config whose repositoryUrl is not a string', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ ...config, repositoryUrl: 42 }),
+    });
+
+    await expect(service.load()).rejects.toThrow('Runtime config is missing');
+  });
+
   it('rejects a config whose version is not a string', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

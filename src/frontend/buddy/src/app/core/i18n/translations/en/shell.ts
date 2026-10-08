@@ -15,6 +15,8 @@ export const shell = {
     settings: 'Settings',
     signOut: 'Sign out',
     version: 'Version {version}',
+    sourceCode: 'GitHub',
+    opensInNewTab: '(opens in a new tab)',
     theme: {
       label: 'Theme',
       light: 'Light',

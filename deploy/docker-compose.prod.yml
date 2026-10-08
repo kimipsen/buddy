@@ -38,6 +38,7 @@ services:
         API_BASE_URL: "https://${API_DOMAIN}"
         KEYCLOAK_AUTHORITY: "https://${AUTH_DOMAIN}"
         BUDDY_VERSION: "${BUDDY_VERSION:-0.0.0-dev}"
+        REPOSITORY_URL: "${REPOSITORY_URL:-}"
     restart: unless-stopped
     # The caddy image is Alpine, so busybox wget is there.
     healthcheck:

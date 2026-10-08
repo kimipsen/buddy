@@ -134,13 +134,23 @@
       >
         {{ 'shell.menu.signOut' | translate }}
       </button>
-      @if (version) {
-        <p
-          class="border-t border-slate-200 px-4 pb-1 pt-2 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400"
+      <div
+        class="flex items-center justify-between gap-2 border-t border-slate-200 px-4 pb-1 pt-2 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400"
+      >
+        @if (version) {
+          <p>{{ 'shell.menu.version' | translate: { version } }}</p>
+        }
+        <a
+          [href]="repositoryUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="ml-auto font-medium hover:text-slate-950 hover:underline dark:hover:text-slate-100"
+          (click)="close()"
         >
-          {{ 'shell.menu.version' | translate: { version } }}
-        </p>
-      }
+          {{ 'shell.menu.sourceCode' | translate }}
+          <span class="sr-only">{{ 'shell.menu.opensInNewTab' | translate }}</span>
+        </a>
+      </div>
     </div>
   }
 </div>

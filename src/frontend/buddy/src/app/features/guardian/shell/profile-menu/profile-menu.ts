@@ -26,7 +26,9 @@ export class ProfileMenu {
   protected readonly theme = inject(ThemeService);
 
   protected readonly themeModes = THEME_MODES;
-  protected readonly version = inject(RuntimeConfigService).version;
+  private readonly runtimeConfig = inject(RuntimeConfigService);
+  protected readonly version = this.runtimeConfig.version;
+  protected readonly repositoryUrl = this.runtimeConfig.repositoryUrl;
 
   private readonly injector = inject(Injector);
   private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');

@@ -13,7 +13,12 @@ export interface RuntimeConfig {
   // Build version from git tags, written by the Dockerfile at deploy time (docs/versioning.md).
   // Absent in local development.
   version?: string;
+  // Source code link in the profile menu, so a family running its own fork can point it there.
+  // Defaults to DEFAULT_REPOSITORY_URL.
+  repositoryUrl?: string;
 }
+
+export const DEFAULT_REPOSITORY_URL = 'https://github.com/kimipsen/buddy';
 
 @Injectable({ providedIn: 'root' })
 export class RuntimeConfigService {
@@ -40,6 +45,10 @@ export class RuntimeConfigService {
     return this.config?.version ?? null;
   }
 
+  get repositoryUrl(): string {
+    return this.config?.repositoryUrl ?? DEFAULT_REPOSITORY_URL;
+  }
+
   async load(): Promise<void> {
     const response = await fetch('/config/runtime-config.json', { cache: 'no-cache' });
 
@@ -64,13 +73,17 @@ export function isRuntimeConfig(value: unknown): value is RuntimeConfig {
     return false;
   }
 
-  const { keycloak, apiBaseUrl, version } = value as Record<string, unknown>;
+  const { keycloak, apiBaseUrl, version, repositoryUrl } = value as Record<string, unknown>;
 
   if (typeof apiBaseUrl !== 'string' || typeof keycloak !== 'object' || keycloak === null) {
     return false;
   }
 
   if (version !== undefined && typeof version !== 'string') {
+    return false;
+  }
+
+  if (repositoryUrl !== undefined && typeof repositoryUrl !== 'string') {
     return false;
   }
 

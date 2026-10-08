@@ -405,6 +405,7 @@ az acr build \
   --build-arg "API_BASE_URL=https://$API_HOSTNAME" \
   --build-arg "KEYCLOAK_AUTHORITY=https://$KEYCLOAK_HOSTNAME" \
   --build-arg "BUDDY_VERSION=$BUDDY_VERSION" \
+  --build-arg "REPOSITORY_URL=${REPOSITORY_URL:-}" \
   "$REPO_ROOT/src/frontend/buddy"
 
 FRONTEND_DIGEST=$(az acr repository show --name "$ACR_NAME" --image buddy-frontend:latest --query digest -o tsv)

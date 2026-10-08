@@ -35,7 +35,8 @@ The top-level route setup is in [src/frontend/buddy/src/app/app.routes.ts](../..
 Authentication is centered on the services in [src/frontend/buddy/src/app/core](../../src/frontend/buddy/src/app/core):
 
 - `AuthService` handles the Keycloak authorization code exchange, token refresh, and logout
-- `RuntimeConfigService` loads config from `/config/runtime-config.json`
+- `RuntimeConfigService` loads config from `/config/runtime-config.json` (Keycloak and API URLs,
+  plus the optional `version` and `repositoryUrl` shown in the profile menu)
 - `authGuard` blocks unauthenticated access
 - `roleRedirectGuard` sends users to the correct route after the account role is resolved
 

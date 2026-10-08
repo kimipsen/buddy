@@ -227,7 +227,9 @@ The frontend is available at `http://localhost:4300`. See the
 configuration details, and the [testing guide](docs/testing.md) for test
 commands.
 
-## License and security
+## License, security and contributing
 
 Buddy is released under the [MIT License](LICENSE). To report a security
 problem, follow [SECURITY.md](SECURITY.md); please don't open a public issue.
+To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md).
