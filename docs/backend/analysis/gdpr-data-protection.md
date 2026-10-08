@@ -35,7 +35,7 @@ What exists today (all checked in the code):
   be deleted, because only the owner may do that
   ([DeleteGroup.Handler.cs](../../../src/backend/buddy/Features/Groups/DeleteGroup/DeleteGroup.Handler.cs)).
   A child whose last guardian left keeps all its data with nobody able to reach it.
-- **There is no export.** `GET /users/me/events` lists the caller's own user stream only.
+- **There is no export.** The former `GET /users/me/events` (caller's own user stream only) has been removed.
 - **The AI assistant sends more than it needs**
   ([AiSessionPromptBuilder.cs](../../../src/backend/buddy/Features/Mealplans/AiAssistant/AiSessionPromptBuilder.cs),
   [AiSessionToolExecutor.cs](../../../src/backend/buddy/Features/Mealplans/AiAssistant/AiSessionToolExecutor.cs)):
