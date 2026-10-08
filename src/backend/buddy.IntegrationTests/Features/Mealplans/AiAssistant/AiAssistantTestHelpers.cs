@@ -37,16 +37,42 @@ internal static class AiAssistantTestHelpers
     }
 
     public static async Task<AiSessionViewDto> StartSessionAsync(
-        BuddyApiFixture fixture, string guardianToken, Guid childId, DateOnly from, DateOnly to, IReadOnlyCollection<MealSlot> slots, int expectedStatus = 200, string? notes = null)
+        BuddyApiFixture fixture, string guardianToken, Guid childId, DateOnly from, DateOnly to, IReadOnlyCollection<MealSlot> slots, int expectedStatus = 200, string? notes = null,
+        bool ratedOnly = false, AiServedWindow servedWithin = AiServedWindow.Any)
     {
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Post.Json(new { From = from, To = to, Slots = slots, MustIncludeMealIds = Array.Empty<Guid>(), Notes = notes })
+            _.Post.Json(new { From = from, To = to, Slots = slots, MustIncludeMealIds = Array.Empty<Guid>(), Notes = notes, RatedOnly = ratedOnly, ServedWithin = servedWithin })
                 .ToUrl($"/mealplans/children/{childId}/ai/sessions");
             _.StatusCodeShouldBe(expectedStatus);
         });
 
         return expectedStatus == 200 ? response.ReadAsJson<AiSessionViewDto>() : null!;
+    }
+
+    public static async Task AssignDinnerAsync(BuddyApiFixture fixture, string guardianToken, Guid childId, Guid mealId, DateOnly date)
+    {
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Put.Json(new { MealId = mealId, Notes = (string?)null })
+                .ToUrl($"/mealplans/children/{childId}/plan")
+                .QueryString("date", date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))
+                .QueryString("slot", "Dinner");
+            _.StatusCodeShouldBeOk();
+        });
+    }
+
+    public static async Task ClearDinnerAsync(BuddyApiFixture fixture, string guardianToken, Guid childId, DateOnly date)
+    {
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Delete.Url($"/mealplans/children/{childId}/plan")
+                .QueryString("date", date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))
+                .QueryString("slot", "Dinner");
+            _.StatusCodeShouldBe(204);
+        });
     }
 }

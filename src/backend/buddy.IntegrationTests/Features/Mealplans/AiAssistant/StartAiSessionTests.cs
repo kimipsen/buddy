@@ -207,4 +207,86 @@ public sealed class StartAiSessionTests(BuddyApiFixture fixture)
         Assert.Equal("validation_error", error.Code);
         Assert.Contains("Notes", error.Details.Keys);
     }
+
+    [Fact]
+    public async Task A_session_without_a_filter_reports_no_filter()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+
+        var view = await AiAssistantTestHelpers.StartSessionAsync(fixture, guardianToken, child.Id, From, To, [MealSlot.Dinner]);
+
+        Assert.False(view.RatedOnly);
+        Assert.Equal(AiServedWindow.Any, view.ServedWithin);
+    }
+
+    [Fact]
+    public async Task A_filtered_session_starts_when_a_meal_was_served_in_the_window_and_echoes_the_filter()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+        await AiAssistantTestHelpers.AssignDinnerAsync(fixture, guardianToken, child.Id, meal.Id, From.AddDays(-5));
+
+        var view = await AiAssistantTestHelpers.StartSessionAsync(
+            fixture, guardianToken, child.Id, From, To, [MealSlot.Dinner], servedWithin: AiServedWindow.Last30Days);
+
+        Assert.False(view.RatedOnly);
+        Assert.Equal(AiServedWindow.Last30Days, view.ServedWithin);
+    }
+
+    [Fact]
+    public async Task A_filter_that_matches_no_meals_is_rejected_and_keeps_the_current_session()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id));
+        var current = await AiAssistantTestHelpers.StartSessionAsync(fixture, guardianToken, child.Id, From, To, [MealSlot.Dinner]);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { From, To, Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = Array.Empty<Guid>(), RatedOnly = true })
+                .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Equal([StartAiSessionHandler.NoMatchingMealsMessage], error.Details["ServedWithin"]);
+
+        var stillCurrent = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Get.Url($"/mealplans/children/{child.Id}/ai/sessions/current");
+            _.StatusCodeShouldBeOk();
+        });
+        var currentView = stillCurrent.ReadAsJson<AiSessionViewDto>();
+        Assert.Equal(current.Id, currentView.Id);
+        Assert.Equal(AiSessionStatus.Drafting, currentView.Status);
+    }
+
+    [Fact]
+    public async Task A_served_window_that_is_not_30_60_or_90_days_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { From, To, Slots = new[] { MealSlot.Dinner }, MustIncludeMealIds = Array.Empty<Guid>(), ServedWithin = 45 })
+                .ToUrl($"/mealplans/children/{child.Id}/ai/sessions");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal("validation_error", error.Code);
+        Assert.Contains("ServedWithin", error.Details.Keys);
+    }
 }

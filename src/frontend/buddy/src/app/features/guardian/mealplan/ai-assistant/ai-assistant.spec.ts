@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   AiAssistantService,
@@ -12,6 +12,9 @@ import { ChildSummary, GuardiansService } from '../../../../core/guardians.servi
 import { MealplanAiAssistant } from './ai-assistant';
 
 describe('MealplanAiAssistant', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
     return {
       id: 'child-1',
@@ -42,12 +45,21 @@ describe('MealplanAiAssistant', () => {
       status: 0,
       transcript: [],
       draft: [],
+      ratedOnly: false,
+      servedWithin: 0,
       ...overrides,
     };
   }
 
   function notFound(): HttpErrorResponse {
     return new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+  }
+
+  function noMatchingMeals(): HttpErrorResponse {
+    return new HttpErrorResponse({
+      status: 400,
+      error: { code: 'validation_error', details: { ServedWithin: ['No meals match.'] } },
+    });
   }
 
   interface Stubs {
@@ -180,6 +192,148 @@ describe('MealplanAiAssistant', () => {
       expect.objectContaining({ slots: [2], mustIncludeMealIds: [], notes: '' }),
     );
     expect(fixture.nativeElement.textContent).toContain('Drafting');
+  });
+
+  it('sends the chosen meal filter and remembers it on this device', async () => {
+    const { fixture, aiAssistant } = await setup();
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    compiled.querySelector<HTMLButtonElement>('button[role="switch"]')!.click();
+    findButtonByText(compiled, '60 days')!.click();
+    await settle(fixture);
+    findButtonByText(compiled, 'Start planning')!.click();
+    await settle(fixture);
+
+    expect(aiAssistant.startSession).toHaveBeenCalledWith(
+      'child-1',
+      expect.objectContaining({ ratedOnly: true, servedWithin: 60 }),
+    );
+    expect(JSON.parse(localStorage.getItem('buddy_ai_meal_filter')!)).toEqual({
+      ratedOnly: true,
+      servedWithin: 60,
+    });
+  });
+
+  it('starts unfiltered by default', async () => {
+    const { fixture, aiAssistant } = await setup();
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    expect(compiled.querySelector('button[role="switch"]')!.getAttribute('aria-checked')).toBe(
+      'false',
+    );
+    expect(findButtonByText(compiled, 'Any time')!.getAttribute('aria-checked')).toBe('true');
+
+    findButtonByText(compiled, 'Start planning')!.click();
+    await settle(fixture);
+
+    expect(aiAssistant.startSession).toHaveBeenCalledWith(
+      'child-1',
+      expect.objectContaining({ ratedOnly: false, servedWithin: 0 }),
+    );
+  });
+
+  it('pre-fills the filter last used on this device', async () => {
+    localStorage.setItem(
+      'buddy_ai_meal_filter',
+      JSON.stringify({ ratedOnly: true, servedWithin: 30 }),
+    );
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    expect(compiled.querySelector('button[role="switch"]')!.getAttribute('aria-checked')).toBe(
+      'true',
+    );
+    expect(findButtonByText(compiled, '30 days')!.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('does not remember a filter whose session failed to start', async () => {
+    const { fixture } = await setup({
+      aiAssistant: {
+        startSession: vi.fn(async () =>
+          Promise.reject(new HttpErrorResponse({ status: 500, statusText: 'Server Error' })),
+        ),
+      },
+    });
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    findButtonByText(compiled, '90 days')!.click();
+    await settle(fixture);
+    findButtonByText(compiled, 'Start planning')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain(
+      'Unable to start a session. Check that a provider is configured.',
+    );
+    expect(localStorage.getItem('buddy_ai_meal_filter')).toBeNull();
+  });
+
+  it('explains when the filter matches no meals', async () => {
+    const { fixture } = await setup({
+      aiAssistant: {
+        startSession: vi.fn(async () => Promise.reject(noMatchingMeals())),
+      },
+    });
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement, 'Start planning')!.click();
+    await settle(fixture);
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'No meals match this filter. Choose a longer period or include unrated meals.',
+    );
+  });
+
+  it.each([
+    [true, 60, 'Using rated meals served in the 60 days before 2026-08-01.'],
+    [false, 30, 'Using meals served in the 30 days before 2026-08-01.'],
+    [true, 0, 'Using only meals the children have rated.'],
+  ] as const)(
+    'summarises the session filter (ratedOnly=%s, servedWithin=%s)',
+    async (ratedOnly, servedWithin, expected) => {
+      const { fixture } = await setup({
+        aiAssistant: {
+          getCurrentSession: vi.fn(async () => session({ ratedOnly, servedWithin })),
+        },
+      });
+      await settle(fixture);
+
+      expect(fixture.nativeElement.textContent).toContain(expected);
+    },
+  );
+
+  it('shows no filter summary for an unfiltered session', async () => {
+    const { fixture } = await setup({
+      aiAssistant: { getCurrentSession: vi.fn(async () => session()) },
+    });
+    await settle(fixture);
+
+    expect(fixture.nativeElement.textContent).not.toContain('Using ');
+  });
+
+  it('explains when the session filter no longer matches any meal', async () => {
+    const { fixture } = await setup({
+      aiAssistant: {
+        getCurrentSession: vi.fn(async () => session({ servedWithin: 30 })),
+        sendMessage: vi.fn(async () => Promise.reject(noMatchingMeals())),
+      },
+    });
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    const input = compiled.querySelector<HTMLInputElement>('input[name="aiMessage"]')!;
+    input.value = 'Plan dinners.';
+    input.dispatchEvent(new Event('input'));
+    await settle(fixture);
+    findButtonByText(compiled, 'Send')!.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain(
+      "No meals match this session's filter any more. Start a new session.",
+    );
   });
 
   it('does not start a session when no slot is selected', async () => {

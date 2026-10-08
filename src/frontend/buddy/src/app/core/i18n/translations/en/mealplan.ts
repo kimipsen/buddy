@@ -111,6 +111,12 @@ export const mealplan = {
       starting: 'Starting…',
       startError: 'Unable to start a session. Check that a provider is configured.',
       noSlotsSelected: 'Choose at least one meal slot.',
+      ratedOnlyLabel: 'Only meals the children have rated',
+      servedWithinLabel: 'Only meals served in the last',
+      servedWithinAll: 'Any time',
+      servedWithinDays: '{days} days',
+      noMatchingMeals:
+        'No meals match this filter. Choose a longer period or include unrated meals.',
     },
     session: {
       statusDrafting: 'Drafting',
@@ -124,6 +130,10 @@ export const mealplan = {
       sendButton: 'Send',
       sending: 'Thinking…',
       sendError: 'Unable to send that message. Please try again.',
+      noMatchingMeals: "No meals match this session's filter any more. Start a new session.",
+      filterRated: 'Using only meals the children have rated.',
+      filterServed: 'Using meals served in the {days} days before {from}.',
+      filterRatedServed: 'Using rated meals served in the {days} days before {from}.',
       draftTitle: 'Draft plan',
       draftEmpty: 'Nothing proposed yet.',
       applyButton: 'Apply to my meal plan',

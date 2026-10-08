@@ -35,6 +35,8 @@ describe('AiAssistantService', () => {
       status: 0,
       transcript: [],
       draft: [],
+      ratedOnly: false,
+      servedWithin: 0,
       ...overrides,
     };
   }
@@ -188,6 +190,8 @@ describe('AiAssistantService', () => {
         slots: [2],
         mustIncludeMealIds: [],
         notes: '',
+        ratedOnly: true,
+        servedWithin: 60,
       };
 
       const promise = service.startSession(childId, request);

@@ -48,6 +48,9 @@ export interface AiSessionDraftEntry {
   mealName: string;
 }
 
+// AiServedWindow on the backend: the value is the day count, 0 meaning no served-in filter.
+export type AiServedWindow = 0 | 30 | 60 | 90;
+
 export interface AiSessionView {
   id: string;
   from: string;
@@ -56,6 +59,8 @@ export interface AiSessionView {
   status: AiSessionStatus;
   transcript: AiSessionTranscriptEntry[];
   draft: AiSessionDraftEntry[];
+  ratedOnly: boolean;
+  servedWithin: AiServedWindow;
 }
 
 export interface StartAiSessionRequest {
@@ -64,6 +69,8 @@ export interface StartAiSessionRequest {
   slots: MealSlot[];
   mustIncludeMealIds: string[];
   notes: string;
+  ratedOnly: boolean;
+  servedWithin: AiServedWindow;
 }
 
 @Injectable({ providedIn: 'root' })

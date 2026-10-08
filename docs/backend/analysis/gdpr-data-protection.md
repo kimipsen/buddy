@@ -284,6 +284,8 @@ public interface IPersonalDataExporter
    - Children appear as "child 1", "child 2" in the prompt, not by `UserId`.
    - Rating comments are still sent, because they are what makes suggestions useful ("too
      spicy").
+   - The guardian can narrow the meal list per session to rated meals and/or meals served in the
+     last 30, 60 or 90 days ([ai-assistant-meal-filter.md](ai-assistant-meal-filter.md)).
    - `get_calendar_conflicts` returns titles only for items assigned to the session's child or to
      nobody, from calendars of the child's own family. Everything else becomes `"busy"` with its
      time.

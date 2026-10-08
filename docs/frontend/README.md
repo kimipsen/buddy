@@ -60,7 +60,8 @@ Current responsibilities:
   one-click `webcal://` and Google Calendar subscribe buttons (also offered for calendar iCal links
   in the admin area)
 - start a chat-based AI assistant session to draft meal-plan assignments over a
-  date range, then apply or discard the resulting draft
+  date range, optionally limited to rated meals and/or meals served in the last 30/60/90 days,
+  then apply or discard the resulting draft
 - manage pickup and drop-off assignments for linked children
 - keep a sleep diary per child (one row per night, diary-wide sleep hygiene notes) and share it
   with a doctor through a revocable, optionally expiring link
@@ -87,7 +88,8 @@ The guardian routes currently include:
 - `/guardian/mealplan/ai-assistant` — chat-based AI assistant for drafting
   meal-plan assignments; before the family's first session it shows what is
   shared with the provider (`AiDataSharingNotice`, also on the settings page)
-  and asks a guardian to acknowledge it
+  and asks a guardian to acknowledge it; the start form's meal filter (rated
+  only, served in the last 30/60/90 days) is remembered per device
 - `/guardian/mealplan/import` — import older meal plans from a pasted note or
   CSV: preview, per-meal review, import and undo
 - `/guardian/medicine` — medicine schedule management

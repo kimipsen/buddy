@@ -61,6 +61,8 @@ public union MealplanAiSessionEvent(
 // AiSessionResolution.ResolveCurrentSessionIdAsync), not by a single write-once index row, so
 // starting a session under any sibling in the family always correctly supersedes the last one
 // regardless of which child anchored it.
+// RatedOnly/ServedWithin are the meal filter (docs/backend/analysis/ai-assistant-meal-filter.md);
+// their defaults mean "no filter", so events written before the filter existed still deserialize.
 public sealed record AiSessionStarted(
     MealplanAiSessionId Id,
     UserId ChildId,
@@ -70,7 +72,9 @@ public sealed record AiSessionStarted(
     IReadOnlyCollection<MealId> MustIncludeMealIds,
     string Notes,
     UserId StartedBy,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    bool RatedOnly = false,
+    AiServedWindow ServedWithin = AiServedWindow.Any);
 
 public sealed record AiUserMessageSent(MealplanAiSessionId Id, string Text, UserId SentBy, DateTimeOffset OccurredAt);
 

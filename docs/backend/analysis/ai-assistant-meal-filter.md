@@ -1,6 +1,6 @@
 # AI Assistant Meal Filter
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `AiServedWindow` and `RatedOnly`/`ServedWithin` on `AiSessionStarted`, `StartAiSession` and `AiSessionView`; `AiMealFilter` feeds both the prompt and the `propose_assignment` allowlist in `SendAiSessionMessage`; `400` keyed on `ServedWithin` when nothing matches. The start form on `/guardian/mealplan/ai-assistant` has a "rated only" toggle and an "any time / 30 / 60 / 90 days" segmented control (last choice kept in `localStorage`), and the session panel summarises an active filter.
 
 ## Context
 
@@ -194,10 +194,13 @@ Both handlers need the same filtered set: `StartAiSession` to reject an empty re
 
 ```csharp
 // AiAssistant/AiMealFilter.cs (new)
+// FilterMatchedNothing: a filter is active and no meal passes it (must-include meals don't count).
+public sealed record AiMealSelection(IReadOnlyList<Meal> Meals, bool FilterMatchedNothing);
+
 public static class AiMealFilter
 {
     // Pure, unit-testable core: no stores.
-    public static IReadOnlyList<Meal> Apply(
+    public static AiMealSelection Apply(
         IReadOnlyCollection<Meal> familyMeals,
         MealPlan? familyPlan,
         DateOnly from,
@@ -205,8 +208,8 @@ public static class AiMealFilter
         AiServedWindow servedWithin,
         IReadOnlyCollection<MealId> mustInclude);
 
-    // Loads family meals + the family MealPlan snapshot, then calls Apply.
-    public static Task<IReadOnlyList<Meal>> LoadAsync(
+    // Loads family meal snapshots + the family MealPlan snapshot, then calls Apply.
+    public static Task<AiMealSelection> LoadAsync(
         UserId childId, DateOnly from, bool ratedOnly, AiServedWindow servedWithin,
         IReadOnlyCollection<MealId> mustInclude,
         IGuardianLinkEventStore guardians, IMealEventStore meals, IMealPlanEventStore mealPlans,
@@ -234,11 +237,12 @@ After:
 
 ```csharp
 var started = /* find AiSessionStarted, moved up */;
-var offeredMeals = await AiMealFilter.LoadAsync(
+var selection = await AiMealFilter.LoadAsync(
     command.ChildId, started.From, started.RatedOnly, started.ServedWithin, started.MustIncludeMealIds,
     guardians, meals, mealPlans, cancellationToken);
-var offeredMealIds = offeredMeals.Select(m => m.Id).ToHashSet();
-var systemPrompt = AiSessionPromptBuilder.Build(session, offeredMeals, started);
+if (selection.FilterMatchedNothing) { /* 400 keyed on ServedWithin, see Question 6 */ }
+HashSet<MealId> offeredMealIds = [.. selection.Meals.Select(m => m.Id)];
+var systemPrompt = AiSessionPromptBuilder.Build(session, selection.Meals, started);
 // ... RunToolLoopAsync(..., offeredMealIds, ...)
 ```
 
@@ -259,8 +263,9 @@ frontend can show a dedicated message instead of the generic `startError`.
 
 The meal set can also become empty mid-session, for example when the only matching assignment in the
 window is cleared, or the only matching meal is archived. `SendAiSessionMessage` then returns the
-same kind of `400` ("No meals match this session's filter any more -- start a new session") and
-doesn't call the provider. It is rare, and calling the model with an empty list would only produce
+same kind of `400`, also keyed on `ServedWithin` so the frontend can tell it from a provider
+rejection ("No meals match this session's filter any more -- start a new session"), and doesn't
+call the provider. It is rare, and calling the model with an empty list would only produce
 a confused reply that the guardian paid for.
 
 *Rejected:* falling back to the full library. It silently does the opposite of what the guardian
@@ -271,7 +276,8 @@ asked for and sends more data than they agreed to share.
 **Decision: the prompt states the filter in one line, and `AiSessionView` echoes both fields.**
 
 - Prompt: after the slot line, when a filter is active, add for example
-  `The guardian limited the meal list to rated meals served between 2026-08-08 and 2026-10-06.`
+  `The guardian limited the meal list to meals the children have rated that were served between 2026-08-08 and 2026-10-06.`
+  (with ", plus the meal ids they asked to include" when there are any).
   Without that line, the model may conclude the family only has six meals and say so, or ask
   for meals it can't see.
 - `AiSessionView` gains `bool RatedOnly` and `AiServedWindow ServedWithin`, filled from the
@@ -324,7 +330,7 @@ response fields. Update `Mealplans.http` with a filtered start request.
 
 ## Testing
 
-- **Unit-style (no Alba), next to `AiDataMinimizationTests`:** `AiMealFilter.Apply` covering each
+- **Unit-style (no Alba), `AiMealFilterTests` next to `AiDataMinimizationTests`:** `AiMealFilter.Apply` covering each
   row of the Question 4 table; window edges (`From - N` is included, `From - N - 1` and `From`
   are excluded); must-include kept despite failing both filters; archived meals still dropped;
   a `null` plan with `ServedWithin != Any` gives an empty served set. A prompt-builder case
@@ -334,6 +340,8 @@ response fields. Update `Mealplans.http` with a filtered start request.
   view; omitting both fields behaves as today.
 - **Alba, in `SendAiSessionMessageTests`:** the session-level `400` once the only matching
   assignment is cleared (no provider call is made, so no fake chat client is needed).
+- **E2E, in `e2e/mealplan-ai-assistant.spec.ts`:** a filter on a family with no meals shows the
+  "no meals match" message; turning it off starts the session.
 - **Event shape:** regenerate `AiSessionStarted.json` and add `AiSessionStarted_Filtered.json`.
   `MealplanAiSessionSnapshotTests` is unchanged, because the aggregate doesn't carry the filter.
 - **Frontend spec:** the request body carries the chosen filter; the stored choice pre-fills the
@@ -346,7 +354,7 @@ response fields. Update `Mealplans.http` with a filtered start request.
 | Both filters off / fields omitted | Today's behavior: every active meal |
 | `servedWithin` not 0/30/60/90 | `400` from the validator (`IsInEnum`) |
 | Filter matches no meals at start | `400` keyed on `ServedWithin`; no session created, nothing sent |
-| Filter matches nothing on a later turn | `400` "start a new session"; provider not called; message not recorded |
+| Filter matches nothing on a later turn | `400` keyed on `ServedWithin`, "start a new session"; provider not called; message not recorded |
 | Family has no `MealPlan` yet, `ServedWithin != Any` | Served set is empty, so the start is rejected with `400` (unless must-include meals exist) |
 | Must-include meal fails the filter | Still offered and still accepted by `propose_assignment` |
 | Model proposes a family meal outside the filtered set | Tool error "not in the family's available meal library", as for an unknown id today |
@@ -369,6 +377,7 @@ response fields. Update `Mealplans.http` with a filtered start request.
 | Empty result | `400` at start (and on a later turn); never fall back to the full library |
 | Telling the model / UI | One prompt line; `AiSessionView` echoes `RatedOnly` and `ServedWithin` |
 | Back-compat | Constructor defaults, no upcaster; old sessions expire within 30 days anyway |
+| GDPR doc | One line in the Question 6 minimization list noting the guardian can narrow the meals sent |
 
 ## Remaining open questions
 
@@ -378,9 +387,6 @@ response fields. Update `Mealplans.http` with a filtered start request.
   changes, so the guardian finds out before submitting rather than from a `400`. That needs a small
   read endpoint (`GET .../ai/meal-filter-preview?from&ratedOnly&servedWithin`). Lean: not in v1,
   because the `400` message is clear. It's purely additive later.
-- **GDPR doc.** Lean: add one sentence to the minimization section of
-  [gdpr-data-protection.md](gdpr-data-protection.md) when this ships, noting that guardians can
-  narrow the meal data sent.
 
 ## Diagram
 

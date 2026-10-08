@@ -112,6 +112,12 @@ export const mealplan = {
       starting: 'Starter…',
       startError: 'Kunne ikke starte en session. Tjek at en udbyder er konfigureret.',
       noSlotsSelected: 'Vælg mindst ét måltid.',
+      ratedOnlyLabel: 'Kun måltider, børnene har bedømt',
+      servedWithinLabel: 'Kun måltider serveret inden for de sidste',
+      servedWithinAll: 'Når som helst',
+      servedWithinDays: '{days} dage',
+      noMatchingMeals:
+        'Ingen måltider passer til filteret. Vælg en længere periode, eller tag måltider uden bedømmelse med.',
     },
     session: {
       statusDrafting: 'Udkast',
@@ -125,6 +131,10 @@ export const mealplan = {
       sendButton: 'Send',
       sending: 'Tænker…',
       sendError: 'Kunne ikke sende beskeden. Prøv igen.',
+      noMatchingMeals: 'Ingen måltider passer længere til sessionens filter. Start en ny session.',
+      filterRated: 'Bruger kun måltider, børnene har bedømt.',
+      filterServed: 'Bruger måltider serveret i de {days} dage før {from}.',
+      filterRatedServed: 'Bruger bedømte måltider serveret i de {days} dage før {from}.',
       draftTitle: 'Udkast til plan',
       draftEmpty: 'Intet foreslået endnu.',
       applyButton: 'Tilføj til min madplan',

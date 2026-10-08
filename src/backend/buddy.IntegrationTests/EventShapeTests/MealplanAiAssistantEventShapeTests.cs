@@ -54,6 +54,12 @@ public sealed class MealplanAiAssistantEventShapeTests
         "Mealplans/AiSessionStarted.json");
 
     [Fact]
+    public void AiSessionStarted_Filtered() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new AiSessionStarted(FixedSessionId, FixedChildId, FixedFrom, FixedTo, [MealSlot.Lunch, MealSlot.Dinner], [FixedMealId], "No fish on Fridays", FixedGuardianId, FixedInstant,
+            RatedOnly: true, ServedWithin: AiServedWindow.Last60Days),
+        "Mealplans/AiSessionStarted_Filtered.json");
+
+    [Fact]
     public void AiUserMessageSent() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new AiUserMessageSent(FixedSessionId, "Plan dinners for the week", FixedGuardianId, FixedInstant),
         "Mealplans/AiUserMessageSent.json");

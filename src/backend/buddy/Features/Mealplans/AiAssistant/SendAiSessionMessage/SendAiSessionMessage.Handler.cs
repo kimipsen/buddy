@@ -18,12 +18,15 @@ public static class SendAiSessionMessageHandler
     // loop unboundedly against the family's own paid key -- see the AI mealplan plan.
     public const int MaxToolLoopIterations = 20;
 
+    public const string NoMatchingMealsMessage = "No meals match this session's filter any more -- start a new session.";
+
     public static async Task<AiSessionOutcome> Handle(
         SendAiSessionMessage command,
         IValidator<SendAiSessionMessage> validator,
         IAiSessionEventStore sessions,
         IAiCredentialEventStore credentials,
         IMealEventStore meals,
+        IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         IApiKeyCipher cipher,
         IAiProviderRegistry providerRegistry,
@@ -91,29 +94,35 @@ public static class SendAiSessionMessageHandler
 
         var apiKey = cipher.Unprotect(storedKey.CipherText);
 
-        var familyMealIds = await MealFamilyResolution.ResolveFamilyMealIdsAsync(command.ChildId, guardians, meals, cancellationToken);
-        List<Meal> familyMeals = [];
-
-        foreach (var mealId in familyMealIds)
-        {
-            if (Meal.Rehydrate(await meals.ReadAsync(mealId, cancellationToken)) is { } meal)
-            {
-                familyMeals.Add(meal);
-            }
-        }
-
         // Not existingEvents.OfType<AiSessionStarted>(): a union is a value type whose boxed
         // runtime type is always the union's own type, so the generic is-check OfType/Cast rely on
         // never matches a case type -- only pattern matching (switch/is, as below) understands
         // union cases.
         var started = existingEvents.Select(e => e switch { AiSessionStarted s => s, _ => null }).First(s => s is not null)!;
-        var systemPrompt = AiSessionPromptBuilder.Build(session, familyMeals, started.MustIncludeMealIds, started.Notes);
+
+        // The prompt's meal list and the propose_assignment allowlist are the same filtered set,
+        // so the server only accepts meals it actually offered.
+        var selection = await AiMealFilter.LoadAsync(
+            command.ChildId, started.From, started.RatedOnly, started.ServedWithin, started.MustIncludeMealIds,
+            guardians, meals, mealPlans, cancellationToken);
+
+        if (selection.FilterMatchedNothing)
+        {
+            // Keyed like StartAiSession's rejection, so the frontend can tell it from a provider error.
+            return new AiSessionOutcome.Validation(new ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(AiSessionStarted.ServedWithin)] = [NoMatchingMealsMessage]
+            }));
+        }
+
+        HashSet<MealId> offeredMealIds = [.. selection.Meals.Select(m => m.Id)];
+        var systemPrompt = AiSessionPromptBuilder.Build(session, selection.Meals, started);
 
         List<AiChatMessage> history = [.. AiSessionHistoryBuilder.Build(existingEvents), new AiChatMessage(AiChatMessageRole.User, command.Text, [])];
         List<MealplanAiSessionEvent> newEvents = [new AiUserMessageSent(sessionId, command.Text, userId, DateTimeOffset.UtcNow)];
 
         var toolLoopResult = await RunToolLoopAsync(
-            apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, familyMealIds, userId, started.ChildId,
+            apiKey, chatClient, systemPrompt, history, newEvents, sessionId, session, offeredMealIds, userId, started.ChildId,
             calendars, calendarItems, taskTemplates, groups, guardians, activeProvider, logger, cancellationToken);
 
         if (toolLoopResult is not Result<string>.Success(var finalText))

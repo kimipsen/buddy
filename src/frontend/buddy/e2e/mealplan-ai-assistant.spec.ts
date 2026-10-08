@@ -140,6 +140,21 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
   await page.getByRole('button', { name: 'Start a new session' }).click();
   await expect(page.getByRole('heading', { name: 'Start a new session' })).toBeVisible();
 
+  // --- Meal filter (docs/backend/analysis/ai-assistant-meal-filter.md): this fresh family has no
+  // meals at all, so a real StartAiSession with any filter matches nothing and answers 400. Turning
+  // the filter back off starts normally. ---
+  const ratedOnlySwitch = page.getByRole('switch', { name: 'Only meals the children have rated' });
+  await ratedOnlySwitch.click();
+  await expect(ratedOnlySwitch).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: '60 days' }).click();
+  await startButton.click();
+  await expect(
+    page.getByText('No meals match this filter. Choose a longer period or include unrated meals.'),
+  ).toBeVisible();
+
+  await ratedOnlySwitch.click();
+  await page.getByRole('radio', { name: 'Any time' }).click();
+
   // --- Start a second real session, then stub only the chat round-trip (SendAiSessionMessage),
   // which is the one call that would otherwise reach a real AI provider. The stubbed response
   // shape is exactly AiSessionView from ai-assistant.service.ts, not a guess. ---
@@ -174,6 +189,8 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
             mealName: 'Stubbed Oatmeal',
           },
         ],
+        ratedOnly: false,
+        servedWithin: 0,
       },
     });
   });

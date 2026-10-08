@@ -10,13 +10,22 @@ namespace buddy.Features.Mealplans;
 // it repeats near-verbatim across a session's turns (see the AI mealplan plan's caching note).
 public static class AiSessionPromptBuilder
 {
-    public static string Build(MealplanAiSession session, IReadOnlyCollection<Meal> familyMeals, IReadOnlyCollection<MealId> mustIncludeMealIds, string notes)
+    // offeredMeals is already filtered by AiMealFilter (archived meals and the session's meal
+    // filter applied); the archived check below stays as a guard.
+    public static string Build(MealplanAiSession session, IReadOnlyCollection<Meal> offeredMeals, AiSessionStarted started)
     {
+        var mustIncludeMealIds = started.MustIncludeMealIds;
+        var notes = started.Notes;
         var builder = new StringBuilder();
 
         builder.AppendLine("You are a meal-planning assistant helping a parent or guardian fill in their family's mealplan.");
         builder.AppendLine(CultureInfo.InvariantCulture, $"Requested date range: {session.From:yyyy-MM-dd} to {session.To:yyyy-MM-dd}.");
         builder.AppendLine(CultureInfo.InvariantCulture, $"Requested meal slots: {string.Join(", ", session.RequestedSlots)}.");
+
+        if (DescribeFilter(started) is { } filterLine)
+        {
+            builder.AppendLine(filterLine);
+        }
 
         if (mustIncludeMealIds.Count > 0)
         {
@@ -31,7 +40,7 @@ public static class AiSessionPromptBuilder
         builder.AppendLine();
         builder.AppendLine("Available meals -- only propose meal ids from this list:");
 
-        var activeMeals = familyMeals.Where(m => !m.IsArchived).ToList();
+        var activeMeals = offeredMeals.Where(m => !m.IsArchived).ToList();
         var childAliases = BuildChildAliases(activeMeals);
 
         foreach (var meal in activeMeals)
@@ -56,6 +65,26 @@ public static class AiSessionPromptBuilder
             "tool calls and no reply.");
 
         return builder.ToString();
+    }
+
+    // Tells the model the list is deliberately narrowed, so it doesn't conclude the family only
+    // has a handful of meals or ask for ones it can't see.
+    private static string? DescribeFilter(AiSessionStarted started)
+    {
+        if (!AiMealFilter.IsActive(started.RatedOnly, started.ServedWithin))
+        {
+            return null;
+        }
+
+        var rated = started.RatedOnly ? "meals the children have rated" : "meals";
+        var served = started.ServedWithin == AiServedWindow.Any
+            ? ""
+            : string.Create(CultureInfo.InvariantCulture,
+                $" that were served between {started.From.AddDays(-(int)started.ServedWithin):yyyy-MM-dd} and {started.From.AddDays(-1):yyyy-MM-dd}");
+
+        var mustInclude = started.MustIncludeMealIds.Count > 0 ? ", plus the meal ids they asked to include" : "";
+
+        return $"The guardian limited the meal list to {rated}{served}{mustInclude}.";
     }
 
     // Children are "child 1", "child 2" in the prompt, never their UserId (GDPR Question 6 in

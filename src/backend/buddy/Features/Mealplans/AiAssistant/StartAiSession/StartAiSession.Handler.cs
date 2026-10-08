@@ -7,12 +7,15 @@ namespace buddy.Features.Mealplans;
 
 public static class StartAiSessionHandler
 {
+    public const string NoMatchingMealsMessage = "No meals match this filter. Choose a longer period or include unrated meals.";
+
     public static async Task<AiSessionOutcome> Handle(
         StartAiSession command,
         IValidator<StartAiSession> validator,
         IAiSessionEventStore sessions,
         IAiCredentialEventStore credentials,
         IMealEventStore meals,
+        IMealPlanEventStore mealPlans,
         IGuardianLinkEventStore guardians,
         CancellationToken cancellationToken)
     {
@@ -49,6 +52,23 @@ public static class StartAiSessionHandler
             return new AiSessionOutcome.DataSharingNotAcknowledged();
         }
 
+        // Checked before anything is created or discarded, so a filter that matches nothing leaves
+        // the family's current session untouched and sends nothing to the provider.
+        if (AiMealFilter.IsActive(command.RatedOnly, command.ServedWithin))
+        {
+            var selection = await AiMealFilter.LoadAsync(
+                command.ChildId, command.From, command.RatedOnly, command.ServedWithin, command.MustIncludeMealIds,
+                guardians, meals, mealPlans, cancellationToken);
+
+            if (selection.FilterMatchedNothing)
+            {
+                return new AiSessionOutcome.Validation(new ValidationProblem(new Dictionary<string, string[]>
+                {
+                    [nameof(StartAiSession.ServedWithin)] = [NoMatchingMealsMessage]
+                }));
+            }
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         // Starting a new session supersedes whatever the family's current one is -- see
@@ -69,7 +89,8 @@ public static class StartAiSessionHandler
         var newId = MealplanAiSessionId.New();
         MealplanAiSessionEvent[] events =
         [
-            new AiSessionStarted(newId, command.ChildId, command.From, command.To, command.RequestedSlots, command.MustIncludeMealIds, command.Notes, userId, now)
+            new AiSessionStarted(newId, command.ChildId, command.From, command.To, command.RequestedSlots, command.MustIncludeMealIds, command.Notes, userId, now,
+                command.RatedOnly, command.ServedWithin)
         ];
 
         await sessions.CreateAsync(newId, events, cancellationToken);

@@ -13,6 +13,6 @@
   "Notes": "No fish on Fridays",
   "StartedBy": "00000000-0000-0000-0000-000000000001",
   "OccurredAt": "2025-01-01T12:00:00+00:00",
-  "RatedOnly": false,
-  "ServedWithin": "Any"
+  "RatedOnly": true,
+  "ServedWithin": "Last60Days"
 }

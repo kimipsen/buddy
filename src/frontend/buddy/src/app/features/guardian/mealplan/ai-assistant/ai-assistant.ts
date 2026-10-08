@@ -1,14 +1,25 @@
-import { Component, inject, resource, signal } from '@angular/core';
+import { Component, computed, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 
-import { AiAssistantService, AiSessionView } from '../../../../core/ai-assistant.service';
+import {
+  AiAssistantService,
+  AiServedWindow,
+  AiSessionView,
+} from '../../../../core/ai-assistant.service';
 import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { MealSlot } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import {
+  SegmentedControl,
+  SegmentedControlOption,
+} from '../../../../shared/segmented-control/segmented-control';
+import { Toggle } from '../../../../shared/toggle/toggle';
 import { AiDataSharingNotice } from '../ai-data-sharing-notice/ai-data-sharing-notice';
+import { readLastMealFilter, writeLastMealFilter } from './ai-meal-filter-storage';
 
 const DRAFTING = 0;
 
@@ -20,6 +31,19 @@ const SLOT_LABEL_KEYS: Record<MealSlot, string> = {
 };
 
 const ALL_SLOTS: readonly MealSlot[] = [0, 1, 2, 3];
+
+const SERVED_WINDOW_DAYS: readonly Exclude<AiServedWindow, 0>[] = [30, 60, 90];
+
+// The backend keys a "no meals match the filter" rejection on ServedWithin, for both starting a
+// session and sending a message (docs/backend/analysis/ai-assistant-meal-filter.md, Question 6).
+function isNoMatchingMeals(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 400) {
+    return false;
+  }
+
+  const details = (error.error as { details?: Record<string, string[]> } | null)?.details;
+  return details?.['ServedWithin'] !== undefined;
+}
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -42,12 +66,13 @@ interface AssistantChild {
 
 @Component({
   selector: 'app-mealplan-ai-assistant',
-  imports: [RouterLink, FormsModule, TranslatePipe, AiDataSharingNotice],
+  imports: [RouterLink, FormsModule, TranslatePipe, AiDataSharingNotice, Toggle, SegmentedControl],
   templateUrl: './ai-assistant.html',
 })
 export class MealplanAiAssistant {
   private readonly guardians = inject(GuardiansService);
   private readonly aiAssistant = inject(AiAssistantService);
+  private readonly translation = inject(TranslationService);
 
   protected readonly slotLabelKeys = SLOT_LABEL_KEYS;
   protected readonly allSlots = ALL_SLOTS;
@@ -59,6 +84,26 @@ export class MealplanAiAssistant {
   protected readonly toDate = signal(addDaysIso(todayIsoDate(), 6));
   protected readonly selectedSlots = signal<Set<MealSlot>>(new Set<MealSlot>([2]));
   protected readonly notes = signal('');
+  private readonly lastFilter = readLastMealFilter();
+  protected readonly ratedOnly = signal(this.lastFilter.ratedOnly);
+  protected readonly servedWithin = signal<AiServedWindow>(this.lastFilter.servedWithin);
+  protected readonly servedWithinOptions = computed(
+    (): SegmentedControlOption<AiServedWindow>[] => {
+      this.translation.language();
+      return [
+        {
+          value: 0,
+          label: this.translation.translate('mealplan.aiAssistant.start.servedWithinAll'),
+        },
+        ...SERVED_WINDOW_DAYS.map((days) => ({
+          value: days,
+          label: this.translation.translate('mealplan.aiAssistant.start.servedWithinDays', {
+            days,
+          }),
+        })),
+      ];
+    },
+  );
   protected readonly starting = createAction();
 
   protected readonly messageInput = signal('');
@@ -102,11 +147,17 @@ export class MealplanAiAssistant {
           slots,
           mustIncludeMealIds: [],
           notes: this.notes().trim(),
+          ratedOnly: this.ratedOnly(),
+          servedWithin: this.servedWithin(),
         });
+        writeLastMealFilter({ ratedOnly: this.ratedOnly(), servedWithin: this.servedWithin() });
         this.setSession(session);
         this.lastOutcome.set(null);
       },
-      'mealplan.aiAssistant.start.startError',
+      (error) =>
+        isNoMatchingMeals(error)
+          ? 'mealplan.aiAssistant.start.noMatchingMeals'
+          : 'mealplan.aiAssistant.start.startError',
     );
   }
 
@@ -124,7 +175,10 @@ export class MealplanAiAssistant {
         this.setSession(await this.aiAssistant.sendMessage(childId, text));
         this.messageInput.set('');
       },
-      'mealplan.aiAssistant.session.sendError',
+      (error) =>
+        isNoMatchingMeals(error)
+          ? 'mealplan.aiAssistant.session.noMatchingMeals'
+          : 'mealplan.aiAssistant.session.sendError',
     );
   }
 
@@ -182,6 +236,17 @@ export class MealplanAiAssistant {
     this.setSession(null);
     this.lastOutcome.set(null);
     this.starting.reset();
+  }
+
+  // The i18n key describing a session's meal filter, or null when it has none.
+  protected filterSummaryKey(session: AiSessionView): string | null {
+    if (session.servedWithin !== 0) {
+      return session.ratedOnly
+        ? 'mealplan.aiAssistant.session.filterRatedServed'
+        : 'mealplan.aiAssistant.session.filterServed';
+    }
+
+    return session.ratedOnly ? 'mealplan.aiAssistant.session.filterRated' : null;
   }
 
   protected onDataSharingAcknowledged(): void {

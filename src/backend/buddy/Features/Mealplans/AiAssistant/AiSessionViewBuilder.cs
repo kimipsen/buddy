@@ -10,11 +10,17 @@ public static class AiSessionViewBuilder
         MealplanAiSession session, IReadOnlyCollection<MealplanAiSessionEvent> events, IMealEventStore meals, CancellationToken cancellationToken)
     {
         List<AiSessionTranscriptEntry> transcript = [];
+        var ratedOnly = false;
+        var servedWithin = AiServedWindow.Any;
 
         foreach (var @event in events)
         {
             switch (@event)
             {
+                case AiSessionStarted started:
+                    ratedOnly = started.RatedOnly;
+                    servedWithin = started.ServedWithin;
+                    break;
                 case AiUserMessageSent userMessage:
                     transcript.Add(new AiSessionTranscriptEntry(AiChatMessageRole.User, userMessage.Text, userMessage.OccurredAt));
                     break;
@@ -33,6 +39,6 @@ public static class AiSessionViewBuilder
             draft.Add(new AiSessionDraftEntry(entry.Key.Date, entry.Key.Slot, entry.Value, meal?.Name ?? "(deleted meal)"));
         }
 
-        return new AiSessionView(session.Id, session.From, session.To, session.RequestedSlots, session.Status, transcript, draft);
+        return new AiSessionView(session.Id, session.From, session.To, session.RequestedSlots, session.Status, transcript, draft, ratedOnly, servedWithin);
     }
 }

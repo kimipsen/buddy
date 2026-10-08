@@ -22,4 +22,6 @@ internal sealed record AiSessionViewDto(
     IReadOnlyList<MealSlot> RequestedSlots,
     AiSessionStatus Status,
     IReadOnlyList<AiSessionTranscriptEntryDto> Transcript,
-    IReadOnlyList<AiSessionDraftEntryDto> Draft);
+    IReadOnlyList<AiSessionDraftEntryDto> Draft,
+    bool RatedOnly,
+    AiServedWindow ServedWithin);

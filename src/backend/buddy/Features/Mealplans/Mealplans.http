@@ -106,3 +106,22 @@ PUT {{buddy_HostAddress}}/mealplans/children/{{childId}}/ai/data-sharing-acknowl
 Authorization: Bearer {{guardianToken}}
 
 ###
+
+# Start an AI assistant session, offering only meals the children have rated that were served in
+# the 60 days before "from" (ratedOnly/servedWithin are optional; servedWithin is 0, 30, 60 or 90).
+# 400 when no meal matches the filter.
+POST {{buddy_HostAddress}}/mealplans/children/{{childId}}/ai/sessions
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "from": "2025-06-02",
+  "to": "2025-06-08",
+  "slots": [2],
+  "mustIncludeMealIds": [],
+  "notes": "No fish on Fridays",
+  "ratedOnly": true,
+  "servedWithin": 60
+}
+
+###

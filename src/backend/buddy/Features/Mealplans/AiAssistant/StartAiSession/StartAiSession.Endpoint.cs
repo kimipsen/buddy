@@ -29,7 +29,9 @@ public static class StartAiSessionEndpoint
                 request.To,
                 request.Slots,
                 [.. request.MustIncludeMealIds.Select(id => new MealId(id))],
-                FreeText.Normalize(request.Notes));
+                FreeText.Normalize(request.Notes),
+                request.RatedOnly,
+                request.ServedWithin);
 
             var outcome = await bus.InvokeAsync<AiSessionOutcome>(command, cancellationToken);
 
@@ -42,4 +44,5 @@ public static class StartAiSessionEndpoint
     }
 }
 
-public sealed record StartAiSessionRequest(DateOnly From, DateOnly To, IReadOnlyCollection<MealSlot> Slots, IReadOnlyCollection<Guid> MustIncludeMealIds, string? Notes = null);
+public sealed record StartAiSessionRequest(DateOnly From, DateOnly To, IReadOnlyCollection<MealSlot> Slots, IReadOnlyCollection<Guid> MustIncludeMealIds, string? Notes = null,
+    bool RatedOnly = false, AiServedWindow ServedWithin = AiServedWindow.Any);

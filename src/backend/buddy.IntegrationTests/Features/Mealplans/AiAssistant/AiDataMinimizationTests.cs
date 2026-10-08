@@ -39,7 +39,9 @@ public sealed class AiDataMinimizationTests(BuddyApiFixture fixture)
         var soup = NewMeal("Soup", ImmutableDictionary<UserId, MealRating>.Empty
             .Add(youngerChild, new MealRating(4, "", ratedAt)));
 
-        var prompt = AiSessionPromptBuilder.Build(NewSession(DateOnly.FromDateTime(DateTime.UtcNow)), [pasta, soup], [], "");
+        var session = NewSession(DateOnly.FromDateTime(DateTime.UtcNow));
+        var started = new AiSessionStarted(session.Id, olderChild, session.From, session.To, [MealSlot.Dinner], [], "", new UserId(Guid.CreateVersion7()), ratedAt);
+        var prompt = AiSessionPromptBuilder.Build(session, [pasta, soup], started);
 
         Assert.DoesNotContain(olderChild.Value.ToString(), prompt, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(youngerChild.Value.ToString(), prompt, StringComparison.OrdinalIgnoreCase);

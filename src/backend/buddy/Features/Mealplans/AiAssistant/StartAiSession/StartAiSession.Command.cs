@@ -11,11 +11,14 @@ public sealed record StartAiSession(
     DateOnly To,
     IReadOnlyCollection<MealSlot> RequestedSlots,
     IReadOnlyCollection<MealId> MustIncludeMealIds,
-    string Notes)
+    string Notes,
+    bool RatedOnly = false,
+    AiServedWindow ServedWithin = AiServedWindow.Any)
 {
     public static StartAiSession FromClaims(
         ClaimsPrincipal principal, UserId childId, DateOnly from, DateOnly to,
-        IReadOnlyCollection<MealSlot> requestedSlots, IReadOnlyCollection<MealId> mustIncludeMealIds, string notes) =>
-        new(principal.GetRequiredUserId(), childId, from, to, requestedSlots, mustIncludeMealIds, notes);
+        IReadOnlyCollection<MealSlot> requestedSlots, IReadOnlyCollection<MealId> mustIncludeMealIds, string notes,
+        bool ratedOnly, AiServedWindow servedWithin) =>
+        new(principal.GetRequiredUserId(), childId, from, to, requestedSlots, mustIncludeMealIds, notes, ratedOnly, servedWithin);
 }
 

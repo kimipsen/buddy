@@ -1,4 +1,5 @@
 using buddy.Common;
+using buddy.Features.Mealplans;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -95,5 +96,31 @@ public sealed class SendAiSessionMessageTests(BuddyApiFixture fixture)
         var error = response.ReadAsJson<ErrorEnvelope>();
         Assert.Equal("validation_error", error.Code);
         Assert.Contains("Text", error.Details.Keys);
+    }
+
+    [Fact]
+    public async Task A_message_is_rejected_once_the_sessions_filter_no_longer_matches_any_meal()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        await AiAssistantTestHelpers.ConfigureAnthropicKeyAsync(fixture, guardianToken, child.Id);
+        var meal = await MealplanTestHelpers.CreateMealAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(meal);
+        var from = DateOnly.FromDateTime(DateTime.UtcNow);
+        await AiAssistantTestHelpers.AssignDinnerAsync(fixture, guardianToken, child.Id, meal.Id, from.AddDays(-2));
+        await AiAssistantTestHelpers.StartSessionAsync(
+            fixture, guardianToken, child.Id, from, from.AddDays(2), [MealSlot.Dinner], servedWithin: AiServedWindow.Last30Days);
+
+        await AiAssistantTestHelpers.ClearDinnerAsync(fixture, guardianToken, child.Id, from.AddDays(-2));
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { Text = "Plan the dinners." }).ToUrl($"/mealplans/children/{child.Id}/ai/sessions/current/messages");
+            _.StatusCodeShouldBe(400);
+        });
+
+        var error = response.ReadAsJson<ErrorEnvelope>();
+        Assert.Equal([SendAiSessionMessageHandler.NoMatchingMealsMessage], error.Details["ServedWithin"]);
     }
 }

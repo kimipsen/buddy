@@ -10,7 +10,9 @@ public sealed record AiSessionView(
     IReadOnlyCollection<MealSlot> RequestedSlots,
     AiSessionStatus Status,
     IReadOnlyList<AiSessionTranscriptEntry> Transcript,
-    IReadOnlyList<AiSessionDraftEntry> Draft);
+    IReadOnlyList<AiSessionDraftEntry> Draft,
+    bool RatedOnly,
+    AiServedWindow ServedWithin);
 
 public sealed record AiSessionTranscriptEntry(AiChatMessageRole Role, string Text, DateTimeOffset OccurredAt);
 
