@@ -83,6 +83,15 @@
   This stops the start from ending up after the end. Changing the end on its
   own should still just change the end.
 
+## Community documents for GitHub
+
+- [ ] Add a `CODE_OF_CONDUCT.md`, for example based on the Contributor Covenant,
+  with a contact for reports (like `SECURITY.md` does for vulnerabilities).
+- [ ] Add a `CONTRIBUTING.md`: how to set up the devcontainer, run the tests
+  (`task test`), install the hooks (`task hooks:install`), the commit and PR
+  conventions (see `.github/pull_request_template.md`), and that every UI string
+  needs both English and Danish.
+
 ## Mobile app
 
 - [ ] Build a mobile app for Buddy. Decide the approach first (installable PWA,
