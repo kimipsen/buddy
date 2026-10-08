@@ -341,6 +341,8 @@ Notes:
 | `POST /users/me/email/verify` | `200` | `400`, `401`, `404` | `400` for invalid/expired token or malformed request. |
 | `GET /users/me/deletion-preview` | `200` | `401` | Read-only preview of what `DELETE /users/me` would erase or hand over; changes nothing. |
 | `DELETE /users/me` | `204` | `401` | Idempotent delete: repeated deletes remain `204`. |
+| `GET /users/me/onboarding` | `200` | `401` | Always `200`: a user who never started the guided setup gets `status` NotStarted at `version` 0. |
+| `PUT /users/me/onboarding` | `200` | `400`, `401`, `409` | `400` for NotStarted or an unknown status, Completed without a setup group, a group the caller doesn't own or administer, clearing the setup group, or changing a completed guide; `409 concurrency_conflict` when `version` isn't the stored one (another tab wrote first). An unchanged write is a no-op `200`. |
 
 ### Calendars API (`/calendars`)
 

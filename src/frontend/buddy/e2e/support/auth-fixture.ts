@@ -3,6 +3,7 @@ import { test as base } from '@playwright/test';
 import { cleanUpCreatedData, trackDisposableGuardian } from './created-data-cleanup';
 import { type DisposableGuardian, createDisposableGuardian } from './keycloak-admin-client';
 import { getAccessToken } from './keycloak-client';
+import { deferOnboarding } from './onboarding-api';
 import { readRuntimeConfig } from './runtime-config';
 import type { TestUser } from './seeded-users';
 
@@ -15,7 +16,7 @@ const STORAGE_KEY = 'buddy_keycloak_tokens';
 
 export const test = base.extend<{
   loginAs: (user: TestUser) => Promise<void>;
-  newGuardian: () => Promise<DisposableGuardian>;
+  newGuardian: (options?: { inGuide?: boolean }) => Promise<DisposableGuardian>;
   cleanUpCreatedData: void;
 }>({
   // Runs for every test (auto) and, after the test body, removes what guardian-data.ts helpers
@@ -31,11 +32,16 @@ export const test = base.extend<{
 
   // A fresh, throwaway guardian (verified email, no children, no family) for specs that depend on
   // family-wide or account-wide state, which a shared seeded guardian can't give a parallel test in
-  // isolation. Removed again (backend user + Keycloak identity) by cleanUpCreatedData.
+  // isolation. Removed again (backend user + Keycloak identity) by cleanUpCreatedData. Their
+  // guided setup is deferred so they land on the dashboard; { inGuide: true } leaves it untouched
+  // for the onboarding specs.
   newGuardian: async ({}, use) => {
-    await use(async () => {
+    await use(async (options = {}) => {
       const guardian = await createDisposableGuardian('e2eguardian');
       trackDisposableGuardian(guardian);
+      if (!options.inGuide) {
+        await deferOnboarding(guardian);
+      }
       return guardian;
     });
   },

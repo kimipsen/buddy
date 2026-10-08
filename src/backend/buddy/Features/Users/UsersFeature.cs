@@ -129,11 +129,18 @@ public static class UsersFeature
             options.Projections.Register(new GuardianLinkSnapshotProjection(), ProjectionLifecycle.Inline);
             options.Schema.For<GuardianLinkSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
+            // The setup guide's progress: a plain document, version-checked through Marten's numeric
+            // revisions rather than an event stream -- see docs/frontend/analysis/guardian-onboarding.md.
+            options.Schema.For<OnboardingProgressDocument>().UseNumericRevisions(true);
+
             return options;
         });
 
         services.AddSingleton<IUserEventStore, MartenUserEventStore>();
         services.AddSingleton<IPersonalDataExporter, UsersPersonalDataExporter>();
+        services.AddSingleton<IOnboardingProgressStore, MartenOnboardingProgressStore>();
+        services.AddSingleton<IPersonalDataEraser, OnboardingPersonalDataEraser>();
+        services.AddSingleton<IPersonalDataExporter, OnboardingPersonalDataExporter>();
 
         return services;
     }
@@ -157,6 +164,8 @@ public static class UsersFeature
         users.MapDeleteCurrentUser();
         users.MapGetAccountDeletionPreview();
         users.MapExportPersonalData();
+        users.MapGetOnboardingProgress();
+        users.MapUpdateOnboardingProgress();
 
         return endpoints;
     }

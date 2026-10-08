@@ -1,0 +1,262 @@
+<p class="text-sm text-slate-600 dark:text-slate-400">{{ 'onboarding.task.intro' | translate }}</p>
+
+@if (setup().hasScheduledRoutine) {
+  <p
+    class="mt-4 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-200"
+    role="status"
+  >
+    {{ 'onboarding.task.scheduled' | translate }}
+  </p>
+}
+
+<div class="mt-4 grid gap-3 sm:grid-cols-2">
+  <div>
+    <label
+      for="onboardingTaskChild"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.task.childLabel' | translate }}</label
+    >
+    <select
+      id="onboardingTaskChild"
+      name="taskChild"
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="childId()"
+      (ngModelChange)="childId.set($event)"
+    >
+      @for (child of setup().children; track child.id) {
+        <option [value]="child.id">{{ child.name.givenName }}</option>
+      }
+    </select>
+  </div>
+  <div>
+    <label
+      for="onboardingTaskTemplate"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.task.templateLabel' | translate }}</label
+    >
+    <select
+      id="onboardingTaskTemplate"
+      name="taskTemplate"
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="templateChoice()"
+      (ngModelChange)="chooseTemplate($event)"
+    >
+      @if (templateChoice() === '') {
+        <option value="" disabled>{{ 'onboarding.task.templateLabel' | translate }}</option>
+      }
+      @for (template of childTemplates(); track template.id) {
+        <option [value]="template.id">{{ template.icon }} {{ template.name }}</option>
+      }
+      <option [value]="newTemplate">{{ 'onboarding.task.newTemplate' | translate }}</option>
+    </select>
+  </div>
+</div>
+
+@if (selectedTemplate(); as template) {
+  @if (template.subtasks.length > 0) {
+    <h3 class="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
+      {{ 'onboarding.task.subtasksTitle' | translate }}
+    </h3>
+    <ol class="mt-1 list-decimal pl-5 text-sm text-slate-700 dark:text-slate-300">
+      @for (subtask of template.subtasks; track subtask.id) {
+        <li>
+          {{ subtask.title }} ·
+          {{ 'onboarding.task.minutes' | translate: { minutes: subtask.durationMinutes } }}
+        </li>
+      }
+    </ol>
+  }
+}
+
+@if (needsSubtasks()) {
+  <form class="mt-4 flex flex-col gap-3" (ngSubmit)="save()">
+    @if (templateChoice() === newTemplate) {
+      <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <div>
+          <label
+            for="onboardingTaskName"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >{{ 'onboarding.task.nameLabel' | translate }}</label
+          >
+          <input
+            id="onboardingTaskName"
+            name="taskName"
+            required
+            class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+            [placeholder]="'onboarding.task.namePlaceholder' | translate"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+          />
+        </div>
+        <div>
+          <label
+            for="onboardingTaskIcon"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >{{ 'onboarding.task.iconLabel' | translate }}</label
+          >
+          <input
+            id="onboardingTaskIcon"
+            name="taskIcon"
+            class="mt-1 w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+            [ngModel]="icon()"
+            (ngModelChange)="icon.set($event)"
+          />
+        </div>
+      </div>
+      <app-color-swatch-picker
+        [value]="color()"
+        [ariaLabel]="'common.colorLabel' | translate"
+        (valueChange)="color.set($event)"
+      />
+    }
+
+    <fieldset class="flex flex-col gap-2">
+      <legend class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+        {{ 'onboarding.task.subtasksTitle' | translate }}
+      </legend>
+      @for (row of rows(); track $index; let index = $index) {
+        <app-repeatable-row
+          [canRemove]="rows().length > stepsNeeded() && !isSaved(index)"
+          [removeLabel]="'onboarding.task.removeSubtask' | translate"
+          (remove)="removeRow(index)"
+        >
+          <div class="flex flex-wrap items-center gap-2">
+            <input
+              class="min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [name]="'subtask' + index"
+              [attr.aria-label]="'onboarding.task.subtaskLabel' | translate: { number: index + 1 }"
+              [placeholder]="'onboarding.task.subtaskPlaceholder' | translate"
+              [readonly]="isSaved(index)"
+              [ngModel]="row.title"
+              (ngModelChange)="updateRow(index, { title: $event })"
+            />
+            <app-stepper
+              [value]="row.minutes"
+              [min]="1"
+              [disabled]="isSaved(index)"
+              [ariaLabel]="'onboarding.task.minutesLabel' | translate: { number: index + 1 }"
+              [decrementLabel]="'onboarding.task.decreaseMinutes' | translate"
+              [incrementLabel]="'onboarding.task.increaseMinutes' | translate"
+              (valueChange)="updateRow(index, { minutes: $event })"
+            />
+          </div>
+        </app-repeatable-row>
+      }
+      <div>
+        <button
+          type="button"
+          class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+          (click)="addRow()"
+        >
+          {{ 'onboarding.task.addSubtask' | translate }}
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        {{ 'onboarding.task.minimumSubtasks' | translate }}
+      </p>
+    </fieldset>
+
+    <div>
+      <button
+        type="submit"
+        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+        [disabled]="saving.busy() || !canSave()"
+      >
+        {{ 'onboarding.task.save' | translate }}
+      </button>
+    </div>
+  </form>
+  @if (saving.state(); as state) {
+    @if (state.status === 'error') {
+      <p class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ state.message | translate }}
+      </p>
+    }
+  }
+}
+
+@if (selectedTemplate(); as template) {
+  @if (template.subtasks.length >= minSubtasks) {
+    <form class="mt-6 flex flex-col gap-3" (ngSubmit)="schedule()">
+      <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+        {{ 'onboarding.task.scheduleTitle' | translate }}
+      </h3>
+      @if (setup().calendars.length === 0) {
+        <p class="text-sm text-amber-700 dark:text-amber-400">
+          {{ 'onboarding.task.needsCalendar' | translate }}
+        </p>
+      } @else {
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="onboardingTaskCalendar"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >{{ 'onboarding.task.calendarLabel' | translate }}</label
+            >
+            <select
+              id="onboardingTaskCalendar"
+              name="taskCalendar"
+              class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="calendarId()"
+              (ngModelChange)="calendarId.set($event)"
+            >
+              @if (calendarId() === '') {
+                <option value="" disabled>
+                  {{ 'onboarding.task.chooseCalendar' | translate }}
+                </option>
+              }
+              @for (calendar of setup().calendars; track calendar.id) {
+                <option [value]="calendar.id">{{ calendar.icon }} {{ calendar.name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {{ 'onboarding.task.dateLabel' | translate }}
+            </p>
+            <div class="mt-1">
+              <app-date-select
+                [value]="date()"
+                [ariaLabel]="'onboarding.task.dateLabel' | translate"
+                (valueChange)="date.set($event)"
+              />
+            </div>
+            @if (!dateInRange()) {
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                {{ 'onboarding.task.dateOutOfRange' | translate }}
+              </p>
+            }
+          </div>
+          <div>
+            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {{ 'onboarding.task.timeLabel' | translate }}
+            </p>
+            <div class="mt-1">
+              <app-time-select
+                [value]="time()"
+                [ariaLabel]="'onboarding.task.timeLabel' | translate"
+                (valueChange)="time.set($event)"
+              />
+            </div>
+          </div>
+        </div>
+        <div>
+          <button
+            type="submit"
+            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+            [disabled]="scheduling.busy() || !calendarId() || !dateInRange()"
+          >
+            {{ 'onboarding.task.schedule' | translate }}
+          </button>
+        </div>
+      }
+    </form>
+    @if (scheduling.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ state.message | translate }}
+        </p>
+      }
+    }
+  }
+}

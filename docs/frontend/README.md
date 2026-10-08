@@ -84,7 +84,12 @@ The route definition is in [src/frontend/buddy/src/app/features/guardian/guardia
 
 The guardian routes currently include:
 
-- `/guardian` — dashboard and today's operational summary
+- `/guardian` — dashboard and today's operational summary; a guardian with no groups and no
+  children (or with a started guide) is sent to `/guardian/onboarding` instead, and a deferred
+  guide shows a "Resume setup" card
+- `/guardian/onboarding` — the guided first-login setup: group, children, optional invitations,
+  shared calendar, a first routine, a meal plan, summary
+  ([design](analysis/guardian-onboarding.md))
 - `/guardian/mealplan` — meal library and meal-plan assignment
 - `/guardian/mealplan/ai-assistant` — chat-based AI assistant for drafting
   meal-plan assignments; before the family's first session it shows what is
@@ -161,6 +166,9 @@ The shared domain services live under [src/frontend/buddy/src/app/core](../../sr
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
   subscription-token and import (preview, commit, list, undo) endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
+- `OnboardingService` reads and version-checks the guided setup's progress
+  (`/users/me/onboarding`), decides whether a guardian enters the guide (`onboardingEntryGuard`
+  on the guardian home), and derives each step's completion from the existing domain services
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
 - `SleepDiaryService` logs, clears, and lists sleep diary nights, saves the hygiene notes, manages
   share links, and reads a shared diary anonymously by token
@@ -245,7 +253,7 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 
 ## Design analysis
 
-- [Guardian onboarding](analysis/guardian-onboarding.md) -- proposed first-login
+- [Guardian onboarding](analysis/guardian-onboarding.md) -- implemented first-login
   setup guide for guardians with no groups or children, with resumable progress
 - [Visual specification](analysis/visual-specification.md) — proposed data-type-to-component
   map and guardian/child visual language, applied to the Sleep Diary as a worked example

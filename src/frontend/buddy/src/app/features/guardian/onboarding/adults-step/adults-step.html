@@ -1,0 +1,142 @@
+<p class="text-sm text-slate-600 dark:text-slate-400">
+  {{ 'onboarding.adults.intro' | translate }}
+</p>
+
+@if (skipped()) {
+  <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+    {{ 'onboarding.adults.skipped' | translate }}
+  </p>
+}
+
+@if (setup().pendingInvites.length > 0) {
+  <h3 class="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.adults.invitedTitle' | translate }}
+  </h3>
+  <ul class="mt-1 text-sm text-slate-700 dark:text-slate-300">
+    @for (invite of setup().pendingInvites; track invite.id) {
+      <li>{{ invite.email }}</li>
+    }
+  </ul>
+}
+
+<form class="mt-4 flex flex-col gap-4" (ngSubmit)="send()">
+  <div>
+    <label
+      for="onboardingAdultEmail"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.adults.emailLabel' | translate }}</label
+    >
+    <input
+      id="onboardingAdultEmail"
+      name="email"
+      type="email"
+      required
+      autocomplete="email"
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="email()"
+      (ngModelChange)="email.set($event)"
+    />
+  </div>
+
+  <div>
+    <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+      {{ 'onboarding.adults.kindLabel' | translate }}
+    </p>
+    <div class="mt-1">
+      <app-segmented-control
+        [options]="kindOptions()"
+        [selected]="kind()"
+        [ariaLabel]="'onboarding.adults.kindLabel' | translate"
+        (selectedChange)="kind.set($event)"
+      />
+    </div>
+  </div>
+
+  <div>
+    <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+      {{ 'onboarding.adults.roleLabel' | translate }}
+    </p>
+    <div class="mt-1">
+      <app-segmented-control
+        [options]="roleOptions()"
+        [selected]="role()"
+        [wrap]="true"
+        [ariaLabel]="'onboarding.adults.roleLabel' | translate"
+        (selectedChange)="chooseRole($event)"
+      />
+    </div>
+    @if (roleMissing()) {
+      <p class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ 'onboarding.adults.roleRequired' | translate }}
+      </p>
+    }
+  </div>
+
+  @if (setup().children.length > 0) {
+    <fieldset>
+      <legend class="text-sm font-medium text-slate-700 dark:text-slate-300">
+        {{ 'onboarding.adults.childrenLabel' | translate }}
+      </legend>
+      <ul class="mt-1 flex flex-col gap-2">
+        @for (child of setup().children; track child.id) {
+          <li class="flex items-center gap-3 text-sm">
+            <app-toggle
+              [checked]="isSelected(child.id)"
+              [ariaLabel]="child.name.givenName"
+              (checkedChange)="setSelected(child.id, $event)"
+            />
+            <span aria-hidden="true">{{ child.name.givenName }}</span>
+          </li>
+        }
+      </ul>
+    </fieldset>
+  }
+
+  <div class="flex flex-wrap gap-3">
+    <button
+      type="submit"
+      class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+      [disabled]="sending() || hasFailures() || !email().trim()"
+    >
+      {{ 'onboarding.adults.send' | translate }}
+    </button>
+    @if (hasFailures()) {
+      <button
+        type="button"
+        class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
+        [disabled]="sending()"
+        (click)="retry()"
+      >
+        {{ 'onboarding.adults.retry' | translate }}
+      </button>
+    }
+    <button
+      type="button"
+      class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 underline-offset-2 hover:underline disabled:opacity-50"
+      [disabled]="busy() || sending()"
+      (click)="skip.emit()"
+    >
+      {{ 'onboarding.adults.skip' | translate }}
+    </button>
+  </div>
+</form>
+
+@if (requests().length > 0) {
+  <ul class="mt-4 flex flex-col gap-1 text-sm" role="status" aria-live="polite">
+    @for (request of requests(); track request.key) {
+      <li class="flex items-center justify-between gap-3">
+        <span>{{ request.label }}</span>
+        <span
+          class="font-semibold"
+          [class.text-emerald-700]="request.status === 'sent'"
+          [class.dark:text-emerald-400]="request.status === 'sent'"
+          [class.text-red-600]="request.status === 'failed'"
+          [class.dark:text-red-400]="request.status === 'failed'"
+          [class.text-slate-500]="request.status === 'pending'"
+          [class.dark:text-slate-400]="request.status === 'pending'"
+          >{{ statusLabels[request.status] | translate }}</span
+        >
+      </li>
+    }
+  </ul>
+}

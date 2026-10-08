@@ -63,6 +63,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: 'Emil',
   },
   {
+    name: 'guardian-onboarding',
+    title: 'Guided setup',
+    description:
+      'The first-login guide for a guardian with no groups or children: group, children, other adults, a shared calendar, a first routine and a meal plan, one step at a time. Sara already has a group, so step 1 also offers to continue with it.',
+    as: 'guardian',
+    route: '/guardian/onboarding',
+    waitFor: 'Use Holm family',
+  },
+  {
     name: 'guardian-calendar',
     title: 'Calendar',
     description: 'Shared family calendars with events and tasks.',

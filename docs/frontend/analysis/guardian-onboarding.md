@@ -1,5 +1,8 @@
 # Guardian onboarding -- implementation plan
-Status: Proposed (not yet implemented)
+Status: Implemented (2026-10-08). `GET`/`PUT /users/me/onboarding` (`OnboardingProgressDocument`
+in the Users store, Marten numeric revisions), `onboardingEntryGuard` on the guardian home,
+`OnboardingService`, the `/guardian/onboarding` page with one component per step, a "Resume setup"
+dashboard card, `e2e/onboarding-complete.spec.ts` and `e2e/onboarding-defer-resume.spec.ts`.
 
 ## Goal
 
@@ -7,8 +10,7 @@ When a guardian logs in with no groups and no linked children, show a guided
 setup flow rather than an empty dashboard. Guide them through creating one
 group, adding one or more children, optionally inviting other parents or
 guardians, creating a shared calendar, scheduling a simple task with multiple
-subtasks, and setting up a meal plan. This document is a plan for later
-implementation, not a description of shipped behavior.
+subtasks, and setting up a meal plan.
 
 ## Context and precedents
 
@@ -62,14 +64,21 @@ user provisioning. Both reads must succeed. An error is not an empty result.
 | Resolved child role | Existing child home |
 | Guardian, no progress record, both lists empty | Onboarding |
 | Guardian, no progress record, either list non-empty | Existing guardian home |
-| Guardian, active guide with accessible saved resources | Resume first incomplete step |
+| Guardian, active guide (a group was chosen in it) | Resume first incomplete step |
 | Guardian, completed or explicitly deferred guide | Guardian home, with a resume entry for a deferred guide |
 | Provisioning, role, eligibility, or progress lookup fails | Retryable error; do not create resources or infer eligibility |
 
-Add a proposed `/guardian/onboarding` route. Check entry at the guardian home
-boundary as well as the post-login redirect so direct visits to `/guardian`
-do not bypass onboarding. Do not redirect all guardian routes: invitation
-handling, administration, and ordinary navigation must remain available.
+The `/guardian/onboarding` route sits in the guardian route tree. Entry is checked by
+`onboardingEntryGuard` on the guardian home route (`/guardian`), which the post-login redirect
+lands on too, so one check covers both and direct visits to `/guardian` don't bypass onboarding.
+Other guardian routes are not redirected: invitation handling, administration, and ordinary
+navigation stay available.
+
+**Decision (implementation): opening the guide writes nothing; choosing the setup group makes it
+Active.** Before a group exists, the "no groups and no children" predicate already keeps the guardian
+in the guide, so nothing needs storing. Storing Active on page open would push an established
+guardian who merely opens the URL into the guide from then on. A deferred guide resumed from the
+dashboard card stays Deferred: the card keeps offering it, and the home doesn't redirect.
 
 Creating the first group makes the original eligibility predicate false.
 Therefore, checking only "no groups and no children" on every visit is
@@ -87,7 +96,7 @@ Success means persisted domain data, not just a visited screen.
 | Step | Form and action | Completion condition |
 |---|---|---|
 | 1. Group | Enter a group name and call `createGroup`. Keep this group selected for the rest of setup. | One group created and its ID saved |
-| 2. Children | Enter the existing child-account fields (given name, family name, username), call `createChild`, then `addChildToGroup`. Offer "Add another child". | At least one child created and added to the group; every child included in setup has completed membership |
+| 2. Children | Enter the existing child-account fields (given name, family name, username), call `createChild`, then `addChildToGroup`. Offer "Add another child". | At least one child in the group. A child of the guardian outside the group (a failed membership, or one in another family's group) is listed with an "Add to group" retry but doesn't block |
 | 3. Other adults (optional) | Enter email and Parent/Guardian kind, select children, and explicitly send guardian invitations for those children plus a group invitation. Offer Skip and invite-another. | Chosen invitations sent, or explicit skip; acceptance is not required |
 | 4. Calendar | Enter a name, icon, and time zone; call `createCalendar` with the setup group ID. Display the group's sharing policy before confirming. | Group-owned calendar created and readable by the intended child members |
 | 5. Task and subtasks | Select one setup child; create a task template with a title, icon, color, and at least two ordered subtasks with positive whole-minute durations. Choose a date and start time, then schedule it on the setup calendar for that child. | Template and all subtasks saved, and the template scheduled once |
@@ -197,12 +206,12 @@ and is what makes "reload after child creation" recoverable.
 
 ## Frontend plan
 
-1. Add a proposed `core/onboarding.service.ts` for eligibility, progress API
+1. Add `core/onboarding.service.ts` for eligibility, progress API
    access, reconciliation, and account-scoped state. Keep domain writes in
    the existing services, not a parallel set of onboarding HTTP clients.
-2. Extend the existing role redirect guard without changing pending-token
-   priority. Add a guardian-home entry check, and register the onboarding
-   route in the existing guardian route configuration.
+2. Leave the role redirect guard and its pending-token priority unchanged; the
+   entry check is `onboardingEntryGuard` on the guardian home route, which the
+   post-login redirect lands on (see "Entry and resume rules").
 3. Add `features/guardian/onboarding/` with a standalone, signal-based page
    and focused step components. Reuse existing shared form controls and domain
    validation. Extract small reusable form pieces only where required; do not
@@ -220,6 +229,8 @@ and is what makes "reload after child creation" recoverable.
    invent another color-picker variant.
 
 ## Implementation order
+
+All steps done 2026-10-08.
 
 1. Add the child-password reset slice (backend, guardian child-account page,
    tests). Done 2026-10-08: `ResetChildPassword`, the "Reset password" action
@@ -285,6 +296,14 @@ and is what makes "reload after child creation" recoverable.
 | Meals | Existing family scope; at least one assignment; group sharing opt-in, off by default (2026-10-08) |
 | Leaving early | "Finish later" marks the guide Deferred; resume entry on the guardian home; created resources kept (2026-10-08) |
 | Lost child credentials | New guardian-only child-password reset slice, built first (2026-10-08) |
+| Version transport | `version` in the PUT body; a stale one is the existing `409 concurrency_conflict` (`ConcurrencyConflictMiddleware`), not `If-Match`/`412` (2026-10-08) |
+| Calendar policy fix | The step shows the group's actual policy; when Members are above Viewer it offers an explicit "Make children view-only" (Member → Viewer). Every role always has a calendar role, so children can always see a group calendar (2026-10-08) |
+| Deriving the calendar step | `GET /calendars/{id}` now returns the owning `groupId` (additive), so the guide finds the setup group's calendars without storing their ids (2026-10-08) |
+| Activation | Opening the page writes nothing; choosing the setup group makes the guide Active; resuming a deferred guide keeps it Deferred (2026-10-08) |
+| Routine and meal detection | A routine counts once a template-scheduled task occurs on a setup calendar between 30 days back and 180 days ahead; a meal once the family plan has an entry between 7 days back and 23 ahead (the APIs' range limits). The steps only accept dates from today to those look-aheads, so a saved step is always found again (2026-10-08) |
+| Children outside the setup group | Don't block the children step; only at least one child in the group is required (2026-10-08) |
+| Other adults | The adults step counts adults in the group other than the signed-in guardian, so choosing an existing group where they are Admin doesn't fake an invitation (2026-10-08) |
+| e2e and seeded users | `newGuardian()` and the seeded alice/bob/carol get a deferred guide through the API (`e2e/support/onboarding-api.ts`) so feature specs still start on the dashboard; `newGuardian({ inGuide: true })` keeps the guide (2026-10-08) |
 
 No open questions remain.
 

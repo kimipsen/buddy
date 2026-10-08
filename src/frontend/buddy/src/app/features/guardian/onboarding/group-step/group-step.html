@@ -1,0 +1,78 @@
+<p class="text-sm text-slate-600 dark:text-slate-400">{{ 'onboarding.group.intro' | translate }}</p>
+
+@if (setup().group; as group) {
+  <p
+    class="mt-4 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950 px-4 py-3 text-sm font-semibold text-emerald-800 dark:text-emerald-200"
+  >
+    {{ 'onboarding.group.current' | translate: { name: group.name } }}
+  </p>
+} @else {
+  @if (setup().groupMissing) {
+    <p
+      class="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
+      role="alert"
+    >
+      {{ 'onboarding.group.missing' | translate }}
+    </p>
+  }
+
+  <form class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end" (ngSubmit)="create()">
+    <div class="flex-1">
+      <label
+        for="onboardingGroupName"
+        class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+        >{{ 'onboarding.group.nameLabel' | translate }}</label
+      >
+      <input
+        id="onboardingGroupName"
+        name="groupName"
+        required
+        class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+        [placeholder]="'onboarding.group.namePlaceholder' | translate"
+        [attr.aria-describedby]="
+          creating.state().status === 'error' ? 'onboardingGroupError' : null
+        "
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+      />
+    </div>
+    <button
+      type="submit"
+      class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+      [disabled]="creating.busy() || busy() || !name().trim()"
+    >
+      {{ 'onboarding.group.create' | translate }}
+    </button>
+  </form>
+  @if (creating.state(); as state) {
+    @if (state.status === 'error') {
+      <p id="onboardingGroupError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ state.message | translate }}
+      </p>
+    }
+  }
+
+  @if (manageableGroups().length > 0) {
+    <h3 class="mt-6 text-sm font-semibold text-slate-700 dark:text-slate-300">
+      {{ 'onboarding.group.existingTitle' | translate }}
+    </h3>
+    <ul class="mt-2 flex flex-wrap gap-2">
+      @for (group of manageableGroups(); track group.id) {
+        <li>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
+            [disabled]="busy()"
+            (click)="choose(group.id)"
+          >
+            {{ 'onboarding.group.useExisting' | translate: { name: group.name } }}
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (groupsError()) {
+    <p class="mt-4 text-sm text-red-600 dark:text-red-400">
+      {{ 'onboarding.group.loadGroupsError' | translate }}
+    </p>
+  }
+}

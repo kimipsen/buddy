@@ -4,6 +4,7 @@ using Alba;
 
 using buddy.Common.Erasure;
 using buddy.Features.Guardians;
+using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
@@ -12,6 +13,7 @@ using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Features.Medicines;
 using buddy.IntegrationTests.Features.PrintTemplates;
 using buddy.IntegrationTests.Features.SleepDiaries;
+using buddy.IntegrationTests.Features.Users.Onboarding;
 using buddy.IntegrationTests.Features.WorkLocations;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -57,6 +59,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, $"Calendar{n}", groupId);
         await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, title: $"Event{n}");
         var icalToken = await CalendarTestHelpers.CreateIcalTokenAsync(fixture, token, calendarId);
+        await OnboardingTestHelpers.PutAsync(fixture, token, OnboardingStatus.Active, groupId, false, version: 0);
 
         var response = await ExportAsync(token);
         var text = await response.ReadAsTextAsync();

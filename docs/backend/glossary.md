@@ -65,6 +65,9 @@ The event that stores a hash of the verification token plus its expiry time. The
 ### EmailVerified
 The event that marks the email address as verified and clears the pending verification state.
 
+### OnboardingProgress
+How far a guardian got through the guided first-login setup: status (NotStarted, Active, Deferred, Completed), the setup group, and whether the optional invitations were skipped. A version-checked document in the Users store, not an event stream; every other step's completion is derived from current data. See [guardian-onboarding.md](../frontend/analysis/guardian-onboarding.md).
+
 ## Guardian domain
 
 ### GuardianLink

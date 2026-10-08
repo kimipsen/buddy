@@ -32,6 +32,14 @@ Today at a glance: meals, tasks, events, medicine, pickups and the children.
 
 <img src="mobile/guardian-dashboard.png" alt="Guardian dashboard on a phone" width="320">
 
+## Guided setup
+
+The first-login guide for a guardian with no groups or children: group, children, other adults, a shared calendar, a first routine and a meal plan, one step at a time. Sara already has a group, so step 1 also offers to continue with it.
+
+![Guided setup](guardian-onboarding.png)
+
+<img src="mobile/guardian-onboarding.png" alt="Guided setup on a phone" width="320">
+
 ## Calendar
 
 Shared family calendars with events and tasks.

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Features.Groups;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -38,12 +39,15 @@ public static class GetCalendarEndpoint
 
 public sealed record CalendarMemberResponse(Guid UserId, CalendarRole Role);
 
-public sealed record CalendarResponse(CalendarId Id, string Name, string Icon, string TimeZoneId, IReadOnlyCollection<CalendarMemberResponse> Members)
+// GroupId is the owning group, so a client can tell which group's calendar this is (the guardian
+// onboarding guide looks for the setup group's calendar).
+public sealed record CalendarResponse(CalendarId Id, string Name, string Icon, string TimeZoneId, GroupId GroupId, IReadOnlyCollection<CalendarMemberResponse> Members)
 {
     public static CalendarResponse FromCalendar(Calendar calendar) => new(
         calendar.Id,
         calendar.Name,
         calendar.Icon.Value,
         calendar.TimeZoneId.Value,
+        calendar.GroupId,
         [.. calendar.Members.Select(m => new CalendarMemberResponse(m.Key.Value, m.Value))]);
 }

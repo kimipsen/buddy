@@ -55,7 +55,7 @@ sequenceDiagram
 | --- | --- | --- |
 | `POST` | `/calendars` | Creates a calendar for the current user or for an owned group. |
 | `GET` | `/calendars` | Lists calendars visible to the current user. |
-| `GET` | `/calendars/{calendarId}` | Loads one calendar aggregate and its member state. |
+| `GET` | `/calendars/{calendarId}` | Loads one calendar aggregate and its member state, including its owning `groupId`. |
 | `DELETE` | `/calendars/{calendarId}` | Deletes the calendar if the caller is authorized. |
 | `PUT` | `/calendars/{calendarId}/members/{memberId}` | Grants or revokes a member role on the calendar. |
 | `DELETE` | `/calendars/{calendarId}/members/{memberId}` | Removes a member from the calendar. |

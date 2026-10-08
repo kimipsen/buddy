@@ -1,0 +1,172 @@
+<p class="text-sm text-slate-600 dark:text-slate-400">{{ 'onboarding.meal.intro' | translate }}</p>
+
+@if (planned().length > 0) {
+  <ul
+    class="mt-4 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200"
+    role="status"
+  >
+    @for (entry of planned(); track $index) {
+      <li>
+        {{
+          'onboarding.meal.planned'
+            | translate
+              : {
+                  meal: entry.mealName,
+                  date: entry.date + ' · ' + (slotLabels[entry.slot] | translate),
+                }
+        }}
+      </li>
+    }
+  </ul>
+  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+    {{ 'onboarding.meal.addMore' | translate }}
+  </p>
+}
+
+@if (meals.error()) {
+  <p class="mt-4 text-sm text-red-600 dark:text-red-400">
+    {{ 'onboarding.meal.loadError' | translate }}
+  </p>
+}
+
+<form class="mt-4 flex flex-col gap-3" (ngSubmit)="assign()">
+  <div>
+    <label
+      for="onboardingMealChoice"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.meal.mealLabel' | translate }}</label
+    >
+    <select
+      id="onboardingMealChoice"
+      name="mealChoice"
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="mealChoice()"
+      (ngModelChange)="mealChoice.set($event)"
+    >
+      @if (mealChoice() === '') {
+        <option value="" disabled>{{ 'onboarding.meal.mealLabel' | translate }}</option>
+      }
+      @for (meal of liveMeals(); track meal.id) {
+        <option [value]="meal.id">{{ meal.icon }} {{ meal.name }}</option>
+      }
+      <option [value]="newMeal">{{ 'onboarding.meal.newMeal' | translate }}</option>
+    </select>
+  </div>
+
+  @if (mealChoice() === newMeal) {
+    <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+      <div>
+        <label
+          for="onboardingMealName"
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >{{ 'onboarding.meal.nameLabel' | translate }}</label
+        >
+        <input
+          id="onboardingMealName"
+          name="mealName"
+          required
+          class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [placeholder]="'onboarding.meal.namePlaceholder' | translate"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+        />
+      </div>
+      <div>
+        <label
+          for="onboardingMealIcon"
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >{{ 'onboarding.meal.iconLabel' | translate }}</label
+        >
+        <input
+          id="onboardingMealIcon"
+          name="mealIcon"
+          class="mt-1 w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="icon()"
+          (ngModelChange)="icon.set($event)"
+        />
+      </div>
+    </div>
+    <app-color-swatch-picker
+      [value]="color()"
+      [ariaLabel]="'common.colorLabel' | translate"
+      (valueChange)="color.set($event)"
+    />
+  }
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+        {{ 'onboarding.meal.dateLabel' | translate }}
+      </p>
+      <div class="mt-1">
+        <app-date-select
+          [value]="date()"
+          [ariaLabel]="'onboarding.meal.dateLabel' | translate"
+          (valueChange)="date.set($event)"
+        />
+      </div>
+      @if (!dateInRange()) {
+        <p class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ 'onboarding.meal.dateOutOfRange' | translate }}
+        </p>
+      }
+    </div>
+    <div>
+      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+        {{ 'onboarding.meal.slotLabel' | translate }}
+      </p>
+      <div class="mt-1">
+        <app-segmented-control
+          [options]="slotOptions()"
+          [selected]="slot()"
+          [wrap]="true"
+          [ariaLabel]="'onboarding.meal.slotLabel' | translate"
+          (selectedChange)="slot.set($event)"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <button
+      type="submit"
+      class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+      [disabled]="assigning.busy() || !canAssign()"
+    >
+      {{ 'onboarding.meal.assign' | translate }}
+    </button>
+  </div>
+</form>
+@if (assigning.state(); as state) {
+  @if (state.status === 'error') {
+    <p class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ state.message | translate }}
+    </p>
+  }
+}
+
+@if (setup().group; as group) {
+  <div class="mt-6 flex items-start gap-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+    <app-toggle
+      [checked]="isShared()"
+      [disabled]="sharing.busy() || sharedGroup.isLoading()"
+      [ariaLabel]="'onboarding.meal.shareLabel' | translate: { group: group.name }"
+      (checkedChange)="setShared($event)"
+    />
+    <div class="text-sm">
+      <p class="font-medium text-slate-700 dark:text-slate-300" aria-hidden="true">
+        {{ 'onboarding.meal.shareLabel' | translate: { group: group.name } }}
+      </p>
+      <p class="text-slate-500 dark:text-slate-400">
+        {{ 'onboarding.meal.shareHint' | translate }}
+      </p>
+      @if (sharing.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="mt-1 text-red-600 dark:text-red-400" role="alert">
+            {{ state.message | translate }}
+          </p>
+        }
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,159 @@
+<p class="text-sm text-slate-600 dark:text-slate-400">
+  {{ 'onboarding.children.intro' | translate }}
+</p>
+
+@if (credentials(); as shown) {
+  <div
+    class="mt-4 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950 p-4 text-sm text-emerald-900 dark:text-emerald-100"
+    role="status"
+  >
+    <p class="font-semibold">
+      {{ 'onboarding.children.credentialsTitle' | translate: { name: shown.givenName } }}
+    </p>
+    <p class="mt-1">
+      {{ 'onboarding.children.usernameValue' | translate }}
+      <span class="font-mono font-semibold">{{ shown.username }}</span>
+    </p>
+    <p class="mt-1 flex flex-wrap items-center gap-2">
+      <span
+        >{{ 'onboarding.children.passwordValue' | translate }}
+        <span class="font-mono font-semibold">{{ shown.temporaryPassword }}</span></span
+      >
+      <button
+        type="button"
+        class="rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300 transition hover:border-emerald-400 dark:hover:border-emerald-500"
+        (click)="copy(shown.temporaryPassword)"
+      >
+        {{ (copied() ? 'onboarding.children.copied' : 'onboarding.children.copy') | translate }}
+      </button>
+    </p>
+    <p class="mt-1">{{ 'onboarding.children.credentialsHint' | translate }}</p>
+  </div>
+}
+
+<ul class="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+  @for (child of setup().children; track child.id) {
+    <li class="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+      <span class="font-medium">{{ child.name.givenName }} {{ child.name.familyName }}</span>
+      <span class="flex items-center gap-3">
+        <span class="text-emerald-700 dark:text-emerald-400">{{
+          'onboarding.children.inGroup' | translate
+        }}</span>
+        <button
+          type="button"
+          class="text-xs font-semibold text-slate-600 dark:text-slate-400 underline-offset-2 hover:underline disabled:opacity-50"
+          [disabled]="resetting.isBusy(child.id)"
+          (click)="resetPassword(child)"
+        >
+          {{ 'onboarding.children.resetPassword' | translate }}
+        </button>
+      </span>
+    </li>
+  }
+  @for (child of setup().childrenOutsideGroup; track child.id) {
+    <li class="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+      <span class="font-medium">{{ child.name.givenName }} {{ child.name.familyName }}</span>
+      <span class="flex items-center gap-3">
+        <span class="text-amber-700 dark:text-amber-400">{{
+          'onboarding.children.notInGroup' | translate
+        }}</span>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
+          [disabled]="joining.isBusy(child.id)"
+          (click)="addToGroup(child)"
+        >
+          {{ 'onboarding.children.addToGroup' | translate }}
+        </button>
+      </span>
+    </li>
+  } @empty {
+    @if (setup().children.length === 0) {
+      <li class="py-2 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'onboarding.children.empty' | translate }}
+      </li>
+    }
+  }
+</ul>
+
+@for (action of [joining, resetting]; track $index) {
+  @if (action.state(); as state) {
+    @if (state.status === 'error') {
+      <p class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ state.message | translate }}
+      </p>
+    }
+  }
+}
+
+<form class="mt-4 grid gap-3 sm:grid-cols-3" (ngSubmit)="add()">
+  <div>
+    <label
+      for="onboardingChildGivenName"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.children.givenNameLabel' | translate }}</label
+    >
+    <input
+      id="onboardingChildGivenName"
+      name="givenName"
+      required
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="givenName()"
+      (ngModelChange)="givenName.set($event)"
+    />
+  </div>
+  <div>
+    <label
+      for="onboardingChildFamilyName"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.children.familyNameLabel' | translate }}</label
+    >
+    <input
+      id="onboardingChildFamilyName"
+      name="familyName"
+      required
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="familyName()"
+      (ngModelChange)="familyName.set($event)"
+    />
+  </div>
+  <div>
+    <label
+      for="onboardingChildUsername"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.children.usernameLabel' | translate }}</label
+    >
+    <input
+      id="onboardingChildUsername"
+      name="username"
+      required
+      autocomplete="off"
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [attr.aria-describedby]="adding.state().status === 'error' ? 'onboardingChildError' : null"
+      [ngModel]="username()"
+      (ngModelChange)="username.set($event)"
+    />
+  </div>
+  <div class="sm:col-span-3">
+    <button
+      type="submit"
+      class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+      [disabled]="
+        adding.busy() ||
+        joining.busy() ||
+        !givenName().trim() ||
+        !familyName().trim() ||
+        !username().trim()
+      "
+    >
+      {{ 'onboarding.children.add' | translate }}
+    </button>
+  </div>
+</form>
+@if (adding.state(); as state) {
+  @if (state.status === 'error') {
+    <p id="onboardingChildError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ state.message | translate }}
+    </p>
+  }
+}

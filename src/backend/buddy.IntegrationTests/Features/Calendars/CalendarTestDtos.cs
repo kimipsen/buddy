@@ -5,7 +5,7 @@ namespace buddy.IntegrationTests.Features.Calendars;
 // Shared response shapes for the Calendars endpoint tests, matching CalendarResponse /
 // CalendarItemResponse (Features/Calendars/GetCalendar and CreateItem). Strongly-typed ids
 // serialize as a raw Guid (StronglyTypedIdJsonConverterFactory).
-internal sealed record CalendarResponseDto(Guid Id, string Name, string Icon, string TimeZoneId, IReadOnlyCollection<CalendarMemberDto> Members);
+internal sealed record CalendarResponseDto(Guid Id, string Name, string Icon, string TimeZoneId, Guid GroupId, IReadOnlyCollection<CalendarMemberDto> Members);
 
 internal sealed record CalendarMemberDto(Guid UserId, CalendarRole Role);
 

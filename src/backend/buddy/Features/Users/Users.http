@@ -120,3 +120,22 @@ Accept: application/json
 @childId = 00000000-0000-0000-0000-000000000000
 DELETE {{buddy_HostAddress}}/users/me/children/{{childId}}
 Authorization: Bearer {{login.response.body.$.access_token}}
+
+GET {{buddy_HostAddress}}/users/me/onboarding
+Authorization: Bearer {{login.response.body.$.access_token}}
+Accept: application/json
+
+###
+
+PUT {{buddy_HostAddress}}/users/me/onboarding
+Authorization: Bearer {{login.response.body.$.access_token}}
+Content-Type: application/json
+
+{
+  "status": 2,
+  "setupGroupId": null,
+  "invitationsSkipped": false,
+  "version": 0
+}
+
+###

@@ -1,0 +1,66 @@
+<p class="text-sm text-slate-600 dark:text-slate-400">
+  {{ 'onboarding.summary.intro' | translate }}
+</p>
+
+<dl class="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
+  <dt class="font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.summary.group' | translate }}
+  </dt>
+  <dd>{{ setup().group?.name ?? ('onboarding.summary.none' | translate) }}</dd>
+
+  <dt class="font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.summary.children' | translate }}
+  </dt>
+  <dd>
+    @for (child of setup().children; track child.id; let last = $last) {
+      {{ child.name.givenName }}{{ last ? '' : ', ' }}
+    } @empty {
+      {{ 'onboarding.summary.none' | translate }}
+    }
+  </dd>
+
+  <dt class="font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.summary.invites' | translate }}
+  </dt>
+  <dd>
+    @for (invite of setup().pendingInvites; track invite.id; let last = $last) {
+      {{ invite.email }}{{ last ? '' : ', ' }}
+    } @empty {
+      {{
+        (invitationsSkipped() ? 'onboarding.summary.invitesSkipped' : 'onboarding.summary.none')
+          | translate
+      }}
+    }
+  </dd>
+
+  <dt class="font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.summary.calendars' | translate }}
+  </dt>
+  <dd>
+    @for (calendar of setup().calendars; track calendar.id; let last = $last) {
+      {{ calendar.icon }} {{ calendar.name }}{{ last ? '' : ', ' }}
+    } @empty {
+      {{ 'onboarding.summary.none' | translate }}
+    }
+  </dd>
+
+  <dt class="font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.summary.routine' | translate }}
+  </dt>
+  <dd>
+    {{
+      (setup().hasScheduledRoutine ? 'onboarding.summary.routineDone' : 'onboarding.summary.none')
+        | translate
+    }}
+  </dd>
+
+  <dt class="font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.summary.meal' | translate }}
+  </dt>
+  <dd>
+    {{
+      (setup().hasMealAssignment ? 'onboarding.summary.mealDone' : 'onboarding.summary.none')
+        | translate
+    }}
+  </dd>
+</dl>

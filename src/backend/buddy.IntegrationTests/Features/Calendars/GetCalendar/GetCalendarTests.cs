@@ -22,6 +22,18 @@ public sealed class GetCalendarTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task The_response_names_the_owning_group()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var groupId = await GroupTestHelpers.CreateGroupAsync(fixture, token, "Owners");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Shared", groupId);
+
+        var body = await CalendarTestHelpers.GetCalendarAsync(fixture, token, calendarId);
+
+        Assert.Equal(groupId, body.GroupId);
+    }
+
+    [Fact]
     public async Task A_non_member_gets_not_found_rather_than_forbidden()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();

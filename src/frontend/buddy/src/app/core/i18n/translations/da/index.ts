@@ -8,6 +8,7 @@ import { events } from './events';
 import { invite } from './invite';
 import { login } from './login';
 import { mealplan } from './mealplan';
+import { onboarding } from './onboarding';
 import { medicine } from './medicine';
 import { pickup } from './pickup';
 import { print } from './print';
@@ -30,6 +31,7 @@ export const da = {
   invite,
   login,
   mealplan,
+  onboarding,
   medicine,
   pickup,
   print,

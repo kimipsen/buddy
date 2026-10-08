@@ -28,6 +28,16 @@ export interface CalendarSummary {
   role: CalendarRole;
 }
 
+// GET /calendars/{id}: one calendar with its owning group (CalendarResponse).
+export interface CalendarDetail {
+  id: string;
+  name: string;
+  icon: string;
+  timeZoneId: string;
+  groupId: string;
+  members: { userId: string; role: CalendarRole }[];
+}
+
 export interface IcalTokenSummary {
   tokenId: string;
   issuedAt: string;
@@ -200,6 +210,12 @@ export class CalendarsService {
     return firstValueFrom(
       this.http.get<CalendarSummary[]>(`${this.runtimeConfig.apiBaseUrl}/calendars`),
     ).then(sortByName);
+  }
+
+  getCalendar(calendarId: string): Promise<CalendarDetail> {
+    return firstValueFrom(
+      this.http.get<CalendarDetail>(`${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}`),
+    );
   }
 
   createCalendar(request: CreateCalendarRequest): Promise<CalendarSummary> {

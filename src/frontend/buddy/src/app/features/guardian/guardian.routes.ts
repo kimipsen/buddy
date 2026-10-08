@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { onboardingEntryGuard } from '../../core/onboarding.guard';
 import { GuardianAdmin } from './admin/admin';
 import { GuardianBabysitters } from './babysitters/babysitters';
 import { GuardianCalendar } from './calendar/calendar';
@@ -8,6 +9,7 @@ import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
 import { MealplanImport } from './mealplan/import/mealplan-import';
 import { GuardianMealplan } from './mealplan/mealplan';
 import { GuardianMedicine } from './medicine/medicine';
+import { GuardianOnboarding } from './onboarding/onboarding';
 import { GuardianPickup } from './pickup/pickup';
 import { PrintTemplateEditor } from './print/editor/print-template-editor';
 import { GuardianPrint } from './print/print';
@@ -26,7 +28,9 @@ export const GUARDIAN_ROUTES: Routes = [
     path: '',
     component: GuardianShell,
     children: [
-      { path: '', component: GuardianDashboard },
+      // The home is where a guardian with nothing set up yet is sent into the guide.
+      { path: '', component: GuardianDashboard, canActivate: [onboardingEntryGuard] },
+      { path: 'onboarding', component: GuardianOnboarding },
       { path: 'mealplan', component: GuardianMealplan },
       { path: 'mealplan/ai-assistant', component: MealplanAiAssistant },
       { path: 'mealplan/import', component: MealplanImport },

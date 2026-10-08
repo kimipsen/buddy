@@ -1,0 +1,167 @@
+<section class="mx-auto max-w-3xl px-4 py-8 sm:px-8">
+  <p class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
+    {{ 'onboarding.eyebrow' | translate }}
+  </p>
+  <h1 class="mt-2 text-3xl font-semibold tracking-normal">
+    {{ 'onboarding.title' | translate }}
+  </h1>
+  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+    {{ 'onboarding.intro' | translate }}
+  </p>
+
+  @if (loading()) {
+    <div class="mt-8">
+      <app-loading-spinner [label]="'onboarding.loading' | translate" />
+    </div>
+  } @else if (loadError(); as message) {
+    <div
+      class="mt-8 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-700 dark:text-red-300"
+      role="alert"
+    >
+      <p>{{ message | translate }}</p>
+      <button
+        type="button"
+        class="mt-3 rounded-lg border border-red-300 dark:border-red-800 px-3 py-1.5 text-sm font-semibold text-red-700 dark:text-red-300 transition hover:border-red-400 dark:hover:border-red-700"
+        (click)="load()"
+      >
+        {{ 'onboarding.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+    <nav class="mt-6" [attr.aria-label]="'onboarding.progressLabel' | translate">
+      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+        {{ 'onboarding.stepOf' | translate: { current: stepIndex() + 1, total: steps.length } }}
+      </p>
+      <ol class="mt-2 flex flex-wrap gap-2">
+        @for (item of steps; track item; let index = $index) {
+          <li
+            class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
+            [attr.aria-current]="item === step() ? 'step' : null"
+            [class.border-emerald-600]="item === step()"
+            [class.dark:border-emerald-400]="item === step()"
+            [class.bg-emerald-50]="item === step()"
+            [class.dark:bg-emerald-950]="item === step()"
+            [class.text-emerald-800]="item === step()"
+            [class.dark:text-emerald-200]="item === step()"
+            [class.border-slate-200]="item !== step()"
+            [class.dark:border-slate-700]="item !== step()"
+            [class.text-slate-600]="item !== step()"
+            [class.dark:text-slate-400]="item !== step()"
+          >
+            <span aria-hidden="true">{{ isDone(item) ? '✓' : index + 1 }}</span>
+            <span>{{ stepLabels[item] | translate }}</span>
+            @if (isDone(item)) {
+              <span class="sr-only">{{ 'onboarding.stepDone' | translate }}</span>
+            }
+          </li>
+        }
+      </ol>
+    </nav>
+
+    <div
+      class="mt-6 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm"
+    >
+      <h2
+        #stepHeading
+        tabindex="-1"
+        class="flex flex-wrap items-baseline gap-2 text-xl font-semibold focus:outline-none"
+      >
+        {{ stepTitles[step()] | translate }}
+        @if (step() === 'adults') {
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400">{{
+            'onboarding.adults.optional' | translate
+          }}</span>
+        }
+      </h2>
+
+      <div class="mt-4">
+        @switch (step()) {
+          @case ('group') {
+            <app-onboarding-group-step
+              [setup]="setup()"
+              [busy]="saving.busy()"
+              (groupChosen)="chooseGroup($event)"
+            />
+          }
+          @case ('children') {
+            <app-onboarding-children-step [setup]="setup()" (changed)="refresh()" />
+          }
+          @case ('adults') {
+            <app-onboarding-adults-step
+              [setup]="setup()"
+              [skipped]="progress()?.invitationsSkipped ?? false"
+              [busy]="saving.busy()"
+              (changed)="refresh()"
+              (skip)="skipInvitations()"
+            />
+          }
+          @case ('calendar') {
+            <app-onboarding-calendar-step [setup]="setup()" (changed)="refresh()" />
+          }
+          @case ('task') {
+            <app-onboarding-task-step [setup]="setup()" (changed)="refresh()" />
+          }
+          @case ('meal') {
+            <app-onboarding-meal-step [setup]="setup()" (changed)="refresh()" />
+          }
+          @case ('summary') {
+            <app-onboarding-summary-step
+              [setup]="setup()"
+              [invitationsSkipped]="progress()?.invitationsSkipped ?? false"
+            />
+          }
+        }
+      </div>
+    </div>
+
+    <div role="status" aria-live="polite" class="mt-4 text-sm">
+      @if (saving.state().status === 'error') {
+        <p class="text-red-600 dark:text-red-400">{{ 'onboarding.saveError' | translate }}</p>
+      }
+      @if (notice(); as message) {
+        <p class="text-slate-700 dark:text-slate-300">{{ message | translate }}</p>
+      }
+    </div>
+
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap gap-3">
+        @if (stepIndex() > 0) {
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+            (click)="back()"
+          >
+            {{ 'onboarding.back' | translate }}
+          </button>
+        }
+        <button
+          type="button"
+          class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 underline-offset-2 hover:underline disabled:opacity-50"
+          [disabled]="saving.busy()"
+          (click)="finishLater()"
+        >
+          {{ 'onboarding.finishLater' | translate }}
+        </button>
+      </div>
+      @if (step() === 'summary') {
+        <button
+          type="button"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+          [disabled]="saving.busy()"
+          (click)="finish()"
+        >
+          {{ 'onboarding.finish' | translate }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+          [disabled]="!stepComplete()"
+          (click)="next()"
+        >
+          {{ 'onboarding.continue' | translate }}
+        </button>
+      }
+    </div>
+  }
+</section>

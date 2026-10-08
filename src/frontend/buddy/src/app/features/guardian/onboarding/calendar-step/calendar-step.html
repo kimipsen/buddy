@@ -1,0 +1,127 @@
+<p class="text-sm text-slate-600 dark:text-slate-400">
+  {{ 'onboarding.calendar.intro' | translate }}
+</p>
+
+@if (policy(); as current) {
+  <div
+    class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 text-sm"
+  >
+    <h3 class="font-semibold text-slate-700 dark:text-slate-300">
+      {{ 'onboarding.calendar.policyTitle' | translate }}
+    </h3>
+    <ul class="mt-1 text-slate-700 dark:text-slate-300">
+      <li>
+        {{
+          'onboarding.calendar.policyAdmin'
+            | translate: { role: (roleLabels[current.Admin] | translate) }
+        }}
+      </li>
+      <li>
+        {{
+          'onboarding.calendar.policyMember'
+            | translate: { role: (roleLabels[current.Member] | translate) }
+        }}
+      </li>
+    </ul>
+    @if (membersCanEdit()) {
+      <p class="mt-2 text-amber-700 dark:text-amber-400">
+        {{ 'onboarding.calendar.membersCanEdit' | translate }}
+      </p>
+      <button
+        type="button"
+        class="mt-2 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
+        [disabled]="updatingPolicy.busy()"
+        (click)="makeChildrenViewOnly()"
+      >
+        {{ 'onboarding.calendar.makeViewOnly' | translate }}
+      </button>
+    }
+    @if (updatingPolicy.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mt-2 text-red-600 dark:text-red-400" role="alert">
+          {{ state.message | translate }}
+        </p>
+      }
+    }
+  </div>
+}
+
+@if (setup().calendars.length > 0) {
+  <h3 class="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
+    {{ 'onboarding.calendar.existingTitle' | translate }}
+  </h3>
+  <ul class="mt-1 text-sm text-slate-700 dark:text-slate-300">
+    @for (calendar of setup().calendars; track calendar.id) {
+      <li>
+        <span aria-hidden="true">{{ calendar.icon }}</span> {{ calendar.name }}
+      </li>
+    }
+  </ul>
+}
+
+<form class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_1fr]" (ngSubmit)="create()">
+  <div>
+    <label
+      for="onboardingCalendarName"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.calendar.nameLabel' | translate }}</label
+    >
+    <input
+      id="onboardingCalendarName"
+      name="calendarName"
+      required
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [placeholder]="'onboarding.calendar.namePlaceholder' | translate"
+      [ngModel]="name()"
+      (ngModelChange)="name.set($event)"
+    />
+  </div>
+  <div>
+    <label
+      for="onboardingCalendarIcon"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.calendar.iconLabel' | translate }}</label
+    >
+    <input
+      id="onboardingCalendarIcon"
+      name="calendarIcon"
+      class="mt-1 w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="icon()"
+      (ngModelChange)="icon.set($event)"
+    />
+  </div>
+  <div>
+    <label
+      for="onboardingCalendarTimeZone"
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      >{{ 'onboarding.calendar.timeZoneLabel' | translate }}</label
+    >
+    <select
+      id="onboardingCalendarTimeZone"
+      name="calendarTimeZone"
+      class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [ngModel]="timeZoneId()"
+      (ngModelChange)="timeZoneId.set($event)"
+    >
+      @for (zone of timeZoneIds; track zone) {
+        <option [value]="zone">{{ zone }}</option>
+      }
+    </select>
+  </div>
+  <div class="sm:col-span-3">
+    <button
+      type="submit"
+      class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+      [disabled]="creating.busy() || !name().trim()"
+    >
+      {{ 'onboarding.calendar.create' | translate }}
+    </button>
+  </div>
+</form>
+@if (creating.state(); as state) {
+  @if (state.status === 'error') {
+    <p class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ state.message | translate }}
+    </p>
+  }
+}
