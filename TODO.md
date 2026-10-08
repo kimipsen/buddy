@@ -75,6 +75,14 @@
   tablet, not only on first load. Check every page, and extend the docs
   screenshots with a tablet size if needed.
 
+## Keep range length when the start changes
+
+- [ ] In every form with a start and an end (for example calendar items), move
+  the end along with the start so the length stays the same. If an item runs
+  from 9:00 to 9:30 and the start is changed to 10:00, the end becomes 10:30.
+  This stops the start from ending up after the end. Changing the end on its
+  own should still just change the end.
+
 ## Mobile app
 
 - [ ] Build a mobile app for Buddy. Decide the approach first (installable PWA,
