@@ -95,9 +95,11 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
   {
     name: 'guardian-mealplan-ai-assistant',
     title: 'Meal plan AI assistant',
-    description: 'Plan meals with an AI provider of your choice (needs an API key).',
+    description:
+      'Plan meals with an AI provider of your choice (needs an API key), optionally only from rated or recently served meals.',
     as: 'guardian',
     route: '/guardian/mealplan/ai-assistant',
+    waitFor: 'Start a new session',
   },
   {
     name: 'guardian-mealplan-import',

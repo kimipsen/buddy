@@ -552,6 +552,14 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       })),
     });
 
+    // AI assistant: a fake key (storing one never calls the provider; the first key becomes the
+    // active one) and the data-sharing acknowledgement, so the assistant page shows its start form
+    // instead of the "add a key" prompt. Nothing here ever sends a chat message.
+    await api.put(`/mealplans/children/${emil.id}/ai/providers/Anthropic/key`, {
+      apiKey: 'sk-ant-demo-screenshots-not-a-real-key',
+    });
+    await api.put(`/mealplans/children/${emil.id}/ai/data-sharing-acknowledgement`);
+
     // Medicine ------------------------------------------------------------------------------
     const ritalin = await api.post<Named>(`/medicines/children/${emil.id}/schedules`, {
       name: 'Methylphenidate',

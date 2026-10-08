@@ -66,7 +66,7 @@ The week's meals per slot, picked from the child's meal library.
 
 ## Meal plan AI assistant
 
-Plan meals with an AI provider of your choice (needs an API key).
+Plan meals with an AI provider of your choice (needs an API key), optionally only from rated or recently served meals.
 
 ![Meal plan AI assistant](guardian-mealplan-ai-assistant.png)
 
