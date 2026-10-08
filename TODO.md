@@ -483,6 +483,18 @@ Found while seeding the demo family for `task docs:screenshots`.
   Both labels are now held to 70% of the cell width and at most two lines. The pickup label is
   right-aligned in its corner, and labels over 10 characters print at 0.9em instead of 1.2em
   (`week-plan-sheet.ts`).
+- [ ] **The meal plan import page shows a Danish placeholder in the English UI.** The empty
+  "Meal plan text" field's placeholder reads `Madplan 2025 / U12 / Sø: Lasagne / Ma:
+  Fiskefrikadeller m. salat`, while every other string on the page is English. It isn't a
+  tooltip problem or e2e/demo data: the screenshot leaves the textarea empty, and the demo
+  family's earlier import (`screenshots/demo-family.ts`) uses English meals. The English
+  dictionary has a copy of the Danish text: `mealplan.import.input.textPlaceholder` in
+  `core/i18n/translations/en/mealplan.ts` is the same as in `da/mealplan.ts`. Fix: give the
+  English entry an English sample that the weekly-note parser accepts (it accepts
+  `Meal plan 2025`, `Week 12`/`W12`, and English day names such as `Sun:`/`Mon:`; see
+  `WeeklyNoteImportFormat.cs`), e.g.
+  `'Meal plan 2025\nW12\nSun: Lasagne\nMon: Fish cakes with salad\n…'`, then run
+  `task docs:screenshots` to refresh `guardian-mealplan-import`.
 
 Found along the way:
 - [x] The full frontend unit suite (`npm test -- --watch=false`) times out in a different set of
