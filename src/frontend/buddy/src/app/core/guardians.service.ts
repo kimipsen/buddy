@@ -41,6 +41,11 @@ export interface CreateChildResult extends ChildSummary {
   temporaryPassword: string;
 }
 
+export interface ChildPasswordReset {
+  username: string;
+  temporaryPassword: string;
+}
+
 export interface CreateChildRequest {
   givenName: string;
   familyName: string;
@@ -117,6 +122,18 @@ export class GuardiansService {
   deleteChild(childId: string): Promise<void> {
     return firstValueFrom(
       this.http.delete<void>(`${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}`),
+    );
+  }
+
+  // Gives the child a new one-time password (shown once) and signs them out everywhere. A child
+  // has no email, so Keycloak's own "forgot password" flow can't reach them.
+  resetChildPassword(childId: string): Promise<ChildPasswordReset> {
+    return firstValueFrom(
+      postIdempotent<ChildPasswordReset>(
+        this.http,
+        `${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/password-reset`,
+        {},
+      ),
     );
   }
 

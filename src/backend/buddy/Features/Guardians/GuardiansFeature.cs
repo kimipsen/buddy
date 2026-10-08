@@ -43,6 +43,7 @@ public static class GuardiansFeature
         children.MapListChildGuardians();
         children.MapRevokeGuardianLink();
         children.MapDeleteChild();
+        children.MapResetChildPassword();
         children.MapUpdateChildLanguage();
         children.MapUpdateChildTimeZone();
         children.MapInviteGuardian();

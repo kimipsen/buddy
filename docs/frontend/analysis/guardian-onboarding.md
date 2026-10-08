@@ -222,7 +222,8 @@ and is what makes "reload after child creation" recoverable.
 ## Implementation order
 
 1. Add the child-password reset slice (backend, guardian child-account page,
-   tests).
+   tests). Done 2026-10-08: `ResetChildPassword`, the "Reset password" action
+   on the admin page's Children list, `e2e/reset-child-password.spec.ts`.
 2. Specify the progress API with backend authorization, validation, and
    concurrency tests.
 3. Implement progress, eligibility, and redirect tests before building forms.

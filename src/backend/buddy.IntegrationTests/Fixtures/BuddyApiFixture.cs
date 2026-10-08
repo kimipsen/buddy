@@ -175,6 +175,32 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 
     public Task<string> GetAccessTokenAsync(TestUser user) => GetAccessTokenAsync(user.Username, user.Password);
 
+    // Tries a direct-grant login without caching and returns Keycloak's error_description, or null
+    // when it succeeds. Tells a wrong password ("Invalid user credentials") apart from a right one
+    // with a pending required action ("Account is not fully set up"), which a one-time password has.
+    public async Task<string?> GetPasswordGrantErrorAsync(string username, string password)
+    {
+        using var client = new HttpClient();
+        var tokenEndpoint = $"http://{_keycloak.Hostname}:{_keycloak.GetMappedPublicPort(8080)}/realms/{RealmName}/protocol/openid-connect/token";
+
+        using var response = await client.PostAsync(tokenEndpoint, new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "password",
+            ["client_id"] = Audience,
+            ["username"] = username,
+            ["password"] = password,
+            ["scope"] = "openid"
+        }));
+
+        if (response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return payload.TryGetProperty("error_description", out var description) ? description.GetString() : payload.ToString();
+    }
+
     // Convenience for the common case: mint a fresh Keycloak user and materialize its buddy
     // User aggregate (GET /users/me lazily creates it from the token's claims -- see
     // GetOrCreateUserHandler) so command endpoints that require an existing UserId claim

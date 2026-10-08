@@ -29,7 +29,7 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
         var admin = options.CurrentValue;
         var token = await GetServiceAccountTokenAsync(admin, cancellationToken);
 
-        var temporaryPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(18));
+        var temporaryPassword = NewTemporaryPassword();
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{admin.AdminBaseUrl}/users")
         {
@@ -125,6 +125,39 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, IOptionsMonitor<K
         using var putResponse = await httpClient.SendAsync(putRequest, cancellationToken);
         EnsureSuccess(putResponse, "mark email verified");
     }
+
+    public async Task<string?> ResetPasswordAsync(KeycloakSubject subject, CancellationToken cancellationToken)
+    {
+        var admin = options.CurrentValue;
+        var token = await GetServiceAccountTokenAsync(admin, cancellationToken);
+        var userUrl = $"{admin.AdminBaseUrl}/users/{Uri.EscapeDataString(subject.Value)}";
+
+        var temporaryPassword = NewTemporaryPassword();
+
+        using var resetRequest = new HttpRequestMessage(HttpMethod.Put, $"{userUrl}/reset-password")
+        {
+            Content = JsonContent.Create(new { type = "password", value = temporaryPassword, temporary = true })
+        };
+        resetRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var resetResponse = await httpClient.SendAsync(resetRequest, cancellationToken);
+        if (resetResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        EnsureSuccess(resetResponse, "reset password");
+
+        using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, $"{userUrl}/logout");
+        logoutRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var logoutResponse = await httpClient.SendAsync(logoutRequest, cancellationToken);
+        EnsureSuccess(logoutResponse, "sign out user sessions");
+
+        return temporaryPassword;
+    }
+
+    private static string NewTemporaryPassword() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(18));
 
     // Looks up the role via the user's own "available realm roles" list rather than the general
     // /roles/{name} endpoint -- the latter needs "view-realm", but this service account is

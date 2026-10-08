@@ -10,6 +10,7 @@ import {
   isSupportedLanguage,
 } from '../../../../core/i18n/language';
 import {
+  ChildPasswordReset,
   ChildSummary,
   CreateChildResult,
   GuardianKind,
@@ -55,6 +56,13 @@ export class ManageChildren {
   protected readonly confirmingDeleteChildId = signal<string | null>(null);
   protected readonly deletingChild = createAction<string>();
 
+  // A reset signs the child out, so it asks first; the new password is shown once, like a new child's.
+  protected readonly confirmingResetChildId = signal<string | null>(null);
+  protected readonly resettingPassword = createAction<string>();
+  protected readonly lastPasswordReset = signal<
+    (ChildPasswordReset & { givenName: string }) | null
+  >(null);
+
   // One save at a time per setting, but each child keeps its own error until its next attempt.
   protected readonly savingLanguageChildId = signal<string | null>(null);
   protected readonly languageErrorByChildId = signal<Record<string, string>>({});
@@ -92,6 +100,7 @@ export class ManageChildren {
       async () => {
         const created = await this.guardians.createChild({ givenName, familyName, username });
         this.lastCreatedChild.set(created);
+        this.lastPasswordReset.set(null);
         this.passwordCopied.set(false);
         this.newChildGivenName.set('');
         this.newChildFamilyName.set('');
@@ -108,6 +117,7 @@ export class ManageChildren {
   protected requestRevoke(childId: string): void {
     this.revokingChild.clearError();
     this.confirmingDeleteChildId.set(null);
+    this.confirmingResetChildId.set(null);
     this.confirmingRevokeChildId.set(childId);
   }
 
@@ -130,6 +140,7 @@ export class ManageChildren {
   protected requestDelete(childId: string): void {
     this.deletingChild.clearError();
     this.confirmingRevokeChildId.set(null);
+    this.confirmingResetChildId.set(null);
     this.confirmingDeleteChildId.set(childId);
   }
 
@@ -149,6 +160,31 @@ export class ManageChildren {
         error instanceof HttpErrorResponse && error.status === 409
           ? 'admin.manageChildren.deleteOtherGuardiansError'
           : 'admin.manageChildren.deleteError',
+    );
+  }
+
+  protected requestPasswordReset(childId: string): void {
+    this.resettingPassword.clearError();
+    this.confirmingRevokeChildId.set(null);
+    this.confirmingDeleteChildId.set(null);
+    this.confirmingResetChildId.set(childId);
+  }
+
+  protected cancelPasswordReset(): void {
+    this.confirmingResetChildId.set(null);
+  }
+
+  protected async confirmPasswordReset(child: ChildSummary): Promise<void> {
+    await this.resettingPassword.run(
+      child.id,
+      async () => {
+        const reset = await this.guardians.resetChildPassword(child.id);
+        this.lastPasswordReset.set({ ...reset, givenName: child.name.givenName });
+        this.lastCreatedChild.set(null);
+        this.passwordCopied.set(false);
+        this.confirmingResetChildId.set(null);
+      },
+      'admin.manageChildren.resetPasswordError',
     );
   }
 

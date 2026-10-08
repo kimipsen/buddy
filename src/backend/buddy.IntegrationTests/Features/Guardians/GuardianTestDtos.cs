@@ -18,3 +18,5 @@ internal sealed record SiblingSummaryDto(Guid Id, NameDto Name);
 internal sealed record GuardianInviteResponseDto(Guid Id, string Email, GuardianKind Kind, DateTimeOffset InvitedAt, DateTimeOffset ExpiresAt);
 
 internal sealed record GuardianInvitePreviewResponseDto(string ChildGivenName, GuardianKind Kind);
+
+internal sealed record ChildPasswordResetDto(string Username, string TemporaryPassword);

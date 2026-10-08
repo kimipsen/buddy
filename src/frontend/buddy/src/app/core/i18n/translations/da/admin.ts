@@ -105,6 +105,13 @@ export const admin = {
     deleteError: 'Kunne ikke slette dette barn.',
     deleteOtherGuardiansError:
       'Andre værger har stadig adgang til barnet. De skal hver især fjerne barnet, før det kan slettes.',
+    resetPassword: 'Nulstil adgangskode',
+    resetPasswordConfirmPrompt:
+      'Giv {name} en ny adgangskode? Den nuværende holder op med at virke, og barnet bliver logget ud.',
+    resetPasswordError: 'Kunne ikke nulstille barnets adgangskode.',
+    resetPasswordMessage:
+      '{name} har fået en ny adgangskode. Barnet vælger sin egen næste gang, det logger ind.',
+    usernameLabel: 'Brugernavn:',
     language: {
       label: 'Sprog',
       error: 'Kunne ikke opdatere barnets sprog.',

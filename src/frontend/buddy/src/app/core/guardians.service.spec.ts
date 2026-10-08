@@ -292,6 +292,32 @@ describe('GuardiansService', () => {
     });
   });
 
+  describe('resetChildPassword', () => {
+    it('POSTs to the child password-reset route with an idempotency key and resolves the new credentials', async () => {
+      const promise = service.resetChildPassword('child-1');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/password-reset`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.has('Idempotency-Key')).toBe(true);
+      req.flush({ username: 'sam.kid', temporaryPassword: 'new-pass-456' });
+
+      await expect(promise).resolves.toEqual({
+        username: 'sam.kid',
+        temporaryPassword: 'new-pass-456',
+      });
+    });
+
+    it('rejects when the child is not found', async () => {
+      const promise = service.resetChildPassword('missing-child');
+
+      httpMock
+        .expectOne(`${apiBaseUrl}/users/me/children/missing-child/password-reset`)
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(promise).rejects.toMatchObject({ status: 404 });
+    });
+  });
+
   describe('revokeChild', () => {
     it('DELETEs the guardian link and resolves', async () => {
       const promise = service.revokeChild('child-1');

@@ -53,7 +53,8 @@ Current responsibilities:
 
 - display a dashboard shell
 - list linked children
-- create child accounts and capture the one-time temporary password
+- create child accounts and capture the one-time temporary password, and reset a child's password
+  to a new one-time password (shown once, like the first)
 - show today's events, tasks, and medicine doses
 - manage meals and assign them to shared meal-plan slots
 - create, list, and revoke private iCal subscription links for the family's meal plan, with

@@ -107,7 +107,7 @@ message text.
 | EventIds | File | What |
 |---|---|---|
 | 1001–1007 | `Features/Users/UsersLog.cs` | Account provisioned or deleted, email changed or verified, rejected verification attempts, calls before provisioning, a failed sync of a verified email to Keycloak |
-| 2001–2007 | `Features/Guardians/GuardiansLog.cs` | Child accounts created; guardian invites sent, accepted, refused, revoked; guardian links given up; Keycloak admin API failures |
+| 2001–2009 | `Features/Guardians/GuardiansLog.cs` | Child accounts created, deleted and their passwords reset; guardian invites sent, accepted, refused, revoked; guardian links given up; Keycloak admin API failures |
 | 3001–3007 | `Features/Groups/GroupsLog.cs` | Group invites sent, accepted, refused, revoked; members removed or given a role; groups deleted |
 | 4001–4006 | `Features/Calendars/CalendarsLog.cs` | Calendar members removed or given a role, calendars deleted, iCal tokens issued or revoked; a failed star-count update (swallowed on purpose, so it's logged) |
 | 5001–5004 | `Features/SleepDiaries/SleepDiariesLog.cs` | Share links created or revoked, every view of a shared diary, and every read of a child's diary entries |

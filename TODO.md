@@ -34,7 +34,7 @@
   add one or more children, optionally invite other guardians/parents, create
   a shared calendar, schedule a task with multiple subtasks, and set up a meal
   plan. Include resumable progress. Open questions settled 2026-10-08 (see the doc's
-  "Decisions made"); step 1 is the new child-password reset slice.
+  "Decisions made"); step 1, the child-password reset, is done (2026-10-08).
 
 ## In-app help
 

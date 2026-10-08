@@ -61,6 +61,26 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Resetting_a_child_password_logs_ids_but_never_the_password()
+    {
+        var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken);
+
+        var response = await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Url($"/users/me/children/{child.Id}/password-reset");
+            _.StatusCodeShouldBe(200);
+        });
+        var reset = response.ReadAsJson<ChildPasswordResetDto>();
+
+        Assert.Contains(_logs.Entries, e => e.EventId == 2009
+            && Equals(e.Property("ChildId"), child.Id)
+            && Equals(e.Property("GuardianId"), guardianId));
+        Assert.DoesNotContain(_logs.Entries, e => e.Message.Contains(reset.TemporaryPassword, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Creating_a_child_and_inviting_a_guardian_logs_ids_but_no_personal_data()
     {
         var user = await fixture.CreateUserAsync();

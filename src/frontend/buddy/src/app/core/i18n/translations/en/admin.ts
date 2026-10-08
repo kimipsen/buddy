@@ -105,6 +105,13 @@ export const admin = {
     deleteError: 'Unable to delete this child.',
     deleteOtherGuardiansError:
       'Other guardians still have access to this child. Each of them must remove the child before it can be deleted.',
+    resetPassword: 'Reset password',
+    resetPasswordConfirmPrompt:
+      'Give {name} a new password? The current one stops working and they are signed out.',
+    resetPasswordError: "Unable to reset this child's password.",
+    resetPasswordMessage:
+      '{name} has a new password. They choose their own the next time they sign in.',
+    usernameLabel: 'Username:',
     language: {
       label: 'Language',
       error: "Unable to update this child's language.",

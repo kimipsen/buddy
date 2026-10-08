@@ -395,6 +395,7 @@ Notes:
 | `GET /users/me/children/{childId}/guardians` | `200` | `401`, `404` | `404` for unknown child or no guardian relationship. |
 | `DELETE /users/me/children/{childId}/guardian-link` | `204` | `401`, `404` | `404` for unknown child or no active link to revoke. |
 | `DELETE /users/me/children/{childId}` | `204` | `401`, `404`, `409` | `404` for unknown child or no active guardian link; `409 child_has_other_guardians` while another guardian remains. |
+| `POST /users/me/children/{childId}/password-reset` | `200` | `401`, `404` | Returns a new one-time password; `404` for unknown child, no active guardian link, or a child account missing in Keycloak. |
 | `PATCH /users/me/children/{childId}/language` | `200` | `400`, `401`, `404` | `400` for an unsupported language code. |
 | `PATCH /users/me/children/{childId}/timezone` | `200` | `400`, `401`, `404` | `400` for an invalid time zone id. |
 | `GET /users/me/guardians` | `200` | `401` | Lists guardians linked to the caller. |

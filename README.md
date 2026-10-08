@@ -25,7 +25,8 @@ in real time.
 
 - [ ] Guided setup for guardians with no groups or children (proposed, not yet
   implemented -- see [Guardian onboarding](docs/frontend/analysis/guardian-onboarding.md))
-- [x] Create child accounts and manage guardian/child relationships
+- [x] Create child accounts and manage guardian/child relationships, including
+      resetting a child's password (children have no email for a self-service reset)
 - [x] Shared calendars: day, work-week, rolling-week, and month views, with
       event/task creation across personal and group-owned calendars
 - [x] Medicine schedules with daily dose times and dose-status tracking

@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  ChildPasswordReset,
   ChildSummary,
   CreateChildResult,
   GuardianInvite,
@@ -1654,6 +1655,173 @@ describe('ManageChildren', () => {
 
     resolve(undefined);
     await settle(fixture);
+  });
+
+  describe('resetting a password', () => {
+    async function requestReset(resetChildPassword = vi.fn(async () => resetResult())) {
+      const listMyChildren = vi.fn(async () => [child()]);
+      const { fixture, guardians } = await setup({
+        guardians: { listMyChildren, resetChildPassword },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Reset password')!.click();
+      fixture.detectChanges();
+
+      return { fixture, guardians, compiled, listMyChildren };
+    }
+
+    async function confirmReset(fixture: ComponentFixture<ManageChildren>) {
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Reset password')!.click();
+      await settle(fixture);
+    }
+
+    function resetResult(): ChildPasswordReset {
+      return { username: 'sam.kid', temporaryPassword: 'new-pass-456' };
+    }
+
+    it('asks for confirmation, naming the child and the sign-out', async () => {
+      const { compiled } = await requestReset();
+
+      const row = childRow(compiled, 'Sam Kid');
+      expect(row.textContent).toContain(
+        'Give Sam a new password? The current one stops working and they are signed out.',
+      );
+      expect(findButtonByText(row, 'Remove')).toBeUndefined();
+    });
+
+    it('cancels without calling resetChildPassword', async () => {
+      const { fixture, guardians, compiled } = await requestReset();
+
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Cancel')!.click();
+      fixture.detectChanges();
+
+      expect(guardians.resetChildPassword).not.toHaveBeenCalled();
+      expect(findButtonByText(childRow(compiled, 'Sam Kid'), 'Remove')).toBeTruthy();
+    });
+
+    it('resets on confirm and shows the username and new one-time password once', async () => {
+      const { fixture, guardians, compiled, listMyChildren } = await requestReset();
+
+      await confirmReset(fixture);
+
+      expect(guardians.resetChildPassword).toHaveBeenCalledWith('child-1');
+      expect(listMyChildren).toHaveBeenCalledTimes(1);
+      const status = compiled.querySelector('[role="status"]')!;
+      expect(status.textContent).toContain(
+        'Sam has a new password. They choose their own the next time they sign in.',
+      );
+      expect(status.textContent).toContain('Username: sam.kid');
+      expect(status.textContent).toContain('Temporary password (shown once): new-pass-456');
+      expect(childRow(compiled, 'Sam Kid').textContent).not.toContain('signed out');
+    });
+
+    it('disables the confirm and cancel buttons while the reset is in flight', async () => {
+      let resolve!: (value: ChildPasswordReset) => void;
+      const { fixture, compiled } = await requestReset(
+        vi.fn(() => new Promise<ChildPasswordReset>((r) => (resolve = r))),
+      );
+
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Reset password')!.click();
+      await settle(fixture);
+
+      const row = childRow(compiled, 'Sam Kid');
+      expect(findButtonByText(row, 'Reset password')!.disabled).toBe(true);
+      expect(findButtonByText(row, 'Cancel')!.disabled).toBe(true);
+
+      resolve(resetResult());
+      await settle(fixture);
+    });
+
+    it('keeps the prompt open and shows an error when the reset fails', async () => {
+      const { fixture, compiled } = await requestReset(
+        vi.fn(async () => Promise.reject(new Error('boom'))),
+      );
+
+      await confirmReset(fixture);
+
+      expect(compiled.textContent).toContain("Unable to reset this child's password.");
+      expect(childRow(compiled, 'Sam Kid').textContent).toContain('they are signed out');
+      expect(compiled.querySelector('[role="status"]')).toBeNull();
+    });
+
+    it('clears the reset error when a reset is requested again', async () => {
+      const { fixture, compiled } = await requestReset(
+        vi.fn(async () => Promise.reject(new Error('boom'))),
+      );
+      await confirmReset(fixture);
+
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Cancel')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Reset password')!.click();
+      fixture.detectChanges();
+
+      expect(compiled.textContent).not.toContain("Unable to reset this child's password.");
+    });
+
+    it('closes a pending delete or remove confirmation, and they close a pending reset', async () => {
+      const { fixture, compiled } = await requestReset();
+
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Cancel')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Delete')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Cancel')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Reset password')!.click();
+      fixture.detectChanges();
+
+      let row = childRow(compiled, 'Sam Kid');
+      expect(row.textContent).toContain('they are signed out');
+      expect(row.textContent).not.toContain('This can’t be undone.');
+
+      findButtonByText(row, 'Cancel')!.click();
+      fixture.detectChanges();
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Remove')!.click();
+      fixture.detectChanges();
+
+      row = childRow(compiled, 'Sam Kid');
+      expect(row.textContent).toContain('Remove this child?');
+      expect(row.textContent).not.toContain('they are signed out');
+    });
+
+    it('replaces a newly created child’s credentials, and a new child replaces the reset ones', async () => {
+      const { fixture, compiled } = await requestReset();
+      await addChildThroughForm(fixture);
+      expect(compiled.textContent).toContain('temp-pass-123');
+
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Reset password')!.click();
+      fixture.detectChanges();
+      await confirmReset(fixture);
+
+      expect(compiled.textContent).toContain('new-pass-456');
+      expect(compiled.textContent).not.toContain('temp-pass-123');
+
+      await addChildThroughForm(fixture);
+
+      expect(compiled.textContent).toContain('temp-pass-123');
+      expect(compiled.textContent).not.toContain('new-pass-456');
+    });
+
+    it('copies the reset password and starts from "Copy" after each reset', async () => {
+      const writeText = vi.fn(async () => undefined);
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+      const { fixture, compiled } = await requestReset();
+      await confirmReset(fixture);
+
+      findButtonByText(compiled, 'Copy')!.click();
+      await settle(fixture);
+      expect(writeText).toHaveBeenCalledWith('new-pass-456');
+      expect(findButtonByText(compiled, 'Copied!')).toBeTruthy();
+
+      findButtonByText(childRow(compiled, 'Sam Kid'), 'Reset password')!.click();
+      fixture.detectChanges();
+      await confirmReset(fixture);
+
+      expect(findButtonByText(compiled, 'Copy')).toBeTruthy();
+    });
   });
 
   // ----- Copy temporary password -----

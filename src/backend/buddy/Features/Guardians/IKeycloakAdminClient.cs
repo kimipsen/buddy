@@ -26,6 +26,12 @@ public interface IKeycloakAdminClient
     // when the account is gone, has another email (Buddy's UpdateEmail doesn't change Keycloak's),
     // or is already verified. Compares case-insensitively: Keycloak stores emails lowercased.
     Task MarkEmailVerifiedAsync(KeycloakSubject subject, string email, CancellationToken cancellationToken);
+
+    // Replaces the account's password with a new one-time password (UPDATE_PASSWORD at next login,
+    // like CreateChildUserAsync's) and signs out its sessions, so the old password and any device
+    // still logged in with it stop working. Returns the new password, or null when the account is
+    // gone.
+    Task<string?> ResetPasswordAsync(KeycloakSubject subject, CancellationToken cancellationToken);
 }
 
 // Username is the child's login handle in Keycloak -- the guardian needs it alongside

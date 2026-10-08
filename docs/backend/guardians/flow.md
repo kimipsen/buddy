@@ -52,6 +52,7 @@ sequenceDiagram
 | `GET` | `/users/me/children/{childId}/guardians` | Lists the active guardians linked to a specific child. |
 | `DELETE` | `/users/me/children/{childId}/guardian-link` | Revokes the guardian-child relationship. |
 | `DELETE` | `/users/me/children/{childId}` | Erases the child's account and all its data, Keycloak account included. Only the child's sole active guardian may: `404` without an active link, `409 child_has_other_guardians` while another guardian remains. Family data anchored to the child passes to a sibling. See [gdpr-data-protection.md](../analysis/gdpr-data-protection.md). |
+| `POST` | `/users/me/children/{childId}/password-reset` | An active guardian gives the child a new one-time password, returned once like `POST /users/me/children`'s, and signs the child out of every session. A child has no email, so Keycloak's own reset flow can't reach them. `404` without an active link. |
 | `PATCH` | `/users/me/children/{childId}/language` | An active guardian updates the child's language. |
 | `PATCH` | `/users/me/children/{childId}/timezone` | An active guardian updates the child's time zone. |
 | `GET` | `/users/me/guardians` | Lists guardians linked to the current authenticated user. |
