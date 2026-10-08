@@ -178,7 +178,7 @@ In short:
   feature with no new route but a visible change to an existing page (a new dashboard widget, say)
   still needs the screenshots re-run and the affected seed data added.
 - For a new aggregate or schema, also update `aggregate-roots.md`, `domain-model-diagram.md`, the
-  aggregate count in `event-stream-snapshots.md`, and `MARTEN_SCHEMAS` in `taskfile.yml`.
+  aggregate count in `event-stream-snapshots.md`, and `MARTEN_SCHEMAS` in `taskfile.dist.yml`.
 
 ## 10. Report
 

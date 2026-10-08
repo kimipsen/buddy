@@ -188,8 +188,9 @@ copilot, github-pilot) are not Claude Code skills (no frontmatter, not under
   Codex/Copilot-only in `agents/README.md`.
 - [x] Prune stale `.claude/worktrees/agent-*` checkouts (they hold old
   copies of the skills and TODO). `.claude/worktrees/` no longer exists.
-- [ ] After each new skill, test that it triggers using `skill-creator`'s
+- [x] After each new skill, test that it triggers using `skill-creator`'s
   eval and description-tuning workflow.
+  (2026-10-08) Now a standing rule in `CLAUDE.md` under "Project skills".
 
 ### Status (2026-10-01)
 
@@ -302,6 +303,7 @@ Still open:
   run).
 - [ ] Stryker Safe Mode drops about 1277 of 4734 mutants as `CompileError`
   (CS0165), so some methods are never mutation-tested.
+  (2026-10-08) Still open: 5.0.0 is the latest Stryker.NET, so there is no upgrade to try.
 
 ### Round 3 (2026-10-01)
 
@@ -329,6 +331,7 @@ Still open:
   the endpoint turns a blank icon into null.
 - [ ] Stryker Safe Mode drops about 1277 mutants as `CompileError`
   (a Stryker limitation).
+  (2026-10-08) Still open: 5.0.0 is the latest Stryker.NET, so there is no upgrade to try.
 
 ### Suggested order
 
@@ -359,13 +362,16 @@ Before calling it done:
 - [ ] Print a real week on paper and compare it with the old fridge sheet.
 
 Found along the way:
-- [ ] Some e2e specs fail only in a parallel full run: calendar, groups, task library and AI
+- [x] Some e2e specs fail only in a parallel full run: calendar, groups, task library and AI
   settings. They pass when run serially. They are unrelated to printing, but a cold dev server
   with several workers seems to push them over the timeout.
-- [ ] The `db:marten:*` tasks and `MARTEN_SCHEMAS` live only in the git-ignored `taskfile.yml`,
+  (2026-10-08) Not reproducible: three full parallel runs (8 workers, cold dev servers each
+  time) passed 31/31. Reopen with a trace if it comes back under load.
+- [x] The `db:marten:*` tasks and `MARTEN_SCHEMAS` live only in the git-ignored `taskfile.yml`,
   not in `taskfile.dist.yml`. `worklocations` and `printtemplates` were added locally, but other
   clones don't get them. The skills and `CLAUDE.md` still point at `taskfile.yml`.
   Either move the tasks into `taskfile.dist.yml` or document the local setup.
+  (2026-10-08) Moved to `taskfile.dist.yml` with `MARTEN_SCHEMAS`; skills and docs point there.
 
 Deferred until someone asks (each is additive; details are in the docs' open questions):
 - [ ] Print several weeks at once, for example a month as one PDF.
@@ -395,12 +401,14 @@ Found while seeding the demo family for `task docs:screenshots`.
   (`week-plan-sheet.ts`).
 
 Found along the way:
-- [ ] The full frontend unit suite (`npm test -- --watch=false`) times out in a different set of
+- [x] The full frontend unit suite (`npm test -- --watch=false`) times out in a different set of
   specs on each run when the machine is busy (load average 20–30 on 16 cores, with dev servers,
   language servers and a second agent session running). Every spec passes when run in smaller
   groups (`--include 'src/app/core/**/*.spec.ts'` and so on). The specs wait with `settle()`
   loops and real timers. Consider limiting the Vitest worker count, or raising the per-test
   timeout for the unit-test builder.
+  (2026-10-08) `vitest-base.config.ts` (angular.json `runnerConfig`): `maxWorkers: 50%`,
+  `testTimeout: 15s`.
 
 ## Best-practice gap review (2026-10-06)
 

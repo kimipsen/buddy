@@ -92,7 +92,7 @@ New domain only:
 - [ ] `I<Domain>Store : IDocumentStore`.
 - [ ] `<Domain>Feature.cs` with `OpenApiDocumentName`, `EventTypes`, `AddMartenStore<I<Domain>Store>` (`DatabaseSchemaName = "<domain>"`, `StreamIdentity.AsGuid`, `AddEventTypes`), plus `Add<Domain>Feature`/`Map<Domain>Feature`.
 - [ ] `Program.cs`: add `Add<Domain>Feature(builder.Configuration)` **after** every feature it depends on (Guardians before anything that uses `IGuardianLinkEventStore`), and add `app.Map<Domain>Feature()`.
-- [ ] `taskfile.yml`: add the schema to `MARTEN_SCHEMAS`.
+- [ ] `taskfile.dist.yml`: add the schema to `MARTEN_SCHEMAS`.
 - [ ] Create `docs/backend/<domain>/flow.md` and link it in `docs/backend/README.md`.
 
 ## 4. Tests: `src/backend/buddy.IntegrationTests/Features/<Domain>/<UseCase>/<UseCase>Tests.cs`

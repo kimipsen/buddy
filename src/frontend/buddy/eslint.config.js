@@ -28,7 +28,9 @@ module.exports = defineConfig([
     processor: angular.processInlineTemplates,
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        // Root-level tool configs (playwright/vitest) belong to no tsconfig; lint them with the
+        // project service's default project instead of failing to parse them.
+        projectService: { allowDefaultProject: ['*.config.ts'] },
         tsconfigRootDir: __dirname,
       },
     },

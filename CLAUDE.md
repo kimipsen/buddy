@@ -38,6 +38,8 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 
 `agents/` holds Codex/Copilot packages; Claude Code doesn't load them.
 
+After adding a skill or changing a skill's `description`, check that it still triggers, and doesn't steal prompts from its neighbours, with `skill-creator`'s description eval.
+
 ## Conventions
 
 - Every page appears in the documentation screenshots (`docs/screenshots`). A new route or a visible change to a page means updating `src/frontend/buddy/screenshots/pages.ts` (plus demo data in `demo-family.ts`) and running `task docs:screenshots`. `src/app/screenshot-coverage.spec.ts` enforces the route list. See the `doc-screenshots` skill.

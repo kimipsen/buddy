@@ -114,9 +114,13 @@ List repository tasks:
 task --list
 ```
 
-The `db:marten:*` tasks inspect or clear tables in the `users` schema. The
-`db:marten:clear-events` task is destructive and does not reset every feature
-schema. To clear every table in every user schema instead, use
+The `db:marten:*` tasks (in `taskfile.dist.yml`) inspect or clear the Marten
+tables of one feature schema, named with `SCHEMA=<schema>` (the allowed names
+are `MARTEN_SCHEMAS`). The `db:marten:clear-events` task is destructive and
+does not reset the other schemas or the shared `snapshots` schema. A git-ignored
+`taskfile.yml` can include `taskfile.dist.yml` and add local-only tasks.
+
+To clear every table in every user schema instead, use
 `scripts/clear-database.sh` (`--drop` also drops the schemas themselves,
 `--dry-run` only lists what would be cleared); see the script's header for
 details.

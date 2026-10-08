@@ -19,6 +19,11 @@ Run the Angular unit suite once with the Vitest-backed builder:
 npm test -- --watch=false
 ```
 
+`vitest-base.config.ts` (the builder's `runnerConfig`) caps Vitest at half the
+cores and raises the per-test timeout to 15 seconds, so the `settle()`-based
+specs don't time out when dev servers, language servers or Stryker load the
+machine.
+
 Run mutation testing with StrykerJS:
 
 ```bash

@@ -298,4 +298,4 @@ When it ships:
   (every shipped backend feature has `docs/backend/<feature>/flow.md`).
 - New aggregates: `docs/backend/analysis/aggregate-roots.md`, `domain-model-diagram.md`, and the
   snapshot count in `event-stream-snapshots.md` ("Implemented for all N event-sourced aggregates").
-- New Marten schema: add it to `MARTEN_SCHEMAS` in `taskfile.yml`.
+- New Marten schema: add it to `MARTEN_SCHEMAS` in `taskfile.dist.yml`.

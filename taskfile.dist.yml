@@ -3,7 +3,8 @@
 version: '3'
 
 vars:
-  GREETING: Hello, world!
+  # Every schema with Marten event tables, for the db:marten:* tasks. Add a new feature's schema here.
+  MARTEN_SCHEMAS: &marten_schemas [users, groups, tasklibrary, medicines, calendars, progress, mealplans, pickups, babysitters, worklocations, printtemplates, sleepdiaries, erasure]
 
 tasks:
   hooks:install:
@@ -82,6 +83,80 @@ tasks:
     dir: src/frontend/buddy
     cmds:
       - npm run screenshots
+
+  db:marten:tables:
+    desc: "List Marten tables in a schema. Usage: task db:marten:tables SCHEMA=groups"
+    requires:
+      vars:
+        - name: SCHEMA
+          enum: *marten_schemas
+    cmds:
+      - |
+        PGPASSWORD=postgres psql -h db -p 5432 -U postgres -d postgres -c "select schemaname, tablename from pg_tables where schemaname='{{.SCHEMA}}' order by tablename;"
+
+  db:marten:events:
+    desc: "Show latest Marten events (<schema>.mt_events). Usage: task db:marten:events SCHEMA=groups"
+    requires:
+      vars:
+        - name: SCHEMA
+          enum: *marten_schemas
+    cmds:
+      - |
+        PGPASSWORD=postgres psql -h db -p 5432 -U postgres -d postgres -c "select seq_id, stream_id, version, type, timestamp from {{.SCHEMA}}.mt_events order by seq_id desc limit 50;"
+
+  db:marten:streams:
+    desc: "Show latest Marten streams (<schema>.mt_streams). Usage: task db:marten:streams SCHEMA=groups"
+    requires:
+      vars:
+        - name: SCHEMA
+          enum: *marten_schemas
+    cmds:
+      - |
+        PGPASSWORD=postgres psql -h db -p 5432 -U postgres -d postgres -c "select id, type, version, timestamp from {{.SCHEMA}}.mt_streams order by timestamp desc limit 50;"
+
+  db:marten:event-types:
+    desc: "Show Marten event counts grouped by event type. Usage: task db:marten:event-types SCHEMA=groups"
+    requires:
+      vars:
+        - name: SCHEMA
+          enum: *marten_schemas
+    cmds:
+      - |
+        PGPASSWORD=postgres psql -h db -p 5432 -U postgres -d postgres -c "select type, count(*) from {{.SCHEMA}}.mt_events group by type order by count(*) desc;"
+
+  db:marten:clear-events:
+    desc: "Clear all Marten tables (events + doc/index tables) in a schema (destructive). Usage: task db:marten:clear-events SCHEMA=groups"
+    requires:
+      vars:
+        - name: SCHEMA
+          enum: *marten_schemas
+    cmds:
+      - |
+        PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h db -p 5432 -U postgres -d postgres -c "
+        do \$\$
+        declare
+          tbls text;
+        begin
+          select string_agg(format('%I.%I', schemaname, tablename), ', ')
+          into tbls
+          from pg_tables
+          where schemaname = '{{.SCHEMA}}' and tablename like 'mt\_%';
+
+          if tbls is not null then
+            execute 'truncate table ' || tbls || ' restart identity cascade';
+          end if;
+        end \$\$;
+        "
+
+  db:marten:clear-all-events:
+    desc: "Clear all Marten tables in every schema listed in MARTEN_SCHEMAS (destructive)"
+    prompt: This truncates all Marten tables in every schema. Continue?
+    cmds:
+      - for:
+          var: MARTEN_SCHEMAS
+        task: db:marten:clear-events
+        vars:
+          SCHEMA: '{{.ITEM}}'
 
   db:snapshots:rebuild:
     desc: >-
