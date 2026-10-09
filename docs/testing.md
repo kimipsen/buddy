@@ -174,6 +174,10 @@ verified scoping instructions and expected runtime characteristics.
   real backend and frontend.
 - `.github/workflows/mutation-testing.yml` runs mutation testing nightly and on
   demand. See [nightly mutation testing](#nightly-mutation-testing).
+- `.github/workflows/codeql.yml` runs CodeQL's `security-and-quality` queries
+  on the backend (C#, built with the SDK from `global.json`) and the frontend
+  (TypeScript, no build) for changes under `src/`, and weekly. Findings appear
+  under the repository's Security → Code scanning alerts.
 
 ### Code coverage
 

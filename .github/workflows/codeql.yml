@@ -1,0 +1,89 @@
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/backend/**"
+      - "src/frontend/**"
+      - "global.json"
+      - ".github/workflows/codeql.yml"
+  push:
+    branches: [master]
+    paths:
+      - "src/backend/**"
+      - "src/frontend/**"
+      - "global.json"
+      - ".github/workflows/codeql.yml"
+  # Weekly, so new CodeQL queries also run against code that hasn't changed.
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+# Least privilege for the GITHUB_TOKEN; a job that needs more asks for it itself.
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    # Uploads the results to the repository's code scanning alerts.
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Built for real (manual build mode), so the extractor sees the same compilation as the
+          # SDK pinned in global.json -- .NET 11 preview with C# preview features.
+          - name: backend
+            language: csharp
+            build-mode: manual
+            config: |
+              paths:
+                - src/backend
+          # TypeScript needs no build. Generated output, dependencies and reports stay out.
+          - name: frontend
+            language: javascript-typescript
+            build-mode: none
+            config: |
+              paths:
+                - src/frontend/buddy
+              paths-ignore:
+                - src/frontend/buddy/node_modules
+                - src/frontend/buddy/dist
+                - src/frontend/buddy/coverage
+                - src/frontend/buddy/reports
+                - src/frontend/buddy/playwright-report
+                - src/frontend/buddy/test-results
+    steps:
+      - uses: actions/checkout@v7
+
+      # Same SDK as the devcontainer, pinned in global.json at the repo root.
+      - if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # security-and-quality adds the maintainability queries to the default security suite.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-and-quality
+          config: ${{ matrix.config }}
+
+      - name: Build backend
+        if: matrix.build-mode == 'manual'
+        run: |
+          dotnet restore src/backend/backend.slnx
+          dotnet build src/backend/backend.slnx --no-restore --configuration Release
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
