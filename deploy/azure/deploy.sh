@@ -61,7 +61,8 @@ postgres_firewall_rule_exists() {
 # Sets a container app's health probes. The containerapp CLI has no probe flags, so this patches
 # them through ARM. PATCH replaces the whole containers array, so the current container goes back
 # with only its probes changed. Only the fields given are compared (Azure fills in defaults), so an
-# unchanged config adds no revision.
+# unchanged config adds no revision. Newer containerapp CLI versions return imageType, which the
+# pinned api-version rejects, so it is dropped before the PATCH.
 set_probes() {
   local name=$1 probes=$2 app_id containers
   app_id=$(az containerapp show --name "$name" --resource-group "$RESOURCE_GROUP" --query id -o tsv)
@@ -74,7 +75,7 @@ set_probes() {
     az rest --method patch \
       --url "https://management.azure.com${app_id}?api-version=2024-03-01" \
       --body "$(echo "$containers" | jq --argjson probes "$probes" \
-        '{properties: {template: {containers: (.[0].probes = $probes)}}}')" \
+        '{properties: {template: {containers: (map(del(.imageType)) | .[0].probes = $probes)}}}')" \
       -o none
   fi
 }
