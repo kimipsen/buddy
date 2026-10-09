@@ -282,6 +282,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Expired sessions during in-app navigation](analysis/expired-session-handling.md) — implemented
   redirect to `/login` with a "session expired" notice when the Keycloak session ends mid-use, and
   return to the interrupted page after signing in
+- [In-app help for guardians](analysis/in-app-help.md) — proposed per-page inline help panel
+  toggled from the shell header, a `/guardian/help` index, typed en/da help dictionaries and a
+  coverage spec that requires help for every guardian page
 
 ## Local development
 
