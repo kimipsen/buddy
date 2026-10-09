@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { todayIsoDate } from '../../../../core/date-utils';
+import { shiftRangeEndDate, todayIsoDate } from '../../../../core/date-utils';
 import { GroupSummary, GroupsService } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -83,6 +83,13 @@ export class ManageMedicines {
   protected readonly newTimes = signal<string[]>(['08:00']);
   protected readonly newStartDate = signal(todayIsoDate());
   protected readonly newEndDate = signal('');
+
+  // Moving the start date moves an end date with it, so the course keeps its length. No end date
+  // (an open-ended course) stays open-ended.
+  protected setNewStartDate(start: string): void {
+    this.newEndDate.set(shiftRangeEndDate(this.newStartDate(), start, this.newEndDate()));
+    this.newStartDate.set(start);
+  }
   protected readonly creating = createAction<string>();
   protected readonly createState = computed(() =>
     stateForChild(this.creating.state(), this.selectedChildId()),

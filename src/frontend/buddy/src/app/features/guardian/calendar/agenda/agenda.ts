@@ -24,6 +24,7 @@ import {
   dayOfWeekIndex,
   parseIsoDate,
   shiftMonthIso,
+  shiftRangeEnd,
   startOfWeekIso,
   toIsoDateInTimeZone,
   toTimeInTimeZone,
@@ -773,6 +774,20 @@ export class CalendarAgenda {
     }
   }
 
+  // Moving the start moves the end by the same amount, so the event keeps its length and can't
+  // end before it starts. The end fields themselves still change only the end.
+  protected setEditStart(date: string, time: string): void {
+    const end = shiftRangeEnd(
+      { date: this.editStartDate(), time: this.editStartTime() },
+      { date, time },
+      { date: this.editEndDate(), time: this.editEndTime() },
+    );
+    this.editStartDate.set(date);
+    this.editStartTime.set(time);
+    this.editEndDate.set(end.date);
+    this.editEndTime.set(end.time);
+  }
+
   protected cancelEditItem(): void {
     this.editingItemId.set(null);
   }
@@ -850,6 +865,19 @@ export class CalendarAgenda {
       this.newIcon.set(template.icon);
       this.newColor.set(template.color);
     }
+  }
+
+  // Same as setEditStart, for the create form.
+  protected setNewStart(date: string, time: string): void {
+    const end = shiftRangeEnd(
+      { date: this.newStartDate(), time: this.newStartTime() },
+      { date, time },
+      { date: this.newEndDate(), time: this.newEndTime() },
+    );
+    this.newStartDate.set(date);
+    this.newStartTime.set(time);
+    this.newEndDate.set(end.date);
+    this.newEndTime.set(end.time);
   }
 
   protected async createItem(): Promise<void> {

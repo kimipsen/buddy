@@ -157,3 +157,64 @@ export function nextWeekdayOnOrAfter(isoDate: string, weekday: DayOfWeek): strin
   const offset = (dayOfWeekIndex(weekday) - parseIsoDate(isoDate).getDay() + 7) % 7;
   return addDaysIso(isoDate, offset);
 }
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = /^\d{2}:\d{2}$/;
+
+// Minutes since the epoch for a wall-clock date and "HH:mm" time, read as UTC so DST never adds
+// or drops an hour; null when either part is blank or malformed.
+function wallClockMinutes(isoDate: string, time: string): number | null {
+  if (!ISO_DATE.test(isoDate) || !TIME.test(time)) {
+    return null;
+  }
+  const [year = NaN, month = NaN, day = NaN] = isoDate.split('-').map(Number);
+  const [hours = NaN, minutes = NaN] = time.split(':').map(Number);
+  return Date.UTC(year, month - 1, day, hours, minutes) / 60_000;
+}
+
+export interface DateTimeParts {
+  date: string;
+  time: string;
+}
+
+// The end of a date + time range after its start moved from `oldStart` to `newStart`, moved by the
+// same amount so the range keeps its length (9:00-9:30 with the start moved to 10:00 ends at
+// 10:30, crossing into the next day when needed). Left as it is when any part is blank.
+export function shiftRangeEnd(
+  oldStart: DateTimeParts,
+  newStart: DateTimeParts,
+  end: DateTimeParts,
+): DateTimeParts {
+  const from = wallClockMinutes(oldStart.date, oldStart.time);
+  const to = wallClockMinutes(newStart.date, newStart.time);
+  const endAt = wallClockMinutes(end.date, end.time);
+  if (from === null || to === null || endAt === null) {
+    return end;
+  }
+  const shifted = new Date((endAt + to - from) * 60_000);
+  return {
+    date: shifted.toISOString().slice(0, 10),
+    time: shifted.toISOString().slice(11, 16),
+  };
+}
+
+// shiftRangeEnd for a range of whole days.
+export function shiftRangeEndDate(oldStart: string, newStart: string, end: string): string {
+  return shiftRangeEnd(
+    { date: oldStart, time: '00:00' },
+    { date: newStart, time: '00:00' },
+    { date: end, time: '00:00' },
+  ).date;
+}
+
+// shiftRangeEnd for a window of wall-clock times with no date, which may cross midnight.
+export function shiftRangeEndTime(oldStart: string, newStart: string, end: string): string {
+  if (!TIME.test(oldStart) || !TIME.test(newStart) || !TIME.test(end)) {
+    return end;
+  }
+  const minutesOfDay = (time: string): number => {
+    const [hours = NaN, minutes = NaN] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  return addMinutesToTime(end, minutesOfDay(newStart) - minutesOfDay(oldStart));
+}

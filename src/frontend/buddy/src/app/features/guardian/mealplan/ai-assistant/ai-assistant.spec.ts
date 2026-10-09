@@ -194,6 +194,31 @@ describe('MealplanAiAssistant', () => {
     expect(fixture.nativeElement.textContent).toContain('Drafting');
   });
 
+  it('moves the last day along with the first day, keeping the period length', async () => {
+    const { fixture, aiAssistant } = await setup();
+    await settle(fixture);
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    const from = compiled.querySelector<HTMLInputElement>('#aiFrom')!;
+    const to = compiled.querySelector<HTMLInputElement>('#aiTo')!;
+    from.value = '2026-08-01';
+    from.dispatchEvent(new Event('input'));
+    to.value = '2026-08-03';
+    to.dispatchEvent(new Event('input'));
+    await settle(fixture);
+    from.value = '2026-08-10';
+    from.dispatchEvent(new Event('input'));
+    await settle(fixture);
+
+    expect(to.value).toBe('2026-08-12');
+    findButtonByText(compiled, 'Start planning')!.click();
+    await settle(fixture);
+    expect(aiAssistant.startSession).toHaveBeenCalledWith(
+      'child-1',
+      expect.objectContaining({ from: '2026-08-10', to: '2026-08-12' }),
+    );
+  });
+
   it('sends the chosen meal filter and remembers it on this device', async () => {
     const { fixture, aiAssistant } = await setup();
     await settle(fixture);

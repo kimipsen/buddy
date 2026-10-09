@@ -709,6 +709,42 @@ describe('CalendarAgenda', () => {
     ).toBeNull();
   });
 
+  it('moves the end along with the start in the edit form, across midnight when needed', async () => {
+    const item = occurrence({
+      itemId: 'item-1',
+      title: 'Dentist',
+      calendarId: 'cal-1',
+      startsAt: `${today}T09:00:00Z`,
+      endsAt: `${today}T09:30:00Z`,
+      isAllDay: false,
+    });
+    const { fixture, calendars } = await setup({
+      calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+    });
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Edit')!.click();
+    await settle(fixture);
+
+    const form = (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLInputElement>('input[name="editTitle"]')!
+      .closest('form')!;
+    setInputValue(form.querySelector<HTMLInputElement>('input[aria-label="Start time"]')!, '23:45');
+    await settle(fixture);
+
+    form.dispatchEvent(new Event('submit'));
+    await settle(fixture);
+
+    expect(calendars.rescheduleItem).toHaveBeenCalledWith('cal-1', 'item-1', {
+      schedule: {
+        kind: 0,
+        startsAt: { date: today, time: '23:45:00' },
+        endsAt: { date: addDays(today, 1), time: '00:15:00' },
+        isAllDay: false,
+      },
+    });
+  });
+
   it('stores an all-day event reschedule with a sentinel 00:00 time and an exclusive end date one day later', async () => {
     const item = occurrence({
       itemId: 'item-1',
@@ -862,6 +898,31 @@ describe('CalendarAgenda', () => {
       },
       recurrence: null,
     });
+  });
+
+  it('moves the end along with the start in the create form, keeping the length', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const form = createForm(fixture.nativeElement as HTMLElement);
+    const field = (label: string) =>
+      form.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
+
+    setInputValue(field('Start time'), '10:30');
+    await settle(fixture);
+    expect(field('End time').value).toBe('11:30');
+    expect(field('End date').value).toBe(today);
+
+    setInputValue(field('Start date'), addDays(today, 2));
+    await settle(fixture);
+    expect(field('End date').value).toBe(addDays(today, 2));
+    expect(field('End time').value).toBe('11:30');
+
+    // Changing the end on its own leaves the start where it is.
+    setInputValue(field('End time'), '12:00');
+    await settle(fixture);
+    expect(field('Start time').value).toBe('10:30');
+    expect(field('Start date').value).toBe(addDays(today, 2));
   });
 
   it('creates an all-day task assigned to a member, with a null time sentinel and the picked assignee', async () => {

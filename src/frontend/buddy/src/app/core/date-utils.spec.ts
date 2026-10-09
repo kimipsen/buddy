@@ -15,6 +15,9 @@ import {
   nextWeekdayOnOrAfter,
   parseIsoDate,
   shiftMonthIso,
+  shiftRangeEnd,
+  shiftRangeEndDate,
+  shiftRangeEndTime,
   startOfMonthIso,
   startOfWeekIso,
   toIsoDate,
@@ -329,5 +332,116 @@ describe('day-of-week helpers', () => {
   it('names the weekday of an ISO date', () => {
     expect(dayOfWeekOf('2026-10-05')).toBe('Monday');
     expect(dayOfWeekOf('2026-10-04')).toBe('Sunday');
+  });
+});
+
+describe('shiftRangeEnd', () => {
+  it('moves the end by as much as the start moved, keeping the length', () => {
+    expect(
+      shiftRangeEnd(
+        { date: '2026-10-09', time: '09:00' },
+        { date: '2026-10-09', time: '10:00' },
+        { date: '2026-10-09', time: '09:30' },
+      ),
+    ).toEqual({ date: '2026-10-09', time: '10:30' });
+  });
+
+  it('moves the end backwards when the start moves earlier', () => {
+    expect(
+      shiftRangeEnd(
+        { date: '2026-10-09', time: '09:00' },
+        { date: '2026-10-07', time: '08:15' },
+        { date: '2026-10-10', time: '09:30' },
+      ),
+    ).toEqual({ date: '2026-10-08', time: '08:45' });
+  });
+
+  it('carries the end into the next day, month and year', () => {
+    expect(
+      shiftRangeEnd(
+        { date: '2026-12-31', time: '09:00' },
+        { date: '2026-12-31', time: '23:30' },
+        { date: '2026-12-31', time: '10:00' },
+      ),
+    ).toEqual({ date: '2027-01-01', time: '00:30' });
+  });
+
+  it('keeps a whole-day length across a DST change', () => {
+    // Europe/Copenhagen leaves summer time on 2026-10-25; wall-clock days still count as days.
+    expect(
+      shiftRangeEnd(
+        { date: '2026-10-24', time: '09:00' },
+        { date: '2026-10-25', time: '09:00' },
+        { date: '2026-10-24', time: '10:00' },
+      ),
+    ).toEqual({ date: '2026-10-25', time: '10:00' });
+  });
+
+  it.each([
+    [
+      { date: '', time: '09:00' },
+      { date: '2026-10-09', time: '10:00' },
+      { date: '2026-10-09', time: '09:30' },
+    ],
+    [
+      { date: '2026-10-09', time: '' },
+      { date: '2026-10-09', time: '10:00' },
+      { date: '2026-10-09', time: '09:30' },
+    ],
+    [
+      { date: '2026-10-09', time: '09:00' },
+      { date: '', time: '10:00' },
+      { date: '2026-10-09', time: '09:30' },
+    ],
+    [
+      { date: '2026-10-09', time: '09:00' },
+      { date: '2026-10-09', time: '' },
+      { date: '2026-10-09', time: '09:30' },
+    ],
+    [
+      { date: '2026-10-09', time: '09:00' },
+      { date: '2026-10-09', time: '10:00' },
+      { date: '', time: '09:30' },
+    ],
+    [
+      { date: '2026-10-09', time: '09:00' },
+      { date: '2026-10-09', time: '10:00' },
+      { date: '2026-10-09', time: '' },
+    ],
+  ])('leaves the end alone when a part is blank (%o -> %o, end %o)', (oldStart, newStart, end) => {
+    expect(shiftRangeEnd(oldStart, newStart, end)).toBe(end);
+  });
+});
+
+describe('shiftRangeEndDate', () => {
+  it('moves the last day by as many days as the first day moved', () => {
+    expect(shiftRangeEndDate('2026-10-01', '2026-10-05', '2026-10-03')).toBe('2026-10-07');
+  });
+
+  it('leaves a blank end blank', () => {
+    expect(shiftRangeEndDate('2026-10-01', '2026-10-05', '')).toBe('');
+  });
+
+  it('leaves the end alone when the start is cleared', () => {
+    expect(shiftRangeEndDate('2026-10-01', '', '2026-10-03')).toBe('2026-10-03');
+  });
+});
+
+describe('shiftRangeEndTime', () => {
+  it('moves the end by as much as the start moved', () => {
+    expect(shiftRangeEndTime('09:00', '10:00', '09:30')).toBe('10:30');
+  });
+
+  it('wraps across midnight', () => {
+    expect(shiftRangeEndTime('19:30', '23:50', '20:10')).toBe('00:30');
+    expect(shiftRangeEndTime('00:10', '23:40', '00:40')).toBe('00:10');
+  });
+
+  it.each([
+    ['', '10:00', '09:30'],
+    ['09:00', '', '09:30'],
+    ['09:00', '10:00', ''],
+  ])('leaves the end alone when a time is blank (%s -> %s, end %s)', (oldStart, newStart, end) => {
+    expect(shiftRangeEndTime(oldStart, newStart, end)).toBe(end);
   });
 });

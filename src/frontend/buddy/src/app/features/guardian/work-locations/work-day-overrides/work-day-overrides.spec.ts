@@ -202,15 +202,34 @@ describe('WorkDayOverrides', () => {
 
   it('keeps Apply disabled for a range that ends before it starts', async () => {
     const { fixture, compiled } = await setup();
-    const [from] = Array.from(compiled.querySelectorAll<HTMLElement>('app-date-select'));
-    const input = from.querySelector<HTMLInputElement>('input')!;
+    const [, to] = Array.from(compiled.querySelectorAll<HTMLElement>('app-date-select'));
+    const input = to.querySelector<HTMLInputElement>('input')!;
 
-    input.value = '2026-10-05';
+    input.value = '2026-09-28';
     input.dispatchEvent(new Event('input'));
     input.dispatchEvent(new Event('change'));
     await settle(fixture);
 
     expect(button(compiled, 'Apply').disabled).toBe(true);
+  });
+
+  it('moves the last day along with the first day, keeping the range length', async () => {
+    const { fixture, compiled, service } = await setup();
+    const [from, to] = Array.from(compiled.querySelectorAll<HTMLElement>('app-date-select')).map(
+      (select) => select.querySelector<HTMLInputElement>('input')!,
+    );
+
+    to.value = '2026-10-03';
+    to.dispatchEvent(new Event('input'));
+    await settle(fixture);
+    from.value = '2026-10-05';
+    from.dispatchEvent(new Event('input'));
+    await settle(fixture);
+
+    expect(to.value).toBe('2026-10-07');
+    button(compiled, 'Apply').click();
+    await settle(fixture);
+    expect(service.setOverrides).toHaveBeenCalledWith('2026-10-05', '2026-10-07', null);
   });
 
   it('shows the save error', async () => {

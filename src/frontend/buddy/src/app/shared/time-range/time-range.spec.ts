@@ -50,4 +50,24 @@ describe('TimeRange', () => {
     inputs[1].dispatchEvent(new Event('input'));
     expect(onEnd).toHaveBeenLastCalledWith('20:10');
   });
+
+  it('moves a set end along with the start, so the window keeps its length', async () => {
+    const { inputs, onStart, onEnd } = await setup('19:30', '20:10');
+
+    inputs[0].value = '23:50';
+    inputs[0].dispatchEvent(new Event('input'));
+
+    expect(onStart).toHaveBeenLastCalledWith('23:50');
+    expect(onEnd).toHaveBeenLastCalledWith('00:30');
+  });
+
+  it('changes only the end when the end changes', async () => {
+    const { inputs, onStart, onEnd } = await setup('19:30', '20:10');
+
+    inputs[1].value = '21:00';
+    inputs[1].dispatchEvent(new Event('input'));
+
+    expect(onEnd).toHaveBeenLastCalledWith('21:00');
+    expect(onStart).not.toHaveBeenCalled();
+  });
 });

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   addDaysIso,
   parseIsoDate,
+  shiftRangeEndDate,
   startOfWeekIso,
   todayIsoDate,
 } from '../../../../core/date-utils';
@@ -68,6 +69,12 @@ export class WorkDayOverrides {
   protected readonly rangeIsValid = computed(
     () => !!this.rangeFrom() && !!this.rangeTo() && this.rangeTo() >= this.rangeFrom(),
   );
+
+  // Moving the first day moves the last day with it, so the range keeps its length.
+  protected setRangeFrom(from: string): void {
+    this.rangeTo.set(shiftRangeEndDate(this.rangeFrom(), from, this.rangeTo()));
+    this.rangeFrom.set(from);
+  }
 
   protected readonly active = computed(() =>
     this.schedule().locations.filter((l) => !l.isArchived),

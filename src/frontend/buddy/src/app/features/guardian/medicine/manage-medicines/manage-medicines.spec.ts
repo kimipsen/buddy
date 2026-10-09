@@ -439,6 +439,45 @@ describe('ManageMedicines', () => {
       expect(request.endDate).toBe('2026-09-15');
     });
 
+    it('moves an entered end date along with the start date, keeping the course length', async () => {
+      const { fixture, medicines } = await setup();
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      fillRequiredFields(compiled);
+      const start = compiled.querySelector<HTMLInputElement>('input[name="medicineStartDate"]')!;
+      const end = compiled.querySelector<HTMLInputElement>('input[name="medicineEndDate"]')!;
+      setInputValue(start, '2026-09-01');
+      setInputValue(end, '2026-09-10');
+      fixture.detectChanges();
+      setInputValue(start, '2026-09-05');
+      await settle(fixture);
+
+      expect(end.value).toBe('2026-09-14');
+      submitCreateForm(compiled);
+      await settle(fixture);
+      const [, request] = (medicines.createSchedule as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(request).toMatchObject({ startDate: '2026-09-05', endDate: '2026-09-14' });
+    });
+
+    it('keeps an open-ended course open-ended when the start date changes', async () => {
+      const { fixture, medicines } = await setup();
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      fillRequiredFields(compiled);
+      setInputValue(
+        compiled.querySelector<HTMLInputElement>('input[name="medicineStartDate"]')!,
+        '2026-09-05',
+      );
+      fixture.detectChanges();
+      submitCreateForm(compiled);
+      await settle(fixture);
+
+      const [, request] = (medicines.createSchedule as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(request.endDate).toBeNull();
+    });
+
     it('resets the form to its defaults after a successful submit', async () => {
       const { fixture } = await setup();
       await settle(fixture);

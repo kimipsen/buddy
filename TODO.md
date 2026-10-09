@@ -4,7 +4,7 @@
 
 - [x] Include subtasks in printed output and add a toggle to turn their
   inclusion on/off. Printing currently ignores subtasks and offers no toggle.
-- [ ] Add an option to include a watermark QR code on the print preview. The
+- [x] Add an option to include a watermark QR code on the print preview. The
   QR code should take whoever scans it to the web application's login page.
 
 ## Pickup/drop-off options
@@ -80,7 +80,7 @@
 
 ## Keep range length when the start changes
 
-- [ ] In every form with a start and an end (for example calendar items), move
+- [x] In every form with a start and an end (for example calendar items), move
   the end along with the start so the length stays the same. If an item runs
   from 9:00 to 9:30 and the start is changed to 10:00, the end becomes 10:30.
   This stops the start from ending up after the end. Changing the end on its

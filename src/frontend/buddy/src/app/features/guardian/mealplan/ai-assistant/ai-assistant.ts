@@ -10,6 +10,7 @@ import {
   AiSessionView,
   SERVED_WINDOW_DAYS,
 } from '../../../../core/ai-assistant.service';
+import { shiftRangeEndDate } from '../../../../core/date-utils';
 import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
@@ -88,6 +89,12 @@ export class MealplanAiAssistant {
 
   protected readonly fromDate = signal(todayIsoDate());
   protected readonly toDate = signal(addDaysIso(todayIsoDate(), 6));
+
+  // Moving the first day moves the last day with it, so the period keeps its length.
+  protected setFromDate(from: string): void {
+    this.toDate.set(shiftRangeEndDate(this.fromDate(), from, this.toDate()));
+    this.fromDate.set(from);
+  }
   protected readonly selectedSlots = signal<Set<MealSlot>>(new Set<MealSlot>(['Dinner']));
   protected readonly notes = signal('');
   private readonly lastFilter = readLastMealFilter();
