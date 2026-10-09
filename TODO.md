@@ -41,7 +41,7 @@
 
 ## In-app help
 
-- [ ] Add in-system help so users can learn how each page and feature works
+- [x] Add in-system help so users can learn how each page and feature works
   without leaving the app. Consider building it alongside, or reusing parts of,
   the guardian onboarding guide above (for example, step explanations or a way
   to replay the guide on demand). Write a design doc in `docs/frontend/analysis/`
