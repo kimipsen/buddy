@@ -95,15 +95,14 @@ describe('GuardianDashboard', () => {
     }
   });
 
-  it('grows wider than other pages, to max-w-[96rem], for three columns', async () => {
+  it('keeps the standard max-w-7xl cap, so it lines up with the shell header', async () => {
     const { fixture } = await setup();
     await settle(fixture);
 
     const section = (fixture.nativeElement as HTMLElement).querySelector(
       'app-page > section',
     ) as HTMLElement;
-    expect(section.classList).toContain('max-w-[96rem]');
-    expect(section.classList).not.toContain('max-w-7xl');
+    expect(section.classList).toContain('max-w-7xl');
   });
 
   it('packs the cards into one, two (lg) and three (2xl) columns, in the widget order', async () => {

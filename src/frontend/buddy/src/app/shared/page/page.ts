@@ -1,15 +1,15 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-export type PageWidth = '3xl' | '4xl' | '5xl' | '7xl' | 'wide';
+export type PageWidth = '3xl' | '4xl' | '5xl' | '7xl';
 
-// `wide` (96rem, 1536px) is for the dashboard only, so it has room for three columns of cards.
+// Nothing goes wider than 7xl: the shell header is capped there too, and a wider page would no
+// longer line up with it.
 const MAX_WIDTH: Record<PageWidth, string> = {
   '3xl': 'max-w-3xl',
   '4xl': 'max-w-4xl',
   '5xl': 'max-w-5xl',
   '7xl': 'max-w-7xl',
-  wide: 'max-w-[96rem]',
 };
 
 /**
