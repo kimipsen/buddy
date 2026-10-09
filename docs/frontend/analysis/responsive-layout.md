@@ -330,8 +330,8 @@ Implemented, with no change in behaviour:
   child pages repeated, with header controls projected via `childPageActions`. Child cards are
   `p-5 sm:p-8`.
 - "Layout and breakpoints" section in `docs/frontend/README.md`.
-- Not swapped, because they belong to other work: the guardian shell's header and help region
-  (still `px-6 sm:px-8`) and the `delete-account` danger card.
+- The guardian shell's header and help region use the same `px-4 sm:px-6 lg:px-8`, so they line
+  up with the page. The `delete-account` danger card keeps its own styling.
 
 ### Phase 3 -- touch targets, popovers, dialog
 
