@@ -19,7 +19,7 @@
 </section>
 
 @if (confirmOpen()) {
-  <div class="fixed inset-0 z-30 flex items-center justify-center px-4">
+  <div class="fixed inset-0 z-40 flex items-center justify-center px-4">
     <!-- Pointer-only dismiss target behind the panel, so clicks inside the panel never reach it;
          keyboard users close with Escape (see onEscape). -->
     <div class="absolute inset-0 bg-slate-950/50" aria-hidden="true" (click)="closeConfirm()"></div>
@@ -31,7 +31,7 @@
       aria-labelledby="delete-account-confirm-title"
       aria-describedby="delete-account-confirm-description"
       tabindex="-1"
-      class="relative w-full max-w-md rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg focus:outline-none"
+      class="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg focus:outline-none"
     >
       <h4
         id="delete-account-confirm-title"

@@ -49,6 +49,18 @@ describe('Stepper', () => {
     expect(input.value).toBe('5');
   });
 
+  // jsdom has no pointer media, so this checks the classes: 32px with a mouse, 44px on touch.
+  it('keeps the 32px buttons with a mouse and raises them to 44px on a touch screen', async () => {
+    const { decrementButton, incrementButton } = await setup({ value: 5 });
+
+    for (const button of [decrementButton, incrementButton]) {
+      expect(button.classList).toContain('h-8');
+      expect(button.classList).toContain('w-8');
+      expect(button.classList).toContain('pointer-coarse:h-11');
+      expect(button.classList).toContain('pointer-coarse:w-11');
+    }
+  });
+
   it('emits valueChange one step up when the increment button is clicked', async () => {
     const { incrementButton, onValueChange } = await setup({ value: 5 });
 

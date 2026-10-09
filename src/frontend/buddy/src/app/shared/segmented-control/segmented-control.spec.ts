@@ -52,6 +52,19 @@ describe('SegmentedControl', () => {
     expect(buttons[1].classList).toContain('border-emerald-500');
   });
 
+  // jsdom has no pointer media, so this checks the classes: compact with a mouse, 44px on touch.
+  it.each([false, true])(
+    'raises every option to a 44px touch target on a touch screen (wrap: %s)',
+    async (wrap) => {
+      const { buttons } = await setup(0, wrap);
+
+      for (const button of buttons) {
+        expect(button.classList).toContain('py-1.5');
+        expect(button.classList).toContain('pointer-coarse:min-h-11');
+      }
+    },
+  );
+
   it('renders one radio button per option', async () => {
     const { buttons } = await setup(0);
 

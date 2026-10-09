@@ -1,6 +1,6 @@
 @if (editing()) {
   <div
-    class="w-56 space-y-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 p-3 text-left shadow-lg"
+    class="max-h-[calc(100dvh-5rem)] w-56 max-w-[calc(100vw-2rem)] space-y-2 overflow-y-auto rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 p-3 text-left shadow-lg"
   >
     <app-segmented-control
       [options]="kindOptions()"

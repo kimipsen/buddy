@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -15,6 +15,20 @@ class Page {}
 // The shell is the header (brand, profile menu, the current page's help button) plus the outlet.
 // The help topic comes from the active page route's `data.helpTopic`.
 describe('GuardianShell', () => {
+  // jsdom has no layout, so scrollIntoView doesn't exist; record which elements were scrolled to.
+  let scrolled: Element[];
+
+  beforeEach(() => {
+    scrolled = [];
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+  });
+
+  afterEach(() => {
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  });
+
   async function setup(url: string) {
     const authStub: Partial<AuthService> = { logout: vi.fn() };
 
@@ -85,6 +99,31 @@ describe('GuardianShell', () => {
 
     expect(button.getAttribute('aria-expanded')).toBe('false');
     expect(root().querySelector('app-help-panel')).toBeNull();
+  });
+
+  it('keeps the header, with its help button and profile menu, at the top while the page scrolls', async () => {
+    const { root } = await setup('/calendar');
+
+    const header = root().querySelector('header')!;
+    expect(header.classList).toContain('sticky');
+    expect(header.classList).toContain('top-0');
+    expect(header.classList).toContain('bg-white');
+    expect(header.classList).toContain('dark:bg-slate-900');
+  });
+
+  it('scrolls the help panel into view when it opens, and not when it closes', async () => {
+    const { harness, root } = await setup('/calendar');
+
+    helpButton(root())!.click();
+    harness.detectChanges();
+
+    expect(scrolled).toHaveLength(1);
+    expect(scrolled[0].querySelector('#page-help')).not.toBeNull();
+
+    helpButton(root())!.click();
+    harness.detectChanges();
+
+    expect(scrolled).toHaveLength(1);
   });
 
   it('closes the panel and switches topic when another page opens', async () => {

@@ -92,6 +92,7 @@ describe('ProfileMenu', () => {
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
     expect(menuLink(compiled, '/guardian/mealplan')?.textContent?.trim()).toBe('Meal planner');
     expect(menuLink(compiled, '/guardian/medicine')?.textContent?.trim()).toBe('Medicine');
+    expect(menuLink(compiled, '/guardian/pickup')?.textContent?.trim()).toBe('Pickup & drop-off');
     expect(menuLink(compiled, '/guardian/calendar')?.textContent?.trim()).toBe('Calendar');
     expect(menuLink(compiled, '/guardian/babysitters')?.textContent?.trim()).toBe('Babysitters');
     expect(menuLink(compiled, '/guardian/admin')?.textContent?.trim()).toBe('Settings');
@@ -205,6 +206,18 @@ describe('ProfileMenu', () => {
     expect(setMode).toHaveBeenCalledWith('dark');
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
   });
+
+  it('keeps the open panel within a phone screen, scrolling when it is taller', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+
+    const panel = themeButton(compiled, 'Light')!.closest('.absolute')!;
+    expect(panel.classList).toContain('max-w-[calc(100vw-2rem)]');
+    expect(panel.classList).toContain('max-h-[calc(100dvh-5rem)]');
+    expect(panel.classList).toContain('overflow-y-auto');
+  });
+
   it('hides the pointer-only backdrop from assistive tech', async () => {
     const { fixture, compiled } = await setup();
 
@@ -267,6 +280,7 @@ describe('ProfileMenu', () => {
       'taskLibrary',
       'medicines',
       'sleepDiary',
+      'pickups',
       'progress',
       'workLocations',
       'babysitters',

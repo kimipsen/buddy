@@ -1,4 +1,13 @@
-import { Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  Injector,
+  afterNextRender,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
 
 import { FeaturesService } from '../../../core/features.service';
@@ -17,6 +26,7 @@ export class GuardianShell {
   private readonly features = inject(FeaturesService);
 
   private readonly route = inject(ActivatedRoute);
+  private readonly injector = inject(Injector);
   private readonly helpTrigger = viewChild<ElementRef<HTMLButtonElement>>('helpTrigger');
   private readonly helpRegion = viewChild<ElementRef<HTMLElement>>('helpRegion');
 
@@ -40,8 +50,17 @@ export class GuardianShell {
     );
   }
 
+  // The header is sticky, so "?" can be pressed far down a long page while the panel opens at the
+  // top, under the header: bring it into view. At the top of the page this is a no-op, since the
+  // root's scroll-padding-top (styles.css) keeps the panel clear of the header.
   protected toggleHelp(): void {
     this.helpOpen.update((open) => !open);
+
+    if (this.helpOpen()) {
+      afterNextRender(() => this.helpRegion()?.nativeElement.scrollIntoView({ block: 'start' }), {
+        injector: this.injector,
+      });
+    }
   }
 
   // Close and hand focus back to the toggle, since a focused control inside the panel is about to

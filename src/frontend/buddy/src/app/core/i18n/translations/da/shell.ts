@@ -10,6 +10,7 @@ export const shell = {
     taskLibrary: 'Opgavebibliotek',
     medicine: 'Medicin',
     sleepDiary: 'Søvndagbog',
+    pickup: 'Afhentning & aflevering',
     calendar: 'Kalender',
     progress: 'Mål',
     workLocations: 'Arbejdssteder',

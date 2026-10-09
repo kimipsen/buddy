@@ -16,3 +16,10 @@
 :root.dark {
   color-scheme: dark;
 }
+
+/* The guardian shell's header is sticky (guardian-shell.html), so anything scrolled into view --
+   a help topic heading, the inline help panel, a focused field -- stops below it rather than
+   behind it. Child pages have no sticky header and keep the default. */
+:root:has(app-guardian-shell) {
+  scroll-padding-top: 6rem;
+}

@@ -370,6 +370,20 @@ describe('DeleteAccount', () => {
     expect(backdrop(compiled)!.contains(panel)).toBe(false);
   });
 
+  // jsdom has no layout, so this checks the classes: the panel scrolls rather than running off a
+  // short phone screen, and its overlay sits above the shell's sticky header (z-30).
+  it('keeps the dialog within a short screen and above the sticky header', () => {
+    const { fixture } = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    openDialog(fixture);
+
+    const panel = dialog(compiled)!;
+    expect(panel.classList).toContain('max-h-[90dvh]');
+    expect(panel.classList).toContain('overflow-y-auto');
+    expect(panel.parentElement!.classList).toContain('z-40');
+  });
+
   it('moves focus to Cancel when the dialog opens', () => {
     const { fixture } = setup();
     const compiled = fixture.nativeElement as HTMLElement;

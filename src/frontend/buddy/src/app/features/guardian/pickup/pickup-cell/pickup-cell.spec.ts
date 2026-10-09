@@ -309,6 +309,20 @@ describe('PickupCell', () => {
       expect(findButton(compiled, 'Save')?.disabled).toBe(true);
     });
 
+    // jsdom has no layout, so this checks the classes: the form never gets wider than a phone, and
+    // scrolls rather than running off a short screen.
+    it('keeps the edit form within a phone screen', async () => {
+      const { fixture, compiled } = await setup();
+
+      findButton(compiled, 'Not planned')!.click();
+      fixture.detectChanges();
+
+      const form = compiled.querySelector('[role="radiogroup"]')!.closest('.shadow-lg')!;
+      expect(form.classList).toContain('max-w-[calc(100vw-2rem)]');
+      expect(form.classList).toContain('max-h-[calc(100dvh-5rem)]');
+      expect(form.classList).toContain('overflow-y-auto');
+    });
+
     it('does not open when disabled', async () => {
       const { fixture, compiled } = await setup({ disabled: true });
 

@@ -1,7 +1,7 @@
 <div class="relative">
   <button
     type="button"
-    class="grid size-10 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:border-slate-400 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-slate-100"
+    class="grid size-10 place-items-center rounded-full border border-slate-300 pointer-coarse:size-11 bg-white text-slate-700 transition hover:border-slate-400 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-slate-100"
     aria-haspopup="true"
     [attr.aria-expanded]="open()"
     #trigger
@@ -30,7 +30,7 @@
 
     <div
       #panel
-      class="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900"
+      class="absolute right-0 z-20 mt-2 max-h-[calc(100dvh-5rem)] w-48 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900"
     >
       <div class="border-b border-slate-200 px-3 py-2 dark:border-slate-800">
         <p
@@ -91,6 +91,15 @@
           (click)="close()"
         >
           {{ 'shell.menu.sleepDiary' | translate }}
+        </a>
+      }
+      @if (features.enabled('pickups')) {
+        <a
+          routerLink="/guardian/pickup"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.pickup' | translate }}
         </a>
       }
       <a

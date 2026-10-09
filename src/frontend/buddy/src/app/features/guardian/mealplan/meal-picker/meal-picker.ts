@@ -12,6 +12,10 @@ import {
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { Meal } from '../../../../core/mealplans.service';
+import { DropdownSize, dropdownPosition } from '../../../../core/dropdown-position';
+
+// The list's height (max-h-56) and narrowest width, in px; see dropdownPosition.
+const LIST_SIZE: DropdownSize = { maxHeight: 224, minWidth: 192 };
 
 @Component({
   selector: 'app-meal-picker',
@@ -65,13 +69,12 @@ export class MealPicker {
     this.query.set('');
     this.open.set(true);
 
-    const rect = this.elementRef.nativeElement.getBoundingClientRect();
-    this.dropdownStyle.set({
-      position: 'fixed',
-      top: `${rect.bottom + 4}px`,
-      left: `${rect.left}px`,
-      width: `${rect.width}px`,
-    });
+    this.dropdownStyle.set(
+      dropdownPosition(this.elementRef.nativeElement.getBoundingClientRect(), LIST_SIZE, {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      }),
+    );
   }
 
   protected closeDropdown(): void {

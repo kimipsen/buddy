@@ -145,6 +145,18 @@ describe('ChildMenu', () => {
     expect(setMode).toHaveBeenCalledWith('dark');
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
   });
+
+  it('keeps the open panel within a phone screen, scrolling when it is taller', async () => {
+    const { fixture, compiled } = await setup();
+
+    fireClick(fixture, toggleButton(compiled));
+
+    const panel = themeButton(compiled, 'Light')!.closest('.absolute')!;
+    expect(panel.classList).toContain('max-w-[calc(100vw-2rem)]');
+    expect(panel.classList).toContain('max-h-[calc(100dvh-5rem)]');
+    expect(panel.classList).toContain('overflow-y-auto');
+  });
+
   it('hides the pointer-only backdrop from assistive tech', async () => {
     const { fixture, compiled } = await setup();
 

@@ -139,6 +139,42 @@ describe('MealPicker', () => {
     });
   });
 
+  // The list is `position: fixed`, so it doesn't scroll with the page: it has to open where it
+  // fits. jsdom has no layout, so the picker's box is stubbed; the viewport is jsdom's 1024x768.
+  describe('placing the dropdown in the viewport', () => {
+    async function openAt(top: number) {
+      const { fixture, compiled } = await setup();
+      vi.spyOn(compiled, 'getBoundingClientRect').mockReturnValue(
+        DOMRect.fromRect({ x: 40, y: top, width: 160, height: 32 }),
+      );
+
+      openDropdown(fixture);
+
+      return compiled.querySelector('ul')!;
+    }
+
+    it('opens below the picker when the list fits there', async () => {
+      const list = await openAt(100);
+
+      expect(list.style.position).toBe('fixed');
+      expect(list.style.top).toBe('136px');
+      expect(list.style.bottom).toBe('');
+      expect(list.style.left).toBe('40px');
+      // Never narrower than 12rem, even next to a narrower input.
+      expect(list.style.width).toBe('192px');
+      expect(list.style.maxHeight).toBe('224px');
+    });
+
+    it('flips above the picker when there is no room below, so no option is off screen', async () => {
+      const list = await openAt(700);
+
+      expect(list.style.top).toBe('');
+      // 768 - 700 + 4: the list's bottom edge sits just above the input.
+      expect(list.style.bottom).toBe('72px');
+      expect(list.style.maxHeight).toBe('224px');
+    });
+  });
+
   describe('filtering', () => {
     it.each([
       {

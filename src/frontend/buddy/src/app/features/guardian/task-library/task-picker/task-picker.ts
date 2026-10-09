@@ -12,6 +12,10 @@ import {
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TaskTemplate } from '../../../../core/task-library.service';
+import { DropdownSize, dropdownPosition } from '../../../../core/dropdown-position';
+
+// The list's height (max-h-56) and narrowest width, in px; see dropdownPosition.
+const LIST_SIZE: DropdownSize = { maxHeight: 224, minWidth: 256 };
 
 // Formats a whole-minutes duration for display (e.g. "35m", "1h", "1h 30m") -- same convention as
 // ManageTasks's own formatDuration, duplicated rather than shared since neither component imports
@@ -84,13 +88,12 @@ export class TaskPicker {
     this.query.set('');
     this.open.set(true);
 
-    const rect = this.elementRef.nativeElement.getBoundingClientRect();
-    this.dropdownStyle.set({
-      position: 'fixed',
-      top: `${rect.bottom + 4}px`,
-      left: `${rect.left}px`,
-      width: `${rect.width}px`,
-    });
+    this.dropdownStyle.set(
+      dropdownPosition(this.elementRef.nativeElement.getBoundingClientRect(), LIST_SIZE, {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      }),
+    );
   }
 
   protected closeDropdown(): void {

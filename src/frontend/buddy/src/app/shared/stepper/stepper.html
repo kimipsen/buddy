@@ -4,7 +4,7 @@
 >
   <button
     type="button"
-    class="flex h-8 w-8 items-center justify-center rounded-l-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+    class="flex h-8 w-8 items-center pointer-coarse:h-11 pointer-coarse:w-11 justify-center rounded-l-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
     [disabled]="!canDecrement()"
     [attr.aria-label]="decrementLabel() || null"
     (click)="decrement()"
@@ -13,7 +13,7 @@
   </button>
   <input
     type="number"
-    class="w-14 border-x border-slate-300 dark:border-slate-600 bg-transparent px-1 py-1.5 text-center text-sm focus:outline-none [appearance:textfield]"
+    class="w-14 border-x pointer-coarse:self-stretch border-slate-300 dark:border-slate-600 bg-transparent px-1 py-1.5 text-center text-sm focus:outline-none [appearance:textfield]"
     [ngModel]="value()"
     (ngModelChange)="setValue($event)"
     [ngModelOptions]="{ standalone: true }"
@@ -22,7 +22,7 @@
   />
   <button
     type="button"
-    class="flex h-8 w-8 items-center justify-center rounded-r-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+    class="flex h-8 w-8 items-center pointer-coarse:h-11 pointer-coarse:w-11 justify-center rounded-r-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
     [disabled]="!canIncrement()"
     [attr.aria-label]="incrementLabel() || null"
     (click)="increment()"

@@ -329,6 +329,27 @@ Implemented, with template class changes only:
 - `delete-account` dialog gets `max-h-[90dvh] overflow-y-auto`.
 - Profile menu and sticky header (Decision 6).
 
+Phase 3a is implemented (everything above except the inline text actions and the child star
+buttons):
+
+- Shared controls: the `stepper` buttons get `pointer-coarse:h-11 pointer-coarse:w-11` (its input
+  stretches to match), and the `segmented-control` options `pointer-coarse:min-h-11
+pointer-coarse:px-3`. With a mouse they are unchanged.
+- Popovers: the profile menu, child menu and pickup-cell editor get
+  `max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto`. The meal picker and task
+  picker place their `position: fixed` lists with `core/dropdown-position.ts`: below the input
+  unless the list doesn't fit there and there is more room above, capped to the room on that side,
+  at least the old `min-w-*` wide but never wider than the viewport, and shifted left when it would
+  stick out. The e2e workaround (type the name and press Enter) is replaced by clicking the option.
+- Dialog: the `delete-account` panel gets `max-h-[90dvh] overflow-y-auto`, and its overlay moves to
+  `z-40` so it covers the sticky header.
+- Profile menu and sticky header: the menu has the missing Pickup link (`shell.menu.pickup`, behind
+  the `pickups` feature flag). The guardian header is `sticky top-0 z-30` with its opaque
+  background, and its "?" and avatar buttons are `pointer-coarse:size-11`. `styles.css` sets
+  `scroll-padding-top: 6rem` on guardian pages so a scrolled-to help heading or focused field stops
+  below the header, and opening the inline help panel scrolls it into view, since "?" can now be
+  pressed far down a long page.
+
 ### Phase 4 -- stacked phone view for the week tables
 
 - `manage-pickups`, `assign-mealplan` (picker only, no drag), `work-pattern-editor`,

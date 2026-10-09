@@ -51,20 +51,18 @@ test('guardian creates a meal and assigns it to a slot in the current week', asy
   const todayRow = page.locator('tbody tr').first();
   const breakfastPicker = todayRow.getByRole('textbox').first();
 
-  // Filter down to this meal by typing its (unique) name and confirm with Enter
-  // (MealPicker.selectFirstMatch), rather than clicking its row in the dropdown list directly: the
-  // dropdown is a `position: fixed` panel anchored below the input, which can render partly below
-  // the viewport -- scrolling the page doesn't help a fixed-position element, so clicking a
-  // specific list item can be flaky. Typing+Enter sidesteps that entirely.
+  // Pick the meal from the open dropdown. The list is `position: fixed`, which scrolling can't
+  // bring into view, so MealPicker opens it above the input when there's no room below
+  // (core/dropdown-position.ts); its row is always on screen to click. The option's name is
+  // "<icon> <name>", and the meal names are unique, so a substring match finds it.
   await breakfastPicker.click();
-  await breakfastPicker.fill(mealName);
 
   const [assignResponse] = await Promise.all([
     page.waitForResponse(
       (res) =>
         res.request().method() === 'PUT' && /\/mealplans\/children\/[^/]+\/plan\?/.test(res.url()),
     ),
-    breakfastPicker.press('Enter'),
+    page.getByRole('button', { name: mealName }).click(),
   ]);
 
   expect(assignResponse.ok()).toBe(true);

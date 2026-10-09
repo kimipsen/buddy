@@ -171,6 +171,22 @@ describe('TaskPicker', () => {
 
       expect(textInput(compiled).value).toBe('');
     });
+
+    // Same placement as the meal picker (core/dropdown-position.ts); jsdom's viewport is 1024x768.
+    it('flips the fixed list above the picker when there is no room below, at least 16rem wide', async () => {
+      const { fixture, compiled } = await setup();
+      vi.spyOn(compiled, 'getBoundingClientRect').mockReturnValue(
+        DOMRect.fromRect({ x: 40, y: 700, width: 160, height: 32 }),
+      );
+
+      openDropdown(fixture);
+
+      const list = compiled.querySelector('ul')!;
+      expect(list.style.position).toBe('fixed');
+      expect(list.style.top).toBe('');
+      expect(list.style.bottom).toBe('72px');
+      expect(list.style.width).toBe('256px');
+    });
   });
 
   describe('filtering', () => {
