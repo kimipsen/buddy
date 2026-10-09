@@ -70,7 +70,8 @@ The guardian editing workflow is documented in
 
 ## Tasks
 
-Calendar occurrences are filtered to tasks and sorted by due time, with undated
+Calendar occurrences are filtered to tasks and sorted by due time, then by name
+(`compareOccurrences()` in `core/task-run.ts`), with undated
 tasks last. Task completion is implemented: toggling a row calls
 `CalendarsService.setTaskCompletion()` for today's occurrence and updates the
 local result after the server succeeds.
@@ -87,7 +88,7 @@ it through the existing calendar authorization model.
 ## Events
 
 Calendar occurrences are also filtered to events (the complement of the Tasks
-filter above) and sorted by start time, with all-day/undated events last. This
+filter above) and sorted by start time, then by name, with all-day/undated events last. This
 reuses the same `listTodayOccurrences()` call already made for tasks — no
 extra request. Events are read-only here (no completion concept applies to an
 event); `ChildVisibility.FilterForChild` on the backend already returns every

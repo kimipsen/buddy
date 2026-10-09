@@ -73,7 +73,7 @@ and are unit-tested in Vitest:
   names, matching the en/da dictionaries).
 - **Day bucketing:** an occurrence lands in every column its local
   `[timing.startsAt, timing.endsAt)` overlaps. Tasks use `sortAt` (their due instant). All-day
-  items sort first, then by start time.
+  items sort first, then by start time, then by name (locale-aware, shared `compareOccurrences`).
 - **Work location rows:** with `workLocationId`, a day gets a mark when its
   resolved location has that id. Without it, the cell shows the location's
   icon and name in the guardian's template color. A day with no location
