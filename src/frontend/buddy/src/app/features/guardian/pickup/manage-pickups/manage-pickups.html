@@ -38,7 +38,9 @@
       }
     }
 
-    <div class="overflow-x-auto">
+    <!-- From sm (about 544px inside the card) the 520px table fits without scrolling sideways;
+         below it the same cells are stacked one day at a time. Printing always uses the table. -->
+    <div class="overflow-x-auto max-sm:hidden print:block">
       <table class="w-full min-w-[520px] border-separate border-spacing-2">
         <thead>
           <tr>
@@ -64,14 +66,8 @@
               </th>
               @for (slot of slots; track slot) {
                 <td class="align-top">
-                  <app-pickup-cell
-                    [guardians]="loaded().childGuardians"
-                    [siblings]="siblings()"
-                    [babysitters]="loaded().childBabysitters"
-                    [occurrence]="occurrenceFor(day.date, slot)"
-                    [saving]="saving.isBusy(saveId(day.date, slot))"
-                    (assign)="onAssign(day.date, slot, $event)"
-                    (clear)="onClear(day.date, slot)"
+                  <ng-container
+                    *ngTemplateOutlet="cell; context: { $implicit: day.date, slot: slot }"
                   />
                 </td>
               }
@@ -80,5 +76,42 @@
         </tbody>
       </table>
     </div>
+
+    <ol class="space-y-3 sm:hidden print:hidden">
+      @for (day of week(); track day.date) {
+        <li class="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+          <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ day.label }}</h4>
+          <dl class="mt-2 space-y-3">
+            @for (slot of slots; track slot) {
+              <div>
+                <dt
+                  class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
+                  {{ slotLabels[slot] | translate }}
+                </dt>
+                <dd>
+                  <ng-container
+                    *ngTemplateOutlet="cell; context: { $implicit: day.date, slot: slot }"
+                  />
+                </dd>
+              </div>
+            }
+          </dl>
+        </li>
+      }
+    </ol>
   }
 </app-card>
+
+<!-- One cell for a day and slot, shared by the table and the phone list so both edit the same way. -->
+<ng-template #cell let-date let-slot="slot">
+  <app-pickup-cell
+    [guardians]="loaded().childGuardians"
+    [siblings]="siblings()"
+    [babysitters]="loaded().childBabysitters"
+    [occurrence]="occurrenceFor(date, slot)"
+    [saving]="saving.isBusy(saveId(date, slot))"
+    (assign)="onAssign(date, slot, $event)"
+    (clear)="onClear(date, slot)"
+  />
+</ng-template>

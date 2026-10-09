@@ -1,4 +1,5 @@
 import { Component, computed, inject, linkedSignal, resource } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { FeaturesService } from '../../../../core/features.service';
@@ -71,7 +72,7 @@ function buildWeek(locale: string): WeekDay[] {
 
 @Component({
   selector: 'app-manage-pickups',
-  imports: [FormsModule, PickupCell, TranslatePipe, Card],
+  imports: [FormsModule, NgTemplateOutlet, PickupCell, TranslatePipe, Card],
   templateUrl: './manage-pickups.html',
 })
 export class ManagePickups {

@@ -119,13 +119,34 @@ describe('ManagePickups', () => {
     }
   }
 
+  // Both layouts are in the DOM (CSS picks one, and specs run without Tailwind), so the table's
+  // cells and the phone list's cells are queried separately.
   function cells(fixture: ComponentFixture<unknown>): HTMLElement[] {
-    return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('app-pickup-cell'));
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('table app-pickup-cell'),
+    );
   }
 
   // Cells render day-major, slot-minor (dropOff=0 then pickUp=1 per day) -- see manage-pickups.html.
   function cellAt(fixture: ComponentFixture<unknown>, dayOffset: number, slot: 0 | 1): HTMLElement {
     return cells(fixture)[dayOffset * 2 + slot];
+  }
+
+  function dayList(fixture: ComponentFixture<unknown>): HTMLOListElement {
+    return (fixture.nativeElement as HTMLElement).querySelector('ol')!;
+  }
+
+  function listDays(fixture: ComponentFixture<unknown>): HTMLLIElement[] {
+    return Array.from(dayList(fixture).querySelectorAll<HTMLLIElement>(':scope > li'));
+  }
+
+  // The same day-major, slot-minor order as the table, one <li> per day.
+  function listCellAt(
+    fixture: ComponentFixture<unknown>,
+    dayOffset: number,
+    slot: 0 | 1,
+  ): HTMLElement {
+    return listDays(fixture)[dayOffset].querySelectorAll<HTMLElement>('app-pickup-cell')[slot];
   }
 
   // The "kind" picker inside a pickup-cell's edit form is an `app-segmented-control`: a
@@ -248,9 +269,9 @@ describe('ManagePickups', () => {
     const { fixture } = await setup();
     await settle(fixture);
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelectorAll('app-pickup-cell')).toHaveLength(14);
-    expect(compiled.textContent?.match(/Not planned/g)).toHaveLength(14);
+    const table = (fixture.nativeElement as HTMLElement).querySelector('table')!;
+    expect(table.querySelectorAll('app-pickup-cell')).toHaveLength(14);
+    expect(table.textContent?.match(/Not planned/g)).toHaveLength(14);
   });
 
   it('keys an occurrence by date and slot, so it only shows in its own cell', async () => {
@@ -571,6 +592,125 @@ describe('ManagePickups', () => {
       const compiled = fixture.nativeElement as HTMLElement;
       expect(compiled.textContent).toContain('Unable to update this slot.');
       expect(cellAt(fixture, 0, 0).textContent).toContain('Gina');
+    });
+  });
+
+  describe('the phone day list', () => {
+    it('hides the table below sm and the list from sm up, and keeps the table when printing', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+
+      const tableWrapper = (fixture.nativeElement as HTMLElement).querySelector(
+        'table',
+      )!.parentElement!;
+      expect(tableWrapper.classList).toContain('max-sm:hidden');
+      expect(tableWrapper.classList).toContain('print:block');
+      expect(dayList(fixture).classList).toContain('sm:hidden');
+      expect(dayList(fixture).classList).toContain('print:hidden');
+    });
+
+    it('shows one block per day, in order, headed by the same label as the table row', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+
+      const tableDayLabels = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr > th'),
+      ).map((th) => th.textContent?.trim());
+      const listDayLabels = listDays(fixture).map((li) =>
+        li.querySelector('h4')?.textContent?.trim(),
+      );
+
+      expect(listDayLabels).toHaveLength(7);
+      expect(listDayLabels).toEqual(tableDayLabels);
+      expect(listDayLabels[0]).toBe(
+        new Date().toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' }),
+      );
+    });
+
+    it("labels each day's two rows Drop-off and Pickup, each with its own cell", async () => {
+      const dropOff = occurrence({ date: weekStart, slot: 'DropOff' });
+      const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [dropOff]) } });
+      await settle(fixture);
+
+      for (const day of listDays(fixture)) {
+        const rows = Array.from(day.querySelectorAll('dl > div'));
+        expect(rows.map((row) => row.querySelector('dt')?.textContent?.trim())).toEqual([
+          'Drop-off',
+          'Pickup',
+        ]);
+        expect(rows.map((row) => row.querySelectorAll('dd app-pickup-cell').length)).toEqual([
+          1, 1,
+        ]);
+      }
+
+      expect(listCellAt(fixture, 0, 0).textContent).toContain('Gina');
+      expect(listCellAt(fixture, 0, 1).textContent).toContain('Not planned');
+      expect(listCellAt(fixture, 1, 0).textContent).toContain('Not planned');
+    });
+
+    it('assigns from a list cell with the same service call as the table, and shows the result in both', async () => {
+      const assignPickup = vi.fn(async () =>
+        occurrence({ assignee: { kind: 1 }, date: isoDateOffset(2), slot: 'PickUp' }),
+      );
+      const { fixture, pickups } = await setup({ pickups: { assignPickup } });
+      await settle(fixture);
+
+      const cell = listCellAt(fixture, 2, 1);
+      cell.querySelector<HTMLButtonElement>('button')!.click();
+      fixture.detectChanges();
+      selectKind(cell, 'Goes alone');
+      fixture.detectChanges();
+      Array.from(cell.querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Save')!
+        .click();
+      await settle(fixture);
+
+      expect(pickups.assignPickup).toHaveBeenCalledWith('child-1', isoDateOffset(2), 'PickUp', {
+        assignee: { kind: 1 },
+        time: null,
+        notes: '',
+      });
+      expect(listCellAt(fixture, 2, 1).textContent).toContain('Goes alone');
+      expect(cellAt(fixture, 2, 1).textContent).toContain('Goes alone');
+    });
+
+    it('clears from a list cell with the same service call as the table', async () => {
+      const existing = occurrence({ date: isoDateOffset(1), slot: 'PickUp' });
+      const clearPickup = vi.fn(async () => undefined);
+      const { fixture, pickups } = await setup({
+        pickups: { listSchedule: vi.fn(async () => [existing]), clearPickup },
+      });
+      await settle(fixture);
+
+      Array.from(listCellAt(fixture, 1, 1).querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Clear')!
+        .click();
+      await settle(fixture);
+
+      expect(pickups.clearPickup).toHaveBeenCalledWith('child-1', isoDateOffset(1), 'PickUp');
+      expect(listCellAt(fixture, 1, 1).textContent).toContain('Not planned');
+    });
+
+    it('disables the matching list cell while its slot is saving', async () => {
+      const pending = deferred<PickupOccurrence>();
+      const { fixture } = await setup({ pickups: { assignPickup: vi.fn(() => pending.promise) } });
+      await settle(fixture);
+
+      const cell = listCellAt(fixture, 0, 0);
+      cell.querySelector<HTMLButtonElement>('button')!.click();
+      fixture.detectChanges();
+      selectKind(cell, 'Goes alone');
+      fixture.detectChanges();
+      Array.from(cell.querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Save')!
+        .click();
+      fixture.detectChanges();
+
+      expect(listCellAt(fixture, 0, 0).querySelector('button')!.disabled).toBe(true);
+      expect(listCellAt(fixture, 0, 1).querySelector('button')!.disabled).toBe(false);
+
+      pending.reject(new Error('boom'));
+      await settle(fixture);
     });
   });
 
