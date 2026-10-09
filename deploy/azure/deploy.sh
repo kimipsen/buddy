@@ -396,6 +396,35 @@ else
     -o none
 fi
 
+# Health probes (Common/Health/HealthChecksFeature.cs). The containerapp CLI has no probe flags, so
+# patch the container's probes through ARM; PATCH replaces the containers array, so send the current
+# container back with only its probes changed. Probes go straight to the container over plain HTTP
+# (no X-Forwarded-Proto), so UseHttpsRedirection leaves them alone.
+#   startup    /health, up to 2 min for Marten's schema migrations before liveness takes over.
+#   liveness   /health, the process is serving; a restart fixes a hung process.
+#   readiness  /health/ready, 503 while Postgres is unreachable takes the replica out of ingress
+#              without restarting it (a restart can't fix the database). Keycloak only degrades it.
+echo "==> Configuring the API's health probes"
+API_PROBES='[
+  {"type": "Startup",   "httpGet": {"path": "/health",       "port": 8080}, "periodSeconds": 5,  "timeoutSeconds": 3, "failureThreshold": 24},
+  {"type": "Liveness",  "httpGet": {"path": "/health",       "port": 8080}, "periodSeconds": 10, "timeoutSeconds": 3, "failureThreshold": 3},
+  {"type": "Readiness", "httpGet": {"path": "/health/ready", "port": 8080}, "periodSeconds": 10, "timeoutSeconds": 5, "failureThreshold": 3}
+]'
+API_APP_ID=$(az containerapp show --name api --resource-group "$RESOURCE_GROUP" --query id -o tsv)
+API_CONTAINERS=$(az containerapp show --name api --resource-group "$RESOURCE_GROUP" \
+  --query properties.template.containers -o json)
+# Compare only the fields set above (Azure fills in defaults), so an unchanged config adds no revision.
+if [[ $(echo "$API_CONTAINERS" | jq --argjson probes "$API_PROBES" '
+    [.[0].probes // [] | .[] | {type, httpGet: {path: .httpGet.path, port: .httpGet.port},
+      periodSeconds, timeoutSeconds, failureThreshold}] | sort_by(.type)
+    == ($probes | sort_by(.type))') != true ]]; then
+  az rest --method patch \
+    --url "https://management.azure.com${API_APP_ID}?api-version=2024-03-01" \
+    --body "$(echo "$API_CONTAINERS" | jq --argjson probes "$API_PROBES" \
+      '{properties: {template: {containers: (.[0].probes = $probes)}}}')" \
+    -o none
+fi
+
 bind_custom_domain api "$API_CUSTOM_DOMAIN" "$API_FQDN"
 
 echo "==> Building the frontend image (API_BASE_URL/KEYCLOAK_AUTHORITY baked in at build time)"

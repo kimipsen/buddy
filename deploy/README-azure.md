@@ -221,10 +221,12 @@ curl -fsS  https://<keycloak host>/realms/buddy/.well-known/openid-configuration
 - The issuer must be exactly `https://<keycloak host>/realms/buddy` (the API's
   `ValidIssuer`). A 404 on the `buddy` realm means step 4 hasn't been done.
 
-The apps have no health probes configured, so Container Apps only knows the
-container started. That's why the checks above are manual. The API's
-`/health` (liveness) and `/health/ready` (readiness) are ready to be used as
-probes, but `deploy.sh` doesn't configure them yet.
+`deploy.sh` gives the API health probes: a startup and a liveness probe on
+`/health` (a hung process is restarted) and a readiness probe on
+`/health/ready` (a replica that can't reach Postgres leaves the ingress until
+it can, without a restart). A revision whose replicas never turn ready shows
+up as unhealthy in the revision list above. Keycloak and the frontend have no
+probes of their own, so the checks above are still the way to confirm those.
 
 ## 8. Rollback
 
