@@ -35,6 +35,7 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 | Review a diff | `backend-aware-review` |
 | Mutation testing | `mutation-fix` (frontend), `mutation-fix-backend` |
 | SonarCloud findings | `sonar-triage` |
+| Commit and land work (rebase + fast-forward, no push) | `rebase-commit` |
 | Production deploy (always confirm first) | `deploy` |
 
 `agents/` holds Codex/Copilot packages; Claude Code doesn't load them.

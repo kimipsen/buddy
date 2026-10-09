@@ -1,0 +1,7 @@
+{
+  "name": "rebase-commit",
+  "version": "0.1.0",
+  "author": "devcontainer-user",
+  "description": "Commit finished work and land it on master with rebase + merge --ff-only (Bitbucket's 'Rebase and fast-forward'), with conflict handling, worktree-aware fast-forward and no push unless asked.",
+  "tags": ["copilot", "git", "commit", "rebase", "fast-forward", "workflow"]
+}
