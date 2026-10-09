@@ -131,7 +131,7 @@
                             >
                             <button
                               type="button"
-                              class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                              class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                               [disabled]="deleting.isBusy(run.itemId)"
                               (click)="confirmDeleteItem(run)"
                             >
@@ -139,7 +139,7 @@
                             </button>
                             <button
                               type="button"
-                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                               [disabled]="deleting.isBusy(run.itemId)"
                               (click)="cancelDeleteItem()"
                             >
@@ -148,7 +148,7 @@
                           } @else {
                             <button
                               type="button"
-                              class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
+                              class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                               (click)="requestDeleteItem(run.itemId)"
                             >
                               {{ 'calendar.agenda.delete.button' | translate }}
@@ -393,7 +393,7 @@
                               >
                               <button
                                 type="button"
-                                class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                                class="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                                 [disabled]="deleting.isBusy(occurrence.itemId)"
                                 (click)="confirmDeleteItem(occurrence)"
                               >
@@ -401,7 +401,7 @@
                               </button>
                               <button
                                 type="button"
-                                class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                                class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                                 [disabled]="deleting.isBusy(occurrence.itemId)"
                                 (click)="cancelDeleteItem()"
                               >
@@ -430,14 +430,14 @@
                               }
                               <button
                                 type="button"
-                                class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200"
+                                class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                                 (click)="startEditItem(occurrence)"
                               >
                                 {{ 'calendar.agenda.edit.button' | translate }}
                               </button>
                               <button
                                 type="button"
-                                class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
+                                class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                                 (click)="requestDeleteItem(occurrence.itemId)"
                               >
                                 {{ 'calendar.agenda.delete.button' | translate }}

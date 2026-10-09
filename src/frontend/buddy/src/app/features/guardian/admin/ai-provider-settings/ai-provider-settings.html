@@ -69,7 +69,7 @@
                     @if (loaded.activeProvider !== provider) {
                       <button
                         type="button"
-                        class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
+                        class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                         [disabled]="settingActive.isBusy(provider)"
                         (click)="makeActive(loaded.childId, provider)"
                       >
@@ -79,7 +79,7 @@
 
                     <button
                       type="button"
-                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
+                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                       [disabled]="testingProvider() === provider"
                       (click)="testConnection(loaded.childId, provider)"
                     >
@@ -93,7 +93,7 @@
 
                     <button
                       type="button"
-                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                       (click)="startEdit(provider)"
                     >
                       {{
@@ -106,7 +106,7 @@
 
                     <button
                       type="button"
-                      class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
+                      class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                       (click)="requestRemove(provider)"
                     >
                       {{ 'admin.aiProviders.remove.button' | translate }}
@@ -114,7 +114,7 @@
                   } @else {
                     <button
                       type="button"
-                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                       (click)="startEdit(provider)"
                     >
                       {{

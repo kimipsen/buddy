@@ -1,8 +1,9 @@
 # Responsive layout: phone, tablet and wide desktop
 
-Status: Phases 0, 1 and 2 implemented (overflow check and tablet size in the screenshot run; no
-page is wider than a phone any more; shared `app-page` and `app-card` with responsive padding).
-Phases 3–6 are proposed.
+Status: Phases 0–3 implemented (overflow check and tablet size in the screenshot run; no page is
+wider than a phone any more; shared `app-page` and `app-card` with responsive padding; touch-sized
+controls, a sticky header, and menus, popovers and the delete dialog that fit a phone). Phases 4–6
+are proposed.
 
 ## Context
 
@@ -362,6 +363,21 @@ pointer-coarse:px-3`. With a mouse they are unchanged.
   `scroll-padding-top: 6rem` on guardian pages so a scrolled-to help heading or focused field stops
   below the header, and opening the inline help panel scrolls it into view, since "?" can now be
   pressed far down a long page.
+
+Inline actions and child buttons: implemented.
+
+- 73 small `text-xs` actions (bare text buttons and links, and `py-1`/`px-2.5 py-1` bordered ones)
+  on guardian pages get a 44px touch area from a transparent `::after`, positioned with
+  `pointer-coarse:after:-inset-x-2` and `pointer-coarse:after:-inset-y-3.5` on a
+  `pointer-coarse:relative` button. It covers the agenda, task library, admin children,
+  calendars and groups, onboarding children step, share links, meal-plan iCal, progress goals,
+  medicines, meals, babysitters, work locations, AI settings, the meal-plan import and the print
+  template editor. The layout doesn't move, with a mouse or on touch.
+- Where actions sit closer together than the extra area, the gap grows on touch only: the admin
+  action rows (`pointer-coarse:gap-y-4`) and the template editor's row arrows
+  (`pointer-coarse:gap-4`).
+- Child subtask check buttons (home and calendar) are `size-11` (44px) on every device.
+- `px-3 py-1.5` buttons (about 28px) and the pill toggles are not changed yet.
 
 ### Phase 4 -- stacked phone view for the week tables
 

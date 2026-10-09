@@ -44,13 +44,13 @@
                 </button>
               </div>
             } @else {
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pointer-coarse:gap-y-4">
                 <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{
                   roleLabels[group.role] | translate
                 }}</span>
                 <button
                   type="button"
-                  class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                  class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                   (click)="toggleMembersPanel(group.id)"
                 >
                   {{
@@ -63,7 +63,7 @@
                 @if (canManage(group)) {
                   <button
                     type="button"
-                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                     (click)="toggleInvitePanel(group.id)"
                   >
                     {{
@@ -75,7 +75,7 @@
                   </button>
                   <button
                     type="button"
-                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                     (click)="toggleChildrenPanel(group.id)"
                   >
                     {{
@@ -87,7 +87,7 @@
                   </button>
                   <button
                     type="button"
-                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                     (click)="togglePolicyPanel(group.id)"
                   >
                     {{
@@ -100,7 +100,7 @@
                   @if (features.enabled('mealplans')) {
                     <button
                       type="button"
-                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                       (click)="toggleMealplanPolicyPanel(group.id)"
                     >
                       {{
@@ -115,7 +115,7 @@
                 @if (isOwner(group)) {
                   <button
                     type="button"
-                    class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400"
+                    class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                     (click)="requestDelete(group.id)"
                   >
                     {{ 'admin.manageGroups.delete.button' | translate }}
@@ -212,7 +212,7 @@
                         }}</span>
                         <button
                           type="button"
-                          class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50"
+                          class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                           [disabled]="revokingInvite.isBusy(invite.id)"
                           (click)="revokeInvite(group.id, invite.id)"
                         >

@@ -270,6 +270,13 @@ home page) and controls projected with the `childPageActions` attribute, and a `
 column, padded `px-4 sm:px-6 lg:px-8`. Child cards (`rounded-3xl border-4`) are padded
 `p-5 sm:p-8`.
 
+Touch targets: guardian pages keep their mouse density and grow only on touch screens, through
+Tailwind's `pointer-coarse:` variant. Small inline text actions (Edit, Delete, Remove, Revoke,
+Undo) get a 44px tap area from a transparent `::after` that doesn't move the layout
+(`pointer-coarse:relative`, `pointer-coarse:after:absolute`, `pointer-coarse:after:-inset-x-2`,
+`pointer-coarse:after:-inset-y-3.5`). Keep at least `gap-2` between such actions (`gap-y-4` on touch
+where they wrap). Child-facing buttons are at least 44px (`size-11`) on every device.
+
 ## Theming
 
 The app supports light, dark, and system (OS-following) themes, chosen from the theme switcher in
