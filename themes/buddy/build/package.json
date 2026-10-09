@@ -8,5 +8,8 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.12",
     "tailwindcss": "^4.1.12"
+  },
+  "overrides": {
+    "@parcel/watcher": "^2.6.0"
   }
 }
