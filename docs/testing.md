@@ -51,7 +51,10 @@ they already are, seeded automatically from
 `.devcontainer/keycloak/buddy-realm.json` (see the
 [development container guide](../.devcontainer/README.md)).
 `playwright.config.ts` starts the Angular dev server and the backend API
-itself. Most specs authenticate via a fast direct-grant token fetch
+itself, giving that API a larger anonymous rate-limit budget (1000 tokens, 100 per
+second) because every logged-out request in the suite shares one localhost IP;
+production limits are unchanged, and an already-running dev API keeps its own
+limits. Most specs authenticate via a fast direct-grant token fetch
 (`e2e/support/auth-fixture.ts`) rather than driving Keycloak's hosted login
 form; `e2e/login.spec.ts` is the one spec that drives the real form, to prove
 the redirect/PKCE flow itself still works.
