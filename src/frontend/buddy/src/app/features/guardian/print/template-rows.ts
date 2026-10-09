@@ -1,4 +1,5 @@
 import { CalendarSummary } from '../../../core/calendars.service';
+import { FeatureName } from '../../../core/features.service';
 import { MealSlot } from '../../../core/mealplans.service';
 import { ChildSummary, GuardianSummary } from '../../../core/guardians.service';
 import {
@@ -23,6 +24,18 @@ const CALENDAR_KINDS: readonly PrintRowKind[] = [
 
 export function usesCalendars(kind: PrintRowKind): boolean {
   return CALENDAR_KINDS.includes(kind);
+}
+
+// The optional feature a row kind reads from (docs/backend/analysis/feature-flags.md). While it is
+// off, the editor doesn't offer the kind and the sheet prints existing rows of it empty.
+const ROW_KIND_FEATURES: Partial<Record<PrintRowKind, FeatureName>> = {
+  [PRINT_ROW_KIND.meal]: 'mealplans',
+  [PRINT_ROW_KIND.pickup]: 'pickups',
+  [PRINT_ROW_KIND.workLocation]: 'workLocations',
+};
+
+export function rowKindFeature(kind: PrintRowKind): FeatureName | undefined {
+  return ROW_KIND_FEATURES[kind];
 }
 
 // Mirrors the backend's per-kind field table: everything a kind doesn't use is cleared before

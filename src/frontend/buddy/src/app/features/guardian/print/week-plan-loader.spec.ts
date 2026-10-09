@@ -13,6 +13,7 @@ import {
 } from '../../../core/print-templates.service';
 import { WorkLocationsService } from '../../../core/work-locations.service';
 import { WeekPlanLoader } from './week-plan-loader';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 describe('WeekPlanLoader', () => {
   function row(
@@ -140,5 +141,27 @@ describe('WeekPlanLoader', () => {
     const sources = await loader.load(template([]), '2026-10-04');
 
     expect(sources.names.size).toBe(0);
+  });
+
+  it("prints a disabled feature's rows from an empty source instead of fetching them", async () => {
+    disableFeatures('mealplans', 'pickups', 'workLocations');
+    const { loader, mealplans, pickups, workLocations } = setup();
+
+    const sources = await loader.load(
+      template([
+        row(PRINT_ROW_KIND.meal, { childId: 'signe', mealSlot: 'Dinner' }),
+        row(PRINT_ROW_KIND.pickup, { childId: 'signe' }),
+        row(PRINT_ROW_KIND.workLocation, { guardianId: 'dad' }),
+      ]),
+      '2026-10-04',
+    );
+
+    expect(mealplans.listMealPlan).not.toHaveBeenCalled();
+    expect(pickups.listSchedule).not.toHaveBeenCalled();
+    expect(workLocations.listWorkDays).not.toHaveBeenCalled();
+    // Empty, not null: the rows print blank rather than marked unavailable.
+    expect([...sources.meals.values()]).toEqual([[]]);
+    expect(sources.pickups.get('signe')).toEqual([]);
+    expect(sources.workDays.get('dad')).toEqual([]);
   });
 });

@@ -64,7 +64,7 @@
 
 ## Feature flags
 
-- [ ] Add feature flags so each Buddy installation can turn features on or off
+- [x] Add feature flags so each Buddy installation can turn features on or off
   (for example the AI meal assistant, medicines or printing). Decide where flags
   live (configuration per installation vs. an admin setting), how the backend
   enforces them (endpoints and handlers) and how the frontend hides routes and

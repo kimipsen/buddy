@@ -1,6 +1,7 @@
 using buddy.Common.Configuration;
 using buddy.Common.DataProtection;
 using buddy.Common.Erasure;
+using buddy.Common.FeatureFlags;
 using buddy.Common.Http;
 using buddy.Common.OpenApi;
 using buddy.Common.Postgres;
@@ -143,7 +144,7 @@ public static class MealplansFeature
         return services;
     }
 
-    public static IEndpointRouteBuilder MapMealplansFeature(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapMealplansFeature(this IEndpointRouteBuilder endpoints, InstallationFeatures features)
     {
         var mealplans = endpoints.MapGroup("/mealplans")
             .WithTags("Mealplans")
@@ -184,29 +185,35 @@ public static class MealplansFeature
 
         // Importing historical plans from notes and other systems -- see
         // docs/backend/analysis/mealplan-import.md.
-        mealplans.MapPreviewMealPlanImport();
-        mealplans.MapCommitMealPlanImport();
-        mealplans.MapListMealPlanImports();
-        mealplans.MapRevertMealPlanImport();
-        mealplans.MapPreviewMealPlanImportForGroup();
-        mealplans.MapCommitMealPlanImportForGroup();
-        mealplans.MapListMealPlanImportsForGroup();
-        mealplans.MapRevertMealPlanImportForGroup();
+        if (features.MealplanImport)
+        {
+            mealplans.MapPreviewMealPlanImport();
+            mealplans.MapCommitMealPlanImport();
+            mealplans.MapListMealPlanImports();
+            mealplans.MapRevertMealPlanImport();
+            mealplans.MapPreviewMealPlanImportForGroup();
+            mealplans.MapCommitMealPlanImportForGroup();
+            mealplans.MapListMealPlanImportsForGroup();
+            mealplans.MapRevertMealPlanImportForGroup();
+        }
 
         // AI assistant: BYOK provider credentials + the chat/tool-calling session loop (see
         // docs/backend/plans -- AI-Assisted Mealplan Generation). OpenAi/Gemini and the calendar
         // tool land in later phases.
-        mealplans.MapListProviders();
-        mealplans.MapSetProviderApiKey();
-        mealplans.MapRemoveProviderApiKey();
-        mealplans.MapSetActiveProvider();
-        mealplans.MapTestProviderConnection();
-        mealplans.MapGetCurrentAiSession();
-        mealplans.MapAcknowledgeAiDataSharing();
-        mealplans.MapStartAiSession();
-        mealplans.MapSendAiSessionMessage();
-        mealplans.MapApplyAiSessionDraft();
-        mealplans.MapDiscardAiSession();
+        if (features.MealplanAiAssistant)
+        {
+            mealplans.MapListProviders();
+            mealplans.MapSetProviderApiKey();
+            mealplans.MapRemoveProviderApiKey();
+            mealplans.MapSetActiveProvider();
+            mealplans.MapTestProviderConnection();
+            mealplans.MapGetCurrentAiSession();
+            mealplans.MapAcknowledgeAiDataSharing();
+            mealplans.MapStartAiSession();
+            mealplans.MapSendAiSessionMessage();
+            mealplans.MapApplyAiSessionDraft();
+            mealplans.MapDiscardAiSession();
+        }
 
         return endpoints;
     }

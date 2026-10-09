@@ -8,6 +8,7 @@ import { RuntimeConfigService } from '../../../../core/runtime-config.service';
 import { ThemeMode } from '../../../../core/theme';
 import { ThemeService } from '../../../../core/theme.service';
 import { ProfileMenu } from './profile-menu';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 // TranslatePipe/TranslationService are used unstubbed throughout (the same pattern as the other
 // component specs in this app), so assertions below check the real English copy from
@@ -258,5 +259,26 @@ describe('ProfileMenu', () => {
 
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).not.toBe(toggleButton(compiled));
+  });
+
+  it('leaves out the links to features that are turned off', async () => {
+    disableFeatures(
+      'mealplans',
+      'taskLibrary',
+      'medicines',
+      'sleepDiary',
+      'progress',
+      'workLocations',
+      'babysitters',
+      'printing',
+      'help',
+    );
+    const { fixture, compiled } = await setup();
+    fireClick(fixture, toggleButton(compiled));
+
+    const hrefs = Array.from(compiled.querySelectorAll('a[href^="/guardian"]')).map((a) =>
+      a.getAttribute('href'),
+    );
+    expect(hrefs).toEqual(['/guardian/calendar', '/guardian/admin']);
   });
 });

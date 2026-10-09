@@ -75,8 +75,7 @@ in real time.
 - [x] GDPR: account and child erasure, data export, AI data minimization and retention, and
       health-data read audit logs. What you still have to do when you run Buddy is in
       [PRIVACY.md](PRIVACY.md)
-- [ ] Per-installation feature flags to turn optional features off (proposed, not yet
-      implemented — see [Feature flags](docs/backend/analysis/feature-flags.md))
+- [x] Per-installation feature flags to turn optional features off
 
 ## Repository structure
 

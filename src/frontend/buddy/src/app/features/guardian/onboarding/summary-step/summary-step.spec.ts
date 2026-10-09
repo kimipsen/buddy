@@ -9,6 +9,7 @@ import {
   setupWith,
 } from '../../../../../testing/onboarding-fixture';
 import { SummaryStep } from './summary-step';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 describe('SummaryStep', () => {
   async function render(setup: OnboardingSetup, invitationsSkipped = false) {
@@ -46,5 +47,14 @@ describe('SummaryStep', () => {
 
     expect(text).toContain('Skipped');
     expect(text).toContain('None');
+  });
+
+  it('leaves out the routine and meal rows while their features are off', async () => {
+    disableFeatures('taskLibrary', 'mealplans');
+    const text = await render(setupWith({ hasScheduledRoutine: true, hasMealAssignment: true }));
+
+    expect(text).not.toContain('Scheduled');
+    expect(text).not.toContain('Planned');
+    expect(text).toContain('The Hansens');
   });
 });

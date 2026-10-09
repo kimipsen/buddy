@@ -17,8 +17,15 @@ The app is bootstrapped in [src/frontend/buddy/src/app/app.config.ts](../../src/
 
 - router configuration
 - HTTP client with auth interceptor
-- runtime config loader
+- runtime config loader, then the installation's feature flags (`FeaturesService`)
 - browser app initialization
+
+Each installation can turn optional features off ([feature flags](../backend/analysis/feature-flags.md)).
+`FeaturesService.enabled(name)` reads the flags from `GET /features`. `featureGuard(name)` on every
+route of an optional feature redirects to `/` while it is off, and the links, dashboard cards,
+child-home sections, onboarding steps, help topics and print row kinds of a disabled feature are
+hidden. Specs stub the flags with `provideFeatures(...)` / `disableFeatures(...)` from
+`src/testing/features-fixture.ts`.
 
 The top-level route setup is in [src/frontend/buddy/src/app/app.routes.ts](../../src/frontend/buddy/src/app/app.routes.ts). It divides the app into:
 
@@ -169,6 +176,8 @@ change shows up as a type error. Never edit the generated file; frontend CI fail
 Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators are numbers.
 
 - `AccountService` resolves whether the user is a guardian or child
+- `FeaturesService` loads the installation's feature flags (`GET /features`, anonymous, with
+  `fetch` in an app initializer; every feature on if it fails) and answers `enabled(name)`
 - `AiAssistantService` calls the AI provider-settings and AI mealplan-session
   endpoints (list/set/remove provider keys, test a connection, acknowledge data
   sharing, start a session, send a chat message, apply or discard the draft)

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth.guard';
+import { featureGuard } from './core/feature.guard';
 import { roleRedirectGuard } from './core/role.guard';
 import { AcceptGuardianInvite } from './features/invite/accept-guardian-invite';
 import { AcceptInvite } from './features/invite/accept-invite';
@@ -36,6 +37,7 @@ export const routes: Routes = [
     // the URL is the only credential (see GetSharedSleepDiary on the backend).
     path: 'shared/sleep-diary/:token',
     component: SharedSleepDiary,
+    canActivate: [featureGuard('sleepDiary')],
   },
   {
     path: 'guardian',

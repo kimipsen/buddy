@@ -6,6 +6,7 @@ import { ChildBabysitter } from '../../../../core/babysitters.service';
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
 import { AssignPickupRequest, PickupOccurrence } from '../../../../core/pickups.service';
 import { PickupCell } from './pickup-cell';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 describe('PickupCell', () => {
   function guardian(id: string, givenName: string): GuardianSummary {
@@ -591,6 +592,65 @@ describe('PickupCell', () => {
       expect(onClear).not.toHaveBeenCalled();
       expect(compiled.querySelector('[role="radiogroup"]')).toBeNull();
       expect(compiled.textContent).toContain('Goes alone');
+    });
+  });
+
+  describe('with babysitters turned off', () => {
+    it('offers no babysitter option for a new assignment', async () => {
+      disableFeatures('babysitters');
+      const { fixture, compiled } = await setup();
+
+      findButton(compiled, 'Not planned')!.click();
+      fixture.detectChanges();
+
+      const labels = kindRadios(compiled).map((radio) => radio.textContent?.trim());
+      expect(labels).toHaveLength(4);
+      expect(labels).not.toContain('Babysitter');
+    });
+
+    it('keeps the option, without the link to manage babysitters, for a slot already assigned to one', async () => {
+      disableFeatures('babysitters');
+      const { fixture, compiled } = await setup({
+        babysitters: [],
+        occurrence: occurrence({
+          assignee: { kind: 4, guardianId: 'g1', babysitterId: 'b1', name: 'Anna' },
+        }),
+      });
+
+      findButton(compiled, 'Anna')!.click();
+      fixture.detectChanges();
+
+      expect(selectedKindLabel(compiled)).toBe('Babysitter');
+      expect(compiled.querySelector('a[href="/guardian/babysitters"]')).toBeNull();
+    });
+
+    it('re-saves a slot already assigned to a babysitter without calling them removed', async () => {
+      disableFeatures('babysitters');
+      const { fixture, compiled, onAssign } = await setup({
+        babysitters: [],
+        occurrence: occurrence({
+          assignee: { kind: 4, guardianId: 'g1', babysitterId: 'b1', name: 'Anna' },
+        }),
+      });
+
+      findButton(compiled, 'Anna')!.click();
+      fixture.detectChanges();
+
+      const options = Array.from(selects(compiled)[0].options).map((o) => o.textContent?.trim());
+      expect(options).toContain('Anna');
+      expect(compiled.textContent).not.toContain('This babysitter was removed');
+      expect(findButton(compiled, 'Save')?.disabled).toBe(false);
+
+      findButton(compiled, 'Save')!.click();
+
+      expect(onAssign).toHaveBeenCalledTimes(1);
+      const request: AssignPickupRequest = onAssign.mock.calls[0][0];
+      expect(request.assignee).toEqual({
+        kind: 4,
+        guardianId: 'g1',
+        babysitterId: 'b1',
+        name: 'Anna',
+      });
     });
   });
 });

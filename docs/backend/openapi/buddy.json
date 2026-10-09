@@ -34,6 +34,35 @@
         }
       }
     },
+    "/features": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "operationId": "GetFeatures",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallationFeatures"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -17873,6 +17902,61 @@
         ],
         "type": "string"
       },
+      "InstallationFeatures": {
+        "required": [
+          "mealplans",
+          "mealplanAiAssistant",
+          "mealplanImport",
+          "medicines",
+          "sleepDiary",
+          "pickups",
+          "babysitters",
+          "workLocations",
+          "printing",
+          "progress",
+          "taskLibrary",
+          "help"
+        ],
+        "type": "object",
+        "properties": {
+          "mealplans": {
+            "type": "boolean"
+          },
+          "mealplanAiAssistant": {
+            "type": "boolean"
+          },
+          "mealplanImport": {
+            "type": "boolean"
+          },
+          "medicines": {
+            "type": "boolean"
+          },
+          "sleepDiary": {
+            "type": "boolean"
+          },
+          "pickups": {
+            "type": "boolean"
+          },
+          "babysitters": {
+            "type": "boolean"
+          },
+          "workLocations": {
+            "type": "boolean"
+          },
+          "printing": {
+            "type": "boolean"
+          },
+          "progress": {
+            "type": "boolean"
+          },
+          "taskLibrary": {
+            "type": "boolean"
+          },
+          "help": {
+            "type": "boolean"
+          }
+        }
+      },
       "InviteGuardianRequest": {
         "required": [
           "email",
@@ -20894,6 +20978,9 @@
     },
     {
       "name": "Calendars"
+    },
+    {
+      "name": "Features"
     },
     {
       "name": "Groups"

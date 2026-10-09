@@ -18,4 +18,7 @@ internal static partial class CommonLog
 
     [LoggerMessage(EventId = 8005, Level = LogLevel.Information, Message = "Rate limit exceeded for {CallerKind} caller on {Endpoint}")]
     public static partial void RateLimitExceeded(this ILogger logger, string callerKind, string endpoint);
+
+    [LoggerMessage(EventId = 8006, Level = LogLevel.Information, Message = "Feature flags {Flags} are off because their parent feature is off.")]
+    public static partial void SubFlagsFollowParent(this ILogger logger, IEnumerable<string> flags);
 }

@@ -88,7 +88,7 @@
           {{ 'pickup.cell.selectBabysitterPlaceholder' | translate }}
         </option>
         @for (
-          babysitter of babysitters();
+          babysitter of babysitterOptions();
           track babysitterKey(babysitter.guardianId, babysitter.id)
         ) {
           <option [value]="babysitterKey(babysitter.guardianId, babysitter.id)">
@@ -101,7 +101,7 @@
           {{ 'pickup.cell.babysitterRemoved' | translate }}
         </p>
       }
-      @if (babysitters().length === 0) {
+      @if (babysitters().length === 0 && features.enabled('babysitters')) {
         <p class="text-xs text-slate-400">
           {{ 'pickup.cell.noBabysitters' | translate }}
           <a

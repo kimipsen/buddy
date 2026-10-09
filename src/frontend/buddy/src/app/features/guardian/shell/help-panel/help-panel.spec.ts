@@ -2,7 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
+import { FeatureName } from '../../../../core/features.service';
 import { HelpTopic } from '../../../../core/help/help-topic';
+import { provideFeatures } from '../../../../../testing/features-fixture';
 import { HelpPanel } from './help-panel';
 
 // Raw keys render for the made-up topic; the panel's own strings are real and asserted in English.
@@ -12,10 +14,10 @@ const topic: HelpTopic = {
   related: ['other', 'third'],
 };
 
-async function setup(value: HelpTopic = topic) {
+async function setup(value: HelpTopic = topic, disabled: FeatureName[] = []) {
   await TestBed.configureTestingModule({
     imports: [HelpPanel],
-    providers: [provideRouter([])],
+    providers: [provideRouter([]), provideFeatures(disabled)],
   }).compileComponents();
 
   const fixture = TestBed.createComponent(HelpPanel);
@@ -57,6 +59,18 @@ describe('HelpPanel', () => {
       { text: 'help.topics.other.title', href: '/guardian/help?topic=other' },
       { text: 'help.topics.third.title', href: '/guardian/help?topic=third' },
       { text: 'All help topics', href: '/guardian/help?topic=demo' },
+    ]);
+  });
+
+  it('leaves out a related topic whose feature is turned off', async () => {
+    const { compiled } = await setup(
+      { id: 'demo', sections: [{ id: 'first' }], related: ['medicine', 'calendar'] },
+      ['medicines'],
+    );
+
+    expect(links(compiled).map((link) => link.href)).toEqual([
+      '/guardian/help?topic=calendar',
+      '/guardian/help?topic=demo',
     ]);
   });
 

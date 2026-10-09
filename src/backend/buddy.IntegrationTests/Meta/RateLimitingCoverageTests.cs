@@ -19,12 +19,13 @@ public sealed class RateLimitingCoverageTests(BuddyApiFixture fixture)
     // Container probes hit them constantly; throttling them would make a healthy replica look dead.
     private static readonly string[] ExemptRoutes = ["/health", "/health/ready"];
 
-    // Anonymous endpoints where the global per-IP bucket is enough: /version is tiny, a shared
+    // Anonymous endpoints where the global per-IP bucket is enough: /version and /features are tiny
+    // and read once per app load (docs/backend/analysis/feature-flags.md), a shared
     // sleep diary is opened by a person, not polled, and the OpenAPI document is a public contract
     // (the code is open source) that each family's instance serves about itself -- see
     // docs/backend/analysis/openapi-client-contract.md. Listed by endpoint name, or by route for an
     // endpoint without one (the OpenAPI document endpoint has no name).
-    private static readonly string[] AnonymousOnGlobalLimitOnly = ["GetVersion", "GetSharedSleepDiary", "/openapi/{documentName}.json"];
+    private static readonly string[] AnonymousOnGlobalLimitOnly = ["GetVersion", "GetFeatures", "GetSharedSleepDiary", "/openapi/{documentName}.json"];
 
     [Fact]
     public void Only_listed_endpoints_opt_out_of_rate_limiting()

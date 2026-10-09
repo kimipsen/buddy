@@ -162,7 +162,7 @@
                         [ngModel]="draft.row.kind"
                         (ngModelChange)="changeKind(draft.key, $event)"
                       >
-                        @for (kindValue of kinds; track kindValue) {
+                        @for (kindValue of kindsFor(draft.row.kind); track kindValue) {
                           <option [ngValue]="kindValue">
                             {{ kindLabels[kindValue] | translate }}
                           </option>

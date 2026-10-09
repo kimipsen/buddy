@@ -9,7 +9,8 @@ describe('child routes', () => {
   it('serves the child home, meal plan, and calendar pages', () => {
     expect(CHILD_ROUTES).toEqual([
       { path: '', component: ChildHome },
-      { path: 'mealplan', component: ChildMealplan },
+      // Behind featureGuard('mealplans'): feature-routes.spec.ts covers what it lets through.
+      { path: 'mealplan', component: ChildMealplan, canActivate: [expect.any(Function)] },
       { path: 'calendar', component: ChildCalendar },
     ]);
   });

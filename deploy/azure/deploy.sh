@@ -387,6 +387,28 @@ if [[ "$MAIL_CONFIGURED" == true ]]; then
   )
 fi
 
+# Per-installation feature flags (docs/backend/analysis/feature-flags.md): FEATURES in .env is a
+# comma-separated list of Name=true|false pairs. The API rejects an unknown name at startup, so the
+# names are checked here too (case-insensitively, like the API's binding): a typo fails the deploy
+# rather than leaving a crash-looping revision. Keep the list in step with FeatureOptions.cs.
+KNOWN_FEATURES=" mealplans mealplanaiassistant mealplanimport medicines sleepdiary pickups babysitters worklocations printing progress tasklibrary help "
+if [[ -n "${FEATURES:-}" ]]; then
+  IFS=',' read -ra FEATURE_FLAGS <<< "$FEATURES"
+  for flag in "${FEATURE_FLAGS[@]}"; do
+    flag="${flag// /}"
+    if [[ ! "$flag" =~ ^[A-Za-z]+=(true|false)$ ]]; then
+      echo "FEATURES in .env: '$flag' is not Name=true or Name=false." >&2
+      exit 1
+    fi
+    name="${flag%%=*}"
+    if [[ "$KNOWN_FEATURES" != *" ${name,,} "* ]]; then
+      echo "FEATURES in .env: '$name' is not a feature. Names: Mealplans, MealplanAiAssistant, MealplanImport, Medicines, SleepDiary, Pickups, Babysitters, WorkLocations, Printing, Progress, TaskLibrary, Help." >&2
+      exit 1
+    fi
+    API_ENV_VARS+=("Features__$flag")
+  done
+fi
+
 API_SECRETS=(
   "postgres-connection-string=Host=$PG_HOST;Port=5432;Database=$APP_DB_NAME;Username=$PG_ADMIN_USER;Password=$PG_ADMIN_PASSWORD;Ssl Mode=Require;Trust Server Certificate=true"
   "keycloak-admin-cli-secret=$KEYCLOAK_ADMIN_CLI_SECRET"

@@ -20,6 +20,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/features': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetFeatures'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/users/me': {
     parameters: {
       query?: never;
@@ -2608,6 +2624,20 @@ export interface components {
     };
     /** @enum {string} */
     ImportWeekStart: 'Sunday' | 'Monday';
+    InstallationFeatures: {
+      mealplans: boolean;
+      mealplanAiAssistant: boolean;
+      mealplanImport: boolean;
+      medicines: boolean;
+      sleepDiary: boolean;
+      pickups: boolean;
+      babysitters: boolean;
+      workLocations: boolean;
+      printing: boolean;
+      progress: boolean;
+      taskLibrary: boolean;
+      help: boolean;
+    };
     InviteGuardianRequest: {
       email: string;
       kind: components['schemas']['GuardianKind'];
@@ -3530,6 +3560,29 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['BuildVersion'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetFeatures: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InstallationFeatures'];
         };
       };
       429: components['responses']['TooManyRequests'];

@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
 
+import { FeaturesService } from '../../../core/features.service';
 import { HelpTopic } from '../../../core/help/help-topic';
 import { findHelpTopic } from '../../../core/help/help-topics';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -13,6 +14,8 @@ import { ProfileMenu } from './profile-menu/profile-menu';
   templateUrl: './guardian-shell.html',
 })
 export class GuardianShell {
+  private readonly features = inject(FeaturesService);
+
   private readonly route = inject(ActivatedRoute);
   private readonly helpTrigger = viewChild<ElementRef<HTMLButtonElement>>('helpTrigger');
   private readonly helpRegion = viewChild<ElementRef<HTMLElement>>('helpRegion');
@@ -31,7 +34,10 @@ export class GuardianShell {
     }
 
     this.helpOpen.set(false);
-    this.helpTopic.set(findHelpTopic(page?.snapshot.data['helpTopic']));
+    // No ? button at all while help is turned off for this installation.
+    this.helpTopic.set(
+      this.features.enabled('help') ? findHelpTopic(page?.snapshot.data['helpTopic']) : undefined,
+    );
   }
 
   protected toggleHelp(): void {

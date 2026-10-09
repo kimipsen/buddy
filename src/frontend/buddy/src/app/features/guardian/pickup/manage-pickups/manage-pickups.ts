@@ -1,6 +1,7 @@
 import { Component, computed, inject, linkedSignal, resource } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { FeaturesService } from '../../../../core/features.service';
 import { firstAndLast } from '../../../../core/array-utils';
 import { BabysittersService, ChildBabysitter } from '../../../../core/babysitters.service';
 import { toIsoDate } from '../../../../core/date-utils';
@@ -73,6 +74,8 @@ function buildWeek(locale: string): WeekDay[] {
   templateUrl: './manage-pickups.html',
 })
 export class ManagePickups {
+  private readonly features = inject(FeaturesService);
+
   private readonly babysitters = inject(BabysittersService);
   private readonly guardians = inject(GuardiansService);
   private readonly pickups = inject(PickupsService);
@@ -213,7 +216,10 @@ export class ManagePickups {
     const [childGuardians, childBabysitters, occurrences] = await Promise.all([
       this.guardians.listChildGuardians(childId),
       // Best effort: without babysitters the grid still works, only the babysitter picker is empty.
-      this.babysitters.listForChild(childId).catch((): ChildBabysitter[] => []),
+      // With the feature off the route isn't mapped, so there is nothing to ask for.
+      this.features.enabled('babysitters')
+        ? this.babysitters.listForChild(childId).catch((): ChildBabysitter[] => [])
+        : Promise.resolve([]),
       this.pickups.listSchedule(childId, from, to),
     ]);
 

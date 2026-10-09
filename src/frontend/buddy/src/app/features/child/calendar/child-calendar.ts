@@ -1,6 +1,7 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../../core/features.service';
 import { compareNames, firstAndLast } from '../../../core/array-utils';
 import {
   CalendarItemKind,
@@ -125,6 +126,8 @@ function nameFor(row: ChildAgendaRow): string {
   templateUrl: './child-calendar.html',
 })
 export class ChildCalendar {
+  private readonly features = inject(FeaturesService);
+
   private readonly calendars = inject(CalendarsService);
   private readonly mealplans = inject(MealplansService);
   private readonly users = inject(UsersService);
@@ -345,7 +348,9 @@ export class ChildCalendar {
     const [myCalendars, occurrences, mealEntries] = await Promise.all([
       this.calendars.listMyCalendars(),
       this.calendars.listOccurrencesInRange(from, to),
-      this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to),
+      this.features.enabled('mealplans')
+        ? this.mealplans.listMealPlan({ kind: 'family', childId: me.id }, from, to)
+        : Promise.resolve([]),
     ]);
 
     return { myCalendars, occurrences, mealEntries };

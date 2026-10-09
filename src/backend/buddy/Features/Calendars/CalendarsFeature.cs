@@ -1,4 +1,5 @@
 using buddy.Common.Erasure;
+using buddy.Common.FeatureFlags;
 using buddy.Common.Http;
 using buddy.Common.OpenApi;
 using buddy.Common.Postgres;
@@ -105,7 +106,7 @@ public static class CalendarsFeature
         return services;
     }
 
-    public static IEndpointRouteBuilder MapCalendarsFeature(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapCalendarsFeature(this IEndpointRouteBuilder endpoints, InstallationFeatures features)
     {
         var calendars = endpoints.MapGroup("/calendars")
             .WithTags("Calendars")
@@ -122,7 +123,12 @@ public static class CalendarsFeature
         calendars.MapSetMemberRole();
         calendars.MapRemoveMember();
         calendars.MapCreateItem();
-        calendars.MapScheduleTaskFromTemplate();
+        // Belongs to the task library: off with it (docs/backend/analysis/feature-flags.md).
+        if (features.TaskLibrary)
+        {
+            calendars.MapScheduleTaskFromTemplate();
+        }
+
         calendars.MapListItems();
         calendars.MapListOccurrences();
         calendars.MapListAssignableMembers();

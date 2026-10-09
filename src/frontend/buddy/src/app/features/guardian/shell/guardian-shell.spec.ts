@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../../../core/auth.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { GuardianShell } from './guardian-shell';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 @Component({ template: '<p>page</p>' })
 class Page {}
@@ -156,5 +157,12 @@ describe('GuardianShell', () => {
 
     expect(root().querySelector('app-help-panel')).toBeNull();
     expect(document.activeElement).toBe(helpButton(root()));
+  });
+
+  it('shows no help button anywhere while help is turned off', async () => {
+    disableFeatures('help');
+    const { root } = await setup('/calendar');
+
+    expect(helpButton(root())).toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { HelpTopic } from '../../core/help/help-topic';
 import { HelpContent } from './help-content';
+import { disableFeatures } from '../../../testing/features-fixture';
 
 // A topic with no translations, so the raw keys render and the spec checks structure and order
 // rather than the help text itself (help-coverage.spec.ts checks that every real key resolves).
@@ -76,5 +77,18 @@ describe('HelpContent', () => {
     const compiled = await setup(topic);
 
     expect(compiled.querySelector('a')).toBeNull();
+  });
+
+  it('leaves out a section whose feature is turned off', async () => {
+    disableFeatures('mealplanAiAssistant');
+    const compiled = await setup({
+      id: 'demo',
+      sections: [{ id: 'first' }, { id: 'ai', feature: 'mealplanAiAssistant' }],
+    });
+
+    const headings = Array.from(compiled.querySelectorAll('[role="heading"]')).map((heading) =>
+      heading.textContent?.trim(),
+    );
+    expect(headings).toEqual(['help.topics.demo.sections.first.title']);
   });
 });

@@ -11,6 +11,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth.service';
+import { FeaturesService } from '../../../../core/features.service';
 import { RuntimeConfigService } from '../../../../core/runtime-config.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { THEME_MODES, ThemeMode } from '../../../../core/theme';
@@ -24,6 +25,7 @@ import { ThemeService } from '../../../../core/theme.service';
 export class ProfileMenu {
   private readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  protected readonly features = inject(FeaturesService);
 
   protected readonly themeModes = THEME_MODES;
   private readonly runtimeConfig = inject(RuntimeConfigService);

@@ -12,18 +12,19 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { FeaturesService } from '../../../core/features.service';
 import { AccountService } from '../../../core/account.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
   EMPTY_SETUP,
   ONBOARDING_STATUS,
-  ONBOARDING_STEPS,
   OnboardingProgress,
   OnboardingService,
   OnboardingSetup,
   OnboardingStep,
   firstIncompleteStep,
   isStepComplete,
+  offeredSteps,
 } from '../../../core/onboarding.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
@@ -55,9 +56,6 @@ const STEP_TITLES: Record<OnboardingStep, string> = {
   summary: 'onboarding.summary.title',
 };
 
-// Every step but the summary must be done before the guide can be completed.
-const REQUIRED_STEPS = ONBOARDING_STEPS.filter((step) => step !== 'summary');
-
 // The guided first-login setup (docs/frontend/analysis/guardian-onboarding.md). It owns the stored
 // progress and the setup derived from current data; each step component writes through the
 // existing domain services and asks for a reload when it changed something.
@@ -84,7 +82,11 @@ export class GuardianOnboarding implements OnInit {
 
   private readonly stepHeading = viewChild<ElementRef<HTMLElement>>('stepHeading');
 
-  protected readonly steps = ONBOARDING_STEPS;
+  private readonly features = inject(FeaturesService);
+  // The flags are loaded before the app starts, so the offered steps are fixed for the page's life.
+  protected readonly steps = offeredSteps((feature) => this.features.enabled(feature));
+  // Every offered step but the summary must be done before the guide can be completed.
+  private readonly requiredSteps = this.steps.filter((step) => step !== 'summary');
   protected readonly stepLabels = STEP_LABELS;
   protected readonly stepTitles = STEP_TITLES;
 
@@ -135,7 +137,7 @@ export class GuardianOnboarding implements OnInit {
       const setup = await this.onboarding.loadSetup(progress);
       this.progress.set(progress);
       this.setup.set(setup);
-      this.goTo(firstIncompleteStep(progress, setup));
+      this.goTo(firstIncompleteStep(progress, setup, this.steps));
     } catch {
       this.loadError.set('onboarding.loadError');
     } finally {
@@ -220,7 +222,7 @@ export class GuardianOnboarding implements OnInit {
     }
 
     const setup = this.setup();
-    const missing = REQUIRED_STEPS.find((step) => !isStepComplete(step, progress, setup));
+    const missing = this.requiredSteps.find((step) => !isStepComplete(step, progress, setup));
 
     if (missing !== undefined) {
       this.notice.set('onboarding.incomplete');

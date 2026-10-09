@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../../../core/features.service';
 import { ChildBabysitter } from '../../../../core/babysitters.service';
 import { ChildSummary, GuardianSummary } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -43,17 +44,29 @@ let nextPickupCellInstanceId = 0;
   templateUrl: './pickup-cell.html',
 })
 export class PickupCell {
+  protected readonly features = inject(FeaturesService);
+
   private readonly translation = inject(TranslationService);
 
   protected readonly instanceId = `pickup-cell-${nextPickupCellInstanceId++}`;
 
-  protected readonly kindOptions = computed<SegmentedControlOption<PickupAssigneeKind>[]>(() => [
-    { value: GUARDIAN, label: this.translation.translate('pickup.cell.kind.guardian') },
-    { value: SELF_ESCORT, label: this.translation.translate('pickup.cell.kind.selfEscort') },
-    { value: SIBLING, label: this.translation.translate('pickup.cell.kind.sibling') },
-    { value: PLAYDATE, label: this.translation.translate('pickup.cell.kind.playdate') },
-    { value: BABYSITTER, label: this.translation.translate('pickup.cell.kind.babysitter') },
-  ]);
+  protected readonly kindOptions = computed<SegmentedControlOption<PickupAssigneeKind>[]>(() =>
+    (
+      [
+        { value: GUARDIAN, label: this.translation.translate('pickup.cell.kind.guardian') },
+        { value: SELF_ESCORT, label: this.translation.translate('pickup.cell.kind.selfEscort') },
+        { value: SIBLING, label: this.translation.translate('pickup.cell.kind.sibling') },
+        { value: PLAYDATE, label: this.translation.translate('pickup.cell.kind.playdate') },
+        { value: BABYSITTER, label: this.translation.translate('pickup.cell.kind.babysitter') },
+      ] satisfies SegmentedControlOption<PickupAssigneeKind>[]
+    ).filter(
+      // With babysitters off, only a slot already assigned to one keeps the option, so it shows.
+      (option) =>
+        option.value !== BABYSITTER ||
+        this.features.enabled('babysitters') ||
+        this.kind() === BABYSITTER,
+    ),
+  );
 
   readonly guardians = input.required<GuardianSummary[]>();
   readonly siblings = input.required<ChildSummary[]>();
@@ -120,9 +133,30 @@ export class PickupCell {
     );
   });
 
+  // With babysitters off the list isn't loaded, so a slot already assigned to one offers just that
+  // babysitter: the guardian can still change its time and notes without reassigning it.
+  protected readonly babysitterOptions = computed<ChildBabysitter[]>(() => {
+    if (this.features.enabled('babysitters')) {
+      return this.babysitters();
+    }
+    const assignee = this.occurrence()?.assignee;
+    return assignee?.kind === BABYSITTER
+      ? [
+          {
+            guardianId: assignee.guardianId,
+            id: assignee.babysitterId,
+            name: assignee.name ?? '',
+            contactInfo: '',
+          },
+        ]
+      : [];
+  });
+
   // Undefined until one is chosen, and for an archived babysitter that left the list.
   private readonly chosenBabysitter = computed(() =>
-    this.babysitters().find((b) => babysitterKey(b.guardianId, b.id) === this.babysitterChoice()),
+    this.babysitterOptions().find(
+      (b) => babysitterKey(b.guardianId, b.id) === this.babysitterChoice(),
+    ),
   );
 
   // The slot points at a babysitter who has left the list (archived, or their guardian unlinked):

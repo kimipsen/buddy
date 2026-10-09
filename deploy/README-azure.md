@@ -48,6 +48,17 @@ the realm") and update the `api` app. `.claude/skills/deploy/check-env.sh
 deploy/azure` compares `.env` with `.env.example` by key name and flags
 values still equal to an `.env.example` placeholder, without printing values.
 
+**Turning features off (optional).** `FEATURES` in `.env` lists the features
+this installation turns off as comma-separated `Name=false` pairs, for example
+`FEATURES=Medicines=false,MealplanAiAssistant=false`. Blank keeps every feature
+on. `deploy.sh` checks each name against the known features (case-insensitively,
+so a typo stops the deploy instead of crash-looping the API) and passes each pair
+to the API as `Features__<Name>`. To turn a
+feature back on, change its pair to `Name=true` rather than deleting it, because
+a redeploy keeps the env vars it doesn't mention. A disabled feature's data is
+kept, and the app hides its pages. See
+[docs/backend/analysis/feature-flags.md](../docs/backend/analysis/feature-flags.md).
+
 ## 3. Deploy
 
 ```

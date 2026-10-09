@@ -15,9 +15,10 @@ namespace buddy.IntegrationTests.Meta;
 public sealed class ETagCoverageTests(BuddyApiFixture fixture)
 {
     // Infrastructure endpoints outside every feature group: /version is tiny and polled by probes,
+    // /features is tiny and read with fetch once per app load (no If-None-Match to answer),
     // and the OpenAPI document (mapped in Development only) is for tooling, not the app. /health
     // isn't listed because MapHealthChecks maps it for every method, not as a GET.
-    private static readonly string[] ExcludedRoutes = ["/version", "/openapi/{documentName}.json"];
+    private static readonly string[] ExcludedRoutes = ["/version", "/features", "/openapi/{documentName}.json"];
 
     [Fact]
     public void Every_get_endpoint_has_an_etag_or_is_explicitly_excluded()

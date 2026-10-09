@@ -15,6 +15,7 @@ import {
   PickupsService,
 } from '../../../../core/pickups.service';
 import { ManagePickups } from './manage-pickups';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 describe('ManagePickups', () => {
   // Mirrors buildWeek()'s own date math (today + offset, in local time) so expectations don't
@@ -571,5 +572,14 @@ describe('ManagePickups', () => {
       expect(compiled.textContent).toContain('Unable to update this slot.');
       expect(cellAt(fixture, 0, 0).textContent).toContain('Gina');
     });
+  });
+
+  it('does not ask for babysitters while they are turned off', async () => {
+    disableFeatures('babysitters');
+    const { fixture, babysitters } = await setup();
+    await settle(fixture);
+
+    expect(babysitters.listForChild).not.toHaveBeenCalled();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr')).toHaveLength(7);
   });
 });

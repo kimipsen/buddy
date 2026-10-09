@@ -17,6 +17,7 @@ import { ProgressService } from '../../../core/progress.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildHome } from './home';
 import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 describe('ChildHome', () => {
   const currentUser: CurrentUser = {
@@ -1306,5 +1307,22 @@ describe('ChildHome', () => {
       ).map(rowText);
       expect(rows).toEqual(['Drop-off🧑‍🍼 Anna', 'Pickup🧑‍🍼 Your babysitter']);
     });
+  });
+
+  it('neither loads nor shows the sections of features that are turned off', async () => {
+    disableFeatures('mealplans', 'medicines', 'pickups', 'progress');
+    const { fixture, mealplans, medicines, pickups, progress } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(mealplans.listMealPlan).not.toHaveBeenCalled();
+    expect(medicines.listDoses).not.toHaveBeenCalled();
+    expect(pickups.listSchedule).not.toHaveBeenCalled();
+    expect(progress.getMyProgress).not.toHaveBeenCalled();
+    expect(compiled.querySelector('app-progress-badge')).toBeNull();
+    expect(compiled.querySelector('a[href="/child/mealplan"]')).toBeNull();
+    expect(compiled.querySelector('a[href="/child/calendar"]')).toBeTruthy();
+    expect(compiled.textContent).toContain('Nothing to show yet');
+    expect(compiled.textContent).not.toContain('Something went wrong');
   });
 });

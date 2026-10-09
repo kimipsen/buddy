@@ -1,6 +1,7 @@
 import { Component, ElementRef, Injector, OnInit, afterNextRender, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../../core/features.service';
 import { topicKey } from '../../../core/help/help-topic';
 import { HELP_TOPICS } from '../../../core/help/help-topics';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -21,11 +22,15 @@ export class GuardianHelp implements OnInit {
 
   protected readonly repositoryUrl = inject(RuntimeConfigService).repositoryUrl;
 
-  protected readonly topics = HELP_TOPICS.map((topic) => ({
-    topic,
-    anchorId: `help-topic-${topic.id}`,
-    titleKey: topicKey(topic, 'title'),
-  }));
+  private readonly features = inject(FeaturesService);
+
+  protected readonly topics = HELP_TOPICS.filter((topic) => this.features.offers(topic)).map(
+    (topic) => ({
+      topic,
+      anchorId: `help-topic-${topic.id}`,
+      titleKey: topicKey(topic, 'title'),
+    }),
+  );
 
   ngOnInit(): void {
     const requested = this.requestedTopic;

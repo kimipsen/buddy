@@ -10,16 +10,20 @@ import { ChildSummary, GuardiansService } from './guardians.service';
 import { MealPlanEntry, MealplansService } from './mealplans.service';
 import {
   EMPTY_SETUP,
+  ONBOARDING_STEPS,
   OnboardingProgress,
   OnboardingService,
   OnboardingSetup,
   firstIncompleteStep,
   isStepComplete,
   isWithinDaysAhead,
+  offeredSteps,
 } from './onboarding.service';
+import { FeatureName } from './features.service';
 import { RuntimeConfigService } from './runtime-config.service';
 import { TaskLibraryService, TaskTemplate } from './task-library.service';
 import { UsersService } from './users.service';
+import { provideFeatures } from '../../testing/features-fixture';
 
 const apiBaseUrl = 'https://api.buddy.test';
 
@@ -84,9 +88,10 @@ interface DomainStubs {
   mealplans?: Partial<MealplansService>;
 }
 
-function setup(stubs: DomainStubs = {}) {
+function setup(stubs: DomainStubs = {}, disabled: FeatureName[] = []) {
   TestBed.configureTestingModule({
     providers: [
+      provideFeatures(disabled),
       provideHttpClient(),
       provideHttpClientTesting(),
       { provide: RuntimeConfigService, useValue: { apiBaseUrl } },
@@ -411,6 +416,22 @@ describe('OnboardingService', () => {
       expect(result.hasMealAssignment).toBe(true);
     });
 
+    it('reads neither templates nor the meal plan for features that are turned off', async () => {
+      const listTaskTemplates = vi.fn(async () => [template('t1')]);
+      const listMealPlan = vi.fn(async () => [{ mealId: 'm1' } as MealPlanEntry]);
+      const { service } = setup(
+        domain({ taskLibrary: { listTaskTemplates }, mealplans: { listMealPlan } }),
+        ['taskLibrary', 'mealplans'],
+      );
+
+      const result = await service.loadSetup(progress);
+
+      expect(listTaskTemplates).not.toHaveBeenCalled();
+      expect(listMealPlan).not.toHaveBeenCalled();
+      expect(result.templates).toEqual([]);
+      expect(result.hasMealAssignment).toBe(false);
+    });
+
     it('does not read a meal plan while the group has no children', async () => {
       const listMealPlan = vi.fn(async () => []);
       const { service } = setup(
@@ -483,6 +504,23 @@ describe('onboarding step completion', () => {
     expect(firstIncompleteStep(active, { ...complete, calendars: [] })).toBe('calendar');
     expect(firstIncompleteStep(active, { ...complete, hasScheduledRoutine: false })).toBe('task');
     expect(firstIncompleteStep(active, { ...complete, hasMealAssignment: false })).toBe('meal');
+  });
+
+  it('resumes only at a step this installation offers', () => {
+    const steps = offeredSteps((feature) => feature !== 'taskLibrary' && feature !== 'mealplans');
+
+    expect(steps).toEqual(['group', 'children', 'adults', 'calendar', 'summary']);
+    expect(
+      firstIncompleteStep(
+        active,
+        { ...complete, hasScheduledRoutine: false, hasMealAssignment: false },
+        steps,
+      ),
+    ).toBe('summary');
+  });
+
+  it('offers every step while every feature is on', () => {
+    expect(offeredSteps(() => true)).toEqual([...ONBOARDING_STEPS]);
   });
 
   it('never treats the summary itself as done', () => {

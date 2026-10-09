@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../core/features.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ChildrenOverview } from './children-overview/children-overview';
 import { DosesToday } from './doses-today/doses-today';
@@ -25,4 +26,6 @@ import { TasksToday } from './tasks-today/tasks-today';
   ],
   templateUrl: './dashboard.html',
 })
-export class GuardianDashboard {}
+export class GuardianDashboard {
+  protected readonly features = inject(FeaturesService);
+}

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { featureGuard } from '../../core/feature.guard';
 import { onboardingEntryGuard } from '../../core/onboarding.guard';
 import { GuardianAdmin } from './admin/admin';
 import { GuardianBabysitters } from './babysitters/babysitters';
@@ -24,7 +25,11 @@ import { GuardianWorkLocations } from './work-locations/work-locations';
 export const GUARDIAN_ROUTES: Routes = [
   // Outside GuardianShell on purpose: no navigation, header or padding may end up on paper. Listed
   // before the shell route so its '' + children can't claim the path first.
-  { path: 'print/sheet/:templateId', component: WeekPlanPrintPage },
+  {
+    path: 'print/sheet/:templateId',
+    component: WeekPlanPrintPage,
+    canActivate: [featureGuard('printing')],
+  },
   {
     path: '',
     component: GuardianShell,
@@ -39,56 +44,67 @@ export const GUARDIAN_ROUTES: Routes = [
       { path: 'onboarding', component: GuardianOnboarding },
       {
         path: 'mealplan',
+        canActivate: [featureGuard('mealplans')],
         component: GuardianMealplan,
         data: { helpTopic: 'mealPlans' },
       },
       {
         path: 'mealplan/ai-assistant',
+        canActivate: [featureGuard('mealplanAiAssistant')],
         component: MealplanAiAssistant,
         data: { helpTopic: 'mealPlans' },
       },
       {
         path: 'mealplan/import',
+        canActivate: [featureGuard('mealplanImport')],
         component: MealplanImport,
         data: { helpTopic: 'mealPlans' },
       },
       {
         path: 'medicine',
+        canActivate: [featureGuard('medicines')],
         component: GuardianMedicine,
         data: { helpTopic: 'medicine' },
       },
       {
         path: 'sleep-diary',
+        canActivate: [featureGuard('sleepDiary')],
         component: GuardianSleepDiary,
         data: { helpTopic: 'sleepDiary' },
       },
       {
         path: 'progress',
+        canActivate: [featureGuard('progress')],
         component: GuardianProgress,
         data: { helpTopic: 'progress' },
       },
       {
         path: 'pickup',
+        canActivate: [featureGuard('pickups')],
         component: GuardianPickup,
         data: { helpTopic: 'pickup' },
       },
       {
         path: 'babysitters',
+        canActivate: [featureGuard('babysitters')],
         component: GuardianBabysitters,
         data: { helpTopic: 'babysitters' },
       },
       {
         path: 'work-locations',
+        canActivate: [featureGuard('workLocations')],
         component: GuardianWorkLocations,
         data: { helpTopic: 'workLocations' },
       },
       {
         path: 'print',
+        canActivate: [featureGuard('printing')],
         component: GuardianPrint,
         data: { helpTopic: 'print' },
       },
       {
         path: 'print/templates/:templateId',
+        canActivate: [featureGuard('printing')],
         component: PrintTemplateEditor,
         data: { helpTopic: 'print' },
       },
@@ -99,6 +115,7 @@ export const GUARDIAN_ROUTES: Routes = [
       },
       {
         path: 'task-library',
+        canActivate: [featureGuard('taskLibrary')],
         component: GuardianTaskLibrary,
         data: { helpTopic: 'taskLibrary' },
       },
@@ -108,7 +125,7 @@ export const GUARDIAN_ROUTES: Routes = [
         data: { helpTopic: 'admin' },
       },
       // Every help topic on one page; it has no page help of its own.
-      { path: 'help', component: GuardianHelp },
+      { path: 'help', component: GuardianHelp, canActivate: [featureGuard('help')] },
     ],
   },
 ];

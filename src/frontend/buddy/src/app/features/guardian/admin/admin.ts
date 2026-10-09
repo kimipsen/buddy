@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../../core/features.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AiProviderSettingsComponent } from './ai-provider-settings/ai-provider-settings';
 import { DeleteAccount } from './delete-account/delete-account';
@@ -25,4 +26,6 @@ import { MyProfile } from './my-profile/my-profile';
   ],
   templateUrl: './admin.html',
 })
-export class GuardianAdmin {}
+export class GuardianAdmin {
+  protected readonly features = inject(FeaturesService);
+}

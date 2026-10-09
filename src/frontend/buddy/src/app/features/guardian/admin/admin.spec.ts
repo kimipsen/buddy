@@ -8,6 +8,7 @@ import { GroupsService } from '../../../core/groups.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { GuardianAdmin } from './admin';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 // GuardianAdmin is a pure composition shell -- it wires together six already-covered admin
 // sections (see each section's own .spec.ts for its behavior) plus a static back link, with no
@@ -88,5 +89,15 @@ describe('GuardianAdmin', () => {
     for (const selector of selectors) {
       expect(compiled.querySelector(selector)).toBeTruthy();
     }
+  });
+
+  it('leaves out the AI provider settings while the AI assistant is turned off', async () => {
+    disableFeatures('mealplanAiAssistant');
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-ai-provider-settings')).toBeNull();
+    expect(compiled.querySelector('app-download-my-data')).toBeTruthy();
   });
 });

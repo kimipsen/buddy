@@ -57,6 +57,17 @@ Values are compared without being printed.
 `KEYCLOAK_ADMIN_CLI_SECRET` can be a placeholder on the very first boot —
 you'll generate the real one in step 5 and then restart the `api` service.
 
+**Turning features off (optional).** Every feature is on by default. To leave
+out one this family doesn't use, add a line such as `Features__Medicines=false`
+to `.env` (`.env.example` lists every flag, commented out) and restart the
+`api` service with `docker compose up -d api`. The API stops serving that
+feature's endpoints and the app hides its pages, cards and links. The frontend
+reads the flags from the API at startup, so it needs no rebuild. A disabled
+feature's data is kept, is still in data exports and erasure, and comes back as
+it was when you set the flag to `true` again. A misspelt flag name stops the API
+from starting, and the log names it. See
+[docs/backend/analysis/feature-flags.md](../docs/backend/analysis/feature-flags.md).
+
 ## 4. First boot
 
 From the repo root on the VM (needs [Task](https://taskfile.dev)):

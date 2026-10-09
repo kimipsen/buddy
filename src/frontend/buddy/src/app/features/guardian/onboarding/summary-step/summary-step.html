@@ -44,23 +44,27 @@
     }
   </dd>
 
-  <dt class="font-semibold text-slate-700 dark:text-slate-300">
-    {{ 'onboarding.summary.routine' | translate }}
-  </dt>
-  <dd>
-    {{
-      (setup().hasScheduledRoutine ? 'onboarding.summary.routineDone' : 'onboarding.summary.none')
-        | translate
-    }}
-  </dd>
+  @if (features.enabled('taskLibrary')) {
+    <dt class="font-semibold text-slate-700 dark:text-slate-300">
+      {{ 'onboarding.summary.routine' | translate }}
+    </dt>
+    <dd>
+      {{
+        (setup().hasScheduledRoutine ? 'onboarding.summary.routineDone' : 'onboarding.summary.none')
+          | translate
+      }}
+    </dd>
+  }
 
-  <dt class="font-semibold text-slate-700 dark:text-slate-300">
-    {{ 'onboarding.summary.meal' | translate }}
-  </dt>
-  <dd>
-    {{
-      (setup().hasMealAssignment ? 'onboarding.summary.mealDone' : 'onboarding.summary.none')
-        | translate
-    }}
-  </dd>
+  @if (features.enabled('mealplans')) {
+    <dt class="font-semibold text-slate-700 dark:text-slate-300">
+      {{ 'onboarding.summary.meal' | translate }}
+    </dt>
+    <dd>
+      {{
+        (setup().hasMealAssignment ? 'onboarding.summary.mealDone' : 'onboarding.summary.none')
+          | translate
+      }}
+    </dd>
+  }
 </dl>

@@ -24,6 +24,7 @@ import {
   setupWith,
 } from '../../../../testing/onboarding-fixture';
 import { GuardianOnboarding } from './onboarding';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 const COMPLETE: OnboardingSetup = setupWith({
   children: [child()],
@@ -337,5 +338,20 @@ describe('GuardianOnboarding', () => {
 
     expect(onboarding.saveProgress).toHaveBeenCalledWith(progress({ invitationsSkipped: true }));
     expect(heading(compiled)).toBe('Create a shared calendar');
+  });
+
+  it('leaves out the task and meal steps while their features are off, and finishes without them', async () => {
+    disableFeatures('taskLibrary', 'mealplans');
+    const { compiled, fixture, onboarding } = await setup({
+      setup: { ...COMPLETE, hasScheduledRoutine: false, hasMealAssignment: false },
+    });
+
+    expect(heading(compiled)).toBe('All set?');
+    expect(compiled.textContent).toContain('Step 5 of 5');
+
+    buttonByText(compiled, 'Finish setup')!.click();
+    await settle(fixture);
+
+    expect(onboarding.saveProgress).toHaveBeenCalledWith(progress({ status: 'Completed' }));
   });
 });

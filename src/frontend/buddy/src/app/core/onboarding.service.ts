@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { FeatureName, FeaturesService } from './features.service';
 import { CalendarDetail, CalendarsService } from './calendars.service';
 import { addDaysIso, todayIsoDate } from './date-utils';
 import { GroupDetail, GroupInvite, GroupMember, GroupsService } from './groups.service';
@@ -60,6 +61,21 @@ export const ONBOARDING_STEPS = [
 ] as const;
 
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+
+// The steps that set up an optional feature, and the feature they need
+// (docs/backend/analysis/feature-flags.md). The task step schedules from the task library.
+const STEP_FEATURES: Partial<Record<OnboardingStep, FeatureName>> = {
+  task: 'taskLibrary',
+  meal: 'mealplans',
+};
+
+// The guide's steps on this installation: a disabled feature's step is left out altogether.
+export function offeredSteps(enabled: (feature: FeatureName) => boolean): OnboardingStep[] {
+  return ONBOARDING_STEPS.filter((step) => {
+    const feature = STEP_FEATURES[step];
+    return feature === undefined || enabled(feature);
+  });
+}
 
 export const EMPTY_SETUP: OnboardingSetup = {
   group: null,
@@ -121,8 +137,9 @@ export function isStepComplete(
 export function firstIncompleteStep(
   progress: OnboardingProgress,
   setup: OnboardingSetup,
+  steps: readonly OnboardingStep[] = ONBOARDING_STEPS,
 ): OnboardingStep {
-  return ONBOARDING_STEPS.find((step) => !isStepComplete(step, progress, setup)) ?? 'summary';
+  return steps.find((step) => !isStepComplete(step, progress, setup)) ?? 'summary';
 }
 
 // The guide's own API (progress) plus eligibility and reconciliation over the existing domain
@@ -137,6 +154,7 @@ export class OnboardingService {
   private readonly taskLibrary = inject(TaskLibraryService);
   private readonly mealplans = inject(MealplansService);
   private readonly users = inject(UsersService);
+  private readonly features = inject(FeaturesService);
 
   private url(): string {
     return `${this.runtimeConfig.apiBaseUrl}/users/me/onboarding`;
@@ -202,11 +220,15 @@ export class OnboardingService {
     // The family meal plan is addressed through any one of its children.
     const familyChild = children[0];
 
+    // A disabled feature's routes aren't mapped: its step is left out, and its data isn't asked for.
     const [templates, routineFlags, mealPlan] = await Promise.all([
-      mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, async (child) =>
-        (await this.taskLibrary.listTaskTemplates(child.id))
-          .filter((template) => !template.isArchived)
-          .map((template) => ({ childId: child.id, template })),
+      mapWithConcurrency(
+        this.features.enabled('taskLibrary') ? children : [],
+        PER_ITEM_REQUEST_CONCURRENCY,
+        async (child) =>
+          (await this.taskLibrary.listTaskTemplates(child.id))
+            .filter((template) => !template.isArchived)
+            .map((template) => ({ childId: child.id, template })),
       ),
       mapWithConcurrency(calendars, PER_ITEM_REQUEST_CONCURRENCY, async (calendar) =>
         (
@@ -217,7 +239,7 @@ export class OnboardingService {
           )
         ).some((occurrence) => occurrence.routine !== null),
       ),
-      familyChild !== undefined
+      familyChild !== undefined && this.features.enabled('mealplans')
         ? this.mealplans.listMealPlan(
             { kind: 'family', childId: familyChild.id },
             addDaysIso(today, -MEAL_LOOKBACK_DAYS),

@@ -57,34 +57,42 @@
         </div>
       </div>
 
-      <a
-        routerLink="/guardian/mealplan"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.mealPlanner' | translate }}
-      </a>
-      <a
-        routerLink="/guardian/task-library"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.taskLibrary' | translate }}
-      </a>
-      <a
-        routerLink="/guardian/medicine"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.medicine' | translate }}
-      </a>
-      <a
-        routerLink="/guardian/sleep-diary"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.sleepDiary' | translate }}
-      </a>
+      @if (features.enabled('mealplans')) {
+        <a
+          routerLink="/guardian/mealplan"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.mealPlanner' | translate }}
+        </a>
+      }
+      @if (features.enabled('taskLibrary')) {
+        <a
+          routerLink="/guardian/task-library"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.taskLibrary' | translate }}
+        </a>
+      }
+      @if (features.enabled('medicines')) {
+        <a
+          routerLink="/guardian/medicine"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.medicine' | translate }}
+        </a>
+      }
+      @if (features.enabled('sleepDiary')) {
+        <a
+          routerLink="/guardian/sleep-diary"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.sleepDiary' | translate }}
+        </a>
+      }
       <a
         routerLink="/guardian/calendar"
         class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -92,34 +100,42 @@
       >
         {{ 'shell.menu.calendar' | translate }}
       </a>
-      <a
-        routerLink="/guardian/progress"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.progress' | translate }}
-      </a>
-      <a
-        routerLink="/guardian/work-locations"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.workLocations' | translate }}
-      </a>
-      <a
-        routerLink="/guardian/babysitters"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.babysitters' | translate }}
-      </a>
-      <a
-        routerLink="/guardian/print"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.print' | translate }}
-      </a>
+      @if (features.enabled('progress')) {
+        <a
+          routerLink="/guardian/progress"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.progress' | translate }}
+        </a>
+      }
+      @if (features.enabled('workLocations')) {
+        <a
+          routerLink="/guardian/work-locations"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.workLocations' | translate }}
+        </a>
+      }
+      @if (features.enabled('babysitters')) {
+        <a
+          routerLink="/guardian/babysitters"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.babysitters' | translate }}
+        </a>
+      }
+      @if (features.enabled('printing')) {
+        <a
+          routerLink="/guardian/print"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.print' | translate }}
+        </a>
+      }
       <a
         routerLink="/guardian/admin"
         class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -127,13 +143,15 @@
       >
         {{ 'shell.menu.settings' | translate }}
       </a>
-      <a
-        routerLink="/guardian/help"
-        class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        (click)="close()"
-      >
-        {{ 'shell.menu.help' | translate }}
-      </a>
+      @if (features.enabled('help')) {
+        <a
+          routerLink="/guardian/help"
+          class="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="close()"
+        >
+          {{ 'shell.menu.help' | translate }}
+        </a>
+      }
       <button
         type="button"
         class="block w-full px-4 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"

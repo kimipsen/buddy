@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { FeaturesService } from '../../../../core/features.service';
 import { firstAndLast } from '../../../../core/array-utils';
 import {
   AssignableMember,
@@ -206,6 +207,8 @@ function formatDuration(totalMinutes: number): string {
   templateUrl: './agenda.html',
 })
 export class CalendarAgenda {
+  protected readonly features = inject(FeaturesService);
+
   private readonly calendars = inject(CalendarsService);
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
@@ -519,7 +522,7 @@ export class CalendarAgenda {
         (candidate) => candidate.id === this.newAssignedTo(),
       );
 
-      if (child) {
+      if (child && this.features.enabled('taskLibrary')) {
         void this.taskLibrary.listTaskTemplates(child.id);
       } else {
         this.taskLibrary.clearTemplates();

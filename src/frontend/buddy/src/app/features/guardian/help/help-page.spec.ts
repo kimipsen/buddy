@@ -8,6 +8,7 @@ import { HELP_TOPICS } from '../../../core/help/help-topics';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { RuntimeConfigService } from '../../../core/runtime-config.service';
 import { GuardianHelp } from './help-page';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 @Component({ template: '' })
 class Blank {}
@@ -108,5 +109,18 @@ describe('GuardianHelp', () => {
     const link = page.querySelector<HTMLAnchorElement>('a[href="https://example.test/buddy"]');
     expect(link?.getAttribute('target')).toBe('_blank');
     expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('leaves out the topics of features that are turned off', async () => {
+    disableFeatures('medicines', 'printing');
+    const page = await open('/help');
+
+    const contents = Array.from(page.querySelectorAll('nav button')).map((button) =>
+      button.textContent?.trim(),
+    );
+    expect(contents).toHaveLength(HELP_TOPICS.length - 2);
+    expect(contents).not.toContain(title('medicine'));
+    expect(contents).not.toContain(title('print'));
+    expect(contents).toContain(title('calendar'));
   });
 });

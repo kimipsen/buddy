@@ -14,6 +14,7 @@ import { TaskLibraryService, TaskTemplate } from '../../../../core/task-library.
 import { UsersService } from '../../../../core/users.service';
 import { CalendarAgenda } from './agenda';
 import { FlatOccurrence, nestOccurrence } from '../../../../../testing/occurrence-fixture';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 describe('CalendarAgenda', () => {
   const today = todayIsoDate();
@@ -1813,5 +1814,31 @@ describe('CalendarAgenda', () => {
       expect(taskLibrary.clearTemplates).toHaveBeenCalled();
       expect(taskLibrary.listTaskTemplates).not.toHaveBeenCalledWith('guardian-2');
     });
+  });
+
+  it('offers no "From template" source and loads no templates while the task library is off', async () => {
+    disableFeatures('taskLibrary');
+    const members: AssignableMember[] = [
+      { userId: 'child-1', givenName: 'Sam', familyName: 'Kid' },
+    ];
+    const { fixture, taskLibrary } = await setup({
+      calendars: { listAssignableMembers: vi.fn(async () => members) },
+      guardians: { listMyChildren: vi.fn(async () => [childSummary({ id: 'child-1' })]) },
+    });
+    await settle(fixture);
+
+    let compiled = fixture.nativeElement as HTMLElement;
+    findButtonByText(compiled, 'Task')!.click();
+    await settle(fixture);
+
+    compiled = fixture.nativeElement as HTMLElement;
+    selectValue(
+      compiled.querySelector<HTMLSelectElement>('select[name="itemAssignee"]')!,
+      'child-1',
+    );
+    await settle(fixture);
+
+    expect(findButtonByText(compiled, 'From template')).toBeUndefined();
+    expect(taskLibrary.listTaskTemplates).not.toHaveBeenCalled();
   });
 });

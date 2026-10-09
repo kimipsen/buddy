@@ -16,6 +16,7 @@ import {
   CalendarOccurrence,
   CalendarsService,
 } from '../../../core/calendars.service';
+import { FeaturesService } from '../../../core/features.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -112,6 +113,8 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
   templateUrl: './home.html',
 })
 export class ChildHome implements OnInit, OnDestroy {
+  protected readonly features = inject(FeaturesService);
+
   private readonly guardians = inject(GuardiansService);
   private readonly pickups = inject(PickupsService);
   private readonly users = inject(UsersService);
@@ -155,7 +158,13 @@ export class ChildHome implements OnInit, OnDestroy {
   });
   // Progress is a supplementary widget, not core dashboard data -- a failed load just leaves the
   // badge as it was (the starting seedling, or the last progress that loaded), with no error.
-  private readonly progress = resource({ loader: () => this.progressService.getMyProgress() });
+  // Not asked for at all while progress is turned off: the badge isn't shown.
+  private readonly progress = resource({
+    loader: () =>
+      this.features.enabled('progress')
+        ? this.progressService.getMyProgress()
+        : Promise.resolve(undefined),
+  });
 
   protected readonly badge = linkedSignal<ProgressSummary | undefined, ProgressSummary>({
     source: () => (this.progress.hasValue() ? this.progress.value() : undefined),
@@ -372,7 +381,12 @@ export class ChildHome implements OnInit, OnDestroy {
     );
   }
 
+  // A disabled feature's section loads empty, so it isn't shown and its 404 isn't a load error.
   private async loadTodaysPickups(): Promise<PickupOccurrence[]> {
+    if (!this.features.enabled('pickups')) {
+      return [];
+    }
+
     try {
       const me = await this.users.ensureCurrentUser();
       const today = todayIsoDate();
@@ -448,6 +462,10 @@ export class ChildHome implements OnInit, OnDestroy {
     childId: string,
     today: string,
   ): Promise<Partial<Record<MealSlot, MealPlanEntry>>> {
+    if (!this.features.enabled('mealplans')) {
+      return {};
+    }
+
     const entries = await this.mealplans.listMealPlan({ kind: 'family', childId }, today, today);
     const bySlot: Partial<Record<MealSlot, MealPlanEntry>> = {};
 
@@ -459,6 +477,10 @@ export class ChildHome implements OnInit, OnDestroy {
   }
 
   private async loadDoses(childId: string, today: string): Promise<MedicineDoseOccurrence[]> {
+    if (!this.features.enabled('medicines')) {
+      return [];
+    }
+
     const occurrences = await this.medicines.listDoses(childId, today, today);
     return [...occurrences].sort((a, b) => a.time.localeCompare(b.time));
   }

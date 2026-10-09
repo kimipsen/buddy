@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 
 import { CalendarsService } from '../../../core/calendars.service';
 import { addDaysIso } from '../../../core/date-utils';
+import { FeaturesService } from '../../../core/features.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import {
   PER_ITEM_REQUEST_CONCURRENCY,
@@ -12,6 +13,7 @@ import { PickupsService } from '../../../core/pickups.service';
 import { PRINT_ROW_KIND, PrintRowKind, PrintTemplate } from '../../../core/print-templates.service';
 import { WorkLocationsService } from '../../../core/work-locations.service';
 import { WEEK_PLAN_DAY_COUNT } from './assemble-week-plan';
+import { rowKindFeature } from './template-rows';
 import { WeekPlanSources, mealSourceKey } from './week-plan-model';
 
 const CALENDAR_KINDS: PrintRowKind[] = [
@@ -31,6 +33,7 @@ export class WeekPlanLoader {
   private readonly mealplans = inject(MealplansService);
   private readonly pickups = inject(PickupsService);
   private readonly workLocations = inject(WorkLocationsService);
+  private readonly features = inject(FeaturesService);
 
   async load(template: PrintTemplate, start: string): Promise<WeekPlanSources> {
     const from = start;
@@ -70,15 +73,28 @@ export class WeekPlanLoader {
       ...[...meals].map(
         ([key, scope]) =>
           () =>
-            settle(this.mealplans.listMealPlan(scope, from, to), (v) => result.meals.set(key, v)),
+            settle(
+              this.unlessOff(PRINT_ROW_KIND.meal, () =>
+                this.mealplans.listMealPlan(scope, from, to),
+              ),
+              (v) => result.meals.set(key, v),
+            ),
       ),
       ...childIds.map(
         (id) => () =>
-          settle(this.pickups.listSchedule(id, from, to), (v) => result.pickups.set(id, v)),
+          settle(
+            this.unlessOff(PRINT_ROW_KIND.pickup, () => this.pickups.listSchedule(id, from, to)),
+            (v) => result.pickups.set(id, v),
+          ),
       ),
       ...guardianIds.map(
         (id) => () =>
-          settle(this.workLocations.listWorkDays(id, from, to), (v) => result.workDays.set(id, v)),
+          settle(
+            this.unlessOff(PRINT_ROW_KIND.workLocation, () =>
+              this.workLocations.listWorkDays(id, from, to),
+            ),
+            (v) => result.workDays.set(id, v),
+          ),
       ),
       ...calendarIds.map(
         (id) => () =>
@@ -92,6 +108,15 @@ export class WeekPlanLoader {
     await mapWithConcurrency(tasks, PER_ITEM_REQUEST_CONCURRENCY, (task) => task());
 
     return result;
+  }
+
+  // A disabled feature's routes aren't mapped, so its rows aren't fetched: an empty source prints
+  // them blank rather than "unavailable" -- nothing failed.
+  private unlessOff<T>(kind: PrintRowKind, request: () => Promise<T[]>): Promise<T[]> {
+    const feature = rowKindFeature(kind);
+    return feature === undefined || this.features.enabled(feature)
+      ? request()
+      : Promise.resolve([]);
   }
 
   // Given names for the guardian's children and every guardian of those children -- covers pickup

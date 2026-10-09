@@ -10,10 +10,11 @@ namespace buddy.Common.Configuration;
 // register (the integration-test fixture's ConfigurationOverride) are what gets validated.
 public static class ValidatedOptions
 {
-    public static OptionsBuilder<TOptions> AddValidatedOptions<TOptions>(this IServiceCollection services, string sectionName)
+    public static OptionsBuilder<TOptions> AddValidatedOptions<TOptions>(
+        this IServiceCollection services, string sectionName, Action<BinderOptions>? configureBinder = null)
         where TOptions : class =>
         services.AddOptions<TOptions>()
-            .BindConfiguration(sectionName)
+            .BindConfiguration(sectionName, configureBinder)
             .ValidateDataAnnotations()
             .ValidateOnStart();
 }

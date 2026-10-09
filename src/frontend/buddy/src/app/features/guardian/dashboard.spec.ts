@@ -10,6 +10,7 @@ import { MedicinesService } from '../../core/medicines.service';
 import { PickupsService } from '../../core/pickups.service';
 import { CurrentUser, UsersService } from '../../core/users.service';
 import { GuardianDashboard } from './dashboard';
+import { disableFeatures } from '../../../testing/features-fixture';
 
 // GuardianDashboard is a pure composition shell -- it wires together six already-covered "today"
 // widgets (see each widget's own .spec.ts for its behavior) with no logic of its own. This spec
@@ -92,5 +93,19 @@ describe('GuardianDashboard', () => {
     for (const selector of selectors) {
       expect(compiled.querySelector(selector)).toBeTruthy();
     }
+  });
+
+  it('leaves out the cards and the print link of features that are turned off', async () => {
+    disableFeatures('mealplans', 'medicines', 'pickups', 'printing');
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    for (const selector of ['app-mealplan-today', 'app-doses-today', 'app-pickup-today']) {
+      expect(compiled.querySelector(selector)).toBeNull();
+    }
+    expect(compiled.querySelector('a[href="/guardian/print"]')).toBeNull();
+    expect(compiled.querySelector('app-tasks-today')).toBeTruthy();
+    expect(compiled.querySelector('app-events-today')).toBeTruthy();
   });
 });

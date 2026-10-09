@@ -1,5 +1,6 @@
 import { Component, inject, resource, signal } from '@angular/core';
 
+import { FeaturesService } from '../../../core/features.service';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { mapWithConcurrency } from '../../../core/map-with-concurrency';
@@ -18,6 +19,8 @@ export const PROGRESS_REQUEST_CONCURRENCY = 4;
   templateUrl: './children-overview.html',
 })
 export class ChildrenOverview {
+  private readonly features = inject(FeaturesService);
+
   private readonly guardians = inject(GuardiansService);
   private readonly progressService = inject(ProgressService);
 
@@ -31,7 +34,11 @@ export class ChildrenOverview {
 
   private async loadChildren(): Promise<ChildSummary[]> {
     const children = await this.guardians.listMyChildren();
-    void this.loadProgress(children);
+
+    if (this.features.enabled('progress')) {
+      void this.loadProgress(children);
+    }
+
     return children;
   }
 

@@ -16,6 +16,7 @@ import { CurrentUser, UsersService } from '../../../../core/users.service';
 import { WorkLocationsService } from '../../../../core/work-locations.service';
 import { WeekPlanLoader } from '../week-plan-loader';
 import { PrintTemplateEditor } from './print-template-editor';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 describe('PrintTemplateEditor', () => {
   const template: PrintTemplate = {
@@ -484,5 +485,41 @@ describe('PrintTemplateEditor', () => {
 
     expect(root.textContent).toContain('Unable to save the template.');
     expect(root.querySelector<HTMLInputElement>('#template-name')!.value).toBe('Skoleuge');
+  });
+
+  it('offers no rows from features that are turned off, and does not look their data up', async () => {
+    disableFeatures('mealplans', 'pickups', 'workLocations', 'babysitters');
+    const { fixture, root } = await setup();
+
+    const kinds = Array.from(root.querySelectorAll<HTMLOptionElement>('#new-row-kind option')).map(
+      (option) => option.textContent?.trim(),
+    );
+    expect(kinds).toHaveLength(4);
+
+    button(root, 'Start from example').click();
+    await settle(fixture);
+    const labels = Array.from(
+      root.querySelectorAll<HTMLInputElement>('input[id^="row-label-"]'),
+    ).map((i) => i.value);
+    expect(labels).not.toContain('Dinner');
+    expect(labels).not.toContain('Mor at Randers');
+
+    const babysitters = TestBed.inject(BabysittersService);
+    expect(babysitters.listMine).not.toHaveBeenCalled();
+    expect(babysitters.listForChild).not.toHaveBeenCalled();
+    expect(TestBed.inject(WorkLocationsService).getSchedule).not.toHaveBeenCalled();
+  });
+
+  it('keeps the kind of an existing row from a turned-off feature in its own select', async () => {
+    disableFeatures('pickups');
+    const { root } = await setup();
+
+    const rowKind = root.querySelector<HTMLSelectElement>('select[id^="row-kind-"]')!;
+    expect(rowKind.selectedOptions[0]?.textContent?.trim()).toBe('Drop-off / pick-up');
+
+    const newRowKinds = Array.from(
+      root.querySelectorAll<HTMLOptionElement>('#new-row-kind option'),
+    ).map((option) => option.textContent?.trim());
+    expect(newRowKinds).not.toContain('Drop-off / pick-up');
   });
 });

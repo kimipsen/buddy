@@ -13,6 +13,7 @@ import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealpla
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildCalendar } from './child-calendar';
 import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 describe('ChildCalendar', () => {
   const today = todayIsoDate();
@@ -888,5 +889,16 @@ describe('ChildCalendar', () => {
     await settle(fixture);
 
     expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(today, addDays(today, 6));
+  });
+
+  it('neither loads nor shows meals while meal plans are turned off', async () => {
+    disableFeatures('mealplans');
+    const { fixture, mealplans } = await setup();
+    await settle(fixture);
+
+    expect(mealplans.listMealPlan).not.toHaveBeenCalled();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Something went wrong',
+    );
   });
 });

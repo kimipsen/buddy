@@ -1,6 +1,7 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../core/features.service';
 import { HelpTopic, sectionKey, stepKeys, topicKey } from '../../core/help/help-topic';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -16,15 +17,19 @@ export class HelpContent {
   readonly topic = input.required<HelpTopic>();
   readonly headingLevel = input(3);
 
+  private readonly features = inject(FeaturesService);
+
   protected readonly sections = computed(() => {
     const topic = this.topic();
 
-    return topic.sections.map((section) => ({
-      id: section.id,
-      titleKey: sectionKey(topic, section, 'title'),
-      bodyKey: sectionKey(topic, section, 'body'),
-      stepKeys: stepKeys(topic, section),
-    }));
+    return topic.sections
+      .filter((section) => this.features.offers(section))
+      .map((section) => ({
+        id: section.id,
+        titleKey: sectionKey(topic, section, 'title'),
+        bodyKey: sectionKey(topic, section, 'body'),
+        stepKeys: stepKeys(topic, section),
+      }));
   });
 
   protected readonly link = computed(() => {

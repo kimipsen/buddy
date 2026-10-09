@@ -1,6 +1,6 @@
 # Feature Flags
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `FeatureOptions` (`Features:*`, unknown keys fail startup) and `FeatureFlagsFeature` in `Common/FeatureFlags/`: `Program.cs` skips the `Map*Feature` call of a disabled feature (and `MapMealplansFeature` / `MapCalendarsFeature` their sub-flagged endpoints), and the anonymous `GET /features` (`GetFeatures`, response `InstallationFeatures`) reports the effective flags. Frontend: `FeaturesService` (loaded with `fetch` after the runtime config), `featureGuard` on every flagged route, and hidden links, cards, sections, onboarding steps, help topics and print row kinds. Deploy: `Features__*` in `deploy/.env`, `FEATURES` for Azure. `FeatureFlagsTests`, `feature-routes.spec.ts`.
 
 ## Context
 
@@ -42,7 +42,7 @@ features that depend on each other behave.
 startup. There is no admin screen.**
 
 ```csharp
-// Common/Features/FeatureOptions.cs
+// Common/FeatureFlags/FeatureOptions.cs
 public sealed class FeatureOptions
 {
     public const string SectionName = "Features";
@@ -218,6 +218,10 @@ handler, command or endpoint file changes.
 - **The committed OpenAPI contract stays complete.** `task docs:openapi` runs with the default
   configuration (all on), so `buddy.json` and `buddy-api.ts` keep every endpoint. On an installation
   with a feature off, its OpenAPI document simply lists fewer operations.
+- **`ScheduleTaskFromTemplate` answers `405`, not `404`.** Its `POST
+  /calendars/{calendarId}/items/from-template` path also matches the template of
+  `DELETE /calendars/{calendarId}/items/{itemId:guid}`, and routing rejects the method before it
+  checks the guid constraint. Nothing runs either way, and no caller tells the two apart.
 - **Disabled iCal feeds return 404.** A calendar app subscribed to the meal plan feed reports the
   subscription as broken. That is the honest answer. When the flag comes back on, the same token
   works again, because tokens are data (Question 3).
@@ -256,17 +260,21 @@ GET /features   (anonymous, like /version)
 - **Effective values.** The endpoint returns `MealplanAiAssistant && Mealplans` (see Question 6),
   so the frontend never has to apply the dependency rules itself.
 - **Loading.** `provideAppInitializer` already awaits `RuntimeConfigService.load()`
-  ([`app.config.ts:17`](../../../src/frontend/buddy/src/app/app.config.ts)). `FeaturesService.load()`
-  chains after it, because it needs `apiBaseUrl`. If the call fails (API down), the service falls
-  back to **all on** and logs a warning. The backend still enforces the flags, so the worst case is
+  ([`app.config.ts`](../../../src/frontend/buddy/src/app/app.config.ts)). `FeaturesService.load()`
+  chains after it, because it needs `apiBaseUrl`. It uses `fetch`, as `RuntimeConfigService` does,
+  not `HttpClient`: in an app initializer the auth interceptor's token refresh and `/login` redirect
+  would run before the router, for an endpoint that needs no token. If the call fails (API down), or
+  gets no answer within 3 seconds (`FEATURES_LOAD_TIMEOUT_MS`), the service falls back to **all on**
+  and logs a warning. The backend still enforces the flags, so the worst case is
   a page that shows its usual load error. Blocking the whole app on this call would turn a
   transient API hiccup into a blank screen.
-- **`FeaturesService`** exposes a signal of the flags and `enabled(name): boolean`. The names are a
-  `FeatureName` union generated from the endpoint's DTO into `buddy-api.ts` by `task docs:openapi`,
-  so a renamed flag fails `tsc`.
+- **`FeaturesService`** exposes `enabled(name): boolean` over a signal of the flags, and
+  `offers(item)` for registry entries tagged with an optional `feature` (help topics and sections).
+  `FeatureName` is `keyof InstallationFeatures`, the endpoint's DTO generated into `buddy-api.ts` by
+  `task docs:openapi`, so a renamed flag fails `tsc`.
 - **`featureGuard(name)`** is a `CanActivateFn` factory next to
-  [`onboarding.guard.ts`](../../../src/frontend/buddy/src/app/core/onboarding.guard.ts). It redirects
-  to the role's home (`/guardian` or `/child`) when the feature is off. Every flagged route in
+  [`onboarding.guard.ts`](../../../src/frontend/buddy/src/app/core/onboarding.guard.ts). When the
+  feature is off it redirects to `/`, where `roleRedirectGuard` picks the role's home. Every flagged route in
   `guardian.routes.ts`, `child.routes.ts` and `app.routes.ts` gets
   `canActivate: [featureGuard('...')]`.
 - **Surfaces to hide.** These are the links and widgets that point into flagged features:
@@ -276,11 +284,17 @@ GET /features   (anonymous, like /version)
   - the AI provider section on admin
   - the babysitter links and assignee options in pickups (`pickup.html`, `pickup-cell.html`)
   - the child home sections and links (`child/home/home.html`)
-  - the onboarding meal step
-  - the help `?` button and help index entries for disabled features
-  - "schedule from library" in the calendar
+  - the onboarding task and meal steps and their summary rows (`offeredSteps` in
+    `onboarding.service.ts`; the guide finishes without them)
+  - the help `?` button (`Help=false`), and the help topics, sections and related links of disabled
+    features (`feature` on the entries in `core/help/help-topics.ts`)
+  - "From template" in the calendar's new-task form
+  - the progress badges on the child home and the children overview
 
-  Each one gets an `@if`. A disabled feature's page component is never loaded.
+  Each one gets an `@if` or a filter. A component that loads data for a disabled feature (the child
+  home's meals, doses and pickups, the child calendar's meals, onboarding's templates and meal plan,
+  the pickup grid's babysitters) skips the request instead of turning its 404 into a load error. A
+  disabled feature's page component is never loaded.
 
 Rejected: **putting flags on `GET /users/me`.** It needs authentication, so the shared sleep diary
 page couldn't use it. It is also per user, while flags are per installation.
@@ -314,19 +328,23 @@ added.
 GET /features   GetFeatures   anonymous, global anonymous rate-limit partition
 ```
 
-The endpoint lives in `Common/Features/FeaturesEndpoint.cs` next to `FeatureOptions`, the same shape
-as `Common/Versioning/VersionEndpoint.cs`. Its response DTO is a record with one `bool` per flag.
-It goes in the v1 OpenAPI document with `/health` and `/version`.
+The endpoint is mapped by `Common/FeatureFlags/FeatureFlagsFeature.cs`, next to `FeatureOptions`, in
+the same shape as `Common/Versioning/VersionEndpoint.cs`. Its response DTO, `InstallationFeatures`,
+is a record with one `bool` per flag. It goes in the v1 OpenAPI document with `/health` and
+`/version`. Like `/version`, it is on the `RateLimitingCoverageTests` list of anonymous endpoints
+that only use the global limit and on the `ETagCoverageTests` exclusion list.
 
 ## Frontend
 
-- `core/features.service.ts` + spec (`HttpTestingController`: loads flags, falls back to all-on on
-  error, `enabled()`).
+- `core/features.service.ts` + spec (stubbed `fetch`: loads flags, falls back to all-on on error,
+  `enabled()`, `offers()`).
 - `core/feature.guard.ts` + spec.
 - `app.config.ts`: chain `FeaturesService.load()` after the runtime config.
-- `@if` guards on the surfaces listed in Question 5, with spec cases for one representative per
-  component (dashboard card hidden, profile menu link hidden, child home section hidden).
-- `week-plan-loader.ts`: skip disabled row kinds.
+- `@if` guards on the surfaces listed in Question 5, with a spec case in each component's spec.
+  `src/testing/features-fixture.ts` has `provideFeatures(...)` and `disableFeatures(...)` for them.
+- `feature-routes.spec.ts`: every flagged route lets the navigation through when its feature is on
+  and redirects it when the feature is off.
+- `week-plan-loader.ts`: a disabled row kind gets an empty source instead of a request.
 - No new i18n keys: everything removed is existing text. The print editor's row-kind picker filters
   its existing options.
 - `help-coverage.spec.ts` and `screenshot-coverage.spec.ts` are unchanged: routes are still
@@ -338,14 +356,16 @@ It goes in the v1 OpenAPI document with `/health` and `/version`.
   low-limit host:
   - a route of every flagged group returns `404`, including the anonymous meal plan iCal feed and
     shared sleep diary
-  - `ScheduleTaskFromTemplate` returns `404` with `TaskLibrary=false`, while the rest of
-    `/calendars` works
+  - `ScheduleTaskFromTemplate` is unmapped with `TaskLibrary=false` (`405`, see Question 4), while
+    the rest of `/calendars` works
   - the AI and import endpoints return `404` with only their sub-flag off, while `/mealplans`
     works
   - `GET /features` reflects the overrides and the parent rule
-  - data export and erasure still include a disabled feature's data
-- **`GetFeaturesTests`** on the shared fixture: all `true` by default, anonymous access.
-- **Startup:** an unknown `Features:Medecines` key fails host start.
+  - the data export still includes a disabled feature's data
+  - all `true` by default on the shared fixture, anonymous access, camel-case names
+  - startup: an unknown `Features:Medecines` key or a non-boolean value fails host start
+- **`FeatureOptionsTests`**, without a host: defaults with no `Features` section, and which
+  sub-flags a disabled parent overrides
 - **Frontend:** the specs listed above. One e2e spec isn't practical, because the e2e suite runs
   against the shared dev API with every feature on. Coverage of the hiding comes from unit specs.
 
@@ -358,7 +378,7 @@ It goes in the v1 OpenAPI document with `/health` and `/version`.
 | Non-boolean value (`Features__Medicines=no`) | Host fails at startup (binder conversion error) |
 | Feature turned off with data in it | Data kept, hidden. Still in GDPR export and erasure. Back as it was when turned on again. |
 | Feature turned off while a guardian has its page open | Next API call answers `404`. The page shows its normal load error. A reload sends them home through `featureGuard`. |
-| Bookmark or deep link to a disabled page | `featureGuard` redirects to the role's home |
+| Bookmark or deep link to a disabled page | `featureGuard` redirects to `/`, and `roleRedirectGuard` on to the role's home |
 | `GET /features` fails at app start | Frontend treats every feature as on and logs a warning. The backend still enforces. |
 | Calendar app polling a disabled meal plan iCal feed | `404`. The same token works again once the feature is back. |
 | AI assistant off with an active AI session | Session endpoints `404`. `AiSessionRetentionService` still deletes the session after 30 days. |
@@ -376,13 +396,10 @@ It goes in the v1 OpenAPI document with `/health` and `/version`.
 | Frontend source | Anonymous `GET /features`, so the flags have a single source and one image serves every installation |
 | Frontend enforcement | `featureGuard` on routes, `@if` on links, cards and sections |
 | Dependencies | Sub-flags follow their parent. Cross-feature data degrades to not shown. No startup failure. |
+| Azure | One optional `FEATURES` list of `Name=true\|false` pairs in `deploy/azure/.env`, shape-checked by `deploy.sh`, rather than 12 separate keys. Docker Compose reads `Features__*` lines from `deploy/.env` through `env_file`. |
 
 ## Remaining open questions
 
-- **Should the Azure deploy take flags as one `FEATURES` list or as individual variables?** The
-  lean is one comma-separated list, because `deploy.sh` already reads `.env` keys one by one and
-  12 new optional keys would clutter `.env.example`. Docker Compose gets them for free through
-  `env_file`, so this only affects Azure.
 - **Should disabled features also be removed from the per-feature OpenAPI documents served at
   runtime?** They are already gone, because unmapped endpoints aren't described. The lean is to
   leave it at that. The committed contract is generated with everything on.

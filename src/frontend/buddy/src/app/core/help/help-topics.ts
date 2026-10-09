@@ -6,7 +6,12 @@ import { HelpTopic } from './help-topic';
 export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'dashboard',
-    sections: [{ id: 'overview' }, { id: 'tasks' }, { id: 'medicine' }, { id: 'mealsAndPickups' }],
+    sections: [
+      { id: 'overview' },
+      { id: 'tasks' },
+      { id: 'medicine', feature: 'medicines' },
+      { id: 'mealsAndPickups' },
+    ],
     related: ['calendar', 'medicine', 'mealPlans', 'pickup'],
     link: '/guardian/onboarding',
   },
@@ -22,6 +27,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   },
   {
     id: 'taskLibrary',
+    feature: 'taskLibrary',
     sections: [
       { id: 'templates' },
       { id: 'buildTemplate', steps: 4 },
@@ -32,21 +38,24 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   },
   {
     id: 'mealPlans',
+    feature: 'mealplans',
     sections: [
       { id: 'planWeek', steps: 3 },
-      { id: 'aiAssistant', steps: 4 },
-      { id: 'importPlans', steps: 4 },
+      { id: 'aiAssistant', steps: 4, feature: 'mealplanAiAssistant' },
+      { id: 'importPlans', steps: 4, feature: 'mealplanImport' },
       { id: 'calendarLink' },
     ],
     related: ['dashboard', 'groupsAndSharing', 'print'],
   },
   {
     id: 'medicine',
+    feature: 'medicines',
     sections: [{ id: 'addSchedule', steps: 4 }, { id: 'doseTimes' }, { id: 'doseStatus' }],
     related: ['dashboard', 'groupsAndSharing'],
   },
   {
     id: 'sleepDiary',
+    feature: 'sleepDiary',
     sections: [
       { id: 'logNight', steps: 3 },
       { id: 'hygieneNotes' },
@@ -56,11 +65,13 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   },
   {
     id: 'progress',
+    feature: 'progress',
     sections: [{ id: 'earnStars' }, { id: 'goalPosts', steps: 4 }, { id: 'milestones' }],
     related: ['calendar', 'taskLibrary'],
   },
   {
     id: 'pickup',
+    feature: 'pickups',
     sections: [
       { id: 'planSlot', steps: 4 },
       { id: 'whoTakesCare' },
@@ -71,11 +82,13 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   },
   {
     id: 'babysitters',
+    feature: 'babysitters',
     sections: [{ id: 'addBabysitter', steps: 3 }, { id: 'useInPickups' }, { id: 'editOrRemove' }],
     related: ['pickup', 'print'],
   },
   {
     id: 'workLocations',
+    feature: 'workLocations',
     sections: [
       { id: 'addLocations', steps: 4 },
       { id: 'weeklyPattern', steps: 4 },
@@ -86,6 +99,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   },
   {
     id: 'print',
+    feature: 'printing',
     sections: [
       { id: 'printWeekPlan', steps: 4 },
       { id: 'createTemplate', steps: 3 },
@@ -117,7 +131,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       { id: 'account' },
       { id: 'children', steps: 4 },
       { id: 'groupsAndCalendars' },
-      { id: 'aiAssistant', steps: 4 },
+      { id: 'aiAssistant', steps: 4, feature: 'mealplanAiAssistant' },
     ],
     related: ['groupsAndSharing', 'calendar', 'mealPlans'],
   },

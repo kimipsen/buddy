@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
 import { ChildrenOverview, PROGRESS_REQUEST_CONCURRENCY } from './children-overview';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 describe('ChildrenOverview', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
@@ -245,5 +246,16 @@ describe('ChildrenOverview', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
       'Unable to load children.',
     );
+  });
+
+  it('lists the children without asking for progress while progress is turned off', async () => {
+    disableFeatures('progress');
+    const { fixture, progress } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
+    await settle(fixture);
+
+    expect(progress.getChildProgress).not.toHaveBeenCalled();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('li')).toHaveLength(1);
   });
 });

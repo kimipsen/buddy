@@ -12,6 +12,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../../../core/features.service';
 import { sortByName, swapped } from '../../../../core/array-utils';
 import { BabysittersService } from '../../../../core/babysitters.service';
 import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
@@ -63,6 +64,7 @@ import {
   exampleRows,
   missingField,
   usesCalendars,
+  rowKindFeature,
 } from '../template-rows';
 import { WeekPlanLoader } from '../week-plan-loader';
 import { WeekPlanSources } from '../week-plan-model';
@@ -153,6 +155,8 @@ const EMPTY_SOURCES: WeekPlanSources = {
   templateUrl: './print-template-editor.html',
 })
 export class PrintTemplateEditor {
+  private readonly features = inject(FeaturesService);
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly templates = inject(PrintTemplatesService);
@@ -168,7 +172,16 @@ export class PrintTemplateEditor {
 
   protected readonly kind = PRINT_ROW_KIND;
   protected readonly kindLabels = KIND_LABELS;
-  protected readonly kinds = Object.keys(KIND_LABELS) as PrintRowKind[];
+  protected readonly kinds = (Object.keys(KIND_LABELS) as PrintRowKind[]).filter((kind) => {
+    const feature = rowKindFeature(kind);
+    return feature === undefined || this.features.enabled(feature);
+  });
+  // An existing row of a turned-off feature keeps its kind, so its select still says what it is.
+  protected kindsFor(current: PrintRowKind): PrintRowKind[] {
+    return (Object.keys(KIND_LABELS) as PrintRowKind[]).filter(
+      (kind) => kind === current || this.kinds.includes(kind),
+    );
+  }
   protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
   protected readonly mealSlots: MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
   protected readonly maxItemsOptions = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -519,7 +532,9 @@ export class PrintTemplateEditor {
         notes: t('print.editor.example.notes'),
       },
     });
-    this.rows.set(rows.map((row) => this.draft(row)));
+    this.rows.set(
+      rows.filter((row) => this.kinds.includes(row.kind)).map((row) => this.draft(row)),
+    );
   }
 
   protected async save(): Promise<void> {
@@ -608,7 +623,9 @@ export class PrintTemplateEditor {
       this.calendarsService.listMyCalendars(),
       this.groupsService.listMyGroups(),
       this.users.ensureCurrentUser(),
-      this.babysittersService.listMine().catch(() => []),
+      this.features.enabled('babysitters')
+        ? this.babysittersService.listMine().catch(() => [])
+        : Promise.resolve([]),
     ]);
 
     // The guardian themself plus every guardian of their children -- the people a work-location
@@ -620,7 +637,7 @@ export class PrintTemplateEditor {
     const guardians = [...new Map([self, ...lists.flat()].map((g) => [g.id, g])).values()];
 
     const schedules = await mapWithConcurrency(
-      guardians,
+      this.features.enabled('workLocations') ? guardians : [],
       PER_ITEM_REQUEST_CONCURRENCY,
       (guardian) =>
         this.workLocationsService
@@ -632,7 +649,7 @@ export class PrintTemplateEditor {
     // The guardian's own list plus each child's (every co-guardian's active babysitters), so a
     // guardian without children still sees their own.
     const childBabysitters = await mapWithConcurrency(
-      children,
+      this.features.enabled('babysitters') ? children : [],
       PER_ITEM_REQUEST_CONCURRENCY,
       (child) => this.babysittersService.listForChild(child.id).catch(() => []),
     );

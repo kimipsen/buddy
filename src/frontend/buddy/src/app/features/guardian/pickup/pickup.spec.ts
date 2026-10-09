@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { GuardiansService } from '../../../core/guardians.service';
 import { PickupsService } from '../../../core/pickups.service';
 import { GuardianPickup } from './pickup';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 // GuardianPickup is a trivial shell: a back link plus <app-manage-pickups>, no logic of its own.
 // This smoke test only confirms it renders that composition -- ManagePickups' own behavior is
@@ -42,5 +43,23 @@ describe('GuardianPickup', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-manage-pickups')).toBeTruthy();
     expect(compiled.querySelector('a[href="/guardian"]')).toBeTruthy();
+  });
+
+  it('links to the babysitters page only while babysitters are turned on', async () => {
+    const { fixture } = await setup();
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('a[href="/guardian/babysitters"]'),
+    ).toBeTruthy();
+
+    TestBed.resetTestingModule();
+    disableFeatures('babysitters');
+    const { fixture: withoutBabysitters } = await setup();
+    withoutBabysitters.detectChanges();
+    expect(
+      (withoutBabysitters.nativeElement as HTMLElement).querySelector(
+        'a[href="/guardian/babysitters"]',
+      ),
+    ).toBeNull();
   });
 });

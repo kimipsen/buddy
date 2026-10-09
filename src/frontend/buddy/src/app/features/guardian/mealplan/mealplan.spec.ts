@@ -8,6 +8,7 @@ import { ChildSummary, GuardiansService } from '../../../core/guardians.service'
 import { Meal, MealplansService } from '../../../core/mealplans.service';
 import { PER_ITEM_REQUEST_CONCURRENCY } from '../../../core/map-with-concurrency';
 import { GuardianMealplan } from './mealplan';
+import { disableFeatures } from '../../../../testing/features-fixture';
 
 describe('GuardianMealplan', () => {
   const child: ChildSummary = {
@@ -589,5 +590,15 @@ describe('GuardianMealplan', () => {
 
     expect(getGroupMealplanStatus).toHaveBeenCalledTimes(groupCount);
     expect(gate.maxInFlight).toBe(PER_ITEM_REQUEST_CONCURRENCY);
+  });
+
+  it('links to the import and the AI assistant only while each is turned on', async () => {
+    disableFeatures('mealplanAiAssistant');
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[href="/guardian/mealplan/import"]')).toBeTruthy();
+    expect(compiled.querySelector('a[href="/guardian/mealplan/ai-assistant"]')).toBeNull();
   });
 });

@@ -2,6 +2,7 @@ import { Component, computed, inject, linkedSignal, resource, signal } from '@an
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { FeaturesService } from '../../../core/features.service';
 import { GroupSummary, GroupsService } from '../../../core/groups.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -54,6 +55,7 @@ const EMPTY_GROUPS: LoadedGroups = {
   templateUrl: './mealplan.html',
 })
 export class GuardianMealplan {
+  protected readonly features = inject(FeaturesService);
   private readonly guardians = inject(GuardiansService);
   private readonly groupsService = inject(GroupsService);
   private readonly mealplans = inject(MealplansService);

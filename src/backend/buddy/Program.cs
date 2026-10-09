@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 using buddy.Common.Concurrency;
 using buddy.Common.Errors;
+using buddy.Common.FeatureFlags;
 using buddy.Common.Health;
 using buddy.Common.Http;
 using buddy.Common.Idempotency;
@@ -98,6 +99,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddIdempotencyFeature(builder.Configuration);
 builder.Services.AddForwardedHeadersFromConfiguration(builder.Configuration);
 builder.Services.AddRateLimitingFeature();
+builder.Services.AddFeatureFlagsFeature();
 builder.Services.AddEmail(builder.Configuration);
 builder.Services.AddUsersFeature(builder.Configuration);
 builder.Services.AddGuardiansFeature(builder.Configuration);
@@ -168,19 +170,60 @@ app.MapHealthChecksFeature();
 app.MapVersion();
 app.MapBuddyOpenApi();
 
+// A disabled feature's endpoints are not mapped, so they answer routing's 404. Its Add*Feature
+// registration above stays: other features read its stores and Privacy erases and exports its data.
+// See docs/backend/analysis/feature-flags.md.
+var features = app.GetFeatureFlags();
+app.MapFeatureFlags(features);
+
 app.MapUsersFeature();
 app.MapGuardiansFeature();
 app.MapGroupsFeature();
-app.MapTaskLibraryFeature();
-app.MapCalendarsFeature();
-app.MapMedicinesFeature();
-app.MapMealplansFeature();
-app.MapBabysittersFeature();
-app.MapPickupsFeature();
-app.MapWorkLocationsFeature();
-app.MapPrintTemplatesFeature();
-app.MapProgressFeature();
-app.MapSleepDiariesFeature();
+if (features.TaskLibrary)
+{
+    app.MapTaskLibraryFeature();
+}
+
+app.MapCalendarsFeature(features);
+if (features.Medicines)
+{
+    app.MapMedicinesFeature();
+}
+
+if (features.Mealplans)
+{
+    app.MapMealplansFeature(features);
+}
+
+if (features.Babysitters)
+{
+    app.MapBabysittersFeature();
+}
+
+if (features.Pickups)
+{
+    app.MapPickupsFeature();
+}
+
+if (features.WorkLocations)
+{
+    app.MapWorkLocationsFeature();
+}
+
+if (features.Printing)
+{
+    app.MapPrintTemplatesFeature();
+}
+
+if (features.Progress)
+{
+    app.MapProgressFeature();
+}
+
+if (features.SleepDiary)
+{
+    app.MapSleepDiariesFeature();
+}
 
 // JasperFx command line: no arguments runs the API as before; `projections --rebuild --store <name>`
 // rebuilds snapshot projections (see docs/backend/analysis/event-stream-snapshots.md).
