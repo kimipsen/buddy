@@ -753,6 +753,29 @@ describe('ChildCalendar', () => {
     expect(text.indexOf('Apple slices')).toBeLessThan(text.indexOf('Pasta'));
   });
 
+  it('orders rows sharing a time by name, meals included', async () => {
+    const at = (itemId: string, title: string) =>
+      occurrence({
+        itemId,
+        title,
+        startsAt: `${today}T07:00:00Z`,
+        endsAt: `${today}T07:30:00Z`,
+      });
+    const breakfast = mealEntry({ mealId: 'breakfast', mealName: 'Pancakes', slot: 'Breakfast' });
+
+    const { fixture } = await setup({
+      calendars: {
+        listOccurrencesInRange: vi.fn(async () => [at('z', 'Zoo trip'), at('a', 'Art class')]),
+      },
+      mealplans: { listMealPlan: vi.fn(async () => [breakfast]) },
+    });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text.indexOf('Art class')).toBeLessThan(text.indexOf('Pancakes'));
+    expect(text.indexOf('Pancakes')).toBeLessThan(text.indexOf('Zoo trip'));
+  });
+
   it('places breakfast at 07:00 and lunch at 12:00 among timed events', async () => {
     const events = [
       occurrence({

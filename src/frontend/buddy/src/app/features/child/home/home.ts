@@ -22,6 +22,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
   AgendaEntry,
   TaskRun,
+  compareOccurrences,
   groupTaskRuns,
   isTaskRun,
   occurrenceKey,
@@ -467,11 +468,11 @@ export class ChildHome implements OnInit, OnDestroy {
 
     const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
 
-    tasks.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
+    tasks.sort(compareOccurrences);
 
     const events = occurrences.filter((occurrence) => occurrence.kind === EVENT_KIND);
 
-    events.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
+    events.sort(compareOccurrences);
 
     return { tasks, events };
   }

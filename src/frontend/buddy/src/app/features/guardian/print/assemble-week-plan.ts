@@ -14,6 +14,7 @@ import {
   PrintTemplate,
   PrintTemplateRow,
 } from '../../../core/print-templates.service';
+import { compareOccurrences } from '../../../core/task-run';
 import { workDayLocation } from '../../../core/work-locations.service';
 import {
   WeekPlanCell,
@@ -365,7 +366,7 @@ function byAllDayThenStart(a: CalendarItemOccurrence, b: CalendarItemOccurrence)
   if (a.isAllDay !== b.isAllDay) {
     return a.isAllDay ? -1 : 1;
   }
-  return new Date(a.sortAt).getTime() - new Date(b.sortAt).getTime();
+  return compareOccurrences(a, b);
 }
 
 function text(value: WeekPlanText): WeekPlanCell {

@@ -35,6 +35,7 @@ import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
   AgendaEntry,
   TaskRun,
+  compareOccurrences,
   groupTaskRuns,
   isTaskRun,
   occurrenceKey,
@@ -376,7 +377,7 @@ export class CalendarAgenda {
     }
 
     for (const dayOccurrences of Object.values(byDate)) {
-      dayOccurrences.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
+      dayOccurrences.sort(compareOccurrences);
     }
 
     return byDate;

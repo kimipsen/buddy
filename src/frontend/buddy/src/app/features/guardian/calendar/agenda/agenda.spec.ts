@@ -303,6 +303,26 @@ describe('CalendarAgenda', () => {
     expect(text.indexOf('Late meeting')).toBeLessThan(text.indexOf('Tomorrow item'));
   });
 
+  it('orders same-day items starting at the same time by name', async () => {
+    const at = (itemId: string, title: string) =>
+      occurrence({
+        itemId,
+        title,
+        startsAt: `${today}T08:00:00Z`,
+        endsAt: `${today}T08:30:00Z`,
+      });
+
+    const { fixture } = await setup({
+      calendars: {
+        listOccurrencesInRange: vi.fn(async () => [at('c', 'Swimming'), at('a', 'Dentist')]),
+      },
+    });
+    await settle(fixture);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text.indexOf('Dentist')).toBeLessThan(text.indexOf('Swimming'));
+  });
+
   it('groups a task by its due date, not its (absent) start date', async () => {
     const task = occurrence({
       itemId: 'task-1',

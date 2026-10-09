@@ -457,6 +457,29 @@ describe('assembleWeekPlan', () => {
       expect(friday).toEqual({ type: 'blank' });
     });
 
+    it('lists items starting at the same time by name', () => {
+      const at = (itemId: string, title: string) =>
+        occurrence({
+          itemId,
+          title,
+          startsAt: '2026-09-29T14:00:00Z',
+          endsAt: '2026-09-29T15:00:00Z',
+        });
+      const model = assembleWeekPlan(
+        template([row(PRINT_ROW_KIND.calendarEvents, { calendarIds: ['family'] })]),
+        sources({
+          occurrences: new Map([
+            ['family', [at('svoem', 'Svømning'), at('bad', 'Badminton'), at('kor', 'kor')]],
+          ]),
+        }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].cells[1]).toMatchObject({
+        items: [{ text: 'Badminton' }, { text: 'kor' }, { text: 'Svømning' }],
+      });
+    });
+
     it('filters by assignee and shows the assignee’s name when asked', () => {
       const model = assembleWeekPlan(
         template([

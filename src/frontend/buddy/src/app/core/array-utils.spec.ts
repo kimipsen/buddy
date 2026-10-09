@@ -1,4 +1,11 @@
-import { firstAndLast, sortByFullName, sortByName, sortByPersonName, swapped } from './array-utils';
+import {
+  compareNames,
+  firstAndLast,
+  sortByFullName,
+  sortByName,
+  sortByPersonName,
+  swapped,
+} from './array-utils';
 
 describe('firstAndLast', () => {
   it('returns the first and last items', () => {
@@ -20,6 +27,14 @@ describe('sortByName', () => {
 
     expect(sortByName(items)).toEqual([{ name: 'ask' }, { name: 'Bo' }, { name: 'Zoe' }]);
     expect(items[0]).toEqual({ name: 'Zoe' });
+  });
+});
+
+describe('compareNames', () => {
+  it('compares locale-aware, ignoring case', () => {
+    expect(compareNames('ask', 'Bo')).toBeLessThan(0);
+    expect(compareNames('Zoe', 'Bo')).toBeGreaterThan(0);
+    expect(compareNames('Bo', 'Bo')).toBe(0);
   });
 });
 

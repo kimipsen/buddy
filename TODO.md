@@ -116,7 +116,7 @@
 
 ## Sort tasks by time, then name
 
-- [ ] Sort the tasks in the print view and the calendar by start time, and when
+- [x] Sort the tasks in the print view and the calendar by start time, and when
   two or more start at the same time, by name, so the order is always the same.
   Reuse the locale-aware name sorting in `core/array-utils.ts`.
 

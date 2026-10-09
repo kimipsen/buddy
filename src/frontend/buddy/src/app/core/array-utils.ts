@@ -18,7 +18,13 @@ export function firstAndLast<T>(items: readonly T[]): [T, T] {
 // A copy of items sorted by their `name` field, locale-aware (admin lists want "Åse" to sort next
 // to "Ask", not after "Zoe").
 export function sortByName<T extends { name: string }>(items: readonly T[]): T[] {
-  return [...items].sort((a, b) => a.name.localeCompare(b.name));
+  return [...items].sort((a, b) => compareNames(a.name, b.name));
+}
+
+// The locale-aware name comparison every sortBy* helper uses, for callers sorting on more than a
+// name (e.g. calendar occurrences by start time, then name).
+export function compareNames(a: string, b: string): number {
+  return a.localeCompare(b);
 }
 
 // A copy of people sorted by full name ("given family"), locale-aware like sortByName.
@@ -36,7 +42,7 @@ export function sortByPersonName<T extends { name: { givenName: string; familyNa
 }
 
 function sortByKey<T>(items: readonly T[], key: (item: T) => string): T[] {
-  return [...items].sort((a, b) => key(a).localeCompare(key(b)));
+  return [...items].sort((a, b) => compareNames(key(a), key(b)));
 }
 
 // A copy of items with the elements at i and j exchanged.

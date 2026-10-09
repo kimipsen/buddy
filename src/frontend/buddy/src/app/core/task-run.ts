@@ -1,5 +1,5 @@
-import { NonEmptyArray } from './array-utils';
-import { CalendarOccurrence } from './calendars.service';
+import { NonEmptyArray, compareNames } from './array-utils';
+import { CalendarItemOccurrence, CalendarOccurrence } from './calendars.service';
 
 // A "run" is every subtask occurrence a single ScheduleTaskFromTemplate-created CalendarItem
 // produces for one calendar day -- e.g. a 3-subtask morning routine template shows up as 3
@@ -32,6 +32,19 @@ export function isTaskRun(entry: AgendaEntry): entry is TaskRun {
 // different calendar day) from being folded into a single run.
 function dateKeyOf(occurrence: Pick<CalendarOccurrence, 'sortAt'>): string {
   return occurrence.sortAt.slice(0, 10);
+}
+
+// Orders occurrences by start time, then by name when they start at the same time, so a day's
+// list always comes out the same way. A routine subtask goes by its routine's title, so two
+// subtasks of one routine compare equal and keep the order the backend sends them in.
+export function compareOccurrences(
+  a: Pick<CalendarItemOccurrence, 'sortAt' | 'title' | 'routine'>,
+  b: Pick<CalendarItemOccurrence, 'sortAt' | 'title' | 'routine'>,
+): number {
+  return (
+    Date.parse(a.sortAt) - Date.parse(b.sortAt) ||
+    compareNames(a.routine?.parentTitle ?? a.title, b.routine?.parentTitle ?? b.title)
+  );
 }
 
 // Groups a list of occurrences (typically one calendar day's worth, already the caller's unit of

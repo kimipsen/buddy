@@ -6,6 +6,7 @@ import {
   CalendarsService,
 } from '../../../core/calendars.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { compareOccurrences } from '../../../core/task-run';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
@@ -90,6 +91,6 @@ export class EventsToday implements OnInit, OnDestroy {
 
     return occurrences
       .filter((occurrence) => occurrence.kind === EVENT_KIND)
-      .sort((a, b) => a.sortAt.localeCompare(b.sortAt));
+      .sort(compareOccurrences);
   }
 }

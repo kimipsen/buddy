@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CalendarOccurrence } from './calendars.service';
-import { TaskRun, groupTaskRuns, isTaskRun, occurrenceKey } from './task-run';
+import { TaskRun, compareOccurrences, groupTaskRuns, isTaskRun, occurrenceKey } from './task-run';
 import { FlatOccurrence, nestOccurrence } from '../../testing/occurrence-fixture';
 
 describe('task-run', () => {
@@ -167,6 +167,60 @@ describe('task-run', () => {
 
     it('returns an empty array for an empty input', () => {
       expect(groupTaskRuns([])).toEqual([]);
+    });
+  });
+
+  describe('compareOccurrences', () => {
+    const at = (time: string) => `2026-08-27T${time}:00Z`;
+
+    it('orders by start time first, whatever the names', () => {
+      const early = occurrence({ itemId: 'b', title: 'Zebra', startsAt: at('07:00') });
+      const late = occurrence({ itemId: 'a', title: 'Apple', startsAt: at('08:00') });
+
+      expect([late, early].sort(compareOccurrences)).toEqual([early, late]);
+    });
+
+    it('orders occurrences starting at the same time by name, locale-aware', () => {
+      const zebra = occurrence({ itemId: 'z', title: 'Zebra', startsAt: at('08:00') });
+      const bee = occurrence({ itemId: 'b', title: 'bee', startsAt: at('08:00') });
+      const apple = occurrence({ itemId: 'a', title: 'Apple', startsAt: at('08:00') });
+
+      expect([zebra, bee, apple].sort(compareOccurrences)).toEqual([apple, bee, zebra]);
+    });
+
+    it('compares a routine subtask by its routine title, not its own', () => {
+      const subtask = occurrence({
+        itemId: 'run-1',
+        title: 'Aardvark step',
+        startsAt: at('08:00'),
+        subtaskId: 'sub-1',
+        parentTitle: 'Morning',
+      });
+      const homework = occurrence({ itemId: 'hw', title: 'Homework', startsAt: at('08:00') });
+
+      expect([subtask, homework].sort(compareOccurrences)).toEqual([homework, subtask]);
+    });
+
+    it('keeps two subtasks of one routine starting together in their given order', () => {
+      const routineStep = (subtaskId: string, title: string) =>
+        occurrence({
+          itemId: 'run-1',
+          title,
+          startsAt: at('08:00'),
+          subtaskId,
+          parentTitle: 'Morning',
+        });
+      const second = routineStep('sub-2', 'Brush teeth');
+      const first = routineStep('sub-1', 'Wake up');
+
+      expect([first, second].sort(compareOccurrences)).toEqual([first, second]);
+    });
+
+    it('compares instants, not strings, across different offsets', () => {
+      const utc = occurrence({ itemId: 'u', title: 'B', startsAt: '2026-08-27T08:00:00Z' });
+      const offset = occurrence({ itemId: 'o', title: 'A', startsAt: '2026-08-27T09:30:00+02:00' });
+
+      expect([utc, offset].sort(compareOccurrences)).toEqual([offset, utc]);
     });
   });
 

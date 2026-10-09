@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { firstAndLast } from '../../../core/array-utils';
+import { compareNames, firstAndLast } from '../../../core/array-utils';
 import {
   CalendarItemKind,
   CalendarOccurrence,
@@ -21,6 +21,7 @@ import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealpla
 import {
   AgendaEntry,
   TaskRun,
+  compareOccurrences,
   groupTaskRuns,
   isTaskRun,
   occurrenceKey,
@@ -106,6 +107,15 @@ function sortKeyFor(row: ChildAgendaRow, timeZoneId: string): string {
   return toTimeInTimeZone(instantFor(occurrence), timeZoneId);
 }
 
+// The tiebreak for rows sharing a sortKeyFor time, so the day reads the same way every time.
+function nameFor(row: ChildAgendaRow): string {
+  if (isMealRow(row)) {
+    return row.meal.mealName;
+  }
+
+  return isTaskRun(row) ? row.parentTitle : row.title;
+}
+
 // Read-only child counterpart to the guardian's CalendarAgenda: same week-window and
 // occurrence-grouping shape, but no create/edit/delete -- see
 // docs/frontend/analysis/child-calendar-agenda-plan.md for why those are deliberately absent here.
@@ -163,7 +173,7 @@ export class ChildCalendar {
     }
 
     for (const dayOccurrences of Object.values(byDate)) {
-      dayOccurrences.sort((a, b) => a.sortAt.localeCompare(b.sortAt));
+      dayOccurrences.sort(compareOccurrences);
     }
 
     return byDate;
@@ -234,7 +244,11 @@ export class ChildCalendar {
     ];
 
     const timeZoneId = this.users.timeZoneId();
-    return rows.sort((a, b) => sortKeyFor(a, timeZoneId).localeCompare(sortKeyFor(b, timeZoneId)));
+    return rows.sort(
+      (a, b) =>
+        sortKeyFor(a, timeZoneId).localeCompare(sortKeyFor(b, timeZoneId)) ||
+        compareNames(nameFor(a), nameFor(b)),
+    );
   }
 
   protected isRun(entry: ChildAgendaRow): entry is TaskRun {

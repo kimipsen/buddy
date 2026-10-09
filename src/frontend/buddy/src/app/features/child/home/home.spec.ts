@@ -1162,8 +1162,9 @@ describe('ChildHome', () => {
         { title: '⚽ Past ✓', isPast: true, background: '' },
         { title: '⚽ EndsNow ✓', isPast: true, background: '' },
         { title: '⚽ Ongoing', isPast: false, background: gradient(25) },
-        { title: '⚽ StartsNow', isPast: false, background: gradient(0) },
+        // Instant and StartsNow both start at 12:00, so they're ordered by name.
         { title: '⚽ Instant ✓', isPast: true, background: '' },
+        { title: '⚽ StartsNow', isPast: false, background: gradient(0) },
         { title: '⚽ Upcoming', isPast: false, background: '' },
       ]);
     });
