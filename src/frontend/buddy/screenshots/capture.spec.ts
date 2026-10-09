@@ -61,10 +61,15 @@ for (const entry of SCREENSHOT_PAGES) {
     await expect(page.locator('app-loading-spinner')).toHaveCount(0);
     expect(errors, 'server errors while loading the page').toEqual([]);
 
+    const fullPage = entry.fullPage ?? true;
     await page.screenshot({
       path: join(screenshotsDirFor(testInfo.project.name), `${entry.name}.png`),
-      fullPage: entry.fullPage ?? true,
+      fullPage,
       animations: 'disabled',
+      // A full-page capture draws a `position: fixed` bar at the bottom of the first screen, on top
+      // of the content there. Put the phone tab bar back in the flow for the capture, so it shows at
+      // the end of the page, where it sits once you've scrolled to the bottom.
+      style: fullPage ? 'app-tab-bar > nav { position: static !important; }' : undefined,
     });
 
     // Checked after the screenshot, so a failing page still leaves its PNG to look at.

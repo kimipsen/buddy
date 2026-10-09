@@ -1,9 +1,9 @@
 # Responsive layout: phone, tablet and wide desktop
 
-Status: Phases 0–4 implemented (overflow check and tablet size in the screenshot run; no page is
+Status: Phases 0–5 implemented (overflow check and tablet size in the screenshot run; no page is
 wider than a phone any more; shared `app-page` and `app-card` with responsive padding; touch-sized
 controls, a sticky header, and menus, popovers and the delete dialog that fit a phone; the four week
-tables become day lists where they don't fit). Phases 5–6 are proposed.
+tables become day lists where they don't fit; a guardian tab bar on phones). Phase 6 is proposed.
 
 ## Context
 
@@ -293,11 +293,10 @@ overflow-y-auto`, `max-w-[calc(100vw-2rem)]`, and the missing Pickup link. Make 
 - This keeps "Open account menu", which five e2e specs depend on, and the in-app help design,
   which rejected a drawer because it covers a 393px screen
   ([in-app-help.md](in-app-help.md)).
-- _Considered and deferred:_ a bottom tab bar on phones (Dashboard, Calendar, Meals, Medicine,
-  More). It's the more native pattern and would make the per-page "Back to dashboard" links
-  unnecessary, but it is a navigation redesign rather than a responsive fix. If guardians ask for
-  it, it is additive: a new `shell/tab-bar` shown with `sm:hidden`, with the menu kept for the
-  rest.
+- _Reopened in Phase 5:_ a bottom tab bar on phones, added next to the menu rather than replacing
+  it. The user chose four tabs (Today, Calendar, Meals, Medicine) and no "More" tab, so the account
+  menu keeps every link and the e2e specs that open it are unaffected. Pickup was considered as the
+  fourth tab; Medicine won. The per-page "Back to dashboard" links stay for tablet and desktop.
 
 ## Plan
 
@@ -408,9 +407,25 @@ Implemented, at the breakpoints in Decision 3:
   the DOM can now be the hidden copy.
 - `pickup-planning-and-daily-views.md`'s "Responsive behavior" section is updated to match.
 
-### Phase 5 -- (optional) tab bar
+### Phase 5 -- tab bar
 
-- Only if Decision 6 is reopened.
+Implemented:
+
+- `shell/tab-bar`: a `<nav>` ("Main" / "Hovedmenu") fixed to the bottom on phones only
+  (`sm:hidden print:hidden`, `z-30` like the header), four `routerLink` tabs with line icons and a
+  label, at least 56px tall. The active tab gets `aria-current="page"`, emerald semibold text and a
+  2px top bar; Today is active only on the exact dashboard route. Meals and Medicine follow the
+  `mealplans` and `medicines` feature flags.
+- Hidden on onboarding through `data: { hideTabBar: true }` on that route, read where the shell
+  already reads the help topic.
+- The page content gets `max-sm:pb-20`, and guardian pages with the bar get
+  `scroll-padding-bottom: 5rem` on phones, so nothing ends up behind it.
+- The meal and task picker lists moved from `z-20` to `z-40`, so they draw over the bar and the
+  header. `dropdown-position.ts` still counts the space behind the bar as room below, so a list
+  opening downward near the bottom can cover the bar.
+- Full-page documentation screenshots put the bar back in normal flow while capturing (Playwright's
+  `style` option), since a fixed bar would otherwise be drawn over content at the bottom of the
+  first screen.
 
 ### Phase 6 -- tablet and wide desktop
 
@@ -437,15 +452,16 @@ Implemented, at the breakpoints in Decision 3:
 | Touch targets           | At least 44px on `pointer-coarse:` for guardian pages; at least 44px always on child pages                                         |
 | Regression guard        | Overflow assertion in the screenshot run, plus a tablet project                                                                    |
 | Phase 0 rollout         | Landed first with a temporary `knownOverflow` list, removed again in Phase 1                                                       |
-| Phone navigation        | Fix the profile menu and make the header sticky; tab bar deferred                                                                  |
+| Phone navigation        | Profile menu fitted to a phone, sticky header, and a four-tab bar (Today, Calendar, Meals, Medicine) with no More tab              |
 
 ## Remaining open questions
 
 - **Which devices count as supported?** Lean: iPhone-size phones (≥375px), iPad portrait and
   landscape, and desktop up to 1920px. 320px phones should work without overflow but don't get
   their own layout.
-- **Bottom tab bar now or later?** Lean: later (Decision 6). It's additive, and the menu fix covers
-  today's problem.
+- **Danish tab labels.** "Hovedmenu" (the nav's accessible name; "Hovednavigation" is the
+  alternative) and "Mad" for the Meals tab ("Madplan" and "Måltider" were longer) want a native
+  speaker's check.
 - **Does the wide-desktop dashboard need three columns at all?** Lean: yes, but only the
   dashboard. Every other page keeps `max-w-7xl`.
 - **Does the tablet screenshot replace or add to the mobile one?** Lean: add, so there are three

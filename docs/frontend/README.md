@@ -263,6 +263,12 @@ Two shared components hold the repeated spacing, so it is set in one place:
   the unnamed `<section>` it replaced; a card that should be a landmark adds `role="region"` and
   `aria-labelledby`.
 
+On phones the guardian shell adds a bottom tab bar
+([`shell/tab-bar`](../../src/frontend/buddy/src/app/features/guardian/shell/tab-bar/tab-bar.ts))
+with Today, Calendar, Meals and Medicine (the last two follow their feature flags). It is hidden
+from `sm` up, when printing and on onboarding (`data: { hideTabBar: true }`); the account menu in
+the sticky header keeps every link on all sizes.
+
 Child pages share **`app-child-page`**
 ([`features/child/child-page`](../../src/frontend/buddy/src/app/features/child/child-page/child-page.ts)):
 the warm background, a header with the page title (a back link to `/child`, or the logo on the
