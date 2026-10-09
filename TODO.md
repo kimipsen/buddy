@@ -4,6 +4,8 @@
 
 - [x] Include subtasks in printed output and add a toggle to turn their
   inclusion on/off. Printing currently ignores subtasks and offers no toggle.
+- [ ] Add an option to include a watermark QR code on the print preview. The
+  QR code should take whoever scans it to the web application's login page.
 
 ## Pickup/drop-off options
 
