@@ -1,0 +1,55 @@
+<nav
+  class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden dark:border-slate-800 dark:bg-slate-900"
+  [attr.aria-label]="'shell.tabs.label' | translate"
+>
+  <ul class="flex">
+    @for (tab of tabs(); track tab.link) {
+      <li class="flex-1">
+        <!-- Active: emerald text, semibold, and a bar along the top edge (not colour alone). -->
+        <a
+          [routerLink]="tab.link"
+          routerLinkActive="font-semibold text-emerald-700 before:bg-emerald-600 dark:text-emerald-400 dark:before:bg-emerald-400"
+          [routerLinkActiveOptions]="{ exact: tab.exact }"
+          ariaCurrentWhenActive="page"
+          class="relative flex min-h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-xs font-medium text-slate-600 before:absolute before:inset-x-4 before:top-0 before:h-0.5 before:rounded-full hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:text-slate-100"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="size-6"
+            aria-hidden="true"
+          >
+            @switch (tab.icon) {
+              @case ('today') {
+                <path
+                  d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+                />
+              }
+              @case ('calendar') {
+                <path
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                />
+              }
+              @case ('meals') {
+                <path
+                  d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"
+                />
+              }
+              @case ('medicine') {
+                <path
+                  d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7"
+                />
+              }
+            }
+          </svg>
+          <span>{{ tab.label | translate }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+</nav>

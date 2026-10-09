@@ -157,6 +157,8 @@ describe('MealPicker', () => {
       const list = await openAt(100);
 
       expect(list.style.position).toBe('fixed');
+      // Above the sticky header and the phone tab bar (both z-30).
+      expect(list.classList).toContain('z-40');
       expect(list.style.top).toBe('136px');
       expect(list.style.bottom).toBe('');
       expect(list.style.left).toBe('40px');

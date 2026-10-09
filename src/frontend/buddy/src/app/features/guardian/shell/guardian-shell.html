@@ -46,5 +46,12 @@
     }
   }
 
-  <router-outlet (activate)="onActivate()" />
+  <!-- On phones, room below the page for the fixed tab bar (about 57px tall). -->
+  <div class="max-sm:pb-20">
+    <router-outlet (activate)="onActivate()" />
+  </div>
+
+  @if (showTabBar()) {
+    <app-tab-bar />
+  }
 </div>

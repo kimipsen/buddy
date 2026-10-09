@@ -16,10 +16,11 @@ import { findHelpTopic } from '../../../core/help/help-topics';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { HelpPanel } from './help-panel/help-panel';
 import { ProfileMenu } from './profile-menu/profile-menu';
+import { TabBar } from './tab-bar/tab-bar';
 
 @Component({
   selector: 'app-guardian-shell',
-  imports: [RouterOutlet, RouterLink, ProfileMenu, TranslatePipe, HelpPanel],
+  imports: [RouterOutlet, RouterLink, ProfileMenu, TranslatePipe, HelpPanel, TabBar],
   templateUrl: './guardian-shell.html',
 })
 export class GuardianShell {
@@ -34,6 +35,9 @@ export class GuardianShell {
   // The current page's topic, from its route's `data.helpTopic`. Pages without one get no button.
   protected readonly helpTopic = signal<HelpTopic | undefined>(undefined);
   protected readonly helpOpen = signal(false);
+  // The phone tab bar, except on pages whose route sets `data.hideTabBar` (the guided first-login
+  // setup, which walks the guardian through its own steps).
+  protected readonly showTabBar = signal(true);
 
   // Runs whenever the outlet shows another page: pick up its topic and fold away the previous
   // page's help.
@@ -44,6 +48,7 @@ export class GuardianShell {
     }
 
     this.helpOpen.set(false);
+    this.showTabBar.set(!page?.snapshot.data['hideTabBar']);
     // No ? button at all while help is turned off for this installation.
     this.helpTopic.set(
       this.features.enabled('help') ? findHelpTopic(page?.snapshot.data['helpTopic']) : undefined,

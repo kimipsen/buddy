@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth.service';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { GUARDIAN_ROUTES } from '../guardian.routes';
 import { GuardianShell } from './guardian-shell';
 import { disableFeatures } from '../../../../testing/features-fixture';
 
@@ -42,6 +43,7 @@ describe('GuardianShell', () => {
               { path: 'calendar', component: Page, data: { helpTopic: 'calendar' } },
               { path: 'medicine', component: Page, data: { helpTopic: 'medicine' } },
               { path: 'plain', component: Page },
+              { path: 'onboarding', component: Page, data: { hideTabBar: true } },
             ],
           },
         ]),
@@ -196,6 +198,35 @@ describe('GuardianShell', () => {
 
     expect(root().querySelector('app-help-panel')).toBeNull();
     expect(document.activeElement).toBe(helpButton(root()));
+  });
+
+  it('renders the phone tab bar below the page, with room left for it on phones', async () => {
+    const { root } = await setup('/plain');
+
+    expect(root().querySelector('app-tab-bar nav')).toBeTruthy();
+    const outlet = root().querySelector('app-guardian-shell router-outlet')!;
+    expect(outlet.parentElement!.classList).toContain('max-sm:pb-20');
+    expect(outlet.parentElement!.textContent).toContain('page');
+  });
+
+  it('leaves the tab bar off a page whose route hides it, and brings it back on the next page', async () => {
+    const { harness, root } = await setup('/onboarding');
+
+    expect(root().querySelector('app-tab-bar')).toBeNull();
+    expect(root().textContent).toContain('page');
+
+    await harness.navigateByUrl('/calendar');
+
+    expect(root().querySelector('app-tab-bar')).toBeTruthy();
+  });
+
+  it('hides the tab bar on the real onboarding route', () => {
+    const shell = GUARDIAN_ROUTES.find((route) => route.component === GuardianShell)!;
+    const onboarding = shell.children!.find((route) => route.path === 'onboarding')!;
+    const others = shell.children!.filter((route) => route.path !== 'onboarding');
+
+    expect(onboarding.data?.['hideTabBar']).toBe(true);
+    expect(others.filter((route) => route.data?.['hideTabBar'])).toEqual([]);
   });
 
   it('shows no help button anywhere while help is turned off', async () => {

@@ -4,6 +4,13 @@ export const shell = {
   help: {
     toggle: 'Hjælp til denne side',
   },
+  tabs: {
+    label: 'Hovedmenu',
+    today: 'I dag',
+    calendar: 'Kalender',
+    meals: 'Mad',
+    medicine: 'Medicin',
+  },
   menu: {
     openLabel: 'Åbn kontomenu',
     mealPlanner: 'Madplan',

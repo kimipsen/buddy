@@ -183,6 +183,8 @@ describe('TaskPicker', () => {
 
       const list = compiled.querySelector('ul')!;
       expect(list.style.position).toBe('fixed');
+      // Above the sticky header and the phone tab bar (both z-30).
+      expect(list.classList).toContain('z-40');
       expect(list.style.top).toBe('');
       expect(list.style.bottom).toBe('72px');
       expect(list.style.width).toBe('256px');

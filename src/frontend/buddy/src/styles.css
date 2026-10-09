@@ -23,3 +23,12 @@
 :root:has(app-guardian-shell) {
   scroll-padding-top: 6rem;
 }
+
+/* On phones the shell also has a fixed tab bar at the bottom (tab-bar.html, shown below Tailwind's
+   `sm`, 40rem), so a field focused near the bottom stops above it too. Pages without the bar (the
+   onboarding guide) don't render app-tab-bar and keep the default. */
+@media (width < 40rem) {
+  :root:has(app-guardian-shell app-tab-bar) {
+    scroll-padding-bottom: 5rem;
+  }
+}

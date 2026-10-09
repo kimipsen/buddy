@@ -41,7 +41,8 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [onboardingEntryGuard],
         data: { helpTopic: 'dashboard' },
       },
-      { path: 'onboarding', component: GuardianOnboarding },
+      // The guide has its own steps and finish button: no tab bar to wander off through.
+      { path: 'onboarding', component: GuardianOnboarding, data: { hideTabBar: true } },
       {
         path: 'mealplan',
         canActivate: [featureGuard('mealplans')],

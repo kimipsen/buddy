@@ -4,6 +4,13 @@ export const shell = {
   help: {
     toggle: 'Help for this page',
   },
+  tabs: {
+    label: 'Main',
+    today: 'Today',
+    calendar: 'Calendar',
+    meals: 'Meals',
+    medicine: 'Medicine',
+  },
   menu: {
     openLabel: 'Open account menu',
     mealPlanner: 'Meal planner',
