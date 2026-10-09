@@ -1,6 +1,6 @@
 ---
 name: rebase-commit
-description: Commit finished work and land it on the target branch (master by default) with a rebase-and-fast-forward workflow (Bitbucket's "Rebase and fast-forward" - git rebase, then merge --ff-only), so history stays linear with no merge commits. Commits on a work branch (creating agent/<topic> if you're on master), rebases it onto the target, re-runs the relevant tests if the target moved, then fast-forwards the target via the bundled land.sh, which handles agent worktrees, a target checked out in another worktree, conflicts and the post-commit doc-sync hook. Never pushes unless asked. Use when a task is done and should be committed, and for "commit this", "commit and merge", "land this branch", "rebase onto master and fast-forward", "merge my worktree branch into master", "get this onto master". Reviewing a diff is backend-aware-review; production deploys are deploy.
+description: Commit finished work and land it on the target branch (master by default) with a rebase-and-fast-forward workflow (Bitbucket's "Rebase and fast-forward" - git rebase, then merge --ff-only), so history stays linear with no merge commits. Commits on a work branch (creating agent/<topic> if you're on master), rebases it onto the target, re-runs the relevant tests if the target moved, then fast-forwards the target via the bundled land.sh, which handles agent worktrees, a target checked out in another worktree, conflicts and the post-commit doc-sync hook, then removes the landed worktree and deletes its branch. Never pushes unless asked. Use when a task is done and should be committed, and for "commit this", "commit and merge", "land this branch", "rebase onto master and fast-forward", "merge my worktree branch into master", "get this onto master", "clean up the merged worktree". Reviewing a diff is backend-aware-review; production deploys are deploy.
 ---
 
 # Rebase and fast-forward commit
@@ -115,14 +115,45 @@ commits, then moves the target forward:
 If it says the branch isn't based on the target's tip, someone landed in the meantime: go back to
 step 4.
 
-## 6. Clean up and report
+## 6. Clean up the landed branch and its worktree
 
-- If you created `agent/<topic>` in the main worktree (step 2), switch back and delete it; it's
-  fully merged, so the safe delete works: `git switch master && git branch -d agent/<topic>`.
-- Leave `worktree-agent-*` branches and worktrees alone; the harness manages them.
-- Report: the commits that landed (`land.sh` prints them), the target branch, whether the target
-  had moved and which tests you re-ran, anything you left uncommitted, and that nothing was pushed.
-  Offer to push if that seems wanted.
+Once `finish` has landed the branch, its worktree and branch are dead weight: remove them without
+asking. Only clean up a branch whose commits are all on the target; never throw away unlanded work.
+If `finish` refused, or landing was left to the user, skip this step and keep the worktree.
+
+Pick the case that matches where the branch lives:
+
+- **This session's own worktree, entered with `EnterWorktree`** (or `claude --worktree`, if
+  `ExitWorktree` accepts it): call `ExitWorktree` with `action: "remove"`. It deletes the worktree
+  and its branch and moves the session back to the main checkout. It refuses if there are
+  uncommitted files; never pass `discard_changes: true` without asking the user.
+- **Anything else** (an `agent/<topic>` branch in the main checkout, a subagent's
+  `worktree-agent-*` worktree once that agent has returned, a stale worktree from an old session):
+
+  ```bash
+  LAND="$(git rev-parse --path-format=absolute --git-common-dir)/../.claude/skills/rebase-commit/land.sh"
+  "$LAND" cleanup master [branch]   # branch defaults to the current one
+  ```
+
+  It refuses (exit 1, nothing changed) unless every commit of the branch is on the target. Then:
+  in the main checkout it switches back to the target; in a linked worktree it refuses if there
+  are uncommitted or untracked files (ignored ones such as `node_modules` and the
+  `.worktreeinclude` copies are fine to lose), then `git worktree remove`s it. Last, it deletes
+  the branch with the safe `git branch -d`. If you ran it from inside the removed worktree, your
+  shell's directory is gone: run later commands with absolute paths in the main checkout.
+
+Worktrees that a Claude session holds are locked (`claude session <name> (pid … start …)`).
+`cleanup` refuses a lock whose process is still running: only that session may remove its
+worktree (ExitWorktree, or "remove" when it exits). A subagent therefore doesn't remove its own
+isolated worktree; the parent does it after the agent returns. If the session is gone, the lock is
+stale and `cleanup` unlocks it. Never `git worktree remove --force`, and never clean up worktrees
+or branches of other features that haven't landed.
+
+## 7. Report
+
+Report: the commits that landed (`land.sh` prints them), the target branch, whether the target
+had moved and which tests you re-ran, the worktree and branch you removed (or why you kept them),
+anything you left uncommitted, and that nothing was pushed. Offer to push if that seems wanted.
 
 ## When the user asks to push
 

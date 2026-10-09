@@ -35,7 +35,7 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 | Review a diff | `backend-aware-review` |
 | Mutation testing | `mutation-fix` (frontend), `mutation-fix-backend` |
 | SonarCloud findings | `sonar-triage` |
-| Commit and land work (rebase + fast-forward, no push) | `rebase-commit` |
+| Commit and land work (rebase + fast-forward, no push), then remove the worktree | `rebase-commit` |
 | Production deploy (always confirm first) | `deploy` |
 
 `agents/` holds Codex/Copilot packages; Claude Code doesn't load them.
@@ -50,7 +50,7 @@ Several features are developed at once, each in its own git worktree, so they do
 - Every Agent call that may edit files passes `isolation: "worktree"`. This includes implementation, fixes, tests, mutation runs and doc generation. Read-only agents (Explore, Plan, claude-code-guide, reviews) are the exception.
 - `.worktreeinclude` copies the git-ignored local files (`taskfile.yml`, `appsettings.Development.json`, `.env`) into each new worktree. Run `npm ci` in `src/frontend/buddy` before the first frontend command in a fresh worktree.
 - Worktrees share the dev ports (4300, 5193, 7076), the database and Keycloak. Only one worktree at a time may run the dev servers, e2e tests or `task docs:screenshots`. Unit specs and backend integration tests can run in parallel, because Testcontainers gives each run its own database.
-- Land a worktree branch with `rebase-commit`. It fast-forwards `master` in the main checkout.
+- Land a worktree branch with `rebase-commit`. It fast-forwards `master` in the main checkout, then removes the landed worktree and its branch.
 
 ## Conventions
 
