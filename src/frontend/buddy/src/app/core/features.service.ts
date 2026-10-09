@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
 import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
@@ -33,6 +33,9 @@ export class FeaturesService {
   // All on until load() resolves, and after a failed load: the API enforces the flags anyway, so
   // the worst case is a page showing its usual load error, not a blank app.
   private readonly flags = signal<InstallationFeatures>(ALL_ON);
+
+  // Whether this installation has any feature turned off (the help page says so).
+  readonly someOff = computed(() => Object.values(this.flags()).some((on) => !on));
 
   enabled(name: FeatureName): boolean {
     return this.flags()[name];

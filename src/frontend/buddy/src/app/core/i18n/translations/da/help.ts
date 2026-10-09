@@ -10,6 +10,8 @@ export const help = {
     intro:
       'Alle hjælpeemner samlet ét sted. Knappen "?" øverst på en side åbner hjælpen til den side.',
     contentsLabel: 'Hjælpeemner',
+    featuresOff:
+      'Nogle dele af Buddy er slået fra for jeres familie, så deres sider og hjælp er udeladt. Den, der driver Buddy for jeres familie, kan slå dem til.',
     contact:
       'Virker noget ikke? Spørg den, der driver Buddy for jeres familie, eller se projektet på',
     repositoryLink: 'GitHub',
@@ -21,19 +23,31 @@ export const help = {
       sections: {
         overview: {
           title: 'Dagen på ét blik',
-          body: 'Dashboardet viser familiens dag i dag: måltider, opgaver, begivenheder, medicin, afhentning og dine børn. Hvert kort fører videre til sin egen side, når du har brug for mere. Brug "Print ugeplan" til at printe ugen. Har du sat den guidede opsætning på pause, kan du gøre den færdig med "Fortsæt opsætningen".',
+          body: 'Dashboardet viser familiens dag i dag: opgaver, begivenheder og dine børn, plus et kort for hver anden del af Buddy, som familien bruger, fx måltider, medicin eller afhentning. Hvert kort fører videre til sin egen side, når du har brug for mere. Har du sat den guidede opsætning på pause, kan du gøre den færdig med "Fortsæt opsætningen".',
         },
         tasks: {
           title: 'Sæt flueben ved dagens opgaver',
-          body: '"Dagens opgaver" viser det, der forfalder i dag. Opgaver, hvis tidspunkt er passeret uden at de er udført, står under "Forsinket". Du kan markere en opgave som udført, hvis den er tildelt dig eller ingen. En rutine fra en skabelon viser, hvor mange af trinnene der er udført. "Dagens begivenheder" viser resten af dagens kalender.',
+          body: '"Dagens opgaver" viser det, der forfalder i dag. Opgaver, hvis tidspunkt er passeret uden at de er udført, står under "Forsinket". Du kan markere en opgave som udført, hvis den er tildelt dig eller ingen. En rutine med trin viser, hvor mange af dem der er udført. "Dagens begivenheder" viser resten af dagens kalender.',
         },
         medicine: {
           title: 'Registrér medicindoser',
           body: 'Under "Dagens medicin" ser du hver dosis med tidspunkt. Tryk "Marker som taget", når barnet har fået den, eller "Spring over", hvis dosen udelades. Kom du til at trykke forkert? "Fortryd" sætter dosen tilbage. Vil du ændre selve medicinplanerne, så brug "Administrer medicin →".',
         },
-        mealsAndPickups: {
-          title: 'Måltider, afhentning og stjerner',
-          body: '"Dagens madplan" viser morgenmad, frokost, aftensmad og mellemmåltid, og "Planlæg måltider →" åbner madplanen. "Dagens afhentning & aflevering" viser, hvem der afleverer og henter hvert barn, og du planlægger det med "Planlæg afhentning →". Kortet "Børn" viser dine børn og de stjerner, de har samlet mod deres mål.',
+        meals: {
+          title: 'Dagens måltider',
+          body: '"Dagens madplan" viser morgenmad, frokost, aftensmad og mellemmåltid, og "Planlæg måltider →" åbner madplanen.',
+        },
+        pickups: {
+          title: 'Afhentning og aflevering',
+          body: '"Dagens afhentning & aflevering" viser, hvem der afleverer og henter hvert barn, og du planlægger det med "Planlæg afhentning →".',
+        },
+        stars: {
+          title: 'Stjerner',
+          body: 'Kortet "Børn" viser de stjerner, hvert barn har samlet mod sine mål.',
+        },
+        printWeek: {
+          title: 'Print ugen',
+          body: 'Brug "Print ugeplan" til at printe den kommende uge med en af dine printskabeloner.',
         },
       },
     },
@@ -61,7 +75,7 @@ export const help = {
         },
         changeItems: {
           title: 'Ret, slet eller markér som udført',
-          body: 'Hver begivenhed og opgave har "Rediger" og "Slet". Med "Rediger" ændrer du titel, ikon, farve og tidspunkter. "Slet" beder dig bekræfte først. Brug opgavens kontakt til at markere den som udført; for en gentaget opgave gælder det kun den dag. En rutine fra en skabelon kan kun slettes, og den viser hvert trin med sin egen kontakt.',
+          body: 'Hver begivenhed og opgave har "Rediger" og "Slet". Med "Rediger" ændrer du titel, ikon, farve og tidspunkter. "Slet" beder dig bekræfte først. Brug opgavens kontakt til at markere den som udført; for en gentaget opgave gælder det kun den dag. En rutine med trin kan kun slettes, og den viser hvert trin med sin egen kontakt.',
         },
       },
     },
@@ -224,7 +238,11 @@ export const help = {
         },
         whoTakesCare: {
           title: 'Vælg, hvem der tager sig af det',
-          body: '"En voksen" er en af barnets voksne. "En søskende" er et af dine andre børn. "Går selv" betyder, at barnet klarer turen uden en voksen. Til "Legeaftale" skal du skrive, hvem der er vært, mens sted og kontaktoplysninger er valgfrie. Med "Babysitter" vælger du en, som du eller barnets andre voksne har gemt.',
+          body: '"En voksen" er en af barnets voksne. "En søskende" er et af dine andre børn. "Går selv" betyder, at barnet klarer turen uden en voksen. Til "Legeaftale" skal du skrive, hvem der er vært, mens sted og kontaktoplysninger er valgfrie.',
+        },
+        babysitter: {
+          title: 'Vælg en babysitter',
+          body: 'Med "Babysitter" vælger du en, som du eller barnets andre voksne har gemt på listen over babysittere.',
         },
         changeOrClear: {
           title: 'Ret eller ryd en plan',
@@ -232,7 +250,11 @@ export const help = {
         },
         whereItShows: {
           title: 'Hvor planen bliver vist',
-          body: 'Dagens plan står på din oversigt under "Dagens afhentning & aflevering". Dit barn ser dagens afhentning og aflevering på sin egen forside, også en babysitters navn, men aldrig kontaktoplysningerne. En printskabelon kan også tage planen med på den printede ugeplan.',
+          body: 'Dagens plan står på din oversigt under "Dagens afhentning & aflevering". Dit barn ser dagens afhentning og aflevering på sin egen forside, også en babysitters navn, men aldrig kontaktoplysningerne.',
+        },
+        onPrint: {
+          title: 'På den printede ugeplan',
+          body: 'En printskabelon kan tage planen med på den printede ugeplan som en række med "Aflevere / hente".',
         },
       },
     },
@@ -342,11 +364,23 @@ export const help = {
         },
         permissions: {
           title: 'Hvem kan redigere, og hvem kan se',
-          body: 'Under "Kalendertilladelser" vælger du for hver rolle, hvad gruppens kalendere tillader: "Ejer" kan redigere og styre, "Bidragyder" kan redigere begivenheder og opgaver, "Læser" kan kun se. Under "Måltidsplan-tilladelser" vælger du "Fuld adgang", "Kun læsning" eller "Ingen adgang". I en ny gruppe kan medlemmer se kalenderne, men ikke madplanen.',
+          body: 'Under "Kalendertilladelser" vælger du for hver rolle, hvad gruppens kalendere tillader: "Ejer" kan redigere og styre, "Bidragyder" kan redigere begivenheder og opgaver, "Læser" kan kun se. I en ny gruppe kan medlemmer se kalenderne.',
+        },
+        mealplanPermissions: {
+          title: 'Måltidsplan-tilladelser',
+          body: 'Under "Måltidsplan-tilladelser" vælger du "Fuld adgang", "Kun læsning" eller "Ingen adgang". I en ny gruppe kan medlemmer ikke se madplanen, før du ændrer det.',
+        },
+        shareMealPlan: {
+          title: 'Del jeres madplan',
+          body: 'Madplanen hører til din familie. Du deler den med en gruppe under "Del med en gruppe" i madplanen.',
+        },
+        shareMedicine: {
+          title: 'Del medicin',
+          body: 'Medicin hører også til din familie. Du deler en medicinplan med en gruppe under "Del med en gruppe" på medicinsiden.',
         },
         guardianVsGroup: {
-          title: 'Madplaner, medicin og værger',
-          body: 'Madplanen hører til din familie; du deler den med en gruppe under "Del med en gruppe" i madplanen, og medicin fungerer på samme måde. Et medlemskab af en gruppe gør ikke nogen til værge for dit barn. Vil du have en anden voksen til at styre barnets konto sammen med dig, så brug "Inviter en medforælder" ved barnet under Børn i Indstillinger.',
+          title: 'Grupper og værger',
+          body: 'Et medlemskab af en gruppe gør ikke nogen til værge for dit barn. Vil du have en anden voksen til at styre barnets konto sammen med dig, så brug "Inviter en medforælder" ved barnet under Børn i Indstillinger.',
         },
       },
     },

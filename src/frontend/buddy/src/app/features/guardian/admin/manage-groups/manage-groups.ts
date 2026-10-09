@@ -2,6 +2,7 @@ import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { CalendarRole } from '../../../../core/calendars.service';
+import { FeaturesService } from '../../../../core/features.service';
 import {
   GroupMember,
   GroupRole,
@@ -61,6 +62,7 @@ export class ManageGroups {
   private readonly groups = inject(GroupsService);
   private readonly guardians = inject(GuardiansService);
   private readonly translation = inject(TranslationService);
+  protected readonly features = inject(FeaturesService);
 
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly invitableRoles = INVITABLE_ROLES;

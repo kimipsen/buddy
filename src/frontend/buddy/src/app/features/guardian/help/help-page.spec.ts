@@ -122,5 +122,12 @@ describe('GuardianHelp', () => {
     expect(contents).not.toContain(title('medicine'));
     expect(contents).not.toContain(title('print'));
     expect(contents).toContain(title('calendar'));
+    expect(page.textContent).toContain('Some parts of Buddy are turned off for your family');
+  });
+
+  it('says nothing about turned-off features while every feature is on', async () => {
+    const page = await open('/help');
+
+    expect(page.textContent).not.toContain('turned off');
   });
 });

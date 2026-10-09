@@ -121,13 +121,23 @@ export interface HelpTopic {
 export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'dashboard',
-    sections: [{ id: 'overview' }, { id: 'tasks' }, { id: 'medicine' }, { id: 'mealsAndPickups' }],
+    sections: [
+      { id: 'overview' },
+      { id: 'tasks' },
+      { id: 'medicine', feature: 'medicines' },
+      { id: 'meals', feature: 'mealplans' },
+      // ...
+    ],
     related: ['calendar', 'medicine', 'mealPlans', 'pickup'],
     link: '/guardian/onboarding',
   },
   // ...
 ];
 ```
+
+A topic or section with a `feature` is left out while the installation has that feature turned off
+([feature-flags.md](../../backend/analysis/feature-flags.md)). So text about an optional feature
+goes in a section tagged with it, never in an untagged one.
 
 Topic ids are plain strings rather than a union type. `help-coverage.spec.ts` checks that every
 id a route or `related` names exists, which a union couldn't do for route `data` anyway.

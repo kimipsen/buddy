@@ -99,18 +99,20 @@
                       ) | translate
                     }}
                   </button>
-                  <button
-                    type="button"
-                    class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
-                    (click)="toggleMealplanPolicyPanel(group.id)"
-                  >
-                    {{
-                      (expandedMealplanPolicyGroupId() === group.id
-                        ? 'admin.manageGroups.mealplanPolicy.hideButton'
-                        : 'admin.manageGroups.mealplanPolicy.showButton'
-                      ) | translate
-                    }}
-                  </button>
+                  @if (features.enabled('mealplans')) {
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                      (click)="toggleMealplanPolicyPanel(group.id)"
+                    >
+                      {{
+                        (expandedMealplanPolicyGroupId() === group.id
+                          ? 'admin.manageGroups.mealplanPolicy.hideButton'
+                          : 'admin.manageGroups.mealplanPolicy.showButton'
+                        ) | translate
+                      }}
+                    </button>
+                  }
                 }
                 @if (isOwner(group)) {
                   <button

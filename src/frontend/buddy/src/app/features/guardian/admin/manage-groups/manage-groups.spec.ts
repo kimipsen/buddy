@@ -12,6 +12,7 @@ import {
   MealplanPermissionPolicy,
 } from '../../../../core/groups.service';
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
+import { disableFeatures } from '../../../../../testing/features-fixture';
 import { ManageGroups } from './manage-groups';
 
 // TranslatePipe/TranslationService are used unstubbed throughout (the same pattern as the other
@@ -957,6 +958,16 @@ describe('ManageGroups', () => {
 
     expect(groups.getGroup).toHaveBeenCalledWith('group-1');
     expect(findButtonByText(compiled, 'Save permissions')).toBeTruthy();
+  });
+
+  it('offers no meal plan permissions while meal plans are turned off', async () => {
+    disableFeatures('mealplans');
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByText(compiled, 'Meal plan permissions')).toBeFalsy();
+    expect(findButtonByText(compiled, 'Calendar permissions')).toBeTruthy();
   });
 
   it('only offers None, Manage, and View mealplan tiers, never Rate', async () => {

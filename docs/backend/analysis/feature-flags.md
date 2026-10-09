@@ -287,7 +287,13 @@ GET /features   (anonymous, like /version)
   - the onboarding task and meal steps and their summary rows (`offeredSteps` in
     `onboarding.service.ts`; the guide finishes without them)
   - the help `?` button (`Help=false`), and the help topics, sections and related links of disabled
-    features (`feature` on the entries in `core/help/help-topics.ts`)
+    features (`feature` on the entries in `core/help/help-topics.ts`). A section's text never names
+    a feature that can be off unless the section carries that feature's tag: the dashboard's
+    meals, pickups, stars and print sections, the pickup babysitter and print sections, and the
+    groups topic's meal plan permissions and sharing sections are separate tagged sections. While
+    any feature is off, `/guardian/help` says that some parts of Buddy are turned off
+    (`FeaturesService.someOff`)
+  - the "Meal plan permissions" button in group settings (`manage-groups.html`)
   - "From template" in the calendar's new-task form
   - the progress badges on the child home and the children overview
 

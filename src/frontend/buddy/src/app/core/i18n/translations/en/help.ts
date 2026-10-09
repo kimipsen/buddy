@@ -10,6 +10,8 @@ export const help = {
     intro:
       'Every help topic in one place. The "?" button at the top of a page opens the help for that page.',
     contentsLabel: 'Help topics',
+    featuresOff:
+      'Some parts of Buddy are turned off for your family, so their pages and help are left out. Whoever runs Buddy for your family can turn them on.',
     contact: 'Something not working? Ask whoever runs Buddy for your family, or see the project on',
     repositoryLink: 'GitHub',
   },
@@ -20,19 +22,31 @@ export const help = {
       sections: {
         overview: {
           title: 'Your day at a glance',
-          body: 'The dashboard shows today for your family: meals, tasks, events, medicine, pickups and your children. Each card links to its own page when you need more. Use "Print week plan" to print the week. If you put the guided setup on hold, a card with "Resume setup" lets you finish it.',
+          body: 'The dashboard shows today for your family: tasks, events and your children, plus a card for each other part of Buddy your family uses, such as meals, medicine or pickups. Each card links to its own page when you need more. If you put the guided setup on hold, a card with "Resume setup" lets you finish it.',
         },
         tasks: {
           title: "Tick off today's tasks",
-          body: '"Today’s tasks" lists what is due today. Unfinished tasks whose time has passed move up under "Overdue". You can tick off a task that is assigned to you or to nobody. A routine from a template shows how many of its steps are done. "Today’s events" shows the rest of today\'s calendar, with past events crossed out.',
+          body: '"Today’s tasks" lists what is due today. Unfinished tasks whose time has passed move up under "Overdue". You can tick off a task that is assigned to you or to nobody. A routine with steps shows how many of them are done. "Today’s events" shows the rest of today\'s calendar, with past events crossed out.',
         },
         medicine: {
           title: 'Record medicine doses',
           body: 'Under "Today’s medicine" you see each dose with its time. Press "Mark taken" when the child has had it, or "Skip" if the dose is left out. Pressed the wrong one? "Undo" sets the dose back. To change the schedules themselves, use "Manage medicine →".',
         },
-        mealsAndPickups: {
-          title: 'Meals, pickups and stars',
-          body: '"Today’s meal plan" shows breakfast, lunch, dinner and snack, and "Plan meals →" opens the meal planner. "Today’s pickup & drop-off" shows who brings and fetches each child; plan it with "Plan pickups →". The "Children" card lists your children with the stars they have earned towards their goals.',
+        meals: {
+          title: 'Today’s meals',
+          body: '"Today’s meal plan" shows breakfast, lunch, dinner and snack, and "Plan meals →" opens the meal planner.',
+        },
+        pickups: {
+          title: 'Pickups and drop-offs',
+          body: '"Today’s pickup & drop-off" shows who brings and fetches each child; plan it with "Plan pickups →".',
+        },
+        stars: {
+          title: 'Stars',
+          body: 'The "Children" card shows the stars each child has earned towards their goals.',
+        },
+        printWeek: {
+          title: 'Print the week',
+          body: 'Use "Print week plan" to print the coming week with one of your print templates.',
         },
       },
     },
@@ -60,7 +74,7 @@ export const help = {
         },
         changeItems: {
           title: 'Change, delete or tick off',
-          body: 'Each event and task has "Edit" and "Delete". "Edit" changes the title, icon, colour and times. "Delete" asks you to confirm first. Use a task\'s toggle to mark it done; for a repeating task this only marks that day. A routine from a template can only be deleted, and shows each step with its own toggle.',
+          body: 'Each event and task has "Edit" and "Delete". "Edit" changes the title, icon, colour and times. "Delete" asks you to confirm first. Use a task\'s toggle to mark it done; for a repeating task this only marks that day. A routine with steps can only be deleted, and shows each step with its own toggle.',
         },
       },
     },
@@ -223,7 +237,11 @@ export const help = {
         },
         whoTakesCare: {
           title: 'Choose who takes care of it',
-          body: '"A guardian" is one of the child\'s guardians. "A sibling" is one of your other children. "Goes alone" means the child manages without an adult. "Playdate" needs the host\'s name, and the location and contact info are optional. "Babysitter" lets you pick someone saved on the babysitter list of you or another of the child\'s guardians.',
+          body: '"A guardian" is one of the child\'s guardians. "A sibling" is one of your other children. "Goes alone" means the child manages without an adult. "Playdate" needs the host\'s name, and the location and contact info are optional.',
+        },
+        babysitter: {
+          title: 'Pick a babysitter',
+          body: '"Babysitter" lets you pick someone saved on the babysitter list of you or another of the child\'s guardians.',
         },
         changeOrClear: {
           title: 'Change or clear a plan',
@@ -231,7 +249,11 @@ export const help = {
         },
         whereItShows: {
           title: 'Where the plan shows up',
-          body: 'Today\'s plan appears on your dashboard under "Today’s pickup & drop-off". Your child sees their own pickups and drop-offs for today on their home screen, including a babysitter\'s name but never the contact info. A print template can also add the plan to the printed week plan.',
+          body: 'Today\'s plan appears on your dashboard under "Today’s pickup & drop-off". Your child sees their own pickups and drop-offs for today on their home screen, including a babysitter\'s name but never the contact info.',
+        },
+        onPrint: {
+          title: 'On the printed week plan',
+          body: 'A print template can add the plan to the printed week plan as a "Drop-off / pick-up" row.',
         },
       },
     },
@@ -341,11 +363,23 @@ export const help = {
         },
         permissions: {
           title: 'Who can edit and who can view',
-          body: 'Under "Calendar permissions" you choose, for each role, what the group\'s calendars allow: "Owner" can edit and manage, "Contributor" can edit events and tasks, "Viewer" can only view. Under "Meal plan permissions" you choose "Full access", "Read only" or "No access". In a new group, members can view the calendars but not the meal plan.',
+          body: 'Under "Calendar permissions" you choose, for each role, what the group\'s calendars allow: "Owner" can edit and manage, "Contributor" can edit events and tasks, "Viewer" can only view. In a new group, members can view the calendars.',
+        },
+        mealplanPermissions: {
+          title: 'Meal plan permissions',
+          body: 'Under "Meal plan permissions" you choose "Full access", "Read only" or "No access". In a new group, members can\'t see the meal plan until you change it.',
+        },
+        shareMealPlan: {
+          title: 'Share your meal plan',
+          body: 'Your meal plan belongs to your family. Share it with a group under "Share with a group" on the meal planner.',
+        },
+        shareMedicine: {
+          title: 'Share medicine',
+          body: 'Medicine belongs to your family too. Share a schedule with a group under "Share with a group" on the medicine page.',
         },
         guardianVsGroup: {
-          title: 'Meal plans, medicine and guardians',
-          body: 'Your meal plan belongs to your family; you share it with a group under "Share with a group" on the meal planner, and medicine works the same way. Joining a group does not make anyone your child\'s guardian. To let another adult manage your child\'s account with you, use "Invite a co-guardian" on the child under Children in Settings.',
+          title: 'Groups and guardians',
+          body: 'Joining a group does not make anyone your child\'s guardian. To let another adult manage your child\'s account with you, use "Invite a co-guardian" on the child under Children in Settings.',
         },
       },
     },

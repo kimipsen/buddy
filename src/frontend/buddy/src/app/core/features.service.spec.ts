@@ -119,6 +119,15 @@ describe('FeaturesService', () => {
     }
   });
 
+  it('reports whether any feature is turned off', async () => {
+    expect(service.someOff()).toBe(false);
+
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ...allOn, sleepDiary: false }) });
+    await service.load();
+
+    expect(service.someOff()).toBe(true);
+  });
+
   it('offers an untagged item, and a tagged one only while its feature is on', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ...allOn, progress: false }) });
     await service.load();

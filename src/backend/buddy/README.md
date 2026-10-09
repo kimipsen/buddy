@@ -58,6 +58,14 @@ variables). Notable sections:
   in `Common/RateLimiting/RateLimitingOptions.cs`; override single values,
   e.g. `RateLimiting__IcalFeed__TokenLimit`. See
   [rate-limiting.md](../../../docs/backend/analysis/rate-limiting.md).
+- `Features` — which optional features this installation offers (`Mealplans`,
+  `MealplanAiAssistant`, `MealplanImport`, `Medicines`, `SleepDiary`, `Pickups`,
+  `Babysitters`, `WorkLocations`, `Printing`, `Progress`, `TaskLibrary`,
+  `Help`), all `true` by default. A disabled feature's endpoints aren't mapped,
+  and `GET /features` tells the frontend what to hide. An unknown name or a
+  non-boolean value fails startup. Defaults live in
+  `Common/FeatureFlags/FeatureOptions.cs`; e.g. `Features__Medicines=false`. See
+  [feature-flags.md](../../../docs/backend/analysis/feature-flags.md).
 - `ForwardedHeaders:KnownNetworks` — CIDR ranges of the reverse proxy whose
   `X-Forwarded-For` is trusted (loopback is always trusted). Empty locally;
   both production deployments set it.
@@ -91,7 +99,7 @@ provide one). Mutation testing runs separately with Stryker.NET from
   optional `.Validator.cs`) split, with shared `Types/` for aggregates, IDs,
   and events.
 - `Common/` — cross-cutting concerns shared by features: idempotency, rate
-  limiting, validation helpers, and the `Result`/`ErrorEnvelope` types used
+  limiting, feature flags, validation helpers, and the `Result`/`ErrorEnvelope` types used
   for endpoint responses.
 - `Email/` — SMTP sending abstraction (`IEmailSender`) used for verification
   and invite email.

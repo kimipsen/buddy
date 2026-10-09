@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { Provider, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { FeatureName, FeaturesService } from '../app/core/features.service';
@@ -18,7 +18,11 @@ export function disableFeatures(...disabled: FeatureName[]): void {
 
 function featuresStub(
   disabled: readonly FeatureName[],
-): Pick<FeaturesService, 'enabled' | 'offers'> {
+): Pick<FeaturesService, 'enabled' | 'offers' | 'someOff'> {
   const enabled = (name: FeatureName) => !disabled.includes(name);
-  return { enabled, offers: (item) => item.feature === undefined || enabled(item.feature) };
+  return {
+    enabled,
+    offers: (item) => item.feature === undefined || enabled(item.feature),
+    someOff: signal(disabled.length > 0).asReadonly(),
+  };
 }

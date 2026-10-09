@@ -24,6 +24,8 @@ export class GuardianHelp implements OnInit {
 
   private readonly features = inject(FeaturesService);
 
+  protected readonly someFeaturesOff = this.features.someOff;
+
   protected readonly topics = HELP_TOPICS.filter((topic) => this.features.offers(topic)).map(
     (topic) => ({
       topic,
