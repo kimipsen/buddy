@@ -6,6 +6,7 @@ import {
   CdkDropList,
   CdkDropListGroup,
 } from '@angular/cdk/drag-drop';
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, input, resource, signal } from '@angular/core';
 
 import { firstAndLast } from '../../../../core/array-utils';
@@ -81,6 +82,7 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
   selector: 'app-assign-mealplan',
   imports: [
     MealPicker,
+    NgTemplateOutlet,
     TranslatePipe,
     CdkDrag,
     CdkDragHandle,

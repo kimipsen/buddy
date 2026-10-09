@@ -130,8 +130,21 @@ describe('AssignMealplan', () => {
 
   // Every grid cell's cdkDropList div carries `id="${date}|${slot}"` (see assign-mealplan.html),
   // which uniquely locates one of the 7x4 app-meal-picker instances without depending on DOM order.
+  // Scoped to the table: jsdom has no Tailwind, so the day list (shown below xl) renders too.
   function cell(compiled: HTMLElement, date: string, slot: MealSlot): HTMLElement {
-    return compiled.querySelector(`[id="${date}|${slot}"]`) as HTMLElement;
+    return compiled.querySelector(`table [id="${date}|${slot}"]`) as HTMLElement;
+  }
+
+  // The day list below xl: one <li> per day, each with a <dl> of slot label (<dt>) and picker (<dd>).
+  function listDays(compiled: HTMLElement): HTMLElement[] {
+    return Array.from(compiled.querySelectorAll<HTMLElement>('ol > li'));
+  }
+
+  function listSlot(compiled: HTMLElement, dayIndex: number, label: string): HTMLElement {
+    const row = Array.from(listDays(compiled)[dayIndex].querySelectorAll('dl > div')).find(
+      (candidate) => candidate.querySelector('dt')?.textContent?.trim() === label,
+    );
+    return row!.querySelector('dd') as HTMLElement;
   }
 
   function pickerInput(compiled: HTMLElement, date: string, slot: MealSlot): HTMLInputElement {
@@ -586,6 +599,163 @@ describe('AssignMealplan', () => {
       await settle(fixture);
 
       expect(compiled.querySelector('ul.mt-1')).toBeFalsy();
+    });
+  });
+
+  describe('day list (below xl)', () => {
+    it('hides the table below xl except when printing, and the list from xl up and when printing', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const tableWrapper = compiled.querySelector('table')!.parentElement!;
+      expect(tableWrapper.classList).toContain('not-print:max-xl:hidden');
+      const list = compiled.querySelector('ol')!;
+      expect(list.classList).toContain('xl:hidden');
+      expect(list.classList).toContain('print:hidden');
+    });
+
+    it('shows one block per day in the table’s order, each with the four labelled slots and a picker per slot', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const rowLabels = Array.from(compiled.querySelectorAll('tbody tr > th')).map((th) =>
+        th.textContent?.trim(),
+      );
+      const days = listDays(compiled);
+      expect(days).toHaveLength(7);
+      expect(days.map((day) => day.querySelector('h4')?.textContent?.trim())).toEqual(rowLabels);
+
+      for (const day of days) {
+        expect(Array.from(day.querySelectorAll('dt')).map((dt) => dt.textContent?.trim())).toEqual([
+          'Breakfast',
+          'Lunch',
+          'Dinner',
+          'Snack',
+        ]);
+        expect(day.querySelectorAll('dd app-meal-picker')).toHaveLength(4);
+      }
+    });
+
+    it('shows the assigned meal in the matching list slot', async () => {
+      const { fixture } = await setup({
+        mealplans: {
+          listMealPlan: vi.fn(async () => [
+            entry({ date: today, slot: 'Dinner', mealId: 'meal-2' }),
+          ]),
+        },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(listSlot(compiled, 0, 'Dinner').querySelector('input')!.value).toBe('🌮 Tacos');
+      expect(listSlot(compiled, 0, 'Lunch').querySelector('input')!.value).toBe('');
+    });
+
+    it('has no drag and drop, while the table keeps its drag handle', async () => {
+      const { fixture } = await setup({
+        mealplans: { listMealPlan: vi.fn(async () => [entry({ date: today, slot: 'Breakfast' })]) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(compiled.querySelectorAll('table .cdk-drag-handle')).toHaveLength(1);
+      const list = compiled.querySelector('ol')!;
+      expect(list.querySelector('.cdk-drop-list, .cdk-drag, .cdk-drag-handle')).toBeNull();
+      expect(list.textContent).not.toContain('⠿');
+    });
+
+    it('assigns a meal chosen in a list picker exactly as the table does, and both show it', async () => {
+      const { fixture, mealplans } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      const slot = listSlot(compiled, 1, 'Snack');
+
+      slot.querySelector('input')!.dispatchEvent(new Event('focus'));
+      fixture.detectChanges();
+      Array.from(slot.querySelectorAll<HTMLButtonElement>('ul li button'))
+        .find((button) => button.textContent?.includes('Tacos'))!
+        .click();
+      await settle(fixture);
+
+      const tomorrow = addDays(today, 1);
+      expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(
+        familyScope,
+        tomorrow,
+        'Snack',
+        'meal-2',
+        '',
+      );
+      expect(slot.querySelector('input')!.value).toBe('🌮 Tacos');
+      expect(pickerInput(compiled, tomorrow, 'Snack').value).toBe('🌮 Tacos');
+    });
+
+    it('clears a slot from a list picker with the same clearMealSlot call as the table', async () => {
+      const { fixture, mealplans } = await setup({
+        mealplans: { listMealPlan: vi.fn(async () => [entry({ date: today, slot: 'Lunch' })]) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      const slot = listSlot(compiled, 0, 'Lunch');
+
+      slot.querySelector('input')!.dispatchEvent(new Event('focus'));
+      fixture.detectChanges();
+      Array.from(slot.querySelectorAll<HTMLButtonElement>('ul li button'))
+        .find((button) => button.textContent?.includes('Not planned'))!
+        .click();
+      await settle(fixture);
+
+      expect(mealplans.clearMealSlot).toHaveBeenCalledExactlyOnceWith(familyScope, today, 'Lunch');
+      expect(pickerInput(compiled, today, 'Lunch').value).toBe('');
+    });
+
+    it('marks past days and disables their list pickers', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, '← Previous week')!.click();
+      await settle(fixture);
+
+      const firstDay = listDays(compiled)[0];
+      expect(firstDay.querySelector('h4')!.textContent).toContain('(past)');
+      expect(listSlot(compiled, 0, 'Breakfast').querySelector('input')!.disabled).toBe(true);
+    });
+
+    it('disables every list picker for a read-only scope', async () => {
+      const { fixture } = await setup({ scope: groupViewScope });
+      await settle(fixture);
+      const inputs = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('ol input'),
+      );
+
+      expect(inputs).toHaveLength(28);
+      expect(inputs.every((input) => input.disabled)).toBe(true);
+    });
+
+    it('shows past-day sibling ratings in the list slot too', async () => {
+      const { fixture } = await setup({
+        mealplans: {
+          listMealPlan: vi.fn(async (_scope, from: string) => [
+            entry({
+              date: from,
+              slot: 'Breakfast',
+              allRatings: [
+                { childId: 'child-9', stars: 2, comment: 'Meh', ratedAt: '2026-01-01T00:00:00Z' },
+              ],
+            }),
+          ]),
+        },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, '← Previous week')!.click();
+      await settle(fixture);
+
+      expect(listSlot(compiled, 0, 'Breakfast').textContent).toContain('child-9:');
+      expect(listSlot(compiled, 0, 'Breakfast').textContent).toContain('“Meh”');
     });
   });
 

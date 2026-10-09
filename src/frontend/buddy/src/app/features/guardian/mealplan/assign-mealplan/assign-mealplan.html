@@ -44,7 +44,8 @@
       </p>
     }
 
-    <div class="overflow-x-auto">
+    <!-- The table only fits from xl up (see the day list below). Printing always shows it. -->
+    <div class="overflow-x-auto not-print:max-xl:hidden">
       <table cdkDropListGroup class="w-full min-w-[640px] border-separate border-spacing-2">
         <thead>
           <tr>
@@ -82,13 +83,9 @@
                     (cdkDropListDropped)="onMealDrop($event)"
                     class="relative"
                   >
-                    <app-meal-picker
-                      [meals]="meals()"
-                      [mealId]="mealIdFor(day.date, slot)"
-                      [disabled]="
-                        readOnly() || isPastDay(day.date) || saving.isBusy(saveId(day.date, slot))
-                      "
-                      (mealIdChange)="onSlotChange(day.date, slot, $event)"
+                    <ng-container
+                      [ngTemplateOutlet]="picker"
+                      [ngTemplateOutletContext]="{ $implicit: day, slot: slot }"
                     />
                     @if (entryFor(day.date, slot); as entry) {
                       <div
@@ -119,21 +116,10 @@
                     }
                   </div>
 
-                  @if (ratingsFor(day.date, slot); as ratings) {
-                    @if (ratings.length > 0) {
-                      <ul class="mt-1 space-y-0.5">
-                        @for (rating of ratings; track rating.childName) {
-                          <li class="text-xs text-slate-500 dark:text-slate-400">
-                            <span class="font-medium">{{ rating.childName }}:</span>
-                            <span aria-hidden="true">{{ starDisplay(rating.stars) }}</span>
-                            @if (rating.comment) {
-                              <span class="italic">“{{ rating.comment }}”</span>
-                            }
-                          </li>
-                        }
-                      </ul>
-                    }
-                  }
+                  <ng-container
+                    [ngTemplateOutlet]="ratingList"
+                    [ngTemplateOutletContext]="{ $implicit: day, slot: slot }"
+                  />
                 </td>
               }
             </tr>
@@ -141,5 +127,72 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Below xl the four slot columns would clip meal names, so each day is a block of labelled
+         slot rows with the same picker. No drag and drop here: on touch it fights scrolling, and
+         the picker already covers assigning. -->
+    <ol class="space-y-3 xl:hidden print:hidden">
+      @for (day of days(); track day.date) {
+        <li class="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+          <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            {{ day.label }}
+            @if (isPastDay(day.date)) {
+              <span class="ml-1 text-xs font-medium text-slate-400">{{
+                'mealplan.assign.pastDay' | translate
+              }}</span>
+            }
+          </h4>
+          <dl class="mt-2 space-y-2">
+            @for (slot of slots; track slot) {
+              <div class="grid grid-cols-[7rem_minmax(0,1fr)] items-start gap-2">
+                <dt
+                  class="pt-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
+                  {{ slotLabels[slot] | translate }}
+                </dt>
+                <dd class="min-w-0">
+                  <ng-container
+                    [ngTemplateOutlet]="picker"
+                    [ngTemplateOutletContext]="{ $implicit: day, slot: slot }"
+                  />
+                  <ng-container
+                    [ngTemplateOutlet]="ratingList"
+                    [ngTemplateOutletContext]="{ $implicit: day, slot: slot }"
+                  />
+                </dd>
+              </div>
+            }
+          </dl>
+        </li>
+      }
+    </ol>
   }
 </app-card>
+
+<!-- A slot's picker and ratings, shared by the table and the day list so both edit the same way. -->
+<ng-template #picker let-day let-slot="slot">
+  <app-meal-picker
+    [meals]="meals()"
+    [mealId]="mealIdFor(day.date, slot)"
+    [disabled]="readOnly() || isPastDay(day.date) || saving.isBusy(saveId(day.date, slot))"
+    (mealIdChange)="onSlotChange(day.date, slot, $event)"
+  />
+</ng-template>
+
+<ng-template #ratingList let-day let-slot="slot">
+  @if (ratingsFor(day.date, slot); as ratings) {
+    @if (ratings.length > 0) {
+      <ul class="mt-1 space-y-0.5">
+        @for (rating of ratings; track rating.childName) {
+          <li class="text-xs text-slate-500 dark:text-slate-400">
+            <span class="font-medium">{{ rating.childName }}:</span>
+            <span aria-hidden="true">{{ starDisplay(rating.stars) }}</span>
+            @if (rating.comment) {
+              <span class="italic">“{{ rating.comment }}”</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</ng-template>
