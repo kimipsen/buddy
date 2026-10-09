@@ -58,6 +58,27 @@ postgres_firewall_rule_exists() {
     --server-name "$PG_SERVER_NAME" --name "$rule_name" -o none 2>/dev/null
 }
 
+# Sets a container app's health probes. The containerapp CLI has no probe flags, so this patches
+# them through ARM. PATCH replaces the whole containers array, so the current container goes back
+# with only its probes changed. Only the fields given are compared (Azure fills in defaults), so an
+# unchanged config adds no revision.
+set_probes() {
+  local name=$1 probes=$2 app_id containers
+  app_id=$(az containerapp show --name "$name" --resource-group "$RESOURCE_GROUP" --query id -o tsv)
+  containers=$(az containerapp show --name "$name" --resource-group "$RESOURCE_GROUP" \
+    --query properties.template.containers -o json)
+  if [[ $(echo "$containers" | jq --argjson probes "$probes" '
+      [.[0].probes // [] | .[] | {type, httpGet: {path: .httpGet.path, port: .httpGet.port},
+        periodSeconds, timeoutSeconds, failureThreshold}] | sort_by(.type)
+      == ($probes | sort_by(.type))') != true ]]; then
+    az rest --method patch \
+      --url "https://management.azure.com${app_id}?api-version=2024-03-01" \
+      --body "$(echo "$containers" | jq --argjson probes "$probes" \
+        '{properties: {template: {containers: (.[0].probes = $probes)}}}')" \
+      -o none
+  fi
+}
+
 postgres_db_exists() {
   local db_name=$1
   az postgres flexible-server db show --resource-group "$RESOURCE_GROUP" \
@@ -231,6 +252,7 @@ echo "==> Building the Keycloak image (base image + buddy theme)"
 az acr build \
   --registry "$ACR_NAME" \
   --image buddy-keycloak:latest \
+  --build-arg HEALTH_ENABLED=true \
   --file "$REPO_ROOT/deploy/azure/keycloak/Dockerfile" \
   "$REPO_ROOT"
 
@@ -296,6 +318,16 @@ else
     --env-vars "${KEYCLOAK_ENV_VARS[@]}" \
     -o none
 fi
+
+# Keycloak's health endpoints are on the management port (9000), which the ingress (8080) doesn't
+# expose, so they stay private. /health/ready includes its database check. A cold start on one CPU
+# (realm caches, theme) can take a few minutes, hence the startup probe's 5 min allowance.
+echo "==> Configuring Keycloak's health probes"
+set_probes keycloak '[
+  {"type": "Startup",   "httpGet": {"path": "/health/started", "port": 9000}, "periodSeconds": 10, "timeoutSeconds": 5, "failureThreshold": 30},
+  {"type": "Liveness",  "httpGet": {"path": "/health/live",    "port": 9000}, "periodSeconds": 15, "timeoutSeconds": 5, "failureThreshold": 3},
+  {"type": "Readiness", "httpGet": {"path": "/health/ready",   "port": 9000}, "periodSeconds": 15, "timeoutSeconds": 5, "failureThreshold": 3}
+]'
 
 bind_custom_domain keycloak "$KEYCLOAK_CUSTOM_DOMAIN" "$KEYCLOAK_FQDN"
 
@@ -396,34 +428,17 @@ else
     -o none
 fi
 
-# Health probes (Common/Health/HealthChecksFeature.cs). The containerapp CLI has no probe flags, so
-# patch the container's probes through ARM; PATCH replaces the containers array, so send the current
-# container back with only its probes changed. Probes go straight to the container over plain HTTP
-# (no X-Forwarded-Proto), so UseHttpsRedirection leaves them alone.
-#   startup    /health, up to 2 min for Marten's schema migrations before liveness takes over.
-#   liveness   /health, the process is serving; a restart fixes a hung process.
-#   readiness  /health/ready, 503 while Postgres is unreachable takes the replica out of ingress
-#              without restarting it (a restart can't fix the database). Keycloak only degrades it.
+# /health and /health/ready (Common/Health/HealthChecksFeature.cs). The startup probe gives
+# Marten's schema migrations up to 2 min before liveness takes over. A 503 from /health/ready
+# (Postgres unreachable) takes the replica out of ingress without restarting it; a restart can't
+# fix the database. Probes reach the container over plain HTTP with no X-Forwarded-Proto, so
+# UseHttpsRedirection leaves them alone.
 echo "==> Configuring the API's health probes"
-API_PROBES='[
+set_probes api '[
   {"type": "Startup",   "httpGet": {"path": "/health",       "port": 8080}, "periodSeconds": 5,  "timeoutSeconds": 3, "failureThreshold": 24},
   {"type": "Liveness",  "httpGet": {"path": "/health",       "port": 8080}, "periodSeconds": 10, "timeoutSeconds": 3, "failureThreshold": 3},
   {"type": "Readiness", "httpGet": {"path": "/health/ready", "port": 8080}, "periodSeconds": 10, "timeoutSeconds": 5, "failureThreshold": 3}
 ]'
-API_APP_ID=$(az containerapp show --name api --resource-group "$RESOURCE_GROUP" --query id -o tsv)
-API_CONTAINERS=$(az containerapp show --name api --resource-group "$RESOURCE_GROUP" \
-  --query properties.template.containers -o json)
-# Compare only the fields set above (Azure fills in defaults), so an unchanged config adds no revision.
-if [[ $(echo "$API_CONTAINERS" | jq --argjson probes "$API_PROBES" '
-    [.[0].probes // [] | .[] | {type, httpGet: {path: .httpGet.path, port: .httpGet.port},
-      periodSeconds, timeoutSeconds, failureThreshold}] | sort_by(.type)
-    == ($probes | sort_by(.type))') != true ]]; then
-  az rest --method patch \
-    --url "https://management.azure.com${API_APP_ID}?api-version=2024-03-01" \
-    --body "$(echo "$API_CONTAINERS" | jq --argjson probes "$API_PROBES" \
-      '{properties: {template: {containers: (.[0].probes = $probes)}}}')" \
-    -o none
-fi
 
 bind_custom_domain api "$API_CUSTOM_DOMAIN" "$API_FQDN"
 
@@ -463,6 +478,13 @@ else
     --cpu 0.25 --memory 0.5Gi \
     -o none
 fi
+
+# Caddy serving static files: if / answers, the app is up. Nothing else to check.
+echo "==> Configuring the frontend's health probes"
+set_probes frontend '[
+  {"type": "Liveness",  "httpGet": {"path": "/", "port": 80}, "periodSeconds": 30, "timeoutSeconds": 5, "failureThreshold": 3},
+  {"type": "Readiness", "httpGet": {"path": "/", "port": 80}, "periodSeconds": 10, "timeoutSeconds": 5, "failureThreshold": 3}
+]'
 
 bind_custom_domain frontend "$FRONTEND_CUSTOM_DOMAIN" "$FRONTEND_FQDN"
 

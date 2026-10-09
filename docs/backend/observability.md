@@ -30,7 +30,7 @@ Both endpoints are exempt from rate limiting and aren't traced. Where they're us
 
 - `deploy/docker-compose.prod.yml`: the `api` healthcheck calls `/health/ready`, and the
   `frontend` healthcheck fetches `/`.
-- Azure Container Apps: `deploy.sh` configures startup and liveness probes on `/health` and a readiness probe on `/health/ready` for the API (see `deploy/README-azure.md`).
+- Azure Container Apps: `deploy.sh` configures startup and liveness probes on `/health` and a readiness probe on `/health/ready` for the API, and probes Keycloak and the frontend too (see `deploy/README-azure.md`).
 
 Code: `src/backend/buddy/Common/Health/`. Tests: `buddy.IntegrationTests/Common/Health/`.
 

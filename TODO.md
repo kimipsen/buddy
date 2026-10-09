@@ -590,7 +590,8 @@ Found along the way:
 - [x] **Readiness health checks.** `/health/ready` checks Postgres (503) and Keycloak (degraded,
   still 200); the prod compose file probes it for `api` and `/` for `frontend`.
 - [x] **Health probes on Azure Container Apps.** `deploy/azure/deploy.sh` gives the API startup and
-  liveness probes on `/health` and a readiness probe on `/health/ready`.
+  liveness probes on `/health` and a readiness probe on `/health/ready`; Keycloak is probed on its
+  management port (9000) and the frontend on `/`.
 - [ ] **Automated backups.** Backups on the Oracle VM are manual `pg_dump` commands
   (`deploy/README.md` §7). Schedule them, copy them off the VM, and test a restore regularly.
 - [x] **Pin the base images.** Official `sdk:11.0.100-preview.7` / `aspnet:11.0.0-preview.7`
