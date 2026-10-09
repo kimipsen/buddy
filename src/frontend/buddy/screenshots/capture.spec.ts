@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -64,5 +64,67 @@ for (const entry of SCREENSHOT_PAGES) {
       fullPage: entry.fullPage ?? true,
       animations: 'disabled',
     });
+
+    // Checked after the screenshot, so a failing page still leaves its PNG to look at.
+    const overflow = await horizontalOverflow(page);
+    if (entry.knownOverflow?.includes(testInfo.project.name)) {
+      expect(
+        overflow,
+        `${entry.name} no longer overflows on ${testInfo.project.name}: remove it from knownOverflow in pages.ts`,
+      ).not.toBeNull();
+    } else {
+      expect(
+        overflow,
+        `${entry.name} is wider than the ${testInfo.project.name} screen`,
+      ).toBeNull();
+    }
+  });
+}
+
+// How far the page is wider than the screen, with the elements sticking out furthest, or null
+// when it fits. Compared with the root's clientWidth (the layout viewport without a scrollbar),
+// because a mobile browser may zoom out to fit wide content and so change innerWidth.
+async function horizontalOverflow(page: Page): Promise<string | null> {
+  return page.evaluate(() => {
+    const root = document.documentElement;
+    const extra = root.scrollWidth - root.clientWidth;
+    if (extra <= 0) {
+      return null;
+    }
+
+    // "app-doses-today > button.rounded-lg.bg-emerald-600": the nearest component and the element.
+    const describe = (el: Element) => {
+      const component = findComponent(el);
+      const classes = [...el.classList]
+        .slice(0, 3)
+        .map((c) => `.${c}`)
+        .join('');
+      return `${component ? `${component} > ` : ''}${el.tagName.toLowerCase()}${classes}`;
+    };
+    const findComponent = (el: Element) => {
+      for (let a = el.parentElement; a; a = a.parentElement) {
+        if (a.tagName.includes('-')) {
+          return a.tagName.toLowerCase();
+        }
+      }
+      return null;
+    };
+
+    const widest = [...document.body.querySelectorAll('*')]
+      .map((el) => ({ el, right: el.getBoundingClientRect().right }))
+      .filter(({ right }) => right > root.clientWidth + 1)
+      // Keep the outermost offenders: an element whose parent also sticks out adds nothing.
+      .filter(
+        ({ el }) =>
+          !(
+            el.parentElement &&
+            el.parentElement.getBoundingClientRect().right > root.clientWidth + 1
+          ),
+      )
+      .sort((a, b) => b.right - a.right)
+      .slice(0, 3)
+      .map(({ el, right }) => `${describe(el)} (right edge ${Math.round(right)}px)`);
+
+    return `${extra}px wider than the ${root.clientWidth}px screen; ${widest.join('; ')}`;
   });
 }

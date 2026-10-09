@@ -48,7 +48,7 @@ The mobile PNGs are taken at `deviceScaleFactor: 2`, so a page that fits is exac
 | `guardian-calendar`              | 874       | 437               | Agenda rows with nowrap time ranges plus Edit/Delete                                                                                                                                                                                                   |
 | `guardian-dashboard`             | 850       | 425               | Dose rows: `flex justify-between` with two buttons and no wrap ([doses-today.html:40](../../../src/frontend/buddy/src/app/features/guardian/doses-today/doses-today.html))                                                                             |
 | `child-calendar`                 | 834       | 417               | `whitespace-nowrap` times in agenda rows                                                                                                                                                                                                               |
-| `guardian-print-template-editor` | 820       | 410               | `w-40` fields in the editor's form rows                                                                                                                                                                                                                |
+| `guardian-print-template-editor` | 820       | 410               | The week-plan preview (`app-week-plan-sheet`) is wider than its column                                                                                                                                                                                 |
 
 Content is also hidden on pages that _do_ fit. On `guardian-pickup`, the 520px table scrolls
 sideways inside its card, so the whole Pickup column is off-screen. Nothing on the screen hints
@@ -286,6 +286,8 @@ Each phase is one worktree branch, landed with `rebase-commit`, ending with `tas
 
 ### Phase 0 -- guardrail and tablet screenshots
 
+Implemented: the eight pages above are marked `knownOverflow: ['mobile']` in `screenshots/pages.ts`; tablet and desktop have no overflow.
+
 - `screenshots/capture.spec.ts`: horizontal-overflow assertion (Decision 5).
 - `playwright.screenshots.config.ts`: `tablet` project. `global-teardown.ts`: third image per page.
 - `docs/screenshots/README.md` intro text (generated).
@@ -299,7 +301,7 @@ Each phase is one worktree branch, landed with `rebase-commit`, ending with `tas
   with Remove on its own line below `sm`.
 - Sleep diary: give the page grid `grid-cols-[minmax(0,1fr)]` so the history table scrolls inside
   its card.
-- Print template editor: `w-40` becomes `w-full sm:w-40`.
+- Print template editor: let the week-plan preview shrink to its column (`min-w-0` on the column, or scale it as the print page already does).
 - Remove each `knownOverflow` flag as its page is fixed.
 
 ### Phase 2 -- `app-page`, `app-card`, responsive spacing

@@ -4,9 +4,9 @@ import { join } from 'node:path';
 import { SCREENSHOT_PAGES } from './pages';
 import { SCREENSHOTS_DIR, screenshotsDirFor } from './screenshots-dir';
 
-// Regenerates docs/screenshots/README.md from pages.ts, listing every page that has a desktop or
-// mobile PNG. The mobile image sits below the desktop one at a fixed width (GitHub honours the
-// HTML width attribute, not Markdown image sizing).
+// Regenerates docs/screenshots/README.md from pages.ts, listing every page that has a desktop,
+// tablet or mobile PNG. The tablet and phone images sit below the desktop one at fixed widths
+// (GitHub honours the HTML width attribute, not Markdown image sizing).
 export default function globalTeardown(): void {
   if (!existsSync(SCREENSHOTS_DIR)) {
     return;
@@ -16,11 +16,17 @@ export default function globalTeardown(): void {
     existsSync(join(screenshotsDirFor(project), `${name}.png`));
 
   const sections = SCREENSHOT_PAGES.filter(
-    (entry) => has('desktop', entry.name) || has('mobile', entry.name),
+    (entry) => has('desktop', entry.name) || has('tablet', entry.name) || has('mobile', entry.name),
   ).map((entry) => {
     const images: string[] = [];
     if (has('desktop', entry.name)) {
       images.push(`![${entry.title}](${entry.name}.png)`, '');
+    }
+    if (has('tablet', entry.name)) {
+      images.push(
+        `<img src="tablet/${entry.name}.png" alt="${entry.title} on a tablet" width="384">`,
+        '',
+      );
     }
     if (has('mobile', entry.name)) {
       images.push(
@@ -39,8 +45,8 @@ export default function globalTeardown(): void {
     '',
     'Every page of Buddy, signed in as the demo guardian Sara Holm or her son Emil. The data is a',
     'demo family seeded fresh for each run, so dates are relative to the day the screenshots were',
-    'taken. Each page is shown on a desktop browser (1280×800) and on a phone (iPhone 15,',
-    '393×852).',
+    'taken. Each page is shown on a desktop browser (1280×800), on a tablet in portrait (iPad Mini,',
+    '768×1024) and on a phone (iPhone 15, 393×852).',
     '',
     ...sections.flatMap((section) => [section, '']),
   ].join('\n');

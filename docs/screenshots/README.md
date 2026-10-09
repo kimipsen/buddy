@@ -5,14 +5,16 @@
 
 Every page of Buddy, signed in as the demo guardian Sara Holm or her son Emil. The data is a
 demo family seeded fresh for each run, so dates are relative to the day the screenshots were
-taken. Each page is shown on a desktop browser (1280×800) and on a phone (iPhone 15,
-393×852).
+taken. Each page is shown on a desktop browser (1280×800), on a tablet in portrait (iPad Mini,
+768×1024) and on a phone (iPhone 15, 393×852).
 
 ## Login
 
 The sign-in page. Authentication is handled by Keycloak.
 
 ![Login](login.png)
+
+<img src="tablet/login.png" alt="Login on a tablet" width="384">
 
 <img src="mobile/login.png" alt="Login on a phone" width="320">
 
@@ -22,6 +24,8 @@ Where an expired session lands: the sign-in page with a notice. Signing in retur
 
 ![Login after an expired session](login-session-expired.png)
 
+<img src="tablet/login-session-expired.png" alt="Login after an expired session on a tablet" width="384">
+
 <img src="mobile/login-session-expired.png" alt="Login after an expired session on a phone" width="320">
 
 ## Guardian dashboard
@@ -29,6 +33,8 @@ Where an expired session lands: the sign-in page with a notice. Signing in retur
 Today at a glance: meals, tasks, events, medicine, pickups and the children.
 
 ![Guardian dashboard](guardian-dashboard.png)
+
+<img src="tablet/guardian-dashboard.png" alt="Guardian dashboard on a tablet" width="384">
 
 <img src="mobile/guardian-dashboard.png" alt="Guardian dashboard on a phone" width="320">
 
@@ -38,6 +44,8 @@ The first-login guide for a guardian with no groups or children: group, children
 
 ![Guided setup](guardian-onboarding.png)
 
+<img src="tablet/guardian-onboarding.png" alt="Guided setup on a tablet" width="384">
+
 <img src="mobile/guardian-onboarding.png" alt="Guided setup on a phone" width="320">
 
 ## Calendar
@@ -45,6 +53,8 @@ The first-login guide for a guardian with no groups or children: group, children
 Shared family calendars with events and tasks.
 
 ![Calendar](guardian-calendar.png)
+
+<img src="tablet/guardian-calendar.png" alt="Calendar on a tablet" width="384">
 
 <img src="mobile/guardian-calendar.png" alt="Calendar on a phone" width="320">
 
@@ -54,6 +64,8 @@ Reusable routines broken into small, timed steps.
 
 ![Task library](guardian-task-library.png)
 
+<img src="tablet/guardian-task-library.png" alt="Task library on a tablet" width="384">
+
 <img src="mobile/guardian-task-library.png" alt="Task library on a phone" width="320">
 
 ## Progress
@@ -61,6 +73,8 @@ Reusable routines broken into small, timed steps.
 Completed tasks earn progress towards rewards the guardian sets up.
 
 ![Progress](guardian-progress.png)
+
+<img src="tablet/guardian-progress.png" alt="Progress on a tablet" width="384">
 
 <img src="mobile/guardian-progress.png" alt="Progress on a phone" width="320">
 
@@ -70,6 +84,8 @@ The week's meals per slot, picked from the child's meal library.
 
 ![Meal plan](guardian-mealplan.png)
 
+<img src="tablet/guardian-mealplan.png" alt="Meal plan on a tablet" width="384">
+
 <img src="mobile/guardian-mealplan.png" alt="Meal plan on a phone" width="320">
 
 ## Meal plan AI assistant
@@ -77,6 +93,8 @@ The week's meals per slot, picked from the child's meal library.
 Plan meals with an AI provider of your choice (needs an API key), optionally only from rated or recently served meals.
 
 ![Meal plan AI assistant](guardian-mealplan-ai-assistant.png)
+
+<img src="tablet/guardian-mealplan-ai-assistant.png" alt="Meal plan AI assistant on a tablet" width="384">
 
 <img src="mobile/guardian-mealplan-ai-assistant.png" alt="Meal plan AI assistant on a phone" width="320">
 
@@ -86,6 +104,8 @@ Paste a note or upload a CSV of earlier plans, review the matched meals, and und
 
 ![Import older meal plans](guardian-mealplan-import.png)
 
+<img src="tablet/guardian-mealplan-import.png" alt="Import older meal plans on a tablet" width="384">
+
 <img src="mobile/guardian-mealplan-import.png" alt="Import older meal plans on a phone" width="320">
 
 ## Medicine
@@ -93,6 +113,8 @@ Paste a note or upload a CSV of earlier plans, review the matched meals, and und
 Medicine schedules and daily dose tracking.
 
 ![Medicine](guardian-medicine.png)
+
+<img src="tablet/guardian-medicine.png" alt="Medicine on a tablet" width="384">
 
 <img src="mobile/guardian-medicine.png" alt="Medicine on a phone" width="320">
 
@@ -102,6 +124,8 @@ Log a night in the same fields as a sleep clinic’s form, review the last 14 ni
 
 ![Sleep diary](guardian-sleep-diary.png)
 
+<img src="tablet/guardian-sleep-diary.png" alt="Sleep diary on a tablet" width="384">
+
 <img src="mobile/guardian-sleep-diary.png" alt="Sleep diary on a phone" width="320">
 
 ## Pickup & drop-off
@@ -109,6 +133,8 @@ Log a night in the same fields as a sleep clinic’s form, review the last 14 ni
 Who takes and fetches the child each day.
 
 ![Pickup & drop-off](guardian-pickup.png)
+
+<img src="tablet/guardian-pickup.png" alt="Pickup & drop-off on a tablet" width="384">
 
 <img src="mobile/guardian-pickup.png" alt="Pickup & drop-off on a phone" width="320">
 
@@ -118,6 +144,8 @@ Saved babysitters and nannies that any of a child’s guardians can plan for a p
 
 ![Babysitters](guardian-babysitters.png)
 
+<img src="tablet/guardian-babysitters.png" alt="Babysitters on a tablet" width="384">
+
 <img src="mobile/guardian-babysitters.png" alt="Babysitters on a phone" width="320">
 
 ## Work locations
@@ -125,6 +153,8 @@ Saved babysitters and nannies that any of a child’s guardians can plan for a p
 Where each guardian works on which weekday, as a repeating pattern.
 
 ![Work locations](guardian-work-locations.png)
+
+<img src="tablet/guardian-work-locations.png" alt="Work locations on a tablet" width="384">
 
 <img src="mobile/guardian-work-locations.png" alt="Work locations on a phone" width="320">
 
@@ -134,6 +164,8 @@ Templates for a printable week plan.
 
 ![Print templates](guardian-print.png)
 
+<img src="tablet/guardian-print.png" alt="Print templates on a tablet" width="384">
+
 <img src="mobile/guardian-print.png" alt="Print templates on a phone" width="320">
 
 ## Print template editor
@@ -141,6 +173,8 @@ Templates for a printable week plan.
 Choose which rows the printed week plan shows.
 
 ![Print template editor](guardian-print-template-editor.png)
+
+<img src="tablet/guardian-print-template-editor.png" alt="Print template editor on a tablet" width="384">
 
 <img src="mobile/guardian-print-template-editor.png" alt="Print template editor on a phone" width="320">
 
@@ -150,6 +184,8 @@ The week plan as it comes out on paper.
 
 ![Printable week plan](guardian-print-sheet.png)
 
+<img src="tablet/guardian-print-sheet.png" alt="Printable week plan on a tablet" width="384">
+
 <img src="mobile/guardian-print-sheet.png" alt="Printable week plan on a phone" width="320">
 
 ## Settings
@@ -157,6 +193,8 @@ The week plan as it comes out on paper.
 Profile, children, groups, calendars and sharing.
 
 ![Settings](guardian-admin.png)
+
+<img src="tablet/guardian-admin.png" alt="Settings on a tablet" width="384">
 
 <img src="mobile/guardian-admin.png" alt="Settings on a phone" width="320">
 
@@ -166,6 +204,8 @@ Every help topic on one page. The "?" button in the header opens the same help i
 
 ![Help](guardian-help.png)
 
+<img src="tablet/guardian-help.png" alt="Help on a tablet" width="384">
+
 <img src="mobile/guardian-help.png" alt="Help on a phone" width="320">
 
 ## Child: today
@@ -173,6 +213,8 @@ Every help topic on one page. The "?" button in the header opens the same help i
 The child's own view of today's tasks and events.
 
 ![Child: today](child-home.png)
+
+<img src="tablet/child-home.png" alt="Child: today on a tablet" width="384">
 
 <img src="mobile/child-home.png" alt="Child: today on a phone" width="320">
 
@@ -182,6 +224,8 @@ The child's view of the week's meals.
 
 ![Child: meal plan](child-mealplan.png)
 
+<img src="tablet/child-mealplan.png" alt="Child: meal plan on a tablet" width="384">
+
 <img src="mobile/child-mealplan.png" alt="Child: meal plan on a phone" width="320">
 
 ## Child: calendar
@@ -189,6 +233,8 @@ The child's view of the week's meals.
 The child's calendar.
 
 ![Child: calendar](child-calendar.png)
+
+<img src="tablet/child-calendar.png" alt="Child: calendar on a tablet" width="384">
 
 <img src="mobile/child-calendar.png" alt="Child: calendar on a phone" width="320">
 
@@ -198,6 +244,8 @@ What someone invited to a group sees before signing in.
 
 ![Group invite](invite-group.png)
 
+<img src="tablet/invite-group.png" alt="Group invite on a tablet" width="384">
+
 <img src="mobile/invite-group.png" alt="Group invite on a phone" width="320">
 
 ## Guardian invite
@@ -206,6 +254,8 @@ What an invited co-guardian sees before signing in.
 
 ![Guardian invite](invite-guardian.png)
 
+<img src="tablet/invite-guardian.png" alt="Guardian invite on a tablet" width="384">
+
 <img src="mobile/invite-guardian.png" alt="Guardian invite on a phone" width="320">
 
 ## Shared sleep diary
@@ -213,5 +263,7 @@ What an invited co-guardian sees before signing in.
 What a doctor sees from a share link, with no login: a printable 14-day table laid out like the clinic’s paper sleep registration.
 
 ![Shared sleep diary](shared-sleep-diary.png)
+
+<img src="tablet/shared-sleep-diary.png" alt="Shared sleep diary on a tablet" width="384">
 
 <img src="mobile/shared-sleep-diary.png" alt="Shared sleep diary on a phone" width="320">

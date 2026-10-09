@@ -5,8 +5,10 @@ import { defineConfig, devices } from '@playwright/test';
 // (screenshots/demo-family.ts) and starts the API and dev server itself, reusing them when they're
 // already running.
 //
-// Two projects capture every page twice: `desktop` into docs/screenshots/ and `mobile` (an
-// iPhone 15 profile) into docs/screenshots/mobile/. Both share the one seeded demo family.
+// Three projects capture every page: `desktop` into docs/screenshots/, `mobile` (an iPhone 15
+// profile) into docs/screenshots/mobile/ and `tablet` (an iPad Mini in portrait) into
+// docs/screenshots/tablet/. They share the one seeded demo family. Each capture also fails when the
+// page is wider than the screen (see `knownOverflow` in screenshots/pages.ts).
 export default defineConfig({
   testDir: './screenshots',
   globalSetup: require.resolve('./screenshots/global-setup'),
@@ -37,6 +39,16 @@ export default defineConfig({
         // 2x instead of the device's 3x keeps full-page PNGs a reasonable size in the repo.
         defaultBrowserType: 'chromium',
         deviceScaleFactor: 2,
+      },
+    },
+    {
+      name: 'tablet',
+      use: {
+        ...devices['iPad Mini'],
+        // 768x1024 portrait: the step between the phone and desktop layouts. Chromium for the same
+        // reason as mobile; 1x because the README shows it at about half the desktop width.
+        defaultBrowserType: 'chromium',
+        deviceScaleFactor: 1,
       },
     },
   ],
