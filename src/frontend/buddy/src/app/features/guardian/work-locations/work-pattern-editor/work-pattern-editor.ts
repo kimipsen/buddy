@@ -28,13 +28,13 @@ import { Card } from '../../../../shared/card/card';
 // Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
 const A_SUNDAY = new Date(2026, 9, 4);
 
-function shortDayName(day: Weekday, locale: string): string {
+function dayName(day: Weekday, locale: string, weekday: 'short' | 'long' = 'short'): string {
   const date = new Date(
     A_SUNDAY.getFullYear(),
     A_SUNDAY.getMonth(),
     A_SUNDAY.getDate() + dayOfWeekIndex(day),
   );
-  return date.toLocaleDateString(locale, { weekday: 'short' });
+  return date.toLocaleDateString(locale, { weekday });
 }
 
 // Draft of the cycle length, "which week is this week" and the week x weekday grid. The draft
@@ -98,8 +98,22 @@ export class WorkPatternEditor {
 
   protected readonly dayNames = computed(() => {
     const locale = this.translation.language();
-    return WEEKDAYS_MONDAY_FIRST.map((day) => shortDayName(day, locale));
+    return WEEKDAYS_MONDAY_FIRST.map((day) => dayName(day, locale));
   });
+
+  protected readonly dayLongNames = computed(() => {
+    const locale = this.translation.language();
+    return WEEKDAYS_MONDAY_FIRST.map((day) => dayName(day, locale, 'long'));
+  });
+
+  // Ids for the phone list only; the table's selects are named by aria-label and carry no id.
+  protected listWeekId(week: number): string {
+    return `work-pattern-list-week-${week}`;
+  }
+
+  protected listCellId(week: number, day: Weekday): string {
+    return `work-pattern-list-${week}-${day}`;
+  }
 
   protected weekLabel(week: number): string {
     return this.translation.translate('workLocations.pattern.weekName', {
@@ -110,7 +124,7 @@ export class WorkPatternEditor {
   protected cellLabel(week: number, day: Weekday): string {
     return this.translation.translate('workLocations.pattern.dayLabel', {
       week: this.weekLabel(week),
-      day: shortDayName(day, this.translation.language()),
+      day: dayName(day, this.translation.language()),
     });
   }
 

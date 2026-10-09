@@ -42,9 +42,30 @@ describe('WorkPatternEditor', () => {
     return button!;
   }
 
+  // The table and the phone list are both in the DOM (no Tailwind in jsdom), so scope to one.
   function cell(root: HTMLElement, label: string): HTMLSelectElement {
-    const select = root.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`);
+    const select = root.querySelector<HTMLSelectElement>(`table select[aria-label="${label}"]`);
     expect(select, `cell "${label}"`).toBeTruthy();
+    return select!;
+  }
+
+  function weekBlocks(root: HTMLElement): HTMLElement[] {
+    return Array.from(root.querySelectorAll<HTMLElement>('.lg\\:hidden [role="group"]'));
+  }
+
+  // Accessible name of a list select: the texts its aria-labelledby ids point at.
+  function accessibleName(root: HTMLElement, select: HTMLSelectElement): string {
+    return (select.getAttribute('aria-labelledby') ?? '')
+      .split(' ')
+      .map((id) => root.querySelector(`#${id}`)?.textContent?.trim())
+      .join(' ');
+  }
+
+  function listCell(root: HTMLElement, name: string): HTMLSelectElement {
+    const select = Array.from(root.querySelectorAll<HTMLSelectElement>('.lg\\:hidden select')).find(
+      (s) => accessibleName(root, s) === name,
+    );
+    expect(select, `list cell "${name}"`).toBeTruthy();
     return select!;
   }
 
@@ -156,7 +177,8 @@ describe('WorkPatternEditor', () => {
 
     radio(compiled, '1 week').click();
     await settle(fixture);
-    expect(compiled.querySelector('select[aria-label="Week B, Mon"]')).toBeNull();
+    expect(compiled.querySelector('table select[aria-label="Week B, Mon"]')).toBeNull();
+    expect(weekBlocks(compiled)).toHaveLength(1);
     saveButton(compiled).click();
     await settle(fixture);
 
@@ -180,5 +202,98 @@ describe('WorkPatternEditor', () => {
 
     expect(compiled.textContent).toContain('Unable to save the pattern.');
     expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('switches between the table and the list with CSS only, keeping the table for print', async () => {
+    const { compiled } = await setup(schedule());
+
+    const table = compiled.querySelector('table')!;
+    expect(table.parentElement!.classList).toContain('max-lg:not-print:hidden');
+    const list = weekBlocks(compiled)[0].parentElement!;
+    expect(list.classList).toContain('lg:hidden');
+    expect(list.classList).toContain('print:hidden');
+    expect(table.querySelectorAll('select')).toHaveLength(7);
+    expect(list.querySelectorAll('select')).toHaveLength(7);
+  });
+
+  it('lists one block per week with a labelled row per weekday', async () => {
+    const { fixture, compiled } = await setup(schedule());
+
+    radio(compiled, '2 weeks').click();
+    await settle(fixture);
+
+    const blocks = weekBlocks(compiled);
+    expect(blocks.map((b) => b.querySelector('h4')?.textContent?.trim())).toEqual([
+      'Week A',
+      'Week B',
+    ]);
+    for (const block of blocks) {
+      const labels = Array.from(block.querySelectorAll('label'));
+      expect(labels.map((l) => l.textContent?.trim())).toEqual([
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ]);
+      for (const label of labels) {
+        const select = block.querySelector<HTMLSelectElement>(`#${label.htmlFor}`);
+        expect(select, label.textContent!).toBeTruthy();
+        expect(select!.getAttribute('aria-labelledby')).toBe(
+          `${block.getAttribute('aria-labelledby')} ${label.id}`,
+        );
+      }
+    }
+    expect(accessibleName(compiled, blocks[1].querySelector('select')!)).toBe('Week B Monday');
+  });
+
+  it('gives every element a unique id', async () => {
+    const { fixture, compiled } = await setup(schedule());
+
+    radio(compiled, '2 weeks').click();
+    await settle(fixture);
+
+    const ids = Array.from(compiled.querySelectorAll('[id]')).map((el) => el.id);
+    expect(ids.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('shows the stored pattern in the list as well', async () => {
+    const { compiled } = await setup(
+      schedule({ days: [{ week: 0, day: 'Tuesday', locationId: 'stil' }] }),
+    );
+
+    expect(listCell(compiled, 'Week A Tuesday').value).toBe('stil');
+    expect(listCell(compiled, 'Week A Monday').value).toBe('');
+  });
+
+  it('edits the same draft from the list as from the table', async () => {
+    const { fixture, compiled, replacePattern } = await setup(schedule());
+
+    radio(compiled, '2 weeks').click();
+    await settle(fixture);
+    choose(listCell(compiled, 'Week B Thursday'), 'stil');
+    await settle(fixture);
+
+    expect(cell(compiled, 'Week B, Thu').value).toBe('stil');
+    expect(listCell(compiled, 'Week B Thursday').value).toBe('stil');
+
+    choose(cell(compiled, 'Week A, Mon'), 'stil');
+    await settle(fixture);
+    expect(listCell(compiled, 'Week A Monday').value).toBe('stil');
+
+    saveButton(compiled).click();
+    await settle(fixture);
+
+    expect(replacePattern).toHaveBeenCalledWith(
+      expect.objectContaining({
+        days: [
+          { week: 0, day: 'Monday', locationId: 'stil' },
+          { week: 1, day: 'Thursday', locationId: 'stil' },
+        ],
+      }),
+    );
   });
 });
