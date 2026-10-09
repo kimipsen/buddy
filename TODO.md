@@ -22,8 +22,8 @@
 
 ## Invitation documentation
 
-- [ ] Update the documentation to state that invitations can only be accepted
-  by accounts with a verified email address.
+- [x] Update the documentation to state that invitations can only be accepted
+  by accounts with a verified email address (2026-10-09).
 
 ## Group deletion
 

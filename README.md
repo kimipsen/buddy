@@ -67,7 +67,8 @@ in real time.
 ### Platform
 
 - [x] Keycloak authentication, token lifecycle, and role-based routing
-- [x] Group invitations and email-verification flows
+- [x] Group and guardian invitations and email-verification flows; an invitation can only be
+      accepted by an account with a verified email address that matches the invited one
 - [x] English and Danish localization
 - [x] Light, dark, and system theme selection
 - [x] Per-user and per-feed rate limiting on every API endpoint

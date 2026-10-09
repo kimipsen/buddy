@@ -88,7 +88,7 @@ Values:
 Unlike `GroupRole` or `CalendarRole`, `GuardianKind` never gates permission level — a `Parent` and a `Guardian` have the same default authority over the child's account.
 
 ### GuardianInvite
-An event-sourced invite that brings a second adult into an existing child's guardianship, mirroring the Groups invite/accept/revoke triad. It lives on its own dedicated stream rather than the child's `User` stream, since neither the `User` nor a `GuardianLink` pre-exists the invite. Accepting it appends a new `GuardianLinked` event.
+An event-sourced invite that brings a second adult into an existing child's guardianship, mirroring the Groups invite/accept/revoke triad. It lives on its own dedicated stream rather than the child's `User` stream, since neither the `User` nor a `GuardianLink` pre-exists the invite. Accepting it appends a new `GuardianLinked` event. Like a group invite, it can only be accepted by an account whose verified email address matches the invited one.
 
 ### ChildSummary
 A read-model shape returned by guardian-facing child-listing endpoints: the child's `UserId`, name, the `GuardianLinkId` and `GuardianKind` connecting them to the caller, language, and time zone, without requiring a full `User` aggregate rehydration per child.
