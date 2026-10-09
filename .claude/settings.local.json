@@ -6,7 +6,6 @@
       "Bash(dotnet --version)",
       "Bash(dotnet --list-sdks)",
       "Bash(timeout 300 dotnet build -v q --nologo)",
-      "Bash(cp src/Domain/Orders/OrderEvents.cs /tmp/claude-1000/-workspaces-kim/c54d10c3-fc3e-40e1-899f-34f94c1503b9/scratchpad/OrderEvents.bak)",
       "Bash(python3 -)",
       "Bash(python3 - *)",
       "Bash(git check-ignore *)",
@@ -29,7 +28,6 @@
       "Bash(pkill -f \"dotnet.*buddy.dll\")",
       "Bash(kill 6228)",
       "Bash(npx ng *)",
-      "Bash(grep -n \"^\\\\s*[a-zA-Z0-9_:-]*:$\" /workspaces/kim/taskfile.yml)",
       "Bash(command -v chromium-cli)",
       "Bash(find / -maxdepth 6 -iname \"chromium-cli*\")",
       "Read(//tmp/claude-1000/bundled-skills/**)",
@@ -44,10 +42,6 @@
       "Bash(node -e \"require\\('playwright'\\); console.log\\('playwright resolvable'\\)\")",
       "Bash(find / -maxdepth 4 -iname \"playwright\" -type d)",
       "Bash(timeout 15 curl -sI https://registry.npmjs.org/playwright)",
-      "Bash(git -C /workspaces/kim status --porcelain -- src/frontend/buddy/public/config/runtime-config.json)",
-      "Bash(git -C /workspaces/kim log --oneline -1 -- src/frontend/buddy/public/config/runtime-config.json)",
-      "Bash(git -C /workspaces/kim check-ignore -v src/frontend/buddy/public/config/runtime-config.json)",
-      "Bash(mkdir -p /tmp/claude-1000/-workspaces-kim/267f5046-335c-4379-b74d-379338a97588/scratchpad/pw-test)",
       "Bash(npm init *)",
       "Bash(npm install *)",
       "Bash(npx playwright *)",
@@ -66,9 +60,6 @@
       "Bash(xargs -r kill)",
       "Bash(nohup npx ng serve --port 4300)",
       "Bash(echo \"started pid $!\")"
-    ],
-    "additionalDirectories": [
-      "/workspaces/kim/.claude/skills/claude-backend/samples/dotnet-sample/src/Domain/Orders"
     ]
   }
 }

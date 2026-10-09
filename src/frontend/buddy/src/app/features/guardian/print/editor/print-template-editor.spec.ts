@@ -105,7 +105,7 @@ describe('PrintTemplateEditor', () => {
               { id: 'signe', name: { givenName: 'Signe', familyName: 'X' } },
             ]),
             listChildGuardians: vi.fn(async () => [
-              { id: 'me', name: { givenName: 'Kim', familyName: 'X' } },
+              { id: 'me', name: { givenName: 'Ida', familyName: 'X' } },
               { id: 'mum', name: { givenName: 'Mor', familyName: 'X' } },
             ]),
           },
@@ -161,7 +161,7 @@ describe('PrintTemplateEditor', () => {
           useValue: {
             ensureCurrentUser: vi.fn(
               async () =>
-                ({ id: 'me', name: { givenName: 'Kim', familyName: 'X' } }) as CurrentUser,
+                ({ id: 'me', name: { givenName: 'Ida', familyName: 'X' } }) as CurrentUser,
             ),
             timeZoneId: () => 'Europe/Copenhagen',
           },
@@ -372,7 +372,7 @@ describe('PrintTemplateEditor', () => {
     const guardianSelect = root.querySelector<HTMLSelectElement>('select[id^="row-guardian-"]')!;
     expect(Array.from(guardianSelect.options).map((o) => o.textContent?.trim())).toEqual([
       'Choose…',
-      'Kim X',
+      'Ida X',
       'Mor X',
     ]);
     expect(root.textContent).not.toContain('Refers to something you can’t see.');

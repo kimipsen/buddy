@@ -6,7 +6,7 @@ using Project.Infrastructure.EventSourcing;
 var builder = WebApplication.CreateBuilder(args);
 
 // configuration: use a default connection string if none provided
-var conn = builder.Configuration.GetConnectionString("Default") ?? "Host=localhost;Database=kim;Username=kim;Password=kim";
+var conn = builder.Configuration.GetConnectionString("Default") ?? "Host=localhost;Database=orders;Username=orders;Password=orders";
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

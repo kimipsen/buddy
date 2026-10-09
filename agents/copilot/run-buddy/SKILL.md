@@ -1,6 +1,6 @@
 # Run Buddy
 
-Goal: get the real stack up, drive it in a browser, see the change working, then leave the machine as you found it. Paths are relative to the repo root (`/workspaces/kim`) unless a step says otherwise. Logs go in the scratchpad (`$S` below = your scratchpad directory).
+Goal: get the real stack up, drive it in a browser, see the change working, then leave the machine as you found it. Paths are relative to the repo root unless a step says otherwise. Logs go in the scratchpad (`$S` below = your scratchpad directory).
 
 ## 0. Hostnames: use the Compose names, not localhost
 
@@ -44,8 +44,8 @@ ss -ltnp | grep -E ':(4300|5193|7076)\b'
 Run each with `run_in_background: true`, output to a log:
 
 ```bash
-cd /workspaces/kim/src/backend/buddy && dotnet run > $S/api.log 2>&1
-cd /workspaces/kim/src/frontend/buddy && npm start > $S/web.log 2>&1
+cd "$(git rev-parse --show-toplevel)"/src/backend/buddy && dotnet run > $S/api.log 2>&1
+cd "$(git rev-parse --show-toplevel)"/src/frontend/buddy && npm start > $S/web.log 2>&1
 ```
 
 - `dotnet run` uses the `https` launch profile (`Properties/launchSettings.json`): `https://localhost:7076;http://localhost:5193`, `ASPNETCORE_ENVIRONMENT=Development`, which loads `appsettings.Development.json` (Postgres at `db`, Keycloak admin at `keycloak:8080`, CORS for 4300). Mail goes to `mailpit:1025` (`appsettings.json` + devcontainer env).
@@ -73,7 +73,7 @@ Seeded users come from `.devcontainer/keycloak/buddy-realm.json` (realm `buddy`,
 Use the bundled helper, run from `src/frontend/buddy` (it resolves Playwright from there; Chromium is already installed if `npx playwright test` has ever run, otherwise `npx playwright install --with-deps chromium`):
 
 ```bash
-cd /workspaces/kim/src/frontend/buddy
+cd "$(git rev-parse --show-toplevel)"/src/frontend/buddy
 node ../../../agents/copilot/run-buddy/screenshot.mjs --path /guardian --user alice --out $S/guardian.png
 node ../../../agents/copilot/run-buddy/screenshot.mjs --path /guardian/admin --user bob --full-page --wait-for "Your profile" --out $S/admin.png
 node ../../../agents/copilot/run-buddy/screenshot.mjs --form --path /guardian/calendar --user carol --out $S/cal.png   # real Keycloak login form

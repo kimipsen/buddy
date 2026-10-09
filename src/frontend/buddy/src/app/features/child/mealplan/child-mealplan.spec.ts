@@ -13,7 +13,7 @@ describe('ChildMealplan', () => {
     id: 'child-1',
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',
-    name: { givenName: 'Kim', familyName: 'Kid' },
+    name: { givenName: 'Ida', familyName: 'Kid' },
     timeZoneId: 'UTC',
     language: 'en',
   };

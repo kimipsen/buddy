@@ -1,4 +1,4 @@
-# Kim Documentation
+# Buddy Documentation
 
 This folder contains the project-level documentation for Buddy.
 

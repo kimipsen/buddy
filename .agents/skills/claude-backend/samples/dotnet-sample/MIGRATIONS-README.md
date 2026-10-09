@@ -20,5 +20,5 @@ dotnet ef database update -p Project.Web.csproj -s Project.Web.csproj --context 
 3. The `OrderDbContextFactory` is provided for design-time DbContext creation.
 
 Notes:
-- Connection string defaults to `Host=localhost;Database=kim;Username=kim;Password=kim`. Override with `CONNECTION` env var.
+- Connection string defaults to `Host=localhost;Database=orders;Username=orders;Password=orders`. Override with `CONNECTION` env var.
 - Migrations will create the `orders` schema and tables as configured in `OrderDbContext` mapping.

@@ -12,8 +12,8 @@ git merge --ff-only <branch> # on the target: move it forward, never create a me
 `land.sh` (next to this file) does both halves with the safety checks; use it rather than the raw
 commands. That standing permission covers **local** commits and the local fast-forward only.
 
-- **Never push** unless the user asks in this conversation. `origin` has two push URLs (personal
-  GitHub and the Knowit mirror), so a push publishes to both.
+- **Never push** unless the user asks in this conversation. `origin` has two push URLs (the
+  GitHub repo and a mirror), so a push publishes to both.
 - Never `git push --force`, `git reset --hard` on the target, `git stash` someone else's changes,
   `--no-verify`, or delete branches you didn't create.
 - The target is `master` unless the user names another branch.
@@ -34,7 +34,7 @@ git branch --show-current
 ```
 
 - **Agent worktree** (a `worktree-agent-*` or other non-target branch): stay on it.
-- **On the target itself** (e.g. `master` in `/workspaces/kim`): create a branch from where you
+- **On the target itself** (e.g. `master` in the main checkout): create a branch from where you
   are; uncommitted changes come along: `git switch -c agent/<short-topic>`.
 
 Look at what's in the working tree. Stage only the files that belong to *your* task, by path
@@ -102,7 +102,7 @@ It re-checks that the branch sits on the current tip of the target and contains 
 commits, then moves the target forward:
 
 - target not checked out anywhere → `git update-ref` from the exact tip it checked (no race);
-- target checked out in another worktree (usually `master` in `/workspaces/kim`) →
+- target checked out in another worktree (usually `master` in the main checkout) →
   `git -C <that worktree> merge --ff-only`, but **only if that worktree has no uncommitted
   tracked changes**. If it has some, the script refuses (exit 1); that's the user's work in
   progress. Tell the user what's ready to land and let them decide. Don't stash or commit

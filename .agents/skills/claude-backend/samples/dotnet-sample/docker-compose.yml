@@ -3,9 +3,9 @@ services:
   postgres:
     image: postgres:19
     environment:
-      POSTGRES_USER: kim
-      POSTGRES_PASSWORD: kim
-      POSTGRES_DB: kim
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+      POSTGRES_DB: orders
     ports:
       - "5432:5432"
     volumes:

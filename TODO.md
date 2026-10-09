@@ -56,7 +56,7 @@
 
 ## Remove personal information from the docs
 
-- [ ] Remove my name and other personal details from the documentation, for
+- [x] Remove my name and other personal details from the documentation, for
   example the `# Kim Documentation` heading in `docs/README.md`. `git grep -i -E
   '\bkim\b|ipsen'` finds about 30 more files to check (skills, `.http` files,
   specs, `.vscode/settings.json`, the Stryker report). Keep the ones that have to

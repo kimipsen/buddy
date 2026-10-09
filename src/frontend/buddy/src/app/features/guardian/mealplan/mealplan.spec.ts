@@ -12,7 +12,7 @@ import { GuardianMealplan } from './mealplan';
 describe('GuardianMealplan', () => {
   const child: ChildSummary = {
     id: 'child-1',
-    name: { givenName: 'Kim', familyName: 'Kid' },
+    name: { givenName: 'Ida', familyName: 'Kid' },
     guardianLinkId: 'link-1',
     kind: 'Parent',
     language: 'en',

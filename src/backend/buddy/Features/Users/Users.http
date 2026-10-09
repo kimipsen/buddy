@@ -1,9 +1,9 @@
 @buddy_HostAddress = http://localhost:5193
 @keycloak_HostAddress = http://keycloak:8080
 @keycloak_realm = buddy
-@keycloak_client_id = buddy-api
-@keycloak_username = kim.ipsen
-@keycloak_password = starspy
+@keycloak_client_id = buddy-frontend
+@keycloak_username = alice
+@keycloak_password = alice-test-pw
 
 GET {{buddy_HostAddress}}/openapi/v1.json
 Accept: application/json
@@ -35,8 +35,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "givenName": "Kim",
-  "familyName": "Ipsen"
+  "givenName": "Alice",
+  "familyName": "Anderson"
 }
 
 ###
@@ -47,7 +47,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "kim.ipsen@knowit.dk"
+  "email": "alice@buddy.test"
 }
 
 ###
