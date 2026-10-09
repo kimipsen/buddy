@@ -53,7 +53,9 @@ for (const entry of SCREENSHOT_PAGES) {
     await page.waitForLoadState('networkidle');
 
     if (entry.waitFor) {
-      await expect(page.getByText(entry.waitFor).first()).toBeVisible();
+      // Some pages render a table and a phone list and hide one with CSS, so the first match in
+      // the DOM can be the hidden copy.
+      await expect(page.getByText(entry.waitFor).filter({ visible: true }).first()).toBeVisible();
     }
 
     await expect(page.locator('app-loading-spinner')).toHaveCount(0);

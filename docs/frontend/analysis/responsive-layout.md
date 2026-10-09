@@ -1,9 +1,9 @@
 # Responsive layout: phone, tablet and wide desktop
 
-Status: Phases 0–3 implemented (overflow check and tablet size in the screenshot run; no page is
+Status: Phases 0–4 implemented (overflow check and tablet size in the screenshot run; no page is
 wider than a phone any more; shared `app-page` and `app-card` with responsive padding; touch-sized
-controls, a sticky header, and menus, popovers and the delete dialog that fit a phone). Phases 4–6
-are proposed.
+controls, a sticky header, and menus, popovers and the delete dialog that fit a phone; the four week
+tables become day lists where they don't fit). Phases 5–6 are proposed.
 
 ## Context
 
@@ -225,6 +225,19 @@ history show one card per day (day as heading, then each column as a labelled ro
 and when printing, the existing `<table>` stays as it is. The table is hidden with `max-sm:hidden`
 and the list with `sm:hidden`. The month grid and the shared sleep diary keep scrolling sideways.**
 
+As built, each table switches where it really fits rather than at `sm` for all of them, judged from
+the tablet screenshots:
+
+| Table          | List below    | Why                                                                                                                                                                                 |
+| -------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pickup planner | `sm` (640px)  | About 410px wide in practice, 490px with the edit panel open                                                                                                                        |
+| Sleep history  | `md` (768px)  | 640px minimum; fits the ~672px tablet card                                                                                                                                          |
+| Work pattern   | `lg` (1024px) | Fits a tablet, but every location select is truncated there                                                                                                                         |
+| Meal plan      | `xl` (1280px) | Clipped on a tablet, and about 3px short of the longest meal names at `lg`. Desktop windows 1024–1279px wide therefore get the list without drag and drop, as does a landscape iPad |
+
+The table is hidden with a print-safe variant (`max-md:not-print:hidden` and so on, or
+`max-sm:hidden print:block` for pickup), because a printed page is narrower than these breakpoints.
+
 - Keeping the table means the table-structure specs and the e2e specs listed above keep passing
   at desktop size, which is the only size e2e runs at.
 - The stacked list reuses the existing cell components (`pickup-cell`, `meal-picker`), so phone and
@@ -381,9 +394,18 @@ Inline actions and child buttons: implemented.
 
 ### Phase 4 -- stacked phone view for the week tables
 
-- `manage-pickups`, `assign-mealplan` (picker only, no drag), `work-pattern-editor`,
-  `sleep-history`: add a `sm:hidden` list next to the `max-sm:hidden` table (Decision 3).
-- Unit specs: one case per component for the list markup. The e2e specs stay unchanged.
+Implemented, at the breakpoints in Decision 3:
+
+- `manage-pickups` and `assign-mealplan` render each cell from one `<ng-template>` used by both the
+  table and the list, so the two can't drift apart. The meal-plan list has no drag and drop.
+- `work-pattern-editor`: one block per week with a labelled select per weekday; the list's ids are
+  prefixed so they don't clash with the table.
+- `sleep-history`: a logged night takes three lines (date, then a 3×2 grid of values), an empty
+  night one line; the selected night keeps its highlight and `aria-current`.
+- Unit specs: existing assertions are scoped to `table`, since jsdom renders both layouts, and each
+  component has cases for its list. The e2e specs run at 1280px against the tables, unchanged.
+- The screenshot run waits for the first _visible_ match of `waitFor`, since the first match in
+  the DOM can now be the hidden copy.
 - `pickup-planning-and-daily-views.md`'s "Responsive behavior" section is updated to match.
 
 ### Phase 5 -- (optional) tab bar
@@ -406,16 +428,16 @@ Inline actions and child buttons: implemented.
 
 ## Decisions made
 
-| Question                | Decision                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Mechanism               | Tailwind default breakpoints, mobile-first; `md:` for tablet; `@container` only for dashboard widgets; no `BreakpointObserver` |
-| Repeated wrappers       | Shared `app-page` and `app-card` with responsive padding                                                                       |
-| Week tables on phones   | Stacked day list beside the existing table (`sm:hidden` / `max-sm:hidden`); tables stay for desktop and print                  |
-| Meal-plan drag on touch | Not offered on phones; the meal picker covers it                                                                               |
-| Touch targets           | At least 44px on `pointer-coarse:` for guardian pages; at least 44px always on child pages                                     |
-| Regression guard        | Overflow assertion in the screenshot run, plus a tablet project                                                                |
-| Phase 0 rollout         | Landed first with a temporary `knownOverflow` list, removed again in Phase 1                                                   |
-| Phone navigation        | Fix the profile menu and make the header sticky; tab bar deferred                                                              |
+| Question                | Decision                                                                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Mechanism               | Tailwind default breakpoints, mobile-first; `md:` for tablet; `@container` only for dashboard widgets; no `BreakpointObserver`     |
+| Repeated wrappers       | Shared `app-page` and `app-card` with responsive padding                                                                           |
+| Week tables on phones   | Day list beside the existing table, switching where each table fits (`sm`/`md`/`lg`/`xl`); tables stay for wider screens and print |
+| Meal-plan drag on touch | Not offered below `xl`; the meal picker covers it                                                                                  |
+| Touch targets           | At least 44px on `pointer-coarse:` for guardian pages; at least 44px always on child pages                                         |
+| Regression guard        | Overflow assertion in the screenshot run, plus a tablet project                                                                    |
+| Phase 0 rollout         | Landed first with a temporary `knownOverflow` list, removed again in Phase 1                                                       |
+| Phone navigation        | Fix the profile menu and make the header sticky; tab bar deferred                                                                  |
 
 ## Remaining open questions
 

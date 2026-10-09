@@ -44,12 +44,12 @@ renders each grid cell in one of three states:
 
 The assignee kind controls the required input:
 
-| Kind | Frontend fields |
-| --- | --- |
-| Guardian | One guardian from `listChildGuardians`; selection is required. |
-| Self-escort | No assignee fields. |
-| Sibling | One other loaded child; selection is required. |
-| Playdate | Required host name with optional location and contact information. |
+| Kind        | Frontend fields                                                    |
+| ----------- | ------------------------------------------------------------------ |
+| Guardian    | One guardian from `listChildGuardians`; selection is required.     |
+| Self-escort | No assignee fields.                                                |
+| Sibling     | One other loaded child; selection is required.                     |
+| Playdate    | Required host name with optional location and contact information. |
 
 The save button is disabled until the kind-specific required value exists.
 Times are edited as `HH:mm`, sent as `HH:mm:00`, and displayed through the
@@ -83,11 +83,11 @@ clear action, matching the backend's read-only child access tier.
 [`PickupsService`](../../../src/frontend/buddy/src/app/core/pickups.service.ts)
 wraps the three backend routes with Promise-returning `HttpClient` calls:
 
-| Method | Request |
-| --- | --- |
-| `listSchedule` | `GET /pickups/children/{childId}/schedule?from=YYYY-MM-DD&to=YYYY-MM-DD` |
-| `assignPickup` | `PUT /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff|PickUp}` |
-| `clearPickup` | `DELETE /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff|PickUp}` |
+| Method         | Request                                                                       |
+| -------------- | ----------------------------------------------------------------------------- |
+| `listSchedule` | `GET /pickups/children/{childId}/schedule?from=YYYY-MM-DD&to=YYYY-MM-DD`      |
+| `assignPickup` | `PUT /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff    | PickUp}` |
+| `clearPickup`  | `DELETE /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff | PickUp}` |
 
 Slots travel by name (`DropOff`, `PickUp`) since the API switched to string
 enums ([openapi-client-contract.md](../../backend/analysis/openapi-client-contract.md)).
@@ -97,9 +97,11 @@ contract change.
 
 ## Responsive behavior and localization
 
-The planner table has a minimum width and sits inside a horizontal overflow
-container, so narrow screens scroll the seven-day grid instead of compressing
-cell editors beyond use. Static UI text is translated in the English and Danish
+From `sm` (640px) up, and when printing, the planner is a seven-day table.
+Below `sm` it is a list with one block per day and the Drop-off and Pickup
+cells stacked under their labels, so a phone never scrolls sideways. Both
+layouts render the same `app-pickup-cell` from one template
+([responsive-layout.md](responsive-layout.md#decision-3-on-phones-week-tables-get-a-stacked-day-list-next-to-the-table)). Static UI text is translated in the English and Danish
 `pickup` dictionaries. Date labels use the current `TranslationService`
 language, and times use the application's locale-aware display pipe.
 
@@ -116,8 +118,10 @@ language, and times use the application's locale-aware display pipe.
 - Several inline editor controls rely on placeholders or surrounding context
   instead of explicit associated labels. Keyboard and screen-reader behavior
   should be audited before treating the editor as fully accessible.
-- The wide grid is scrollable on mobile, but the fixed-width inline editor has
-  not been documented as tested across all supported viewport sizes.
+- Every screenshot run checks the planner for sideways overflow on a phone, a
+  tablet and a desktop, but only with all editors closed. That the open inline
+  editor (`w-56`, capped to the viewport) fits a phone's day list is measured,
+  not tested.
 
 These are frontend follow-ups, not changes to the pickup aggregate or its
 current authorization model.
