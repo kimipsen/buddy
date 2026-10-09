@@ -21,10 +21,10 @@
     <ul class="space-y-3">
       @for (group of items.value(); track group.id) {
         <li class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium">{{ group.name }}</span>
+          <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <span class="min-w-0 text-sm font-medium">{{ group.name }}</span>
             @if (confirmingDeleteGroupId() === group.id) {
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <span class="text-xs text-slate-500 dark:text-slate-400">{{
                   'admin.manageGroups.delete.confirmPrompt' | translate
                 }}</span>
@@ -46,7 +46,7 @@
                 </button>
               </div>
             } @else {
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{
                   roleLabels[group.role] | translate
                 }}</span>

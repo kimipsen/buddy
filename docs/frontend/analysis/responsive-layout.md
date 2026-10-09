@@ -1,6 +1,7 @@
 # Responsive layout: phone, tablet and wide desktop
 
-Status: Proposed (not yet implemented)
+Status: Phases 0 and 1 implemented (overflow check and tablet size in the screenshot run; no page
+is wider than a phone any more). Phases 2–6 are proposed.
 
 ## Context
 
@@ -39,28 +40,31 @@ and only partly adapts to narrow screens:
 The mobile PNGs are taken at `deviceScaleFactor: 2`, so a page that fits is exactly 786 px wide.
 **8 of the 26 pages are wider than that**, so the whole page scrolls sideways on a phone:
 
-| Page                             | PNG width | CSS px (393 fits) | Visible cause                                                                                                                                                                                                                                          |
-| -------------------------------- | --------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `guardian-sleep-diary`           | 1326      | 663               | The 640px history table (in its `overflow-x-auto` wrapper) widens the page grid instead of scrolling inside it                                                                                                                                         |
-| `guardian-progress`              | 1070      | 535               | Goal rows: `w-32` number input + icon input + name input + "Remove" in a flex row that doesn't wrap ([manage-progress-goals.html:54](../../../src/frontend/buddy/src/app/features/guardian/progress/manage-progress-goals/manage-progress-goals.html)) |
-| `guardian-admin`                 | 1002      | 501               | Calendar and group rows with five or six text actions in a single flex row ([manage-groups.html:24](../../../src/frontend/buddy/src/app/features/guardian/admin/manage-groups/manage-groups.html))                                                     |
-| `child-home`                     | 968       | 484               | Medicine rows: name, time, "Taken" and "Skip" don't wrap, so the buttons stick out of the card                                                                                                                                                         |
-| `guardian-calendar`              | 874       | 437               | Agenda rows with nowrap time ranges plus Edit/Delete                                                                                                                                                                                                   |
-| `guardian-dashboard`             | 850       | 425               | Dose rows: `flex justify-between` with two buttons and no wrap ([doses-today.html:40](../../../src/frontend/buddy/src/app/features/guardian/doses-today/doses-today.html))                                                                             |
-| `child-calendar`                 | 834       | 417               | `whitespace-nowrap` times in agenda rows                                                                                                                                                                                                               |
-| `guardian-print-template-editor` | 820       | 410               | The week-plan preview (`app-week-plan-sheet`) is wider than its column                                                                                                                                                                                 |
+| Page                             | PNG width | CSS px (393 fits) | Visible cause                                                                                                                                                                                                                                                                                |
+| -------------------------------- | --------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guardian-sleep-diary`           | 1326      | 663               | The history table's `sr-only` column header is absolutely positioned with no positioned ancestor inside the scroll box, so it escapes the box and widens the page ([sleep-history.html](../../../src/frontend/buddy/src/app/features/guardian/sleep-diary/sleep-history/sleep-history.html)) |
+| `guardian-progress`              | 1070      | 535               | Goal rows: `w-32` number input + icon input + name input + "Remove" in a flex row that doesn't wrap ([manage-progress-goals.html:54](../../../src/frontend/buddy/src/app/features/guardian/progress/manage-progress-goals/manage-progress-goals.html))                                       |
+| `guardian-admin`                 | 1002      | 501               | Calendar and group rows with five or six text actions in a single flex row ([manage-groups.html:24](../../../src/frontend/buddy/src/app/features/guardian/admin/manage-groups/manage-groups.html))                                                                                           |
+| `child-home`                     | 968       | 484               | Medicine rows: name, time, "Taken" and "Skip" don't wrap, so the buttons stick out of the card                                                                                                                                                                                               |
+| `guardian-calendar`              | 874       | 437               | Agenda rows with nowrap time ranges plus Edit/Delete                                                                                                                                                                                                                                         |
+| `guardian-dashboard`             | 850       | 425               | Dose rows: `flex justify-between` with two buttons and no wrap ([doses-today.html:40](../../../src/frontend/buddy/src/app/features/guardian/doses-today/doses-today.html))                                                                                                                   |
+| `child-calendar`                 | 834       | 417               | `whitespace-nowrap` times in agenda rows                                                                                                                                                                                                                                                     |
+| `guardian-print-template-editor` | 820       | 410               | The fixed 384px preview sets the width of the editor's single grid column below `xl`                                                                                                                                                                                                         |
 
 Content is also hidden on pages that _do_ fit. On `guardian-pickup`, the 520px table scrolls
 sideways inside its card, so the whole Pickup column is off-screen. Nothing on the screen hints
 that it is there. The meal plan, the work pattern and sleep history work the same way.
 
-There are two root causes, and fixing them is mechanical work:
+There are three root causes, and fixing them is mechanical work:
 
 1. **Flex rows that never wrap.** A `flex items-center justify-between` row, with a label that has
    no `min-w-0` and fixed-size buttons, can only grow sideways.
-2. **Grid and flex children that keep their content width.** A grid item's default `min-width:
-auto` makes the 640px table inside it set the width of the whole column, so the
-   `overflow-x-auto` wrapper never gets to scroll. Only 4 files in `features/` use `min-w-0`.
+2. **Grid and flex children that keep their content width.** A `flex-1` title without `min-w-0`
+   can't shrink below its text, and a grid with no `grid-cols-*` below a breakpoint sizes its one
+   column to its widest content. Only 4 files in `features/` used `min-w-0`.
+3. **Absolutely positioned content escaping a scroll box.** `overflow-x-auto` only contains
+   absolute descendants when it (or something inside it) is positioned. An `sr-only` span is
+   absolute, so in a scrolling table it is placed against the page and widens it.
 
 ### Other gaps
 
@@ -256,9 +260,10 @@ screenshot project. Add a `tablet` project (`devices['iPad Mini']`, 768×1024) t
 
 - This turns a problem found by eye into a failing test, and it reuses the demo family and the
   page list that already exist. It adds no new e2e journeys.
-- The 8 pages in the table above fail this check today. Phase 0 can either land with them marked as
-  known failures (a `knownOverflow` flag in `pages.ts`, removed in Phase 1) or land together with
-  Phase 1.
+- Phase 0 landed with the 8 pages above marked `knownOverflow` in `pages.ts`; Phase 1 fixed them
+  and removed the flag, so every page must now fit on every size.
+- The failure message names the elements that stick out, ignoring content that scrolls inside an
+  `overflow-x-auto` box but not absolute content escaping one (root cause 3).
 - A tablet project adds 26 PNGs per run and about a minute to `task docs:screenshots`. The
   generated README (`global-teardown.ts`) needs a third image per page.
 - _Considered and rejected:_ a mobile project in the main e2e config. It would run every journey
@@ -286,7 +291,7 @@ Each phase is one worktree branch, landed with `rebase-commit`, ending with `tas
 
 ### Phase 0 -- guardrail and tablet screenshots
 
-Implemented: the eight pages above are marked `knownOverflow: ['mobile']` in `screenshots/pages.ts`; tablet and desktop have no overflow.
+Implemented. Nothing overflowed on tablet or desktop.
 
 - `screenshots/capture.spec.ts`: horizontal-overflow assertion (Decision 5).
 - `playwright.screenshots.config.ts`: `tablet` project. `global-teardown.ts`: third image per page.
@@ -294,15 +299,18 @@ Implemented: the eight pages above are marked `knownOverflow: ['mobile']` in `sc
 
 ### Phase 1 -- fix the 8 overflowing pages
 
-- Flex rows: add `flex-wrap` and `min-w-0` on the text side in `doses-today`, the child home's
-  medicine rows, `manage-progress-goals`, the `manage-groups`/`manage-calendars` action rows and the
-  agenda/child-calendar item rows.
-- Progress goals: `w-32` becomes `w-20 sm:w-32`. The row becomes `grid grid-cols-[5rem_3.5rem_1fr]`
-  with Remove on its own line below `sm`.
-- Sleep diary: give the page grid `grid-cols-[minmax(0,1fr)]` so the history table scrolls inside
-  its card.
-- Print template editor: let the week-plan preview shrink to its column (`min-w-0` on the column, or scale it as the print page already does).
-- Remove each `knownOverflow` flag as its page is fixed.
+Implemented, with template class changes only:
+
+- Flex rows wrap (`flex-wrap`, `min-w-0` on the text, `ml-auto` on the action group) in
+  `doses-today`, the child home's medicine rows, and the `manage-groups`/`manage-calendars` rows.
+- Agenda and child-calendar rows: `flex-wrap` on the row headers, `min-w-0` on the `flex-1` titles.
+- Progress goals: `w-20 sm:w-32` / `w-16 sm:w-20` inputs, a `min-w-32` label, and Remove wraps onto
+  its own line on a phone.
+- Sleep history: `relative` on the scroll wrapper (root cause 3).
+- Print template editor: `grid-cols-[minmax(0,1fr)]` below `xl`, and the preview box scrolls
+  (`overflow-auto`) where the fixed 384px preview is wider than a phone column. Scaling the preview
+  to its column is left for Phase 6.
+- `knownOverflow` removed from `pages.ts` and the capture spec.
 
 ### Phase 2 -- `app-page`, `app-card`, responsive spacing
 
@@ -356,6 +364,7 @@ Implemented: the eight pages above are marked `knownOverflow: ['mobile']` in `sc
 | Meal-plan drag on touch | Not offered on phones; the meal picker covers it                                                                               |
 | Touch targets           | At least 44px on `pointer-coarse:` for guardian pages; at least 44px always on child pages                                     |
 | Regression guard        | Overflow assertion in the screenshot run, plus a tablet project                                                                |
+| Phase 0 rollout         | Landed first with a temporary `knownOverflow` list, removed again in Phase 1                                                   |
 | Phone navigation        | Fix the profile menu and make the header sticky; tab bar deferred                                                              |
 
 ## Remaining open questions
@@ -363,9 +372,6 @@ Implemented: the eight pages above are marked `knownOverflow: ['mobile']` in `sc
 - **Which devices count as supported?** Lean: iPhone-size phones (≥375px), iPad portrait and
   landscape, and desktop up to 1920px. 320px phones should work without overflow but don't get
   their own layout.
-- **Should Phase 0's overflow check block, or warn, until Phase 1 lands?** Lean: land them together
-  so the check blocks from the start. That avoids adding a `knownOverflow` flag that exists only
-  to be removed.
 - **Bottom tab bar now or later?** Lean: later (Decision 6). It's additive, and the menu fix covers
   today's problem.
 - **Does the wide-desktop dashboard need three columns at all?** Lean: yes, but only the

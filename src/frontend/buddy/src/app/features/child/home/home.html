@@ -170,9 +170,9 @@
           <ul class="mt-4 space-y-3">
             @for (dose of doses(); track doseKey(dose)) {
               <li
-                class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+                class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
               >
-                <span class="flex items-center gap-2 text-lg font-semibold">
+                <span class="flex min-w-0 items-center gap-2 text-lg font-semibold">
                   <span
                     class="inline-block size-3 rounded-full"
                     [style.background-color]="dose.color"
@@ -185,7 +185,7 @@
                 </span>
 
                 @if (dose.status === pending) {
-                  <div class="flex items-center gap-2">
+                  <div class="ml-auto flex items-center gap-2">
                     <button
                       type="button"
                       class="rounded-2xl bg-emerald-600 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
@@ -204,7 +204,7 @@
                     </button>
                   </div>
                 } @else if (dose.status === taken) {
-                  <div class="flex items-center gap-2">
+                  <div class="ml-auto flex items-center gap-2">
                     <span
                       class="rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-4 py-2 text-base font-bold text-emerald-800 dark:text-emerald-300"
                       >{{ 'child.home.medicine.taken' | translate }}</span
@@ -219,7 +219,7 @@
                     </button>
                   </div>
                 } @else {
-                  <div class="flex items-center gap-2">
+                  <div class="ml-auto flex items-center gap-2">
                     <span
                       class="rounded-full bg-slate-200 dark:bg-slate-700 px-4 py-2 text-base font-bold text-slate-600 dark:text-slate-300"
                       >{{ 'child.home.medicine.skipped' | translate }}</span

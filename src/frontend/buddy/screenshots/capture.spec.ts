@@ -66,18 +66,10 @@ for (const entry of SCREENSHOT_PAGES) {
     });
 
     // Checked after the screenshot, so a failing page still leaves its PNG to look at.
-    const overflow = await horizontalOverflow(page);
-    if (entry.knownOverflow?.includes(testInfo.project.name)) {
-      expect(
-        overflow,
-        `${entry.name} no longer overflows on ${testInfo.project.name}: remove it from knownOverflow in pages.ts`,
-      ).not.toBeNull();
-    } else {
-      expect(
-        overflow,
-        `${entry.name} is wider than the ${testInfo.project.name} screen`,
-      ).toBeNull();
-    }
+    expect(
+      await horizontalOverflow(page),
+      `${entry.name} is wider than the ${testInfo.project.name} screen`,
+    ).toBeNull();
   });
 }
 
@@ -110,17 +102,38 @@ async function horizontalOverflow(page: Page): Promise<string | null> {
       return null;
     };
 
+    // Content inside an overflow-x-auto box scrolls there and doesn't widen the page, unless it is
+    // absolutely positioned against something outside that box (an sr-only span in a scrolling
+    // table with no positioned ancestor in between does exactly that).
+    const isClipped = (el: Element) => {
+      const position = getComputedStyle(el).position;
+      if (position === 'fixed') {
+        return false;
+      }
+      // An absolute element skips static ancestors until it reaches its containing block.
+      let escaping = position === 'absolute';
+      for (let a = el.parentElement; a; a = a.parentElement) {
+        const style = getComputedStyle(a);
+        if (escaping) {
+          if (style.position === 'static') {
+            continue;
+          }
+          escaping = false;
+        }
+        if (style.overflowX !== 'visible') {
+          return true;
+        }
+      }
+      return false;
+    };
+    const sticksOut = (el: Element) =>
+      el.getBoundingClientRect().right > root.clientWidth + 1 && !isClipped(el);
+
     const widest = [...document.body.querySelectorAll('*')]
-      .map((el) => ({ el, right: el.getBoundingClientRect().right }))
-      .filter(({ right }) => right > root.clientWidth + 1)
+      .filter(sticksOut)
       // Keep the outermost offenders: an element whose parent also sticks out adds nothing.
-      .filter(
-        ({ el }) =>
-          !(
-            el.parentElement &&
-            el.parentElement.getBoundingClientRect().right > root.clientWidth + 1
-          ),
-      )
+      .filter((el) => !(el.parentElement && sticksOut(el.parentElement)))
+      .map((el) => ({ el, right: el.getBoundingClientRect().right }))
       .sort((a, b) => b.right - a.right)
       .slice(0, 3)
       .map(({ el, right }) => `${describe(el)} (right edge ${Math.round(right)}px)`);

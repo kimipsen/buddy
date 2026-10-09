@@ -34,11 +34,6 @@ export interface ScreenshotPage {
   waitFor?: string;
   // Capture the whole scrollable page instead of just the viewport (default true).
   fullPage?: boolean;
-  // Screenshot projects ('mobile', 'tablet', ...) where this page is known to be wider than the
-  // screen, so it scrolls sideways. The capture spec fails on any other page that overflows, and
-  // on a listed page that no longer does, so remove the entry when the layout is fixed. See
-  // docs/frontend/analysis/responsive-layout.md (Phase 1).
-  knownOverflow?: readonly string[];
 }
 
 export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
@@ -66,7 +61,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'guardian',
     route: '/guardian',
     waitFor: 'Emil',
-    knownOverflow: ['mobile'],
   },
   {
     name: 'guardian-onboarding',
@@ -83,7 +77,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     description: 'Shared family calendars with events and tasks.',
     as: 'guardian',
     route: '/guardian/calendar',
-    knownOverflow: ['mobile'],
   },
   {
     name: 'guardian-task-library',
@@ -99,7 +92,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     description: 'Completed tasks earn progress towards rewards the guardian sets up.',
     as: 'guardian',
     route: '/guardian/progress',
-    knownOverflow: ['mobile'],
   },
   {
     name: 'guardian-mealplan',
@@ -143,7 +135,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'guardian',
     route: '/guardian/sleep-diary',
     waitFor: '9 h 25 min',
-    knownOverflow: ['mobile'],
   },
   {
     name: 'guardian-pickup',
@@ -184,7 +175,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'guardian',
     route: '/guardian/print/templates/:templateId',
     path: (demo) => `/guardian/print/templates/${demo.printTemplateId}`,
-    knownOverflow: ['mobile'],
   },
   {
     name: 'guardian-print-sheet',
@@ -201,7 +191,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'guardian',
     route: '/guardian/admin',
     waitFor: 'Your profile',
-    knownOverflow: ['mobile'],
   },
   {
     name: 'guardian-help',
@@ -218,7 +207,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     description: "The child's own view of today's tasks and events.",
     as: 'child',
     route: '/child',
-    knownOverflow: ['mobile'],
   },
   {
     name: 'child-mealplan',
@@ -233,7 +221,6 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     description: "The child's calendar.",
     as: 'child',
     route: '/child/calendar',
-    knownOverflow: ['mobile'],
   },
   {
     name: 'invite-group',

@@ -91,7 +91,7 @@
                       class="inline-block size-3 shrink-0 rounded-full"
                       [style.background-color]="meal.color"
                     ></span>
-                    <span class="flex flex-1 items-center gap-2 text-lg font-semibold">
+                    <span class="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold">
                       <span aria-hidden="true">{{ meal.icon }}</span>
                       {{ meal.mealName }}
                     </span>
@@ -105,7 +105,7 @@
                   <li
                     class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
                   >
-                    <div class="mb-3 flex items-center gap-2">
+                    <div class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span
                         class="inline-block size-3 shrink-0 rounded-full"
                         [style.background-color]="run.color"
@@ -144,7 +144,7 @@
                             }
                           </button>
                           <span
-                            class="flex flex-1 items-center gap-2 text-base font-semibold"
+                            class="flex min-w-0 flex-1 items-center gap-2 text-base font-semibold"
                             [class.line-through]="subtask.isCompleted"
                             [class.text-slate-400]="subtask.isCompleted"
                           >
@@ -201,7 +201,7 @@
                     }
 
                     <span
-                      class="flex flex-1 items-center gap-2 text-lg font-semibold"
+                      class="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold"
                       [class.line-through]="occurrence.kind === taskKind && occurrence.isCompleted"
                       [class.text-slate-400]="
                         occurrence.kind === taskKind && occurrence.isCompleted

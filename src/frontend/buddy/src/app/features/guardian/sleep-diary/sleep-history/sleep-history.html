@@ -8,7 +8,9 @@
     <ng-content />
   </div>
 
-  <div class="overflow-x-auto">
+  <!-- relative: the sr-only header text is absolutely positioned; without a positioned box here it
+       escapes the scroll area and widens the whole page on a phone. -->
+  <div class="relative overflow-x-auto">
     <table class="w-full min-w-[640px] text-left text-sm">
       <thead>
         <tr

@@ -8,7 +8,7 @@ import { defineConfig, devices } from '@playwright/test';
 // Three projects capture every page: `desktop` into docs/screenshots/, `mobile` (an iPhone 15
 // profile) into docs/screenshots/mobile/ and `tablet` (an iPad Mini in portrait) into
 // docs/screenshots/tablet/. They share the one seeded demo family. Each capture also fails when the
-// page is wider than the screen (see `knownOverflow` in screenshots/pages.ts).
+// page is wider than the screen, so a layout that scrolls sideways on a phone can't slip in.
 export default defineConfig({
   testDir: './screenshots',
   globalSetup: require.resolve('./screenshots/global-setup'),

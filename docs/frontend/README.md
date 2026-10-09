@@ -278,8 +278,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
   setup guide for guardians with no groups or children, with resumable progress
 - [Visual specification](analysis/visual-specification.md) — proposed data-type-to-component
   map and guardian/child visual language, applied to the Sleep Diary as a worked example
-- [Responsive layout](analysis/responsive-layout.md) — proposed: consequences and a phased plan
-  for phone, tablet and wide-desktop layouts (8 of 26 pages overflow on an iPhone 15 today)
+- [Responsive layout](analysis/responsive-layout.md) — consequences and a phased plan for phone,
+  tablet and wide-desktop layouts; phases 0–1 implemented (no page is wider than a phone, and the
+  screenshot run now fails if one is, on desktop, tablet and phone)
 - [Installing Buddy on a kid's iPad](analysis/ipad-installation.md) — PWA vs. native install
   options, push notification support, and pricing
 - [A single-day dashboard for the child home screen](analysis/child-day-dashboard.md) — layout
