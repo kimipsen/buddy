@@ -127,6 +127,28 @@
   URL part of the runtime config, so a family running its own fork can point it
   elsewhere.
 
+## Error status codes in the OpenAPI documents
+
+- [x] Check that every error status code an endpoint can return is documented in
+  the OpenAPI documents (compare with `docs/backend/http-status-codes.md`). Checked
+  2026-10-09 against the 14 generated documents (170 operations): only `400`, `404`
+  and `409` from the endpoints' `Results<...>` show up.
+- [ ] Fix the gaps the check found:
+  - `403` is missing everywhere: `ForbidHttpResult` and `JsonHttpResult<ErrorEnvelope>`
+    (`email_not_verified`) add no response metadata (111 endpoints).
+  - Middleware responses aren't documented: `401` and `403 user_not_provisioned`
+    (authorized routes), `409 concurrency_conflict` (commands), `400` body-binding /
+    `invalid_idempotency_key` and `409 idempotency_key_*` (POSTs), `304` (GETs with
+    ETag), `429`, `500`, `503`. No security scheme is declared either.
+  - The iCal feeds (`GET /calendars/{id}/ical/{token}`, `GET /mealplans/{id}/ical/{token}`)
+    list no `200`: `ContentHttpResult` adds no metadata.
+  - The status-code doc is missing 19 routes (AI assistant, `/users/me/export`,
+    language/timezone, `PATCH /calendars/{id}/icon`, `PUT /calendars/{id}/group/{groupId}`,
+    `GET /calendars/{id}/assignable-members`, `GET /mealplans/groups/{id}/status`,
+    `PUT /progress/children/{id}/goals`) and lists `PATCH /calendars/{id}/members/{memberId}`,
+    which doesn't exist. Small mismatches: `404` on `POST /babysitters/me`,
+    `GET /print-templates` and the work-location writes isn't in the doc.
+
 ## Mobile app
 
 - [ ] Build a mobile app for Buddy. Decide the approach first (installable PWA,
