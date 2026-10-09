@@ -158,7 +158,7 @@ export const mealplan = {
       intro:
         'Paste a note or upload a text or CSV file. Nothing is saved until you have reviewed the result.',
       textLabel: 'Meal plan text',
-      textPlaceholder: 'Madplan 2025\nU12\nSø: Lasagne\nMa: Fiskefrikadeller m. salat\n…',
+      textPlaceholder: 'Meal plan 2025\nW12\nSun: Lasagne\nMon: Fish cakes with salad\n…',
       fileLabel: 'Or upload a file',
       formatLabel: 'Format',
       formats: {
@@ -173,7 +173,7 @@ export const mealplan = {
       },
       slotLabel: 'Import meals as',
       formatHelp:
-        'Weekly notes: a year line ("Madplan 2025"), week lines ("U12") and one line per day ("Ma: Lasagne"). CSV: one row per meal, starting with the date.',
+        'Weekly notes: a year line ("Meal plan 2025"), week lines ("W12") and one line per day ("Mon: Lasagne"). CSV: one row per meal, starting with the date.',
       previewButton: 'Preview import',
       previewing: 'Reading…',
       previewError: 'The text could not be read as a meal plan.',
