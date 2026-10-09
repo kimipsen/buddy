@@ -19,7 +19,7 @@ describe('MealplanImport', () => {
     id: 'child-1',
     name: { givenName: 'Alex', familyName: 'Doe' },
     guardianLinkId: 'link-1',
-    kind: 0,
+    kind: 'Parent',
     language: 'en',
     timeZoneId: 'UTC',
   };
@@ -28,9 +28,9 @@ describe('MealplanImport', () => {
     return {
       lineNumber: 1,
       date: '2024-01-14',
-      slot: 2,
+      slot: 'Dinner',
       rawText: '',
-      kind: 0,
+      kind: 'Meal',
       mealName: '',
       notes: '',
       key: '',
@@ -43,11 +43,11 @@ describe('MealplanImport', () => {
     return {
       key: '',
       name: '',
-      kind: 0,
+      kind: 'Meal',
       count: 1,
       firstDate: '2024-01-14',
       lastDate: '2024-01-14',
-      defaultAction: 1,
+      defaultAction: 'New',
       matchedMealId: null,
       matchedMealName: '',
       suggestedMealId: null,
@@ -66,7 +66,7 @@ describe('MealplanImport', () => {
       line({ date: '2024-01-15', key: 'hotdogs', mealName: 'Hotdogs' }),
       line({ date: '2024-01-16', key: 'hotdogs', mealName: 'Hotdogs' }),
       line({ date: '2024-01-17', key: 'hotdog', mealName: 'Hotdog' }),
-      line({ date: '2024-01-18', key: 'rester', mealName: 'Rester', kind: 2 }),
+      line({ date: '2024-01-18', key: 'rester', mealName: 'Rester', kind: 'Leftovers' }),
       line({ date: '2024-01-19', key: 'pizza', mealName: 'Pizza', occupied: true }),
     ],
     groups: [
@@ -74,7 +74,7 @@ describe('MealplanImport', () => {
       group({
         key: 'lasagne',
         name: 'Lasagne',
-        defaultAction: 0,
+        defaultAction: 'Existing',
         matchedMealId: 'meal-lasagne',
         matchedMealName: 'Lasagne',
       }),
@@ -84,7 +84,7 @@ describe('MealplanImport', () => {
         suggestedGroupKey: 'hotdogs',
         suggestedName: 'Hotdogs',
       }),
-      group({ key: 'rester', name: 'Rester', kind: 2, defaultAction: 2 }),
+      group({ key: 'rester', name: 'Rester', kind: 'Leftovers', defaultAction: 'Skip' }),
       group({ key: 'pizza', name: 'Pizza' }),
     ],
     warnings: [{ lineNumber: 7, code: 'week_number_corrected', message: '' }],
@@ -200,7 +200,12 @@ describe('MealplanImport', () => {
 
     expect(mealplans.previewImport).toHaveBeenCalledWith(
       { kind: 'family', childId: 'child-1' },
-      { text: 'Madplan 2024\nU3\nSø: Lasagne', format: 'auto', weekStart: 0, slot: 2 },
+      {
+        text: 'Madplan 2024\nU3\nSø: Lasagne',
+        format: 'auto',
+        weekStart: 'Sunday',
+        slot: 'Dinner',
+      },
     );
     expect(compiled.textContent).toContain('6 days from 2024-01-14 to 2024-01-19.');
     expect(compiled.textContent).toContain(
@@ -236,10 +241,10 @@ describe('MealplanImport', () => {
         format: 'weekly-note',
         archiveSingleUse: true,
         entries: [
-          { date: '2024-01-14', slot: 2, mealId: 'meal-lasagne', notes: 'Mor ikke hjemme' },
-          { date: '2024-01-15', slot: 2, newMealName: 'Hotdogs', notes: '' },
-          { date: '2024-01-16', slot: 2, newMealName: 'Hotdogs', notes: '' },
-          { date: '2024-01-17', slot: 2, newMealName: 'Hotdogs', notes: '' },
+          { date: '2024-01-14', slot: 'Dinner', mealId: 'meal-lasagne', notes: 'Mor ikke hjemme' },
+          { date: '2024-01-15', slot: 'Dinner', newMealName: 'Hotdogs', notes: '' },
+          { date: '2024-01-16', slot: 'Dinner', newMealName: 'Hotdogs', notes: '' },
+          { date: '2024-01-17', slot: 'Dinner', newMealName: 'Hotdogs', notes: '' },
         ],
       },
     );
@@ -268,7 +273,7 @@ describe('MealplanImport', () => {
     ]);
     expect(request.entries[3]).toEqual({
       date: '2024-01-18',
-      slot: 2,
+      slot: 'Dinner',
       newMealName: 'Leftovers',
       notes: '',
     });

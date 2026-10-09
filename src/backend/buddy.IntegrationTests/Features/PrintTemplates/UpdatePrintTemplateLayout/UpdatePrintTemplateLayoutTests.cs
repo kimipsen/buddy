@@ -28,7 +28,7 @@ public sealed class UpdatePrintTemplateLayoutTests(BuddyApiFixture fixture)
         });
 
         var read = await PrintTemplateTestHelpers.GetAsync(fixture, token, created.Id);
-        Assert.Equal(1, read.PaperSize);
+        Assert.Equal(PaperSize.A3, read.PaperSize);
         Assert.Equal(DayOfWeek.Sunday, read.DefaultStartWeekday);
         Assert.False(read.ShowWeekNumber);
     }

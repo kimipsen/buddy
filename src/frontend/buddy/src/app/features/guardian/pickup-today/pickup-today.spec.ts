@@ -16,7 +16,7 @@ describe('PickupToday', () => {
       id: 'child-1',
       name: { givenName: 'Charlie', familyName: 'C' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -28,7 +28,7 @@ describe('PickupToday', () => {
       id: 'guardian-1',
       name: { givenName: 'Gina', familyName: 'G' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       ...overrides,
     };
   }
@@ -37,7 +37,7 @@ describe('PickupToday', () => {
     return {
       assignee: { kind: 1 },
       date: today,
-      slot: 0,
+      slot: 'DropOff',
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -146,7 +146,7 @@ describe('PickupToday', () => {
   });
 
   it('renders a self-escort pickup with its translated label', async () => {
-    const selfEscort = occurrence({ assignee: { kind: 1 }, slot: 1 });
+    const selfEscort = occurrence({ assignee: { kind: 1 }, slot: 'PickUp' });
 
     const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [selfEscort]) } });
     await settle(fixture);
@@ -157,7 +157,10 @@ describe('PickupToday', () => {
   });
 
   it('renders a drop-off assigned to a sibling with its translated label', async () => {
-    const sibling = occurrence({ assignee: { kind: 2, siblingChildId: 'sibling-1' }, slot: 0 });
+    const sibling = occurrence({
+      assignee: { kind: 2, siblingChildId: 'sibling-1' },
+      slot: 'DropOff',
+    });
 
     const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [sibling]) } });
     await settle(fixture);
@@ -184,7 +187,7 @@ describe('PickupToday', () => {
       assignee: { kind: 4, guardianId: 'guardian-1', babysitterId: 'b1', name: 'Anna' },
     });
     const unnamed = occurrence({
-      slot: 1,
+      slot: 'PickUp',
       assignee: { kind: 4, guardianId: 'guardian-1', babysitterId: 'b2', name: '' },
     });
 
@@ -244,7 +247,7 @@ describe('PickupToday', () => {
 
   it('renders a table with drop-off and pickup column headers, drop-off first', async () => {
     const { fixture } = await setup({
-      pickups: { listSchedule: vi.fn(async () => [occurrence({ slot: 0 })]) },
+      pickups: { listSchedule: vi.fn(async () => [occurrence({ slot: 'DropOff' })]) },
     });
     await settle(fixture);
 
@@ -256,7 +259,7 @@ describe('PickupToday', () => {
 
   it('shows the child as a row header even when the guardian has only one linked child', async () => {
     const { fixture } = await setup({
-      pickups: { listSchedule: vi.fn(async () => [occurrence({ slot: 0 })]) },
+      pickups: { listSchedule: vi.fn(async () => [occurrence({ slot: 'DropOff' })]) },
     });
     await settle(fixture);
 
@@ -265,7 +268,7 @@ describe('PickupToday', () => {
   });
 
   it('puts each slot in its own column and marks an unplanned slot as not planned', async () => {
-    const pickupOnly = occurrence({ assignee: { kind: 1 }, slot: 1 });
+    const pickupOnly = occurrence({ assignee: { kind: 1 }, slot: 'PickUp' });
 
     const { fixture } = await setup({ pickups: { listSchedule: vi.fn(async () => [pickupOnly]) } });
     await settle(fixture);
@@ -284,10 +287,10 @@ describe('PickupToday', () => {
     // Pickup returned before drop-off, and Dana listed before Charlie, so neither input order
     // matches the expected output.
     const listSchedule = vi.fn(async (childId: string) => [
-      occurrence({ assignee: { kind: 1 }, slot: 1 }),
+      occurrence({ assignee: { kind: 1 }, slot: 'PickUp' }),
       occurrence({
         assignee: childId === 'child-1' ? { kind: 2, siblingChildId: 'sibling-1' } : { kind: 1 },
-        slot: 0,
+        slot: 'DropOff',
       }),
     ]);
 
@@ -311,7 +314,7 @@ describe('PickupToday', () => {
     const listSchedule = vi.fn(async (childId: string) => [
       occurrence({
         assignee: childId === 'child-a' ? { kind: 1 } : { kind: 2, siblingChildId: 'sibling-1' },
-        slot: 0,
+        slot: 'DropOff',
       }),
     ]);
 
@@ -331,7 +334,7 @@ describe('PickupToday', () => {
     const dana = child({ id: 'child-2', name: { givenName: 'Dana', familyName: 'D' } });
 
     const listSchedule = vi.fn(async (childId: string) =>
-      childId === 'child-1' ? [] : [occurrence({ slot: 1 })],
+      childId === 'child-1' ? [] : [occurrence({ slot: 'PickUp' })],
     );
 
     const { fixture } = await setup({
@@ -349,8 +352,8 @@ describe('PickupToday', () => {
 
     const listSchedule = vi.fn(async (childId: string) =>
       childId === 'child-1'
-        ? [occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' }, slot: 0 })]
-        : [occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' }, slot: 1 })],
+        ? [occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' }, slot: 'DropOff' })]
+        : [occurrence({ assignee: { kind: 0, guardianId: 'guardian-1' }, slot: 'PickUp' })],
     );
     const listChildGuardians = vi.fn(async (childId: string) =>
       childId === 'child-1'

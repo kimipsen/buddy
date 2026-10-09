@@ -92,8 +92,10 @@ test('guardian creates a meal and assigns it to a slot in the current week', asy
 
   expect(planResponse.ok()).toBe(true);
 
-  const entries = (await planResponse.json()) as { date: string; slot: number; mealId: string }[];
-  const persisted = entries.find((entry) => entry.date === assignBody.date && entry.slot === 0);
+  const entries = (await planResponse.json()) as { date: string; slot: string; mealId: string }[];
+  const persisted = entries.find(
+    (entry) => entry.date === assignBody.date && entry.slot === 'Breakfast',
+  );
 
   expect(persisted?.mealId).toBe(assignBody.mealId);
 });

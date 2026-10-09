@@ -16,7 +16,7 @@ describe('ManageMedicines', () => {
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -42,7 +42,7 @@ describe('ManageMedicines', () => {
   }
 
   function group(overrides: Partial<GroupSummary> = {}): GroupSummary {
-    return { id: 'group-1', name: 'The Fam', role: 0, ...overrides };
+    return { id: 'group-1', name: 'The Fam', role: 'Owner', ...overrides };
   }
 
   interface Stubs {
@@ -534,9 +534,9 @@ describe('ManageMedicines', () => {
     });
 
     it('only offers groups the guardian owns or administers, not plain member groups', async () => {
-      const owner = group({ id: 'g-owner', name: 'Owned', role: 0 });
-      const admin = group({ id: 'g-admin', name: 'Administered', role: 1 });
-      const member = group({ id: 'g-member', name: 'Just a member', role: 2 });
+      const owner = group({ id: 'g-owner', name: 'Owned', role: 'Owner' });
+      const admin = group({ id: 'g-admin', name: 'Administered', role: 'Admin' });
+      const member = group({ id: 'g-member', name: 'Just a member', role: 'Member' });
 
       const { fixture } = await setup({
         groups: { listMyGroups: vi.fn(async () => [owner, admin, member]) },

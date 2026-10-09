@@ -1,18 +1,20 @@
 using Alba;
 
+using buddy.Features.Mealplans;
+using buddy.Features.PrintTemplates;
 using buddy.IntegrationTests.Fixtures;
 
 namespace buddy.IntegrationTests.Features.PrintTemplates;
 
 // Response shapes, matching PrintTemplateResponse / PrintTemplateSummary
-// (Features/PrintTemplates/Types/PrintTemplateResponse.cs). Enums travel as ordinals.
+// (Features/PrintTemplates/Types/PrintTemplateResponse.cs). Enums travel as their member names.
 internal sealed record PrintTemplateRowDto(
-    int Kind,
+    PrintRowKind Kind,
     string Label,
     int HeightWeight,
     Guid? ChildId,
     Guid? MealGroupId,
-    int? MealSlot,
+    MealSlot? MealSlot,
     Guid? GuardianId,
     Guid? WorkLocationId,
     List<Guid>? CalendarIds,
@@ -31,7 +33,7 @@ internal sealed record PrintTemplateDto(
     Guid? OwnerUserId,
     Guid? OwnerGroupId,
     string Name,
-    int PaperSize,
+    PaperSize PaperSize,
     DayOfWeek DefaultStartWeekday,
     bool ShowWeekNumber,
     List<PrintTemplateRowDto> Rows,
@@ -42,16 +44,16 @@ internal sealed record PrintTemplateSummaryDto(Guid Id, Guid? OwnerUserId, Guid?
 
 internal static class PrintTemplateTestHelpers
 {
-    // PrintRowKind ordinals.
-    public const int Meal = 0;
-    public const int Pickup = 1;
-    public const int WorkLocation = 2;
-    public const int CalendarMarker = 3;
-    public const int CalendarEvents = 4;
-    public const int TaskChecklist = 5;
-    public const int Blank = 6;
+    // Row kinds, sent and read back by member name.
+    public const PrintRowKind Meal = PrintRowKind.Meal;
+    public const PrintRowKind Pickup = PrintRowKind.Pickup;
+    public const PrintRowKind WorkLocation = PrintRowKind.WorkLocation;
+    public const PrintRowKind CalendarMarker = PrintRowKind.CalendarMarker;
+    public const PrintRowKind CalendarEvents = PrintRowKind.CalendarEvents;
+    public const PrintRowKind TaskChecklist = PrintRowKind.TaskChecklist;
+    public const PrintRowKind Blank = PrintRowKind.Blank;
 
-    public const int Dinner = 2; // MealSlot.Dinner
+    public const MealSlot Dinner = MealSlot.Dinner;
 
     public static async Task<PrintTemplateDto> CreateAsync(BuddyApiFixture fixture, string token, string name = "Ugeplan", Guid? groupId = null)
     {

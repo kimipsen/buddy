@@ -1,13 +1,14 @@
 using Alba;
 
 using buddy.Features.Guardians;
+using buddy.Features.WorkLocations;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 
 namespace buddy.IntegrationTests.Features.WorkLocations;
 
 // Response shapes, matching WorkLocationSummary / WorkLocationScheduleResponse / WorkDay
-// (Features/WorkLocations/Types). Enums travel as their ordinal over HTTP, like everywhere else.
+// (Features/WorkLocations/Types). Enums travel as their member name over HTTP; the WorkDayStatus "kind" discriminator stays numeric.
 internal sealed record WorkLocationDto(Guid Id, string Name, string Icon, string Color, bool IsArchived);
 
 internal sealed record PatternDayDto(int Week, DayOfWeek Day, Guid LocationId);
@@ -23,7 +24,7 @@ internal sealed record WorkDayDto(DateOnly Date, WorkDayStatusDto Status)
 }
 
 // WorkDayStatus read flat: "kind" (see the constants below) plus the at-location case's fields.
-internal sealed record WorkDayStatusDto(int Kind, WorkLocationDto? Location = null, int? Source = null);
+internal sealed record WorkDayStatusDto(int Kind, WorkLocationDto? Location = null, WorkDaySource? Source = null);
 
 internal static class WorkLocationTestHelpers
 {
@@ -31,8 +32,8 @@ internal static class WorkLocationTestHelpers
     public const int KindOff = 1;
     public const int KindAtLocation = 2;
 
-    public const int SourcePattern = 0;
-    public const int SourceOverride = 1;
+    public const WorkDaySource SourcePattern = WorkDaySource.Pattern;
+    public const WorkDaySource SourceOverride = WorkDaySource.Override;
 
     public static async Task<WorkLocationDto> AddLocationAsync(BuddyApiFixture fixture, string token, string name, string icon = "🏢", string color = "#2563eb")
     {

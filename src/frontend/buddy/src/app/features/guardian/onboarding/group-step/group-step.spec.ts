@@ -17,7 +17,7 @@ describe('GroupStep', () => {
   async function setup(setupState: OnboardingSetup, groups: Partial<GroupsService> = {}) {
     const groupsStub: Partial<GroupsService> = {
       listMyGroups: vi.fn(async (): Promise<GroupSummary[]> => []),
-      createGroup: vi.fn(async () => ({ id: 'group-new', name: 'Home', role: 0 as const })),
+      createGroup: vi.fn(async () => ({ id: 'group-new', name: 'Home', role: 'Owner' as const })),
       ...groups,
     };
 
@@ -80,9 +80,9 @@ describe('GroupStep', () => {
   it('offers only groups the guardian manages to continue with', async () => {
     const { compiled, chosen } = await setup(EMPTY_SETUP, {
       listMyGroups: vi.fn(async (): Promise<GroupSummary[]> => [
-        { id: 'owned', name: 'Owned', role: 0 },
-        { id: 'admin', name: 'Admined', role: 1 },
-        { id: 'member', name: 'Joined', role: 2 },
+        { id: 'owned', name: 'Owned', role: 'Owner' },
+        { id: 'admin', name: 'Admined', role: 'Admin' },
+        { id: 'member', name: 'Joined', role: 'Member' },
       ]),
     });
 

@@ -2,26 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
-export interface GoalPost {
-  threshold: number;
-  icon: string;
-  label: string;
-}
+export type GoalPost = Schemas['GoalPostResponse'];
 
-export interface ProgressSummary {
-  totalStars: number;
-  unlockedMilestones: number[];
-  // Resolved server-side (see GoalPostResolver) from the child's guardian-configured goal posts
-  // -- or the default scale, if none are configured -- including extrapolated posts past the
-  // configured list, so the frontend never re-derives this logic. displayIcon is the reached goal
-  // post's icon, or the next one's before the first is reached.
-  displayIcon: string;
-  nextGoalThreshold: number;
-  nextGoalIcon: string;
-  goalPosts: GoalPost[];
-}
+export type ProgressSummary = Schemas['ProgressSummary'];
 
 @Injectable({ providedIn: 'root' })
 export class ProgressService {

@@ -8,29 +8,23 @@ import { GroupDetail, GroupInvite, GroupMember, GroupsService } from './groups.s
 import { ChildSummary, GuardiansService } from './guardians.service';
 import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from './map-with-concurrency';
 import { MealplansService } from './mealplans.service';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 import { TaskLibraryService, TaskTemplate } from './task-library.service';
 import { UsersService } from './users.service';
 
-// OnboardingStatus values match the backend's enum ordinals: 0 = NotStarted (never stored; what GET
-// answers before the guide starts), 1 = Active, 2 = Deferred, 3 = Completed.
-export type OnboardingStatus = 0 | 1 | 2 | 3;
+export type OnboardingStatus = Schemas['OnboardingStatus'];
 
 export const ONBOARDING_STATUS = {
-  notStarted: 0,
-  active: 1,
-  deferred: 2,
-  completed: 3,
+  notStarted: 'NotStarted',
+  active: 'Active',
+  deferred: 'Deferred',
+  completed: 'Completed',
 } as const satisfies Record<string, OnboardingStatus>;
 
 // The only state the guide stores (GET/PUT /users/me/onboarding). version is the revision read; a
 // PUT with an older one answers 409 concurrency_conflict.
-export interface OnboardingProgress {
-  status: OnboardingStatus;
-  setupGroupId: string | null;
-  invitationsSkipped: boolean;
-  version: number;
-}
+export type OnboardingProgress = Schemas['OnboardingProgressResponse'];
 
 export interface SetupTemplate {
   childId: string;

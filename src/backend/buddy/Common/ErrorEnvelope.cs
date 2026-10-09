@@ -9,6 +9,8 @@ public sealed record ErrorEnvelope(string Code, string Message, IReadOnlyDiction
 
 public static class ValidationProblemExtensions
 {
+    public const string ErrorCode = "validation_error";
+
     public static ErrorEnvelope ToEnvelope(this ValidationProblem problem, HttpContext context) =>
-        new("validation_error", "One or more fields are invalid.", problem.Errors, context.TraceIdentifier);
+        new(ErrorCode, "One or more fields are invalid.", problem.Errors, context.TraceIdentifier);
 }

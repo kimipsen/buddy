@@ -5,7 +5,6 @@ import { CalendarRole } from '../../../../core/calendars.service';
 import {
   GroupMember,
   GroupRole,
-  GroupRoleName,
   GroupSummary,
   GroupsService,
   SentGroupInvite,
@@ -17,42 +16,41 @@ import { MealplanAccessTier } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 
 const ROLE_LABELS: Record<GroupRole, string> = {
-  0: 'admin.manageGroups.roles.owner',
-  1: 'admin.manageGroups.roles.admin',
-  2: 'admin.manageGroups.roles.member',
+  Owner: 'admin.manageGroups.roles.owner',
+  Admin: 'admin.manageGroups.roles.admin',
+  Member: 'admin.manageGroups.roles.member',
 };
 
 // A group owner/admin can invite Admins or Members, never another Owner (matches the backend's
 // InviteToGroup rejection of GroupRole.Owner).
-const INVITABLE_ROLES: GroupRole[] = [1, 2];
+const INVITABLE_ROLES: GroupRole[] = ['Admin', 'Member'];
 
 const CALENDAR_ROLE_LABELS: Record<CalendarRole, string> = {
-  0: 'admin.manageCalendars.roles.owner',
-  1: 'admin.manageCalendars.roles.contributor',
-  2: 'admin.manageCalendars.roles.viewer',
+  Owner: 'admin.manageCalendars.roles.owner',
+  Contributor: 'admin.manageCalendars.roles.contributor',
+  Viewer: 'admin.manageCalendars.roles.viewer',
 };
 
-const CALENDAR_ROLES: CalendarRole[] = [0, 1, 2];
+const CALENDAR_ROLES: CalendarRole[] = ['Owner', 'Contributor', 'Viewer'];
 
-// Pairs each policy dictionary key (a GroupRole name string, per the backend's enum-dictionary-key
-// serialization) with its numeric GroupRole ordinal so rows can reuse the existing ROLE_LABELS map.
-const POLICY_ROWS: { key: GroupRoleName; role: GroupRole }[] = [
-  { key: 'Owner', role: 0 },
-  { key: 'Admin', role: 1 },
-  { key: 'Member', role: 2 },
+// One row per group role: key indexes the policy dictionary, role the ROLE_LABELS map.
+const POLICY_ROWS: { key: GroupRole; role: GroupRole }[] = [
+  { key: 'Owner', role: 'Owner' },
+  { key: 'Admin', role: 'Admin' },
+  { key: 'Member', role: 'Member' },
 ];
 
-// None (0), Manage (2), and View (3) are the three valid group-policy values for meal plans --
-// Rate (1) is the child's own tier and is rejected by the backend, so it's never offered here.
-type GroupMealplanTier = Exclude<MealplanAccessTier, 1>;
+// None, Manage, and View are the three valid group-policy values for meal plans -- Rate is the
+// child's own tier and is rejected by the backend, so it's never offered here.
+type GroupMealplanTier = Exclude<MealplanAccessTier, 'Rate'>;
 
 const MEALPLAN_TIER_LABELS: Record<GroupMealplanTier, string> = {
-  0: 'admin.manageGroups.mealplanPolicy.tiers.none',
-  2: 'admin.manageGroups.mealplanPolicy.tiers.manage',
-  3: 'admin.manageGroups.mealplanPolicy.tiers.view',
+  None: 'admin.manageGroups.mealplanPolicy.tiers.none',
+  Manage: 'admin.manageGroups.mealplanPolicy.tiers.manage',
+  View: 'admin.manageGroups.mealplanPolicy.tiers.view',
 };
 
-const MEALPLAN_TIERS: GroupMealplanTier[] = [0, 3, 2];
+const MEALPLAN_TIERS: GroupMealplanTier[] = ['None', 'View', 'Manage'];
 
 @Component({
   selector: 'app-manage-groups',
@@ -88,7 +86,7 @@ export class ManageGroups {
 
   // Stryker disable next-line StringLiteral: toggleInvitePanel resets it before the invite form is ever rendered
   protected readonly inviteEmail = signal('');
-  protected readonly inviteRole = signal<GroupRole>(2);
+  protected readonly inviteRole = signal<GroupRole>('Member');
   protected readonly inviting = createAction();
   protected readonly revokingInvite = createAction<string>();
   // The invite just sent from the open panel, whose link the inviter can copy or share themself
@@ -145,12 +143,12 @@ export class ManageGroups {
   protected readonly deleting = createAction<string>();
 
   protected canManage(group: GroupSummary): boolean {
-    return group.role === 0 || group.role === 1;
+    return group.role === 'Owner' || group.role === 'Admin';
   }
 
   // Deleting a group is owner-only, unlike the admin-or-owner actions gated by canManage.
   protected isOwner(group: GroupSummary): boolean {
-    return group.role === 0;
+    return group.role === 'Owner';
   }
 
   protected requestDelete(groupId: string): void {
@@ -200,7 +198,7 @@ export class ManageGroups {
 
     this.expandedGroupId.set(groupId);
     this.inviteEmail.set('');
-    this.inviteRole.set(2);
+    this.inviteRole.set('Member');
     this.sentInvite.set(null);
     this.inviting.clearError();
     this.revokingInvite.clearError();
@@ -331,7 +329,7 @@ export class ManageGroups {
     this.policySaving.clearError();
   }
 
-  protected setDraftRole(roleKey: GroupRoleName, calendarRole: CalendarRole): void {
+  protected setDraftRole(roleKey: GroupRole, calendarRole: CalendarRole): void {
     this.policyDraft.update((draft) => draft && { ...draft, [roleKey]: calendarRole });
   }
 
@@ -359,7 +357,7 @@ export class ManageGroups {
     this.mealplanPolicySaving.clearError();
   }
 
-  protected setMealplanDraftTier(roleKey: GroupRoleName, tier: MealplanAccessTier): void {
+  protected setMealplanDraftTier(roleKey: GroupRole, tier: MealplanAccessTier): void {
     this.mealplanPolicyDraft.update((draft) => draft && { ...draft, [roleKey]: tier });
   }
 

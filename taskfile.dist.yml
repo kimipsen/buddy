@@ -84,6 +84,17 @@ tasks:
     cmds:
       - npm run screenshots
 
+  docs:openapi:
+    desc: >-
+      Regenerate the committed API contract, docs/backend/openapi/buddy.json,
+      from the running code (Meta/OpenApiDocumentTests with
+      BUDDY_UPDATE_OPENAPI=1), then the frontend's generated types in
+      src/frontend/buddy/src/app/core/api/buddy-api.ts. Run it after any change
+      to an endpoint, a request/response DTO or an error code. Needs Docker.
+    cmds:
+      - BUDDY_UPDATE_OPENAPI=1 dotnet test src/backend/backend.slnx --filter "FullyQualifiedName~OpenApiDocumentTests.The_combined_document_matches_the_committed_contract"
+      - cd src/frontend/buddy && npm run api:types
+
   db:marten:tables:
     desc: "List Marten tables in a schema. Usage: task db:marten:tables SCHEMA=groups"
     requires:

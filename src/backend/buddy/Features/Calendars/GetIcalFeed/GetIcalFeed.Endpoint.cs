@@ -37,6 +37,8 @@ public static class GetIcalFeedEndpoint
         })
         .AllowAnonymous()
         .RequireRateLimiting(RateLimitingFeature.IcalFeedPolicy)
+        // ContentHttpResult adds no response metadata.
+        .Produces<string>(StatusCodes.Status200OK, "text/calendar")
         .WithName("GetCalendarIcalFeed");
 
         return calendars;

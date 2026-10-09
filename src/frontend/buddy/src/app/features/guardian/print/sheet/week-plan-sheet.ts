@@ -5,8 +5,8 @@ import { WeekPlanModel } from '../week-plan-model';
 
 // Printable area inside 8 mm margins on landscape paper.
 export const PAPER_MM = {
-  0: { width: 281, height: 194 }, // A4: 297 x 210
-  1: { width: 404, height: 281 }, // A3: 420 x 297
+  A4: { width: 281, height: 194 }, // 297 x 210
+  A3: { width: 404, height: 281 }, // 420 x 297
 } as const;
 
 // A3 is the same layout scaled by sqrt(2), the ratio between the two formats.
@@ -34,7 +34,7 @@ export class WeekPlanSheet {
   protected readonly paper = computed(() => PAPER_MM[this.model().paperSize]);
 
   protected readonly fontPt = computed(() =>
-    this.model().paperSize === 1 ? BASE_FONT_PT * A3_SCALE : BASE_FONT_PT,
+    this.model().paperSize === 'A3' ? BASE_FONT_PT * A3_SCALE : BASE_FONT_PT,
   );
 
   protected pickupLabelEm(text: string): number {

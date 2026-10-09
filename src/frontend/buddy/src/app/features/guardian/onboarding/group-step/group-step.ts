@@ -26,11 +26,11 @@ export class GroupStep {
   // The last group created here, kept so a failed progress save retries with it, not a new group.
   protected readonly createdGroupId = signal<string | null>(null);
 
-  // Owner (0) or Admin (1): the backend only accepts a setup group the guardian manages.
+  // Owner or Admin: the backend only accepts a setup group the guardian manages.
   private readonly myGroups = resource({ loader: () => this.groups.listMyGroups() });
   protected readonly manageableGroups = computed(() =>
     (this.myGroups.hasValue() ? this.myGroups.value() : []).filter(
-      (group) => group.role !== 2 && group.id !== this.setup().group?.id,
+      (group) => group.role !== 'Member' && group.id !== this.setup().group?.id,
     ),
   );
   protected readonly groupsError = computed(() => this.myGroups.error() !== undefined);

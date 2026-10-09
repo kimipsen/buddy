@@ -721,10 +721,18 @@
             (ngModelChange)="chooseRepeat($event)"
           >
             <option [ngValue]="'none'">{{ 'calendar.agenda.form.repeat.none' | translate }}</option>
-            <option [ngValue]="0">{{ 'calendar.agenda.form.repeat.daily' | translate }}</option>
-            <option [ngValue]="1">{{ 'calendar.agenda.form.repeat.weekly' | translate }}</option>
-            <option [ngValue]="2">{{ 'calendar.agenda.form.repeat.monthly' | translate }}</option>
-            <option [ngValue]="3">{{ 'calendar.agenda.form.repeat.yearly' | translate }}</option>
+            <option [ngValue]="'Daily'">
+              {{ 'calendar.agenda.form.repeat.daily' | translate }}
+            </option>
+            <option [ngValue]="'Weekly'">
+              {{ 'calendar.agenda.form.repeat.weekly' | translate }}
+            </option>
+            <option [ngValue]="'Monthly'">
+              {{ 'calendar.agenda.form.repeat.monthly' | translate }}
+            </option>
+            <option [ngValue]="'Yearly'">
+              {{ 'calendar.agenda.form.repeat.yearly' | translate }}
+            </option>
           </select>
         </label>
 

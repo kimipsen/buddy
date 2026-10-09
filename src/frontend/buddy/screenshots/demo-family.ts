@@ -315,13 +315,13 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       givenName: 'Emil',
       familyName: 'Holm',
       username: DEMO_USERNAMES.child,
-      kind: 0,
+      kind: 'Parent',
     });
     const ida = await api.post<Named>('/users/me/children', {
       givenName: 'Ida',
       familyName: 'Holm',
       username: DEMO_USERNAMES.sibling,
-      kind: 0,
+      kind: 'Parent',
     });
     await makeChildLoginUsable(DEMO_USERNAMES.child);
 
@@ -370,7 +370,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         recurrence,
       });
 
-    const weekly = { frequency: 1, intervalCount: 1, until: null };
+    const weekly = { frequency: 'Weekly', intervalCount: 1, until: null };
     await event(
       school.id,
       'Football practice',
@@ -435,7 +435,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       await api.post(`/task-templates/${bedtime.id}/subtasks`, { title, icon, duration });
     }
 
-    const daily = { frequency: 0, intervalCount: 1, until: null };
+    const daily = { frequency: 'Daily', intervalCount: 1, until: null };
     const morningItem = await api.post<Named>(`/calendars/${family.id}/items/from-template`, {
       taskTemplateId: morning.id,
       startDate: mondayIso,
@@ -521,15 +521,15 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       'Chicken tacos',
     ];
     for (const day of planDays) {
-      const assign = (slot: number, meal: string) =>
+      const assign = (slot: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack', meal: string) =>
         api.put(`/mealplans/children/${emil.id}/plan?date=${isoDate(day)}&slot=${slot}`, {
           mealId: meals[meal].id,
           notes: null,
         });
-      await assign(0, 'Oatmeal with berries');
-      if (isWeekday(day)) await assign(1, 'Rye bread sandwiches');
-      await assign(2, dinners[day.getDay()]);
-      await assign(3, 'Apple and carrot sticks');
+      await assign('Breakfast', 'Oatmeal with berries');
+      if (isWeekday(day)) await assign('Lunch', 'Rye bread sandwiches');
+      await assign('Dinner', dinners[day.getDay()]);
+      await assign('Snack', 'Apple and carrot sticks');
     }
 
     // One earlier import, so the import page's history has a row to show.
@@ -546,7 +546,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         'Spaghetti bolognese',
       ].map((meal, index) => ({
         date: `2025-03-0${index + 2}`,
-        slot: 2,
+        slot: 'Dinner',
         ...(meals[meal] ? { mealId: meals[meal].id } : { newMealName: meal }),
         notes: '',
       })),
@@ -581,7 +581,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     });
     await api
       .put(`/medicines/children/${emil.id}/doses/${ritalin.id}?date=${todayIso}&time=07:30:00`, {
-        status: 1,
+        status: 'Taken',
       })
       .catch(warn);
 
@@ -665,11 +665,11 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       cycleWeeks: 1,
       anchorMonday: mondayIso,
       days: [
-        { week: 0, day: 1, locationId: office.id },
-        { week: 0, day: 2, locationId: home.id },
-        { week: 0, day: 3, locationId: office.id },
-        { week: 0, day: 4, locationId: office.id },
-        { week: 0, day: 5, locationId: home.id },
+        { week: 0, day: 'Monday', locationId: office.id },
+        { week: 0, day: 'Tuesday', locationId: home.id },
+        { week: 0, day: 'Wednesday', locationId: office.id },
+        { week: 0, day: 'Thursday', locationId: office.id },
+        { week: 0, day: 'Friday', locationId: home.id },
       ],
     });
 
@@ -683,12 +683,12 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     // Pickups -------------------------------------------------------------------------------
     for (const date of planDays.filter(isWeekday).map(isoDate)) {
       const weekday = weekdayOf(date);
-      await api.put(`/pickups/children/${emil.id}/assignments?date=${date}&slot=0`, {
+      await api.put(`/pickups/children/${emil.id}/assignments?date=${date}&slot=DropOff`, {
         assignee: { kind: 0, guardianId: me.id },
         time: '07:45:00',
         notes: null,
       });
-      await api.put(`/pickups/children/${emil.id}/assignments?date=${date}&slot=1`, {
+      await api.put(`/pickups/children/${emil.id}/assignments?date=${date}&slot=PickUp`, {
         assignee:
           weekday === 4
             ? { kind: 3, hostName: 'Oscar’s family', location: 'Birkevej 12', contactInfo: '' }
@@ -723,17 +723,17 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     await api.put(`/print-templates/${template.id}/rows`, {
       rows: [
         row({
-          kind: 4,
+          kind: 'CalendarEvents',
           label: 'Activities',
           calendarIds: [school.id],
           showTime: true,
           heightWeight: 2,
         }),
-        row({ kind: 1, label: 'Pickup', childId: emil.id }),
-        row({ kind: 0, label: 'Dinner', childId: emil.id, mealSlot: 2 }),
-        row({ kind: 2, label: 'Sara works', guardianId: me.id }),
+        row({ kind: 'Pickup', label: 'Pickup', childId: emil.id }),
+        row({ kind: 'Meal', label: 'Dinner', childId: emil.id, mealSlot: 'Dinner' }),
+        row({ kind: 'WorkLocation', label: 'Sara works', guardianId: me.id }),
         row({
-          kind: 5,
+          kind: 'TaskChecklist',
           label: 'Emil’s tasks',
           calendarIds: [family.id],
           assignedToId: emil.id,
@@ -747,12 +747,12 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
 
     // Invites, so the public invite pages have something to preview -------------------------
     await api
-      .post(`/groups/${group.id}/invites`, { email: 'demo.invitee@buddy.test', role: 2 })
+      .post(`/groups/${group.id}/invites`, { email: 'demo.invitee@buddy.test', role: 'Member' })
       .catch(warn);
     await api
       .post(`/users/me/children/${emil.id}/guardian-invites`, {
         email: 'demo.coparent@buddy.test',
-        kind: 0,
+        kind: 'Parent',
       })
       .catch(warn);
 

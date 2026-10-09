@@ -79,7 +79,7 @@ describe('MealStep', () => {
     expect(mealplans.assignMealToSlot).toHaveBeenCalledWith(
       family,
       todayIsoDate(),
-      2,
+      'Dinner',
       'meal-new',
       '',
     );
@@ -101,7 +101,13 @@ describe('MealStep', () => {
     await settle(fixture);
 
     expect(mealplans.createMeal).toHaveBeenCalledTimes(1);
-    expect(assignMealToSlot).toHaveBeenLastCalledWith(family, todayIsoDate(), 2, 'meal-new', '');
+    expect(assignMealToSlot).toHaveBeenLastCalledWith(
+      family,
+      todayIsoDate(),
+      'Dinner',
+      'meal-new',
+      '',
+    );
   });
 
   it('plans an existing meal without creating one', async () => {
@@ -119,7 +125,7 @@ describe('MealStep', () => {
     expect(mealplans.assignMealToSlot).toHaveBeenCalledWith(
       family,
       todayIsoDate(),
-      2,
+      'Dinner',
       'meal-1',
       '',
     );

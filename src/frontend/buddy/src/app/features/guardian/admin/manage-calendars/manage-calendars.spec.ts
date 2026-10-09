@@ -14,11 +14,11 @@ import { ManageCalendars } from './manage-calendars';
 
 describe('ManageCalendars', () => {
   function calendar(overrides: Partial<CalendarSummary> = {}): CalendarSummary {
-    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 0, ...overrides };
+    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 'Owner', ...overrides };
   }
 
   function group(overrides: Partial<GroupSummary> = {}): GroupSummary {
-    return { id: 'group-1', name: 'Family', role: 0, ...overrides };
+    return { id: 'group-1', name: 'Family', role: 'Owner', ...overrides };
   }
 
   function icalToken(overrides: Partial<IcalTokenSummary> = {}): IcalTokenSummary {
@@ -48,7 +48,7 @@ describe('ManageCalendars', () => {
             id: 'cal-new',
             name: request.name,
             icon: request.icon ?? '📅',
-            role: 0,
+            role: 'Owner',
           }) as CalendarSummary,
       ),
       updateCalendarIcon: vi.fn(async () => undefined),
@@ -204,8 +204,8 @@ describe('ManageCalendars', () => {
     const { fixture } = await setup({
       calendars: {
         listMyCalendars: vi.fn(async () => [
-          calendar({ id: 'cal-1', name: 'Home', icon: '🏠', role: 0 }),
-          calendar({ id: 'cal-2', name: 'Work', icon: '💼', role: 1 }),
+          calendar({ id: 'cal-1', name: 'Home', icon: '🏠', role: 'Owner' }),
+          calendar({ id: 'cal-2', name: 'Work', icon: '💼', role: 'Contributor' }),
         ]),
       },
     });
@@ -220,9 +220,9 @@ describe('ManageCalendars', () => {
     expect(compiled.textContent).toContain('Contributor');
   });
 
-  it('shows the Viewer role label for a role-2 calendar', async () => {
+  it('shows the Viewer role label for a Viewer calendar', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 2 })]) },
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 'Viewer' })]) },
     });
     await settle(fixture);
 
@@ -232,7 +232,7 @@ describe('ManageCalendars', () => {
 
   it('hides the owner-only action buttons for a calendar the caller only contributes to', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 1 })]) },
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 'Contributor' })]) },
     });
     await settle(fixture);
 
@@ -245,7 +245,7 @@ describe('ManageCalendars', () => {
 
   it('hides the owner-only action buttons for a calendar the caller only views', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 2 })]) },
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 'Viewer' })]) },
     });
     await settle(fixture);
 
@@ -256,7 +256,7 @@ describe('ManageCalendars', () => {
 
   it('shows the owner-only action buttons for a calendar the caller owns', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 0 })]) },
+      calendars: { listMyCalendars: vi.fn(async () => [calendar({ role: 'Owner' })]) },
     });
     await settle(fixture);
 
@@ -271,7 +271,7 @@ describe('ManageCalendars', () => {
 
   it('hides the create-calendar form and shows a hint when the caller manages no group', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 'Member' })]) },
     });
     await settle(fixture);
 
@@ -300,9 +300,9 @@ describe('ManageCalendars', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          group({ id: 'g-owner', name: 'Owned', role: 0 }),
-          group({ id: 'g-admin', name: 'Administered', role: 1 }),
-          group({ id: 'g-member', name: 'MemberOnly', role: 2 }),
+          group({ id: 'g-owner', name: 'Owned', role: 'Owner' }),
+          group({ id: 'g-admin', name: 'Administered', role: 'Admin' }),
+          group({ id: 'g-member', name: 'MemberOnly', role: 'Member' }),
         ]),
       },
     });
@@ -321,8 +321,8 @@ describe('ManageCalendars', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          group({ id: 'g-first', name: 'First', role: 0 }),
-          group({ id: 'g-second', name: 'Second', role: 1 }),
+          group({ id: 'g-first', name: 'First', role: 'Owner' }),
+          group({ id: 'g-second', name: 'Second', role: 'Admin' }),
         ]),
       },
     });
@@ -385,7 +385,9 @@ describe('ManageCalendars', () => {
     const listMyCalendars = vi.fn(async () => [calendar()]);
     const { fixture, calendars } = await setup({
       calendars: { listMyCalendars },
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 0 })]) },
+      groups: {
+        listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 'Owner' })]),
+      },
     });
     await settle(fixture);
 
@@ -592,7 +594,7 @@ describe('ManageCalendars', () => {
   it('shows the no-other-groups hint when the caller manages no group to move into', async () => {
     const { fixture } = await setup({
       calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
-      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 'Member' })]) },
     });
     await settle(fixture);
 
@@ -610,8 +612,8 @@ describe('ManageCalendars', () => {
       calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
       groups: {
         listMyGroups: vi.fn(async () => [
-          group({ id: 'g-owner', name: 'Owned', role: 0 }),
-          group({ id: 'g-member', name: 'MemberOnly', role: 2 }),
+          group({ id: 'g-owner', name: 'Owned', role: 'Owner' }),
+          group({ id: 'g-member', name: 'MemberOnly', role: 'Member' }),
         ]),
       },
     });
@@ -632,7 +634,9 @@ describe('ManageCalendars', () => {
   it('disables the move-confirm button until a target group is chosen', async () => {
     const { fixture } = await setup({
       calendars: { listMyCalendars: vi.fn(async () => [calendar()]) },
-      groups: { listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 0 })]) },
+      groups: {
+        listMyGroups: vi.fn(async () => [group({ id: 'g-1', name: 'Family', role: 'Owner' })]),
+      },
     });
     await settle(fixture);
 
@@ -665,7 +669,9 @@ describe('ManageCalendars', () => {
     const { fixture, calendars } = await setup({
       calendars: { listMyCalendars },
       groups: {
-        listMyGroups: vi.fn(async () => [group({ id: 'g-target', name: 'New Group', role: 0 })]),
+        listMyGroups: vi.fn(async () => [
+          group({ id: 'g-target', name: 'New Group', role: 'Owner' }),
+        ]),
       },
     });
     await settle(fixture);
@@ -694,7 +700,9 @@ describe('ManageCalendars', () => {
         transferToGroup: vi.fn(async () => Promise.reject(new Error('boom'))),
       },
       groups: {
-        listMyGroups: vi.fn(async () => [group({ id: 'g-target', name: 'New Group', role: 0 })]),
+        listMyGroups: vi.fn(async () => [
+          group({ id: 'g-target', name: 'New Group', role: 'Owner' }),
+        ]),
       },
     });
     await settle(fixture);
@@ -1244,7 +1252,7 @@ describe('ManageCalendars', () => {
   });
 
   describe('move in flight and retry', () => {
-    const target = () => [group({ id: 'g-target', name: 'New Group', role: 0 })];
+    const target = () => [group({ id: 'g-target', name: 'New Group', role: 'Owner' })];
 
     it('enables Move once a target is chosen and ignores a submit without one', async () => {
       const { fixture, calendars } = await setup({

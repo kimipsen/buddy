@@ -13,12 +13,12 @@ describe('WeekPlanSheet', () => {
 
   function model(overrides: Partial<WeekPlanModel> = {}): WeekPlanModel {
     return {
-      paperSize: 0,
+      paperSize: 'A4',
       weekLabel: 'Week 40',
       days,
       rows: [
         {
-          kind: 1,
+          kind: 'Pickup',
           label: 'Aflevere / Hente',
           heightWeight: 1,
           unavailable: false,
@@ -32,7 +32,7 @@ describe('WeekPlanSheet', () => {
           ],
         },
         {
-          kind: 4,
+          kind: 'CalendarEvents',
           label: 'Signes aktiviteter',
           heightWeight: 3,
           unavailable: false,
@@ -49,7 +49,7 @@ describe('WeekPlanSheet', () => {
           ],
         },
         {
-          kind: 3,
+          kind: 'CalendarMarker',
           label: 'Privat',
           heightWeight: 1,
           unavailable: true,
@@ -96,7 +96,7 @@ describe('WeekPlanSheet', () => {
     expect(a4.style.fontSize).toBe('9pt');
     TestBed.resetTestingModule();
 
-    const a3 = (await render(model({ paperSize: 1 }))).querySelector<HTMLElement>(
+    const a3 = (await render(model({ paperSize: 'A3' }))).querySelector<HTMLElement>(
       '[role="table"]',
     )!;
     expect(a3.style.width).toBe('404mm');

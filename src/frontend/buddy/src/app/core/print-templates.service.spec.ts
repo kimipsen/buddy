@@ -23,8 +23,8 @@ describe('PrintTemplatesService', () => {
     ownerUserId: 'me',
     ownerGroupId: null,
     name: 'Ugeplan',
-    paperSize: 0,
-    defaultStartWeekday: 1,
+    paperSize: 'A4',
+    defaultStartWeekday: 'Monday',
     showWeekNumber: true,
     rows: [],
     guardianColors: [],
@@ -112,15 +112,15 @@ describe('PrintTemplatesService', () => {
     await rename;
 
     const layout = service.updateLayout('t-1', {
-      paperSize: 1,
-      defaultStartWeekday: 0,
+      paperSize: 'A3',
+      defaultStartWeekday: 'Sunday',
       showWeekNumber: false,
     });
     const layoutReq = httpMock.expectOne(`${base}/t-1/layout`);
     expect(layoutReq.request.method).toBe('PATCH');
     expect(layoutReq.request.body).toEqual({
-      paperSize: 1,
-      defaultStartWeekday: 0,
+      paperSize: 'A3',
+      defaultStartWeekday: 'Sunday',
       showWeekNumber: false,
     });
     layoutReq.flush(template);
@@ -165,7 +165,7 @@ describe('PrintTemplatesService', () => {
 
   it('builds an empty row with every kind-specific field cleared', () => {
     expect(emptyRow(PRINT_ROW_KIND.pickup, 'Hente')).toEqual({
-      kind: 1,
+      kind: 'Pickup',
       label: 'Hente',
       heightWeight: 1,
       childId: null,

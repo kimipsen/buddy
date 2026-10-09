@@ -15,6 +15,7 @@ Buddy is a family coordination app for guardians of children with ADHD; see [REA
 - One frontend spec: `cd src/frontend/buddy && npx ng test --watch=false --include src/app/path/foo.spec.ts`
 - One backend test: `dotnet test src/backend/backend.slnx --filter FullyQualifiedName~<Name>`
 - Translation parity: `node .claude/skills/i18n/check-parity.mjs`
+- API contract: `task docs:openapi` regenerates `docs/backend/openapi/buddy.json` and the frontend's generated types (`src/app/core/api/buddy-api.ts`) after an endpoint, DTO or error-code change
 - Inspect events: `task db:marten:streams SCHEMA=<schema>` (`SCHEMA` is required)
 
 ## Project skills (`.claude/skills/`)

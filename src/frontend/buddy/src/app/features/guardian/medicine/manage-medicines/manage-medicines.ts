@@ -259,7 +259,10 @@ export class ManageMedicines {
 
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
       // backend's two-sided consent for ShareMedicineWithGroup.
-      return { manageableGroups: groups.filter((g) => g.role === 0 || g.role === 1), sharedGroup };
+      return {
+        manageableGroups: groups.filter((g) => g.role === 'Owner' || g.role === 'Admin'),
+        sharedGroup,
+      };
     } catch {
       return { manageableGroups: [], sharedGroup: null };
     }

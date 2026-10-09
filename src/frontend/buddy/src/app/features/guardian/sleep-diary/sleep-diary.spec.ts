@@ -19,7 +19,7 @@ function child(id: string, givenName: string): ChildSummary {
     id,
     name: { givenName, familyName: 'Anderson' },
     guardianLinkId: `link-${id}`,
-    kind: 0,
+    kind: 'Parent',
     language: 'en',
     timeZoneId: 'Europe/Copenhagen',
   } as ChildSummary;

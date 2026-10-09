@@ -15,7 +15,7 @@ describe('GuardianPrint', () => {
     ownerUserId: 'me',
     ownerGroupId: null,
     name: id,
-    paperSize: 0,
+    paperSize: 'A4',
     defaultStartWeekday,
     showWeekNumber: true,
     rows: [],
@@ -54,8 +54,8 @@ describe('GuardianPrint', () => {
   ) {
     const service = {
       list: vi.fn(async () => list),
-      get: vi.fn(async (id: string) => template(id, id === 'family' ? 0 : 1)),
-      create: vi.fn(async () => template('new', 1)),
+      get: vi.fn(async (id: string) => template(id, id === 'family' ? 'Sunday' : 'Monday')),
+      create: vi.fn(async () => template('new', 'Monday')),
     };
 
     await TestBed.configureTestingModule({
@@ -65,7 +65,9 @@ describe('GuardianPrint', () => {
         { provide: PrintTemplatesService, useValue: service },
         {
           provide: GroupsService,
-          useValue: { listMyGroups: vi.fn(async () => [{ id: 'g-1', name: 'Familien', role: 0 }]) },
+          useValue: {
+            listMyGroups: vi.fn(async () => [{ id: 'g-1', name: 'Familien', role: 'Owner' }]),
+          },
         },
       ],
     }).compileComponents();

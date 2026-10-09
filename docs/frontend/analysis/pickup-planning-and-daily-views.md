@@ -86,13 +86,14 @@ wraps the three backend routes with Promise-returning `HttpClient` calls:
 | Method | Request |
 | --- | --- |
 | `listSchedule` | `GET /pickups/children/{childId}/schedule?from=YYYY-MM-DD&to=YYYY-MM-DD` |
-| `assignPickup` | `PUT /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={0|1}` |
-| `clearPickup` | `DELETE /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={0|1}` |
+| `assignPickup` | `PUT /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff|PickUp}` |
+| `clearPickup` | `DELETE /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff|PickUp}` |
 
-The TypeScript numeric unions deliberately match backend enum ordinals:
-`0 = DropOff`, `1 = PickUp`; and `0 = Guardian`, `1 = SelfEscort`,
-`2 = Sibling`, `3 = Playdate`. The API does not register a string enum
-converter, so changing either side's order is a contract change.
+Slots travel by name (`DropOff`, `PickUp`) since the API switched to string
+enums ([openapi-client-contract.md](../../backend/analysis/openapi-client-contract.md)).
+The assignee `kind` is a numeric discriminator: `0 = Guardian`, `1 = SelfEscort`,
+`2 = Sibling`, `3 = Playdate`, `4 = Babysitter`; changing that order is a
+contract change.
 
 ## Responsive behavior and localization
 

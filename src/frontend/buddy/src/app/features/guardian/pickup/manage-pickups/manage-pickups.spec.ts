@@ -33,7 +33,7 @@ describe('ManagePickups', () => {
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -45,7 +45,7 @@ describe('ManagePickups', () => {
       id: 'guardian-1',
       name: { givenName: 'Gina', familyName: 'G' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       ...overrides,
     };
   }
@@ -54,7 +54,7 @@ describe('ManagePickups', () => {
     return {
       assignee: { kind: 0, guardianId: 'guardian-1' },
       date: weekStart,
-      slot: 0,
+      slot: 'DropOff',
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -255,7 +255,7 @@ describe('ManagePickups', () => {
   it('keys an occurrence by date and slot, so it only shows in its own cell', async () => {
     const dropOff = occurrence({
       date: weekStart,
-      slot: 0,
+      slot: 'DropOff',
       assignee: { kind: 0, guardianId: 'guardian-1' },
     });
 
@@ -343,7 +343,7 @@ describe('ManagePickups', () => {
       const assignedOccurrence = occurrence({
         assignee: { kind: 0, guardianId: 'guardian-1' },
         date: weekStart,
-        slot: 0,
+        slot: 'DropOff',
       });
       const assignPickup = vi.fn(async () => assignedOccurrence);
 
@@ -374,7 +374,12 @@ describe('ManagePickups', () => {
         time: null,
         notes: '',
       };
-      expect(pickups.assignPickup).toHaveBeenCalledWith('child-1', weekStart, 0, expectedRequest);
+      expect(pickups.assignPickup).toHaveBeenCalledWith(
+        'child-1',
+        weekStart,
+        'DropOff',
+        expectedRequest,
+      );
 
       expect(cellAt(fixture, 0, 0).textContent).toContain('Gina');
       expect(cellAt(fixture, 0, 0).textContent).not.toContain('Not planned');
@@ -384,7 +389,7 @@ describe('ManagePickups', () => {
       const assignedOccurrence = occurrence({
         assignee: { kind: 1 },
         date: isoDateOffset(2),
-        slot: 1,
+        slot: 'PickUp',
       });
       const assignPickup = vi.fn(async () => assignedOccurrence);
 
@@ -407,7 +412,7 @@ describe('ManagePickups', () => {
       expect(pickups.assignPickup).toHaveBeenCalledWith(
         'child-1',
         isoDateOffset(2),
-        1,
+        'PickUp',
         expect.objectContaining({ assignee: { kind: 1 } }),
       );
     });
@@ -473,7 +478,7 @@ describe('ManagePickups', () => {
         .find((button) => button.textContent?.trim() === 'Save')!
         .click();
       fixture.detectChanges();
-      expect(assignPickup).toHaveBeenCalledWith('child-1', weekStart, 0, expect.anything());
+      expect(assignPickup).toHaveBeenCalledWith('child-1', weekStart, 'DropOff', expect.anything());
 
       // Switch to child B and let its (empty) schedule finish loading first.
       const picker = (fixture.nativeElement as HTMLElement).querySelector(
@@ -497,7 +502,7 @@ describe('ManagePickups', () => {
     it("keeps child A's result out of child B's grid", async () => {
       const { fixture, pending } = await startSaveThenSwitchChild();
 
-      pending.resolve(occurrence({ assignee: { kind: 1 }, date: weekStart, slot: 0 }));
+      pending.resolve(occurrence({ assignee: { kind: 1 }, date: weekStart, slot: 'DropOff' }));
       await settle(fixture);
 
       expect(cellAt(fixture, 0, 0).textContent).toContain('Not planned');
@@ -520,7 +525,7 @@ describe('ManagePickups', () => {
       const existing = occurrence({
         assignee: { kind: 0, guardianId: 'guardian-1' },
         date: isoDateOffset(1),
-        slot: 1,
+        slot: 'PickUp',
       });
       const clearPickup = vi.fn(async () => undefined);
 
@@ -538,7 +543,7 @@ describe('ManagePickups', () => {
       clearButton.click();
       await settle(fixture);
 
-      expect(pickups.clearPickup).toHaveBeenCalledWith('child-1', isoDateOffset(1), 1);
+      expect(pickups.clearPickup).toHaveBeenCalledWith('child-1', isoDateOffset(1), 'PickUp');
       expect(cellAt(fixture, 1, 1).textContent).toContain('Not planned');
     });
 
@@ -546,7 +551,7 @@ describe('ManagePickups', () => {
       const existing = occurrence({
         assignee: { kind: 0, guardianId: 'guardian-1' },
         date: weekStart,
-        slot: 0,
+        slot: 'DropOff',
       });
       const clearPickup = vi.fn(async () => Promise.reject(new Error('boom')));
 

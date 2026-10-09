@@ -30,7 +30,7 @@ describe('TasksToday', () => {
   function task(overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {}): CalendarOccurrence {
     return nestOccurrence<CalendarOccurrence>({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Clean room',
       icon: '🧹',
       iconOverride: null,

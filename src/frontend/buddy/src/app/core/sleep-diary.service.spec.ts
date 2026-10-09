@@ -40,6 +40,8 @@ describe('SleepDiaryService', () => {
       nightWakeUps: [{ startTime: '03:30:00', durationMinutes: 30 }],
       morningWakeTime: '06:30:00',
       naps: [{ startTime: '13:00:00', durationMinutes: 45 }],
+      totalSleepMinutes: 555,
+      remarks: 'Restless',
       date: '2026-03-02',
       isWeekend: false,
       loggedBy: 'guardian-1',

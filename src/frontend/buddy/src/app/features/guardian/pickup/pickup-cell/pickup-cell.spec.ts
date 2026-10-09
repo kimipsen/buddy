@@ -13,7 +13,7 @@ describe('PickupCell', () => {
       id,
       name: { givenName, familyName: 'Guardian' },
       guardianLinkId: `link-${id}`,
-      kind: 1,
+      kind: 'Guardian',
     };
   }
 
@@ -22,7 +22,7 @@ describe('PickupCell', () => {
       id,
       name: { givenName, familyName: 'Kid' },
       guardianLinkId: `link-${id}`,
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
     };
@@ -32,7 +32,7 @@ describe('PickupCell', () => {
     return {
       assignee: { kind: 0, guardianId: 'guardian-1' },
       date: '2026-08-26',
-      slot: 0,
+      slot: 'DropOff',
       time: null,
       notes: '',
       assignedBy: 'guardian-1',

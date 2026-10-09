@@ -4,18 +4,12 @@ import { firstValueFrom } from 'rxjs';
 
 import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
-// MealSlot values match the backend's MealSlot enum ordinals (no string enum converter is
-// registered server-side): 0 = Breakfast, 1 = Lunch, 2 = Dinner, 3 = Snack. Declaration order
-// doubles as display order.
-export type MealSlot = 0 | 1 | 2 | 3;
+export type MealSlot = Schemas['MealSlot'];
 
-// MealplanAccessTier values match the backend's enum ordinals: 0 = None, 1 = Rate, 2 = Manage,
-// 3 = View. None/View/Manage are the three meaningful values for a group's
-// MealplanPermissionPolicy -- Rate is the child's own tier and is rejected by the backend if
-// submitted here.
-export type MealplanAccessTier = 0 | 1 | 2 | 3;
+export type MealplanAccessTier = Schemas['MealplanAccessTier'];
 
 // A family's plan is always addressed by childId; a plan the family has shared with a group is
 // additionally reachable by groupId, resolving transparently to the same underlying plan and
@@ -27,163 +21,52 @@ export type MealplanScope =
   | { kind: 'family'; childId: string }
   | { kind: 'group'; groupId: string; groupName: string; accessTier: MealplanAccessTier };
 
-export interface MealRating {
-  stars: number;
-  comment: string;
-  ratedAt: string;
-}
+export type MealRating = Schemas['MealRating'];
 
-export interface MealPlanEntry {
-  date: string;
-  slot: MealSlot;
-  mealId: string;
-  mealName: string;
-  icon: string;
-  color: string;
-  rating: MealRating | null;
-  notes: string;
-  assignedBy: string;
-  allRatings: MealRatingSummary[];
-}
+export type MealPlanEntry = Schemas['MealPlanEntry'];
 
-export interface MealRatingSummary {
-  childId: string;
-  stars: number;
-  comment: string;
-  ratedAt: string;
-}
+export type MealRatingSummary = Schemas['MealRatingResponse'];
 
 // A Meal is shared by every child in its family (see MealFamilyResolution) -- it's scoped by
 // childId/groupId in the URL only to resolve which family's library to read, not because the
 // meal belongs to that child or group.
-export interface Meal {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-  isArchived: boolean;
-  ratings: MealRatingSummary[];
-  createdBy: string;
-  lastModifiedBy: string;
-}
+export type Meal = Schemas['MealResponse'];
 
-export interface GroupMealplanStatus {
-  hasSharedPlan: boolean;
-}
+export type GroupMealplanStatus = Schemas['GroupMealplanStatusResponse'];
 
-export interface MealplanIcalTokenSummary {
-  tokenId: string;
-  issuedAt: string;
-}
+export type MealplanIcalTokenSummary = Schemas['MealPlanIcalTokenSummary'];
 
 // Returned exactly once, at creation -- the plaintext token is never retrievable again after this.
-export interface IssuedMealplanIcalToken {
-  tokenId: string;
-  token: string;
-  subscriptionPath: string;
-}
+export type IssuedMealplanIcalToken = Schemas['MealPlanIcalTokenResponse'];
 
-export interface MealDetails {
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-}
+export type MealDetails = Schemas['UpdateMealDetailsRequest'];
 
-// Importing older plans (docs/backend/analysis/mealplan-import.md). Enum ordinals match the
-// backend: ImportLineKind 0 = Meal, 1 = Alternatives, 2 = Leftovers, 3 = Away; ImportGroupAction
-// 0 = Existing, 1 = New, 2 = Skip; ImportWeekStart 0 = Sunday, 1 = Monday.
-export type ImportLineKind = 0 | 1 | 2 | 3;
-export type ImportGroupAction = 0 | 1 | 2;
-export type ImportWeekStart = 0 | 1;
+export type ImportLineKind = Schemas['ImportLineKind'];
+export type ImportGroupAction = Schemas['ImportGroupAction'];
+export type ImportWeekStart = Schemas['ImportWeekStart'];
 export type ImportFormat = 'auto' | 'weekly-note' | 'csv';
 
-export interface MealPlanImportPreviewRequest {
-  text: string;
-  format: ImportFormat;
-  weekStart: ImportWeekStart;
-  slot: MealSlot;
-}
+export type MealPlanImportPreviewRequest = Schemas['PreviewMealPlanImportRequest'];
 
-export interface MealPlanImportPreviewLine {
-  lineNumber: number;
-  date: string;
-  slot: MealSlot;
-  rawText: string;
-  kind: ImportLineKind;
-  mealName: string;
-  notes: string;
-  key: string;
-  occupied: boolean;
-}
+export type MealPlanImportPreviewLine = Schemas['MealPlanImportPreviewLine'];
 
 // Every line sharing one normalized meal name. matchedMealId is an exact match in the family's
 // library; suggested* is only a "Did you mean ...?" hint (an existing meal or a more frequent
 // group) and is never applied without the guardian choosing it.
-export interface MealPlanImportPreviewGroup {
-  key: string;
-  name: string;
-  kind: ImportLineKind;
-  count: number;
-  firstDate: string;
-  lastDate: string;
-  defaultAction: ImportGroupAction;
-  matchedMealId: string | null;
-  matchedMealName: string;
-  suggestedMealId: string | null;
-  suggestedGroupKey: string;
-  suggestedName: string;
-}
+export type MealPlanImportPreviewGroup = Schemas['MealPlanImportPreviewGroup'];
 
-export interface MealPlanImportWarning {
-  lineNumber: number;
-  code: string;
-  message: string;
-}
+export type MealPlanImportWarning = Schemas['ImportWarning'];
 
-export interface MealPlanImportPreview {
-  format: Exclude<ImportFormat, 'auto'>;
-  lines: MealPlanImportPreviewLine[];
-  groups: MealPlanImportPreviewGroup[];
-  warnings: MealPlanImportWarning[];
-  emptyDays: number;
-}
+export type MealPlanImportPreview = Schemas['MealPlanImportPreview'];
 
 // Either an existing mealId or a newMealName; entries with the same new name share one new meal.
-export interface MealPlanImportEntry {
-  date: string;
-  slot: MealSlot;
-  mealId?: string;
-  newMealName?: string;
-  notes: string;
-}
+export type MealPlanImportEntry = Schemas['CommitMealPlanImportEntryRequest'];
 
-export interface MealPlanImportCommitRequest {
-  format: Exclude<ImportFormat, 'auto'>;
-  entries: MealPlanImportEntry[];
-  archiveSingleUse: boolean;
-}
+export type MealPlanImportCommitRequest = Schemas['CommitMealPlanImportRequest'];
 
-export interface MealPlanImportResult {
-  importId: string | null;
-  imported: number;
-  createdMeals: number;
-  archivedMeals: number;
-  skipped: { date: string; slot: MealSlot; reason: string }[];
-}
+export type MealPlanImportResult = Schemas['MealPlanImportResult'];
 
-export interface MealPlanImportSummary {
-  importId: string;
-  format: string;
-  from: string;
-  to: string;
-  entryCount: number;
-  createdMealCount: number;
-  importedBy: string;
-  importedAt: string;
-  reverted: boolean;
-}
+export type MealPlanImportSummary = Schemas['MealPlanImportSummary'];
 
 @Injectable({ providedIn: 'root' })
 export class MealplansService {
@@ -263,14 +146,14 @@ export class MealplansService {
       this.http.put<MealPlanEntry>(
         `${this.base(scope)}/plan`,
         { mealId, notes },
-        { params: { date, slot: String(slot) } },
+        { params: { date, slot } },
       ),
     );
   }
 
   clearMealSlot(scope: MealplanScope, date: string, slot: MealSlot): Promise<void> {
     return firstValueFrom(
-      this.http.delete<void>(`${this.base(scope)}/plan`, { params: { date, slot: String(slot) } }),
+      this.http.delete<void>(`${this.base(scope)}/plan`, { params: { date, slot } }),
     );
   }
 

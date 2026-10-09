@@ -49,7 +49,7 @@ describe('ChildHome', () => {
   ): CalendarOccurrence {
     return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Item',
       icon: '🧹',
       iconOverride: null,
@@ -75,7 +75,7 @@ describe('ChildHome', () => {
       color: '#0f0',
       date: today,
       time: '09:00:00',
-      status: 0,
+      status: 'Pending',
       ...overrides,
     };
   }
@@ -112,7 +112,7 @@ describe('ChildHome', () => {
   function mealEntry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
     return {
       date: today,
-      slot: 0,
+      slot: 'Breakfast',
       mealId: 'meal-1',
       mealName: 'Pancakes',
       icon: '🥞',
@@ -273,7 +273,7 @@ describe('ChildHome', () => {
   });
 
   it('rates a meal and reflects the rating on every slot sharing that meal', async () => {
-    const entries = [mealEntry({ slot: 0 }), mealEntry({ slot: 1 })];
+    const entries = [mealEntry({ slot: 'Breakfast' }), mealEntry({ slot: 'Lunch' })];
     const rateMeal = vi.fn(async () => ({
       id: 'meal-1',
       name: 'Pancakes',
@@ -351,9 +351,9 @@ describe('ChildHome', () => {
       color: '#0f0',
       date: today,
       time: '09:00:00',
-      status: 0,
+      status: 'Pending',
     };
-    const setDoseStatus = vi.fn(async () => ({ ...dose, status: 1 as const }));
+    const setDoseStatus = vi.fn(async () => ({ ...dose, status: 'Taken' as const }));
 
     const { fixture, medicines } = await setup({
       medicines: { listDoses: vi.fn(async () => [dose]), setDoseStatus },
@@ -364,14 +364,20 @@ describe('ChildHome', () => {
     findButtonByText(compiled, 'Taken')?.click();
     await settle(fixture);
 
-    expect(medicines.setDoseStatus).toHaveBeenCalledWith('child-1', 'med-1', today, '09:00:00', 1);
+    expect(medicines.setDoseStatus).toHaveBeenCalledWith(
+      'child-1',
+      'med-1',
+      today,
+      '09:00:00',
+      'Taken',
+    );
     expect(compiled.textContent).toContain('Taken ✓');
   });
 
   it("toggles a task's completion", async () => {
     const task = nestOccurrence<CalendarOccurrence>({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Clean room',
       icon: '🧹',
       iconOverride: null,
@@ -409,7 +415,7 @@ describe('ChildHome', () => {
     function subtask(subtaskId: string, title: string): CalendarOccurrence {
       return nestOccurrence<CalendarOccurrence>({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         title,
         icon: '🧹',
         iconOverride: null,
@@ -467,7 +473,7 @@ describe('ChildHome', () => {
     function subtask(subtaskId: string, title: string): CalendarOccurrence {
       return nestOccurrence<CalendarOccurrence>({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         title,
         icon: '🧹',
         iconOverride: null,
@@ -502,7 +508,7 @@ describe('ChildHome', () => {
   it("shows today's events including their time", async () => {
     const event = nestOccurrence<CalendarOccurrence>({
       itemId: 'event-1',
-      kind: 0,
+      kind: 'Event',
       title: 'Soccer practice',
       icon: '⚽',
       iconOverride: null,
@@ -547,13 +553,13 @@ describe('ChildHome', () => {
         id: 'guardian-1',
         name: { givenName: 'Gina', familyName: 'G' },
         guardianLinkId: 'link-1',
-        kind: 0,
+        kind: 'Parent',
       },
     ];
     const occurrence: PickupOccurrence = {
       assignee: { kind: 0, guardianId: 'guardian-1' },
       date: today,
-      slot: 0,
+      slot: 'DropOff',
       time: '08:00:00',
       notes: '',
       assignedBy: 'guardian-1',
@@ -577,7 +583,7 @@ describe('ChildHome', () => {
     const occurrence: PickupOccurrence = {
       assignee: { kind: 2, siblingChildId: 'sib-1' },
       date: today,
-      slot: 1,
+      slot: 'PickUp',
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -690,10 +696,10 @@ describe('ChildHome', () => {
   describe('meals', () => {
     it('lists every planned meal in slot order with its translated slot label', async () => {
       const entries = [
-        mealEntry({ slot: 3, mealId: 'meal-4', mealName: 'Apple' }),
-        mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Sandwich' }),
-        mealEntry({ slot: 2, mealId: 'meal-3', mealName: 'Pasta' }),
-        mealEntry({ slot: 0, mealId: 'meal-1', mealName: 'Pancakes' }),
+        mealEntry({ slot: 'Snack', mealId: 'meal-4', mealName: 'Apple' }),
+        mealEntry({ slot: 'Lunch', mealId: 'meal-2', mealName: 'Sandwich' }),
+        mealEntry({ slot: 'Dinner', mealId: 'meal-3', mealName: 'Pasta' }),
+        mealEntry({ slot: 'Breakfast', mealId: 'meal-1', mealName: 'Pancakes' }),
       ];
       const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries) } });
       await settle(fixture);
@@ -717,8 +723,8 @@ describe('ChildHome', () => {
       const pending = deferred<Meal>();
       const rateMeal = vi.fn(() => pending.promise);
       const entries = [
-        mealEntry({ slot: 0 }),
-        mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Soup' }),
+        mealEntry({ slot: 'Breakfast' }),
+        mealEntry({ slot: 'Lunch', mealId: 'meal-2', mealName: 'Soup' }),
       ];
       const { fixture } = await setup({
         mealplans: { listMealPlan: vi.fn(async () => entries), rateMeal },
@@ -792,8 +798,8 @@ describe('ChildHome', () => {
         ]),
       );
       const entries = [
-        mealEntry({ slot: 0 }),
-        mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Soup' }),
+        mealEntry({ slot: 'Breakfast' }),
+        mealEntry({ slot: 'Lunch', mealId: 'meal-2', mealName: 'Soup' }),
       ];
       const { fixture } = await setup({
         mealplans: { listMealPlan: vi.fn(async () => entries), rateMeal },
@@ -903,11 +909,11 @@ describe('ChildHome', () => {
       findButtonByText(rows()[0], 'Skip')!.click();
       await settle(fixture);
 
-      expect(setDoseStatus).toHaveBeenCalledWith('child-1', 'med-1', today, '09:00:00', 2);
+      expect(setDoseStatus).toHaveBeenCalledWith('child-1', 'med-1', today, '09:00:00', 'Skipped');
       expect(buttons(0).map((button) => button.disabled)).toEqual([true, true]);
       expect(buttons(1).map((button) => button.disabled)).toEqual([false, false]);
 
-      pending.resolve({ ...doses[0], status: 2 });
+      pending.resolve({ ...doses[0], status: 'Skipped' });
       await settle(fixture);
 
       expect(rowText(rows()[0])).toContain('Skipped');
@@ -943,7 +949,7 @@ describe('ChildHome', () => {
         occurrence({ itemId: 't-b', title: 'Bravo', dueAt: `${today}T10:00:00Z` }),
         occurrence({
           itemId: 'e-1',
-          kind: 0,
+          kind: 'Event',
           title: 'Party',
           icon: '🎉',
           startsAt: `${today}T15:00:00Z`,
@@ -1043,7 +1049,7 @@ describe('ChildHome', () => {
       const allDay = (itemId: string, title: string) =>
         occurrence({
           itemId,
-          kind: 0,
+          kind: 'Event',
           title,
           icon: '⚽',
           isAllDay: true,
@@ -1054,16 +1060,16 @@ describe('ChildHome', () => {
         allDay('e-a', 'Alpha'),
         occurrence({
           itemId: 'e-b',
-          kind: 0,
+          kind: 'Event',
           title: 'Bravo',
           icon: '⚽',
           startsAt: at('18:00:00'),
           endsAt: at('19:00:00'),
         }),
-        occurrence({ itemId: 't-1', kind: 1, title: 'Chore', dueAt: at('08:00:00') }),
+        occurrence({ itemId: 't-1', kind: 'Task', title: 'Chore', dueAt: at('08:00:00') }),
         occurrence({
           itemId: 'e-c',
-          kind: 0,
+          kind: 'Event',
           title: 'Charlie',
           icon: '⚽',
           startsAt: at('14:00:00'),
@@ -1072,7 +1078,7 @@ describe('ChildHome', () => {
         allDay('e-d', 'Delta'),
         occurrence({
           itemId: 'e-e',
-          kind: 0,
+          kind: 'Event',
           title: 'Echo',
           icon: '⚽',
           startsAt: at('16:00:00'),
@@ -1091,7 +1097,7 @@ describe('ChildHome', () => {
       const { fixture } = await setupEvents([
         occurrence({
           itemId: 'past',
-          kind: 0,
+          kind: 'Event',
           title: 'Past',
           icon: '⚽',
           startsAt: at('09:00:00'),
@@ -1099,7 +1105,7 @@ describe('ChildHome', () => {
         }),
         occurrence({
           itemId: 'ends-now',
-          kind: 0,
+          kind: 'Event',
           title: 'EndsNow',
           icon: '⚽',
           startsAt: at('11:00:00'),
@@ -1107,7 +1113,7 @@ describe('ChildHome', () => {
         }),
         occurrence({
           itemId: 'ongoing',
-          kind: 0,
+          kind: 'Event',
           title: 'Ongoing',
           icon: '⚽',
           startsAt: at('11:00:00'),
@@ -1115,7 +1121,7 @@ describe('ChildHome', () => {
         }),
         occurrence({
           itemId: 'starts-now',
-          kind: 0,
+          kind: 'Event',
           title: 'StartsNow',
           icon: '⚽',
           startsAt: at('12:00:00'),
@@ -1123,7 +1129,7 @@ describe('ChildHome', () => {
         }),
         occurrence({
           itemId: 'upcoming',
-          kind: 0,
+          kind: 'Event',
           title: 'Upcoming',
           icon: '⚽',
           startsAt: at('12:00:01'),
@@ -1131,7 +1137,7 @@ describe('ChildHome', () => {
         }),
         occurrence({
           itemId: 'instant',
-          kind: 0,
+          kind: 'Event',
           title: 'Instant',
           icon: '⚽',
           startsAt: at('12:00:00'),
@@ -1139,7 +1145,7 @@ describe('ChildHome', () => {
         }),
         occurrence({
           itemId: 'all-day',
-          kind: 0,
+          kind: 'Event',
           title: 'AllDay',
           icon: '⚽',
           isAllDay: true,
@@ -1168,7 +1174,7 @@ describe('ChildHome', () => {
       const { fixture } = await setupEvents([
         occurrence({
           itemId: 'ongoing',
-          kind: 0,
+          kind: 'Event',
           title: 'Ongoing',
           icon: '⚽',
           startsAt: at('11:00:00'),
@@ -1205,7 +1211,7 @@ describe('ChildHome', () => {
       return {
         assignee: { kind: 0, guardianId: 'guardian-1' },
         date: today,
-        slot: 0,
+        slot: 'DropOff',
         time: null,
         notes: '',
         assignedBy: 'guardian-1',
@@ -1218,13 +1224,13 @@ describe('ChildHome', () => {
         id: 'guardian-1',
         name: { givenName: 'Gina', familyName: 'G' },
         guardianLinkId: 'link-1',
-        kind: 0,
+        kind: 'Parent',
       },
       {
         id: 'guardian-2',
         name: { givenName: 'Gus', familyName: 'G' },
         guardianLinkId: 'link-2',
-        kind: 0,
+        kind: 'Parent',
       },
     ];
     const siblingList: SiblingSummary[] = [
@@ -1240,8 +1246,8 @@ describe('ChildHome', () => {
         },
         pickups: {
           listSchedule: vi.fn(async () => [
-            pickup({ assignee: { kind: 0, guardianId: 'guardian-2' }, slot: 0 }),
-            pickup({ assignee: { kind: 2, siblingChildId: 'sib-2' }, slot: 1 }),
+            pickup({ assignee: { kind: 0, guardianId: 'guardian-2' }, slot: 'DropOff' }),
+            pickup({ assignee: { kind: 2, siblingChildId: 'sib-2' }, slot: 'PickUp' }),
           ]),
         },
       });
@@ -1262,8 +1268,8 @@ describe('ChildHome', () => {
         },
         pickups: {
           listSchedule: vi.fn(async () => [
-            pickup({ assignee: { kind: 0, guardianId: 'guardian-9' }, slot: 0 }),
-            pickup({ assignee: { kind: 2, siblingChildId: 'sib-1' }, slot: 1 }),
+            pickup({ assignee: { kind: 0, guardianId: 'guardian-9' }, slot: 'DropOff' }),
+            pickup({ assignee: { kind: 2, siblingChildId: 'sib-1' }, slot: 'PickUp' }),
           ]),
         },
       });
@@ -1282,11 +1288,11 @@ describe('ChildHome', () => {
           listSchedule: vi.fn(async () => [
             pickup({
               assignee: { kind: 4, guardianId: 'g', babysitterId: 'b1', name: 'Anna' },
-              slot: 0,
+              slot: 'DropOff',
             }),
             pickup({
               assignee: { kind: 4, guardianId: 'g', babysitterId: 'b2', name: '' },
-              slot: 1,
+              slot: 'PickUp',
             }),
           ]),
         },

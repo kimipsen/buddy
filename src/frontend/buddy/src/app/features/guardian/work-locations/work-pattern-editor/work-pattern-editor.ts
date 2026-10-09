@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { todayIsoDate } from '../../../../core/date-utils';
+import { dayOfWeekIndex, todayIsoDate } from '../../../../core/date-utils';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
@@ -24,11 +24,15 @@ import {
   weekName,
 } from '../work-pattern';
 
-// Sunday 2026-10-04 + n days walks Sunday..Saturday, matching DayOfWeek ordinals.
+// Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
 const A_SUNDAY = new Date(2026, 9, 4);
 
 function shortDayName(day: Weekday, locale: string): string {
-  const date = new Date(A_SUNDAY.getFullYear(), A_SUNDAY.getMonth(), A_SUNDAY.getDate() + day);
+  const date = new Date(
+    A_SUNDAY.getFullYear(),
+    A_SUNDAY.getMonth(),
+    A_SUNDAY.getDate() + dayOfWeekIndex(day),
+  );
   return date.toLocaleDateString(locale, { weekday: 'short' });
 }
 

@@ -20,7 +20,7 @@ describe('MealplanAiAssistant', () => {
       id: 'child-1',
       name: { givenName: 'Alex', familyName: 'Doe' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -29,8 +29,8 @@ describe('MealplanAiAssistant', () => {
 
   function providerSettings(overrides: Partial<AiProviderSettings> = {}): AiProviderSettings {
     return {
-      providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
-      activeProvider: 0,
+      providers: [{ provider: 'Anthropic', last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
+      activeProvider: 'Anthropic',
       dataSharingAcknowledgedAt: '2026-08-01T00:00:00Z',
       ...overrides,
     };
@@ -41,12 +41,12 @@ describe('MealplanAiAssistant', () => {
       id: 'session-1',
       from: '2026-08-01',
       to: '2026-08-03',
-      requestedSlots: [2],
-      status: 0,
+      requestedSlots: ['Dinner'],
+      status: 'Drafting',
       transcript: [],
       draft: [],
       ratedOnly: false,
-      servedWithin: 0,
+      servedWithin: 'Any',
       ...overrides,
     };
   }
@@ -77,8 +77,8 @@ describe('MealplanAiAssistant', () => {
       getCurrentSession: vi.fn(async () => Promise.reject(notFound())),
       startSession: vi.fn(async () => session()),
       sendMessage: vi.fn(async () => session()),
-      applyDraft: vi.fn(async () => session({ status: 1 })),
-      discardSession: vi.fn(async () => session({ status: 2 })),
+      applyDraft: vi.fn(async () => session({ status: 'Applied' })),
+      discardSession: vi.fn(async () => session({ status: 'Discarded' })),
       ...stubs.aiAssistant,
     };
 
@@ -189,7 +189,7 @@ describe('MealplanAiAssistant', () => {
 
     expect(aiAssistant.startSession).toHaveBeenCalledWith(
       'child-1',
-      expect.objectContaining({ slots: [2], mustIncludeMealIds: [], notes: '' }),
+      expect.objectContaining({ slots: ['Dinner'], mustIncludeMealIds: [], notes: '' }),
     );
     expect(fixture.nativeElement.textContent).toContain('Drafting');
   });
@@ -207,11 +207,11 @@ describe('MealplanAiAssistant', () => {
 
     expect(aiAssistant.startSession).toHaveBeenCalledWith(
       'child-1',
-      expect.objectContaining({ ratedOnly: true, servedWithin: 60 }),
+      expect.objectContaining({ ratedOnly: true, servedWithin: 'Last60Days' }),
     );
     expect(JSON.parse(localStorage.getItem('buddy_ai_meal_filter')!)).toEqual({
       ratedOnly: true,
-      servedWithin: 60,
+      servedWithin: 'Last60Days',
     });
   });
 
@@ -230,14 +230,14 @@ describe('MealplanAiAssistant', () => {
 
     expect(aiAssistant.startSession).toHaveBeenCalledWith(
       'child-1',
-      expect.objectContaining({ ratedOnly: false, servedWithin: 0 }),
+      expect.objectContaining({ ratedOnly: false, servedWithin: 'Any' }),
     );
   });
 
   it('pre-fills the filter last used on this device', async () => {
     localStorage.setItem(
       'buddy_ai_meal_filter',
-      JSON.stringify({ ratedOnly: true, servedWithin: 30 }),
+      JSON.stringify({ ratedOnly: true, servedWithin: 'Last30Days' }),
     );
     const { fixture } = await setup();
     await settle(fixture);
@@ -288,9 +288,9 @@ describe('MealplanAiAssistant', () => {
   });
 
   it.each([
-    [true, 60, 'Using rated meals served in the 60 days before 2026-08-01.'],
-    [false, 30, 'Using meals served in the 30 days before 2026-08-01.'],
-    [true, 0, 'Using only meals the children have rated.'],
+    [true, 'Last60Days', 'Using rated meals served in the 60 days before 2026-08-01.'],
+    [false, 'Last30Days', 'Using meals served in the 30 days before 2026-08-01.'],
+    [true, 'Any', 'Using only meals the children have rated.'],
   ] as const)(
     'summarises the session filter (ratedOnly=%s, servedWithin=%s)',
     async (ratedOnly, servedWithin, expected) => {
@@ -317,7 +317,7 @@ describe('MealplanAiAssistant', () => {
   it('explains when the session filter no longer matches any meal', async () => {
     const { fixture } = await setup({
       aiAssistant: {
-        getCurrentSession: vi.fn(async () => session({ servedWithin: 30 })),
+        getCurrentSession: vi.fn(async () => session({ servedWithin: 'Last30Days' })),
         sendMessage: vi.fn(async () => Promise.reject(noMatchingMeals())),
       },
     });
@@ -355,7 +355,7 @@ describe('MealplanAiAssistant', () => {
         sendMessage: vi.fn(async () =>
           session({
             transcript: [
-              { role: 0, text: 'Plan five dinners.', occurredAt: '2026-08-01T00:00:00Z' },
+              { role: 'User', text: 'Plan five dinners.', occurredAt: '2026-08-01T00:00:00Z' },
             ],
           }),
         ),
@@ -381,7 +381,7 @@ describe('MealplanAiAssistant', () => {
       aiAssistant: {
         getCurrentSession: vi.fn(async () =>
           session({
-            draft: [{ date: '2026-08-01', slot: 2, mealId: 'meal-1', mealName: 'Tacos' }],
+            draft: [{ date: '2026-08-01', slot: 'Dinner', mealId: 'meal-1', mealName: 'Tacos' }],
           }),
         ),
       },

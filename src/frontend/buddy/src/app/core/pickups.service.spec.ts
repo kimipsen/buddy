@@ -21,7 +21,7 @@ describe('PickupsService', () => {
     return {
       assignee: { kind: 0, guardianId: 'guardian-1' },
       date: '2026-08-26',
-      slot: 0,
+      slot: 'DropOff',
       time: null,
       notes: '',
       assignedBy: 'guardian-1',
@@ -95,13 +95,13 @@ describe('PickupsService', () => {
       };
       const created = occurrence({ assignee: { kind: 0, guardianId: 'guardian-2' } });
 
-      const promise = service.assignPickup(childId, '2026-08-26', 1, request);
+      const promise = service.assignPickup(childId, '2026-08-26', 'PickUp', request);
 
       const req = httpMock.expectOne(
         (r) =>
           r.url === `${base()}/assignments` &&
           r.params.get('date') === '2026-08-26' &&
-          r.params.get('slot') === '1',
+          r.params.get('slot') === 'PickUp',
       );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual(request);
@@ -110,16 +110,16 @@ describe('PickupsService', () => {
       await expect(promise).resolves.toEqual(created);
     });
 
-    it('serializes slot 0 (DropOff) as the string "0"', async () => {
+    it('serializes the DropOff slot by name', async () => {
       const request: AssignPickupRequest = { assignee: { kind: 1 }, time: null, notes: '' };
 
-      const promise = service.assignPickup(childId, '2026-08-26', 0, request);
+      const promise = service.assignPickup(childId, '2026-08-26', 'DropOff', request);
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${base()}/assignments` && r.params.get('slot') === '0',
+        (r) => r.url === `${base()}/assignments` && r.params.get('slot') === 'DropOff',
       );
-      expect(req.request.params.get('slot')).toBe('0');
-      req.flush(occurrence({ assignee: { kind: 1 }, slot: 0 }));
+      expect(req.request.params.get('slot')).toBe('DropOff');
+      req.flush(occurrence({ assignee: { kind: 1 }, slot: 'DropOff' }));
 
       await promise;
     });
@@ -136,7 +136,7 @@ describe('PickupsService', () => {
         notes: 'Bring cleats',
       });
 
-      const promise = service.assignPickup(childId, '2026-08-26', 1, request);
+      const promise = service.assignPickup(childId, '2026-08-26', 'PickUp', request);
 
       const req = httpMock.expectOne((r) => r.url === `${base()}/assignments`);
       expect(req.request.body).toEqual(request);
@@ -153,7 +153,7 @@ describe('PickupsService', () => {
       };
       const created = occurrence({ assignee: { kind: 2, siblingChildId: 'child-2' } });
 
-      const promise = service.assignPickup(childId, '2026-08-26', 1, request);
+      const promise = service.assignPickup(childId, '2026-08-26', 'PickUp', request);
 
       const req = httpMock.expectOne((r) => r.url === `${base()}/assignments`);
       expect(req.request.body).toEqual(request);
@@ -169,7 +169,7 @@ describe('PickupsService', () => {
         notes: '',
       };
 
-      const promise = service.assignPickup(childId, '2026-08-26', 1, request);
+      const promise = service.assignPickup(childId, '2026-08-26', 'PickUp', request);
 
       const req = httpMock.expectOne((r) => r.url === `${base()}/assignments`);
       req.flush('conflict', { status: 409, statusText: 'Conflict' });
@@ -180,13 +180,13 @@ describe('PickupsService', () => {
 
   describe('clearPickup', () => {
     it('DELETEs the assignment using date/slot params', async () => {
-      const promise = service.clearPickup(childId, '2026-08-26', 1);
+      const promise = service.clearPickup(childId, '2026-08-26', 'PickUp');
 
       const req = httpMock.expectOne(
         (r) =>
           r.url === `${base()}/assignments` &&
           r.params.get('date') === '2026-08-26' &&
-          r.params.get('slot') === '1',
+          r.params.get('slot') === 'PickUp',
       );
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
@@ -194,13 +194,13 @@ describe('PickupsService', () => {
       await promise;
     });
 
-    it('serializes slot 0 (DropOff) distinctly from slot 1 (PickUp)', async () => {
-      const promise = service.clearPickup(childId, '2026-08-26', 0);
+    it('serializes the DropOff slot distinctly from PickUp', async () => {
+      const promise = service.clearPickup(childId, '2026-08-26', 'DropOff');
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${base()}/assignments` && r.params.get('slot') === '0',
+        (r) => r.url === `${base()}/assignments` && r.params.get('slot') === 'DropOff',
       );
-      expect(req.request.params.get('slot')).toBe('0');
+      expect(req.request.params.get('slot')).toBe('DropOff');
       req.flush(null);
 
       await promise;

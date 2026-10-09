@@ -4,37 +4,19 @@ import { firstValueFrom } from 'rxjs';
 
 import { Language } from './i18n/language';
 import { TranslationService } from './i18n/translation.service';
-import { PersonName } from './guardians.service';
 import { postIdempotent } from './http-idempotency';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
-export interface Email {
-  value: string;
-  isVerified: boolean;
-}
+export type Email = Schemas['Email'];
 
-export interface CurrentUser {
-  id: string;
-  email: Email;
-  userName: string;
-  name: PersonName;
-  timeZoneId: string;
-  language: string;
-}
+export type CurrentUser = Schemas['UserResponse'];
 
-export interface PreviewPerson {
-  id: string;
-  givenName: string;
-  familyName: string;
-}
+export type PreviewPerson = Schemas['PreviewPerson'];
 
 // GET /users/me/deletion-preview: children erased with the account (no other guardian), owned
 // groups that pass to another member, and owned groups nobody else is left in.
-export interface AccountDeletionPreview {
-  childrenErased: PreviewPerson[];
-  groupsHandedOver: { id: string; name: string; newOwner: PreviewPerson }[];
-  groupsDeleted: { id: string; name: string }[];
-}
+export type AccountDeletionPreview = Schemas['AccountDeletionPreview'];
 
 @Injectable({ providedIn: 'root' })
 export class UsersService {

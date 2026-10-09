@@ -1,6 +1,6 @@
 # Client-ready OpenAPI documents
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `Common/OpenApi` (`AddBuddyOpenApiDocument`, `WireSchemaTransformer`, `ErrorResponsesOperationTransformer`, `SharedResponses`, `ResponseSchemaRequirements`, `.ProducesErrorCode`), string enums over HTTP (`JsonStringEnumConverter`), the combined `/openapi/buddy.json` served in every environment and committed as `docs/backend/openapi/buddy.json` (`Meta/OpenApiDocumentTests`, `task docs:openapi`), and the Angular services' types generated from it (`src/app/core/api/buddy-api.ts`).
 
 ## Context
 
@@ -110,8 +110,10 @@ call. The component keeps its name (`UserId`), so a generated client still gets 
 
 **Decision: a type whose `[JsonConverter]` derives from
 [`KindDiscriminatedJsonConverter<TBase>`](../../../src/backend/buddy/Serialization/KindDiscriminatedJsonConverter.cs)
-gets `oneOf` its case types, with a `discriminator` on `kind` and each case schema carrying
-`kind` as an integer `const`.** The converter's `Cases` map (ordinal -> case type) is already the
+gets `oneOf` its case types, each case schema carrying a required `kind` with a single-value
+integer `enum`.** `kind` stays a number on the wire even though enums became strings (next
+decision): it is the converter's case ordinal, not an enum value, and the converter only accepts a
+number. The converter's `Cases` map (ordinal -> case type) is already the
 single source of truth; it becomes readable from the transformer (`internal`, through a small
 non-generic interface). All 7 such converters are covered at once, including
 `TaskSourceResponse`, which then appears in the document.
@@ -119,12 +121,20 @@ non-generic interface). All 7 such converters are covered at once, including
 ```json
 "PickupAssigneeDto": {
   "oneOf": [
-    { "$ref": "#/components/schemas/PickupAssigneeDtoGuardian" },
-    { "$ref": "#/components/schemas/PickupAssigneeDtoBabysitter" }
+    { "$ref": "#/components/schemas/GuardianAssigneeDto" },
+    { "$ref": "#/components/schemas/SelfEscortAssigneeDto" },
+    ...
   ],
-  "discriminator": { "propertyName": "kind", "mapping": { "0": "...", "1": "..." } }
+  "description": "One of 5 cases, picked by the numeric \"kind\": 0 = GuardianAssigneeDto, ..."
+}
+"GuardianAssigneeDto": {
+  "required": ["guardianId", "kind"],
+  "properties": { "guardianId": { ... }, "kind": { "type": "integer", "enum": [0] } }
 }
 ```
+
+No `discriminator` object: OpenAPI's mapping keys are strings, and the single-value `enum` already
+lets a generated TypeScript client narrow on `kind`.
 
 Rejected: **switching the DTOs to `[JsonPolymorphic]`**, which the generator understands natively.
 The converter's comment explains why it exists: with an abstract base, a body missing `kind` makes
@@ -135,28 +145,47 @@ Converters used only for events (`RecurrenceJsonConverter`, `ItemScheduleJsonCon
 
 ### Enums
 
-**Decision: enums stay integers on the wire. The schema transformer adds `enum` with the numeric
-values and `x-enum-varnames` with the member names**, plus a description listing `0 = Owner`, and so
-on:
+**Decision: enums go over the wire by member name (`"Owner"`, not `0`): `JsonStringEnumConverter`
+in the HTTP JSON options ([Program.cs](../../../src/backend/buddy/Program.cs)).** The generator
+then emits a string `enum` with the names, so the contract describes itself:
 
 ```json
-"GroupRole": {
-  "type": "integer",
-  "enum": [0, 1, 2],
-  "x-enum-varnames": ["Owner", "Admin", "Member"]
-}
+"GroupRole": { "type": "string", "enum": ["Owner", "Admin", "Member"] }
 ```
 
-`x-enum-varnames` is the de-facto extension that openapi-generator, NSwag and openapi-typescript use
-to name the members. The frontend already relies on the ordinals
-([groups.service.ts:11](../../../src/frontend/buddy/src/app/core/groups.service.ts)), so this is a
-documentation change only.
+This was a breaking change for every request and response that carries one of the 21 enums. The
+frontend's types and the e2e and screenshot seeding changed with it. Numbers are still accepted on
+the way in (the converter's `AllowIntegerValues` default), so a client built before the switch
+keeps working until it reads an enum back. Dictionary keys of an enum type already serialized as
+member names, so they didn't change. Marten's event storage was already `EnumStorage.AsString` and
+is unaffected.
 
-Rejected for this design: **a global `JsonStringEnumConverter`.** String enums are easier to read,
-but switching would change every request and response that has an enum, all 21 enums, across the
-backend, the frontend's types and the e2e specs. That is a breaking API change, so it gets its own
-decision (see [Remaining open questions](#remaining-open-questions)). Dictionary keys of an enum type
-already serialize as member names; their schemas get `propertyNames` with the names.
+The schema transformer lists the names itself, because the generator lets a nullable use of an
+enum (`ImportWeekStart?`) add `null` to the shared component's values. The property's own
+`oneOf: [null, $ref]` already says it can be null.
+
+Considered and rejected: **keep integers and add `x-enum-varnames`**. It is documentation only, but
+every client would still have to map ordinals to meanings by hand, and the frontend did exactly
+that.
+
+### Other schema fixes
+
+Generating a client from the document showed four more places where the schema didn't match the
+wire. The schema transformer and a document transformer fix them:
+
+- **Numbers.** The web defaults also read a number from a JSON string, so the generator typed
+  every number as `integer | string` with a digit pattern. Buddy writes numbers and its clients
+  send numbers, so the contract says `integer`.
+- **Nullable wrappers and lists of wrappers.** `UserId? ChildId` lost its `null`, and
+  `IReadOnlyList<CalendarId>` lost its item schema. Both now follow the wrapper's value type.
+- **Computed properties** (`CalendarItemOccurrence.SortAt`,
+  `PreviewMealPlanImportRequest.FormatOrAuto`) are `readOnly`, because they are only ever written.
+- **Response-only schemas require every property**
+  ([ResponseSchemaRequirements.cs](../../../src/backend/buddy/Common/OpenApi/ResponseSchemaRequirements.cs)).
+  The generator only requires constructor parameters without a default. That is right for a
+  request, but the server always writes every property of a response. A schema that is also sent
+  (`PrintTemplateRow`, `RecurrenceRuleRequest`, ...) keeps the request's view, and the frontend
+  narrows it with `Required<...>` where it needs to.
 
 ## Decision: endpoint-level errors are read from the handler's return type
 
@@ -246,6 +275,11 @@ When a response for the status already exists (a `409 resend_cooldown` declared 
 and the generic `409 concurrency_conflict`), the transformer merges them: one response, the union
 of the codes, and the `ErrorEnvelope` schema.
 
+The responses that are identical everywhere (`401`, `304`, `429`, `500`, `503`) are defined once
+under `components/responses`
+([SharedResponses.cs](../../../src/backend/buddy/Common/OpenApi/SharedResponses.cs)) and referenced,
+which keeps the committed document about a third smaller.
+
 `409 concurrency_conflict` on every non-`GET` overstates it slightly: a command that appends
 nothing can't lose the race. The description says "may", which is accurate, and it is safer than
 missing the case. Working out which handlers append would mean inspecting Wolverine handlers, which
@@ -294,8 +328,7 @@ Keycloak config is fragile, and the Alba host already starts the real app with b
 **Decision: `MapOpenApi()` runs in every environment, not only Development**, anonymous, under the
 default per-IP rate limit. The source code is public (MIT, linked from the profile menu), so the
 document reveals nothing new. A family's technical member, or an app pointed at their instance, can
-read the contract of exactly the version deployed there. This is the main remaining open question
-below.
+read the contract of exactly the version deployed there.
 
 ## Decision: meta tests keep the documents honest
 
@@ -307,8 +340,7 @@ the real endpoints or document and fail with a list.
 - **Golden file**: `buddy.json` matches the committed copy (above).
 - **No empty schemas**: no component schema is `{}`, so a new converter can't silently produce an
   untyped schema.
-- **Enums have values**: every integer schema backed by a .NET enum has `enum` and
-  `x-enum-varnames`.
+- **Enums list their names**: every schema backed by a .NET enum has a string `enum`.
 - **Every endpoint's `403` is documented**: every endpoint whose handler can return
   `ForbidHttpResult` or `JsonHttpResult<ErrorEnvelope>` documents `403`.
 - **Every error response has a body or is listed**: each `4xx` and `5xx` response has the
@@ -324,9 +356,9 @@ the real endpoints or document and fail with a list.
 - `Meta/OpenApiDocumentTests` as above, against the shared `BuddyApiFixture` (Development
   environment, so `/openapi/*.json` is already mapped there today).
 - `CreateChild`'s existing `409` test asserts the `username_unavailable` envelope.
-- A smoke check that the committed `buddy.json` is consumable: run `npx openapi-typescript` over it
-  in CI and fail if it errors. It needs no Docker and catches 3.1 or discriminator mistakes that a
-  JSON comparison can't.
+- The frontend's generated types are the consumability check: `frontend-tests.yml` regenerates
+  `src/app/core/api/buddy-api.ts` from the committed `buddy.json` with openapi-typescript and fails
+  if it differs, and the type check then fails on any service that no longer matches the contract.
 
 ## Failure and edge-case behavior
 
@@ -348,7 +380,12 @@ the real endpoints or document and fail with a list.
 | Where the customization lives | `Common/OpenApi`, one `AddBuddyOpenApiDocument` used by all 14 registrations |
 | OpenAPI version | 3.1 (3.2 isn't read by most generators yet) |
 | Wrapper and `kind` schemas | Derived from the converters' own rules, so schema and serializer can't disagree |
-| Enums | Stay integers; documented with `enum` + `x-enum-varnames` |
+| Enums | Strings over HTTP (`JsonStringEnumConverter`); numbers still accepted on input |
+| `kind` discriminators | Stay numeric; `oneOf` cases with a single-value `enum` |
+| Response-only schemas | Every property required; computed properties `readOnly` |
+| Serve the documents in production | Yes, anonymous under the default rate limit |
+| Per-endpoint tables in `http-status-codes.md` | Replaced by a pointer to `buddy.json` |
+| Frontend types | Generated from `buddy.json` with openapi-typescript (`npm run api:types`); the services alias them |
 | `403` documentation | Read from the handler's `Results<...>` return type, not annotated per endpoint |
 | Error codes | Per response, in the description and `x-error-codes`; `code` itself stays an open string |
 | `CreateChild` `409` body | Becomes an `ErrorEnvelope` (`username_unavailable`), the one behavior change |
@@ -358,23 +395,12 @@ the real endpoints or document and fail with a list.
 
 ## Remaining open questions
 
-- **Serve the documents in production?** Lean: yes, as decided above, because the code is public
-  and a per-family instance should describe itself. The alternative is Development only plus the
-  committed `buddy.json`, which describes `master` rather than the deployed version.
-- **String enums.** Lean: not now. Switching to `JsonStringEnumConverter` makes the API
-  self-describing without `x-enum-varnames`, but it is a breaking change across all 21 enums and
-  the frontend. Worth its own design doc if a third-party client appears.
-- **The per-endpoint tables in `http-status-codes.md`.** They already miss 19 routes and list one
-  that doesn't exist (`PATCH /calendars/{calendarId}/members/{memberId}`). Lean: once `buddy.json`
-  is committed, replace the tables with a pointer to it and keep the doc for the rules (what each
-  status means, decision checklist, idempotency, ETags). The alternative is to fix the tables and
-  keep them in sync by hand.
-- **Generate the frontend's types from `buddy.json`.** Lean: a separate frontend plan in
-  `docs/frontend/analysis/`, after this ships. It would replace the hand-written interfaces in
-  `core/*.service.ts` and is the strongest proof that the contract is complete, but it touches
-  every service.
 - **A UI for the document** (Scalar or Swagger UI). Lean: no. Any OpenAPI viewer can open the
   served JSON, and a UI adds a frontend dependency to the API.
+- **String `kind` discriminators.** `kind` is still a number while every enum is a name. Making it
+  the case name would need an enum per converter (three of them are keyed by bare ordinals today)
+  and another breaking change for pickups, calendar items and work days. Lean: only if a
+  third-party client asks.
 
 ## Diagram
 

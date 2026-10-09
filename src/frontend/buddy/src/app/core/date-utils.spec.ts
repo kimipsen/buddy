@@ -6,6 +6,10 @@ import {
   browserTimeZoneId,
   buildDateRangeIso,
   buildMonthGridIso,
+  DAYS_OF_WEEK,
+  dayOfWeekAt,
+  dayOfWeekIndex,
+  dayOfWeekOf,
   isoWeekNumber,
   listTimeZoneIds,
   nextWeekdayOnOrAfter,
@@ -286,12 +290,44 @@ describe('isoWeekNumber', () => {
 
 describe('nextWeekdayOnOrAfter', () => {
   it('returns the date itself when it already falls on the weekday', () => {
-    expect(nextWeekdayOnOrAfter('2026-10-05', 1)).toBe('2026-10-05');
+    expect(nextWeekdayOnOrAfter('2026-10-05', 'Monday')).toBe('2026-10-05');
   });
 
   it('walks forward to the next matching weekday, across a month end', () => {
-    expect(nextWeekdayOnOrAfter('2026-10-02', 0)).toBe('2026-10-04');
-    expect(nextWeekdayOnOrAfter('2026-10-02', 1)).toBe('2026-10-05');
-    expect(nextWeekdayOnOrAfter('2026-10-30', 4)).toBe('2026-11-05');
+    expect(nextWeekdayOnOrAfter('2026-10-02', 'Sunday')).toBe('2026-10-04');
+    expect(nextWeekdayOnOrAfter('2026-10-02', 'Monday')).toBe('2026-10-05');
+    expect(nextWeekdayOnOrAfter('2026-10-30', 'Thursday')).toBe('2026-11-05');
+  });
+});
+
+describe('day-of-week helpers', () => {
+  it('lists the day names in Date.getDay() order', () => {
+    expect(DAYS_OF_WEEK).toEqual([
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ]);
+  });
+
+  it('maps a day name to its Date.getDay() index', () => {
+    expect(dayOfWeekIndex('Sunday')).toBe(0);
+    expect(dayOfWeekIndex('Monday')).toBe(1);
+    expect(dayOfWeekIndex('Saturday')).toBe(6);
+  });
+
+  it('maps an index to a day name, wrapping out-of-range indices', () => {
+    expect(dayOfWeekAt(0)).toBe('Sunday');
+    expect(dayOfWeekAt(4)).toBe('Thursday');
+    expect(dayOfWeekAt(7)).toBe('Sunday');
+    expect(dayOfWeekAt(-1)).toBe('Saturday');
+  });
+
+  it('names the weekday of an ISO date', () => {
+    expect(dayOfWeekOf('2026-10-05')).toBe('Monday');
+    expect(dayOfWeekOf('2026-10-04')).toBe('Sunday');
   });
 });

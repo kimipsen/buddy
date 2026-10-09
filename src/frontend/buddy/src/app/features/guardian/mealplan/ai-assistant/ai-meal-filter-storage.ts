@@ -11,15 +11,28 @@ export interface AiMealFilter {
   servedWithin: AiServedWindow;
 }
 
-const NO_FILTER: AiMealFilter = { ratedOnly: false, servedWithin: 0 };
-const SERVED_WINDOWS: readonly AiServedWindow[] = [0, 30, 60, 90];
+const NO_FILTER: AiMealFilter = { ratedOnly: false, servedWithin: 'Any' };
+const SERVED_WINDOWS: readonly AiServedWindow[] = ['Any', 'Last30Days', 'Last60Days', 'Last90Days'];
+// Before the API sent enums by name, the window was stored as its day count.
+const LEGACY_SERVED_WINDOWS: Readonly<Record<number, AiServedWindow>> = {
+  30: 'Last30Days',
+  60: 'Last60Days',
+  90: 'Last90Days',
+};
 
 export function readLastMealFilter(): AiMealFilter {
   try {
-    const stored = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Partial<AiMealFilter> | null;
+    const stored = JSON.parse(localStorage.getItem(KEY) ?? 'null') as {
+      ratedOnly?: unknown;
+      servedWithin?: unknown;
+    } | null;
+    const servedWithin = stored?.servedWithin;
     return {
       ratedOnly: stored?.ratedOnly === true,
-      servedWithin: SERVED_WINDOWS.find((window) => window === stored?.servedWithin) ?? 0,
+      servedWithin:
+        SERVED_WINDOWS.find((window) => window === servedWithin) ??
+        (typeof servedWithin === 'number' ? LEGACY_SERVED_WINDOWS[servedWithin] : undefined) ??
+        'Any',
     };
   } catch {
     return NO_FILTER;

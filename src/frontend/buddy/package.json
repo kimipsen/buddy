@@ -10,6 +10,7 @@
     "test:mutation": "stryker run",
     "test:e2e": "playwright test",
     "screenshots": "playwright test -c playwright.screenshots.config.ts",
+    "api:types": "npx --yes openapi-typescript@7.13.0 ../../../docs/backend/openapi/buddy.json -o src/app/core/api/buddy-api.ts && prettier --write src/app/core/api/buddy-api.ts",
     "lint": "ng lint",
     "format:check": "prettier --check .",
     "format": "prettier --write ."

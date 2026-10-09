@@ -46,8 +46,8 @@ describe('ChildMealplan', () => {
   ): Partial<MealplansService> {
     return {
       listMealPlan: vi.fn(async (_scope, from: string, to: string) => [
-        entryAt(from, 0, `meal-from-${from}`),
-        entryAt(to, 1, `meal-to-${to}`),
+        entryAt(from, 'Breakfast', `meal-from-${from}`),
+        entryAt(to, 'Lunch', `meal-to-${to}`),
       ]),
       rateMeal: vi.fn(),
       ...overrides,
@@ -211,8 +211,8 @@ describe('ChildMealplan', () => {
     const { fixture } = await setup({
       mealplans: {
         listMealPlan: vi.fn(async (_scope, from: string) => [
-          entryAt(from, 0, 'meal-shared'),
-          entryAt(from, 1, 'meal-shared'),
+          entryAt(from, 'Breakfast', 'meal-shared'),
+          entryAt(from, 'Lunch', 'meal-shared'),
         ]),
         rateMeal,
       },
@@ -250,7 +250,9 @@ describe('ChildMealplan', () => {
 
     const { fixture } = await setup({
       mealplans: {
-        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 'Breakfast', 'meal-from'),
+        ]),
         rateMeal,
       },
     });
@@ -278,7 +280,9 @@ describe('ChildMealplan', () => {
 
     const { fixture } = await setup({
       mealplans: {
-        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 'Breakfast', 'meal-from'),
+        ]),
         rateMeal,
       },
     });
@@ -295,10 +299,10 @@ describe('ChildMealplan', () => {
 
   it('requests exactly the past seven days and labels each day and slot', async () => {
     const listMealPlan = vi.fn(async (_scope, from: string) => [
-      entryAt(from, 0, 'meal-a'),
-      entryAt(from, 1, 'meal-b'),
-      entryAt(from, 2, 'meal-c'),
-      entryAt(from, 3, 'meal-d'),
+      entryAt(from, 'Breakfast', 'meal-a'),
+      entryAt(from, 'Lunch', 'meal-b'),
+      entryAt(from, 'Dinner', 'meal-c'),
+      entryAt(from, 'Snack', 'meal-d'),
     ]);
     const { fixture } = await setup({ mealplans: { listMealPlan } });
     await settle(fixture);
@@ -336,7 +340,9 @@ describe('ChildMealplan', () => {
 
     const { fixture } = await setup({
       mealplans: {
-        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 'Breakfast', 'meal-from'),
+        ]),
         rateMeal,
       },
     });
@@ -377,7 +383,9 @@ describe('ChildMealplan', () => {
 
     const { fixture } = await setup({
       mealplans: {
-        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 'Breakfast', 'meal-from'),
+        ]),
         rateMeal,
       },
     });
@@ -404,7 +412,9 @@ describe('ChildMealplan', () => {
 
     const { fixture } = await setup({
       mealplans: {
-        listMealPlan: vi.fn(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]),
+        listMealPlan: vi.fn(async (_scope, from: string) => [
+          entryAt(from, 'Breakfast', 'meal-from'),
+        ]),
         rateMeal,
       },
     });
@@ -432,7 +442,9 @@ describe('ChildMealplan', () => {
       const pendingRating = deferred<Meal>();
       const listMealPlan = vi
         .fn()
-        .mockImplementationOnce(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')])
+        .mockImplementationOnce(async (_scope, from: string) => [
+          entryAt(from, 'Breakfast', 'meal-from'),
+        ])
         .mockImplementationOnce(nextWeek);
       const rateMeal = vi.fn(() => pendingRating.promise);
       const { fixture } = await setup({ mealplans: { listMealPlan, rateMeal } });
@@ -459,7 +471,7 @@ describe('ChildMealplan', () => {
       await settle(fixture);
       expect(compiled.textContent).toContain('Loading your meals…');
 
-      nextWeek.resolve([entryAt(addDaysIso(todayIsoDate(), -14), 0, 'meal-older')]);
+      nextWeek.resolve([entryAt(addDaysIso(todayIsoDate(), -14), 'Breakfast', 'meal-older')]);
       await settle(fixture);
 
       expect(compiled.textContent).toContain('Meal meal-older');
@@ -489,7 +501,9 @@ describe('ChildMealplan', () => {
     const listMealPlan = vi
       .fn()
       .mockRejectedValueOnce(new Error('boom'))
-      .mockImplementation(async (_scope, from: string) => [entryAt(from, 0, 'meal-from')]);
+      .mockImplementation(async (_scope, from: string) => [
+        entryAt(from, 'Breakfast', 'meal-from'),
+      ]);
     const { fixture } = await setup({ mealplans: { listMealPlan } });
     await settle(fixture);
 

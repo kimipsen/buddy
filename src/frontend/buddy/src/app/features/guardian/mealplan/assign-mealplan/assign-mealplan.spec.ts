@@ -20,13 +20,13 @@ describe('AssignMealplan', () => {
     kind: 'group',
     groupId: 'group-1',
     groupName: 'The Fam',
-    accessTier: 2,
+    accessTier: 'Manage',
   };
   const groupViewScope: MealplanScope = {
     kind: 'group',
     groupId: 'group-1',
     groupName: 'The Fam',
-    accessTier: 3,
+    accessTier: 'View',
   };
 
   const today = todayIsoDate();
@@ -60,7 +60,7 @@ describe('AssignMealplan', () => {
   function entry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
     return {
       date: today,
-      slot: 0,
+      slot: 'Breakfast',
       mealId: 'meal-1',
       mealName: 'Pancakes',
       icon: '🥞',
@@ -221,7 +221,7 @@ describe('AssignMealplan', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Unable to load the meal plan.');
-    expect(pickerInput(compiled, today, 0)).toBeTruthy();
+    expect(pickerInput(compiled, today, 'Breakfast')).toBeTruthy();
   });
 
   it('shows the translated error message when loading the meal library fails', async () => {
@@ -252,18 +252,18 @@ describe('AssignMealplan', () => {
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
 
-      openPicker(fixture, today, 1);
-      mealOption(compiled, today, 1, 'Tacos').click();
+      openPicker(fixture, today, 'Lunch');
+      mealOption(compiled, today, 'Lunch', 'Tacos').click();
       await settle(fixture);
 
       expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(
         familyScope,
         today,
-        1,
+        'Lunch',
         'meal-2',
         '',
       );
-      expect(pickerInput(compiled, today, 1).value).toBe('🌮 Tacos');
+      expect(pickerInput(compiled, today, 'Lunch').value).toBe('🌮 Tacos');
     });
 
     it('sends empty notes -- the grid has no control for entering them', async () => {
@@ -271,8 +271,8 @@ describe('AssignMealplan', () => {
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
 
-      openPicker(fixture, today, 0);
-      mealOption(compiled, today, 0, 'Pancakes').click();
+      openPicker(fixture, today, 'Breakfast');
+      mealOption(compiled, today, 'Breakfast', 'Pancakes').click();
       await settle(fixture);
 
       // The grid has no notes control, so it always sends empty notes ("" means none) -- pinned
@@ -280,7 +280,7 @@ describe('AssignMealplan', () => {
       expect(mealplans.assignMealToSlot).toHaveBeenCalledExactlyOnceWith(
         familyScope,
         today,
-        0,
+        'Breakfast',
         'meal-1',
         '',
       );
@@ -293,12 +293,12 @@ describe('AssignMealplan', () => {
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
 
-      openPicker(fixture, today, 2);
-      mealOption(compiled, today, 2, 'Tacos').click();
+      openPicker(fixture, today, 'Dinner');
+      mealOption(compiled, today, 'Dinner', 'Tacos').click();
       await settle(fixture);
 
       expect(compiled.textContent).toContain('Unable to update the meal plan. Please try again.');
-      expect(pickerInput(compiled, today, 2).value).toBe('');
+      expect(pickerInput(compiled, today, 'Dinner').value).toBe('');
     });
   });
 
@@ -306,7 +306,7 @@ describe('AssignMealplan', () => {
     it('calls clearMealSlot with the scope, date and slot, and removes the entry', async () => {
       const preassigned = entry({
         date: today,
-        slot: 0,
+        slot: 'Breakfast',
         mealId: 'meal-1',
         mealName: 'Pancakes',
         icon: '🥞',
@@ -316,20 +316,24 @@ describe('AssignMealplan', () => {
       });
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(pickerInput(compiled, today, 0).value).toBe('🥞 Pancakes');
+      expect(pickerInput(compiled, today, 'Breakfast').value).toBe('🥞 Pancakes');
 
-      openPicker(fixture, today, 0);
-      mealOption(compiled, today, 0, 'Not planned').click();
+      openPicker(fixture, today, 'Breakfast');
+      mealOption(compiled, today, 'Breakfast', 'Not planned').click();
       await settle(fixture);
 
-      expect(mealplans.clearMealSlot).toHaveBeenCalledExactlyOnceWith(familyScope, today, 0);
-      expect(pickerInput(compiled, today, 0).value).toBe('');
+      expect(mealplans.clearMealSlot).toHaveBeenCalledExactlyOnceWith(
+        familyScope,
+        today,
+        'Breakfast',
+      );
+      expect(pickerInput(compiled, today, 'Breakfast').value).toBe('');
     });
 
     it('shows a translated error and leaves the entry in place when clearMealSlot rejects', async () => {
       const preassigned = entry({
         date: today,
-        slot: 0,
+        slot: 'Breakfast',
         mealId: 'meal-1',
         mealName: 'Pancakes',
         icon: '🥞',
@@ -343,12 +347,12 @@ describe('AssignMealplan', () => {
       await settle(fixture);
       const compiled = fixture.nativeElement as HTMLElement;
 
-      openPicker(fixture, today, 0);
-      mealOption(compiled, today, 0, 'Not planned').click();
+      openPicker(fixture, today, 'Breakfast');
+      mealOption(compiled, today, 'Breakfast', 'Not planned').click();
       await settle(fixture);
 
       expect(compiled.textContent).toContain('Unable to update the meal plan. Please try again.');
-      expect(pickerInput(compiled, today, 0).value).toBe('🥞 Pancakes');
+      expect(pickerInput(compiled, today, 'Breakfast').value).toBe('🥞 Pancakes');
     });
   });
 
@@ -392,7 +396,7 @@ describe('AssignMealplan', () => {
       await settle(fixture);
 
       expect(compiled.textContent).toContain('(past)');
-      expect(pickerInput(compiled, addDays(today, -7), 0).disabled).toBe(true);
+      expect(pickerInput(compiled, addDays(today, -7), 'Breakfast').disabled).toBe(true);
     });
 
     it('refuses to open the picker (and never calls assignMealToSlot) for a past day', async () => {
@@ -404,9 +408,9 @@ describe('AssignMealplan', () => {
       await settle(fixture);
 
       const pastDate = addDays(today, -7);
-      openPicker(fixture, pastDate, 0);
+      openPicker(fixture, pastDate, 'Breakfast');
 
-      expect(cell(compiled, pastDate, 0).querySelector('ul')).toBeFalsy();
+      expect(cell(compiled, pastDate, 'Breakfast').querySelector('ul')).toBeFalsy();
       expect(mealplans.assignMealToSlot).not.toHaveBeenCalled();
     });
   });
@@ -418,7 +422,7 @@ describe('AssignMealplan', () => {
       const compiled = fixture.nativeElement as HTMLElement;
 
       expect(compiled.textContent).not.toContain('You have read-only access to this plan.');
-      expect(pickerInput(compiled, today, 0).disabled).toBe(false);
+      expect(pickerInput(compiled, today, 'Breakfast').disabled).toBe(false);
     });
 
     it('is not read-only for a group scope with Manage access', async () => {
@@ -427,7 +431,7 @@ describe('AssignMealplan', () => {
       const compiled = fixture.nativeElement as HTMLElement;
 
       expect(compiled.textContent).not.toContain('You have read-only access to this plan.');
-      expect(pickerInput(compiled, today, 0).disabled).toBe(false);
+      expect(pickerInput(compiled, today, 'Breakfast').disabled).toBe(false);
     });
 
     it('is read-only for a group scope with only View access, disabling every picker', async () => {
@@ -436,10 +440,10 @@ describe('AssignMealplan', () => {
       const compiled = fixture.nativeElement as HTMLElement;
 
       expect(compiled.textContent).toContain('You have read-only access to this plan.');
-      expect(pickerInput(compiled, today, 0).disabled).toBe(true);
+      expect(pickerInput(compiled, today, 'Breakfast').disabled).toBe(true);
 
-      openPicker(fixture, today, 0);
-      expect(cell(compiled, today, 0).querySelector('ul')).toBeFalsy();
+      openPicker(fixture, today, 'Breakfast');
+      expect(cell(compiled, today, 'Breakfast').querySelector('ul')).toBeFalsy();
       expect(mealplans.assignMealToSlot).not.toHaveBeenCalled();
     });
 
@@ -477,7 +481,7 @@ describe('AssignMealplan', () => {
           id: 'child-1',
           name: { givenName: 'Sam', familyName: 'Kid' },
           guardianLinkId: 'link-1',
-          kind: 0,
+          kind: 'Parent',
           language: 'en',
           timeZoneId: 'UTC',
         },
@@ -488,7 +492,7 @@ describe('AssignMealplan', () => {
           listMealPlan: vi.fn(async (_scope, from: string) => [
             entry({
               date: from,
-              slot: 0,
+              slot: 'Breakfast',
               mealId: 'meal-1',
               allRatings: [
                 { childId: 'child-1', stars: 4, comment: 'Yum', ratedAt: '2026-01-01T00:00:00Z' },
@@ -514,7 +518,7 @@ describe('AssignMealplan', () => {
           listMealPlan: vi.fn(async (_scope, from: string) => [
             entry({
               date: from,
-              slot: 0,
+              slot: 'Breakfast',
               mealId: 'meal-1',
               allRatings: [
                 {
@@ -545,7 +549,7 @@ describe('AssignMealplan', () => {
           listMealPlan: vi.fn(async () => [
             entry({
               date: futureDate,
-              slot: 0,
+              slot: 'Breakfast',
               mealId: 'meal-1',
               allRatings: [
                 { childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
@@ -566,7 +570,7 @@ describe('AssignMealplan', () => {
           listMealPlan: vi.fn(async (_scope, from: string) => [
             entry({
               date: from,
-              slot: 0,
+              slot: 'Breakfast',
               mealId: 'meal-1',
               allRatings: [
                 { childId: 'child-1', stars: 4, comment: '', ratedAt: '2026-01-01T00:00:00Z' },
@@ -587,8 +591,8 @@ describe('AssignMealplan', () => {
 
   describe('dragging a meal between cells', () => {
     it('moves a meal onto an empty cell: assigns the target then clears the source', async () => {
-      const source: SlotRef = { date: today, slot: 0 };
-      const target: SlotRef = { date: addDays(today, 1), slot: 1 };
+      const source: SlotRef = { date: today, slot: 'Breakfast' };
+      const target: SlotRef = { date: addDays(today, 1), slot: 'Lunch' };
       const sourceEntry = entry({
         date: source.date,
         slot: source.slot,
@@ -624,8 +628,8 @@ describe('AssignMealplan', () => {
     });
 
     it('swaps two occupied cells rather than clearing either', async () => {
-      const source: SlotRef = { date: today, slot: 0 };
-      const target: SlotRef = { date: today, slot: 1 };
+      const source: SlotRef = { date: today, slot: 'Breakfast' };
+      const target: SlotRef = { date: today, slot: 'Lunch' };
       const sourceEntry = entry({
         date: source.date,
         slot: source.slot,
@@ -676,10 +680,12 @@ describe('AssignMealplan', () => {
     });
 
     it('does nothing when dropped back onto the same cell', async () => {
-      const source: SlotRef = { date: today, slot: 0 };
+      const source: SlotRef = { date: today, slot: 'Breakfast' };
       const { fixture, mealplans } = await setup({
         mealplans: {
-          listMealPlan: vi.fn(async () => [entry({ date: today, slot: 0, mealId: 'meal-1' })]),
+          listMealPlan: vi.fn(async () => [
+            entry({ date: today, slot: 'Breakfast', mealId: 'meal-1' }),
+          ]),
         },
       });
       await settle(fixture);
@@ -691,8 +697,8 @@ describe('AssignMealplan', () => {
     });
 
     it('does nothing when the source cell has no meal assigned', async () => {
-      const source: SlotRef = { date: today, slot: 0 };
-      const target: SlotRef = { date: today, slot: 1 };
+      const source: SlotRef = { date: today, slot: 'Breakfast' };
+      const target: SlotRef = { date: today, slot: 'Lunch' };
       const { fixture, mealplans } = await setup(); // default listMealPlan returns no entries
 
       await settle(fixture);
@@ -704,9 +710,9 @@ describe('AssignMealplan', () => {
 
     it('does nothing when either side of the drag is a past day', async () => {
       const pastDate = addDays(today, -7);
-      const source: SlotRef = { date: pastDate, slot: 0 };
-      const target: SlotRef = { date: pastDate, slot: 1 };
-      const pastEntry = entry({ date: pastDate, slot: 0, mealId: 'meal-1' });
+      const source: SlotRef = { date: pastDate, slot: 'Breakfast' };
+      const target: SlotRef = { date: pastDate, slot: 'Lunch' };
+      const pastEntry = entry({ date: pastDate, slot: 'Breakfast', mealId: 'meal-1' });
 
       const { fixture, mealplans } = await setup({
         mealplans: { listMealPlan: vi.fn(async () => [pastEntry]) },
@@ -721,8 +727,8 @@ describe('AssignMealplan', () => {
     });
 
     it('does nothing when the scope is read-only', async () => {
-      const source: SlotRef = { date: today, slot: 0 };
-      const target: SlotRef = { date: today, slot: 1 };
+      const source: SlotRef = { date: today, slot: 'Breakfast' };
+      const target: SlotRef = { date: today, slot: 'Lunch' };
       const sourceEntry = entry({ date: source.date, slot: source.slot, mealId: 'meal-1' });
 
       const { fixture, mealplans } = await setup({

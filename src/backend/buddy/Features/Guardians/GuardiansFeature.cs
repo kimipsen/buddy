@@ -1,6 +1,7 @@
 using buddy.Common.Configuration;
 using buddy.Common.Erasure;
 using buddy.Common.Http;
+using buddy.Common.OpenApi;
 
 namespace buddy.Features.Guardians;
 
@@ -13,10 +14,7 @@ public static class GuardiansFeature
     // Groups/Calendars already have relative to Users.
     public static IServiceCollection AddGuardiansFeature(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddOpenApi(OpenApiDocumentName, options =>
-        {
-            options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
-        });
+        services.AddBuddyOpenApiDocument(OpenApiDocumentName);
 
         services.AddValidatedOptions<KeycloakAdminOptions>(KeycloakAdminOptions.SectionName);
 

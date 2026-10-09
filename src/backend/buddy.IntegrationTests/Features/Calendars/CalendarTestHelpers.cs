@@ -59,7 +59,7 @@ internal static class CalendarTestHelpers
                 Color = "#00ff00",
                 Schedule = new
                 {
-                    Kind = CalendarItemKind.Event,
+                    Kind = (int)CalendarItemKind.Event,
                     StartsAt = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 0) },
                     EndsAt = new { Date = endDay, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 30) },
                     IsAllDay = isAllDay
@@ -89,7 +89,7 @@ internal static class CalendarTestHelpers
                 Recurrence = recurrence,
                 Schedule = new
                 {
-                    Kind = CalendarItemKind.Task,
+                    Kind = (int)CalendarItemKind.Task,
                     DueDate = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(17, 0) },
                     IsAllDay = isAllDay,
                     AssignedTo = assignedTo

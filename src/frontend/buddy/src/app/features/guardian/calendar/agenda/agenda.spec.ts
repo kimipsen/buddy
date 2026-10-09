@@ -34,7 +34,7 @@ describe('CalendarAgenda', () => {
   }
 
   function calendarSummary(overrides: Partial<CalendarSummary> = {}): CalendarSummary {
-    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 0, ...overrides };
+    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 'Owner', ...overrides };
   }
 
   // startsAt/dueAt are given as UTC instants ("...Z") whose date component is exactly the intended
@@ -46,7 +46,7 @@ describe('CalendarAgenda', () => {
   ): CalendarOccurrence {
     return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
-      kind: 0,
+      kind: 'Event',
       title: 'Dentist',
       icon: '🦷',
       iconOverride: null,
@@ -85,7 +85,7 @@ describe('CalendarAgenda', () => {
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -306,7 +306,7 @@ describe('CalendarAgenda', () => {
   it('groups a task by its due date, not its (absent) start date', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Buy groceries',
       startsAt: null,
       endsAt: null,
@@ -496,7 +496,7 @@ describe('CalendarAgenda', () => {
   it('toggles an incomplete task to complete with the exact calendar/item/date/completion args', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed cat',
       startsAt: null,
       endsAt: null,
@@ -522,7 +522,7 @@ describe('CalendarAgenda', () => {
     const tomorrow = addDays(today, 1);
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed cat',
       startsAt: null,
       endsAt: null,
@@ -546,7 +546,7 @@ describe('CalendarAgenda', () => {
   it('shows an error and leaves completion unchanged when toggling a task fails', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed cat',
       startsAt: null,
       endsAt: null,
@@ -724,7 +724,7 @@ describe('CalendarAgenda', () => {
   it('reschedules a task by its due date', async () => {
     const item = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Buy groceries',
       calendarId: 'cal-1',
       startsAt: null,
@@ -911,7 +911,7 @@ describe('CalendarAgenda', () => {
     expect(calendars.createItem).toHaveBeenCalledWith(
       'cal-1',
       expect.objectContaining({
-        recurrence: { frequency: 1, intervalCount: 1, until: null, weekdays: null },
+        recurrence: { frequency: 'Weekly', intervalCount: 1, until: null, weekdays: null },
       }),
     );
   });
@@ -983,7 +983,7 @@ describe('CalendarAgenda', () => {
       expect(calendars.createItem).toHaveBeenCalledWith(
         'cal-1',
         expect.objectContaining({
-          recurrence: { frequency: 1, intervalCount: 1, until: null, weekdays: null },
+          recurrence: { frequency: 'Weekly', intervalCount: 1, until: null, weekdays: null },
         }),
       );
     });
@@ -1003,16 +1003,27 @@ describe('CalendarAgenda', () => {
       createForm(compiled).dispatchEvent(new Event('submit'));
       await settle(fixture);
 
-      // Monday-first index back to the 0 = Sunday numbering the API uses.
+      // Monday-first index back to the Sunday-first day order the API uses.
+      const apiDays = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ];
       const toApiDay = (index: number) => (index + 1) % 7;
       expect(calendars.createItem).toHaveBeenCalledWith(
         'cal-1',
         expect.objectContaining({
           recurrence: {
-            frequency: 1,
+            frequency: 'Weekly',
             intervalCount: 1,
             until: null,
-            weekdays: [toApiDay(todayIndex), toApiDay(otherIndex)].sort((a, b) => a - b),
+            weekdays: [toApiDay(todayIndex), toApiDay(otherIndex)]
+              .sort((a, b) => a - b)
+              .map((i) => apiDays[i]),
           },
         }),
       );
@@ -1056,7 +1067,12 @@ describe('CalendarAgenda', () => {
       expect(calendars.createItem).toHaveBeenCalledWith(
         'cal-1',
         expect.objectContaining({
-          recurrence: { frequency: 0, intervalCount: 1, until: null, weekdays: [1, 2, 3, 4, 5] },
+          recurrence: {
+            frequency: 'Daily',
+            intervalCount: 1,
+            until: null,
+            weekdays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          },
         }),
       );
     });
@@ -1077,7 +1093,7 @@ describe('CalendarAgenda', () => {
       expect(calendars.createItem).toHaveBeenCalledWith(
         'cal-1',
         expect.objectContaining({
-          recurrence: { frequency: 0, intervalCount: 1, until: null, weekdays: null },
+          recurrence: { frequency: 'Daily', intervalCount: 1, until: null, weekdays: null },
         }),
       );
     });
@@ -1189,7 +1205,7 @@ describe('CalendarAgenda', () => {
 
   it('hides the create form and shows a message when no calendar is eligible for new items', async () => {
     const { fixture } = await setup({
-      calendars: { listMyCalendars: vi.fn(async () => [calendarSummary({ role: 2 })]) },
+      calendars: { listMyCalendars: vi.fn(async () => [calendarSummary({ role: 'Viewer' })]) },
     });
     await settle(fixture);
 
@@ -1205,7 +1221,7 @@ describe('CalendarAgenda', () => {
     // agenda list itself renders Edit/Delete for every occurrence regardless of the viewing
     // guardian's role on that occurrence's calendar, relying on the backend (CalendarAuthorization)
     // to reject a contribute action the caller isn't actually allowed to make.
-    const viewerOnly = calendarSummary({ id: 'cal-2', role: 2, name: 'Viewer cal' });
+    const viewerOnly = calendarSummary({ id: 'cal-2', role: 'Viewer', name: 'Viewer cal' });
     const item = occurrence({
       itemId: 'item-1',
       title: 'Someone else’s event',
@@ -1231,7 +1247,7 @@ describe('CalendarAgenda', () => {
   it('resolves and displays the assignee name for a task once assignable members load', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Take out trash',
       startsAt: null,
       endsAt: null,
@@ -1372,7 +1388,7 @@ describe('CalendarAgenda', () => {
   it('shows no assignee text for a task assigned to a member the guardian cannot resolve', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Take out trash',
       startsAt: null,
       endsAt: null,
@@ -1398,7 +1414,7 @@ describe('CalendarAgenda', () => {
     ): CalendarOccurrence {
       return occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         parentTitle: 'Morning routine',
         ...overrides,
       });

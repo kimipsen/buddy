@@ -34,13 +34,13 @@ import { Toggle } from '../../../../shared/toggle/toggle';
 const NEW_MEAL = 'new';
 const DEFAULT_ICON = '🍽️';
 const DEFAULT_COLOR = DEFAULT_COLOR_SWATCHES[1];
-const DINNER: MealSlot = 2;
+const DINNER: MealSlot = 'Dinner';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'mealplan.slots.breakfast',
-  1: 'mealplan.slots.lunch',
-  2: 'mealplan.slots.dinner',
-  3: 'mealplan.slots.snack',
+  Breakfast: 'mealplan.slots.breakfast',
+  Lunch: 'mealplan.slots.lunch',
+  Dinner: 'mealplan.slots.dinner',
+  Snack: 'mealplan.slots.snack',
 };
 
 interface PlannedMeal {
@@ -123,7 +123,7 @@ export class MealStep {
   });
 
   protected readonly slotOptions = computed<SegmentedControlOption<MealSlot>[]>(() =>
-    ([0, 1, 2, 3] as const).map((value) => ({
+    (['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const).map((value) => ({
       value,
       label: this.i18n.translate(SLOT_LABELS[value]),
     })),

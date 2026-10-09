@@ -34,7 +34,7 @@ describe('ChildCalendar', () => {
   }
 
   function calendarSummary(overrides: Partial<CalendarSummary> = {}): CalendarSummary {
-    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 2, ...overrides };
+    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 'Viewer', ...overrides };
   }
 
   function occurrence(
@@ -42,7 +42,7 @@ describe('ChildCalendar', () => {
   ): CalendarOccurrence {
     return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
-      kind: 0,
+      kind: 'Event',
       title: 'Dentist',
       icon: '🦷',
       iconOverride: null,
@@ -64,7 +64,7 @@ describe('ChildCalendar', () => {
   function mealEntry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
     return {
       date: today,
-      slot: 0,
+      slot: 'Breakfast',
       mealId: 'meal-1',
       mealName: 'Pancakes',
       icon: '🥞',
@@ -202,7 +202,7 @@ describe('ChildCalendar', () => {
   it('groups a task by its due date and shows a completion toggle', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed the cat',
       startsAt: null,
       endsAt: null,
@@ -223,7 +223,7 @@ describe('ChildCalendar', () => {
   it("toggles a task's completion", async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed the cat',
       startsAt: null,
       endsAt: null,
@@ -246,7 +246,7 @@ describe('ChildCalendar', () => {
     const tomorrow = addDays(today, 1);
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed the cat',
       startsAt: null,
       endsAt: null,
@@ -271,7 +271,7 @@ describe('ChildCalendar', () => {
   it('refuses to complete a future task even if its toggle is clicked while enabled', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed the cat',
       startsAt: null,
       endsAt: null,
@@ -293,7 +293,7 @@ describe('ChildCalendar', () => {
   it("disables a task's toggle while its completion is saving, and re-enables it afterwards", async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed the cat',
       startsAt: null,
       endsAt: null,
@@ -327,7 +327,7 @@ describe('ChildCalendar', () => {
   it('leaves the newly selected week loading, then shows it, when a completion resolves after switching week', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed the cat',
       startsAt: null,
       endsAt: null,
@@ -382,7 +382,7 @@ describe('ChildCalendar', () => {
   it('shows an error and leaves the task unchanged when saving its completion fails', async () => {
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Feed the cat',
       startsAt: null,
       endsAt: null,
@@ -583,7 +583,7 @@ describe('ChildCalendar', () => {
     const subtasks = [
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         title: 'Brush teeth',
@@ -591,7 +591,7 @@ describe('ChildCalendar', () => {
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         title: 'Get dressed',
@@ -599,7 +599,7 @@ describe('ChildCalendar', () => {
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-3',
         parentTitle: 'Morning routine',
         title: 'Eat breakfast',
@@ -624,7 +624,7 @@ describe('ChildCalendar', () => {
     const subtasks = [
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-3',
         parentTitle: 'Morning routine',
         title: 'Eat breakfast',
@@ -632,7 +632,7 @@ describe('ChildCalendar', () => {
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         title: 'Brush teeth',
@@ -640,7 +640,7 @@ describe('ChildCalendar', () => {
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         title: 'Get dressed',
@@ -667,7 +667,7 @@ describe('ChildCalendar', () => {
     const subtasks = [
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         title: 'Brush teeth',
@@ -675,7 +675,7 @@ describe('ChildCalendar', () => {
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         title: 'Get dressed',
@@ -683,7 +683,7 @@ describe('ChildCalendar', () => {
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-3',
         parentTitle: 'Morning routine',
         title: 'Eat breakfast',
@@ -724,12 +724,12 @@ describe('ChildCalendar', () => {
   // ----- Meal plan integration -----
 
   it('interleaves a meal among tasks/events on the same day in slot-chronological order', async () => {
-    const breakfast = mealEntry({ mealId: 'breakfast', mealName: 'Pancakes', slot: 0 });
-    const snack = mealEntry({ mealId: 'snack', mealName: 'Apple slices', slot: 3 });
-    const dinner = mealEntry({ mealId: 'dinner', mealName: 'Pasta', slot: 2 });
+    const breakfast = mealEntry({ mealId: 'breakfast', mealName: 'Pancakes', slot: 'Breakfast' });
+    const snack = mealEntry({ mealId: 'snack', mealName: 'Apple slices', slot: 'Snack' });
+    const dinner = mealEntry({ mealId: 'dinner', mealName: 'Pasta', slot: 'Dinner' });
     const lunchTask = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Homework',
       startsAt: null,
       endsAt: null,
@@ -775,8 +775,8 @@ describe('ChildCalendar', () => {
       }),
     ];
     const meals = [
-      mealEntry({ slot: 0, mealName: 'Pancakes' }),
-      mealEntry({ slot: 1, mealId: 'meal-2', mealName: 'Soup' }),
+      mealEntry({ slot: 'Breakfast', mealName: 'Pancakes' }),
+      mealEntry({ slot: 'Lunch', mealId: 'meal-2', mealName: 'Soup' }),
     ];
 
     const { fixture } = await setup({
@@ -793,9 +793,9 @@ describe('ChildCalendar', () => {
   });
 
   it.each([
-    [1 as MealSlot, 'Lunch'],
-    [2 as MealSlot, 'Dinner'],
-    [3 as MealSlot, 'Snack'],
+    ['Lunch' as MealSlot, 'Lunch'],
+    ['Dinner' as MealSlot, 'Dinner'],
+    ['Snack' as MealSlot, 'Snack'],
   ])('labels a meal in slot %s as "%s"', async (slot, label) => {
     const { fixture } = await setup({
       mealplans: { listMealPlan: vi.fn(async () => [mealEntry({ slot, mealName: 'Stew' })]) },

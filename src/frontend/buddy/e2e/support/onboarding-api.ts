@@ -4,13 +4,13 @@ import { getAccessToken } from './keycloak-client';
 import { readRuntimeConfig } from './runtime-config';
 import type { TestUser } from './seeded-users';
 
-// OnboardingStatus ordinals (src/app/core/onboarding.service.ts).
-const NOT_STARTED = 0;
-const ACTIVE = 1;
-const DEFERRED = 2;
+// OnboardingStatus names as the API writes them (ONBOARDING_STATUS in src/app/core/onboarding.service.ts).
+const NOT_STARTED = 'NotStarted';
+const ACTIVE = 'Active';
+const DEFERRED = 'Deferred';
 
 interface OnboardingProgressDto {
-  status: number;
+  status: 'NotStarted' | 'Active' | 'Deferred' | 'Completed';
   setupGroupId: string | null;
   invitationsSkipped: boolean;
   version: number;

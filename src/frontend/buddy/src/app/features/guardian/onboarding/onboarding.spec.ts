@@ -27,7 +27,9 @@ import { GuardianOnboarding } from './onboarding';
 
 const COMPLETE: OnboardingSetup = setupWith({
   children: [child()],
-  pendingInvites: [{ id: 'i1', email: 'aunt@buddy.test', role: 1, invitedAt: '', expiresAt: '' }],
+  pendingInvites: [
+    { id: 'i1', email: 'aunt@buddy.test', role: 'Admin', invitedAt: '', expiresAt: '' },
+  ],
   calendars: [calendarDetail()],
   hasScheduledRoutine: true,
   hasMealAssignment: true,
@@ -95,7 +97,7 @@ describe('GuardianOnboarding', () => {
 
   it('opens a fresh guide at the group step without writing any progress', async () => {
     const { compiled, onboarding } = await setup({
-      progress: { status: 0, setupGroupId: null, invitationsSkipped: false, version: 0 },
+      progress: { status: 'NotStarted', setupGroupId: null, invitationsSkipped: false, version: 0 },
     });
 
     expect(onboarding.saveProgress).not.toHaveBeenCalled();
@@ -105,7 +107,7 @@ describe('GuardianOnboarding', () => {
 
   it('leaves a resumed deferred guide deferred', async () => {
     const { onboarding } = await setup({
-      progress: progress({ status: 2, version: 3 }),
+      progress: progress({ status: 'Deferred', version: 3 }),
       setup: { ...COMPLETE, calendars: [] },
     });
 
@@ -132,7 +134,7 @@ describe('GuardianOnboarding', () => {
   });
 
   it('sends a completed guide back to the dashboard', async () => {
-    const { navigate } = await setup({ progress: progress({ status: 3 }) });
+    const { navigate } = await setup({ progress: progress({ status: 'Completed' }) });
 
     expect(navigate).toHaveBeenCalledWith(['/guardian']);
   });
@@ -187,7 +189,7 @@ describe('GuardianOnboarding', () => {
     buttonByText(compiled, 'Finish later')!.click();
     await settle(fixture);
 
-    expect(onboarding.saveProgress).toHaveBeenCalledWith(progress({ status: 2 }));
+    expect(onboarding.saveProgress).toHaveBeenCalledWith(progress({ status: 'Deferred' }));
     expect(navigate).toHaveBeenCalledWith(['/guardian']);
   });
 
@@ -199,7 +201,7 @@ describe('GuardianOnboarding', () => {
     await settle(fixture);
 
     expect(onboarding.loadSetup).toHaveBeenCalledTimes(2);
-    expect(onboarding.saveProgress).toHaveBeenCalledWith(progress({ status: 3 }));
+    expect(onboarding.saveProgress).toHaveBeenCalledWith(progress({ status: 'Completed' }));
     expect(navigate).toHaveBeenCalledWith(['/guardian']);
   });
 
@@ -278,11 +280,11 @@ describe('GuardianOnboarding', () => {
       .mockResolvedValueOnce(EMPTY_SETUP)
       .mockResolvedValue(setupWith());
     const { compiled, fixture, onboarding } = await setup({
-      progress: { status: 0, setupGroupId: null, invitationsSkipped: false, version: 0 },
+      progress: { status: 'NotStarted', setupGroupId: null, invitationsSkipped: false, version: 0 },
       onboarding: { loadSetup },
     });
     const groups = TestBed.inject(GroupsService) as unknown as Record<string, unknown>;
-    groups['createGroup'] = vi.fn(async () => ({ id: 'group-9', name: 'Home', role: 0 }));
+    groups['createGroup'] = vi.fn(async () => ({ id: 'group-9', name: 'Home', role: 'Owner' }));
 
     const input = compiled.querySelector<HTMLInputElement>('#onboardingGroupName')!;
     input.value = 'Home';
@@ -292,7 +294,7 @@ describe('GuardianOnboarding', () => {
     await settle(fixture);
 
     expect(onboarding.saveProgress).toHaveBeenCalledWith({
-      status: 1,
+      status: 'Active',
       setupGroupId: 'group-9',
       invitationsSkipped: false,
       version: 0,
@@ -309,7 +311,7 @@ describe('GuardianOnboarding', () => {
       onboarding: { loadSetup },
     });
     const groups = TestBed.inject(GroupsService) as unknown as Record<string, unknown>;
-    groups['createGroup'] = vi.fn(async () => ({ id: 'group-9', name: 'Home', role: 0 }));
+    groups['createGroup'] = vi.fn(async () => ({ id: 'group-9', name: 'Home', role: 'Owner' }));
 
     const input = compiled.querySelector<HTMLInputElement>('#onboardingGroupName')!;
     input.value = 'Home';

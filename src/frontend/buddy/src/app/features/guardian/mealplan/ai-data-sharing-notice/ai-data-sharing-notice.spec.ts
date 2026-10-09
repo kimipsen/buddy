@@ -23,7 +23,7 @@ class Host {
 describe('AiDataSharingNotice', () => {
   const acknowledgedSettings: AiProviderSettings = {
     providers: [],
-    activeProvider: 0,
+    activeProvider: 'Anthropic',
     dataSharingAcknowledgedAt: '2026-08-02T09:30:00Z',
   };
 

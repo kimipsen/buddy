@@ -15,6 +15,8 @@ module.exports = defineConfig([
       '.stryker-tmp/**',
       'playwright-report/**',
       'test-results/**',
+      // Generated from docs/backend/openapi/buddy.json by `npm run api:types`.
+      'src/app/core/api/buddy-api.ts',
     ],
   },
   {

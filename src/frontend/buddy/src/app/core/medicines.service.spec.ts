@@ -44,7 +44,7 @@ describe('MedicinesService', () => {
       color: '#f00',
       date: '2026-08-26',
       time: '08:00',
-      status: 0,
+      status: 'Pending',
       ...overrides,
     };
   }
@@ -253,9 +253,9 @@ describe('MedicinesService', () => {
 
   describe('setDoseStatus', () => {
     it('PUTs status with date/time params and returns the updated occurrence', async () => {
-      const updated = dose({ status: 1 });
+      const updated = dose({ status: 'Taken' });
 
-      const promise = service.setDoseStatus(childId, 'med-1', '2026-08-26', '08:00', 1);
+      const promise = service.setDoseStatus(childId, 'med-1', '2026-08-26', '08:00', 'Taken');
 
       const req = httpMock.expectOne(
         (r) =>
@@ -264,23 +264,35 @@ describe('MedicinesService', () => {
           r.params.get('time') === '08:00',
       );
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ status: 1 });
+      expect(req.request.body).toEqual({ status: 'Taken' });
       req.flush(updated);
 
       await expect(promise).resolves.toEqual(updated);
     });
 
-    it('serializes DoseStatus 0 (Pending) distinctly from Skipped (2)', async () => {
-      const pendingPromise = service.setDoseStatus(childId, 'med-1', '2026-08-26', '08:00', 0);
+    it('serializes DoseStatus Pending distinctly from Skipped', async () => {
+      const pendingPromise = service.setDoseStatus(
+        childId,
+        'med-1',
+        '2026-08-26',
+        '08:00',
+        'Pending',
+      );
       const pendingReq = httpMock.expectOne((r) => r.url === `${base()}/doses/med-1`);
-      expect(pendingReq.request.body).toEqual({ status: 0 });
-      pendingReq.flush(dose({ status: 0 }));
+      expect(pendingReq.request.body).toEqual({ status: 'Pending' });
+      pendingReq.flush(dose({ status: 'Pending' }));
       await pendingPromise;
 
-      const skippedPromise = service.setDoseStatus(childId, 'med-1', '2026-08-26', '20:00', 2);
+      const skippedPromise = service.setDoseStatus(
+        childId,
+        'med-1',
+        '2026-08-26',
+        '20:00',
+        'Skipped',
+      );
       const skippedReq = httpMock.expectOne((r) => r.url === `${base()}/doses/med-1`);
-      expect(skippedReq.request.body).toEqual({ status: 2 });
-      skippedReq.flush(dose({ status: 2, time: '20:00' }));
+      expect(skippedReq.request.body).toEqual({ status: 'Skipped' });
+      skippedReq.flush(dose({ status: 'Skipped', time: '20:00' }));
       await skippedPromise;
     });
   });

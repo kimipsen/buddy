@@ -133,12 +133,12 @@ export class WeekPlanPrintPage {
   // On screen the sheet keeps its millimetre size and is scaled down to fit, so the preview is a
   // faithful miniature of the paper. The scale is dropped under @media print.
   protected readonly previewScale = computed(() => {
-    const paper = PAPER_MM[this.model()?.paperSize ?? 0];
+    const paper = PAPER_MM[this.model()?.paperSize ?? 'A4'];
     return Math.min(1, (this.viewportWidth() - PREVIEW_GUTTER_PX) / (paper.width * PX_PER_MM));
   });
 
   protected readonly previewSize = computed(() => {
-    const paper = PAPER_MM[this.model()?.paperSize ?? 0];
+    const paper = PAPER_MM[this.model()?.paperSize ?? 'A4'];
     const scale = this.previewScale();
     return { width: paper.width * PX_PER_MM * scale, height: paper.height * PX_PER_MM * scale };
   });
@@ -189,7 +189,7 @@ export class WeekPlanPrintPage {
   }
 
   private applyPageStyle(template: PrintTemplate): void {
-    const size = template.paperSize === 1 ? 'A3' : 'A4';
+    const size = template.paperSize;
     this.pageStyle ??= this.document.head.appendChild(this.document.createElement('style'));
     this.pageStyle.setAttribute('data-week-plan-print', '');
     // Paper is always white, whatever the app theme: the dark class on <html> must not print.

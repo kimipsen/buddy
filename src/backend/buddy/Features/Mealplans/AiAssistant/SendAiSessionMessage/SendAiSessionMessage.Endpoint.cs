@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.OpenApi;
 using buddy.Common.RateLimiting;
 using buddy.Features.Users;
 
@@ -28,6 +29,7 @@ public static class SendAiSessionMessageEndpoint
             return outcome.ToHttpResult(httpContext);
         })
         .RequireRateLimiting(RateLimitingFeature.AiAssistantPolicy)
+        .ProducesErrorCode(StatusCodes.Status409Conflict, AiSessionOutcome.DataSharingNotAcknowledgedCode)
         .WithName("SendAiSessionMessage");
 
         return mealplans;

@@ -9,12 +9,12 @@ import {
 } from '../../../core/map-with-concurrency';
 import { MealplanScope, MealplansService } from '../../../core/mealplans.service';
 import { PickupsService } from '../../../core/pickups.service';
-import { PRINT_ROW_KIND, PrintTemplate } from '../../../core/print-templates.service';
+import { PRINT_ROW_KIND, PrintRowKind, PrintTemplate } from '../../../core/print-templates.service';
 import { WorkLocationsService } from '../../../core/work-locations.service';
 import { WEEK_PLAN_DAY_COUNT } from './assemble-week-plan';
 import { WeekPlanSources, mealSourceKey } from './week-plan-model';
 
-const CALENDAR_KINDS: number[] = [
+const CALENDAR_KINDS: PrintRowKind[] = [
   PRINT_ROW_KIND.calendarMarker,
   PRINT_ROW_KIND.calendarEvents,
   PRINT_ROW_KIND.taskChecklist,
@@ -43,7 +43,7 @@ export class WeekPlanLoader {
     )) {
       // The group scope's name and tier only matter to the meal planner UI; listMealPlan uses the id.
       const scope: MealplanScope = row.mealGroupId
-        ? { kind: 'group', groupId: row.mealGroupId, groupName: '', accessTier: 0 }
+        ? { kind: 'group', groupId: row.mealGroupId, groupName: '', accessTier: 'None' }
         : { kind: 'family', childId: row.childId ?? '' };
       meals.set(mealSourceKey(row), scope);
     }

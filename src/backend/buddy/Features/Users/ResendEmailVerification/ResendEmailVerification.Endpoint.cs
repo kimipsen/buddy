@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.OpenApi;
 using buddy.Common.RateLimiting;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -31,6 +32,7 @@ public static class ResendEmailVerificationEndpoint
             };
         })
         .RequireRateLimiting(RateLimitingFeature.OutboundEmailPolicy)
+        .ProducesErrorCode(StatusCodes.Status409Conflict, ResendCooldown.ErrorCode)
         .WithName("ResendCurrentUserEmailVerification");
 
         return users;

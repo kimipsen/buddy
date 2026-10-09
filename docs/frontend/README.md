@@ -153,7 +153,12 @@ The email verification flow is in [src/frontend/buddy/src/app/features/verify-em
 
 ## Shared services
 
-The shared domain services live under [src/frontend/buddy/src/app/core](../../src/frontend/buddy/src/app/core):
+The shared domain services live under [src/frontend/buddy/src/app/core](../../src/frontend/buddy/src/app/core). Their request
+and response types are aliases of the API contract's schemas: `core/api/buddy-api.ts` is generated
+from [docs/backend/openapi/buddy.json](../backend/openapi/buddy.json) with openapi-typescript
+(`npm run api:types`, or `task docs:openapi` to regenerate the contract too), so a backend DTO
+change shows up as a type error. Never edit the generated file; frontend CI fails if it is stale.
+Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators are numbers.
 
 - `AccountService` resolves whether the user is a guardian or child
 - `AiAssistantService` calls the AI provider-settings and AI mealplan-session

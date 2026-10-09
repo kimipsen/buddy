@@ -37,6 +37,8 @@ public static class GetMealPlanIcalFeedEndpoint
         })
         .AllowAnonymous()
         .RequireRateLimiting(RateLimitingFeature.IcalFeedPolicy)
+        // ContentHttpResult adds no response metadata.
+        .Produces<string>(StatusCodes.Status200OK, "text/calendar")
         .WithName("GetMealPlanIcalFeed");
 
         return mealplans;

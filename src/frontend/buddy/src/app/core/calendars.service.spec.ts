@@ -30,7 +30,7 @@ describe('CalendarsService', () => {
   let httpMock: HttpTestingController;
 
   function calendar(overrides: Partial<CalendarSummary> = {}): CalendarSummary {
-    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 0, ...overrides };
+    return { id: 'cal-1', name: 'Home', icon: '🏠', role: 'Owner', ...overrides };
   }
 
   // listOccurrencesInRange/listTodayOccurrences chain an `await` on the calendars response before
@@ -45,7 +45,7 @@ describe('CalendarsService', () => {
   function occurrence(overrides: Partial<CalendarItemOccurrence> = {}): CalendarItemOccurrence {
     return {
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Clean room',
       icon: '🧹',
       iconOverride: null,
@@ -93,7 +93,7 @@ describe('CalendarsService', () => {
     });
 
     it('GETs the calendars list and resolves with the response body', async () => {
-      const calendars = [calendar(), calendar({ id: 'cal-2', name: 'Work', role: 1 })];
+      const calendars = [calendar(), calendar({ id: 'cal-2', name: 'Work', role: 'Contributor' })];
 
       const promise = service.listMyCalendars();
 

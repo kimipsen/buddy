@@ -18,7 +18,7 @@ describe('ManageChildren', () => {
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -29,7 +29,7 @@ describe('ManageChildren', () => {
     return {
       id: 'invite-1',
       email: 'co-parent@buddy.test',
-      kind: 1,
+      kind: 'Guardian',
       invitedAt: '2026-08-01T00:00:00Z',
       expiresAt: '2026-08-08T00:00:00Z',
       ...overrides,
@@ -41,9 +41,7 @@ describe('ManageChildren', () => {
       id: 'child-new',
       name: { givenName: 'Ada', familyName: 'Kid' },
       guardianLinkId: 'link-new',
-      kind: 0,
-      language: 'en',
-      timeZoneId: 'UTC',
+      kind: 'Parent',
       username: 'ada.kid',
       temporaryPassword: 'temp-pass-123',
       ...overrides,
@@ -1302,7 +1300,7 @@ describe('ManageChildren', () => {
 
     expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', {
       email: 'friend@buddy.test',
-      kind: 0,
+      kind: 'Parent',
     });
   });
 
@@ -1368,7 +1366,7 @@ describe('ManageChildren', () => {
 
     expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', {
       email: 'friend@buddy.test',
-      kind: 0,
+      kind: 'Parent',
     });
     expect(listGuardianInvites).toHaveBeenCalledTimes(2);
     expect(inviteEmailInput(compiled)!.value).toBe('');
@@ -1395,7 +1393,7 @@ describe('ManageChildren', () => {
 
     expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', {
       email: 'friend@buddy.test',
-      kind: 1,
+      kind: 'Guardian',
     });
   });
 
@@ -1489,7 +1487,7 @@ describe('ManageChildren', () => {
 
     expect(guardians.inviteGuardian).toHaveBeenCalledWith('child-1', {
       email: 'friend@buddy.test',
-      kind: 0,
+      kind: 'Parent',
     });
   });
 

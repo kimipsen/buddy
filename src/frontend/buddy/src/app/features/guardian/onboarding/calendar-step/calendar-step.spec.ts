@@ -22,7 +22,7 @@ describe('CalendarStep', () => {
         id: 'cal-new',
         name: 'Family',
         icon: '📅',
-        role: 0 as const,
+        role: 'Owner' as const,
       })),
     };
     const groups: Partial<GroupsService> = {
@@ -77,7 +77,9 @@ describe('CalendarStep', () => {
   it('offers an explicit change when members could edit the calendar', async () => {
     const { fixture, compiled, groups, changed } = await setup(
       setupWith({
-        group: groupDetail({ calendarPermissionPolicy: { Owner: 0, Admin: 1, Member: 1 } }),
+        group: groupDetail({
+          calendarPermissionPolicy: { Owner: 'Owner', Admin: 'Contributor', Member: 'Contributor' },
+        }),
       }),
     );
 
@@ -86,9 +88,9 @@ describe('CalendarStep', () => {
     await settle(fixture);
 
     expect(groups.updateCalendarPermissionPolicy).toHaveBeenCalledWith('group-1', {
-      Owner: 0,
-      Admin: 1,
-      Member: 2,
+      Owner: 'Owner',
+      Admin: 'Contributor',
+      Member: 'Viewer',
     });
     expect(changed).toHaveBeenCalled();
   });

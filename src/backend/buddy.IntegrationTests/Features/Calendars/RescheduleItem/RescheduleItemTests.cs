@@ -30,7 +30,7 @@ public sealed class RescheduleItemTests(BuddyApiFixture fixture)
             {
                 Schedule = new
                 {
-                    Kind = CalendarItemKind.Event,
+                    Kind = (int)CalendarItemKind.Event,
                     StartsAt = new { Date = newDay, Time = new TimeOnly(14, 0) },
                     EndsAt = new { Date = newDay, Time = new TimeOnly(15, 0) },
                     IsAllDay = false
@@ -55,7 +55,7 @@ public sealed class RescheduleItemTests(BuddyApiFixture fixture)
 
         var updated = await RescheduleAsync(token, calendarId, task.Id, new
         {
-            Kind = CalendarItemKind.Task,
+            Kind = (int)CalendarItemKind.Task,
             DueDate = new { Date = newDay, Time = new TimeOnly(18, 0) },
             IsAllDay = false
         }, 200);
@@ -75,7 +75,7 @@ public sealed class RescheduleItemTests(BuddyApiFixture fixture)
 
         await RescheduleAsync(token, calendarId, item.Id, new
         {
-            Kind = CalendarItemKind.Task,
+            Kind = (int)CalendarItemKind.Task,
             DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(5), Time = new TimeOnly(18, 0) },
             IsAllDay = false
         }, 400);
@@ -92,7 +92,7 @@ public sealed class RescheduleItemTests(BuddyApiFixture fixture)
 
         await RescheduleAsync(token, calendarId, task.Id, new
         {
-            Kind = CalendarItemKind.Event,
+            Kind = (int)CalendarItemKind.Event,
             StartsAt = new { Date = day, Time = new TimeOnly(9, 0) },
             EndsAt = new { Date = day, Time = new TimeOnly(10, 0) },
             IsAllDay = false
@@ -124,7 +124,7 @@ public sealed class RescheduleItemTests(BuddyApiFixture fixture)
             {
                 Schedule = new
                 {
-                    Kind = CalendarItemKind.Event,
+                    Kind = (int)CalendarItemKind.Event,
                     StartsAt = new { Date = day, Time = TimeOnly.MinValue },
                     EndsAt = new { Date = day.AddDays(1), Time = TimeOnly.MinValue },
                     IsAllDay = true
@@ -150,7 +150,7 @@ public sealed class RescheduleItemTests(BuddyApiFixture fixture)
         // rather than from request binding.
         var response = await RescheduleAsync(token, calendarId, item.Id, new
         {
-            Kind = CalendarItemKind.Event,
+            Kind = (int)CalendarItemKind.Event,
             StartsAt = new { Date = day, Time = new TimeOnly(10, 0) },
             EndsAt = new { Date = day, Time = new TimeOnly(9, 0) },
             IsAllDay = false

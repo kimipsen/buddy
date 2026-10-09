@@ -6,7 +6,9 @@ import { RouterLink } from '@angular/router';
 import {
   AiAssistantService,
   AiServedWindow,
+  AiSessionStatus,
   AiSessionView,
+  SERVED_WINDOW_DAYS,
 } from '../../../../core/ai-assistant.service';
 import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -21,18 +23,22 @@ import { Toggle } from '../../../../shared/toggle/toggle';
 import { AiDataSharingNotice } from '../ai-data-sharing-notice/ai-data-sharing-notice';
 import { readLastMealFilter, writeLastMealFilter } from './ai-meal-filter-storage';
 
-const DRAFTING = 0;
+const DRAFTING = 'Drafting' satisfies AiSessionStatus;
 
 const SLOT_LABEL_KEYS: Record<MealSlot, string> = {
-  0: 'mealplan.slots.breakfast',
-  1: 'mealplan.slots.lunch',
-  2: 'mealplan.slots.dinner',
-  3: 'mealplan.slots.snack',
+  Breakfast: 'mealplan.slots.breakfast',
+  Lunch: 'mealplan.slots.lunch',
+  Dinner: 'mealplan.slots.dinner',
+  Snack: 'mealplan.slots.snack',
 };
 
-const ALL_SLOTS: readonly MealSlot[] = [0, 1, 2, 3];
+const ALL_SLOTS: readonly MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 
-const SERVED_WINDOW_DAYS: readonly Exclude<AiServedWindow, 0>[] = [30, 60, 90];
+const SERVED_WINDOWS: readonly Exclude<AiServedWindow, 'Any'>[] = [
+  'Last30Days',
+  'Last60Days',
+  'Last90Days',
+];
 
 // The backend keys a "no meals match the filter" rejection on ServedWithin, for both starting a
 // session and sending a message (docs/backend/analysis/ai-assistant-meal-filter.md, Question 6).
@@ -82,9 +88,10 @@ export class MealplanAiAssistant {
 
   protected readonly fromDate = signal(todayIsoDate());
   protected readonly toDate = signal(addDaysIso(todayIsoDate(), 6));
-  protected readonly selectedSlots = signal<Set<MealSlot>>(new Set<MealSlot>([2]));
+  protected readonly selectedSlots = signal<Set<MealSlot>>(new Set<MealSlot>(['Dinner']));
   protected readonly notes = signal('');
   private readonly lastFilter = readLastMealFilter();
+  protected readonly servedWindowDays = SERVED_WINDOW_DAYS;
   protected readonly ratedOnly = signal(this.lastFilter.ratedOnly);
   protected readonly servedWithin = signal<AiServedWindow>(this.lastFilter.servedWithin);
   protected readonly servedWithinOptions = computed(
@@ -92,13 +99,13 @@ export class MealplanAiAssistant {
       this.translation.language();
       return [
         {
-          value: 0,
+          value: 'Any',
           label: this.translation.translate('mealplan.aiAssistant.start.servedWithinAll'),
         },
-        ...SERVED_WINDOW_DAYS.map((days) => ({
-          value: days,
+        ...SERVED_WINDOWS.map((window) => ({
+          value: window,
           label: this.translation.translate('mealplan.aiAssistant.start.servedWithinDays', {
-            days,
+            days: SERVED_WINDOW_DAYS[window],
           }),
         })),
       ];
@@ -240,7 +247,7 @@ export class MealplanAiAssistant {
 
   // The i18n key describing a session's meal filter, or null when it has none.
   protected filterSummaryKey(session: AiSessionView): string | null {
-    if (session.servedWithin !== 0) {
+    if (session.servedWithin !== 'Any') {
       return session.ratedOnly
         ? 'mealplan.aiAssistant.session.filterRatedServed'
         : 'mealplan.aiAssistant.session.filterServed';

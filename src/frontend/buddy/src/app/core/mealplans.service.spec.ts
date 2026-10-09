@@ -25,7 +25,7 @@ describe('MealplansService', () => {
     kind: 'group',
     groupId: 'group-1',
     groupName: 'The Fam',
-    accessTier: 2,
+    accessTier: 'Manage',
   };
 
   function familyBase(): string {
@@ -39,7 +39,7 @@ describe('MealplansService', () => {
   function entry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
     return {
       date: '2026-08-26',
-      slot: 0,
+      slot: 'Breakfast',
       mealId: 'meal-1',
       mealName: 'Pancakes',
       icon: '🥞',
@@ -326,7 +326,7 @@ describe('MealplansService', () => {
     it('PUTs mealId/notes with date/slot params and returns the new entry', async () => {
       const created = entry({
         date: '2026-08-26',
-        slot: 1,
+        slot: 'Lunch',
         mealId: 'meal-1',
         notes: 'extra syrup',
       });
@@ -334,7 +334,7 @@ describe('MealplansService', () => {
       const promise = service.assignMealToSlot(
         familyScope,
         '2026-08-26',
-        1,
+        'Lunch',
         'meal-1',
         'extra syrup',
       );
@@ -343,7 +343,7 @@ describe('MealplansService', () => {
         (r) =>
           r.url === `${familyBase()}/plan` &&
           r.params.get('date') === '2026-08-26' &&
-          r.params.get('slot') === '1',
+          r.params.get('slot') === 'Lunch',
       );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ mealId: 'meal-1', notes: 'extra syrup' });
@@ -352,14 +352,20 @@ describe('MealplansService', () => {
       await expect(promise).resolves.toEqual(created);
     });
 
-    it('serializes slot 0 (Breakfast) as the string "0" in query params', async () => {
-      const promise = service.assignMealToSlot(familyScope, '2026-08-26', 0, 'meal-1', '');
+    it('serializes the Breakfast slot by name in query params', async () => {
+      const promise = service.assignMealToSlot(
+        familyScope,
+        '2026-08-26',
+        'Breakfast',
+        'meal-1',
+        '',
+      );
 
       const req = httpMock.expectOne(
-        (r) => r.url === `${familyBase()}/plan` && r.params.get('slot') === '0',
+        (r) => r.url === `${familyBase()}/plan` && r.params.get('slot') === 'Breakfast',
       );
       expect(req.request.body).toEqual({ mealId: 'meal-1', notes: '' });
-      req.flush(entry({ slot: 0 }));
+      req.flush(entry({ slot: 'Breakfast' }));
 
       await promise;
     });
@@ -367,13 +373,13 @@ describe('MealplansService', () => {
 
   describe('clearMealSlot', () => {
     it('DELETEs the plan entry using date/slot params', async () => {
-      const promise = service.clearMealSlot(familyScope, '2026-08-26', 2);
+      const promise = service.clearMealSlot(familyScope, '2026-08-26', 'Dinner');
 
       const req = httpMock.expectOne(
         (r) =>
           r.url === `${familyBase()}/plan` &&
           r.params.get('date') === '2026-08-26' &&
-          r.params.get('slot') === '2',
+          r.params.get('slot') === 'Dinner',
       );
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
@@ -509,8 +515,8 @@ describe('MealplansService', () => {
       const promise = service.previewImport(familyScope, {
         text: 'Madplan 2026',
         format: 'auto',
-        weekStart: 0,
-        slot: 2,
+        weekStart: 'Sunday',
+        slot: 'Dinner',
       });
 
       const req = httpMock.expectOne(`${familyBase()}/imports/preview`);
@@ -519,8 +525,8 @@ describe('MealplansService', () => {
       expect(req.request.body).toEqual({
         text: 'Madplan 2026',
         format: 'auto',
-        weekStart: 0,
-        slot: 2,
+        weekStart: 'Sunday',
+        slot: 'Dinner',
       });
       req.flush(preview);
 
@@ -538,7 +544,9 @@ describe('MealplansService', () => {
       const request = {
         format: 'csv' as const,
         archiveSingleUse: true,
-        entries: [{ date: '2024-01-14', slot: 2 as const, newMealName: 'Lasagne', notes: '' }],
+        entries: [
+          { date: '2024-01-14', slot: 'Dinner' as const, newMealName: 'Lasagne', notes: '' },
+        ],
       };
 
       const promise = service.commitImport(groupScope, request);

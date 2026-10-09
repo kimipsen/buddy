@@ -383,7 +383,7 @@ Status codes follow [http-status-codes.md](../http-status-codes.md):
 | `MealGroupId` write-time check | The caller must be a non-child member of that group (added during implementation, alongside the checks listed under Authorization) |
 | `AssignedToId` write-time check | None: a wrong assignee only filters a row down to nothing, and print-time authorization already covers access |
 | Write-time reference checks | Only over references that are new in the save, so co-editing a group template and keeping a stale row don't block later saves |
-| Wire format for enums | Numeric ordinals (`PaperSize`, `PrintRowKind`, `DayOfWeek` with `0` = Sunday); there is no string enum converter |
+| Wire format for enums | Member names (`PaperSize`, `PrintRowKind`, `DayOfWeek`), since the API switched to string enums ([openapi-client-contract.md](openapi-client-contract.md)); numeric ordinals until then |
 | Concurrent edits | Expected-version appends; a true race is `409 concurrency_conflict`, not last-write-wins |
 | Guardian "away"/office rows | A dedicated `WorkLocation` row kind over [work-locations.md](work-locations.md), not a `CalendarMarker` with a title filter |
 

@@ -3,8 +3,16 @@ import { Weekday } from '../../../core/work-locations.service';
 
 export const MAX_CYCLE_WEEKS = 4;
 
-// Monday-first display order, as backend DayOfWeek ordinals (0 = Sunday).
-export const WEEKDAYS_MONDAY_FIRST: readonly Weekday[] = [1, 2, 3, 4, 5, 6, 0];
+// Monday-first display order, as backend DayOfWeek names.
+export const WEEKDAYS_MONDAY_FIRST: readonly Weekday[] = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 // Week 0 of the cycle is "A", week 1 "B", ... up to MAX_CYCLE_WEEKS.
 export function weekName(week: number): string {

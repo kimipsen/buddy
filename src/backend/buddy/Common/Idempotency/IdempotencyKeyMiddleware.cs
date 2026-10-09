@@ -19,7 +19,11 @@ namespace buddy.Common.Idempotency;
 public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKeyRepository repository, IOptions<JsonOptions> jsonOptions)
 {
     public const string HeaderName = "Idempotency-Key";
-    private const int MaxKeyLength = 200;
+    public const string InvalidKeyCode = "invalid_idempotency_key";
+    public const string KeyInProgressCode = "idempotency_key_in_progress";
+    public const string KeyReusedCode = "idempotency_key_reused";
+    public const string ResponseUnavailableCode = "idempotency_response_unavailable";
+    public const int MaxKeyLength = 200;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -33,7 +37,7 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
 
         if (string.IsNullOrWhiteSpace(key) || key.Length > MaxKeyLength)
         {
-            await WriteErrorAsync(context, StatusCodes.Status400BadRequest, "invalid_idempotency_key",
+            await WriteErrorAsync(context, StatusCodes.Status400BadRequest, InvalidKeyCode,
                 $"{HeaderName} must be a non-empty string of at most {MaxKeyLength} characters.");
             return;
         }
@@ -67,7 +71,7 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
 
             if (winner is null)
             {
-                await WriteConflictAsync(context, "idempotency_key_in_progress", "A request with this Idempotency-Key is already being processed.");
+                await WriteConflictAsync(context, KeyInProgressCode, "A request with this Idempotency-Key is already being processed.");
                 return;
             }
 
@@ -105,13 +109,13 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
     {
         if (record.RequestFingerprint != fingerprint)
         {
-            await WriteConflictAsync(context, "idempotency_key_reused", $"This {HeaderName} was already used with a different request.");
+            await WriteConflictAsync(context, KeyReusedCode, $"This {HeaderName} was already used with a different request.");
             return;
         }
 
         if (record.Response is not { } response)
         {
-            await WriteConflictAsync(context, "idempotency_key_in_progress", "A request with this Idempotency-Key is already being processed.");
+            await WriteConflictAsync(context, KeyInProgressCode, "A request with this Idempotency-Key is already being processed.");
             return;
         }
 
@@ -119,7 +123,7 @@ public sealed class IdempotencyKeyMiddleware(RequestDelegate next, IdempotencyKe
         {
             // Running the request again could repeat its effect (a second child account), so the
             // retry is refused rather than replayed without its original response.
-            await WriteConflictAsync(context, "idempotency_response_unavailable", $"The response to this {HeaderName} can no longer be replayed. Check whether the original request succeeded.");
+            await WriteConflictAsync(context, ResponseUnavailableCode, $"The response to this {HeaderName} can no longer be replayed. Check whether the original request succeeded.");
             return;
         }
 

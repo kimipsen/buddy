@@ -25,12 +25,12 @@ const PLAYDATE = 3 satisfies PickupAssigneeKind;
 const BABYSITTER = 4 satisfies PickupAssigneeKind;
 
 const SLOT_LABELS = {
-  0: 'dashboard.pickup.slots.dropOff',
-  1: 'dashboard.pickup.slots.pickUp',
-} as const;
+  DropOff: 'dashboard.pickup.slots.dropOff',
+  PickUp: 'dashboard.pickup.slots.pickUp',
+} as const satisfies Record<PickupSlot, string>;
 
-// Table columns, drop-off first; each value is the slot ordinal the column shows.
-const SLOTS = [0, 1] as const satisfies readonly PickupSlot[];
+// Table columns, drop-off first; each value is the slot the column shows.
+const SLOTS = ['DropOff', 'PickUp'] as const satisfies readonly PickupSlot[];
 
 // assigneeName is the assigned guardian's given name, resolved against that child's own guardian
 // list; null when the assignee isn't a guardian or the id can't be resolved.
@@ -97,7 +97,7 @@ export class PickupToday {
           this.pickups.listSchedule(child.id, today, today),
           this.guardians.listChildGuardians(child.id),
         ]);
-        const bySlot: ChildPickups['bySlot'] = { 0: null, 1: null };
+        const bySlot: ChildPickups['bySlot'] = { DropOff: null, PickUp: null };
         for (const occurrence of occurrences) {
           bySlot[occurrence.slot] = {
             ...occurrence,
@@ -111,7 +111,7 @@ export class PickupToday {
     return {
       hasChildren: true,
       rows: perChild
-        .filter((row) => row.bySlot[0] !== null || row.bySlot[1] !== null)
+        .filter((row) => row.bySlot.DropOff !== null || row.bySlot.PickUp !== null)
         .sort(byChild),
     };
   }

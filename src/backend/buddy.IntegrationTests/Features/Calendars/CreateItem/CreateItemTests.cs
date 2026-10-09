@@ -46,7 +46,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
                 Color = "#00ff00",
                 Schedule = new
                 {
-                    Kind = CalendarItemKind.Event,
+                    Kind = (int)CalendarItemKind.Event,
                     StartsAt = new { Date = start, Time = TimeOnly.MinValue },
                     EndsAt = new { Date = start.AddDays(3), Time = TimeOnly.MinValue },
                     IsAllDay = true
@@ -90,7 +90,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
                 Color = "#ff0000",
                 Schedule = new
                 {
-                    Kind = CalendarItemKind.Task,
+                    Kind = (int)CalendarItemKind.Task,
                     IsAllDay = false,
                     DueDate = new { Date = due, Time = new TimeOnly(17, 0) }
                 }
@@ -117,7 +117,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Color = "#00ff00",
             Schedule = new
             {
-                Kind = CalendarItemKind.Event,
+                Kind = (int)CalendarItemKind.Event,
                 IsAllDay = false,
                 StartsAt = new { Date = day, Time = new TimeOnly(9, 0) }
             }
@@ -140,7 +140,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Color = "#00ff00",
             Schedule = new
             {
-                Kind = CalendarItemKind.Event,
+                Kind = (int)CalendarItemKind.Event,
                 IsAllDay = false,
                 EndsAt = new { Date = day, Time = new TimeOnly(9, 30) }
             }
@@ -166,7 +166,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Color = "#00ff00",
             Schedule = new
             {
-                Kind = CalendarItemKind.Event,
+                Kind = (int)CalendarItemKind.Event,
                 IsAllDay = false,
                 StartsAt = new { Date = day, Time = start },
                 EndsAt = new { Date = day, Time = start.AddMinutes(endOffsetMinutes) }
@@ -190,7 +190,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Color = "#ff0000",
             Schedule = new
             {
-                Kind = CalendarItemKind.Task,
+                Kind = (int)CalendarItemKind.Task,
                 IsAllDay = false
             }
         });
@@ -211,7 +211,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Color = "#ff0000",
             Schedule = new
             {
-                Kind = CalendarItemKind.Task,
+                Kind = (int)CalendarItemKind.Task,
                 IsAllDay = false,
                 DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) }
             }
@@ -247,7 +247,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 0, Until = (DateOnly?)null },
             Schedule = new
             {
-                Kind = CalendarItemKind.Task,
+                Kind = (int)CalendarItemKind.Task,
                 IsAllDay = false,
                 DueDate = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(17, 0) }
             }
@@ -271,7 +271,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Recurrence = new { Frequency = RecurrenceFrequency.Daily, IntervalCount = 1, Until = (DateOnly?)dueDate.AddDays(-1) },
             Schedule = new
             {
-                Kind = CalendarItemKind.Task,
+                Kind = (int)CalendarItemKind.Task,
                 IsAllDay = false,
                 DueDate = new { Date = dueDate, Time = new TimeOnly(17, 0) }
             }
@@ -440,7 +440,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             },
             Schedule = new
             {
-                Kind = CalendarItemKind.Task,
+                Kind = (int)CalendarItemKind.Task,
                 IsAllDay = false,
                 DueDate = new { Date = sunday, Time = new TimeOnly(17, 0) }
             }
@@ -521,7 +521,7 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
             Color = "#00ff00",
             Schedule = new
             {
-                Kind = CalendarItemKind.Event,
+                Kind = (int)CalendarItemKind.Event,
                 IsAllDay = false,
                 StartsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 0) },
                 EndsAt = new { Date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), Time = new TimeOnly(9, 30) },

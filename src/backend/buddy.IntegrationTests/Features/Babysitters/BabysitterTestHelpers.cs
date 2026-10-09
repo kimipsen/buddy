@@ -52,7 +52,7 @@ internal static class BabysitterTestHelpers
         var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Babysitter, GuardianId = guardianId, BabysitterId = babysitterId } })
+            _.Put.Json(new { Assignee = new { Kind = (int)PickupAssigneeKind.Babysitter, GuardianId = guardianId, BabysitterId = babysitterId } })
                 .ToUrl($"/pickups/children/{childId}/assignments")
                 .QueryString("date", $"{date:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");

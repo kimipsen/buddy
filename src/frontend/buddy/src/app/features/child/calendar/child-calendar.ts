@@ -30,7 +30,7 @@ import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { Toggle } from '../../../shared/toggle/toggle';
 
-const TASK_KIND: CalendarItemKind = 1;
+const TASK_KIND: CalendarItemKind = 'Task';
 const DAYS_AHEAD = 7;
 
 // Meals only carry a date + MealSlot, never a real clock time -- this mirrors the backend's
@@ -38,17 +38,17 @@ const DAYS_AHEAD = 7;
 // slotted into the right position among real-timestamped occurrences. Note the chronological
 // order (Breakfast, Lunch, Snack, Dinner) differs from the enum's declaration order.
 const MEAL_SLOT_SORT_TIME: Record<MealSlot, string> = {
-  0: '07:00',
-  1: '12:00',
-  2: '18:00',
-  3: '15:00',
+  Breakfast: '07:00',
+  Lunch: '12:00',
+  Dinner: '18:00',
+  Snack: '15:00',
 };
 
 const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'dashboard.mealplan.slots.breakfast',
-  1: 'dashboard.mealplan.slots.lunch',
-  2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack',
+  Breakfast: 'dashboard.mealplan.slots.breakfast',
+  Lunch: 'dashboard.mealplan.slots.lunch',
+  Dinner: 'dashboard.mealplan.slots.dinner',
+  Snack: 'dashboard.mealplan.slots.snack',
 };
 
 // What one week's load produced: the calendars the child can see (for the filter) plus that

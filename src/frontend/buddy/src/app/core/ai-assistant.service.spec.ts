@@ -31,12 +31,12 @@ describe('AiAssistantService', () => {
       id: 'session-1',
       from: '2026-08-01',
       to: '2026-08-03',
-      requestedSlots: [2],
-      status: 0,
+      requestedSlots: ['Dinner'],
+      status: 'Drafting',
       transcript: [],
       draft: [],
       ratedOnly: false,
-      servedWithin: 0,
+      servedWithin: 'Any',
       ...overrides,
     };
   }
@@ -64,8 +64,8 @@ describe('AiAssistantService', () => {
   describe('listProviders', () => {
     it('GETs the provider settings for the child', async () => {
       const result = settings({
-        providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
-        activeProvider: 0,
+        providers: [{ provider: 'Anthropic', last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
+        activeProvider: 'Anthropic',
       });
 
       const promise = service.listProviders(childId);
@@ -80,27 +80,27 @@ describe('AiAssistantService', () => {
 
   describe('setProviderApiKey', () => {
     it('PUTs the api key to the provider-scoped key endpoint', async () => {
-      const promise = service.setProviderApiKey(childId, 0, 'sk-ant-test');
+      const promise = service.setProviderApiKey(childId, 'Anthropic', 'sk-ant-test');
 
-      const req = httpMock.expectOne(`${base()}/ai/providers/0/key`);
+      const req = httpMock.expectOne(`${base()}/ai/providers/Anthropic/key`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ apiKey: 'sk-ant-test' });
       req.flush(
         settings({
-          providers: [{ provider: 0, last4: 'test', addedAt: '2026-08-01T00:00:00Z' }],
-          activeProvider: 0,
+          providers: [{ provider: 'Anthropic', last4: 'test', addedAt: '2026-08-01T00:00:00Z' }],
+          activeProvider: 'Anthropic',
         }),
       );
 
-      await expect(promise).resolves.toMatchObject({ activeProvider: 0 });
+      await expect(promise).resolves.toMatchObject({ activeProvider: 'Anthropic' });
     });
   });
 
   describe('removeProviderApiKey', () => {
     it('DELETEs the provider-scoped key endpoint', async () => {
-      const promise = service.removeProviderApiKey(childId, 1);
+      const promise = service.removeProviderApiKey(childId, 'OpenAi');
 
-      const req = httpMock.expectOne(`${base()}/ai/providers/1/key`);
+      const req = httpMock.expectOne(`${base()}/ai/providers/OpenAi/key`);
       expect(req.request.method).toBe('DELETE');
       req.flush(settings());
 
@@ -110,13 +110,13 @@ describe('AiAssistantService', () => {
 
   describe('setActiveProvider', () => {
     it('PUTs to the active-provider endpoint with the provider in the URL', async () => {
-      const promise = service.setActiveProvider(childId, 2);
+      const promise = service.setActiveProvider(childId, 'Gemini');
 
-      const req = httpMock.expectOne(`${base()}/ai/active-provider/2`);
+      const req = httpMock.expectOne(`${base()}/ai/active-provider/Gemini`);
       expect(req.request.method).toBe('PUT');
-      req.flush(settings({ activeProvider: 2 }));
+      req.flush(settings({ activeProvider: 'Gemini' }));
 
-      await expect(promise).resolves.toMatchObject({ activeProvider: 2 });
+      await expect(promise).resolves.toMatchObject({ activeProvider: 'Gemini' });
     });
   });
 
@@ -137,9 +137,9 @@ describe('AiAssistantService', () => {
 
   describe('testProviderConnection', () => {
     it('POSTs an explicit api key when provided', async () => {
-      const promise = service.testProviderConnection(childId, 0, 'sk-ant-candidate');
+      const promise = service.testProviderConnection(childId, 'Anthropic', 'sk-ant-candidate');
 
-      const req = httpMock.expectOne(`${base()}/ai/providers/0/test-connection`);
+      const req = httpMock.expectOne(`${base()}/ai/providers/Anthropic/test-connection`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ apiKey: 'sk-ant-candidate' });
       req.flush({ kind: 0 });
@@ -148,9 +148,9 @@ describe('AiAssistantService', () => {
     });
 
     it('POSTs a null api key to test the already-stored key', async () => {
-      const promise = service.testProviderConnection(childId, 0);
+      const promise = service.testProviderConnection(childId, 'Anthropic');
 
-      const req = httpMock.expectOne(`${base()}/ai/providers/0/test-connection`);
+      const req = httpMock.expectOne(`${base()}/ai/providers/Anthropic/test-connection`);
       expect(req.request.body).toEqual({ apiKey: null });
       req.flush({ kind: 1, message: 'Incorrect API key provided.' });
 
@@ -187,11 +187,11 @@ describe('AiAssistantService', () => {
       const request: StartAiSessionRequest = {
         from: '2026-08-01',
         to: '2026-08-03',
-        slots: [2],
+        slots: ['Dinner'],
         mustIncludeMealIds: [],
         notes: '',
         ratedOnly: true,
-        servedWithin: 60,
+        servedWithin: 'Last60Days',
       };
 
       const promise = service.startSession(childId, request);
@@ -224,9 +224,9 @@ describe('AiAssistantService', () => {
 
       const req = httpMock.expectOne(`${base()}/ai/sessions/current/apply`);
       expect(req.request.method).toBe('POST');
-      req.flush(session({ status: 1 }));
+      req.flush(session({ status: 'Applied' }));
 
-      await expect(promise).resolves.toMatchObject({ status: 1 });
+      await expect(promise).resolves.toMatchObject({ status: 'Applied' });
     });
   });
 
@@ -236,9 +236,9 @@ describe('AiAssistantService', () => {
 
       const req = httpMock.expectOne(`${base()}/ai/sessions/current/discard`);
       expect(req.request.method).toBe('POST');
-      req.flush(session({ status: 2 }));
+      req.flush(session({ status: 'Discarded' }));
 
-      await expect(promise).resolves.toMatchObject({ status: 2 });
+      await expect(promise).resolves.toMatchObject({ status: 'Discarded' });
     });
   });
 });

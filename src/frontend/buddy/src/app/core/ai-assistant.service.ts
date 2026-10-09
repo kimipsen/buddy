@@ -3,75 +3,40 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { postIdempotent } from './http-idempotency';
-import { MealSlot } from './mealplans.service';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
-// AiProvider values match the backend's AiProvider enum ordinals (no string enum converter is
-// registered server-side): 0 = Anthropic, 1 = OpenAi, 2 = Gemini.
-export type AiProvider = 0 | 1 | 2;
+export type AiProvider = Schemas['AiProvider'];
 
-// AiSessionStatus values match the backend's AiSessionStatus enum ordinals: 0 = Drafting,
-// 1 = Applied, 2 = Discarded.
-export type AiSessionStatus = 0 | 1 | 2;
+export type AiSessionStatus = Schemas['AiSessionStatus'];
 
-// AiChatMessageRole values match the backend's AiChatMessageRole enum ordinals: 0 = User,
-// 1 = Assistant.
-export type AiChatMessageRole = 0 | 1;
+export type AiChatMessageRole = Schemas['AiChatMessageRole'];
 
-export interface AiProviderSettingsEntry {
-  provider: AiProvider;
-  last4: string;
-  addedAt: string;
-}
+export type AiProviderSettingsEntry = Schemas['AiProviderSettingsEntry'];
 
-export interface AiProviderSettings {
-  providers: AiProviderSettingsEntry[];
-  activeProvider: AiProvider | null;
-  // When a guardian acknowledged what the assistant shares with the provider; null until then.
-  // Starting a session is refused (409 ai_data_sharing_not_acknowledged) until it is set.
-  dataSharingAcknowledgedAt: string | null;
-}
+export type AiProviderSettings = Schemas['AiProviderSettings'];
 
 // kind 0 = the provider answered; 1 = it rejected the key (bad key, no quota, ...) with a message.
-export type TestProviderConnectionResult = { kind: 0 } | { kind: 1; message: string };
+export type TestProviderConnectionResult = Schemas['TestProviderConnectionResult'];
 
-export interface AiSessionTranscriptEntry {
-  role: AiChatMessageRole;
-  text: string;
-  occurredAt: string;
-}
+export type AiSessionTranscriptEntry = Schemas['AiSessionTranscriptEntry'];
 
-export interface AiSessionDraftEntry {
-  date: string;
-  slot: MealSlot;
-  mealId: string;
-  mealName: string;
-}
+export type AiSessionDraftEntry = Schemas['AiSessionDraftEntry'];
 
-// AiServedWindow on the backend: the value is the day count, 0 meaning no served-in filter.
-export type AiServedWindow = 0 | 30 | 60 | 90;
+// How far back a meal must have been served to be suggested; Any means no served-in filter.
+export type AiServedWindow = Schemas['AiServedWindow'];
 
-export interface AiSessionView {
-  id: string;
-  from: string;
-  to: string;
-  requestedSlots: MealSlot[];
-  status: AiSessionStatus;
-  transcript: AiSessionTranscriptEntry[];
-  draft: AiSessionDraftEntry[];
-  ratedOnly: boolean;
-  servedWithin: AiServedWindow;
-}
+// Each window's day count, for display.
+export const SERVED_WINDOW_DAYS: Record<AiServedWindow, number> = {
+  Any: 0,
+  Last30Days: 30,
+  Last60Days: 60,
+  Last90Days: 90,
+};
 
-export interface StartAiSessionRequest {
-  from: string;
-  to: string;
-  slots: MealSlot[];
-  mustIncludeMealIds: string[];
-  notes: string;
-  ratedOnly: boolean;
-  servedWithin: AiServedWindow;
-}
+export type AiSessionView = Schemas['AiSessionView'];
+
+export type StartAiSessionRequest = Schemas['StartAiSessionRequest'];
 
 @Injectable({ providedIn: 'root' })
 export class AiAssistantService {

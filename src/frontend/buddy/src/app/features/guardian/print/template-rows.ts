@@ -1,4 +1,5 @@
 import { CalendarSummary } from '../../../core/calendars.service';
+import { MealSlot } from '../../../core/mealplans.service';
 import { ChildSummary, GuardianSummary } from '../../../core/guardians.service';
 import {
   PRINT_ROW_KIND,
@@ -8,7 +9,7 @@ import {
 } from '../../../core/print-templates.service';
 import { WorkLocation } from '../../../core/work-locations.service';
 
-const DINNER = 2;
+const DINNER = 'Dinner' satisfies MealSlot;
 
 // Backend limits (PrintTemplateRules).
 export const MAX_LABEL_LENGTH = 40;

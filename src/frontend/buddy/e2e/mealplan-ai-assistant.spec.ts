@@ -167,16 +167,16 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
         id: 'e2e-stub-session',
         from: new Date().toISOString().slice(0, 10),
         to: new Date().toISOString().slice(0, 10),
-        requestedSlots: [0, 1],
-        status: 0,
+        requestedSlots: ['Breakfast', 'Lunch'],
+        status: 'Drafting',
         transcript: [
           {
-            role: 0,
+            role: 'User',
             text: 'Plan something quick for breakfast.',
             occurredAt: new Date().toISOString(),
           },
           {
-            role: 1,
+            role: 'Assistant',
             text: "Sure -- here's a draft for breakfast and lunch.",
             occurredAt: new Date().toISOString(),
           },
@@ -184,13 +184,13 @@ test('guardian configures a provider, toggles slots, starts/discards a real sess
         draft: [
           {
             date: new Date().toISOString().slice(0, 10),
-            slot: 0,
+            slot: 'Breakfast',
             mealId: 'e2e-stub-meal',
             mealName: 'Stubbed Oatmeal',
           },
         ],
         ratedOnly: false,
-        servedWithin: 0,
+        servedWithin: 'Any',
       },
     });
   });

@@ -6,193 +6,74 @@ import { todayIsoDate } from './date-utils';
 import { sortByFullName, sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { PER_ITEM_REQUEST_CONCURRENCY, mapWithConcurrency } from './map-with-concurrency';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
-// CalendarRole/CalendarItemKind values match the backend's enum ordinals (no string enum
-// converter is registered server-side): CalendarRole 0 = Owner, 1 = Contributor, 2 = Viewer.
-export type CalendarRole = 0 | 1 | 2;
+export type CalendarRole = Schemas['CalendarRole'];
 
-// CalendarItemKind 0 = Event, 1 = Task.
-export type CalendarItemKind = 0 | 1;
+export type CalendarItemKind = Schemas['CalendarItemKind'];
 
-// RecurrenceFrequency 0 = Daily, 1 = Weekly, 2 = Monthly, 3 = Yearly.
-export type RecurrenceFrequency = 0 | 1 | 2 | 3;
+export type RecurrenceFrequency = Schemas['RecurrenceFrequency'];
 
-// Weekday 0 = Sunday ... 6 = Saturday, like the backend's DayOfWeek and Date.getDay().
-export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type Weekday = Schemas['DayOfWeek'];
 
-export interface CalendarSummary {
-  id: string;
-  name: string;
-  icon: string;
-  role: CalendarRole;
-}
+export type CalendarSummary = Schemas['CalendarSummaryResponse'];
 
 // GET /calendars/{id}: one calendar with its owning group (CalendarResponse).
-export interface CalendarDetail {
-  id: string;
-  name: string;
-  icon: string;
-  timeZoneId: string;
-  groupId: string;
-  members: { userId: string; role: CalendarRole }[];
-}
+export type CalendarDetail = Schemas['CalendarResponse'];
 
-export interface IcalTokenSummary {
-  tokenId: string;
-  issuedAt: string;
-}
+export type IcalTokenSummary = Schemas['IcalTokenSummary'];
 
 // Returned exactly once, at creation -- the plaintext token is never retrievable again after this.
-export interface IssuedIcalToken {
-  tokenId: string;
-  token: string;
-  subscriptionPath: string;
-}
+export type IssuedIcalToken = Schemas['IcalTokenResponse'];
 
-export interface CreateCalendarRequest {
-  name: string;
-  timeZoneId: string;
-  // Required -- a calendar is always group-owned now, there's no personal-calendar option.
-  groupId: string;
-  // Omitted/null falls back to the backend's default icon.
-  icon?: string | null;
-}
+export type CreateCalendarRequest = Schemas['CreateCalendarRequest'];
 
-export interface UpdateCalendarIconRequest {
-  icon: string;
-}
+export type UpdateCalendarIconRequest = Schemas['UpdateCalendarIconRequest'];
 
-export interface DatePart {
-  date: string;
-  time: string;
-}
+export type DatePart = Schemas['StartsAt'];
 
 // weekdays: null or absent means no filter (daily: every day; weekly: the start date's weekday).
 // Otherwise the days a daily rule is limited to (intervalCount must be 1), or the days a weekly
 // rule repeats on every intervalCount weeks. Not allowed for monthly/yearly.
-export interface RecurrenceRuleRequest {
-  frequency: RecurrenceFrequency;
-  intervalCount: number;
-  until: string | null;
-  weekdays?: Weekday[] | null;
-}
+export type RecurrenceRuleRequest = Schemas['RecurrenceRuleRequest'];
 
 // When an item happens, discriminated by `kind` (0 = event, 1 = task) like the backend's
 // ItemTimingRequest. isAllDay=true makes the time-of-day in startsAt/endsAt/dueDate a sentinel.
-export type ItemTiming =
-  | { kind: 0; startsAt: DatePart; endsAt: DatePart; isAllDay: boolean }
-  | { kind: 1; dueDate: DatePart; isAllDay: boolean };
+export type ItemTiming = Schemas['ItemTimingRequest'];
 
 // A new item's schedule: a task may also be assigned to someone (null means unassigned).
-export type ItemSchedule =
-  | Extract<ItemTiming, { kind: 0 }>
-  | (Extract<ItemTiming, { kind: 1 }> & { assignedTo: string | null });
+export type ItemSchedule = Schemas['ItemScheduleRequest'];
 
-export interface CreateItemRequest {
-  title: string;
-  // null means "inherit the owning calendar's icon" -- the item stores no override.
-  icon: string | null;
-  color: string;
-  schedule: ItemSchedule;
-  recurrence: RecurrenceRuleRequest | null;
-}
+export type CreateItemRequest = Schemas['CreateItemRequest'];
 
 // Someone who could be assigned a task on a calendar: an explicit per-calendar grant, or -- for a
 // group-owned calendar -- any member of that group.
-export interface AssignableMember {
-  userId: string;
-  givenName: string;
-  familyName: string;
-}
+export type AssignableMember = Schemas['AssignableMemberResponse'];
 
-export interface UpdateItemDetailsRequest {
-  title: string;
-  // null clears any override, reverting to the owning calendar's icon.
-  icon: string | null;
-  color: string;
-}
+export type UpdateItemDetailsRequest = Schemas['UpdateItemDetailsRequest'];
 
 // The timing must match the item's own kind -- an event is rescheduled with an event timing.
-export interface RescheduleItemRequest {
-  schedule: ItemTiming;
-}
+export type RescheduleItemRequest = Schemas['RescheduleItemRequest'];
 
 // Matches ScheduleTaskFromTemplateRequest exactly. startDate/startTime are flat DateOnly/TimeOnly
 // fields (not a nested DatePart like CreateItemRequest) -- System.Text.Json's built-in converters
 // serialize DateOnly as "yyyy-MM-dd" and TimeOnly as "HH:mm:ss", matching todayIsoDate() and the
 // seconds-appended convention ManageMedicines/TimeSelect already use for TimeOnly-backed fields.
-export interface ScheduleTaskFromTemplateRequest {
-  taskTemplateId: string;
-  startDate: string;
-  startTime: string;
-  recurrence: RecurrenceRuleRequest | null;
-  assignedTo: string | null;
-  title: string;
-  icon: string | null;
-  color: string;
-}
+export type ScheduleTaskFromTemplateRequest = Schemas['ScheduleTaskFromTemplateRequest'];
 
-export interface CalendarItemResponse {
-  id: string;
-  calendarId: string;
-  title: string;
-  // Raw override -- null if the item inherits the owning calendar's icon.
-  icon: string | null;
-  color: string;
-  // A task's source says whether it was entered by hand (0) or scheduled from a template (1).
-  schedule:
-    | { kind: 0; period: { startsAt: DatePart; endsAt: DatePart; isAllDay: boolean } }
-    | {
-        kind: 1;
-        dueDate: DatePart & { isAllDay: boolean };
-        assignedTo: string | null;
-        source: { kind: 0 } | { kind: 1; taskTemplateId: string };
-      };
-  recurrence: RecurrenceRuleRequest | null;
-  createdBy: string;
-  lastModifiedBy: string;
-}
+export type CalendarItemResponse = Schemas['CalendarItemResponse'];
 
-export interface CalendarItemOccurrence {
-  itemId: string;
-  kind: CalendarItemKind;
-  title: string;
-  // Always resolved: the item's own override, or the owning calendar's icon when it has none.
-  icon: string;
-  // Raw override -- null if this occurrence's icon came from the calendar's default.
-  iconOverride: string | null;
-  color: string;
-  // An event, and each subtask of a routine, spans a window; a plain task is due at one instant.
-  timing: OccurrenceTiming;
-  // The instant this occurrence sorts and is dated by: the window's start, or the due instant.
-  sortAt: string;
-  isAllDay: boolean;
-  isCompleted: boolean;
-  createdBy: string;
-  lastModifiedBy: string;
-  assignedTo: string | null;
-  // Set only when this occurrence is one subtask of a template-scheduled task.
-  routine: Routine | null;
-}
+export type CalendarItemOccurrence = Schemas['CalendarItemOccurrence'];
 
-export type OccurrenceTiming =
-  { kind: 0; startsAt: string; endsAt: string } | { kind: 1; dueAt: string };
+export type OccurrenceTiming = Schemas['OccurrenceTiming'];
 
 // title on the occurrence is the subtask's own; parentTitle and parentIcon (the parent's
 // effective icon, which a grouped run's header uses instead of any one subtask's icon) let a
 // client group a routine's subtask occurrences. subtaskId targets setTaskCompletion.
-export interface Routine {
-  subtaskId: string;
-  parentTitle: string;
-  parentIcon: string;
-}
+export type Routine = Schemas['Routine'];
 
-export interface TaskCompletion {
-  itemId: string;
-  occurrenceDate: string;
-  isCompleted: boolean;
-}
+export type TaskCompletion = Schemas['TaskCompletionResponse'];
 
 export type CalendarOccurrence = CalendarItemOccurrence & {
   calendarId: string;

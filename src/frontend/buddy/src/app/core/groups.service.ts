@@ -7,75 +7,38 @@ import { sortByFullName, sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
 import { MealplanAccessTier } from './mealplans.service';
 import { RuntimeConfigService } from './runtime-config.service';
+import type { Schemas } from './api/schemas';
 
-// GroupRole values match the backend's GroupRole enum ordinals (no string enum converter is
-// registered server-side): 0 = Owner, 1 = Admin, 2 = Member.
-export type GroupRole = 0 | 1 | 2;
+export type GroupRole = Schemas['GroupRole'];
 
-export interface GroupSummary {
-  id: string;
-  name: string;
-  role: GroupRole;
-}
+export type GroupSummary = Schemas['GroupSummaryResponse'];
 
-export interface GroupMember {
-  userId: string;
-  givenName: string;
-  familyName: string;
-  role: GroupRole;
-  isChild: boolean;
-}
+export type GroupMember = Schemas['GroupMemberResponse'];
 
-// Unlike GroupRole itself, dictionary KEYS of type GroupRole serialize as the enum's member name
-// (System.Text.Json's built-in behavior for enum dictionary keys), not its numeric ordinal --
-// so this policy's keys are string role names, while CalendarRole values stay numeric.
-export type GroupRoleName = 'Owner' | 'Admin' | 'Member';
+// The permission policies are keyed by role name; the generated schema only says "string keys".
+export type CalendarPermissionPolicy = Record<GroupRole, CalendarRole>;
 
-// Indexed by GroupRole's ordinal (0 = Owner, 1 = Admin, 2 = Member).
-export const GROUP_ROLE_NAMES = [
-  'Owner',
-  'Admin',
-  'Member',
-] as const satisfies readonly GroupRoleName[];
+export type MealplanPermissionPolicy = Record<GroupRole, MealplanAccessTier>;
 
-export type CalendarPermissionPolicy = Record<GroupRoleName, CalendarRole>;
-
-export type MealplanPermissionPolicy = Record<GroupRoleName, MealplanAccessTier>;
-
-export interface GroupDetail {
-  id: string;
-  name: string;
-  members: GroupMember[];
+export type GroupDetail = Omit<
+  Schemas['GroupResponse'],
+  'calendarPermissionPolicy' | 'mealplanPermissionPolicy'
+> & {
   calendarPermissionPolicy: CalendarPermissionPolicy;
   mealplanPermissionPolicy: MealplanPermissionPolicy;
-}
+};
 
-export interface CreateGroupRequest {
-  name: string;
-}
+export type CreateGroupRequest = Schemas['CreateGroupRequest'];
 
-export interface InviteToGroupRequest {
-  email: string;
-  role: GroupRole;
-}
+export type InviteToGroupRequest = Schemas['InviteToGroupRequest'];
 
-export interface GroupInvite {
-  id: string;
-  email: string;
-  role: GroupRole;
-  invitedAt: string;
-  expiresAt: string;
-}
+export type GroupInvite = Schemas['GroupInviteResponse'];
 
 // The response to sending an invite: the invite plus the link the email carries, so the inviter
 // can share it themself. Only available here -- the server keeps just the token's hash.
-export interface SentGroupInvite extends GroupInvite {
-  inviteUrl: string;
-}
+export type SentGroupInvite = Schemas['SentGroupInviteResponse'];
 
-export interface GroupInvitePreview {
-  groupName: string;
-}
+export type GroupInvitePreview = Schemas['GroupInvitePreviewResponse'];
 
 @Injectable({ providedIn: 'root' })
 export class GroupsService {

@@ -25,15 +25,15 @@ import { ActionState, createAction } from '../../../../shared/action-state/actio
 import { MealPicker } from '../meal-picker/meal-picker';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'mealplan.slots.breakfast',
-  1: 'mealplan.slots.lunch',
-  2: 'mealplan.slots.dinner',
-  3: 'mealplan.slots.snack',
+  Breakfast: 'mealplan.slots.breakfast',
+  Lunch: 'mealplan.slots.lunch',
+  Dinner: 'mealplan.slots.dinner',
+  Snack: 'mealplan.slots.snack',
 };
 
-const SLOTS: MealSlot[] = [0, 1, 2, 3];
+const SLOTS: MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 const DAYS_AHEAD = 7;
-const MANAGE: MealplanAccessTier = 2;
+const MANAGE: MealplanAccessTier = 'Manage';
 
 interface PlannerDay {
   date: string;

@@ -16,7 +16,7 @@ describe('MonthGrid', () => {
   ): CalendarOccurrence {
     return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
-      kind: 0,
+      kind: 'Event',
       title: 'Dentist',
       icon: '🦷',
       iconOverride: null,
@@ -116,21 +116,21 @@ describe('MonthGrid', () => {
     const subtasks = [
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-1',
         parentTitle: 'Morning routine',
         title: 'Brush teeth',
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-2',
         parentTitle: 'Morning routine',
         title: 'Get dressed',
       }),
       occurrence({
         itemId: 'run-1',
-        kind: 1,
+        kind: 'Task',
         subtaskId: 'sub-3',
         parentTitle: 'Morning routine',
         title: 'Eat breakfast',

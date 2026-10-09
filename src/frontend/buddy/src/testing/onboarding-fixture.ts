@@ -10,7 +10,7 @@ import { TaskTemplate } from '../app/core/task-library.service';
 
 export function progress(overrides: Partial<OnboardingProgress> = {}): OnboardingProgress {
   return {
-    status: 1,
+    status: 'Active',
     setupGroupId: 'group-1',
     invitationsSkipped: false,
     version: 1,
@@ -23,7 +23,7 @@ export function child(id = 'child-1', givenName = 'Ada'): ChildSummary {
     id,
     name: { givenName, familyName: 'Hansen' },
     guardianLinkId: `link-${id}`,
-    kind: 0,
+    kind: 'Parent',
     language: 'en',
     timeZoneId: 'UTC',
   };
@@ -33,9 +33,12 @@ export function groupDetail(overrides: Partial<GroupDetail> = {}): GroupDetail {
   return {
     id: 'group-1',
     name: 'The Hansens',
-    members: [{ userId: 'me', givenName: 'Sara', familyName: 'Hansen', role: 0, isChild: false }],
-    calendarPermissionPolicy: { Owner: 0, Admin: 1, Member: 2 },
-    mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+    members: [
+      { userId: 'me', givenName: 'Sara', familyName: 'Hansen', role: 'Owner', isChild: false },
+    ],
+    calendarPermissionPolicy: { Owner: 'Owner', Admin: 'Contributor', Member: 'Viewer' },
+    mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+    medicinePermissionPolicy: { Owner: 'Manage', Admin: 'Mark', Member: 'None' },
     ...overrides,
   };
 }

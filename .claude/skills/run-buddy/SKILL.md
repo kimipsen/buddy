@@ -67,7 +67,7 @@ for i in $(seq 1 40); do
 done; echo "api=$a web=$w"
 ```
 
-Other API probes: `https://localhost:7076/openapi/v1.json` (200 in Development; the readiness URL Playwright uses), `http://localhost:5193/health`, `https://localhost:7076/users/me` (401 without a token = auth is wired). If it doesn't come up, read `$S/api.log` / `$S/web.log`: build errors, `address already in use` (step 2), or a Postgres/Keycloak error (step 1). Cert errors: `task generer-cert && task cert`, then restart the API (`curl -k` and Playwright's `ignoreHTTPSErrors` don't care either way).
+Other API probes: `https://localhost:7076/openapi/v1.json` (the readiness URL Playwright uses; `/openapi/buddy.json` is the full API contract, served in every environment), `http://localhost:5193/health`, `https://localhost:7076/users/me` (401 without a token = auth is wired). If it doesn't come up, read `$S/api.log` / `$S/web.log`: build errors, `address already in use` (step 2), or a Postgres/Keycloak error (step 1). Cert errors: `task generer-cert && task cert`, then restart the API (`curl -k` and Playwright's `ignoreHTTPSErrors` don't care either way).
 
 ## 4. Log in and screenshot a page
 

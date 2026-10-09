@@ -64,7 +64,7 @@ describe('WorkLocationsService', () => {
 
   it('GETs resolved work days with from/to params', async () => {
     const days: WorkDay[] = [
-      { date: '2026-09-28', status: { kind: 2, location: stil, source: 0 } },
+      { date: '2026-09-28', status: { kind: 2, location: stil, source: 'Pattern' } },
     ];
     const promise = service.listWorkDays('g-1', '2026-09-28', '2026-10-04');
 
@@ -119,7 +119,7 @@ describe('WorkLocationsService', () => {
     const pattern: WorkPattern = {
       cycleWeeks: 2,
       anchorMonday: '2026-09-28',
-      days: [{ week: 1, day: 4, locationId: 'loc-1' }],
+      days: [{ week: 1, day: 'Thursday', locationId: 'loc-1' }],
     };
     const promise = service.replacePattern(pattern);
 

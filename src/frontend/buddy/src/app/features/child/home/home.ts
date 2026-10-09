@@ -35,6 +35,7 @@ import {
 import {
   PickupAssigneeKind,
   PickupOccurrence,
+  PickupSlot,
   PickupsService,
   babysitterName,
   playdateHostName,
@@ -47,21 +48,21 @@ import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner'
 import { ProgressBadge } from '../../../shared/progress-badge/progress-badge';
 import { ChildMenu } from './child-menu/child-menu';
 
-const EVENT_KIND: CalendarItemKind = 0;
-const TASK_KIND: CalendarItemKind = 1;
+const EVENT_KIND: CalendarItemKind = 'Event';
+const TASK_KIND: CalendarItemKind = 'Task';
 
-const PENDING: DoseStatus = 0;
-const TAKEN: DoseStatus = 1;
-const SKIPPED: DoseStatus = 2;
+const PENDING: DoseStatus = 'Pending';
+const TAKEN: DoseStatus = 'Taken';
+const SKIPPED: DoseStatus = 'Skipped';
 
 const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'dashboard.mealplan.slots.breakfast',
-  1: 'dashboard.mealplan.slots.lunch',
-  2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack',
+  Breakfast: 'dashboard.mealplan.slots.breakfast',
+  Lunch: 'dashboard.mealplan.slots.lunch',
+  Dinner: 'dashboard.mealplan.slots.dinner',
+  Snack: 'dashboard.mealplan.slots.snack',
 };
 
-const MEAL_SLOTS: MealSlot[] = [0, 1, 2, 3];
+const MEAL_SLOTS: MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 const MAX_STARS = 5;
 const STARS = Array.from({ length: MAX_STARS }, (_, index) => index + 1);
 
@@ -72,9 +73,9 @@ const PLAYDATE = 3 satisfies PickupAssigneeKind;
 const BABYSITTER = 4 satisfies PickupAssigneeKind;
 
 const PICKUP_SLOT_LABELS = {
-  0: 'child.home.pickup.slots.dropOff',
-  1: 'child.home.pickup.slots.pickUp',
-} as const;
+  DropOff: 'child.home.pickup.slots.dropOff',
+  PickUp: 'child.home.pickup.slots.pickUp',
+} as const satisfies Record<PickupSlot, string>;
 
 export interface EventView extends CalendarOccurrence {
   isPast: boolean;
@@ -432,7 +433,7 @@ export class ChildHome implements OnInit, OnDestroy {
 
         for (const [slot, existing] of Object.entries(next)) {
           if (existing.mealId === entry.mealId) {
-            next[Number(slot) as MealSlot] = { ...existing, rating: myRating };
+            next[slot as MealSlot] = { ...existing, rating: myRating };
           }
         }
 

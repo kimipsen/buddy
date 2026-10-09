@@ -47,8 +47,8 @@ const E2E_FAMILY_NAME = 'Testson';
 const E2E_CHILD_USERNAME = /^e2echild[0-9a-z]{8,14}$/;
 const E2E_GROUP_NAME = /^E2eGroup[AB]?[0-9a-z]{8,14}$/;
 const E2E_CALENDAR_NAME = /^E2eCalendar[0-9a-z]{8,14}$/;
-// GroupRole/CalendarRole serialize as numbers; 0 = Owner.
-const OWNER = 0;
+// GroupRole/CalendarRole serialize as member names.
+const OWNER = 'Owner';
 
 const args = process.argv.slice(2);
 const apply = args.includes('--apply');

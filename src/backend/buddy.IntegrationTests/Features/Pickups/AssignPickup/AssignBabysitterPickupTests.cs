@@ -56,7 +56,7 @@ public sealed class AssignBabysitterPickupTests(BuddyApiFixture fixture)
         var occurrence = (await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
-            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.Babysitter, GuardianId = guardianId, BabysitterId = anna.Id, Name = "Mallory" } })
+            _.Put.Json(new { Assignee = new { Kind = (int)PickupAssigneeKind.Babysitter, GuardianId = guardianId, BabysitterId = anna.Id, Name = "Mallory" } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{Today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");

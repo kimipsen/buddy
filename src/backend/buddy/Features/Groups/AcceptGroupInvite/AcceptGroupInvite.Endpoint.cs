@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.OpenApi;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -32,6 +33,9 @@ public static class AcceptGroupInviteEndpoint
             };
         })
         .RequireAuthorization()
+        // JsonHttpResult adds no response metadata; the plain 403 (another address) has no body.
+        .Produces<ErrorEnvelope>(StatusCodes.Status403Forbidden)
+        .ProducesErrorCode(StatusCodes.Status403Forbidden, EmailNotVerifiedExtensions.ErrorCode)
         .WithName("AcceptGroupInvite");
 
         return invites;

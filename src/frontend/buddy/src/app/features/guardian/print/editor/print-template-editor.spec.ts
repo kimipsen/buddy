@@ -23,8 +23,8 @@ describe('PrintTemplateEditor', () => {
     ownerUserId: 'me',
     ownerGroupId: null,
     name: 'Ugeplan',
-    paperSize: 0,
-    defaultStartWeekday: 1,
+    paperSize: 'A4',
+    defaultStartWeekday: 'Monday',
     showWeekNumber: true,
     rows: [{ ...emptyRow(PRINT_ROW_KIND.pickup, 'Hente'), childId: 'signe' }],
     guardianColors: [],
@@ -114,9 +114,9 @@ describe('PrintTemplateEditor', () => {
           provide: CalendarsService,
           useValue: {
             listMyCalendars: vi.fn(async () => [
-              { id: 'school', name: 'Skole', icon: '🏫', role: 0 },
-              { id: 'family', name: 'Familie', icon: '📅', role: 0 },
-              { id: 'work', name: 'Arbejde', icon: '💼', role: 0 },
+              { id: 'school', name: 'Skole', icon: '🏫', role: 'Owner' },
+              { id: 'family', name: 'Familie', icon: '📅', role: 'Owner' },
+              { id: 'work', name: 'Arbejde', icon: '💼', role: 'Owner' },
             ]),
           },
         },
@@ -314,8 +314,8 @@ describe('PrintTemplateEditor', () => {
     await settle(fixture);
 
     expect(templates.updateLayout).toHaveBeenCalledWith('t-1', {
-      paperSize: 1,
-      defaultStartWeekday: 0,
+      paperSize: 'A3',
+      defaultStartWeekday: 'Sunday',
       showWeekNumber: false,
     });
     expect(templates.replaceColors).toHaveBeenCalledWith('t-1', [

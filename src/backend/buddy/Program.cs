@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 using buddy.Common.Concurrency;
 using buddy.Common.Errors;
 using buddy.Common.Health;
 using buddy.Common.Http;
 using buddy.Common.Idempotency;
+using buddy.Common.OpenApi;
 using buddy.Common.Observability;
 using buddy.Common.RateLimiting;
 using buddy.Common.Validation;
@@ -59,6 +62,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new StronglyTypedIdJsonConverterFactory());
     options.SerializerOptions.Converters.Add(new ValueTupleJsonConverterFactory());
+    // Enums go over the wire by member name ("Owner", not 0), so the OpenAPI contract is
+    // self-describing. Numbers are still accepted on the way in, for a client built before the
+    // switch. See docs/backend/analysis/openapi-client-contract.md.
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 
     // Honest request DTOs: a request record's non-nullable member can't arrive as null, and a
     // constructor parameter without a default must be present in the body. Optional fields are
@@ -82,11 +89,9 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod());
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi(options =>
-{
-    options.ShouldInclude = api => api.GroupName is null;
-});
+// v1 (/health, /version) and the combined client contract; each feature adds its own document.
+// See docs/backend/analysis/openapi-client-contract.md.
+builder.Services.AddBuddyOpenApi();
 builder.Services.AddHealthChecksFeature();
 builder.Services.AddExceptionHandlingFeature();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -132,11 +137,7 @@ app.UseObservability();
 app.UseExceptionHandling();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     // Skipped in Development: the frontend calls the plain-http Kestrel endpoint, and redirecting
     // to https here would break CORS preflight (redirects aren't valid preflight responses).
@@ -165,6 +166,7 @@ app.UseETags();
 // /health and /health/ready. Container probes hit them constantly, so neither is rate limited.
 app.MapHealthChecksFeature();
 app.MapVersion();
+app.MapBuddyOpenApi();
 
 app.MapUsersFeature();
 app.MapGuardiansFeature();

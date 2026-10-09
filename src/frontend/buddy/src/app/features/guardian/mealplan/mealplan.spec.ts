@@ -14,13 +14,13 @@ describe('GuardianMealplan', () => {
     id: 'child-1',
     name: { givenName: 'Kim', familyName: 'Kid' },
     guardianLinkId: 'link-1',
-    kind: 0,
+    kind: 'Parent',
     language: 'en',
     timeZoneId: 'UTC',
   };
 
   function groupSummary(overrides: Partial<GroupSummary> = {}): GroupSummary {
-    return { id: 'group-1', name: 'Group One', role: 0, ...overrides };
+    return { id: 'group-1', name: 'Group One', role: 'Owner', ...overrides };
   }
 
   function groupDetail(overrides: Partial<GroupDetail> = {}): GroupDetail {
@@ -28,8 +28,9 @@ describe('GuardianMealplan', () => {
       id: 'group-1',
       name: 'Group One',
       members: [],
-      calendarPermissionPolicy: { Owner: 0, Admin: 0, Member: 0 },
-      mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+      calendarPermissionPolicy: { Owner: 'Owner', Admin: 'Owner', Member: 'Owner' },
+      medicinePermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+      mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
       ...overrides,
     };
   }
@@ -173,18 +174,18 @@ describe('GuardianMealplan', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-manage', name: 'Manage Co', role: 0 }),
-          groupSummary({ id: 'group-view', name: 'View Co', role: 1 }),
+          groupSummary({ id: 'group-manage', name: 'Manage Co', role: 'Owner' }),
+          groupSummary({ id: 'group-view', name: 'View Co', role: 'Admin' }),
         ]),
         getGroup: vi.fn(async (groupId: string) =>
           groupId === 'group-view'
             ? groupDetail({
                 id: 'group-view',
-                mealplanPermissionPolicy: { Owner: 2, Admin: 3, Member: 0 },
+                mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'View', Member: 'None' },
               })
             : groupDetail({
                 id: 'group-manage',
-                mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+                mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
               }),
         ),
       },
@@ -210,10 +211,12 @@ describe('GuardianMealplan', () => {
     const { fixture, mealplans } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-1', name: 'Family Group', role: 0 }),
+          groupSummary({ id: 'group-1', name: 'Family Group', role: 'Owner' }),
         ]),
         getGroup: vi.fn(async () =>
-          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+          groupDetail({
+            mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+          }),
         ),
       },
     });
@@ -234,7 +237,7 @@ describe('GuardianMealplan', () => {
       kind: 'group',
       groupId: 'group-1',
       groupName: 'Family Group',
-      accessTier: 2,
+      accessTier: 'Manage',
     });
   });
 
@@ -244,10 +247,12 @@ describe('GuardianMealplan', () => {
         // Member maps to tier 0 (None) in this policy -- below View/Manage, so it should not
         // become a selectable scope even though the guardian belongs to the group.
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-member', name: 'Member Co', role: 2 }),
+          groupSummary({ id: 'group-member', name: 'Member Co', role: 'Member' }),
         ]),
         getGroup: vi.fn(async () =>
-          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+          groupDetail({
+            mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+          }),
         ),
       },
     });
@@ -262,10 +267,12 @@ describe('GuardianMealplan', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-unshared', name: 'Unshared Co', role: 0 }),
+          groupSummary({ id: 'group-unshared', name: 'Unshared Co', role: 'Owner' }),
         ]),
         getGroup: vi.fn(async () =>
-          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+          groupDetail({
+            mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+          }),
         ),
       },
       mealplans: { getGroupMealplanStatus: vi.fn(async () => ({ hasSharedPlan: false })) },
@@ -281,7 +288,7 @@ describe('GuardianMealplan', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-broken', name: 'Broken Co', role: 0 }),
+          groupSummary({ id: 'group-broken', name: 'Broken Co', role: 'Owner' }),
         ]),
         getGroup: vi.fn(async () => Promise.reject(new Error('boom'))),
       },
@@ -307,9 +314,9 @@ describe('GuardianMealplan', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'owner-group', name: 'Owner Co', role: 0 }),
-          groupSummary({ id: 'admin-group', name: 'Admin Co', role: 1 }),
-          groupSummary({ id: 'member-group', name: 'Member Co', role: 2 }),
+          groupSummary({ id: 'owner-group', name: 'Owner Co', role: 'Owner' }),
+          groupSummary({ id: 'admin-group', name: 'Admin Co', role: 'Admin' }),
+          groupSummary({ id: 'member-group', name: 'Member Co', role: 'Member' }),
         ]),
       },
     });
@@ -326,7 +333,7 @@ describe('GuardianMealplan', () => {
 
   it('shows the no-manageable-groups message when the guardian owns or administers no group', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [groupSummary({ role: 2 })]) },
+      groups: { listMyGroups: vi.fn(async () => [groupSummary({ role: 'Member' })]) },
     });
     await settle(fixture);
 
@@ -341,7 +348,7 @@ describe('GuardianMealplan', () => {
     const { fixture, mealplans } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-share', name: 'Sharable Co', role: 0 }),
+          groupSummary({ id: 'group-share', name: 'Sharable Co', role: 'Owner' }),
         ]),
       },
       mealplans: { shareWithGroup },
@@ -373,7 +380,7 @@ describe('GuardianMealplan', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-share', name: 'Sharable Co', role: 0 }),
+          groupSummary({ id: 'group-share', name: 'Sharable Co', role: 'Owner' }),
         ]),
       },
       mealplans: { shareWithGroup },
@@ -415,10 +422,12 @@ describe('GuardianMealplan', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-1', name: 'Family Group', role: 0 }),
+          groupSummary({ id: 'group-1', name: 'Family Group', role: 'Owner' }),
         ]),
         getGroup: vi.fn(async () =>
-          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+          groupDetail({
+            mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+          }),
         ),
       },
       mealplans: {
@@ -452,10 +461,12 @@ describe('GuardianMealplan', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          groupSummary({ id: 'group-1', name: 'Family Group', role: 0 }),
+          groupSummary({ id: 'group-1', name: 'Family Group', role: 'Owner' }),
         ]),
         getGroup: vi.fn(async () =>
-          groupDetail({ mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 } }),
+          groupDetail({
+            mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+          }),
         ),
       },
       mealplans: {
@@ -526,7 +537,7 @@ describe('GuardianMealplan', () => {
   it('caps concurrent per-group detail requests and still offers every qualifying group', async () => {
     const groupCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
     const groups = Array.from({ length: groupCount }, (_, i) =>
-      groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }),
+      groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 'Owner' }),
     );
     const gate = gatedCalls((groupId) => groupDetail({ id: groupId }));
     const getGroup = vi.fn((groupId: string) => gate.call(groupId));
@@ -555,7 +566,7 @@ describe('GuardianMealplan', () => {
   it('caps concurrent shared-plan status requests across qualifying groups', async () => {
     const groupCount = PER_ITEM_REQUEST_CONCURRENCY * 2 + 1;
     const groups = Array.from({ length: groupCount }, (_, i) =>
-      groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 0 }),
+      groupSummary({ id: `group-${i}`, name: `Group ${i}`, role: 'Owner' }),
     );
     const gate = gatedCalls(() => ({ hasSharedPlan: true }));
     const getGroupMealplanStatus = vi.fn((groupId: string) => gate.call(groupId));

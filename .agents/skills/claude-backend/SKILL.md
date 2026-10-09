@@ -9,7 +9,7 @@ Scope: `src/backend/` - `buddy/` (the API), `buddy.IntegrationTests/` (all backe
 
 Read before designing anything non-trivial:
 - `docs/backend/analysis/event-stream-snapshots.md` - snapshot projections and the Marten gotchas behind the patterns below.
-- `docs/backend/http-status-codes.md` - status codes per operation, error envelope, `Idempotency-Key`.
+- `docs/backend/http-status-codes.md` - status code rules, error envelope, `Idempotency-Key`. The per-endpoint statuses live in the contract, `docs/backend/openapi/buddy.json`.
 - `docs/backend/glossary.md` - domain vocabulary; use these names.
 - `docs/testing.md` - how to run tests, Docker requirement, mutation testing.
 - The feature's own analysis doc under `docs/backend/analysis/` and `docs/backend/<domain>/` if one exists.
@@ -43,7 +43,7 @@ Reference slice: `src/backend/buddy/Features/Pickups/` (`AssignPickup/`, `Pickup
 - One folder per use case; namespace is `buddy.Features.<Domain>` for every file in the domain (no sub-namespace per use case).
 - Business rules stay inside their slice. Only generic technical code goes to `Common/` (e.g. `Common/Validation/DateRangeRules.cs`).
 - Cross-domain needs go through the other domain's `I*EventStore` (e.g. Pickups injects `IGuardianLinkEventStore`), never its Marten store. Register the dependency's feature first in `Program.cs` and say so in a comment.
-- New domain: add `Add<Domain>Feature` and `Map<Domain>Feature` calls in `Program.cs`, its own OpenAPI document (`OpenApiDocumentName`), and a `<Domain>.http`.
+- New domain: add `Add<Domain>Feature` and `Map<Domain>Feature` calls in `Program.cs`, its own OpenAPI document (`services.AddBuddyOpenApiDocument(OpenApiDocumentName)`, see `Common/OpenApi/OpenApiFeature.cs`), and a `<Domain>.http`. The combined `/openapi/buddy.json` is the client contract, committed as `docs/backend/openapi/buddy.json`; regenerate it with `task docs:openapi` after any endpoint, DTO or error-code change (see `docs/backend/analysis/openapi-client-contract.md`).
 
 ## 2. Types
 

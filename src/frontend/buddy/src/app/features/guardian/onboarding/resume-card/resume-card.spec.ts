@@ -18,18 +18,21 @@ describe('OnboardingResumeCard', () => {
   }
 
   it('links back into a deferred guide', async () => {
-    const compiled = await render(vi.fn(async () => progress({ status: 2 })));
+    const compiled = await render(vi.fn(async () => progress({ status: 'Deferred' })));
 
     const link = compiled.querySelector('a');
     expect(link?.textContent?.trim()).toBe('Resume setup');
     expect(link?.getAttribute('href')).toBe('/guardian/onboarding');
   });
 
-  it.each([0, 1, 3] as OnboardingStatus[])('shows nothing for status %i', async (status) => {
-    const compiled = await render(vi.fn(async () => progress({ status })));
+  it.each(['NotStarted', 'Active', 'Completed'] as OnboardingStatus[])(
+    'shows nothing for status %s',
+    async (status) => {
+      const compiled = await render(vi.fn(async () => progress({ status })));
 
-    expect(compiled.textContent?.trim()).toBe('');
-  });
+      expect(compiled.textContent?.trim()).toBe('');
+    },
+  );
 
   it('shows nothing when the progress cannot be read', async () => {
     const compiled = await render(

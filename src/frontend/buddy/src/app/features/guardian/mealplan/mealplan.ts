@@ -2,12 +2,7 @@ import { Component, computed, inject, linkedSignal, resource, signal } from '@an
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import {
-  GroupRoleName,
-  GROUP_ROLE_NAMES,
-  GroupSummary,
-  GroupsService,
-} from '../../../core/groups.service';
+import { GroupSummary, GroupsService } from '../../../core/groups.service';
 import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
@@ -24,8 +19,8 @@ import { AssignMealplan } from './assign-mealplan/assign-mealplan';
 import { MealplanIcal } from './mealplan-ical/mealplan-ical';
 import { ManageMeals } from './manage-meals/manage-meals';
 
-const MANAGE: MealplanAccessTier = 2;
-const VIEW: MealplanAccessTier = 3;
+const MANAGE: MealplanAccessTier = 'Manage';
+const VIEW: MealplanAccessTier = 'View';
 
 type GroupMealplanScope = Extract<MealplanScope, { kind: 'group' }>;
 type FamilyMealplanScope = Extract<MealplanScope, { kind: 'family' }>;
@@ -172,7 +167,7 @@ export class GuardianMealplan {
     return {
       // Only Owner/Admin can share/unshare (GroupAuthorization.CheckManage), matching the
       // backend's own gate.
-      manageableGroups: groups.filter((g) => g.role === 0 || g.role === 1),
+      manageableGroups: groups.filter((g) => g.role === 'Owner' || g.role === 'Admin'),
       sharedGroup,
       groupScopes: await this.loadGroupScopesFrom(groups),
     };
@@ -202,8 +197,7 @@ export class GuardianMealplan {
     const candidates: GroupMealplanScope[] = [];
 
     details.forEach(({ group, detail }) => {
-      const roleName: GroupRoleName = GROUP_ROLE_NAMES[group.role];
-      const accessTier = detail?.mealplanPermissionPolicy[roleName];
+      const accessTier = detail?.mealplanPermissionPolicy[group.role];
 
       if (accessTier === MANAGE || accessTier === VIEW) {
         candidates.push({ kind: 'group', groupId: group.id, groupName: group.name, accessTier });

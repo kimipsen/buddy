@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.OpenApi;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -33,6 +34,7 @@ public static class DeleteChildEndpoint
                     httpContext.TraceIdentifier)),
             };
         })
+        .ProducesErrorCode(StatusCodes.Status409Conflict, DeleteChild.HasOtherGuardiansCode)
         .WithName("DeleteChild");
 
         return children;

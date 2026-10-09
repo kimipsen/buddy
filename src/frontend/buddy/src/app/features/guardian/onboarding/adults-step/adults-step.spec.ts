@@ -96,11 +96,11 @@ describe('AdultsStep', () => {
     expect(guardians.inviteGuardian).toHaveBeenCalledTimes(1);
     expect(guardians.inviteGuardian).toHaveBeenCalledWith('c1', {
       email: 'aunt@buddy.test',
-      kind: 1,
+      kind: 'Guardian',
     });
     expect(groups.inviteToGroup).toHaveBeenCalledWith('group-1', {
       email: 'aunt@buddy.test',
-      role: 2,
+      role: 'Member',
     });
     expect(compiled.textContent).toContain('Guardian invitation for Ada');
     expect(compiled.textContent).toContain('Sent');
@@ -126,7 +126,10 @@ describe('AdultsStep', () => {
     await settle(fixture);
 
     expect(inviteGuardian).toHaveBeenCalledTimes(3);
-    expect(inviteGuardian).toHaveBeenLastCalledWith('c2', { email: 'aunt@buddy.test', kind: 0 });
+    expect(inviteGuardian).toHaveBeenLastCalledWith('c2', {
+      email: 'aunt@buddy.test',
+      kind: 'Parent',
+    });
     expect(groups.inviteToGroup).toHaveBeenCalledTimes(1);
     expect(compiled.textContent).not.toContain('Failed');
   });

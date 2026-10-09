@@ -25,7 +25,7 @@ describe('SummaryStep', () => {
       setupWith({
         children: [child('c1', 'Ada'), child('c2', 'Emil')],
         pendingInvites: [
-          { id: 'i1', email: 'aunt@buddy.test', role: 1, invitedAt: '', expiresAt: '' },
+          { id: 'i1', email: 'aunt@buddy.test', role: 'Admin', invitedAt: '', expiresAt: '' },
         ],
         calendars: [calendarDetail()],
         hasScheduledRoutine: true,

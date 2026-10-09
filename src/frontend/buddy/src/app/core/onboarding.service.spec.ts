@@ -24,7 +24,7 @@ import { UsersService } from './users.service';
 const apiBaseUrl = 'https://api.buddy.test';
 
 const NOT_STARTED: OnboardingProgress = {
-  status: 0,
+  status: 'NotStarted',
   setupGroupId: null,
   invitationsSkipped: false,
   version: 0,
@@ -35,7 +35,7 @@ function child(id: string): ChildSummary {
     id,
     name: { givenName: id, familyName: 'Family' },
     guardianLinkId: `link-${id}`,
-    kind: 0,
+    kind: 'Parent',
     language: 'en',
     timeZoneId: 'Europe/Copenhagen',
   };
@@ -46,18 +46,19 @@ function group(childIds: string[], extra: GroupDetail['members'] = []): GroupDet
     id: 'group-1',
     name: 'Home',
     members: [
-      { userId: 'me', givenName: 'Me', familyName: 'Family', role: 0, isChild: false },
+      { userId: 'me', givenName: 'Me', familyName: 'Family', role: 'Owner', isChild: false },
       ...childIds.map((id) => ({
         userId: id,
         givenName: id,
         familyName: 'Family',
-        role: 2 as const,
+        role: 'Member' as const,
         isChild: true,
       })),
       ...extra,
     ],
-    calendarPermissionPolicy: { Owner: 0, Admin: 1, Member: 2 },
-    mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+    calendarPermissionPolicy: { Owner: 'Owner', Admin: 'Contributor', Member: 'Viewer' },
+    mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+    medicinePermissionPolicy: { Owner: 'Manage', Admin: 'Mark', Member: 'None' },
   };
 }
 
@@ -127,7 +128,7 @@ describe('OnboardingService', () => {
     it('PUTs exactly the stored fields and the version it read', async () => {
       const { service, httpMock } = setup();
       const saved: OnboardingProgress = {
-        status: 1,
+        status: 'Active',
         setupGroupId: 'group-1',
         invitationsSkipped: true,
         version: 4,
@@ -137,7 +138,7 @@ describe('OnboardingService', () => {
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/onboarding`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({
-        status: 1,
+        status: 'Active',
         setupGroupId: 'group-1',
         invitationsSkipped: true,
         version: 3,
@@ -156,7 +157,7 @@ describe('OnboardingService', () => {
             Array.from({ length: groupCount }, (_, i) => ({
               id: `g${i}`,
               name: 'G',
-              role: 0 as const,
+              role: 'Owner' as const,
             })),
           ),
         },
@@ -192,11 +193,13 @@ describe('OnboardingService', () => {
     );
 
     it('resumes an active guide even once the guardian has a group and children', async () => {
-      await expect(decide({ ...NOT_STARTED, status: 1, version: 2 }, 1, 2)).resolves.toBe(true);
+      await expect(decide({ ...NOT_STARTED, status: 'Active', version: 2 }, 1, 2)).resolves.toBe(
+        true,
+      );
     });
 
-    it.each([2, 3] as const)(
-      'never auto-enters a deferred or completed (%i) guide, even with nothing set up',
+    it.each(['Deferred', 'Completed'] as const)(
+      'never auto-enters a deferred or completed (%s) guide, even with nothing set up',
       async (status) => {
         await expect(decide({ ...NOT_STARTED, status, version: 1 })).resolves.toBe(false);
       },
@@ -233,7 +236,7 @@ describe('OnboardingService', () => {
   describe('loadSetup', () => {
     const progress: OnboardingProgress = {
       ...NOT_STARTED,
-      status: 1,
+      status: 'Active',
       setupGroupId: 'group-1',
       version: 2,
     };
@@ -252,8 +255,8 @@ describe('OnboardingService', () => {
         guardians: { listMyChildren: vi.fn(async () => [child('c1')]), ...overrides.guardians },
         calendars: {
           listMyCalendars: vi.fn(async () => [
-            { id: 'cal-1', name: 'Family', icon: '📅', role: 0 as const },
-            { id: 'cal-2', name: 'Work', icon: '📅', role: 0 as const },
+            { id: 'cal-1', name: 'Family', icon: '📅', role: 'Owner' as const },
+            { id: 'cal-2', name: 'Work', icon: '📅', role: 'Owner' as const },
           ]),
           getCalendar: vi.fn(async (id: string) =>
             calendar(id, id === 'cal-1' ? 'group-1' : 'other-group'),
@@ -323,7 +326,15 @@ describe('OnboardingService', () => {
             getGroup: vi.fn(async () =>
               group(
                 ['c1'],
-                [{ userId: 'aunt', givenName: 'A', familyName: 'F', role: 2, isChild: false }],
+                [
+                  {
+                    userId: 'aunt',
+                    givenName: 'A',
+                    familyName: 'F',
+                    role: 'Member',
+                    isChild: false,
+                  },
+                ],
               ),
             ),
           },
@@ -419,7 +430,7 @@ describe('OnboardingService', () => {
 describe('onboarding step completion', () => {
   const active: OnboardingProgress = {
     ...NOT_STARTED,
-    status: 1,
+    status: 'Active',
     setupGroupId: 'group-1',
     version: 1,
   };
@@ -429,7 +440,7 @@ describe('onboarding step completion', () => {
     children: [child('c1')],
     childrenOutsideGroup: [],
     otherAdults: [],
-    pendingInvites: [{ id: 'i1', email: 'a@b.test', role: 1, invitedAt: '', expiresAt: '' }],
+    pendingInvites: [{ id: 'i1', email: 'a@b.test', role: 'Admin', invitedAt: '', expiresAt: '' }],
     calendars: [
       { id: 'cal-1', name: 'F', icon: '📅', timeZoneId: 'UTC', groupId: 'group-1', members: [] },
     ],
@@ -461,7 +472,9 @@ describe('onboarding step completion', () => {
     expect(
       isStepComplete('adults', active, {
         ...none,
-        otherAdults: [{ userId: 'aunt', givenName: 'A', familyName: 'F', role: 2, isChild: false }],
+        otherAdults: [
+          { userId: 'aunt', givenName: 'A', familyName: 'F', role: 'Member', isChild: false },
+        ],
       }),
     ).toBe(true);
   });

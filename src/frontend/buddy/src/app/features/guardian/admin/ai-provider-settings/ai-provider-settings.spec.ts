@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   AiAssistantService,
+  AiProvider,
   AiProviderSettings,
   TestProviderConnectionResult,
 } from '../../../../core/ai-assistant.service';
@@ -15,7 +16,7 @@ describe('AiProviderSettingsComponent', () => {
       id: 'child-1',
       name: { givenName: 'Alex', familyName: 'Doe' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -40,12 +41,12 @@ describe('AiProviderSettingsComponent', () => {
       listProviders: vi.fn(async () => settings()),
       setProviderApiKey: vi.fn(async () =>
         settings({
-          providers: [{ provider: 0, last4: 'test', addedAt: '2026-08-01T00:00:00Z' }],
-          activeProvider: 0,
+          providers: [{ provider: 'Anthropic', last4: 'test', addedAt: '2026-08-01T00:00:00Z' }],
+          activeProvider: 'Anthropic',
         }),
       ),
       removeProviderApiKey: vi.fn(async () => settings()),
-      setActiveProvider: vi.fn(async () => settings({ activeProvider: 1 })),
+      setActiveProvider: vi.fn(async () => settings({ activeProvider: 'OpenAi' })),
       testProviderConnection: vi.fn(async (): Promise<TestProviderConnectionResult> => ({
         kind: 0,
       })),
@@ -97,8 +98,8 @@ describe('AiProviderSettingsComponent', () => {
   }
 
   // Rows render in PROVIDERS order (alphabetical by display name: Anthropic, Google/Gemini,
-  // OpenAI), not by the AiProvider enum's numeric ordinal.
-  const ROW_POSITION: Record<0 | 1 | 2, number> = { 0: 0, 2: 1, 1: 2 };
+  // OpenAI), not in the AiProvider enum's declaration order.
+  const ROW_POSITION: Record<AiProvider, number> = { Anthropic: 0, Gemini: 1, OpenAi: 2 };
 
   // The data-sharing notice below the provider list has list items of its own.
   function providerRows(compiled: HTMLElement): HTMLElement[] {
@@ -107,13 +108,13 @@ describe('AiProviderSettingsComponent', () => {
     );
   }
 
-  function row(compiled: HTMLElement, provider: 0 | 1 | 2): HTMLElement {
+  function row(compiled: HTMLElement, provider: AiProvider): HTMLElement {
     return providerRows(compiled)[ROW_POSITION[provider]];
   }
 
   function rowButton(
     compiled: HTMLElement,
-    provider: 0 | 1 | 2,
+    provider: AiProvider,
     text: string,
   ): HTMLButtonElement | undefined {
     return findButtonByText(row(compiled, provider), text);
@@ -135,10 +136,10 @@ describe('AiProviderSettingsComponent', () => {
   const twoConfigured = () =>
     settings({
       providers: [
-        { provider: 0, last4: '1111', addedAt: '2026-08-01T00:00:00Z' },
-        { provider: 1, last4: '2222', addedAt: '2026-08-01T00:00:00Z' },
+        { provider: 'Anthropic', last4: '1111', addedAt: '2026-08-01T00:00:00Z' },
+        { provider: 'OpenAi', last4: '2222', addedAt: '2026-08-01T00:00:00Z' },
       ],
-      activeProvider: 0,
+      activeProvider: 'Anthropic',
     });
 
   it('shows a hint when the guardian has no linked children', async () => {
@@ -170,11 +171,11 @@ describe('AiProviderSettingsComponent', () => {
 
   it('lets a guardian acknowledge data sharing once a provider is active', async () => {
     const acknowledgeDataSharing = vi.fn(async () =>
-      settings({ activeProvider: 0, dataSharingAcknowledgedAt: '2026-08-02T09:30:00Z' }),
+      settings({ activeProvider: 'Anthropic', dataSharingAcknowledgedAt: '2026-08-02T09:30:00Z' }),
     );
     const { fixture } = await setup({
       aiAssistant: {
-        listProviders: vi.fn(async () => settings({ activeProvider: 0 })),
+        listProviders: vi.fn(async () => settings({ activeProvider: 'Anthropic' })),
         acknowledgeDataSharing,
       },
     });
@@ -218,7 +219,11 @@ describe('AiProviderSettingsComponent', () => {
     findButtonByText(compiled, 'Save')!.click();
     await settle(fixture);
 
-    expect(aiAssistant.setProviderApiKey).toHaveBeenCalledWith('child-1', 0, 'sk-ant-test1234');
+    expect(aiAssistant.setProviderApiKey).toHaveBeenCalledWith(
+      'child-1',
+      'Anthropic',
+      'sk-ant-test1234',
+    );
     expect(compiled.textContent).toContain('Active');
     expect(compiled.textContent).toContain('••••test');
   });
@@ -246,8 +251,8 @@ describe('AiProviderSettingsComponent', () => {
 
   it('tests a configured provider connection and shows the result', async () => {
     const configured = settings({
-      providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
-      activeProvider: 0,
+      providers: [{ provider: 'Anthropic', last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
+      activeProvider: 'Anthropic',
     });
     const { fixture, aiAssistant } = await setup({
       aiAssistant: {
@@ -264,7 +269,7 @@ describe('AiProviderSettingsComponent', () => {
     findButtonByText(compiled, 'Test connection')!.click();
     await settle(fixture);
 
-    expect(aiAssistant.testProviderConnection).toHaveBeenCalledWith('child-1', 0);
+    expect(aiAssistant.testProviderConnection).toHaveBeenCalledWith('child-1', 'Anthropic');
     expect(compiled.textContent).toContain('Connection failed.');
     expect(compiled.textContent).toContain('Incorrect API key provided.');
   });
@@ -272,10 +277,10 @@ describe('AiProviderSettingsComponent', () => {
   it('makes a configured provider active', async () => {
     const configured = settings({
       providers: [
-        { provider: 0, last4: '1111', addedAt: '2026-08-01T00:00:00Z' },
-        { provider: 1, last4: '2222', addedAt: '2026-08-01T00:00:00Z' },
+        { provider: 'Anthropic', last4: '1111', addedAt: '2026-08-01T00:00:00Z' },
+        { provider: 'OpenAi', last4: '2222', addedAt: '2026-08-01T00:00:00Z' },
       ],
-      activeProvider: 0,
+      activeProvider: 'Anthropic',
     });
     const { fixture, aiAssistant } = await setup({
       aiAssistant: { listProviders: vi.fn(async () => configured) },
@@ -286,14 +291,14 @@ describe('AiProviderSettingsComponent', () => {
     findButtonByText(compiled, 'Make active')!.click();
     await settle(fixture);
 
-    expect(aiAssistant.setActiveProvider).toHaveBeenCalledWith('child-1', 1);
+    expect(aiAssistant.setActiveProvider).toHaveBeenCalledWith('child-1', 'OpenAi');
     expect(compiled.textContent).toContain('Active');
   });
 
   it('removes a configured key after confirming', async () => {
     const configured = settings({
-      providers: [{ provider: 0, last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
-      activeProvider: 0,
+      providers: [{ provider: 'Anthropic', last4: '1234', addedAt: '2026-08-01T00:00:00Z' }],
+      activeProvider: 'Anthropic',
     });
     const { fixture, aiAssistant } = await setup({
       aiAssistant: { listProviders: vi.fn(async () => configured) },
@@ -309,7 +314,7 @@ describe('AiProviderSettingsComponent', () => {
     findButtonByText(compiled, 'Confirm')!.click();
     await settle(fixture);
 
-    expect(aiAssistant.removeProviderApiKey).toHaveBeenCalledWith('child-1', 0);
+    expect(aiAssistant.removeProviderApiKey).toHaveBeenCalledWith('child-1', 'Anthropic');
     expect(compiled.textContent).toContain('Add key');
   });
 
@@ -348,17 +353,17 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Add key')!.click();
+    rowButton(compiled, 'Anthropic', 'Add key')!.click();
     await settle(fixture);
 
-    expect(row(compiled, 0).querySelector('input[name="apiKey"]')).not.toBeNull();
-    expect(rowButton(compiled, 0, 'Add key')).toBeUndefined();
+    expect(row(compiled, 'Anthropic').querySelector('input[name="apiKey"]')).not.toBeNull();
+    expect(rowButton(compiled, 'Anthropic', 'Add key')).toBeUndefined();
 
-    rowButton(compiled, 0, 'Close')!.click();
+    rowButton(compiled, 'Anthropic', 'Close')!.click();
     await settle(fixture);
 
     expect(compiled.querySelector('input[name="apiKey"]')).toBeNull();
-    expect(rowButton(compiled, 0, 'Add key')).toBeDefined();
+    expect(rowButton(compiled, 'Anthropic', 'Add key')).toBeDefined();
   });
 
   it('resets the typed key and previous save error when the editor is reopened', async () => {
@@ -368,7 +373,7 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Add key')!.click();
+    rowButton(compiled, 'Anthropic', 'Add key')!.click();
     await settle(fixture);
     await typeKey(fixture, 'sk-ant-test1234');
 
@@ -376,9 +381,9 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
     expect(compiled.textContent).toContain('Unable to save this API key.');
 
-    rowButton(compiled, 0, 'Close')!.click();
+    rowButton(compiled, 'Anthropic', 'Close')!.click();
     await settle(fixture);
-    rowButton(compiled, 0, 'Add key')!.click();
+    rowButton(compiled, 'Anthropic', 'Add key')!.click();
     await settle(fixture);
 
     const input = compiled.querySelector<HTMLInputElement>('input[name="apiKey"]')!;
@@ -392,16 +397,20 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 1, 'Add key')!.click();
+    rowButton(compiled, 'OpenAi', 'Add key')!.click();
     await settle(fixture);
     await typeKey(fixture, '   sk-openai-5678  ');
 
     findButtonByText(compiled, 'Save')!.click();
     await settle(fixture);
 
-    expect(aiAssistant.setProviderApiKey).toHaveBeenCalledWith('child-1', 1, 'sk-openai-5678');
+    expect(aiAssistant.setProviderApiKey).toHaveBeenCalledWith(
+      'child-1',
+      'OpenAi',
+      'sk-openai-5678',
+    );
     expect(compiled.querySelector('input[name="apiKey"]')).toBeNull();
-    expect(rowButton(compiled, 1, 'Close')).toBeUndefined();
+    expect(rowButton(compiled, 'OpenAi', 'Close')).toBeUndefined();
   });
 
   it('disables Save while saving, clears the previous error on retry and re-enables it after a failure', async () => {
@@ -415,7 +424,7 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Add key')!.click();
+    rowButton(compiled, 'Anthropic', 'Add key')!.click();
     await settle(fixture);
     await typeKey(fixture, 'sk-ant-test1234');
 
@@ -447,19 +456,19 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Replace key')!.click();
+    rowButton(compiled, 'Anthropic', 'Replace key')!.click();
     await settle(fixture);
     expect(compiled.querySelector('input[name="apiKey"]')).not.toBeNull();
 
-    rowButton(compiled, 0, 'Remove')!.click();
+    rowButton(compiled, 'Anthropic', 'Remove')!.click();
     await settle(fixture);
     expect(compiled.querySelector('input[name="apiKey"]')).toBeNull();
-    expect(row(compiled, 0).textContent).toContain('Remove this API key?');
+    expect(row(compiled, 'Anthropic').textContent).toContain('Remove this API key?');
 
-    rowButton(compiled, 0, 'Cancel')!.click();
+    rowButton(compiled, 'Anthropic', 'Cancel')!.click();
     await settle(fixture);
     expect(compiled.textContent).not.toContain('Remove this API key?');
-    expect(rowButton(compiled, 0, 'Replace key')).toBeDefined();
+    expect(rowButton(compiled, 'Anthropic', 'Replace key')).toBeDefined();
     expect(aiAssistant.removeProviderApiKey).not.toHaveBeenCalled();
   });
 
@@ -470,15 +479,15 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Remove')!.click();
+    rowButton(compiled, 'Anthropic', 'Remove')!.click();
     await settle(fixture);
     expect(compiled.textContent).toContain('Remove this API key?');
 
-    rowButton(compiled, 1, 'Replace key')!.click();
+    rowButton(compiled, 'OpenAi', 'Replace key')!.click();
     await settle(fixture);
 
     expect(compiled.textContent).not.toContain('Remove this API key?');
-    expect(row(compiled, 1).querySelector('input[name="apiKey"]')).not.toBeNull();
+    expect(row(compiled, 'OpenAi').querySelector('input[name="apiKey"]')).not.toBeNull();
   });
 
   it('applies the returned settings and closes the prompt after removing', async () => {
@@ -487,8 +496,8 @@ describe('AiProviderSettingsComponent', () => {
         listProviders: vi.fn(async () => twoConfigured()),
         removeProviderApiKey: vi.fn(async () =>
           settings({
-            providers: [{ provider: 1, last4: '2222', addedAt: '2026-08-01T00:00:00Z' }],
-            activeProvider: 1,
+            providers: [{ provider: 'OpenAi', last4: '2222', addedAt: '2026-08-01T00:00:00Z' }],
+            activeProvider: 'OpenAi',
           }),
         ),
       },
@@ -496,15 +505,15 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Remove')!.click();
+    rowButton(compiled, 'Anthropic', 'Remove')!.click();
     await settle(fixture);
-    rowButton(compiled, 0, 'Confirm')!.click();
+    rowButton(compiled, 'Anthropic', 'Confirm')!.click();
     await settle(fixture);
 
     expect(compiled.textContent).not.toContain('Remove this API key?');
-    expect(row(compiled, 0).textContent).not.toContain('••••1111');
-    expect(rowButton(compiled, 0, 'Add key')).toBeDefined();
-    expect(row(compiled, 1).textContent).toContain('Active');
+    expect(row(compiled, 'Anthropic').textContent).not.toContain('••••1111');
+    expect(rowButton(compiled, 'Anthropic', 'Add key')).toBeDefined();
+    expect(row(compiled, 'OpenAi').textContent).toContain('Active');
   });
 
   it('disables the confirm buttons while removing, shows an error on failure and clears it on retry', async () => {
@@ -520,23 +529,23 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Remove')!.click();
+    rowButton(compiled, 'Anthropic', 'Remove')!.click();
     await settle(fixture);
-    expect(rowButton(compiled, 0, 'Confirm')!.disabled).toBe(false);
+    expect(rowButton(compiled, 'Anthropic', 'Confirm')!.disabled).toBe(false);
 
-    rowButton(compiled, 0, 'Confirm')!.click();
+    rowButton(compiled, 'Anthropic', 'Confirm')!.click();
     await settle(fixture);
-    expect(rowButton(compiled, 0, 'Confirm')!.disabled).toBe(true);
-    expect(rowButton(compiled, 0, 'Cancel')!.disabled).toBe(true);
+    expect(rowButton(compiled, 'Anthropic', 'Confirm')!.disabled).toBe(true);
+    expect(rowButton(compiled, 'Anthropic', 'Cancel')!.disabled).toBe(true);
 
     attempts[0].reject(new Error('boom'));
     await settle(fixture);
     expect(compiled.textContent).toContain('Unable to remove this API key.');
-    expect(row(compiled, 0).textContent).toContain('Remove this API key?');
-    expect(rowButton(compiled, 0, 'Confirm')!.disabled).toBe(false);
-    expect(rowButton(compiled, 0, 'Cancel')!.disabled).toBe(false);
+    expect(row(compiled, 'Anthropic').textContent).toContain('Remove this API key?');
+    expect(rowButton(compiled, 'Anthropic', 'Confirm')!.disabled).toBe(false);
+    expect(rowButton(compiled, 'Anthropic', 'Cancel')!.disabled).toBe(false);
 
-    rowButton(compiled, 0, 'Confirm')!.click();
+    rowButton(compiled, 'Anthropic', 'Confirm')!.click();
     await settle(fixture);
     expect(removeProviderApiKey).toHaveBeenCalledTimes(2);
     expect(compiled.textContent).not.toContain('Unable to remove this API key.');
@@ -556,15 +565,15 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Remove')!.click();
+    rowButton(compiled, 'Anthropic', 'Remove')!.click();
     await settle(fixture);
-    rowButton(compiled, 0, 'Confirm')!.click();
+    rowButton(compiled, 'Anthropic', 'Confirm')!.click();
     await settle(fixture);
-    rowButton(compiled, 0, 'Cancel')!.click();
+    rowButton(compiled, 'Anthropic', 'Cancel')!.click();
     await settle(fixture);
     expect(compiled.textContent).toContain('Unable to remove this API key.');
 
-    rowButton(compiled, 0, 'Remove')!.click();
+    rowButton(compiled, 'Anthropic', 'Remove')!.click();
     await settle(fixture);
     expect(compiled.textContent).not.toContain('Unable to remove this API key.');
   });
@@ -573,21 +582,24 @@ describe('AiProviderSettingsComponent', () => {
     const { fixture } = await setup({
       aiAssistant: {
         listProviders: vi.fn(async () => twoConfigured()),
-        setActiveProvider: vi.fn(async () => ({ ...twoConfigured(), activeProvider: 1 as const })),
+        setActiveProvider: vi.fn(async () => ({
+          ...twoConfigured(),
+          activeProvider: 'OpenAi' as const,
+        })),
       },
     });
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    expect(row(compiled, 0).textContent).toContain('Active');
-    expect(row(compiled, 1).textContent).not.toContain('Active');
+    expect(row(compiled, 'Anthropic').textContent).toContain('Active');
+    expect(row(compiled, 'OpenAi').textContent).not.toContain('Active');
 
-    rowButton(compiled, 1, 'Make active')!.click();
+    rowButton(compiled, 'OpenAi', 'Make active')!.click();
     await settle(fixture);
 
-    expect(row(compiled, 1).textContent).toContain('Active');
-    expect(rowButton(compiled, 1, 'Make active')).toBeUndefined();
-    expect(rowButton(compiled, 0, 'Make active')).toBeDefined();
+    expect(row(compiled, 'OpenAi').textContent).toContain('Active');
+    expect(rowButton(compiled, 'OpenAi', 'Make active')).toBeUndefined();
+    expect(rowButton(compiled, 'Anthropic', 'Make active')).toBeDefined();
   });
 
   it('disables Make active while switching, shows an error on failure and clears it on retry', async () => {
@@ -603,19 +615,19 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    expect(rowButton(compiled, 1, 'Make active')!.disabled).toBe(false);
+    expect(rowButton(compiled, 'OpenAi', 'Make active')!.disabled).toBe(false);
 
-    rowButton(compiled, 1, 'Make active')!.click();
+    rowButton(compiled, 'OpenAi', 'Make active')!.click();
     await settle(fixture);
-    expect(rowButton(compiled, 1, 'Make active')!.disabled).toBe(true);
+    expect(rowButton(compiled, 'OpenAi', 'Make active')!.disabled).toBe(true);
 
     attempts[0].reject(new Error('boom'));
     await settle(fixture);
     expect(compiled.textContent).toContain('Unable to switch the active provider.');
-    expect(rowButton(compiled, 1, 'Make active')!.disabled).toBe(false);
-    expect(row(compiled, 0).textContent).toContain('Active');
+    expect(rowButton(compiled, 'OpenAi', 'Make active')!.disabled).toBe(false);
+    expect(row(compiled, 'Anthropic').textContent).toContain('Active');
 
-    rowButton(compiled, 1, 'Make active')!.click();
+    rowButton(compiled, 'OpenAi', 'Make active')!.click();
     await settle(fixture);
     expect(setActiveProvider).toHaveBeenCalledTimes(2);
     expect(compiled.textContent).not.toContain('Unable to switch the active provider.');
@@ -636,21 +648,21 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Test connection')!.click();
+    rowButton(compiled, 'Anthropic', 'Test connection')!.click();
     await settle(fixture);
 
-    expect(rowButton(compiled, 0, 'Test connection')).toBeUndefined();
-    expect(rowButton(compiled, 0, 'Testing…')!.disabled).toBe(true);
-    expect(rowButton(compiled, 1, 'Test connection')!.disabled).toBe(false);
+    expect(rowButton(compiled, 'Anthropic', 'Test connection')).toBeUndefined();
+    expect(rowButton(compiled, 'Anthropic', 'Testing…')!.disabled).toBe(true);
+    expect(rowButton(compiled, 'OpenAi', 'Test connection')!.disabled).toBe(false);
 
     pending.reject(new Error('boom'));
     await settle(fixture);
 
-    expect(rowButton(compiled, 0, 'Testing…')).toBeUndefined();
-    expect(rowButton(compiled, 0, 'Test connection')!.disabled).toBe(false);
-    expect(row(compiled, 0).textContent).toContain('Connection failed.');
-    expect(row(compiled, 0).textContent).not.toContain('Connection succeeded.');
-    expect(row(compiled, 0).textContent).not.toContain('—');
+    expect(rowButton(compiled, 'Anthropic', 'Testing…')).toBeUndefined();
+    expect(rowButton(compiled, 'Anthropic', 'Test connection')!.disabled).toBe(false);
+    expect(row(compiled, 'Anthropic').textContent).toContain('Connection failed.');
+    expect(row(compiled, 'Anthropic').textContent).not.toContain('Connection succeeded.');
+    expect(row(compiled, 'Anthropic').textContent).not.toContain('—');
   });
 
   it('clears the previous test result when the editor is opened for that provider', async () => {
@@ -660,17 +672,17 @@ describe('AiProviderSettingsComponent', () => {
     await settle(fixture);
 
     const compiled: HTMLElement = fixture.nativeElement;
-    rowButton(compiled, 0, 'Test connection')!.click();
+    rowButton(compiled, 'Anthropic', 'Test connection')!.click();
     await settle(fixture);
-    rowButton(compiled, 1, 'Test connection')!.click();
+    rowButton(compiled, 'OpenAi', 'Test connection')!.click();
     await settle(fixture);
-    expect(row(compiled, 0).textContent).toContain('Connection succeeded.');
-    expect(row(compiled, 1).textContent).toContain('Connection succeeded.');
+    expect(row(compiled, 'Anthropic').textContent).toContain('Connection succeeded.');
+    expect(row(compiled, 'OpenAi').textContent).toContain('Connection succeeded.');
 
-    rowButton(compiled, 0, 'Replace key')!.click();
+    rowButton(compiled, 'Anthropic', 'Replace key')!.click();
     await settle(fixture);
 
-    expect(row(compiled, 0).textContent).not.toContain('Connection succeeded.');
-    expect(row(compiled, 1).textContent).toContain('Connection succeeded.');
+    expect(row(compiled, 'Anthropic').textContent).not.toContain('Connection succeeded.');
+    expect(row(compiled, 'OpenAi').textContent).toContain('Connection succeeded.');
   });
 });

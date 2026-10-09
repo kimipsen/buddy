@@ -389,10 +389,10 @@
               [ngModel]="weekStart()"
               (ngModelChange)="weekStart.set($event)"
             >
-              <option [ngValue]="0">
+              <option [ngValue]="'Sunday'">
                 {{ 'mealplan.import.input.weekStart.sunday' | translate }}
               </option>
-              <option [ngValue]="1">
+              <option [ngValue]="'Monday'">
                 {{ 'mealplan.import.input.weekStart.monday' | translate }}
               </option>
             </select>

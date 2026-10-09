@@ -11,7 +11,7 @@ describe('AccountService', () => {
     id: 'guardian-1',
     name: { givenName: 'Gina', familyName: 'G' },
     guardianLinkId: 'link-1',
-    kind: 0,
+    kind: 'Parent',
   };
 
   function setup(): AccountService {

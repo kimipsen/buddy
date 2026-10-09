@@ -4,81 +4,41 @@ import { firstValueFrom } from 'rxjs';
 
 import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
-import { MealSlot } from './mealplans.service';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
-import { Weekday } from './work-locations.service';
 
-// PaperSize ordinals: 0 = A4, 1 = A3. Orientation is always landscape.
-export type PaperSize = 0 | 1;
+export type PaperSize = Schemas['PaperSize'];
 
-// PrintRowKind ordinals, matching the backend enum (new kinds are appended at the end).
+// PrintRowKind names, for code that builds or matches rows of one kind.
 export const PRINT_ROW_KIND = {
-  meal: 0,
-  pickup: 1,
-  workLocation: 2,
-  calendarMarker: 3,
-  calendarEvents: 4,
-  taskChecklist: 5,
-  blank: 6,
-} as const;
-export type PrintRowKind = (typeof PRINT_ROW_KIND)[keyof typeof PRINT_ROW_KIND];
+  meal: 'Meal',
+  pickup: 'Pickup',
+  workLocation: 'WorkLocation',
+  calendarMarker: 'CalendarMarker',
+  calendarEvents: 'CalendarEvents',
+  taskChecklist: 'TaskChecklist',
+  blank: 'Blank',
+} as const satisfies Record<string, Schemas['PrintRowKind']>;
+
+export type PrintRowKind = Schemas['PrintRowKind'];
 
 // A flat row: only the fields its kind uses are set, everything else null/false -- the backend
 // rejects stray values (see docs/backend/analysis/week-plan-print-templates.md, Question 3).
-export interface PrintTemplateRow {
-  kind: PrintRowKind;
-  label: string;
-  heightWeight: number;
-  childId: string | null;
-  mealGroupId: string | null;
-  mealSlot: MealSlot | null;
-  guardianId: string | null;
-  workLocationId: string | null;
-  calendarIds: string[] | null;
-  assignedToId: string | null;
-  titleFilter: string | null;
-  maxItems: number | null;
-  showTime: boolean;
-  showAssignee: boolean;
-}
+// Every field is always sent and returned (emptyRow clears the ones a kind doesn't use).
+export type PrintTemplateRow = Required<Schemas['PrintTemplateRow']>;
 
-export interface GuardianColor {
-  guardianId: string;
-  color: string;
-}
+export type GuardianColor = Schemas['GuardianColorRequest'];
 
 // A babysitter is the (guardianId, babysitterId) pair a kind 4 pickup assignee carries.
-export interface BabysitterColor {
-  guardianId: string;
-  babysitterId: string;
-  color: string;
-}
+export type BabysitterColor = Schemas['BabysitterColorRequest'];
 
-export interface PrintTemplate {
-  id: string;
-  ownerUserId: string | null;
-  ownerGroupId: string | null;
-  name: string;
-  paperSize: PaperSize;
-  defaultStartWeekday: Weekday;
-  showWeekNumber: boolean;
+export type PrintTemplate = Omit<Schemas['PrintTemplateResponse'], 'rows'> & {
   rows: PrintTemplateRow[];
-  guardianColors: GuardianColor[];
-  babysitterColors: BabysitterColor[];
-}
+};
 
-export interface PrintTemplateSummary {
-  id: string;
-  ownerUserId: string | null;
-  ownerGroupId: string | null;
-  name: string;
-}
+export type PrintTemplateSummary = Schemas['PrintTemplateSummary'];
 
-export interface PrintTemplateLayout {
-  paperSize: PaperSize;
-  defaultStartWeekday: Weekday;
-  showWeekNumber: boolean;
-}
+export type PrintTemplateLayout = Schemas['UpdatePrintTemplateLayoutRequest'];
 
 // A row with every kind-specific field cleared -- the starting point for building any kind.
 export function emptyRow(kind: PrintRowKind, label = ''): PrintTemplateRow {

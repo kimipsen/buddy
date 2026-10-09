@@ -1,4 +1,5 @@
 using buddy.Features.Groups;
+using buddy.Features.PrintTemplates;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
@@ -22,7 +23,7 @@ public sealed class CreatePrintTemplateTests(BuddyApiFixture fixture)
         Assert.Equal("Ugeplan", template.Name);
         Assert.Equal(userId, template.OwnerUserId);
         Assert.Null(template.OwnerGroupId);
-        Assert.Equal(0, template.PaperSize); // A4
+        Assert.Equal(PaperSize.A4, template.PaperSize);
         Assert.Equal(DayOfWeek.Monday, template.DefaultStartWeekday);
         Assert.True(template.ShowWeekNumber);
         Assert.Empty(template.Rows);

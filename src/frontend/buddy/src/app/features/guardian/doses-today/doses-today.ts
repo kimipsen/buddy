@@ -16,9 +16,9 @@ import {
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
-const PENDING: DoseStatus = 0;
-const TAKEN: DoseStatus = 1;
-const SKIPPED: DoseStatus = 2;
+const PENDING: DoseStatus = 'Pending';
+const TAKEN: DoseStatus = 'Taken';
+const SKIPPED: DoseStatus = 'Skipped';
 
 type DoseRow = MedicineDoseOccurrence & { childId: string; childName: string };
 

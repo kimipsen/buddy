@@ -15,7 +15,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { sortByName, swapped } from '../../../../core/array-utils';
 import { BabysittersService } from '../../../../core/babysitters.service';
 import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
-import { nextWeekdayOnOrAfter, todayIsoDate } from '../../../../core/date-utils';
+import { dayOfWeekIndex, nextWeekdayOnOrAfter, todayIsoDate } from '../../../../core/date-utils';
 import {
   ChildSummary,
   GuardianSummary,
@@ -72,25 +72,33 @@ const MAX_HEIGHT = 5;
 const PREVIEW_DEBOUNCE_MS = 400;
 const PREVIEW_WIDTH_PX = 384;
 const PX_PER_MM = 96 / 25.4;
-const WEEKDAYS_MONDAY_FIRST: readonly Weekday[] = [1, 2, 3, 4, 5, 6, 0];
-// Sunday 2026-10-04 + n days walks Sunday..Saturday, matching DayOfWeek ordinals.
+const WEEKDAYS_MONDAY_FIRST: readonly Weekday[] = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+// Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
 const A_SUNDAY = new Date(2026, 9, 4);
 
 const KIND_LABELS: Record<PrintRowKind, string> = {
-  0: 'print.editor.kinds.meal',
-  1: 'print.editor.kinds.pickup',
-  2: 'print.editor.kinds.workLocation',
-  3: 'print.editor.kinds.calendarMarker',
-  4: 'print.editor.kinds.calendarEvents',
-  5: 'print.editor.kinds.taskChecklist',
-  6: 'print.editor.kinds.blank',
+  Meal: 'print.editor.kinds.meal',
+  Pickup: 'print.editor.kinds.pickup',
+  WorkLocation: 'print.editor.kinds.workLocation',
+  CalendarMarker: 'print.editor.kinds.calendarMarker',
+  CalendarEvents: 'print.editor.kinds.calendarEvents',
+  TaskChecklist: 'print.editor.kinds.taskChecklist',
+  Blank: 'print.editor.kinds.blank',
 };
 
 const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'print.editor.mealSlots.breakfast',
-  1: 'print.editor.mealSlots.lunch',
-  2: 'print.editor.mealSlots.dinner',
-  3: 'print.editor.mealSlots.snack',
+  Breakfast: 'print.editor.mealSlots.breakfast',
+  Lunch: 'print.editor.mealSlots.lunch',
+  Dinner: 'print.editor.mealSlots.dinner',
+  Snack: 'print.editor.mealSlots.snack',
 };
 
 interface DraftRow {
@@ -160,9 +168,9 @@ export class PrintTemplateEditor {
 
   protected readonly kind = PRINT_ROW_KIND;
   protected readonly kindLabels = KIND_LABELS;
-  protected readonly kinds = Object.keys(KIND_LABELS).map(Number) as PrintRowKind[];
+  protected readonly kinds = Object.keys(KIND_LABELS) as PrintRowKind[];
   protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
-  protected readonly mealSlots = [0, 1, 2, 3] as MealSlot[];
+  protected readonly mealSlots: MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
   protected readonly maxItemsOptions = [1, 2, 3, 4, 5, 6, 7, 8];
   protected readonly maxRows = MAX_ROWS;
   protected readonly maxHeight = MAX_HEIGHT;
@@ -208,9 +216,9 @@ export class PrintTemplateEditor {
   );
 
   protected readonly name = linkedSignal(() => this.template()?.name ?? '');
-  protected readonly paperSize = linkedSignal((): PaperSize => this.template()?.paperSize ?? 0);
+  protected readonly paperSize = linkedSignal((): PaperSize => this.template()?.paperSize ?? 'A4');
   protected readonly startWeekday = linkedSignal(
-    (): Weekday => this.template()?.defaultStartWeekday ?? 1,
+    (): Weekday => this.template()?.defaultStartWeekday ?? 'Monday',
   );
   protected readonly showWeekNumber = linkedSignal(() => this.template()?.showWeekNumber ?? true);
   protected readonly rows = linkedSignal(() =>
@@ -235,8 +243,8 @@ export class PrintTemplateEditor {
   protected readonly paperOptions = computed((): SegmentedControlOption<PaperSize>[] => {
     this.translation.language();
     return [
-      { value: 0, label: this.translation.translate('print.editor.paperA4') },
-      { value: 1, label: this.translation.translate('print.editor.paperA3') },
+      { value: 'A4', label: this.translation.translate('print.editor.paperA4') },
+      { value: 'A3', label: this.translation.translate('print.editor.paperA3') },
     ];
   });
 
@@ -247,7 +255,7 @@ export class PrintTemplateEditor {
         const date = new Date(
           A_SUNDAY.getFullYear(),
           A_SUNDAY.getMonth(),
-          A_SUNDAY.getDate() + day,
+          A_SUNDAY.getDate() + dayOfWeekIndex(day),
         );
         return [day, date.toLocaleDateString(locale, { weekday: 'long' })];
       }),
@@ -608,7 +616,7 @@ export class PrintTemplateEditor {
     const lists = await mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, (child) =>
       this.guardiansService.listChildGuardians(child.id).catch(() => [] as GuardianSummary[]),
     );
-    const self: GuardianSummary = { id: me.id, name: me.name, guardianLinkId: '', kind: 0 };
+    const self: GuardianSummary = { id: me.id, name: me.name, guardianLinkId: '', kind: 'Parent' };
     const guardians = [...new Map([self, ...lists.flat()].map((g) => [g.id, g])).values()];
 
     const schedules = await mapWithConcurrency(

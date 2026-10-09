@@ -153,8 +153,8 @@ export class PickupCell {
     this.guardianId.set(assignee?.kind === GUARDIAN ? assignee.guardianId : '');
     this.siblingChildId.set(assignee?.kind === SIBLING ? assignee.siblingChildId : '');
     this.playdateHostName.set(assignee?.kind === PLAYDATE ? assignee.hostName : '');
-    this.playdateLocation.set(assignee?.kind === PLAYDATE ? assignee.location : '');
-    this.playdateContactInfo.set(assignee?.kind === PLAYDATE ? assignee.contactInfo : '');
+    this.playdateLocation.set(assignee?.kind === PLAYDATE ? (assignee.location ?? '') : '');
+    this.playdateContactInfo.set(assignee?.kind === PLAYDATE ? (assignee.contactInfo ?? '') : '');
     this.babysitterChoice.set(
       assignee?.kind === BABYSITTER
         ? babysitterKey(assignee.guardianId, assignee.babysitterId)

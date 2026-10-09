@@ -2,6 +2,7 @@ import { Component, computed, inject, resource, signal } from '@angular/core';
 
 import {
   AssignableMember,
+  CalendarItemKind,
   CalendarOccurrence,
   CalendarsService,
 } from '../../../core/calendars.service';
@@ -18,7 +19,7 @@ import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Toggle } from '../../../shared/toggle/toggle';
 
-const TASK_KIND = 1;
+const TASK_KIND = 'Task' satisfies CalendarItemKind;
 
 // One dashboard row: either a plain task (totalCount 1, toggle-able directly, unchanged from
 // before this rolled anything up) or the rollup of every subtask occurrence a template-scheduled

@@ -7,8 +7,8 @@ import {
   toIsoDateInTimeZone,
   toTimeInTimeZone,
 } from '../../../core/date-utils';
-import { CalendarItemOccurrence } from '../../../core/calendars.service';
-import { PickupOccurrence } from '../../../core/pickups.service';
+import { CalendarItemKind, CalendarItemOccurrence } from '../../../core/calendars.service';
+import { PickupOccurrence, PickupSlot } from '../../../core/pickups.service';
 import {
   PRINT_ROW_KIND,
   PrintTemplate,
@@ -30,9 +30,9 @@ import {
 
 export const WEEK_PLAN_DAY_COUNT = 7;
 
-const TASK_KIND = 1;
-const DROP_OFF = 0;
-const PICK_UP = 1;
+const TASK_KIND = 'Task' satisfies CalendarItemKind;
+const DROP_OFF = 'DropOff' satisfies PickupSlot;
+const PICK_UP = 'PickUp' satisfies PickupSlot;
 const PICKUP_GUARDIAN = 0;
 const PICKUP_SELF_ESCORT = 1;
 const PICKUP_SIBLING = 2;
@@ -194,7 +194,7 @@ function pickupLabel(
       return { text: `${labels.playdate}: ${assignee.hostName}`, icon: null, color: null };
     case PICKUP_BABYSITTER:
       return {
-        text: assignee.name || labels.babysitter,
+        text: (assignee.name ?? '') || labels.babysitter,
         icon: null,
         color:
           context.babysitterColors.get(babysitterKey(assignee.guardianId, assignee.babysitterId)) ??

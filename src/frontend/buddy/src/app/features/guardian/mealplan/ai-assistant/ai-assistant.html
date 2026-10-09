@@ -74,7 +74,11 @@
 
             @if (filterSummaryKey(current); as summaryKey) {
               <p class="-mt-2 mb-4 text-xs text-slate-500 dark:text-slate-400">
-                {{ summaryKey | translate: { days: current.servedWithin, from: current.from } }}
+                {{
+                  summaryKey
+                    | translate
+                      : { days: servedWindowDays[current.servedWithin], from: current.from }
+                }}
               </p>
             }
 
@@ -87,10 +91,10 @@
                 </p>
               } @else {
                 @for (entry of current.transcript; track $index) {
-                  <div [class.text-right]="entry.role === 0">
+                  <div [class.text-right]="entry.role === 'User'">
                     <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">
                       {{
-                        (entry.role === 0
+                        (entry.role === 'User'
                           ? 'mealplan.aiAssistant.session.you'
                           : 'mealplan.aiAssistant.session.assistant'
                         ) | translate
@@ -98,11 +102,11 @@
                     </p>
                     <p
                       class="mt-1 inline-block max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm"
-                      [class.bg-slate-950]="entry.role === 0"
-                      [class.text-white]="entry.role === 0"
-                      [class.dark:bg-emerald-600]="entry.role === 0"
-                      [class.bg-slate-100]="entry.role !== 0"
-                      [class.dark:bg-slate-800]="entry.role !== 0"
+                      [class.bg-slate-950]="entry.role === 'User'"
+                      [class.text-white]="entry.role === 'User'"
+                      [class.dark:bg-emerald-600]="entry.role === 'User'"
+                      [class.bg-slate-100]="entry.role !== 'User'"
+                      [class.dark:bg-slate-800]="entry.role !== 'User'"
                     >
                       {{ entry.text }}
                     </p>

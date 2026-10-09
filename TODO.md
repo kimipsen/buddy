@@ -133,9 +133,10 @@
   the OpenAPI documents (compare with `docs/backend/http-status-codes.md`). Checked
   2026-10-09 against the 14 generated documents (170 operations): only `400`, `404`
   and `409` from the endpoints' `Results<...>` show up.
-- [ ] Fix the gaps the check found. Design:
-  [Client-ready OpenAPI documents](docs/backend/analysis/openapi-client-contract.md)
-  (proposed; settle its open questions first).
+- [x] Fix the gaps the check found. Done 2026-10-09:
+  [Client-ready OpenAPI documents](docs/backend/analysis/openapi-client-contract.md). Enums are
+  strings on the wire now, the contract is committed as `docs/backend/openapi/buddy.json`, and the
+  frontend's API types are generated from it.
   - `403` is missing everywhere: `ForbidHttpResult` and `JsonHttpResult<ErrorEnvelope>`
     (`email_not_verified`) add no response metadata (111 endpoints).
   - Middleware responses aren't documented: `401` and `403 user_not_provisioned`

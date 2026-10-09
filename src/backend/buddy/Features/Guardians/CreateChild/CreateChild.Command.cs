@@ -17,5 +17,7 @@ public union CreateChildOutcome(CreateChildOutcome.Success, CreateChildOutcome.U
 {
     public sealed record Success(User Child, GuardianLink Link, string Username, string TemporaryPassword);
     public sealed record UsernameUnavailable;
+
+    public const string UsernameUnavailableCode = "username_unavailable";
     public sealed record Validation(ValidationProblem Problem);
 }

@@ -10,7 +10,7 @@ describe('task-run', () => {
   ): CalendarOccurrence {
     return nestOccurrence<CalendarOccurrence>({
       itemId: 'item-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Brush teeth',
       icon: '🪥',
       iconOverride: null,
@@ -34,7 +34,12 @@ describe('task-run', () => {
 
   describe('groupTaskRuns', () => {
     it('passes an ordinary event through unchanged, ungrouped', () => {
-      const event = occurrence({ itemId: 'event-1', kind: 0, parentTitle: null, subtaskId: null });
+      const event = occurrence({
+        itemId: 'event-1',
+        kind: 'Event',
+        parentTitle: null,
+        subtaskId: null,
+      });
 
       const entries = groupTaskRuns([event]);
 
@@ -44,7 +49,7 @@ describe('task-run', () => {
     it('passes a plain hand-entered task (no routine) through unchanged, ungrouped', () => {
       const task = occurrence({
         itemId: 'task-1',
-        kind: 1,
+        kind: 'Task',
         startsAt: null,
         dueAt: '2026-08-27T09:00:00Z',
         parentTitle: null,
@@ -116,7 +121,7 @@ describe('task-run', () => {
     });
 
     it('keeps a run and an unrelated ordinary occurrence as separate entries, in encounter order', () => {
-      const event = occurrence({ itemId: 'event-1', kind: 0, parentTitle: null });
+      const event = occurrence({ itemId: 'event-1', kind: 'Event', parentTitle: null });
       const subtask1 = occurrence({
         itemId: 'run-1',
         subtaskId: 'sub-1',

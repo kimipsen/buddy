@@ -4,71 +4,30 @@ import { firstValueFrom } from 'rxjs';
 
 import { sortByPersonName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
-export interface PersonName {
-  givenName: string;
-  familyName: string;
-}
+export type PersonName = Schemas['Name'];
 
-// GuardianKind values match the backend's GuardianKind enum ordinals (no string enum converter
-// is registered server-side): 0 = Parent, 1 = Guardian.
-export type GuardianKind = 0 | 1;
+export type GuardianKind = Schemas['GuardianKind'];
 
-export interface ChildSummary {
-  id: string;
-  name: PersonName;
-  guardianLinkId: string;
-  kind: GuardianKind;
-  language: string;
-  timeZoneId: string;
-}
+export type ChildSummary = Schemas['ChildSummary'];
 
-export interface GuardianSummary {
-  id: string;
-  name: PersonName;
-  guardianLinkId: string;
-  kind: GuardianKind;
-}
+export type GuardianSummary = Schemas['GuardianSummary'];
 
-export interface SiblingSummary {
-  id: string;
-  name: PersonName;
-}
+export type SiblingSummary = Schemas['SiblingSummary'];
 
-export interface CreateChildResult extends ChildSummary {
-  username: string;
-  temporaryPassword: string;
-}
+export type CreateChildResult = Schemas['ChildResponse'];
 
-export interface ChildPasswordReset {
-  username: string;
-  temporaryPassword: string;
-}
+export type ChildPasswordReset = Schemas['ChildPasswordResetResponse'];
 
-export interface CreateChildRequest {
-  givenName: string;
-  familyName: string;
-  username: string;
-}
+export type CreateChildRequest = Schemas['CreateChildRequest'];
 
-export interface GuardianInvite {
-  id: string;
-  email: string;
-  kind: GuardianKind;
-  invitedAt: string;
-  expiresAt: string;
-}
+export type GuardianInvite = Schemas['GuardianInviteResponse'];
 
-export interface InviteGuardianRequest {
-  email: string;
-  kind: GuardianKind;
-}
+export type InviteGuardianRequest = Schemas['InviteGuardianRequest'];
 
-export interface GuardianInvitePreview {
-  childGivenName: string;
-  kind: GuardianKind;
-}
+export type GuardianInvitePreview = Schemas['GuardianInvitePreviewResponse'];
 
 @Injectable({ providedIn: 'root' })
 export class GuardiansService {

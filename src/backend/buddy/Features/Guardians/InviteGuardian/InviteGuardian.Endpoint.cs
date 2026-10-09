@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.OpenApi;
 using buddy.Common.RateLimiting;
 using buddy.Features.Users;
 
@@ -33,6 +34,7 @@ public static class InviteGuardianEndpoint
             };
         })
         .RequireRateLimiting(RateLimitingFeature.OutboundEmailPolicy)
+        .ProducesErrorCode(StatusCodes.Status409Conflict, ResendCooldown.ErrorCode)
         .WithName("InviteGuardian");
 
         return children;

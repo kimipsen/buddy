@@ -15,12 +15,12 @@ import { AiDataSharingNotice } from '../../mealplan/ai-data-sharing-notice/ai-da
 
 // Ordered to match the alphabetical order of their translated display names ("Anthropic (Claude)",
 // "Google (Gemini)", "OpenAI (ChatGPT)"), like the other admin lists.
-const PROVIDERS: readonly AiProvider[] = [0, 2, 1];
+const PROVIDERS: readonly AiProvider[] = ['Anthropic', 'Gemini', 'OpenAi'];
 
 const PROVIDER_LABEL_KEYS: Record<AiProvider, string> = {
-  0: 'admin.aiProviders.names.anthropic',
-  1: 'admin.aiProviders.names.openAi',
-  2: 'admin.aiProviders.names.gemini',
+  Anthropic: 'admin.aiProviders.names.anthropic',
+  OpenAi: 'admin.aiProviders.names.openAi',
+  Gemini: 'admin.aiProviders.names.gemini',
 };
 
 // What the settings page shows after a test: the API's answer, or that the test request itself

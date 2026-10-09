@@ -45,7 +45,7 @@ describe('GuardiansService', () => {
         id,
         name: { givenName, familyName: 'Kid' },
         guardianLinkId: `link-${id}`,
-        kind: 0,
+        kind: 'Parent',
         language: 'en',
         timeZoneId: 'UTC',
       });
@@ -64,7 +64,7 @@ describe('GuardiansService', () => {
           id: 'child-1',
           name: { givenName: 'Sam', familyName: 'Kid' },
           guardianLinkId: 'link-1',
-          kind: 0,
+          kind: 'Parent',
           language: 'en',
           timeZoneId: 'UTC',
         },
@@ -104,7 +104,7 @@ describe('GuardiansService', () => {
         id,
         name: { givenName, familyName: 'G' },
         guardianLinkId: `link-${id}`,
-        kind: 0,
+        kind: 'Parent',
       });
 
       const promise = service.listMyGuardians();
@@ -121,7 +121,7 @@ describe('GuardiansService', () => {
           id: 'guardian-1',
           name: { givenName: 'Gina', familyName: 'G' },
           guardianLinkId: 'link-1',
-          kind: 0,
+          kind: 'Parent',
         },
       ];
 
@@ -150,7 +150,7 @@ describe('GuardiansService', () => {
         id,
         name: { givenName, familyName: 'G' },
         guardianLinkId: `link-${id}`,
-        kind: 0,
+        kind: 'Parent',
       });
 
       const promise = service.listChildGuardians('child-1');
@@ -167,7 +167,7 @@ describe('GuardiansService', () => {
           id: 'guardian-2',
           name: { givenName: 'Pat', familyName: 'P' },
           guardianLinkId: 'link-2',
-          kind: 1,
+          kind: 'Guardian',
         },
       ];
 
@@ -231,9 +231,7 @@ describe('GuardiansService', () => {
         id: 'child-2',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-3',
-        kind: 0,
-        language: 'en',
-        timeZoneId: 'UTC',
+        kind: 'Parent',
         username: 'sam.kid',
         temporaryPassword: 'temp-pass-123',
       };
@@ -345,7 +343,7 @@ describe('GuardiansService', () => {
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
-        kind: 0,
+        kind: 'Parent',
         language: 'da',
         timeZoneId: 'UTC',
       };
@@ -376,7 +374,7 @@ describe('GuardiansService', () => {
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
-        kind: 0,
+        kind: 'Parent',
         language: 'en',
         timeZoneId: 'Europe/Copenhagen',
       };
@@ -407,7 +405,7 @@ describe('GuardiansService', () => {
         {
           id: 'invite-1',
           email: 'co-parent@buddy.test',
-          kind: 1,
+          kind: 'Guardian',
           invitedAt: '2026-08-01T00:00:00Z',
           expiresAt: '2026-08-08T00:00:00Z',
         },
@@ -437,23 +435,29 @@ describe('GuardiansService', () => {
       const invite: GuardianInvite = {
         id: 'invite-2',
         email: 'co-parent@buddy.test',
-        kind: 1,
+        kind: 'Guardian',
         invitedAt: '2026-08-01T00:00:00Z',
         expiresAt: '2026-08-08T00:00:00Z',
       };
 
-      const promise = service.inviteGuardian('child-1', { email: 'co-parent@buddy.test', kind: 1 });
+      const promise = service.inviteGuardian('child-1', {
+        email: 'co-parent@buddy.test',
+        kind: 'Guardian',
+      });
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/guardian-invites`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ email: 'co-parent@buddy.test', kind: 1 });
+      expect(req.request.body).toEqual({ email: 'co-parent@buddy.test', kind: 'Guardian' });
       req.flush(invite);
 
       await expect(promise).resolves.toEqual(invite);
     });
 
     it('rejects when the invite already exists', async () => {
-      const promise = service.inviteGuardian('child-1', { email: 'co-parent@buddy.test', kind: 1 });
+      const promise = service.inviteGuardian('child-1', {
+        email: 'co-parent@buddy.test',
+        kind: 'Guardian',
+      });
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/guardian-invites`);
       req.flush('conflict', { status: 409, statusText: 'Conflict' });
@@ -489,7 +493,7 @@ describe('GuardiansService', () => {
 
   describe('previewGuardianInvite', () => {
     it('GETs the invite preview by token and resolves it', async () => {
-      const preview: GuardianInvitePreview = { childGivenName: 'Sam', kind: 1 };
+      const preview: GuardianInvitePreview = { childGivenName: 'Sam', kind: 'Guardian' };
 
       const promise = service.previewGuardianInvite('token-1');
 

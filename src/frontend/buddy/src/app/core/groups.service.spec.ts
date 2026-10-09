@@ -43,8 +43,8 @@ describe('GroupsService', () => {
 
   describe('listMyGroups', () => {
     it('resolves the groups sorted by name', async () => {
-      const work: GroupSummary = { id: 'group-2', name: 'Work', role: 0 };
-      const home: GroupSummary = { id: 'group-1', name: 'Home', role: 0 };
+      const work: GroupSummary = { id: 'group-2', name: 'Work', role: 'Owner' };
+      const home: GroupSummary = { id: 'group-1', name: 'Home', role: 'Owner' };
 
       const promise = service.listMyGroups();
       httpMock.expectOne(`${apiBaseUrl}/groups`).flush([work, home]);
@@ -53,7 +53,7 @@ describe('GroupsService', () => {
     });
 
     it('GETs the caller’s groups and resolves them', async () => {
-      const groups: GroupSummary[] = [{ id: 'group-1', name: 'Home', role: 0 }];
+      const groups: GroupSummary[] = [{ id: 'group-1', name: 'Home', role: 'Owner' }];
 
       const promise = service.listMyGroups();
 
@@ -85,7 +85,7 @@ describe('GroupsService', () => {
 
   describe('createGroup', () => {
     it('POSTs the request body and resolves the created group', async () => {
-      const created: GroupSummary = { id: 'group-2', name: 'Weekend House', role: 0 };
+      const created: GroupSummary = { id: 'group-2', name: 'Weekend House', role: 'Owner' };
 
       const promise = service.createGroup({ name: 'Weekend House' });
 
@@ -113,7 +113,7 @@ describe('GroupsService', () => {
         {
           id: 'invite-1',
           email: 'a@b.test',
-          role: 2,
+          role: 'Member',
           invitedAt: '2026-08-01T00:00:00Z',
           expiresAt: '2026-08-08T00:00:00Z',
         },
@@ -143,24 +143,24 @@ describe('GroupsService', () => {
       const invite: SentGroupInvite = {
         id: 'invite-2',
         email: 'c@d.test',
-        role: 1,
+        role: 'Admin',
         invitedAt: '2026-08-01T00:00:00Z',
         expiresAt: '2026-08-08T00:00:00Z',
         inviteUrl: 'http://localhost:4300/invite/tok',
       };
 
-      const promise = service.inviteToGroup('group-1', { email: 'c@d.test', role: 1 });
+      const promise = service.inviteToGroup('group-1', { email: 'c@d.test', role: 'Admin' });
 
       const req = httpMock.expectOne(`${apiBaseUrl}/groups/group-1/invites`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ email: 'c@d.test', role: 1 });
+      expect(req.request.body).toEqual({ email: 'c@d.test', role: 'Admin' });
       req.flush(invite);
 
       await expect(promise).resolves.toEqual(invite);
     });
 
     it('rejects when the invite already exists', async () => {
-      const promise = service.inviteToGroup('group-1', { email: 'c@d.test', role: 1 });
+      const promise = service.inviteToGroup('group-1', { email: 'c@d.test', role: 'Admin' });
 
       const req = httpMock.expectOne(`${apiBaseUrl}/groups/group-1/invites`);
       req.flush('conflict', { status: 409, statusText: 'Conflict' });
@@ -221,22 +221,23 @@ describe('GroupsService', () => {
         userId: 'u-1',
         givenName: 'Sam',
         familyName: 'Kid',
-        role: 2,
+        role: 'Member',
         isChild: true,
       };
       const jamie: GroupMember = {
         userId: 'u-2',
         givenName: 'Jamie',
         familyName: 'Adult',
-        role: 0,
+        role: 'Owner',
         isChild: false,
       };
       const detail: GroupDetail = {
         id: 'group-1',
         name: 'Home',
         members: [sam, jamie],
-        calendarPermissionPolicy: { Owner: 2, Admin: 2, Member: 1 },
-        mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+        calendarPermissionPolicy: { Owner: 'Owner', Admin: 'Contributor', Member: 'Viewer' },
+        mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+        medicinePermissionPolicy: { Owner: 'Manage', Admin: 'Mark', Member: 'None' },
       };
 
       const promise = service.getGroup('group-1');
@@ -250,10 +251,17 @@ describe('GroupsService', () => {
         id: 'group-1',
         name: 'Home',
         members: [
-          { userId: 'user-1', givenName: 'Jamie', familyName: 'Adult', role: 0, isChild: false },
+          {
+            userId: 'user-1',
+            givenName: 'Jamie',
+            familyName: 'Adult',
+            role: 'Owner',
+            isChild: false,
+          },
         ],
-        calendarPermissionPolicy: { Owner: 2, Admin: 2, Member: 1 },
-        mealplanPermissionPolicy: { Owner: 2, Admin: 2, Member: 0 },
+        calendarPermissionPolicy: { Owner: 'Owner', Admin: 'Contributor', Member: 'Viewer' },
+        mealplanPermissionPolicy: { Owner: 'Manage', Admin: 'Manage', Member: 'None' },
+        medicinePermissionPolicy: { Owner: 'Manage', Admin: 'Mark', Member: 'None' },
       };
 
       const promise = service.getGroup('group-1');
@@ -277,7 +285,11 @@ describe('GroupsService', () => {
 
   describe('updateCalendarPermissionPolicy', () => {
     it('PUTs the policy wrapped in a { policy } envelope and resolves', async () => {
-      const policy: CalendarPermissionPolicy = { Owner: 2, Admin: 2, Member: 1 };
+      const policy: CalendarPermissionPolicy = {
+        Owner: 'Owner',
+        Admin: 'Contributor',
+        Member: 'Viewer',
+      };
 
       const promise = service.updateCalendarPermissionPolicy('group-1', policy);
 
@@ -290,7 +302,11 @@ describe('GroupsService', () => {
     });
 
     it('rejects on a validation error', async () => {
-      const policy: CalendarPermissionPolicy = { Owner: 2, Admin: 2, Member: 1 };
+      const policy: CalendarPermissionPolicy = {
+        Owner: 'Owner',
+        Admin: 'Contributor',
+        Member: 'Viewer',
+      };
 
       const promise = service.updateCalendarPermissionPolicy('group-1', policy);
 
@@ -303,7 +319,7 @@ describe('GroupsService', () => {
 
   describe('updateMealplanPermissionPolicy', () => {
     it('PUTs the policy wrapped in a { policy } envelope and resolves', async () => {
-      const policy: MealplanPermissionPolicy = { Owner: 2, Admin: 2, Member: 0 };
+      const policy: MealplanPermissionPolicy = { Owner: 'Manage', Admin: 'Manage', Member: 'None' };
 
       const promise = service.updateMealplanPermissionPolicy('group-1', policy);
 

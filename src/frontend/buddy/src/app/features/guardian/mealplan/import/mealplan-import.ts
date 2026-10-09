@@ -25,17 +25,17 @@ import { Toggle } from '../../../../shared/toggle/toggle';
 const PAGE_SIZE = 50;
 
 const KIND_LABEL_KEYS: Record<ImportLineKind, string> = {
-  0: 'mealplan.import.review.kind.meal',
-  1: 'mealplan.import.review.kind.alternatives',
-  2: 'mealplan.import.review.kind.leftovers',
-  3: 'mealplan.import.review.kind.away',
+  Meal: 'mealplan.import.review.kind.meal',
+  Alternatives: 'mealplan.import.review.kind.alternatives',
+  Leftovers: 'mealplan.import.review.kind.leftovers',
+  Away: 'mealplan.import.review.kind.away',
 };
 
 const SLOT_LABEL_KEYS: Record<MealSlot, string> = {
-  0: 'mealplan.slots.breakfast',
-  1: 'mealplan.slots.lunch',
-  2: 'mealplan.slots.dinner',
-  3: 'mealplan.slots.snack',
+  Breakfast: 'mealplan.slots.breakfast',
+  Lunch: 'mealplan.slots.lunch',
+  Dinner: 'mealplan.slots.dinner',
+  Snack: 'mealplan.slots.snack',
 };
 
 const WARNING_KEYS: Record<string, string> = {
@@ -57,11 +57,11 @@ export type ImportDecision =
 type ResolvedDecision = Exclude<ImportDecision, { kind: 'merge' }>;
 
 function defaultDecision(group: MealPlanImportPreviewGroup): ImportDecision {
-  if (group.defaultAction === 0 && group.matchedMealId) {
+  if (group.defaultAction === 'Existing' && group.matchedMealId) {
     return { kind: 'existing', mealId: group.matchedMealId, name: group.matchedMealName };
   }
 
-  return group.defaultAction === 2 ? { kind: 'skip' } : { kind: 'new', name: group.name };
+  return group.defaultAction === 'Skip' ? { kind: 'skip' } : { kind: 'new', name: group.name };
 }
 
 function encodeDecision(decision: ImportDecision): string {
@@ -111,7 +111,7 @@ export class MealplanImport {
 
   protected readonly kindLabelKeys = KIND_LABEL_KEYS;
   protected readonly slotLabelKeys = SLOT_LABEL_KEYS;
-  protected readonly allSlots: readonly MealSlot[] = [0, 1, 2, 3];
+  protected readonly allSlots: readonly MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
   protected readonly encodeDecision = encodeDecision;
 
   // The guardian's first child's family scope, or null without children (same as the AI assistant).
@@ -123,8 +123,8 @@ export class MealplanImport {
 
   protected readonly text = signal('');
   protected readonly format = signal<ImportFormat>('auto');
-  protected readonly weekStart = signal<ImportWeekStart>(0);
-  protected readonly slot = signal<MealSlot>(2);
+  protected readonly weekStart = signal<ImportWeekStart>('Sunday');
+  protected readonly slot = signal<MealSlot>('Dinner');
   protected readonly previewing = createAction();
   protected readonly previewDetail = signal('');
 
@@ -192,7 +192,7 @@ export class MealplanImport {
       matched: entries.filter((e) => e.mealId).length,
       occupied: preview?.lines.filter((l) => l.occupied).length ?? 0,
       skipped: (preview?.lines.length ?? 0) - entries.length,
-      hasLeftovers: preview?.groups.some((g) => g.kind === 2) ?? false,
+      hasLeftovers: preview?.groups.some((g) => g.kind === 'Leftovers') ?? false,
     };
   });
 
@@ -224,7 +224,7 @@ export class MealplanImport {
   }
 
   protected importLeftoversAsOneMeal(): void {
-    const leftovers = (this.preview()?.groups ?? []).filter((g) => g.kind === 2);
+    const leftovers = (this.preview()?.groups ?? []).filter((g) => g.kind === 'Leftovers');
     const name = this.translation.translate('mealplan.import.review.leftoversMealName');
 
     this.decisions.update((current) => ({

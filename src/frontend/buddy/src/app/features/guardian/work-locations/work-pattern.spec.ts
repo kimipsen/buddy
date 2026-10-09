@@ -30,6 +30,6 @@ describe('work pattern helpers', () => {
   });
 
   it('builds a stable key per week and weekday', () => {
-    expect(patternKey(1, 0)).toBe('1|0');
+    expect(patternKey(1, 'Sunday')).toBe('1|Sunday');
   });
 });

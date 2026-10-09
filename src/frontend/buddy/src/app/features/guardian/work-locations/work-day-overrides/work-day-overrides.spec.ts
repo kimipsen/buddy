@@ -76,9 +76,9 @@ describe('WorkDayOverrides', () => {
     const service: Partial<WorkLocationsService> = {
       listWorkDays: vi.fn(async (_id: string, from: string) =>
         days(from, {
-          1: { status: { kind: 2, location: stil, source: 0 } },
+          1: { status: { kind: 2, location: stil, source: 'Pattern' } },
           2: { status: { kind: 1 } },
-          3: { status: { kind: 2, location: randers, source: 1 } },
+          3: { status: { kind: 2, location: randers, source: 'Override' } },
         }),
       ),
       setOverrides: vi.fn(async () => []),

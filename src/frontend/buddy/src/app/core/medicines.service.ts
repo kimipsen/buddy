@@ -4,56 +4,20 @@ import { firstValueFrom } from 'rxjs';
 
 import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
-// DoseStatus values match the backend's DoseStatus enum ordinals (no string enum converter is
-// registered server-side): 0 = Pending, 1 = Taken, 2 = Skipped.
-export type DoseStatus = 0 | 1 | 2;
+export type DoseStatus = Schemas['DoseStatus'];
 
-export interface MedicineSchedule {
-  id: string;
-  childId: string;
-  name: string;
-  dosage: string;
-  icon: string;
-  color: string;
-  times: string[];
-  startDate: string;
-  endDate: string | null;
-  isStopped: boolean;
-  createdBy: string;
-  lastModifiedBy: string;
-}
+export type MedicineSchedule = Schemas['MedicineScheduleResponse'];
 
-export interface MedicineDoseOccurrence {
-  medicineId: string;
-  name: string;
-  dosage: string;
-  icon: string;
-  color: string;
-  date: string;
-  time: string;
-  status: DoseStatus;
-}
+export type MedicineDoseOccurrence = Schemas['MedicineDoseOccurrence'];
 
-export interface MedicineScheduleDetails {
-  name: string;
-  dosage: string;
-  icon: string;
-  color: string;
-}
+export type MedicineScheduleDetails = Schemas['UpdateMedicineDetailsRequest'];
 
-export interface CreateMedicineScheduleRequest extends MedicineScheduleDetails {
-  times: string[];
-  startDate: string;
-  endDate?: string | null;
-}
+export type CreateMedicineScheduleRequest = Schemas['CreateMedicineScheduleRequest'];
 
-export interface RescheduleMedicineRequest {
-  times: string[];
-  startDate: string;
-  endDate?: string | null;
-}
+export type RescheduleMedicineRequest = Schemas['RescheduleMedicineRequest'];
 
 @Injectable({ providedIn: 'root' })
 export class MedicinesService {

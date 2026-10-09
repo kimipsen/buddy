@@ -21,11 +21,11 @@ import { ActionState, createAction } from '../../../../shared/action-state/actio
 import { PickupCell } from '../pickup-cell/pickup-cell';
 
 const SLOT_LABELS: Record<PickupSlot, string> = {
-  0: 'pickup.slots.dropOff',
-  1: 'pickup.slots.pickUp',
+  DropOff: 'pickup.slots.dropOff',
+  PickUp: 'pickup.slots.pickUp',
 };
 
-const SLOTS: PickupSlot[] = [0, 1];
+const SLOTS: PickupSlot[] = ['DropOff', 'PickUp'];
 const DAYS_AHEAD = 7;
 
 type EntriesByKey = Partial<Record<string, PickupOccurrence>>;

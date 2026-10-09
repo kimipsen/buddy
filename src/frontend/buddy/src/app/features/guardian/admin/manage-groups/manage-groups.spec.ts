@@ -19,14 +19,14 @@ import { ManageGroups } from './manage-groups';
 // core/i18n/translations/en/admin.ts rather than raw translation keys.
 describe('ManageGroups', () => {
   function group(overrides: Partial<GroupSummary> = {}): GroupSummary {
-    return { id: 'group-1', name: 'Home', role: 0, ...overrides };
+    return { id: 'group-1', name: 'Home', role: 'Owner', ...overrides };
   }
 
   function invite(overrides: Partial<GroupInvite> = {}): GroupInvite {
     return {
       id: 'invite-1',
       email: 'a@b.test',
-      role: 2,
+      role: 'Member',
       invitedAt: '2026-08-01T00:00:00Z',
       expiresAt: '2026-08-08T00:00:00Z',
       ...overrides,
@@ -38,7 +38,7 @@ describe('ManageGroups', () => {
       userId: 'member-1',
       givenName: 'Sam',
       familyName: 'Kid',
-      role: 2,
+      role: 'Member',
       isChild: false,
       ...overrides,
     };
@@ -49,15 +49,23 @@ describe('ManageGroups', () => {
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
-      kind: 1,
+      kind: 'Guardian',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
     };
   }
 
-  const calendarPolicy: CalendarPermissionPolicy = { Owner: 0, Admin: 1, Member: 2 };
-  const mealplanPolicy: MealplanPermissionPolicy = { Owner: 0, Admin: 2, Member: 3 };
+  const calendarPolicy: CalendarPermissionPolicy = {
+    Owner: 'Owner',
+    Admin: 'Contributor',
+    Member: 'Viewer',
+  };
+  const mealplanPolicy: MealplanPermissionPolicy = {
+    Owner: 'None',
+    Admin: 'Manage',
+    Member: 'View',
+  };
 
   function groupDetail(overrides: Partial<GroupDetail> = {}): GroupDetail {
     return {
@@ -66,6 +74,7 @@ describe('ManageGroups', () => {
       members: [],
       calendarPermissionPolicy: calendarPolicy,
       mealplanPermissionPolicy: mealplanPolicy,
+      medicinePermissionPolicy: { Owner: 'Manage', Admin: 'Mark', Member: 'None' },
       ...overrides,
     };
   }
@@ -79,7 +88,7 @@ describe('ManageGroups', () => {
     const groupsStub: Partial<GroupsService> = {
       listMyGroups: vi.fn(async () => [group()]),
       createGroup: vi.fn(
-        async (request) => ({ id: 'group-new', name: request.name, role: 0 }) as GroupSummary,
+        async (request) => ({ id: 'group-new', name: request.name, role: 'Owner' }) as GroupSummary,
       ),
       listInvites: vi.fn(async () => []),
       inviteToGroup: vi.fn(async (_groupId, request) => ({
@@ -272,8 +281,8 @@ describe('ManageGroups', () => {
     const { fixture } = await setup({
       groups: {
         listMyGroups: vi.fn(async () => [
-          group({ id: 'g1', name: 'Home', role: 0 }),
-          group({ id: 'g2', name: 'Weekend', role: 2 }),
+          group({ id: 'g1', name: 'Home', role: 'Owner' }),
+          group({ id: 'g2', name: 'Weekend', role: 'Member' }),
         ]),
       },
     });
@@ -288,7 +297,7 @@ describe('ManageGroups', () => {
 
   it('hides the manage buttons for a group where the caller is only a member', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 'Member' })]) },
     });
     await settle(fixture);
 
@@ -298,7 +307,7 @@ describe('ManageGroups', () => {
 
   it('shows the manage buttons for a group where the caller is an admin', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ role: 1 })]) },
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 'Admin' })]) },
     });
     await settle(fixture);
 
@@ -449,7 +458,7 @@ describe('ManageGroups', () => {
 
     expect(groups.inviteToGroup).toHaveBeenCalledWith('group-1', {
       email: 'friend@buddy.test',
-      role: 1,
+      role: 'Admin',
     });
     expect(listInvites).toHaveBeenCalledTimes(2);
     expect(emailInput.value).toBe('');
@@ -652,7 +661,7 @@ describe('ManageGroups', () => {
 
   it('is available to a plain member, not just owners/admins', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ role: 2 })]) },
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 'Member' })]) },
     });
     await settle(fixture);
 
@@ -681,14 +690,14 @@ describe('ManageGroups', () => {
                 userId: 'owner-1',
                 givenName: 'Jamie',
                 familyName: 'Adult',
-                role: 0,
+                role: 'Owner',
                 isChild: false,
               }),
               member({
                 userId: 'child-1',
                 givenName: 'Sam',
                 familyName: 'Kid',
-                role: 2,
+                role: 'Member',
                 isChild: true,
               }),
             ],
@@ -824,7 +833,7 @@ describe('ManageGroups', () => {
 
         // The first select in the policy grid is the Owner row (policyRows[0] = { key: 'Owner' }).
         const ownerSelect = compiled.querySelectorAll('select')[0];
-        selectByLabel(ownerSelect, 'Viewer'); // calendarRoles = [0, 1, 2] -> Viewer is CalendarRole 2.
+        selectByLabel(ownerSelect, 'Viewer');
         await settle(fixture);
 
         findButtonByText(compiled, 'Save permissions')!.click();
@@ -832,7 +841,7 @@ describe('ManageGroups', () => {
 
         expect(groups.updateCalendarPermissionPolicy).toHaveBeenCalledWith('group-1', {
           ...calendarPolicy,
-          Owner: 2,
+          Owner: 'Viewer',
         });
       },
     },
@@ -847,7 +856,7 @@ describe('ManageGroups', () => {
         await settle(fixture);
 
         const ownerSelect = compiled.querySelectorAll('select')[0];
-        selectByLabel(ownerSelect, 'Full access'); // mealplanTiers = [0, 3, 2] -> "Full access" is tier 2 (Manage).
+        selectByLabel(ownerSelect, 'Full access'); // "Full access" is the Manage tier.
         await settle(fixture);
 
         findButtonByText(compiled, 'Save permissions')!.click();
@@ -855,7 +864,7 @@ describe('ManageGroups', () => {
 
         expect(groups.updateMealplanPermissionPolicy).toHaveBeenCalledWith('group-1', {
           ...mealplanPolicy,
-          Owner: 2,
+          Owner: 'Manage',
         });
       },
     },
@@ -1090,7 +1099,7 @@ describe('ManageGroups', () => {
 
     expect(groups.inviteToGroup).toHaveBeenCalledExactlyOnceWith('group-1', {
       email: 'friend@buddy.test',
-      role: 2,
+      role: 'Member',
     });
   });
 
@@ -1112,7 +1121,7 @@ describe('ManageGroups', () => {
 
     expect(groups.inviteToGroup).toHaveBeenCalledExactlyOnceWith('group-1', {
       email: 'friend@buddy.test',
-      role: 2,
+      role: 'Member',
     });
   });
 
@@ -1194,7 +1203,10 @@ describe('ManageGroups', () => {
     compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
     await settle(fixture);
 
-    expect(inviteToGroup).toHaveBeenLastCalledWith('group-1', { email: 'b@b.test', role: 2 });
+    expect(inviteToGroup).toHaveBeenLastCalledWith('group-1', {
+      email: 'b@b.test',
+      role: 'Member',
+    });
   });
 
   it('shows the invites loading message while invites load', async () => {
@@ -1556,7 +1568,7 @@ describe('ManageGroups', () => {
 
   it('shows a Delete button only for a group the caller owns', async () => {
     const { fixture } = await setup({
-      groups: { listMyGroups: vi.fn(async () => [group({ role: 1 })]) },
+      groups: { listMyGroups: vi.fn(async () => [group({ role: 'Admin' })]) },
     });
     await settle(fixture);
 

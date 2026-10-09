@@ -14,9 +14,9 @@ import { createAction } from '../../../../shared/action-state/action-state';
 import { IcalSubscribeLinks } from '../../../../shared/ical-subscribe-links/ical-subscribe-links';
 
 const ROLE_LABELS: Record<CalendarRole, string> = {
-  0: 'admin.manageCalendars.roles.owner',
-  1: 'admin.manageCalendars.roles.contributor',
-  2: 'admin.manageCalendars.roles.viewer',
+  Owner: 'admin.manageCalendars.roles.owner',
+  Contributor: 'admin.manageCalendars.roles.contributor',
+  Viewer: 'admin.manageCalendars.roles.viewer',
 };
 
 // Matches the backend's Calendar.DefaultIcon -- what a new calendar gets if this field is left as-is.
@@ -257,8 +257,8 @@ export class ManageCalendars {
     try {
       const groups = await this.groupsService.listMyGroups();
       // Group-owned calendar creation is gated on GroupAuthorization.CheckManage server-side,
-      // which only Owners (0) and Admins (1) satisfy.
-      return groups.filter((group) => group.role === 0 || group.role === 1);
+      // which only Owners and Admins satisfy.
+      return groups.filter((group) => group.role === 'Owner' || group.role === 'Admin');
     } catch {
       // No manageable groups, so the create form degrades to the needs-group hint.
       return [];

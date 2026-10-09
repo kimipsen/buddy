@@ -11,13 +11,12 @@ import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-f
 describe('EventsToday', () => {
   const today = todayIsoDate();
 
-  // kind 0 = Event, 1 = Task -- see CalendarItemKind in calendars.service.ts.
   function occurrence(
     overrides: Partial<FlatOccurrence<CalendarOccurrence>> = {},
   ): CalendarOccurrence {
     return nestOccurrence<CalendarOccurrence>({
       itemId: 'event-1',
-      kind: 0,
+      kind: 'Event',
       title: 'Dentist',
       icon: '🦷',
       iconOverride: null,
@@ -139,10 +138,10 @@ describe('EventsToday', () => {
   });
 
   it('shows only events, filtering out tasks from the same mixed response', async () => {
-    const event = occurrence({ itemId: 'event-1', kind: 0, title: 'Dentist' });
+    const event = occurrence({ itemId: 'event-1', kind: 'Event', title: 'Dentist' });
     const task = occurrence({
       itemId: 'task-1',
-      kind: 1,
+      kind: 'Task',
       title: 'Buy groceries',
       startsAt: null,
       dueAt: `${today}T17:00:00Z`,

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using buddy.Common;
+using buddy.Common.OpenApi;
 using buddy.Features.Users;
 
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -13,7 +14,7 @@ public static class CreateChildEndpoint
 {
     public static RouteGroupBuilder MapCreateChild(this RouteGroupBuilder children)
     {
-        children.MapPost("/", async Task<Results<Ok<ChildResponse>, Conflict<string>, BadRequest<ErrorEnvelope>>> (
+        children.MapPost("/", async Task<Results<Ok<ChildResponse>, Conflict<ErrorEnvelope>, BadRequest<ErrorEnvelope>>> (
             ClaimsPrincipal principal,
             CreateChildRequest request,
             IMessageBus bus,
@@ -32,10 +33,15 @@ public static class CreateChildEndpoint
             {
                 CreateChildOutcome.Success(var child, var link, var username, var temporaryPassword) =>
                     TypedResults.Ok(ChildResponse.FromChild(child, link, username, temporaryPassword)),
-                CreateChildOutcome.UsernameUnavailable => TypedResults.Conflict("That username is already in use."),
+                CreateChildOutcome.UsernameUnavailable => TypedResults.Conflict(new ErrorEnvelope(
+                    CreateChildOutcome.UsernameUnavailableCode,
+                    "That username is already in use.",
+                    new Dictionary<string, string[]>(),
+                    httpContext.TraceIdentifier)),
                 CreateChildOutcome.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
+        .ProducesErrorCode(StatusCodes.Status409Conflict, CreateChildOutcome.UsernameUnavailableCode)
         .WithName("CreateChild");
 
         return children;

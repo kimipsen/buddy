@@ -95,7 +95,9 @@ describe('WorkPatternEditor', () => {
   });
 
   it('shows the stored pattern in the grid', async () => {
-    const { compiled } = await setup(schedule({ days: [{ week: 0, day: 2, locationId: 'stil' }] }));
+    const { compiled } = await setup(
+      schedule({ days: [{ week: 0, day: 'Tuesday', locationId: 'stil' }] }),
+    );
 
     expect(cell(compiled, 'Week A, Tue').value).toBe('stil');
     expect(cell(compiled, 'Week A, Mon').value).toBe('');
@@ -118,8 +120,8 @@ describe('WorkPatternEditor', () => {
       cycleWeeks: 2,
       anchorMonday: '2026-09-21',
       days: [
-        { week: 0, day: 2, locationId: 'stil' },
-        { week: 1, day: 4, locationId: 'stil' },
+        { week: 0, day: 'Tuesday', locationId: 'stil' },
+        { week: 1, day: 'Thursday', locationId: 'stil' },
       ],
     });
     expect(changed).toHaveBeenCalledOnce();
@@ -146,8 +148,8 @@ describe('WorkPatternEditor', () => {
       schedule({
         cycleWeeks: 2,
         days: [
-          { week: 0, day: 1, locationId: 'stil' },
-          { week: 1, day: 1, locationId: 'stil' },
+          { week: 0, day: 'Monday', locationId: 'stil' },
+          { week: 1, day: 'Monday', locationId: 'stil' },
         ],
       }),
     );
@@ -161,7 +163,7 @@ describe('WorkPatternEditor', () => {
     expect(replacePattern).toHaveBeenCalledWith({
       cycleWeeks: 1,
       anchorMonday: '2026-09-28',
-      days: [{ week: 0, day: 1, locationId: 'stil' }],
+      days: [{ week: 0, day: 'Monday', locationId: 'stil' }],
     });
   });
 

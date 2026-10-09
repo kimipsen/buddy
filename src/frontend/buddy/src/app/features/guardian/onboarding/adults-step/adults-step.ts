@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { GroupsService } from '../../../../core/groups.service';
+import { GroupRole, GroupsService } from '../../../../core/groups.service';
 import { GuardianKind, GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
@@ -12,8 +12,8 @@ import {
 } from '../../../../shared/segmented-control/segmented-control';
 import { Toggle } from '../../../../shared/toggle/toggle';
 
-// The group roles an adult can be invited with (GroupRole ordinals: 1 = Admin, 2 = Member).
-type InvitedRole = 1 | 2;
+// The group roles an adult can be invited with: never another Owner.
+type InvitedRole = Exclude<GroupRole, 'Owner'>;
 
 type RequestStatus = 'pending' | 'sent' | 'failed';
 
@@ -60,7 +60,7 @@ export class AdultsStep {
   protected readonly statusLabels = STATUS_LABELS;
 
   protected readonly email = signal('');
-  protected readonly kind = signal<GuardianKind>(0);
+  protected readonly kind = signal<GuardianKind>('Parent');
   protected readonly role = signal<InvitedRole | null>(null);
   protected readonly roleMissing = signal(false);
   // Every setup child starts selected; the guardian can untick any, and that survives a reload
@@ -83,13 +83,13 @@ export class AdultsStep {
   );
 
   protected readonly kindOptions = computed<SegmentedControlOption<GuardianKind>[]>(() => [
-    { value: 0, label: this.i18n.translate('onboarding.adults.kinds.parent') },
-    { value: 1, label: this.i18n.translate('onboarding.adults.kinds.guardian') },
+    { value: 'Parent', label: this.i18n.translate('onboarding.adults.kinds.parent') },
+    { value: 'Guardian', label: this.i18n.translate('onboarding.adults.kinds.guardian') },
   ]);
 
   protected readonly roleOptions = computed<SegmentedControlOption<InvitedRole | null>[]>(() => [
-    { value: 1, label: this.i18n.translate('onboarding.adults.roles.admin') },
-    { value: 2, label: this.i18n.translate('onboarding.adults.roles.member') },
+    { value: 'Admin', label: this.i18n.translate('onboarding.adults.roles.admin') },
+    { value: 'Member', label: this.i18n.translate('onboarding.adults.roles.member') },
   ]);
 
   protected isSelected(childId: string): boolean {

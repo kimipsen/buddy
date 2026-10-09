@@ -31,7 +31,9 @@ dotnet run
 
 The API listens on `https://localhost:7076` (`http://localhost:5193`), as
 declared in [`Properties/launchSettings.json`](Properties/launchSettings.json).
-OpenAPI is available in development at `/openapi/v1.json`.
+The OpenAPI documents are served in every environment: `/openapi/buddy.json` (the whole API,
+committed as [docs/backend/openapi/buddy.json](../../../docs/backend/openapi/buddy.json)) and one per
+feature at `/openapi/<feature>.json`.
 
 ## Configuration
 

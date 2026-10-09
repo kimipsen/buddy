@@ -16,7 +16,7 @@ describe('DosesToday', () => {
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
-      kind: 0,
+      kind: 'Parent',
       language: 'en',
       timeZoneId: 'UTC',
       ...overrides,
@@ -32,7 +32,7 @@ describe('DosesToday', () => {
       color: '#f00',
       date: today,
       time: '08:00:00',
-      status: 0,
+      status: 'Pending',
       ...overrides,
     };
   }
@@ -135,13 +135,13 @@ describe('DosesToday', () => {
       medicineId: 'med-early',
       name: 'Vitamin D',
       time: '07:00:00',
-      status: 0,
+      status: 'Pending',
     });
     const lateDose = dose({
       medicineId: 'med-late',
       name: 'Ibuprofen',
       time: '20:00:00',
-      status: 0,
+      status: 'Pending',
     });
 
     const { fixture } = await setup({
@@ -188,12 +188,12 @@ describe('DosesToday', () => {
   });
 
   it('renders a taken dose with a status pill and undo action, and a skipped dose likewise', async () => {
-    const takenDose = dose({ medicineId: 'med-taken', name: 'Taken med', status: 1 });
+    const takenDose = dose({ medicineId: 'med-taken', name: 'Taken med', status: 'Taken' });
     const skippedDose = dose({
       medicineId: 'med-skipped',
       name: 'Skipped med',
       time: '09:00:00',
-      status: 2,
+      status: 'Skipped',
     });
 
     const { fixture } = await setup({
@@ -211,8 +211,13 @@ describe('DosesToday', () => {
   });
 
   it('marks a pending dose taken and asserts the exact setDoseStatus call args', async () => {
-    const pendingDose = dose({ medicineId: 'med-1', date: today, time: '08:00:00', status: 0 });
-    const updated: MedicineDoseOccurrence = { ...pendingDose, status: 1 };
+    const pendingDose = dose({
+      medicineId: 'med-1',
+      date: today,
+      time: '08:00:00',
+      status: 'Pending',
+    });
+    const updated: MedicineDoseOccurrence = { ...pendingDose, status: 'Taken' };
     const setDoseStatus = vi.fn(async () => updated);
 
     const { fixture, medicines } = await setup({
@@ -224,13 +229,24 @@ describe('DosesToday', () => {
     findButton(compiled, 'Mark taken')!.click();
     await settle(fixture);
 
-    expect(medicines.setDoseStatus).toHaveBeenCalledWith('child-1', 'med-1', today, '08:00:00', 1);
+    expect(medicines.setDoseStatus).toHaveBeenCalledWith(
+      'child-1',
+      'med-1',
+      today,
+      '08:00:00',
+      'Taken',
+    );
     expect(compiled.textContent).toContain('Taken');
   });
 
   it('skips a pending dose and asserts the exact setDoseStatus call args', async () => {
-    const pendingDose = dose({ medicineId: 'med-2', date: today, time: '12:00:00', status: 0 });
-    const updated: MedicineDoseOccurrence = { ...pendingDose, status: 2 };
+    const pendingDose = dose({
+      medicineId: 'med-2',
+      date: today,
+      time: '12:00:00',
+      status: 'Pending',
+    });
+    const updated: MedicineDoseOccurrence = { ...pendingDose, status: 'Skipped' };
     const setDoseStatus = vi.fn(async () => updated);
 
     const { fixture, medicines } = await setup({
@@ -242,13 +258,19 @@ describe('DosesToday', () => {
     findButton(compiled, 'Skip')!.click();
     await settle(fixture);
 
-    expect(medicines.setDoseStatus).toHaveBeenCalledWith('child-1', 'med-2', today, '12:00:00', 2);
+    expect(medicines.setDoseStatus).toHaveBeenCalledWith(
+      'child-1',
+      'med-2',
+      today,
+      '12:00:00',
+      'Skipped',
+    );
     expect(compiled.textContent).toContain('Skipped');
   });
 
   it('undoes a taken dose back to pending and asserts the exact setDoseStatus call args', async () => {
-    const takenDose = dose({ medicineId: 'med-3', date: today, time: '10:00:00', status: 1 });
-    const updated: MedicineDoseOccurrence = { ...takenDose, status: 0 };
+    const takenDose = dose({ medicineId: 'med-3', date: today, time: '10:00:00', status: 'Taken' });
+    const updated: MedicineDoseOccurrence = { ...takenDose, status: 'Pending' };
     const setDoseStatus = vi.fn(async () => updated);
 
     const { fixture, medicines } = await setup({
@@ -260,12 +282,18 @@ describe('DosesToday', () => {
     findButton(compiled, 'Undo')!.click();
     await settle(fixture);
 
-    expect(medicines.setDoseStatus).toHaveBeenCalledWith('child-1', 'med-3', today, '10:00:00', 0);
+    expect(medicines.setDoseStatus).toHaveBeenCalledWith(
+      'child-1',
+      'med-3',
+      today,
+      '10:00:00',
+      'Pending',
+    );
     expect(compiled.textContent).toContain('Mark taken');
   });
 
   it('disables the action buttons for the dose being saved while the update is in flight', async () => {
-    const pendingDose = dose({ medicineId: 'med-4', status: 0 });
+    const pendingDose = dose({ medicineId: 'med-4', status: 'Pending' });
     let resolveUpdate!: (value: MedicineDoseOccurrence) => void;
     const setDoseStatus = vi.fn(
       () =>
@@ -289,14 +317,14 @@ describe('DosesToday', () => {
     expect(findButton(compiled, 'Mark taken')?.disabled).toBe(true);
     expect(findButton(compiled, 'Skip')?.disabled).toBe(true);
 
-    resolveUpdate({ ...pendingDose, status: 1 });
+    resolveUpdate({ ...pendingDose, status: 'Taken' });
     await settle(fixture);
 
     expect(compiled.textContent).toContain('Taken');
   });
 
   it('keeps the dose list visible alongside the error message when updating a dose fails', async () => {
-    const pendingDose = dose({ medicineId: 'med-5', name: 'Still pending', status: 0 });
+    const pendingDose = dose({ medicineId: 'med-5', name: 'Still pending', status: 'Pending' });
     const setDoseStatus = vi.fn(async () => Promise.reject(new Error('boom')));
 
     const { fixture } = await setup({

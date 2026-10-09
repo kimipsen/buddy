@@ -16,13 +16,13 @@ describe('ManageMeals', () => {
     kind: 'group',
     groupId: 'group-1',
     groupName: 'The Fam',
-    accessTier: 3,
+    accessTier: 'View',
   };
   const groupManageScope: MealplanScope = {
     kind: 'group',
     groupId: 'group-1',
     groupName: 'The Fam',
-    accessTier: 2,
+    accessTier: 'Manage',
   };
 
   function meal(overrides: Partial<Meal> = {}): Meal {
@@ -55,7 +55,11 @@ describe('ManageMeals', () => {
       meals: mealsState.asReadonly(),
       listMeals: vi.fn(async () => mealsState()),
       createMeal: vi.fn(async (_scope: MealplanScope, request: MealDetails) => {
-        const created = meal({ id: `meal-created-${mealsState().length + 1}`, ...request });
+        const created = meal({
+          id: `meal-created-${mealsState().length + 1}`,
+          ...request,
+          description: request.description ?? '',
+        });
         mealsState.update((current) => [...current, created]);
         return created;
       }),

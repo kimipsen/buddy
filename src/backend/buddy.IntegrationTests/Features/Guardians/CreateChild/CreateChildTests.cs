@@ -72,13 +72,15 @@ public sealed class CreateChildTests(BuddyApiFixture fixture)
         const string username = "duplicate-child-username";
         await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, username: username);
 
-        await fixture.Host.Scenario(_ =>
+        var response = await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
             _.Post.Json(new { GivenName = "Another", FamilyName = "Child", Username = username })
                 .ToUrl("/users/me/children/");
             _.StatusCodeShouldBe(409);
         });
+
+        Assert.Equal(CreateChildOutcome.UsernameUnavailableCode, response.ReadAsJson<ErrorEnvelope>().Code);
     }
 
     [Fact]

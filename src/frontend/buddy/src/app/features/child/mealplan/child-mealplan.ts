@@ -18,13 +18,13 @@ import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'dashboard.mealplan.slots.breakfast',
-  1: 'dashboard.mealplan.slots.lunch',
-  2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack',
+  Breakfast: 'dashboard.mealplan.slots.breakfast',
+  Lunch: 'dashboard.mealplan.slots.lunch',
+  Dinner: 'dashboard.mealplan.slots.dinner',
+  Snack: 'dashboard.mealplan.slots.snack',
 };
 
-const SLOTS: MealSlot[] = [0, 1, 2, 3];
+const SLOTS: MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 const DAYS_AHEAD = 7;
 const MAX_STARS = 5;
 const STARS = Array.from({ length: MAX_STARS }, (_, index) => index + 1);

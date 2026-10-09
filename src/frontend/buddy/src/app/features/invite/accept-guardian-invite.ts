@@ -12,8 +12,8 @@ import { ResendVerification } from '../../shared/resend-verification/resend-veri
 import { isEmailNotVerified } from './email-not-verified';
 
 const KIND_LABELS: Record<GuardianKind, string> = {
-  0: 'invite.guardianPreview.kinds.parent',
-  1: 'invite.guardianPreview.kinds.guardian',
+  Parent: 'invite.guardianPreview.kinds.parent',
+  Guardian: 'invite.guardianPreview.kinds.guardian',
 };
 
 @Component({

@@ -35,7 +35,7 @@ describe('AcceptGuardianInvite', () => {
     };
     const guardiansStub: Partial<GuardiansService> = {
       previewGuardianInvite: vi.fn(
-        async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+        async () => ({ childGivenName: 'Alex', kind: 'Parent' }) as GuardianInvitePreview,
       ),
       acceptGuardianInvite: vi.fn(async () => {}),
       ...stubs.guardians,
@@ -80,7 +80,7 @@ describe('AcceptGuardianInvite', () => {
 
   it('requests the preview using the token from the route', async () => {
     const previewGuardianInvite = vi.fn(
-      async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+      async () => ({ childGivenName: 'Alex', kind: 'Parent' }) as GuardianInvitePreview,
     );
     const { fixture } = await setup({ guardians: { previewGuardianInvite } });
     await settle(fixture);
@@ -106,7 +106,7 @@ describe('AcceptGuardianInvite', () => {
     const { fixture } = await setup({
       guardians: {
         previewGuardianInvite: vi.fn(
-          async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+          async () => ({ childGivenName: 'Alex', kind: 'Parent' }) as GuardianInvitePreview,
         ),
       },
     });
@@ -122,7 +122,7 @@ describe('AcceptGuardianInvite', () => {
     const { fixture } = await setup({
       guardians: {
         previewGuardianInvite: vi.fn(
-          async () => ({ childGivenName: 'Sam', kind: 1 }) as GuardianInvitePreview,
+          async () => ({ childGivenName: 'Sam', kind: 'Guardian' }) as GuardianInvitePreview,
         ),
       },
     });
@@ -180,7 +180,7 @@ describe('AcceptGuardianInvite', () => {
     const { fixture } = await setup({
       guardians: {
         previewGuardianInvite: vi.fn(
-          async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+          async () => ({ childGivenName: 'Alex', kind: 'Parent' }) as GuardianInvitePreview,
         ),
         acceptGuardianInvite,
       },
@@ -320,7 +320,7 @@ describe('AcceptGuardianInvite', () => {
     const { fixture, router } = await setup({
       guardians: {
         previewGuardianInvite: vi.fn(
-          async () => ({ childGivenName: 'Alex', kind: 0 }) as GuardianInvitePreview,
+          async () => ({ childGivenName: 'Alex', kind: 'Parent' }) as GuardianInvitePreview,
         ),
         acceptGuardianInvite: vi.fn(async () => {}),
       },

@@ -3,67 +3,27 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { postIdempotent } from './http-idempotency';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // A night wake-up or a daytime nap. Times are "HH:mm" here; the API answers "HH:mm:ss", which
 // normalizeEntry trims so they bind straight to app-time-select.
-export interface SleepInterval {
-  startTime: string;
-  durationMinutes: number;
-}
+export type SleepInterval = Schemas['SleepIntervalDto'];
 
 // What a guardian saves for one date -- every field optional, matching the backend's
 // LogSleepEntryRequest. Saving always overwrites the whole day.
-export interface SleepEntryRequest {
-  routineStartTime: string | null;
-  ritualStartTime: string | null;
-  ritualEndTime: string | null;
-  bedTime: string | null;
-  fellAsleepTime: string | null;
-  nightWakeUps: SleepInterval[];
-  morningWakeTime: string | null;
-  isTired: boolean;
-  naps: SleepInterval[];
-  // Guardian-entered (the app only suggests it), so it can disagree with the times above.
-  totalSleepMinutes: number | null;
-  remarks: string;
-}
+export type SleepEntryRequest = Schemas['LogSleepEntryRequest'];
 
-export interface SleepEntry extends SleepEntryRequest {
-  date: string;
-  // Derived server-side from the date (the paper form's "weekend" column).
-  isWeekend: boolean;
-  loggedBy: string;
-}
+export type SleepEntry = Schemas['SleepEntryResponse'];
 
-export interface SleepDiaryEntries {
-  sleepHygieneNotes: string;
-  entries: SleepEntry[];
-}
+export type SleepDiaryEntries = Schemas['SleepDiaryEntriesResponse'];
 
 // The plaintext token is only ever returned here, once.
-export interface CreatedShareLink {
-  id: string;
-  token: string;
-  createdAt: string;
-  expiresAt: string | null;
-}
+export type CreatedShareLink = Schemas['SleepDiaryShareLinkResponse'];
 
-export interface ShareLinkSummary {
-  id: string;
-  createdAt: string;
-  expiresAt: string | null;
-}
+export type ShareLinkSummary = Schemas['SleepDiaryShareLinkSummary'];
 
-export interface SharedSleepDiary {
-  childGivenName: string;
-  childFamilyName: string;
-  from: string;
-  to: string;
-  expiresAt: string | null;
-  sleepHygieneNotes: string;
-  entries: SleepEntry[];
-}
+export type SharedSleepDiary = Schemas['SharedSleepDiaryResponse'];
 
 function trimTime(time: string | null): string | null {
   return time === null ? null : time.slice(0, 5);

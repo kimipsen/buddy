@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - "src/frontend/**"
+      - "docs/backend/openapi/**"
       - ".claude/skills/i18n/**"
       - ".github/workflows/frontend-tests.yml"
       - ".github/scripts/coverage-report.sh"
@@ -12,6 +13,7 @@ on:
     branches: [master]
     paths:
       - "src/frontend/**"
+      - "docs/backend/openapi/**"
       - ".claude/skills/i18n/**"
       - ".github/workflows/frontend-tests.yml"
       - ".github/scripts/coverage-report.sh"
@@ -49,6 +51,11 @@ jobs:
 
       - name: Type check specs
         run: npx tsc --noEmit -p tsconfig.spec.json
+
+      # src/app/core/api/buddy-api.ts must be generated from the committed API contract
+      # (docs/backend/openapi/buddy.json); `task docs:openapi` regenerates both.
+      - name: Generated API types are up to date
+        run: npm run api:types && git diff --exit-code -- src/app/core/api/buddy-api.ts
 
       # ESLint (angular-eslint, flat config in eslint.config.js); warnings don't fail the build.
       - name: Lint

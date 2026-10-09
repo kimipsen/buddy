@@ -30,11 +30,13 @@ describe('cleanRow', () => {
 
   it('keeps exactly one meal scope, preferring the group when both are set', () => {
     expect(
-      cleanRow(row(PRINT_ROW_KIND.meal, { childId: 'signe', mealGroupId: 'fam', mealSlot: 2 })),
+      cleanRow(
+        row(PRINT_ROW_KIND.meal, { childId: 'signe', mealGroupId: 'fam', mealSlot: 'Dinner' }),
+      ),
     ).toMatchObject({
       childId: null,
       mealGroupId: 'fam',
-      mealSlot: 2,
+      mealSlot: 'Dinner',
     });
   });
 
@@ -76,7 +78,7 @@ describe('cleanRow', () => {
 describe('missingField', () => {
   it.each([
     [row(PRINT_ROW_KIND.pickup, { label: ' ' }), 'print.editor.missing.label'],
-    [row(PRINT_ROW_KIND.meal, { mealSlot: 2 }), 'print.editor.missing.mealScope'],
+    [row(PRINT_ROW_KIND.meal, { mealSlot: 'Dinner' }), 'print.editor.missing.mealScope'],
     [row(PRINT_ROW_KIND.meal, { childId: 'signe' }), 'print.editor.missing.mealSlot'],
     [row(PRINT_ROW_KIND.pickup), 'print.editor.missing.child'],
     [row(PRINT_ROW_KIND.workLocation), 'print.editor.missing.guardian'],
@@ -99,7 +101,9 @@ describe('missingField', () => {
 
   it('accepts complete rows, and a blank row without a label', () => {
     expect(missingField(row(PRINT_ROW_KIND.blank, { label: '' }))).toBeNull();
-    expect(missingField(row(PRINT_ROW_KIND.meal, { mealGroupId: 'fam', mealSlot: 0 }))).toBeNull();
+    expect(
+      missingField(row(PRINT_ROW_KIND.meal, { mealGroupId: 'fam', mealSlot: 'Breakfast' })),
+    ).toBeNull();
     expect(missingField(row(PRINT_ROW_KIND.calendarEvents, { calendarIds: ['a'] }))).toBeNull();
   });
 });
@@ -123,7 +127,7 @@ describe('exampleRows', () => {
     const rows = exampleRows({
       children: [child('signe', 'Signe')],
       guardians: [guardian('dad', 'Far')],
-      calendars: [{ id: 'family', name: 'Familie', icon: '📅', role: 0 } as never],
+      calendars: [{ id: 'family', name: 'Familie', icon: '📅', role: 'Owner' } as never],
       workLocations: new Map([
         ['dad', [{ id: 'stil', name: 'Stil', icon: '🏢', color: '#000', isArchived: false }]],
       ]),

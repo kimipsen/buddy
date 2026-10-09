@@ -13,7 +13,7 @@ import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
-const MANAGE: MealplanAccessTier = 2;
+const MANAGE: MealplanAccessTier = 'Manage';
 
 @Component({
   selector: 'app-manage-meals',

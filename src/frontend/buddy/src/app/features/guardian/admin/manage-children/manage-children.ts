@@ -18,11 +18,11 @@ import {
 } from '../../../../core/guardians.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 
-const INVITABLE_KINDS: GuardianKind[] = [0, 1];
+const INVITABLE_KINDS: GuardianKind[] = ['Parent', 'Guardian'];
 
 const KIND_LABELS: Record<GuardianKind, string> = {
-  0: 'admin.manageChildren.invite.kinds.parent',
-  1: 'admin.manageChildren.invite.kinds.guardian',
+  Parent: 'admin.manageChildren.invite.kinds.parent',
+  Guardian: 'admin.manageChildren.invite.kinds.guardian',
 };
 
 @Component({
@@ -82,7 +82,7 @@ export class ManageChildren {
 
   // Stryker disable next-line StringLiteral: the invite form only renders once toggleInvitePanel has reset this to ''
   protected readonly inviteEmail = signal('');
-  protected readonly inviteKind = signal<GuardianKind>(0);
+  protected readonly inviteKind = signal<GuardianKind>('Parent');
   protected readonly sendingInvite = createAction();
   protected readonly revokingInvite = createAction<string>();
 
@@ -246,7 +246,7 @@ export class ManageChildren {
 
     this.expandedInviteChildId.set(childId);
     this.inviteEmail.set('');
-    this.inviteKind.set(0);
+    this.inviteKind.set('Parent');
     this.sendingInvite.clearError();
     this.revokingInvite.clearError();
   }

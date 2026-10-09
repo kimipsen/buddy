@@ -13,13 +13,15 @@ namespace buddy.Serialization;
 // validation_error. "kind" may appear anywhere in the object; on a duplicate the last one wins, as
 // in the rest of System.Text.Json's object binding. The case's own fields still bind through the
 // configured options (naming policy, RespectRequiredConstructorParameters).
-public abstract class KindDiscriminatedJsonConverter<TBase> : JsonConverter<TBase>
+public abstract class KindDiscriminatedJsonConverter<TBase> : JsonConverter<TBase>, IKindDiscriminatedConverter
     where TBase : class
 {
-    private const string KindProperty = "kind";
+    private const string KindProperty = IKindDiscriminatedConverter.KindProperty;
 
     // Each case's kind ordinal and concrete type.
     protected abstract IReadOnlyDictionary<int, Type> Cases { get; }
+
+    IReadOnlyDictionary<int, Type> IKindDiscriminatedConverter.Cases => Cases;
 
     public override TBase Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -82,4 +84,13 @@ public abstract class KindDiscriminatedJsonConverter<TBase> : JsonConverter<TBas
 
         writer.WriteEndObject();
     }
+}
+
+// The non-generic view of a KindDiscriminatedJsonConverter's cases, for the OpenAPI schema
+// transformer (Common/OpenApi/WireSchemaTransformer), which documents each case as a oneOf branch.
+public interface IKindDiscriminatedConverter
+{
+    const string KindProperty = "kind";
+
+    IReadOnlyDictionary<int, Type> Cases { get; }
 }

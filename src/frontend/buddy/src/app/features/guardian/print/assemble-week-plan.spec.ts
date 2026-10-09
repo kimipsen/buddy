@@ -29,8 +29,8 @@ function template(rows: PrintTemplateRow[], overrides: Partial<PrintTemplate> = 
     ownerUserId: 'me',
     ownerGroupId: null,
     name: 'Ugeplan',
-    paperSize: 0,
-    defaultStartWeekday: 1,
+    paperSize: 'A4',
+    defaultStartWeekday: 'Monday',
     showWeekNumber: true,
     rows,
     guardianColors: [],
@@ -67,7 +67,7 @@ function occurrence(
 ): CalendarItemOccurrence {
   return nestOccurrence<CalendarItemOccurrence>({
     itemId: 'i',
-    kind: 0,
+    kind: 'Event',
     title: 'Item',
     icon: '📅',
     iconOverride: null,
@@ -115,14 +115,14 @@ describe('assembleWeekPlan', () => {
             row(PRINT_ROW_KIND.blank),
           ],
           {
-            paperSize: 1,
+            paperSize: 'A3',
           },
         ),
         sources(),
         OPTIONS,
       );
 
-      expect(model.paperSize).toBe(1);
+      expect(model.paperSize).toBe('A3');
       expect(model.rows.map((r) => r.label)).toEqual(['Signes aktiviteter', 'Row']);
       expect(model.rows[0].heightWeight).toBe(3);
       expect(model.rows[0].cells).toEqual(Array(7).fill({ type: 'blank' }));
@@ -138,18 +138,18 @@ describe('assembleWeekPlan', () => {
         [
           'child:signe',
           [
-            entry('2026-09-28', 2, 'Rejer'),
-            entry('2026-09-28', 1, 'Rugbrød'),
-            entry('2026-09-30', 2, 'Pasta'),
+            entry('2026-09-28', 'Dinner', 'Rejer'),
+            entry('2026-09-28', 'Lunch', 'Rugbrød'),
+            entry('2026-09-30', 'Dinner', 'Pasta'),
           ],
         ],
-        ['group:fam', [entry('2026-09-29', 2, 'Butterchicken')]],
+        ['group:fam', [entry('2026-09-29', 'Dinner', 'Butterchicken')]],
       ]);
 
       const model = assembleWeekPlan(
         template([
-          row(PRINT_ROW_KIND.meal, { childId: 'signe', mealSlot: 2 }),
-          row(PRINT_ROW_KIND.meal, { mealGroupId: 'fam', mealSlot: 2 }),
+          row(PRINT_ROW_KIND.meal, { childId: 'signe', mealSlot: 'Dinner' }),
+          row(PRINT_ROW_KIND.meal, { mealGroupId: 'fam', mealSlot: 'Dinner' }),
         ]),
         sources({ meals }),
         OPTIONS,
@@ -170,7 +170,7 @@ describe('assembleWeekPlan', () => {
       ({
         assignee: { kind: 0, guardianId: 'guardian-1' },
         date: '2026-09-28',
-        slot: 0,
+        slot: 'DropOff',
         ...overrides,
       }) as PickupOccurrence;
 
@@ -179,14 +179,18 @@ describe('assembleWeekPlan', () => {
         [
           'signe',
           [
-            pickup({ assignee: { kind: 0, guardianId: 'dad' }, slot: 0 }),
-            pickup({ assignee: { kind: 0, guardianId: 'mum' }, slot: 1 }),
-            pickup({ assignee: { kind: 1 }, date: '2026-09-29', slot: 0 }),
-            pickup({ assignee: { kind: 2, siblingChildId: 'viggo' }, date: '2026-09-29', slot: 1 }),
+            pickup({ assignee: { kind: 0, guardianId: 'dad' }, slot: 'DropOff' }),
+            pickup({ assignee: { kind: 0, guardianId: 'mum' }, slot: 'PickUp' }),
+            pickup({ assignee: { kind: 1 }, date: '2026-09-29', slot: 'DropOff' }),
+            pickup({
+              assignee: { kind: 2, siblingChildId: 'viggo' },
+              date: '2026-09-29',
+              slot: 'PickUp',
+            }),
             pickup({
               assignee: { kind: 3, hostName: 'Emma', location: '', contactInfo: '' },
               date: '2026-09-30',
-              slot: 1,
+              slot: 'PickUp',
             }),
           ],
         ],
@@ -219,11 +223,11 @@ describe('assembleWeekPlan', () => {
           [
             pickup({
               assignee: { kind: 4, guardianId: 'dad', babysitterId: 'b1', name: 'Anna' },
-              slot: 0,
+              slot: 'DropOff',
             }),
             pickup({
               assignee: { kind: 4, guardianId: 'dad', babysitterId: 'b2', name: '' },
-              slot: 1,
+              slot: 'PickUp',
             }),
           ],
         ],
@@ -249,12 +253,12 @@ describe('assembleWeekPlan', () => {
           [
             pickup({
               assignee: { kind: 4, guardianId: 'dad', babysitterId: 'b1', name: 'Anna' },
-              slot: 0,
+              slot: 'DropOff',
             }),
             // Same babysitter id on another guardian's list: a different babysitter.
             pickup({
               assignee: { kind: 4, guardianId: 'mum', babysitterId: 'b1', name: 'Jonas' },
-              slot: 1,
+              slot: 'PickUp',
             }),
           ],
         ],
@@ -293,8 +297,8 @@ describe('assembleWeekPlan', () => {
       isArchived: true,
     };
     const days: WorkDay[] = [
-      { date: '2026-09-28', status: { kind: 2, location: stil, source: 0 } },
-      { date: '2026-09-29', status: { kind: 2, location: randers, source: 1 } },
+      { date: '2026-09-28', status: { kind: 2, location: stil, source: 'Pattern' } },
+      { date: '2026-09-29', status: { kind: 2, location: randers, source: 'Override' } },
       { date: '2026-09-30', status: { kind: 1 } },
     ];
 
@@ -367,21 +371,21 @@ describe('assembleWeekPlan', () => {
           }),
           occurrence({
             itemId: 'affald',
-            kind: 1,
+            kind: 'Task',
             title: 'Affald + pant',
             dueAt: '2026-09-28T16:00:00Z',
             assignedTo: 'viggo',
           }),
           occurrence({
             itemId: 'lektier',
-            kind: 1,
+            kind: 'Task',
             title: 'Lektier',
             dueAt: '2026-10-01T16:00:00Z',
             assignedTo: 'viggo',
           }),
           occurrence({
             itemId: 'routine',
-            kind: 1,
+            kind: 'Task',
             title: 'Brush',
             parentTitle: 'Morgenrutine',
             subtaskId: 's1',
@@ -390,7 +394,7 @@ describe('assembleWeekPlan', () => {
           }),
           occurrence({
             itemId: 'routine',
-            kind: 1,
+            kind: 'Task',
             title: 'Dress',
             parentTitle: 'Morgenrutine',
             subtaskId: 's2',
@@ -593,8 +597,18 @@ describe('assembleWeekPlan', () => {
         [
           'family',
           [
-            occurrence({ itemId: 'a', kind: 1, title: 'Støvsug', dueAt: '2026-09-28T08:00:00Z' }),
-            occurrence({ itemId: 'b', kind: 1, title: 'Støvsug', dueAt: '2026-09-28T15:00:00Z' }),
+            occurrence({
+              itemId: 'a',
+              kind: 'Task',
+              title: 'Støvsug',
+              dueAt: '2026-09-28T08:00:00Z',
+            }),
+            occurrence({
+              itemId: 'b',
+              kind: 'Task',
+              title: 'Støvsug',
+              dueAt: '2026-09-28T15:00:00Z',
+            }),
           ],
         ],
       ]);
@@ -632,7 +646,7 @@ describe('assembleWeekPlan', () => {
         template([
           row(PRINT_ROW_KIND.pickup),
           row(PRINT_ROW_KIND.workLocation),
-          row(PRINT_ROW_KIND.meal, { mealSlot: 2 }),
+          row(PRINT_ROW_KIND.meal, { mealSlot: 'Dinner' }),
         ]),
         sources(),
         OPTIONS,
@@ -650,7 +664,7 @@ describe('assembleWeekPlan', () => {
           row(PRINT_ROW_KIND.calendarEvents, { calendarIds: ['private'] }),
           row(PRINT_ROW_KIND.pickup, { childId: 'gone' }),
           row(PRINT_ROW_KIND.workLocation, { guardianId: 'stranger' }),
-          row(PRINT_ROW_KIND.meal, { childId: 'gone', mealSlot: 2 }),
+          row(PRINT_ROW_KIND.meal, { childId: 'gone', mealSlot: 'Dinner' }),
           row(PRINT_ROW_KIND.blank),
         ]),
         sources({ occurrences: new Map([['private', null]]), pickups: new Map([['gone', null]]) }),

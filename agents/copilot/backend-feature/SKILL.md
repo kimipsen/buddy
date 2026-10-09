@@ -9,7 +9,7 @@ Arguments (free text): domain, use case name, verb + route, who may call it. Ask
 1. `Features/<Domain>/<Domain>Feature.cs`: store, event types, route group, and the `Map*` list.
 2. `Features/<Domain>/<Domain>Authorization.cs`: which access check fits (`CheckMark`/`CheckManage`, `CheckView`/`CheckContribute`, ...).
 3. The closest sibling slice in the same domain. Copy its shape over the templates when they differ.
-4. `docs/backend/<domain>/flow.md`, and the domain's table in `docs/backend/http-status-codes.md` → "Endpoint Status Mapping".
+4. `docs/backend/<domain>/flow.md`, and the API contract `docs/backend/openapi/buddy.json` (regenerate with `task docs:openapi`).
 
 ## 1. The slice: `Features/<Domain>/<UseCase>/`
 
@@ -39,13 +39,13 @@ Result to HTTP mapping (`Common/Result.cs`, `Common/ErrorEnvelope.cs`, `docs/bac
 | `NotFound` | `TypedResults.NotFound()` | 404 (no relationship counts as not found, so a stranger can't tell whether the resource exists) |
 
 - The switch is exhaustive over the union, so don't add a `_ =>` arm. If the route never produces a case, map it to `NotFound` with a comment instead of widening `Results<...>` (`ListMedicineSchedules.Endpoint.cs`, `DeleteItem.Endpoint.cs`).
-- Declare in `Results<...>` exactly the statuses the route returns. OpenAPI is generated from that list.
+- Declare in `Results<...>` exactly the statuses the route returns. OpenAPI is generated from that list, plus the middleware responses (`401`, `403 user_not_provisioned`, `409 concurrency_conflict`, `429`, `500`, `503`, ...) that `Common/OpenApi/ErrorResponsesOperationTransformer` adds by rule. An `ErrorEnvelope` code the endpoint returns itself gets `.ProducesErrorCode(status, Code)`; a result type without metadata (`ContentHttpResult`, `JsonHttpResult<T>`) gets `.Produces<T>(status, contentType)`. Enums go over the wire by name (`JsonStringEnumConverter`); a `kind` discriminator (`KindDiscriminatedJsonConverter`) stays numeric.
 - **Creates return `200 Ok`**, not 201: no endpoint uses `TypedResults.Created`. Match this convention.
 - Use a feature-specific outcome union only when a case doesn't fit `Result<T>` (`CreateChildOutcome` with `UsernameUnavailable` → 409).
 
 Wiring:
 
-- Add `group.Map<UseCase>();` to `Map<Domain>Feature` in `<Domain>Feature.cs`. The group already applies `.WithTags("<Domain>")`, `.RequireAuthorization()`, `.WithGroupName(OpenApiDocumentName)` and `.WithETag()` (conditional GET: a GET gets an `ETag` and answers a matching `If-None-Match` with `304`, nothing to do in the endpoint), and the feature has its own OpenAPI document (`services.AddOpenApi(OpenApiDocumentName, ...)`). `Program.cs` changes only for a new domain (step 3).
+- Add `group.Map<UseCase>();` to `Map<Domain>Feature` in `<Domain>Feature.cs`. The group already applies `.WithTags("<Domain>")`, `.RequireAuthorization()`, `.WithGroupName(OpenApiDocumentName)` and `.WithETag()` (conditional GET: a GET gets an `ETag` and answers a matching `If-None-Match` with `304`, nothing to do in the endpoint), and the feature has its own OpenAPI document (`services.AddBuddyOpenApiDocument(OpenApiDocumentName)`). `Program.cs` changes only for a new domain (step 3).
 - Anonymous routes are the exception and need `.AllowAnonymous()` (the iCal feeds only).
 - **Idempotency:** nothing to do per endpoint. `Common/Idempotency/IdempotencyKeyMiddleware.cs` covers every POST that carries an `Idempotency-Key` header, and the frontend sends one through `postIdempotent`. PUT/PATCH/DELETE get idempotency from step 6.
 - **Rate limiting:** a global ASP.NET Core rate limiter (`Common/RateLimiting/RateLimitingFeature`) already covers every endpoint (per Keycloak subject, else per client IP) and answers `429 rate_limited` before the handler runs; a new endpoint needs nothing. Add `.RequireRateLimiting(RateLimitingFeature.<Policy>)` only when it calls an LLM (`AiAssistantPolicy`), sends email (`OutboundEmailPolicy`) or is an anonymous token feed (`IcalFeedPolicy`); a new anonymous endpoint must get a policy or be listed in `Meta/RateLimitingCoverageTests`. Separately, resend throttling is the shared handler check `Common/RateLimiting/ResendCooldown`; the handler returns `ResendCooldownActive` (a case of a feature-specific outcome union, e.g. `InviteToGroupOutcome`) and the endpoint maps it with `cooldown.ToConflict(httpContext)` → `409` with the `resend_cooldown` envelope. Declare `Conflict<ErrorEnvelope>` in `Results<...>`.
@@ -111,7 +111,7 @@ task test:backend                                                               
 ## 5. Docs (when behavior or the contract changes)
 
 - `docs/backend/<domain>/flow.md`: add the row to the endpoint table, and extend the sequence diagram if the flow changed.
-- `docs/backend/http-status-codes.md` → the domain's "Endpoint Status Mapping" table: route, success code, client error codes, and when each applies. The doc requires this to change in the same PR.
+- Run `task docs:openapi` and commit the regenerated `docs/backend/openapi/buddy.json` and `src/frontend/buddy/src/app/core/api/buddy-api.ts`. `Meta/OpenApiDocumentTests` fails until the contract is regenerated, and frontend CI fails if the generated types are stale. `docs/backend/http-status-codes.md` holds the rules, not per-endpoint tables; change it only when a rule changes.
 - `docs/backend/glossary.md` for new domain terms or ids. Update `docs/backend/analysis/<topic>.md` if the change implements or alters a recorded design decision.
 - The post-commit doc-sync hook (`.devcontainer/git-hooks`, opt-in via `task hooks:install AGENT=claude`) may also update docs in a follow-up `docs: sync documentation (auto)` commit. It is per-clone and optional, so don't rely on it.
 

@@ -1,5 +1,6 @@
 using buddy.Common.Erasure;
 using buddy.Common.Http;
+using buddy.Common.OpenApi;
 using buddy.Common.Postgres;
 using buddy.Features.Calendars;
 using buddy.Serialization;
@@ -34,10 +35,7 @@ public static class ProgressFeature
 
     public static IServiceCollection AddProgressFeature(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddOpenApi(OpenApiDocumentName, options =>
-        {
-            options.ShouldInclude = api => api.GroupName == OpenApiDocumentName;
-        });
+        services.AddBuddyOpenApiDocument(OpenApiDocumentName);
 
         // Shared process-wide pool -- see PostgresDataSource.
         services.AddPostgresDataSource(configuration);

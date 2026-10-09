@@ -11,7 +11,7 @@ describe('MealplanToday', () => {
     id: 'child-1',
     name: { givenName: 'Sam', familyName: 'Kid' },
     guardianLinkId: 'link-1',
-    kind: 0,
+    kind: 'Parent',
     language: 'en',
     timeZoneId: 'UTC',
   };
@@ -19,7 +19,7 @@ describe('MealplanToday', () => {
   function entry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
     return {
       date: '2026-08-26',
-      slot: 1,
+      slot: 'Lunch',
       mealId: 'meal-1',
       mealName: 'Pancakes',
       icon: '🥞',
@@ -145,7 +145,7 @@ describe('MealplanToday', () => {
   });
 
   it('renders a planned meal in its slot with icon and name, leaving other slots not planned', async () => {
-    const lunch = entry({ slot: 1, mealName: 'Pancakes', icon: '🥞' });
+    const lunch = entry({ slot: 'Lunch', mealName: 'Pancakes', icon: '🥞' });
     const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => [lunch]) } });
     await settle(fixture);
 
@@ -158,8 +158,8 @@ describe('MealplanToday', () => {
   });
 
   it('renders every slot when all four are planned', async () => {
-    const entries: MealPlanEntry[] = ([0, 1, 2, 3] as MealSlot[]).map((slot) =>
-      entry({ slot, mealId: `meal-${slot}`, mealName: `Meal ${slot}`, icon: '🍽️' }),
+    const entries: MealPlanEntry[] = (['Breakfast', 'Lunch', 'Dinner', 'Snack'] as MealSlot[]).map(
+      (slot) => entry({ slot, mealId: `meal-${slot}`, mealName: `Meal ${slot}`, icon: '🍽️' }),
     );
     const { fixture } = await setup({ mealplans: { listMealPlan: vi.fn(async () => entries) } });
     await settle(fixture);

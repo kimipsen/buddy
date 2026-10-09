@@ -8,13 +8,13 @@ import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealpla
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
-  0: 'dashboard.mealplan.slots.breakfast',
-  1: 'dashboard.mealplan.slots.lunch',
-  2: 'dashboard.mealplan.slots.dinner',
-  3: 'dashboard.mealplan.slots.snack',
+  Breakfast: 'dashboard.mealplan.slots.breakfast',
+  Lunch: 'dashboard.mealplan.slots.lunch',
+  Dinner: 'dashboard.mealplan.slots.dinner',
+  Snack: 'dashboard.mealplan.slots.snack',
 };
 
-const SLOTS: MealSlot[] = [0, 1, 2, 3];
+const SLOTS: MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 
 // What the widget loaded: whether the guardian has children at all, and the first child's meals
 // for today keyed by slot.

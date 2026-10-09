@@ -23,7 +23,7 @@ public sealed class ClearPickupTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
-            _.Put.Json(new { Assignee = new { Kind = PickupAssigneeKind.SelfEscort } })
+            _.Put.Json(new { Assignee = new { Kind = (int)PickupAssigneeKind.SelfEscort } })
                 .ToUrl($"/pickups/children/{child.Id}/assignments")
                 .QueryString("date", $"{today:yyyy-MM-dd}")
                 .QueryString("slot", "PickUp");

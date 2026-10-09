@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,6 +21,15 @@ public sealed class StronglyTypedIdJsonConverterFactory : JsonConverterFactory
         var valueType = GetValueProperty(typeToConvert)!.PropertyType;
         var converterType = typeof(Converter<,>).MakeGenericType(typeToConvert, valueType);
         return (JsonConverter)Activator.CreateInstance(converterType)!;
+    }
+
+    // The wrapped value's type (Guid for an id, string for Color/Language/TimeZoneId), for a type this
+    // factory converts. The OpenAPI schema transformer (Common/OpenApi/WireSchemaTransformer) uses it
+    // so a wrapper's schema is its value's, exactly when the serializer writes the bare value.
+    internal static bool TryGetValueType(Type type, [NotNullWhen(true)] out Type? valueType)
+    {
+        valueType = GetValueProperty(type)?.PropertyType;
+        return valueType is not null;
     }
 
     private static PropertyInfo? GetValueProperty(Type type)

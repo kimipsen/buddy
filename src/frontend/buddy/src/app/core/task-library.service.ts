@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { sortByName } from './array-utils';
 import { postIdempotent } from './http-idempotency';
+import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
 
 // Wire format for Duration/TotalDuration matches the backend's default System.Text.Json TimeSpan
@@ -50,30 +51,9 @@ export interface TaskTemplate {
   lastModifiedBy: string;
 }
 
-export interface TaskTemplateDetails {
-  name: string;
-  icon: string;
-  color: string;
-}
+export type TaskTemplateDetails = Schemas['CreateTaskTemplateRequest'];
 
-interface SubtaskResponse {
-  id: string;
-  title: string;
-  icon: string | null;
-  duration: string;
-}
-
-interface TaskTemplateResponse {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  subtasks: SubtaskResponse[];
-  totalDuration: string;
-  isArchived: boolean;
-  createdBy: string;
-  lastModifiedBy: string;
-}
+type TaskTemplateResponse = Schemas['TaskTemplateResponse'];
 
 function fromResponse(response: TaskTemplateResponse): TaskTemplate {
   return {

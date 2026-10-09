@@ -1,3 +1,33 @@
+import type { Schemas } from './api/schemas';
+
+export type DayOfWeek = Schemas['DayOfWeek'];
+
+// The backend's DayOfWeek names, indexed like Date.getDay() (0 = Sunday).
+export const DAYS_OF_WEEK = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const satisfies readonly DayOfWeek[];
+
+// Date.getDay()'s number for a day (0 = Sunday ... 6 = Saturday).
+export function dayOfWeekIndex(day: DayOfWeek): number {
+  return DAYS_OF_WEEK.indexOf(day);
+}
+
+// The day for Date.getDay()'s number (0 = Sunday ... 6 = Saturday).
+export function dayOfWeekAt(index: number): DayOfWeek {
+  return DAYS_OF_WEEK[((index % 7) + 7) % 7] ?? 'Sunday';
+}
+
+// The day an ISO date falls on.
+export function dayOfWeekOf(isoDate: string): DayOfWeek {
+  return dayOfWeekAt(parseIsoDate(isoDate).getDay());
+}
+
 export function toIsoDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -121,9 +151,9 @@ export function isoWeekNumber(isoDate: string): number {
   return Math.ceil(((date.getTime() - yearStart) / 86_400_000 + 1) / 7);
 }
 
-// The first date on or after isoDate that falls on `weekday` (0 = Sunday ... 6 = Saturday, the
-// backend's DayOfWeek ordinals) -- isoDate itself when it already matches.
-export function nextWeekdayOnOrAfter(isoDate: string, weekday: number): string {
-  const offset = (weekday - parseIsoDate(isoDate).getDay() + 7) % 7;
+// The first date on or after isoDate that falls on `weekday` -- isoDate itself when it already
+// matches.
+export function nextWeekdayOnOrAfter(isoDate: string, weekday: DayOfWeek): string {
+  const offset = (dayOfWeekIndex(weekday) - parseIsoDate(isoDate).getDay() + 7) % 7;
   return addDaysIso(isoDate, offset);
 }

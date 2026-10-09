@@ -9,14 +9,14 @@ import { OnboardingSetup } from '../../../../core/onboarding.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 
 const ROLE_LABELS: Record<CalendarRole, string> = {
-  0: 'onboarding.calendar.roles.owner',
-  1: 'onboarding.calendar.roles.contributor',
-  2: 'onboarding.calendar.roles.viewer',
+  Owner: 'onboarding.calendar.roles.owner',
+  Contributor: 'onboarding.calendar.roles.contributor',
+  Viewer: 'onboarding.calendar.roles.viewer',
 };
 
 // Matches the backend's Calendar.DefaultIcon, like the admin page's calendar form.
 const DEFAULT_ICON = '📅';
-const VIEWER: CalendarRole = 2;
+const VIEWER: CalendarRole = 'Viewer';
 
 // Same fallback as the admin calendar form: the browser may report an alias ("UTC") the list
 // doesn't contain, and the select must only offer values it shows.

@@ -1,11 +1,15 @@
 import { Component, OnDestroy, OnInit, computed, inject, resource, signal } from '@angular/core';
 
-import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
+import {
+  CalendarItemKind,
+  CalendarOccurrence,
+  CalendarsService,
+} from '../../../core/calendars.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 
-const EVENT_KIND = 0;
+const EVENT_KIND = 'Event' satisfies CalendarItemKind;
 
 // How often the ongoing-event progress fill and past/done state are recomputed -- same cadence
 // as the child dashboard's equivalent (see ChildHome.NOW_REFRESH_INTERVAL_MS).

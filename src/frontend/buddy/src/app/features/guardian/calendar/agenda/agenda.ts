@@ -6,6 +6,7 @@ import {
   AssignableMember,
   CalendarItemKind,
   CalendarOccurrence,
+  CalendarRole,
   CalendarSummary,
   CalendarsService,
   DatePart,
@@ -18,6 +19,9 @@ import {
   addMinutesToTime,
   buildDateRangeIso,
   buildMonthGridIso,
+  DAYS_OF_WEEK,
+  dayOfWeekAt,
+  dayOfWeekIndex,
   parseIsoDate,
   shiftMonthIso,
   startOfWeekIso,
@@ -54,10 +58,10 @@ import { TaskPicker } from '../../task-library/task-picker/task-picker';
 export type NewTaskSource = 'manual' | 'template';
 
 const DAYS_AHEAD = 7;
-const EVENT_KIND = 0 satisfies CalendarItemKind;
-const TASK_KIND = 1 satisfies CalendarItemKind;
-// Owner (0) or Contributor (1) -- the same tiers CalendarAuthorization.CheckContribute accepts.
-const MAX_CONTRIBUTE_ROLE = 1;
+const EVENT_KIND = 'Event' satisfies CalendarItemKind;
+const TASK_KIND = 'Task' satisfies CalendarItemKind;
+// The same tiers CalendarAuthorization.CheckContribute accepts.
+const CONTRIBUTE_ROLES: readonly CalendarRole[] = ['Owner', 'Contributor'];
 const DEFAULT_COLOR = '#f43f5e';
 
 export interface AgendaDay {
@@ -72,50 +76,50 @@ export type ViewMode = 'day' | 'workweek' | 'week' | 'month';
 // The create form's Repeat choice: 'none' posts no recurrence rule at all.
 export type RepeatChoice = RecurrenceFrequency | 'none';
 
-const DAILY: RecurrenceFrequency = 0;
-const WEEKLY: RecurrenceFrequency = 1;
+const DAILY: RecurrenceFrequency = 'Daily';
+const WEEKLY: RecurrenceFrequency = 'Weekly';
 
 // The daily weekday toggles, Monday first, with the translation keys of their visible
 // abbreviation and their accessible full name.
 export const WEEKDAY_TOGGLES: readonly { day: Weekday; shortKey: string; nameKey: string }[] = [
   {
-    day: 1,
+    day: 'Monday',
     shortKey: 'calendar.agenda.form.repeat.weekdays.monShort',
     nameKey: 'calendar.agenda.form.repeat.weekdays.mon',
   },
   {
-    day: 2,
+    day: 'Tuesday',
     shortKey: 'calendar.agenda.form.repeat.weekdays.tueShort',
     nameKey: 'calendar.agenda.form.repeat.weekdays.tue',
   },
   {
-    day: 3,
+    day: 'Wednesday',
     shortKey: 'calendar.agenda.form.repeat.weekdays.wedShort',
     nameKey: 'calendar.agenda.form.repeat.weekdays.wed',
   },
   {
-    day: 4,
+    day: 'Thursday',
     shortKey: 'calendar.agenda.form.repeat.weekdays.thuShort',
     nameKey: 'calendar.agenda.form.repeat.weekdays.thu',
   },
   {
-    day: 5,
+    day: 'Friday',
     shortKey: 'calendar.agenda.form.repeat.weekdays.friShort',
     nameKey: 'calendar.agenda.form.repeat.weekdays.fri',
   },
   {
-    day: 6,
+    day: 'Saturday',
     shortKey: 'calendar.agenda.form.repeat.weekdays.satShort',
     nameKey: 'calendar.agenda.form.repeat.weekdays.sat',
   },
   {
-    day: 0,
+    day: 'Sunday',
     shortKey: 'calendar.agenda.form.repeat.weekdays.sunShort',
     nameKey: 'calendar.agenda.form.repeat.weekdays.sun',
   },
 ];
 
-const ALL_WEEKDAYS: readonly Weekday[] = [0, 1, 2, 3, 4, 5, 6];
+const ALL_WEEKDAYS: readonly Weekday[] = DAYS_OF_WEEK;
 
 // What one load of the visible range returns: the guardian's calendars and the range's occurrences.
 interface LoadedWeek {
@@ -322,7 +326,7 @@ export class CalendarAgenda {
 
   protected readonly myCalendars = computed(() => this.shown().myCalendars);
   protected readonly eligibleCalendars = computed<CalendarSummary[]>(() =>
-    this.myCalendars().filter((calendar) => calendar.role <= MAX_CONTRIBUTE_ROLE),
+    this.myCalendars().filter((calendar) => CONTRIBUTE_ROLES.includes(calendar.role)),
   );
 
   protected readonly occurrences = computed(() => this.shown().occurrences);
@@ -421,7 +425,7 @@ export class CalendarAgenda {
       this.newKind() === EVENT_KIND ? this.newStartDate() : this.newDueDate(),
     ).getDay();
 
-    return Number.isNaN(day) ? null : (day as Weekday);
+    return Number.isNaN(day) ? null : dayOfWeekAt(day);
   });
   protected readonly shownWeekdays = computed<readonly Weekday[]>(() => {
     const explicit = this.newWeekdays();
@@ -803,12 +807,12 @@ export class CalendarAgenda {
           schedule:
             kind === EVENT_KIND
               ? {
-                  kind: EVENT_KIND,
+                  kind: 0,
                   startsAt: toDatePart(this.editStartDate(), startTime),
                   endsAt: toDatePart(endDate, endTime),
                   isAllDay,
                 }
-              : { kind: TASK_KIND, dueDate: toDatePart(this.editDueDate(), dueTime), isAllDay },
+              : { kind: 1, dueDate: toDatePart(this.editDueDate(), dueTime), isAllDay },
         });
 
         this.editingItemId.set(null);
@@ -900,13 +904,13 @@ export class CalendarAgenda {
       schedule:
         kind === EVENT_KIND
           ? {
-              kind: EVENT_KIND,
+              kind: 0,
               startsAt: toDatePart(this.newStartDate(), startTime),
               endsAt: toDatePart(endDate, endTime),
               isAllDay,
             }
           : {
-              kind: TASK_KIND,
+              kind: 1,
               dueDate: toDatePart(this.newDueDate(), dueTime),
               isAllDay,
               assignedTo: this.newAssignedTo() || null,
@@ -929,7 +933,10 @@ export class CalendarAgenda {
       frequency,
       intervalCount: filtered ? 1 : this.newIntervalCount(),
       until: this.newUntil().trim() || null,
-      weekdays: filtered || explicitWeekly ? [...this.shownWeekdays()].sort((a, b) => a - b) : null,
+      weekdays:
+        filtered || explicitWeekly
+          ? [...this.shownWeekdays()].sort((a, b) => dayOfWeekIndex(a) - dayOfWeekIndex(b))
+          : null,
     };
   }
 

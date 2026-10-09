@@ -49,9 +49,8 @@ sequenceDiagram
 | `PUT` | `/print-templates/{templateId}/babysitter-colors` | Replaces the babysitter name colors (`guardianId` + `babysitterId` per entry). |
 | `DELETE` | `/print-templates/{templateId}` | Deletes it; it then reads as missing everywhere. |
 
-Row kinds travel as `PrintRowKind` ordinals: `0` Meal, `1` Pickup,
-`2` WorkLocation, `3` CalendarMarker, `4` CalendarEvents, `5` TaskChecklist,
-`6` Blank. A row only sets the fields its kind uses; see the table in the
+Row kinds travel as `PrintRowKind` names: `Meal`, `Pickup`, `WorkLocation`,
+`CalendarMarker`, `CalendarEvents`, `TaskChecklist`, `Blank`. A row only sets the fields its kind uses; see the table in the
 design doc's Question 3.
 
 ## Authorization model
