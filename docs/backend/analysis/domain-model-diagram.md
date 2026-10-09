@@ -116,6 +116,7 @@ classDiagram
         +PaperSize PaperSize
         +PrintTemplateRow[] Rows
         +GuardianColor[] GuardianColors
+        +BabysitterColor[] BabysitterColors
     }
 
     class TaskTemplate {

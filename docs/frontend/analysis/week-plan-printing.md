@@ -174,13 +174,16 @@ faithful miniature of the paper. The transform is removed under
   values.
 - **Guardian colors:** one `color-swatch-picker` per guardian of the
   guardian's children.
+- **Babysitter colors:** one `color-swatch-picker` per active babysitter of the
+  guardian and co-guardians, stored per `(guardianId, babysitterId)`. Babysitter
+  pickups in the print sheet use this color.
 - **Live preview:** a scaled `WeekPlanSheet` for the coming week, refreshed
   as the guardian edits.
 - **Stale references:** rows pointing at a calendar or child the guardian can
   no longer see are flagged inline with a fix-it prompt.
 
 Saving sends only what changed: `PATCH …/name`, `PATCH …/layout`,
-`PUT …/rows`, `PUT …/colors`. As with the pickup planner, there is no
+`PUT …/rows`, `PUT …/colors`, `PUT …/babysitter-colors`. As with the pickup planner, there is no
 optimistic update; the editor replaces its state with the server's response.
 
 ### Starting from the example
