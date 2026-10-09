@@ -23,6 +23,17 @@ const ciBackendEnv = {
   Mail__Port: '2025',
 };
 
+// Every logged-out request in the suite comes from the same localhost IP, so it all shares the API's
+// anonymous rate-limit bucket (60 requests, then 1 per second; RateLimitingOptions.Anonymous). The
+// parallel suite loads the app dozens of times (each load fetches GET /features before signing in)
+// and ran it dry, so a public page such as the shared sleep diary got a 429 and showed its generic
+// error. Production keeps its limits; only the API this config starts gets a larger anonymous
+// budget. A dev API that is already running (reuseExistingServer) keeps whatever limits it has.
+const e2eBackendEnv = {
+  RateLimiting__Anonymous__TokenLimit: '1000',
+  RateLimiting__Anonymous__TokensPerPeriod: '100',
+};
+
 export default defineConfig({
   testDir: './e2e',
   globalSetup: require.resolve('./e2e/support/global-setup'),
@@ -69,8 +80,9 @@ export default defineConfig({
       reuseExistingServer: !isCI,
       // Only the backend needs an explicit override: inside the devcontainer it already targets
       // db/keycloak/mailpit by hostname via the checked-in appsettings.Development.json, so
-      // nothing to change there -- only a bare CI runner needs redirecting to localhost.
-      env: isCI ? ciBackendEnv : {},
+      // nothing to change there -- only a bare CI runner needs redirecting to localhost. The
+      // rate-limit budget above applies everywhere.
+      env: { ...(isCI ? ciBackendEnv : {}), ...e2eBackendEnv },
       timeout: 120_000,
     },
   ],
