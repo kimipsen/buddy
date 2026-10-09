@@ -1,6 +1,9 @@
 export const shell = {
   brand: 'Buddy',
   dashboardTitle: 'Guardian dashboard',
+  help: {
+    toggle: 'Help for this page',
+  },
   menu: {
     openLabel: 'Open account menu',
     mealPlanner: 'Meal planner',
@@ -13,6 +16,7 @@ export const shell = {
     babysitters: 'Babysitters',
     print: 'Print week plan',
     settings: 'Settings',
+    help: 'Help',
     signOut: 'Sign out',
     version: 'Version {version}',
     sourceCode: 'GitHub',

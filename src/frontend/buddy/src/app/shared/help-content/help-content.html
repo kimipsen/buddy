@@ -1,0 +1,30 @@
+@for (section of sections(); track section.id) {
+  <section class="mt-4 first:mt-0">
+    <p
+      role="heading"
+      [attr.aria-level]="headingLevel()"
+      class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+    >
+      {{ section.titleKey | translate }}
+    </p>
+    <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">
+      {{ section.bodyKey | translate }}
+    </p>
+    @if (section.stepKeys.length > 0) {
+      <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
+        @for (key of section.stepKeys; track key) {
+          <li>{{ key | translate }}</li>
+        }
+      </ol>
+    }
+  </section>
+}
+
+@if (link(); as link) {
+  <a
+    [routerLink]="link.route"
+    class="mt-4 inline-block text-sm font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+  >
+    {{ link.labelKey | translate }}
+  </a>
+}

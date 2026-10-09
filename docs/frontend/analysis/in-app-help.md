@@ -1,6 +1,11 @@
 # In-app help for guardians
 
-Status: Proposed (not yet implemented)
+Status: Implemented (2026-10-09). A "?" disclosure button in the `GuardianShell` header expands
+the current page's help inline (`HelpPanel`, topic from the route's `data.helpTopic`), a
+`/guardian/help` page lists all 13 topics (`GuardianHelp`, `?topic=` scrolls to one), the profile
+menu links to it, the text lives in `translations/{en,da}/help.ts` with section order in
+`core/help/help-topics.ts`, `help-coverage.spec.ts` requires help for every guardian page, and
+`e2e/help.spec.ts` covers the journey in English and Danish.
 
 ## Goal
 
@@ -54,7 +59,9 @@ current page. A new `/guardian/help` page lists every topic, and the profile men
   It pushes the page content down instead of covering it, the same as an inline edit.
   - The button is a disclosure: `aria-expanded`, `aria-controls` pointing at the panel, and a
     `shell.help.toggle` label.
-  - Escape closes the panel and returns focus to the button, as `ProfileMenu` does.
+  - Escape closes the panel and returns focus to the button, as `ProfileMenu` does, but only
+    while focus is on the button or inside the panel. Escape elsewhere belongs to whatever has
+    focus there, such as the delete-account dialog.
   - The panel closes when the user navigates to another page.
 - The panel shows the topic's sections and ends with an "All help topics" link to
   `/guardian/help?topic=<id>`.
@@ -99,23 +106,31 @@ Topic structure lives in a typed TypeScript registry. The dictionaries hold only
 order of sections and steps can't come from the dictionary. It comes from a registry:
 
 ```ts
-// core/help/help-topics.ts
+// core/help/help-topic.ts
 export interface HelpTopic {
-  id: HelpTopicId;            // key under `help.topics`
-  sections: readonly {
-    id: string;               // help.topics.<id>.<section>.title / .body
-    steps?: number;           // help.topics.<id>.<section>.steps.s1 .. sN, rendered as an <ol>
+  readonly id: string;                    // key under `help.topics`
+  readonly sections: readonly {
+    readonly id: string;                  // help.topics.<id>.sections.<section>.title / .body
+    readonly steps?: number;              // ...sections.<section>.steps.s1 .. sN, rendered as an <ol>
   }[];
-  related?: readonly HelpTopicId[];
+  readonly related?: readonly string[];   // other topic ids the panel links to
+  readonly link?: string;                 // an in-app page; label is help.topics.<id>.link
 }
 
+// core/help/help-topics.ts
 export const HELP_TOPICS: readonly HelpTopic[] = [
-  { id: 'dashboard', sections: [{ id: 'overview' }, { id: 'cards' }] },
-  { id: 'calendar', sections: [{ id: 'views' }, { id: 'ownership' }, { id: 'createEvent', steps: 4 }],
-    related: ['groupsAndSharing'] },
+  {
+    id: 'dashboard',
+    sections: [{ id: 'overview' }, { id: 'tasks' }, { id: 'medicine' }, { id: 'mealsAndPickups' }],
+    related: ['calendar', 'medicine', 'mealPlans', 'pickup'],
+    link: '/guardian/onboarding',
+  },
   // ...
 ];
 ```
+
+Topic ids are plain strings rather than a union type. `help-coverage.spec.ts` checks that every
+id a route or `related` names exists, which a union couldn't do for route `data` anyway.
 
 ```ts
 // translations/en/help.ts
@@ -125,9 +140,10 @@ export const help = {
   topics: {
     calendar: {
       title: 'Calendars',
-      views: { title: 'Day, week and month', body: '...' },
-      ownership: { title: 'Personal and group calendars', body: '...' },
-      createEvent: { title: 'Add an event', body: '...', steps: { s1: '...', s2: '...', s3: '...', s4: '...' } },
+      sections: {
+        views: { title: '...', body: '...' },
+        addItem: { title: '...', body: '...', steps: { s1: '...', s2: '...', s3: '...', s4: '...', s5: '...' } },
+      },
     },
   },
 };
@@ -171,11 +187,14 @@ After:
 ```
 
 Blast radius: 15 one-line route edits, plus one new route (`help`). No page component or page
-template changes. `GuardianShell` changes from an empty class to one that injects `Router` and
-derives a `helpTopic` signal from `NavigationEnd` (or `toSignal` over router events).
+template changes. `GuardianShell` changes from an empty class to one that injects
+`ActivatedRoute` and sets a `helpTopic` signal from `<router-outlet (activate)>`, walking down to
+the deepest child route. Components here don't `subscribe()` or use `toSignal` (see the
+`buddy-frontend` conventions), and `activate` fires on exactly the event that matters: another page
+replacing the current one. The same handler folds the previous page's panel away.
 
-Several routes can share a topic. `mealplan`, `mealplan/ai-assistant` and `mealplan/import` might
-each get their own topic or share `mealPlans`; that gets settled while writing the content.
+Several routes share a topic: `mealplan`, `mealplan/ai-assistant` and `mealplan/import` all point
+at `mealPlans`, and `print` and `print/templates/:templateId` both point at `print`.
 `onboarding` gets no topic because the guide explains itself.
 
 Considered and rejected:
@@ -215,26 +234,35 @@ screenshots complete.
 
 | File | Change |
 |---|---|
-| `core/help/help-topics.ts` | New: `HelpTopicId`, `HelpTopic`, `HELP_TOPICS`, and `helpKeys(topic)`, which yields every key for the template and the coverage spec |
-| `shared/help-content/help-content.{ts,html,spec.ts}` | New: renders one topic's sections (`h3` + `p` + optional `ol`). The panel and the index both use it |
-| `features/guardian/shell/help-panel/help-panel.{ts,html,spec.ts}` | New: the inline panel (emerald card styling, like `OnboardingResumeCard`), its close button and the "All help topics" link |
+| `core/help/help-topic.ts`, `help-topics.ts` | New: `HelpTopic`, the key helpers (`helpTopicKeys(topic)` yields every key, for the coverage spec), `HELP_TOPICS` and `findHelpTopic` |
+| `shared/help-content/help-content.{ts,html,spec.ts}` | New: renders one topic's sections (heading at the host's `headingLevel` + `p` + optional `ol`) and its `link`. The panel and the index both use it |
+| `features/guardian/shell/help-panel/help-panel.{ts,html,spec.ts}` | New: the inline panel (emerald card styling, like `OnboardingResumeCard`), its close button, "See also" links to related topics and the "All help topics" link |
 | `features/guardian/shell/guardian-shell.{ts,html,spec.ts}` | Header "?" disclosure button next to `<app-profile-menu />`; `helpTopic`/`helpOpen` signals; closes on navigation |
 | `features/guardian/help/help-page.{ts,html,spec.ts}` | New `/guardian/help`: table of contents, all topics, and `?topic=` scroll via `afterNextRender` |
 | `features/guardian/guardian.routes.ts` | `data.helpTopic` on 15 routes; new `help` route |
 | `features/guardian/shell/profile-menu/profile-menu.html` | "Help" link |
-| `core/i18n/translations/{en,da}/help.ts` + `index.ts` | New area; `shell.help.toggle`/`close` and `shell.menu.help` keys in `shell.ts` |
+| `core/i18n/translations/{en,da}/help.ts` + `index.ts` | New area (`panelTitle`, `close`, `related`, `allTopics`, `page.*`, `topics.*`); `shell.help.toggle` and `shell.menu.help` keys in `shell.ts` |
 | `src/app/help-coverage.spec.ts` | New, see Decision 6 |
 
 Use the `buddy-frontend` skill for component and spec conventions, and the `i18n` skill for the new
 area and parity.
 
-### Topics (first cut)
+### Topics
 
-`dashboard`, `calendar`, `taskLibrary`, `mealPlans` (planner, AI assistant, import, iCal links),
+`dashboard`, `calendar`, `taskLibrary`, `mealPlans` (planner, AI assistant, import, iCal link),
 `medicine`, `sleepDiary` (including share links), `progress` (goal posts), `pickup`, `babysitters`,
-`workLocations`, `print`, `admin` (profile, children, groups, sharing and permissions, AI
-settings, data export and erasure), and a cross-cutting `groupsAndSharing` that the calendar, meal
-plan and admin topics link to as `related`.
+`workLocations`, `print`, `groupsAndSharing` (cross-cutting; the calendar, meal plan, medicine and
+admin topics link to it as `related`) and `admin` (profile, language, children, groups, calendars,
+AI settings, data export and erasure).
+
+Facts the content had to get right, found while checking it against the code:
+
+- Every calendar belongs to a group; there are no personal calendars.
+  [docs/backend/calendars/flow.md](../../backend/calendars/flow.md) still says `POST /calendars`
+  creates one "for the current user or for an owned group", which is out of date.
+- Meal plans and medicine belong to the family and are *shared* with a group, not group-owned.
+- Doses are marked taken or skipped on the dashboard (and by the child), not on `/guardian/medicine`.
+- Work locations only feed the printable week plan.
 
 ### Content guidelines
 
@@ -259,14 +287,13 @@ plan and admin topics link to as `related`.
   Danish text.
 - Screenshots: add `guardian-help` (`/guardian/help`) to
   [`screenshots/pages.ts`](../../../src/frontend/buddy/screenshots/pages.ts). The coverage spec
-  requires it because it's a new route. Optionally also capture `guardian-calendar-help`, the
-  calendar page with the panel open, so the docs show the panel. This needs a small capture hook
-  that clicks the button, because a `path` alone can't open it.
+  requires it because it's a new route. A capture of a page with the panel open was left out: it
+  needs a capture hook that clicks the button, because a `path` alone can't open it.
 
 ## Explicitly out of scope for this phase
 
 - Help for children (Decision 2).
-- Search across topics. With about 14 topics, the table of contents is enough.
+- Search across topics. With 13 topics, the table of contents is enough.
 - Tooltips, popovers or guided tours on individual fields.
 - Screenshots or images inside help.
 - Operator documentation (deploy, backups, logs, privacy duties). It stays in the repo markdown
@@ -283,19 +310,17 @@ plan and admin topics link to as `related`.
 | Page to topic mapping | `data.helpTopic` on routes, read by `GuardianShell`; one shell change instead of 15 page edits |
 | Backend | None; help opens only on demand |
 | Completeness | `help-coverage.spec.ts`, modelled on `screenshot-coverage.spec.ts` |
+| Contact line on the help page | "Something not working? Ask whoever runs Buddy for your family", plus the `runtimeConfig.repositoryUrl` link; a feedback form would need a backend and a recipient (2026-10-09) |
+| Guided setup from help | The dashboard topic's `link` opens `/guardian/onboarding`, labelled "Continue the guided setup, if you haven't finished it": for a completed guide that page goes straight back to the dashboard, so the label sets that expectation (2026-10-09) |
+| Meal-plan sub-pages | One `mealPlans` topic for all three routes, with a section each for planning, the AI assistant, import and the iCal link (2026-10-09) |
+| How the shell learns the topic | `<router-outlet (activate)>`, not router events, so the component needs no subscription |
 
 ## Remaining open questions
 
 - **Child help later?** Lean: a single emoji-led "how this works" card on the child home, in the
   child tone, if children or guardians ask for it. It's additive and doesn't affect this design.
-- **Contact or "report a problem" link in the index?** Lean: a footer line "Something not working?
-  Ask whoever runs Buddy for your family", plus the existing `runtimeConfig.repositoryUrl` link.
-  This fits per-family hosting. A feedback form would need a backend and a recipient, so no.
-- **Restart the guided setup from help?** `OnboardingResumeCard` only appears while the guide is
-  Deferred. Lean: the dashboard topic links to `/guardian/onboarding` for a guardian who wants to
-  look at it again. That page already handles a completed guide.
-- **Meal-plan sub-pages: one topic or three?** Lean: one `mealPlans` topic with a section each for
-  the AI assistant and import, so a guardian sees how they connect. Settle this while writing the
-  content.
+- **Keeping the text true.** Nothing checks that help still matches a page after the page changes.
+  Lean: treat the page's help topic like its screenshot. A visible change to a page means
+  rereading its topic in both languages.
 - **Field-level help later?** If the inline `hint`/`help` strings prove too terse, the next step is
   an expandable "More" link under the field (still inline), not a popover.

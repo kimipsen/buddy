@@ -114,6 +114,10 @@ The guardian routes currently include:
   calendar, plus event/task creation
 - `/guardian/task-library` — per-child task template and subtask management
 - `/guardian/admin` — profile, child, calendar, group, AI provider, data export, and account administration
+- `/guardian/help` — every in-app help topic on one page; `?topic=<id>` scrolls to one. Every other
+  guardian page (except onboarding) names its topic in its route's `data.helpTopic`, and the shell
+  header's "?" button expands that topic inline above the page
+  ([design](analysis/in-app-help.md))
 
 ### Child feature
 
@@ -291,7 +295,7 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Expired sessions during in-app navigation](analysis/expired-session-handling.md) — implemented
   redirect to `/login` with a "session expired" notice when the Keycloak session ends mid-use, and
   return to the interrupted page after signing in
-- [In-app help for guardians](analysis/in-app-help.md) — proposed per-page inline help panel
+- [In-app help for guardians](analysis/in-app-help.md) — implemented per-page inline help panel
   toggled from the shell header, a `/guardian/help` index, typed en/da help dictionaries and a
   coverage spec that requires help for every guardian page
 

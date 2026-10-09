@@ -1,6 +1,9 @@
 export const shell = {
   brand: 'Buddy',
   dashboardTitle: 'Forældre-dashboard',
+  help: {
+    toggle: 'Hjælp til denne side',
+  },
   menu: {
     openLabel: 'Åbn kontomenu',
     mealPlanner: 'Madplan',
@@ -13,6 +16,7 @@ export const shell = {
     babysitters: 'Babysittere',
     print: 'Print ugeplan',
     settings: 'Indstillinger',
+    help: 'Hjælp',
     signOut: 'Log ud',
     version: 'Version {version}',
     sourceCode: 'GitHub',

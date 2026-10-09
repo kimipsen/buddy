@@ -15,9 +15,34 @@
         </div>
       </a>
 
-      <app-profile-menu />
+      <div class="flex items-center gap-2">
+        @if (helpTopic()) {
+          <button
+            #helpTrigger
+            type="button"
+            class="grid size-10 place-items-center rounded-full border border-slate-200 text-lg font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            [class.bg-emerald-50]="helpOpen()"
+            [class.dark:bg-emerald-950]="helpOpen()"
+            [attr.aria-expanded]="helpOpen()"
+            [attr.aria-controls]="helpPanelId"
+            (click)="toggleHelp()"
+          >
+            <span aria-hidden="true">?</span>
+            <span class="sr-only">{{ 'shell.help.toggle' | translate }}</span>
+          </button>
+        }
+        <app-profile-menu />
+      </div>
     </div>
   </header>
 
-  <router-outlet />
+  @if (helpOpen()) {
+    @if (helpTopic(); as topic) {
+      <div #helpRegion class="mx-auto max-w-7xl px-6 pt-6 sm:px-8">
+        <app-help-panel [topic]="topic" [panelId]="helpPanelId" (closed)="closeHelp()" />
+      </div>
+    }
+  }
+
+  <router-outlet (activate)="onActivate()" />
 </div>

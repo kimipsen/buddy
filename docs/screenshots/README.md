@@ -160,6 +160,14 @@ Profile, children, groups, calendars and sharing.
 
 <img src="mobile/guardian-admin.png" alt="Settings on a phone" width="320">
 
+## Help
+
+Every help topic on one page. The "?" button in the header opens the same help inline for the current page.
+
+![Help](guardian-help.png)
+
+<img src="mobile/guardian-help.png" alt="Help on a phone" width="320">
+
 ## Child: today
 
 The child's own view of today's tasks and events.

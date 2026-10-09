@@ -94,6 +94,7 @@ describe('ProfileMenu', () => {
     expect(menuLink(compiled, '/guardian/calendar')?.textContent?.trim()).toBe('Calendar');
     expect(menuLink(compiled, '/guardian/babysitters')?.textContent?.trim()).toBe('Babysitters');
     expect(menuLink(compiled, '/guardian/admin')?.textContent?.trim()).toBe('Settings');
+    expect(menuLink(compiled, '/guardian/help')?.textContent?.trim()).toBe('Help');
     expect(signOutButton(compiled)).not.toBeNull();
   });
 

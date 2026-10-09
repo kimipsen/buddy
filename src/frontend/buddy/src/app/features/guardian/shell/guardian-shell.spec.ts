@@ -1,37 +1,160 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth.service';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { GuardianShell } from './guardian-shell';
 
-// GuardianShell is a pure composition shell -- a static header (brand, title, and an already
-// covered app-profile-menu) plus a router-outlet, with no logic of its own. This spec only checks
-// that it constructs and renders without throwing, and that its pieces are present, mirroring the
-// other shell specs in this phase.
+@Component({ template: '<p>page</p>' })
+class Page {}
+
+// The shell is the header (brand, profile menu, the current page's help button) plus the outlet.
+// The help topic comes from the active page route's `data.helpTopic`.
 describe('GuardianShell', () => {
-  async function setup() {
+  async function setup(url: string) {
     const authStub: Partial<AuthService> = { logout: vi.fn() };
 
-    await TestBed.configureTestingModule({
-      imports: [GuardianShell],
-      providers: [provideRouter([]), { provide: AuthService, useValue: authStub }],
-    }).compileComponents();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          {
+            path: '',
+            component: GuardianShell,
+            children: [
+              { path: 'calendar', component: Page, data: { helpTopic: 'calendar' } },
+              { path: 'medicine', component: Page, data: { helpTopic: 'medicine' } },
+              { path: 'plain', component: Page },
+            ],
+          },
+        ]),
+        { provide: AuthService, useValue: authStub },
+      ],
+    });
 
-    const fixture = TestBed.createComponent(GuardianShell);
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl(url);
+    const root = () => harness.fixture.nativeElement as HTMLElement;
 
-    return { fixture };
+    return { harness, root };
   }
 
-  it('renders the brand header, the profile menu, and a router outlet without throwing', async () => {
-    const { fixture } = await setup();
-    fixture.detectChanges();
+  function helpButton(root: HTMLElement) {
+    return root.querySelector<HTMLButtonElement>('button[aria-controls="page-help"]');
+  }
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Buddy');
-    expect(compiled.textContent).toContain('Guardian dashboard');
-    expect(compiled.querySelector('a[href="/guardian"]')).toBeTruthy();
-    expect(compiled.querySelector('app-profile-menu')).toBeTruthy();
-    expect(compiled.querySelector('router-outlet')).toBeTruthy();
+  function topicTitle(id: string) {
+    return TestBed.inject(TranslationService).translate(`help.topics.${id}.title`);
+  }
+
+  it('renders the brand header, the profile menu, and the page', async () => {
+    const { root } = await setup('/plain');
+
+    expect(root().textContent).toContain('Buddy');
+    expect(root().textContent).toContain('Guardian dashboard');
+    expect(root().querySelector('a[href="/guardian"]')).toBeTruthy();
+    expect(root().querySelector('app-profile-menu')).toBeTruthy();
+    expect(root().textContent).toContain('page');
+  });
+
+  it('shows no help button on a page without a help topic', async () => {
+    const { root } = await setup('/plain');
+
+    expect(helpButton(root())).toBeNull();
+  });
+
+  it('toggles the current page’s help panel from a labelled disclosure button', async () => {
+    const { harness, root } = await setup('/calendar');
+
+    const button = helpButton(root())!;
+    expect(button.textContent).toContain('Help for this page');
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(root().querySelector('app-help-panel')).toBeNull();
+
+    button.click();
+    harness.detectChanges();
+
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(root().querySelector('#page-help h2')?.textContent).toContain(topicTitle('calendar'));
+
+    button.click();
+    harness.detectChanges();
+
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(root().querySelector('app-help-panel')).toBeNull();
+  });
+
+  it('closes the panel and switches topic when another page opens', async () => {
+    const { harness, root } = await setup('/calendar');
+    helpButton(root())!.click();
+    harness.detectChanges();
+
+    await harness.navigateByUrl('/medicine');
+
+    expect(root().querySelector('app-help-panel')).toBeNull();
+    helpButton(root())!.click();
+    harness.detectChanges();
+    expect(root().querySelector('#page-help h2')?.textContent).toContain(topicTitle('medicine'));
+  });
+
+  function pressEscape() {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+  }
+
+  it('closes on Escape from the help button and keeps focus there', async () => {
+    const { harness, root } = await setup('/calendar');
+    helpButton(root())!.focus();
+    helpButton(root())!.click();
+    harness.detectChanges();
+
+    pressEscape();
+    harness.detectChanges();
+
+    expect(root().querySelector('app-help-panel')).toBeNull();
+    expect(document.activeElement).toBe(helpButton(root()));
+  });
+
+  it('closes on Escape from inside the panel and returns focus to the help button', async () => {
+    const { harness, root } = await setup('/calendar');
+    helpButton(root())!.click();
+    harness.detectChanges();
+    root().querySelector<HTMLAnchorElement>('#page-help a')!.focus();
+
+    pressEscape();
+    harness.detectChanges();
+
+    expect(root().querySelector('app-help-panel')).toBeNull();
+    expect(document.activeElement).toBe(helpButton(root()));
+  });
+
+  it('leaves the panel open on Escape while focus is elsewhere on the page', async () => {
+    const { harness, root } = await setup('/calendar');
+    helpButton(root())!.click();
+    harness.detectChanges();
+    const elsewhere = root().querySelector<HTMLAnchorElement>('a[href="/guardian"]')!;
+    elsewhere.focus();
+
+    pressEscape();
+    harness.detectChanges();
+
+    expect(root().querySelector('app-help-panel')).not.toBeNull();
+    expect(document.activeElement).toBe(elsewhere);
+  });
+
+  it('closes from the panel’s close button and returns focus to the help button', async () => {
+    const { harness, root } = await setup('/calendar');
+    helpButton(root())!.click();
+    harness.detectChanges();
+
+    const close = Array.from(root().querySelectorAll('#page-help button')).find(
+      (button) => button.textContent?.trim() === 'Close help',
+    ) as HTMLButtonElement;
+    close.click();
+    harness.detectChanges();
+
+    expect(root().querySelector('app-help-panel')).toBeNull();
+    expect(document.activeElement).toBe(helpButton(root()));
   });
 });

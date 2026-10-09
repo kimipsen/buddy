@@ -5,6 +5,7 @@ import { GuardianAdmin } from './admin/admin';
 import { GuardianBabysitters } from './babysitters/babysitters';
 import { GuardianCalendar } from './calendar/calendar';
 import { GuardianDashboard } from './dashboard';
+import { GuardianHelp } from './help/help-page';
 import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
 import { MealplanImport } from './mealplan/import/mealplan-import';
 import { GuardianMealplan } from './mealplan/mealplan';
@@ -29,22 +30,85 @@ export const GUARDIAN_ROUTES: Routes = [
     component: GuardianShell,
     children: [
       // The home is where a guardian with nothing set up yet is sent into the guide.
-      { path: '', component: GuardianDashboard, canActivate: [onboardingEntryGuard] },
+      {
+        path: '',
+        component: GuardianDashboard,
+        canActivate: [onboardingEntryGuard],
+        data: { helpTopic: 'dashboard' },
+      },
       { path: 'onboarding', component: GuardianOnboarding },
-      { path: 'mealplan', component: GuardianMealplan },
-      { path: 'mealplan/ai-assistant', component: MealplanAiAssistant },
-      { path: 'mealplan/import', component: MealplanImport },
-      { path: 'medicine', component: GuardianMedicine },
-      { path: 'sleep-diary', component: GuardianSleepDiary },
-      { path: 'progress', component: GuardianProgress },
-      { path: 'pickup', component: GuardianPickup },
-      { path: 'babysitters', component: GuardianBabysitters },
-      { path: 'work-locations', component: GuardianWorkLocations },
-      { path: 'print', component: GuardianPrint },
-      { path: 'print/templates/:templateId', component: PrintTemplateEditor },
-      { path: 'calendar', component: GuardianCalendar },
-      { path: 'task-library', component: GuardianTaskLibrary },
-      { path: 'admin', component: GuardianAdmin },
+      {
+        path: 'mealplan',
+        component: GuardianMealplan,
+        data: { helpTopic: 'mealPlans' },
+      },
+      {
+        path: 'mealplan/ai-assistant',
+        component: MealplanAiAssistant,
+        data: { helpTopic: 'mealPlans' },
+      },
+      {
+        path: 'mealplan/import',
+        component: MealplanImport,
+        data: { helpTopic: 'mealPlans' },
+      },
+      {
+        path: 'medicine',
+        component: GuardianMedicine,
+        data: { helpTopic: 'medicine' },
+      },
+      {
+        path: 'sleep-diary',
+        component: GuardianSleepDiary,
+        data: { helpTopic: 'sleepDiary' },
+      },
+      {
+        path: 'progress',
+        component: GuardianProgress,
+        data: { helpTopic: 'progress' },
+      },
+      {
+        path: 'pickup',
+        component: GuardianPickup,
+        data: { helpTopic: 'pickup' },
+      },
+      {
+        path: 'babysitters',
+        component: GuardianBabysitters,
+        data: { helpTopic: 'babysitters' },
+      },
+      {
+        path: 'work-locations',
+        component: GuardianWorkLocations,
+        data: { helpTopic: 'workLocations' },
+      },
+      {
+        path: 'print',
+        component: GuardianPrint,
+        data: { helpTopic: 'print' },
+      },
+      {
+        path: 'print/templates/:templateId',
+        component: PrintTemplateEditor,
+        data: { helpTopic: 'print' },
+      },
+      {
+        path: 'calendar',
+        component: GuardianCalendar,
+        data: { helpTopic: 'calendar' },
+      },
+      {
+        path: 'task-library',
+        component: GuardianTaskLibrary,
+        data: { helpTopic: 'taskLibrary' },
+      },
+      {
+        path: 'admin',
+        component: GuardianAdmin,
+        data: { helpTopic: 'admin' },
+      },
+      // Every help topic on one page; it has no page help of its own.
+      { path: 'help', component: GuardianHelp },
     ],
   },
 ];

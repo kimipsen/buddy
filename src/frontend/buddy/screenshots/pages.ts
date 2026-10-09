@@ -193,6 +193,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: 'Your profile',
   },
   {
+    name: 'guardian-help',
+    title: 'Help',
+    description:
+      'Every help topic on one page. The "?" button in the header opens the same help inline for the current page.',
+    as: 'guardian',
+    route: '/guardian/help',
+    waitFor: 'How Buddy works',
+  },
+  {
     name: 'child-home',
     title: 'Child: today',
     description: "The child's own view of today's tasks and events.",

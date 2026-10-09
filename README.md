@@ -52,8 +52,7 @@ in real time.
 - [x] Guardian work locations with alternating weekly patterns and per-day
       exceptions
 - [x] Saved babysitters/nannies for pickup and drop-off
-- [ ] In-app help: a help panel on every guardian page and a help index, in English and Danish
-      (proposed, not yet implemented — see [In-app help for guardians](docs/frontend/analysis/in-app-help.md))
+- [x] In-app help: a help panel on every guardian page and a help index, in English and Danish
 
 ### Child
 
