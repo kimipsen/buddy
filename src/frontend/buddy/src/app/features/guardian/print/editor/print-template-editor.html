@@ -1,22 +1,4 @@
-<section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
-  <a
-    routerLink="/guardian/print"
-    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      class="size-4"
-      aria-hidden="true"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-    </svg>
-    {{ 'print.editor.backLink' | translate }}
-  </a>
-
+<app-page backLink="/guardian/print" [backLabel]="'print.editor.backLink' | translate">
   <h2 class="mb-6 text-3xl font-semibold tracking-normal">
     {{ 'print.editor.title' | translate }}
   </h2>
@@ -31,9 +13,7 @@
     <div class="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <div class="space-y-6">
         <!-- Header: name and layout -->
-        <div
-          class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-        >
+        <app-card>
           <div class="flex flex-col gap-1">
             <label
               for="template-name"
@@ -90,12 +70,10 @@
               }}</span>
             </div>
           </div>
-        </div>
+        </app-card>
 
         <!-- Rows -->
-        <div
-          class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-        >
+        <app-card>
           <div class="flex flex-wrap items-center justify-between gap-3">
             <h3 class="text-lg font-semibold">{{ 'print.editor.rowsTitle' | translate }}</h3>
             <button
@@ -493,13 +471,11 @@
               {{ 'print.editor.addRow' | translate }}
             </button>
           </div>
-        </div>
+        </app-card>
 
         <!-- Guardian name colors -->
         @if (guardians().length > 0) {
-          <div
-            class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-          >
+          <app-card>
             <h3 class="text-lg font-semibold">{{ 'print.editor.colorsTitle' | translate }}</h3>
             <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
               {{ 'print.editor.colorsDescription' | translate }}
@@ -525,14 +501,12 @@
                 </li>
               }
             </ul>
-          </div>
+          </app-card>
         }
 
         <!-- Babysitter name colors -->
         @if (babysitters().length > 0) {
-          <div
-            class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-          >
+          <app-card>
             <h3 class="text-lg font-semibold">
               {{ 'print.editor.babysitterColorsTitle' | translate }}
             </h3>
@@ -560,7 +534,7 @@
                 </li>
               }
             </ul>
-          </div>
+          </app-card>
         }
 
         <div class="flex flex-wrap items-center gap-3">
@@ -644,4 +618,4 @@
       </div>
     </div>
   }
-</section>
+</app-page>

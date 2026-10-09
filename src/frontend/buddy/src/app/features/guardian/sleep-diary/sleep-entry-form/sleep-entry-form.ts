@@ -20,6 +20,7 @@ import {
   splitMinutes,
   suggestTotalSleepMinutes,
 } from '../sleep-entry-draft';
+import { Card } from '../../../../shared/card/card';
 
 type FormAction = 'save' | 'clear';
 
@@ -56,7 +57,16 @@ const INTERVAL_GROUPS: {
 // example). Owns only the draft; the page owns which child/date is shown and the logged entries.
 @Component({
   selector: 'app-sleep-entry-form',
-  imports: [FormsModule, DateSelect, RepeatableRow, TimeRange, TimeSelect, Toggle, TranslatePipe],
+  imports: [
+    FormsModule,
+    DateSelect,
+    RepeatableRow,
+    TimeRange,
+    TimeSelect,
+    Toggle,
+    TranslatePipe,
+    Card,
+  ],
   templateUrl: './sleep-entry-form.html',
 })
 export class SleepEntryForm {

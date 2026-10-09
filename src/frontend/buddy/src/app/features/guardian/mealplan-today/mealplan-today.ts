@@ -6,6 +6,7 @@ import { GuardiansService } from '../../../core/guardians.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
+import { Card } from '../../../shared/card/card';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   Breakfast: 'dashboard.mealplan.slots.breakfast',
@@ -25,7 +26,7 @@ interface LoadedPlan {
 
 @Component({
   selector: 'app-mealplan-today',
-  imports: [RouterLink, TranslatePipe, LoadingSpinner],
+  imports: [RouterLink, TranslatePipe, LoadingSpinner, Card],
   templateUrl: './mealplan-today.html',
 })
 export class MealplanToday {

@@ -15,6 +15,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { MealplanAccessTier } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { Card } from '../../../../shared/card/card';
 
 const ROLE_LABELS: Record<GroupRole, string> = {
   Owner: 'admin.manageGroups.roles.owner',
@@ -55,7 +56,7 @@ const MEALPLAN_TIERS: GroupMealplanTier[] = ['None', 'View', 'Manage'];
 
 @Component({
   selector: 'app-manage-groups',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, Card],
   templateUrl: './manage-groups.html',
 })
 export class ManageGroups {

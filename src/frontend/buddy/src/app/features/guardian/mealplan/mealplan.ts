@@ -19,6 +19,8 @@ import { createAction } from '../../../shared/action-state/action-state';
 import { AssignMealplan } from './assign-mealplan/assign-mealplan';
 import { MealplanIcal } from './mealplan-ical/mealplan-ical';
 import { ManageMeals } from './manage-meals/manage-meals';
+import { Card } from '../../../shared/card/card';
+import { Page } from '../../../shared/page/page';
 
 const MANAGE: MealplanAccessTier = 'Manage';
 const VIEW: MealplanAccessTier = 'View';
@@ -51,7 +53,16 @@ const EMPTY_GROUPS: LoadedGroups = {
 
 @Component({
   selector: 'app-guardian-mealplan',
-  imports: [RouterLink, FormsModule, ManageMeals, AssignMealplan, MealplanIcal, TranslatePipe],
+  imports: [
+    RouterLink,
+    FormsModule,
+    ManageMeals,
+    AssignMealplan,
+    MealplanIcal,
+    TranslatePipe,
+    Card,
+    Page,
+  ],
   templateUrl: './mealplan.html',
 })
 export class GuardianMealplan {

@@ -1,9 +1,7 @@
 @let revokeState = revoking().state();
 @let createState = creating.state();
 
-<section
-  class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
->
+<app-card>
   <h3 class="text-lg font-semibold tracking-normal">{{ 'sleepDiary.share.title' | translate }}</h3>
   <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
     {{ 'sleepDiary.share.help' | translate }}
@@ -105,4 +103,4 @@
       </p>
     }
   }
-</section>
+</app-card>

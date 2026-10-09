@@ -17,6 +17,7 @@ import {
   GuardiansService,
 } from '../../../../core/guardians.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { Card } from '../../../../shared/card/card';
 
 const INVITABLE_KINDS: GuardianKind[] = ['Parent', 'Guardian'];
 
@@ -27,7 +28,7 @@ const KIND_LABELS: Record<GuardianKind, string> = {
 
 @Component({
   selector: 'app-manage-children',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, Card],
   templateUrl: './manage-children.html',
 })
 export class ManageChildren {

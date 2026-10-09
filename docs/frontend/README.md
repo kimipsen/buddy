@@ -243,6 +243,33 @@ the pipe in the template using Angular's `as` narrowing, e.g. `@if (error(); as 
 message | translate }} }` — a raw backend validation message (not a static UI string) is passed
 through untranslated instead.
 
+## Layout and breakpoints
+
+Layout uses Tailwind's default breakpoints, mobile first (`sm` 640px, `md` 768px, `lg` 1024px,
+`xl` 1280px), with no custom breakpoints and no `BreakpointObserver`. Every page must fit a 393px
+phone; the documentation screenshot run fails on horizontal overflow. See
+[responsive-layout.md](analysis/responsive-layout.md) for the plan and its decisions.
+
+Two shared components hold the repeated spacing, so it is set in one place:
+
+- **`app-page`** ([`shared/page`](../../src/frontend/buddy/src/app/shared/page/page.ts)) is the
+  guardian page container: `mx-auto max-w-7xl`, side padding `px-4 sm:px-6 lg:px-8` and `py-8`.
+  `width="3xl" | "4xl" | "5xl"` narrows the cap for form-like pages, and `backLink` plus a
+  translated `backLabel` add the "Back to …" link above the content. The eyebrow, title and page
+  actions differ between pages, so each page keeps them as its own content.
+- **`app-card`** ([`shared/card`](../../src/frontend/buddy/src/app/shared/card/card.ts)) is the
+  white guardian card: border, `shadow-sm` and padding `p-4 sm:p-6`. Its classes sit on the host,
+  so a caller adds margins or a flex layout with its own `class`. The host is a plain element like
+  the unnamed `<section>` it replaced; a card that should be a landmark adds `role="region"` and
+  `aria-labelledby`.
+
+Child pages share **`app-child-page`**
+([`features/child/child-page`](../../src/frontend/buddy/src/app/features/child/child-page/child-page.ts)):
+the warm background, a header with the page title (a back link to `/child`, or the logo on the
+home page) and controls projected with the `childPageActions` attribute, and a `max-w-3xl` content
+column, padded `px-4 sm:px-6 lg:px-8`. Child cards (`rounded-3xl border-4`) are padded
+`p-5 sm:p-8`.
+
 ## Theming
 
 The app supports light, dark, and system (OS-following) themes, chosen from the theme switcher in

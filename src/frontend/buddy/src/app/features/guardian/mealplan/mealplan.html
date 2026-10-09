@@ -1,21 +1,4 @@
-<section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
-  <a
-    routerLink="/guardian"
-    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      class="size-4"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-    </svg>
-    {{ 'mealplan.backToDashboard' | translate }}
-  </a>
-
+<app-page backLink="/guardian" [backLabel]="'mealplan.backToDashboard' | translate">
   <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
     <div>
       <p
@@ -98,9 +81,7 @@
       </div>
     }
 
-    <section
-      class="mb-6 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-    >
+    <app-card class="mb-6">
       <h3 class="mb-3 text-lg font-semibold tracking-normal">
         {{ 'mealplan.sharing.title' | translate }}
       </h3>
@@ -153,7 +134,7 @@
           <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
         }
       }
-    </section>
+    </app-card>
 
     @if (familyScope(); as family) {
       <app-mealplan-ical class="mb-6 block" [childId]="family.childId" />
@@ -172,4 +153,4 @@
       {{ 'mealplan.loadError' | translate }}
     </p>
   }
-</section>
+</app-page>

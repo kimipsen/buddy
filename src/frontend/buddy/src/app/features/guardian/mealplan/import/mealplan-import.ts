@@ -20,6 +20,8 @@ import {
 } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Toggle } from '../../../../shared/toggle/toggle';
+import { Card } from '../../../../shared/card/card';
+import { Page } from '../../../../shared/page/page';
 
 // Rows of the meal table shown at a time; "Show more" adds another page.
 const PAGE_SIZE = 50;
@@ -101,7 +103,7 @@ function validationDetail(error: unknown): string {
 
 @Component({
   selector: 'app-mealplan-import',
-  imports: [RouterLink, FormsModule, TranslatePipe, Toggle],
+  imports: [RouterLink, FormsModule, TranslatePipe, Toggle, Card, Page],
   templateUrl: './mealplan-import.html',
 })
 export class MealplanImport {

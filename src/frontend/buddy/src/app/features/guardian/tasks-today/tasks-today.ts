@@ -18,6 +18,7 @@ import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Toggle } from '../../../shared/toggle/toggle';
+import { Card } from '../../../shared/card/card';
 
 const TASK_KIND = 'Task' satisfies CalendarItemKind;
 
@@ -100,7 +101,7 @@ function isOverdue(rollup: TaskRollup, now: number): boolean {
 
 @Component({
   selector: 'app-tasks-today',
-  imports: [TranslatePipe, LoadingSpinner, Toggle],
+  imports: [TranslatePipe, LoadingSpinner, Toggle, Card],
   templateUrl: './tasks-today.html',
 })
 export class TasksToday {

@@ -10,6 +10,7 @@ import { ActionState, createAction } from '../../../../shared/action-state/actio
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { RepeatableRow } from '../../../../shared/repeatable-row/repeatable-row';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
+import { Card } from '../../../../shared/card/card';
 
 const DEFAULT_COLOR = '#f43f5e';
 
@@ -52,7 +53,7 @@ function withoutSeconds(time: string): string {
 
 @Component({
   selector: 'app-manage-medicines',
-  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, RepeatableRow, TimeSelect],
+  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, RepeatableRow, TimeSelect, Card],
   templateUrl: './manage-medicines.html',
 })
 export class ManageMedicines {

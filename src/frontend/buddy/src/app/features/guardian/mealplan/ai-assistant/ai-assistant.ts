@@ -23,6 +23,8 @@ import {
 import { Toggle } from '../../../../shared/toggle/toggle';
 import { AiDataSharingNotice } from '../ai-data-sharing-notice/ai-data-sharing-notice';
 import { readLastMealFilter, writeLastMealFilter } from './ai-meal-filter-storage';
+import { Card } from '../../../../shared/card/card';
+import { Page } from '../../../../shared/page/page';
 
 const DRAFTING = 'Drafting' satisfies AiSessionStatus;
 
@@ -73,7 +75,16 @@ interface AssistantChild {
 
 @Component({
   selector: 'app-mealplan-ai-assistant',
-  imports: [RouterLink, FormsModule, TranslatePipe, AiDataSharingNotice, Toggle, SegmentedControl],
+  imports: [
+    RouterLink,
+    FormsModule,
+    TranslatePipe,
+    AiDataSharingNotice,
+    Toggle,
+    SegmentedControl,
+    Card,
+    Page,
+  ],
   templateUrl: './ai-assistant.html',
 })
 export class MealplanAiAssistant {

@@ -1,5 +1,5 @@
 import { Component, ElementRef, Injector, OnInit, afterNextRender, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { FeaturesService } from '../../../core/features.service';
 import { topicKey } from '../../../core/help/help-topic';
@@ -7,12 +7,13 @@ import { HELP_TOPICS } from '../../../core/help/help-topics';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RuntimeConfigService } from '../../../core/runtime-config.service';
 import { HelpContent } from '../../../shared/help-content/help-content';
+import { Page } from '../../../shared/page/page';
 
 // /guardian/help: every help topic on one page. `?topic=<id>` (the help panel's "All help topics"
 // link) scrolls to that topic once it has rendered.
 @Component({
   selector: 'app-guardian-help',
-  imports: [RouterLink, TranslatePipe, HelpContent],
+  imports: [TranslatePipe, HelpContent, Page],
   templateUrl: './help-page.html',
 })
 export class GuardianHelp implements OnInit {

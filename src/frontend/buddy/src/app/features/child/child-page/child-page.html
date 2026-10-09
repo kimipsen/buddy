@@ -1,0 +1,24 @@
+<main class="min-h-dvh bg-amber-50 dark:bg-slate-950 text-slate-950 dark:text-slate-50">
+  <header class="flex flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-3">
+      @if (backLabel(); as label) {
+        <a
+          routerLink="/child"
+          class="text-base font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+          >← {{ label }}</a
+        >
+      } @else {
+        <span class="grid size-12 place-items-center rounded-2xl bg-emerald-400 text-2xl font-bold"
+          >B</span
+        >
+      }
+      <h1 class="text-2xl font-bold tracking-normal">{{ title() }}</h1>
+    </div>
+
+    <ng-content select="[childPageActions]" />
+  </header>
+
+  <section class="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <ng-content />
+  </section>
+</main>

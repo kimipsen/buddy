@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { FeaturesService } from '../../../core/features.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -10,11 +9,11 @@ import { ManageCalendars } from './manage-calendars/manage-calendars';
 import { ManageChildren } from './manage-children/manage-children';
 import { ManageGroups } from './manage-groups/manage-groups';
 import { MyProfile } from './my-profile/my-profile';
+import { Page } from '../../../shared/page/page';
 
 @Component({
   selector: 'app-guardian-admin',
   imports: [
-    RouterLink,
     TranslatePipe,
     MyProfile,
     ManageChildren,
@@ -23,6 +22,7 @@ import { MyProfile } from './my-profile/my-profile';
     AiProviderSettingsComponent,
     DownloadMyData,
     DeleteAccount,
+    Page,
   ],
   templateUrl: './admin.html',
 })

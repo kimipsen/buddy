@@ -10,6 +10,8 @@ import { createAction } from '../../../shared/action-state/action-state';
 import { DateSelect } from '../../../shared/date-select/date-select';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { readLastTemplateId, writeLastTemplateId } from './last-template-storage';
+import { Card } from '../../../shared/card/card';
+import { Page } from '../../../shared/page/page';
 
 const PERSONAL = '';
 
@@ -17,7 +19,7 @@ const PERSONAL = '';
 // is created; building it happens in the editor.
 @Component({
   selector: 'app-guardian-print',
-  imports: [FormsModule, RouterLink, TranslatePipe, DateSelect, LoadingSpinner],
+  imports: [FormsModule, RouterLink, TranslatePipe, DateSelect, LoadingSpinner, Card, Page],
   templateUrl: './print.html',
 })
 export class GuardianPrint {

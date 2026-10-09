@@ -5,10 +5,11 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { MealplansService } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { IcalSubscribeLinks } from '../../../../shared/ical-subscribe-links/ical-subscribe-links';
+import { Card } from '../../../../shared/card/card';
 
 @Component({
   selector: 'app-mealplan-ical',
-  imports: [DatePipe, TranslatePipe, IcalSubscribeLinks],
+  imports: [DatePipe, TranslatePipe, IcalSubscribeLinks, Card],
   templateUrl: './mealplan-ical.html',
 })
 export class MealplanIcal {

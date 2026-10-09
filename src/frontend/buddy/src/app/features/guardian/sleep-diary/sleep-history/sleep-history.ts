@@ -6,6 +6,7 @@ import { TranslationService } from '../../../../core/i18n/translation.service';
 import { SleepEntry } from '../../../../core/sleep-diary.service';
 import { TimeOfDayPipe } from '../../../../core/time-of-day.pipe';
 import { splitMinutes } from '../sleep-entry-draft';
+import { Card } from '../../../../shared/card/card';
 
 interface HistoryRow {
   date: string;
@@ -18,7 +19,7 @@ interface HistoryRow {
 // "empty cell" the paper form shows. Choosing a night hands it to the entry form.
 @Component({
   selector: 'app-sleep-history',
-  imports: [TimeOfDayPipe, TranslatePipe],
+  imports: [TimeOfDayPipe, TranslatePipe, Card],
   templateUrl: './sleep-history.html',
 })
 export class SleepHistory {

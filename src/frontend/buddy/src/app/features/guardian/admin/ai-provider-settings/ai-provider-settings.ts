@@ -12,6 +12,7 @@ import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { AiDataSharingNotice } from '../../mealplan/ai-data-sharing-notice/ai-data-sharing-notice';
+import { Card } from '../../../../shared/card/card';
 
 // Ordered to match the alphabetical order of their translated display names ("Anthropic (Claude)",
 // "Google (Gemini)", "OpenAI (ChatGPT)"), like the other admin lists.
@@ -40,7 +41,7 @@ type LoadedSettings =
 
 @Component({
   selector: 'app-ai-provider-settings',
-  imports: [FormsModule, TranslatePipe, AiDataSharingNotice],
+  imports: [FormsModule, TranslatePipe, AiDataSharingNotice, Card],
   templateUrl: './ai-provider-settings.html',
 })
 export class AiProviderSettingsComponent {

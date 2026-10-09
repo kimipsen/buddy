@@ -6,6 +6,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { mapWithConcurrency } from '../../../core/map-with-concurrency';
 import { ProgressService } from '../../../core/progress.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
+import { Card } from '../../../shared/card/card';
 
 // How many /progress/children/{id} requests this widget keeps in flight at once. There is no
 // batch progress endpoint, so it still costs one request per child, but a guardian with dozens of
@@ -15,7 +16,7 @@ export const PROGRESS_REQUEST_CONCURRENCY = 4;
 
 @Component({
   selector: 'app-children-overview',
-  imports: [TranslatePipe, LoadingSpinner],
+  imports: [TranslatePipe, LoadingSpinner, Card],
   templateUrl: './children-overview.html',
 })
 export class ChildrenOverview {

@@ -35,6 +35,8 @@ import { GroupStep } from './group-step/group-step';
 import { MealStep } from './meal-step/meal-step';
 import { SummaryStep } from './summary-step/summary-step';
 import { TaskStep } from './task-step/task-step';
+import { Card } from '../../../shared/card/card';
+import { Page } from '../../../shared/page/page';
 
 const STEP_LABELS: Record<OnboardingStep, string> = {
   group: 'onboarding.steps.group',
@@ -71,6 +73,8 @@ const STEP_TITLES: Record<OnboardingStep, string> = {
     TaskStep,
     MealStep,
     SummaryStep,
+    Card,
+    Page,
   ],
   templateUrl: './onboarding.html',
 })

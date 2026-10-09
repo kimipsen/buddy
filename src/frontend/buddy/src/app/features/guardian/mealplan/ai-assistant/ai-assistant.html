@@ -1,21 +1,8 @@
-<section class="mx-auto max-w-4xl px-6 py-8 sm:px-8">
-  <a
-    routerLink="/guardian/mealplan"
-    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      class="size-4"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-    </svg>
-    {{ 'mealplan.aiAssistant.backToMealplan' | translate }}
-  </a>
-
+<app-page
+  width="4xl"
+  backLink="/guardian/mealplan"
+  [backLabel]="'mealplan.aiAssistant.backToMealplan' | translate"
+>
   <div class="mb-8">
     <p
       class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
@@ -38,9 +25,7 @@
   } @else if (assistant.hasValue()) {
     @if (assistant.value(); as child) {
       @if (!child.hasProviderConfigured) {
-        <section
-          class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-        >
+        <app-card>
           <p class="text-sm text-slate-600 dark:text-slate-300">
             {{ 'mealplan.aiAssistant.noProviderConfigured' | translate }}
           </p>
@@ -50,7 +35,7 @@
           >
             {{ 'mealplan.aiAssistant.goToSettings' | translate }}
           </a>
-        </section>
+        </app-card>
       } @else if (!child.dataSharingAcknowledged) {
         <app-ai-data-sharing-notice
           [childId]="child.childId"
@@ -58,9 +43,7 @@
         />
       } @else if (child.session; as current) {
         <div class="space-y-6">
-          <section
-            class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-          >
+          <app-card>
             <div class="mb-4 flex items-center justify-between">
               <span class="text-sm text-slate-500 dark:text-slate-400"
                 >{{ current.from }} — {{ current.to }}</span
@@ -150,11 +133,9 @@
                 </p>
               }
             }
-          </section>
+          </app-card>
 
-          <section
-            class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-          >
+          <app-card>
             <h3 class="mb-3 text-lg font-semibold tracking-normal">
               {{ 'mealplan.aiAssistant.session.draftTitle' | translate }}
             </h3>
@@ -238,12 +219,10 @@
                 </p>
               }
             }
-          </section>
+          </app-card>
         </div>
       } @else if (lastOutcome(); as outcome) {
-        <section
-          class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-        >
+        <app-card>
           <p class="text-sm text-slate-600 dark:text-slate-300">
             {{
               (outcome === 'applied'
@@ -259,11 +238,9 @@
           >
             {{ 'mealplan.aiAssistant.session.startNewButton' | translate }}
           </button>
-        </section>
+        </app-card>
       } @else {
-        <section
-          class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-        >
+        <app-card>
           <h3 class="mb-4 text-lg font-semibold tracking-normal">
             {{ 'mealplan.aiAssistant.start.title' | translate }}
           </h3>
@@ -391,7 +368,7 @@
               }
             }
           </form>
-        </section>
+        </app-card>
       }
     } @else {
       <p class="text-sm text-slate-500 dark:text-slate-400">
@@ -399,4 +376,4 @@
       </p>
     }
   }
-</section>
+</app-page>

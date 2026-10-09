@@ -5,13 +5,14 @@ import { Component, inject } from '@angular/core';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { UsersService } from '../../../../core/users.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { Card } from '../../../../shared/card/card';
 
 // "Your data": downloads GET /users/me/export, everything Buddy holds about the guardian and the
 // children they guard, as a JSON file. The request needs the bearer token, so it can't be a plain
 // link: the file is fetched as a blob and saved through a temporary object URL.
 @Component({
   selector: 'app-download-my-data',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, Card],
   templateUrl: './download-my-data.html',
 })
 export class DownloadMyData {

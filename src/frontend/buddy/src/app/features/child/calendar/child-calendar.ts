@@ -1,5 +1,4 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { FeaturesService } from '../../../core/features.service';
 import { compareNames, firstAndLast } from '../../../core/array-utils';
@@ -31,6 +30,7 @@ import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { Toggle } from '../../../shared/toggle/toggle';
+import { ChildPage } from '../child-page/child-page';
 
 const TASK_KIND: CalendarItemKind = 'Task';
 const DAYS_AHEAD = 7;
@@ -122,7 +122,7 @@ function nameFor(row: ChildAgendaRow): string {
 // docs/frontend/analysis/child-calendar-agenda-plan.md for why those are deliberately absent here.
 @Component({
   selector: 'app-child-calendar',
-  imports: [RouterLink, TranslatePipe, UserDatePipe, Toggle],
+  imports: [ChildPage, TranslatePipe, UserDatePipe, Toggle],
   templateUrl: './child-calendar.html',
 })
 export class ChildCalendar {

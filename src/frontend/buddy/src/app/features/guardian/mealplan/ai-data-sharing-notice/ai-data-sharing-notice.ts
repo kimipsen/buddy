@@ -3,13 +3,14 @@ import { Component, inject, input, output } from '@angular/core';
 import { AiAssistantService, AiProviderSettings } from '../../../../core/ai-assistant.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { Card } from '../../../../shared/card/card';
 
 // What the AI assistant sends to the family's provider (GDPR Question 6.3 in
 // docs/backend/analysis/gdpr-data-protection.md). Shown before the family's first session and on the
 // provider settings page. A guardian acknowledges it once for the whole family.
 @Component({
   selector: 'app-ai-data-sharing-notice',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, Card],
   templateUrl: './ai-data-sharing-notice.html',
 })
 export class AiDataSharingNotice {

@@ -9,6 +9,7 @@ import {
   SegmentedControl,
   SegmentedControlOption,
 } from '../../../../shared/segmented-control/segmented-control';
+import { Card } from '../../../../shared/card/card';
 
 // Days until the link expires; 0 means no expiry. 30 is the default the design doc suggests -- a
 // link handed to a clinician is usually for one consultation.
@@ -22,7 +23,7 @@ export const SHARED_SLEEP_DIARY_PATH = '/shared/sleep-diary/';
 // login (the same one-time-secret flow as the meal plan's iCal feed in mealplan-ical).
 @Component({
   selector: 'app-sleep-share-links',
-  imports: [DatePipe, SegmentedControl, TranslatePipe],
+  imports: [DatePipe, SegmentedControl, TranslatePipe, Card],
   templateUrl: './share-links.html',
 })
 export class SleepShareLinks {

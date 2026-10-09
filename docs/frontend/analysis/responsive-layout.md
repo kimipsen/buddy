@@ -1,7 +1,8 @@
 # Responsive layout: phone, tablet and wide desktop
 
-Status: Phases 0 and 1 implemented (overflow check and tablet size in the screenshot run; no page
-is wider than a phone any more). Phases 2–6 are proposed.
+Status: Phases 0, 1 and 2 implemented (overflow check and tablet size in the screenshot run; no
+page is wider than a phone any more; shared `app-page` and `app-card` with responsive padding).
+Phases 3–6 are proposed.
 
 ## Context
 
@@ -314,10 +315,22 @@ Implemented, with template class changes only:
 
 ### Phase 2 -- `app-page`, `app-card`, responsive spacing
 
-- `shared/page/page.ts` and `shared/card/card.ts`, each with a spec.
-- Swap the 15 page wrappers and about 50 cards over. Child pages get a shared `child-page` header
-  for the three duplicated ones.
-- Add a "Layout and breakpoints" section to `docs/frontend/README.md`.
+Implemented, with no change in behaviour:
+
+- `shared/page` (`app-page`): container, `px-4 sm:px-6 lg:px-8`, a `width` input (`3xl`, `4xl`,
+  `5xl`, default `7xl`) and the optional back link (`backLink` + translated `backLabel`). Page
+  headers (eyebrow, title, intro, actions) differ too much to fold in, so they stay page content.
+  17 page wrappers swapped: every guardian page, including onboarding and the template editor.
+- `shared/card` (`app-card`): the card classes on the host with `p-4 sm:p-6`, no inputs; callers
+  add `class` for margins or a flex layout, and `role="region"` where the card is a landmark.
+  47 cards swapped. The muted sleep-hygiene card keeps its own classes with the new padding.
+  The shared sleep diary keeps its wrapper (print classes) with the new side padding.
+- `features/child/child-page` (`app-child-page`): the frame, header and content column the three
+  child pages repeated, with header controls projected via `childPageActions`. Child cards are
+  `p-5 sm:p-8`.
+- "Layout and breakpoints" section in `docs/frontend/README.md`.
+- Not swapped, because they belong to other work: the guardian shell's header and help region
+  (still `px-6 sm:px-8`) and the `delete-account` danger card.
 
 ### Phase 3 -- touch targets, popovers, dialog
 

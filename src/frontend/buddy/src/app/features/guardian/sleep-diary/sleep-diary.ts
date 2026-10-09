@@ -1,6 +1,5 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 import { firstAndLast } from '../../../core/array-utils';
 import { addDaysIso, buildDateRangeIso, todayIsoDate } from '../../../core/date-utils';
@@ -15,6 +14,7 @@ import { HygieneNotes } from './hygiene-notes/hygiene-notes';
 import { SleepShareLinks } from './share-links/share-links';
 import { SleepEntryForm } from './sleep-entry-form/sleep-entry-form';
 import { SleepHistory } from './sleep-history/sleep-history';
+import { Page } from '../../../shared/page/page';
 
 // The paper form a sleep clinic hands out covers 14 nights; the history pages by the same window.
 export const NIGHTS_SHOWN = 14;
@@ -33,12 +33,12 @@ const EMPTY_DIARY: SleepDiaryEntries = { sleepHygieneNotes: '', entries: [] };
   selector: 'app-guardian-sleep-diary',
   imports: [
     FormsModule,
-    RouterLink,
     HygieneNotes,
     SleepEntryForm,
     SleepHistory,
     SleepShareLinks,
     TranslatePipe,
+    Page,
   ],
   templateUrl: './sleep-diary.html',
 })

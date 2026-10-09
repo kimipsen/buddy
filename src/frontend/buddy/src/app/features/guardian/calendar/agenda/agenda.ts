@@ -57,6 +57,7 @@ import { TimeSelect } from '../../../../shared/time-select/time-select';
 import { Toggle } from '../../../../shared/toggle/toggle';
 import { MonthGrid } from './month-grid/month-grid';
 import { TaskPicker } from '../../task-library/task-picker/task-picker';
+import { Card } from '../../../../shared/card/card';
 
 export type NewTaskSource = 'manual' | 'template';
 
@@ -203,6 +204,7 @@ function formatDuration(totalMinutes: number): string {
     Toggle,
     MonthGrid,
     TaskPicker,
+    Card,
   ],
   templateUrl: './agenda.html',
 })

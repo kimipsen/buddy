@@ -20,6 +20,7 @@ import {
 } from '../../../../core/pickups.service';
 import { ActionState, createAction } from '../../../../shared/action-state/action-state';
 import { PickupCell } from '../pickup-cell/pickup-cell';
+import { Card } from '../../../../shared/card/card';
 
 const SLOT_LABELS: Record<PickupSlot, string> = {
   DropOff: 'pickup.slots.dropOff',
@@ -70,7 +71,7 @@ function buildWeek(locale: string): WeekDay[] {
 
 @Component({
   selector: 'app-manage-pickups',
-  imports: [FormsModule, PickupCell, TranslatePipe],
+  imports: [FormsModule, PickupCell, TranslatePipe, Card],
   templateUrl: './manage-pickups.html',
 })
 export class ManagePickups {

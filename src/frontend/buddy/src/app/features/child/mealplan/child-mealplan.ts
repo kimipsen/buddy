@@ -7,7 +7,6 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { firstAndLast } from '../../../core/array-utils';
 import { parseIsoDate, toIsoDate, todayIsoDate } from '../../../core/date-utils';
@@ -16,6 +15,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
 import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
+import { ChildPage } from '../child-page/child-page';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   Breakfast: 'dashboard.mealplan.slots.breakfast',
@@ -64,7 +64,7 @@ function defaultAnchor(): string {
 
 @Component({
   selector: 'app-child-mealplan',
-  imports: [RouterLink, TranslatePipe],
+  imports: [ChildPage, TranslatePipe],
   templateUrl: './child-mealplan.html',
 })
 export class ChildMealplan {

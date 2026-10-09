@@ -1,11 +1,12 @@
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 import { Babysitter, BabysittersService } from '../../../core/babysitters.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
+import { Card } from '../../../shared/card/card';
+import { Page } from '../../../shared/page/page';
 
 // The guardian's own saved babysitters (see docs/backend/analysis/babysitters.md): add, edit and
 // remove (archive) them. Archived ones are hidden here; they only stay on the server so pickup
@@ -13,7 +14,7 @@ import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner'
 // the pickup planner.
 @Component({
   selector: 'app-guardian-babysitters',
-  imports: [FormsModule, RouterLink, TranslatePipe, LoadingSpinner],
+  imports: [FormsModule, TranslatePipe, LoadingSpinner, Card, Page],
   templateUrl: './babysitters.html',
 })
 export class GuardianBabysitters {

@@ -1,4 +1,4 @@
-<section class="mx-auto max-w-3xl px-4 py-8 sm:px-8">
+<app-page width="3xl">
   <p class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
     {{ 'onboarding.eyebrow' | translate }}
   </p>
@@ -58,9 +58,7 @@
       </ol>
     </nav>
 
-    <div
-      class="mt-6 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm"
-    >
+    <app-card class="mt-6">
       <h2
         #stepHeading
         tabindex="-1"
@@ -112,7 +110,7 @@
           }
         }
       </div>
-    </div>
+    </app-card>
 
     <div role="status" aria-live="polite" class="mt-4 text-sm">
       @if (saving.state().status === 'error') {
@@ -164,4 +162,4 @@
       }
     </div>
   }
-</section>
+</app-page>

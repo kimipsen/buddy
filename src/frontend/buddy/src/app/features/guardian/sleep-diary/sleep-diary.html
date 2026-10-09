@@ -1,22 +1,4 @@
-<section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
-  <a
-    routerLink="/guardian"
-    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      class="size-4"
-      aria-hidden="true"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-    </svg>
-    {{ 'sleepDiary.backLink' | translate }}
-  </a>
-
+<app-page backLink="/guardian" [backLabel]="'sleepDiary.backLink' | translate">
   <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
     <div>
       <p
@@ -131,4 +113,4 @@
       {{ 'sleepDiary.noChildren' | translate }}
     </p>
   }
-</section>
+</app-page>

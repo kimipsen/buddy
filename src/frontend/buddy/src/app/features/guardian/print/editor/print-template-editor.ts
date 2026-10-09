@@ -10,7 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { FeaturesService } from '../../../../core/features.service';
 import { sortByName, swapped } from '../../../../core/array-utils';
@@ -68,6 +68,8 @@ import {
 } from '../template-rows';
 import { WeekPlanLoader } from '../week-plan-loader';
 import { WeekPlanSources } from '../week-plan-model';
+import { Card } from '../../../../shared/card/card';
+import { Page } from '../../../../shared/page/page';
 
 const MAX_ROWS = 12;
 const MAX_HEIGHT = 5;
@@ -142,7 +144,6 @@ const EMPTY_SOURCES: WeekPlanSources = {
   selector: 'app-print-template-editor',
   imports: [
     FormsModule,
-    RouterLink,
     TranslatePipe,
     ColorSwatchPicker,
     LoadingSpinner,
@@ -151,6 +152,8 @@ const EMPTY_SOURCES: WeekPlanSources = {
     Stepper,
     Toggle,
     WeekPlanSheet,
+    Card,
+    Page,
   ],
   templateUrl: './print-template-editor.html',
 })

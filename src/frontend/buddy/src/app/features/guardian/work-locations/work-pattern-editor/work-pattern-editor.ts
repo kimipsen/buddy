@@ -23,6 +23,7 @@ import {
   patternKey,
   weekName,
 } from '../work-pattern';
+import { Card } from '../../../../shared/card/card';
 
 // Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
 const A_SUNDAY = new Date(2026, 9, 4);
@@ -40,7 +41,7 @@ function shortDayName(day: Weekday, locale: string): string {
 // resets whenever the page reloads the schedule; nothing is sent until Save.
 @Component({
   selector: 'app-work-pattern-editor',
-  imports: [FormsModule, TranslatePipe, SegmentedControl],
+  imports: [FormsModule, TranslatePipe, SegmentedControl, Card],
   templateUrl: './work-pattern-editor.html',
 })
 export class WorkPatternEditor {

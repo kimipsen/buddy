@@ -48,6 +48,7 @@ import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { ProgressBadge } from '../../../shared/progress-badge/progress-badge';
+import { ChildPage } from '../child-page/child-page';
 import { ChildMenu } from './child-menu/child-menu';
 
 const EVENT_KIND: CalendarItemKind = 'Event';
@@ -109,7 +110,15 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
 
 @Component({
   selector: 'app-child-home',
-  imports: [TranslatePipe, RouterLink, LoadingSpinner, ProgressBadge, UserDatePipe, ChildMenu],
+  imports: [
+    TranslatePipe,
+    RouterLink,
+    LoadingSpinner,
+    ProgressBadge,
+    UserDatePipe,
+    ChildMenu,
+    ChildPage,
+  ],
   templateUrl: './home.html',
 })
 export class ChildHome implements OnInit, OnDestroy {

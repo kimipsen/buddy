@@ -17,6 +17,7 @@ import {
   playdateHostName,
 } from '../../../core/pickups.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
+import { Card } from '../../../shared/card/card';
 
 const GUARDIAN = 0 satisfies PickupAssigneeKind;
 const SELF_ESCORT = 1 satisfies PickupAssigneeKind;
@@ -58,7 +59,7 @@ interface LoadedPickups {
 
 @Component({
   selector: 'app-pickup-today',
-  imports: [RouterLink, TranslatePipe, LoadingSpinner],
+  imports: [RouterLink, TranslatePipe, LoadingSpinner, Card],
   templateUrl: './pickup-today.html',
 })
 export class PickupToday {

@@ -5,6 +5,7 @@ import { GuardiansService } from '../../../../core/guardians.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { GoalPost, ProgressService, ProgressSummary } from '../../../../core/progress.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { Card } from '../../../../shared/card/card';
 
 interface GoalPostRow {
   threshold: string;
@@ -22,7 +23,7 @@ function toRow(goalPost: GoalPost): GoalPostRow {
 
 @Component({
   selector: 'app-manage-progress-goals',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, Card],
   templateUrl: './manage-progress-goals.html',
 })
 export class ManageProgressGoals {

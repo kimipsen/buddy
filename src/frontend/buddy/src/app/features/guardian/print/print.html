@@ -1,22 +1,4 @@
-<section class="mx-auto max-w-7xl px-6 py-8 sm:px-8">
-  <a
-    routerLink="/guardian"
-    class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-slate-100"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.8"
-      class="size-4"
-      aria-hidden="true"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-    </svg>
-    {{ 'print.backLink' | translate }}
-  </a>
-
+<app-page backLink="/guardian" [backLabel]="'print.backLink' | translate">
   <div class="mb-8">
     <p
       class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
@@ -42,9 +24,7 @@
     <app-loading-spinner [label]="'print.list.loading' | translate" />
   } @else {
     <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
-      <div
-        class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-      >
+      <app-card>
         <h3 class="text-lg font-semibold">{{ 'print.list.title' | translate }}</h3>
 
         @if (list().length === 0) {
@@ -110,57 +90,56 @@
             }
           </div>
         }
-      </div>
+      </app-card>
 
-      <form
-        class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
-        (ngSubmit)="create()"
-      >
-        <h3 class="text-lg font-semibold">{{ 'print.list.newTitle' | translate }}</h3>
-        <div class="mt-4 flex flex-col gap-1">
-          <label
-            for="new-template-name"
-            class="text-xs font-medium text-slate-600 dark:text-slate-400"
-            >{{ 'print.list.nameLabel' | translate }}</label
+      <app-card>
+        <form (ngSubmit)="create()">
+          <h3 class="text-lg font-semibold">{{ 'print.list.newTitle' | translate }}</h3>
+          <div class="mt-4 flex flex-col gap-1">
+            <label
+              for="new-template-name"
+              class="text-xs font-medium text-slate-600 dark:text-slate-400"
+              >{{ 'print.list.nameLabel' | translate }}</label
+            >
+            <input
+              id="new-template-name"
+              name="newTemplateName"
+              type="text"
+              maxlength="80"
+              [placeholder]="'print.list.namePlaceholder' | translate"
+              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="newName()"
+              (ngModelChange)="newName.set($event)"
+            />
+          </div>
+          <div class="mt-3 flex flex-col gap-1">
+            <label
+              for="new-template-owner"
+              class="text-xs font-medium text-slate-600 dark:text-slate-400"
+              >{{ 'print.list.ownerLabel' | translate }}</label
+            >
+            <select
+              id="new-template-owner"
+              name="newTemplateOwner"
+              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="newOwner()"
+              (ngModelChange)="newOwner.set($event)"
+            >
+              <option [value]="personal">{{ 'print.list.ownerPersonal' | translate }}</option>
+              @for (group of groupList(); track group.id) {
+                <option [value]="group.id">{{ group.name }}</option>
+              }
+            </select>
+          </div>
+          <button
+            type="submit"
+            class="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+            [disabled]="creating.busy() || !newName().trim()"
           >
-          <input
-            id="new-template-name"
-            name="newTemplateName"
-            type="text"
-            maxlength="80"
-            [placeholder]="'print.list.namePlaceholder' | translate"
-            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-            [ngModel]="newName()"
-            (ngModelChange)="newName.set($event)"
-          />
-        </div>
-        <div class="mt-3 flex flex-col gap-1">
-          <label
-            for="new-template-owner"
-            class="text-xs font-medium text-slate-600 dark:text-slate-400"
-            >{{ 'print.list.ownerLabel' | translate }}</label
-          >
-          <select
-            id="new-template-owner"
-            name="newTemplateOwner"
-            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-            [ngModel]="newOwner()"
-            (ngModelChange)="newOwner.set($event)"
-          >
-            <option [value]="personal">{{ 'print.list.ownerPersonal' | translate }}</option>
-            @for (group of groupList(); track group.id) {
-              <option [value]="group.id">{{ group.name }}</option>
-            }
-          </select>
-        </div>
-        <button
-          type="submit"
-          class="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
-          [disabled]="creating.busy() || !newName().trim()"
-        >
-          {{ 'print.list.createButton' | translate }}
-        </button>
-      </form>
+            {{ 'print.list.createButton' | translate }}
+          </button>
+        </form>
+      </app-card>
     </div>
   }
-</section>
+</app-page>

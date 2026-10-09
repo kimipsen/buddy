@@ -23,6 +23,7 @@ import {
 } from '../../../../core/mealplans.service';
 import { ActionState, createAction } from '../../../../shared/action-state/action-state';
 import { MealPicker } from '../meal-picker/meal-picker';
+import { Card } from '../../../../shared/card/card';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   Breakfast: 'mealplan.slots.breakfast',
@@ -86,6 +87,7 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
     CdkDragPreview,
     CdkDropList,
     CdkDropListGroup,
+    Card,
   ],
   templateUrl: './assign-mealplan.html',
 })

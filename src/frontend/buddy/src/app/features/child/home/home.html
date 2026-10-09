@@ -1,462 +1,450 @@
-<main class="min-h-dvh bg-amber-50 dark:bg-slate-950 text-slate-950 dark:text-slate-50">
-  <header class="flex items-center justify-between px-6 py-5 sm:px-8">
-    <div class="flex items-center gap-3">
-      <span class="grid size-12 place-items-center rounded-2xl bg-emerald-400 text-2xl font-bold"
-        >B</span
-      >
-      <h1 class="text-2xl font-bold tracking-normal">{{ 'child.home.title' | translate }}</h1>
-    </div>
+<app-child-page [title]="'child.home.title' | translate">
+  <app-child-menu childPageActions />
 
-    <app-child-menu />
-  </header>
+  @if (features.enabled('progress')) {
+    <app-progress-badge
+      class="block"
+      [totalStars]="badge().totalStars"
+      [displayIcon]="badge().displayIcon"
+      [nextGoalThreshold]="badge().nextGoalThreshold"
+      [nextGoalIcon]="badge().nextGoalIcon"
+    />
+  }
 
-  <section class="mx-auto max-w-3xl space-y-6 px-6 py-6 sm:px-8">
-    @if (features.enabled('progress')) {
-      <app-progress-badge
-        class="block"
-        [totalStars]="badge().totalStars"
-        [displayIcon]="badge().displayIcon"
-        [nextGoalThreshold]="badge().nextGoalThreshold"
-        [nextGoalIcon]="badge().nextGoalIcon"
-      />
-    }
-
-    <div class="flex flex-wrap gap-3">
-      @if (features.enabled('mealplans')) {
-        <a
-          routerLink="/child/mealplan"
-          class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-emerald-700 dark:text-emerald-400 transition hover:border-emerald-300 dark:hover:border-emerald-700"
-        >
-          <span aria-hidden="true">🍽️</span>
-          {{ 'child.home.mealplanLink' | translate }}
-        </a>
-      }
-
+  <div class="flex flex-wrap gap-3">
+    @if (features.enabled('mealplans')) {
       <a
-        routerLink="/child/calendar"
+        routerLink="/child/mealplan"
         class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-emerald-700 dark:text-emerald-400 transition hover:border-emerald-300 dark:hover:border-emerald-700"
       >
-        <span aria-hidden="true">🗓️</span>
-        {{ 'child.home.calendarLink' | translate }}
+        <span aria-hidden="true">🍽️</span>
+        {{ 'child.home.mealplanLink' | translate }}
       </a>
-    </div>
-
-    @if (error(); as message) {
-      <p
-        class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400"
-      >
-        {{ message | translate }}
-      </p>
     }
 
-    @if (contentLoading()) {
+    <a
+      routerLink="/child/calendar"
+      class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-emerald-700 dark:text-emerald-400 transition hover:border-emerald-300 dark:hover:border-emerald-700"
+    >
+      <span aria-hidden="true">🗓️</span>
+      {{ 'child.home.calendarLink' | translate }}
+    </a>
+  </div>
+
+  @if (error(); as message) {
+    <p
+      class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400"
+    >
+      {{ message | translate }}
+    </p>
+  }
+
+  @if (contentLoading()) {
+    <div
+      class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-5 sm:p-8 text-center shadow-sm"
+    >
+      <app-loading-spinner [label]="'common.loading' | translate" />
+    </div>
+  } @else if (hasAnything()) {
+    <!-- Meals -->
+    @if (mealsToShow().length > 0) {
       <div
-        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm"
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm"
       >
-        <app-loading-spinner [label]="'common.loading' | translate" />
-      </div>
-    } @else if (hasAnything()) {
-      <!-- Meals -->
-      @if (mealsToShow().length > 0) {
-        <div
-          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
-        >
-          <h2 class="text-2xl font-bold tracking-normal">
-            {{ 'child.home.mealsTitle' | translate }}
-          </h2>
-          <ul class="mt-4 space-y-3">
-            @for (entry of mealsToShow(); track entry.slot) {
-              <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
-                <div class="flex items-center justify-between gap-3">
-                  <span
-                    class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
-                    >{{ mealSlotLabels[entry.slot] | translate }}</span
-                  >
-                  <span class="flex items-center gap-2 text-lg font-semibold">
-                    <span aria-hidden="true">{{ entry.icon }}</span>
-                    {{ entry.mealName }}
-                  </span>
-                </div>
-
-                <div class="mt-3 flex items-center justify-between gap-3">
-                  <div class="flex items-center gap-1">
-                    @for (starCount of stars; track starCount) {
-                      <button
-                        type="button"
-                        class="text-2xl leading-none disabled:opacity-50"
-                        [class.text-amber-400]="
-                          entry.rating !== null && starCount <= entry.rating.stars
-                        "
-                        [class.text-slate-300]="
-                          entry.rating === null || starCount > entry.rating.stars
-                        "
-                        [class.dark:text-slate-600]="
-                          entry.rating === null || starCount > entry.rating.stars
-                        "
-                        [disabled]="rating.isBusy(entry.slot)"
-                        [attr.aria-label]="
-                          'child.mealplan.starLabel' | translate: { count: starCount }
-                        "
-                        (click)="rate(entry, starCount)"
-                      >
-                        ★
-                      </button>
-                    }
-                  </div>
-
-                  <button
-                    type="button"
-                    class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
-                    (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)"
-                  >
-                    {{
-                      (entry.rating?.comment ? 'child.mealplan.editNote' : 'child.mealplan.addNote')
-                        | translate
-                    }}
-                  </button>
-                </div>
-
-                @if (isEditing(entry)) {
-                  <div class="mt-3 space-y-2">
-                    <label class="sr-only" [attr.for]="'mealNote-' + entry.slot">{{
-                      'child.mealplan.notePlaceholder' | translate
-                    }}</label>
-                    <textarea
-                      [id]="'mealNote-' + entry.slot"
-                      class="w-full rounded-xl border-2 border-slate-200 dark:border-slate-800 p-3 text-base focus:border-emerald-400 focus:outline-none dark:bg-slate-800 dark:text-slate-100"
-                      rows="2"
-                      [placeholder]="'child.mealplan.notePlaceholder' | translate"
-                      #commentInput
-                      [value]="commentDraft()"
-                      (input)="setComment(commentInput.value)"
-                    ></textarea>
-                    <div class="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500"
-                        (click)="cancelEditing()"
-                      >
-                        {{ 'child.mealplan.cancel' | translate }}
-                      </button>
-                      <button
-                        type="button"
-                        class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-                        [disabled]="rating.isBusy(entry.slot)"
-                        (click)="saveComment(entry)"
-                      >
-                        {{ 'child.mealplan.save' | translate }}
-                      </button>
-                    </div>
-                  </div>
-                } @else if (entry.rating?.comment; as comment) {
-                  <p class="mt-2 text-base italic text-slate-600 dark:text-slate-300">
-                    “{{ comment }}”
-                  </p>
-                }
-              </li>
-            }
-          </ul>
-        </div>
-      }
-
-      <!-- Medicine -->
-      @if (doses().length > 0) {
-        <div
-          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
-        >
-          <h2 class="text-2xl font-bold tracking-normal">
-            {{ 'child.home.medicineTitle' | translate }}
-          </h2>
-          <ul class="mt-4 space-y-3">
-            @for (dose of doses(); track doseKey(dose)) {
-              <li
-                class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
-              >
-                <span class="flex min-w-0 items-center gap-2 text-lg font-semibold">
-                  <span
-                    class="inline-block size-3 rounded-full"
-                    [style.background-color]="dose.color"
-                  ></span>
-                  <span aria-hidden="true">{{ dose.icon }}</span>
-                  {{ dose.name }}
-                  <span class="text-sm font-normal text-slate-500 dark:text-slate-400">{{
-                    dose.time.slice(0, 5)
-                  }}</span>
-                </span>
-
-                @if (dose.status === pending) {
-                  <div class="ml-auto flex items-center gap-2">
-                    <button
-                      type="button"
-                      class="rounded-2xl bg-emerald-600 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-                      [disabled]="savingDose.isBusy(doseKey(dose))"
-                      (click)="setDoseStatus(dose, taken)"
-                    >
-                      {{ 'child.home.medicine.markTaken' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
-                      [disabled]="savingDose.isBusy(doseKey(dose))"
-                      (click)="setDoseStatus(dose, skipped)"
-                    >
-                      {{ 'child.home.medicine.skip' | translate }}
-                    </button>
-                  </div>
-                } @else if (dose.status === taken) {
-                  <div class="ml-auto flex items-center gap-2">
-                    <span
-                      class="rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-4 py-2 text-base font-bold text-emerald-800 dark:text-emerald-300"
-                      >{{ 'child.home.medicine.taken' | translate }}</span
-                    >
-                    <button
-                      type="button"
-                      class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
-                      [disabled]="savingDose.isBusy(doseKey(dose))"
-                      (click)="setDoseStatus(dose, pending)"
-                    >
-                      {{ 'child.home.medicine.undo' | translate }}
-                    </button>
-                  </div>
-                } @else {
-                  <div class="ml-auto flex items-center gap-2">
-                    <span
-                      class="rounded-full bg-slate-200 dark:bg-slate-700 px-4 py-2 text-base font-bold text-slate-600 dark:text-slate-300"
-                      >{{ 'child.home.medicine.skipped' | translate }}</span
-                    >
-                    <button
-                      type="button"
-                      class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
-                      [disabled]="savingDose.isBusy(doseKey(dose))"
-                      (click)="setDoseStatus(dose, pending)"
-                    >
-                      {{ 'child.home.medicine.undo' | translate }}
-                    </button>
-                  </div>
-                }
-              </li>
-            }
-          </ul>
-        </div>
-      }
-
-      <!-- Tasks -->
-      @if (tasks().length > 0) {
-        <div
-          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
-        >
-          <h2 class="text-2xl font-bold tracking-normal">
-            {{ 'child.home.tasksTitle' | translate }}
-          </h2>
-          <ul class="mt-4 space-y-3">
-            @for (entry of groupedTasks(); track entry.itemId) {
-              @if (isRun(entry)) {
-                @let run = entry;
-                <li
-                  class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
-                >
-                  <div class="mb-3 flex items-center gap-2 text-lg font-semibold">
-                    <span aria-hidden="true">{{ run.icon }}</span>
-                    {{ run.parentTitle }}
-                  </div>
-                  <ul class="ml-2 space-y-2 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
-                    @for (subtask of run.subtasks; track keyFor(subtask)) {
-                      <li class="flex items-center gap-3">
-                        <button
-                          type="button"
-                          class="grid size-9 shrink-0 place-items-center rounded-lg border-2 text-base font-bold transition disabled:opacity-50"
-                          [class.border-emerald-400]="subtask.isCompleted"
-                          [class.bg-emerald-400]="subtask.isCompleted"
-                          [class.text-white]="subtask.isCompleted"
-                          [class.border-slate-300]="!subtask.isCompleted"
-                          [class.dark:border-slate-600]="!subtask.isCompleted"
-                          [disabled]="savingTask.isBusy(keyFor(subtask))"
-                          [attr.aria-label]="
-                            (subtask.isCompleted
-                              ? 'child.home.tasks.markNotDone'
-                              : 'child.home.tasks.markDone'
-                            ) | translate
-                          "
-                          (click)="toggleTask(subtask)"
-                        >
-                          @if (subtask.isCompleted) {
-                            ✓
-                          }
-                        </button>
-                        <span
-                          class="flex flex-1 items-center gap-2 text-base font-semibold"
-                          [class.line-through]="subtask.isCompleted"
-                          [class.text-slate-400]="subtask.isCompleted"
-                        >
-                          <span aria-hidden="true">{{ subtask.icon }}</span>
-                          {{ subtask.title }}
-                        </span>
-                      </li>
-                    }
-                  </ul>
-                </li>
-              } @else {
-                @let task = entry;
-                <li
-                  class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
-                >
-                  <button
-                    type="button"
-                    class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
-                    [class.border-emerald-400]="task.isCompleted"
-                    [class.bg-emerald-400]="task.isCompleted"
-                    [class.text-white]="task.isCompleted"
-                    [class.border-slate-300]="!task.isCompleted"
-                    [class.dark:border-slate-600]="!task.isCompleted"
-                    [disabled]="savingTask.isBusy(keyFor(task))"
-                    [attr.aria-label]="
-                      (task.isCompleted
-                        ? 'child.home.tasks.markNotDone'
-                        : 'child.home.tasks.markDone'
-                      ) | translate
-                    "
-                    (click)="toggleTask(task)"
-                  >
-                    @if (task.isCompleted) {
-                      ✓
-                    }
-                  </button>
-                  <span
-                    class="flex items-center gap-2 text-lg font-semibold"
-                    [class.line-through]="task.isCompleted"
-                    [class.text-slate-400]="task.isCompleted"
-                  >
-                    <span aria-hidden="true">{{ task.icon }}</span>
-                    {{ task.title }}
-                  </span>
-                </li>
-              }
-            }
-          </ul>
-        </div>
-      }
-
-      <!-- Events -->
-      @if (eventsView().length > 0) {
-        <div
-          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
-        >
-          <h2 class="text-2xl font-bold tracking-normal">
-            {{ 'child.home.eventsTitle' | translate }}
-          </h2>
-          <ul class="mt-4 space-y-3">
-            @for (event of eventsView(); track event.itemId) {
-              <li
-                class="flex items-center justify-between gap-3 overflow-hidden rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
-                [style.background]="
-                  event.isOngoing ? eventProgressBackground(event.progressPercent) : null
-                "
-              >
-                <span
-                  class="flex items-center gap-2 text-lg font-semibold"
-                  [class.line-through]="event.isPast"
-                  [class.text-slate-400]="event.isPast"
-                >
-                  <span
-                    class="inline-block size-3 rounded-full"
-                    [style.background-color]="event.color"
-                  ></span>
-                  <span aria-hidden="true">{{ event.icon }}</span>
-                  {{ event.title }}
-                  @if (event.isPast) {
-                    <span aria-hidden="true">✓</span>
-                  }
-                </span>
-
-                @if (event.isAllDay) {
-                  <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{
-                    'child.home.events.allDay' | translate
-                  }}</span>
-                } @else if (event.timing.kind === 0) {
-                  <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                    {{ event.timing.startsAt | userDate: 'shortTime' }}
-                    – {{ event.timing.endsAt | userDate: 'shortTime' }}
-                  </span>
-                }
-              </li>
-            }
-          </ul>
-        </div>
-      }
-
-      <!-- Pickup & drop-off -->
-      @if (todaysPickups().length > 0) {
-        <div
-          class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 shadow-sm"
-        >
-          <h2 class="text-2xl font-bold tracking-normal">
-            {{ 'child.home.pickup.title' | translate }}
-          </h2>
-          <ul class="mt-4 space-y-3">
-            @for (occurrence of todaysPickups(); track occurrence.slot) {
-              <li
-                class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
-              >
+        <h2 class="text-2xl font-bold tracking-normal">
+          {{ 'child.home.mealsTitle' | translate }}
+        </h2>
+        <ul class="mt-4 space-y-3">
+          @for (entry of mealsToShow(); track entry.slot) {
+            <li class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3">
+              <div class="flex items-center justify-between gap-3">
                 <span
                   class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
-                  >{{ pickupSlotLabels[occurrence.slot] | translate }}</span
+                  >{{ mealSlotLabels[entry.slot] | translate }}</span
                 >
-                <span class="flex flex-col items-end gap-0.5">
-                  <span class="flex items-center gap-2 text-lg font-semibold">
-                    @switch (occurrence.assignee.kind) {
-                      @case (guardianKind) {
-                        <span aria-hidden="true">👤</span>
-                        {{
-                          assigneeName(occurrence) ??
-                            ('child.home.pickup.kind.guardian' | translate)
-                        }}
-                      }
-                      @case (selfEscortKind) {
-                        <span aria-hidden="true">🚶</span>
-                        {{ 'child.home.pickup.kind.selfEscort' | translate }}
-                      }
-                      @case (siblingKind) {
-                        <span aria-hidden="true">🧒</span>
-                        {{
-                          assigneeName(occurrence) ?? ('child.home.pickup.kind.sibling' | translate)
-                        }}
-                      }
-                      @case (playdateKind) {
-                        <span aria-hidden="true">🎉</span>
-                        {{ playdateHostName(occurrence.assignee) }}
-                      }
-                      @case (babysitterKind) {
-                        <span aria-hidden="true">🧑‍🍼</span>
-                        {{
-                          babysitterName(occurrence.assignee) ||
-                            ('child.home.pickup.kind.babysitter' | translate)
-                        }}
-                      }
-                    }
-                  </span>
-                  @if (occurrence.time) {
-                    <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{
-                      occurrence.time.slice(0, 5)
-                    }}</span>
+                <span class="flex items-center gap-2 text-lg font-semibold">
+                  <span aria-hidden="true">{{ entry.icon }}</span>
+                  {{ entry.mealName }}
+                </span>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-1">
+                  @for (starCount of stars; track starCount) {
+                    <button
+                      type="button"
+                      class="text-2xl leading-none disabled:opacity-50"
+                      [class.text-amber-400]="
+                        entry.rating !== null && starCount <= entry.rating.stars
+                      "
+                      [class.text-slate-300]="
+                        entry.rating === null || starCount > entry.rating.stars
+                      "
+                      [class.dark:text-slate-600]="
+                        entry.rating === null || starCount > entry.rating.stars
+                      "
+                      [disabled]="rating.isBusy(entry.slot)"
+                      [attr.aria-label]="
+                        'child.mealplan.starLabel' | translate: { count: starCount }
+                      "
+                      (click)="rate(entry, starCount)"
+                    >
+                      ★
+                    </button>
                   }
+                </div>
+
+                <button
+                  type="button"
+                  class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                  (click)="isEditing(entry) ? cancelEditing() : startEditing(entry)"
+                >
+                  {{
+                    (entry.rating?.comment ? 'child.mealplan.editNote' : 'child.mealplan.addNote')
+                      | translate
+                  }}
+                </button>
+              </div>
+
+              @if (isEditing(entry)) {
+                <div class="mt-3 space-y-2">
+                  <label class="sr-only" [attr.for]="'mealNote-' + entry.slot">{{
+                    'child.mealplan.notePlaceholder' | translate
+                  }}</label>
+                  <textarea
+                    [id]="'mealNote-' + entry.slot"
+                    class="w-full rounded-xl border-2 border-slate-200 dark:border-slate-800 p-3 text-base focus:border-emerald-400 focus:outline-none dark:bg-slate-800 dark:text-slate-100"
+                    rows="2"
+                    [placeholder]="'child.mealplan.notePlaceholder' | translate"
+                    #commentInput
+                    [value]="commentDraft()"
+                    (input)="setComment(commentInput.value)"
+                  ></textarea>
+                  <div class="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500"
+                      (click)="cancelEditing()"
+                    >
+                      {{ 'child.mealplan.cancel' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                      [disabled]="rating.isBusy(entry.slot)"
+                      (click)="saveComment(entry)"
+                    >
+                      {{ 'child.mealplan.save' | translate }}
+                    </button>
+                  </div>
+                </div>
+              } @else if (entry.rating?.comment; as comment) {
+                <p class="mt-2 text-base italic text-slate-600 dark:text-slate-300">
+                  “{{ comment }}”
+                </p>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Medicine -->
+    @if (doses().length > 0) {
+      <div
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm"
+      >
+        <h2 class="text-2xl font-bold tracking-normal">
+          {{ 'child.home.medicineTitle' | translate }}
+        </h2>
+        <ul class="mt-4 space-y-3">
+          @for (dose of doses(); track doseKey(dose)) {
+            <li
+              class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+            >
+              <span class="flex min-w-0 items-center gap-2 text-lg font-semibold">
+                <span
+                  class="inline-block size-3 rounded-full"
+                  [style.background-color]="dose.color"
+                ></span>
+                <span aria-hidden="true">{{ dose.icon }}</span>
+                {{ dose.name }}
+                <span class="text-sm font-normal text-slate-500 dark:text-slate-400">{{
+                  dose.time.slice(0, 5)
+                }}</span>
+              </span>
+
+              @if (dose.status === pending) {
+                <div class="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="rounded-2xl bg-emerald-600 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                    [disabled]="savingDose.isBusy(doseKey(dose))"
+                    (click)="setDoseStatus(dose, taken)"
+                  >
+                    {{ 'child.home.medicine.markTaken' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-2xl border-2 border-slate-300 dark:border-slate-600 px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 disabled:opacity-50"
+                    [disabled]="savingDose.isBusy(doseKey(dose))"
+                    (click)="setDoseStatus(dose, skipped)"
+                  >
+                    {{ 'child.home.medicine.skip' | translate }}
+                  </button>
+                </div>
+              } @else if (dose.status === taken) {
+                <div class="ml-auto flex items-center gap-2">
+                  <span
+                    class="rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-4 py-2 text-base font-bold text-emerald-800 dark:text-emerald-300"
+                    >{{ 'child.home.medicine.taken' | translate }}</span
+                  >
+                  <button
+                    type="button"
+                    class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
+                    [disabled]="savingDose.isBusy(doseKey(dose))"
+                    (click)="setDoseStatus(dose, pending)"
+                  >
+                    {{ 'child.home.medicine.undo' | translate }}
+                  </button>
+                </div>
+              } @else {
+                <div class="ml-auto flex items-center gap-2">
+                  <span
+                    class="rounded-full bg-slate-200 dark:bg-slate-700 px-4 py-2 text-base font-bold text-slate-600 dark:text-slate-300"
+                    >{{ 'child.home.medicine.skipped' | translate }}</span
+                  >
+                  <button
+                    type="button"
+                    class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-50"
+                    [disabled]="savingDose.isBusy(doseKey(dose))"
+                    (click)="setDoseStatus(dose, pending)"
+                  >
+                    {{ 'child.home.medicine.undo' | translate }}
+                  </button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Tasks -->
+    @if (tasks().length > 0) {
+      <div
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm"
+      >
+        <h2 class="text-2xl font-bold tracking-normal">
+          {{ 'child.home.tasksTitle' | translate }}
+        </h2>
+        <ul class="mt-4 space-y-3">
+          @for (entry of groupedTasks(); track entry.itemId) {
+            @if (isRun(entry)) {
+              @let run = entry;
+              <li
+                class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
+              >
+                <div class="mb-3 flex items-center gap-2 text-lg font-semibold">
+                  <span aria-hidden="true">{{ run.icon }}</span>
+                  {{ run.parentTitle }}
+                </div>
+                <ul class="ml-2 space-y-2 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
+                  @for (subtask of run.subtasks; track keyFor(subtask)) {
+                    <li class="flex items-center gap-3">
+                      <button
+                        type="button"
+                        class="grid size-11 shrink-0 place-items-center rounded-lg border-2 text-base font-bold transition disabled:opacity-50"
+                        [class.border-emerald-400]="subtask.isCompleted"
+                        [class.bg-emerald-400]="subtask.isCompleted"
+                        [class.text-white]="subtask.isCompleted"
+                        [class.border-slate-300]="!subtask.isCompleted"
+                        [class.dark:border-slate-600]="!subtask.isCompleted"
+                        [disabled]="savingTask.isBusy(keyFor(subtask))"
+                        [attr.aria-label]="
+                          (subtask.isCompleted
+                            ? 'child.home.tasks.markNotDone'
+                            : 'child.home.tasks.markDone'
+                          ) | translate
+                        "
+                        (click)="toggleTask(subtask)"
+                      >
+                        @if (subtask.isCompleted) {
+                          ✓
+                        }
+                      </button>
+                      <span
+                        class="flex flex-1 items-center gap-2 text-base font-semibold"
+                        [class.line-through]="subtask.isCompleted"
+                        [class.text-slate-400]="subtask.isCompleted"
+                      >
+                        <span aria-hidden="true">{{ subtask.icon }}</span>
+                        {{ subtask.title }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              </li>
+            } @else {
+              @let task = entry;
+              <li
+                class="flex items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+              >
+                <button
+                  type="button"
+                  class="grid size-11 shrink-0 place-items-center rounded-xl border-2 text-xl font-bold transition disabled:opacity-50"
+                  [class.border-emerald-400]="task.isCompleted"
+                  [class.bg-emerald-400]="task.isCompleted"
+                  [class.text-white]="task.isCompleted"
+                  [class.border-slate-300]="!task.isCompleted"
+                  [class.dark:border-slate-600]="!task.isCompleted"
+                  [disabled]="savingTask.isBusy(keyFor(task))"
+                  [attr.aria-label]="
+                    (task.isCompleted
+                      ? 'child.home.tasks.markNotDone'
+                      : 'child.home.tasks.markDone'
+                    ) | translate
+                  "
+                  (click)="toggleTask(task)"
+                >
+                  @if (task.isCompleted) {
+                    ✓
+                  }
+                </button>
+                <span
+                  class="flex items-center gap-2 text-lg font-semibold"
+                  [class.line-through]="task.isCompleted"
+                  [class.text-slate-400]="task.isCompleted"
+                >
+                  <span aria-hidden="true">{{ task.icon }}</span>
+                  {{ task.title }}
                 </span>
               </li>
             }
-          </ul>
-        </div>
-      }
-    } @else {
-      <div
-        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-8 text-center shadow-sm"
-      >
-        <p class="text-5xl">🗓️</p>
-        <h2 class="mt-4 text-2xl font-bold tracking-normal">
-          {{ 'child.home.emptyTitle' | translate }}
-        </h2>
-        <p class="mt-2 text-lg leading-7 text-slate-600 dark:text-slate-300">
-          {{ 'child.home.emptySubtitle' | translate }}
-        </p>
+          }
+        </ul>
       </div>
     }
-  </section>
-</main>
+
+    <!-- Events -->
+    @if (eventsView().length > 0) {
+      <div
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm"
+      >
+        <h2 class="text-2xl font-bold tracking-normal">
+          {{ 'child.home.eventsTitle' | translate }}
+        </h2>
+        <ul class="mt-4 space-y-3">
+          @for (event of eventsView(); track event.itemId) {
+            <li
+              class="flex items-center justify-between gap-3 overflow-hidden rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+              [style.background]="
+                event.isOngoing ? eventProgressBackground(event.progressPercent) : null
+              "
+            >
+              <span
+                class="flex items-center gap-2 text-lg font-semibold"
+                [class.line-through]="event.isPast"
+                [class.text-slate-400]="event.isPast"
+              >
+                <span
+                  class="inline-block size-3 rounded-full"
+                  [style.background-color]="event.color"
+                ></span>
+                <span aria-hidden="true">{{ event.icon }}</span>
+                {{ event.title }}
+                @if (event.isPast) {
+                  <span aria-hidden="true">✓</span>
+                }
+              </span>
+
+              @if (event.isAllDay) {
+                <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{
+                  'child.home.events.allDay' | translate
+                }}</span>
+              } @else if (event.timing.kind === 0) {
+                <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                  {{ event.timing.startsAt | userDate: 'shortTime' }}
+                  – {{ event.timing.endsAt | userDate: 'shortTime' }}
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Pickup & drop-off -->
+    @if (todaysPickups().length > 0) {
+      <div
+        class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm"
+      >
+        <h2 class="text-2xl font-bold tracking-normal">
+          {{ 'child.home.pickup.title' | translate }}
+        </h2>
+        <ul class="mt-4 space-y-3">
+          @for (occurrence of todaysPickups(); track occurrence.slot) {
+            <li
+              class="flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-200 dark:border-slate-800 px-4 py-3"
+            >
+              <span
+                class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >{{ pickupSlotLabels[occurrence.slot] | translate }}</span
+              >
+              <span class="flex flex-col items-end gap-0.5">
+                <span class="flex items-center gap-2 text-lg font-semibold">
+                  @switch (occurrence.assignee.kind) {
+                    @case (guardianKind) {
+                      <span aria-hidden="true">👤</span>
+                      {{
+                        assigneeName(occurrence) ?? ('child.home.pickup.kind.guardian' | translate)
+                      }}
+                    }
+                    @case (selfEscortKind) {
+                      <span aria-hidden="true">🚶</span>
+                      {{ 'child.home.pickup.kind.selfEscort' | translate }}
+                    }
+                    @case (siblingKind) {
+                      <span aria-hidden="true">🧒</span>
+                      {{
+                        assigneeName(occurrence) ?? ('child.home.pickup.kind.sibling' | translate)
+                      }}
+                    }
+                    @case (playdateKind) {
+                      <span aria-hidden="true">🎉</span>
+                      {{ playdateHostName(occurrence.assignee) }}
+                    }
+                    @case (babysitterKind) {
+                      <span aria-hidden="true">🧑‍🍼</span>
+                      {{
+                        babysitterName(occurrence.assignee) ||
+                          ('child.home.pickup.kind.babysitter' | translate)
+                      }}
+                    }
+                  }
+                </span>
+                @if (occurrence.time) {
+                  <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">{{
+                    occurrence.time.slice(0, 5)
+                  }}</span>
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  } @else {
+    <div
+      class="rounded-3xl border-4 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-5 sm:p-8 text-center shadow-sm"
+    >
+      <p class="text-5xl">🗓️</p>
+      <h2 class="mt-4 text-2xl font-bold tracking-normal">
+        {{ 'child.home.emptyTitle' | translate }}
+      </h2>
+      <p class="mt-2 text-lg leading-7 text-slate-600 dark:text-slate-300">
+        {{ 'child.home.emptySubtitle' | translate }}
+      </p>
+    </div>
+  }
+</app-child-page>

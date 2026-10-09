@@ -10,6 +10,7 @@ import {
 } from '../../../../core/mealplans.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
+import { Card } from '../../../../shared/card/card';
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
@@ -17,7 +18,7 @@ const MANAGE: MealplanAccessTier = 'Manage';
 
 @Component({
   selector: 'app-manage-meals',
-  imports: [FormsModule, TranslatePipe, ColorSwatchPicker],
+  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Card],
   templateUrl: './manage-meals.html',
 })
 export class ManageMeals {

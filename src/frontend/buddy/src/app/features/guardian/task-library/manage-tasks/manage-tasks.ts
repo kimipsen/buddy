@@ -8,6 +8,7 @@ import { Subtask, TaskLibraryService, TaskTemplate } from '../../../../core/task
 import { createAction } from '../../../../shared/action-state/action-state';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { Stepper } from '../../../../shared/stepper/stepper';
+import { Card } from '../../../../shared/card/card';
 
 const DEFAULT_COLOR = '#6366f1';
 const DEFAULT_ICON = '📋';
@@ -31,7 +32,7 @@ function formatDuration(totalMinutes: number): string {
 // group-sharing axis (see TaskLibraryAuthorization.cs), so there's no scope input to accept here.
 @Component({
   selector: 'app-manage-tasks',
-  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Stepper],
+  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Stepper, Card],
   templateUrl: './manage-tasks.html',
 })
 export class ManageTasks {
