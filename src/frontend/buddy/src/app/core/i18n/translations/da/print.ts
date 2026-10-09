@@ -37,6 +37,7 @@ export const print = {
     editTemplate: 'Rediger skabelon',
     printButton: 'Print',
     includeSubtasks: 'Medtag deltrin',
+    includeQrCode: 'Medtag QR-kode',
   },
   editor: {
     title: 'Rediger printskabelon',

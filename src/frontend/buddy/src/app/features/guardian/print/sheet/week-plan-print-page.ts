@@ -87,6 +87,13 @@ export class WeekPlanPrintPage {
     this.route.snapshot.queryParamMap.get('subtasks') === '1',
   );
 
+  // Print a QR code that takes whoever scans the sheet to Buddy's login page;
+  // kept in the URL like the start date.
+  protected readonly includeQrCode = signal(this.route.snapshot.queryParamMap.get('qr') === '1');
+  protected readonly qrCodeUrl = computed(() =>
+    this.includeQrCode() ? new URL('login', this.document.baseURI).href : null,
+  );
+
   // Refetches whenever the date changes; a newer date picked while one loads wins.
   protected readonly sheet = resource({
     params: () =>
@@ -186,6 +193,15 @@ export class WeekPlanPrintPage {
       replaceUrl: true,
     });
     this.includeSubtasks.set(include);
+  }
+
+  protected setIncludeQrCode(include: boolean): void {
+    void this.router.navigate([], {
+      queryParams: { qr: include ? '1' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    this.includeQrCode.set(include);
   }
 
   private applyPageStyle(template: PrintTemplate): void {

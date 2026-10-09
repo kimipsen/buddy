@@ -182,7 +182,7 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     description: 'The week plan as it comes out on paper.',
     as: 'guardian',
     route: '/guardian/print/sheet/:templateId',
-    path: (demo) => `/guardian/print/sheet/${demo.printTemplateId}`,
+    path: (demo) => `/guardian/print/sheet/${demo.printTemplateId}?qr=1`,
   },
   {
     name: 'guardian-admin',

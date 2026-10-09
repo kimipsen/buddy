@@ -1,5 +1,5 @@
 <div
-  class="week-plan-sheet box-border grid overflow-hidden bg-white text-slate-900 [break-inside:avoid]"
+  class="week-plan-sheet relative box-border grid overflow-hidden bg-white text-slate-900 [break-inside:avoid]"
   role="table"
   [attr.aria-label]="model().weekLabel ?? ('print.sheet.title' | translate)"
   [style.width.mm]="paper().width"
@@ -165,5 +165,19 @@
         </div>
       }
     </div>
+  }
+
+  <!-- Faint, the grid lines' grey, on an opaque quiet zone: fading the whole code instead lets the
+       cell text underneath show through and stops it scanning. -->
+  @if (qrCode(); as qr) {
+    <svg
+      class="pointer-events-none absolute bottom-[0.6em] right-[0.6em] size-[7em]"
+      [attr.viewBox]="'0 0 ' + qr.size + ' ' + qr.size"
+      shape-rendering="crispEdges"
+      aria-hidden="true"
+    >
+      <rect [attr.width]="qr.size" [attr.height]="qr.size" fill="#fff" />
+      <path [attr.d]="qr.path" fill="#94a3b8" />
+    </svg>
   }
 </div>

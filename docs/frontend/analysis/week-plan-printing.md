@@ -256,6 +256,13 @@ Where the build settled details this design left open:
   each with its own smaller tick box in checklists, as indented lines in events rows. A routine
   still counts as one entry against `maxItems`. Toggling reassembles the fetched week without
   refetching; the editor preview always prints without subtasks.
+- **A QR code to the login page is a print-time toggle.** The print page's "Include QR code"
+  switch (off by default, kept in the URL as `?qr=1`) prints a QR code of the app's `/login` URL
+  (resolved against the document's base URI, so it follows whichever host the family runs Buddy
+  on) over the sheet's bottom-right corner, about 22 mm square on A4. It is faint, slate-400
+  modules on an opaque white quiet zone, and covers a little of the last row's Sunday cell.
+  Fading the whole code instead lets the cell text show through and stops it scanning. The
+  editor preview never shows it. Encoded client-side with `uqr`.
 - **Unfinished rows print blank.** A row with no source picked yet (no calendar, child or
   location) renders as an empty cell, not "not available"; that note is only for sources the
   printing guardian can't read.

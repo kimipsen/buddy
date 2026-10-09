@@ -174,6 +174,46 @@ describe('WeekPlanPrintPage', () => {
     expect(root.querySelector('app-toggle button')?.getAttribute('aria-checked')).toBe('true');
   });
 
+  it('toggles a QR code to the login page, keeping the choice in the URL', async () => {
+    const { fixture, load, root } = await setup('2026-10-05');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const toggle = root.querySelectorAll<HTMLButtonElement>('app-toggle button')[1]!;
+
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(toggle.getAttribute('aria-label')).toBe('Include QR code');
+    expect(root.querySelector('app-week-plan-sheet svg path[d]')).toBeNull();
+
+    toggle.click();
+    await settle(fixture);
+
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(root.querySelector('app-week-plan-sheet svg path[d]')).not.toBeNull();
+    expect(navigate).toHaveBeenCalledWith([], {
+      queryParams: { qr: '1' },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+
+    toggle.click();
+    await settle(fixture);
+
+    expect(root.querySelector('app-week-plan-sheet svg path[d]')).toBeNull();
+    expect(navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { qr: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('starts with the QR code included when the URL asks for it', async () => {
+    const { root } = await setup('2026-10-05', undefined, { qr: '1' });
+
+    const toggles = root.querySelectorAll('app-toggle button');
+    expect(toggles[0]?.getAttribute('aria-checked')).toBe('false');
+    expect(toggles[1]?.getAttribute('aria-checked')).toBe('true');
+  });
+
   it('focuses Print once the sheet is ready', async () => {
     const { root } = await setup('2026-10-05');
 

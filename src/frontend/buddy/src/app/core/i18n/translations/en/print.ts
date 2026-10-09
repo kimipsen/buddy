@@ -37,6 +37,7 @@ export const print = {
     editTemplate: 'Edit template',
     printButton: 'Print',
     includeSubtasks: 'Include subtasks',
+    includeQrCode: 'Include QR code',
   },
   editor: {
     title: 'Edit print template',

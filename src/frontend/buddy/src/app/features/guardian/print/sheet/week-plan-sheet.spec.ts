@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { encode } from 'uqr';
 import { describe, expect, it } from 'vitest';
 
 import { WeekPlanModel } from '../week-plan-model';
@@ -60,10 +61,13 @@ describe('WeekPlanSheet', () => {
     };
   }
 
-  async function render(value: WeekPlanModel): Promise<HTMLElement> {
+  async function render(value: WeekPlanModel, qrCodeUrl?: string): Promise<HTMLElement> {
     await TestBed.configureTestingModule({ imports: [WeekPlanSheet] }).compileComponents();
     const fixture = TestBed.createComponent(WeekPlanSheet);
     fixture.componentRef.setInput('model', value);
+    if (qrCodeUrl !== undefined) {
+      fixture.componentRef.setInput('qrCodeUrl', qrCodeUrl);
+    }
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
@@ -195,5 +199,32 @@ describe('WeekPlanSheet', () => {
 
     expect(root.querySelector('[role="columnheader"]')?.textContent?.trim()).toBe('');
     expect(root.querySelector('[role="table"]')?.getAttribute('aria-label')).toBe('Week plan');
+  });
+
+  it('prints no QR code unless given a link', async () => {
+    const root = await render(model());
+
+    expect(root.querySelector('svg[shape-rendering="crispEdges"] path')).toBeNull();
+  });
+
+  it('prints a link as a QR code, one unit square per dark module, hidden from screen readers', async () => {
+    const url = 'https://buddy.example/login';
+    const root = await render(model(), url);
+    const qr = root.querySelector<SVGElement>('svg[shape-rendering="crispEdges"]')!;
+
+    const { size, data } = encode(url, { ecc: 'M', border: 2 });
+    expect(qr.getAttribute('viewBox')).toBe(`0 0 ${size} ${size}`);
+    expect(qr.getAttribute('aria-hidden')).toBe('true');
+    expect(qr.querySelector('rect')?.getAttribute('width')).toBe(String(size));
+    expect(qr.querySelector('rect')?.getAttribute('height')).toBe(String(size));
+    const squares =
+      qr
+        .querySelector('path')
+        ?.getAttribute('d')
+        ?.match(/M\d+ \d+h1v1h-1z/g) ?? [];
+    expect(squares).toHaveLength(data.flat().filter(Boolean).length);
+    // The top-left finder pattern starts right after the two-module quiet zone.
+    expect(squares[0]).toBe('M2 2h1v1h-1z');
+    expect(squares).not.toContain('M0 0h1v1h-1z');
   });
 });

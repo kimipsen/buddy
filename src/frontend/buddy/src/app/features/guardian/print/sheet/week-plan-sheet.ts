@@ -1,4 +1,5 @@
 import { Component, computed, input } from '@angular/core';
+import { encode } from 'uqr';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { WeekPlanModel } from '../week-plan-model';
@@ -20,6 +21,9 @@ const PICKUP_LABEL_FULL_SIZE_CHARS = 10;
 const PICKUP_LABEL_EM = 1.2;
 const PICKUP_LONG_LABEL_EM = 0.9;
 
+// Quiet zone around the QR code, in modules; scanners need some light margin to find the code.
+const QR_BORDER_MODULES = 2;
+
 // Presentational only: one WeekPlanModel in, one page out, no service calls -- so the print page,
 // its on-screen preview and the editor's live preview are the same component. It always renders
 // light with its own colors (never theme tokens): paper is white whatever the app theme is.
@@ -30,6 +34,21 @@ const PICKUP_LONG_LABEL_EM = 0.9;
 })
 export class WeekPlanSheet {
   readonly model = input.required<WeekPlanModel>();
+  // A link printed as a faint QR code over the bottom-right corner; none when null.
+  readonly qrCodeUrl = input<string | null>(null);
+
+  // The QR code as one SVG path of its dark modules, one unit per module.
+  protected readonly qrCode = computed(() => {
+    const url = this.qrCodeUrl();
+    if (!url) {
+      return null;
+    }
+    const { size, data } = encode(url, { ecc: 'M', border: QR_BORDER_MODULES });
+    const path = data
+      .flatMap((row, y) => row.map((dark, x) => (dark ? `M${x} ${y}h1v1h-1z` : '')))
+      .join('');
+    return { size, path };
+  });
 
   protected readonly paper = computed(() => PAPER_MM[this.model().paperSize]);
 
