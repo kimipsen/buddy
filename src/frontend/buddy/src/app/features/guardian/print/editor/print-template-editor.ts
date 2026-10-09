@@ -1,6 +1,7 @@
 import {
   Component,
   DestroyRef,
+  ElementRef,
   computed,
   effect,
   inject,
@@ -8,6 +9,7 @@ import {
   resource,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -74,7 +76,13 @@ import { Page } from '../../../../shared/page/page';
 const MAX_ROWS = 12;
 const MAX_HEIGHT = 5;
 const PREVIEW_DEBOUNCE_MS = 400;
-const PREVIEW_WIDTH_PX = 384;
+// Until the preview box has been measured (and where ResizeObserver doesn't exist) the preview
+// keeps its old fixed width.
+const DEFAULT_PREVIEW_WIDTH_PX = 384;
+// Below xl the preview column spans the whole page (up to ~1200px). Capped at 900px the A4 sheet
+// shows at about 85% of its printed size (A3 at about 60%) and stays about 620px tall, so the
+// sheet and the editor above it both stay in view; wider adds nothing a miniature needs.
+const MAX_PREVIEW_WIDTH_PX = 900;
 const PX_PER_MM = 96 / 25.4;
 const WEEKDAYS_MONDAY_FIRST: readonly Weekday[] = [
   'Monday',
@@ -343,11 +351,21 @@ export class PrintTemplateEditor {
       : null;
   });
 
-  // A4 and A3 both scale into the same preview width, keeping the paper's proportions.
+  // The bordered preview box: a block in a minmax(0, 1fr) grid column, so its width comes from
+  // the column and never from the scaled sheet inside it -- measuring it can't loop.
+  private readonly previewFrame = viewChild<ElementRef<HTMLElement>>('previewFrame');
+  // The frame's content width, once measured.
+  private readonly previewFrameWidth = signal<number | null>(null);
+
+  // A4 and A3 both scale to the frame's width (capped), keeping the paper's proportions.
   protected readonly previewBox = computed(() => {
     const paper = PAPER_MM[this.paperSize()];
-    const scale = PREVIEW_WIDTH_PX / (paper.width * PX_PER_MM);
-    return { scale, width: PREVIEW_WIDTH_PX, height: paper.height * PX_PER_MM * scale };
+    const width = Math.min(
+      this.previewFrameWidth() ?? DEFAULT_PREVIEW_WIDTH_PX,
+      MAX_PREVIEW_WIDTH_PX,
+    );
+    const scale = width / (paper.width * PX_PER_MM);
+    return { scale, width, height: paper.height * PX_PER_MM * scale };
   });
 
   // Only refetch preview data when the set of referenced sources changes, not on every keystroke.
@@ -369,6 +387,24 @@ export class PrintTemplateEditor {
       if (this.previewTimer) {
         clearTimeout(this.previewTimer);
       }
+    });
+
+    // The frame only exists once the template has loaded, so observe it whenever it (re)appears;
+    // the cleanup disconnects on the next run and on destroy.
+    effect((onCleanup) => {
+      const frame = this.previewFrame()?.nativeElement;
+      if (!frame || typeof ResizeObserver === 'undefined') {
+        return;
+      }
+      const observer = new ResizeObserver((entries) => {
+        const width = Math.floor(entries.at(-1)?.contentRect.width ?? 0);
+        // A hidden frame measures 0; keep the last size rather than collapsing the preview.
+        if (width > 0) {
+          this.previewFrameWidth.set(width);
+        }
+      });
+      observer.observe(frame);
+      onCleanup(() => observer.disconnect());
     });
 
     effect(() => {

@@ -595,15 +595,16 @@
         </div>
       </div>
 
-      <!-- Live preview: the same sheet component the print page uses, scaled down to a fixed
-           width. On a phone that width is wider than the column, so the preview scrolls. -->
+      <!-- Live preview: the same sheet component the print page uses, scaled to the width of its
+           column (measured on #previewFrame), so it fits without scrolling on any screen. -->
       <div class="xl:sticky xl:top-6 xl:self-start">
         <h3 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {{ 'print.editor.previewTitle' | translate }}
         </h3>
         @if (previewModel(); as model) {
           <div
-            class="overflow-auto rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm"
+            #previewFrame
+            class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm"
           >
             <div [style.width.px]="previewBox().width" [style.height.px]="previewBox().height">
               <div

@@ -522,4 +522,156 @@ describe('PrintTemplateEditor', () => {
     ).map((option) => option.textContent?.trim());
     expect(newRowKinds).not.toContain('Drop-off / pick-up');
   });
+
+  describe('live preview size', () => {
+    const PX_PER_MM = 96 / 25.4;
+    const A4 = { width: 281 * PX_PER_MM, height: 194 * PX_PER_MM };
+    const A3 = { width: 404 * PX_PER_MM, height: 281 * PX_PER_MM };
+
+    // A stand-in for the browser's ResizeObserver: records what is observed and lets the spec
+    // report a new content width.
+    class FakeResizeObserver {
+      static instances: FakeResizeObserver[] = [];
+      readonly observed: Element[] = [];
+      disconnected = false;
+
+      constructor(private readonly callback: ResizeObserverCallback) {
+        FakeResizeObserver.instances.push(this);
+      }
+
+      observe(target: Element): void {
+        this.observed.push(target);
+      }
+
+      unobserve(): void {
+        // Not used by the editor.
+      }
+
+      disconnect(): void {
+        this.disconnected = true;
+      }
+
+      resize(width: number): void {
+        this.callback(
+          [{ target: this.observed[0], contentRect: { width } } as unknown as ResizeObserverEntry],
+          this as unknown as ResizeObserver,
+        );
+      }
+    }
+
+    beforeEach(() => {
+      FakeResizeObserver.instances = [];
+      vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    // The sized box is the sheet's grandparent; its scaled wrapper is the sheet's parent.
+    function previewBox(root: HTMLElement) {
+      const scaled = root.querySelector('app-week-plan-sheet')!.parentElement!;
+      const box = scaled.parentElement!;
+      return {
+        frame: box.parentElement!,
+        width: parseFloat(box.style.width),
+        height: parseFloat(box.style.height),
+        scale: parseFloat(scaled.style.getPropertyValue('--preview-scale')),
+      };
+    }
+
+    function observer(): FakeResizeObserver {
+      expect(FakeResizeObserver.instances).toHaveLength(1);
+      return FakeResizeObserver.instances[0];
+    }
+
+    it('is 384px wide until the frame has been measured', async () => {
+      const { root } = await setup();
+
+      const box = previewBox(root);
+      expect(box.width).toBe(384);
+      expect(box.scale).toBeCloseTo(384 / A4.width, 6);
+      expect(box.height).toBeCloseTo((A4.height * 384) / A4.width, 3);
+    });
+
+    it('observes the bordered frame around the preview and scrolls nothing', async () => {
+      const { root } = await setup();
+
+      const { frame } = previewBox(root);
+      expect(observer().observed).toEqual([frame]);
+      expect(frame.classList).toContain('overflow-hidden');
+      expect(frame.classList).not.toContain('overflow-auto');
+    });
+
+    it('follows the measured width of its column', async () => {
+      const { fixture, root } = await setup();
+
+      observer().resize(640.7);
+      await settle(fixture);
+
+      const box = previewBox(root);
+      expect(box.width).toBe(640);
+      expect(box.scale).toBeCloseTo(640 / A4.width, 6);
+      expect(box.height).toBeCloseTo((A4.height * 640) / A4.width, 3);
+
+      observer().resize(345);
+      await settle(fixture);
+      expect(previewBox(root).width).toBe(345);
+    });
+
+    it('keeps the last width when the frame measures 0', async () => {
+      const { fixture, root } = await setup();
+
+      observer().resize(500);
+      await settle(fixture);
+      observer().resize(0);
+      await settle(fixture);
+
+      expect(previewBox(root).width).toBe(500);
+    });
+
+    it('stops growing at 900px', async () => {
+      const { fixture, root } = await setup();
+
+      observer().resize(1200);
+      await settle(fixture);
+
+      const box = previewBox(root);
+      expect(box.width).toBe(900);
+      expect(box.scale).toBeCloseTo(900 / A4.width, 6);
+    });
+
+    it('keeps the paper’s proportions when switching to A3', async () => {
+      const { fixture, root } = await setup();
+      observer().resize(640);
+      await settle(fixture);
+
+      Array.from(root.querySelectorAll<HTMLButtonElement>('[role="radio"]'))
+        .find((b) => b.textContent?.trim() === 'A3')!
+        .click();
+      await settle(fixture);
+
+      const box = previewBox(root);
+      expect(box.width).toBe(640);
+      expect(box.scale).toBeCloseTo(640 / A3.width, 6);
+      expect(box.height).toBeCloseTo((A3.height * 640) / A3.width, 3);
+      expect(box.height / box.width).not.toBeCloseTo(A4.height / A4.width, 2);
+    });
+
+    it('disconnects the observer when the editor is destroyed', async () => {
+      const { fixture } = await setup();
+      const resizes = observer();
+      expect(resizes.disconnected).toBe(false);
+
+      fixture.destroy();
+
+      expect(resizes.disconnected).toBe(true);
+    });
+
+    it('keeps the 384px preview where ResizeObserver does not exist', async () => {
+      vi.stubGlobal('ResizeObserver', undefined);
+
+      const { root } = await setup();
+
+      expect(previewBox(root).width).toBe(384);
+      expect(FakeResizeObserver.instances).toHaveLength(0);
+    });
+  });
 });
