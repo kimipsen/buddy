@@ -55,6 +55,7 @@ model or permissions logic.
 - [Guardian work locations](analysis/work-locations.md)
 - [Babysitters](analysis/babysitters.md)
 - [Client-ready OpenAPI documents](analysis/openapi-client-contract.md)
+- [Feature flags](analysis/feature-flags.md)
 
 ## Current focus areas
 
