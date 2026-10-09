@@ -8,11 +8,11 @@
     <h2 class="mt-2 text-3xl font-semibold tracking-normal">
       {{ 'help.page.title' | translate }}
     </h2>
-    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+    <p class="mt-2 max-w-prose text-sm text-slate-500 dark:text-slate-400">
       {{ 'help.page.intro' | translate }}
     </p>
     @if (someFeaturesOff()) {
-      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      <p class="mt-2 max-w-prose text-sm text-slate-500 dark:text-slate-400">
         {{ 'help.page.featuresOff' | translate }}
       </p>
     }
@@ -50,7 +50,8 @@
           >
             {{ entry.titleKey | translate }}
           </h3>
-          <div class="mt-3">
+          <!-- Running text keeps a readable line length; the card itself fills the column. -->
+          <div class="mt-3 max-w-prose">
             <app-help-content [topic]="entry.topic" [headingLevel]="4" />
           </div>
         </article>

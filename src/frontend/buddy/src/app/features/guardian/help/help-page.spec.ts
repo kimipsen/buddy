@@ -125,6 +125,36 @@ describe('GuardianHelp', () => {
     expect(page.textContent).toContain('Some parts of Buddy are turned off for your family');
   });
 
+  it('caps the running text at a reading width without narrowing the layout', async () => {
+    disableFeatures('medicines');
+    const page = await open('/help');
+
+    const bodies = Array.from(page.querySelectorAll('app-help-content')).map(
+      (content) => content.parentElement as HTMLElement,
+    );
+    expect(bodies.length).toBeGreaterThan(0);
+    for (const body of bodies) {
+      expect(body.classList).toContain('max-w-prose');
+    }
+    const translations = TestBed.inject(TranslationService);
+    const introTexts = ['help.page.intro', 'help.page.featuresOff'].map((key) =>
+      translations.translate(key),
+    );
+    const intro = Array.from(page.querySelectorAll('p')).filter((p) =>
+      introTexts.includes(p.textContent?.trim() ?? ''),
+    );
+    expect(intro).toHaveLength(2);
+    for (const p of intro) {
+      expect(p.classList).toContain('max-w-prose');
+    }
+
+    expect(page.querySelector('nav')?.classList).not.toContain('max-w-prose');
+    for (const article of page.querySelectorAll('article')) {
+      expect(article.classList).not.toContain('max-w-prose');
+    }
+    expect(page.querySelector('app-page > section')?.classList).toContain('max-w-7xl');
+  });
+
   it('says nothing about turned-off features while every feature is on', async () => {
     const page = await open('/help');
 

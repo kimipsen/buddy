@@ -25,6 +25,14 @@ describe('OnboardingResumeCard', () => {
     expect(link?.getAttribute('href')).toBe('/guardian/onboarding');
   });
 
+  it('is a full-width banner with its own space below it, not a grid item', async () => {
+    const compiled = await render(vi.fn(async () => progress({ status: 'Deferred' })));
+
+    const banner = compiled.querySelector('section') as HTMLElement;
+    expect(banner.classList).toContain('mb-6');
+    expect(banner.classList).not.toContain('lg:col-span-2');
+  });
+
   it.each(['NotStarted', 'Active', 'Completed'] as OnboardingStatus[])(
     'shows nothing for status %s',
     async (status) => {

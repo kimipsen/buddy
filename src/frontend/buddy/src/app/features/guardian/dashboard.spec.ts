@@ -95,6 +95,69 @@ describe('GuardianDashboard', () => {
     }
   });
 
+  it('grows wider than other pages, to max-w-[96rem], for three columns', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const section = (fixture.nativeElement as HTMLElement).querySelector(
+      'app-page > section',
+    ) as HTMLElement;
+    expect(section.classList).toContain('max-w-[96rem]');
+    expect(section.classList).not.toContain('max-w-7xl');
+  });
+
+  it('packs the cards into one, two (lg) and three (2xl) columns, in the widget order', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const columns = compiled.querySelector('app-tasks-today')?.parentElement as HTMLElement;
+    expect([...columns.classList]).toEqual(
+      expect.arrayContaining(['columns-1', 'gap-6', 'lg:columns-2', '2xl:columns-3']),
+    );
+    expect(columns.classList).not.toContain('grid');
+    expect(columns.classList).not.toContain('lg:grid-cols-2');
+
+    expect([...columns.children].map((card) => card.tagName.toLowerCase())).toEqual([
+      'app-mealplan-today',
+      'app-tasks-today',
+      'app-events-today',
+      'app-doses-today',
+      'app-pickup-today',
+      'app-children-overview',
+    ]);
+  });
+
+  it('keeps every card whole in one column, spaced below all but the last', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = [
+      ...(compiled.querySelector('app-tasks-today')?.parentElement as HTMLElement).children,
+    ];
+    for (const card of cards) {
+      expect(card.classList).toContain('block');
+      expect(card.classList).toContain('break-inside-avoid');
+    }
+    for (const card of cards.slice(0, -1)) {
+      expect(card.classList).toContain('mb-6');
+    }
+    expect(cards.at(-1)?.classList).not.toContain('mb-6');
+  });
+
+  it('puts the onboarding resume banner before the columns, not inside them', async () => {
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const resume = compiled.querySelector('app-onboarding-resume-card') as HTMLElement;
+    const columns = compiled.querySelector('app-tasks-today')?.parentElement as HTMLElement;
+    expect(resume.classList).toContain('contents');
+    expect(resume.parentElement).toBe(columns.parentElement);
+    expect(resume.nextElementSibling).toBe(columns);
+  });
+
   it('leaves out the cards and the print link of features that are turned off', async () => {
     disableFeatures('mealplans', 'medicines', 'pickups', 'printing');
     const { fixture } = await setup();

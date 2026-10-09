@@ -1,4 +1,4 @@
-<app-page>
+<app-page width="wide">
   <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
     <div>
       <p
@@ -20,19 +20,24 @@
     }
   </div>
 
-  <div class="grid gap-6 lg:grid-cols-2">
-    <app-onboarding-resume-card class="contents" />
+  <!--
+    The resume banner spans the page above the cards. The cards are packed into CSS columns (one,
+    two from lg, three from 2xl), so a short card leaves no gap beside a tall one. The DOM order,
+    and so the reading and tab order, runs down the first column, then the next.
+  -->
+  <app-onboarding-resume-card class="contents" />
+  <div class="columns-1 gap-6 lg:columns-2 2xl:columns-3">
     @if (features.enabled('mealplans')) {
-      <app-mealplan-today />
+      <app-mealplan-today class="mb-6 block break-inside-avoid" />
     }
-    <app-tasks-today />
-    <app-events-today />
+    <app-tasks-today class="mb-6 block break-inside-avoid" />
+    <app-events-today class="mb-6 block break-inside-avoid" />
     @if (features.enabled('medicines')) {
-      <app-doses-today />
+      <app-doses-today class="mb-6 block break-inside-avoid" />
     }
     @if (features.enabled('pickups')) {
-      <app-pickup-today />
+      <app-pickup-today class="mb-6 block break-inside-avoid" />
     }
-    <app-children-overview />
+    <app-children-overview class="block break-inside-avoid" />
   </div>
 </app-page>

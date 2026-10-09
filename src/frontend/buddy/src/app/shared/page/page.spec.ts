@@ -33,7 +33,11 @@ describe('Page', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    return { compiled, section: compiled.querySelector('app-page > section') as HTMLElement };
+    return {
+      fixture,
+      compiled,
+      section: compiled.querySelector('app-page > section') as HTMLElement,
+    };
   }
 
   it('projects its content into a section', async () => {
@@ -56,6 +60,7 @@ describe('Page', () => {
 
     expect(section.classList).toContain('max-w-7xl');
     expect(section.classList).not.toContain('max-w-3xl');
+    expect(section.classList).not.toContain('max-w-[96rem]');
   });
 
   it.each<[PageWidth, string]>([
@@ -67,6 +72,27 @@ describe('Page', () => {
 
     expect(section.classList).toContain(cls);
     expect(section.classList).not.toContain('max-w-7xl');
+  });
+
+  it('grows to max-w-[96rem] for width wide, keeping its padding', async () => {
+    const { section } = await setup({ width: 'wide' });
+
+    expect(section.classList).toContain('max-w-[96rem]');
+    expect(section.classList).not.toContain('max-w-7xl');
+    expect([...section.classList]).toEqual(
+      expect.arrayContaining(['mx-auto', 'px-4', 'py-8', 'sm:px-6', 'lg:px-8']),
+    );
+  });
+
+  it('swaps the cap when the width changes', async () => {
+    const { fixture, section } = await setup({ width: '3xl' });
+
+    fixture.componentInstance.width.set('wide');
+    fixture.detectChanges();
+
+    expect(section.classList).toContain('max-w-[96rem]');
+    expect(section.classList).not.toContain('max-w-3xl');
+    expect(section.classList).toContain('mx-auto');
   });
 
   it('shows no back link without a route', async () => {
