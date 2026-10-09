@@ -111,6 +111,18 @@ describe('GuardianSleepDiary', () => {
     expect(bedTimeInput(compiled).value).toBe('20:30');
   });
 
+  it('opens a night picked in the phone night list', async () => {
+    const { fixture, compiled } = await setup();
+
+    const nights = compiled.querySelectorAll('app-sleep-history ul > li');
+    expect(nights).toHaveLength(14);
+    (nights[1].querySelector('button') as HTMLButtonElement).click();
+    await settle(fixture);
+
+    expect(bedTimeInput(compiled).value).toBe('20:30');
+    expect(nights[1].getAttribute('aria-current')).toBe('date');
+  });
+
   it('pages back 14 nights, and only forward up to today', async () => {
     const { fixture, compiled, sleepDiary } = await setup();
     const button = (text: string) =>

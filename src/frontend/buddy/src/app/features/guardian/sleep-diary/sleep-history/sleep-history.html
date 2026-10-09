@@ -6,9 +6,12 @@
     <ng-content />
   </div>
 
-  <!-- relative: the sr-only header text is absolutely positioned; without a positioned box here it
+  <!-- The table needs 640px. Inside the card that only fits from md (768px viewport, ~670px of
+       content); at sm it would still scroll sideways, so below md the night list further down
+       takes over. not-print: a printed page is narrower than md, and the table is what prints.
+       relative: the sr-only header text is absolutely positioned; without a positioned box here it
        escapes the scroll area and widens the whole page on a phone. -->
-  <div class="relative overflow-x-auto">
+  <div class="relative overflow-x-auto max-md:not-print:hidden">
     <table class="w-full min-w-[640px] text-left text-sm">
       <thead>
         <tr
@@ -80,4 +83,95 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Phone and small-tablet layout: one block per night with the same values and Edit action as
+       the table row. Empty nights are a single line. relative keeps the sr-only text inside. -->
+  <ul class="relative divide-y divide-slate-100 dark:divide-slate-800 md:hidden print:hidden">
+    @for (row of rows(); track row.date) {
+      <li
+        class="-mx-2 rounded-md px-2 py-2"
+        [class.bg-emerald-50]="row.date === selectedDate()"
+        [class.dark:bg-emerald-950]="row.date === selectedDate()"
+        [attr.aria-current]="row.date === selectedDate() ? 'date' : null"
+      >
+        <div class="flex items-center gap-3">
+          <h4
+            class="text-sm font-medium"
+            [class.text-slate-500]="row.isWeekend"
+            [class.dark:text-slate-400]="row.isWeekend"
+          >
+            {{ row.label }}
+          </h4>
+          <div class="min-w-0 flex-1 text-sm">
+            @if (row.entry; as entry) {
+              @if (entry.isTired) {
+                <span
+                  class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300"
+                >
+                  {{ 'sleepDiary.history.tired' | translate }}
+                </span>
+              }
+            } @else {
+              <span class="text-slate-400 dark:text-slate-500">
+                {{ 'sleepDiary.history.notLogged' | translate }}
+              </span>
+            }
+          </div>
+          <button
+            type="button"
+            class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+            [attr.aria-label]="('sleepDiary.history.edit' | translate) + ' ' + row.label"
+            (click)="selectDate.emit(row.date)"
+          >
+            {{ 'sleepDiary.history.edit' | translate }}
+          </button>
+        </div>
+        @if (row.entry; as entry) {
+          <dl class="mt-1 grid grid-cols-3 gap-x-3 gap-y-1 text-sm">
+            <div>
+              <dt class="text-xs text-slate-500 dark:text-slate-400">
+                {{ 'sleepDiary.history.bedTime' | translate }}
+              </dt>
+              <dd>{{ entry.bedTime | timeOfDay }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-slate-500 dark:text-slate-400">
+                {{ 'sleepDiary.history.fellAsleep' | translate }}
+              </dt>
+              <dd>{{ entry.fellAsleepTime | timeOfDay }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-slate-500 dark:text-slate-400">
+                {{ 'sleepDiary.history.morningWake' | translate }}
+              </dt>
+              <dd>{{ entry.morningWakeTime | timeOfDay }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-slate-500 dark:text-slate-400">
+                {{ 'sleepDiary.history.total' | translate }}
+              </dt>
+              <dd>
+                @if (entry.totalSleepMinutes !== null) {
+                  @let parts = split(entry.totalSleepMinutes);
+                  {{ 'sleepDiary.duration' | translate: parts }}
+                }
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs text-slate-500 dark:text-slate-400">
+                {{ 'sleepDiary.history.wakeUps' | translate }}
+              </dt>
+              <dd>{{ entry.nightWakeUps.length }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-slate-500 dark:text-slate-400">
+                {{ 'sleepDiary.history.naps' | translate }}
+              </dt>
+              <dd>{{ entry.naps.length }}</dd>
+            </div>
+          </dl>
+        }
+      </li>
+    }
+  </ul>
 </app-card>
