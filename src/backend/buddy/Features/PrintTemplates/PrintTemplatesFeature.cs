@@ -26,11 +26,12 @@ public static class PrintTemplatesFeature
         typeof(PrintTemplateLayoutChanged),
         typeof(PrintTemplateRowsReplaced),
         typeof(PrintTemplateGuardianColorsReplaced),
+        typeof(PrintTemplateBabysitterColorsReplaced),
         typeof(PrintTemplateDeleted)
     ];
 
     // Write-time reference checks read other features' stores (Guardians, Groups, Calendars,
-    // WorkLocations), so all of those must be registered first.
+    // WorkLocations, Babysitters), so all of those must be registered first.
     public static IServiceCollection AddPrintTemplatesFeature(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOpenApi(OpenApiDocumentName, options =>
@@ -91,6 +92,7 @@ public static class PrintTemplatesFeature
         printTemplates.MapUpdatePrintTemplateLayout();
         printTemplates.MapReplacePrintTemplateRows();
         printTemplates.MapReplacePrintTemplateGuardianColors();
+        printTemplates.MapReplacePrintTemplateBabysitterColors();
         printTemplates.MapDeletePrintTemplate();
 
         return endpoints;

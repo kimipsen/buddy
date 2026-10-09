@@ -528,6 +528,41 @@
           </div>
         }
 
+        <!-- Babysitter name colors -->
+        @if (babysitters().length > 0) {
+          <div
+            class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+          >
+            <h3 class="text-lg font-semibold">
+              {{ 'print.editor.babysitterColorsTitle' | translate }}
+            </h3>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {{ 'print.editor.babysitterColorsDescription' | translate }}
+            </p>
+            <ul class="mt-4 space-y-3">
+              @for (babysitter of babysitters(); track babysitter.key) {
+                <li class="flex flex-wrap items-center gap-3">
+                  <span class="w-40 text-sm font-medium">{{ babysitter.name }}</span>
+                  <app-color-swatch-picker
+                    [value]="babysitterColors()[babysitter.key]?.color ?? ''"
+                    [ariaLabel]="babysitter.name"
+                    (valueChange)="setBabysitterColor(babysitter, $event)"
+                  />
+                  @if (babysitterColors()[babysitter.key]) {
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                      (click)="setBabysitterColor(babysitter, null)"
+                    >
+                      {{ 'print.editor.clearColor' | translate }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
         <div class="flex flex-wrap items-center gap-3">
           <button
             type="button"

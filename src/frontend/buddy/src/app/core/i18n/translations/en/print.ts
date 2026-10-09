@@ -118,6 +118,8 @@ export const print = {
     },
     colorsTitle: 'Name colors',
     colorsDescription: 'Guardians’ names print in these colors.',
+    babysitterColorsTitle: 'Babysitter colors',
+    babysitterColorsDescription: 'Babysitters’ names print in these colors on pick-up rows.',
     clearColor: 'No color',
     previewTitle: 'Preview of the coming week',
     saveButton: 'Save',

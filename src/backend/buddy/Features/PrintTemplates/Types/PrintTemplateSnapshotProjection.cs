@@ -23,6 +23,8 @@ public sealed class PrintTemplateSnapshotProjection : SingleStreamProjection<Pri
 
     public PrintTemplateSnapshot Apply(PrintTemplateSnapshot current, PrintTemplateGuardianColorsReplaced e) => Next(current, e);
 
+    public PrintTemplateSnapshot Apply(PrintTemplateSnapshot current, PrintTemplateBabysitterColorsReplaced e) => Next(current, e);
+
     public PrintTemplateSnapshot Apply(PrintTemplateSnapshot current, PrintTemplateDeleted e) => Next(current, e);
 
     private static PrintTemplateSnapshot Next(PrintTemplateSnapshot current, PrintTemplateEvent e) =>

@@ -10,6 +10,7 @@ public union PrintTemplateEvent(
     PrintTemplateLayoutChanged,
     PrintTemplateRowsReplaced,
     PrintTemplateGuardianColorsReplaced,
+    PrintTemplateBabysitterColorsReplaced,
     PrintTemplateDeleted
 )
 {
@@ -21,6 +22,7 @@ public union PrintTemplateEvent(
         PrintTemplateLayoutChanged e => e,
         PrintTemplateRowsReplaced e => e,
         PrintTemplateGuardianColorsReplaced e => e,
+        PrintTemplateBabysitterColorsReplaced e => e,
         PrintTemplateDeleted e => e,
         _ => throw new ArgumentException($"Unknown print template event payload: {payload.GetType().Name}", nameof(payload)),
     };
@@ -33,6 +35,7 @@ public union PrintTemplateEvent(
         PrintTemplateLayoutChanged => nameof(PrintTemplateLayoutChanged),
         PrintTemplateRowsReplaced => nameof(PrintTemplateRowsReplaced),
         PrintTemplateGuardianColorsReplaced => nameof(PrintTemplateGuardianColorsReplaced),
+        PrintTemplateBabysitterColorsReplaced => nameof(PrintTemplateBabysitterColorsReplaced),
         PrintTemplateDeleted => nameof(PrintTemplateDeleted),
     };
 }
@@ -69,6 +72,13 @@ public sealed record PrintTemplateGuardianColorsReplaced(
     PrintTemplateId Id,
     IReadOnlyList<GuardianColor> Before,
     IReadOnlyList<GuardianColor> After,
+    UserId ModifiedBy,
+    DateTimeOffset OccurredAt);
+
+public sealed record PrintTemplateBabysitterColorsReplaced(
+    PrintTemplateId Id,
+    IReadOnlyList<BabysitterColor> Before,
+    IReadOnlyList<BabysitterColor> After,
     UserId ModifiedBy,
     DateTimeOffset OccurredAt);
 

@@ -47,6 +47,13 @@ export interface GuardianColor {
   color: string;
 }
 
+// A babysitter is the (guardianId, babysitterId) pair a kind 4 pickup assignee carries.
+export interface BabysitterColor {
+  guardianId: string;
+  babysitterId: string;
+  color: string;
+}
+
 export interface PrintTemplate {
   id: string;
   ownerUserId: string | null;
@@ -57,6 +64,7 @@ export interface PrintTemplate {
   showWeekNumber: boolean;
   rows: PrintTemplateRow[];
   guardianColors: GuardianColor[];
+  babysitterColors: BabysitterColor[];
 }
 
 export interface PrintTemplateSummary {
@@ -135,6 +143,12 @@ export class PrintTemplatesService {
   replaceColors(templateId: string, colors: GuardianColor[]): Promise<PrintTemplate> {
     return firstValueFrom(
       this.http.put<PrintTemplate>(`${this.base}/${templateId}/colors`, { colors }),
+    );
+  }
+
+  replaceBabysitterColors(templateId: string, colors: BabysitterColor[]): Promise<PrintTemplate> {
+    return firstValueFrom(
+      this.http.put<PrintTemplate>(`${this.base}/${templateId}/babysitter-colors`, { colors }),
     );
   }
 

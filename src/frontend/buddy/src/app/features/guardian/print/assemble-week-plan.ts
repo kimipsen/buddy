@@ -51,7 +51,10 @@ export function assembleWeekPlan(
 ): WeekPlanModel {
   const dates = buildDateRangeIso(options.start, WEEK_PLAN_DAY_COUNT);
   const colors = new Map(template.guardianColors.map((c) => [c.guardianId, c.color]));
-  const context: RowContext = { dates, sources, options, colors };
+  const babysitterColors = new Map(
+    template.babysitterColors.map((c) => [babysitterKey(c.guardianId, c.babysitterId), c.color]),
+  );
+  const context: RowContext = { dates, sources, options, colors, babysitterColors };
 
   return {
     paperSize: template.paperSize,
@@ -66,6 +69,12 @@ interface RowContext {
   sources: WeekPlanSources;
   options: WeekPlanOptions;
   colors: ReadonlyMap<string, string>;
+  babysitterColors: ReadonlyMap<string, string>;
+}
+
+// Babysitter ids are only unique within one guardian's list, so colors are keyed by the pair.
+export function babysitterKey(guardianId: string, babysitterId: string): string {
+  return `${guardianId}:${babysitterId}`;
 }
 
 // "Uge 40" for a Monday start; any other start spans two ISO weeks: "Uge 40–41".
@@ -184,7 +193,13 @@ function pickupLabel(
     case PICKUP_PLAYDATE:
       return { text: `${labels.playdate}: ${assignee.hostName}`, icon: null, color: null };
     case PICKUP_BABYSITTER:
-      return { text: assignee.name || labels.babysitter, icon: null, color: null };
+      return {
+        text: assignee.name || labels.babysitter,
+        icon: null,
+        color:
+          context.babysitterColors.get(babysitterKey(assignee.guardianId, assignee.babysitterId)) ??
+          null,
+      };
   }
 }
 

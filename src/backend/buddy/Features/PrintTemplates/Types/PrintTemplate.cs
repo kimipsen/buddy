@@ -13,6 +13,10 @@ public sealed record PrintTemplate(
     IReadOnlyList<GuardianColor> GuardianColors,
     bool IsDeleted = false)
 {
+    // Not positional: snapshots stored before babysitter colors existed lack the property, and an
+    // init property keeps its [] default where a missing constructor parameter would come back null.
+    public IReadOnlyList<BabysitterColor> BabysitterColors { get; init; } = [];
+
     public static PrintTemplate? Rehydrate(IEnumerable<PrintTemplateEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
     public static PrintTemplate Replay(IEnumerable<PrintTemplateEvent> events) => EventReplay.Replay(events, Start, Advance);
@@ -41,6 +45,7 @@ public sealed record PrintTemplate(
         },
         PrintTemplateRowsReplaced replaced => template with { Rows = replaced.After },
         PrintTemplateGuardianColorsReplaced replaced => template with { GuardianColors = replaced.After },
+        PrintTemplateBabysitterColorsReplaced replaced => template with { BabysitterColors = replaced.After },
         PrintTemplateDeleted => template with { IsDeleted = true },
         PrintTemplateCreated or PrintTemplateCreatedForGroup => throw EventReplay.AlreadyStarted(nameof(PrintTemplate), @event.EventType)
     };

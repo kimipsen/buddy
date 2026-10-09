@@ -1,0 +1,58 @@
+using buddy.Common;
+using buddy.Common.Validation;
+using buddy.Features.Babysitters;
+using buddy.Features.Calendars;
+using buddy.Features.Groups;
+using buddy.Features.Guardians;
+using buddy.Features.WorkLocations;
+
+using FluentValidation;
+
+namespace buddy.Features.PrintTemplates;
+
+public static class ReplacePrintTemplateBabysitterColorsHandler
+{
+    public static async Task<Result<PrintTemplateResponse>> Handle(
+        ReplacePrintTemplateBabysitterColors command,
+        IValidator<ReplacePrintTemplateBabysitterColors> validator,
+        IPrintTemplateEventStore store,
+        IGroupEventStore groups,
+        IGuardianLinkEventStore guardians,
+        ICalendarEventStore calendars,
+        IWorkLocationScheduleEventStore workLocations,
+        IBabysitterListEventStore babysitters,
+        CancellationToken cancellationToken)
+    {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<PrintTemplateResponse>.Validation(problem);
+        }
+
+        var userId = command.UserId;
+
+        var loaded = await PrintTemplateLoader.LoadForManageAsync(store, command.TemplateId, userId, groups, guardians, cancellationToken);
+
+        if (loaded is not Result<PrintTemplate>.Success(var template))
+        {
+            return loaded.Reraise<PrintTemplate, PrintTemplateResponse>();
+        }
+
+        if (command.Colors.SequenceEqual(template.BabysitterColors))
+        {
+            return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(template));
+        }
+
+        var references = new PrintTemplateReferenceChecks(userId, guardians, groups, calendars, workLocations);
+
+        if (await references.CheckBabysitterColorsAsync(command.Colors, template.BabysitterColors, babysitters, cancellationToken) is { } referenceError)
+        {
+            return new Result<PrintTemplateResponse>.Validation(ValidationProblem.Of(referenceError));
+        }
+
+        var replaced = new PrintTemplateBabysitterColorsReplaced(template.Id, template.BabysitterColors, command.Colors, userId, DateTimeOffset.UtcNow);
+
+        await store.AppendAsync(template.Id, [replaced], index: null, cancellationToken);
+
+        return new Result<PrintTemplateResponse>.Success(PrintTemplateResponse.From(PrintTemplate.Advance(template, replaced)));
+    }
+}

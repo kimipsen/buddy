@@ -24,6 +24,8 @@ internal sealed record PrintTemplateRowDto(
 
 internal sealed record GuardianColorDto(Guid GuardianId, string Color);
 
+internal sealed record BabysitterColorDto(Guid GuardianId, Guid BabysitterId, string Color);
+
 internal sealed record PrintTemplateDto(
     Guid Id,
     Guid? OwnerUserId,
@@ -33,7 +35,8 @@ internal sealed record PrintTemplateDto(
     DayOfWeek DefaultStartWeekday,
     bool ShowWeekNumber,
     List<PrintTemplateRowDto> Rows,
-    List<GuardianColorDto> GuardianColors);
+    List<GuardianColorDto> GuardianColors,
+    List<BabysitterColorDto> BabysitterColors);
 
 internal sealed record PrintTemplateSummaryDto(Guid Id, Guid? OwnerUserId, Guid? OwnerGroupId, string Name);
 

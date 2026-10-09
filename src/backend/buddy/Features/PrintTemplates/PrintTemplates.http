@@ -74,6 +74,19 @@ Content-Type: application/json
 
 ###
 
+# Babysitter name colors
+PUT {{buddy_HostAddress}}/print-templates/{{templateId}}/babysitter-colors
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Colors": [
+    { "GuardianId": "{{guardianId}}", "BabysitterId": "{{babysitterId}}", "Color": "#a855f7" }
+  ]
+}
+
+###
+
 # Delete
 DELETE {{buddy_HostAddress}}/print-templates/{{templateId}}
 Authorization: Bearer {{guardianToken}}

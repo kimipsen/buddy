@@ -34,6 +34,7 @@ function template(rows: PrintTemplateRow[], overrides: Partial<PrintTemplate> = 
     showWeekNumber: true,
     rows,
     guardianColors: [],
+    babysitterColors: [],
     ...overrides,
   };
 }
@@ -238,6 +239,40 @@ describe('assembleWeekPlan', () => {
         type: 'pickup',
         dropOff: { text: 'Anna', icon: null, color: null },
         pickUp: { text: 'Babysitter', icon: null, color: null },
+      });
+    });
+
+    it('colors a babysitter by the guardian and babysitter pair', () => {
+      const pickups = new Map([
+        [
+          'signe',
+          [
+            pickup({
+              assignee: { kind: 4, guardianId: 'dad', babysitterId: 'b1', name: 'Anna' },
+              slot: 0,
+            }),
+            // Same babysitter id on another guardian's list: a different babysitter.
+            pickup({
+              assignee: { kind: 4, guardianId: 'mum', babysitterId: 'b1', name: 'Jonas' },
+              slot: 1,
+            }),
+          ],
+        ],
+      ]);
+
+      const model = assembleWeekPlan(
+        template([row(PRINT_ROW_KIND.pickup, { childId: 'signe' })], {
+          guardianColors: [{ guardianId: 'dad', color: '#2563eb' }],
+          babysitterColors: [{ guardianId: 'dad', babysitterId: 'b1', color: '#a855f7' }],
+        }),
+        sources({ pickups }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].cells[0]).toEqual({
+        type: 'pickup',
+        dropOff: { text: 'Anna', icon: null, color: '#a855f7' },
+        pickUp: { text: 'Jonas', icon: null, color: null },
       });
     });
   });

@@ -1,3 +1,4 @@
+using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Mealplans;
@@ -37,3 +38,7 @@ public sealed record PrintTemplateRow(
 // Colors a guardian's name in Pickup/WorkLocation/CalendarEvents cells. A list of small records
 // rather than a dictionary keyed by a strongly-typed id, which serializes unpredictably.
 public sealed record GuardianColor(UserId GuardianId, Color Color);
+
+// Colors a babysitter's name in Pickup cells. A babysitter is identified by whose list it is on plus
+// its id, the same pair PickupAssignee.Babysitter carries.
+public sealed record BabysitterColor(UserId GuardianId, BabysitterId BabysitterId, Color Color);

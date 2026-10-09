@@ -33,6 +33,7 @@ describe('WeekPlanLoader', () => {
       showWeekNumber: true,
       rows,
       guardianColors: [],
+      babysitterColors: [],
     };
   }
 

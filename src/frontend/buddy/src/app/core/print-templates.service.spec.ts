@@ -28,6 +28,7 @@ describe('PrintTemplatesService', () => {
     showWeekNumber: true,
     rows: [],
     guardianColors: [],
+    babysitterColors: [],
   };
 
   beforeEach(() => {
@@ -142,6 +143,14 @@ describe('PrintTemplatesService', () => {
     expect(colorsReq.request.body).toEqual({ colors });
     colorsReq.flush(template);
     await replaceColors;
+
+    const babysitterColors = [{ guardianId: 'me', babysitterId: 'b-1', color: '#a855f7' }];
+    const replaceBabysitterColors = service.replaceBabysitterColors('t-1', babysitterColors);
+    const babysitterReq = httpMock.expectOne(`${base}/t-1/babysitter-colors`);
+    expect(babysitterReq.request.method).toBe('PUT');
+    expect(babysitterReq.request.body).toEqual({ colors: babysitterColors });
+    babysitterReq.flush(template);
+    await replaceBabysitterColors;
   });
 
   it('DELETEs a template', async () => {

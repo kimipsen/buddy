@@ -741,6 +741,9 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         }),
       ],
     });
+    await api.put(`/print-templates/${template.id}/babysitter-colors`, {
+      colors: [{ guardianId: me.id, babysitterId: maja.id, color: '#a855f7' }],
+    });
 
     // Invites, so the public invite pages have something to preview -------------------------
     await api

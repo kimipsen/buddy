@@ -11,7 +11,8 @@ public sealed record PrintTemplateResponse(
     DayOfWeek DefaultStartWeekday,
     bool ShowWeekNumber,
     IReadOnlyList<PrintTemplateRow> Rows,
-    IReadOnlyList<GuardianColor> GuardianColors)
+    IReadOnlyList<GuardianColor> GuardianColors,
+    IReadOnlyList<BabysitterColor> BabysitterColors)
 {
     public static PrintTemplateResponse From(PrintTemplate template)
     {
@@ -26,7 +27,8 @@ public sealed record PrintTemplateResponse(
             template.DefaultStartWeekday,
             template.ShowWeekNumber,
             template.Rows,
-            template.GuardianColors);
+            template.GuardianColors,
+            template.BabysitterColors);
     }
 }
 

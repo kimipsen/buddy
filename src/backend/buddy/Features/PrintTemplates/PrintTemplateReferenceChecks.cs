@@ -1,3 +1,4 @@
+using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
@@ -93,6 +94,34 @@ internal sealed class PrintTemplateReferenceChecks(
             if (await CheckGuardianAsync(guardianId, cancellationToken) is { } error)
             {
                 return error;
+            }
+        }
+
+        return null;
+    }
+
+    // A new entry must be an active babysitter on the list of the caller or a co-guardian -- the
+    // babysitters the caller can already pick in the pickup planner.
+    public async Task<string?> CheckBabysitterColorsAsync(
+        IReadOnlyList<BabysitterColor> colors,
+        IReadOnlyList<BabysitterColor> existing,
+        IBabysitterListEventStore babysitters,
+        CancellationToken cancellationToken)
+    {
+        var known = existing.Select(c => (c.GuardianId, c.BabysitterId)).ToHashSet();
+
+        foreach (var color in colors.Where(c => !known.Contains((c.GuardianId, c.BabysitterId))))
+        {
+            if (await CheckGuardianAsync(color.GuardianId, cancellationToken) is { } guardianError)
+            {
+                return guardianError;
+            }
+
+            var list = await babysitters.FindSnapshotAsync(BabysitterListId.ForGuardian(color.GuardianId), cancellationToken);
+
+            if (list?.FindActive(color.BabysitterId) is null)
+            {
+                return "babysitterId must be an active babysitter on that guardian's list.";
             }
         }
 

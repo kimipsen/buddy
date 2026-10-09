@@ -109,7 +109,7 @@
 
 ## Babysitter colors in print templates
 
-- [ ] Let print templates set a color for each babysitter, like they already do
+- [x] Let print templates set a color for each babysitter, like they already do
   for guardians (`guardianColors`). Today a babysitter pickup always prints
   without a color (`assemble-week-plan.ts`). Needs a picker in the print template
   editor and a backend change to store the colors on the template.

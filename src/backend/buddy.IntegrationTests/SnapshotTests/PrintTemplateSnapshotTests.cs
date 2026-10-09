@@ -2,6 +2,7 @@ using Alba;
 
 using buddy.Features.Groups;
 using buddy.Features.PrintTemplates;
+using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.PrintTemplates;
 using buddy.IntegrationTests.Features.WorkLocations;
@@ -34,6 +35,8 @@ public sealed class PrintTemplateSnapshotTests(BuddyApiFixture fixture)
             PrintTemplateTestHelpers.BlankRow(),
         ]);
         await Send(family.FirstToken, _ => _.Put.Json(new { Colors = new[] { new { GuardianId = family.SecondId, Color = "#f43f5e" } } }).ToUrl($"/print-templates/{template.Id}/colors"));
+        var mette = await BabysitterTestHelpers.AddAsync(fixture, family.SecondToken, "Mette");
+        await Send(family.FirstToken, _ => _.Put.Json(new { Colors = new[] { new { GuardianId = family.SecondId, BabysitterId = mette.Id, Color = "#a855f7" } } }).ToUrl($"/print-templates/{template.Id}/babysitter-colors"));
 
         await AssertSnapshotMatchesReplay(template.Id, expectDeleted: false);
     }

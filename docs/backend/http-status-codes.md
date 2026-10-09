@@ -527,6 +527,7 @@ Guardian-only: every route under `/sleep-diary/children/{childId}` answers `404`
 | `PATCH /print-templates/{templateId}/layout` | `200` | `400`, `401`, `404` | `400` for an unknown paper size or weekday; unchanged layout is an idempotent `200`. |
 | `PUT /print-templates/{templateId}/rows` | `200` | `400`, `401`, `404` | `400` for 0 or over 12 rows, a row missing what its kind needs or setting fields its kind doesn't use, or a reference the caller can't reach (child, group, calendar, guardian, work location). |
 | `PUT /print-templates/{templateId}/colors` | `200` | `400`, `401`, `404` | `400` for two colors for one guardian, a blank color, or a guardian who isn't the caller or a co-guardian. |
+| `PUT /print-templates/{templateId}/babysitter-colors` | `200` | `400`, `401`, `404` | `400` for two colors for one babysitter, a blank color, a guardian who isn't the caller or a co-guardian, or a babysitter that isn't active on that guardian's list. |
 | `DELETE /print-templates/{templateId}` | `204` | `401`, `404` | A second delete is `404`: a deleted template is treated as missing. |
 
 ### Progress API (`/progress`)

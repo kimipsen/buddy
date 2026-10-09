@@ -46,6 +46,7 @@ sequenceDiagram
 | `PATCH` | `/print-templates/{templateId}/layout` | `paperSize` (`0` A4, `1` A3), `defaultStartWeekday` (`0` Sunday … `6` Saturday), `showWeekNumber`. |
 | `PUT` | `/print-templates/{templateId}/rows` | Replaces the whole ordered row list (1–12 rows). |
 | `PUT` | `/print-templates/{templateId}/colors` | Replaces the guardian name colors. |
+| `PUT` | `/print-templates/{templateId}/babysitter-colors` | Replaces the babysitter name colors (`guardianId` + `babysitterId` per entry). |
 | `DELETE` | `/print-templates/{templateId}` | Deletes it; it then reads as missing everywhere. |
 
 Row kinds travel as `PrintRowKind` ordinals: `0` Meal, `1` Pickup,

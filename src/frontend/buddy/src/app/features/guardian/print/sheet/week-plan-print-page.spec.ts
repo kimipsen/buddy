@@ -18,6 +18,7 @@ describe('WeekPlanPrintPage', () => {
     showWeekNumber: true,
     rows: [],
     guardianColors: [],
+    babysitterColors: [],
   };
 
   async function settle(fixture: { detectChanges: () => void }): Promise<void> {

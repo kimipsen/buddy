@@ -14,6 +14,7 @@ internal static class PrintTemplateRules
     public const int MaxTitleFilterLength = 60;
     public const int MaxItemsLimit = 8;
     public const int MaxGuardianColors = 12;
+    public const int MaxBabysitterColors = 24;
     public const int MaxColorLength = 32;
 
     public static void ValidTemplateName<T>(this AbstractValidator<T> validator, Func<T, string> name) =>

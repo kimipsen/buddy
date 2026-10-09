@@ -12,7 +12,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { swapped } from '../../../../core/array-utils';
+import { sortByName, swapped } from '../../../../core/array-utils';
+import { BabysittersService } from '../../../../core/babysitters.service';
 import { CalendarSummary, CalendarsService } from '../../../../core/calendars.service';
 import { nextWeekdayOnOrAfter, todayIsoDate } from '../../../../core/date-utils';
 import {
@@ -29,6 +30,7 @@ import {
 } from '../../../../core/map-with-concurrency';
 import { MealSlot } from '../../../../core/mealplans.service';
 import {
+  BabysitterColor,
   PRINT_ROW_KIND,
   PaperSize,
   PrintRowKind,
@@ -53,7 +55,7 @@ import {
 } from '../../../../shared/segmented-control/segmented-control';
 import { Stepper } from '../../../../shared/stepper/stepper';
 import { Toggle } from '../../../../shared/toggle/toggle';
-import { assembleWeekPlan } from '../assemble-week-plan';
+import { assembleWeekPlan, babysitterKey } from '../assemble-week-plan';
 import { PAPER_MM, WeekPlanSheet } from '../sheet/week-plan-sheet';
 import {
   MAX_CALENDARS_PER_ROW,
@@ -104,6 +106,15 @@ interface LoadedEditor {
   groups: GroupSummary[];
   guardians: GuardianSummary[];
   workLocations: ReadonlyMap<string, WorkLocation[]>;
+  babysitters: EditorBabysitter[];
+}
+
+// An active babysitter on the list of the guardian or a co-guardian -- the ones a pickup can name.
+interface EditorBabysitter {
+  key: string;
+  guardianId: string;
+  id: string;
+  name: string;
 }
 
 const EMPTY_SOURCES: WeekPlanSources = {
@@ -141,6 +152,7 @@ export class PrintTemplateEditor {
   private readonly calendarsService = inject(CalendarsService);
   private readonly groupsService = inject(GroupsService);
   private readonly workLocationsService = inject(WorkLocationsService);
+  private readonly babysittersService = inject(BabysittersService);
   private readonly users = inject(UsersService);
   private readonly loader = inject(WeekPlanLoader);
   private readonly translation = inject(TranslationService);
@@ -188,6 +200,9 @@ export class PrintTemplateEditor {
   protected readonly groups = computed(() =>
     this.editor.hasValue() ? this.editor.value().groups : [],
   );
+  protected readonly babysitters = computed(() =>
+    this.editor.hasValue() ? this.editor.value().babysitters : [],
+  );
   protected readonly workLocations = computed((): ReadonlyMap<string, WorkLocation[]> =>
     this.editor.hasValue() ? this.editor.value().workLocations : new Map<string, WorkLocation[]>(),
   );
@@ -203,6 +218,15 @@ export class PrintTemplateEditor {
   );
   protected readonly colors = linkedSignal((): Partial<Record<string, string>> =>
     Object.fromEntries((this.template()?.guardianColors ?? []).map((c) => [c.guardianId, c.color])),
+  );
+  // Keyed by babysitterKey(guardianId, babysitterId).
+  protected readonly babysitterColors = linkedSignal((): Partial<Record<string, BabysitterColor>> =>
+    Object.fromEntries(
+      (this.template()?.babysitterColors ?? []).map((c) => [
+        babysitterKey(c.guardianId, c.babysitterId),
+        c,
+      ]),
+    ),
   );
   protected readonly newKind = signal<PrintRowKind>(PRINT_ROW_KIND.blank);
 
@@ -250,6 +274,9 @@ export class PrintTemplateEditor {
       rows: this.rows().map((draft) => cleanRow(draft.row)),
       guardianColors: Object.entries(this.colors()).flatMap(([guardianId, color]) =>
         color === undefined ? [] : [{ guardianId, color }],
+      ),
+      babysitterColors: Object.values(this.babysitterColors()).flatMap((c) =>
+        c === undefined ? [] : [c],
       ),
     };
   });
@@ -449,6 +476,22 @@ export class PrintTemplateEditor {
     });
   }
 
+  protected setBabysitterColor(babysitter: EditorBabysitter, color: string | null): void {
+    this.babysitterColors.update((colors) => {
+      const next = { ...colors };
+      if (color) {
+        next[babysitter.key] = {
+          guardianId: babysitter.guardianId,
+          babysitterId: babysitter.id,
+          color,
+        };
+      } else {
+        delete next[babysitter.key];
+      }
+      return next;
+    });
+  }
+
   protected fillExample(): void {
     const t = (key: string, params?: Record<string, string>) =>
       this.translation.translate(key, params);
@@ -502,6 +545,9 @@ export class PrintTemplateEditor {
         if (JSON.stringify(draft.guardianColors) !== JSON.stringify(template.guardianColors)) {
           saved = await this.templates.replaceColors(template.id, draft.guardianColors);
         }
+        if (JSON.stringify(draft.babysitterColors) !== JSON.stringify(template.babysitterColors)) {
+          saved = await this.templates.replaceBabysitterColors(template.id, draft.babysitterColors);
+        }
 
         // Resets the draft to the server's response.
         this.editor.update((current) => current && { ...current, template: saved });
@@ -548,12 +594,13 @@ export class PrintTemplateEditor {
   }
 
   private async load(): Promise<LoadedEditor> {
-    const [template, children, calendars, groups, me] = await Promise.all([
+    const [template, children, calendars, groups, me, myBabysitters] = await Promise.all([
       this.templates.get(this.templateId),
       this.guardiansService.listMyChildren(),
       this.calendarsService.listMyCalendars(),
       this.groupsService.listMyGroups(),
       this.users.ensureCurrentUser(),
+      this.babysittersService.listMine().catch(() => []),
     ]);
 
     // The guardian themself plus every guardian of their children -- the people a work-location
@@ -574,6 +621,25 @@ export class PrintTemplateEditor {
           .catch(() => [guardian.id, [] as WorkLocation[]] as const),
     );
 
+    // The guardian's own list plus each child's (every co-guardian's active babysitters), so a
+    // guardian without children still sees their own.
+    const childBabysitters = await mapWithConcurrency(
+      children,
+      PER_ITEM_REQUEST_CONCURRENCY,
+      (child) => this.babysittersService.listForChild(child.id).catch(() => []),
+    );
+    const babysitters = [
+      ...myBabysitters
+        .filter((b) => !b.isArchived)
+        .map((b) => ({ guardianId: me.id, id: b.id, name: b.name })),
+      ...childBabysitters.flat(),
+    ].map(({ guardianId, id, name }) => ({
+      key: babysitterKey(guardianId, id),
+      guardianId,
+      id,
+      name,
+    }));
+
     return {
       template,
       children,
@@ -581,6 +647,7 @@ export class PrintTemplateEditor {
       groups,
       guardians,
       workLocations: new Map(schedules),
+      babysitters: sortByName([...new Map(babysitters.map((b) => [b.key, b])).values()]),
     };
   }
 }

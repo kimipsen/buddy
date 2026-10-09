@@ -150,10 +150,14 @@ PrintTemplate(
     IReadOnlyList<PrintTemplateRow> Rows,      // ordered top to bottom
     IReadOnlyList<GuardianColor> GuardianColors,
     bool IsDeleted)
+{
+    IReadOnlyList<BabysitterColor> BabysitterColors   // init property, defaults to []
+}
 
 public enum PaperSize { A4, A3 }
 
 GuardianColor(UserId GuardianId, Color Color)
+BabysitterColor(UserId GuardianId, BabysitterId BabysitterId, Color Color)
 ```
 
 - **Orientation is not a field.** Landscape is a product rule, not a choice;
@@ -171,6 +175,12 @@ GuardianColor(UserId GuardianId, Color Color)
   bitten by. Guardians without an entry print in the default ink color.
   `Color` reuses the existing calendar `Color` value type
   ([Color.cs](../../../src/backend/buddy/Features/Calendars/Types/Color.cs)).
+- **`BabysitterColors` colors babysitter names in `Pickup` cells**, added
+  after the first release. A babysitter is keyed by the
+  `(GuardianId, BabysitterId)` pair that `PickupAssignee.Babysitter` carries,
+  since babysitter ids are only unique within one guardian's list. It is an
+  init property rather than a positional parameter so snapshots stored before
+  it existed still deserialize to an empty list instead of `null`.
 
 ### Events
 
@@ -194,6 +204,10 @@ PrintTemplateRowsReplaced(PrintTemplateId,
 
 PrintTemplateGuardianColorsReplaced(PrintTemplateId,
     IReadOnlyList<GuardianColor> Before, IReadOnlyList<GuardianColor> After,
+    UserId ModifiedBy, DateTimeOffset OccurredAt)
+
+PrintTemplateBabysitterColorsReplaced(PrintTemplateId,
+    IReadOnlyList<BabysitterColor> Before, IReadOnlyList<BabysitterColor> After,
     UserId ModifiedBy, DateTimeOffset OccurredAt)
 
 PrintTemplateDeleted(PrintTemplateId, UserId DeletedBy, DateTimeOffset OccurredAt)
@@ -286,6 +300,7 @@ surfaces as a "not available" row at print time and a warning in the editor.
 | `UpdatePrintTemplateLayout` | Manage | `PaperSize`, `DefaultStartWeekday`, `ShowWeekNumber`. No-op when unchanged (`Success`, no event) |
 | `ReplacePrintTemplateRows` | Manage | Full ordered row list; validated per Question 3 plus the write-time checks above. No-op when equal |
 | `ReplacePrintTemplateGuardianColors` | Manage | Full list; one entry per guardian at most |
+| `ReplacePrintTemplateBabysitterColors` | Manage | Full list; one entry per babysitter at most. A new entry must be an active babysitter on the list of the caller or a co-guardian |
 | `DeletePrintTemplate` | Manage | Emits `PrintTemplateDeleted`; marks the index row deleted |
 
 There is no "render" or "print" slice. Rendering is read-only composition over
@@ -308,6 +323,7 @@ run in the handler (`PrintTemplateReferenceChecks`), as
 | `Row.TitleFilter` | 1–60 characters when present |
 | `Row.MaxItems` | 1–8 when present |
 | `GuardianColors` | at most one entry per guardian, at most 12 entries, each color trimmed, 1–32 characters |
+| `BabysitterColors` | at most one entry per `(GuardianId, BabysitterId)`, at most 24 entries, each color trimmed, 1–32 characters |
 | `Row.CalendarIds` entries | a null id is rejected with `400`, not stored |
 
 Validation error keys use the camelCase JSON path (`rows[2].calendarIds`), so the editor can
@@ -323,6 +339,7 @@ PATCH  /print-templates/{templateId}/name        RenamePrintTemplate
 PATCH  /print-templates/{templateId}/layout      UpdatePrintTemplateLayout
 PUT    /print-templates/{templateId}/rows        ReplacePrintTemplateRows
 PUT    /print-templates/{templateId}/colors      ReplacePrintTemplateGuardianColors
+PUT    /print-templates/{templateId}/babysitter-colors  ReplacePrintTemplateBabysitterColors
 DELETE /print-templates/{templateId}             DeletePrintTemplate
 ```
 
@@ -341,6 +358,7 @@ Status codes follow [http-status-codes.md](../http-status-codes.md):
 | A referenced child's guardian link is revoked for the printing guardian | Same as above — the pickup/meal endpoints return `NotFound`, the row degrades |
 | A referenced work location is archived | The row keeps printing its marks (archived locations still resolve); the editor flags the row |
 | A guardian named in `GuardianColors` is no longer linked | The entry is harmless and unused; the editor hides it |
+| A babysitter named in `BabysitterColors` is archived, or its guardian is no longer linked | The entry stays and doesn't block later saves (only new entries are checked); the editor hides it. Pickups already assigned to an archived babysitter keep printing in its color |
 | Two guardians edit rows at nearly the same time | Each write is an expected-version append (`StreamVersionTracker`), so a true race gives the second writer `409 concurrency_conflict` and nothing is lost; saves that don't overlap simply replace each other in order |
 | A template is deleted twice | The second delete is `404`: a deleted template is treated as missing, the same rule `DeleteCalendar` follows |
 | A child account | Can't create (`403`), lists nothing (an empty list, even for its group's templates) and gets `404` for any template |

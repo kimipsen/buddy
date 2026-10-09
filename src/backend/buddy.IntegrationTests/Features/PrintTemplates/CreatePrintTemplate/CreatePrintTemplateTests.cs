@@ -27,6 +27,7 @@ public sealed class CreatePrintTemplateTests(BuddyApiFixture fixture)
         Assert.True(template.ShowWeekNumber);
         Assert.Empty(template.Rows);
         Assert.Empty(template.GuardianColors);
+        Assert.Empty(template.BabysitterColors);
     }
 
     [Fact]

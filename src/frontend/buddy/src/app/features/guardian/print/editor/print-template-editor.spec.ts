@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BabysittersService } from '../../../../core/babysitters.service';
 import { CalendarsService } from '../../../../core/calendars.service';
 import { GuardiansService } from '../../../../core/guardians.service';
 import { GroupsService } from '../../../../core/groups.service';
@@ -27,6 +28,7 @@ describe('PrintTemplateEditor', () => {
     showWeekNumber: true,
     rows: [{ ...emptyRow(PRINT_ROW_KIND.pickup, 'Hente'), childId: 'signe' }],
     guardianColors: [],
+    babysitterColors: [],
   };
 
   async function settle(fixture: { detectChanges: () => void }): Promise<void> {
@@ -66,6 +68,12 @@ describe('PrintTemplateEditor', () => {
         async (_id: string, guardianColors: PrintTemplate['guardianColors']) => ({
           ...initial,
           guardianColors,
+        }),
+      ),
+      replaceBabysitterColors: vi.fn(
+        async (_id: string, babysitterColors: PrintTemplate['babysitterColors']) => ({
+          ...initial,
+          babysitterColors,
         }),
       ),
       delete: vi.fn(async () => undefined),
@@ -113,6 +121,20 @@ describe('PrintTemplateEditor', () => {
           },
         },
         { provide: GroupsService, useValue: { listMyGroups: vi.fn(async () => []) } },
+        {
+          provide: BabysittersService,
+          useValue: {
+            listMine: vi.fn(async () => [
+              { id: 'b-mette', name: 'Mette', contactInfo: '', isArchived: false },
+              { id: 'b-old', name: 'Gammel', contactInfo: '', isArchived: true },
+            ]),
+            // The child's list repeats the guardian's own babysitters.
+            listForChild: vi.fn(async () => [
+              { guardianId: 'mum', id: 'b-jonas', name: 'Jonas', contactInfo: '' },
+              { guardianId: 'me', id: 'b-mette', name: 'Mette', contactInfo: '' },
+            ]),
+          },
+        },
         {
           provide: WorkLocationsService,
           useValue: {
@@ -179,6 +201,7 @@ describe('PrintTemplateEditor', () => {
     expect(templates.updateLayout).not.toHaveBeenCalled();
     expect(templates.replaceRows).not.toHaveBeenCalled();
     expect(templates.replaceColors).not.toHaveBeenCalled();
+    expect(templates.replaceBabysitterColors).not.toHaveBeenCalled();
     expect(root.textContent).toContain('Template saved.');
   });
 
@@ -298,6 +321,47 @@ describe('PrintTemplateEditor', () => {
     expect(templates.replaceColors).toHaveBeenCalledWith('t-1', [
       { guardianId: 'me', color: '#f43f5e' },
     ]);
+  });
+
+  it('lists each active babysitter once and saves a babysitter color by its guardian', async () => {
+    const { fixture, root, templates } = await setup();
+
+    expect(root.textContent).toContain('Babysitter colors');
+    const pickers = root.querySelectorAll<HTMLElement>(
+      'app-color-swatch-picker [role="radiogroup"]',
+    );
+    const labels = Array.from(pickers).map((p) => p.getAttribute('aria-label'));
+    expect(labels.filter((l) => l === 'Mette' || l === 'Jonas' || l === 'Gammel')).toEqual([
+      'Jonas',
+      'Mette',
+    ]);
+
+    root
+      .querySelector<HTMLElement>('[role="radiogroup"][aria-label="Jonas"]')!
+      .querySelector<HTMLButtonElement>('[role="radio"]')!
+      .click();
+    await settle(fixture);
+    button(root, 'Save').click();
+    await settle(fixture);
+
+    expect(templates.replaceColors).not.toHaveBeenCalled();
+    expect(templates.replaceBabysitterColors).toHaveBeenCalledWith('t-1', [
+      { guardianId: 'mum', babysitterId: 'b-jonas', color: '#f43f5e' },
+    ]);
+  });
+
+  it('clears a babysitter color', async () => {
+    const { fixture, root, templates } = await setup({
+      ...template,
+      babysitterColors: [{ guardianId: 'me', babysitterId: 'b-mette', color: '#a855f7' }],
+    });
+
+    button(root, 'No color').click();
+    await settle(fixture);
+    button(root, 'Save').click();
+    await settle(fixture);
+
+    expect(templates.replaceBabysitterColors).toHaveBeenCalledWith('t-1', []);
   });
 
   it('lists the guardian themself first among work-location guardians', async () => {

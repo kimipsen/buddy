@@ -118,6 +118,9 @@ export const print = {
     },
     colorsTitle: 'Navnefarver',
     colorsDescription: 'Forældrenes navne printes i disse farver.',
+    babysitterColorsTitle: 'Babysitterfarver',
+    babysitterColorsDescription:
+      'Babysitternes navne printes i disse farver i hente- og bringerækker.',
     clearColor: 'Ingen farve',
     previewTitle: 'Forhåndsvisning af den kommende uge',
     saveButton: 'Gem',

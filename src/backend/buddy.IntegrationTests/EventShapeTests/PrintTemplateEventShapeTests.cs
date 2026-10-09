@@ -1,3 +1,4 @@
+using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Mealplans;
@@ -18,6 +19,7 @@ public sealed class PrintTemplateEventShapeTests
     private static readonly GroupId FixedGroupId = new(Guid.Parse("00000000-0000-0000-0000-000000000010"));
     private static readonly CalendarId FixedCalendarId = new(Guid.Parse("00000000-0000-0000-0000-000000000020"));
     private static readonly WorkLocationId FixedLocationId = new(Guid.Parse("00000000-0000-0000-0000-000000000080"));
+    private static readonly BabysitterId FixedBabysitterId = new(Guid.Parse("00000000-0000-0000-0000-000000000070"));
     private static readonly DateTimeOffset FixedInstant = new(2025, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
@@ -73,6 +75,16 @@ public sealed class PrintTemplateEventShapeTests
             FixedGuardianId,
             FixedInstant),
         "PrintTemplates/PrintTemplateGuardianColorsReplaced.json");
+
+    [Fact]
+    public void PrintTemplateBabysitterColorsReplaced() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new PrintTemplateBabysitterColorsReplaced(
+            FixedTemplateId,
+            [],
+            [new BabysitterColor(FixedOtherGuardianId, FixedBabysitterId, new Color("#a855f7"))],
+            FixedGuardianId,
+            FixedInstant),
+        "PrintTemplates/PrintTemplateBabysitterColorsReplaced.json");
 
     [Fact]
     public void PrintTemplateDeleted() => EventShapeTestSupport.AssertMatchesGoldenFile(
