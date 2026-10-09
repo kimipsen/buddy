@@ -269,6 +269,10 @@ with Today, Calendar, Meals and Medicine (the last two follow their feature flag
 from `sm` up, when printing and on onboarding (`data: { hideTabBar: true }`); the account menu in
 the sticky header keeps every link on all sizes.
 
+On wide screens the dashboard packs its cards into CSS columns (two from `lg`, three from `2xl`)
+so short cards leave no holes; nothing is wider than `max-w-7xl`, so pages line up with the shell
+header. The help page caps its running text at `max-w-prose`.
+
 Child pages share **`app-child-page`**
 ([`features/child/child-page`](../../src/frontend/buddy/src/app/features/child/child-page/child-page.ts)):
 the warm background, a header with the page title (a back link to `/child`, or the logo on the
@@ -318,9 +322,10 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
   setup guide for guardians with no groups or children, with resumable progress
 - [Visual specification](analysis/visual-specification.md) — proposed data-type-to-component
   map and guardian/child visual language, applied to the Sleep Diary as a worked example
-- [Responsive layout](analysis/responsive-layout.md) — consequences and a phased plan for phone,
-  tablet and wide-desktop layouts; phases 0–1 implemented (no page is wider than a phone, and the
-  screenshot run now fails if one is, on desktop, tablet and phone)
+- [Responsive layout](analysis/responsive-layout.md) — implemented phone, tablet and wide-desktop
+  layouts: no page wider than a phone (checked by the screenshot run on all three sizes), shared
+  page and card components, touch targets, day lists for the week tables, a phone tab bar, and a
+  gap-free dashboard
 - [Installing Buddy on a kid's iPad](analysis/ipad-installation.md) — PWA vs. native install
   options, push notification support, and pricing
 - [A single-day dashboard for the child home screen](analysis/child-day-dashboard.md) — layout

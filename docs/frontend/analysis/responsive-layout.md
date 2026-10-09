@@ -1,9 +1,11 @@
 # Responsive layout: phone, tablet and wide desktop
 
-Status: Phases 0–5 implemented (overflow check and tablet size in the screenshot run; no page is
+Status: Implemented, phases 0–6 (overflow check and tablet size in the screenshot run; no page is
 wider than a phone any more; shared `app-page` and `app-card` with responsive padding; touch-sized
 controls, a sticky header, and menus, popovers and the delete dialog that fit a phone; the four week
-tables become day lists where they don't fit; a guardian tab bar on phones). Phase 6 is proposed.
+tables become day lists where they don't fit; a guardian tab bar on phones; a gap-free dashboard
+with three columns on wide screens, a help page capped to a reading width, and a print preview that
+fills its column).
 
 ## Context
 
@@ -182,7 +184,8 @@ custom breakpoints in `styles.css`. Don't introduce `BreakpointObserver`.**
 - **Container queries (`@container`, built into Tailwind 4) only for the dashboard widgets.** They
   sit in a one-column grid on phones and a two- or three-column grid on desktop, so their own width
   matters more than the viewport's. Everywhere else, viewport breakpoints are simpler and match
-  what the rest of the code does.
+  what the rest of the code does. _As built, none were needed:_ a dashboard column is never
+  narrower than a grid cell was before, so the widgets meet no new widths.
 - _Considered and rejected:_ `BreakpointObserver` from `@angular/cdk/layout`, because it moves
   layout into signals and specs for no gain over CSS. The one exception is a component whose DOM
   must differ (Decision 3, if a stacked view needs its own selection state), and even then
@@ -429,9 +432,24 @@ Implemented:
 
 ### Phase 6 -- tablet and wide desktop
 
-- Add `md:` steps in long forms (agenda create form, sleep entry form, admin).
-- Dashboard: `@container` widgets, and `xl:grid-cols-3` on a wider cap (`max-w-[96rem]`) for
-  the dashboard only. Reading text keeps `max-w-prose`.
+Implemented, after checking the tablet and desktop screenshots for what actually needed it:
+
+- Dashboard: the cards pack into CSS columns (`lg:columns-2 2xl:columns-3`, each card
+  `break-inside-avoid` with `mb-6`) instead of a grid whose rows were as tall as their tallest
+  card, so short cards no longer leave holes. DOM order, and with it keyboard and screen-reader
+  order, is unchanged; visually the cards now run down one column, then the next. The resume-setup
+  banner sits above the columns. The dashboard keeps the standard `max-w-7xl`: a wider cap was
+  tried and dropped, because the shell header stays at `max-w-7xl` and the page no longer lined up
+  with it at 1920px.
+- Help page: topic text and the intro are capped at `max-w-prose`; the nav, the article cards and
+  the inline help panel are unchanged.
+- Print template editor: the live preview measures its column with a `ResizeObserver` and scales
+  the sheet to it, up to 900px (an A4 sheet at about 85% of print size), instead of a fixed 384px.
+  It falls back to 384px before the first measurement. The preview box is `overflow-hidden` again.
+- Not done: `md:` steps in long forms. The tablet screenshots show the agenda, sleep-entry and
+  admin forms already laying out in two to four columns from `sm`.
+- The documentation screenshots stop at 1280px, so the three-column dashboard and the help reading
+  width were checked with a one-off 1920px capture rather than a fourth screenshot size.
 
 ## Explicitly out of scope
 
@@ -443,16 +461,17 @@ Implemented:
 
 ## Decisions made
 
-| Question                | Decision                                                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Mechanism               | Tailwind default breakpoints, mobile-first; `md:` for tablet; `@container` only for dashboard widgets; no `BreakpointObserver`     |
-| Repeated wrappers       | Shared `app-page` and `app-card` with responsive padding                                                                           |
-| Week tables on phones   | Day list beside the existing table, switching where each table fits (`sm`/`md`/`lg`/`xl`); tables stay for wider screens and print |
-| Meal-plan drag on touch | Not offered below `xl`; the meal picker covers it                                                                                  |
-| Touch targets           | At least 44px on `pointer-coarse:` for guardian pages; at least 44px always on child pages                                         |
-| Regression guard        | Overflow assertion in the screenshot run, plus a tablet project                                                                    |
-| Phase 0 rollout         | Landed first with a temporary `knownOverflow` list, removed again in Phase 1                                                       |
-| Phone navigation        | Profile menu fitted to a phone, sticky header, and a four-tab bar (Today, Calendar, Meals, Medicine) with no More tab              |
+| Question                | Decision                                                                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mechanism               | Tailwind default breakpoints, mobile-first; `md:` for tablet; `@container` only for dashboard widgets; no `BreakpointObserver`                           |
+| Repeated wrappers       | Shared `app-page` and `app-card` with responsive padding                                                                                                 |
+| Week tables on phones   | Day list beside the existing table, switching where each table fits (`sm`/`md`/`lg`/`xl`); tables stay for wider screens and print                       |
+| Meal-plan drag on touch | Not offered below `xl`; the meal picker covers it                                                                                                        |
+| Touch targets           | At least 44px on `pointer-coarse:` for guardian pages; at least 44px always on child pages                                                               |
+| Regression guard        | Overflow assertion in the screenshot run, plus a tablet project                                                                                          |
+| Phase 0 rollout         | Landed first with a temporary `knownOverflow` list, removed again in Phase 1                                                                             |
+| Phone navigation        | Profile menu fitted to a phone, sticky header, and a four-tab bar (Today, Calendar, Meals, Medicine) with no More tab                                    |
+| Wide desktop            | Dashboard in CSS columns, three from `2xl` within `max-w-7xl` so it lines up with the header; help text at `max-w-prose`; print preview fills its column |
 
 ## Remaining open questions
 
@@ -462,8 +481,6 @@ Implemented:
 - **Danish tab labels.** "Hovedmenu" (the nav's accessible name; "Hovednavigation" is the
   alternative) and "Mad" for the Meals tab ("Madplan" and "Måltider" were longer) want a native
   speaker's check.
-- **Does the wide-desktop dashboard need three columns at all?** Lean: yes, but only the
-  dashboard. Every other page keeps `max-w-7xl`.
 - **Does the tablet screenshot replace or add to the mobile one?** Lean: add, so there are three
   images per page in the docs.
 
