@@ -151,6 +151,10 @@ The email verification flow is in [src/frontend/buddy/src/app/features/verify-em
 
 `shared/resend-verification` is the "Send verification email again" button (`POST /users/me/email/verify/resend`). It appears on the invite pages after a `403 email_not_verified`, and on the profile while the saved email is unverified. A `409 resend_cooldown` shows a "try again shortly" message.
 
+### Start/end ranges
+
+In every form with a start and an end (calendar create/edit, the sleep-diary bedtime ritual, work-day override ranges, the AI meal-plan period, medicine schedules), changing the start moves the end by the same amount, so the length is kept and the start can't end up after the end. Changing the end alone only changes the end. The pure helpers `shiftRangeEnd`, `shiftRangeEndDate` and `shiftRangeEndTime` in `core/date-utils.ts` do the arithmetic; `shared/time-range` uses the time variant, which may cross midnight.
+
 ## Shared services
 
 The shared domain services live under [src/frontend/buddy/src/app/core](../../src/frontend/buddy/src/app/core). Their request
