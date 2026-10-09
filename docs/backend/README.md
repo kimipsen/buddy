@@ -54,6 +54,7 @@ model or permissions logic.
 - [Week plan print templates](analysis/week-plan-print-templates.md)
 - [Guardian work locations](analysis/work-locations.md)
 - [Babysitters](analysis/babysitters.md)
+- [Client-ready OpenAPI documents](analysis/openapi-client-contract.md)
 
 ## Current focus areas
 
