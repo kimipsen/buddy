@@ -502,3 +502,5 @@ dotnet/
 
 # Stryker.NET mutation testing output
 StrykerOutput/
+# Claude Code worktrees (claude --worktree, isolated agents)
+.claude/worktrees/

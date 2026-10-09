@@ -42,6 +42,16 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 
 After adding a skill or changing a skill's `description`, check that it still triggers, and doesn't steal prompts from its neighbours, with `skill-creator`'s description eval.
 
+## Parallel work in worktrees
+
+Several features are developed at once, each in its own git worktree, so they don't touch each other's files.
+
+- Start a session for each feature with `claude --worktree <feature>` (`-w`). The worktree is created in `.claude/worktrees/<feature>` on the branch `worktree-<feature>`. It branches from the local HEAD (`worktree.baseRef: "head"` in `.claude/settings.json`), because `origin/master` falls behind local master. So keep the main checkout on `master`.
+- Every Agent call that may edit files passes `isolation: "worktree"`. This includes implementation, fixes, tests, mutation runs and doc generation. Read-only agents (Explore, Plan, claude-code-guide, reviews) are the exception.
+- `.worktreeinclude` copies the git-ignored local files (`taskfile.yml`, `appsettings.Development.json`, `.env`) into each new worktree. Run `npm ci` in `src/frontend/buddy` before the first frontend command in a fresh worktree.
+- Worktrees share the dev ports (4300, 5193, 7076), the database and Keycloak. Only one worktree at a time may run the dev servers, e2e tests or `task docs:screenshots`. Unit specs and backend integration tests can run in parallel, because Testcontainers gives each run its own database.
+- Land a worktree branch with `rebase-commit`. It fast-forwards `master` in the main checkout.
+
 ## Conventions
 
 - Every page appears in the documentation screenshots (`docs/screenshots`). A new route or a visible change to a page means updating `src/frontend/buddy/screenshots/pages.ts` (plus demo data in `demo-family.ts`) and running `task docs:screenshots`. `src/app/screenshot-coverage.spec.ts` enforces the route list. See the `doc-screenshots` skill.

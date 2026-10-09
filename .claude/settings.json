@@ -1,5 +1,8 @@
 {
   "enabledPlugins": {
     "dotnet-skills@dotnet-skills": true
+  },
+  "worktree": {
+    "baseRef": "head"
   }
 }

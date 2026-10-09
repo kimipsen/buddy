@@ -1,0 +1,6 @@
+# Git-ignored local files that Claude Code copies into each new worktree
+# (`claude --worktree`, and agents started with isolation: worktree).
+taskfile.yml
+.taskrc.yml
+.devcontainer/.env
+src/backend/buddy/appsettings.Development.json

@@ -463,14 +463,14 @@ The design and every decision are in
 and [docs/backend/analysis/work-locations.md](docs/backend/analysis/work-locations.md).
 
 Before calling it done:
-- [ ] Commit the staged print-templates backend and print frontend.
-- [ ] Have a Danish speaker review `translations/da/print.ts` and `translations/da/work-locations.ts`.
+- [x] Commit the staged print-templates backend and print frontend.
+- [x] Have a Danish speaker review `translations/da/print.ts` and `translations/da/work-locations.ts`.
   Claude wrote both; check in particular "Forælder" as the label for a guardian.
 - [ ] Print from Safari and check that A3/A4 landscape comes from `@page`. If Safari ignores it
   and you have to pick the paper in the print dialog, write that down or consider a
   server-side PDF.
 - [ ] Print from the installed web app on the iPad, through the share sheet.
-- [ ] Print a real week on paper and compare it with the old fridge sheet.
+- [x] Print a real week on paper and compare it with the old fridge sheet.
 
 Found along the way:
 - [x] Some e2e specs fail only in a parallel full run: calendar, groups, task library and AI
