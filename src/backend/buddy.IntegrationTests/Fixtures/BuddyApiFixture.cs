@@ -27,7 +27,7 @@ namespace buddy.IntegrationTests.Fixtures;
 public sealed class BuddyApiFixture : IAsyncLifetime
 {
     // The same Keycloak the app runs on (.devcontainer/docker-compose.yml, deploy/azure/keycloak/Dockerfile);
-    // KeycloakVersionTests fails when they drift apart.
+    // KeycloakParityTests fails when they drift apart.
     public const string KeycloakImage = "quay.io/keycloak/keycloak:26.8.0";
 
     private const string RealmName = "buddy-test";
