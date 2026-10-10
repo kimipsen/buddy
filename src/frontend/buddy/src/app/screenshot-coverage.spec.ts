@@ -26,7 +26,7 @@ async function collectPagePaths(config: Route[], parent = ''): Promise<string[]>
     const children =
       route.children ?? ((await route.loadChildren?.()) as Route[] | undefined) ?? [];
 
-    if (route.component && !route.children?.length) {
+    if ((route.component ?? route.loadComponent) && !route.children?.length) {
       paths.push(`/${full}`);
     }
 

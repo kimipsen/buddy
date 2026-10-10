@@ -624,8 +624,10 @@ Found along the way:
 
 ## Initial bundle over budget (2026-10-09)
 
-- [ ] **Bring the initial bundle back under its 500 kB warning budget.** The production build
+- [x] **Bring the initial bundle back under its 500 kB warning budget.** The production build
   warns: `bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 23.05 kB with a
   total of 523.05 kB.` (budget in `src/frontend/buddy/angular.json`). Find what pulled code into
   the initial chunk (`ng build --stats-json` plus a bundle analyzer), and move it out with lazy
   routes, `@defer` blocks or lighter imports. Don't just raise the budget.
+  Done 2026-10-10: Danish is a lazy dictionary chunk and the email/share-link pages are lazy
+  routes; the initial bundle is 439 kB.

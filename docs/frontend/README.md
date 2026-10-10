@@ -235,6 +235,13 @@ instead of silently falling back to the raw key at runtime. CI additionally runs
 `.claude/skills/i18n/check-parity.mjs` (`.github/workflows/frontend-tests.yml`), which also fails
 on `{placeholder}` mismatches between the two languages and warns about identical en/da text.
 
+Only English ships in the initial bundle (the default, and the fallback). Danish is a lazy chunk
+that `loadDictionary` fetches the first time it's needed; `TranslationService.setLanguage` switches
+only once it has loaded, so the screen never mixes languages. The app initializer awaits the
+browser language's dictionary, so a Danish browser's first screen is already Danish. The public
+pages opened from emails and share links (invites, email verification, the shared sleep diary)
+are lazy chunks too; only the login page is in the initial bundle.
+
 The current language is a signal seeded from the browser's own language (`detectBrowserLanguage`
 in `core/i18n/language.ts`) so the pre-auth login screen renders sensibly before any user is
 known. Once `UsersService.ensureCurrentUser()` resolves, it's replaced with the signed-in user's

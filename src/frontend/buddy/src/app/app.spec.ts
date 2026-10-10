@@ -25,15 +25,15 @@ describe('App', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
-  it('keeps <html lang> in sync with the selected language', () => {
+  it('keeps <html lang> in sync with the selected language', async () => {
     const fixture = TestBed.createComponent(App);
     const translation = TestBed.inject(TranslationService);
 
-    translation.setLanguage('da');
+    await translation.setLanguage('da');
     fixture.detectChanges();
     expect(document.documentElement.lang).toBe('da');
 
-    translation.setLanguage('en');
+    await translation.setLanguage('en');
     fixture.detectChanges();
     expect(document.documentElement.lang).toBe('en');
   });

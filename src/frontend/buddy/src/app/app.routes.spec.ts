@@ -9,6 +9,7 @@ import { GUARDIAN_ROUTES } from './features/guardian/guardian.routes';
 import { AcceptGuardianInvite } from './features/invite/accept-guardian-invite';
 import { AcceptInvite } from './features/invite/accept-invite';
 import { Login } from './features/login/login';
+import { SharedSleepDiary } from './features/shared-sleep-diary/shared-sleep-diary';
 import { VerifyEmail } from './features/verify-email/verify-email';
 
 describe('app routes', () => {
@@ -22,16 +23,30 @@ describe('app routes', () => {
     return match;
   }
 
+  it('serves the login page from the initial bundle, without an auth guard', () => {
+    const r = route('login');
+
+    expect(r.component).toBe(Login);
+    expect(r.canActivate).toBeUndefined();
+  });
+
   it.each([
-    ['login', Login],
     ['invite/:token', AcceptInvite],
     ['guardian-invite/:token', AcceptGuardianInvite],
     ['verify-email/:token', VerifyEmail],
-  ])('serves %s publicly, without an auth guard', (path, component) => {
+  ])('lazy-loads %s publicly, without an auth guard', async (path, component) => {
     const r = route(path);
 
-    expect(r.component).toBe(component);
+    expect(r.component).toBeUndefined();
+    await expect((r.loadComponent as () => Promise<unknown>)()).resolves.toBe(component);
     expect(r.canActivate).toBeUndefined();
+  });
+
+  it('lazy-loads the shared sleep diary behind its feature guard only', async () => {
+    const r = route('shared/sleep-diary/:token');
+
+    await expect((r.loadComponent as () => Promise<unknown>)()).resolves.toBe(SharedSleepDiary);
+    expect(r.canActivate).toHaveLength(1);
   });
 
   it.each([

@@ -4,7 +4,7 @@ import { TranslationService } from './translation.service';
 
 // The Angular Vitest builder doesn't support vi.mock for relative imports (it throws "The
 // vi.mock and related methods are not supported for relative imports with the Angular
-// unit-test system"), so TRANSLATIONS can't be swapped for a small test fixture here. Instead
+// unit-test system"), so the dictionaries can't be swapped for a small test fixture here. Instead
 // these tests resolve against the real dictionary, picking keys/shapes that are stable and
 // unlikely to change: a flat key, a key nested two levels deep, and a key with two
 // placeholders, all present (and translated) in both en and da.
@@ -19,65 +19,91 @@ describe('TranslationService', () => {
   });
 
   describe('initial language', () => {
-    it('seeds the language from the browser when the browser language is supported', () => {
+    it('seeds the language from the browser when the browser language is supported', async () => {
       vi.stubGlobal('navigator', { languages: ['da-DK'], language: 'da-DK' });
 
       const service = new TranslationService();
+      await service.ready();
 
       expect(service.language()).toBe('da');
+      expect(service.translate('common.loading')).toBe('Indlæser…');
     });
 
-    it('falls back to the default language when the browser language is unsupported', () => {
+    it('falls back to the default language when the browser language is unsupported', async () => {
       vi.stubGlobal('navigator', { languages: ['fr-FR'], language: 'fr-FR' });
 
       const service = new TranslationService();
+      await service.ready();
 
       expect(service.language()).toBe('en');
     });
   });
 
   describe('setLanguage', () => {
-    it('updates the current language', () => {
+    it('updates the current language', async () => {
       const service = new TranslationService();
 
-      service.setLanguage('da');
+      await service.setLanguage('da');
 
       expect(service.language()).toBe('da');
     });
 
-    it('switches the dictionary used to resolve subsequent translations', () => {
+    it('switches the dictionary used to resolve subsequent translations', async () => {
       const service = new TranslationService();
 
       expect(service.translate('common.loading')).toBe('Loading…');
 
-      service.setLanguage('da');
+      await service.setLanguage('da');
 
       expect(service.translate('common.loading')).toBe('Indlæser…');
     });
   });
 
-  describe('setLanguageFromServer', () => {
-    it('sets the language when given a supported language code', () => {
+  describe('loading a language', () => {
+    it('keeps the current language on screen until the new dictionary has loaded', async () => {
       const service = new TranslationService();
 
-      service.setLanguageFromServer('da');
+      const switching = service.setLanguage('da');
+
+      expect(service.language()).toBe('en');
+      expect(service.translate('common.loading')).toBe('Loading…');
+      await switching;
+      expect(service.translate('common.loading')).toBe('Indlæser…');
+    });
+
+    it('lets the last request win when an earlier, slower load finishes later', async () => {
+      const service = new TranslationService();
+
+      const toDanish = service.setLanguage('da');
+      await service.setLanguage('en');
+      await toDanish;
+
+      expect(service.language()).toBe('en');
+    });
+  });
+
+  describe('setLanguageFromServer', () => {
+    it('sets the language when given a supported language code', async () => {
+      const service = new TranslationService();
+
+      await service.setLanguageFromServer('da');
 
       expect(service.language()).toBe('da');
     });
 
-    it('leaves the language unchanged when given an unsupported language code', () => {
+    it('leaves the language unchanged when given an unsupported language code', async () => {
       const service = new TranslationService();
 
-      service.setLanguageFromServer('fr');
+      await service.setLanguageFromServer('fr');
 
       expect(service.language()).toBe('en');
     });
 
-    it('leaves the language unchanged when given an empty string', () => {
+    it('leaves the language unchanged when given an empty string', async () => {
       const service = new TranslationService();
-      service.setLanguage('da');
+      await service.setLanguage('da');
 
-      service.setLanguageFromServer('');
+      await service.setLanguageFromServer('');
 
       expect(service.language()).toBe('da');
     });
@@ -160,9 +186,9 @@ describe('TranslationService', () => {
       expect(service.translate('common.colorLabel', { unused: 'value' })).toBe('Color');
     });
 
-    it('resolves against the dictionary for the currently selected language', () => {
+    it('resolves against the dictionary for the currently selected language', async () => {
       const service = new TranslationService();
-      service.setLanguage('da');
+      await service.setLanguage('da');
 
       expect(
         service.translate('mealplan.manageMeals.pageIndicator', { current: 2, total: 5 }),
