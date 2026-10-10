@@ -1,7 +1,7 @@
 import { ThemeMode, isThemeMode } from './theme';
 
-// Keep in sync with the pre-boot theme script in index.html, which reads this same key to apply
-// the right theme before Angular loads (avoiding a flash of the wrong theme).
+// Keep in sync with the pre-boot theme script in public/theme-init.js, which reads this same key
+// to apply the right theme before Angular loads (avoiding a flash of the wrong theme).
 export const THEME_STORAGE_KEY = 'buddy_theme_mode';
 
 export function readStoredThemeMode(storage: Storage): ThemeMode | null {
