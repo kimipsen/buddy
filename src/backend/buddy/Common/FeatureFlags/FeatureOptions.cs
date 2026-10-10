@@ -17,6 +17,7 @@ public sealed class FeatureOptions
 
     public bool Medicines { get; set; } = true;
     public bool SleepDiary { get; set; } = true;
+    public bool HouseRules { get; set; } = true;
     public bool Pickups { get; set; } = true;
     public bool Babysitters { get; set; } = true;
     public bool WorkLocations { get; set; } = true;
@@ -35,6 +36,7 @@ public sealed class FeatureOptions
         MealplanImport && Mealplans,
         Medicines,
         SleepDiary,
+        HouseRules,
         Pickups,
         Babysitters,
         WorkLocations,
@@ -68,6 +70,7 @@ public sealed record InstallationFeatures(
     bool MealplanImport,
     bool Medicines,
     bool SleepDiary,
+    bool HouseRules,
     bool Pickups,
     bool Babysitters,
     bool WorkLocations,

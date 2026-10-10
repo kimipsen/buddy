@@ -49,6 +49,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             ["Features:Mealplans"] = "false",
             ["Features:Medicines"] = "false",
             ["Features:SleepDiary"] = "false",
+            ["Features:HouseRules"] = "false",
             ["Features:Pickups"] = "false",
             ["Features:Babysitters"] = "false",
             ["Features:WorkLocations"] = "false",
@@ -71,7 +72,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(fixture.Host);
 
-        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true), flags);
+        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
     }
 
     [Fact]
@@ -79,9 +80,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(await AllOffAsync());
 
-        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false), flags);
+        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
         Assert.Equal(
-            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true),
             await GetFeaturesAsync(await MealplanExtrasOffAsync()));
     }
 
@@ -97,6 +98,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
         using var json = JsonDocument.Parse(await response.ReadAsTextAsync());
         Assert.True(json.RootElement.GetProperty("mealplanAiAssistant").GetBoolean());
         Assert.True(json.RootElement.GetProperty("sleepDiary").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("houseRules").GetBoolean());
     }
 
     [Fact]
@@ -112,6 +114,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             $"/mealplans/children/{child.Id}/ai/providers",
             $"/mealplans/children/{child.Id}/imports",
             $"/sleep-diary/children/{child.Id}/share-links",
+            $"/house-rules/children/{child.Id}/rules",
             $"/pickups/children/{child.Id}/schedule?from=2026-03-02&to=2026-03-08",
             "/babysitters/me",
             $"/work-locations/guardians/{guardianId}",

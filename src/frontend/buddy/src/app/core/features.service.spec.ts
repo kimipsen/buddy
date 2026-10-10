@@ -19,6 +19,7 @@ describe('FeaturesService', () => {
     mealplanImport: true,
     medicines: true,
     sleepDiary: true,
+    houseRules: true,
     pickups: true,
     babysitters: true,
     workLocations: true,

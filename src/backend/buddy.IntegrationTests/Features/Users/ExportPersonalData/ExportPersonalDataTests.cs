@@ -9,6 +9,7 @@ using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
+using buddy.IntegrationTests.Features.HouseRules;
 using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Features.Medicines;
 using buddy.IntegrationTests.Features.PrintTemplates;
@@ -60,6 +61,8 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
         await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, title: $"Event{n}");
         var icalToken = await CalendarTestHelpers.CreateIcalTokenAsync(fixture, token, calendarId);
         await OnboardingTestHelpers.PutAsync(fixture, token, OnboardingStatus.Active, groupId, false, version: 0);
+        await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.ChildRules(child.Id), $"PersonalRule{n}");
+        await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.GroupRules(groupId), $"HouseRule{n}");
 
         var response = await ExportAsync(token);
         var text = await response.ReadAsTextAsync();
@@ -78,7 +81,8 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
 
         foreach (var value in (string[])[
             $"nightmare{n}", $"Medizor{n}", $"Meal{n}", $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}",
-            $"Template{n}", $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Event{n}"])
+            $"Template{n}", $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Event{n}",
+            $"PersonalRule{n}", $"HouseRule{n}"])
         {
             Assert.Contains(value, text, StringComparison.Ordinal);
         }

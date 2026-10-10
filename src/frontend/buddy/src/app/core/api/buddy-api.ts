@@ -2116,6 +2116,150 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/house-rules/children/{childId}/rules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListRules'];
+    put?: never;
+    post: operations['AddRule'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/groups/{groupId}/rules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListRulesForGroup'];
+    put?: never;
+    post: operations['AddRuleForGroup'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/children/{childId}/rules/{ruleId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['EditRule'];
+    post?: never;
+    delete: operations['RemoveRule'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/groups/{groupId}/rules/{ruleId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['EditRuleForGroup'];
+    post?: never;
+    delete: operations['RemoveRuleForGroup'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/children/{childId}/rules/order': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['ReorderRules'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/groups/{groupId}/rules/order': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['ReorderRulesForGroup'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/children/{childId}/rules/{ruleId}/acknowledgement': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['AcknowledgeRule'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/groups/{groupId}/rules/{ruleId}/acknowledgement': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['AcknowledgeRuleForGroup'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/house-rules/children/{childId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetChildRules'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2124,6 +2268,16 @@ export interface components {
       childrenErased: components['schemas']['PreviewPerson'][];
       groupsHandedOver: components['schemas']['GroupHandover'][];
       groupsDeleted: components['schemas']['PreviewGroup'][];
+    };
+    AcknowledgeRuleRequest: {
+      /** Format: int32 */
+      revision: number;
+      /** Format: uuid */
+      childId?: null | string;
+    };
+    AddRuleRequest: {
+      title: null | string;
+      body?: null | string;
     };
     AddSubtaskRequest: {
       title: string;
@@ -2327,6 +2481,34 @@ export interface components {
       username: string;
       temporaryPassword: string;
     };
+    ChildRuleResponse: {
+      /** Format: uuid */
+      id: string;
+      title: string;
+      body: string;
+      /** Format: int32 */
+      revision: number;
+      /** Format: int32 */
+      acknowledgedRevision: null | number;
+      isUpToDate: boolean;
+      /** Format: date-time */
+      lastEditedAt: string;
+    };
+    ChildRuleSectionResponse: {
+      scopeKind: components['schemas']['RuleBookScopeKind'];
+      /** Format: uuid */
+      scopeId: string;
+      label: string;
+      rules: components['schemas']['ChildRuleResponse'][];
+    };
+    ChildRulesResponse: {
+      /** Format: uuid */
+      childId: string;
+      personal: components['schemas']['ChildRuleSectionResponse'];
+      households: components['schemas']['ChildRuleSectionResponse'][];
+      /** Format: int32 */
+      pendingAcknowledgements: number;
+    };
     ChildSummary: {
       id: components['schemas']['UserId'];
       name: components['schemas']['Name'];
@@ -2434,6 +2616,12 @@ export interface components {
       date: string;
       /** Format: time */
       time: string;
+    };
+    EditRuleRequest: {
+      title: null | string;
+      body?: null | string;
+      /** @default true */
+      requireReacknowledgement: boolean;
     };
     Email: {
       value: string;
@@ -2600,6 +2788,8 @@ export interface components {
       guardianLinkId: components['schemas']['GuardianLinkId'];
       kind: components['schemas']['GuardianKind'];
     };
+    /** @enum {string} */
+    HouseRulesAccessTier: 'None' | 'View' | 'Acknowledge' | 'Manage';
     IcalTokenResponse: {
       /** Format: uuid */
       tokenId: string;
@@ -2630,6 +2820,7 @@ export interface components {
       mealplanImport: boolean;
       medicines: boolean;
       sleepDiary: boolean;
+      houseRules: boolean;
       pickups: boolean;
       babysitters: boolean;
       workLocations: boolean;
@@ -3017,6 +3208,9 @@ export interface components {
     RenamePrintTemplateRequest: {
       name: string;
     };
+    ReorderRulesRequest: {
+      newOrder: null | string[];
+    };
     ReorderSubtasksRequest: {
       newOrder: string[];
     };
@@ -3051,6 +3245,36 @@ export interface components {
       subtaskId: string;
       parentTitle: string;
       parentIcon: string;
+    };
+    RuleAcknowledgementResponse: {
+      /** Format: uuid */
+      childId: string;
+      /** Format: int32 */
+      acknowledgedRevision: null | number;
+      isUpToDate: boolean;
+    };
+    RuleBookResponse: {
+      scopeKind: components['schemas']['RuleBookScopeKind'];
+      /** Format: uuid */
+      scopeId: string;
+      access: components['schemas']['HouseRulesAccessTier'];
+      children: string[];
+      rules: components['schemas']['RuleResponse'][];
+    };
+    /** @enum {string} */
+    RuleBookScopeKind: 'Child' | 'Group';
+    RuleResponse: {
+      /** Format: uuid */
+      id: string;
+      title: string;
+      body: string;
+      /** Format: int32 */
+      revision: number;
+      /** Format: int32 */
+      acknowledgementRevision: number;
+      /** Format: date-time */
+      lastEditedAt: string;
+      acknowledgements: components['schemas']['RuleAcknowledgementResponse'][];
     };
     ScheduleTaskFromTemplateRequest: {
       /** Format: uuid */
@@ -13189,6 +13413,774 @@ export interface operations {
       304: components['responses']['NotModified'];
       /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
       400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ListRules: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  AddRule: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddRuleRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ListRulesForGroup: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  AddRuleForGroup: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddRuleRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  EditRule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        ruleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EditRuleRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  RemoveRule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        ruleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  EditRuleForGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        ruleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EditRuleRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  RemoveRuleForGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        ruleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ReorderRules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReorderRulesRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ReorderRulesForGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReorderRulesRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleBookResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  AcknowledgeRule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        ruleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcknowledgeRuleRequest'];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `house_rule_revision_changed`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  AcknowledgeRuleForGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        ruleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcknowledgeRuleRequest'];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `house_rule_revision_changed`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetChildRules: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChildRulesResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
         headers: {
           [name: string]: unknown;
         };

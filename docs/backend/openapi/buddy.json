@@ -16156,6 +16156,1275 @@
           }
         }
       }
+    },
+    "/house-rules/children/{childId}/rules": {
+      "post": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "AddRule",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again.",
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "invalid_idempotency_key",
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060, \u0060idempotency_key_in_progress\u0060, \u0060idempotency_key_reused\u0060, \u0060idempotency_response_unavailable\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict",
+              "idempotency_key_in_progress",
+              "idempotency_key_reused",
+              "idempotency_response_unavailable"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "ListRules",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/groups/{groupId}/rules": {
+      "post": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "AddRuleForGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again.",
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060invalid_idempotency_key\u0060, \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "invalid_idempotency_key",
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060, \u0060idempotency_key_in_progress\u0060, \u0060idempotency_key_reused\u0060, \u0060idempotency_response_unavailable\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict",
+              "idempotency_key_in_progress",
+              "idempotency_key_reused",
+              "idempotency_response_unavailable"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "ListRulesForGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/children/{childId}/rules/{ruleId}": {
+      "put": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "EditRule",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "RemoveRule",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/groups/{groupId}/rules/{ruleId}": {
+      "put": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "EditRuleForGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "RemoveRuleForGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/children/{childId}/rules/order": {
+      "put": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "ReorderRules",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderRulesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/groups/{groupId}/rules/order": {
+      "put": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "ReorderRulesForGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderRulesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleBookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/children/{childId}/rules/{ruleId}/acknowledgement": {
+      "put": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "AcknowledgeRule",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060, \u0060house_rule_revision_changed\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict",
+              "house_rule_revision_changed"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/groups/{groupId}/rules/{ruleId}/acknowledgement": {
+      "put": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "AcknowledgeRuleForGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060, \u0060house_rule_revision_changed\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict",
+              "house_rule_revision_changed"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/house-rules/children/{childId}": {
+      "get": {
+        "tags": [
+          "HouseRules"
+        ],
+        "operationId": "GetChildRules",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildRulesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -16185,6 +17454,45 @@
             "items": {
               "$ref": "#/components/schemas/PreviewGroup"
             }
+          }
+        }
+      },
+      "AcknowledgeRuleRequest": {
+        "required": [
+          "revision"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "childId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "AddRuleRequest": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -16924,6 +18232,103 @@
           }
         }
       },
+      "ChildRuleResponse": {
+        "required": [
+          "id",
+          "title",
+          "body",
+          "revision",
+          "acknowledgedRevision",
+          "isUpToDate",
+          "lastEditedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "acknowledgedRevision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "isUpToDate": {
+            "type": "boolean"
+          },
+          "lastEditedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChildRuleSectionResponse": {
+        "required": [
+          "scopeKind",
+          "scopeId",
+          "label",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "scopeKind": {
+            "$ref": "#/components/schemas/RuleBookScopeKind"
+          },
+          "scopeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildRuleResponse"
+            }
+          }
+        }
+      },
+      "ChildRulesResponse": {
+        "required": [
+          "childId",
+          "personal",
+          "households",
+          "pendingAcknowledgements"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "personal": {
+            "$ref": "#/components/schemas/ChildRuleSectionResponse"
+          },
+          "households": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildRuleSectionResponse"
+            }
+          },
+          "pendingAcknowledgements": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ChildSummary": {
         "required": [
           "id",
@@ -17316,6 +18721,30 @@
           "time": {
             "type": "string",
             "format": "time"
+          }
+        }
+      },
+      "EditRuleRequest": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requireReacknowledgement": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -17821,6 +19250,15 @@
           }
         }
       },
+      "HouseRulesAccessTier": {
+        "enum": [
+          "None",
+          "View",
+          "Acknowledge",
+          "Manage"
+        ],
+        "type": "string"
+      },
       "IcalTokenResponse": {
         "required": [
           "tokenId",
@@ -17909,6 +19347,7 @@
           "mealplanImport",
           "medicines",
           "sleepDiary",
+          "houseRules",
           "pickups",
           "babysitters",
           "workLocations",
@@ -17932,6 +19371,9 @@
             "type": "boolean"
           },
           "sleepDiary": {
+            "type": "boolean"
+          },
+          "houseRules": {
             "type": "boolean"
           },
           "pickups": {
@@ -19307,6 +20749,24 @@
           }
         }
       },
+      "ReorderRulesRequest": {
+        "required": [
+          "newOrder"
+        ],
+        "type": "object",
+        "properties": {
+          "newOrder": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "ReorderSubtasksRequest": {
         "required": [
           "newOrder"
@@ -19443,6 +20903,114 @@
           },
           "parentIcon": {
             "type": "string"
+          }
+        }
+      },
+      "RuleAcknowledgementResponse": {
+        "required": [
+          "childId",
+          "acknowledgedRevision",
+          "isUpToDate"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "acknowledgedRevision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "isUpToDate": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RuleBookResponse": {
+        "required": [
+          "scopeKind",
+          "scopeId",
+          "access",
+          "children",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "scopeKind": {
+            "$ref": "#/components/schemas/RuleBookScopeKind"
+          },
+          "scopeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "access": {
+            "$ref": "#/components/schemas/HouseRulesAccessTier"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleResponse"
+            }
+          }
+        }
+      },
+      "RuleBookScopeKind": {
+        "enum": [
+          "Child",
+          "Group"
+        ],
+        "type": "string"
+      },
+      "RuleResponse": {
+        "required": [
+          "id",
+          "title",
+          "body",
+          "revision",
+          "acknowledgementRevision",
+          "lastEditedAt",
+          "acknowledgements"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "acknowledgementRevision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastEditedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "acknowledgements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleAcknowledgementResponse"
+            }
           }
         }
       },
@@ -20987,6 +22555,9 @@
     },
     {
       "name": "Guardians"
+    },
+    {
+      "name": "HouseRules"
     },
     {
       "name": "Mealplans"

@@ -1,0 +1,90 @@
+@buddy_HostAddress = http://localhost:5193
+
+### Add a personal rule (an active guardian of the child) -- starts the book on first use
+
+POST {{buddy_HostAddress}}/house-rules/children/{{childId}}/rules
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "title": "Screen time",
+  "body": "| Day | Time | When |\n|---|---|---|\n| Mon--Thu | 45 min | after homework |\n\n- Tablet on the charger at **19:30**."
+}
+
+###
+
+# Add a household rule (group Owner/Admin who isn't a child)
+POST {{buddy_HostAddress}}/house-rules/groups/{{groupId}}/rules
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "title": "No phones at the dinner table"
+}
+
+###
+
+# Edit a rule; requireReacknowledgement false for a small fix keeps the children's acknowledgements
+PUT {{buddy_HostAddress}}/house-rules/children/{{childId}}/rules/{{ruleId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "title": "Screen time",
+  "body": "- 30 minutes after homework",
+  "requireReacknowledgement": true
+}
+
+###
+
+# Remove a rule (idempotent)
+DELETE {{buddy_HostAddress}}/house-rules/groups/{{groupId}}/rules/{{ruleId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Reorder: the full list of the book's rule ids in the new order
+PUT {{buddy_HostAddress}}/house-rules/children/{{childId}}/rules/order
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "newOrder": ["{{ruleId}}", "{{otherRuleId}}"]
+}
+
+###
+
+# One book with every child's acknowledgement status (any tier; a child sees only their own)
+GET {{buddy_HostAddress}}/house-rules/groups/{{groupId}}/rules
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# The child acknowledges the revision they read -- 409 house_rule_revision_changed if it changed since
+PUT {{buddy_HostAddress}}/house-rules/children/{{childId}}/rules/{{ruleId}}/acknowledgement
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+
+{
+  "revision": 1
+}
+
+###
+
+# A guardian acknowledges on behalf of their child (who can't read yet)
+PUT {{buddy_HostAddress}}/house-rules/groups/{{groupId}}/rules/{{ruleId}}/acknowledgement
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "revision": 1,
+  "childId": "{{childId}}"
+}
+
+###
+
+# Everything one child is asked to keep: personal rules plus each household
+GET {{buddy_HostAddress}}/house-rules/children/{{childId}}
+Authorization: Bearer {{childToken}}

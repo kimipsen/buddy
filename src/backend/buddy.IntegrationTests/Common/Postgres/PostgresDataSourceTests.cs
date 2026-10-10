@@ -4,6 +4,7 @@ using buddy.Common.Postgres;
 using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
+using buddy.Features.HouseRules;
 using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Pickups;
@@ -93,6 +94,7 @@ public sealed class PostgresDataSourceHostTests(BuddyApiFixture fixture)
         typeof(IPrintTemplatesStore),
         typeof(IProgressStore),
         typeof(ISleepDiariesStore),
+        typeof(IHouseRulesStore),
         typeof(IIdempotencyStore),
         typeof(IDataProtectionStore)
     ];

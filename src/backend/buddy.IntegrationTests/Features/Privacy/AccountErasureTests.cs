@@ -8,6 +8,7 @@ using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
+using buddy.IntegrationTests.Features.HouseRules;
 using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Features.Medicines;
 using buddy.IntegrationTests.Features.PrintTemplates;
@@ -59,6 +60,8 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
         });
         var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, $"Calendar{n}", groupId);
         await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, title: $"Task{n}", assignedTo: child.Id);
+        await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.ChildRules(child.Id), $"PersonalRule{n}", $"rulebody{n}");
+        await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.GroupRules(groupId), $"HouseRule{n}");
 
         await DeleteAccountAsync(token, expectedStatus: 204);
 
@@ -68,7 +71,8 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
             $"Cosmo{n}", $"Crane{n}", child.Username,
             $"nightmare{n}", $"hygiene{n}", $"Medizor{n}", $"dose{n}",
             $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}", $"Template{n}", $"Meal{n}", $"recipe{n}",
-            $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Task{n}");
+            $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Task{n}",
+            $"PersonalRule{n}", $"rulebody{n}", $"HouseRule{n}");
 
         Assert.True(leftovers.Count == 0, $"Personal data left after erasure:\n{string.Join("\n", leftovers)}");
         Assert.False(await fixture.KeycloakUserExistsAsync(guardian.Username));

@@ -4,7 +4,7 @@ version: '3'
 
 vars:
   # Every schema with Marten event tables, for the db:marten:* tasks. Add a new feature's schema here.
-  MARTEN_SCHEMAS: &marten_schemas [users, groups, tasklibrary, medicines, calendars, progress, mealplans, pickups, babysitters, worklocations, printtemplates, sleepdiaries, erasure]
+  MARTEN_SCHEMAS: &marten_schemas [users, groups, tasklibrary, medicines, calendars, progress, mealplans, pickups, babysitters, worklocations, printtemplates, sleepdiaries, houserules, erasure]
 
 tasks:
   hooks:install:

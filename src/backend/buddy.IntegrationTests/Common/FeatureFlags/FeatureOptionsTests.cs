@@ -22,7 +22,7 @@ public sealed class FeatureOptionsTests
         using var provider = services.BuildServiceProvider();
 
         Assert.Equal(
-            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true),
             provider.GetRequiredService<IOptions<FeatureOptions>>().Value.Effective());
     }
 

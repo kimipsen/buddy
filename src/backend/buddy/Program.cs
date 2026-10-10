@@ -16,6 +16,7 @@ using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
+using buddy.Features.HouseRules;
 using buddy.Features.Mealplans;
 using buddy.Features.Medicines;
 using buddy.Features.Pickups;
@@ -121,6 +122,9 @@ builder.Services.AddPrintTemplatesFeature(builder.Configuration);
 builder.Services.AddProgressFeature(builder.Configuration);
 // After Users and Guardians: authorization reads IGuardianLinkEventStore, the shared view IUserEventStore.
 builder.Services.AddSleepDiariesFeature(builder.Configuration);
+// After Users, Guardians and Groups: authorization reads IGuardianLinkEventStore and IGroupEventStore,
+// GetChildRules the child's name from IUserEventStore.
+builder.Services.AddHouseRulesFeature(builder.Configuration);
 // Last: erasure orchestrates every feature's IPersonalDataEraser.
 builder.Services.AddPrivacyFeature();
 
@@ -223,6 +227,11 @@ if (features.Progress)
 if (features.SleepDiary)
 {
     app.MapSleepDiariesFeature();
+}
+
+if (features.HouseRules)
+{
+    app.MapHouseRulesFeature();
 }
 
 // JasperFx command line: no arguments runs the API as before; `projections --rebuild --store <name>`
