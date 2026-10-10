@@ -389,6 +389,9 @@ internal Vitest wiring (jsdom, TestBed initialisation, Angular template compilat
 separate config file.
 The TypeScript checker (`checkers: ["typescript"]`) still runs ahead of the test command to skip
 mutants that don't compile, without needing the Vitest API integration.
+The command runs with `NG_BUILD_TYPE_CHECK=0` so the Angular build skips type checking: Stryker's
+mutant switches widen inferred types in mutated files, which would otherwise break `strictTemplates`
+checking of their templates and fail the initial test run.
 
 `concurrency` is capped at `4` in the checked-in config — each mutant reruns a full `ng test`
 build, and higher concurrency was observed to cause build contention and false timeouts in this
