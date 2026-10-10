@@ -60,7 +60,7 @@ export class HouseRulesPrintPage {
 
     return {
       title: this.translation.translate('houseRules.print.childTitle', { name }),
-      sections: [
+      sections: withRules([
         {
           heading: this.translation.translate('houseRules.print.personalHeading', { name }),
           rules: rules.personal.rules,
@@ -69,7 +69,7 @@ export class HouseRulesPrintPage {
           heading: household.label,
           rules: household.rules,
         })),
-      ],
+      ]),
     };
   }
 
@@ -79,6 +79,11 @@ export class HouseRulesPrintPage {
       this.groups.getGroup(this.id),
     ]);
 
-    return { title: group.name, sections: [{ heading: '', rules: book.rules }] };
+    return { title: group.name, sections: withRules([{ heading: '', rules: book.rules }]) };
   }
+}
+
+// Empty scopes stay off paper; the sheet says "No rules yet." once when nothing is left.
+function withRules(sections: PrintedSection[]): PrintedSection[] {
+  return sections.filter((section) => section.rules.length > 0);
 }

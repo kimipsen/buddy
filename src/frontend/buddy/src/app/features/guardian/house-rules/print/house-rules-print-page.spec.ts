@@ -104,7 +104,6 @@ describe('HouseRulesPrintPage', () => {
     expect(compiled.querySelector('h1')?.textContent?.trim()).toBe('Emil’s rules');
     expect([...compiled.querySelectorAll('h2')].map((h) => h.textContent?.trim())).toEqual([
       'Just for Emil',
-      'Dad’s',
       'Mum’s',
     ]);
     expect([...compiled.querySelectorAll('h3')].map((h) => h.textContent?.trim())).toEqual([
@@ -113,6 +112,37 @@ describe('HouseRulesPrintPage', () => {
       '2. Dinner',
     ]);
     expect(compiled.querySelector('app-markdown-view table')).not.toBeNull();
+    expect(compiled.textContent).not.toContain('Dad’s');
+    expect(compiled.textContent).not.toContain('No rules yet.');
+  });
+
+  it('says so once when a child has no rules anywhere', async () => {
+    const { compiled } = await setup('child', {
+      getChildRules: vi.fn(async () => ({
+        childId: 'emil',
+        personal: { scopeKind: 'Child' as const, scopeId: 'emil', label: 'Emil', rules: [] },
+        households: [{ scopeKind: 'Group' as const, scopeId: 'dad', label: 'Dad’s', rules: [] }],
+        pendingAcknowledgements: 0,
+      })),
+    });
+
+    expect(compiled.querySelector('h1')?.textContent?.trim()).toBe('Emil’s rules');
+    expect(compiled.querySelectorAll('h2')).toHaveLength(0);
+    expect(compiled.textContent?.match(/No rules yet\./g)).toHaveLength(1);
+  });
+
+  it('says so when a household has no rules', async () => {
+    const { compiled } = await setup('group', {
+      listRules: vi.fn(async () => ({
+        scopeKind: 'Group' as const,
+        scopeId: 'mum',
+        access: 'View' as const,
+        children: [],
+        rules: [],
+      })),
+    });
+
+    expect(compiled.querySelector('h1')?.textContent?.trim()).toBe('Mum’s');
     expect(compiled.textContent).toContain('No rules yet.');
   });
 
