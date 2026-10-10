@@ -24,6 +24,10 @@ describe('GuardianProgress', () => {
         nextGoalThreshold: 0,
         nextGoalIcon: '🌱',
         goalPosts: [],
+        spendableStars: 0,
+        spentStars: 0,
+        rewards: [],
+        rewardRequests: [],
       })),
     };
 

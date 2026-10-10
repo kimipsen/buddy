@@ -2,13 +2,17 @@
 
 The progress feature tracks a per-child star count and unlocked milestones,
 earned as a side effect of completing tasks in the `Calendars` feature. A
-guardian can also configure the ordered list of goal posts (threshold, icon,
-optional label) a child progresses through — the one guardian *write* action
-in this feature — see
-[Configurable goal posts for progress](../analysis/configurable-goal-posts.md).
+guardian configures the ordered list of goal posts (threshold, icon, optional
+label) a child progresses through — see
+[Configurable goal posts for progress](../analysis/configurable-goal-posts.md) —
+and a per-child reward catalog the child spends stars on. The child asks for a
+reward and a guardian approves or declines; only an approval spends stars, and
+lifetime stars (which drive the goal posts) never drop — see
+[Reward redemption for progress](../analysis/reward-redemption.md).
 The only way a `ChildProgress` aggregate changes from stars is an internal
 call from `SetTaskCompletionHandler`, made after that handler's own event has
-already been appended; goal posts change directly, via the endpoint below.
+already been appended; goal posts, rewards and requests change directly, via
+the endpoints below.
 
 ```mermaid
 sequenceDiagram
@@ -62,6 +66,43 @@ sequenceDiagram
     API-->>App: 200 OK
 ```
 
+### Reward redemption
+
+```mermaid
+sequenceDiagram
+    actor Child
+    actor Guardian
+    participant API as Buddy API
+    participant Progress as Progress feature
+    participant Store as Progress event store
+
+    Guardian->>API: PUT /progress/children/{childId}/rewards
+    API->>Progress: ConfigureRewards (Manage)
+    Progress->>Store: Append RewardsConfigured (full replace, stable reward ids)
+
+    Child->>API: POST /progress/me/reward-requests { rewardId }
+    API->>Progress: RequestReward (the caller's own stream only)
+    Progress->>Store: Read and rehydrate ChildProgress
+    alt cost <= spendable stars, under 10 pending
+        Progress->>Store: Append RewardRequested (reserves the cost)
+        Progress-->>API: 200 ProgressSummary
+    else
+        Progress-->>API: 409 insufficient_stars / too_many_pending_requests
+    end
+
+    Guardian->>API: POST /progress/children/{childId}/reward-requests/{requestId}/approve
+    API->>Progress: ApproveRewardRequest (Manage)
+    Progress->>Store: Read and rehydrate ChildProgress
+    alt still pending and cost <= TotalStars - SpentStars
+        Progress->>Store: Append RewardRequestApproved (SpentStars += cost)
+    else
+        Progress-->>API: 409 insufficient_stars / reward_request_resolved
+    end
+```
+
+Declining (`/decline`, guardian) and cancelling (`/progress/me/reward-requests/{requestId}/cancel`,
+the child) follow the approve shape without the star check, and release the reservation.
+
 ## Endpoints
 
 | Method | Route | Behavior |
@@ -69,6 +110,16 @@ sequenceDiagram
 | `GET` | `/progress/me` | Returns the caller's own star count, unlocked milestones, and resolved goal-post info. Self-only: it always resolves the child from the caller's own claims. |
 | `GET` | `/progress/children/{childId}` | Returns one named child's star count, unlocked milestones, and resolved goal-post info. Read-only guardian-facing view; see "Authorization model" below. |
 | `PUT` | `/progress/children/{childId}/goals` | Guardian-only. Replaces the child's full ordered list of goal posts (`Threshold`, `Icon`, optional `Label`). Full-replace, not a partial update; see "Authorization model" below. |
+| `PUT` | `/progress/children/{childId}/rewards` | Guardian-only. Replaces the child's reward catalog (`Name`, `Icon`, `Cost`, and the `Id` of a reward being kept). An unknown `Id` is `400`. |
+| `POST` | `/progress/me/reward-requests` | The caller asks for one of their own rewards. `409 insufficient_stars` past the spendable balance, `409 too_many_pending_requests` at 10 pending, `404` for a reward not in the catalog. |
+| `POST` | `/progress/me/reward-requests/{requestId}/cancel` | The caller withdraws their own pending request. |
+| `POST` | `/progress/children/{childId}/reward-requests/{requestId}/approve` | Guardian-only. Spends the request's cost; `409 insufficient_stars` if revoked stars left too few. |
+| `POST` | `/progress/children/{childId}/reward-requests/{requestId}/decline` | Guardian-only. Releases the reservation. |
+
+Every route returns the updated `ProgressSummary`, which also carries `SpendableStars`, `SpentStars`,
+the catalog and the reward requests (pending first, then the 20 most recently resolved). Repeating the
+same resolution is an idempotent `200`; resolving an already-resolved request differently is
+`409 reward_request_resolved`.
 
 `RecordStarChange` (see "Core lifecycle") is still an internal command, not
 an HTTP endpoint — a star is never awarded or revoked by a client calling
@@ -110,6 +161,11 @@ account is provisioned. It contains:
   command, carrying the complete replacement list of goal posts (full
   replace, not a partial update — see
   [configurable-goal-posts.md](../analysis/configurable-goal-posts.md)).
+- `RewardsConfigured`, the guardian's full-replace reward catalog.
+- `RewardRequested`, the child's request, with the reward's name, icon and cost
+  copied at request time; pending requests reserve their cost.
+- `RewardRequestApproved` (adds the cost to `SpentStars`), `RewardRequestDeclined`
+  and `RewardRequestCancelled`, each resolving one pending request.
 
 `AwardedOccurrences` is a sparse set of `OccurrenceKey` (item, occurrence
 date, and completion target), so a plain task and each independently-completable subtask
@@ -122,16 +178,19 @@ applies to `TaskCompletionChanged`.
 
 ## Authorization model
 
-All three endpoints require an authenticated caller. `ProgressAuthorization`
+All endpoints require an authenticated caller. `ProgressAuthorization`
 resolves a two-tier access level, mirroring `MedicineAuthorization`'s
 Mark/Manage split:
 
 - **View** — the child identified by `childId` (or, for `/progress/me`, the
   caller themself) can always view their own progress; an active guardian of
   that child can also view it.
-- **Manage** — only an active guardian can configure goal posts. A child
-  attempting to call `ConfigureGoalPosts` on themself has View but not
-  Manage, so the endpoint returns `403 Forbidden` rather than `404`.
+- **Manage** — only an active guardian can configure goal posts and rewards
+  and approve or decline requests. A child attempting any of these on themself
+  has View but not Manage, so the endpoint returns `403 Forbidden` rather than
+  `404`.
+- **Self** — requesting and cancelling go through `/progress/me`, so they only
+  ever reach the caller's own stream; no `childId` is accepted.
 
 A caller with no relationship to the child at all (neither View nor Manage)
 receives `404 Not Found`, collapsing "no such child" and "not your child"
@@ -149,10 +208,15 @@ receives `200 OK` with zero stars and no milestones, never `404 Not Found`
 - `MilestoneUnlocked` — records a goal-post threshold newly crossed.
 - `GoalPostsConfigured` — guardian-authored, full-replace list of goal
   posts (`Threshold`, `Icon`, optional `Label`).
+- `RewardsConfigured` — guardian-authored, full-replace reward catalog.
+- `RewardRequested` / `RewardRequestApproved` / `RewardRequestDeclined` /
+  `RewardRequestCancelled` — a reward request and how it was resolved.
 
 See [Gamified progress for children's tasks](../analysis/gamified-progress.md)
 for the design rationale behind the dedicated aggregate, the explicit
 synchronous call instead of a projection, and the 1:1 stream-ID shortcut, and
 [Configurable goal posts for progress](../analysis/configurable-goal-posts.md)
-for the guardian-write goal-post design covered above. Dose gamification,
-reward redemption, and sibling comparisons remain out of scope.
+for the guardian-write goal-post design covered above, and
+[Reward redemption for progress](../analysis/reward-redemption.md) for the
+reward catalog and requests. Dose gamification, manual star adjustment, and
+sibling comparisons remain out of scope.

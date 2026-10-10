@@ -1,7 +1,7 @@
 export const progress = {
   backLink: 'Tilbage til oversigt',
   eyebrow: 'Point',
-  title: 'Administrer mål.',
+  title: 'Mål og belønninger.',
   manageProgressGoals: {
     title: 'Mål',
     hint: 'Når dit barn når forbi det sidste mål nedenfor, dukker der automatisk nye op, som genbruger disse ikoner.',
@@ -17,6 +17,42 @@ export const progress = {
       thresholdPlaceholder: 'Stjerner nødvendige',
       iconPlaceholder: 'Ikon',
       labelPlaceholder: 'Etiket (valgfri)',
+    },
+  },
+  manageRewards: {
+    title: 'Belønninger',
+    hint: 'Dit barn bruger stjerner på dem. En anmodning venter på din godkendelse, og stjernerne bliver først brugt, når du godkender. Optjente stjerner tæller stadig med til målene.',
+    loading: 'Indlæser belønninger…',
+    noChildrenLinked: 'Tilknyt et barn under Indstillinger, før du tilføjer belønninger.',
+    loadError: 'Kunne ikke indlæse belønninger.',
+    balance: '{spendable} stjerner at bruge, {spent} brugt, {total} optjent i alt.',
+    requestsTitle: 'Venter på dig',
+    noPendingRequests: 'Ingen anmodninger om belønninger venter.',
+    cost: '{cost} stjerner',
+    approve: 'Godkend',
+    decline: 'Afvis',
+    resolveError: 'Kunne ikke opdatere anmodningen.',
+    insufficientStars:
+      'Der er ikke længere stjerner nok til denne belønning. Du kan afvise den i stedet.',
+    alreadyResolved: 'Anmodningen var allerede behandlet, så listen er blevet opdateret.',
+    historyTitle: 'Seneste',
+    status: {
+      Approved: 'Godkendt',
+      Declined: 'Afvist',
+      Cancelled: 'Trukket tilbage',
+    },
+    catalogTitle: 'Belønningsliste',
+    noRewards: 'Ingen belønninger endnu.',
+    removeReward: 'Fjern',
+    addReward: '+ Tilføj en belønning',
+    submit: 'Gem belønninger',
+    saveError:
+      'Kunne ikke gemme belønninger. Hver skal have et navn, et ikon og koste mindst én stjerne.',
+    saveSuccess: 'Belønninger gemt.',
+    form: {
+      namePlaceholder: 'Belønning',
+      iconPlaceholder: 'Ikon',
+      costPlaceholder: 'Stjerner',
     },
   },
 };

@@ -1,4 +1,5 @@
 import { Component, inject, resource, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { FeaturesService } from '../../../core/features.service';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
@@ -16,7 +17,7 @@ export const PROGRESS_REQUEST_CONCURRENCY = 4;
 
 @Component({
   selector: 'app-children-overview',
-  imports: [TranslatePipe, LoadingSpinner, Card],
+  imports: [RouterLink, TranslatePipe, LoadingSpinner, Card],
   templateUrl: './children-overview.html',
 })
 export class ChildrenOverview {
@@ -30,7 +31,7 @@ export class ChildrenOverview {
   // Keyed by child ID rather than joined onto ChildSummary -- progress can fail or load slower
   // per child without blocking the (more important) name/linked-status list from rendering.
   protected readonly progressByChildId = signal<
-    Record<string, { totalStars: number; icon: string }>
+    Record<string, { totalStars: number; icon: string; pendingRewards: number }>
   >({});
 
   private async loadChildren(): Promise<ChildSummary[]> {
@@ -54,6 +55,9 @@ export class ChildrenOverview {
         const entry = {
           totalStars: summary.totalStars,
           icon: summary.displayIcon,
+          // There are no notifications, so this is how a guardian notices a reward request.
+          pendingRewards: summary.rewardRequests.filter((request) => request.status === 'Pending')
+            .length,
         };
 
         this.progressByChildId.update((current) => ({ ...current, [child.id]: entry }));

@@ -92,9 +92,11 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
   {
     name: 'guardian-progress',
     title: 'Progress',
-    description: 'Completed tasks earn progress towards rewards the guardian sets up.',
+    description:
+      'Completed tasks earn stars. The guardian answers reward requests, keeps the reward list and sets the goal posts.',
     as: 'guardian',
     route: '/guardian/progress',
+    waitFor: 'Choose Friday’s dinner',
   },
   {
     name: 'guardian-mealplan',
@@ -261,6 +263,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'child',
     route: '/child/rules',
     waitFor: 'Just for you',
+  },
+  {
+    name: 'child-rewards',
+    title: 'Child: rewards',
+    description:
+      'The child spends stars on the rewards a guardian set up. A request waits for a grown-up, and earlier answers are listed below.',
+    as: 'child',
+    route: '/child/rewards',
+    waitFor: 'Waiting for a grown-up',
   },
   {
     name: 'invite-group',

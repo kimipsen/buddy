@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
@@ -37,6 +38,10 @@ describe('ChildrenOverview', () => {
         nextGoalThreshold: 5,
         nextGoalIcon: '🌱',
         goalPosts: [],
+        spendableStars: 0,
+        spentStars: 0,
+        rewards: [],
+        rewardRequests: [],
       })),
       ...stubs.progress,
     };
@@ -44,6 +49,7 @@ describe('ChildrenOverview', () => {
     await TestBed.configureTestingModule({
       imports: [ChildrenOverview],
       providers: [
+        provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: ProgressService, useValue: progressStub },
       ],
@@ -133,6 +139,10 @@ describe('ChildrenOverview', () => {
           nextGoalThreshold: 5,
           nextGoalIcon: '🌿',
           goalPosts: [],
+          spendableStars: 0,
+          spentStars: 0,
+          rewards: [],
+          rewardRequests: [],
         })),
       },
     });
@@ -167,6 +177,10 @@ describe('ChildrenOverview', () => {
       nextGoalThreshold: 5,
       nextGoalIcon: '🌿',
       goalPosts: [],
+      spendableStars: 0,
+      spentStars: 0,
+      rewards: [],
+      rewardRequests: [],
     };
   }
 
@@ -257,5 +271,54 @@ describe('ChildrenOverview', () => {
 
     expect(progress.getChildProgress).not.toHaveBeenCalled();
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('li')).toHaveLength(1);
+  });
+
+  it("links to the child's rewards on the progress page when requests are waiting", async () => {
+    const pending = (id: string, status: 'Pending' | 'Approved') => ({
+      id,
+      rewardId: 'screen',
+      name: 'Screen time',
+      icon: '📱',
+      cost: 3,
+      status,
+      requestedAt: '2026-10-01T10:00:00Z',
+      resolvedAt: null,
+    });
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+      progress: {
+        getChildProgress: vi.fn(async () => ({
+          totalStars: 9,
+          unlockedMilestones: [],
+          displayIcon: '🌱',
+          nextGoalThreshold: 10,
+          nextGoalIcon: '🌿',
+          goalPosts: [],
+          spendableStars: 3,
+          spentStars: 3,
+          rewards: [],
+          rewardRequests: [
+            pending('a', 'Pending'),
+            pending('b', 'Pending'),
+            pending('c', 'Approved'),
+          ],
+        })),
+      },
+    });
+    await settle(fixture);
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      'a[href="/guardian/progress?child=child-1"]',
+    );
+    expect(link?.textContent?.trim()).toBe('Rewards waiting: 2');
+  });
+
+  it('shows no reward link when nothing is waiting', async () => {
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
+    await settle(fixture);
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('a')).toBeNull();
   });
 });

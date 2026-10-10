@@ -65,6 +65,7 @@ in real time.
 - [x] View linked guardians
 - [x] Complete tasks from the day view
 - [x] View progress and unlocked milestones
+- [x] Spend stars on guardian-defined rewards, approved by a guardian
 
 ### Platform
 

@@ -1,0 +1,68 @@
+@buddy_HostAddress = http://localhost:5193
+
+### The signed-in child's own progress, rewards and reward requests
+
+GET {{buddy_HostAddress}}/progress/me
+Authorization: Bearer {{childToken}}
+
+###
+
+# A child's progress (the child themself or a guardian)
+GET {{buddy_HostAddress}}/progress/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Configure goal posts (guardian only) -- full replace
+PUT {{buddy_HostAddress}}/progress/children/{{childId}}/goals
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "goalPosts": [
+    { "threshold": 5, "icon": "🌱", "label": "First sprout" },
+    { "threshold": 15, "icon": "🌳" }
+  ]
+}
+
+###
+
+# Configure the reward catalog (guardian only) -- full replace; omit "id" for a new reward
+PUT {{buddy_HostAddress}}/progress/children/{{childId}}/rewards
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "rewards": [
+    { "name": "15 minutes extra screen time", "icon": "📱", "cost": 5 },
+    { "name": "Choose Friday's dinner", "icon": "🍕", "cost": 12 }
+  ]
+}
+
+###
+
+# The child asks for a reward (409 insufficient_stars / too_many_pending_requests)
+POST {{buddy_HostAddress}}/progress/me/reward-requests
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{ "rewardId": "{{rewardId}}" }
+
+###
+
+# The child withdraws a pending request
+POST {{buddy_HostAddress}}/progress/me/reward-requests/{{requestId}}/cancel
+Authorization: Bearer {{childToken}}
+
+###
+
+# A guardian approves a request -- spends its stars (409 insufficient_stars / reward_request_resolved)
+POST {{buddy_HostAddress}}/progress/children/{{childId}}/reward-requests/{{requestId}}/approve
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# A guardian declines a request (409 reward_request_resolved)
+POST {{buddy_HostAddress}}/progress/children/{{childId}}/reward-requests/{{requestId}}/decline
+Authorization: Bearer {{guardianToken}}

@@ -52,6 +52,7 @@ model or permissions logic.
 - [Guardian-managed child time zone](analysis/child-timezone-settings.md)
 - [Gamified progress](analysis/gamified-progress.md)
 - [Configurable goal posts for progress](analysis/configurable-goal-posts.md)
+- [Reward redemption for progress](analysis/reward-redemption.md)
 - [Week plan print templates](analysis/week-plan-print-templates.md)
 - [Guardian work locations](analysis/work-locations.md)
 - [Babysitters](analysis/babysitters.md)

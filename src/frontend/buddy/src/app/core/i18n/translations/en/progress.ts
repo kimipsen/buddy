@@ -1,7 +1,7 @@
 export const progress = {
   backLink: 'Back to dashboard',
   eyebrow: 'Progress',
-  title: 'Manage progress goals.',
+  title: 'Goals and rewards.',
   manageProgressGoals: {
     title: 'Goal posts',
     hint: 'Once your child passes the last goal below, new ones keep appearing automatically, reusing these icons.',
@@ -17,6 +17,42 @@ export const progress = {
       thresholdPlaceholder: 'Stars needed',
       iconPlaceholder: 'Icon',
       labelPlaceholder: 'Label (optional)',
+    },
+  },
+  manageRewards: {
+    title: 'Rewards',
+    hint: 'Your child spends stars on these. A request waits for your approval, and the stars are only spent when you approve it. Earned stars still count towards the goal posts.',
+    loading: 'Loading rewards…',
+    noChildrenLinked: 'Link a child from Settings before adding rewards.',
+    loadError: 'Unable to load rewards.',
+    balance: '{spendable} stars to spend, {spent} spent, {total} earned in all.',
+    requestsTitle: 'Waiting for you',
+    noPendingRequests: 'No reward requests are waiting.',
+    cost: '{cost} stars',
+    approve: 'Approve',
+    decline: 'Decline',
+    resolveError: 'Unable to update this request.',
+    insufficientStars:
+      'There are no longer enough stars for this reward. You can decline it instead.',
+    alreadyResolved: 'This request was already handled, so the list has been refreshed.',
+    historyTitle: 'Recent',
+    status: {
+      Approved: 'Approved',
+      Declined: 'Declined',
+      Cancelled: 'Withdrawn',
+    },
+    catalogTitle: 'Reward list',
+    noRewards: 'No rewards yet.',
+    removeReward: 'Remove',
+    addReward: '+ Add a reward',
+    submit: 'Save rewards',
+    saveError:
+      'Unable to save rewards. Each needs a name, an icon and a cost of at least one star.',
+    saveSuccess: 'Rewards saved.',
+    form: {
+      namePlaceholder: 'Reward',
+      iconPlaceholder: 'Icon',
+      costPlaceholder: 'Stars',
     },
   },
 };

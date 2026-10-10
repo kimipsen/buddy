@@ -59,4 +59,33 @@ public sealed class ProgressEventShapeTests
     public void GoalPostsConfigured() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new GoalPostsConfigured(FixedProgressId, [new GoalPost(5, "star", "Movie night"), new GoalPost(20, "trophy", "")], FixedInstant),
         "Progress/GoalPostsConfigured.json");
+
+    private static readonly UserId FixedGuardianId = new(Guid.Parse("00000000-0000-0000-0000-000000000001"));
+    private static readonly RewardId FixedRewardId = new(Guid.Parse("00000000-0000-0000-0000-000000000040"));
+    private static readonly RewardRequestId FixedRequestId = new(Guid.Parse("00000000-0000-0000-0000-000000000041"));
+
+    [Fact]
+    public void RewardsConfigured() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RewardsConfigured(FixedProgressId, [new Reward(FixedRewardId, "Extra screen time", "tablet", 5)], FixedGuardianId, FixedInstant),
+        "Progress/RewardsConfigured.json");
+
+    [Fact]
+    public void RewardRequested() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RewardRequested(FixedProgressId, FixedRequestId, FixedRewardId, "Extra screen time", "tablet", 5, FixedInstant),
+        "Progress/RewardRequested.json");
+
+    [Fact]
+    public void RewardRequestApproved() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RewardRequestApproved(FixedProgressId, FixedRequestId, FixedGuardianId, FixedInstant),
+        "Progress/RewardRequestApproved.json");
+
+    [Fact]
+    public void RewardRequestDeclined() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RewardRequestDeclined(FixedProgressId, FixedRequestId, FixedGuardianId, FixedInstant),
+        "Progress/RewardRequestDeclined.json");
+
+    [Fact]
+    public void RewardRequestCancelled() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new RewardRequestCancelled(FixedProgressId, FixedRequestId, FixedInstant),
+        "Progress/RewardRequestCancelled.json");
 }

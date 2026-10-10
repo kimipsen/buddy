@@ -1,7 +1,8 @@
 # Progress badge on the child home dashboard
 
-Status: Implemented (badge + service + guardian goal-post management; no
-reward redemption UI yet)
+Status: Implemented (badge + service + guardian goal-post management, plus reward redemption: the
+child's `/child/rewards` page and the guardian's rewards card, designed in
+[reward-redemption.md](../../backend/analysis/reward-redemption.md))
 
 ## Context
 
@@ -137,8 +138,8 @@ including any server-side normalization.
 
 ## Deliberate boundaries
 
-- No reward catalog or redemption UI — Phase 3 in the backend doc, blocked
-  on the same open product questions (real-world vs. cosmetic rewards).
+- Reward redemption shipped later as its own design:
+  [reward-redemption.md](../../backend/analysis/reward-redemption.md).
 - No per-child on/off toggle for gamification, and no way for a guardian to
   manually adjust a child's stars — goal posts control the icons/thresholds
   a child progresses through, not the star count itself.

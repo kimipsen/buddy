@@ -6,6 +6,7 @@ using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
+using buddy.IntegrationTests.Features.Progress;
 using buddy.IntegrationTests.Fixtures;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -105,5 +106,37 @@ public sealed class ChildProgressSnapshotTests(BuddyApiFixture fixture)
         Assert.NotEmpty(snapshot!.AwardedOccurrences);
         Assert.Contains(new OccurrenceKey(new CalendarItemId(firstTask!.Id), dueDate, new CompletionTarget.WholeTask()), snapshot.AwardedOccurrences);
         Assert.DoesNotContain(new OccurrenceKey(new CalendarItemId(secondTask!.Id), dueDate, new CompletionTarget.WholeTask()), snapshot.AwardedOccurrences);
+    }
+
+    // RewardsConfigured, RewardRequested and all three resolutions -- the reward catalog and the
+    // request list (with its RewardRequestStatus enum and nullable ResolvedBy) must round-trip.
+    [Fact]
+    public async Task The_snapshot_matches_a_full_replay_after_reward_requests()
+    {
+        var family = await RewardTestHelpers.CreateFamilyAsync(fixture);
+        await RewardTestHelpers.EarnStarsAsync(fixture, family, 4);
+        var rewardId = await RewardTestHelpers.AddRewardAsync(fixture, family, "Screen time", 1);
+
+        var approved = await RewardTestHelpers.RequestAsync(fixture, family, rewardId);
+        var declined = await RewardTestHelpers.RequestAsync(fixture, family, rewardId);
+        var cancelled = await RewardTestHelpers.RequestAsync(fixture, family, rewardId);
+        await RewardTestHelpers.RequestAsync(fixture, family, rewardId);
+        await RewardTestHelpers.ResolveAsync(fixture, family.GuardianToken, family.ChildId, approved, "approve");
+        await RewardTestHelpers.ResolveAsync(fixture, family.GuardianToken, family.ChildId, declined, "decline");
+        await RewardTestHelpers.CancelAsync(fixture, family.ChildToken, cancelled);
+
+        var progress = fixture.Host.Services.GetRequiredService<IProgressEventStore>();
+        var id = ProgressId.ForChild(new UserId(family.ChildId));
+
+        var replayed = ChildProgress.Rehydrate(await progress.ReadAsync(id, CancellationToken.None));
+        var snapshot = await progress.FindSnapshotAsync(id, CancellationToken.None);
+
+        Assert.NotNull(replayed);
+        Assert.NotNull(snapshot);
+        Assert.Equivalent(replayed, snapshot, strict: true);
+        Assert.Equal(1, snapshot.SpentStars);
+        Assert.Equal(
+            [RewardRequestStatus.Approved, RewardRequestStatus.Declined, RewardRequestStatus.Cancelled, RewardRequestStatus.Pending],
+            snapshot.RewardRequests.Select(r => r.Status));
     }
 }

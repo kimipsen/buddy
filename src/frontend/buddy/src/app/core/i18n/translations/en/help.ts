@@ -232,6 +232,16 @@ export const help = {
           title: 'How your child earns stars',
           body: 'Your child earns a star each time a task assigned to them is marked done. For a task with subtasks, each subtask your child ticks off gives a star. If the task is marked not done again, the star is taken back. Your child sees their stars and their next goal on their home page.',
         },
+        rewards: {
+          title: 'Rewards your child can ask for',
+          body: 'Rewards are things your child can spend stars on, like extra screen time. Your child asks for one from "Spend your stars" on their home page, and the request waits for you; the stars are only spent when you approve it. Spending stars never moves your child back on their goals. When a request is waiting, the Children card on your dashboard says so.',
+          steps: {
+            s1: 'Choose the child, if you have more than one.',
+            s2: 'Under "Reward list", press "+ Add a reward" and enter an icon, a name and how many stars it costs.',
+            s3: 'Press "Save rewards".',
+            s4: 'Under "Waiting for you", press "Approve" or "Decline" when your child asks for one.',
+          },
+        },
         goalPosts: {
           title: "Set your child's goals",
           body: 'Goal posts are the star counts your child works towards, each with an icon and an optional label. Until you change them, Buddy uses 5, 10, 25, 50 and 100 stars. Each goal must need more stars than the one before.',

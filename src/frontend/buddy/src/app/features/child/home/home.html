@@ -39,6 +39,16 @@
         {{ 'houseRules.child.homeLink' | translate }}
       </a>
     }
+
+    @if (features.enabled('progress')) {
+      <a
+        routerLink="/child/rewards"
+        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-emerald-700 dark:text-emerald-400 transition hover:border-emerald-300 dark:hover:border-emerald-700"
+      >
+        <span aria-hidden="true">🎁</span>
+        {{ 'child.home.rewardsLink' | translate }}
+      </a>
+    }
   </div>
 
   @if (pendingRules() > 0) {

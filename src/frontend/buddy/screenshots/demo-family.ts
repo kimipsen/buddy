@@ -490,6 +490,34 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       ],
     });
 
+    // Rewards: one already approved and one waiting, so both the child's page and the guardian's
+    // show requests. Emil has at least four stars (one Monday morning's subtasks), enough for both;
+    // the third is out of reach. Optional, like the subtask completions above.
+    try {
+      const { rewards } = await api.put<{ rewards: Named[] }>(
+        `/progress/children/${emil.id}/rewards`,
+        {
+          rewards: [
+            { name: 'Extra screen time', icon: '📱', cost: 2 },
+            { name: 'Choose Friday’s dinner', icon: '🍕', cost: 2 },
+            { name: 'Cinema trip', icon: '🎬', cost: 50 },
+          ],
+        },
+      );
+      const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);
+      const approved = await emilApi.post<{ rewardRequests: Named[] }>(
+        '/progress/me/reward-requests',
+        { rewardId: rewards[0].id },
+      );
+      await api.post(
+        `/progress/children/${emil.id}/reward-requests/${approved.rewardRequests[0].id}/approve`,
+      );
+      await emilApi.post('/progress/me/reward-requests', { rewardId: rewards[1].id });
+      await emilApi.dispose();
+    } catch (error: unknown) {
+      warn(error);
+    }
+
     // Meal plan -----------------------------------------------------------------------------
     const meals: Record<string, Named> = {};
     for (const [name, icon, color, description] of [

@@ -3,9 +3,9 @@
 Status: Sketch implemented for tasks (`Features/Progress/`, wired into
 `SetTaskCompletionHandler`, plus a `GET /progress/me` read endpoint, a
 guardian-facing `GET /progress/children/{childId}` read endpoint, and a
-child-dashboard widget). Doses, reward redemption, and guardian *write*
-controls (redemption, manual adjustment) are not implemented and won't be
-built (dropped 2026-10-10); the open questions are kept for reference.
+child-dashboard widget). Reward redemption (Phase 3) is implemented, see
+[reward-redemption.md](reward-redemption.md). Doses and manual star
+adjustment remain unimplemented -- see open questions.
 
 ## Context
 
@@ -174,7 +174,7 @@ before reward redemption (Phase 3) is designed.
 | Does un-completing a task claw back a star | Yes, mirroring `TaskCompletionChanged`'s existing `Before`/`After` toggle semantics — flagged as a UX question, not settled |
 | Are dose completions gamified in v1 | No — excluded pending the open question below, to avoid conflating a health record with a reward economy |
 | Are sibling comparisons/leaderboards in scope | No — progress is strictly per-child, never surfaced across children in a `Group` |
-| Redemption / reward catalog | Not modeled in this sketch — Phase 3 |
+| Redemption / reward catalog | Not modeled in this sketch — Phase 3, since built: [reward-redemption.md](reward-redemption.md) |
 
 ## Remaining open questions
 
@@ -185,8 +185,9 @@ before reward redemption (Phase 3) is designed.
 - Should un-completing a task always revoke its star, or only within some
   grace window (e.g. same day), to avoid a child watching a milestone
   disappear from an honest backtrack?
-- Real-world reward redemption (Phase 3) is explicitly out of scope here —
-  is that guardian-configured, or purely in-app/cosmetic?
+- ~~Real-world reward redemption (Phase 3)~~ Settled: guardian-configured
+  real-world rewards, requested by the child and approved by a guardian, from a
+  separate spendable balance -- see [reward-redemption.md](reward-redemption.md).
 - No reminder/notification infrastructure exists anywhere in this codebase
   (`notification|reminder|push` — zero hits). If "celebrate a completion" or
   "remind before a streak-equivalent lapses" ever needs a push notification,

@@ -40,6 +40,7 @@ describe('feature routes', () => {
     ['guardian', guardianChildren, 'task-library', 'taskLibrary'],
     ['guardian', guardianChildren, 'help', 'help'],
     ['child', CHILD_ROUTES, 'mealplan', 'mealplans'],
+    ['child', CHILD_ROUTES, 'rewards', 'progress'],
     ['child', CHILD_ROUTES, 'rules', 'houseRules'],
   ];
 

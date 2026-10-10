@@ -1,0 +1,213 @@
+<app-card>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">
+      {{ 'progress.manageRewards.title' | translate }}
+    </h3>
+
+    @if (childList().length > 1) {
+      <label class="sr-only" for="rewardsChildId">{{
+        'common.selectChildLabel' | translate
+      }}</label>
+      <select
+        id="rewardsChildId"
+        class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+        [ngModel]="selectedChildId()"
+        (ngModelChange)="onChildChange($event)"
+      >
+        @for (child of childList(); track child.id) {
+          <option [value]="child.id">{{ child.name.givenName }}</option>
+        }
+      </select>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'progress.manageRewards.loading' | translate }}
+    </p>
+  } @else if (!hasChildren()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'progress.manageRewards.noChildrenLinked' | translate }}
+    </p>
+  } @else {
+    @if (loadFailed()) {
+      <p class="mb-3 text-sm text-red-600 dark:text-red-400">
+        {{ 'progress.manageRewards.loadError' | translate }}
+      </p>
+    }
+
+    <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'progress.manageRewards.hint' | translate }}
+    </p>
+
+    <!-- Only once the child's progress has loaded: an editor drafted from a failed load would
+         save an empty catalog over the real one. -->
+    @if (progress.hasValue()) {
+      @let summary = progress.value();
+      <p class="mb-5 text-sm font-medium" data-testid="reward-balance">
+        {{
+          'progress.manageRewards.balance'
+            | translate
+              : {
+                  spendable: summary.spendableStars,
+                  spent: summary.spentStars,
+                  total: summary.totalStars,
+                }
+        }}
+      </p>
+
+      <h4 class="mb-2 text-sm font-semibold">
+        {{ 'progress.manageRewards.requestsTitle' | translate }}
+      </h4>
+      <!-- Here rather than in the request's row: after a 409 the reload can take the row away. -->
+      @let resolveState = resolving.state();
+      @if (resolveState.status === 'error') {
+        <p class="mb-2 text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ resolveState.message | translate }}
+        </p>
+      }
+      @if (pending().length === 0) {
+        <p class="mb-5 text-sm text-slate-500 dark:text-slate-400">
+          {{ 'progress.manageRewards.noPendingRequests' | translate }}
+        </p>
+      } @else {
+        <ul class="mb-5 space-y-2">
+          @for (request of pending(); track request.id) {
+            <li
+              class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700 dark:bg-amber-500/10"
+              [attr.data-request-id]="request.id"
+            >
+              <span class="text-xl" aria-hidden="true">{{ request.icon }}</span>
+              <span class="min-w-40 flex-1 text-sm">
+                <span class="font-medium">{{ request.name }}</span>
+                <span class="text-slate-500 dark:text-slate-400">
+                  · {{ 'progress.manageRewards.cost' | translate: { cost: request.cost } }}</span
+                >
+              </span>
+              <span class="flex gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                  [disabled]="resolving.busy()"
+                  (click)="approve(request)"
+                >
+                  {{ 'progress.manageRewards.approve' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-50"
+                  [disabled]="resolving.busy()"
+                  (click)="decline(request)"
+                >
+                  {{ 'progress.manageRewards.decline' | translate }}
+                </button>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (history().length > 0) {
+        <h4 class="mb-2 text-sm font-semibold">
+          {{ 'progress.manageRewards.historyTitle' | translate }}
+        </h4>
+        <ul class="mb-5 space-y-1">
+          @for (request of history(); track request.id) {
+            <li class="flex flex-wrap items-center gap-2 text-sm">
+              <span aria-hidden="true">{{ request.icon }}</span>
+              <span class="flex-1">{{ request.name }}</span>
+              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{
+                statusKey(request) | translate
+              }}</span>
+            </li>
+          }
+        </ul>
+      }
+
+      <h4 class="mb-2 text-sm font-semibold">
+        {{ 'progress.manageRewards.catalogTitle' | translate }}
+      </h4>
+      @if (rows().length === 0) {
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ 'progress.manageRewards.noRewards' | translate }}
+        </p>
+      }
+
+      <div class="space-y-2">
+        @for (row of rows(); track $index) {
+          <div class="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              [attr.name]="'rewardIcon' + $index"
+              maxlength="32"
+              [placeholder]="'progress.manageRewards.form.iconPlaceholder' | translate"
+              aria-label="{{ 'progress.manageRewards.form.iconPlaceholder' | translate }}"
+              class="w-16 sm:w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="row.icon"
+              (ngModelChange)="setField($index, 'icon', $event)"
+            />
+            <input
+              type="text"
+              [attr.name]="'rewardName' + $index"
+              maxlength="100"
+              [placeholder]="'progress.manageRewards.form.namePlaceholder' | translate"
+              aria-label="{{ 'progress.manageRewards.form.namePlaceholder' | translate }}"
+              class="min-w-32 flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="row.name"
+              (ngModelChange)="setField($index, 'name', $event)"
+            />
+            <input
+              type="number"
+              min="1"
+              max="10000"
+              [attr.name]="'rewardCost' + $index"
+              [placeholder]="'progress.manageRewards.form.costPlaceholder' | translate"
+              aria-label="{{ 'progress.manageRewards.form.costPlaceholder' | translate }}"
+              class="w-20 sm:w-28 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+              [ngModel]="row.cost"
+              (ngModelChange)="setField($index, 'cost', $event)"
+            />
+            <button
+              type="button"
+              class="ml-auto text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+              (click)="removeRow($index)"
+            >
+              {{ 'progress.manageRewards.removeReward' | translate }}
+            </button>
+          </div>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="mt-3 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+        (click)="addRow()"
+      >
+        {{ 'progress.manageRewards.addReward' | translate }}
+      </button>
+
+      <div class="mt-5 flex items-center gap-3">
+        <button
+          type="button"
+          class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50"
+          [disabled]="saving.busy() || !canSave()"
+          (click)="save()"
+        >
+          {{ 'progress.manageRewards.submit' | translate }}
+        </button>
+
+        @if (saved()) {
+          <span class="text-sm text-emerald-700 dark:text-emerald-400">{{
+            'progress.manageRewards.saveSuccess' | translate
+          }}</span>
+        }
+      </div>
+    }
+
+    @if (saving.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      }
+    }
+  }
+</app-card>

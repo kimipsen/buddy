@@ -233,6 +233,16 @@ export const help = {
           title: 'Sådan tjener dit barn stjerner',
           body: 'Dit barn får en stjerne, hver gang en opgave, der er tildelt barnet, bliver markeret som klar. Har opgaven deltrin, giver hvert deltrin, barnet krydser af, en stjerne. Markeres opgaven som ikke klar igen, forsvinder stjernen. Dit barn kan se sine stjerner og sit næste mål på sin startside.',
         },
+        rewards: {
+          title: 'Belønninger, dit barn kan bede om',
+          body: 'Belønninger er ting, dit barn kan bruge stjerner på, fx ekstra skærmtid. Dit barn beder om en via "Brug dine stjerner" på sin startside, og anmodningen venter på dig; stjernerne bliver først brugt, når du godkender den. At bruge stjerner flytter aldrig dit barn tilbage i forhold til målene. Når en anmodning venter, står det på kortet Børn på din oversigt.',
+          steps: {
+            s1: 'Vælg barnet, hvis du har flere.',
+            s2: 'Under "Belønningsliste" trykker du "+ Tilføj en belønning" og skriver et ikon, et navn og hvor mange stjerner den koster.',
+            s3: 'Tryk "Gem belønninger".',
+            s4: 'Under "Venter på dig" trykker du "Godkend" eller "Afvis", når dit barn beder om en.',
+          },
+        },
         goalPosts: {
           title: 'Sæt dit barns mål',
           body: 'Mål er de antal stjerner, dit barn arbejder hen imod, hver med et ikon og en valgfri etiket. Indtil du ændrer dem, bruger Buddy 5, 10, 25, 50 og 100 stjerner. Hvert mål skal kræve flere stjerner end det forrige.',

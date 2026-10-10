@@ -30,7 +30,12 @@ public static class ProgressFeature
         typeof(StarAwarded),
         typeof(StarRevoked),
         typeof(MilestoneUnlocked),
-        typeof(GoalPostsConfigured)
+        typeof(GoalPostsConfigured),
+        typeof(RewardsConfigured),
+        typeof(RewardRequested),
+        typeof(RewardRequestApproved),
+        typeof(RewardRequestDeclined),
+        typeof(RewardRequestCancelled)
     ];
 
     public static IServiceCollection AddProgressFeature(this IServiceCollection services, IConfiguration configuration)
@@ -93,6 +98,11 @@ public static class ProgressFeature
         progress.MapGetMyProgress();
         progress.MapGetChildProgress();
         progress.MapConfigureGoalPosts();
+        progress.MapConfigureRewards();
+        progress.MapRequestReward();
+        progress.MapCancelRewardRequest();
+        progress.MapApproveRewardRequest();
+        progress.MapDeclineRewardRequest();
 
         return endpoints;
     }

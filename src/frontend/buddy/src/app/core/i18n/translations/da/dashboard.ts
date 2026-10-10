@@ -8,6 +8,7 @@ export const dashboard = {
     empty: 'Ingen børn tilknyttet endnu. Tilføj et under Indstillinger.',
     linkedBadge: 'Tilknyttet',
     starCount: '{count} stjerner',
+    pendingRewards: 'Belønninger venter: {count}',
   },
   tasks: {
     title: 'Dagens opgaver',

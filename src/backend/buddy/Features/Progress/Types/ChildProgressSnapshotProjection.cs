@@ -32,4 +32,19 @@ public sealed class ChildProgressSnapshotProjection : SingleStreamProjection<Chi
 
     public ChildProgressSnapshot Apply(ChildProgressSnapshot current, GoalPostsConfigured configured) =>
         current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(configured)) };
+
+    public ChildProgressSnapshot Apply(ChildProgressSnapshot current, RewardsConfigured configured) =>
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(configured)) };
+
+    public ChildProgressSnapshot Apply(ChildProgressSnapshot current, RewardRequested requested) =>
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(requested)) };
+
+    public ChildProgressSnapshot Apply(ChildProgressSnapshot current, RewardRequestApproved approved) =>
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(approved)) };
+
+    public ChildProgressSnapshot Apply(ChildProgressSnapshot current, RewardRequestDeclined declined) =>
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(declined)) };
+
+    public ChildProgressSnapshot Apply(ChildProgressSnapshot current, RewardRequestCancelled cancelled) =>
+        current with { ChildProgress = ChildProgress.Advance(current.ChildProgress, ProgressEvent.FromPayload(cancelled)) };
 }

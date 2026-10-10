@@ -8,6 +8,7 @@ export const dashboard = {
     empty: 'No children linked yet. Add one from Settings.',
     linkedBadge: 'Linked',
     starCount: '{count} stars',
+    pendingRewards: 'Rewards waiting: {count}',
   },
   tasks: {
     title: 'Today’s tasks',

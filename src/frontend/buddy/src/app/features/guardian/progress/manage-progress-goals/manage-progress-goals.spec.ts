@@ -25,6 +25,10 @@ describe('ManageProgressGoals', () => {
       displayIcon: '🌱',
       nextGoalThreshold: 5,
       nextGoalIcon: '🌱',
+      spendableStars: 0,
+      spentStars: 0,
+      rewards: [],
+      rewardRequests: [],
       goalPosts: [
         { threshold: 5, icon: '🌱', label: '' },
         { threshold: 10, icon: '🌿', label: '' },

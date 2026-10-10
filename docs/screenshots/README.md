@@ -70,7 +70,7 @@ Reusable routines broken into small, timed steps.
 
 ## Progress
 
-Completed tasks earn progress towards rewards the guardian sets up.
+Completed tasks earn stars. The guardian answers reward requests, keeps the reward list and sets the goal posts.
 
 ![Progress](guardian-progress.png)
 
@@ -277,6 +277,16 @@ The child’s own rules and each household’s, with “New” and “Changed”
 <img src="tablet/child-rules.png" alt="Child: our rules on a tablet" width="384">
 
 <img src="mobile/child-rules.png" alt="Child: our rules on a phone" width="320">
+
+## Child: rewards
+
+The child spends stars on the rewards a guardian set up. A request waits for a grown-up, and earlier answers are listed below.
+
+![Child: rewards](child-rewards.png)
+
+<img src="tablet/child-rewards.png" alt="Child: rewards on a tablet" width="384">
+
+<img src="mobile/child-rewards.png" alt="Child: rewards on a phone" width="320">
 
 ## Group invite
 

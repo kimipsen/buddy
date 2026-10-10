@@ -38,6 +38,14 @@ public static class ProgressAccessExtensions
         ProgressAccess.Allowed => throw new UnreachableException("ToDeniedResult called with ProgressAccess.Allowed."),
         _ => throw new UnreachableException($"Unrecognized ProgressAccess value: {access}."),
     };
+
+    // The same mapping for the reward request slices, which answer with RewardRequestOutcome.
+    public static RewardRequestOutcome ToDeniedOutcome(this ProgressAccess access) => access.ToDeniedResult<Unit>() switch
+    {
+        Result<Unit>.Forbidden => new RewardRequestOutcome.Forbidden(),
+        Result<Unit>.NotFound => new RewardRequestOutcome.NotFound(),
+        Result<Unit>.Success or Result<Unit>.Validation => throw new UnreachableException("ToDeniedResult only denies."),
+    };
 }
 
 public static class ProgressAuthorization

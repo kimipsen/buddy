@@ -122,6 +122,9 @@ The guardian routes currently include:
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
   calendar, plus event/task creation
 - `/guardian/task-library` — per-child task template and subtask management
+- `/guardian/progress` — per child: answer reward requests (approve/decline), keep the reward
+  list, and set the goal posts; the children overview on the dashboard links here with
+  "Rewards waiting: N" ([design](../backend/analysis/reward-redemption.md))
 - `/guardian/admin` — profile, child, calendar, group, AI provider, data export, and account administration
 - `/guardian/help` — every in-app help topic on one page; `?topic=<id>` scrolls to one. Every other
   guardian page (except onboarding) names its topic in its route's `data.helpTopic`, and the shell
@@ -149,6 +152,7 @@ The child routes currently include:
 - `/child` — today's operational view and relationship summaries
 - `/child/mealplan` — current/historical meal plans and the child's own ratings
 - `/child/calendar` — read-only seven-day agenda across accessible calendars
+- `/child/rewards` — the child's spendable stars, the rewards a guardian set up with an "Ask for this" button on the affordable ones, requests waiting for a grown-up (withdrawable), and earlier answers; the child home links to it
 - `/child/rules` — the child's own and each household's rules, with "New"/"Changed" chips and an "I've read this" button; the child home links to it and shows a "N rules to read" card
 
 ### Login feature
@@ -208,7 +212,8 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
 - `TaskLibraryService` manages per-child task templates and subtasks, and backs the
   template picker on the calendar agenda's create-task form
 - `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post
-  info for the progress badge, and lets a guardian configure a child's goal posts
+  info for the progress badge, lets a guardian configure a child's goal posts and reward
+  catalog and approve or decline reward requests, and lets a child request or withdraw a reward
 - `UsersService` loads the current profile, language, and email-verification state, resends the
   verification email, loads the
   account-deletion preview, downloads the personal-data export, and deletes the account
@@ -355,7 +360,8 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Guardian calendar views](analysis/guardian-full-calendar-views.md) — implemented day,
   work-week, rolling-week, and month navigation
 - [Child progress and rewards](analysis/child-progress-and-rewards.md) — implemented progress
-  summary, guardian-configurable goal posts, and reward sketch
+  summary, guardian-configurable goal posts, and reward redemption (see
+  [Reward redemption](../backend/analysis/reward-redemption.md))
 - [Pickup planning and daily views](analysis/pickup-planning-and-daily-views.md) — implemented
   guardian planner, guardian dashboard summary, and child read-only view
 - [Week plan printing](analysis/week-plan-printing.md) — implemented A3/A4 landscape print

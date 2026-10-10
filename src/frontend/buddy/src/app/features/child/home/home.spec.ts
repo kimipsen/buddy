@@ -176,6 +176,10 @@ describe('ChildHome', () => {
         nextGoalThreshold: 5,
         nextGoalIcon: '🌱',
         goalPosts: [],
+        spendableStars: 0,
+        spentStars: 0,
+        rewards: [],
+        rewardRequests: [],
       })),
       ...stubs.progress,
     };
@@ -640,6 +644,10 @@ describe('ChildHome', () => {
             nextGoalThreshold: 10,
             nextGoalIcon: '🏆',
             goalPosts: [],
+            spendableStars: 0,
+            spentStars: 0,
+            rewards: [],
+            rewardRequests: [],
           })),
         },
       });
@@ -674,6 +682,10 @@ describe('ChildHome', () => {
           nextGoalThreshold: 5,
           nextGoalIcon: '🌱',
           goalPosts: [],
+          spendableStars: 0,
+          spentStars: 0,
+          rewards: [],
+          rewardRequests: [],
         })
         .mockResolvedValueOnce({
           totalStars: 2,
@@ -682,6 +694,10 @@ describe('ChildHome', () => {
           nextGoalThreshold: 5,
           nextGoalIcon: '🌱',
           goalPosts: [],
+          spendableStars: 0,
+          spentStars: 0,
+          rewards: [],
+          rewardRequests: [],
         });
       const { fixture } = await setup({
         progress: { getMyProgress },

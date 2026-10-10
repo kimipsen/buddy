@@ -80,7 +80,12 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'progress',
     feature: 'progress',
-    sections: [{ id: 'earnStars' }, { id: 'goalPosts', steps: 4 }, { id: 'milestones' }],
+    sections: [
+      { id: 'earnStars' },
+      { id: 'rewards', steps: 4 },
+      { id: 'goalPosts', steps: 4 },
+      { id: 'milestones' },
+    ],
     related: ['calendar', 'taskLibrary'],
   },
   {

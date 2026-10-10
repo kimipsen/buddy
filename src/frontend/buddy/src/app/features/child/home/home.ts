@@ -96,6 +96,10 @@ const STARTING_PROGRESS: ProgressSummary = {
   nextGoalThreshold: 0,
   nextGoalIcon: '🌱',
   goalPosts: [],
+  spendableStars: 0,
+  spentStars: 0,
+  rewards: [],
+  rewardRequests: [],
 };
 
 // Today's calendar occurrences, split into the two kinds the dashboard shows separately.
