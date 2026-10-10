@@ -556,6 +556,14 @@ Frontend:
 | Concurrent edits by two guardians | Last write wins. Both are kept in the event history (`Before`/`After`) |
 | `Features:HouseRules = false` | Routes not mapped. Data and GDPR coverage stay, as for every flag |
 
+## Estimate
+
+| | |
+|---|---|
+| Complexity | High -- a new aggregate and Marten schema with six events, seven slices on dual child/group routes, a three-tier authorization over two scopes, GDPR erasure and export, the app's first markdown renderer and editor, and four new pages (guardian, child, two print pages) |
+| Single developer | 12-18 days |
+| AI agent | 6-10 hours, plus 3-5 hours of human review (the markdown allow list and the authorization matrix deserve a careful read) and settling the open questions |
+
 ## Decisions made
 
 | Question | Decision |

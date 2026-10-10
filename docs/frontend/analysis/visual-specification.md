@@ -118,9 +118,8 @@ every new component in this spec:
   icons next to a text label get `aria-hidden="true"` instead so screen
   readers don't read them twice.
 - Toggle switches use `role="switch"` with `aria-checked`, not a bare styled
-  checkbox -- the current codebase has no toggle yet, so this is a new
-  requirement, not an existing pattern.
-- Stateful custom buttons (menus, segmented controls, future toggles) carry
+  checkbox, as `shared/toggle` does.
+- Stateful custom buttons (menus, segmented controls) carry
   `aria-pressed` / `aria-expanded` / `aria-haspopup` as appropriate,
   matching the pattern already used in `child-menu.ts`.
 - Focus is always visible: `focus:ring-2` (or `ring-4` for larger touch
@@ -134,20 +133,26 @@ every new component in this spec:
 
 ## Gaps and recommendations
 
-This spec assumes a few components the codebase doesn't have yet. Building
-these as shared components (`shared/toggle`, `shared/stepper`, etc.),
-following the pattern already set by `shared/date-select` and
-`shared/time-select`, is what makes the rest of this document enforceable
-rather than aspirational.
+Most of the components this spec assumes now exist as shared components in
+`src/app/shared`, following the pattern set by `shared/date-select` and
+`shared/time-select`. That is what makes the rest of this document
+enforceable rather than aspirational. As of October 2026:
 
-| Missing today | Currently used instead | Needed for |
+| Component | State | Used by |
 | --- | --- | --- |
-| Toggle switch | Native `<input type="checkbox">` | Every boolean field, including the Sleep Diary's "seemed tired" flag |
-| Styled dropdown / segmented control | Raw `<select>` | Enums like `PickupAssigneeKind`, medicine schedules |
-| Repeatable row group | Nothing -- not yet built | Sleep Diary night wake-ups and naps (variable count per day) |
-| Time-range control | Built: `shared/time-range` (first used by the Sleep Diary) | Bedtime-ritual window |
-| Stepper | Free-typed number/text input | Dosage, quantities |
-| Modal / dialog | None -- explicitly avoided; editing happens inline | Only introduce one if a future flow can't be done inline; otherwise keep the inline-edit convention |
+| Toggle switch | Built: `shared/toggle`. No template uses a bare `<input type="checkbox">` any more | 10 templates, including the Sleep Diary's "seemed tired" flag |
+| Segmented control | Built: `shared/segmented-control` | 8 templates, including `PickupAssigneeKind` in `pickup-cell` |
+| Repeatable row group | Built: `shared/repeatable-row` | Sleep Diary wake-ups and naps, medicines, task subtasks, print templates |
+| Time-range control | Built: `shared/time-range` | Sleep Diary bedtime-ritual window |
+| Stepper | Built: `shared/stepper` | Task library, onboarding task step, agenda, print templates |
+| Color swatch picker | Built: `shared/color-swatch-picker` | 8 templates (meals, medicines, tasks, work locations, agenda, print templates) |
+| Styled dropdown | **Missing.** About 50 raw `<select>` elements in 20 templates, mostly for choosing a person, child, group or calendar from a list that isn't known in advance | Every closed set with more than four options |
+| Modal / dialog | One so far: the confirmation in `admin/delete-account`. Editing still happens inline | Only introduce another if a flow can't be done inline. [house-rules.md](../../backend/analysis/house-rules.md#frontend) proposes a rule editor dialog |
+
+The remaining free-typed number inputs (Sleep Diary wake-up minutes and
+total-slept hours/minutes, progress goal thresholds) are wide-range values,
+not the small bounded counts the stepper is for, so they stay as number
+fields.
 
 Also worth doing regardless of any single feature: promote the `emerald` /
 `slate` / `red` convention from "used consistently by habit" to actual CSS
@@ -178,3 +183,11 @@ Layout order should mirror the night itself, top to bottom: getting-ready ->
 bedtime ritual -> put-down -> fall-asleep -> wake-ups/naps -> morning wake ->
 total slept -> remarks. A guardian scanning the form should be able to
 reconstruct the night in reading order without cross-referencing labels.
+
+## Estimate
+
+| | |
+|---|---|
+| Complexity | Medium -- almost every component in [Gaps and recommendations](#gaps-and-recommendations) is built, so what remains is broad rather than deep: a styled dropdown and the migration of about 50 raw `<select>` elements in 20 templates (any with four or fewer fixed options become segmented controls), semantic color tokens in place of several hundred hard-coded `emerald`/`slate`/`red` classes, a child-screen pass for `text-lg` and 44x44px targets, and regenerated screenshots |
+| Single developer | 5-8 days |
+| AI agent | 3-5 hours, plus 2-3 hours of human review, mostly checking the regenerated screenshots in light and dark |
