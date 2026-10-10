@@ -1,0 +1,234 @@
+<app-page backLink="/guardian" [backLabel]="'houseRules.backLink' | translate">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p
+        class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+      >
+        {{ 'houseRules.eyebrow' | translate }}
+      </p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+        {{ 'houseRules.title' | translate }}
+      </h2>
+      <p class="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
+        {{ 'houseRules.intro' | translate }}
+      </p>
+    </div>
+
+    @if (householdOptions().length + childOptions().length > 0) {
+      <div>
+        <label
+          class="block text-xs font-medium text-slate-500 dark:text-slate-400"
+          for="houseRulesScope"
+          >{{ 'houseRules.scopeLabel' | translate }}</label
+        >
+        <select
+          id="houseRulesScope"
+          class="mt-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="selectedKey()"
+          [disabled]="action.busy()"
+          (ngModelChange)="selectScope($event)"
+        >
+          @if (householdOptions().length > 0) {
+            <optgroup [label]="'houseRules.households' | translate">
+              @for (option of householdOptions(); track option.key) {
+                <option [value]="option.key">{{ option.label }}</option>
+              }
+            </optgroup>
+          }
+          @if (childOptions().length > 0) {
+            <optgroup [label]="'houseRules.children' | translate">
+              @for (option of childOptions(); track option.key) {
+                <option [value]="option.key">{{ option.label }}</option>
+              }
+            </optgroup>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  @if (listsLoading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'houseRules.loading' | translate }}</p>
+  } @else if (listsFailed()) {
+    <p class="text-sm text-red-600 dark:text-red-400">{{ 'houseRules.loadError' | translate }}</p>
+  } @else if (!scope()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'houseRules.noScopes' | translate }}
+    </p>
+  } @else if (book.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">{{ 'houseRules.loadError' | translate }}</p>
+  } @else if (book.isLoading() && !loaded()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'houseRules.loading' | translate }}</p>
+  } @else if (loaded(); as current) {
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      @if (canManage()) {
+        <button
+          type="button"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+          [disabled]="action.busy()"
+          (click)="openAdd($event)"
+        >
+          {{ 'houseRules.addButton' | translate }}
+        </button>
+      } @else {
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ 'houseRules.viewOnly' | translate }}
+        </p>
+      }
+      @if (printLink(); as link) {
+        <a
+          class="ml-auto rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+          [routerLink]="link"
+          >{{ 'houseRules.printButton' | translate }}</a
+        >
+      }
+    </div>
+
+    @if (current.rules.length === 0) {
+      <p
+        class="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400"
+      >
+        {{ 'houseRules.empty' | translate }}
+      </p>
+    } @else {
+      <ol class="space-y-4">
+        @for (rule of current.rules; track rule.id; let first = $first, last = $last) {
+          <li
+            class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            [attr.data-rule-id]="rule.id"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <h3 class="text-lg font-semibold text-slate-950 dark:text-slate-50">
+                {{ rule.title }}
+              </h3>
+
+              @if (canManage()) {
+                <div class="flex flex-wrap items-center gap-1">
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+                    [disabled]="first || action.busy()"
+                    [attr.aria-label]="'houseRules.moveUp' | translate: { title: rule.title }"
+                    (click)="move(rule, -1)"
+                  >
+                    <span aria-hidden="true">↑</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+                    [disabled]="last || action.busy()"
+                    [attr.aria-label]="'houseRules.moveDown' | translate: { title: rule.title }"
+                    (click)="move(rule, 1)"
+                  >
+                    <span aria-hidden="true">↓</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-3 py-1 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+                    [disabled]="action.busy()"
+                    (click)="openEdit($event, rule)"
+                  >
+                    {{ 'houseRules.editButton' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                    [disabled]="action.busy()"
+                    (click)="confirmingRemove.set(rule.id)"
+                  >
+                    {{ 'houseRules.removeButton' | translate }}
+                  </button>
+                </div>
+              }
+            </div>
+
+            @if (confirmingRemove() === rule.id) {
+              <div
+                class="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm dark:border-red-800 dark:bg-red-500/10"
+              >
+                <span class="text-red-800 dark:text-red-300">{{
+                  'houseRules.confirmRemove' | translate: { title: rule.title }
+                }}</span>
+                <button
+                  type="button"
+                  class="rounded-md bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+                  [disabled]="action.isBusy(rule.id)"
+                  (click)="remove(rule)"
+                >
+                  {{ 'houseRules.confirmRemoveButton' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-md px-3 py-1 font-semibold text-slate-700 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800"
+                  (click)="confirmingRemove.set(null)"
+                >
+                  {{ 'houseRules.cancelButton' | translate }}
+                </button>
+              </div>
+            }
+
+            @if (rule.body) {
+              <app-markdown-view class="mt-3 block" [markdown]="rule.body" />
+            }
+
+            @if (rule.acknowledgements.length > 0) {
+              <div class="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
+                <p
+                  class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
+                  {{ 'houseRules.statusLabel' | translate }}
+                </p>
+                <ul class="mt-2 flex flex-wrap gap-2">
+                  @for (ack of rule.acknowledgements; track ack.childId) {
+                    @let status = statusOf(ack);
+                    <li class="flex flex-wrap items-center gap-2">
+                      <span
+                        class="rounded-full px-3 py-1 text-xs font-semibold"
+                        [attr.data-status]="status"
+                        [class.bg-emerald-100]="status === 'upToDate'"
+                        [class.text-emerald-800]="status === 'upToDate'"
+                        [class.dark:bg-emerald-500/15]="status === 'upToDate'"
+                        [class.dark:text-emerald-300]="status === 'upToDate'"
+                        [class.bg-amber-100]="status !== 'upToDate'"
+                        [class.text-amber-900]="status !== 'upToDate'"
+                        [class.dark:bg-amber-500/15]="status !== 'upToDate'"
+                        [class.dark:text-amber-300]="status !== 'upToDate'"
+                        >{{ statusKeys[status] | translate: { name: nameOf(ack.childId) } }}</span
+                      >
+                      @if (canReadWith(ack)) {
+                        <button
+                          type="button"
+                          class="text-xs font-semibold text-emerald-700 underline hover:text-emerald-800 disabled:opacity-50 dark:text-emerald-400 dark:hover:text-emerald-300"
+                          [disabled]="action.isBusy(rule.id)"
+                          (click)="readWith(rule, ack.childId)"
+                        >
+                          {{ 'houseRules.markRead' | translate: { name: nameOf(ack.childId) } }}
+                        </button>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (ruleError(rule.id); as message) {
+              <p class="mt-3 text-sm text-red-600 dark:text-red-400" role="alert">
+                {{ message | translate }}
+              </p>
+            }
+          </li>
+        }
+      </ol>
+    }
+  }
+
+  @if (editing(); as open) {
+    <app-rule-editor
+      [rule]="editorRule(open)"
+      [saving]="action.busy()"
+      [error]="editorError(open)"
+      (save)="saveRule(open, $event)"
+      (closed)="closeEditor()"
+    />
+  }
+</app-page>

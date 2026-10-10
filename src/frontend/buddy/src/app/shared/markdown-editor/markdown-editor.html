@@ -1,0 +1,77 @@
+<div class="space-y-2">
+  <div class="flex flex-wrap items-end justify-between gap-2">
+    <label
+      class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+      [attr.for]="mode() === 'write' ? inputId() : null"
+      >{{ label() }}</label
+    >
+    <app-segmented-control
+      [options]="modeOptions()"
+      [selected]="mode()"
+      [ariaLabel]="'common.markdown.modeLabel' | translate"
+      (selectedChange)="setMode($event)"
+    />
+  </div>
+
+  @if (hint()) {
+    <p [id]="inputId() + '-hint'" class="text-xs text-slate-500 dark:text-slate-400">
+      {{ hint() }}
+    </p>
+  }
+
+  @if (mode() === 'write') {
+    <div
+      role="toolbar"
+      class="flex flex-wrap gap-1"
+      [attr.aria-label]="'common.markdown.toolbarLabel' | translate"
+      [attr.aria-controls]="inputId()"
+    >
+      @for (button of toolbar; track button.action) {
+        <button
+          type="button"
+          class="min-w-9 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          [attr.data-action]="button.action"
+          [attr.aria-label]="button.labelKey | translate"
+          [title]="button.labelKey | translate"
+          (click)="apply(button.action)"
+        >
+          <span aria-hidden="true">{{ button.symbol }}</span>
+        </button>
+      }
+    </div>
+
+    <textarea
+      #textarea
+      rows="8"
+      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+      [id]="inputId()"
+      [value]="value()"
+      [attr.aria-describedby]="hint() ? inputId() + '-hint' : null"
+      [attr.aria-invalid]="overLimit()"
+      (input)="onInput($event)"
+    ></textarea>
+  } @else {
+    <div
+      class="min-h-32 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
+      data-testid="markdown-preview"
+    >
+      @if (value().trim()) {
+        <app-markdown-view [markdown]="value()" />
+      } @else {
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ 'common.markdown.previewEmpty' | translate }}
+        </p>
+      }
+    </div>
+  }
+
+  <p
+    class="text-right text-xs"
+    [class.text-slate-500]="!overLimit()"
+    [class.dark:text-slate-400]="!overLimit()"
+    [class.text-red-600]="overLimit()"
+    [class.dark:text-red-400]="overLimit()"
+  >
+    {{ 'common.markdown.characters' | translate: { count: length(), max: maxLength() } }}
+  </p>
+</div>

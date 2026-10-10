@@ -199,6 +199,32 @@ export const help = {
         },
       },
     },
+    houseRules: {
+      title: 'House rules',
+      sections: {
+        whereRulesLive: {
+          title: 'Household rules and personal rules',
+          body: "Household rules belong to a group and apply to every child in it, such as \"No phones at the dinner table\". Personal rules belong to one child. A child who lives in two homes sees the rules of both, each under the group's name. A group's owner and admins write its rules; any guardian of a child writes that child's personal rules. Other group members can read the rules.",
+        },
+        writeRule: {
+          title: 'Write a rule',
+          body: 'Keep each rule short, with a title and, if needed, the details. The details can use markdown: bold text, bulleted or numbered lists, checkboxes, tables and links. Press "Preview" to see how it will look. Use the arrows to change the order.',
+          steps: {
+            s1: 'Under "Rules for", choose the household or the child.',
+            s2: 'Press "Add rule", then write a title and the rule.',
+            s3: 'Press "Save rule".',
+          },
+        },
+        reading: {
+          title: 'When your children have read a rule',
+          body: 'Your children see their rules on their home page and tap "I\'ve read this" for each one. Under every rule you see who has read it. When you change a rule, the children are asked to read it again, unless you mark the change as a small fix. For a child who can\'t read yet, go through the rule together and press "Read it with" and their name.',
+        },
+        print: {
+          title: 'Print the rules',
+          body: 'Press "Print" to get the rules on an A4 page for the fridge. For a child, the printout has their personal rules and the rules of every household they belong to.',
+        },
+      },
+    },
     progress: {
       title: 'Progress',
       sections: {

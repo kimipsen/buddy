@@ -23,11 +23,14 @@ describe('feature routes', () => {
   const cases: [string, Route[], string, FeatureName][] = [
     ['app', routes, 'shared/sleep-diary/:token', 'sleepDiary'],
     ['guardian', GUARDIAN_ROUTES, 'print/sheet/:templateId', 'printing'],
+    ['guardian', GUARDIAN_ROUTES, 'house-rules/print/children/:childId', 'houseRules'],
+    ['guardian', GUARDIAN_ROUTES, 'house-rules/print/groups/:groupId', 'houseRules'],
     ['guardian', guardianChildren, 'mealplan', 'mealplans'],
     ['guardian', guardianChildren, 'mealplan/ai-assistant', 'mealplanAiAssistant'],
     ['guardian', guardianChildren, 'mealplan/import', 'mealplanImport'],
     ['guardian', guardianChildren, 'medicine', 'medicines'],
     ['guardian', guardianChildren, 'sleep-diary', 'sleepDiary'],
+    ['guardian', guardianChildren, 'house-rules', 'houseRules'],
     ['guardian', guardianChildren, 'progress', 'progress'],
     ['guardian', guardianChildren, 'pickup', 'pickups'],
     ['guardian', guardianChildren, 'babysitters', 'babysitters'],
@@ -37,6 +40,7 @@ describe('feature routes', () => {
     ['guardian', guardianChildren, 'task-library', 'taskLibrary'],
     ['guardian', guardianChildren, 'help', 'help'],
     ['child', CHILD_ROUTES, 'mealplan', 'mealplans'],
+    ['child', CHILD_ROUTES, 'rules', 'houseRules'],
   ];
 
   function guard(list: Route[], path: string): CanActivateFn {

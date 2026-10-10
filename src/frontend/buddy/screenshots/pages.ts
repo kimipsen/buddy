@@ -15,6 +15,9 @@ export interface DemoFamily {
   groupInviteToken: string | null;
   guardianInviteToken: string | null;
   sleepDiaryShareToken: string | null;
+  // The demo child (Emil) and the family group, for the house rules printouts.
+  childId: string;
+  groupId: string;
 }
 
 export interface ScreenshotPage {
@@ -137,6 +140,34 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: '9 h 25 min',
   },
   {
+    name: 'guardian-house-rules',
+    title: 'House rules',
+    description:
+      'The household’s rules in markdown, with who has read each one. A rule can be added, edited (a small fix keeps the children’s ticks), moved, removed, read together with a child, and printed.',
+    as: 'guardian',
+    route: '/guardian/house-rules',
+    waitFor: 'Screen time',
+  },
+  {
+    name: 'guardian-house-rules-print-group',
+    title: 'House rules printout (household)',
+    description: 'One household’s rules on an A4 page for the fridge.',
+    as: 'guardian',
+    route: '/guardian/house-rules/print/groups/:groupId',
+    path: (demo) => `/guardian/house-rules/print/groups/${demo.groupId}`,
+    waitFor: 'Screen time',
+  },
+  {
+    name: 'guardian-house-rules-print-child',
+    title: 'House rules printout (child)',
+    description:
+      'Everything one child is asked to keep: their personal rules, then every household they belong to.',
+    as: 'guardian',
+    route: '/guardian/house-rules/print/children/:childId',
+    path: (demo) => `/guardian/house-rules/print/children/${demo.childId}`,
+    waitFor: 'Just for Emil',
+  },
+  {
     name: 'guardian-pickup',
     title: 'Pickup & drop-off',
     description: 'Who takes and fetches the child each day.',
@@ -221,6 +252,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     description: "The child's calendar.",
     as: 'child',
     route: '/child/calendar',
+  },
+  {
+    name: 'child-rules',
+    title: 'Child: our rules',
+    description:
+      'The child’s own rules and each household’s, with “New” and “Changed” on what they haven’t read, and an “I’ve read this” button.',
+    as: 'child',
+    route: '/child/rules',
+    waitFor: 'Just for you',
   },
   {
     name: 'invite-group',

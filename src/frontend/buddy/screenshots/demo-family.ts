@@ -650,6 +650,63 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         return null;
       });
 
+    // House rules ---------------------------------------------------------------------------
+    // A household book for the family group and one personal rule for Emil. Ida has read every
+    // household rule (Sara went through them with her); Emil read "Dinner" before it changed and
+    // hasn't read the others, so the guardian page and his page show "new" and "changed".
+    interface RuleBookDto {
+      rules: { id: string; title: string; revision: number }[];
+    }
+    const householdRules = `/house-rules/groups/${group.id}/rules`;
+    await api.post(householdRules, {
+      title: 'Screen time',
+      body: [
+        '| Day | Time | When |',
+        '|:---|:---:|---|',
+        '| Mon–Thu | 45 min | after homework |',
+        '| Fri–Sun | 90 min | after lunch |',
+        '',
+        '- Tablet goes on the charger in the kitchen at **19:30**.',
+        '- One reminder, then a 5-minute warning, then it’s off.',
+      ].join('\n'),
+    });
+    await api.post(householdRules, {
+      title: 'Dinner',
+      body: 'Phones stay in the basket by the door.',
+    });
+    const household = await api.post<RuleBookDto>(householdRules, {
+      title: 'Bedtime',
+      body: '1. Pyjamas and teeth\n2. One story\n3. Lights out at **20:00**',
+    });
+    const dinner = household.rules.find((rule) => rule.title === 'Dinner');
+    for (const rule of household.rules) {
+      await api
+        .put(`${householdRules}/${rule.id}/acknowledgement`, {
+          revision: rule.revision,
+          childId: ida.id,
+        })
+        .catch(warn);
+    }
+    if (dinner) {
+      await api
+        .put(`${householdRules}/${dinner.id}/acknowledgement`, { revision: 1, childId: emil.id })
+        .catch(warn);
+      await api
+        .put(`${householdRules}/${dinner.id}`, {
+          title: 'Dinner',
+          body: 'Phones stay in the basket by the door. **Ask** before you leave the table.',
+          requireReacknowledgement: true,
+        })
+        .catch(warn);
+      await api
+        .put(`${householdRules}/${dinner.id}/acknowledgement`, { revision: 2, childId: ida.id })
+        .catch(warn);
+    }
+    await api.post(`/house-rules/children/${emil.id}/rules`, {
+      title: 'Gaming',
+      body: '- [x] Homework first\n- [ ] 45 minutes on school days\n- [ ] Stop when the timer rings',
+    });
+
     // Work locations ------------------------------------------------------------------------
     const office = await api.post<Named>('/work-locations/me/locations', {
       name: 'Office',
@@ -763,6 +820,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       groupInviteToken: await inviteTokenFromMail('demo.invitee@buddy.test', 'invite'),
       guardianInviteToken: await inviteTokenFromMail('demo.coparent@buddy.test', 'guardian-invite'),
       sleepDiaryShareToken: sleepShare?.token ?? null,
+      childId: emil.id,
+      groupId: group.id,
     };
   } finally {
     await api.dispose();

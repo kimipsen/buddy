@@ -67,6 +67,17 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     related: ['medicine'],
   },
   {
+    id: 'houseRules',
+    feature: 'houseRules',
+    sections: [
+      { id: 'whereRulesLive' },
+      { id: 'writeRule', steps: 3 },
+      { id: 'reading' },
+      { id: 'print' },
+    ],
+    related: ['groupsAndSharing'],
+  },
+  {
     id: 'progress',
     feature: 'progress',
     sections: [{ id: 'earnStars' }, { id: 'goalPosts', steps: 4 }, { id: 'milestones' }],

@@ -7,6 +7,8 @@ import { GuardianBabysitters } from './babysitters/babysitters';
 import { GuardianCalendar } from './calendar/calendar';
 import { GuardianDashboard } from './dashboard';
 import { GuardianHelp } from './help/help-page';
+import { GuardianHouseRules } from './house-rules/house-rules';
+import { HouseRulesPrintPage } from './house-rules/print/house-rules-print-page';
 import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
 import { MealplanImport } from './mealplan/import/mealplan-import';
 import { GuardianMealplan } from './mealplan/mealplan';
@@ -29,6 +31,20 @@ export const GUARDIAN_ROUTES: Routes = [
     path: 'print/sheet/:templateId',
     component: WeekPlanPrintPage,
     canActivate: [featureGuard('printing')],
+  },
+  // The house rules printouts, outside the shell for the same reason. They read the rules, not the
+  // week-plan templates, so they belong to houseRules rather than printing.
+  {
+    path: 'house-rules/print/children/:childId',
+    component: HouseRulesPrintPage,
+    canActivate: [featureGuard('houseRules')],
+    data: { printScope: 'child' },
+  },
+  {
+    path: 'house-rules/print/groups/:groupId',
+    component: HouseRulesPrintPage,
+    canActivate: [featureGuard('houseRules')],
+    data: { printScope: 'group' },
   },
   {
     path: '',
@@ -72,6 +88,12 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [featureGuard('sleepDiary')],
         component: GuardianSleepDiary,
         data: { helpTopic: 'sleepDiary' },
+      },
+      {
+        path: 'house-rules',
+        canActivate: [featureGuard('houseRules')],
+        component: GuardianHouseRules,
+        data: { helpTopic: 'houseRules' },
       },
       {
         path: 'progress',

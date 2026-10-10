@@ -280,6 +280,7 @@ describe('ProfileMenu', () => {
       'taskLibrary',
       'medicines',
       'sleepDiary',
+      'houseRules',
       'pickups',
       'progress',
       'workLocations',

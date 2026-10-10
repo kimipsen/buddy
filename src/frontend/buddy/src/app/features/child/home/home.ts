@@ -19,6 +19,7 @@ import {
 import { FeaturesService } from '../../../core/features.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
+import { HouseRulesService } from '../../../core/house-rules.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
   AgendaEntry,
@@ -131,6 +132,7 @@ export class ChildHome implements OnInit, OnDestroy {
   private readonly medicines = inject(MedicinesService);
   private readonly calendars = inject(CalendarsService);
   private readonly progressService = inject(ProgressService);
+  private readonly houseRules = inject(HouseRulesService);
 
   protected readonly guardianKind = GUARDIAN;
   protected readonly selfEscortKind = SELF_ESCORT;
@@ -174,6 +176,19 @@ export class ChildHome implements OnInit, OnDestroy {
         ? this.progressService.getMyProgress()
         : Promise.resolve(undefined),
   });
+
+  // How many house rules wait for "I've read this". Supplementary like progress: a failed load
+  // just leaves the card out, and nothing is asked for while house rules are turned off.
+  private readonly rulesToRead = resource({
+    loader: async () =>
+      this.features.enabled('houseRules')
+        ? (await this.houseRules.getChildRules((await this.users.ensureCurrentUser()).id))
+            .pendingAcknowledgements
+        : 0,
+  });
+  protected readonly pendingRules = computed(() =>
+    this.rulesToRead.hasValue() ? this.rulesToRead.value() : 0,
+  );
 
   protected readonly badge = linkedSignal<ProgressSummary | undefined, ProgressSummary>({
     source: () => (this.progress.hasValue() ? this.progress.value() : undefined),

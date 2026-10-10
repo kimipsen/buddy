@@ -200,6 +200,32 @@ export const help = {
         },
       },
     },
+    houseRules: {
+      title: 'Husregler',
+      sections: {
+        whereRulesLive: {
+          title: 'Husstandens regler og personlige regler',
+          body: 'Husstandens regler hører til en gruppe og gælder for alle børn i den, fx "Ingen telefoner ved middagsbordet". Personlige regler hører til ét barn. Et barn, der bor i to hjem, ser reglerne fra begge, hver under gruppens navn. Gruppens ejer og administratorer skriver dens regler; enhver værge for et barn skriver barnets personlige regler. Andre medlemmer af gruppen kan læse reglerne.',
+        },
+        writeRule: {
+          title: 'Skriv en regel',
+          body: 'Hold hver regel kort, med en titel og om nødvendigt detaljerne. Detaljerne kan bruge markdown: fed tekst, punkt- eller nummererede lister, afkrydsningsfelter, tabeller og links. Tryk på "Forhåndsvisning" for at se, hvordan den kommer til at se ud. Brug pilene til at ændre rækkefølgen.',
+          steps: {
+            s1: 'Vælg husstanden eller barnet under "Regler for".',
+            s2: 'Tryk på "Tilføj regel", og skriv en titel og reglen.',
+            s3: 'Tryk på "Gem regel".',
+          },
+        },
+        reading: {
+          title: 'Når dine børn har læst en regel',
+          body: 'Dine børn ser deres regler på deres forside og trykker "Jeg har læst den" ved hver regel. Under hver regel kan du se, hvem der har læst den. Når du ændrer en regel, bliver børnene bedt om at læse den igen, medmindre du markerer ændringen som en lille rettelse. Har du et barn, der ikke kan læse endnu, så gå reglen igennem sammen, og tryk på "Læs den med" og barnets navn.',
+        },
+        print: {
+          title: 'Udskriv reglerne',
+          body: 'Tryk på "Udskriv" for at få reglerne på en A4-side til køleskabet. For et barn indeholder udskriften barnets personlige regler og reglerne fra alle husstande, barnet hører til.',
+        },
+      },
+    },
     progress: {
       title: 'Point',
       sections: {

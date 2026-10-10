@@ -5,6 +5,7 @@ import { child } from './child';
 import { common } from './common';
 import { dashboard } from './dashboard';
 import { help } from './help';
+import { houseRules } from './house-rules';
 import { invite } from './invite';
 import { login } from './login';
 import { mealplan } from './mealplan';
@@ -28,6 +29,7 @@ export const en = {
   common,
   dashboard,
   help,
+  houseRules,
   invite,
   login,
   mealplan,

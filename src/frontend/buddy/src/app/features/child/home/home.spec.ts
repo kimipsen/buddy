@@ -10,6 +10,7 @@ import {
 } from '../../../core/calendars.service';
 import { addDaysIso, todayIsoDate } from '../../../core/date-utils';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
+import { ChildRules, HouseRulesService } from '../../../core/house-rules.service';
 import { Meal, MealPlanEntry, MealplansService } from '../../../core/mealplans.service';
 import { MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupOccurrence, PickupsService } from '../../../core/pickups.service';
@@ -134,6 +135,7 @@ describe('ChildHome', () => {
     medicines?: Partial<MedicinesService>;
     calendars?: Partial<CalendarsService>;
     progress?: Partial<ProgressService>;
+    houseRules?: Partial<HouseRulesService>;
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -178,6 +180,11 @@ describe('ChildHome', () => {
       ...stubs.progress,
     };
 
+    const houseRulesStub: Partial<HouseRulesService> = {
+      getChildRules: vi.fn(async () => childRules(0)),
+      ...stubs.houseRules,
+    };
+
     await TestBed.configureTestingModule({
       imports: [ChildHome],
       providers: [
@@ -189,6 +196,7 @@ describe('ChildHome', () => {
         { provide: MedicinesService, useValue: medicinesStub },
         { provide: CalendarsService, useValue: calendarsStub },
         { provide: ProgressService, useValue: progressStub },
+        { provide: HouseRulesService, useValue: houseRulesStub },
       ],
     }).compileComponents();
 
@@ -203,6 +211,16 @@ describe('ChildHome', () => {
       medicines: medicinesStub,
       calendars: calendarsStub,
       progress: progressStub,
+      houseRules: houseRulesStub,
+    };
+  }
+
+  function childRules(pendingAcknowledgements: number): ChildRules {
+    return {
+      childId: currentUser.id,
+      personal: { scopeKind: 'Child', scopeId: currentUser.id, label: 'Emil', rules: [] },
+      households: [],
+      pendingAcknowledgements,
     };
   }
 
@@ -1309,9 +1327,40 @@ describe('ChildHome', () => {
     });
   });
 
+  it('links to the house rules and says how many rules are waiting to be read', async () => {
+    const { fixture, houseRules } = await setup({
+      houseRules: { getChildRules: vi.fn(async () => childRules(2)) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(houseRules.getChildRules).toHaveBeenCalledWith(currentUser.id);
+    expect(compiled.querySelector('[data-testid="rules-to-read"]')?.textContent?.trim()).toContain(
+      '2 rules to read',
+    );
+    expect(compiled.querySelectorAll('a[href="/child/rules"]')).toHaveLength(2);
+  });
+
+  it('says "1 rule to read" for a single rule and shows no card when all are read', async () => {
+    const one = await setup({ houseRules: { getChildRules: vi.fn(async () => childRules(1)) } });
+    await settle(one.fixture);
+    expect(
+      (one.fixture.nativeElement as HTMLElement)
+        .querySelector('[data-testid="rules-to-read"]')
+        ?.textContent?.trim(),
+    ).toContain('1 rule to read');
+
+    TestBed.resetTestingModule();
+    const none = await setup();
+    await settle(none.fixture);
+    const compiled = none.fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('[data-testid="rules-to-read"]')).toBeNull();
+    expect(compiled.querySelector('a[href="/child/rules"]')).toBeTruthy();
+  });
+
   it('neither loads nor shows the sections of features that are turned off', async () => {
-    disableFeatures('mealplans', 'medicines', 'pickups', 'progress');
-    const { fixture, mealplans, medicines, pickups, progress } = await setup();
+    disableFeatures('mealplans', 'medicines', 'pickups', 'progress', 'houseRules');
+    const { fixture, mealplans, medicines, pickups, progress, houseRules } = await setup();
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -1319,6 +1368,8 @@ describe('ChildHome', () => {
     expect(medicines.listDoses).not.toHaveBeenCalled();
     expect(pickups.listSchedule).not.toHaveBeenCalled();
     expect(progress.getMyProgress).not.toHaveBeenCalled();
+    expect(houseRules.getChildRules).not.toHaveBeenCalled();
+    expect(compiled.querySelector('a[href="/child/rules"]')).toBeNull();
     expect(compiled.querySelector('app-progress-badge')).toBeNull();
     expect(compiled.querySelector('a[href="/child/mealplan"]')).toBeNull();
     expect(compiled.querySelector('a[href="/child/calendar"]')).toBeTruthy();

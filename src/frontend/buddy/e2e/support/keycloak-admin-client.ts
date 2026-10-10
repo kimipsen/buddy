@@ -167,3 +167,49 @@ export async function endKeycloakSessions(user: DisposableGuardian): Promise<voi
     );
   }
 }
+
+// Gives a child created through the manage-children UI (createChild in guardian-data.ts) a
+// permanent password and clears its UPDATE_PASSWORD required action, so loginAs can sign in as the
+// child by direct grant -- the step the screenshot seed takes for demo.emil. Only for e2e children
+// (an 'e2echild' username): it must never touch a seeded or real account.
+export async function makeChildLoginUsable(
+  username: string,
+): Promise<{ username: string; password: string }> {
+  if (!username.startsWith('e2echild') || isSeededUsername(username)) {
+    throw new Error(`Refusing to set a password for '${username}', which isn't an e2e child.`);
+  }
+
+  const { keycloak } = readRuntimeConfig();
+  const adminToken = await getMasterAdminToken(keycloak.authority);
+  const users = `${keycloak.authority}/admin/realms/${keycloak.realm}/users`;
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` };
+
+  const lookup = await fetch(`${users}?username=${encodeURIComponent(username)}&exact=true`, {
+    headers,
+  });
+  const userId = ((await lookup.json()) as { id: string }[])[0]?.id;
+
+  if (!userId) {
+    throw new Error(`Keycloak user '${username}' not found.`);
+  }
+
+  const password = `E2e-${Math.random().toString(36).slice(2)}-pw`;
+  const reset = await fetch(`${users}/${userId}/reset-password`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ type: 'password', value: password, temporary: false }),
+  });
+  const update = await fetch(`${users}/${userId}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ requiredActions: [] }),
+  });
+
+  if (!reset.ok || !update.ok) {
+    throw new Error(
+      `Making '${username}' able to sign in failed: ${reset.status} / ${update.status}`,
+    );
+  }
+
+  return { username, password };
+}
