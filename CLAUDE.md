@@ -55,7 +55,7 @@ Several features are developed at once, each in its own git worktree, so they do
 ## Conventions
 
 - Every page appears in the documentation screenshots (`docs/screenshots`). A new route or a visible change to a page means updating `src/frontend/buddy/screenshots/pages.ts` (plus demo data in `demo-family.ts`) and running `task docs:screenshots`. `src/app/screenshot-coverage.spec.ts` enforces the route list. See the `doc-screenshots` skill.
-- Plan before non-trivial changes. Design docs live in `docs/backend/analysis/` and `docs/frontend/analysis/`.
+- Plan before non-trivial changes. Design docs live in `docs/backend/analysis/` and `docs/frontend/analysis/`. Every analysis states its complexity, the estimated time for a single developer and the estimated time for an AI agent (an `## Estimate` section; see `feature-from-analysis`).
 - Change tests rather than production code when hardening specs; ask before changing production code for a bug a test uncovers.
 - Never commit secrets. `appsettings.*.json` and `.env` are git-ignored.
 - `task hooks:install` adds a pre-commit hook (Prettier/ESLint, i18n parity and C# whitespace on staged files; fix what it reports rather than using `--no-verify`) and a post-commit hook that may add a `docs: sync documentation (auto)` commit. Add `[skip-docs]` to the commit message to skip the latter.

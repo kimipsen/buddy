@@ -42,6 +42,24 @@ not a ticket number.
   radius (call sites, specs or events affected, e.g. "4 handlers and 2 specs construct this
   record"). The reader should be able to tell a one-line tweak from a rewrite without opening the
   code. Brand-new code doesn't need this; its signature block is enough.
+- **Estimate the effort.** Every analysis ends its body with an `## Estimate` section (just before
+  `## Decisions made` in a design analysis, before `## Verification` in an implementation plan):
+
+  ```markdown
+  ## Estimate
+
+  | | |
+  |---|---|
+  | Complexity | Medium -- <one clause on what drives it: new aggregate, N events, N routes, N screens, a refactor's blast radius> |
+  | Single developer | 4-6 days |
+  | AI agent | 2-3 hours, plus about 1 hour of human review |
+  ```
+
+  Complexity is one of Low / Medium / High / Very high. The developer estimate assumes someone who
+  knows the codebase and covers the whole definition of done: backend slices and integration tests,
+  frontend, en+da i18n, e2e, doc screenshots and doc updates. The AI agent estimate is wall-clock
+  time for a `feature-from-analysis` run, plus the human review and open-question time it still
+  needs. Give ranges, not single numbers, and derive them from the slice/screen counts in the doc.
 - **Name the rejected alternatives.** Each one gets a "considered and rejected, because ..."
   sentence or a bullet.
 - **Domain vocabulary** comes from `docs/backend/glossary.md`: `Manage`/`View` tiers,
@@ -177,6 +195,10 @@ logged-out page).>
 | Guardian's `GuardianLink` is revoked | Immediately drops to `NotFound` ... |
 | <concurrent writes> | <last write wins, history kept> |
 
+## Estimate
+
+<Complexity, single-developer time and AI-agent time; see "Estimate the effort" above.>
+
 ## Decisions made
 
 | Question | Decision |
@@ -273,6 +295,10 @@ In `<component>.spec.ts`, add <stubs> and cases for:
 ## Explicitly out of scope for this phase
 
 - <thing> -- stays on <screen> / its own follow-up.
+
+## Estimate
+
+<Complexity, single-developer time and AI-agent time; see "Estimate the effort" above.>
 
 ## Verification
 

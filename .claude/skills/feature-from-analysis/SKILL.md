@@ -211,7 +211,9 @@ big to build without one.
 4. Write the doc: backend designs go in `docs/backend/analysis/<kebab-name>.md`, frontend-only
    plans in `docs/frontend/analysis/`. Start with `Status: Proposed (not yet implemented)`. Each
    decision is a `**Decision: ...**` paragraph followed by rationale and rejected alternatives,
-   with relative links to real files. End with the decisions table, the open questions and (for
+   with relative links to real files. Before the decisions table, add the `## Estimate` section
+   (complexity, single-developer time, AI-agent time; see "Estimate the effort" in the template).
+   End with the decisions table, the open questions and (for
    a design analysis) a mermaid `flowchart TB` diagram.
    Where the design refactors existing code, add before/after code samples and the number of
    affected call sites, so the size of the change is visible (see "Show the size of a refactor"
