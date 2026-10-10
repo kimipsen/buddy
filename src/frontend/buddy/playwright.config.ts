@@ -16,9 +16,12 @@ const ciBackendEnv = {
     'Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres',
   Authentication__Keycloak__Authority: 'http://localhost:9080/realms/buddy',
   Authentication__Keycloak__ValidIssuer: 'http://localhost:9080/realms/buddy',
+  // buddy-admin-cli lives in the buddy realm of the fresh import (.devcontainer/keycloak/buddy-realm.json),
+  // and CI has no git-ignored appsettings.Development.json, so the secret comes from that export too.
   Authentication__KeycloakAdmin__TokenEndpoint:
-    'http://localhost:9080/realms/master/protocol/openid-connect/token',
+    'http://localhost:9080/realms/buddy/protocol/openid-connect/token',
   Authentication__KeycloakAdmin__AdminBaseUrl: 'http://localhost:9080/admin/realms/buddy',
+  Authentication__KeycloakAdmin__ClientSecret: 'buddy-admin-cli-dev-secret',
   Mail__Host: 'localhost',
   Mail__Port: '2025',
 };
