@@ -28,6 +28,7 @@
     "@angular/forms": "^22.2.1",
     "@angular/platform-browser": "^22.2.1",
     "@angular/router": "^22.2.1",
+    "marked": "18.0.14",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "uqr": "0.1.3"

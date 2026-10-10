@@ -1,0 +1,170 @@
+<div class="space-y-3 break-words text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+  <ng-container *ngTemplateOutlet="blockList; context: { $implicit: blocks() }" />
+</div>
+
+<ng-template #blockList let-blocks>
+  @for (block of blocks; track $index) {
+    @switch (block.kind) {
+      @case ('heading') {
+        @switch (block.level) {
+          @case (3) {
+            <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">
+              <ng-container *ngTemplateOutlet="inlineList; context: { $implicit: block.inlines }" />
+            </h3>
+          }
+          @case (4) {
+            <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <ng-container *ngTemplateOutlet="inlineList; context: { $implicit: block.inlines }" />
+            </h4>
+          }
+          @case (5) {
+            <h5 class="text-sm font-medium text-slate-900 dark:text-slate-100">
+              <ng-container *ngTemplateOutlet="inlineList; context: { $implicit: block.inlines }" />
+            </h5>
+          }
+          @default {
+            <h6
+              class="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400"
+            >
+              <ng-container *ngTemplateOutlet="inlineList; context: { $implicit: block.inlines }" />
+            </h6>
+          }
+        }
+      }
+      @case ('paragraph') {
+        <p class="whitespace-pre-line">
+          <ng-container *ngTemplateOutlet="inlineList; context: { $implicit: block.inlines }" />
+        </p>
+      }
+      @case ('inline') {
+        <span class="whitespace-pre-line">
+          <ng-container *ngTemplateOutlet="inlineList; context: { $implicit: block.inlines }" />
+        </span>
+      }
+      @case ('list') {
+        @if (block.ordered) {
+          <ol class="list-decimal space-y-1 pl-6" [attr.start]="block.start">
+            <ng-container *ngTemplateOutlet="listItems; context: { $implicit: block.items }" />
+          </ol>
+        } @else {
+          <ul class="list-disc space-y-1 pl-6">
+            <ng-container *ngTemplateOutlet="listItems; context: { $implicit: block.items }" />
+          </ul>
+        }
+      }
+      @case ('blockquote') {
+        <blockquote
+          class="space-y-2 border-l-4 border-slate-300 pl-3 text-slate-600 dark:border-slate-600 dark:text-slate-400"
+        >
+          <ng-container *ngTemplateOutlet="blockList; context: { $implicit: block.blocks }" />
+        </blockquote>
+      }
+      @case ('table') {
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse text-left text-sm">
+            <thead>
+              <tr
+                class="bg-slate-50 font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300 print:bg-white print:text-black"
+              >
+                @for (cell of block.header; track $index) {
+                  <th
+                    scope="col"
+                    class="border border-slate-200 px-2 py-1 dark:border-slate-700"
+                    [style.text-align]="cell.align"
+                  >
+                    <ng-container
+                      *ngTemplateOutlet="inlineList; context: { $implicit: cell.inlines }"
+                    />
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of block.rows; track $index) {
+                <tr>
+                  @for (cell of row; track $index) {
+                    <td
+                      class="border border-slate-200 px-2 py-1 dark:border-slate-700"
+                      [style.text-align]="cell.align"
+                    >
+                      <ng-container
+                        *ngTemplateOutlet="inlineList; context: { $implicit: cell.inlines }"
+                      />
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      @case ('code') {
+        <pre
+          class="overflow-x-auto rounded-md bg-slate-100 p-2 font-mono text-xs dark:bg-slate-800"
+        ><code>{{ block.text }}</code></pre>
+      }
+      @case ('hr') {
+        <hr class="border-slate-200 dark:border-slate-700" />
+      }
+    }
+  }
+</ng-template>
+
+<ng-template #listItems let-items>
+  @for (item of items; track $index) {
+    <li [class.list-none]="item.checked !== null" [class.-ml-6]="item.checked !== null">
+      @if (item.checked !== null) {
+        <span class="mr-2 inline-block" [attr.data-task]="item.checked ? 'done' : 'open'">
+          <span aria-hidden="true">{{ item.checked ? '☑' : '☐' }}</span>
+          <span class="sr-only">{{
+            (item.checked ? 'common.markdown.taskDone' : 'common.markdown.taskOpen') | translate
+          }}</span>
+        </span>
+      }
+      <ng-container *ngTemplateOutlet="blockList; context: { $implicit: item.blocks }" />
+    </li>
+  }
+</ng-template>
+
+<ng-template #inlineList let-inlines>
+  @for (inline of inlines; track $index) {
+    @switch (inline.kind) {
+      @case ('text') {
+        <!-- Wrapped so the text keeps no surrounding whitespace: "**b**," must not become "b ,". -->
+        <ng-container>{{ inline.text }}</ng-container>
+      }
+      @case ('strong') {
+        <strong class="font-semibold"
+          ><ng-container *ngTemplateOutlet="inlineList; context: { $implicit: inline.children }"
+        /></strong>
+      }
+      @case ('em') {
+        <em
+          ><ng-container *ngTemplateOutlet="inlineList; context: { $implicit: inline.children }"
+        /></em>
+      }
+      @case ('del') {
+        <del
+          ><ng-container *ngTemplateOutlet="inlineList; context: { $implicit: inline.children }"
+        /></del>
+      }
+      @case ('code') {
+        <code class="rounded bg-slate-100 px-1 font-mono text-xs dark:bg-slate-800">{{
+          inline.text
+        }}</code>
+      }
+      @case ('br') {
+        <br />
+      }
+      @case ('link') {
+        <a
+          class="text-emerald-700 underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
+          [href]="inline.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          ><ng-container *ngTemplateOutlet="inlineList; context: { $implicit: inline.children }"
+        /></a>
+      }
+    }
+  }
+</ng-template>

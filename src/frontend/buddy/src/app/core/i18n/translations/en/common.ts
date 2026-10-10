@@ -2,6 +2,10 @@ export const common = {
   loading: 'Loading…',
   selectChildLabel: 'Select child',
   colorLabel: 'Color',
+  markdown: {
+    taskDone: 'Done',
+    taskOpen: 'Not done',
+  },
   ical: {
     subscribeLink: 'Open in calendar app',
     googleLink: 'Add to Google Calendar',

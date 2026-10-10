@@ -2,6 +2,10 @@ export const common = {
   loading: 'Indlæser…',
   selectChildLabel: 'Vælg barn',
   colorLabel: 'Farve',
+  markdown: {
+    taskDone: 'Gjort',
+    taskOpen: 'Ikke gjort',
+  },
   ical: {
     subscribeLink: 'Åbn i kalenderapp',
     googleLink: 'Tilføj til Google Kalender',
