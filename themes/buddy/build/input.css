@@ -4,21 +4,28 @@
  * Restyles Keycloak's inherited "keycloak" theme (PatternFly/Bootstrap based)
  * to match the Buddy app's visual language, targeting the real selectors and
  * theme.properties class hooks from Keycloak 26's base/keycloak login theme.
- * Structural layout (grids, spacing scaffolding, icon fonts) is left to the
- * inherited css/login.css; this file only overrides color, radius, shadow,
- * and typography.
+ * Icon fonts and the remaining scaffolding come from the inherited
+ * css/login.css. Where its rules would fight this layout (the uppercase
+ * spaced-out header, the phone-only absolute locale switcher, the grey
+ * sign-up band, the card's phone reset) they are overridden below, using a
+ * selector at least as specific as the inherited one.
  */
 
 body {
-  @apply font-sans text-slate-950;
+  @apply bg-slate-100 font-sans text-slate-950;
 }
 
+/* Logo stacked above the card, both centred; a row squeezes the card on phones. */
 .login-pf-page {
-  @apply flex min-h-screen items-center justify-center bg-slate-100 px-6 py-10;
+  @apply flex min-h-dvh flex-col items-center justify-center bg-slate-100 px-4 py-8 sm:px-6 sm:py-12;
+}
+
+#kc-header {
+  @apply w-full max-w-md p-0 text-slate-950;
 }
 
 #kc-header-wrapper {
-  @apply mb-8 flex items-center justify-center gap-3;
+  @apply mb-6 flex items-center justify-center gap-3 p-0 text-base leading-normal font-normal tracking-normal normal-case sm:mb-8;
 }
 
 .buddy-logo-badge {
@@ -29,12 +36,48 @@ body {
   @apply text-lg font-semibold text-slate-950;
 }
 
-.card-pf {
-  @apply w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-950/10 sm:p-8;
+/* .login-pf-page prefix outranks the inherited phone rule that strips padding, border and shadow. */
+.login-pf-page .card-pf {
+  @apply m-0 w-full max-w-md rounded-lg border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/10 sm:p-8;
+}
+
+.login-pf-header {
+  @apply mb-6 flex flex-col;
+}
+
+/* The inherited theme pins the switcher to the page corner on phones; keep it in the card. */
+#kc-locale {
+  @apply relative top-auto right-auto mb-2 w-auto self-end text-right;
+}
+
+#kc-current-locale-link {
+  @apply rounded text-sm text-slate-600 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500;
+}
+
+#kc-locale ul {
+  @apply rounded-lg border border-slate-200 bg-white py-1 shadow-lg;
+}
+
+#kc-locale-dropdown a {
+  @apply block px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-950;
+}
+
+/* Header columns (register's "Required fields" + title) span the card instead of Bootstrap's col-md-10. */
+.login-pf-header [class*="col-"] {
+  @apply float-none w-full p-0;
+}
+
+/* "* Required fields" goes below the title rather than floating above it. */
+.login-pf-header > div:has(> .subtitle) {
+  @apply flex flex-col gap-1;
+}
+
+.login-pf-header .subtitle {
+  @apply order-last m-0 text-center text-xs text-slate-500;
 }
 
 #kc-page-title {
-  @apply mb-2 text-2xl font-semibold text-slate-950;
+  @apply m-0 text-center text-2xl font-semibold text-slate-950;
 }
 
 .instruction {
@@ -47,13 +90,31 @@ body {
 
 .pf-c-form__label,
 .pf-c-form__label-text {
-  @apply mb-1.5 block text-sm font-medium text-slate-700;
+  @apply mb-1.5 inline-block text-sm font-medium text-slate-700;
+}
+
+/* Register puts the asterisk in a sibling span; keep it on the label's line. */
+.pf-c-form__label + .required {
+  @apply ml-0.5 text-sm text-red-600;
+}
+
+/* Register's form-horizontal: Bootstrap's negative row margins and column gutters undone. */
+.card-pf .form-horizontal .form-group {
+  @apply mx-0;
+}
+
+.card-pf .form-group > [class*="col-"] {
+  @apply float-none w-full px-0;
 }
 
 .pf-c-form-control,
 input.pf-c-form-control,
 textarea.pf-c-form-control {
   @apply block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500;
+}
+
+.pf-c-form-control[aria-invalid="true"] {
+  @apply border-red-500 focus:ring-red-500;
 }
 
 /* Password field + show/hide toggle (kcInputGroup, Keycloak 24+). */
@@ -73,8 +134,25 @@ textarea.pf-c-form-control {
   @apply flex items-center gap-2 text-sm font-normal text-slate-700;
 }
 
+/* "Remember me" and "Forgot password?" share a row while they fit, then wrap. */
+.login-pf-settings {
+  @apply flex flex-wrap items-center justify-between gap-x-4 gap-y-2;
+}
+
+.login-pf-settings .checkbox {
+  @apply m-0;
+}
+
+.login-pf-settings a {
+  @apply text-sm;
+}
+
 #kc-form-options {
   @apply text-sm text-slate-600;
+}
+
+#kc-form-buttons {
+  @apply mt-6;
 }
 
 #kc-form-options a,
@@ -84,8 +162,17 @@ textarea.pf-c-form-control {
   @apply text-emerald-700 hover:text-emerald-800 hover:underline;
 }
 
+/* Replaces the inherited grey band that bleeds past the card edges. */
+#kc-info {
+  @apply mx-0 mt-6 mb-0 border-t border-slate-200 pt-6;
+}
+
+#kc-info-wrapper {
+  @apply border-0 bg-transparent p-0 text-sm;
+}
+
 #kc-registration-container {
-  @apply mt-6 text-center text-sm text-slate-600;
+  @apply text-center text-sm text-slate-600;
 }
 
 .pf-c-button {
@@ -103,6 +190,15 @@ textarea.pf-c-form-control {
 /* Not the full-width action button: an icon-sized segment joined to the input. */
 .pf-c-input-group > .pf-c-button.pf-m-control {
   @apply h-auto w-auto shrink-0 rounded-l-none border-l-0 px-3 focus:ring-offset-0;
+}
+
+.pf-c-input-group:has(> [aria-invalid="true"]) > .pf-c-button.pf-m-control {
+  @apply border-red-500;
+}
+
+/* PatternFly draws the control border on a pseudo-element, doubling the bottom edge. */
+.pf-c-button.pf-m-control::after {
+  @apply border-0;
 }
 
 .pf-c-alert {
