@@ -102,6 +102,8 @@ front of all three domains for TLS termination and routing (see
 [`deploy/Caddyfile`](../deploy/Caddyfile)). On Azure Container Apps, the
 platform's ingress does that job and Postgres is a managed Flexible Server
 (see [`deploy/README-azure.md`](../deploy/README-azure.md)). Neither changes
-what the containers do, so both are left off the diagrams. Telemetry is always
+what the containers do, so both are left off the diagrams. The API sets its
+own security headers (`Common/Http/SecurityHeadersMiddleware.cs`), so both
+deployments send them. Telemetry is always
 collected and only exported when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (see
 [observability.md](backend/observability.md)).
