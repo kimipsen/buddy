@@ -73,7 +73,7 @@
 
 ## Responsive design
 
-- [ ] Make the layout adapt when the window changes between screen sizes
+- [x] Make the layout adapt when the window changes between screen sizes
   (phone, tablet, desktop), for example when resizing the browser or rotating a
   tablet, not only on first load. Check every page, and extend the docs
   screenshots with a tablet size if needed.
@@ -400,10 +400,6 @@ Still open:
   worktrees `agent-a1f407bec71b27f87` (its change is already on master) and
   `agent-a13f8a94103b2fea2` (merged into the working tree by hand). Auto mode
   blocked this; it needs you.
-- [ ] **Before the next VM deploy:** check whether the VM's Keycloak realm
-  lives in H2 inside the container (see `deploy/README.md`, "Upgrading from
-  the stock Keycloak image") and export it first. Also add `DEPLOY_HOST` to
-  the VM's `deploy/.env`.
 - [x] **Decided: resolve the key through any linked child.** The family AI credential is attached to
   one child, so unlinking that child silently drops the family's key. When
   families merge, `ResolveFamilyAiCredentialIdAsync` picks a credential out
@@ -434,8 +430,6 @@ Still open:
   `.git-blame-ignore-revs` makes blame skip the reformat.
 
 Still open:
-- [ ] **Before the next VM deploy:** check whether the VM's Keycloak realm
-  lives in H2, and add `DEPLOY_HOST` to the VM's `deploy/.env` (see above).
 - [x] Six `interactive-supports-focus` lint warnings on click-to-dismiss
   backdrops need an accessibility pass.
 - [x] `CreateCalendar`'s `Icon.Value` NotEmpty rule is dead code, because
@@ -466,10 +460,6 @@ Before calling it done:
 - [x] Commit the staged print-templates backend and print frontend.
 - [x] Have a Danish speaker review `translations/da/print.ts` and `translations/da/work-locations.ts`.
   Claude wrote both; check in particular "Forælder" as the label for a guardian.
-- [ ] Print from Safari and check that A3/A4 landscape comes from `@page`. If Safari ignores it
-  and you have to pick the paper in the print dialog, write that down or consider a
-  server-side PDF.
-- [ ] Print from the installed web app on the iPad, through the share sheet.
 - [x] Print a real week on paper and compare it with the old fridge sheet.
 
 Found along the way:
@@ -485,15 +475,7 @@ Found along the way:
   (2026-10-08) Moved to `taskfile.dist.yml` with `MARTEN_SCHEMAS`; skills and docs point there.
 
 Deferred until someone asks (each is additive; details are in the docs' open questions):
-- [ ] Print several weeks at once, for example a month as one PDF.
-- [ ] A `TransferPrintTemplateToGroup` slice, for turning a personal template into a shared one.
-- [ ] A configurable span, for example 14 days, if it stays legible on A4.
 - [ ] More row kinds, for example medicine doses and goal-post progress.
-- [ ] Work locations:
-  - A strict ISO-parity cycle mode, for patterns written as "even weeks".
-  - Effective-from dates for pattern changes, so a change doesn't rewrite past days.
-  - A view tier for group members who aren't co-guardians.
-  - Restoring an archived location.
 
 ## Bugs found while generating the docs screenshots (2026-10-03)
 
@@ -510,7 +492,7 @@ Found while seeding the demo family for `task docs:screenshots`.
   Both labels are now held to 70% of the cell width and at most two lines. The pickup label is
   right-aligned in its corner, and labels over 10 characters print at 0.9em instead of 1.2em
   (`week-plan-sheet.ts`).
-- [ ] **The meal plan import page shows a Danish placeholder in the English UI.** The empty
+- [x] **The meal plan import page shows a Danish placeholder in the English UI.** The empty
   "Meal plan text" field's placeholder reads `Madplan 2025 / U12 / Sø: Lasagne / Ma:
   Fiskefrikadeller m. salat`, while every other string on the page is English. It isn't a
   tooltip problem or e2e/demo data: the screenshot leaves the textarea empty, and the demo
@@ -578,9 +560,6 @@ Found along the way:
 - [x] **Observability.** OpenTelemetry traces, metrics and logs (ASP.NET Core, HttpClient, Npgsql,
   Wolverine, runtime), exported over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; JSON console
   logs with TraceId/RequestId outside Development. See `docs/backend/observability.md`.
-- [ ] **Run an OTLP backend in production** (Collector, Grafana, Azure Monitor...) and set
-  `OTEL_EXPORTER_OTLP_ENDPOINT`; until then nothing is exported. Consider an Aspire dashboard
-  service in the devcontainer for local traces.
 - [x] **More logging.** Audit-style logs for account and access changes, plus logs for swallowed
   and infrastructure failures; IDs only (docs/backend/observability.md, `AuditLogTests`).
 - [x] **Global exception handler.** `UnhandledExceptionHandler` turns any unhandled exception into a
@@ -591,8 +570,6 @@ Found along the way:
 - [x] **Health probes on Azure Container Apps.** `deploy/azure/deploy.sh` gives the API startup and
   liveness probes on `/health` and a readiness probe on `/health/ready`; Keycloak is probed on its
   management port (9000) and the frontend on `/`.
-- [ ] **Automated backups.** Backups on the Oracle VM are manual `pg_dump` commands
-  (`deploy/README.md` §7). Schedule them, copy them off the VM, and test a restore regularly.
 - [x] **Pin the base images.** Official `sdk:11.0.100-preview.7` / `aspnet:11.0.0-preview.7`
   (matching `global.json`) instead of floating nightlies; every base and compose image pinned by
   digest, refreshed by Dependabot.
