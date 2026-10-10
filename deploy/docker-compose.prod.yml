@@ -67,7 +67,7 @@ services:
       Authentication__Keycloak__ValidIssuer: "https://${AUTH_DOMAIN}/realms/buddy"
       Authentication__Keycloak__Audience: "buddy-api"
       Authentication__Keycloak__RequireHttpsMetadata: "false"
-      Authentication__KeycloakAdmin__TokenEndpoint: "http://keycloak:8080/realms/master/protocol/openid-connect/token"
+      Authentication__KeycloakAdmin__TokenEndpoint: "http://keycloak:8080/realms/buddy/protocol/openid-connect/token"
       Authentication__KeycloakAdmin__AdminBaseUrl: "http://keycloak:8080/admin/realms/buddy"
       Authentication__KeycloakAdmin__ClientId: "buddy-admin-cli"
       Authentication__KeycloakAdmin__ClientSecret: "${KEYCLOAK_ADMIN_CLI_SECRET}"
