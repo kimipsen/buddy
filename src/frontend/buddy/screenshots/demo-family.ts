@@ -157,7 +157,9 @@ async function createGuardianIdentity(): Promise<void> {
 }
 
 // CreateChild gives a child a temporary password with a pending UPDATE_PASSWORD action, which the
-// direct-grant login can't complete. Swap it for a permanent one so the child pages can be shown.
+// direct-grant login can't complete. Swap it for a permanent one so the child pages can be shown;
+// a non-temporary reset also drops UPDATE_PASSWORD. No user PUT: under Keycloak's user profile a
+// partial PUT blanks firstName/lastName, and VERIFY_PROFILE then rejects the direct grant.
 async function makeChildLoginUsable(username: string): Promise<void> {
   const id = await findKeycloakUserId(username);
 
@@ -168,10 +170,6 @@ async function makeChildLoginUsable(username: string): Promise<void> {
   await keycloakAdmin(`/users/${id}/reset-password`, {
     method: 'PUT',
     body: JSON.stringify({ type: 'password', value: DEMO_PASSWORD, temporary: false }),
-  });
-  await keycloakAdmin(`/users/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify({ requiredActions: [] }),
   });
 }
 

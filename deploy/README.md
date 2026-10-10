@@ -139,6 +139,11 @@ The dev realm isn't automatically ported over. Easiest path:
    `buddy-admin-cli`) by hand.
 3. Update each client's **Valid redirect URIs** / **Web origins** to the
    real `app.yourdomain.com` / `api.yourdomain.com` values.
+   Check that **Realm settings > User profile > email** isn't required:
+   children have no email, and a required one makes Keycloak refuse their
+   sign-in until they enter one. `buddy-realm.json` ships it optional, but
+   a realm created by hand, or before that change, needs the box unticked
+   once.
 4. Generate a new secret for `buddy-admin-cli` (Clients > buddy-admin-cli >
    Credentials), put it in `.env` as `KEYCLOAK_ADMIN_CLI_SECRET`, then:
    ```

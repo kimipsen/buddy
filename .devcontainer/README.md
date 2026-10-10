@@ -31,6 +31,10 @@ Keycloak prerequisites are automated:
   `carol` — from the checked-in export at `keycloak/buddy-realm.json`, via
   `start-dev --import-realm`. Import is skipped if the realm already exists,
   so this only takes effect on a fresh `postgres-data` volume.
+- The realm's user profile doesn't require an email (children have none);
+  everything else is Keycloak's default profile. A fresh import is what CI
+  gets, so a realm that has drifted from the export can pass locally and
+  fail there.
 
 The `buddy-admin-cli` client secret in your local
 `src/backend/buddy/appsettings.Development.json` (git-ignored, like every

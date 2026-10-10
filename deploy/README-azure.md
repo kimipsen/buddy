@@ -107,6 +107,11 @@ automatically:
    hand.
 3. Update each client's **Valid redirect URIs** / **Web origins** to the
    real frontend/API URLs printed by `deploy.sh`.
+   Check that **Realm settings > User profile > email** isn't required:
+   children have no email, and a required one makes Keycloak refuse their
+   sign-in until they enter one. `buddy-realm.json` ships it optional, but
+   a realm created by hand, or before that change, needs the box unticked
+   once.
 4. Generate a new secret for `buddy-admin-cli` (Clients > buddy-admin-cli >
    Credentials), then update the running API app with it. The commands below
    use `$RESOURCE_GROUP` etc. from `.env` — load them into your shell first

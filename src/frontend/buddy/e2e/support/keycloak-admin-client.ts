@@ -171,13 +171,11 @@ export async function endKeycloakSessions(user: DisposableGuardian): Promise<voi
 // Gives a child created through the manage-children UI (createChild in guardian-data.ts) a
 // permanent password, so loginAs can sign in as the child by direct grant -- the step the
 // screenshot seed takes for demo.emil. A non-temporary reset also drops the UPDATE_PASSWORD
-// required action (as BuddyApiFixture.SetPermanentPasswordAsync relies on).
-//
-// A freshly imported realm (CI) has Keycloak's default user profile, which requires an email, and
-// children are created without one, so VERIFY_PROFILE would reject the direct grant with "Account
-// is not fully set up". The child therefore gets a verified throwaway email too. The user is PUT
-// back whole: a partial PUT would blank firstName/lastName under the user profile. Only for e2e
-// children (an 'e2echild' username): it must never touch a seeded or real account.
+// required action (as BuddyApiFixture.SetPermanentPasswordAsync relies on). Don't PUT the user to
+// clear it: under Keycloak's user profile a partial PUT blanks firstName/lastName, and
+// VERIFY_PROFILE then rejects the direct grant. The child keeps no email, like a real one; the
+// realm's user profile (buddy-realm.json) doesn't require one. Only for e2e children (an
+// 'e2echild' username): it must never touch a seeded or real account.
 export async function makeChildLoginUsable(
   username: string,
 ): Promise<{ username: string; password: string }> {
@@ -206,22 +204,8 @@ export async function makeChildLoginUsable(
     body: JSON.stringify({ type: 'password', value: password, temporary: false }),
   });
 
-  const current = await fetch(`${users}/${userId}`, { headers });
-  const representation = (await current.json()) as Record<string, unknown>;
-  const update = await fetch(`${users}/${userId}`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({
-      ...representation,
-      email: `${username}@buddy.test`,
-      emailVerified: true,
-    }),
-  });
-
-  if (!reset.ok || !current.ok || !update.ok) {
-    throw new Error(
-      `Making '${username}' able to sign in failed: ${reset.status} / ${current.status} / ${update.status}`,
-    );
+  if (!reset.ok) {
+    throw new Error(`Making '${username}' able to sign in failed: ${reset.status}`);
   }
 
   return { username, password };
