@@ -95,7 +95,12 @@ export function buildMonthGridIso(isoDate: string): string[] {
   return buildDateRangeIso(gridStart, totalDays);
 }
 
-const TIME_ZONE_IDS = Intl.supportedValuesOf('timeZone').sort((a, b) => a.localeCompare(b));
+// Intl lists only canonical IANA names, so it leaves out "UTC" -- the backend's default for a new
+// user (TimeZoneId.Utc) and what a browser in UTC reports. Without it, a new user's time zone has
+// no <option> to show.
+const TIME_ZONE_IDS = [...new Set([...Intl.supportedValuesOf('timeZone'), 'UTC'])].sort((a, b) =>
+  a.localeCompare(b),
+);
 
 export function listTimeZoneIds(): readonly string[] {
   return TIME_ZONE_IDS;

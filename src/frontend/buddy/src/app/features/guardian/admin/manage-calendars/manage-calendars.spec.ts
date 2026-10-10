@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import {
   CalendarSummary,
@@ -415,13 +415,35 @@ describe('ManageCalendars', () => {
     expect(listMyCalendars).toHaveBeenCalledTimes(2);
   });
 
+  it('pre-selects UTC when the browser reports it, since listTimeZoneIds() includes it', async () => {
+    const resolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
+    const spy = vi
+      .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
+      .mockImplementation(function (this: Intl.DateTimeFormat) {
+        return { ...resolvedOptions.call(this), timeZone: 'UTC' };
+      });
+    onTestFinished(() => spy.mockRestore());
+
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    expect(timeZoneSelect(fixture.nativeElement as HTMLElement).value).toBe('UTC');
+  });
+
   it('falls back to a real dropdown option when the detected browser time zone is not one of listTimeZoneIds()', async () => {
-    // In this environment browserTimeZoneId() resolves to 'UTC' (Intl.DateTimeFormat().resolvedOptions().timeZone),
-    // but listTimeZoneIds() is built from Intl.supportedValuesOf('timeZone'), which does not include the
-    // 'UTC' alias -- only IANA zone names like 'Etc/UTC'. resolveDefaultTimeZoneId() now falls back to the
-    // first listed zone in that case, so the pre-selected value is always one the <select> actually has an
-    // <option> for.
+    // A browser can report a zone the list doesn't have (an alias such as 'Asia/Calcutta').
+    // resolveDefaultTimeZoneId() then falls back to the first listed zone, so the pre-selected value is
+    // always one the <select> actually has an <option> for.
+    const resolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
+    const spy = vi
+      .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
+      .mockImplementation(function (this: Intl.DateTimeFormat) {
+        return { ...resolvedOptions.call(this), timeZone: 'Mars/Olympus_Mons' };
+      });
+    onTestFinished(() => spy.mockRestore());
+
     const detectedTimeZone = browserTimeZoneId();
+    expect(detectedTimeZone).toBe('Mars/Olympus_Mons');
     const { fixture, calendars } = await setup();
     await settle(fixture);
 

@@ -70,11 +70,14 @@ describe('todayIsoDate', () => {
 });
 
 describe('listTimeZoneIds', () => {
-  it('returns the IANA zone ids sorted ascending by locale comparison', () => {
+  it('returns the IANA zone ids plus UTC, sorted ascending by locale comparison', () => {
     const ids = listTimeZoneIds();
-    const expected = [...Intl.supportedValuesOf('timeZone')].sort((a, b) => a.localeCompare(b));
+    const expected = [...new Set([...Intl.supportedValuesOf('timeZone'), 'UTC'])].sort((a, b) =>
+      a.localeCompare(b),
+    );
 
     expect(ids).toEqual(expected);
+    expect(ids.filter((id) => id === 'UTC')).toEqual(['UTC']);
     expect(ids).toContain('Europe/Copenhagen');
     expect(ids).toContain('America/New_York');
   });
