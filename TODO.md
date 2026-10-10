@@ -585,8 +585,9 @@ Found along the way:
   leak into an image.
 - [x] **Enable .NET analyzers.** `latest-recommended` plus code style enforced on build, findings
   fixed; deliberate exceptions are in `src/backend/.editorconfig`.
-- [ ] **`npm audit` reports 14 vulnerabilities (3 critical)** in the frontend dependencies; triage
-  them (see the security-scanning item).
+- [x] **`npm audit` vulnerabilities in the frontend dependencies.** Fixed in `86f4c8ef` by lockfile
+  bumps, plus an `@parcel/watcher` override in the Keycloak theme build; both lockfiles audit
+  clean. The CI gate that stops new ones is the security-scanning item.
 
 ### Process
 
