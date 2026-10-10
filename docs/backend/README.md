@@ -17,6 +17,7 @@ Backend documentation for the Buddy API.
 - [Task Library flow](task-library/flow.md)
 - [Progress flow](progress/flow.md)
 - [Sleep diary flow](sleep-diary/flow.md)
+- [House rules flow](house-rules/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
 - [Health checks and observability](observability.md)

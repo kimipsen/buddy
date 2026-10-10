@@ -149,6 +149,14 @@ classDiagram
         +bool IsRevoked
     }
 
+    class RuleBook {
+        +RuleBookId Id
+        +RuleBookScopeKind ScopeKind
+        +Guid ScopeId
+        +Rules Rules
+        +Acknowledgements Acknowledgements
+    }
+
     GuardianLink --> User : guardianId, childId
     Group --> User : members
     Calendar --> Group : owner, group-owned
@@ -174,6 +182,8 @@ classDiagram
     ChildProgress ..> CalendarItem : awardedOccurrences
     SleepDiary --> User : childId, entries' loggedBy
     SleepDiaryShareToken --> User : childId, createdBy
+    RuleBook --> User : scopeId (Child scope), acknowledgements
+    RuleBook --> Group : scopeId (Group scope)
 ```
 
 Solid arrows are a stored reference (the tail aggregate holds the head

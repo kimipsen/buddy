@@ -104,6 +104,7 @@ groups, calendars, privacy and onboarding are core and can't be turned off.**
 | `MealplanImport` | The 8 `*MealPlanImport*` endpoints | `/guardian/mealplan/import` and its link |
 | `Medicines` | `/medicines` group | `/guardian/medicine`, `doses-today` card, child home doses |
 | `SleepDiary` | `/sleep-diary` group, including the anonymous shared view | `/guardian/sleep-diary`, `/shared/sleep-diary/:token` |
+| `HouseRules` | `/house-rules` group | `/guardian/house-rules` and its print pages, `/child/rules`, the child home "rules to read" card (frontend not built yet; see [house-rules.md](house-rules.md#feature-flag)) |
 | `Pickups` | `/pickups` group | `/guardian/pickup`, `pickup-today` card, child home pickups |
 | `Babysitters` | `/babysitters` group | `/guardian/babysitters`, babysitter links and assignee options in pickups |
 | `WorkLocations` | `/work-locations` group | `/guardian/work-locations` |
@@ -396,7 +397,7 @@ that only use the global limit and on the `ETagCoverageTests` exclusion list.
 |---|---|
 | Where flags live | `Features` configuration section, set by the operator via env vars, validated on start, no admin screen, because each family has an operator and Buddy has no installation-admin role |
 | Default | Every flag `true`, so upgrades change nothing |
-| Which features | Mealplans (+ AI assistant, import), medicines, sleep diary, pickups, babysitters, work locations, printing, progress, task library, help. Calendars, users, guardians, groups and privacy are core. |
+| Which features | Mealplans (+ AI assistant, import), medicines, sleep diary, house rules, pickups, babysitters, work locations, printing, progress, task library, help. Calendars, users, guardians, groups and privacy are core. |
 | What off means | Hide the HTTP surface and UI. Keep registrations, data, GDPR coverage and background services. |
 | Backend enforcement | Don't map the disabled endpoints. Routing answers `404`. |
 | Frontend source | Anonymous `GET /features`, so the flags have a single source and one image serves every installation |

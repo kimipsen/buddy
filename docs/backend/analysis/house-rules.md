@@ -1,6 +1,12 @@
 # House Rules
 
-Status: Proposed (not yet implemented)
+Status: Implemented (backend and the shared markdown renderer; the guardian, child and print pages
+are not built yet). Shipped: the `RuleBook` aggregate in a new `houserules` schema with its six
+events and inline snapshot, `HouseRulesAuthorization`, the slices `AddRule`, `EditRule`,
+`RemoveRule`, `ReorderRules`, `ListRules`, `AcknowledgeRule` (each on a child and a group route)
+and `GetChildRules`, GDPR erasure and export, the `Features:HouseRules` flag, and
+`shared/markdown-view` in the frontend. The app's Content-Security-Policy is now enforced. See
+[house-rules/flow.md](../house-rules/flow.md).
 
 ## Context
 
@@ -239,9 +245,9 @@ Alternatives considered and rejected:
 - **`marked` or `markdown-it` to HTML, then DOMPurify, then `[innerHTML]`.** This is the
   common approach. It would be the app's first `innerHTML` and first `bypassSecurityTrust*`.
   The safety of every child-facing screen would then depend on keeping a sanitizer
-  configured correctly. The app CSP is still `Report-Only`
-  ([Caddyfile](../../../src/frontend/buddy/Caddyfile), open item in `TODO.md`), so the CSP
-  provides no backstop either.
+  configured correctly. When this was written, the app CSP was still `Report-Only`
+  ([Caddyfile](../../../src/frontend/buddy/Caddyfile)), so it gave no backstop either. It is
+  enforced now, as defence in depth, but the renderer doesn't rely on it.
 - **`ngx-markdown`.** It wraps the same HTML-then-sanitize path, adds an Angular-version
   dependency (the app is on Angular 22 preview builds), and pulls in highlighting and
   KaTeX features nobody asked for.
@@ -335,16 +341,21 @@ isUpToDate(rule, child) = Acknowledgements.TryGetValue((rule.Id, child), out var
   acknowledgement outlives its rule.
 - **The request carries the revision the child saw:**
   `PUT .../rules/{ruleId}/acknowledgement { "revision": 3 }`. If a guardian edited the rule
-  while the child was reading, the stale acknowledgement gets a `409`
+  while the child was reading, and the edit asked for re-acknowledgement (the revision read is
+  now below `AcknowledgementRevision`), the stale acknowledgement gets a `409`
   `house_rule_revision_changed`. The client reloads, and the child sees the new text before
   they can agree to it. Silently recording an acknowledgement of text the child never saw
-  would defeat the purpose.
-- **Repeating an acknowledgement for the same or an older revision succeeds without appending
-  an event.** This matches the idempotent `PUT` convention
+  would defeat the purpose. A minor edit in between doesn't count, because the text the child
+  read is still the version that needs agreeing to. A revision above the current one is `400`.
+- **Repeating an acknowledgement the child already gave (this revision or a later one)
+  succeeds without appending an event.** This matches the idempotent `PUT` convention
   ([http-status-codes.md](../http-status-codes.md)).
-- **Only the child can acknowledge.** A guardian can't acknowledge on a child's behalf in v1
-  (see open questions). The guardian view shows status only: "Emil ✓, Ida — not yet (changed
-  2 days ago)".
+- **A guardian can acknowledge on a child's behalf** (settled with the product owner during
+  implementation), for young children who go through the rules with a parent. The request
+  then names the child (`{ "revision": 3, "childId": "..." }`, required for a guardian). The
+  caller needs `Manage` on the book and must be an active guardian of that child, and the
+  child must be in the book's scope, so a household admin can't tick for another family's
+  child. `RuleAcknowledged.RecordedBy` records who did it.
 - **Acknowledgement is not consent in any legal or GDPR sense.** It's a family tool, and the
   UI wording ("I've read this") says so.
 
@@ -363,8 +374,21 @@ GET /house-rules/children/{childId}
 
 ChildRuleSection(RuleBookScopeKind ScopeKind, Guid ScopeId, string Label,
                  IReadOnlyList<RuleView> Rules)
-RuleView(RuleId Id, string Title, string Body, int Revision, bool IsUpToDate,
-         DateTimeOffset LastEditedAt)
+RuleView(RuleId Id, string Title, string Body, int Revision, int? AcknowledgedRevision,
+         bool IsUpToDate, DateTimeOffset LastEditedAt)
+         // AcknowledgedRevision null -> "New" chip; set but not up to date -> "Changed"
+```
+
+As built, the personal section's `Label` is the child's given name, and the response also
+carries `ChildId`. `ListRules` returns one book with the caller's tier and the children whose
+status it tracks:
+
+```
+RuleBookResponse(RuleBookScopeKind ScopeKind, Guid ScopeId, HouseRulesAccessTier Access,
+                 IReadOnlyList<Guid> Children, IReadOnlyList<RuleResponse> Rules)
+RuleResponse(RuleId Id, string Title, string Body, int Revision, int AcknowledgementRevision,
+             DateTimeOffset LastEditedAt, IReadOnlyList<RuleAcknowledgementResponse> Acknowledgements)
+RuleAcknowledgementResponse(Guid ChildId, int? AcknowledgedRevision, bool IsUpToDate)
 ```
 
 - **How the child's groups are found.** Group membership is resolved through the existing
@@ -405,7 +429,8 @@ RuleRemoved(RuleBookId Id, RuleId RuleId, RuleContent Before,
 RulesReordered(RuleBookId Id, ImmutableList<RuleId> Before, ImmutableList<RuleId> After,
     UserId ModifiedBy, DateTimeOffset OccurredAt)
 RuleAcknowledged(RuleBookId Id, RuleId RuleId, UserId ChildId, int Revision,
-    DateTimeOffset OccurredAt)
+    UserId RecordedBy, DateTimeOffset OccurredAt)
+    // RecordedBy: the child, or a guardian acknowledging on their behalf
 
 RuleContent(string Title, string Body)
 ```
@@ -438,6 +463,9 @@ id is the stream id) or through an index that already exists (`GroupMembershipDo
 Each scoped slice is reachable through two routes, `children/{childId}` and
 `groups/{groupId}`, which build the same command with a `RuleBookScope` value. This is the
 dual-route shape mealplans already use (`/mealplans/children/...` and `/mealplans/groups/...`).
+The group route's endpoint name ends in `ForGroup` (`AddRuleForGroup`), as mealplans' do.
+`AddRule`, `EditRule` and `ReorderRules` return the whole book. `RemoveRule` and
+`AcknowledgeRule` return `204`.
 
 | Slice | Tier | Notes |
 |---|---|---|
@@ -446,7 +474,7 @@ dual-route shape mealplans already use (`/mealplans/children/...` and `/mealplan
 | `RemoveRule` | Manage | Idempotent: an unknown `ruleId` returns `Success` with no event |
 | `ReorderRules` | Manage | Body is the full ordered id list. A list that isn't a permutation → `400` |
 | `ListRules` | View | One book with per-child acknowledgement status. `View` and `Manage` see the status; a child gets a `View`-shaped result with only their own status |
-| `AcknowledgeRule` | Acknowledge | `{ revision }`. A stale revision → `409 house_rule_revision_changed` |
+| `AcknowledgeRule` | Acknowledge (self) / Manage (on behalf) | `{ revision, childId? }`. A stale revision → `409 house_rule_revision_changed` |
 | `GetChildRules` | Acknowledge (self) / Manage (guardian) | The combined child view from Question 7 |
 
 ## Routes
@@ -475,18 +503,29 @@ registers an `IPersonalDataEraser` and an `IPersonalDataExporter`
 The meta tests in `PersonalDataEraserCoverageTests` require both.
 
 - **Child erased.** The child's personal book stream is deleted, as
-  `SleepDiariesPersonalData` deletes the diary. Their acknowledgements in group books are
-  masked: the `RuleAcknowledged` events are erased with the `StreamErasure` helpers. Group
-  books are not deleted, because they belong to the household.
+  `SleepDiariesPersonalData` deletes the diary. Group books are not deleted, because they
+  belong to the household. As built, the child's acknowledgements in them are left rather
+  than masked. They hold only the child's `UserId`, which is a pseudonym once the user is
+  erased, and the erased child is no longer a group member, so they drop out of every status
+  list. `RuleAcknowledged` has no free text to mask.
 - **Guardian erased.** Rules they wrote stay, since they belong to the child or the
   household, as group-owned print templates do
   ([PrintTemplatesPersonalData.cs](../../../src/backend/buddy/Features/PrintTemplates/PrintTemplatesPersonalData.cs)).
-  The guardian's `UserId` on `AddedBy`/`EditedBy` is masked.
+  As built, `AddedBy`/`EditedBy` are not masked. Like `CreatedBy` on calendar items
+  ([CalendarsPersonalData.cs](../../../src/backend/buddy/Features/Calendars/CalendarsPersonalData.cs)),
+  they are pseudonyms once the user is erased.
 - **Group deleted.** The book becomes unreachable (`NotFound`, because group access fails
-  first). Erasing its stream is left to group erasure ordering, the same way group calendars
-  are handled.
-- **Export.** For a child: their personal book and their acknowledgements. For a guardian:
-  the rules they authored or edited.
+  first). When an erasure leaves a group empty, `GroupsPersonalDataEraser` deletes the group.
+  The house-rules eraser runs after it and deletes the book of every group that no longer
+  exists, the same way the group's calendars are erased with it.
+- **Export.** As built (the `houseRules` section; children get only their account section, as
+  for every feature): the personal book of each of the guardian's children and the book of
+  every group the guardian belongs to, with acknowledgement status for their children. That is
+  the house-rules data about the guardian's family, the same choice the sleep diary export
+  makes. A `Rule` keeps only its last editor, so "the rules they authored" can't be told apart
+  from the current state anyway.
+- **A group deleted through `DeleteGroup`** (not an erasure) keeps its book, unreachable,
+  until the next erasure run's sweep deletes the books of all deleted groups.
 
 ## Feature flag
 
@@ -587,11 +626,13 @@ Frontend:
 | Guardian opens a scope with no rules yet | `ListRules` returns an empty list, not `NotFound`. No stream until the first `AddRule` |
 | Title-only rule (empty body) | Allowed. Body `""` |
 | Body contains raw HTML or a `javascript:` link | Stored as typed. Rendered as plain text by the allow list |
-| 51st rule | `400` validation error (`house_rules_limit_reached`) |
+| 51st rule | `400` (`validation_error`, like every other handler-level check) |
 | `EditRule` with unchanged content | `Success`, no event, revision unchanged |
 | `RemoveRule` for an already removed rule | `Success`, no event (idempotent) |
 | `ReorderRules` with missing or extra ids | `400` |
-| Guardian edits while a child is reading, child taps "I've read this" | `409 house_rule_revision_changed`. Client reloads and shows the new text |
+| Guardian edits while a child is reading, child taps "I've read this" | `409 house_rule_revision_changed`. Client reloads and shows the new text. After a minor edit, the acknowledgement is accepted |
+| Guardian acknowledges for their child without naming the child | `400` |
+| Household admin acknowledges for a child they aren't a guardian of | `403` |
 | Child acknowledges a rule in a group they've been removed from | `NotFound` |
 | Child calls `AddRule`/`EditRule` on their own book | `Forbidden` (they can see it, but can't write) |
 | Adult group `Member` calls `AddRule` | `Forbidden` |
@@ -620,21 +661,16 @@ Frontend:
 | Markdown on the backend | Stored and validated as plain text, never parsed |
 | Who manages | Child book: any active guardian. Group book: non-child Owner/Admin |
 | Who reads | The child, plus adult group members (read-only) |
-| Acknowledgement | Per rule and per revision, child only, `409` on a stale revision; minor edits can skip re-acknowledgement |
+| Acknowledgement | Per rule and per revision, `409` on a stale revision; minor edits can skip re-acknowledgement |
+| Acknowledging for a child | Allowed for a caller with `Manage` who is an active guardian of the named child; `RuleAcknowledged.RecordedBy` records who |
+| Guardians and the other home's rules | Through `GetChildRules`, a guardian sees every household their child is in, read-only |
+| App CSP | Enforced together with this feature (theme script moved to a file, `inlineCritical` off) |
+| Erasure | Personal book deleted with the child; household books stay; author and child ids are pseudonyms, not masked; books of groups deleted by erasure are deleted |
 | Printing | Dedicated portrait print pages, not a week-plan row kind |
 | Babysitters | Not in v1. They get the printout |
 
 ## Remaining open questions
 
-- **Should a guardian be able to acknowledge on a child's behalf?** Young children who can't
-  read yet go through the rules with a parent. Lean: not in v1. If it's needed, add
-  `RuleAcknowledged.RecordedBy` and let `Manage` call `AcknowledgeRule` with an explicit
-  `childId`. That change is additive.
-- **Should guardians see household rules of a group they aren't in?** Through
-  `GetChildRules`, a guardian sees every household their child belongs to. Lean: yes,
-  because a parent should know what their child agreed to in the other home. If a family
-  objects, restrict the household sections to groups the caller is also a member of. That
-  change is a filter, not a redesign.
 - **Is a group permission policy for rules needed?** Lean: wait until a family asks for
   "everyone in the group may edit". Adding it means a `HouseRulesPermissionPolicy` on `Group`
   with the migration pattern from
@@ -650,9 +686,6 @@ Frontend:
 - **Should onboarding include a "write your first house rule" step?** Lean: no. Onboarding is
   already long ([guardian-onboarding.md](../../frontend/analysis/guardian-onboarding.md)). A
   dashboard hint after onboarding is cheaper.
-- **Should the app CSP be enforced first?** It isn't required, because no `innerHTML` is
-  introduced. It is still worth doing before or with this feature, as defence in depth for
-  the first user-authored rich text.
 
 ## Diagram
 

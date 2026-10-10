@@ -355,6 +355,25 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [In-app help for guardians](analysis/in-app-help.md) — implemented per-page inline help panel
   toggled from the shell header, a `/guardian/help` index, typed en/da help dictionaries and a
   coverage spec that requires help for every guardian page
+- [House rules](../backend/analysis/house-rules.md) — backend implemented; in the frontend only
+  the shared markdown renderer exists so far (`shared/markdown-view`, see below). The guardian
+  page, the child page and the print pages are not built yet
+
+## Rendering markdown
+
+`shared/markdown-view` (`<app-markdown-view [markdown]="rule.body" />`) is the one place the app
+renders user-written markdown (house rules' bodies). `shared/markdown-view/markdown.ts` runs
+`marked`'s lexer (pinned in `package.json`; its HTML renderer is never called) and maps the token
+tree onto an allow-listed node model: headings (`#`/`##` drop to level 3), paragraphs, line breaks,
+bold, italic, strikethrough, inline and block code, nested and numbered lists, read-only task lists,
+GFM tables with alignment, block quotes, rules, and `http:`/`https:`/`mailto:` links (new tab,
+`rel="noopener noreferrer"`). Anything else (raw HTML, images, other link schemes) is shown as its
+source text. The template uses only interpolation and attribute bindings, never `innerHTML`, so
+there is nothing to sanitize; a spec checks that Angular's sanitizer is never asked for HTML.
+
+The app's Content-Security-Policy is enforced (`Caddyfile`). Keep the app free of inline scripts
+and inline event handlers: the pre-boot theme script lives in `public/theme-init.js`, and
+`inlineCritical` is off in `angular.json` because critical-CSS inlining adds an `onload` handler.
 
 ## Local development
 

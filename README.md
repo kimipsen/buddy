@@ -54,8 +54,8 @@ in real time.
 - [x] Saved babysitters/nannies for pickup and drop-off
 - [x] In-app help: a help panel on every guardian page and a help index, in English and Danish
 - [ ] House rules for a household (group) and for each child, written in markdown, which
-      children read and acknowledge (proposed, not yet implemented — see
-      [House rules](docs/backend/analysis/house-rules.md))
+      children read and acknowledge (backend built; the guardian, child and print pages are not
+      yet — see [House rules](docs/backend/analysis/house-rules.md))
 
 ### Child
 

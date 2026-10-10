@@ -296,6 +296,20 @@ A night wake-up or a daytime nap: a start time plus a duration.
 ### SleepDiaryShareToken
 A hashed, revocable link with an optional expiry that lets someone outside the app (a doctor) read one child's diary without a Buddy account. Modelled on `IcalToken`, which never expires.
 
+## House rules domain
+
+### RuleBook
+The house rules for one scope (`Features/HouseRules`): a child's personal rules, or a household group's rules. Its `RuleBookId` equals the scope's id (the child's `UserId` or the `GroupId`), and a flat `RuleBookScopeKind` (`Child` | `Group`) says which. It holds an ordered list of at most 50 `Rule`s and which revision of each rule each child has acknowledged.
+
+### Rule
+One house rule: a plain-text title (1-100 characters) and a markdown body (0-4000 characters, `""` for none). `Revision` goes up on every content edit. `AcknowledgementRevision` is the last revision that asked children to read the rule again; a minor edit leaves it where it was.
+
+### Acknowledgement
+A child's "I've read this" for one rule at one revision (`RuleAcknowledged`), recorded by the child or by a guardian on their behalf (`RecordedBy`). A child is up to date on a rule when their acknowledged revision is at least the rule's `AcknowledgementRevision`. It is a family tool, not consent in any legal sense.
+
+### Household
+A `Group` whose rules apply to every child member. A child whose parents live apart can be in two households and sees both rule books, each labelled with the group's name.
+
 ## Event-sourced concepts
 
 ### Event stream

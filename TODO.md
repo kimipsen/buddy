@@ -549,12 +549,11 @@ Found along the way:
   stored API keys. Add `ProtectKeysWithCertificate` with a certificate from the secret store.
 - [x] **Security headers.** The app's headers are in `src/frontend/buddy/Caddyfile` (so they also
   apply on Azure); the API's are in `deploy/Caddyfile`. Keycloak sends its own.
-- [ ] **Enforce the app's Content-Security-Policy.** It is report-only for now. Two things break
-  under enforcement: the inline theme script in `index.html` (move it to a file, or add its hash)
-  and the `onload` handler Angular's critical-CSS inlining puts on the stylesheet `<link>`
-  (disable `inlineCritical`, or allow it with `'unsafe-hashes'`). Then switch the header to
-  `Content-Security-Policy`. The API on Azure has no edge proxy, so it gets no security headers
-  there yet.
+- [x] **Enforce the app's Content-Security-Policy.** Enforced in `src/frontend/buddy/Caddyfile`
+  since the house rules work (their markdown is the first user-authored rich text). The pre-boot
+  theme script moved to `public/theme-init.js`, and `inlineCritical` is off in `angular.json`, so
+  the production build has no inline script or event handler.
+- [ ] **Security headers for the API on Azure.** It has no edge proxy there, so it gets none yet.
 - [ ] **GDPR for special-category health data** -- design and progress in
   `docs/backend/analysis/gdpr-data-protection.md` (implementation order there):
   - [x] Quick fixes: deleted users locked out, Keycloak account deleted, tokens redacted from
