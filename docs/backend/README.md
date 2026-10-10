@@ -56,6 +56,7 @@ model or permissions logic.
 - [Babysitters](analysis/babysitters.md)
 - [Client-ready OpenAPI documents](analysis/openapi-client-contract.md)
 - [Feature flags](analysis/feature-flags.md)
+- [House rules](analysis/house-rules.md)
 
 ## Current focus areas
 
