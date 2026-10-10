@@ -169,9 +169,12 @@ export async function endKeycloakSessions(user: DisposableGuardian): Promise<voi
 }
 
 // Gives a child created through the manage-children UI (createChild in guardian-data.ts) a
-// permanent password and clears its UPDATE_PASSWORD required action, so loginAs can sign in as the
-// child by direct grant -- the step the screenshot seed takes for demo.emil. Only for e2e children
-// (an 'e2echild' username): it must never touch a seeded or real account.
+// permanent password, so loginAs can sign in as the child by direct grant -- the step the
+// screenshot seed takes for demo.emil. A non-temporary reset also drops the UPDATE_PASSWORD
+// required action (as BuddyApiFixture.SetPermanentPasswordAsync relies on). Don't PUT the user to
+// clear it: with Keycloak's user profile a partial PUT blanks firstName/lastName, and on a fresh
+// realm import VERIFY_PROFILE then rejects the direct grant. Only for e2e children (an 'e2echild'
+// username): it must never touch a seeded or real account.
 export async function makeChildLoginUsable(
   username: string,
 ): Promise<{ username: string; password: string }> {
@@ -199,16 +202,9 @@ export async function makeChildLoginUsable(
     headers,
     body: JSON.stringify({ type: 'password', value: password, temporary: false }),
   });
-  const update = await fetch(`${users}/${userId}`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({ requiredActions: [] }),
-  });
 
-  if (!reset.ok || !update.ok) {
-    throw new Error(
-      `Making '${username}' able to sign in failed: ${reset.status} / ${update.status}`,
-    );
+  if (!reset.ok) {
+    throw new Error(`Making '${username}' able to sign in failed: ${reset.status}`);
   }
 
   return { username, password };

@@ -31,7 +31,7 @@ export async function getAccessToken(username: string, password: string): Promis
 
   if (!response.ok) {
     throw new Error(
-      `Keycloak direct-grant token request for '${username}' failed: ${response.status} ${response.statusText}`,
+      `Keycloak direct-grant token request for '${username}' failed: ${response.status} ${response.statusText} ${await response.text()}`,
     );
   }
 
