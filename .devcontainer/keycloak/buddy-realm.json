@@ -22,7 +22,7 @@
       "protocol": "openid-connect",
       "redirectUris": ["http://localhost:4300/*"],
       "webOrigins": ["http://localhost:4300"],
-      "defaultClientScopes": ["profile", "email", "roles"],
+      "defaultClientScopes": ["basic", "profile", "email", "roles"],
       "protocolMappers": [
         {
           "name": "audience-buddy-api",
