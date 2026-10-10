@@ -20,6 +20,7 @@ This folder contains the project-level documentation for Buddy.
 - [HTTP status code semantics](backend/http-status-codes.md)
 - [Health checks and observability](backend/observability.md)
 - [Testing](testing.md)
+- [Setting up privacy for your Buddy](privacy-setup.md) — DPAs, backup rotation, record of processing, DPIA and privacy notice
 
 ## Frontend
 

@@ -551,7 +551,7 @@ Found along the way:
   - [x] AI assistant: minimization, 30-day retention, disclosure and acknowledgement.
   - [x] Health-data read audit logs.
   - [ ] Outside the code: privacy notice, record of processing, DPIA, DPAs with the hosting
-    provider; set up 30-day backup rotation.
+    provider; set up 30-day backup rotation. Step-by-step guide: `docs/privacy-setup.md`.
 - [ ] **Security scanning in CI.** Add CodeQL, an `npm audit` / `dotnet list package --vulnerable`
   gate and a container image scan (e.g. Trivy).
 - [x] **Least-privilege `permissions:`** (`contents: read`) in every workflow.

@@ -49,6 +49,8 @@ decides what the law requires of them. The design and the reasons behind it are 
 ## What you have to do when you run Buddy
 
 Work through this list before real families use your instance.
+[docs/privacy-setup.md](docs/privacy-setup.md) walks through each item step by step, with a
+backup rotation script and templates for the record of processing, the DPIA and the notice.
 
 - [ ] **Privacy notice.** Tell guardians, in words a child's parent understands:
   - what you collect (the list above);
