@@ -80,7 +80,9 @@ two trees side by side, before any tooling even runs.
 - **Testcontainers.PostgreSql**, **Testcontainers** (generic container) for Keycloak and
   mailpit. No official `Testcontainers.Keycloak` module is needed — a generic
   `IContainer` built from `quay.io/keycloak/keycloak:26.8.0` (matching the devcontainer's
-  version) with a mounted realm-import file is enough.
+  version) with a mounted realm-import file is enough. `Meta/KeycloakVersionTests` fails if
+  `BuddyApiFixture.KeycloakImage` drifts from the devcontainer or the Azure image, and
+  `TestRealm.json` carries the same user profile as `buddy-realm.json` (email optional).
 - No new assertion library. Stick to `Assert.*` — the assertions here are mostly "status code
   X, body shape Y", which doesn't benefit much from fluent-assertion sugar, and it avoids
   pulling in a dependency (FluentAssertions' license changed; Shouldly/AwesomeAssertions are

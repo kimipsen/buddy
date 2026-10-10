@@ -26,6 +26,10 @@ namespace buddy.IntegrationTests.Fixtures;
 // avoid touching the fixed set of seeded Keycloak users' own profiles from more than one place.
 public sealed class BuddyApiFixture : IAsyncLifetime
 {
+    // The same Keycloak the app runs on (.devcontainer/docker-compose.yml, deploy/azure/keycloak/Dockerfile);
+    // KeycloakVersionTests fails when they drift apart.
+    public const string KeycloakImage = "quay.io/keycloak/keycloak:26.8.0";
+
     private const string RealmName = "buddy-test";
     private const string Audience = "buddy-api";
     private const string AdminClientId = "buddy-admin-cli";
@@ -47,9 +51,9 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 
         var realmImportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "TestRealm.json");
 
-        _keycloak = new ContainerBuilder("quay.io/keycloak/keycloak:21.1.1")
-            .WithEnvironment("KEYCLOAK_ADMIN", "admin")
-            .WithEnvironment("KEYCLOAK_ADMIN_PASSWORD", "admin")
+        _keycloak = new ContainerBuilder(KeycloakImage)
+            .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
+            .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
             .WithCommand("start-dev", "--import-realm")
             // WithResourceMapping treats the target as a directory and keeps the source file's own
             // name (TestRealm.json) -- it does not rename to a target basename. Point it at the
