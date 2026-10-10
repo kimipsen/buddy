@@ -60,8 +60,20 @@ jobs:
 
       # Testcontainers needs a Docker daemon, which the ubuntu-latest runner provides natively --
       # same as backend-tests.yml's integration suite.
+      # The devcontainer reaches Postgres as "db" on the compose network, so the checked-in compose
+      # file publishes no port for it. The API here runs on the bare runner and connects to
+      # localhost:5432 (ciBackendEnv in playwright.config.ts), so publish it for CI only.
+      - name: Publish Postgres for the runner
+        run: |
+          cat > .devcontainer/docker-compose.ci.yml <<'EOF'
+          services:
+            db:
+              ports:
+                - 5432:5432
+          EOF
+
       - name: Start db, Keycloak and Mailpit
-        run: docker compose -f .devcontainer/docker-compose.yml up -d --wait db keycloak mailpit
+        run: docker compose -f .devcontainer/docker-compose.yml -f .devcontainer/docker-compose.ci.yml up -d --wait db keycloak mailpit
 
       - name: Install frontend dependencies
         working-directory: src/frontend/buddy
