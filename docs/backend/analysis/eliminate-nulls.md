@@ -674,10 +674,9 @@ RecurrenceEnd  = Never | On(DateOnly Until)
 - **Frontend.** `userName: string` in `users.service.ts` and `user-event.model.ts`, which also
   gained `timeZoneId` and `language` on `UserCreatedData`.
 - **Existing databases need a reset**: stored `UserCreated` events lack the new fields.
-- **Noticed, not changed.** My profile's time zone `<select>` lists `Intl.supportedValuesOf('timeZone')`,
-  which has no `"UTC"`, so a user still on the default sees no matching option (unchanged from the
-  old implicit default). `e2e/profile-update.spec.ts` restores carol to her original zone and so
-  fails on a freshly reset database, where that is `"UTC"`; it passes once she has a listed zone.
+- **Time zone dropdowns offer `"UTC"`.** `Intl.supportedValuesOf('timeZone')` has no `"UTC"`, so
+  `listTimeZoneIds()` adds it; a user still on the default now sees a matching option on My profile,
+  and `e2e/profile-update.spec.ts` can restore carol's original zone on a freshly reset database.
 
 ### 5.7 WorkLocations
 
