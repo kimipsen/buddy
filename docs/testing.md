@@ -174,7 +174,9 @@ verified scoping instructions and expected runtime characteristics.
   check (`.claude/skills/i18n/check-parity.mjs`) for frontend changes.
 - `.github/workflows/e2e-tests.yml` starts Postgres, Keycloak, and Mailpit via
   `.devcontainer/docker-compose.yml` and runs the Playwright suite against a
-  real backend and frontend.
+  real backend and frontend. A CI-only override (`docker-compose.ci.yml`,
+  written by the workflow) publishes Postgres on `localhost:5432` for the API
+  running on the runner.
 - `.github/workflows/mutation-testing.yml` runs mutation testing nightly and on
   demand. See [nightly mutation testing](#nightly-mutation-testing).
 - `.github/workflows/codeql.yml` runs CodeQL's `security-and-quality` queries
