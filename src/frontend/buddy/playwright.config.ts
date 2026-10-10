@@ -83,6 +83,9 @@ export default defineConfig({
       // nothing to change there -- only a bare CI runner needs redirecting to localhost. The
       // rate-limit budget above applies everywhere.
       env: { ...(isCI ? ciBackendEnv : {}), ...e2eBackendEnv },
+      // The API logs to stdout, which Playwright drops by default; on CI that log is the only
+      // record of why a request failed (e.g. a 500 from GET /users/me in global setup).
+      stdout: isCI ? 'pipe' : 'ignore',
       timeout: 120_000,
     },
   ],

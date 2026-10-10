@@ -35,7 +35,9 @@ export async function deferOnboarding(user: TestUser): Promise<void> {
   try {
     const provisioned = await api.get('/users/me');
     if (!provisioned.ok()) {
-      throw new Error(`provisioning ${user.username} failed: ${provisioned.status()}`);
+      throw new Error(
+        `provisioning ${user.username} failed: ${provisioned.status()} ${await provisioned.text()}`,
+      );
     }
 
     const current = (await (await api.get('/users/me/onboarding')).json()) as OnboardingProgressDto;
