@@ -411,7 +411,8 @@ RuleAcknowledgementResponse(Guid ChildId, int? AcknowledgedRevision, bool IsUpTo
   `/guardian/print/sheet/:templateId`. They use a portrait A4 layout and `print:` variants
   ([shared-sleep-diary.html](../../../src/frontend/buddy/src/app/features/shared-sleep-diary/shared-sleep-diary.html)
   is the precedent). The child print shows "Emil's rules": personal rules first, then each
-  household. The group print shows one household's rules for the fridge. The week-plan print
+  household. The group print shows one household's rules for the fridge. Sections with no
+  rules are left off; the sheet says "No rules yet." once when nothing is left. The week-plan print
   templates were rejected as the vehicle: their rows are per-day cells
   ([week-plan-print-templates.md](week-plan-print-templates.md)), and a rule isn't per day.
 
