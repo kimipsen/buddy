@@ -87,7 +87,8 @@ This document answers seven questions:
   ([sleep-diary.md, Question 1](sleep-diary.md#question-1-extend-calendarsmedicines-or-a-new-feature)).
 - **Feature flag.** The feature gets its own flag, `Features:HouseRules`, wired like the
   existing flags ([FeatureOptions.cs](../../../src/backend/buddy/Common/FeatureFlags/FeatureOptions.cs),
-  [feature-flags.md](feature-flags.md)). A family that doesn't want it can turn it off.
+  [feature-flags.md](feature-flags.md)). A family that doesn't want it can turn it off. See
+  [Feature flag](#feature-flag) for what the flag hides.
 
 ## Question 2: rule book scope and identity
 
@@ -486,6 +487,49 @@ The meta tests in `PersonalDataEraserCoverageTests` require both.
   are handled.
 - **Export.** For a child: their personal book and their acknowledgements. For a guardian:
   the rules they authored or edited.
+
+## Feature flag
+
+`Features:HouseRules` (on by default) lets an installation's operator turn the feature off with
+`Features__HouseRules=false` in `deploy/.env`, or in `FEATURES` for Azure. It follows
+[feature-flags.md](feature-flags.md) like every other flag. Turning it off hides the endpoints
+and screens only. `AddHouseRulesFeature` still runs, so the rules already written, the snapshot
+projection, and the GDPR eraser and exporter stay. Turning the flag back on shows the same rules
+again.
+
+### Backend
+
+| File | Change |
+|---|---|
+| [FeatureOptions.cs](../../../src/backend/buddy/Common/FeatureFlags/FeatureOptions.cs) | `public bool HouseRules { get; set; } = true;`, a `HouseRules` argument in `Effective()`, and a `bool HouseRules` field on `InstallationFeatures` |
+| [Program.cs](../../../src/backend/buddy/Program.cs) | `if (features.HouseRules) { app.MapHouseRulesFeature(); }`, next to the `SleepDiary` block |
+| `FeatureFlagsTests` / `FeatureOptionsTests` | A disabled flag returns `404` for a `/house-rules` route; `GET /features` reports `houseRules` |
+| `task docs:openapi` | Regenerates `InstallationFeatures` in `buddy.json` and `buddy-api.ts`, so `FeatureName` gets `'houseRules'` |
+
+`HouseRules` is a top-level flag, not a sub-flag. It has no parent, so
+`SubFlagsOverriddenByParent` doesn't change. The print pages don't depend on `Features:Printing`:
+that flag covers the week-plan print templates (`MapPrintTemplatesFeature`). The rule print
+pages are read-only views of `GetChildRules`/`ListRules` and belong to this feature.
+
+### Frontend
+
+When `features.enabled('houseRules')` is false, nothing in the UI points at the feature:
+
+| Place | How it is hidden | Precedent |
+|---|---|---|
+| `ALL_ON` in [features.service.ts](../../../src/frontend/buddy/src/app/core/features.service.ts) | Add `houseRules: true` (the typed record fails to compile without it) | every flag |
+| `/guardian/house-rules` in `guardian.routes.ts` | `canActivate: [featureGuard('houseRules')]` | `sleep-diary` route |
+| Both print routes (`/guardian/house-rules/print/...`) | `featureGuard('houseRules')` | `sleep-diary` route |
+| `/child/rules` in `child.routes.ts` | `featureGuard('houseRules')` | `mealplan` child route |
+| Guardian navigation link in [profile-menu.html](../../../src/frontend/buddy/src/app/features/guardian/shell/profile-menu/profile-menu.html) | `@if (features.enabled('houseRules'))` | the `sleepDiary` menu item |
+| "Rules to read" card on child home ([home.ts](../../../src/frontend/buddy/src/app/features/child/home/home.ts)) | Don't call `GetChildRules` and don't render the card | the `medicines`/`pickups` sections, which skip their load when off |
+| Help topic in [help-topics.ts](../../../src/frontend/buddy/src/app/core/help/help-topics.ts) | `feature: 'houseRules'` on the topic, filtered by `FeaturesService.offers` | `medicine`, `stars`, `printWeek` |
+| Group page or dashboard shortcuts to the rules (if added) | `@if (features.enabled('houseRules'))` | `dashboard.html` cards |
+
+Tests: add `['guardian', guardianChildren, 'house-rules', 'houseRules']` and the child and
+print routes to [feature-routes.spec.ts](../../../src/frontend/buddy/src/app/feature-routes.spec.ts).
+Add an "off" case to the child home and profile-menu specs, as they already have for
+`sleepDiary` and `medicines`.
 
 ## Frontend
 
