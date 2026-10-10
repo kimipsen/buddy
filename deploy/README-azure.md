@@ -332,6 +332,20 @@ update the `postgres-connection-string` / `pg-password` secrets and Keycloak's
 `KC_DB_URL_HOST`. Keycloak's database is on the same server, so it rolls back
 too (users created since then disappear).
 
+## 9. Staying up to date
+
+Nothing in a running Buddy checks for new versions or calls home. Watch the
+repository you deploy from for releases (**Watch → Custom → Releases** on
+GitHub; on a fork, watch upstream too), and `deploy.sh` runs
+[`release-check.sh`](release-check.sh) before it builds anything: it
+fetches tags and warns (without failing) when the commit you're deploying
+doesn't contain the newest `vX.Y.Z` release, with a link to its notes.
+
+To upgrade, read the release notes, check out the tag (`git fetch --tags &&
+git checkout v1.3.0`, or merge it into your fork) and rerun `./deploy.sh`.
+Events don't roll back (step 8); Flexible Server's point-in-time restore is
+the way back across a release that adds event types.
+
 ## Notes
 
 - **Redeploying after a code change**: just rerun `./deploy.sh`. It rebuilds

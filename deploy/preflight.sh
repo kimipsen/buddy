@@ -15,7 +15,8 @@
 #      (or a fresh one from .env.example) fails it.
 #
 # It also refuses first-boot placeholder passwords from .env.example and warns
-# (without failing) when KEYCLOAK_ADMIN_CLI_SECRET is still the placeholder.
+# (without failing) when KEYCLOAK_ADMIN_CLI_SECRET is still the placeholder, or
+# when the commit being deployed is missing the newest release (release-check.sh).
 # Values are compared in memory and never printed (DEPLOY_HOST excepted).
 # There is deliberately no override flag: to deploy to a different machine,
 # change DEPLOY_HOST in that machine's .env.
@@ -71,5 +72,7 @@ if [[ -f "$example" ]]; then
     echo "  buddy-admin-cli secret (deploy/README.md, step 5)." >&2
   fi
 fi
+
+"$dir/release-check.sh" "$(value_of REPOSITORY_URL "$env_file")" || true
 
 echo "deploy preflight: ok (host $host)"

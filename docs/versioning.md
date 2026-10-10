@@ -43,3 +43,11 @@ Deploy from the tagged commit to ship exactly that version.
 
 CI checkouts are shallow, so a test build there may compute a different height. Builds that
 ship always go through `deploy/version.sh` on a full clone.
+
+## Finding out about new releases
+
+A running installation never checks for updates. The operator watches the repository's
+releases on GitHub, and both deploy paths run [`deploy/release-check.sh`](../deploy/release-check.sh),
+which warns when the commit being deployed is missing the newest `vX.Y.Z` tag. See
+"Staying up to date" in [deploy/README.md](../deploy/README.md) and
+[update-check.md](backend/analysis/update-check.md) for why there is no in-app check.

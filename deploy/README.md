@@ -301,6 +301,28 @@ remove ones you won't roll back to with `docker image rm buddy-api:<sha> ...`.
 > restore the database from a backup taken before the deploy (step 7), which
 > loses everything written since.
 
+## 9. Staying up to date
+
+Nothing in a running Buddy checks for new versions or calls home. Two things
+tell you about a release instead:
+
+- **GitHub release notifications.** On the repository your deploy is built
+  from (`https://github.com/kimipsen/buddy`, or the fork in `REPOSITORY_URL`),
+  choose **Watch → Custom → Releases**. GitHub then emails you each release
+  with its notes. A fork only gets releases its owner publishes there, so on a
+  fork also watch the upstream repository.
+- **The release check in `task deploy`.** `preflight.sh` runs
+  [`release-check.sh`](release-check.sh), which fetches tags and warns (without
+  failing) when the commit you're deploying doesn't contain the newest
+  `vX.Y.Z` release, with a link to its notes. Pre-release tags are ignored.
+  If the VM can't reach the remote, it says so and compares against the tags
+  it already has.
+
+To upgrade, read the release notes, take a backup (step 7), check out the tag
+(`git fetch --tags && git checkout v1.3.0`, or merge it into your fork) and
+run `task deploy`. Events don't roll back (step 8), so a release that adds
+event types is a one-way step unless you restore the backup.
+
 ## Notes
 
 - Every base image is pinned by tag and digest: the .NET SDK/runtime in

@@ -57,6 +57,7 @@ model or permissions logic.
 - [Client-ready OpenAPI documents](analysis/openapi-client-contract.md)
 - [Feature flags](analysis/feature-flags.md)
 - [House rules](analysis/house-rules.md)
+- [Update check](analysis/update-check.md)
 
 ## Current focus areas
 

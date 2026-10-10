@@ -30,6 +30,9 @@ source "$SCRIPT_DIR/.env"
 : "${API_CUSTOM_DOMAIN:=}"
 : "${KEYCLOAK_CUSTOM_DOMAIN:=}"
 
+# Warns (never fails) when this commit is missing the newest release tag.
+"$REPO_ROOT/deploy/release-check.sh" "${REPOSITORY_URL:-}" || true
+
 # Outbound email (Brevo SMTP relay) - optional, blank means the API/Keycloak
 # deploy without it. See "Mail" in README-azure.md for how to get an SMTP key.
 : "${BREVO_SMTP_LOGIN:=}"
