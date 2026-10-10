@@ -530,12 +530,14 @@ Found along the way:
   `dataprotection` schema, so anyone who can read the database (or a `pg_dump` backup) can decrypt
   stored API keys. Add `ProtectKeysWithCertificate` with a certificate from the secret store.
 - [x] **Security headers.** The app's headers are in `src/frontend/buddy/Caddyfile` (so they also
-  apply on Azure); the API's are in `deploy/Caddyfile`. Keycloak sends its own.
+  apply on Azure); the API sets its own in `Common/Http/SecurityHeadersMiddleware.cs`. Keycloak
+  sends its own.
 - [x] **Enforce the app's Content-Security-Policy.** Enforced in `src/frontend/buddy/Caddyfile`
   since the house rules work (their markdown is the first user-authored rich text). The pre-boot
   theme script moved to `public/theme-init.js`, and `inlineCritical` is off in `angular.json`, so
   the production build has no inline script or event handler.
-- [ ] **Security headers for the API on Azure.** It has no edge proxy there, so it gets none yet.
+- [x] **Security headers for the API on Azure.** Moved from `deploy/Caddyfile` into the API
+  (`SecurityHeadersMiddleware`), so both deployments send them.
 - [ ] **GDPR for special-category health data** -- design and progress in
   `docs/backend/analysis/gdpr-data-protection.md` (implementation order there):
   - [x] Quick fixes: deleted users locked out, Keycloak account deleted, tokens redacted from
@@ -553,7 +555,8 @@ Found along the way:
 - [ ] **Security scanning in CI.** Add CodeQL, an `npm audit` / `dotnet list package --vulnerable`
   gate and a container image scan (e.g. Trivy).
 - [x] **Least-privilege `permissions:`** (`contents: read`) in every workflow.
-- [ ] **Pin GitHub Actions by commit SHA** instead of tag (Dependabot keeps SHA pins updated).
+- [x] **Pin GitHub Actions by commit SHA** instead of tag, with the release as a trailing comment
+  (`@<sha> # v7.0.1`); Dependabot's `github-actions` ecosystem bumps both.
 
 ### Operability
 

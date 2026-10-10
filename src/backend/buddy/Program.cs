@@ -134,6 +134,10 @@ var app = builder.Build();
 // not the reverse proxy's.
 app.UseForwardedHeaders();
 
+// Before everything that can end a request (exception handling, CORS preflight, rate limiting), so
+// every response carries them.
+app.UseSecurityHeaders();
+
 // Makes each request's requestId its trace id; see ObservabilityFeature.
 app.UseObservability();
 
