@@ -1,12 +1,14 @@
 # House Rules
 
-Status: Implemented (backend and the shared markdown renderer; the guardian, child and print pages
-are not built yet). Shipped: the `RuleBook` aggregate in a new `houserules` schema with its six
+Status: Implemented. Backend: the `RuleBook` aggregate in a new `houserules` schema with its six
 events and inline snapshot, `HouseRulesAuthorization`, the slices `AddRule`, `EditRule`,
 `RemoveRule`, `ReorderRules`, `ListRules`, `AcknowledgeRule` (each on a child and a group route)
-and `GetChildRules`, GDPR erasure and export, the `Features:HouseRules` flag, and
-`shared/markdown-view` in the frontend. The app's Content-Security-Policy is now enforced. See
-[house-rules/flow.md](../house-rules/flow.md).
+and `GetChildRules`, GDPR erasure and export, and the `Features:HouseRules` flag (see
+[house-rules/flow.md](../house-rules/flow.md)). Frontend: `shared/markdown-view` and
+`shared/markdown-editor`, the guardian page `/guardian/house-rules`, the printouts
+`/guardian/house-rules/print/children/:childId` and `/guardian/house-rules/print/groups/:groupId`,
+the child page `/child/rules` with a "rules to read" card on the child home, a help topic and the
+profile-menu link. The app's Content-Security-Policy is now enforced.
 
 ## Context
 

@@ -104,7 +104,7 @@ groups, calendars, privacy and onboarding are core and can't be turned off.**
 | `MealplanImport` | The 8 `*MealPlanImport*` endpoints | `/guardian/mealplan/import` and its link |
 | `Medicines` | `/medicines` group | `/guardian/medicine`, `doses-today` card, child home doses |
 | `SleepDiary` | `/sleep-diary` group, including the anonymous shared view | `/guardian/sleep-diary`, `/shared/sleep-diary/:token` |
-| `HouseRules` | `/house-rules` group | `/guardian/house-rules` and its print pages, `/child/rules`, the child home "rules to read" card (frontend not built yet; see [house-rules.md](house-rules.md#feature-flag)) |
+| `HouseRules` | `/house-rules` group | `/guardian/house-rules` and its print pages, `/child/rules`, the child home "rules to read" card |
 | `Pickups` | `/pickups` group | `/guardian/pickup`, `pickup-today` card, child home pickups |
 | `Babysitters` | `/babysitters` group | `/guardian/babysitters`, babysitter links and assignee options in pickups |
 | `WorkLocations` | `/work-locations` group | `/guardian/work-locations` |

@@ -128,6 +128,36 @@ Log a night in the same fields as a sleep clinic’s form, review the last 14 ni
 
 <img src="mobile/guardian-sleep-diary.png" alt="Sleep diary on a phone" width="320">
 
+## House rules
+
+The household’s rules in markdown, with who has read each one. A rule can be added, edited (a small fix keeps the children’s ticks), moved, removed, read together with a child, and printed.
+
+![House rules](guardian-house-rules.png)
+
+<img src="tablet/guardian-house-rules.png" alt="House rules on a tablet" width="384">
+
+<img src="mobile/guardian-house-rules.png" alt="House rules on a phone" width="320">
+
+## House rules printout (household)
+
+One household’s rules on an A4 page for the fridge.
+
+![House rules printout (household)](guardian-house-rules-print-group.png)
+
+<img src="tablet/guardian-house-rules-print-group.png" alt="House rules printout (household) on a tablet" width="384">
+
+<img src="mobile/guardian-house-rules-print-group.png" alt="House rules printout (household) on a phone" width="320">
+
+## House rules printout (child)
+
+Everything one child is asked to keep: their personal rules, then every household they belong to.
+
+![House rules printout (child)](guardian-house-rules-print-child.png)
+
+<img src="tablet/guardian-house-rules-print-child.png" alt="House rules printout (child) on a tablet" width="384">
+
+<img src="mobile/guardian-house-rules-print-child.png" alt="House rules printout (child) on a phone" width="320">
+
 ## Pickup & drop-off
 
 Who takes and fetches the child each day.
@@ -237,6 +267,16 @@ The child's calendar.
 <img src="tablet/child-calendar.png" alt="Child: calendar on a tablet" width="384">
 
 <img src="mobile/child-calendar.png" alt="Child: calendar on a phone" width="320">
+
+## Child: our rules
+
+The child’s own rules and each household’s, with “New” and “Changed” on what they haven’t read, and an “I’ve read this” button.
+
+![Child: our rules](child-rules.png)
+
+<img src="tablet/child-rules.png" alt="Child: our rules on a tablet" width="384">
+
+<img src="mobile/child-rules.png" alt="Child: our rules on a phone" width="320">
 
 ## Group invite
 

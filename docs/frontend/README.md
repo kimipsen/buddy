@@ -109,6 +109,8 @@ The guardian routes currently include:
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
+- `/guardian/house-rules` — household and personal house rules in markdown: pick a household or a child, see who has read each rule, add/edit (with a "small fix" that keeps the children's ticks)/move/remove, and read a rule with a child who can't read yet
+- `/guardian/house-rules/print/children/:childId`, `/guardian/house-rules/print/groups/:groupId` — A4 portrait printouts for the fridge, outside the shell like the week-plan sheet
 - `/guardian/babysitters` — the guardian's saved babysitters and nannies, which any of a child's
   guardians can pick in the pickup planner
 - `/guardian/work-locations` — the guardian's own work locations, alternating weekly pattern, and
@@ -147,6 +149,7 @@ The child routes currently include:
 - `/child` — today's operational view and relationship summaries
 - `/child/mealplan` — current/historical meal plans and the child's own ratings
 - `/child/calendar` — read-only seven-day agenda across accessible calendars
+- `/child/rules` — the child's own and each household's rules, with "New"/"Changed" chips and an "I've read this" button; the child home links to it and shows a "N rules to read" card
 
 ### Login feature
 
@@ -193,6 +196,7 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   (`/users/me/onboarding`), decides whether a guardian enters the guide (`onboardingEntryGuard`
   on the guardian home), and derives each step's completion from the existing domain services
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
+- `HouseRulesService` lists, adds (`postIdempotent`), edits, removes and reorders the rules of a child or group book, acknowledges a rule (for a guardian, on a named child's behalf), and loads everything one child is asked to keep
 - `SleepDiaryService` logs, clears, and lists sleep diary nights, saves the hygiene notes, manages
   share links, and reads a shared diary anonymously by token
 - `BabysittersService` manages the guardian's own babysitters and lists the babysitters a child's
@@ -355,14 +359,16 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [In-app help for guardians](analysis/in-app-help.md) — implemented per-page inline help panel
   toggled from the shell header, a `/guardian/help` index, typed en/da help dictionaries and a
   coverage spec that requires help for every guardian page
-- [House rules](../backend/analysis/house-rules.md) — backend implemented; in the frontend only
-  the shared markdown renderer exists so far (`shared/markdown-view`, see below). The guardian
-  page, the child page and the print pages are not built yet
+- [House rules](../backend/analysis/house-rules.md) — implemented guardian page, child page with
+  a "rules to read" card on the child home, A4 printouts, and the shared markdown renderer and
+  editor (see "Rendering markdown" below)
 
 ## Rendering markdown
 
 `shared/markdown-view` (`<app-markdown-view [markdown]="rule.body" />`) is the one place the app
-renders user-written markdown (house rules' bodies). `shared/markdown-view/markdown.ts` runs
+renders user-written markdown (house rules' bodies). `shared/markdown-editor` is the matching
+input: a textarea with a Write/Preview switch (the preview is `markdown-view`), a toolbar that
+inserts syntax (pure edits in `markdown-edits.ts`) and a character counter. `shared/markdown-view/markdown.ts` runs
 `marked`'s lexer (pinned in `package.json`; its HTML renderer is never called) and maps the token
 tree onto an allow-listed node model: headings (`#`/`##` drop to level 3), paragraphs, line breaks,
 bold, italic, strikethrough, inline and block code, nested and numbered lists, read-only task lists,
