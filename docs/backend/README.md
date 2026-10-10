@@ -59,6 +59,7 @@ model or permissions logic.
 - [Feature flags](analysis/feature-flags.md)
 - [House rules](analysis/house-rules.md)
 - [Update check](analysis/update-check.md)
+- [Mobile app and push notifications](analysis/mobile-app-and-notifications.md)
 
 ## Current focus areas
 

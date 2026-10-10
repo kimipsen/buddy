@@ -78,6 +78,9 @@ in real time.
       health-data read audit logs. What you still have to do when you run Buddy is in
       [PRIVACY.md](PRIVACY.md)
 - [x] Per-installation feature flags to turn optional features off
+- [ ] Installable mobile app (PWA) with push notifications for reward requests, completed tasks,
+      milestones, missed doses and reminders (proposed, not yet implemented — see
+      [Mobile app and push notifications](docs/backend/analysis/mobile-app-and-notifications.md))
 
 ## Repository structure
 
