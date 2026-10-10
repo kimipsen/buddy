@@ -22,6 +22,8 @@ const ciBackendEnv = {
     'http://localhost:9080/realms/buddy/protocol/openid-connect/token',
   Authentication__KeycloakAdmin__AdminBaseUrl: 'http://localhost:9080/admin/realms/buddy',
   Authentication__KeycloakAdmin__ClientSecret: 'buddy-admin-cli-dev-secret',
+  // appsettings.json allows no origins; locally the git-ignored appsettings.Development.json adds the dev server.
+  Cors__AllowedOrigins__0: 'http://localhost:4300',
   Mail__Host: 'localhost',
   Mail__Port: '2025',
 };
