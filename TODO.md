@@ -612,3 +612,57 @@ Found along the way:
   routes, `@defer` blocks or lighter imports. Don't just raise the budget.
   Done 2026-10-10: Danish is a lazy dictionary chunk and the email/share-link pages are lazy
   routes; the initial bundle is 439 kB.
+
+## Tools for families with ADHD and autism (2026-10-11)
+
+Ideas for new features beyond what Buddy already has. Start with the four marked **(start here)**:
+they reuse data the app already keeps. Each has a design doc.
+
+### In-the-moment help for the child
+
+- [ ] **Visual time-left timer (start here).** A shrinking disc or bar on the child's current
+  task and subtask, counting down the durations the task library already stores. See
+  [Visual time-left timer](docs/frontend/analysis/visual-time-left-timer.md).
+- [ ] **Transition warnings (start here).** A heads-up before calendar events and pickups ("10
+  minutes until we leave for football"), configurable per child. See
+  [Transition warnings](docs/backend/analysis/transition-warnings.md).
+- [ ] **Now / Next / Later strip.** A reduced day view with three cards, for overwhelmed moments.
+- [ ] **Pictogram support.** An optional icon or photo on tasks, routine steps and meals, for
+  younger or non-reading children.
+- [ ] **First–Then board.** Pair a non-preferred task with a preferred activity ("first homework,
+  then iPad").
+
+### Regulation and emotions
+
+- [ ] **Feelings check-in (start here).** The child taps one of four colour zones (each with a
+  face and a word) a few times a day; guardians see trends, with a doctor share link like the sleep diary's. See
+  [Feelings check-in](docs/backend/analysis/feelings-check-in.md).
+- [ ] **Calm-down toolbox.** Strategies the guardian and child pick together, reachable in one tap
+  from the day view, with a guided breathing animation.
+- [ ] **Sensory profile.** Per-child notes on sounds, textures, foods and situations to avoid or
+  that help, shareable with babysitters and grandparents.
+
+### Insight for guardians and clinicians
+
+- [ ] **Behaviour (ABC) log.** Antecedent, behaviour and consequence entries, correlated with
+  sleep, doses and schedule changes to surface patterns.
+- [ ] **Medicine effect and side-effect notes.** Ratings ("focus good / appetite poor") linked to
+  doses, for dose-adjustment conversations.
+- [ ] **Doctor visit summary.** One printable, shareable report combining sleep, doses, feelings
+  and the behaviour log for a chosen period, reusing the sleep diary's share link and print setup.
+
+### School and other caregivers
+
+- [ ] **Home–school notebook.** A short daily message thread between home and school; the teacher
+  reads and replies through a link, without an account.
+- [ ] **Packing checklists (start here).** Weekday-bound checklists ("Tuesday: gym clothes") on the
+  child's day view. See [Packing checklists](docs/backend/analysis/packing-checklists.md).
+- [ ] **Caregiver handover card.** Routine, medicine, house rules, calm-down tips and contacts for
+  one evening on a single share link, building on saved babysitters.
+
+### Smaller ideas
+
+- [ ] **Homework splitter.** Break an assignment into timed focus chunks with breaks.
+- [ ] **Social stories.** Short illustrated stories that prepare the child for new events, such as
+  the dentist or a trip.
+- [ ] **Guardian well-being check-in.** A short private note for guardians themselves.

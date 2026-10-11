@@ -66,6 +66,14 @@ in real time.
 - [x] Complete tasks from the day view
 - [x] View progress and unlocked milestones
 - [x] Spend stars on guardian-defined rewards, approved by a guardian
+- [ ] Visual time-left timer on the current routine and subtask (proposed, not yet implemented — see
+      [Visual time-left timer](docs/frontend/analysis/visual-time-left-timer.md))
+- [ ] Transition warnings before events, tasks and pickups (proposed, not yet implemented — see
+      [Transition warnings](docs/backend/analysis/transition-warnings.md))
+- [ ] Feelings check-ins with guardian trends and a doctor share link (proposed, not yet implemented —
+      see [Feelings check-in](docs/backend/analysis/feelings-check-in.md))
+- [ ] Weekday packing checklists on the day view, with guardian-approved child suggestions (proposed, not yet implemented — see
+      [Packing checklists](docs/backend/analysis/packing-checklists.md))
 
 ### Platform
 

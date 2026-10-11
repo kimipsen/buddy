@@ -378,6 +378,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [House rules](../backend/analysis/house-rules.md) — implemented guardian page, child page with
   a "rules to read" card on the child home, A4 printouts, and the shared markdown renderer and
   editor (see "Rendering markdown" below)
+- [Visual time-left timer](analysis/visual-time-left-timer.md) — proposed countdown
+  disc and bar for the child's current routine and subtask on `/child`, plus a `/child/focus/:itemId`
+  focus page, with a per-child guardian switch
 
 ## Rendering markdown
 

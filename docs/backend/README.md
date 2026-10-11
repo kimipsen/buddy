@@ -61,6 +61,9 @@ model or permissions logic.
 - [House rules](analysis/house-rules.md)
 - [Update check](analysis/update-check.md)
 - [Mobile app and push notifications](analysis/mobile-app-and-notifications.md)
+- [Transition warnings](analysis/transition-warnings.md)
+- [Feelings check-in](analysis/feelings-check-in.md)
+- [Packing checklists](analysis/packing-checklists.md)
 
 ## Current focus areas
 
