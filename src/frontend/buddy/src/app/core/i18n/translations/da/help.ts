@@ -204,6 +204,28 @@ export const help = {
         },
       },
     },
+    transitionWarnings: {
+      title: 'Varsel før skift',
+      sections: {
+        turnOn: {
+          title: 'Slå varsel til for et barn',
+          body: 'Varsel er slået fra for hvert barn, indtil en voksen slår det til, fordi nogle børn bliver stressede af en nedtælling i stedet for hjulpet. Når det er slået til, ser barnet en nedtælling på alle Buddy-sider før aftaler, opgaver, rutiner, pakkelister og afhentninger med et tidspunkt, for eksempel "Om 5 minutter: fodbold". En pakkeliste tæller ned til sit "Afgang kl."-tidspunkt. Barnet kan trykke "Okay" for at skjule ét varsel; det næste kommer stadig.',
+          steps: {
+            s1: 'Vælg barnet øverst på siden.',
+            s2: 'Slå "Varsl … før skift" til. Buddy foreslår 15, 5 og 1 minut før, for alle slags.',
+            s3: 'Ret tidspunkter, slags eller stille tid, hvis du vil, og tryk "Gem".',
+          },
+        },
+        exceptions: {
+          title: 'Undtagelser for én aftale eller opgave',
+          body: 'Under "Undtagelser" kan du give én aftale eller opgave sine egne tidspunkter, for eksempel 30 minutter før fodbold på grund af tøjet, eller slet intet varsel. En undtagelse gælder hver gang, den gentages. Den gælder kun, mens varsel er slået til for barnet.',
+        },
+        quietHours: {
+          title: 'Stille tid og hvad barnet ser',
+          body: 'I stille tid vises ingen varsler, og et varsel, der ville være vist da, vises ikke senere. Nedtællingen bruger barnets egen tidszone. Den vises kun, mens Buddy er åben på barnets enhed; der er ingen lyd.',
+        },
+      },
+    },
     houseRules: {
       title: 'Husregler',
       sections: {

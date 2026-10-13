@@ -1,0 +1,193 @@
+<app-page width="3xl" backLink="/guardian" [backLabel]="'transitionWarnings.backLink' | translate">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p
+        class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+      >
+        {{ 'transitionWarnings.eyebrow' | translate }}
+      </p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+        {{ 'transitionWarnings.title' | translate }}
+      </h2>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'transitionWarnings.intro' | translate }}
+      </p>
+    </div>
+
+    @if (childList().length > 1) {
+      <div>
+        <label class="sr-only" for="transitionWarningsChildId">{{
+          'common.selectChildLabel' | translate
+        }}</label>
+        <select
+          id="transitionWarningsChildId"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="selectedChildId()"
+          (ngModelChange)="selectChild($event)"
+        >
+          @for (child of childList(); track child.id) {
+            <option [value]="child.id">{{ child.name.givenName }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  @if (children.isLoading() || settings.isLoading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'transitionWarnings.loading' | translate }}
+    </p>
+  } @else if (children.error() || settings.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'transitionWarnings.loadError' | translate }}
+    </p>
+  } @else if (childList().length === 0) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'transitionWarnings.noChildren' | translate }}
+    </p>
+  } @else if (draft(); as form) {
+    <div class="space-y-6">
+      <section
+        class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div class="flex items-center gap-3">
+          <app-toggle
+            size="lg"
+            [checked]="form.enabled"
+            [ariaLabel]="'transitionWarnings.switchLabel' | translate: { name: childName() }"
+            (checkedChange)="update({ enabled: $event })"
+          />
+          <span class="text-lg font-semibold">
+            {{ 'transitionWarnings.switchLabel' | translate: { name: childName() } }}
+          </span>
+        </div>
+
+        @if (!form.enabled) {
+          <p class="mt-4 text-sm text-slate-600 dark:text-slate-300">
+            {{ 'transitionWarnings.offExplanation' | translate: { name: childName() } }}
+          </p>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            {{ 'transitionWarnings.offExample' | translate: { name: childName() } }}
+          </p>
+        } @else {
+          <div class="mt-6 space-y-6">
+            <div>
+              <h3 class="text-sm font-semibold">
+                {{ 'transitionWarnings.leadTimes.label' | translate }}
+              </h3>
+              <p class="mb-2 text-sm text-slate-500 dark:text-slate-400">
+                {{ 'transitionWarnings.leadTimes.hint' | translate }}
+              </p>
+              <app-lead-chips
+                [selected]="form.leadMinutes"
+                [label]="'transitionWarnings.leadTimes.label' | translate"
+                (selectedChange)="update({ leadMinutes: $event })"
+              />
+            </div>
+
+            <div>
+              <h3 class="mb-2 text-sm font-semibold">
+                {{ 'transitionWarnings.kinds.label' | translate }}
+              </h3>
+              <ul class="grid gap-2 sm:grid-cols-2">
+                @for (kind of kinds(); track kind) {
+                  <li class="flex items-center gap-3">
+                    <app-toggle
+                      [checked]="hasKind(kind)"
+                      [ariaLabel]="kindLabels[kind] | translate"
+                      (checkedChange)="setKind(kind, $event)"
+                    />
+                    <span class="text-sm">{{ kindLabels[kind] | translate }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-3">
+                <app-toggle
+                  [checked]="form.quietOn"
+                  [ariaLabel]="'transitionWarnings.quietHours.label' | translate"
+                  (checkedChange)="update({ quietOn: $event })"
+                />
+                <span class="text-sm font-semibold">{{
+                  'transitionWarnings.quietHours.label' | translate
+                }}</span>
+              </div>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {{ 'transitionWarnings.quietHours.hint' | translate }}
+              </p>
+              @if (form.quietOn) {
+                <div class="mt-2 grid max-w-sm grid-cols-2 gap-3">
+                  <div>
+                    <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{
+                      'transitionWarnings.quietHours.from' | translate
+                    }}</span>
+                    <app-time-select
+                      [value]="form.quietFrom"
+                      [ariaLabel]="'transitionWarnings.quietHours.from' | translate"
+                      (valueChange)="update({ quietFrom: $event })"
+                    />
+                  </div>
+                  <div>
+                    <span class="block text-xs font-medium text-slate-600 dark:text-slate-300">{{
+                      'transitionWarnings.quietHours.to' | translate
+                    }}</span>
+                    <app-time-select
+                      [value]="form.quietTo"
+                      [ariaLabel]="'transitionWarnings.quietHours.to' | translate"
+                      (valueChange)="update({ quietTo: $event })"
+                    />
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (form.leadMinutes.length > 0) {
+              <p
+                class="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+                data-testid="warning-preview"
+              >
+                {{
+                  'transitionWarnings.preview' | translate: { name: childName(), times: times() }
+                }}
+              </p>
+            }
+          </div>
+        }
+
+        @if (form.enabled || dirty()) {
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+              [disabled]="!canSave()"
+              (click)="save()"
+            >
+              {{ (saving() ? 'transitionWarnings.saving' : 'transitionWarnings.save') | translate }}
+            </button>
+            @if (status() === 'saved') {
+              <p class="text-sm text-emerald-700 dark:text-emerald-400" role="status">
+                {{ 'transitionWarnings.saved' | translate }}
+              </p>
+            } @else if (status() === 'error') {
+              <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+                {{ 'transitionWarnings.saveError' | translate }}
+              </p>
+            }
+          </div>
+        }
+      </section>
+
+      @if (form.enabled && selectedChildId(); as childId) {
+        <app-warning-exceptions
+          [childId]="childId"
+          [childName]="childName()"
+          [overrides]="saved()?.overrides ?? []"
+          (saved)="onExceptionSaved($event)"
+          (removed)="onExceptionRemoved($event)"
+        />
+      }
+    </div>
+  }
+</app-page>

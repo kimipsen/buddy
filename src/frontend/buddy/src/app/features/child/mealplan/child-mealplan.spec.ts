@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
@@ -63,6 +64,7 @@ describe('ChildMealplan', () => {
   async function setup(stubs: Stubs = {}) {
     const usersStub: Partial<UsersService> = {
       ensureCurrentUser: vi.fn(async () => currentUser),
+      profileTimeZoneId: signal<string | null>(null).asReadonly(),
       ...stubs.users,
     };
     const mealplansStub: Partial<MealplansService> = {
@@ -176,6 +178,23 @@ describe('ChildMealplan', () => {
     // The range's last day is now in the future -- only the (still not-in-the-future) first
     // day's row should offer stars.
     expect(compiled.querySelectorAll('button[aria-label^="Rate"]')).toHaveLength(5);
+  });
+
+  it("opens on the week before the profile's today, not the device's", async () => {
+    // 23:30 on the 12th in New York is 03:30 on the 13th in UTC.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-13T03:30:00Z'));
+      const { fixture, mealplans } = await setup({
+        users: { profileTimeZoneId: signal<string | null>('America/New_York').asReadonly() },
+      });
+      await settle(fixture);
+
+      const [, from, to] = (mealplans.listMealPlan as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect([from, to]).toEqual(['2026-10-05', '2026-10-11']);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('moves the visible week forward and backward', async () => {

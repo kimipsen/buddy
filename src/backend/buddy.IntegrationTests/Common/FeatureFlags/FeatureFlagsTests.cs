@@ -56,6 +56,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             ["Features:Printing"] = "false",
             ["Features:Progress"] = "false",
             ["Features:TaskLibrary"] = "false",
+            ["Features:TransitionWarnings"] = "false",
             ["Features:Help"] = "false"
         });
 
@@ -72,7 +73,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(fixture.Host);
 
-        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
+        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
     }
 
     [Fact]
@@ -80,9 +81,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(await AllOffAsync());
 
-        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
+        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
         Assert.Equal(
-            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true, true),
             await GetFeaturesAsync(await MealplanExtrasOffAsync()));
     }
 
@@ -99,6 +100,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
         Assert.True(json.RootElement.GetProperty("mealplanAiAssistant").GetBoolean());
         Assert.True(json.RootElement.GetProperty("sleepDiary").GetBoolean());
         Assert.True(json.RootElement.GetProperty("houseRules").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("transitionWarnings").GetBoolean());
     }
 
     [Fact]
@@ -120,7 +122,8 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             $"/work-locations/guardians/{guardianId}",
             "/print-templates/",
             $"/progress/children/{child.Id}",
-            $"/task-templates/children/{child.Id}"
+            $"/task-templates/children/{child.Id}",
+            $"/transition-warnings/children/{child.Id}"
         ];
 
         foreach (var url in disabled)

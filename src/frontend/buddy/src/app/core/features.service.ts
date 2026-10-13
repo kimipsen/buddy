@@ -22,6 +22,7 @@ const ALL_ON: InstallationFeatures = {
   printing: true,
   progress: true,
   taskLibrary: true,
+  transitionWarnings: true,
   help: true,
 };
 

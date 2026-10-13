@@ -1,6 +1,8 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { TransitionWarningBanner } from '../transition-warning-banner/transition-warning-banner';
+
 /**
  * The frame every child page shares: the warm background, a header with the page title, and the
  * content column. The header starts with a back link to the child home when `backLabel` is set,
@@ -9,7 +11,7 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
   selector: 'app-child-page',
-  imports: [RouterLink],
+  imports: [RouterLink, TransitionWarningBanner],
   templateUrl: './child-page.html',
   host: { class: 'block' },
 })

@@ -203,6 +203,28 @@ export const help = {
         },
       },
     },
+    transitionWarnings: {
+      title: 'Heads-up before changes',
+      sections: {
+        turnOn: {
+          title: 'Turn heads-ups on for a child',
+          body: 'Heads-ups are off for each child until a guardian turns them on, because some children find a countdown stressful rather than helpful. When they are on, the child sees a countdown on every Buddy page before events, tasks, routines, packing lists and timed pickups, such as "5 minutes until football". A packing list counts down to its "Leave by" time. The child can press "Got it" to hide one step; the next step still comes.',
+          steps: {
+            s1: 'Choose the child at the top of the page.',
+            s2: 'Turn on "Warn … before changes". Buddy suggests 15, 5 and 1 minute before, for every kind of item.',
+            s3: 'Change the times, kinds or quiet hours if you like, and press "Save".',
+          },
+        },
+        exceptions: {
+          title: 'Exceptions for one item',
+          body: 'Under "Exceptions", give one event or task its own times, such as 30 minutes before football because of the kit, or no heads-up at all. An exception covers every time the item repeats. It only applies while heads-ups are on for the child.',
+        },
+        quietHours: {
+          title: 'Quiet hours and what the child sees',
+          body: "No heads-ups show during quiet hours, and a heads-up that would have shown then isn't shown late. The countdown uses the child's own time zone. It only shows while Buddy is open on the child's device; there is no sound.",
+        },
+      },
+    },
     houseRules: {
       title: 'House rules',
       sections: {

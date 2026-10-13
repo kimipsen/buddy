@@ -322,6 +322,23 @@ A child's "I've read this" for one rule at one revision (`RuleAcknowledged`), re
 ### Household
 A `Group` whose rules apply to every child member. A child whose parents live apart can be in two households and sees both rule books, each labelled with the group's name.
 
+## Transition warnings domain
+
+### TransitionWarningSettings
+A child's settings for the heads-up they see before a transition (`Features/TransitionWarnings`). Its `TransitionWarningSettingsId` equals the child's `UserId`, like `ProgressId`. Holds the `WarningDefaults` and per-item `ItemWarningOverride`s. Off until a guardian turns it on; any active guardian manages it, the child only reads it.
+
+### WarningDefaults
+The master switch, one to three lead times (15/5/1 suggested), the `WarningKind`s that warn (`Event`, `Task`, `DropOff`, `PickUp`; routines and packing lists count as `Task`) and optional `QuietHours`. Replaced whole on every save.
+
+### ItemWarningOverride
+One calendar item's exception for one child: its own lead times, or `Off` (never warn). Keyed by `CalendarItemId`, at most 100 per child.
+
+### QuietHours
+A wall-clock window in the child's own time zone with no warnings at all; `From > To` wraps midnight. A warning that would fall in it is dropped, not delayed.
+
+### Child clock
+The child's "today" and time of day in their profile time zone (`ChildClockService` in the frontend), which every child page uses instead of the device's clock.
+
 ## Event-sourced concepts
 
 ### Event stream

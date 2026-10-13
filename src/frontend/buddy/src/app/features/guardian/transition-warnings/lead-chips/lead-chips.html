@@ -1,0 +1,25 @@
+<div class="flex flex-wrap gap-2" role="group" [attr.aria-label]="label()">
+  @for (minutes of choices(); track minutes) {
+    <button
+      type="button"
+      class="min-w-16 rounded-full border px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+      [class.border-emerald-600]="isOn(minutes)"
+      [class.bg-emerald-600]="isOn(minutes)"
+      [class.text-white]="isOn(minutes)"
+      [class.dark:border-emerald-500]="isOn(minutes)"
+      [class.dark:bg-emerald-500]="isOn(minutes)"
+      [class.dark:text-slate-950]="isOn(minutes)"
+      [class.border-slate-300]="!isOn(minutes)"
+      [class.bg-white]="!isOn(minutes)"
+      [class.text-slate-700]="!isOn(minutes)"
+      [class.dark:border-slate-600]="!isOn(minutes)"
+      [class.dark:bg-slate-800]="!isOn(minutes)"
+      [class.dark:text-slate-200]="!isOn(minutes)"
+      [attr.aria-pressed]="isOn(minutes)"
+      [disabled]="full() && !isOn(minutes)"
+      (click)="toggle(minutes)"
+    >
+      {{ 'transitionWarnings.leadTimes.minutes' | translate: { minutes } }}
+    </button>
+  }
+</div>

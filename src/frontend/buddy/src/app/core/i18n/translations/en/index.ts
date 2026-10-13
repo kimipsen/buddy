@@ -18,6 +18,7 @@ import { progress } from './progress';
 import { shell } from './shell';
 import { sleepDiary } from './sleep-diary';
 import { taskLibrary } from './task-library';
+import { transitionWarnings } from './transition-warnings';
 import { verifyEmail } from './verify-email';
 import { workLocations } from './work-locations';
 
@@ -42,6 +43,7 @@ export const en = {
   shell,
   sleepDiary,
   taskLibrary,
+  transitionWarnings,
   verifyEmail,
   workLocations,
 };

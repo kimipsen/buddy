@@ -109,6 +109,9 @@ The guardian routes currently include:
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
+- `/guardian/transition-warnings` — per child (`?child=<id>` from the `manage-children` On/Off
+  line), the "Warn … before changes" switch, then lead times, kinds, quiet hours and per-item
+  exceptions; saved as one PUT, so nothing reaches the child until Save
 - `/guardian/house-rules` — household and personal house rules in markdown: pick a household or a child, see who has read each rule, add/edit (with a "small fix" that keeps the children's ticks)/move/remove, and read a rule with a child who can't read yet
 - `/guardian/house-rules/print/children/:childId`, `/guardian/house-rules/print/groups/:groupId` — A4 portrait printouts for the fridge, outside the shell like the week-plan sheet
 - `/guardian/babysitters` — the guardian's saved babysitters and nannies, which any of a child's
@@ -215,6 +218,14 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   on the guardian home), and derives each step's completion from the existing domain services
 - `PickupsService` lists, assigns, and clears pickup/drop-off occurrences
 - `HouseRulesService` lists, adds (`postIdempotent`), edits, removes and reorders the rules of a child or group book, acknowledges a rule (for a guardian, on a named child's behalf), and loads everything one child is asked to keep
+- `TransitionWarningsService` reads and writes a child's transition warning settings and per-item
+  exceptions; `ChildWarningFeed` loads the signed-in child's settings and, only when they are on,
+  today's occurrences and pickups for `TransitionWarningBanner` (in the `ChildPage` frame, so on
+  every child page), refetching every 10 minutes and on wake; the warnings themselves are the pure
+  `core/transition-warnings.ts`
+- `ChildClockService` is the child's "today", tomorrow and time of day in their profile time zone
+  (device zone until the user loads); every child page and `ChildTimerService` use it instead of
+  the device's clock
 - `SleepDiaryService` logs, clears, and lists sleep diary nights, saves the hygiene notes, manages
   share links, and reads a shared diary anonymously by token
 - `BabysittersService` manages the guardian's own babysitters and lists the babysitters a child's
@@ -395,6 +406,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [In-app help for guardians](analysis/in-app-help.md) — implemented per-page inline help panel
   toggled from the shell header, a `/guardian/help` index, typed en/da help dictionaries and a
   coverage spec that requires help for every guardian page
+- [Transition warnings](../backend/analysis/transition-warnings.md) — implemented countdown banner
+  on every child page, guardian settings page with exceptions, the `manage-children` and onboarding
+  reminders, and the child pages' "today" in the child's profile time zone
 - [House rules](../backend/analysis/house-rules.md) — implemented guardian page, child page with
   a "rules to read" card on the child home, A4 printouts, and the shared markdown renderer and
   editor (see "Rendering markdown" below)

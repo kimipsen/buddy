@@ -277,11 +277,10 @@ export class CalendarsService {
   /**
    * Lists today's occurrences across every calendar the guardian belongs to. The in-flight
    * promise is memoized per day so concurrent callers on the same page (e.g. the tasks and
-   * events dashboard widgets) collapse into a single fan-out instead of one each.
+   * events dashboard widgets) collapse into a single fan-out instead of one each. Child pages pass
+   * the child's own today (ChildClockService); guardian pages use the device's.
    */
-  listTodayOccurrences(): Promise<CalendarOccurrence[]> {
-    const today = todayIsoDate();
-
+  listTodayOccurrences(today: string = todayIsoDate()): Promise<CalendarOccurrence[]> {
     if (this.todayCache?.date !== today) {
       const promise = this.listOccurrencesInRange(today, today).catch((error: unknown) => {
         if (this.todayCache?.promise === promise) {

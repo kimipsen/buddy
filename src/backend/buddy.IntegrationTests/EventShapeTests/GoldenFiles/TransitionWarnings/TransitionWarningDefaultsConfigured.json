@@ -1,0 +1,35 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000003",
+  "Before": {
+    "Enabled": false,
+    "LeadMinutes": [
+      15,
+      5,
+      1
+    ],
+    "Kinds": [
+      "Event",
+      "Task",
+      "DropOff",
+      "PickUp"
+    ],
+    "QuietHours": null
+  },
+  "After": {
+    "Enabled": true,
+    "LeadMinutes": [
+      10,
+      2
+    ],
+    "Kinds": [
+      "Event",
+      "DropOff"
+    ],
+    "QuietHours": {
+      "From": "21:00:00",
+      "To": "07:00:00"
+    }
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

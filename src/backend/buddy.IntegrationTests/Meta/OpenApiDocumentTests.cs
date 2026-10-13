@@ -30,7 +30,7 @@ public sealed class OpenApiDocumentTests(BuddyApiFixture fixture)
     private static readonly string[] PartialDocuments =
     [
         "v1", "users", "guardians", "groups", "tasklibrary", "calendars", "medicines", "mealplans",
-        "babysitters", "pickups", "worklocations", "printtemplates", "progress", "sleepdiaries", "houserules",
+        "babysitters", "pickups", "worklocations", "printtemplates", "progress", "sleepdiaries", "houserules", "transitionwarnings",
     ];
 
     [Fact]

@@ -69,6 +69,7 @@ describe('ChildRules', () => {
     const users: Partial<UsersService> = {
       ensureCurrentUser: vi.fn(async () => ({ id: 'emil' }) as CurrentUser),
       timeZoneId: signal('UTC').asReadonly(),
+      profileTimeZoneId: signal<string | null>(null).asReadonly(),
     };
 
     await TestBed.configureTestingModule({

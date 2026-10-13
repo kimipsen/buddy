@@ -401,6 +401,42 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       '18:00:00',
     );
 
+    // Heads-up before changes (docs/backend/analysis/transition-warnings.md): on for Emil with the
+    // suggested 15/5/1 and 30 minutes' notice before football (the kit), off for Ida, so the
+    // settings page and manage-children show both. "Leave for school" at 07:20 today puts a
+    // "10 minutes until" banner on the child pages captured at 07:10. Optional, like the subtask
+    // completions below.
+    try {
+      await api.post(`/calendars/${family.id}/items`, {
+        title: 'Leave for school',
+        icon: '🚶',
+        color: '#14b8a6',
+        schedule: {
+          kind: 0,
+          startsAt: { date: todayIso, time: '07:20:00' },
+          endsAt: { date: todayIso, time: '07:40:00' },
+          isAllDay: false,
+        },
+        recurrence: null,
+      });
+      await api.put(`/transition-warnings/children/${emil.id}`, {
+        enabled: true,
+        leadMinutes: [15, 5, 1],
+        kinds: ['Event', 'Task', 'DropOff', 'PickUp'],
+        quietHours: { from: '21:00', to: '07:00' },
+      });
+      const football = (
+        await api.get<(Named & { title: string })[]>(`/calendars/${school.id}/items`)
+      ).find((item) => item.title === 'Football practice');
+      if (football) {
+        await api.put(`/transition-warnings/children/${emil.id}/items/${football.id}`, {
+          leadMinutes: [30, 10],
+        });
+      }
+    } catch (error) {
+      warn(error);
+    }
+
     // Task library and scheduled tasks ------------------------------------------------------
     const morning = await api.post<Named>(`/task-templates/children/${emil.id}`, {
       name: 'Morning routine',

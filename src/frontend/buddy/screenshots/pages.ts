@@ -153,6 +153,18 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: '9 h 25 min',
   },
   {
+    name: 'guardian-transition-warnings',
+    title: 'Heads-up before changes',
+    description:
+      'Per child, a countdown on the child’s screen before events, tasks, routines, packing lists and pickups: off until a guardian turns it on, then 15, 5 and 1 minute before by default, with the kinds of item, quiet hours and exceptions for single items.',
+    as: 'guardian',
+    route: '/guardian/transition-warnings',
+    // Emil's settings: on, with an exception (Ida's are off). The page otherwise opens on whichever
+    // child the API lists first.
+    path: (demo) => `/guardian/transition-warnings?child=${demo.childId}`,
+    waitFor: 'Football practice',
+  },
+  {
     name: 'guardian-house-rules',
     title: 'House rules',
     description:

@@ -128,6 +128,16 @@ Log a night in the same fields as a sleep clinic’s form, review the last 14 ni
 
 <img src="mobile/guardian-sleep-diary.png" alt="Sleep diary on a phone" width="320">
 
+## Heads-up before changes
+
+Per child, a countdown on the child’s screen before events, tasks, routines, packing lists and pickups: off until a guardian turns it on, then 15, 5 and 1 minute before by default, with the kinds of item, quiet hours and exceptions for single items.
+
+![Heads-up before changes](guardian-transition-warnings.png)
+
+<img src="tablet/guardian-transition-warnings.png" alt="Heads-up before changes on a tablet" width="384">
+
+<img src="mobile/guardian-transition-warnings.png" alt="Heads-up before changes on a phone" width="320">
+
 ## House rules
 
 The household’s rules in markdown, with who has read each one. A rule can be added, edited (a small fix keeps the children’s ticks), moved, removed, read together with a child, and printed.

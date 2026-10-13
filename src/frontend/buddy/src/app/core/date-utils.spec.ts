@@ -10,8 +10,10 @@ import {
   dayOfWeekAt,
   dayOfWeekIndex,
   dayOfWeekOf,
+  instantInTimeZone,
   isoWeekNumber,
   listTimeZoneIds,
+  minutesOfDayInTimeZone,
   nextWeekdayOnOrAfter,
   parseIsoDate,
   shiftMonthIso,
@@ -446,5 +448,54 @@ describe('shiftRangeEndTime', () => {
     ['09:00', '10:00', ''],
   ])('leaves the end alone when a time is blank (%s -> %s, end %s)', (oldStart, newStart, end) => {
     expect(shiftRangeEndTime(oldStart, newStart, end)).toBe(end);
+  });
+});
+
+describe('minutesOfDayInTimeZone', () => {
+  it('reads the wall clock of the given zone', () => {
+    const instant = new Date('2026-10-13T22:30:00Z');
+    expect(minutesOfDayInTimeZone(instant, 'UTC')).toBe(22 * 60 + 30);
+    expect(minutesOfDayInTimeZone(instant, 'Europe/Copenhagen')).toBe(30);
+    expect(minutesOfDayInTimeZone(instant, 'America/New_York')).toBe(18 * 60 + 30);
+  });
+});
+
+describe('instantInTimeZone', () => {
+  it('resolves a wall-clock date and time in the zone to an instant', () => {
+    expect(instantInTimeZone('2026-10-13', '15:00', 'Europe/Copenhagen')).toBe(
+      Date.parse('2026-10-13T13:00:00Z'),
+    );
+    expect(instantInTimeZone('2026-01-13', '15:00:00', 'Europe/Copenhagen')).toBe(
+      Date.parse('2026-01-13T14:00:00Z'),
+    );
+    expect(instantInTimeZone('2026-10-13', '23:30', 'America/New_York')).toBe(
+      Date.parse('2026-10-14T03:30:00Z'),
+    );
+    expect(instantInTimeZone('2026-10-13', '07:45', 'UTC')).toBe(
+      Date.parse('2026-10-13T07:45:00Z'),
+    );
+  });
+
+  it('uses the new offset for a time after the spring-forward change that day', () => {
+    // Copenhagen moves from +01:00 to +02:00 at 02:00 on 2026-03-29.
+    expect(instantInTimeZone('2026-03-29', '09:00', 'Europe/Copenhagen')).toBe(
+      Date.parse('2026-03-29T07:00:00Z'),
+    );
+  });
+
+  it('moves a time in the spring-forward gap an hour later', () => {
+    expect(instantInTimeZone('2026-03-29', '02:30', 'Europe/Copenhagen')).toBe(
+      Date.parse('2026-03-29T01:30:00Z'),
+    );
+  });
+
+  it('takes the first of the two times in the repeated autumn hour', () => {
+    // Copenhagen goes back from +02:00 to +01:00 at 03:00 on 2026-10-25.
+    expect(instantInTimeZone('2026-10-25', '02:30', 'Europe/Copenhagen')).toBe(
+      Date.parse('2026-10-25T00:30:00Z'),
+    );
+    expect(instantInTimeZone('2026-10-25', '10:00', 'Europe/Copenhagen')).toBe(
+      Date.parse('2026-10-25T09:00:00Z'),
+    );
   });
 });

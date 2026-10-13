@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { Language } from './i18n/language';
@@ -26,10 +26,13 @@ export class UsersService {
 
   private currentUserPromise: Promise<CurrentUser> | null = null;
 
-  // Defaults to UTC until the current user resolves (see ensureCurrentUser) -- read by the
-  // UserDatePipe so every timestamp in the app renders in the signed-in user's own time zone.
-  private readonly timeZoneState = signal('UTC');
-  readonly timeZoneId = this.timeZoneState.asReadonly();
+  // The signed-in user's stored time zone, null until the current user resolves (see
+  // ensureCurrentUser). ChildClockService falls back to the device's zone while it is null.
+  private readonly timeZoneState = signal<string | null>(null);
+  readonly profileTimeZoneId = this.timeZoneState.asReadonly();
+  // UTC until then -- read by the UserDatePipe so every timestamp in the app renders in the
+  // signed-in user's own time zone.
+  readonly timeZoneId = computed(() => this.timeZoneState() ?? 'UTC');
 
   /**
    * Resolves the authenticated Keycloak subject to a backend user, creating one on first login.

@@ -25,6 +25,7 @@ using buddy.Features.PrintTemplates;
 using buddy.Features.Progress;
 using buddy.Features.SleepDiaries;
 using buddy.Features.TaskLibrary;
+using buddy.Features.TransitionWarnings;
 using buddy.Features.Users;
 using buddy.Features.WorkLocations;
 using buddy.Serialization;
@@ -125,6 +126,9 @@ builder.Services.AddSleepDiariesFeature(builder.Configuration);
 // After Users, Guardians and Groups: authorization reads IGuardianLinkEventStore and IGroupEventStore,
 // GetChildRules the child's name from IUserEventStore.
 builder.Services.AddHouseRulesFeature(builder.Configuration);
+// After Guardians, Groups and Calendars: authorization reads IGuardianLinkEventStore, the override
+// item check ICalendarItemEventStore, ICalendarEventStore and IGroupEventStore.
+builder.Services.AddTransitionWarningsFeature(builder.Configuration);
 // Last: erasure orchestrates every feature's IPersonalDataEraser.
 builder.Services.AddPrivacyFeature();
 
@@ -236,6 +240,11 @@ if (features.SleepDiary)
 if (features.HouseRules)
 {
     app.MapHouseRulesFeature();
+}
+
+if (features.TransitionWarnings)
+{
+    app.MapTransitionWarningsFeature();
 }
 
 // JasperFx command line: no arguments runs the API as before; `projections --rebuild --store <name>`

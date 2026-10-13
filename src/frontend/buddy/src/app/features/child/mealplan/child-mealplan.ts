@@ -9,7 +9,8 @@ import {
 } from '@angular/core';
 
 import { firstAndLast } from '../../../core/array-utils';
-import { parseIsoDate, toIsoDate, todayIsoDate } from '../../../core/date-utils';
+import { ChildClockService } from '../../../core/child-clock.service';
+import { parseIsoDate, toIsoDate } from '../../../core/date-utils';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealplans.service';
@@ -56,8 +57,8 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
 
 // The screen opens one week back rather than on today's forward week -- a child opening "my
 // meals" wants to see (and rate) what they already ate, not an empty upcoming week.
-function defaultAnchor(): string {
-  const today = parseIsoDate(todayIsoDate());
+function defaultAnchor(todayIsoDate: string): string {
+  const today = parseIsoDate(todayIsoDate);
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - DAYS_AHEAD);
   return toIsoDate(start);
 }
@@ -69,13 +70,15 @@ function defaultAnchor(): string {
 })
 export class ChildMealplan {
   private readonly mealplans = inject(MealplansService);
+  // The child's own today (profile time zone), not the device's.
+  private readonly clock = inject(ChildClockService);
   private readonly users = inject(UsersService);
   private readonly translation = inject(TranslationService);
 
   protected readonly slots = SLOTS;
   protected readonly slotLabels = SLOT_LABELS;
   protected readonly stars = STARS;
-  protected readonly anchorDate = signal(defaultAnchor());
+  protected readonly anchorDate = signal(defaultAnchor(this.clock.today()));
   protected readonly days = computed(() =>
     buildDays(this.anchorDate(), this.translation.language()),
   );
@@ -135,7 +138,7 @@ export class ChildMealplan {
 
   // Nothing to rate before it's actually been served.
   protected canRate(entry: MealPlanEntry): boolean {
-    return entry.date <= todayIsoDate();
+    return entry.date <= this.clock.today();
   }
 
   protected isEditing(entry: MealPlanEntry): boolean {

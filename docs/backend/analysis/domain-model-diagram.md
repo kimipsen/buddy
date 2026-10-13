@@ -141,6 +141,13 @@ classDiagram
         +string SleepHygieneNotes
     }
 
+    class TransitionWarningSettings {
+        +TransitionWarningSettingsId Id
+        +UserId ChildId
+        +WarningDefaults Defaults
+        +ItemOverrides ItemOverrides
+    }
+
     class SleepDiaryShareToken {
         +SleepDiaryShareTokenId Id
         +UserId ChildId
@@ -182,6 +189,8 @@ classDiagram
     ChildProgress ..> CalendarItem : awardedOccurrences
     SleepDiary --> User : childId, entries' loggedBy
     SleepDiaryShareToken --> User : childId, createdBy
+    TransitionWarningSettings --> User : childId
+    TransitionWarningSettings ..> CalendarItem : itemOverrides
     RuleBook --> User : scopeId (Child scope), acknowledgements
     RuleBook --> Group : scopeId (Group scope)
 ```

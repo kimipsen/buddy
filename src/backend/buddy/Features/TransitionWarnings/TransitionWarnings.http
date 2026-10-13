@@ -1,0 +1,43 @@
+@buddy_HostAddress = http://localhost:5193
+
+### The signed-in child's own warning settings (off with 15/5/1 pre-filled until a guardian saves)
+
+GET {{buddy_HostAddress}}/transition-warnings/me
+Authorization: Bearer {{childToken}}
+
+###
+
+# A child's settings with each exception's item title (guardian only)
+GET {{buddy_HostAddress}}/transition-warnings/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Turn warnings on (guardian only) -- full replace; quietHours may be omitted for none
+PUT {{buddy_HostAddress}}/transition-warnings/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "leadMinutes": [15, 5, 1],
+  "kinds": ["Event", "Task", "DropOff", "PickUp"],
+  "quietHours": { "from": "21:00", "to": "07:00" }
+}
+
+###
+
+# Football needs 30 minutes' notice -- an empty leadMinutes list means "never warn for this item"
+PUT {{buddy_HostAddress}}/transition-warnings/children/{{childId}}/items/{{itemId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "leadMinutes": [30, 10]
+}
+
+###
+
+# Remove the exception again (idempotent)
+DELETE {{buddy_HostAddress}}/transition-warnings/children/{{childId}}/items/{{itemId}}
+Authorization: Bearer {{guardianToken}}

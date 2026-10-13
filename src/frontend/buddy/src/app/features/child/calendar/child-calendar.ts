@@ -1,5 +1,6 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 
+import { ChildClockService } from '../../../core/child-clock.service';
 import { FeaturesService } from '../../../core/features.service';
 import { compareNames, firstAndLast } from '../../../core/array-utils';
 import {
@@ -11,7 +12,6 @@ import {
 import {
   parseIsoDate,
   toIsoDate,
-  todayIsoDate,
   toIsoDateInTimeZone,
   toTimeInTimeZone,
 } from '../../../core/date-utils';
@@ -131,12 +131,14 @@ export class ChildCalendar {
   private readonly calendars = inject(CalendarsService);
   private readonly mealplans = inject(MealplansService);
   private readonly users = inject(UsersService);
+  // The child's own today (profile time zone), the same zone the agenda groups occurrences by.
+  private readonly clock = inject(ChildClockService);
   private readonly translation = inject(TranslationService);
 
   protected readonly taskKind = TASK_KIND;
   protected readonly mealSlotLabels = MEAL_SLOT_LABELS;
 
-  protected readonly anchorDate = signal(todayIsoDate());
+  protected readonly anchorDate = signal(this.clock.today());
   protected readonly days = computed(() =>
     buildDays(this.anchorDate(), this.translation.language()),
   );
@@ -279,7 +281,9 @@ export class ChildCalendar {
   // just the UI affordance so a child never sees an actionable checkbox for a day that hasn't
   // arrived yet, not the source of truth.
   protected canCompleteTask(occurrence: CalendarOccurrence): boolean {
-    return toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId()) <= todayIsoDate();
+    return (
+      toIsoDateInTimeZone(instantFor(occurrence), this.users.timeZoneId()) <= this.clock.today()
+    );
   }
 
   protected isCalendarHidden(calendarId: string): boolean {

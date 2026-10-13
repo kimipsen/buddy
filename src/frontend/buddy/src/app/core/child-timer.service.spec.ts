@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +8,7 @@ import { readTimerAnchor, writeTimerAnchor } from './child-timer-storage';
 import { ChildTimerService } from './child-timer.service';
 import { todayIsoDate } from './date-utils';
 import { TaskRun, occurrenceKey } from './task-run';
+import { UsersService } from './users.service';
 
 describe('ChildTimerService', () => {
   const today = todayIsoDate();
@@ -119,6 +121,36 @@ describe('ChildTimerService', () => {
     service.afterCompletionChange(run([true, false]), 5000);
 
     expect(service.stored()).toBeNull();
+  });
+
+  it("keeps the timer until midnight on the child's profile clock, not the device's", () => {
+    // The device says 01:00 on the 13th (UTC); the child's profile zone (New York) is still on the
+    // evening of the 12th, so a timer started at bedtime there belongs to the 12th.
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: UsersService,
+          useValue: { profileTimeZoneId: signal<string | null>('America/New_York').asReadonly() },
+        },
+      ],
+    });
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-13T01:00:00Z'));
+      const service = create();
+      service.start(run(), 1000);
+      expect(readTimerAnchor('2026-10-12')?.itemId).toBe('run-1');
+
+      // 23:59 in New York: still the same day there.
+      vi.setSystemTime(new Date('2026-10-13T03:59:00Z'));
+      expect(service.anchorFor('run-1')).toBeDefined();
+
+      // 00:01 in New York: the next day, so the timer is gone.
+      vi.setSystemTime(new Date('2026-10-13T04:01:00Z'));
+      expect(service.stored()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("forgets yesterday's timer when the app stays open past midnight", () => {

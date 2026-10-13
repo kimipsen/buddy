@@ -17,10 +17,10 @@ import {
   CalendarOccurrence,
   CalendarsService,
 } from '../../../core/calendars.service';
+import { ChildClockService } from '../../../core/child-clock.service';
 import { completeChildTask } from '../../../core/child-task-completion';
 import { ChildTimerService } from '../../../core/child-timer.service';
 import { FeaturesService } from '../../../core/features.service';
-import { addDaysIso, todayIsoDate, toIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
 import { HouseRulesService } from '../../../core/house-rules.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -116,6 +116,7 @@ export function isChecklistRun(run: TaskRun): boolean {
   return (run.subtasks[0].routine?.checklist ?? null) !== null;
 }
 
+// Minutes since midnight of a "HH:mm" or "HH:mm:ss" time.
 function minutesOf(time: string): number {
   const [hours = 0, minutes = 0] = time.split(':').map(Number);
   return hours * 60 + minutes;
@@ -165,6 +166,8 @@ export class ChildHome implements OnInit, OnDestroy {
   private readonly progressService = inject(ProgressService);
   private readonly houseRules = inject(HouseRulesService);
   private readonly childTimer = inject(ChildTimerService);
+  // "Today" is the child's own (profile time zone), not the device's: every date below comes from it.
+  private readonly clock = inject(ChildClockService);
   private readonly taskLibrary = inject(TaskLibraryService);
 
   protected readonly guardianKind = GUARDIAN;
@@ -187,10 +190,12 @@ export class ChildHome implements OnInit, OnDestroy {
   // holds a value and isn't reloading: update() on a loading resource would cancel that load,
   // and on a failed one it throws.
   private readonly meals = resource({
-    loader: async () => this.loadMeals((await this.users.ensureCurrentUser()).id, todayIsoDate()),
+    loader: async () =>
+      this.loadMeals((await this.users.ensureCurrentUser()).id, this.clock.today()),
   });
   private readonly doseList = resource({
-    loader: async () => this.loadDoses((await this.users.ensureCurrentUser()).id, todayIsoDate()),
+    loader: async () =>
+      this.loadDoses((await this.users.ensureCurrentUser()).id, this.clock.today()),
   });
   // Doesn't need the child id, but still waits for it: the calendar never loads for a user who
   // can't be resolved.
@@ -365,17 +370,17 @@ export class ChildHome implements OnInit, OnDestroy {
     return state.phase === 'done' ? null : state;
   });
 
-  // Tomorrow's packing lists whose evening time has passed (in this device's local time). The date
-  // check hides the old list while the new tomorrow is loading after midnight.
+  // Tomorrow's packing lists whose evening time has passed on the child's clock. The date check
+  // hides the old list while the new tomorrow is loading after midnight.
   protected readonly packForTomorrow = computed<TaskRun[]>(() => {
     const loaded = this.tomorrow.hasValue() ? this.tomorrow.value() : undefined;
-    const now = new Date(this.now());
+    const now = this.now();
 
-    if (!loaded || loaded.date !== addDaysIso(toIsoDate(now), 1)) {
+    if (!loaded || loaded.date !== this.clock.tomorrow(now)) {
       return [];
     }
 
-    const minutesNow = now.getHours() * 60 + now.getMinutes();
+    const minutesNow = this.clock.minutesOfDay(now);
     return groupTaskRuns(loaded.tasks)
       .filter(isTaskRun)
       .filter((run) => {
@@ -399,7 +404,7 @@ export class ChildHome implements OnInit, OnDestroy {
   });
 
   protected readonly isChecklistRun = isChecklistRun;
-  protected readonly tomorrowDate = computed(() => addDaysIso(toIsoDate(new Date(this.now())), 1));
+  protected readonly tomorrowDate = computed(() => this.clock.tomorrow(this.now()));
 
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
   // shouldn't render five empty-state messages back to back.
@@ -595,7 +600,7 @@ export class ChildHome implements OnInit, OnDestroy {
     await this.savingTask.run(
       key,
       async () => {
-        await completeChildTask(this.calendars, task, isCompleted);
+        await completeChildTask(this.calendars, task, isCompleted, this.clock.today());
         if (this.occurrences.hasValue() && !this.occurrences.isLoading()) {
           const current = this.occurrences.value();
           this.occurrences.set({
@@ -631,7 +636,7 @@ export class ChildHome implements OnInit, OnDestroy {
 
     try {
       const me = await this.users.ensureCurrentUser();
-      const today = todayIsoDate();
+      const today = this.clock.today();
       return await this.pickups.listSchedule(me.id, today, today);
     } catch {
       return [];
@@ -728,7 +733,7 @@ export class ChildHome implements OnInit, OnDestroy {
   }
 
   private async loadCalendarOccurrences(): Promise<TodaysOccurrences> {
-    const occurrences = await this.calendars.listTodayOccurrences();
+    const occurrences = await this.calendars.listTodayOccurrences(this.clock.today());
 
     const tasks = occurrences.filter((occurrence) => occurrence.kind === TASK_KIND);
 

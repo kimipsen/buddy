@@ -18743,6 +18743,457 @@
           }
         ]
       }
+    },
+    "/transition-warnings/me": {
+      "get": {
+        "tags": [
+          "TransitionWarnings"
+        ],
+        "operationId": "GetMyTransitionWarnings",
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyTransitionWarningsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/transition-warnings/children/{childId}": {
+      "get": {
+        "tags": [
+          "TransitionWarnings"
+        ],
+        "operationId": "GetChildTransitionWarnings",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildTransitionWarningsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "TransitionWarnings"
+        ],
+        "operationId": "ConfigureTransitionWarnings",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureTransitionWarningsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildTransitionWarningsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/transition-warnings/children/{childId}/items/{itemId}": {
+      "put": {
+        "tags": [
+          "TransitionWarnings"
+        ],
+        "operationId": "SetItemWarningOverride",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetItemWarningOverrideRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildTransitionWarningsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060, \u0060too_many_warning_overrides\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict",
+              "too_many_warning_overrides"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "TransitionWarnings"
+        ],
+        "operationId": "ClearItemWarningOverride",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -19797,6 +20248,55 @@
           }
         }
       },
+      "ChildTransitionWarningsResponse": {
+        "required": [
+          "childId",
+          "enabled",
+          "leadMinutes",
+          "kinds",
+          "quietHours",
+          "overrides"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "leadMinutes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarningKind"
+            }
+          },
+          "quietHours": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuietHours"
+              }
+            ]
+          },
+          "overrides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemWarningOverrideDetailResponse"
+            }
+          }
+        }
+      },
       "Color": {
         "type": "string"
       },
@@ -19882,6 +20382,42 @@
             "items": {
               "$ref": "#/components/schemas/RewardBody"
             }
+          }
+        }
+      },
+      "ConfigureTransitionWarningsRequest": {
+        "required": [
+          "enabled",
+          "leadMinutes",
+          "kinds"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "leadMinutes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarningKind"
+            }
+          },
+          "quietHours": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuietHoursRequest"
+              }
+            ]
           }
         }
       },
@@ -20827,6 +21363,7 @@
           "printing",
           "progress",
           "taskLibrary",
+          "transitionWarnings",
           "help"
         ],
         "type": "object",
@@ -20865,6 +21402,9 @@
             "type": "boolean"
           },
           "taskLibrary": {
+            "type": "boolean"
+          },
+          "transitionWarnings": {
             "type": "boolean"
           },
           "help": {
@@ -20934,6 +21474,58 @@
           }
         ],
         "description": "One of 2 cases, picked by the numeric \u0022kind\u0022: 0 = EventTimingRequest, 1 = TaskTimingRequest."
+      },
+      "ItemWarningOverrideDetailResponse": {
+        "required": [
+          "itemId",
+          "title",
+          "icon",
+          "kind",
+          "leadMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CalendarItemKind"
+          },
+          "leadMinutes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "ItemWarningOverrideResponse": {
+        "required": [
+          "itemId",
+          "leadMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadMinutes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
       },
       "Language": {
         "type": "string"
@@ -21629,6 +22221,50 @@
           }
         }
       },
+      "MyTransitionWarningsResponse": {
+        "required": [
+          "enabled",
+          "leadMinutes",
+          "kinds",
+          "quietHours",
+          "overrides"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "leadMinutes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarningKind"
+            }
+          },
+          "quietHours": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuietHours"
+              }
+            ]
+          },
+          "overrides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemWarningOverrideResponse"
+            }
+          }
+        }
+      },
       "Name": {
         "required": [
           "givenName",
@@ -22173,6 +22809,40 @@
             "items": {
               "$ref": "#/components/schemas/RewardRequestResponse"
             }
+          }
+        }
+      },
+      "QuietHours": {
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "time"
+          },
+          "to": {
+            "type": "string",
+            "format": "time"
+          }
+        }
+      },
+      "QuietHoursRequest": {
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "time"
+          },
+          "to": {
+            "type": "string",
+            "format": "time"
           }
         }
       },
@@ -22805,6 +23475,21 @@
         "properties": {
           "role": {
             "$ref": "#/components/schemas/GroupRole"
+          }
+        }
+      },
+      "SetItemWarningOverrideRequest": {
+        "required": [
+          "leadMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "leadMinutes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -24034,6 +24719,15 @@
           }
         }
       },
+      "WarningKind": {
+        "enum": [
+          "Event",
+          "Task",
+          "DropOff",
+          "PickUp"
+        ],
+        "type": "string"
+      },
       "WorkDay": {
         "required": [
           "date",
@@ -24319,6 +25013,9 @@
     },
     {
       "name": "TaskLibrary"
+    },
+    {
+      "name": "TransitionWarnings"
     },
     {
       "name": "Users"

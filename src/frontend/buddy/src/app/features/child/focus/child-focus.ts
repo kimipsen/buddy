@@ -11,6 +11,7 @@ import {
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { CalendarOccurrence, CalendarsService } from '../../../core/calendars.service';
+import { ChildClockService } from '../../../core/child-clock.service';
 import { completeChildTask } from '../../../core/child-task-completion';
 import { ChildTimerService } from '../../../core/child-timer.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -41,13 +42,14 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
 })
 export class ChildFocus implements OnInit, OnDestroy {
   private readonly calendars = inject(CalendarsService);
+  private readonly clock = inject(ChildClockService);
   private readonly childTimer = inject(ChildTimerService);
   private readonly itemId = inject(ActivatedRoute).snapshot.paramMap.get('itemId') ?? '';
 
   // Today's occurrences come from the same per-day cache as the child home, so opening this page
   // from there costs no request.
   protected readonly occurrences = resource({
-    loader: () => this.calendars.listTodayOccurrences(),
+    loader: () => this.calendars.listTodayOccurrences(this.clock.today()),
   });
 
   protected readonly run = computed<TaskRun | null>(() => {
@@ -109,7 +111,7 @@ export class ChildFocus implements OnInit, OnDestroy {
     await this.saving.run(
       key,
       async () => {
-        await completeChildTask(this.calendars, task, true);
+        await completeChildTask(this.calendars, task, true, this.clock.today());
 
         if (this.occurrences.hasValue() && !this.occurrences.isLoading()) {
           this.occurrences.set(

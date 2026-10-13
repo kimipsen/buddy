@@ -111,6 +111,7 @@ groups, calendars, privacy and onboarding are core and can't be turned off.**
 | `Printing` | `/print-templates` group | `/guardian/print*`, `/guardian/print/sheet/:templateId`, the print link on the dashboard |
 | `Progress` | `/progress` group | `/guardian/progress`, child progress views |
 | `TaskLibrary` | `/task-templates` group, plus `ScheduleTaskFromTemplate`, which lives in the `/calendars` group | `/guardian/task-library`, "schedule from library" in the calendar |
+| `TransitionWarnings` | `/transition-warnings` group | `/guardian/transition-warnings`, its menu link and help topic, the countdown banner on the child pages, the On/Off line on `manage-children` and the onboarding hint |
 | `Help` | none (frontend only) | the `?` help panel in the guardian shell, `/guardian/help` |
 
 - **Sub-flags only where the TODO names a reason.** The AI assistant sends family data to a

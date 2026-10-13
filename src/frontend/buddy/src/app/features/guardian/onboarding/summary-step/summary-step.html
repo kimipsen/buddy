@@ -68,3 +68,14 @@
     </dd>
   }
 </dl>
+
+@if (features.enabled('transitionWarnings')) {
+  <p class="mt-4 text-sm text-slate-600 dark:text-slate-300" data-testid="warnings-hint">
+    {{ 'transitionWarnings.onboarding.text' | translate }}
+    <a
+      routerLink="/guardian/transition-warnings"
+      class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+      >{{ 'transitionWarnings.onboarding.link' | translate }}</a
+    >
+  </p>
+}

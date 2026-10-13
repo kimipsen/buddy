@@ -2452,6 +2452,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/transition-warnings/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetMyTransitionWarnings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transition-warnings/children/{childId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetChildTransitionWarnings'];
+    put: operations['ConfigureTransitionWarnings'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transition-warnings/children/{childId}/items/{itemId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['SetItemWarningOverride'];
+    post?: never;
+    delete: operations['ClearItemWarningOverride'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2738,6 +2786,15 @@ export interface components {
       timeZoneId: components['schemas']['TimeZoneId'];
       showVisualTimers: boolean;
     };
+    ChildTransitionWarningsResponse: {
+      /** Format: uuid */
+      childId: string;
+      enabled: boolean;
+      leadMinutes: number[];
+      kinds: components['schemas']['WarningKind'][];
+      quietHours: null | components['schemas']['QuietHours'];
+      overrides: components['schemas']['ItemWarningOverrideDetailResponse'][];
+    };
     Color: string;
     CommitMealPlanImportEntryRequest: {
       /** Format: date */
@@ -2759,6 +2816,12 @@ export interface components {
     };
     ConfigureRewardsRequest: {
       rewards: components['schemas']['RewardBody'][];
+    };
+    ConfigureTransitionWarningsRequest: {
+      enabled: boolean;
+      leadMinutes: number[];
+      kinds: components['schemas']['WarningKind'][];
+      quietHours?: null | components['schemas']['QuietHoursRequest'];
     };
     CopyTaskTemplateRequest: {
       /** Format: uuid */
@@ -3058,6 +3121,7 @@ export interface components {
       printing: boolean;
       progress: boolean;
       taskLibrary: boolean;
+      transitionWarnings: boolean;
       help: boolean;
     };
     InviteGuardianRequest: {
@@ -3078,6 +3142,19 @@ export interface components {
     /** @description One of 2 cases, picked by the numeric "kind": 0 = EventTimingRequest, 1 = TaskTimingRequest. */
     ItemTimingRequest:
       components['schemas']['EventTimingRequest'] | components['schemas']['TaskTimingRequest'];
+    ItemWarningOverrideDetailResponse: {
+      /** Format: uuid */
+      itemId: string;
+      title: string;
+      icon: string;
+      kind: components['schemas']['CalendarItemKind'];
+      leadMinutes: number[];
+    };
+    ItemWarningOverrideResponse: {
+      /** Format: uuid */
+      itemId: string;
+      leadMinutes: number[];
+    };
     Language: string;
     LogSleepEntryRequest: {
       /** Format: time */
@@ -3273,6 +3350,13 @@ export interface components {
       /** Format: uuid */
       lastModifiedBy: string;
     };
+    MyTransitionWarningsResponse: {
+      enabled: boolean;
+      leadMinutes: number[];
+      kinds: components['schemas']['WarningKind'][];
+      quietHours: null | components['schemas']['QuietHours'];
+      overrides: components['schemas']['ItemWarningOverrideResponse'][];
+    };
     Name: {
       givenName: string;
       familyName: string;
@@ -3426,6 +3510,18 @@ export interface components {
       spentStars: number;
       rewards: components['schemas']['RewardResponse'][];
       rewardRequests: components['schemas']['RewardRequestResponse'][];
+    };
+    QuietHours: {
+      /** Format: time */
+      from: string;
+      /** Format: time */
+      to: string;
+    };
+    QuietHoursRequest: {
+      /** Format: time */
+      from: string;
+      /** Format: time */
+      to: string;
     };
     RateMealRequest: {
       /** Format: int32 */
@@ -3600,6 +3696,9 @@ export interface components {
     };
     SetGroupMemberRoleRequest: {
       role: components['schemas']['GroupRole'];
+    };
+    SetItemWarningOverrideRequest: {
+      leadMinutes: number[];
     };
     SetMemberRoleRequest: {
       role: components['schemas']['CalendarRole'];
@@ -3960,6 +4059,8 @@ export interface components {
     VerifyEmailRequest: {
       token: string;
     };
+    /** @enum {string} */
+    WarningKind: 'Event' | 'Task' | 'DropOff' | 'PickUp';
     WorkDay: {
       /** Format: date */
       date: string;
@@ -15270,6 +15371,276 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetMyTransitionWarnings: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MyTransitionWarningsResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetChildTransitionWarnings: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChildTransitionWarningsResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ConfigureTransitionWarnings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConfigureTransitionWarningsRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChildTransitionWarningsResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SetItemWarningOverride: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetItemWarningOverrideRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChildTransitionWarningsResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `too_many_warning_overrides`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ClearItemWarningOverride: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
       };
       429: components['responses']['TooManyRequests'];
       500: components['responses']['InternalServerError'];

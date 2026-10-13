@@ -69,8 +69,9 @@ in real time.
 - [x] Visual time-left timer on the current routine and subtask, with a focus view, that a
       guardian can turn off per child — see
       [Visual time-left timer](docs/frontend/analysis/visual-time-left-timer.md)
-- [ ] Transition warnings before events, tasks and pickups (proposed, not yet implemented — see
-      [Transition warnings](docs/backend/analysis/transition-warnings.md))
+- [x] Transition warnings before events, tasks and pickups: a countdown on the child's screen, off
+      until a guardian turns it on per child — see
+      [Transition warnings](docs/backend/analysis/transition-warnings.md)
 - [ ] Feelings check-ins with guardian trends and a doctor share link (proposed, not yet implemented —
       see [Feelings check-in](docs/backend/analysis/feelings-check-in.md))
 - [x] Weekday packing checklists on the day view, shown the evening before, one star per packed list,

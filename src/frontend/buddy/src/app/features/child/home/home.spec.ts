@@ -154,6 +154,7 @@ describe('ChildHome', () => {
     const usersStub: Partial<UsersService> = {
       ensureCurrentUser: vi.fn(async () => currentUser),
       timeZoneId: signal('UTC').asReadonly(),
+      profileTimeZoneId: signal<string | null>(null).asReadonly(),
       ...stubs.users,
     };
     const mealplansStub: Partial<MealplansService> = {
@@ -1798,6 +1799,99 @@ describe('ChildHome', () => {
       await setupPacking({ at: evening, taskLibrary: { fetchTaskTemplates } });
 
       expect(fetchTaskTemplates).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the child's own clock", () => {
+    // 23:30 on the 12th in the child's profile zone (New York) is 03:30 on the 13th in UTC: a
+    // device on UTC, or one carried to Europe, already says tomorrow.
+    const lateEveningInNewYork = new Date('2026-10-13T03:30:00Z');
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(lateEveningInNewYork);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function packingItem(date: string): CalendarOccurrence {
+      return occurrence({
+        itemId: 'bag-item',
+        title: 'Lunchbox',
+        icon: '🎒',
+        timing: { kind: 1, dueAt: `${date}T11:45:00Z` },
+        routine: {
+          subtaskId: 'lunchbox',
+          parentTitle: 'School bag',
+          parentIcon: '🎒',
+          checklist: { eveningBeforeFrom: '18:00:00' },
+        },
+      });
+    }
+
+    async function setupInNewYork() {
+      const result = await setup({
+        users: { profileTimeZoneId: signal<string | null>('America/New_York').asReadonly() },
+        calendars: {
+          listTodayOccurrences: vi.fn(async () => []),
+          listOccurrencesInRange: vi.fn(async () => [packingItem('2026-10-13')]),
+          setTaskCompletion: vi.fn(async () => ({}) as TaskCompletion),
+        },
+      });
+      await settle(result.fixture);
+      await settle(result.fixture);
+      return { ...result, compiled: result.fixture.nativeElement as HTMLElement };
+    }
+
+    it("loads today by the profile's date, not the device's", async () => {
+      const { calendars, mealplans, medicines, pickups } = await setupInNewYork();
+
+      expect(calendars.listTodayOccurrences).toHaveBeenCalledWith('2026-10-12');
+      expect(mealplans.listMealPlan).toHaveBeenCalledWith(
+        { kind: 'family', childId: currentUser.id },
+        '2026-10-12',
+        '2026-10-12',
+      );
+      expect(medicines.listDoses).toHaveBeenCalledWith(currentUser.id, '2026-10-12', '2026-10-12');
+      expect(pickups.listSchedule).toHaveBeenCalledWith(currentUser.id, '2026-10-12', '2026-10-12');
+    });
+
+    it("shows tomorrow's packing list from its evening time on the profile's clock", async () => {
+      const { compiled, calendars } = await setupInNewYork();
+
+      // Tomorrow is the 13th there, and 23:30 is past the list's 18:00, although the device's
+      // own clock says 03:30 on the 13th.
+      expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith('2026-10-13', '2026-10-13');
+      const section = compiled.querySelector('[data-testid="pack-for-tomorrow"]');
+      expect(section?.textContent).toContain('School bag');
+    });
+
+    it("ticks a task for the profile's today", async () => {
+      const task = occurrence({
+        itemId: 'teeth',
+        title: 'Brush teeth',
+        icon: '🪥',
+        kind: 'Task',
+        timing: { kind: 1, dueAt: '2026-10-13T00:00:00Z' },
+      });
+      const setTaskCompletion = vi.fn(async () => ({}) as TaskCompletion);
+      const result = await setup({
+        users: { profileTimeZoneId: signal<string | null>('America/New_York').asReadonly() },
+        calendars: {
+          listTodayOccurrences: vi.fn(async () => [task]),
+          listOccurrencesInRange: vi.fn(async () => []),
+          setTaskCompletion,
+        },
+      });
+      await settle(result.fixture);
+      await settle(result.fixture);
+
+      findButtonByAriaLabel(result.fixture.nativeElement as HTMLElement, 'Mark done')!.click();
+      await settle(result.fixture);
+
+      expect(setTaskCompletion).toHaveBeenCalledWith('cal-1', 'teeth', '2026-10-12', true, null);
     });
   });
 });

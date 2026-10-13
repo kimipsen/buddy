@@ -79,7 +79,13 @@ describe('ChildFocus', () => {
       providers: [
         provideRouter([]),
         { provide: CalendarsService, useValue: calendarsStub },
-        { provide: UsersService, useValue: { timeZoneId: signal('UTC').asReadonly() } },
+        {
+          provide: UsersService,
+          useValue: {
+            timeZoneId: signal('UTC').asReadonly(),
+            profileTimeZoneId: signal<string | null>(null).asReadonly(),
+          },
+        },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ itemId }) } },

@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 
 import {
   StoredTimer,
@@ -6,7 +6,7 @@ import {
   readTimerAnchor,
   writeTimerAnchor,
 } from './child-timer-storage';
-import { todayIsoDate } from './date-utils';
+import { ChildClockService } from './child-clock.service';
 import { TaskRun } from './task-run';
 import { TimerAnchor, pauseAnchor, reanchor, resumeAnchor, startAnchor } from './visual-timer';
 
@@ -15,13 +15,18 @@ import { TimerAnchor, pauseAnchor, reanchor, resumeAnchor, startAnchor } from '.
 // survives a reload on this device.
 @Injectable({ providedIn: 'root' })
 export class ChildTimerService {
+  // The child's own day, so a timer started late in the evening on a device in another zone still
+  // belongs to the day its routine was on.
+  private readonly clock = inject(ChildClockService);
   private readonly state = signal<(StoredTimer & { date: string }) | null>(this.load());
 
   // Today's started timer. Checked against the date on every read, not only at start-up: a tablet
   // left open overnight must not keep yesterday's timer (recurring routines reuse their itemId).
   stored(): StoredTimer | null {
     const state = this.state();
-    return state?.date === todayIsoDate() ? { itemId: state.itemId, anchor: state.anchor } : null;
+    return state?.date === this.clock.today()
+      ? { itemId: state.itemId, anchor: state.anchor }
+      : null;
   }
 
   // The anchor for this run, or undefined when it is schedule-anchored.
@@ -62,7 +67,7 @@ export class ChildTimerService {
   }
 
   private load(): (StoredTimer & { date: string }) | null {
-    const date = todayIsoDate();
+    const date = this.clock.today();
     const stored = readTimerAnchor(date);
     return stored ? { ...stored, date } : null;
   }
@@ -73,7 +78,7 @@ export class ChildTimerService {
       return;
     }
 
-    const date = todayIsoDate();
+    const date = this.clock.today();
     this.state.set({ itemId, anchor, date });
     writeTimerAnchor(itemId, date, anchor);
   }

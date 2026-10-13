@@ -1,6 +1,14 @@
 # Transition Warnings
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `Features/TransitionWarnings` (schema `transitionwarnings`, flag
+`Features:TransitionWarnings`) with the `TransitionWarningSettings` aggregate, four events and five
+slices (`GetMyTransitionWarnings`, `GetChildTransitionWarnings`, `ConfigureTransitionWarnings`,
+`SetItemWarningOverride`, `ClearItemWarningOverride`) under `/transition-warnings`; the pure
+`computeTransitionWarnings` in `core/transition-warnings.ts`, the `ChildWarningFeed` and the
+`TransitionWarningBanner` in the `ChildPage` frame of every child page; the guardian page
+`/guardian/transition-warnings` with exceptions; the On/Off line on `manage-children`, the hint in the
+onboarding summary and a help topic. The same build moved every child page's "today" to the child's
+profile time zone through `ChildClockService` (Question 9).
 
 ## Context
 
@@ -61,10 +69,10 @@ What exists today:
   writes and a child reads is `ChildProgress`'s goal posts
   ([configurable-goal-posts.md](configurable-goal-posts.md)).
 
-This document answers eight questions: whether this is its own feature, where the settings live,
+This document answers nine questions: whether this is its own feature, where the settings live,
 how they are modelled, where per-item exceptions live, where warnings are computed, how they are
-delivered now and how they plug into push later, how time zones apply, and who can see and change
-the settings.
+delivered now and how they plug into push later, how time zones apply, who can see and change
+the settings, and whose "today" the child pages use.
 
 ## Question 1: extend an existing feature, or a new one?
 
@@ -111,9 +119,11 @@ TransitionWarningSettings(
     TransitionWarningSettingsId Id,     // Id.Value == ChildId.Value -- 1:1, no index document
     UserId ChildId,
     WarningDefaults Defaults,           // Question 3
-    ImmutableDictionary<CalendarItemId, ItemWarningOverride> ItemOverrides,  // Question 4
-    UserId LastModifiedBy)              // always a guardian
+    ImmutableDictionary<CalendarItemId, ItemWarningOverride> ItemOverrides)  // Question 4
 ```
+
+Who changed what is on the events (`ModifiedBy`). The aggregate keeps no `LastModifiedBy`, because
+nothing reads it (dropped while building; the history needs only the events).
 
 `Initial(id, childId)` returns the defaults (`Enabled = false`, the suggested lead times and kinds
 filled in), the same "one non-null state" helper `ChildProgress` has, so the reader for a child no
@@ -133,8 +143,8 @@ save.**
 ```
 WarningDefaults(
     bool Enabled,                                  // master switch for this child; default false
-    ImmutableSortedSet<int> LeadMinutes,           // 1..120, 1-3 distinct values; default {15, 5, 1}
-    ImmutableHashSet<WarningKind> Kinds,           // default: all four
+    ImmutableArray<int> LeadMinutes,               // 1..120, 1-3 distinct values, largest first; default [15, 5, 1]
+    ImmutableArray<WarningKind> Kinds,             // distinct, in enum order; default: all four
     QuietHours? QuietHours)                        // default null (none)
 
 enum WarningKind { Event, Task, DropOff, PickUp }
@@ -161,6 +171,16 @@ QuietHours(TimeOnly From, TimeOnly To)             // in the child's TimeZoneId;
   The transition is *into* the routine, so only its first subtask warns ("10 minutes until: Go to
   bed"), not each of "brush teeth", "pyjamas", "story". Moving from one subtask to the next is the
   routine itself, not a transition.
+- **Packing lists count as `Task` too, and warn before their "leave by" time** (decided while
+  building, 2026-10-13). Since this doc was written, [packing checklists](packing-checklists.md)
+  shipped: a `TaskTemplateKind.Checklist` scheduled as a task whose items all have the same `Due`
+  instant (the "leave by" time), with `Routine.Checklist` set on each occurrence. A packing list
+  warns exactly like a routine: once per list (not per item), titled by the list ("5 minutes until
+  Football bag"), counting down to the "leave by" time, under the `Task` kind and any override on its
+  item. A list whose items are all packed no longer warns, as a completed task doesn't. Its
+  "evening before" option is about *showing* tomorrow's list, not a transition, so it never warns:
+  the leave-by time tomorrow is tomorrow's warning. Considered: a separate `Leaving` kind, rejected
+  because the guardian already chose the time and an override covers a list that needs more notice.
 - **`DropOff` and `PickUp` separately**, mirroring [`PickupSlot`](../../../src/backend/buddy/Features/Pickups/Types/PickupSlot.cs).
   The morning drop-off ("leaving for school") is the classic hard transition; an afternoon pickup at
   school may need no warning at all, since the child isn't in the middle of anything at home.
@@ -186,7 +206,7 @@ get no per-assignment override in v1; the `DropOff`/`PickUp` kinds cover them.**
 ```
 ItemWarningOverride
     | Off                                   // never warn for this item
-    | LeadTimes(ImmutableSortedSet<int>)    // same rules as WarningDefaults.LeadMinutes
+    | LeadTimes(ImmutableArray<int>)        // same rules as WarningDefaults.LeadMinutes
 ```
 
 - **Per child, per item.** As argued in Question 1, one event in a shared calendar can need
@@ -210,7 +230,8 @@ ItemWarningOverride
   nothing. `GetChildTransitionWarnings` resolves each override's title from the `CalendarItem`
   snapshot for the guardian's list and leaves out deleted items. A cap of 100 overrides per child
   stops the map growing forever; at the cap the handler returns `409` with an error code and the
-  guardian removes old exceptions.
+  guardian removes old exceptions. Exceptions for deleted items don't count towards the cap (found
+  in review): the guardian's list leaves them out, so they could never be removed to make room.
 - **Task-library templates** get no default warning of their own in v1. A routine scheduled from a
   template is a normal `CalendarItem`, so an override on it works. A template-level default
   ("bedtime always 20/5") is an open question.
@@ -233,8 +254,10 @@ export interface TransitionWarning {
   kind: WarningKind;          // 'Event' | 'Task' | 'DropOff' | 'PickUp'
   title: string;              // occurrence title, or the translated pickup label
   icon: string;
-  startsAt: Date;             // what the countdown counts down to
+  slot: PickupSlot | null;    // a pickup's slot, which the banner translates into its title
+  startsAtMs: number;         // what the countdown counts down to
   leadMinutes: number;        // which stage this is (15, 5, 1 ...)
+  firstLeadMinutes: number;   // the item's largest lead time -- where the draining bar starts
   isFinalStage: boolean;      // the smallest lead time -- styled more urgently
 }
 
@@ -243,17 +266,19 @@ export function computeTransitionWarnings(input: {
   pickups: PickupOccurrence[];
   settings: TransitionWarningSettings;
   timeZone: string;
-  now: Date;
+  nowMs: number;
 }): TransitionWarning[];      // sorted by startsAt; the banner shows the first, "+N more" for the rest
 ```
 
-The rule, per candidate (an event, a not-completed task assigned to the child, the first subtask of
-a routine, or a timed pickup):
+The rule, per candidate (an event, a not-completed task assigned to the child, a routine counting
+down to its first subtask, a packing list counting down to its "leave by" time, or a timed pickup):
 
 1. Skip all-day items, completed tasks, and anything whose start is not after `now`.
 2. If `Enabled` is off, nothing warns -- overrides included; they are kept but inactive. Otherwise
    its lead times are the override's (if `LeadTimes`), none (if `Off`), else the defaults' -- if
-   its kind is in `Kinds`.
+   its kind is in `Kinds`. An override wins whatever the kinds (decided while building): it is the
+   guardian's specific choice for that item, so "football 30 minutes" still warns when events are
+   otherwise off.
 3. The active stage is the smallest lead `L` with `startsAt - L minutes <= now`. None means not yet.
 4. Drop it if `now`, in the child's time zone, is inside quiet hours.
 
@@ -298,7 +323,8 @@ become one more `NotificationKind` that reads these settings; nothing here chang
   header and content shows on home, calendar, meal plan, rules and rewards alike -- a child who is
   rating dinner still sees that football is in 5 minutes. A child who isn't in Buddy at all sees
   nothing; that is the gap push closes.
-- **Data.** A root-provided `TransitionWarningsService` loads the child's settings
+- **Data.** A root-provided `ChildWarningFeed` (the HTTP calls are in `TransitionWarningsService`)
+  loads the child's settings
   (`GET /transition-warnings/me`) first. When `Enabled` is off -- the default, so the normal case
   for a child no guardian has set up -- it stops there: no banner, no occurrence refetches, no
   tick, and the day view looks and behaves exactly as it does today. Otherwise it loads today's
@@ -308,11 +334,15 @@ become one more `NotificationKind` that reads these settings; nothing here chang
   client's own writes, the service refetches with `listOccurrencesInRange(today, today)` every 10
   minutes and on `visibilitychange` to visible, so a guardian moving football while the iPad sits
   open is picked up. The same refetch re-reads the settings, so a guardian switching warnings on
-  or off reaches an open iPad within 10 minutes or on its next wake.
+  or off reaches an open iPad within 10 minutes or on its next wake. The banner asks the feed once a
+  minute whether its data is older than 10 minutes, also while warnings are off (that is the only
+  timer a child with warnings off has; it costs one `GET /transition-warnings/me` per 10 minutes).
+  "Today" is the child's own (Question 9).
 - **Tick.** The banner has its own 15-second tick (the home page's 60-second tick is too coarse for
   a 1-minute stage) and recomputes immediately on `visibilitychange`, so an iPad woken from sleep
   doesn't show a stale stage. It runs only while the feature flag is on and the child's settings
-  are enabled; a child with warnings off has no timer running at all.
+  are enabled; a child with warnings off has no countdown tick, and the banner renders nothing at
+  all, not even its live region.
 - **What it looks like.** One card, large text, the item's icon and title, "in 5 min", and a ring
   or bar that drains from the first lead time to the start. The first stages use the calm emerald
   of the child pages; the final stage switches to the amber the "rules to read" card uses, never
@@ -387,12 +417,10 @@ as `UsersService.timeZoneId()`.**
   accepts .NET's default resolution on the server rather than surfacing an error.
 - **Quiet hours**: `now` is converted with `toTimeInTimeZone(now, childZone)` and compared with
   `From`/`To`, wrapping midnight when `From > To`.
-- **"Today"**: `ChildHome` loads "today" by the browser's local date (`todayIsoDate()`). For a child
-  whose device and profile agree (the normal case) this is the same day. When they don't (a trip
-  abroad with an unchanged profile), the banner follows whatever the day view loaded rather than
-  fetching a second day; fixing `ChildHome`'s "today" to use the profile zone is a separate change.
-  Warnings for an item just after midnight, due before midnight, are not shown: the next day isn't
-  loaded until it is today. Accepted.
+- **"Today"**: the child's profile zone, the same as the day view, through `ChildClockService`
+  (Question 9, settled by the user 2026-10-13 and built with this feature). Warnings for an item just
+  after midnight, seen before midnight, are not shown: the next day isn't loaded until it is today.
+  Accepted.
 - **Server side**: the settings themselves hold no instants. `QuietHours` is two `TimeOnly`s
   without a zone, read in the child's zone at evaluation time, so changing a child's time zone
   needs no migration of these settings.
@@ -412,6 +440,9 @@ child writing gets `Forbidden`. A `TransitionWarningsAuthorization` with the sam
 - **Group members and babysitters** have no access. They don't manage the child, and babysitters
   have no account ([babysitters.md](babysitters.md)).
 - **A revoked `GuardianLink`** drops to `NotFound` immediately, as everywhere else.
+- **The child on `/children/{their own id}`** gets `Forbidden`, reads included (decided while
+  building): the guardian view names each exception's item, which can be a sibling's task the child
+  can't see. The child reads their settings through `/me`, which carries item ids only.
 
 ### Events
 
@@ -440,6 +471,66 @@ on `TransitionWarningDefaultsConfigured`, sets or removes one `ItemOverrides` en
 override events, and sets `LastModifiedBy`. Same `EventReplay.Rehydrate(events, Start, Advance)`
 shape as [`User`](../../../src/backend/buddy/Features/Users/Types/User.cs) and `ChildProgress`.
 
+## Question 9: whose "today" do the child pages use?
+
+**Decision: the child's profile time zone (`User.TimeZoneId`,
+[child-timezone-settings.md](child-timezone-settings.md)), through one root `ChildClockService` that
+every child page asks for "today", "tomorrow" and the minutes since midnight, falling back to the
+device's zone until the signed-in user has loaded. Settled by the user 2026-10-13 and built with this
+feature (the doc's earlier lean was a separate change).**
+
+Before this build every child page decided "today" from the device's clock (`todayIsoDate()`,
+`new Date().getHours()`), while the times on those same pages render in the profile zone
+(`UserDatePipe`, and the child calendar already grouped occurrences by the profile zone). A family
+iPad left on another zone, or a trip abroad with the profile unchanged, then loaded the wrong day:
+at 23:30 in New York on the 12th, a device on UTC asked for the 13th's tasks, meals, doses and
+pickups, ticked tasks as done on the 13th, dropped the visual timer the child had just started, and
+hid "Pack for tomorrow" because 03:30 was before the list's 18:00. The banner computes "today" too,
+so building it on the device clock would have added one more page with the bug.
+
+```ts
+// Before -- features/child/home/home.ts (and the same pattern on the other child pages)
+const today = todayIsoDate();                                   // the device's date
+const minutesNow = now.getHours() * 60 + now.getMinutes();      // the device's clock
+await completeChildTask(this.calendars, task, isCompleted);     // defaulted to todayIsoDate()
+
+// After
+private readonly clock = inject(ChildClockService);             // the child's profile zone
+const today = this.clock.today();
+const minutesNow = this.clock.minutesOfDay(now);
+await completeChildTask(this.calendars, task, isCompleted, this.clock.today());
+```
+
+```ts
+// core/child-clock.service.ts
+readonly timeZone = computed(() => this.users.profileTimeZoneId() ?? browserTimeZoneId());
+today(nowMs = Date.now()): string { return toIsoDateInTimeZone(new Date(nowMs), this.timeZone()); }
+tomorrow(nowMs = Date.now()): string { return addDaysIso(this.today(nowMs), 1); }
+minutesOfDay(nowMs = Date.now()): number { return minutesOfDayInTimeZone(new Date(nowMs), this.timeZone()); }
+```
+
+The size of the change: **17 call sites in 5 files** moved to the clock -- `ChildHome` 8 (meals,
+doses, pickups, today's occurrences, tomorrow's date, the packing list's tomorrow check and its
+"evening before" minutes, and ticking a task), `ChildTimerService` 3 (the visual timer's "is this
+today's timer"), `ChildCalendar` 2 (the opening week and which tasks may be ticked), `ChildMealplan`
+2 (the opening week and which meals may be rated) and `ChildFocus` 2 -- plus the warning feed's own 2.
+Two shared helpers changed shape: `CalendarsService.listTodayOccurrences(today)` takes the date (the
+guardian pages keep the device's today as the default), and `completeChildTask`'s date is required.
+`UsersService` gained `profileTimeZoneId`, null until the user loads, which is what tells the clock
+to fall back. Guardian pages are unchanged: a guardian's "today" is their own device's.
+
+- **Why one service, not per-page fixes.** Five pages and a service made the same decision; a shared
+  clock keeps them from drifting and gives specs one thing to set (`profileTimeZoneId`).
+- **Why the profile zone and not the device.** The profile zone is what every time on the child's
+  screen already uses, what pickups' wall-clock times mean (Question 7) and what a guardian set on
+  purpose. A guardian who wants the device's zone sets the profile to it.
+- **A profile still on UTC** (a child created before a guardian set a zone) now switches day at
+  UTC midnight rather than local midnight. That matches the times the child's pages already show in
+  UTC; the guardian fixes both by setting the child's time zone on `manage-children`.
+- **Deterministic e2e and screenshots.** The screenshot run sets the demo children's profile zone to
+  the browser's zone and fixes the clock at 07:10, so device and profile agree; the e2e journey reads
+  the child's profile zone from `/users/me` and builds its times in it.
+
 ## Read models
 
 None. The stream id is the child id, overrides live inside the aggregate, and override titles for
@@ -450,15 +541,16 @@ index).
 
 | Slice | Tier | Notes |
 |---|---|---|
-| `GetMyTransitionWarnings` | View (self) | The caller's settings, or the defaults when the stream doesn't exist. Overrides as `{ itemId, override }`, no titles (the child's client already has the occurrences) |
-| `GetChildTransitionWarnings` | Manage | Defaults plus overrides with the item's title and icon; deleted items left out |
+| `GetMyTransitionWarnings` | View (self) | The caller's settings, or the defaults when the stream doesn't exist. Overrides as `{ itemId, leadMinutes }` (empty: never warn), no titles (the child's client already has the occurrences) |
+| `GetChildTransitionWarnings` | Manage | Defaults plus overrides with the item's title, effective icon and kind; deleted items, and items the guardian can no longer see, left out |
 | `ConfigureTransitionWarnings` | Manage | Full replace of `WarningDefaults`. Emits `TransitionWarningDefaultsConfigured` (plus `TransitionWarningsStarted` on first write) |
-| `SetItemWarningOverride` | Manage | Item must exist and be visible to the guardian, else `NotFound`; `409` (`transitionWarnings.tooManyOverrides`) at 100. Emits `ItemWarningOverrideSet` |
+| `SetItemWarningOverride` | Manage | Body `{ leadMinutes }`, an empty list meaning `Off`. Item must exist and be visible to the guardian, else `NotFound`; `409` (`too_many_warning_overrides`) at 100. Emits `ItemWarningOverrideSet` |
 | `ClearItemWarningOverride` | Manage | Idempotent. Emits `ItemWarningOverrideCleared` |
 
 Validators: `LeadMinutes` 1-120, 1-3 distinct values (an empty set is "use `Enabled = false`"
-instead, so the form has one way to say "off"); `Kinds` non-empty when `Enabled`; quiet hours
-`From != To`.
+instead, so the form has one way to say "off"; on an override, empty means `Off`); `Kinds` non-empty
+when `Enabled`, each a known kind; quiet hours `From != To`. On the wire the override is a flat
+`leadMinutes` list both ways; the kind-discriminated `ItemWarningOverride` is the stored shape only.
 
 ## Routes
 
@@ -503,8 +595,10 @@ installation might -- one more reason it has its own flag.
 ## Frontend
 
 - `core/transition-warnings.service.ts`: settings calls (`getMine`, `getForChild`, `configure`,
-  `setOverride`, `clearOverride`), plus the root-level state for the banner described in
-  Question 6. PUTs, so no `postIdempotent`.
+  `setOverride`, `clearOverride`). PUTs and a DELETE, so no `postIdempotent`.
+- `core/child-warning-feed.service.ts`: the root-level state for the banner described in
+  Question 6 (settings, today's occurrences and pickups, staleness, dismissals).
+- `core/child-clock.service.ts`: the child's "today" (Question 9).
 - `core/transition-warnings.ts`: `computeTransitionWarnings` and its spec, the largest spec in the
   feature (each rule in Question 5, quiet hours across midnight, routines, DST, overrides).
 - `features/child/transition-warning-banner/`: the banner, placed in `child-page.html`.
@@ -571,10 +665,17 @@ installation might -- one more reason it has its own flag.
   switching on reveals the form pre-filled with 15/5/1 and all kinds; nothing is sent until Save;
   switching off and saving keeps the other values); the `manage-children` spec for the On/Off line;
   the onboarding summary spec for the hint link.
-- e2e: a child with no settings sees no banner with the clock set 9 minutes before a seeded event;
-  then a guardian turns warnings on for that child, sets 10 minutes and an exception, and the
-  child, with the browser clock set by `page.clock` to 9 minutes before the event, sees "9 minutes
-  until ..." on the home page and on the calendar page.
+- The today fix (Question 9): `ChildClockService` specs with a profile zone whose date differs from
+  the device's around midnight, and specs on `ChildHome` (today's loads, ticking, "Pack for
+  tomorrow"), `ChildTimerService`, `ChildCalendar` and `ChildMealplan` with the device on the 13th
+  and the profile still on the 12th.
+- e2e (`e2e/transition-warnings.spec.ts`): two events are created 8 and 9 minutes ahead on the real
+  clock (a fake browser clock ahead of real time would expire the session), with the child's profile
+  zone set to the calendar's. The child sees no banner; a guardian follows the `manage-children`
+  "Off" link, turns warnings on with 10 minutes instead of 15 and a "No heads-up" exception for the
+  second event; the child then sees "<n> minutes until ..." for the first only, on the home page and
+  the calendar page, and "Got it" hides it. The spec skips itself when the events would start after
+  midnight. The documentation screenshots use the fixed 07:10 clock and a seeded 07:20 event.
 
 ## Failure and edge-case behavior
 
@@ -589,6 +690,8 @@ installation might -- one more reason it has its own flag.
 | Pickup without a `Time` | No warning; there is nothing to count down to |
 | All-day event | Never warns |
 | Routine | Only its first subtask warns |
+| Packing list | Warns once before its "leave by" time; not once every item is packed |
+| Device zone differs from the child's profile zone | "Today", pickup times and quiet hours follow the profile zone (Question 9) |
 | Two items within the same window | Soonest shown, "+1 more" |
 | Lead time longer than the gap since the previous item | Shown anyway; overlapping warnings are expected (football right after school pickup) |
 | Device asleep through a stage | On wake, the current stage is computed fresh; skipped stages aren't replayed |
@@ -605,9 +708,9 @@ installation might -- one more reason it has its own flag.
 
 | | |
 |---|---|
-| Complexity | Medium -- a new 1:1 aggregate and schema with 4 events, 5 routes, a cross-feature item check, GDPR eraser/exporter, a feature flag, a pure warning function with time-zone edge cases, a banner in the shared child frame, one guardian settings page with an off state, small hints on `manage-children` and the onboarding summary, en+da strings, and clock-controlled e2e and screenshots. Push integration is not included |
-| Single developer | 7-10 days (backend 2-3, warning function and banner 2-3, settings page 1-2, e2e, screenshots and docs 1-2) |
-| AI agent | 4-6 hours, plus 2-3 hours of human time for the open questions, the Danish wording and trying the banner on a real iPad with a child |
+| Complexity | Medium -- a new 1:1 aggregate and schema with 4 events, 5 routes, a cross-feature item check, GDPR eraser/exporter, a feature flag, a pure warning function with time-zone edge cases, a banner in the shared child frame, one guardian settings page with an off state, small hints on `manage-children` and the onboarding summary, en+da strings, clock-controlled e2e and screenshots, and the child pages' "today" moved to the profile zone (17 call sites in 5 files, Question 9). Push integration is not included |
+| Single developer | 8-11 days (backend 2-3, warning function and banner 2-3, settings page 1-2, the today fix 1, e2e, screenshots and docs 1-2) |
+| AI agent | 5-7 hours (the today fix about 1 of them), plus 2-3 hours of human time for the Danish wording and trying the banner on a real iPad with a child |
 
 ## Decisions made
 
@@ -629,26 +732,21 @@ installation might -- one more reason it has its own flag.
 | Quiet hours | Drop, don't delay |
 | Who changes settings | Any active guardian; the child reads only |
 | Dismissal | "Got it" per stage, in memory only |
+| Packing lists (shipped after this doc) | Warn like a task: once per list, before its "leave by" time, under the `Task` kind; not once fully packed; the "evening before" option never warns (decided while building 2026-10-13, as the user leaned) |
+| Finding the feature | All three reminders: an On/Off line per child on `manage-children` linking to the settings page, one line in onboarding's summary, a note in the help topic; no dashboard nag card (settled by the user 2026-10-13) |
+| Override a single occurrence | Not in v1; a `(CalendarItemId, DateOnly)` key is additive (settled by the user 2026-10-13) |
+| Template-level defaults in the task library | None; the override on the scheduled item covers it (settled by the user 2026-10-13) |
+| Per-kind lead times | None; per-item overrides cover the known case, `LeadMinutesByKind` is additive (settled by the user 2026-10-13) |
+| Guardian "is being warned" line | None in-app (settled by the user 2026-10-13) |
+| Recording "Got it" taps | Not recorded (settled by the user 2026-10-13) |
+| Sharing the rule between browser and server | Deferred to when push is built; the shared JSON fixture is the lean (settled by the user 2026-10-13) |
+| "Today" on the child pages | The child's profile time zone through `ChildClockService`, device zone until the user loads; fixed in this build (settled by the user 2026-10-13, Question 9) |
+| An override and the kinds | An item's override wins even when its kind is switched off (decided while building) |
+| The child on `/children/{own id}` | `Forbidden`, reads included; the child reads through `/me` (decided while building) |
 
 ## Remaining open questions
 
-- **Override a single occurrence** (this Saturday's match needs 45 minutes)? Lean: not in v1; a key
-  of `(CalendarItemId, DateOnly)` beside the per-item map is additive.
-- **Template-level defaults in the task library** ("bedtime always warns 20/5")? Lean: not in v1;
-  the override on the scheduled item covers it. It would be a field on `TaskTemplate`, copied into
-  an override when the template is scheduled.
-- **Per-kind lead times** (longer for leaving the house than for tasks)? Lean: wait for a family to
-  ask; per-item overrides cover the known case. Additive as `LeadMinutesByKind`.
-- **Should guardians see the child's upcoming warnings in-app** (a "Emil is being warned about
-  football" line on the guardian dashboard)? Lean: no; the guardian already sees the event, and
-  the useful guardian case is push.
-- **Should a "Got it" be recorded** so a guardian can see the child acknowledged? Lean: no; it adds
-  an event per tap and turns a support tool into monitoring, against the "prefer logs over in-app
-  oversight" stance of a per-family installation.
-- **Shared JSON fixture between Vitest and xunit** when push arrives, or a server endpoint that
-  both use? Lean: the fixture; decide when push is built, since nothing in v1 depends on it.
-- **"Today" by profile zone.** `ChildHome` loads today by the browser's date. Lean: leave it for this
-  feature; fixing it is a separate, small change to the day view.
+None. Every question above was settled by the user (2026-10-11 and 2026-10-13).
 
 ## Diagram
 
@@ -658,11 +756,14 @@ flowchart TB
         direction TB
         Home["ChildHome and other child pages\n(ChildPage frame)"]
         Banner["TransitionWarningBanner\n15 s tick, 'Got it' per stage"]
-        Svc["TransitionWarningsService\nsettings first; stops if Enabled = false\nelse today's occurrences + pickups\nrefetch every 10 min / on wake"]
+        Svc["ChildWarningFeed\nsettings first; stops if Enabled = false\nelse today's occurrences + pickups\nrefetch every 10 min / on wake"]
+        Clock["ChildClockService\ntoday in the child's profile zone"]
         Fn["computeTransitionWarnings()\npure: kinds, lead times, overrides,\nquiet hours in child's TimeZoneId"]
         Home --> Banner
         Banner --> Svc
         Svc --> Fn
+        Svc --> Clock
+        Home --> Clock
     end
     subgraph Api["Buddy API"]
         direction TB

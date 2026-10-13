@@ -1,0 +1,114 @@
+<!-- Nothing at all, not even the live region, unless a guardian turned warnings on. -->
+@if (active()) {
+  <!-- Only the stage is announced (a new stage, not every tick); the card's countdown isn't live. -->
+  <p class="sr-only" role="status" aria-live="polite">
+    @if (current(); as warning) {
+      {{
+        (warning.leadMinutes === 1
+          ? 'transitionWarnings.banner.oneMinute'
+          : 'transitionWarnings.banner.minutes'
+        )
+          | translate
+            : {
+                minutes: warning.leadMinutes,
+                title: warning.slot ? (pickupLabels[warning.slot] | translate) : warning.title,
+              }
+      }}
+    }
+  </p>
+
+  @if (current(); as warning) {
+    <div
+      class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8"
+      data-testid="transition-warning"
+      [attr.data-stage]="warning.leadMinutes"
+    >
+      <div
+        class="rounded-2xl border-2 p-4 shadow-sm"
+        [class.border-emerald-300]="!warning.isFinalStage"
+        [class.bg-emerald-50]="!warning.isFinalStage"
+        [class.dark:border-emerald-700]="!warning.isFinalStage"
+        [class.dark:bg-emerald-950]="!warning.isFinalStage"
+        [class.border-amber-300]="warning.isFinalStage"
+        [class.bg-amber-100]="warning.isFinalStage"
+        [class.dark:border-amber-700]="warning.isFinalStage"
+        [class.dark:bg-amber-950]="warning.isFinalStage"
+      >
+        <div class="flex flex-wrap items-center gap-4">
+          <span class="text-4xl" aria-hidden="true">{{ warning.icon }}</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-xl font-bold text-slate-950 dark:text-slate-50">
+              {{
+                (minutes(warning) === 1
+                  ? 'transitionWarnings.banner.oneMinute'
+                  : 'transitionWarnings.banner.minutes'
+                )
+                  | translate
+                    : {
+                        minutes: minutes(warning),
+                        title: warning.slot
+                          ? (pickupLabels[warning.slot] | translate)
+                          : warning.title,
+                      }
+              }}
+            </p>
+            <div
+              class="mt-2 h-3 overflow-hidden rounded-full bg-white dark:bg-slate-800"
+              aria-hidden="true"
+            >
+              <div
+                class="h-full rounded-full motion-safe:transition-[width] motion-safe:duration-1000"
+                [class.bg-emerald-500]="!warning.isFinalStage"
+                [class.dark:bg-emerald-400]="!warning.isFinalStage"
+                [class.bg-amber-500]="warning.isFinalStage"
+                [class.dark:bg-amber-400]="warning.isFinalStage"
+                [style.width.%]="barPercent(warning)"
+              ></div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="min-h-11 rounded-xl bg-white px-5 py-2 text-lg font-semibold text-slate-900 shadow-sm hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+            (click)="dismiss(warning)"
+          >
+            {{ 'transitionWarnings.banner.gotIt' | translate }}
+          </button>
+        </div>
+
+        @if (others().length > 0) {
+          <button
+            type="button"
+            class="mt-3 text-base font-semibold text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300"
+            [attr.aria-expanded]="showAll()"
+            (click)="toggleAll()"
+          >
+            {{ 'transitionWarnings.banner.more' | translate: { count: others().length } }}
+          </button>
+
+          @if (showAll()) {
+            <ul class="mt-2 space-y-1 text-base text-slate-800 dark:text-slate-200">
+              @for (other of others(); track other.key) {
+                <li class="flex items-center gap-2">
+                  <span aria-hidden="true">{{ other.icon }}</span>
+                  {{
+                    (minutes(other) === 1
+                      ? 'transitionWarnings.banner.oneMinute'
+                      : 'transitionWarnings.banner.minutes'
+                    )
+                      | translate
+                        : {
+                            minutes: minutes(other),
+                            title: other.slot
+                              ? (pickupLabels[other.slot] | translate)
+                              : other.title,
+                          }
+                  }}
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
+  }
+}

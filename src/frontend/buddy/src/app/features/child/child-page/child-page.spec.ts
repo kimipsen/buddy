@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
+import { ChildWarningFeed } from '../../../core/child-warning-feed.service';
 import { ChildPage } from './child-page';
 
 @Component({
@@ -22,7 +23,13 @@ describe('ChildPage', () => {
   async function setup(backLabel?: string) {
     await TestBed.configureTestingModule({
       imports: [Host],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ChildWarningFeed,
+          useValue: { active: signal(false), warningsAt: () => [], refresh: async () => undefined },
+        },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(Host);
@@ -60,6 +67,14 @@ describe('ChildPage', () => {
     expect(compiled.querySelector('header button')?.textContent).toBe('Next week');
     expect(compiled.querySelector('main > section p')?.textContent).toBe('Content');
     expect(compiled.querySelector('main > section button')).toBeNull();
+  });
+
+  it('places the transition warning banner between the header and the content', async () => {
+    const compiled = await setup();
+
+    const banner = compiled.querySelector('main > app-transition-warning-banner');
+    expect(banner?.previousElementSibling?.tagName).toBe('HEADER');
+    expect(banner?.nextElementSibling?.tagName).toBe('SECTION');
   });
 
   it('pads the header and the content column less on a phone', async () => {

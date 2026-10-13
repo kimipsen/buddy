@@ -223,3 +223,50 @@ export function shiftRangeEndTime(oldStart: string, newStart: string, end: strin
   };
   return addMinutesToTime(end, minutesOfDay(newStart) - minutesOfDay(oldStart));
 }
+
+// Minutes since midnight (0-1439) on the wall clock of `timeZone` at `date`.
+export function minutesOfDayInTimeZone(date: Date, timeZone: string): number {
+  const [hours = 0, minutes = 0] = toTimeInTimeZone(date, timeZone).split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+// How far `timeZone`'s wall clock is ahead of UTC at the instant `ms`, in milliseconds.
+function zoneOffsetMs(ms: number, timeZone: string): number {
+  const parts: Record<string, number> = {};
+  for (const part of new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(ms))) {
+    parts[part.type] = Number(part.value);
+  }
+  const wall = Date.UTC(
+    parts['year'] ?? 0,
+    (parts['month'] ?? 1) - 1,
+    parts['day'] ?? 1,
+    parts['hour'] ?? 0,
+    parts['minute'] ?? 0,
+    parts['second'] ?? 0,
+  );
+  return wall - Math.floor(ms / 1000) * 1000;
+}
+
+// The instant (epoch ms) that a wall-clock date and "HH:mm" (or "HH:mm:ss") time name in
+// `timeZone` -- e.g. a pickup's time, which is the child's own local time. On the DST changeover
+// day: a time in the spring-forward gap (02:30) uses the offset from before the change, so it lands
+// an hour later (03:30); a time in the repeated autumn hour takes its first occurrence.
+export function instantInTimeZone(isoDate: string, time: string, timeZone: string): number {
+  const [year = NaN, month = NaN, day = NaN] = isoDate.split('-').map(Number);
+  const [hours = NaN, minutes = NaN] = time.split(':').map(Number);
+  const wall = Date.UTC(year, month - 1, day, hours, minutes);
+  // First with the offset a day earlier (before any change that day), then corrected once with the
+  // offset at that guess. The two disagree only for a time in the gap, which keeps the first guess.
+  const before = wall - zoneOffsetMs(wall - 86_400_000, timeZone);
+  const corrected = wall - zoneOffsetMs(before, timeZone);
+  return zoneOffsetMs(corrected, timeZone) === zoneOffsetMs(before, timeZone) ? corrected : before;
+}

@@ -21,6 +21,7 @@ import { WeekPlanPrintPage } from './print/sheet/week-plan-print-page';
 import { GuardianProgress } from './progress/progress';
 import { GuardianShell } from './shell/guardian-shell';
 import { GuardianSleepDiary } from './sleep-diary/sleep-diary';
+import { GuardianTransitionWarnings } from './transition-warnings/transition-warnings';
 import { GuardianTaskLibrary } from './task-library/task-library';
 import { GuardianWorkLocations } from './work-locations/work-locations';
 
@@ -88,6 +89,12 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [featureGuard('sleepDiary')],
         component: GuardianSleepDiary,
         data: { helpTopic: 'sleepDiary' },
+      },
+      {
+        path: 'transition-warnings',
+        canActivate: [featureGuard('transitionWarnings')],
+        component: GuardianTransitionWarnings,
+        data: { helpTopic: 'transitionWarnings' },
       },
       {
         path: 'house-rules',

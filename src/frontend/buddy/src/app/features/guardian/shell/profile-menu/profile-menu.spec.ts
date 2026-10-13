@@ -287,6 +287,7 @@ describe('ProfileMenu', () => {
       'babysitters',
       'printing',
       'help',
+      'transitionWarnings',
     );
     const { fixture, compiled } = await setup();
     fireClick(fixture, toggleButton(compiled));

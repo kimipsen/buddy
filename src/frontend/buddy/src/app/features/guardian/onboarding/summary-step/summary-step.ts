@@ -1,13 +1,15 @@
 import { Component, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { FeaturesService } from '../../../../core/features.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { OnboardingSetup } from '../../../../core/onboarding.service';
 
-// Step 7: what the setup created, read from current data. Finishing is the page's job.
+// Step 7: what the setup created, read from current data, and a pointer to heads-ups (off for
+// every child until a guardian turns them on). Finishing is the page's job.
 @Component({
   selector: 'app-onboarding-summary-step',
-  imports: [TranslatePipe],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './summary-step.html',
 })
 export class SummaryStep {

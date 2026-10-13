@@ -1,7 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
+
+import { disableFeatures } from '../../../../../testing/features-fixture';
 
 import {
   ChildPasswordReset,
@@ -10,6 +13,7 @@ import {
   GuardianInvite,
   GuardiansService,
 } from '../../../../core/guardians.service';
+import { TransitionWarningsService } from '../../../../core/transition-warnings.service';
 import { ManageChildren } from './manage-children';
 
 describe('ManageChildren', () => {
@@ -51,6 +55,7 @@ describe('ManageChildren', () => {
 
   interface Stubs {
     guardians?: Partial<GuardiansService>;
+    warningsOn?: Record<string, boolean>;
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -74,14 +79,29 @@ describe('ManageChildren', () => {
       ...stubs.guardians,
     };
 
+    // A child missing from warningsOn has a failing request (no line shown).
+    const warningsStub = {
+      getForChild: vi.fn(async (childId: string) => {
+        const enabled = stubs.warningsOn?.[childId];
+        if (enabled === undefined) {
+          throw new Error('not found');
+        }
+        return { childId, enabled };
+      }),
+    };
+
     await TestBed.configureTestingModule({
       imports: [ManageChildren],
-      providers: [{ provide: GuardiansService, useValue: guardiansStub }],
+      providers: [
+        provideRouter([]),
+        { provide: GuardiansService, useValue: guardiansStub },
+        { provide: TransitionWarningsService, useValue: warningsStub },
+      ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ManageChildren);
 
-    return { fixture, guardians: guardiansStub };
+    return { fixture, guardians: guardiansStub, warnings: warningsStub };
   }
 
   // The app runs zoneless, and the stubbed GuardiansService never registers a PendingTasks entry,
@@ -265,6 +285,64 @@ describe('ManageChildren', () => {
   }
 
   // ----- Children list: loading / empty / error / rendering -----
+
+  describe('heads-up status', () => {
+    function statusLines(fixture: ComponentFixture<ManageChildren>): (string | undefined)[] {
+      return [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll(
+          '[data-testid="warning-status"]',
+        ),
+      ].map((line) => line.textContent?.replace(/\s+/g, ' ').trim());
+    }
+
+    it('shows On or Off per child, linking to the settings page with that child selected', async () => {
+      const { fixture, warnings } = await setup({
+        guardians: {
+          listMyChildren: vi.fn(async () => [
+            child({ id: 'c1', name: { givenName: 'Emil', familyName: 'Kid' } }),
+            child({ id: 'c2', name: { givenName: 'Ida', familyName: 'Kid' } }),
+          ]),
+        },
+        warningsOn: { c1: true, c2: false },
+      });
+      await settle(fixture);
+      await settle(fixture);
+
+      expect(warnings.getForChild).toHaveBeenCalledWith('c1');
+      expect(warnings.getForChild).toHaveBeenCalledWith('c2');
+      expect(statusLines(fixture)).toEqual([
+        'Heads-up before changes: On',
+        'Heads-up before changes: Off',
+      ]);
+      const link = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="warning-status"] a',
+      );
+      expect(link?.getAttribute('href')).toBe('/guardian/transition-warnings?child=c1');
+    });
+
+    it('leaves the line out for a child whose settings fail to load', async () => {
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child({ id: 'c1' })]) },
+      });
+      await settle(fixture);
+      await settle(fixture);
+
+      expect(statusLines(fixture)).toEqual([]);
+    });
+
+    it('asks for nothing and shows no line while transition warnings are off', async () => {
+      disableFeatures('transitionWarnings');
+      const { fixture, warnings } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child({ id: 'c1' })]) },
+        warningsOn: { c1: true },
+      });
+      await settle(fixture);
+      await settle(fixture);
+
+      expect(warnings.getForChild).not.toHaveBeenCalled();
+      expect(statusLines(fixture)).toEqual([]);
+    });
+  });
 
   it('shows a loading message before the children list resolves', async () => {
     const { fixture } = await setup();

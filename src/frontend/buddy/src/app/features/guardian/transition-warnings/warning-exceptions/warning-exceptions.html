@@ -1,0 +1,120 @@
+<section
+  class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+  aria-labelledby="warningExceptionsTitle"
+>
+  <h3 id="warningExceptionsTitle" class="text-lg font-semibold">
+    {{ 'transitionWarnings.exceptions.title' | translate }}
+  </h3>
+  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+    {{ 'transitionWarnings.exceptions.intro' | translate }}
+  </p>
+
+  @if (overrides().length === 0) {
+    <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'transitionWarnings.exceptions.empty' | translate }}
+    </p>
+  } @else {
+    <ul class="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+      @for (override of overrides(); track override.itemId) {
+        <li class="flex flex-wrap items-center gap-3 py-2">
+          <span aria-hidden="true">{{ override.icon }}</span>
+          <span class="min-w-0 flex-1 font-medium">{{ override.title }}</span>
+          <span class="text-sm text-slate-600 dark:text-slate-300">{{ leadText(override) }}</span>
+          <button
+            type="button"
+            class="rounded-lg px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
+            [attr.aria-label]="
+              'transitionWarnings.exceptions.removeLabel' | translate: { title: override.title }
+            "
+            [disabled]="busy()"
+            (click)="remove(override)"
+          >
+            {{ 'transitionWarnings.exceptions.remove' | translate }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (adding()) {
+    <div class="mt-4 space-y-4 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+      <div>
+        <label class="block text-sm font-medium" for="warningExceptionItem">{{
+          'transitionWarnings.exceptions.itemLabel' | translate
+        }}</label>
+        @if (loadingItems()) {
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {{ 'common.loading' | translate }}
+          </p>
+        } @else if (candidates().length === 0) {
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {{ 'transitionWarnings.exceptions.noItems' | translate: { name: childName() } }}
+          </p>
+        } @else {
+          <select
+            id="warningExceptionItem"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            [ngModel]="itemId()"
+            (ngModelChange)="itemId.set($event)"
+          >
+            <option value="">
+              {{ 'transitionWarnings.exceptions.itemPlaceholder' | translate }}
+            </option>
+            @for (item of candidates(); track item.itemId) {
+              <option [value]="item.itemId">{{ item.icon }} {{ item.title }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <div class="flex items-center gap-3">
+        <app-toggle
+          [checked]="never()"
+          [ariaLabel]="'transitionWarnings.exceptions.neverLabel' | translate"
+          (checkedChange)="never.set($event)"
+        />
+        <span class="text-sm">{{ 'transitionWarnings.exceptions.neverLabel' | translate }}</span>
+      </div>
+
+      @if (!never()) {
+        <app-lead-chips
+          [selected]="leadMinutes()"
+          [label]="'transitionWarnings.leadTimes.label' | translate"
+          (selectedChange)="leadMinutes.set($event)"
+        />
+      }
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+          [disabled]="!canSave()"
+          (click)="save()"
+        >
+          {{ 'transitionWarnings.exceptions.saveButton' | translate }}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          (click)="cancel()"
+        >
+          {{ 'transitionWarnings.exceptions.cancel' | translate }}
+        </button>
+      </div>
+    </div>
+  } @else {
+    <button
+      type="button"
+      class="mt-4 rounded-lg border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-950"
+      (click)="startAdding()"
+    >
+      {{ 'transitionWarnings.exceptions.add' | translate }}
+    </button>
+  }
+
+  @if (error(); as message) {
+    <p class="mt-3 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ message | translate }}
+    </p>
+  }
+</section>

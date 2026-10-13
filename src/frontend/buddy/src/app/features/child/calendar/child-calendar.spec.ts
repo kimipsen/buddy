@@ -88,6 +88,7 @@ describe('ChildCalendar', () => {
   async function setup(stubs: Stubs = {}) {
     const usersStub: Partial<UsersService> = {
       timeZoneId: signal('UTC').asReadonly(),
+      profileTimeZoneId: signal<string | null>(null).asReadonly(),
       ensureCurrentUser: vi.fn(async () => currentUser),
       ...stubs.users,
     };
@@ -167,6 +168,25 @@ describe('ChildCalendar', () => {
     await settle(fixture);
 
     expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith(today, addDays(today, 6));
+  });
+
+  it("starts the week on the profile's today when the device is already on the next day", async () => {
+    // 23:30 on the 12th in New York is 03:30 on the 13th in UTC.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-13T03:30:00Z'));
+      const { fixture, calendars } = await setup({
+        users: {
+          timeZoneId: signal('America/New_York').asReadonly(),
+          profileTimeZoneId: signal<string | null>('America/New_York').asReadonly(),
+        },
+      });
+      await settle(fixture);
+
+      expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith('2026-10-12', '2026-10-18');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('groups occurrences under the correct day and orders same-day items by time', async () => {

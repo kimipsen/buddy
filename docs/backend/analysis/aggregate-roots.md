@@ -39,6 +39,7 @@ flowchart TB
         SleepDiary["SleepDiary\nSleepDiaryId(Guid)"]
         SleepDiaryShareToken["SleepDiaryShareToken\nSleepDiaryShareTokenId(Guid)"]
         RuleBook["RuleBook\nRuleBookId(Guid)"]
+        TransitionWarningSettings["TransitionWarningSettings\nTransitionWarningSettingsId(Guid)"]
     end
 
     GuardianLink -- "guardianId, childId : UserId" --> User
@@ -73,6 +74,8 @@ flowchart TB
     SleepDiaryShareToken -- "childId, createdBy" --> User
     RuleBook -- "scopeId (Child scope: Id == ChildId), acknowledgements' childId" --> User
     RuleBook -- "scopeId (Group scope: Id == GroupId)" --> Group
+    TransitionWarningSettings -- "childId (Id == ChildId, no index needed)" --> User
+    TransitionWarningSettings -. "itemOverrides : CalendarItemId" .-> CalendarItem
 
     GuardianLink -. "family resolved at read time" .-> MealPlan
     GuardianLink -. "family resolved at read time" .-> Meal
@@ -118,6 +121,7 @@ flowchart TB
 | ChildProgress | `Features/Progress/Types/ChildProgress.cs` | `ProgressId(Guid)`, equal to the child's `UserId` | `childId` → User; `awardedOccurrences` → CalendarItem (computed reference, not a foreign-key relationship) |
 | SleepDiary | `Features/SleepDiaries/Types/SleepDiary.cs` | `SleepDiaryId(Guid)`, equal to the child's `UserId` | `childId` → User; entries' `loggedBy` → User |
 | SleepDiaryShareToken | `Features/SleepDiaries/Types/SleepDiaryShareToken.cs` | `SleepDiaryShareTokenId(Guid)` | `childId` / `createdBy` → User; found by token hash through `SleepDiaryShareTokenDocument` |
+| TransitionWarningSettings | `Features/TransitionWarnings/Types/TransitionWarningSettings.cs` | `TransitionWarningSettingsId(Guid)`, equal to the child's `UserId` | `childId` → User; `itemOverrides` (keys) → CalendarItem (checked at write time, never an access grant) |
 | RuleBook | `Features/HouseRules/Types/RuleBook.cs` | `RuleBookId(Guid)`, equal to the scope's id (a child's `UserId` or a `GroupId`) | `scopeId` → User or Group (by `scopeKind`); rules' `lastEditedBy` and acknowledgements' child → User |
 
 `CalendarItem` also stores an optional `taskTemplateId` (a raw `Guid`, not `TaskLibrary`'s `TaskTemplateId` type) when it was scheduled from a template — see `Features/Calendars/Types/CalendarItem.cs`.

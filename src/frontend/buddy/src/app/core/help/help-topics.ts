@@ -90,6 +90,12 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     related: ['calendar', 'taskLibrary'],
   },
   {
+    id: 'transitionWarnings',
+    feature: 'transitionWarnings',
+    sections: [{ id: 'turnOn', steps: 3 }, { id: 'exceptions' }, { id: 'quietHours' }],
+    related: ['calendar', 'taskLibrary', 'pickup'],
+  },
+  {
     id: 'pickup',
     feature: 'pickups',
     sections: [

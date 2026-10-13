@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { listTimeZoneIds } from '../../../../core/date-utils';
+import { FeaturesService } from '../../../../core/features.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import {
   LANGUAGE_NAMES,
@@ -16,6 +18,7 @@ import {
   GuardianKind,
   GuardiansService,
 } from '../../../../core/guardians.service';
+import { TransitionWarningsService } from '../../../../core/transition-warnings.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
 import { Toggle } from '../../../../shared/toggle/toggle';
@@ -29,11 +32,13 @@ const KIND_LABELS: Record<GuardianKind, string> = {
 
 @Component({
   selector: 'app-manage-children',
-  imports: [FormsModule, TranslatePipe, Card, Toggle],
+  imports: [FormsModule, RouterLink, TranslatePipe, Card, Toggle],
   templateUrl: './manage-children.html',
 })
 export class ManageChildren {
   private readonly guardians = inject(GuardiansService);
+  private readonly transitionWarnings = inject(TransitionWarningsService);
+  private readonly features = inject(FeaturesService);
 
   protected readonly invitableKinds = INVITABLE_KINDS;
   protected readonly kindLabels = KIND_LABELS;
@@ -44,6 +49,35 @@ export class ManageChildren {
   protected readonly children = resource({
     loader: () => this.guardians.listMyChildren(),
   });
+
+  // Whether each child gets transition warnings ("Heads-up before changes: On/Off"), so a feature
+  // that is off by default can be found. One request per child (a family has a handful); a child
+  // whose request fails, or every child while the feature is off, gets no line.
+  private readonly warningStatus = resource({
+    params: () => (this.children.hasValue() ? this.children.value().map((c) => c.id) : undefined),
+    loader: async ({ params }) => {
+      if (!this.features.enabled('transitionWarnings')) {
+        return {};
+      }
+      const entries = await Promise.all(
+        params.map(async (childId) => {
+          try {
+            return [childId, (await this.transitionWarnings.getForChild(childId)).enabled] as const;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      return Object.fromEntries(entries.filter((entry) => entry !== null)) as Record<
+        string,
+        boolean
+      >;
+    },
+  });
+
+  protected warningsOn(childId: string): boolean | undefined {
+    return this.warningStatus.hasValue() ? this.warningStatus.value()[childId] : undefined;
+  }
 
   protected readonly newChildGivenName = signal('');
   protected readonly newChildFamilyName = signal('');
