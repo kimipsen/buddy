@@ -1758,6 +1758,106 @@
         ]
       }
     },
+    "/users/me/children/{childId}/visual-timers": {
+      "patch": {
+        "tags": [
+          "Guardians"
+        ],
+        "operationId": "UpdateChildVisualTimers",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChildVisualTimersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/users/me/children/{childId}/guardian-invites": {
       "post": {
         "tags": [
@@ -18874,7 +18974,8 @@
           "guardianLinkId",
           "kind",
           "language",
-          "timeZoneId"
+          "timeZoneId",
+          "showVisualTimers"
         ],
         "type": "object",
         "properties": {
@@ -18895,6 +18996,9 @@
           },
           "timeZoneId": {
             "$ref": "#/components/schemas/TimeZoneId"
+          },
+          "showVisualTimers": {
+            "type": "boolean"
           }
         }
       },
@@ -22667,6 +22771,17 @@
           }
         }
       },
+      "UpdateChildVisualTimersRequest": {
+        "required": [
+          "showVisualTimers"
+        ],
+        "type": "object",
+        "properties": {
+          "showVisualTimers": {
+            "type": "boolean"
+          }
+        }
+      },
       "UpdateEmailRequest": {
         "required": [
           "email"
@@ -22955,7 +23070,8 @@
           "userName",
           "name",
           "timeZoneId",
-          "language"
+          "language",
+          "showVisualTimers"
         ],
         "type": "object",
         "properties": {
@@ -22976,6 +23092,9 @@
           },
           "language": {
             "$ref": "#/components/schemas/Language"
+          },
+          "showVisualTimers": {
+            "type": "boolean"
           }
         }
       },

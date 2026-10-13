@@ -491,6 +491,7 @@ describe('AssignMealplan', () => {
     it("resolves a rating's child name for a past day in family scope", async () => {
       const children: ChildSummary[] = [
         {
+          showVisualTimers: true,
           id: 'child-1',
           name: { givenName: 'Sam', familyName: 'Kid' },
           guardianLinkId: 'link-1',

@@ -3,6 +3,7 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   linkedSignal,
   resource,
@@ -16,6 +17,8 @@ import {
   CalendarOccurrence,
   CalendarsService,
 } from '../../../core/calendars.service';
+import { completeChildTask } from '../../../core/child-task-completion';
+import { ChildTimerService } from '../../../core/child-timer.service';
 import { FeaturesService } from '../../../core/features.service';
 import { todayIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
@@ -46,9 +49,11 @@ import {
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
+import { TimerState, currentRun, timerState } from '../../../core/visual-timer';
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { ProgressBadge } from '../../../shared/progress-badge/progress-badge';
+import { VisualTimer } from '../../../shared/visual-timer/visual-timer';
 import { ChildPage } from '../child-page/child-page';
 import { ChildMenu } from './child-menu/child-menu';
 
@@ -123,6 +128,7 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
     UserDatePipe,
     ChildMenu,
     ChildPage,
+    VisualTimer,
   ],
   templateUrl: './home.html',
 })
@@ -137,6 +143,7 @@ export class ChildHome implements OnInit, OnDestroy {
   private readonly calendars = inject(CalendarsService);
   private readonly progressService = inject(ProgressService);
   private readonly houseRules = inject(HouseRulesService);
+  private readonly childTimer = inject(ChildTimerService);
 
   protected readonly guardianKind = GUARDIAN;
   protected readonly selfEscortKind = SELF_ESCORT;
@@ -289,6 +296,34 @@ export class ChildHome implements OnInit, OnDestroy {
     return this.events().map((event) => ({ ...event, ...this.eventProgress(event, nowMs) }));
   });
 
+  // Visual time-left timers (docs/frontend/analysis/visual-time-left-timer.md). Off until the
+  // signed-in child has loaded, so a child whose guardian turned them off never sees one flash.
+  private readonly me = resource({ loader: () => this.users.ensureCurrentUser() });
+  protected readonly timersOn = computed(
+    () => this.me.hasValue() && this.me.value().showVisualTimers !== false,
+  );
+
+  // The one run that gets a timer, and its state. Only that run's header and current subtask show
+  // it; a finished run shows none.
+  protected readonly timerRun = computed(() =>
+    this.timersOn()
+      ? currentRun(
+          this.groupedTasks().filter(isTaskRun),
+          this.now(),
+          this.childTimer.stored()?.itemId,
+        )
+      : null,
+  );
+  protected readonly timer = computed<TimerState | null>(() => {
+    const run = this.timerRun();
+    if (!run) {
+      return null;
+    }
+
+    const state = timerState(run, this.now(), this.childTimer.anchorFor(run.itemId));
+    return state.phase === 'done' ? null : state;
+  });
+
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
   // shouldn't render five empty-state messages back to back.
   protected readonly hasAnything = computed(
@@ -299,6 +334,28 @@ export class ChildHome implements OnInit, OnDestroy {
       this.tasks().length > 0 ||
       this.events().length > 0,
   );
+
+  constructor() {
+    // Recalculate the moment the current step's time runs out, rather than at the next minute
+    // tick, so the buttons (Pause) follow the disc straight away.
+    effect((onCleanup) => {
+      const deadlineMs = this.timer()?.deadlineMs;
+      if (deadlineMs === null || deadlineMs === undefined) {
+        return;
+      }
+
+      const id = setTimeout(() => this.now.set(Date.now()), Math.max(0, deadlineMs - Date.now()));
+      onCleanup(() => clearTimeout(id));
+    });
+
+    // A guardian turned timers off: forget any child-started timer, so turning them back on later
+    // starts from the schedule rather than a stale Start.
+    effect(() => {
+      if (this.me.hasValue() && this.me.value().showVisualTimers === false) {
+        this.childTimer.stop();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.nowIntervalId = setInterval(() => this.now.set(Date.now()), NOW_REFRESH_INTERVAL_MS);
@@ -376,6 +433,33 @@ export class ChildHome implements OnInit, OnDestroy {
     );
   }
 
+  protected isCurrentSubtask(subtask: CalendarOccurrence): boolean {
+    const current = this.timer()?.current;
+    return (
+      current !== null && current !== undefined && occurrenceKey(current) === occurrenceKey(subtask)
+    );
+  }
+
+  protected startTimer(run: TaskRun): void {
+    this.childTimer.start(run);
+    this.now.set(Date.now());
+  }
+
+  protected pauseTimer(run: TaskRun): void {
+    this.childTimer.pause(run.itemId);
+    this.now.set(Date.now());
+  }
+
+  protected resumeTimer(run: TaskRun): void {
+    this.childTimer.resume(run.itemId);
+    this.now.set(Date.now());
+  }
+
+  protected stopTimer(): void {
+    this.childTimer.stop();
+    this.now.set(Date.now());
+  }
+
   protected async toggleTask(task: CalendarOccurrence): Promise<void> {
     const key = occurrenceKey(task);
     const isCompleted = !task.isCompleted;
@@ -383,13 +467,7 @@ export class ChildHome implements OnInit, OnDestroy {
     await this.savingTask.run(
       key,
       async () => {
-        await this.calendars.setTaskCompletion(
-          task.calendarId,
-          task.itemId,
-          todayIsoDate(),
-          isCompleted,
-          task.routine?.subtaskId ?? null,
-        );
+        await completeChildTask(this.calendars, task, isCompleted);
         if (this.occurrences.hasValue() && !this.occurrences.isLoading()) {
           const current = this.occurrences.value();
           this.occurrences.set({
@@ -398,6 +476,14 @@ export class ChildHome implements OnInit, OnDestroy {
               occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
             ),
           });
+
+          // A child-started timer moves on to the next step (or back to an unticked one).
+          const run = this.groupedTasks()
+            .filter(isTaskRun)
+            .find((entry) => entry.itemId === task.itemId);
+          if (run) {
+            this.childTimer.afterCompletionChange(run);
+          }
         }
 
         // The backend awards/revokes a star as part of the same request that just completed above

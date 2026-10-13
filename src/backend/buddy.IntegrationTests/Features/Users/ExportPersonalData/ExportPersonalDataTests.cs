@@ -111,6 +111,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
 
         Assert.Equal(["account"], sections.EnumerateObject().Select(p => p.Name).ToArray());
         Assert.Equal(child.Username, sections.GetProperty("account").GetProperty("userName").GetString());
+        Assert.True(sections.GetProperty("account").GetProperty("showVisualTimers").GetBoolean());
     }
 
     [Fact]

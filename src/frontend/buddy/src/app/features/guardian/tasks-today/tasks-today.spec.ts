@@ -17,6 +17,7 @@ import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-f
 
 describe('TasksToday', () => {
   const currentUser: CurrentUser = {
+    showVisualTimers: true,
     id: 'guardian-1',
     email: { value: 'guardian@buddy.test', isVerified: true },
     userName: 'guardian',

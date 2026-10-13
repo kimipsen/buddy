@@ -122,6 +122,15 @@ export class GuardiansService {
     );
   }
 
+  updateChildVisualTimers(childId: string, showVisualTimers: boolean): Promise<ChildSummary> {
+    return firstValueFrom(
+      this.http.patch<ChildSummary>(
+        `${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/visual-timers`,
+        { showVisualTimers },
+      ),
+    );
+  }
+
   listGuardianInvites(childId: string): Promise<GuardianInvite[]> {
     return firstValueFrom(
       this.http.get<GuardianInvite[]>(

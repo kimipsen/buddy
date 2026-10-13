@@ -15,6 +15,7 @@ import { ManageChildren } from './manage-children';
 describe('ManageChildren', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
     return {
+      showVisualTimers: true,
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
@@ -63,6 +64,9 @@ describe('ManageChildren', () => {
       ),
       updateChildTimeZone: vi.fn(async (childId: string, timeZoneId: string) =>
         child({ id: childId, timeZoneId }),
+      ),
+      updateChildVisualTimers: vi.fn(async (childId: string, showVisualTimers: boolean) =>
+        child({ id: childId, showVisualTimers }),
       ),
       listGuardianInvites: vi.fn(async () => []),
       inviteGuardian: vi.fn(async () => invite()),
@@ -128,6 +132,16 @@ describe('ManageChildren', () => {
 
   function childTimeZoneSelect(compiled: HTMLElement, fullName: string): HTMLSelectElement {
     return childRow(compiled, fullName).querySelectorAll<HTMLSelectElement>('select')[1];
+  }
+
+  function timerSwitch(compiled: HTMLElement, fullName: string): HTMLButtonElement {
+    const toggle = childRow(compiled, fullName).querySelector<HTMLButtonElement>(
+      'button[role="switch"][aria-label="Show time-left timers"]',
+    );
+    if (!toggle) {
+      throw new Error(`timer switch not found for "${fullName}"`);
+    }
+    return toggle;
   }
 
   function childRow(compiled: HTMLElement, fullName: string): HTMLElement {
@@ -1104,6 +1118,97 @@ describe('ManageChildren', () => {
     expect(childRow(compiled, 'Ada Kid').textContent).toContain(
       "Unable to update this child's time zone.",
     );
+  });
+
+  it("shows each child's visual timer setting with its hint", async () => {
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
+          child({
+            id: 'child-2',
+            name: { givenName: 'Ada', familyName: 'Kid' },
+            showVisualTimers: false,
+          }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(timerSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('true');
+    expect(timerSwitch(compiled, 'Ada Kid').getAttribute('aria-checked')).toBe('false');
+    expect(childRow(compiled, 'Sam Kid').textContent).toContain(
+      'A shrinking disc shows how long is left of each step in a routine.',
+    );
+  });
+
+  it("turns a child's visual timers off and reflects the updated value", async () => {
+    const { fixture, guardians } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    timerSwitch(compiled, 'Sam Kid').click();
+    await settle(fixture);
+
+    expect(guardians.updateChildVisualTimers).toHaveBeenCalledWith('child-1', false);
+    expect(timerSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('disables the visual timer switch while the change is in flight', async () => {
+    const { promise, resolve } = deferred<ChildSummary>();
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        updateChildVisualTimers: vi.fn(() => promise),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    timerSwitch(compiled, 'Sam Kid').click();
+    fixture.detectChanges();
+
+    expect(timerSwitch(compiled, 'Sam Kid').disabled).toBe(true);
+
+    resolve(child({ showVisualTimers: false }));
+    await settle(fixture);
+
+    expect(timerSwitch(compiled, 'Sam Kid').disabled).toBe(false);
+  });
+
+  it('shows a per-child visual timer error, cleared by a successful retry', async () => {
+    const children = [
+      child({ id: 'child-1', name: { givenName: 'Sam', familyName: 'Kid' } }),
+      child({ id: 'child-2', name: { givenName: 'Ada', familyName: 'Kid' } }),
+    ];
+    const updateChildVisualTimers = vi
+      .fn<GuardiansService['updateChildVisualTimers']>()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockImplementation(async (childId, showVisualTimers) =>
+        child({ id: childId, showVisualTimers }),
+      );
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => children), updateChildVisualTimers },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const error = "Unable to update this child's timer setting.";
+    timerSwitch(compiled, 'Sam Kid').click();
+    await settle(fixture);
+
+    expect(childRow(compiled, 'Sam Kid').textContent).toContain(error);
+    expect(childRow(compiled, 'Ada Kid').textContent).not.toContain(error);
+    expect(timerSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('true');
+
+    timerSwitch(compiled, 'Sam Kid').click();
+    await settle(fixture);
+
+    expect(childRow(compiled, 'Sam Kid').textContent).not.toContain(error);
+    expect(timerSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('false');
   });
 
   it('ignores an empty time zone selection', async () => {

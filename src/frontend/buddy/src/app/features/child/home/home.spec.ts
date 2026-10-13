@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CalendarOccurrence,
@@ -22,6 +22,7 @@ import { disableFeatures } from '../../../../testing/features-fixture';
 
 describe('ChildHome', () => {
   const currentUser: CurrentUser = {
+    showVisualTimers: true,
     id: 'child-1',
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',
@@ -1391,5 +1392,223 @@ describe('ChildHome', () => {
     expect(compiled.querySelector('a[href="/child/calendar"]')).toBeTruthy();
     expect(compiled.textContent).toContain('Nothing to show yet');
     expect(compiled.textContent).not.toContain('Something went wrong');
+  });
+
+  describe('visual time-left timer', () => {
+    // A fixed "now" inside the morning run: Get dressed 11:58-12:03, Eat breakfast 12:03-12:13.
+    const NOW = Date.parse(`${today}T12:00:00Z`);
+
+    function runSubtask(
+      itemId: string,
+      subtaskId: string,
+      title: string,
+      start: string,
+      end: string,
+      isCompleted = false,
+    ): CalendarOccurrence {
+      return nestOccurrence<CalendarOccurrence>({
+        itemId,
+        kind: 'Task',
+        title,
+        icon: '🧹',
+        iconOverride: null,
+        color: '#22c55e',
+        startsAt: `${today}T${start}:00Z`,
+        endsAt: `${today}T${end}:00Z`,
+        isAllDay: false,
+        isCompleted,
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        assignedTo: 'child-1',
+        calendarId: 'cal-1',
+        calendarName: 'Home',
+        parentTitle: itemId === 'run-1' ? 'Morning routine' : 'Bedtime',
+        subtaskId,
+      });
+    }
+
+    function morning(): CalendarOccurrence[] {
+      return [
+        runSubtask('run-1', 'sub-1', 'Get dressed', '11:58', '12:03'),
+        runSubtask('run-1', 'sub-2', 'Eat breakfast', '12:03', '12:13'),
+      ];
+    }
+
+    function subtaskRow(compiled: HTMLElement, title: string): HTMLLIElement {
+      return Array.from(compiled.querySelectorAll<HTMLLIElement>('li')).find(
+        (li) =>
+          li.querySelector(':scope > button[aria-label]') !== null &&
+          rowText(li).includes(`🧹 ${title}`),
+      )!;
+    }
+
+    beforeEach(() => {
+      localStorage.clear();
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(NOW);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      localStorage.clear();
+    });
+
+    it('shows a run bar and a disc on the current subtask of the current run only', async () => {
+      const plain = occurrence({ itemId: 'plain-1', title: 'Feed the cat' });
+      const bedtime = runSubtask('run-2', 'sub-9', 'Pajamas', '19:00', '19:10');
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => [...morning(), bedtime, plain]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const timers = compiled.querySelectorAll('[role="timer"]');
+      expect(timers).toHaveLength(2);
+      expect(timers[0]!.getAttribute('aria-label')).toBe('13 min left of Morning routine');
+      expect(timers[1]!.getAttribute('aria-label')).toBe('3 min left');
+      expect(subtaskRow(compiled, 'Get dressed').querySelector('[role="timer"]')).not.toBeNull();
+      expect(subtaskRow(compiled, 'Eat breakfast').querySelector('[role="timer"]')).toBeNull();
+      expect(subtaskRow(compiled, 'Pajamas').querySelector('[role="timer"]')).toBeNull();
+      expect(findButtonByText(compiled, 'Start')).toBeTruthy();
+      expect(compiled.querySelector('a[href="/child/focus/run-1"]')?.textContent?.trim()).toBe(
+        'Focus',
+      );
+    });
+
+    it('shows no timer when no run is current', async () => {
+      vi.setSystemTime(Date.parse(`${today}T15:00:00Z`));
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('[role="timer"]')).toBeNull();
+      expect(findButtonByText(compiled, 'Start')).toBeUndefined();
+    });
+
+    it('renders no timer or timer buttons, and forgets a started timer, when timers are off', async () => {
+      localStorage.setItem(
+        'buddy_child_timer',
+        JSON.stringify({
+          itemId: 'run-1',
+          date: today,
+          anchor: { subtaskKey: 'x', startedAtMs: NOW, pausedAtMs: null },
+        }),
+      );
+      const { fixture } = await setup({
+        users: {
+          ensureCurrentUser: vi.fn(async () => ({ ...currentUser, showVisualTimers: false })),
+        },
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('[role="timer"]')).toBeNull();
+      expect(findButtonByText(compiled, 'Start')).toBeUndefined();
+      expect(compiled.querySelector('a[href="/child/focus/run-1"]')).toBeNull();
+      expect(compiled.textContent).toContain('Get dressed');
+      expect(localStorage.getItem('buddy_child_timer')).toBeNull();
+    });
+
+    it('starts, pauses, resumes and stops a child-started timer, keeping it on this device', async () => {
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()) },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Start')!.click();
+      await settle(fixture);
+      // The current step gets its whole 5 minutes from the tap.
+      expect(compiled.querySelectorAll('[role="timer"]')[1]!.getAttribute('aria-label')).toBe(
+        '5 min left',
+      );
+      expect(JSON.parse(localStorage.getItem('buddy_child_timer')!)).toMatchObject({
+        itemId: 'run-1',
+        date: today,
+        anchor: { startedAtMs: NOW, pausedAtMs: null },
+      });
+
+      findButtonByText(compiled, 'Pause')!.click();
+      await settle(fixture);
+      expect(compiled.querySelectorAll('[role="timer"]')[1]!.getAttribute('aria-label')).toBe(
+        'Paused',
+      );
+
+      findButtonByText(compiled, 'Keep going')!.click();
+      await settle(fixture);
+      expect(findButtonByText(compiled, 'Pause')).toBeTruthy();
+
+      findButtonByText(compiled, 'Stop timer')!.click();
+      await settle(fixture);
+      expect(findButtonByText(compiled, 'Start')).toBeTruthy();
+      expect(localStorage.getItem('buddy_child_timer')).toBeNull();
+    });
+
+    it('ticking the current subtask still completes it by subtask id, reloads progress and moves the timer on', async () => {
+      const setTaskCompletion = vi.fn(
+        async () =>
+          ({ itemId: 'run-1', occurrenceDate: today, isCompleted: true }) as TaskCompletion,
+      );
+      const { fixture, calendars, progress } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()), setTaskCompletion },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Start')!.click();
+      await settle(fixture);
+
+      findButtonByAriaLabel(subtaskRow(compiled, 'Get dressed'), 'Mark done')!.click();
+      await settle(fixture);
+
+      expect(calendars.setTaskCompletion).toHaveBeenCalledWith(
+        'cal-1',
+        'run-1',
+        today,
+        true,
+        'sub-1',
+      );
+      expect(progress.getMyProgress).toHaveBeenCalledTimes(2);
+      expect(subtaskRow(compiled, 'Get dressed').querySelector('[role="timer"]')).toBeNull();
+      // Child-started: the next step gets its full 10 minutes straight away.
+      expect(
+        subtaskRow(compiled, 'Eat breakfast')
+          .querySelector('[role="timer"]')
+          ?.getAttribute('aria-label'),
+      ).toBe('10 min left');
+    });
+
+    it('announces the next step from the run bar, which stays put while the disc moves rows', async () => {
+      const setTaskCompletion = vi.fn(
+        async () =>
+          ({ itemId: 'run-1', occurrenceDate: today, isCompleted: true }) as TaskCompletion,
+      );
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => morning()), setTaskCompletion },
+      });
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+      // Only the bar has a live region, so the step's own disc never doubles what it says.
+      expect(compiled.querySelectorAll('[aria-live="polite"]')).toHaveLength(1);
+
+      findButtonByAriaLabel(subtaskRow(compiled, 'Get dressed'), 'Mark done')!.click();
+      await settle(fixture);
+
+      expect(compiled.querySelector('[aria-live="polite"]')?.textContent?.trim()).toBe(
+        'Next step: Eat breakfast.',
+      );
+    });
+
+    it('drops the timer once every subtask of the run is ticked', async () => {
+      const done = morning().map((subtask) => ({ ...subtask, isCompleted: true }));
+      const { fixture } = await setup({
+        calendars: { listTodayOccurrences: vi.fn(async () => done) },
+      });
+      await settle(fixture);
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('[role="timer"]')).toBeNull();
+    });
   });
 });

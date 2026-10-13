@@ -36,6 +36,7 @@ const NOT_STARTED: OnboardingProgress = {
 
 function child(id: string): ChildSummary {
   return {
+    showVisualTimers: true,
     id,
     name: { givenName: id, familyName: 'Family' },
     guardianLinkId: `link-${id}`,

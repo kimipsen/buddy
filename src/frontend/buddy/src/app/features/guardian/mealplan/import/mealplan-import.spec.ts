@@ -16,6 +16,7 @@ import { MealplanImport } from './mealplan-import';
 
 describe('MealplanImport', () => {
   const child: ChildSummary = {
+    showVisualTimers: true,
     id: 'child-1',
     name: { givenName: 'Alex', familyName: 'Doe' },
     guardianLinkId: 'link-1',

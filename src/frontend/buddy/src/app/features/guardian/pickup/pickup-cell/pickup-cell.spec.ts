@@ -20,6 +20,7 @@ describe('PickupCell', () => {
 
   function sibling(id: string, givenName: string): ChildSummary {
     return {
+      showVisualTimers: true,
       id,
       name: { givenName, familyName: 'Kid' },
       guardianLinkId: `link-${id}`,

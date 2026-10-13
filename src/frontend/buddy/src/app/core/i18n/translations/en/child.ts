@@ -54,6 +54,25 @@ export const child = {
       markDone: 'Mark done',
       markNotDone: 'Mark not done',
     },
+    timer: {
+      minutesLeft: '{count} min left',
+      underAMinute: 'Less than a minute left',
+      runLeft: '{count} min left of {title}',
+      startsAt: 'Starts at {time}',
+      timesUp: "Time's up. Finish when you're ready.",
+      paused: 'Paused',
+      start: 'Start',
+      pause: 'Pause',
+      resume: 'Keep going',
+      stop: 'Stop timer',
+      focus: 'Focus',
+      announce: {
+        started: 'Timer started for {title}.',
+        paused: 'Timer paused.',
+        timesUp: "Time's up for {title}.",
+        next: 'Next step: {title}.',
+      },
+    },
     events: {
       allDay: 'All day',
     },
@@ -107,5 +126,12 @@ export const child = {
       markDone: 'Mark done',
       markNotDone: 'Mark not done',
     },
+  },
+  focus: {
+    title: 'One step at a time',
+    next: 'Next: {title}',
+    done: "I'm done",
+    allDone: 'All done! Great job.',
+    back: 'Back to today',
   },
 };

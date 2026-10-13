@@ -55,6 +55,7 @@ sequenceDiagram
 | `POST` | `/users/me/children/{childId}/password-reset` | An active guardian gives the child a new one-time password, returned once like `POST /users/me/children`'s, and signs the child out of every session. A child has no email, so Keycloak's own reset flow can't reach them. `404` without an active link. |
 | `PATCH` | `/users/me/children/{childId}/language` | An active guardian updates the child's language. |
 | `PATCH` | `/users/me/children/{childId}/timezone` | An active guardian updates the child's time zone. |
+| `PATCH` | `/users/me/children/{childId}/visual-timers` | An active guardian turns the child's visual time-left timers on or off (`ShowVisualTimersUpdated` on the child's `User` stream; no event when unchanged). |
 | `GET` | `/users/me/guardians` | Lists guardians linked to the current authenticated user. |
 | `GET` | `/users/me/siblings` | Lists the caller's siblings, resolved via shared guardians. |
 | `POST` | `/users/me/children/{childId}/guardian-invites` | An active guardian invites another adult, by email, to co-manage this child. Re-inviting the same email within a minute returns `409 resend_cooldown`. |

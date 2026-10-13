@@ -18,6 +18,8 @@ export interface DemoFamily {
   // The demo child (Emil) and the family group, for the house rules printouts.
   childId: string;
   groupId: string;
+  // Emil's daily morning routine (a template-scheduled task), for the focus view.
+  morningRoutineItemId: string;
 }
 
 export interface ScreenshotPage {
@@ -37,6 +39,10 @@ export interface ScreenshotPage {
   waitFor?: string;
   // Capture the whole scrollable page instead of just the viewport (default true).
   fullPage?: boolean;
+  // A time of day ('HH:mm', in the demo family's time zone) the browser clock is fixed at, so a
+  // page that depends on the time (the visual timer) shows the same moment on every run. Only
+  // applied once that time has passed today: a clock ahead of real time would expire the session.
+  clock?: string;
 }
 
 export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
@@ -237,9 +243,22 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
   {
     name: 'child-home',
     title: 'Child: today',
-    description: "The child's own view of today's tasks and events.",
+    description:
+      "The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons.",
     as: 'child',
     route: '/child',
+    clock: '07:10',
+  },
+  {
+    name: 'child-focus',
+    title: 'Child: one step at a time',
+    description:
+      'The focus view of a routine: one big disc showing how long is left of the current step, the step after it, and Done, Start and Pause. A guardian can turn the timers off per child.',
+    as: 'child',
+    route: '/child/focus/:itemId',
+    path: (demo) => `/child/focus/${demo.morningRoutineItemId}`,
+    waitFor: 'One step at a time',
+    clock: '07:10',
   },
   {
     name: 'child-mealplan',

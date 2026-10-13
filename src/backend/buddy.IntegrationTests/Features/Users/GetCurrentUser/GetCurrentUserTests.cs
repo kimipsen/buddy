@@ -105,7 +105,38 @@ public sealed class GetCurrentUserTests(BuddyApiFixture fixture)
         Assert.Single(responses.Select(r => r.ReadAsJson<UserProfileResponse>().Id).Distinct());
     }
 
-    private sealed record UserProfileResponse(Guid Id, EmailResponse Email, string UserName, NameResponse Name, string Language, string TimeZoneId);
+    [Fact]
+    public async Task A_child_sees_the_visual_timer_setting_its_guardian_chose()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await Guardians.GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await Guardians.GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+
+        Assert.True((await GetMeAsync(childToken)).ShowVisualTimers);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { ShowVisualTimers = false }).ToUrl($"/users/me/children/{child.Id}/visual-timers");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.False((await GetMeAsync(childToken)).ShowVisualTimers);
+    }
+
+    private async Task<UserProfileResponse> GetMeAsync(string token)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Get.Url("/users/me");
+            _.StatusCodeShouldBeOk();
+        });
+
+        return response.ReadAsJson<UserProfileResponse>();
+    }
+
+    private sealed record UserProfileResponse(Guid Id, EmailResponse Email, string UserName, NameResponse Name, string Language, string TimeZoneId, bool ShowVisualTimers = false);
 
     private sealed record EmailResponse(string Value, bool IsVerified);
 

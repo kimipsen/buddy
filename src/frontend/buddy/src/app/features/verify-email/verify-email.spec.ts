@@ -13,6 +13,7 @@ const STORAGE_KEY = 'buddy_pending_verify_email_token';
 describe('VerifyEmail', () => {
   function fakeCurrentUser(overrides: Partial<CurrentUser> = {}): CurrentUser {
     return {
+      showVisualTimers: true,
       id: 'user-1',
       email: { value: 'user@buddy.test', isVerified: true },
       userName: 'user',

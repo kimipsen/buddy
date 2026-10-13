@@ -240,13 +240,23 @@ Every help topic on one page. The "?" button in the header opens the same help i
 
 ## Child: today
 
-The child's own view of today's tasks and events.
+The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons.
 
 ![Child: today](child-home.png)
 
 <img src="tablet/child-home.png" alt="Child: today on a tablet" width="384">
 
 <img src="mobile/child-home.png" alt="Child: today on a phone" width="320">
+
+## Child: one step at a time
+
+The focus view of a routine: one big disc showing how long is left of the current step, the step after it, and Done, Start and Pause. A guardian can turn the timers off per child.
+
+![Child: one step at a time](child-focus.png)
+
+<img src="tablet/child-focus.png" alt="Child: one step at a time on a tablet" width="384">
+
+<img src="mobile/child-focus.png" alt="Child: one step at a time on a phone" width="320">
 
 ## Child: meal plan
 

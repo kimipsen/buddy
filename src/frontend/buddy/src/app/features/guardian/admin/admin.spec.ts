@@ -16,6 +16,7 @@ import { disableFeatures } from '../../../../testing/features-fixture';
 // throwing, and that every section is present, mirroring the other shell specs in this phase.
 describe('GuardianAdmin', () => {
   const currentUser: CurrentUser = {
+    showVisualTimers: true,
     id: 'guardian-1',
     email: { value: 'guardian@buddy.test', isVerified: true },
     userName: 'guardian',

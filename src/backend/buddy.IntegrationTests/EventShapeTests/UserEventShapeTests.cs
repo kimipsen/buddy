@@ -68,4 +68,9 @@ public sealed class UserEventShapeTests
     public void LanguageUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new LanguageUpdated(FixedUserId, Language.New("en"), Language.New("da"), FixedInstant),
         "Users/LanguageUpdated.json");
+
+    [Fact]
+    public void ShowVisualTimersUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new ShowVisualTimersUpdated(FixedUserId, Before: true, After: false, FixedInstant),
+        "Users/ShowVisualTimersUpdated.json");
 }

@@ -120,6 +120,11 @@ export const admin = {
       label: 'Time zone',
       error: "Unable to update this child's time zone.",
     },
+    visualTimers: {
+      label: 'Show time-left timers',
+      hint: 'A shrinking disc shows how long is left of each step in a routine.',
+      error: "Unable to update this child's timer setting.",
+    },
     givenNamePlaceholder: 'Given name',
     familyNamePlaceholder: 'Family name',
     usernamePlaceholder: 'Login username',

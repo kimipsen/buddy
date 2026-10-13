@@ -9,6 +9,7 @@ import { MyProfile } from './my-profile';
 
 describe('MyProfile', () => {
   const currentUser: CurrentUser = {
+    showVisualTimers: true,
     id: 'user-1',
     email: { value: 'alice@buddy.test', isVerified: true },
     userName: 'alice',

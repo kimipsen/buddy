@@ -1,9 +1,12 @@
 using Alba;
 
 using buddy.Features.Users;
+using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Fixtures;
 
 using Microsoft.Extensions.DependencyInjection;
+
+using Npgsql;
 
 using Xunit;
 
@@ -56,5 +59,59 @@ public sealed class UserSnapshotTests(BuddyApiFixture fixture)
         Assert.Equivalent(replayed, snapshot, strict: true);
         Assert.True(snapshot.EmailVerification is EmailVerification.Pending);
         Assert.Equal(replayed.EmailVerification, snapshot.EmailVerification);
+    }
+
+    [Fact]
+    public async Task The_snapshot_matches_a_full_replay_after_a_guardian_turns_visual_timers_off()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { ShowVisualTimers = false }).ToUrl($"/users/me/children/{child.Id}/visual-timers");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var users = fixture.Host.Services.GetRequiredService<IUserEventStore>();
+        var id = new UserId(child.Id);
+
+        var replayed = User.Rehydrate(await users.ReadAsync(id, CancellationToken.None));
+        var snapshot = await users.FindSnapshotAsync(id, CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        Assert.False(snapshot.ShowVisualTimers);
+        Assert.Equivalent(replayed, snapshot, strict: true);
+    }
+
+    // A snapshot row written before ShowVisualTimers existed has no such property; System.Text.Json
+    // falls back to the constructor parameter's default, so it reads as true without a rebuild.
+    [Fact]
+    public async Task A_snapshot_row_without_the_visual_timer_property_reads_as_shown()
+    {
+        var (_, _, userId) = await fixture.CreateAuthenticatedUserAsync();
+        var dataSource = fixture.Host.Services.GetRequiredService<NpgsqlDataSource>();
+
+        await using (var command = dataSource.CreateCommand(
+            "UPDATE snapshots.mt_doc_usersnapshot SET data = data #- '{User,ShowVisualTimers}' #- '{User,showVisualTimers}' WHERE id = $1"))
+        {
+            command.Parameters.AddWithValue(userId);
+            Assert.Equal(1, await command.ExecuteNonQueryAsync());
+        }
+
+        await using (var check = dataSource.CreateCommand(
+            "SELECT data::text FROM snapshots.mt_doc_usersnapshot WHERE id = $1"))
+        {
+            check.Parameters.AddWithValue(userId);
+            var json = (string?)await check.ExecuteScalarAsync();
+            Assert.DoesNotContain("ShowVisualTimers", json!, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var snapshot = await fixture.Host.Services.GetRequiredService<IUserEventStore>()
+            .FindSnapshotAsync(new UserId(userId), CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        Assert.True(snapshot.ShowVisualTimers);
     }
 }

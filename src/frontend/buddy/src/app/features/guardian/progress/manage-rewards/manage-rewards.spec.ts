@@ -14,6 +14,7 @@ import { ManageRewards } from './manage-rewards';
 
 function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
   return {
+    showVisualTimers: true,
     id: 'child-1',
     name: { givenName: 'Sam', familyName: 'Kid' },
     guardianLinkId: 'link-1',

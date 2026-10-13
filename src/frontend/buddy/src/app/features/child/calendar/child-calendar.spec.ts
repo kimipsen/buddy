@@ -19,6 +19,7 @@ describe('ChildCalendar', () => {
   const today = todayIsoDate();
 
   const currentUser: CurrentUser = {
+    showVisualTimers: true,
     id: 'child-1',
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',

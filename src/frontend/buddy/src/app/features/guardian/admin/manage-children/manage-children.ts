@@ -18,6 +18,7 @@ import {
 } from '../../../../core/guardians.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
+import { Toggle } from '../../../../shared/toggle/toggle';
 
 const INVITABLE_KINDS: GuardianKind[] = ['Parent', 'Guardian'];
 
@@ -28,7 +29,7 @@ const KIND_LABELS: Record<GuardianKind, string> = {
 
 @Component({
   selector: 'app-manage-children',
-  imports: [FormsModule, TranslatePipe, Card],
+  imports: [FormsModule, TranslatePipe, Card, Toggle],
   templateUrl: './manage-children.html',
 })
 export class ManageChildren {
@@ -70,6 +71,9 @@ export class ManageChildren {
 
   protected readonly savingTimeZoneChildId = signal<string | null>(null);
   protected readonly timeZoneErrorByChildId = signal<Record<string, string>>({});
+
+  protected readonly savingVisualTimersChildId = signal<string | null>(null);
+  protected readonly visualTimersErrorByChildId = signal<Record<string, string>>({});
 
   // Stryker disable next-line BooleanLiteral: the copy button only renders once lastCreatedChild is set, and addChild resets this to false at the same time
   protected readonly passwordCopied = signal(false);
@@ -236,6 +240,27 @@ export class ManageChildren {
       }));
     } finally {
       this.savingTimeZoneChildId.set(null);
+    }
+  }
+
+  protected visualTimersErrorFor(childId: string): string | undefined {
+    return this.visualTimersErrorByChildId()[childId];
+  }
+
+  protected async changeVisualTimers(childId: string, showVisualTimers: boolean): Promise<void> {
+    this.savingVisualTimersChildId.set(childId);
+    this.visualTimersErrorByChildId.update((byChildId) => withoutKey(byChildId, childId));
+
+    try {
+      const updated = await this.guardians.updateChildVisualTimers(childId, showVisualTimers);
+      this.replaceChild(childId, updated);
+    } catch {
+      this.visualTimersErrorByChildId.update((byChildId) => ({
+        ...byChildId,
+        [childId]: 'admin.manageChildren.visualTimers.error',
+      }));
+    } finally {
+      this.savingVisualTimersChildId.set(null);
     }
   }
 

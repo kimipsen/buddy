@@ -164,10 +164,30 @@
             }
           </div>
 
+          <div class="mt-2 flex items-start gap-2">
+            <app-toggle
+              [checked]="child.showVisualTimers"
+              [disabled]="savingVisualTimersChildId() === child.id"
+              [ariaLabel]="'admin.manageChildren.visualTimers.label' | translate"
+              (checkedChange)="changeVisualTimers(child.id, $event)"
+            />
+            <div class="text-xs">
+              <span class="font-medium text-slate-700 dark:text-slate-300">{{
+                'admin.manageChildren.visualTimers.label' | translate
+              }}</span>
+              <p class="text-slate-500 dark:text-slate-400">
+                {{ 'admin.manageChildren.visualTimers.hint' | translate }}
+              </p>
+            </div>
+          </div>
+
           @if (languageErrorFor(child.id); as message) {
             <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
           }
           @if (timeZoneErrorFor(child.id); as message) {
+            <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
+          }
+          @if (visualTimersErrorFor(child.id); as message) {
             <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ message | translate }}</p>
           }
         </li>

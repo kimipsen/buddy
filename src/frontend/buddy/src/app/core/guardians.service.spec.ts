@@ -42,6 +42,7 @@ describe('GuardiansService', () => {
   describe('listMyChildren', () => {
     it('resolves the children sorted by full name', async () => {
       const child = (id: string, givenName: string): ChildSummary => ({
+        showVisualTimers: true,
         id,
         name: { givenName, familyName: 'Kid' },
         guardianLinkId: `link-${id}`,
@@ -61,6 +62,7 @@ describe('GuardiansService', () => {
     it('GETs the caller’s children and resolves them', async () => {
       const children: ChildSummary[] = [
         {
+          showVisualTimers: true,
           id: 'child-1',
           name: { givenName: 'Sam', familyName: 'Kid' },
           guardianLinkId: 'link-1',
@@ -340,6 +342,7 @@ describe('GuardiansService', () => {
   describe('updateChildLanguage', () => {
     it('PATCHes the language and resolves the updated child', async () => {
       const updated: ChildSummary = {
+        showVisualTimers: true,
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
@@ -371,6 +374,7 @@ describe('GuardiansService', () => {
   describe('updateChildTimeZone', () => {
     it('PATCHes the time zone and resolves the updated child', async () => {
       const updated: ChildSummary = {
+        showVisualTimers: true,
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
@@ -394,6 +398,39 @@ describe('GuardiansService', () => {
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/timezone`);
       req.flush('invalid', { status: 400, statusText: 'Bad Request' });
+
+      await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
+    });
+  });
+
+  describe('updateChildVisualTimers', () => {
+    it('PATCHes the visual timer switch and resolves the updated child', async () => {
+      const updated: ChildSummary = {
+        id: 'child-1',
+        name: { givenName: 'Sam', familyName: 'Kid' },
+        guardianLinkId: 'link-1',
+        kind: 'Parent',
+        language: 'en',
+        timeZoneId: 'UTC',
+        showVisualTimers: false,
+      };
+
+      const promise = service.updateChildVisualTimers('child-1', false);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/visual-timers`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ showVisualTimers: false });
+      req.flush(updated);
+
+      await expect(promise).resolves.toEqual(updated);
+    });
+
+    it('rejects when the child is not found', async () => {
+      const promise = service.updateChildVisualTimers('child-1', true);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/visual-timers`);
+      expect(req.request.body).toEqual({ showVisualTimers: true });
+      req.flush(null, { status: 404, statusText: 'Not Found' });
 
       await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
     });

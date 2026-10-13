@@ -149,11 +149,14 @@ The route definition is in [src/frontend/buddy/src/app/features/child/child.rout
 
 The child routes currently include:
 
-- `/child` — today's operational view and relationship summaries
+- `/child` — today's operational view and relationship summaries; the routine under way shows a
+  time-left bar for the whole run and a disc on its current step, with Start / Pause / Keep going /
+  Stop timer and a Focus link (unless a guardian turned timers off for the child)
 - `/child/mealplan` — current/historical meal plans and the child's own ratings
 - `/child/calendar` — read-only seven-day agenda across accessible calendars
 - `/child/rewards` — the child's spendable stars, the rewards a guardian set up with an "Ask for this" button on the affordable ones, requests waiting for a grown-up (withdrawable), and earlier answers; the child home links to it
 - `/child/rules` — the child's own and each household's rules, with "New"/"Changed" chips and an "I've read this" button; the child home links to it and shows a "N rules to read" card
+- `/child/focus/:itemId` — one of today's routines one step at a time: a large time-left disc for the current step, the next step, and Done / Start / Pause; behind `featureGuard('taskLibrary')` and `visualTimersGuard` (timers off sends the child to `/child`)
 
 ### Login feature
 
@@ -192,7 +195,12 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   calendar items and task completion
 - `GroupsService` manages group membership, invitations, sharing policies, and
   group deletion
-- `GuardiansService` calls the backend guardian endpoints, including deleting a child
+- `GuardiansService` calls the backend guardian endpoints, including deleting a child and the
+  per-child language, time zone and visual-timer settings
+- `ChildTimerService` holds the child-started visual timer (start / pause / resume / stop, and the
+  auto-chain after a tick) for the child home and the focus view, kept on the device by
+  `core/child-timer-storage.ts`; the timer itself is the pure `core/visual-timer.ts`, drawn by
+  `shared/visual-timer`
 - `MealplansService` calls meal-library, meal-plan, rating, group-sharing, iCal
   subscription-token and import (preview, commit, list, undo) endpoints
 - `MedicinesService` manages medicine schedules, dose status, and group sharing
@@ -378,9 +386,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [House rules](../backend/analysis/house-rules.md) — implemented guardian page, child page with
   a "rules to read" card on the child home, A4 printouts, and the shared markdown renderer and
   editor (see "Rendering markdown" below)
-- [Visual time-left timer](analysis/visual-time-left-timer.md) — proposed countdown
+- [Visual time-left timer](analysis/visual-time-left-timer.md) — implemented countdown
   disc and bar for the child's current routine and subtask on `/child`, plus a `/child/focus/:itemId`
-  focus page, with a per-child guardian switch
+  focus page, with a per-child guardian switch on `manage-children`
 
 ## Rendering markdown
 

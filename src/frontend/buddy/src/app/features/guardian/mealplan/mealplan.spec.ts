@@ -12,6 +12,7 @@ import { disableFeatures } from '../../../../testing/features-fixture';
 
 describe('GuardianMealplan', () => {
   const child: ChildSummary = {
+    showVisualTimers: true,
     id: 'child-1',
     name: { givenName: 'Ida', familyName: 'Kid' },
     guardianLinkId: 'link-1',

@@ -284,9 +284,61 @@
                   <span aria-hidden="true">{{ run.icon }}</span>
                   {{ run.parentTitle }}
                 </div>
+                @if (timerRun()?.itemId === run.itemId && timer(); as state) {
+                  <div class="mb-3 space-y-3" data-testid="run-timer">
+                    <app-visual-timer
+                      variant="bar"
+                      [state]="state"
+                      [color]="run.color"
+                      [title]="run.parentTitle"
+                    />
+                    <div class="flex flex-wrap gap-2">
+                      @if (!state.childStarted) {
+                        <button
+                          type="button"
+                          class="min-h-11 min-w-11 rounded-xl bg-emerald-500 px-4 text-base font-semibold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                          (click)="startTimer(run)"
+                        >
+                          {{ 'child.home.timer.start' | translate }}
+                        </button>
+                      } @else {
+                        @if (state.phase === 'paused') {
+                          <button
+                            type="button"
+                            class="min-h-11 min-w-11 rounded-xl bg-emerald-500 px-4 text-base font-semibold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                            (click)="resumeTimer(run)"
+                          >
+                            {{ 'child.home.timer.resume' | translate }}
+                          </button>
+                        } @else if (state.phase === 'running') {
+                          <button
+                            type="button"
+                            class="min-h-11 min-w-11 rounded-xl border-2 border-slate-300 bg-white px-4 text-base font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                            (click)="pauseTimer(run)"
+                          >
+                            {{ 'child.home.timer.pause' | translate }}
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          class="min-h-11 min-w-11 rounded-xl border-2 border-slate-300 bg-white px-4 text-base font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                          (click)="stopTimer()"
+                        >
+                          {{ 'child.home.timer.stop' | translate }}
+                        </button>
+                      }
+                      <a
+                        class="inline-flex min-h-11 min-w-11 items-center rounded-xl border-2 border-emerald-300 bg-white px-4 text-base font-semibold text-emerald-800 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-emerald-700 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                        [routerLink]="['/child/focus', run.itemId]"
+                      >
+                        {{ 'child.home.timer.focus' | translate }}
+                      </a>
+                    </div>
+                  </div>
+                }
                 <ul class="ml-2 space-y-2 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
                   @for (subtask of run.subtasks; track keyFor(subtask)) {
-                    <li class="flex items-center gap-3">
+                    <li class="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <button
                         type="button"
                         class="grid size-11 shrink-0 place-items-center rounded-lg border-2 text-base font-bold transition disabled:opacity-50"
@@ -316,6 +368,18 @@
                         <span aria-hidden="true">{{ subtask.icon }}</span>
                         {{ subtask.title }}
                       </span>
+                      @if (timer(); as state) {
+                        @if (isCurrentSubtask(subtask)) {
+                          <!-- Its own line under the title on a phone, beside it from sm up. -->
+                          <app-visual-timer
+                            class="block shrink-0 basis-full pl-14 sm:basis-auto sm:pl-0"
+                            data-testid="subtask-timer"
+                            [announce]="false"
+                            [state]="state"
+                            [color]="run.color"
+                          />
+                        }
+                      }
                     </li>
                   }
                 </ul>

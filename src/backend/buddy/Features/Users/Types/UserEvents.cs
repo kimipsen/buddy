@@ -11,7 +11,8 @@ namespace buddy.Features.Users
         EmailVerificationRequested,
         EmailVerified,
         TimeZoneUpdated,
-        LanguageUpdated
+        LanguageUpdated,
+        ShowVisualTimersUpdated
     )
     {
         // Marten hands back the deserialized concrete event object when reading a stream; case
@@ -27,6 +28,7 @@ namespace buddy.Features.Users
             EmailVerified e => e,
             TimeZoneUpdated e => e,
             LanguageUpdated e => e,
+            ShowVisualTimersUpdated e => e,
             _ => throw new ArgumentException($"Unknown user event payload: {payload.GetType().Name}", nameof(payload)),
         };
 
@@ -43,6 +45,7 @@ namespace buddy.Features.Users
             EmailVerified => nameof(EmailVerified),
             TimeZoneUpdated => nameof(TimeZoneUpdated),
             LanguageUpdated => nameof(LanguageUpdated),
+            ShowVisualTimersUpdated => nameof(ShowVisualTimersUpdated),
         };
     }
 
@@ -79,4 +82,8 @@ namespace buddy.Features.Users
     public sealed record TimeZoneUpdated(UserId UserId, TimeZoneId Before, TimeZoneId After, DateTimeOffset OccurredAt);
 
     public sealed record LanguageUpdated(UserId UserId, Language Before, Language After, DateTimeOffset OccurredAt);
+
+    // A guardian turned the child's visual time-left timers on or off (UpdateChildVisualTimersHandler).
+    // Appended to the child's own User stream; never appended when the value doesn't change.
+    public sealed record ShowVisualTimersUpdated(UserId UserId, bool Before, bool After, DateTimeOffset OccurredAt);
 }

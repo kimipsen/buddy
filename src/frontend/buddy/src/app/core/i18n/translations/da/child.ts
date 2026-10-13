@@ -54,6 +54,25 @@ export const child = {
       markDone: 'Marker som klar',
       markNotDone: 'Marker som ikke klar',
     },
+    timer: {
+      minutesLeft: '{count} min tilbage',
+      underAMinute: 'Under et minut tilbage',
+      runLeft: '{count} min tilbage af {title}',
+      startsAt: 'Starter kl. {time}',
+      timesUp: 'Tiden er gået. Gør det færdigt i dit eget tempo.',
+      paused: 'På pause',
+      start: 'Start',
+      pause: 'Pause',
+      resume: 'Fortsæt',
+      stop: 'Stop uret',
+      focus: 'Fokus',
+      announce: {
+        started: 'Uret er startet for {title}.',
+        paused: 'Uret er sat på pause.',
+        timesUp: 'Tiden er gået for {title}.',
+        next: 'Næste trin: {title}.',
+      },
+    },
     events: {
       allDay: 'Hele dagen',
     },
@@ -107,5 +126,12 @@ export const child = {
       markDone: 'Marker som klar',
       markNotDone: 'Marker som ikke klar',
     },
+  },
+  focus: {
+    title: 'Et trin ad gangen',
+    next: 'Bagefter: {title}',
+    done: 'Jeg er færdig',
+    allDone: 'Færdig! Godt gået.',
+    back: 'Tilbage til i dag',
   },
 };

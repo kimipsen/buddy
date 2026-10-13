@@ -13,6 +13,7 @@ import { AiProviderSettingsComponent } from './ai-provider-settings';
 describe('AiProviderSettingsComponent', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
     return {
+      showVisualTimers: true,
       id: 'child-1',
       name: { givenName: 'Alex', familyName: 'Doe' },
       guardianLinkId: 'link-1',

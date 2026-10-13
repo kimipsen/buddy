@@ -16,6 +16,7 @@ describe('UsersService', () => {
 
   function currentUser(overrides: Partial<CurrentUser> = {}): CurrentUser {
     return {
+      showVisualTimers: true,
       id: 'user-1',
       email: { value: 'user@buddy.test', isVerified: true },
       userName: 'user',

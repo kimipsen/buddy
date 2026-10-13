@@ -2,7 +2,7 @@ import { type Page, expect, test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { KEYCLOAK_URL, browserTokenSet } from './demo-family';
+import { KEYCLOAK_URL, TIME_ZONE, browserTokenSet } from './demo-family';
 import { type DemoFamily, SCREENSHOT_PAGES } from './pages';
 import { screenshotsDirFor } from './screenshots-dir';
 
@@ -49,6 +49,11 @@ for (const entry of SCREENSHOT_PAGES) {
       );
     }
 
+    const fixedTime = entry.clock ? pastTimeToday(entry.clock) : null;
+    if (fixedTime) {
+      await page.clock.setFixedTime(fixedTime);
+    }
+
     await page.goto(path!);
     await page.waitForLoadState('networkidle');
 
@@ -78,6 +83,38 @@ for (const entry of SCREENSHOT_PAGES) {
       `${entry.name} is wider than the ${testInfo.project.name} screen`,
     ).toBeNull();
   });
+}
+
+// Today at `clock` ('HH:mm') in the demo family's time zone, or null while that time is still to
+// come: a browser clock ahead of real time would make the access token look expired.
+function pastTimeToday(clock: string): Date | null {
+  const now = new Date();
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(now)
+      .map((part) => [part.type, part.value]),
+  );
+  const [hour, minute] = clock.split(':').map(Number);
+  // The wall-clock time read as UTC, corrected by the zone's offset from UTC right now.
+  const wallNow = Date.UTC(
+    +parts['year'],
+    +parts['month'] - 1,
+    +parts['day'],
+    +parts['hour'],
+    +parts['minute'],
+  );
+  const offsetMs = wallNow - Math.floor(now.getTime() / 60_000) * 60_000;
+  const target =
+    Date.UTC(+parts['year'], +parts['month'] - 1, +parts['day'], hour, minute) - offsetMs;
+  return target <= now.getTime() ? new Date(target) : null;
 }
 
 // How far the page is wider than the screen, with the elements sticking out furthest, or null

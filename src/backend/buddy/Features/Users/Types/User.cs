@@ -13,7 +13,10 @@ public sealed record User(
     Language Language,
     EmailVerification EmailVerification,
     bool IsDeleted,
-    bool IsErased = false)
+    bool IsErased = false,
+    // Guardian-managed (UpdateChildVisualTimers); meaningful for children only. Snapshot rows written
+    // before the field existed have no property and read as the default.
+    bool ShowVisualTimers = true)
 {
     public static User? Rehydrate(IEnumerable<UserEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
@@ -45,6 +48,7 @@ public sealed record User(
         NameUpdated nameUpdated => user with { Name = nameUpdated.After },
         TimeZoneUpdated timeZoneUpdated => user with { TimeZoneId = timeZoneUpdated.After },
         LanguageUpdated languageUpdated => user with { Language = languageUpdated.After },
+        ShowVisualTimersUpdated visualTimersUpdated => user with { ShowVisualTimers = visualTimersUpdated.After },
         // A new address is never covered by a verification of the old one, so any
         // pending verification for the old address is cleared here too.
         EmailUpdated emailUpdated => user with { Email = emailUpdated.After, EmailVerification = new EmailVerification.None() },

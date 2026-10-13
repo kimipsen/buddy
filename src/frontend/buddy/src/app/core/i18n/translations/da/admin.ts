@@ -120,6 +120,11 @@ export const admin = {
       label: 'Tidszone',
       error: 'Kunne ikke opdatere barnets tidszone.',
     },
+    visualTimers: {
+      label: 'Vis nedtællingsure',
+      hint: 'En skive, der bliver mindre, viser hvor lang tid der er tilbage af hvert trin i en rutine.',
+      error: 'Kunne ikke opdatere barnets indstilling for nedtællingsure.',
+    },
     givenNamePlaceholder: 'Fornavn',
     familyNamePlaceholder: 'Efternavn',
     usernamePlaceholder: 'Login-brugernavn',

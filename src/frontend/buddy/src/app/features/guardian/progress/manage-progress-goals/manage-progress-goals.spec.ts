@@ -8,6 +8,7 @@ import { ManageProgressGoals } from './manage-progress-goals';
 describe('ManageProgressGoals', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
     return {
+      showVisualTimers: true,
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',

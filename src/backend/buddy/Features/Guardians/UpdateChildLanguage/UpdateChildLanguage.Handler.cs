@@ -43,6 +43,6 @@ public static class UpdateChildLanguageHandler
         }
 
         return new Result<ChildSummary>.Success(new ChildSummary(
-            child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId));
+            child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId, child.ShowVisualTimers));
     }
 }

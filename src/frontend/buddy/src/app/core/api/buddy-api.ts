@@ -308,6 +308,22 @@ export interface paths {
     patch: operations['UpdateChildTimeZone'];
     trace?: never;
   };
+  '/users/me/children/{childId}/visual-timers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UpdateChildVisualTimers'];
+    trace?: never;
+  };
   '/users/me/children/{childId}/guardian-invites': {
     parameters: {
       query?: never;
@@ -2596,6 +2612,7 @@ export interface components {
       kind: components['schemas']['GuardianKind'];
       language: components['schemas']['Language'];
       timeZoneId: components['schemas']['TimeZoneId'];
+      showVisualTimers: boolean;
     };
     Color: string;
     CommitMealPlanImportEntryRequest: {
@@ -3701,6 +3718,9 @@ export interface components {
     UpdateChildTimeZoneRequest: {
       timeZoneId: string;
     };
+    UpdateChildVisualTimersRequest: {
+      showVisualTimers: boolean;
+    };
     UpdateEmailRequest: {
       email: string;
     };
@@ -3784,6 +3804,7 @@ export interface components {
       name: components['schemas']['Name'];
       timeZoneId: components['schemas']['TimeZoneId'];
       language: components['schemas']['Language'];
+      showVisualTimers: boolean;
     };
     VerifyEmailRequest: {
       token: string;
@@ -4953,6 +4974,70 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UpdateChildTimeZoneRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChildSummary'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  UpdateChildVisualTimers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateChildVisualTimersRequest'];
       };
     };
     responses: {

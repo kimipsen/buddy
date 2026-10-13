@@ -20,6 +20,7 @@ export function progress(overrides: Partial<OnboardingProgress> = {}): Onboardin
 
 export function child(id = 'child-1', givenName = 'Ada'): ChildSummary {
   return {
+    showVisualTimers: true,
     id,
     name: { givenName, familyName: 'Hansen' },
     guardianLinkId: `link-${id}`,

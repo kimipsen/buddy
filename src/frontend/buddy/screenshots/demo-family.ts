@@ -16,7 +16,7 @@ export const KEYCLOAK_URL = process.env['KEYCLOAK_URL'] ?? 'http://keycloak:8080
 export const API_URL = process.env['BUDDY_API_URL'] ?? 'https://localhost:7076';
 const REALM = 'buddy';
 const CLIENT_ID = 'buddy-frontend';
-const TIME_ZONE = 'Europe/Copenhagen';
+export const TIME_ZONE = 'Europe/Copenhagen';
 
 // Local-dev-only credentials: the Keycloak master bootstrap admin from .devcontainer/.env (the
 // same one e2e/support/keycloak-admin-client.ts uses) and a fixed password for the demo users.
@@ -434,9 +434,10 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     }
 
     const daily = { frequency: 'Daily', intervalCount: 1, until: null };
+    // From a week before this Monday, so yesterday always has a morning to complete (see below).
     const morningItem = await api.post<Named>(`/calendars/${family.id}/items/from-template`, {
       taskTemplateId: morning.id,
-      startDate: mondayIso,
+      startDate: isoDate(addDays(monday, -7)),
       startTime: '07:00:00',
       title: 'Morning routine',
       color: '#f97316',
@@ -467,9 +468,16 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       recurrence: null,
     });
 
-    // Mornings done so far this week (template tasks complete per subtask), so Emil has stars.
-    for (const date of planDays.map(isoDate).filter((d) => d <= todayIso)) {
-      for (const subtask of morningSubtasks) {
+    // Mornings done so far this week and yesterday (template tasks complete per subtask), so Emil
+    // has at least five stars even on a Monday. Today only "Get dressed" is ticked, so the child
+    // pages (captured at 07:10) show the morning routine under way, with the visual timer on "Eat
+    // breakfast".
+    const morningsDone = new Set([
+      inDays(-1),
+      ...planDays.map(isoDate).filter((d) => d <= todayIso),
+    ]);
+    for (const date of morningsDone) {
+      for (const subtask of date === todayIso ? morningSubtasks.slice(0, 1) : morningSubtasks) {
         await api
           .patch(
             `/calendars/${family.id}/items/${morningItem.id}/subtasks/${subtask.id}/completion`,
@@ -491,8 +499,9 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     });
 
     // Rewards: one already approved and one waiting, so both the child's page and the guardian's
-    // show requests. Emil has at least four stars (one Monday morning's subtasks), enough for both;
-    // the third is out of reach. Optional, like the subtask completions above.
+    // show requests. Emil has at least five stars (yesterday's full morning and today's first
+    // step), enough for both; the third is out of reach. Optional, like the subtask completions
+    // above.
     try {
       const { rewards } = await api.put<{ rewards: Named[] }>(
         `/progress/children/${emil.id}/rewards`,
@@ -848,6 +857,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       sleepDiaryShareToken: sleepShare?.token ?? null,
       childId: emil.id,
       groupId: group.id,
+      morningRoutineItemId: morningItem.id,
     };
   } finally {
     await api.dispose();
