@@ -29,6 +29,11 @@ public static class UpdateSubtaskHandler
             return resolved.Reraise<ResolvedTaskTemplate, TaskTemplate>();
         }
 
+        if (SubtaskDurationRule.Check(loaded.Template.Kind, command.Duration) is { } durationProblem)
+        {
+            return new Result<TaskTemplate>.Validation(durationProblem);
+        }
+
         var before = loaded.Template.Subtasks.FirstOrDefault(s => s.Id == command.SubtaskId);
 
         if (before is null)
@@ -36,7 +41,7 @@ public static class UpdateSubtaskHandler
             return new Result<TaskTemplate>.NotFound();
         }
 
-        var after = new Subtask(command.SubtaskId, command.Title, command.Icon, command.Duration);
+        var after = new Subtask(command.SubtaskId, command.Title, command.Icon, command.Duration, command.Weekdays);
 
         if (before == after)
         {

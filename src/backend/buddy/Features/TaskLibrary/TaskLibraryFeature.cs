@@ -27,7 +27,12 @@ public static class TaskLibraryFeature
         typeof(SubtaskUpdated),
         typeof(SubtaskRemoved),
         typeof(SubtasksReordered),
-        typeof(TaskTemplateArchived)
+        typeof(TaskTemplateArchived),
+        typeof(ChecklistOptionsChanged),
+        typeof(ChecklistItemSuggested),
+        typeof(ChecklistItemSuggestionApproved),
+        typeof(ChecklistItemSuggestionDeclined),
+        typeof(ChecklistItemSuggestionWithdrawn)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -50,6 +55,7 @@ public static class TaskLibraryFeature
             options.DatabaseSchemaName = "tasklibrary";
             options.Events.StreamIdentity = StreamIdentity.AsGuid;
             options.Events.AddEventTypes(EventTypes);
+            TaskLibraryPersonalDataEraser.ConfigureMasking(options);
 
             options.UseSystemTextJsonForSerialization(
                 enumStorage: EnumStorage.AsString,
@@ -93,6 +99,14 @@ public static class TaskLibraryFeature
         taskTemplates.MapUpdateSubtask();
         taskTemplates.MapRemoveSubtask();
         taskTemplates.MapReorderSubtasks();
+
+        taskTemplates.MapSetChecklistOptions();
+        taskTemplates.MapCopyTaskTemplate();
+
+        taskTemplates.MapSuggestChecklistItem();
+        taskTemplates.MapWithdrawChecklistSuggestion();
+        taskTemplates.MapApproveChecklistSuggestion();
+        taskTemplates.MapDeclineChecklistSuggestion();
 
         return endpoints;
     }

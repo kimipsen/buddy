@@ -29,11 +29,16 @@ public static class AddSubtaskHandler
             return resolved.Reraise<ResolvedTaskTemplate, TaskTemplate>();
         }
 
+        if (SubtaskDurationRule.Check(loaded.Template.Kind, command.Duration) is { } durationProblem)
+        {
+            return new Result<TaskTemplate>.Validation(durationProblem);
+        }
+
         // Null Position means "append at the end"; Rehydrate's SubtaskAdded fold clamps to
         // [0, Subtasks.Count] regardless, so an explicit out-of-range Position is simply clamped
         // rather than rejected.
         var position = command.Position ?? loaded.Template.Subtasks.Count;
-        var subtask = new Subtask(SubtaskId.New(), command.Title, command.Icon, command.Duration);
+        var subtask = new Subtask(SubtaskId.New(), command.Title, command.Icon, command.Duration, command.Weekdays);
         var added = new SubtaskAdded(command.TemplateId, subtask, position, userId, DateTimeOffset.UtcNow);
 
         await templates.AppendAsync(command.TemplateId, [added], cancellationToken);

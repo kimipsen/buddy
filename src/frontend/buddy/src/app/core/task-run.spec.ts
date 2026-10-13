@@ -230,6 +230,7 @@ describe('task-run', () => {
       subtaskId,
       parentTitle: 'Morning',
       parentIcon: '🌅',
+      checklist: null,
     });
 
     it('keys a plain occurrence (no routine) by its itemId and date alone', () => {

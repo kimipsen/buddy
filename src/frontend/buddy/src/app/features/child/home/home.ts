@@ -20,7 +20,7 @@ import {
 import { completeChildTask } from '../../../core/child-task-completion';
 import { ChildTimerService } from '../../../core/child-timer.service';
 import { FeaturesService } from '../../../core/features.service';
-import { todayIsoDate } from '../../../core/date-utils';
+import { addDaysIso, todayIsoDate, toIsoDate } from '../../../core/date-utils';
 import { GuardiansService } from '../../../core/guardians.service';
 import { HouseRulesService } from '../../../core/house-rules.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -47,6 +47,7 @@ import {
   playdateHostName,
 } from '../../../core/pickups.service';
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
+import { TaskLibraryService, TaskTemplate } from '../../../core/task-library.service';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { UsersService } from '../../../core/users.service';
 import { TimerState, currentRun, timerState } from '../../../core/visual-timer';
@@ -56,6 +57,7 @@ import { ProgressBadge } from '../../../shared/progress-badge/progress-badge';
 import { VisualTimer } from '../../../shared/visual-timer/visual-timer';
 import { ChildPage } from '../child-page/child-page';
 import { ChildMenu } from './child-menu/child-menu';
+import { ChildSuggestions } from './child-suggestions/child-suggestions';
 
 const EVENT_KIND: CalendarItemKind = 'Event';
 const TASK_KIND: CalendarItemKind = 'Task';
@@ -107,6 +109,24 @@ const STARTING_PROGRESS: ProgressSummary = {
   rewardRequests: [],
 };
 
+// A packing list's run (docs/backend/analysis/packing-checklists.md): its items are all due when
+// the child leaves the house, so it renders as a checklist with an "n of m packed" count and gets
+// no time-left timer.
+export function isChecklistRun(run: TaskRun): boolean {
+  return (run.subtasks[0].routine?.checklist ?? null) !== null;
+}
+
+function minutesOf(time: string): number {
+  const [hours = 0, minutes = 0] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+// Tomorrow's packing-list occurrences, and the date they were loaded for.
+interface TomorrowsChecklists {
+  date: string;
+  tasks: CalendarOccurrence[];
+}
+
 // Today's calendar occurrences, split into the two kinds the dashboard shows separately.
 interface TodaysOccurrences {
   tasks: CalendarOccurrence[];
@@ -129,6 +149,7 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
     ChildMenu,
     ChildPage,
     VisualTimer,
+    ChildSuggestions,
   ],
   templateUrl: './home.html',
 })
@@ -144,6 +165,7 @@ export class ChildHome implements OnInit, OnDestroy {
   private readonly progressService = inject(ProgressService);
   private readonly houseRules = inject(HouseRulesService);
   private readonly childTimer = inject(ChildTimerService);
+  private readonly taskLibrary = inject(TaskLibraryService);
 
   protected readonly guardianKind = GUARDIAN;
   protected readonly selfEscortKind = SELF_ESCORT;
@@ -178,6 +200,23 @@ export class ChildHome implements OnInit, OnDestroy {
       return this.loadCalendarOccurrences();
     },
   });
+  // Tomorrow's packing lists, shown in "Pack for tomorrow" from each list's eveningBeforeFrom time
+  // today. Supplementary like progress: a failed load just leaves the section out. Today's tasks
+  // keep their own (shared, memoized) request, so this is one more per calendar.
+  // Keyed on tomorrow's date, so a home left open overnight loads the new tomorrow after midnight.
+  private readonly tomorrow = resource({
+    params: () => ({ date: this.tomorrowDate() }),
+    loader: async ({ params: { date } }): Promise<TomorrowsChecklists> => {
+      await this.users.ensureCurrentUser();
+      const occurrences = await this.calendars.listOccurrencesInRange(date, date);
+      const tasks = occurrences.filter(
+        (occurrence) => occurrence.kind === TASK_KIND && !!occurrence.routine?.checklist,
+      );
+      tasks.sort(compareOccurrences);
+      return { date, tasks };
+    },
+  });
+
   // Progress is a supplementary widget, not core dashboard data -- a failed load just leaves the
   // badge as it was (the starting seedling, or the last progress that loaded), with no error.
   // Not asked for at all while progress is turned off: the badge isn't shown.
@@ -288,7 +327,7 @@ export class ChildHome implements OnInit, OnDestroy {
   // Ticks on an interval (rather than reading Date.now() directly in the template) so the
   // ongoing-event progress fill and past/done state actually update while the dashboard sits
   // open, instead of only reflecting "now" at the moment the page loaded.
-  private readonly now = signal(Date.now());
+  protected readonly now = signal(Date.now());
   private nowIntervalId: ReturnType<typeof setInterval> | undefined;
 
   protected readonly eventsView = computed<EventView[]>(() => {
@@ -308,7 +347,9 @@ export class ChildHome implements OnInit, OnDestroy {
   protected readonly timerRun = computed(() =>
     this.timersOn()
       ? currentRun(
-          this.groupedTasks().filter(isTaskRun),
+          this.groupedTasks()
+            .filter(isTaskRun)
+            .filter((run) => !isChecklistRun(run)),
           this.now(),
           this.childTimer.stored()?.itemId,
         )
@@ -324,10 +365,47 @@ export class ChildHome implements OnInit, OnDestroy {
     return state.phase === 'done' ? null : state;
   });
 
+  // Tomorrow's packing lists whose evening time has passed (in this device's local time). The date
+  // check hides the old list while the new tomorrow is loading after midnight.
+  protected readonly packForTomorrow = computed<TaskRun[]>(() => {
+    const loaded = this.tomorrow.hasValue() ? this.tomorrow.value() : undefined;
+    const now = new Date(this.now());
+
+    if (!loaded || loaded.date !== addDaysIso(toIsoDate(now), 1)) {
+      return [];
+    }
+
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
+    return groupTaskRuns(loaded.tasks)
+      .filter(isTaskRun)
+      .filter((run) => {
+        const from = run.subtasks[0].routine?.checklist?.eveningBeforeFrom;
+        return !!from && minutesNow >= minutesOf(from);
+      });
+  });
+
+  // The child's own packing-list templates, for the suggestions under each list. Asked for only
+  // while a packing list is on screen and the task library is on.
+  private readonly checklistOnScreen = computed(
+    () =>
+      this.features.enabled('taskLibrary') &&
+      (this.packForTomorrow().length > 0 ||
+        this.groupedTasks().some((entry) => isTaskRun(entry) && isChecklistRun(entry))),
+  );
+  private readonly checklistTemplates = resource({
+    params: () => (this.checklistOnScreen() ? true : undefined),
+    loader: async () =>
+      this.taskLibrary.fetchTaskTemplates((await this.users.ensureCurrentUser()).id),
+  });
+
+  protected readonly isChecklistRun = isChecklistRun;
+  protected readonly tomorrowDate = computed(() => addDaysIso(toIsoDate(new Date(this.now())), 1));
+
   // Only when every section is empty do we show the "nothing to show yet" card -- a light day
   // shouldn't render five empty-state messages back to back.
   protected readonly hasAnything = computed(
     () =>
+      this.packForTomorrow().length > 0 ||
       this.todaysPickups().length > 0 ||
       this.mealsToShow().length > 0 ||
       this.doses().length > 0 ||
@@ -403,6 +481,56 @@ export class ChildHome implements OnInit, OnDestroy {
 
   protected isRun(entry: AgendaEntry): entry is TaskRun {
     return isTaskRun(entry);
+  }
+
+  protected packedCount(run: TaskRun): number {
+    return run.subtasks.filter((subtask) => subtask.isCompleted).length;
+  }
+
+  // The template a packing-list run was scheduled from, found by its items' ids (an occurrence
+  // doesn't carry the template id). Undefined while loading, or with the task library off.
+  protected templateFor(run: TaskRun): TaskTemplate | undefined {
+    const subtaskId = run.subtasks[0].routine?.subtaskId;
+    const templates = this.checklistTemplates.hasValue() ? this.checklistTemplates.value() : [];
+    return templates.find((template) =>
+      template.subtasks.some((subtask) => subtask.id === subtaskId),
+    );
+  }
+
+  protected onSuggestionsChanged(updated: TaskTemplate): void {
+    if (this.checklistTemplates.hasValue() && !this.checklistTemplates.isLoading()) {
+      this.checklistTemplates.set(
+        this.checklistTemplates
+          .value()
+          .map((template) => (template.id === updated.id ? updated : template)),
+      );
+    }
+  }
+
+  // Ticks an item of tomorrow's packing list: the occurrence is tomorrow's, which the backend
+  // allows a day ahead for packing lists only.
+  protected async toggleTomorrowTask(task: CalendarOccurrence): Promise<void> {
+    const key = occurrenceKey(task);
+    const isCompleted = !task.isCompleted;
+    const date = this.tomorrow.hasValue() ? this.tomorrow.value().date : this.tomorrowDate();
+
+    await this.savingTask.run(
+      key,
+      async () => {
+        await completeChildTask(this.calendars, task, isCompleted, date);
+        if (this.tomorrow.hasValue() && !this.tomorrow.isLoading()) {
+          const current = this.tomorrow.value();
+          this.tomorrow.set({
+            ...current,
+            tasks: current.tasks.map((existing) =>
+              occurrenceKey(existing) === key ? { ...existing, isCompleted } : existing,
+            ),
+          });
+        }
+        this.progress.reload();
+      },
+      'child.home.loadError',
+    );
   }
 
   protected async setDoseStatus(dose: MedicineDoseOccurrence, status: DoseStatus): Promise<void> {

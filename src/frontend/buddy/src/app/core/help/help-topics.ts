@@ -35,6 +35,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       { id: 'templates' },
       { id: 'buildTemplate', steps: 4 },
       { id: 'schedule', steps: 4 },
+      { id: 'packingLists' },
       { id: 'archive' },
     ],
     related: ['calendar'],

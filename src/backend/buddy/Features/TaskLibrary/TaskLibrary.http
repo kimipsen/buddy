@@ -82,3 +82,91 @@ DELETE {{buddy_HostAddress}}/task-templates/{{templateId}}
 Authorization: Bearer {{guardianToken}}
 
 ###
+
+# Create a packing list (checklist) shown the evening before from 17:00 (guardian only)
+POST {{buddy_HostAddress}}/task-templates/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Name": "School bag",
+  "Icon": "🎒",
+  "Color": "#3355ff",
+  "Kind": "Checklist",
+  "EveningBeforeFrom": "17:00:00"
+}
+
+###
+
+# Add a packing-list item that only applies on Tuesdays (no duration for a checklist)
+POST {{buddy_HostAddress}}/task-templates/{{templateId}}/subtasks
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Title": "Gym clothes",
+  "Weekdays": ["Tuesday"]
+}
+
+###
+
+# Change when a packing list shows the evening before; null shows it on the day only (guardian only)
+PUT {{buddy_HostAddress}}/task-templates/{{templateId}}/checklist-options
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "EveningBeforeFrom": "18:30:00"
+}
+
+###
+
+# Copy a template (routine or packing list) to another child (guardian of both)
+POST {{buddy_HostAddress}}/task-templates/{{templateId}}/copy
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "ChildId": "{{siblingId}}"
+}
+
+###
+
+# Suggest an item for your own packing list (the owning child only)
+POST {{buddy_HostAddress}}/task-templates/{{templateId}}/suggestions
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "Title": "Recorder",
+  "Weekdays": ["Friday"]
+}
+
+###
+
+# Take back your own pending suggestion (the owning child only)
+POST {{buddy_HostAddress}}/task-templates/{{templateId}}/suggestions/{{suggestionId}}/withdraw
+Authorization: Bearer {{childToken}}
+
+###
+
+# Approve a suggestion with the guardian's final title and days (guardian only)
+POST {{buddy_HostAddress}}/task-templates/{{templateId}}/suggestions/{{suggestionId}}/approve
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Title": "Recorder",
+  "Weekdays": ["Friday"],
+  "Position": null
+}
+
+###
+
+# Decline a suggestion (guardian only)
+POST {{buddy_HostAddress}}/task-templates/{{templateId}}/suggestions/{{suggestionId}}/decline
+Authorization: Bearer {{guardianToken}}
+
+###

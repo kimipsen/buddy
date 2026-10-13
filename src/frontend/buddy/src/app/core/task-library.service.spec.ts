@@ -30,6 +30,9 @@ describe('TaskLibraryService', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      kind: 'Routine',
+      checklist: null,
+      suggestions: [],
       ...overrides,
     };
   }
@@ -45,6 +48,9 @@ describe('TaskLibraryService', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      kind: 'Routine',
+      eveningBeforeFrom: null,
+      suggestions: [],
       ...overrides,
     };
   }
@@ -90,8 +96,8 @@ describe('TaskLibraryService', () => {
     it('GETs templates for a child, converts wire durations to minutes, and updates the templates signal', async () => {
       const response = templateResponse({
         subtasks: [
-          { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00' },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
+          { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00', weekdays: [] },
+          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00', weekdays: [] },
         ],
         totalDuration: '00:15:00',
       });
@@ -104,8 +110,8 @@ describe('TaskLibraryService', () => {
 
       const expected = template({
         subtasks: [
-          { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5 },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10 },
+          { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5, weekdays: [] },
+          { id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10, weekdays: [] },
         ],
         totalDurationMinutes: 15,
       });
@@ -125,7 +131,9 @@ describe('TaskLibraryService', () => {
 
     it('correctly parses an hours-and-minutes duration (not just minutes-only)', async () => {
       const response = templateResponse({
-        subtasks: [{ id: 'subtask-1', title: 'Long task', icon: null, duration: '01:30:00' }],
+        subtasks: [
+          { id: 'subtask-1', title: 'Long task', icon: null, duration: '01:30:00', weekdays: [] },
+        ],
         totalDuration: '01:30:00',
       });
 
@@ -202,7 +210,13 @@ describe('TaskLibraryService', () => {
 
       const req = httpMock.expectOne(`${base()}/children/child-1`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ name: 'Bedtime routine', icon: '🎒', color: '#6366f1' });
+      expect(req.request.body).toEqual({
+        name: 'Bedtime routine',
+        icon: '🎒',
+        color: '#6366f1',
+        kind: 'Routine',
+        eveningBeforeFrom: null,
+      });
       req.flush(created);
 
       const expected = template({ id: 'template-new', name: 'Bedtime routine' });
@@ -313,7 +327,9 @@ describe('TaskLibraryService', () => {
 
       const withSubtask = templateResponse({
         id: 'template-1',
-        subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00' }],
+        subtasks: [
+          { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00', weekdays: [] },
+        ],
         totalDuration: '00:05:00',
       });
 
@@ -326,12 +342,15 @@ describe('TaskLibraryService', () => {
         icon: '🪥',
         duration: '00:05:00',
         position: null,
+        weekdays: null,
       });
       req.flush(withSubtask);
 
       const expected = template({
         id: 'template-1',
-        subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5 }],
+        subtasks: [
+          { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5, weekdays: [] },
+        ],
         totalDurationMinutes: 5,
       });
       await expect(promise).resolves.toEqual(expected);
@@ -348,6 +367,7 @@ describe('TaskLibraryService', () => {
         icon: null,
         duration: '00:05:00',
         position: 0,
+        weekdays: null,
       });
       req.flush(templateResponse());
     });
@@ -362,6 +382,7 @@ describe('TaskLibraryService', () => {
         icon: null,
         duration: '01:30:00',
         position: null,
+        weekdays: null,
       });
       req.flush(templateResponse());
     });
@@ -371,7 +392,9 @@ describe('TaskLibraryService', () => {
     it('PATCHes the subtask and replaces the template in state', async () => {
       const original = templateResponse({
         id: 'template-1',
-        subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00' }],
+        subtasks: [
+          { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', duration: '00:05:00', weekdays: [] },
+        ],
         totalDuration: '00:05:00',
       });
       const listPromise = service.listTaskTemplates('child-1');
@@ -381,7 +404,13 @@ describe('TaskLibraryService', () => {
       const updated = templateResponse({
         id: 'template-1',
         subtasks: [
-          { id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', duration: '00:07:00' },
+          {
+            id: 'subtask-1',
+            title: 'Brush teeth thoroughly',
+            icon: '🪥',
+            duration: '00:07:00',
+            weekdays: [],
+          },
         ],
         totalDuration: '00:07:00',
       });
@@ -400,13 +429,20 @@ describe('TaskLibraryService', () => {
         title: 'Brush teeth thoroughly',
         icon: '🪥',
         duration: '00:07:00',
+        weekdays: null,
       });
       req.flush(updated);
 
       const expected = template({
         id: 'template-1',
         subtasks: [
-          { id: 'subtask-1', title: 'Brush teeth thoroughly', icon: '🪥', durationMinutes: 7 },
+          {
+            id: 'subtask-1',
+            title: 'Brush teeth thoroughly',
+            icon: '🪥',
+            durationMinutes: 7,
+            weekdays: [],
+          },
         ],
         totalDurationMinutes: 7,
       });
@@ -420,8 +456,8 @@ describe('TaskLibraryService', () => {
       const original = templateResponse({
         id: 'template-1',
         subtasks: [
-          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
+          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00', weekdays: [] },
+          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00', weekdays: [] },
         ],
         totalDuration: '00:15:00',
       });
@@ -439,7 +475,15 @@ describe('TaskLibraryService', () => {
       expect(service.templates()).toEqual([
         template({
           id: 'template-1',
-          subtasks: [{ id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10 }],
+          subtasks: [
+            {
+              id: 'subtask-2',
+              title: 'Get dressed',
+              icon: null,
+              durationMinutes: 10,
+              weekdays: [],
+            },
+          ],
           totalDurationMinutes: 10,
         }),
       ]);
@@ -447,12 +491,16 @@ describe('TaskLibraryService', () => {
     it('leaves other templates in state untouched (same object)', async () => {
       const target = templateResponse({
         id: 'template-1',
-        subtasks: [{ id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' }],
+        subtasks: [
+          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00', weekdays: [] },
+        ],
         totalDuration: '00:05:00',
       });
       const other = templateResponse({
         id: 'template-2',
-        subtasks: [{ id: 'subtask-9', title: 'Pack bag', icon: null, duration: '00:03:00' }],
+        subtasks: [
+          { id: 'subtask-9', title: 'Pack bag', icon: null, duration: '00:03:00', weekdays: [] },
+        ],
         totalDuration: '00:03:00',
       });
       const listPromise = service.listTaskTemplates('child-1');
@@ -474,8 +522,8 @@ describe('TaskLibraryService', () => {
       const original = templateResponse({
         id: 'template-1',
         subtasks: [
-          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' },
-          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
+          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00', weekdays: [] },
+          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00', weekdays: [] },
         ],
         totalDuration: '00:15:00',
       });
@@ -486,8 +534,8 @@ describe('TaskLibraryService', () => {
       const reordered = templateResponse({
         id: 'template-1',
         subtasks: [
-          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00' },
-          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00' },
+          { id: 'subtask-2', title: 'Get dressed', icon: null, duration: '00:10:00', weekdays: [] },
+          { id: 'subtask-1', title: 'Brush teeth', icon: null, duration: '00:05:00', weekdays: [] },
         ],
         totalDuration: '00:15:00',
       });
@@ -502,13 +550,214 @@ describe('TaskLibraryService', () => {
       const expected = template({
         id: 'template-1',
         subtasks: [
-          { id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10 },
-          { id: 'subtask-1', title: 'Brush teeth', icon: null, durationMinutes: 5 },
+          { id: 'subtask-2', title: 'Get dressed', icon: null, durationMinutes: 10, weekdays: [] },
+          { id: 'subtask-1', title: 'Brush teeth', icon: null, durationMinutes: 5, weekdays: [] },
         ],
         totalDurationMinutes: 15,
       });
       await expect(promise).resolves.toEqual(expected);
       expect(service.templates()).toEqual([expected]);
+    });
+  });
+
+  describe('packing checklists', () => {
+    const suggestion = {
+      id: 'suggestion-1',
+      title: 'Recorder',
+      weekdays: ['Friday'],
+      suggestedBy: 'child-1',
+      status: 'Pending',
+      suggestedAt: '2026-10-12T15:00:00Z',
+      resolvedAt: null,
+      subtaskId: null,
+    };
+
+    function checklistResponse(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+      return templateResponse({
+        name: 'School bag',
+        kind: 'Checklist',
+        checklist: { eveningBeforeFrom: '17:00:00' },
+        subtasks: [
+          {
+            id: 'item-1',
+            title: 'Gym clothes',
+            icon: null,
+            duration: '00:00:00',
+            weekdays: ['Tuesday'],
+          },
+        ],
+        suggestions: [suggestion],
+        ...overrides,
+      });
+    }
+
+    async function seedChecklist(): Promise<void> {
+      const listPromise = service.listTaskTemplates('child-1');
+      httpMock.expectOne(`${base()}/children/child-1`).flush([checklistResponse()]);
+      await listPromise;
+    }
+
+    it('maps the kind, the evening-before time as HH:mm, the item weekdays and the suggestions', async () => {
+      const promise = service.listTaskTemplates('child-1');
+      httpMock.expectOne(`${base()}/children/child-1`).flush([checklistResponse()]);
+
+      const [checklist] = await promise;
+      expect(checklist?.kind).toBe('Checklist');
+      expect(checklist?.eveningBeforeFrom).toBe('17:00');
+      expect(checklist?.subtasks[0]?.weekdays).toEqual(['Tuesday']);
+      expect(checklist?.subtasks[0]?.durationMinutes).toBe(0);
+      expect(checklist?.suggestions).toEqual([suggestion]);
+    });
+
+    it('fetchTaskTemplates reads a child without replacing the shared state', async () => {
+      await seedChecklist();
+
+      const promise = service.fetchTaskTemplates('child-2');
+      httpMock
+        .expectOne(`${base()}/children/child-2`)
+        .flush([templateResponse({ id: 'template-9', name: 'Bedtime' })]);
+
+      expect((await promise).map((t) => t.id)).toEqual(['template-9']);
+      expect(service.templates().map((t) => t.id)).toEqual(['template-1']);
+    });
+
+    it('creates a checklist with its kind and the evening-before time on the wire format', async () => {
+      const promise = service.createTaskTemplate('child-1', {
+        name: 'School bag',
+        icon: '🎒',
+        color: '#6366f1',
+        kind: 'Checklist',
+        eveningBeforeFrom: '17:00',
+      });
+
+      const req = httpMock.expectOne(`${base()}/children/child-1`);
+      expect(req.request.headers.has('Idempotency-Key')).toBe(true);
+      expect(req.request.body).toEqual({
+        name: 'School bag',
+        icon: '🎒',
+        color: '#6366f1',
+        kind: 'Checklist',
+        eveningBeforeFrom: '17:00:00',
+      });
+      req.flush(checklistResponse());
+
+      expect((await promise).kind).toBe('Checklist');
+    });
+
+    it('sends an item weekday list when adding and updating, and null for every day', async () => {
+      const add = service.addSubtask('template-1', 'Gym clothes', null, 0, null, ['Tuesday']);
+      const addReq = httpMock.expectOne(`${base()}/template-1/subtasks`);
+      expect(addReq.request.body).toEqual({
+        title: 'Gym clothes',
+        icon: null,
+        duration: '00:00:00',
+        position: null,
+        weekdays: ['Tuesday'],
+      });
+      addReq.flush(checklistResponse());
+      await add;
+
+      const update = service.updateSubtask('template-1', 'item-1', 'Gym clothes', null, 0, []);
+      const updateReq = httpMock.expectOne(`${base()}/template-1/subtasks/item-1`);
+      expect(updateReq.request.body).toEqual({
+        title: 'Gym clothes',
+        icon: null,
+        duration: '00:00:00',
+        weekdays: null,
+      });
+      updateReq.flush(checklistResponse());
+      await update;
+    });
+
+    it('PUTs the checklist options and replaces the template in state', async () => {
+      await seedChecklist();
+
+      const promise = service.setChecklistOptions('template-1', '18:30');
+      const req = httpMock.expectOne(`${base()}/template-1/checklist-options`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ eveningBeforeFrom: '18:30:00' });
+      req.flush(checklistResponse({ checklist: { eveningBeforeFrom: '18:30:00' } }));
+
+      await promise;
+      expect(service.templates()[0]?.eveningBeforeFrom).toBe('18:30');
+    });
+
+    it('clears the evening-before time with null', async () => {
+      const promise = service.setChecklistOptions('template-1', null);
+      const req = httpMock.expectOne(`${base()}/template-1/checklist-options`);
+      expect(req.request.body).toEqual({ eveningBeforeFrom: null });
+      req.flush(checklistResponse({ checklist: { eveningBeforeFrom: null } }));
+
+      expect((await promise).eveningBeforeFrom).toBeNull();
+    });
+
+    it('copies a template to another child with an idempotency key and leaves the state alone', async () => {
+      await seedChecklist();
+
+      const promise = service.copyTaskTemplate('template-1', 'child-2');
+      const req = httpMock.expectOne(`${base()}/template-1/copy`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.has('Idempotency-Key')).toBe(true);
+      expect(req.request.body).toEqual({ childId: 'child-2' });
+      req.flush(checklistResponse({ id: 'template-copy' }));
+
+      expect((await promise).id).toBe('template-copy');
+      expect(service.templates().map((t) => t.id)).toEqual(['template-1']);
+    });
+
+    it('suggests an item with an idempotency key', async () => {
+      const promise = service.suggestChecklistItem('template-1', 'Recorder', ['Friday']);
+      const req = httpMock.expectOne(`${base()}/template-1/suggestions`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.has('Idempotency-Key')).toBe(true);
+      expect(req.request.body).toEqual({ title: 'Recorder', weekdays: ['Friday'] });
+      req.flush(checklistResponse());
+
+      expect((await promise).suggestions).toEqual([suggestion]);
+    });
+
+    it('suggests an item for every day with null weekdays', async () => {
+      const promise = service.suggestChecklistItem('template-1', 'Recorder');
+      const req = httpMock.expectOne(`${base()}/template-1/suggestions`);
+      expect(req.request.body).toEqual({ title: 'Recorder', weekdays: null });
+      req.flush(checklistResponse());
+      await promise;
+    });
+
+    it('withdraws a suggestion', async () => {
+      const promise = service.withdrawChecklistSuggestion('template-1', 'suggestion-1');
+      const req = httpMock.expectOne(`${base()}/template-1/suggestions/suggestion-1/withdraw`);
+      expect(req.request.method).toBe('POST');
+      req.flush(checklistResponse({ suggestions: [{ ...suggestion, status: 'Withdrawn' }] }));
+
+      expect((await promise).suggestions[0]?.status).toBe('Withdrawn');
+    });
+
+    it('approves a suggestion with the guardian title and days and replaces the template in state', async () => {
+      await seedChecklist();
+
+      const promise = service.approveChecklistSuggestion('template-1', 'suggestion-1', 'Recorder', [
+        'Friday',
+      ]);
+      const req = httpMock.expectOne(`${base()}/template-1/suggestions/suggestion-1/approve`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ title: 'Recorder', weekdays: ['Friday'], position: null });
+      req.flush(checklistResponse({ suggestions: [{ ...suggestion, status: 'Approved' }] }));
+
+      await promise;
+      expect(service.templates()[0]?.suggestions[0]?.status).toBe('Approved');
+    });
+
+    it('declines a suggestion and replaces the template in state', async () => {
+      await seedChecklist();
+
+      const promise = service.declineChecklistSuggestion('template-1', 'suggestion-1');
+      const req = httpMock.expectOne(`${base()}/template-1/suggestions/suggestion-1/decline`);
+      expect(req.request.method).toBe('POST');
+      req.flush(checklistResponse({ suggestions: [{ ...suggestion, status: 'Declined' }] }));
+
+      await promise;
+      expect(service.templates()[0]?.suggestions[0]?.status).toBe('Declined');
     });
   });
 });

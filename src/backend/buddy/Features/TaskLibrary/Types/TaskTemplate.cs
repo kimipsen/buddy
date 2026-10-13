@@ -17,8 +17,19 @@ public sealed record TaskTemplate(
     Color Color,
     ImmutableList<Subtask> Subtasks,
     bool IsArchived,
-    UserId LastModifiedBy)
+    UserId LastModifiedBy,
+    TaskTemplateKind Kind,
+    ChecklistOptions Checklist,
+    // Child suggestions for a checklist, oldest first; always empty for a routine.
+    ImmutableList<ChecklistSuggestion> Suggestions)
 {
+    // Snapshots written before packing checklists have no Checklist/Suggestions; System.Text.Json
+    // then passes null. Read those as "no options" and "no suggestions" (a missing Kind is already
+    // Routine, the enum's default).
+    public ChecklistOptions Checklist { get; init; } = Checklist ?? ChecklistOptions.None;
+
+    public ImmutableList<ChecklistSuggestion> Suggestions { get; init; } = Suggestions ?? [];
+
     public TimeSpan TotalDuration => Subtasks.Aggregate(TimeSpan.Zero, (sum, subtask) => sum + subtask.Duration);
 
     public static TaskTemplate? Rehydrate(IEnumerable<TaskTemplateEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
@@ -42,7 +53,10 @@ public sealed record TaskTemplate(
             created.Color,
             ImmutableList<Subtask>.Empty,
             IsArchived: false,
-            created.CreatedBy),
+            created.CreatedBy,
+            created.Kind,
+            ChecklistOptions.None,
+            ImmutableList<ChecklistSuggestion>.Empty),
         _ => throw EventReplay.NotAStartEvent(nameof(TaskTemplate), @event.EventType)
     };
 
@@ -78,8 +92,60 @@ public sealed record TaskTemplate(
             LastModifiedBy = reordered.ModifiedBy
         },
         TaskTemplateArchived archived => template with { IsArchived = true, LastModifiedBy = archived.ModifiedBy },
+        ChecklistOptionsChanged changed => template with { Checklist = changed.After, LastModifiedBy = changed.ModifiedBy },
+        ChecklistItemSuggested suggested => template with
+        {
+            Suggestions = template.Suggestions.Add(new ChecklistSuggestion(
+                suggested.SuggestionId,
+                suggested.Title,
+                suggested.Weekdays,
+                suggested.SuggestedBy,
+                ChecklistSuggestionStatus.Pending,
+                suggested.OccurredAt,
+                ResolvedAt: null,
+                ResolvedBy: null,
+                SubtaskId: null))
+        },
+        ChecklistItemSuggestionApproved approved => Resolve(
+            template, approved.SuggestionId, s => s with
+            {
+                Status = ChecklistSuggestionStatus.Approved,
+                ResolvedAt = approved.OccurredAt,
+                ResolvedBy = approved.ApprovedBy,
+                SubtaskId = approved.SubtaskId
+            }),
+        ChecklistItemSuggestionDeclined declined => Resolve(
+            template, declined.SuggestionId, s => s with
+            {
+                Status = ChecklistSuggestionStatus.Declined,
+                ResolvedAt = declined.OccurredAt,
+                ResolvedBy = declined.DeclinedBy
+            }),
+        ChecklistItemSuggestionWithdrawn withdrawn => Resolve(
+            template, withdrawn.SuggestionId, s => s with
+            {
+                Status = ChecklistSuggestionStatus.Withdrawn,
+                ResolvedAt = withdrawn.OccurredAt,
+                ResolvedBy = withdrawn.WithdrawnBy
+            }),
         TaskTemplateCreated => throw EventReplay.AlreadyStarted(nameof(TaskTemplate), @event.EventType)
     };
+
+    public ChecklistSuggestion? FindSuggestion(ChecklistSuggestionId id) => Suggestions.FirstOrDefault(s => s.Id == id);
+
+    // A resolution names a suggestion the stream itself added -- an unknown id is a handler bug, not
+    // input, so it throws like Reorder below.
+    private static TaskTemplate Resolve(TaskTemplate template, ChecklistSuggestionId id, Func<ChecklistSuggestion, ChecklistSuggestion> resolve)
+    {
+        var index = template.Suggestions.FindIndex(s => s.Id == id);
+
+        if (index < 0)
+        {
+            throw new InvalidOperationException($"A suggestion resolution referenced unknown suggestion {id}.");
+        }
+
+        return template with { Suggestions = template.Suggestions.SetItem(index, resolve(template.Suggestions[index])) };
+    }
 
     // Every id in `after` must already exist in `subtasks` -- a fold-invariant violation here is a
     // real bug (the handler emitting SubtasksReordered is responsible for only ever appending a

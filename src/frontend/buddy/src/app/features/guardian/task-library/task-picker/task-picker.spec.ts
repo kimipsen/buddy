@@ -6,7 +6,14 @@ import { TaskPicker } from './task-picker';
 
 describe('TaskPicker', () => {
   function subtask(overrides: Partial<Subtask> = {}): Subtask {
-    return { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5, ...overrides };
+    return {
+      id: 'subtask-1',
+      title: 'Brush teeth',
+      icon: '🪥',
+      durationMinutes: 5,
+      weekdays: [],
+      ...overrides,
+    };
   }
 
   function template(overrides: Partial<TaskTemplate> = {}): TaskTemplate {
@@ -20,6 +27,9 @@ describe('TaskPicker', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      kind: 'Routine',
+      eveningBeforeFrom: null,
+      suggestions: [],
       ...overrides,
     };
   }
@@ -162,6 +172,25 @@ describe('TaskPicker', () => {
         '1 steps, 1h 30m',
       );
       expect(findTemplateOption(compiled, 'Weekend chores').textContent).toContain('0 steps, 0m');
+    });
+
+    it("shows a packing list's item count instead of a duration", async () => {
+      const bag = template({
+        id: 'template-4',
+        name: 'School bag',
+        kind: 'Checklist',
+        subtasks: [
+          subtask({ id: 's5', durationMinutes: 0 }),
+          subtask({ id: 's6', durationMinutes: 0 }),
+        ],
+      });
+      const { fixture, compiled } = await setup({ templates: [bag] });
+
+      openDropdown(fixture);
+
+      const text = findTemplateOption(compiled, 'School bag').textContent ?? '';
+      expect(text).toContain('2 items');
+      expect(text).not.toContain('steps');
     });
 
     it('clears the visible text so the input starts blank even when a template was already selected', async () => {

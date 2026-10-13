@@ -29,7 +29,8 @@ public static class UpdateSubtaskEndpoint
                 request.Title,
                 // Blank means "inherit the template's icon", the same as omitting it -- as Calendars does.
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
-                request.Duration);
+                request.Duration ?? TimeSpan.Zero,
+                TaskLibraryWeekdays.FromDays(request.Weekdays));
 
             var result = await bus.InvokeAsync<Result<TaskTemplate>>(command, cancellationToken);
 
@@ -47,4 +48,5 @@ public static class UpdateSubtaskEndpoint
     }
 }
 
-public sealed record UpdateSubtaskRequest(string Title, TimeSpan Duration, string? Icon = null);
+// A full replacement like the rest of the PATCH: a left-out Weekdays means "every day".
+public sealed record UpdateSubtaskRequest(string Title, TimeSpan? Duration = null, string? Icon = null, IReadOnlyList<DayOfWeek>? Weekdays = null);

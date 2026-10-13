@@ -216,6 +216,18 @@ The editable top-level metadata of a task template: name, icon, and color.
 ### Subtask
 One ordered step in a task template. A subtask has a title, an optional icon, and a duration. When its icon is omitted, a scheduled occurrence falls back to the calendar item's icon and then to the calendar's icon.
 
+### TaskTemplateKind
+Whether a task template is a `Routine` (timed steps laid out back to back) or a `Checklist` (a packing list whose items have no duration and are all due at the scheduled "leave by" time). Fixed at creation.
+
+### ChecklistOptions
+A packing list's display options: `EveningBeforeFrom`, the local time from which the child home shows tomorrow's list (null: on the day only).
+
+### Subtask weekdays
+The days a subtask applies on (`Weekdays`, empty for "whenever the template occurs"). Expansion leaves the subtask out on other days. Offered for packing-list items.
+
+### ChecklistSuggestion
+An item a child suggested for their own packing list, with the child's title and proposed weekdays, and a status of Pending, Approved (with the `SubtaskId` it created), Declined or Withdrawn. At most five are pending per list.
+
 ### TotalDuration
 The sum of all subtask durations in a task template.
 

@@ -78,6 +78,9 @@ function template(id: string, isArchived = false): TaskTemplate {
     isArchived,
     createdBy: 'me',
     lastModifiedBy: 'me',
+    kind: 'Routine',
+    eveningBeforeFrom: null,
+    suggestions: [],
   };
 }
 

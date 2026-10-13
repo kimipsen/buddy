@@ -17,11 +17,13 @@ public sealed class TaskLibraryPersonalDataExporter(ITaskTemplateEventStore temp
         {
             List<TaskTemplateResponse> exported = [];
 
+            // Every suggestion, not the capped history the API answers with: they are the child's own text.
+
             foreach (var id in await templates.ListIdsForChildAsync(childId, cancellationToken))
             {
                 if (await templates.FindSnapshotAsync(id, cancellationToken) is { } template)
                 {
-                    exported.Add(TaskTemplateResponse.FromTaskTemplate(template));
+                    exported.Add(TaskTemplateResponse.FromTaskTemplate(template, allSuggestions: true));
                 }
             }
 

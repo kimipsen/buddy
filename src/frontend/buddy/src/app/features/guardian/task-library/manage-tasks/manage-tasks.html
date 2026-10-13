@@ -118,10 +118,10 @@
                 }
               </form>
             } @else {
-              <div class="flex items-center justify-between gap-3 px-4 py-3">
+              <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <button
                   type="button"
-                  class="flex flex-1 items-center gap-2 text-left text-sm font-medium"
+                  class="flex min-w-[14rem] flex-1 flex-wrap items-center gap-2 text-left text-sm font-medium"
                   (click)="toggleExpanded(template.id)"
                 >
                   <span
@@ -130,12 +130,26 @@
                   ></span>
                   <span class="text-lg leading-none">{{ template.icon }}</span>
                   <span>{{ template.name }}</span>
-                  <span class="text-xs font-normal text-slate-500 dark:text-slate-400"
-                    >({{
-                      'taskLibrary.manageTasks.totalDuration'
-                        | translate: { duration: formatDuration(template.totalDurationMinutes) }
-                    }})</span
-                  >
+                  @if (isChecklist(template)) {
+                    <span
+                      class="whitespace-nowrap rounded-full bg-sky-100 dark:bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200"
+                    >
+                      {{ 'taskLibrary.manageTasks.kind.checklist' | translate }}
+                    </span>
+                    <span class="text-xs font-normal text-slate-500 dark:text-slate-400"
+                      >({{
+                        'taskLibrary.manageTasks.itemCount'
+                          | translate: { count: template.subtasks.length }
+                      }})</span
+                    >
+                  } @else {
+                    <span class="text-xs font-normal text-slate-500 dark:text-slate-400"
+                      >({{
+                        'taskLibrary.manageTasks.totalDuration'
+                          | translate: { duration: formatDuration(template.totalDurationMinutes) }
+                      }})</span
+                    >
+                  }
                   @if (template.isArchived) {
                     <span
                       class="rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300"
@@ -145,7 +159,7 @@
                   }
                 </button>
 
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                   @if (!template.isArchived) {
                     <button
                       type="button"
@@ -153,6 +167,15 @@
                       (click)="startEditTemplate(template)"
                     >
                       {{ 'taskLibrary.manageTasks.rename' | translate }}
+                    </button>
+                  }
+                  @if (!template.isArchived && copyTargets().length > 0) {
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                      (click)="openCopy(template)"
+                    >
+                      {{ 'taskLibrary.manageTasks.copy.button' | translate }}
                     </button>
                   }
                   <button
@@ -181,12 +204,107 @@
               </div>
             }
 
+            @if (copyingTemplateId() === template.id) {
+              <div
+                class="flex flex-wrap items-center gap-2 border-t border-slate-200 dark:border-slate-800 px-4 py-3"
+              >
+                <label
+                  class="text-xs font-semibold text-slate-600 dark:text-slate-300"
+                  [for]="'copyTarget-' + template.id"
+                  >{{ 'taskLibrary.manageTasks.copy.label' | translate }}</label
+                >
+                <select
+                  #copyTargetSelect
+                  [id]="'copyTarget-' + template.id"
+                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                  [value]="copyTargetId()"
+                  (change)="copyTargetId.set(copyTargetSelect.value)"
+                >
+                  @for (child of copyTargets(); track child.id) {
+                    <option [value]="child.id">{{ child.name.givenName }}</option>
+                  }
+                </select>
+                <button
+                  type="button"
+                  class="rounded-lg bg-slate-950 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                  [disabled]="copying.isBusy(template.id) || !copyTargetId()"
+                  (click)="copyTemplate(template)"
+                >
+                  {{ 'taskLibrary.manageTasks.copy.button' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500"
+                  (click)="closeCopy()"
+                >
+                  {{ 'taskLibrary.manageTasks.copy.cancel' | translate }}
+                </button>
+                @if (copying.state(); as state) {
+                  @if (state.status === 'error') {
+                    <p class="basis-full text-xs text-red-600 dark:text-red-400">
+                      {{ state.message | translate }}
+                    </p>
+                  }
+                }
+              </div>
+            }
+            @if (copiedTo(); as copied) {
+              @if (copied.templateId === template.id) {
+                <p
+                  class="border-t border-slate-200 dark:border-slate-800 px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+                  role="status"
+                >
+                  {{ 'taskLibrary.manageTasks.copy.done' | translate: { name: copied.name } }}
+                </p>
+              }
+            }
+
             @if (expandedTemplateId() === template.id) {
               <div
                 class="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
               >
+                @if (isChecklist(template)) {
+                  @if (!template.isArchived) {
+                    <div
+                      class="mb-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300"
+                    >
+                      <app-toggle
+                        [checked]="template.eveningBeforeFrom !== null"
+                        [disabled]="savingOptions.isBusy(template.id)"
+                        [ariaLabel]="'taskLibrary.manageTasks.checklist.eveningLabel' | translate"
+                        (checkedChange)="toggleEveningBefore(template, $event)"
+                      />
+                      {{ 'taskLibrary.manageTasks.checklist.eveningLabel' | translate }}
+                      @if (template.eveningBeforeFrom !== null) {
+                        <app-time-select
+                          [value]="template.eveningBeforeFrom"
+                          [ariaLabel]="'taskLibrary.manageTasks.checklist.eveningLabel' | translate"
+                          (valueChange)="setEveningBefore(template, $event)"
+                        />
+                      } @else {
+                        <span class="font-normal text-slate-500 dark:text-slate-400">{{
+                          'taskLibrary.manageTasks.checklist.eveningHint' | translate
+                        }}</span>
+                      }
+                    </div>
+                    @if (savingOptions.state(); as state) {
+                      @if (state.status === 'error') {
+                        <p class="mb-2 text-sm text-red-600 dark:text-red-400">
+                          {{ state.message | translate }}
+                        </p>
+                      }
+                    }
+                    <app-suggestion-panel [template]="template" [childName]="selectedChildName()" />
+                  }
+                }
+
                 <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {{ 'taskLibrary.manageTasks.subtasks.title' | translate }}
+                  {{
+                    (isChecklist(template)
+                      ? 'taskLibrary.manageTasks.items.title'
+                      : 'taskLibrary.manageTasks.subtasks.title'
+                    ) | translate
+                  }}
                 </h4>
 
                 @if (subtasks.state(); as state) {
@@ -199,7 +317,12 @@
 
                 @if (template.subtasks.length === 0) {
                   <p class="mb-3 text-sm text-slate-500 dark:text-slate-400">
-                    {{ 'taskLibrary.manageTasks.subtasks.empty' | translate }}
+                    {{
+                      (isChecklist(template)
+                        ? 'taskLibrary.manageTasks.items.empty'
+                        : 'taskLibrary.manageTasks.subtasks.empty'
+                      ) | translate
+                    }}
                   </p>
                 } @else {
                   <ul class="mb-3 space-y-2">
@@ -231,21 +354,30 @@
                               [ngModel]="editSubtaskIcon()"
                               (ngModelChange)="editSubtaskIcon.set($event)"
                             />
-                            <app-stepper
-                              [value]="editSubtaskDuration()"
-                              [min]="1"
-                              [ariaLabel]="
-                                'taskLibrary.manageTasks.subtasks.durationLabel' | translate
-                              "
-                              (valueChange)="editSubtaskDuration.set($event)"
-                            />
+                            @if (isChecklist(template)) {
+                              <app-weekday-picker
+                                class="sm:col-span-full sm:row-start-2"
+                                [value]="editSubtaskWeekdays()"
+                                [ariaLabel]="'taskLibrary.manageTasks.items.daysLabel' | translate"
+                                (valueChange)="editSubtaskWeekdays.set($event)"
+                              />
+                            } @else {
+                              <app-stepper
+                                [value]="editSubtaskDuration()"
+                                [min]="1"
+                                [ariaLabel]="
+                                  'taskLibrary.manageTasks.subtasks.durationLabel' | translate
+                                "
+                                (valueChange)="editSubtaskDuration.set($event)"
+                              />
+                            }
                             <button
                               type="button"
                               class="rounded-lg bg-slate-950 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
                               [disabled]="
                                 subtasks.isBusy('save:' + subtask.id) || !editSubtaskTitle().trim()
                               "
-                              (click)="saveSubtask(template.id, subtask.id)"
+                              (click)="saveSubtask(template, subtask.id)"
                             >
                               {{ 'taskLibrary.manageTasks.subtasks.save' | translate }}
                             </button>
@@ -264,9 +396,22 @@
                                 <span class="text-base leading-none">{{ subtask.icon }}</span>
                               }
                               {{ subtask.title }}
-                              <span class="text-xs text-slate-400"
-                                >· {{ formatDuration(subtask.durationMinutes) }}</span
-                              >
+                              @if (isChecklist(template)) {
+                                <span class="text-xs text-slate-400"
+                                  >·
+                                  @if (subtask.weekdays.length === 0) {
+                                    {{ 'taskLibrary.manageTasks.items.everyDay' | translate }}
+                                  } @else {
+                                    @for (day of subtask.weekdays; track day; let last = $last) {
+                                      {{ shortKey(day) | translate }}{{ last ? '' : ',' }}
+                                    }
+                                  }
+                                </span>
+                              } @else {
+                                <span class="text-xs text-slate-400"
+                                  >· {{ formatDuration(subtask.durationMinutes) }}</span
+                                >
+                              }
                             </span>
 
                             <div class="flex items-center gap-2">
@@ -322,15 +467,23 @@
 
                 <form
                   class="grid gap-2 sm:grid-cols-[1fr_4rem_8rem_auto] sm:items-center"
-                  (ngSubmit)="addSubtask(template.id)"
+                  (ngSubmit)="addSubtask(template)"
                 >
                   <input
                     type="text"
                     name="newSubtaskTitle"
-                    [placeholder]="'taskLibrary.manageTasks.subtasks.titlePlaceholder' | translate"
-                    aria-label="{{
-                      'taskLibrary.manageTasks.subtasks.titlePlaceholder' | translate
-                    }}"
+                    [placeholder]="
+                      (isChecklist(template)
+                        ? 'taskLibrary.manageTasks.items.titlePlaceholder'
+                        : 'taskLibrary.manageTasks.subtasks.titlePlaceholder'
+                      ) | translate
+                    "
+                    [attr.aria-label]="
+                      (isChecklist(template)
+                        ? 'taskLibrary.manageTasks.items.titlePlaceholder'
+                        : 'taskLibrary.manageTasks.subtasks.titlePlaceholder'
+                      ) | translate
+                    "
                     class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                     [ngModel]="newSubtaskTitle()"
                     (ngModelChange)="newSubtaskTitle.set($event)"
@@ -346,23 +499,45 @@
                     [ngModel]="newSubtaskIcon()"
                     (ngModelChange)="newSubtaskIcon.set($event)"
                   />
-                  <app-stepper
-                    [value]="newSubtaskDuration()"
-                    [min]="1"
-                    [ariaLabel]="'taskLibrary.manageTasks.subtasks.durationLabel' | translate"
-                    (valueChange)="newSubtaskDuration.set($event)"
-                  />
+                  @if (!isChecklist(template)) {
+                    <app-stepper
+                      [value]="newSubtaskDuration()"
+                      [min]="1"
+                      [ariaLabel]="'taskLibrary.manageTasks.subtasks.durationLabel' | translate"
+                      (valueChange)="newSubtaskDuration.set($event)"
+                    />
+                  }
                   <button
                     type="submit"
                     class="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                     [disabled]="
                       subtasks.isBusy('add') ||
                       !newSubtaskTitle().trim() ||
-                      newSubtaskDuration() <= 0
+                      (!isChecklist(template) && newSubtaskDuration() <= 0)
                     "
                   >
-                    {{ 'taskLibrary.manageTasks.subtasks.addButton' | translate }}
+                    {{
+                      (isChecklist(template)
+                        ? 'taskLibrary.manageTasks.items.addButton'
+                        : 'taskLibrary.manageTasks.subtasks.addButton'
+                      ) | translate
+                    }}
                   </button>
+                  @if (isChecklist(template)) {
+                    <div class="sm:col-span-full">
+                      <span
+                        class="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400"
+                        aria-hidden="true"
+                        >{{ 'taskLibrary.manageTasks.items.daysLabel' | translate }} ·
+                        {{ 'taskLibrary.manageTasks.items.everyDay' | translate }}</span
+                      >
+                      <app-weekday-picker
+                        [value]="newSubtaskWeekdays()"
+                        [ariaLabel]="'taskLibrary.manageTasks.items.daysLabel' | translate"
+                        (valueChange)="newSubtaskWeekdays.set($event)"
+                      />
+                    </div>
+                  }
                 </form>
               </div>
             }
@@ -375,6 +550,14 @@
       class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_5rem_auto]"
       (ngSubmit)="createTemplate()"
     >
+      <div class="sm:col-span-2 lg:col-span-full">
+        <app-segmented-control
+          [options]="kindOptions()"
+          [selected]="newTemplateKind()"
+          [ariaLabel]="'taskLibrary.manageTasks.kind.label' | translate"
+          (selectedChange)="newTemplateKind.set($event)"
+        />
+      </div>
       <input
         type="text"
         name="templateName"
@@ -393,7 +576,7 @@
         [ngModel]="newTemplateIcon()"
         (ngModelChange)="newTemplateIcon.set($event)"
       />
-      <div class="sm:col-span-2 lg:col-span-full lg:row-start-2">
+      <div class="sm:col-span-2 lg:col-span-full lg:row-start-3">
         <app-color-swatch-picker
           [value]="newTemplateColor()"
           [ariaLabel]="'common.colorLabel' | translate"

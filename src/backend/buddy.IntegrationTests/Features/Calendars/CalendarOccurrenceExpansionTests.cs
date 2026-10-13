@@ -179,6 +179,102 @@ public sealed class CalendarOccurrenceExpansionTests
         Assert.Equal(expectedStart.AddMinutes(90), Timed(occurrences[2]).EndsAt);
     }
 
+    // Packing checklists (docs/backend/analysis/packing-checklists.md, Questions 2-4). 2026-06-01
+    // is a Monday.
+    private static TaskTemplateEvent ChecklistCreated() =>
+        new TaskTemplateCreated(FixedTemplateId, FixedUserId, FixedUserId, "School bag", Icon.New("backpack"), Color.New("#ffaa00"), DateTimeOffset.UtcNow, TaskTemplateKind.Checklist);
+
+    private static TaskTemplateEvent ItemAdded(string title, Weekdays weekdays = Weekdays.None, TimeSpan duration = default) =>
+        new SubtaskAdded(FixedTemplateId, new Subtask(SubtaskId.New(), title, null, duration, weekdays), int.MaxValue, FixedUserId, DateTimeOffset.UtcNow);
+
+    private static Recurrence Daily() => new Recurrence.Repeating(RecurrenceFrequency.Daily, 1, new RecurrenceEnd.Never());
+
+    [Fact]
+    public async Task A_checklists_items_are_all_due_at_the_scheduled_time_and_carry_the_checklist_options()
+    {
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 45), IsAllDay: false);
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
+        var options = new ChecklistOptionsChanged(FixedTemplateId, ChecklistOptions.None, new ChecklistOptions(new TimeOnly(17, 0)), FixedUserId, DateTimeOffset.UtcNow);
+        var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, ChecklistCreated(), options, ItemAdded("Lunchbox"), ItemAdded("Glasses"));
+
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+
+        Assert.Equal(2, occurrences.Count);
+        var dueAt = new DateTimeOffset(2026, 6, 1, 5, 45, 0, TimeSpan.Zero);
+        Assert.All(occurrences, o => Assert.Equal(dueAt, Assert.IsType<OccurrenceTiming.Due>(o.Timing).DueAt));
+        Assert.All(occurrences, o => Assert.Equal(new RoutineChecklist(new TimeOnly(17, 0)), o.Routine?.Checklist));
+        Assert.Equal(["Lunchbox", "Glasses"], occurrences.Select(o => o.Title));
+    }
+
+    [Fact]
+    public async Task A_routine_carries_no_checklist_options()
+    {
+        var due = new DueDate(new DateOnly(2026, 6, 1), new TimeOnly(7, 0), IsAllDay: false);
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
+        var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(5)));
+
+        var occurrence = Assert.Single(await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None));
+
+        Assert.NotNull(occurrence.Routine);
+        Assert.Null(occurrence.Routine.Checklist);
+    }
+
+    [Fact]
+    public async Task A_weekday_bound_item_only_appears_on_its_days()
+    {
+        var monday = new DateOnly(2026, 6, 1);
+        var due = new DueDate(monday, new TimeOnly(7, 45), IsAllDay: false);
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due, Daily()));
+        var templates = new FakeTaskTemplateEventStore().Add(
+            FixedTemplateId, ChecklistCreated(), ItemAdded("Lunchbox"), ItemAdded("Gym clothes", Weekdays.Tuesday));
+
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(2), items, templates, CancellationToken.None);
+
+        var gym = occurrences.Where(o => o.Title == "Gym clothes").ToArray();
+        var gymDay = Assert.Single(gym);
+        Assert.Equal(new DateTimeOffset(2026, 6, 2, 5, 45, 0, TimeSpan.Zero), gymDay.SortAt);
+        Assert.Equal(3, occurrences.Count(o => o.Title == "Lunchbox"));
+    }
+
+    [Fact]
+    public async Task A_day_where_no_item_applies_has_no_occurrences()
+    {
+        var monday = new DateOnly(2026, 6, 1);
+        var due = new DueDate(monday, new TimeOnly(7, 45), IsAllDay: false);
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due, Daily()));
+        var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, ChecklistCreated(), ItemAdded("Swimming kit", Weekdays.Thursday));
+
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(2), items, templates, CancellationToken.None);
+
+        Assert.Empty(occurrences);
+    }
+
+    [Fact]
+    public async Task A_routine_step_skipped_on_a_weekday_closes_the_gap()
+    {
+        var monday = new DateOnly(2026, 6, 1);
+        var due = new DueDate(monday, new TimeOnly(7, 0), IsAllDay: false);
+        var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
+        var templates = new FakeTaskTemplateEventStore().Add(
+            FixedTemplateId,
+            TemplateCreated(),
+            SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10)),
+            ItemAdded("Pack gym bag", Weekdays.Tuesday, TimeSpan.FromMinutes(5)),
+            SubtaskAdded("Get dressed", TimeSpan.FromMinutes(15)));
+
+        var occurrences = (await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday, items, templates, CancellationToken.None))
+            .OrderBy(o => o.SortAt)
+            .ToArray();
+
+        Assert.Equal(["Brush teeth", "Get dressed"], occurrences.Select(o => o.Title));
+        Assert.Equal(Timed(occurrences[0]).EndsAt, Timed(occurrences[1]).StartsAt);
+    }
+
     private static OccurrenceTiming.Timed Timed(CalendarItemOccurrence occurrence) =>
         Assert.IsType<OccurrenceTiming.Timed>(occurrence.Timing);
 

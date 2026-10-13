@@ -91,4 +91,6 @@ internal sealed record OccurrenceTimingDto(
     DateTimeOffset? EndsAt = null,
     DateTimeOffset? DueAt = null);
 
-internal sealed record RoutineDto(Guid SubtaskId, string ParentTitle, string ParentIcon);
+internal sealed record RoutineDto(Guid SubtaskId, string ParentTitle, string ParentIcon, RoutineChecklistDto? Checklist = null);
+
+internal sealed record RoutineChecklistDto(TimeOnly? EveningBeforeFrom);

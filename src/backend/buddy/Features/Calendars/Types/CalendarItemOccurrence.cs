@@ -62,5 +62,11 @@ public sealed class OccurrenceTimingJsonConverter : KindDiscriminatedJsonConvert
 // One subtask of a template-scheduled task. Title on the occurrence is the subtask's own title;
 // ParentTitle and ParentIcon (the parent's effective icon) let a client group a routine's subtask
 // occurrences under their shared parent, whose header shouldn't take any one subtask's icon.
-// SubtaskId targets the subtask completion route.
-public sealed record Routine(Guid SubtaskId, string ParentTitle, string ParentIcon);
+// SubtaskId targets the subtask completion route. Checklist is set when the template is a packing
+// list (its items are all due at the scheduled time), null for a routine -- so the child home knows
+// which runs to show the evening before without asking the task library.
+public sealed record Routine(Guid SubtaskId, string ParentTitle, string ParentIcon, RoutineChecklist? Checklist = null);
+
+// A packing list's display options, carried on each of its occurrences
+// (docs/backend/analysis/packing-checklists.md, Question 4).
+public sealed record RoutineChecklist(TimeOnly? EveningBeforeFrom);

@@ -477,6 +477,14 @@ export class CalendarAgenda {
     this.taskTemplates().find((template) => template.id === this.newTaskTemplateId()),
   );
 
+  // A packing list's items are all due when the child leaves the house, so its time reads
+  // "Leave by" (docs/backend/analysis/packing-checklists.md, Frontend).
+  protected readonly newDueTimeLabel = computed(() =>
+    this.newTaskSource() === 'template' && this.selectedTaskTemplate()?.kind === 'Checklist'
+      ? 'taskLibrary.leaveBy'
+      : 'calendar.agenda.form.dueTimeLabel',
+  );
+
   protected readonly assignableMembers = signal<AssignableMember[]>([]);
   // Used only to tell whether the selected assignee is one of the guardian's own children (and
   // if so, which childId) -- AssignableMember carries no child/guardian discriminator of its own.

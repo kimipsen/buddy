@@ -29,11 +29,18 @@ function formatDurationMinutes(totalMinutes: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
 }
 
+export type TaskTemplateKind = Schemas['TaskTemplateKind'];
+export type ChecklistSuggestionStatus = Schemas['ChecklistSuggestionStatus'];
+export type ChecklistSuggestion = Schemas['ChecklistSuggestionResponse'];
+type DayOfWeek = Schemas['DayOfWeek'];
+
 export interface Subtask {
   id: string;
   title: string;
   icon: string | null;
   durationMinutes: number;
+  // Empty: the item applies whenever the template occurs. Only checklists offer it in the UI.
+  weekdays: DayOfWeek[];
 }
 
 // A TaskTemplate belongs to exactly one child -- it's scoped by childId in the URL because that's
@@ -49,9 +56,38 @@ export interface TaskTemplate {
   isArchived: boolean;
   createdBy: string;
   lastModifiedBy: string;
+  kind: TaskTemplateKind;
+  // A packing list's "show the evening before from" time ("HH:mm"), or null for the day only.
+  // Always null for a routine.
+  eveningBeforeFrom: string | null;
+  // Pending first (oldest first), then the most recently resolved; always empty for a routine.
+  suggestions: ChecklistSuggestion[];
 }
 
-export type TaskTemplateDetails = Schemas['CreateTaskTemplateRequest'];
+export type TaskTemplateDetails = Pick<
+  Schemas['CreateTaskTemplateRequest'],
+  'name' | 'icon' | 'color'
+>;
+
+// What only creation takes: the kind is fixed from then on.
+export interface NewTaskTemplate extends TaskTemplateDetails {
+  kind?: TaskTemplateKind;
+  eveningBeforeFrom?: string | null;
+}
+
+// The wire TimeOnly is "HH:mm:ss"; the app's time inputs use "HH:mm".
+function toHourMinute(time: string | null | undefined): string | null {
+  return time ? time.slice(0, 5) : null;
+}
+
+function toWireTime(time: string | null | undefined): string | null {
+  return time ? `${time.slice(0, 5)}:00` : null;
+}
+
+// An empty list means "every day" and goes over the wire as null.
+function toWireWeekdays(weekdays: DayOfWeek[] | undefined): DayOfWeek[] | null {
+  return weekdays && weekdays.length > 0 ? weekdays : null;
+}
 
 type TaskTemplateResponse = Schemas['TaskTemplateResponse'];
 
@@ -66,11 +102,15 @@ function fromResponse(response: TaskTemplateResponse): TaskTemplate {
       title: subtask.title,
       icon: subtask.icon,
       durationMinutes: parseDurationMinutes(subtask.duration),
+      weekdays: subtask.weekdays,
     })),
     totalDurationMinutes: parseDurationMinutes(response.totalDuration),
     isArchived: response.isArchived,
     createdBy: response.createdBy,
     lastModifiedBy: response.lastModifiedBy,
+    kind: response.kind,
+    eveningBeforeFrom: toHourMinute(response.checklist?.eveningBeforeFrom),
+    suggestions: response.suggestions,
   };
 }
 
@@ -109,21 +149,30 @@ export class TaskLibraryService {
   }
 
   async listTaskTemplates(childId: string): Promise<TaskTemplate[]> {
+    const templates = await this.fetchTaskTemplates(childId);
+    this.templatesState.set(templates);
+    return templates;
+  }
+
+  // A child's templates without touching the shared `templates` state: for readers that aren't the
+  // editor (the child home's suggestions, the dashboard's per-child counts), so the editor's list
+  // never flips to whichever child was read last.
+  async fetchTaskTemplates(childId: string): Promise<TaskTemplate[]> {
     const responses = await firstValueFrom(
       this.http.get<TaskTemplateResponse[]>(`${this.base()}/children/${childId}`),
     );
-    const templates = responses.map(fromResponse);
-    this.templatesState.set(templates);
-    return sortByName(templates);
+    return sortByName(responses.map(fromResponse));
   }
 
-  async createTaskTemplate(childId: string, request: TaskTemplateDetails): Promise<TaskTemplate> {
+  async createTaskTemplate(childId: string, request: NewTaskTemplate): Promise<TaskTemplate> {
     const response = await firstValueFrom(
-      postIdempotent<TaskTemplateResponse>(
-        this.http,
-        `${this.base()}/children/${childId}`,
-        request,
-      ),
+      postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/children/${childId}`, {
+        name: request.name,
+        icon: request.icon,
+        color: request.color,
+        kind: request.kind ?? 'Routine',
+        eveningBeforeFrom: toWireTime(request.eveningBeforeFrom),
+      }),
     );
     const template = fromResponse(response);
     this.templatesState.update((current) => [...current, template]);
@@ -157,6 +206,7 @@ export class TaskLibraryService {
     icon: string | null,
     durationMinutes: number,
     position?: number | null,
+    weekdays?: DayOfWeek[],
   ): Promise<TaskTemplate> {
     const response = await firstValueFrom(
       postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/${templateId}/subtasks`, {
@@ -164,6 +214,7 @@ export class TaskLibraryService {
         icon,
         duration: formatDurationMinutes(durationMinutes),
         position: position ?? null,
+        weekdays: toWireWeekdays(weekdays),
       }),
     );
     const template = fromResponse(response);
@@ -177,12 +228,14 @@ export class TaskLibraryService {
     title: string,
     icon: string | null,
     durationMinutes: number,
+    weekdays?: DayOfWeek[],
   ): Promise<TaskTemplate> {
     const response = await firstValueFrom(
       this.http.patch<TaskTemplateResponse>(`${this.base()}/${templateId}/subtasks/${subtaskId}`, {
         title,
         icon,
         duration: formatDurationMinutes(durationMinutes),
+        weekdays: toWireWeekdays(weekdays),
       }),
     );
     const template = fromResponse(response);
@@ -211,6 +264,95 @@ export class TaskLibraryService {
       this.http.put<TaskTemplateResponse>(`${this.base()}/${templateId}/subtasks/order`, {
         newOrder,
       }),
+    );
+    const template = fromResponse(response);
+    this.replaceTemplate(template);
+    return template;
+  }
+
+  // A packing list's "evening before" time ("HH:mm"), or null to show it on the day only.
+  async setChecklistOptions(
+    templateId: string,
+    eveningBeforeFrom: string | null,
+  ): Promise<TaskTemplate> {
+    const response = await firstValueFrom(
+      this.http.put<TaskTemplateResponse>(`${this.base()}/${templateId}/checklist-options`, {
+        eveningBeforeFrom: toWireTime(eveningBeforeFrom),
+      }),
+    );
+    const template = fromResponse(response);
+    this.replaceTemplate(template);
+    return template;
+  }
+
+  // Copies a template into another child's library. The copy belongs to that child, so the shared
+  // state (the selected child's list) is left alone unless it is that child's.
+  async copyTaskTemplate(templateId: string, childId: string): Promise<TaskTemplate> {
+    const response = await firstValueFrom(
+      postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/${templateId}/copy`, {
+        childId,
+      }),
+    );
+    return fromResponse(response);
+  }
+
+  // The child's own packing list: suggest an item for a guardian to approve. An empty weekday list
+  // means "whenever the list occurs".
+  async suggestChecklistItem(
+    templateId: string,
+    title: string,
+    weekdays: DayOfWeek[] = [],
+  ): Promise<TaskTemplate> {
+    const response = await firstValueFrom(
+      postIdempotent<TaskTemplateResponse>(this.http, `${this.base()}/${templateId}/suggestions`, {
+        title,
+        weekdays: toWireWeekdays(weekdays),
+      }),
+    );
+    return fromResponse(response);
+  }
+
+  async withdrawChecklistSuggestion(
+    templateId: string,
+    suggestionId: string,
+  ): Promise<TaskTemplate> {
+    return fromResponse(
+      await firstValueFrom(
+        this.http.post<TaskTemplateResponse>(
+          `${this.base()}/${templateId}/suggestions/${suggestionId}/withdraw`,
+          null,
+        ),
+      ),
+    );
+  }
+
+  // The guardian's final title and days; the item is appended to the list.
+  async approveChecklistSuggestion(
+    templateId: string,
+    suggestionId: string,
+    title: string,
+    weekdays: DayOfWeek[] = [],
+  ): Promise<TaskTemplate> {
+    const response = await firstValueFrom(
+      this.http.post<TaskTemplateResponse>(
+        `${this.base()}/${templateId}/suggestions/${suggestionId}/approve`,
+        { title, weekdays: toWireWeekdays(weekdays), position: null },
+      ),
+    );
+    const template = fromResponse(response);
+    this.replaceTemplate(template);
+    return template;
+  }
+
+  async declineChecklistSuggestion(
+    templateId: string,
+    suggestionId: string,
+  ): Promise<TaskTemplate> {
+    const response = await firstValueFrom(
+      this.http.post<TaskTemplateResponse>(
+        `${this.base()}/${templateId}/suggestions/${suggestionId}/decline`,
+        null,
+      ),
     );
     const template = fromResponse(response);
     this.replaceTemplate(template);

@@ -67,6 +67,9 @@ export function taskTemplate(overrides: Partial<TaskTemplate> = {}): TaskTemplat
     isArchived: false,
     createdBy: 'me',
     lastModifiedBy: 'me',
+    kind: 'Routine',
+    eveningBeforeFrom: null,
+    suggestions: [],
     ...overrides,
   };
 }

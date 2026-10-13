@@ -4,7 +4,8 @@ import { CalendarItemOccurrence, OccurrenceTiming, Routine } from '../app/core/c
 // subtaskId/parentTitle/parentIcon for a routine subtask); this nests them into the wire shape the
 // way the backend's CalendarOccurrenceExpansion does. A startsAt makes the occurrence timed (endsAt
 // defaults to startsAt), otherwise it is due at dueAt. Any subtaskId or parentTitle makes it a
-// routine subtask, which must be timed, as the backend always sends it. An explicit timing, sortAt
+// routine subtask, which must be timed, as the backend sends it (a packing-list item, with a
+// routine.checklist, is due instead). An explicit timing, sortAt
 // or routine wins over the flat fields.
 export interface FlatOccurrenceFields {
   startsAt?: string | null;
@@ -29,7 +30,7 @@ export function nestOccurrence<T extends CalendarItemOccurrence>(flat: FlatOccur
       ? flat.routine
       : routineFrom(subtaskId, parentTitle, parentIcon ?? flat.icon);
 
-  if (routine !== null && timing.kind !== 0) {
+  if (routine !== null && !routine.checklist && timing.kind !== 0) {
     throw new Error('A routine subtask occurrence is always timed: give it a startsAt.');
   }
 
@@ -66,5 +67,10 @@ function routineFrom(
     return null;
   }
 
-  return { subtaskId: subtaskId ?? 'subtask-1', parentTitle: parentTitle ?? '', parentIcon };
+  return {
+    subtaskId: subtaskId ?? 'subtask-1',
+    parentTitle: parentTitle ?? '',
+    parentIcon,
+    checklist: null,
+  };
 }

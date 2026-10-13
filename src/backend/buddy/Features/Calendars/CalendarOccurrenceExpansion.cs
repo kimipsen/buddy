@@ -97,34 +97,41 @@ public static class CalendarOccurrenceExpansion
         }
     }
 
-    // One occurrence per (date, subtask): each subtask's wall-clock window is computed first
+    // One occurrence per (date, applicable subtask). A routine's subtasks run back to back: each
+    // subtask's wall-clock window is computed first
     // (due.Time + a cumulative TimeSpan offset, still local time), and only then resolved through
     // TimeZoneResolution -- never by resolving the anchor to a single UTC instant and adding
     // TimeSpans to that instant, which would compute the wrong wall-clock boundary for any subtask
-    // starting after a DST transition mid-routine.
+    // starting after a DST transition mid-routine. A checklist's items have no duration and are all
+    // due at the scheduled ("leave by") time. Either kind skips an item whose weekdays exclude the
+    // date (docs/backend/analysis/packing-checklists.md, Questions 2 and 3).
     private static void AddTemplateTaskOccurrences(
         CalendarItem item, ItemSchedule.Task task, TaskTemplate template, TimeZoneId zoneId, Icon calendarIcon, DateOnly from, DateOnly to, List<CalendarItemOccurrence> occurrences)
     {
         var due = task.DueDate;
+        var checklist = template.Kind == TaskTemplateKind.Checklist ? new RoutineChecklist(template.Checklist.EveningBeforeFrom) : null;
 
         foreach (var date in RecurrenceExpansion.ExpandDates(due.Date, item.Recurrence, from, to))
         {
             var offset = TimeSpan.Zero;
 
-            foreach (var subtask in template.Subtasks)
+            foreach (var subtask in template.Subtasks.Where(s => s.AppliesOn(date)))
             {
                 var startLocal = date.ToDateTime(due.Time) + offset;
-                var endLocal = startLocal + subtask.Duration;
 
-                var startsAt = TimeZoneResolution.ResolveInstant(zoneId, startLocal);
-                var endsAt = TimeZoneResolution.ResolveInstant(zoneId, endLocal);
+                OccurrenceTiming timing = checklist is null
+                    ? new OccurrenceTiming.Timed(
+                        TimeZoneResolution.ResolveInstant(zoneId, startLocal),
+                        TimeZoneResolution.ResolveInstant(zoneId, startLocal + subtask.Duration))
+                    : new OccurrenceTiming.Due(TimeZoneResolution.ResolveInstant(zoneId, startLocal));
                 var isCompleted = item.CompletionLog.Contains(new CompletionKey(date, new CompletionTarget.Subtask(subtask.Id.Value)));
 
                 occurrences.Add(new CalendarItemOccurrence(
                     item.Id, item.Kind, subtask.Title, subtask.Icon?.Value ?? item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
-                    new OccurrenceTiming.Timed(startsAt, endsAt), due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value,
-                    task.AssignedTo?.Value, new Routine(subtask.Id.Value, item.Title, item.Icon?.Value ?? calendarIcon.Value)));
+                    timing, due.IsAllDay, isCompleted, item.CreatedBy.Value, item.LastModifiedBy.Value,
+                    task.AssignedTo?.Value, new Routine(subtask.Id.Value, item.Title, item.Icon?.Value ?? calendarIcon.Value, checklist)));
 
+                // Zero for a checklist item.
                 offset += subtask.Duration;
             }
         }

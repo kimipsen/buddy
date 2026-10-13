@@ -19,8 +19,23 @@ internal sealed record ResolvedTaskTemplate(IReadOnlyCollection<TaskTemplateEven
 // kind of shared prerequisite helper for.
 internal static class TaskTemplateAccess
 {
-    public static async Task<Result<ResolvedTaskTemplate>> ResolveForManageAsync(
-        TaskTemplateId templateId, UserId userId, ITaskTemplateEventStore templates, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    public static Task<Result<ResolvedTaskTemplate>> ResolveForManageAsync(
+        TaskTemplateId templateId, UserId userId, ITaskTemplateEventStore templates, IGuardianLinkEventStore guardians, CancellationToken cancellationToken) =>
+        ResolveAsync(templateId, userId, templates, guardians, TaskLibraryAuthorization.CheckManage, cancellationToken);
+
+    // The child-only suggestion slices: the template's owning child is allowed, a guardian of the
+    // child Forbidden, anyone else NotFound (docs/backend/analysis/packing-checklists.md, Question 8).
+    public static Task<Result<ResolvedTaskTemplate>> ResolveForOwnerAsync(
+        TaskTemplateId templateId, UserId userId, ITaskTemplateEventStore templates, IGuardianLinkEventStore guardians, CancellationToken cancellationToken) =>
+        ResolveAsync(templateId, userId, templates, guardians, TaskLibraryAuthorization.CheckOwner, cancellationToken);
+
+    private static async Task<Result<ResolvedTaskTemplate>> ResolveAsync(
+        TaskTemplateId templateId,
+        UserId userId,
+        ITaskTemplateEventStore templates,
+        IGuardianLinkEventStore guardians,
+        Func<UserId, UserId, IGuardianLinkEventStore, CancellationToken, Task<TaskLibraryAccess>> check,
+        CancellationToken cancellationToken)
     {
         var events = await templates.ReadAsync(templateId, cancellationToken);
         var template = TaskTemplate.Rehydrate(events);
@@ -35,7 +50,7 @@ internal static class TaskTemplateAccess
             return new Result<ResolvedTaskTemplate>.NotFound();
         }
 
-        var access = await TaskLibraryAuthorization.CheckManage(childId, userId, guardians, cancellationToken);
+        var access = await check(childId, userId, guardians, cancellationToken);
 
         if (access != TaskLibraryAccess.Allowed)
         {

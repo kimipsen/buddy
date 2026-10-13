@@ -15,6 +15,7 @@ import { Meal, MealPlanEntry, MealplansService } from '../../../core/mealplans.s
 import { MedicineDoseOccurrence, MedicinesService } from '../../../core/medicines.service';
 import { PickupOccurrence, PickupsService } from '../../../core/pickups.service';
 import { ProgressService } from '../../../core/progress.service';
+import { TaskLibraryService, TaskTemplate } from '../../../core/task-library.service';
 import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildHome } from './home';
 import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
@@ -137,6 +138,7 @@ describe('ChildHome', () => {
     calendars?: Partial<CalendarsService>;
     progress?: Partial<ProgressService>;
     houseRules?: Partial<HouseRulesService>;
+    taskLibrary?: Partial<TaskLibraryService>;
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -202,6 +204,10 @@ describe('ChildHome', () => {
         { provide: CalendarsService, useValue: calendarsStub },
         { provide: ProgressService, useValue: progressStub },
         { provide: HouseRulesService, useValue: houseRulesStub },
+        {
+          provide: TaskLibraryService,
+          useValue: { fetchTaskTemplates: vi.fn(async () => []), ...stubs.taskLibrary },
+        },
       ],
     }).compileComponents();
 
@@ -1609,6 +1615,189 @@ describe('ChildHome', () => {
       await settle(fixture);
 
       expect((fixture.nativeElement as HTMLElement).querySelector('[role="timer"]')).toBeNull();
+    });
+  });
+
+  describe('packing lists', () => {
+    // A local evening, so tomorrow's list is past its 17:00 "evening before" time.
+    const evening = new Date(2026, 9, 13, 18, 30);
+    const afternoon = new Date(2026, 9, 13, 16, 30);
+    const todayIso = '2026-10-13';
+    const tomorrowIso = '2026-10-14';
+
+    function item(
+      date: string,
+      subtaskId: string,
+      title: string,
+      isCompleted = false,
+      eveningBeforeFrom: string | null = '17:00:00',
+    ): CalendarOccurrence {
+      return occurrence({
+        itemId: 'bag-item',
+        title,
+        icon: '🎒',
+        isCompleted,
+        timing: { kind: 1, dueAt: `${date}T05:45:00Z` },
+        routine: {
+          subtaskId,
+          parentTitle: 'School bag',
+          parentIcon: '🎒',
+          checklist: { eveningBeforeFrom },
+        },
+      });
+    }
+
+    function bagTemplate(overrides: Partial<TaskTemplate> = {}): TaskTemplate {
+      return {
+        id: 'bag-1',
+        name: 'School bag',
+        icon: '🎒',
+        color: '#6366f1',
+        subtasks: [
+          { id: 'lunchbox', title: 'Lunchbox', icon: null, durationMinutes: 0, weekdays: [] },
+          { id: 'gym', title: 'Gym clothes', icon: null, durationMinutes: 0, weekdays: [] },
+        ],
+        totalDurationMinutes: 0,
+        isArchived: false,
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        kind: 'Checklist',
+        eveningBeforeFrom: '17:00',
+        suggestions: [],
+        ...overrides,
+      };
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    async function setupPacking(options: {
+      at: Date;
+      today?: CalendarOccurrence[];
+      tomorrow?: CalendarOccurrence[];
+      taskLibrary?: Partial<TaskLibraryService>;
+      setTaskCompletion?: CalendarsService['setTaskCompletion'];
+    }) {
+      vi.setSystemTime(options.at);
+      const result = await setup({
+        calendars: {
+          listTodayOccurrences: vi.fn(async () => options.today ?? []),
+          listOccurrencesInRange: vi.fn(async () => options.tomorrow ?? []),
+          setTaskCompletion: options.setTaskCompletion ?? vi.fn(async () => ({}) as TaskCompletion),
+        },
+        taskLibrary: options.taskLibrary,
+      });
+      await settle(result.fixture);
+      await settle(result.fixture);
+      return { ...result, compiled: result.fixture.nativeElement as HTMLElement };
+    }
+
+    it('shows tomorrow’s packing list once its evening time has passed', async () => {
+      const { compiled, calendars } = await setupPacking({
+        at: evening,
+        tomorrow: [
+          item(tomorrowIso, 'lunchbox', 'Lunchbox', true),
+          item(tomorrowIso, 'gym', 'Gym clothes'),
+        ],
+      });
+
+      expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith(tomorrowIso, tomorrowIso);
+      const section = compiled.querySelector('[data-testid="pack-for-tomorrow"]')!;
+      expect(section.textContent).toContain('Pack for tomorrow');
+      expect(section.textContent).toContain('School bag');
+      expect(section.textContent).toContain('1 of 2 packed');
+      expect(section.textContent).toContain('Gym clothes');
+    });
+
+    it('hides tomorrow’s list before its evening time, and a list shown on the day only', async () => {
+      const before = await setupPacking({
+        at: afternoon,
+        tomorrow: [item(tomorrowIso, 'lunchbox', 'Lunchbox')],
+      });
+      expect(before.compiled.querySelector('[data-testid="pack-for-tomorrow"]')).toBeNull();
+
+      TestBed.resetTestingModule();
+      const dayOnly = await setupPacking({
+        at: evening,
+        tomorrow: [item(tomorrowIso, 'lunchbox', 'Lunchbox', false, null)],
+      });
+      expect(dayOnly.compiled.querySelector('[data-testid="pack-for-tomorrow"]')).toBeNull();
+    });
+
+    it('ticks an item of tomorrow’s list for tomorrow’s date and reloads the stars', async () => {
+      const setTaskCompletion = vi.fn(async () => ({}) as TaskCompletion);
+      const { fixture, compiled, progress } = await setupPacking({
+        at: evening,
+        tomorrow: [item(tomorrowIso, 'lunchbox', 'Lunchbox')],
+        setTaskCompletion,
+      });
+
+      const section = compiled.querySelector<HTMLElement>('[data-testid="pack-for-tomorrow"]')!;
+      findButtonByAriaLabel(section, 'Mark done')!.click();
+      await settle(fixture);
+
+      expect(setTaskCompletion).toHaveBeenCalledWith(
+        'cal-1',
+        'bag-item',
+        tomorrowIso,
+        true,
+        'lunchbox',
+      );
+      expect(section.textContent).toContain('1 of 1 packed');
+      expect(progress.getMyProgress).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows today’s packing list with its count and no timer', async () => {
+      const { compiled } = await setupPacking({
+        at: evening,
+        today: [item(todayIso, 'lunchbox', 'Lunchbox', true), item(todayIso, 'gym', 'Gym clothes')],
+      });
+
+      const tasks = sectionRows(compiled, 'Tasks today');
+      expect(tasks).toHaveLength(1);
+      expect(rowText(tasks[0]!)).toContain('1 of 2 packed');
+      expect(compiled.querySelector('[role="timer"]')).toBeNull();
+    });
+
+    it('shows the child’s suggestions under the list, from the matching template', async () => {
+      const fetchTaskTemplates = vi.fn(async () => [
+        bagTemplate({
+          suggestions: [
+            {
+              id: 'suggestion-1',
+              title: 'Recorder',
+              weekdays: ['Friday'],
+              suggestedBy: 'child-1',
+              status: 'Pending',
+              suggestedAt: '2026-10-12T15:00:00Z',
+              resolvedAt: null,
+              subtaskId: null,
+            },
+          ],
+        }),
+      ]);
+      const { compiled } = await setupPacking({
+        at: evening,
+        tomorrow: [item(tomorrowIso, 'lunchbox', 'Lunchbox')],
+        taskLibrary: { fetchTaskTemplates },
+      });
+
+      expect(fetchTaskTemplates).toHaveBeenCalledWith('child-1');
+      const section = compiled.querySelector('[data-testid="pack-for-tomorrow"]')!;
+      expect(section.textContent).toContain('Recorder · Waiting for a grown-up');
+      expect(section.textContent).toContain('Suggest something');
+    });
+
+    it('does not ask for templates when no packing list is on screen', async () => {
+      const fetchTaskTemplates = vi.fn(async () => []);
+      await setupPacking({ at: evening, taskLibrary: { fetchTaskTemplates } });
+
+      expect(fetchTaskTemplates).not.toHaveBeenCalled();
     });
   });
 });

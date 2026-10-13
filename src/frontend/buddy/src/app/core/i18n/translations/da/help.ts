@@ -106,6 +106,10 @@ export const help = {
             s4: 'Angiv "Forfaldsdato" og "Forfaldstid", hvor rutinen starter, og tryk "Tilføj til kalender".',
           },
         },
+        packingLists: {
+          title: 'Pakkelister',
+          body: 'Vælg "Pakkeliste" i stedet for "Rutine" til en skoletaske eller en sportstaske. Tingene på listen har ingen minutter, og en ting kan gælde nogle dage, fx idrætstøj om tirsdagen. Med "Vis aftenen før fra" slået til ser dit barn morgendagens liste på sin forside fra det tidspunkt og kan pakke aftenen før. En færdigpakket liste giver én stjerne. Dit barn kan foreslå ting; du godkender eller afviser dem under listen ("Ikke nu"). "Kopiér til…" kopierer en rutine eller en pakkeliste til en søskende. Når du sætter en pakkeliste i kalenderen, hedder tidspunktet "Afgang kl.".',
+        },
         archive: {
           title: 'Omdøb eller arkivér en rutine',
           body: 'Brug "Omdøb" til at ændre en skabelons navn, ikon eller farve. Når en rutine ikke bruges mere, trykker du "Arkiver". Den bliver stående i listen som "Arkiveret", men du kan ikke længere sætte den i kalenderen.',

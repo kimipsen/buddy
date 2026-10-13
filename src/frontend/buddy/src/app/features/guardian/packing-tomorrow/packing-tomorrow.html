@@ -1,0 +1,27 @@
+@if (lists().length > 0) {
+  <app-card class="mb-6 block break-inside-avoid" data-testid="packing-tomorrow">
+    <h3 class="mb-5 text-lg font-semibold tracking-normal">
+      {{ 'dashboard.packing.title' | translate }}
+    </h3>
+    <ul class="space-y-2">
+      @for (list of lists(); track list.key) {
+        <li>
+          <a
+            routerLink="/guardian/task-library"
+            [queryParams]="{ child: list.childId }"
+            class="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100 transition hover:border-amber-300 dark:hover:border-amber-700"
+          >
+            <span class="text-lg leading-none" aria-hidden="true">{{ list.icon }}</span>
+            <span>
+              {{
+                'dashboard.packing.row'
+                  | translate: { name: list.childName, packed: list.packed, total: list.total }
+              }}
+              <span class="text-xs text-slate-500 dark:text-slate-400">· {{ list.title }}</span>
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  </app-card>
+}

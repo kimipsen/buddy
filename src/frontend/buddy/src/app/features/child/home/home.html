@@ -265,6 +265,78 @@
       </div>
     }
 
+    <!-- Pack for tomorrow: tomorrow's packing lists, from each list's evening time -->
+    @if (packForTomorrow().length > 0) {
+      <div
+        class="rounded-3xl border-4 border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm"
+        data-testid="pack-for-tomorrow"
+      >
+        <h2 class="text-2xl font-bold tracking-normal">
+          {{ 'child.home.packing.tomorrowTitle' | translate }}
+        </h2>
+        <ul class="mt-4 space-y-3">
+          @for (run of packForTomorrow(); track run.itemId) {
+            <li
+              class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
+            >
+              <div class="mb-3 flex flex-wrap items-center gap-2 text-lg font-semibold">
+                <span aria-hidden="true">{{ run.icon }}</span>
+                {{ run.parentTitle }}
+                <span class="text-sm font-semibold text-sky-700 dark:text-sky-300">
+                  {{
+                    'child.home.packing.packed'
+                      | translate: { packed: packedCount(run), total: run.subtasks.length }
+                  }}
+                </span>
+              </div>
+              <ul class="ml-2 space-y-2 border-l-2 border-slate-200 dark:border-slate-800 pl-3">
+                @for (subtask of run.subtasks; track keyFor(subtask)) {
+                  <li class="flex items-center gap-3">
+                    <button
+                      type="button"
+                      class="grid size-11 shrink-0 place-items-center rounded-lg border-2 text-base font-bold transition disabled:opacity-50"
+                      [class.border-emerald-400]="subtask.isCompleted"
+                      [class.bg-emerald-400]="subtask.isCompleted"
+                      [class.text-white]="subtask.isCompleted"
+                      [class.border-slate-300]="!subtask.isCompleted"
+                      [class.dark:border-slate-600]="!subtask.isCompleted"
+                      [disabled]="savingTask.isBusy(keyFor(subtask))"
+                      [attr.aria-label]="
+                        (subtask.isCompleted
+                          ? 'child.home.tasks.markNotDone'
+                          : 'child.home.tasks.markDone'
+                        ) | translate
+                      "
+                      (click)="toggleTomorrowTask(subtask)"
+                    >
+                      @if (subtask.isCompleted) {
+                        ✓
+                      }
+                    </button>
+                    <span
+                      class="flex flex-1 items-center gap-2 text-base font-semibold"
+                      [class.line-through]="subtask.isCompleted"
+                      [class.text-slate-400]="subtask.isCompleted"
+                    >
+                      <span aria-hidden="true">{{ subtask.icon }}</span>
+                      {{ subtask.title }}
+                    </span>
+                  </li>
+                }
+              </ul>
+              @if (templateFor(run); as template) {
+                <app-child-suggestions
+                  [template]="template"
+                  [now]="now()"
+                  (changed)="onSuggestionsChanged($event)"
+                />
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
     <!-- Tasks -->
     @if (tasks().length > 0) {
       <div
@@ -280,9 +352,17 @@
               <li
                 class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
               >
-                <div class="mb-3 flex items-center gap-2 text-lg font-semibold">
+                <div class="mb-3 flex flex-wrap items-center gap-2 text-lg font-semibold">
                   <span aria-hidden="true">{{ run.icon }}</span>
                   {{ run.parentTitle }}
+                  @if (isChecklistRun(run)) {
+                    <span class="text-sm font-semibold text-sky-700 dark:text-sky-300">
+                      {{
+                        'child.home.packing.packed'
+                          | translate: { packed: packedCount(run), total: run.subtasks.length }
+                      }}
+                    </span>
+                  }
                 </div>
                 @if (timerRun()?.itemId === run.itemId && timer(); as state) {
                   <div class="mb-3 space-y-3" data-testid="run-timer">
@@ -383,6 +463,15 @@
                     </li>
                   }
                 </ul>
+                @if (isChecklistRun(run)) {
+                  @if (templateFor(run); as template) {
+                    <app-child-suggestions
+                      [template]="template"
+                      [now]="now()"
+                      (changed)="onSuggestionsChanged($event)"
+                    />
+                  }
+                }
               </li>
             } @else {
               @let task = entry;

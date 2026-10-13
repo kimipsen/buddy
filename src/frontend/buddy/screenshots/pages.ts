@@ -66,7 +66,8 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
   {
     name: 'guardian-dashboard',
     title: 'Guardian dashboard',
-    description: 'Today at a glance: meals, tasks, events, medicine, pickups and the children.',
+    description:
+      'Today at a glance: meals, tasks, events, medicine, pickups and the children, with a pill for a child’s packing-list suggestions. On a weekday evening a “Packing for tomorrow” card lists the lists not yet packed.',
     as: 'guardian',
     route: '/guardian',
     waitFor: 'Emil',
@@ -90,10 +91,14 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
   {
     name: 'guardian-task-library',
     title: 'Task library',
-    description: 'Reusable routines broken into small, timed steps.',
+    description:
+      'Reusable routines broken into small, timed steps, and packing lists whose items can apply on some weekdays only. A child’s suggestions wait above the list for a guardian to approve.',
     as: 'guardian',
     route: '/guardian/task-library',
-    waitFor: 'Morning routine',
+    // As from the dashboard's "Packing suggestions" pill, which opens Emil's school bag with his
+    // suggestion waiting.
+    path: (demo) => `/guardian/task-library?child=${demo.childId}`,
+    waitFor: 'Suggested by Emil',
   },
   {
     name: 'guardian-progress',
@@ -244,7 +249,7 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     name: 'child-home',
     title: 'Child: today',
     description:
-      "The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons.",
+      "The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons. A packing list shows how much is packed and lets the child suggest something; in the evening tomorrow's list appears under “Pack for tomorrow”.",
     as: 'child',
     route: '/child',
     clock: '07:10',

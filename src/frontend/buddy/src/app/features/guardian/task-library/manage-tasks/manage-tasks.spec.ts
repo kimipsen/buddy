@@ -1,5 +1,6 @@
 import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChildSummary, GuardiansService } from '../../../../core/guardians.service';
@@ -26,7 +27,14 @@ describe('ManageTasks', () => {
   }
 
   function subtask(overrides: Partial<Subtask> = {}): Subtask {
-    return { id: 'subtask-1', title: 'Brush teeth', icon: '🪥', durationMinutes: 5, ...overrides };
+    return {
+      id: 'subtask-1',
+      title: 'Brush teeth',
+      icon: '🪥',
+      durationMinutes: 5,
+      weekdays: [],
+      ...overrides,
+    };
   }
 
   function template(overrides: Partial<TaskTemplate> = {}): TaskTemplate {
@@ -40,11 +48,15 @@ describe('ManageTasks', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      kind: 'Routine',
+      eveningBeforeFrom: null,
+      suggestions: [],
       ...overrides,
     };
   }
 
   interface SetupOptions {
+    requestedChildId?: string;
     initialTemplates?: TaskTemplate[];
     guardians?: Partial<GuardiansService>;
     taskLibrary?: Partial<TaskLibraryService>;
@@ -129,6 +141,13 @@ describe('ManageTasks', () => {
           totalDurationMinutes: subtasks.reduce((sum, s) => sum + s.durationMinutes, 0),
         });
       }),
+      setChecklistOptions: vi.fn(async (templateId: string, eveningBeforeFrom: string | null) =>
+        replace({ ...templatesState().find((t) => t.id === templateId)!, eveningBeforeFrom }),
+      ),
+      copyTaskTemplate: vi.fn(async (templateId: string) => ({
+        ...templatesState().find((t) => t.id === templateId)!,
+        id: 'template-copy',
+      })),
       reorderSubtasks: vi.fn(async (templateId: string, newOrder: string[]) => {
         const current = templatesState().find((t) => t.id === templateId)!;
         const byId = new Map(current.subtasks.map((s) => [s.id, s]));
@@ -148,6 +167,18 @@ describe('ManageTasks', () => {
       providers: [
         { provide: TaskLibraryService, useValue: taskLibraryStub },
         { provide: GuardiansService, useValue: guardiansStub },
+        ...(options.requestedChildId
+          ? [
+              {
+                provide: ActivatedRoute,
+                useValue: {
+                  snapshot: {
+                    queryParamMap: convertToParamMap({ child: options.requestedChildId }),
+                  },
+                },
+              },
+            ]
+          : []),
       ],
     }).compileComponents();
 
@@ -658,7 +689,14 @@ describe('ManageTasks', () => {
       findButtonByText(compiled, 'Add subtask')!.click();
       await settle(fixture);
 
-      expect(taskLibrary.addSubtask).toHaveBeenCalledWith('template-1', 'Pack lunch', null, 10);
+      expect(taskLibrary.addSubtask).toHaveBeenCalledWith(
+        'template-1',
+        'Pack lunch',
+        null,
+        10,
+        null,
+        [],
+      );
       expect(compiled.textContent).toContain('Pack lunch');
       expect(subtaskTitleInput(compiled).value).toBe('');
     });
@@ -712,6 +750,7 @@ describe('ManageTasks', () => {
         'Brush teeth well',
         '🪥',
         5,
+        [],
       );
       expect(compiled.textContent).toContain('Brush teeth well');
     });
@@ -790,6 +829,274 @@ describe('ManageTasks', () => {
       expect(downButtons[0].disabled).toBe(false);
       expect(upButtons[1].disabled).toBe(false);
       expect(downButtons[1].disabled).toBe(true);
+    });
+  });
+
+  describe('packing lists', () => {
+    const twoChildren = [
+      child({ id: 'child-1', name: { givenName: 'Emil', familyName: 'Kid' } }),
+      child({ id: 'child-2', name: { givenName: 'Ida', familyName: 'Kid' } }),
+    ];
+
+    function checklist(overrides: Partial<TaskTemplate> = {}): TaskTemplate {
+      return template({
+        id: 'bag-1',
+        name: 'School bag',
+        kind: 'Checklist',
+        eveningBeforeFrom: '17:00',
+        subtasks: [
+          subtask({ id: 'item-1', title: 'Lunchbox', icon: null, durationMinutes: 0 }),
+          subtask({
+            id: 'item-2',
+            title: 'Gym clothes',
+            icon: null,
+            durationMinutes: 0,
+            weekdays: ['Tuesday', 'Thursday'],
+          }),
+        ],
+        ...overrides,
+      });
+    }
+
+    async function setupChecklist(options: SetupOptions = {}) {
+      const result = await setup({ initialTemplates: [checklist()], ...options });
+      await settle(result.fixture);
+      const compiled = result.fixture.nativeElement as HTMLElement;
+      return { ...result, compiled };
+    }
+
+    async function expand(result: Awaited<ReturnType<typeof setupChecklist>>) {
+      findButtonByText(result.compiled, 'Edit subtasks')!.click();
+      await settle(result.fixture);
+    }
+
+    function lastButton(compiled: HTMLElement, text: string): HTMLButtonElement {
+      const matches = Array.from(compiled.querySelectorAll<HTMLButtonElement>('button')).filter(
+        (button) => button.textContent?.trim() === text,
+      );
+      return matches[matches.length - 1]!;
+    }
+
+    it('creates a packing list with the evening view on from 17:00', async () => {
+      const { fixture, taskLibrary } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      findButtonByText(compiled, 'Packing list')!.click();
+      setInputValue(templateNameInput(compiled), 'School bag');
+      fixture.detectChanges();
+      compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(taskLibrary.createTaskTemplate).toHaveBeenCalledWith('child-1', {
+        name: 'School bag',
+        icon: '📋',
+        color: '#6366f1',
+        kind: 'Checklist',
+        eveningBeforeFrom: '17:00',
+      });
+    });
+
+    it('creates a routine by default, with no evening view', async () => {
+      const { fixture, taskLibrary } = await setup();
+      await settle(fixture);
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      setInputValue(templateNameInput(compiled), 'Bedtime');
+      fixture.detectChanges();
+      compiled.querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(taskLibrary.createTaskTemplate).toHaveBeenCalledWith(
+        'child-1',
+        expect.objectContaining({ kind: 'Routine', eveningBeforeFrom: null }),
+      );
+    });
+
+    it('shows a packing list with its item count instead of a duration', async () => {
+      const { compiled } = await setupChecklist();
+
+      expect(compiled.textContent).toContain('Packing list');
+      expect(compiled.textContent).toContain('(2 items)');
+      expect(compiled.textContent).not.toContain('total');
+    });
+
+    it('shows each item’s days and no duration input', async () => {
+      const result = await setupChecklist();
+      await expand(result);
+
+      const text = result.compiled.textContent ?? '';
+      expect(text).toContain('Items');
+      expect(text).toContain('Every day');
+      expect(text).toContain('Tue');
+      expect(text).toContain('Thu');
+      expect(result.compiled.querySelector('app-stepper')).toBeNull();
+    });
+
+    it('adds an item with no duration on the chosen days', async () => {
+      const result = await setupChecklist();
+      await expand(result);
+      const { compiled, fixture, taskLibrary } = result;
+
+      setInputValue(subtaskTitleInput(compiled), 'Swimming kit');
+      compiled
+        .querySelector<HTMLButtonElement>('form app-weekday-picker button[aria-label="Thursday"]')!
+        .click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Add item')!.click();
+      await settle(fixture);
+
+      expect(taskLibrary.addSubtask).toHaveBeenCalledWith('bag-1', 'Swimming kit', null, 0, null, [
+        'Thursday',
+      ]);
+    });
+
+    it('edits an item’s days', async () => {
+      const result = await setupChecklist();
+      await expand(result);
+      const { compiled, fixture, taskLibrary } = result;
+
+      lastButton(compiled, 'Edit').click();
+      await settle(fixture);
+      compiled
+        .querySelector<HTMLButtonElement>('li app-weekday-picker button[aria-label="Tuesday"]')!
+        .click();
+      await settle(fixture);
+      findButtonByText(compiled, 'Save')!.click();
+      await settle(fixture);
+
+      expect(taskLibrary.updateSubtask).toHaveBeenCalledWith(
+        'bag-1',
+        'item-2',
+        'Gym clothes',
+        null,
+        0,
+        ['Thursday'],
+      );
+    });
+
+    it('turns the evening view off and on', async () => {
+      const result = await setupChecklist();
+      await expand(result);
+      const { compiled, fixture, taskLibrary } = result;
+
+      const toggle = () =>
+        compiled.querySelector<HTMLButtonElement>(
+          'button[role="switch"][aria-label="Show the evening before from"]',
+        )!;
+      expect(toggle().getAttribute('aria-checked')).toBe('true');
+
+      toggle().click();
+      await settle(fixture);
+      expect(taskLibrary.setChecklistOptions).toHaveBeenCalledWith('bag-1', null);
+      expect(compiled.textContent).toContain('Off: the list shows on the day only.');
+
+      toggle().click();
+      await settle(fixture);
+      expect(taskLibrary.setChecklistOptions).toHaveBeenLastCalledWith('bag-1', '17:00');
+    });
+
+    it('shows the child’s pending suggestions above the items', async () => {
+      const result = await setupChecklist({
+        initialTemplates: [
+          checklist({
+            suggestions: [
+              {
+                id: 'suggestion-1',
+                title: 'Recorder',
+                weekdays: ['Friday'],
+                suggestedBy: 'child-1',
+                status: 'Pending',
+                suggestedAt: '2026-10-12T15:00:00Z',
+                resolvedAt: null,
+                subtaskId: null,
+              },
+            ],
+          }),
+        ],
+      });
+      await expand(result);
+
+      expect(result.compiled.textContent).toContain('Suggested by Sam');
+      expect(result.compiled.textContent).toContain('Recorder');
+    });
+
+    it('offers no copy action when the guardian has one child', async () => {
+      const { compiled } = await setupChecklist();
+
+      expect(findButtonByText(compiled, 'Copy to…')).toBeUndefined();
+    });
+
+    it('copies a template to another child and says so', async () => {
+      const { compiled, fixture, taskLibrary } = await setupChecklist({
+        guardians: { listMyChildren: vi.fn(async () => twoChildren) },
+      });
+
+      findButtonByText(compiled, 'Copy to…')!.click();
+      await settle(fixture);
+      const select = compiled.querySelector<HTMLSelectElement>('select[id="copyTarget-bag-1"]')!;
+      expect(Array.from(select.options).map((option) => option.textContent?.trim())).toEqual([
+        'Ida',
+      ]);
+
+      lastButton(compiled, 'Copy to…').click();
+      await settle(fixture);
+
+      expect(taskLibrary.copyTaskTemplate).toHaveBeenCalledWith('bag-1', 'child-2');
+      expect(compiled.textContent).toContain('Copied to Ida.');
+      expect(compiled.querySelector('select[id="copyTarget-bag-1"]')).toBeNull();
+    });
+
+    it('shows an error when copying fails', async () => {
+      const { compiled, fixture } = await setupChecklist({
+        guardians: { listMyChildren: vi.fn(async () => twoChildren) },
+        taskLibrary: { copyTaskTemplate: vi.fn().mockRejectedValue(new Error('403')) },
+      });
+
+      findButtonByText(compiled, 'Copy to…')!.click();
+      await settle(fixture);
+      lastButton(compiled, 'Copy to…').click();
+      await settle(fixture);
+
+      expect(compiled.textContent).toContain('Unable to copy this task template.');
+    });
+
+    it('opens the list with a waiting suggestion when arriving with ?child=', async () => {
+      const pending = {
+        id: 'suggestion-1',
+        title: 'Recorder',
+        weekdays: [],
+        suggestedBy: 'child-1',
+        status: 'Pending' as const,
+        suggestedAt: '2026-10-12T15:00:00Z',
+        resolvedAt: null,
+        subtaskId: null,
+      };
+      const { compiled } = await setupChecklist({
+        requestedChildId: 'child-1',
+        initialTemplates: [
+          template({ id: 'routine-1', name: 'Bedtime' }),
+          checklist({ suggestions: [pending] }),
+        ],
+      });
+
+      expect(compiled.textContent).toContain('Suggested by Sam');
+      expect(compiled.textContent).toContain('Hide subtasks');
+    });
+
+    it('opens nothing without ?child=', async () => {
+      const { compiled } = await setupChecklist();
+
+      expect(compiled.textContent).not.toContain('Hide subtasks');
+    });
+
+    it('preselects the child named in ?child=', async () => {
+      const { taskLibrary } = await setupChecklist({
+        requestedChildId: 'child-2',
+        guardians: { listMyChildren: vi.fn(async () => twoChildren) },
+      });
+
+      expect(taskLibrary.listTaskTemplates).toHaveBeenCalledWith('child-2');
     });
   });
 });

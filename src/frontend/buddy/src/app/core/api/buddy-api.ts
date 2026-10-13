@@ -676,6 +676,102 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/task-templates/{templateId}/checklist-options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['SetChecklistOptions'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/task-templates/{templateId}/copy': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['CopyTaskTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/task-templates/{templateId}/suggestions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['SuggestChecklistItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/task-templates/{templateId}/suggestions/{suggestionId}/withdraw': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['WithdrawChecklistSuggestion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/task-templates/{templateId}/suggestions/{suggestionId}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ApproveChecklistSuggestion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/task-templates/{templateId}/suggestions/{suggestionId}/decline': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['DeclineChecklistSuggestion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/calendars': {
     parameters: {
       query?: never;
@@ -2377,10 +2473,11 @@ export interface components {
     };
     AddSubtaskRequest: {
       title: string;
-      duration: string;
+      duration?: null | string;
       icon?: null | string;
       /** Format: int32 */
       position?: null | number;
+      weekdays?: null | components['schemas']['DayOfWeek'][];
     };
     /** @enum {string} */
     AiChatMessageRole: 'User' | 'Assistant';
@@ -2427,6 +2524,12 @@ export interface components {
       draft: components['schemas']['AiSessionDraftEntry'][];
       ratedOnly: boolean;
       servedWithin: components['schemas']['AiServedWindow'];
+    };
+    ApproveChecklistSuggestionRequest: {
+      title: string;
+      weekdays?: null | components['schemas']['DayOfWeek'][];
+      /** Format: int32 */
+      position?: null | number;
     };
     AssignableMemberResponse: {
       /** Format: uuid */
@@ -2557,6 +2660,27 @@ export interface components {
       icon: string;
       role: components['schemas']['CalendarRole'];
     };
+    ChecklistOptionsResponse: {
+      /** Format: time */
+      eveningBeforeFrom: null | string;
+    };
+    ChecklistSuggestionResponse: {
+      /** Format: uuid */
+      id: string;
+      title: string;
+      weekdays: components['schemas']['DayOfWeek'][];
+      /** Format: uuid */
+      suggestedBy: string;
+      status: components['schemas']['ChecklistSuggestionStatus'];
+      /** Format: date-time */
+      suggestedAt: string;
+      /** Format: date-time */
+      resolvedAt: null | string;
+      /** Format: uuid */
+      subtaskId: null | string;
+    };
+    /** @enum {string} */
+    ChecklistSuggestionStatus: 'Pending' | 'Approved' | 'Declined' | 'Withdrawn';
     ChildBabysitter: {
       /** Format: uuid */
       guardianId: string;
@@ -2636,6 +2760,10 @@ export interface components {
     ConfigureRewardsRequest: {
       rewards: components['schemas']['RewardBody'][];
     };
+    CopyTaskTemplateRequest: {
+      /** Format: uuid */
+      childId: string;
+    };
     CreateCalendarRequest: {
       name: string;
       timeZoneId: string;
@@ -2689,6 +2817,9 @@ export interface components {
       name: string;
       icon: string;
       color: string;
+      kind?: components['schemas']['TaskTemplateKind'];
+      /** Format: time */
+      eveningBeforeFrom?: null | string;
     };
     /** @enum {string} */
     DayOfWeek: 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
@@ -3388,6 +3519,11 @@ export interface components {
       subtaskId: string;
       parentTitle: string;
       parentIcon: string;
+      checklist: null | components['schemas']['RoutineChecklist'];
+    };
+    RoutineChecklist: {
+      /** Format: time */
+      eveningBeforeFrom: null | string;
     };
     RuleAcknowledgementResponse: {
       /** Format: uuid */
@@ -3454,6 +3590,10 @@ export interface components {
       /** Format: date-time */
       expiresAt: string;
       inviteUrl: string;
+    };
+    SetChecklistOptionsRequest: {
+      /** Format: time */
+      eveningBeforeFrom: null | string;
     };
     SetDoseStatusRequest: {
       status: components['schemas']['DoseStatus'];
@@ -3598,6 +3738,11 @@ export interface components {
       title: string;
       icon: null | string;
       duration: string;
+      weekdays: components['schemas']['DayOfWeek'][];
+    };
+    SuggestChecklistItemRequest: {
+      title: string;
+      weekdays?: null | components['schemas']['DayOfWeek'][];
     };
     TaskCompletionResponse: {
       itemId: components['schemas']['CalendarItemId'];
@@ -3635,6 +3780,8 @@ export interface components {
       | components['schemas']['TemplateTaskSourceResponse'];
     /** Format: uuid */
     TaskTemplateId: string;
+    /** @enum {string} */
+    TaskTemplateKind: 'Routine' | 'Checklist';
     TaskTemplateResponse: {
       id: components['schemas']['TaskTemplateId'];
       name: string;
@@ -3647,6 +3794,9 @@ export interface components {
       createdBy: string;
       /** Format: uuid */
       lastModifiedBy: string;
+      kind: components['schemas']['TaskTemplateKind'];
+      checklist: null | components['schemas']['ChecklistOptionsResponse'];
+      suggestions: components['schemas']['ChecklistSuggestionResponse'][];
     };
     TaskTimingRequest: {
       dueDate: components['schemas']['DueDateRequest'];
@@ -3784,8 +3934,9 @@ export interface components {
     };
     UpdateSubtaskRequest: {
       title: string;
-      duration: string;
+      duration?: null | string;
       icon?: null | string;
+      weekdays?: null | components['schemas']['DayOfWeek'][];
     };
     UpdateTaskTemplateRequest: {
       name: string;
@@ -6718,6 +6869,400 @@ export interface operations {
         content?: never;
       };
       /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SetChecklistOptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetChecklistOptionsRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TaskTemplateResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  CopyTaskTemplate: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CopyTaskTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TaskTemplateResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SuggestChecklistItem: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SuggestChecklistItemRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TaskTemplateResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `checklist_item_exists`, `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`, `too_many_pending_suggestions`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  WithdrawChecklistSuggestion: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        templateId: string;
+        suggestionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TaskTemplateResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`, `suggestion_resolved`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ApproveChecklistSuggestion: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        templateId: string;
+        suggestionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ApproveChecklistSuggestionRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TaskTemplateResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`, `suggestion_resolved`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  DeclineChecklistSuggestion: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        templateId: string;
+        suggestionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TaskTemplateResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`, `suggestion_resolved`. */
       409: {
         headers: {
           [name: string]: unknown;

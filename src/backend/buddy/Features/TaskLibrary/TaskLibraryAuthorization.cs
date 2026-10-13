@@ -62,6 +62,22 @@ public static class TaskLibraryAuthorization
         };
     }
 
+    // A self-only action (suggesting an item for one's own packing list): the owning child is
+    // allowed, an active guardian is related but not the owner (Forbidden), anyone else NotFound.
+    // Not a tier above View -- like RequestReward in Progress, it is something only the child does.
+    public static async Task<TaskLibraryAccess> CheckOwner(UserId childId, UserId callerId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
+    {
+        var tier = await ResolveTier(childId, callerId, guardians, cancellationToken);
+
+        return tier switch
+        {
+            TaskLibraryAccessTier.View => TaskLibraryAccess.Allowed,
+            TaskLibraryAccessTier.Manage => TaskLibraryAccess.Forbidden,
+            TaskLibraryAccessTier.None => TaskLibraryAccess.NotFound,
+            _ => throw new UnreachableException($"Unrecognized TaskLibraryAccessTier value: {tier}."),
+        };
+    }
+
     private static async Task<TaskLibraryAccessTier> ResolveTier(UserId childId, UserId callerId, IGuardianLinkEventStore guardians, CancellationToken cancellationToken)
     {
         if (callerId == childId)

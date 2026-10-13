@@ -15,6 +15,40 @@ export const taskLibrary = {
     editSubtasks: 'Rediger deltrin',
     hideSubtasks: 'Skjul deltrin',
     rename: 'Omdøb',
+    kind: {
+      label: 'Slags skabelon',
+      routine: 'Rutine',
+      checklist: 'Pakkeliste',
+    },
+    itemCount: '{count} ting',
+    checklist: {
+      eveningLabel: 'Vis aftenen før fra',
+      eveningHint: 'Slået fra: listen vises kun på dagen.',
+      saveError: 'Kunne ikke gemme pakkelistens indstillinger.',
+    },
+    items: {
+      title: 'Ting',
+      empty: 'Ingen ting endnu. Tilføj en nedenfor.',
+      titlePlaceholder: 'Ting',
+      addButton: 'Tilføj ting',
+      daysLabel: 'Dage',
+      everyDay: 'Hver dag',
+    },
+    copy: {
+      button: 'Kopiér til…',
+      label: 'Kopiér til hvilket barn?',
+      done: 'Kopieret til {name}.',
+      error: 'Opgaveskabelonen kunne ikke kopieres.',
+      cancel: 'Annuller',
+    },
+    suggestions: {
+      title: 'Foreslået af {name}',
+      approve: 'Godkend',
+      notNow: 'Ikke nu',
+      addToList: 'Tilføj til listen',
+      cancel: 'Annuller',
+      error: 'Forslaget kunne ikke behandles.',
+    },
     form: {
       namePlaceholder: 'Skabelonnavn',
       iconPlaceholder: 'Ikon',
@@ -43,9 +77,11 @@ export const taskLibrary = {
       moveDown: 'Flyt ned',
     },
   },
+  leaveBy: 'Afgang kl.',
   picker: {
     noTemplate: 'Ingen skabelon',
     noMatches: 'Ingen skabeloner matcher.',
+    itemSummary: '{count} ting',
     summary: '{count} trin, {duration}',
   },
 };

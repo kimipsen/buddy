@@ -30,6 +30,10 @@
     @if (features.enabled('mealplans')) {
       <app-mealplan-today class="mb-6 block break-inside-avoid" />
     }
+    @if (features.enabled('taskLibrary')) {
+      <!-- Shows itself only in the evening, while a child's list for tomorrow isn't packed. -->
+      <app-packing-tomorrow />
+    }
     <app-tasks-today class="mb-6 block break-inside-avoid" />
     <app-events-today class="mb-6 block break-inside-avoid" />
     @if (features.enabled('medicines')) {

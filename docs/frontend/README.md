@@ -121,7 +121,11 @@ The guardian routes currently include:
   guardian shell so no navigation ends up on paper
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
   calendar, plus event/task creation
-- `/guardian/task-library` — per-child task template and subtask management
+- `/guardian/task-library` — per-child task template and subtask management: routines and packing
+  lists (items with weekdays, the "show the evening before" switch), "Copy to…" a sibling, and the
+  child's packing suggestions to approve or decline; `?child=<id>` preselects a child and opens
+  the list with a waiting suggestion (the dashboard's "Packing suggestions: N" pill links here)
+  ([design](../backend/analysis/packing-checklists.md))
 - `/guardian/progress` — per child: answer reward requests (approve/decline), keep the reward
   list, and set the goal posts; the children overview on the dashboard links here with
   "Rewards waiting: N" ([design](../backend/analysis/reward-redemption.md))
@@ -151,7 +155,9 @@ The child routes currently include:
 
 - `/child` — today's operational view and relationship summaries; the routine under way shows a
   time-left bar for the whole run and a disc on its current step, with Start / Pause / Keep going /
-  Stop timer and a Focus link (unless a guardian turned timers off for the child)
+  Stop timer and a Focus link (unless a guardian turned timers off for the child); a packing list
+  shows "n of m packed" and "Suggest something", and from its evening time tomorrow's list appears
+  under "Pack for tomorrow" (ticked for tomorrow's date)
 - `/child/mealplan` — current/historical meal plans and the child's own ratings
 - `/child/calendar` — read-only seven-day agenda across accessible calendars
 - `/child/rewards` — the child's spendable stars, the rewards a guardian set up with an "Ask for this" button on the affordable ones, requests waiting for a grown-up (withdrawable), and earlier answers; the child home links to it
@@ -217,8 +223,10 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   `WeekPlanLoader` in `features/guardian/print` composes a week from the existing services
 - `WorkLocationsService` manages the guardian's work locations, pattern, and exceptions, and lists
   resolved work days for the guardian or a co-guardian
-- `TaskLibraryService` manages per-child task templates and subtasks, and backs the
-  template picker on the calendar agenda's create-task form
+- `TaskLibraryService` manages per-child task templates and subtasks (routines and packing lists,
+  checklist options, copying to a sibling, and the child's suggestions), and backs the template
+  picker on the calendar agenda's create-task form; `fetchTaskTemplates` reads a child's library
+  without touching the editor's shared state (child home, dashboard pill)
 - `ProgressService` loads a child's star count, unlocked milestones, and resolved goal-post
   info for the progress badge, lets a guardian configure a child's goal posts and reward
   catalog and approve or decline reward requests, and lets a child request or withdraw a reward
@@ -292,6 +300,10 @@ On phones the guardian shell adds a bottom tab bar
 with Today, Calendar, Meals and Medicine (the last two follow their feature flags). It is hidden
 from `sm` up, when printing and on onboarding (`data: { hideTabBar: true }`); the account menu in
 the sticky header keeps every link on all sizes.
+
+The dashboard's "Packing for tomorrow" card (`packing-tomorrow/`, behind `taskLibrary`) only
+renders from a packing list's evening time until midnight while a child's list for tomorrow isn't
+packed; it reads tomorrow's occurrences like "tasks today" reads today's.
 
 On wide screens the dashboard packs its cards into CSS columns (two from `lg`, three from `2xl`)
 so short cards leave no holes; nothing is wider than `max-w-7xl`, so pages line up with the shell

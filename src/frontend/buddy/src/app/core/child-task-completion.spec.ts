@@ -59,4 +59,13 @@ describe('completeChildTask', () => {
 
     expect(setTaskCompletion).toHaveBeenCalledWith('cal-1', 'item-1', todayIsoDate(), false, null);
   });
+
+  it('ticks a packing-list item for the date it is given (tomorrow’s list)', async () => {
+    const { calendars, setTaskCompletion } = stub();
+    const task = nestOccurrence<CalendarOccurrence>({ ...base, dueAt: '2026-10-14T05:45:00Z' });
+
+    await completeChildTask(calendars, task, true, '2026-10-14');
+
+    expect(setTaskCompletion).toHaveBeenCalledWith('cal-1', 'item-1', '2026-10-14', true, null);
+  });
 });

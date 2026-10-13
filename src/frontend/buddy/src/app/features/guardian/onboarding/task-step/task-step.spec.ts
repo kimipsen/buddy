@@ -18,8 +18,8 @@ import {
 import { TaskStep } from './task-step';
 
 const twoSteps = [
-  { id: 's1', title: 'Brush teeth', icon: null, durationMinutes: 5 },
-  { id: 's2', title: 'Get dressed', icon: null, durationMinutes: 10 },
+  { id: 's1', title: 'Brush teeth', icon: null, durationMinutes: 5, weekdays: [] },
+  { id: 's2', title: 'Get dressed', icon: null, durationMinutes: 10, weekdays: [] },
 ];
 
 describe('TaskStep', () => {

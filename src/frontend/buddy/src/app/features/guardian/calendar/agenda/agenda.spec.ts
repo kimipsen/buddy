@@ -77,6 +77,9 @@ describe('CalendarAgenda', () => {
       isArchived: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      kind: 'Routine',
+      eveningBeforeFrom: null,
+      suggestions: [],
       ...overrides,
     };
   }
@@ -1723,6 +1726,39 @@ describe('CalendarAgenda', () => {
         color: '#0ea5e9',
       });
       expect(calendars.createItem).not.toHaveBeenCalled();
+    });
+
+    it('labels the time "Leave by" for a packing list and "Due time" otherwise', async () => {
+      const bag = taskTemplate({ id: 'template-bag', name: 'School bag', kind: 'Checklist' });
+      const { fixture } = await setup({ templates: [template, bag] });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Task')!.click();
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'From template')!.click();
+      await settle(fixture);
+
+      const pick = async (name: string) => {
+        compiled = fixture.nativeElement as HTMLElement;
+        compiled
+          .querySelector<HTMLInputElement>('app-task-picker input')!
+          .dispatchEvent(new Event('focus'));
+        await settle(fixture);
+        compiled = fixture.nativeElement as HTMLElement;
+        Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-task-picker ul li button'))
+          .find((button) => button.textContent?.includes(name))!
+          .click();
+        await settle(fixture);
+        compiled = fixture.nativeElement as HTMLElement;
+      };
+
+      await pick('School bag');
+      expect(createForm(compiled).textContent).toContain('Leave by');
+
+      await pick('Morning routine');
+      expect(createForm(compiled).textContent).not.toContain('Leave by');
     });
 
     it('disables the add button in template mode until a template is picked', async () => {

@@ -15,6 +15,40 @@ export const taskLibrary = {
     editSubtasks: 'Edit subtasks',
     hideSubtasks: 'Hide subtasks',
     rename: 'Rename',
+    kind: {
+      label: 'Kind of template',
+      routine: 'Routine',
+      checklist: 'Packing list',
+    },
+    itemCount: '{count} items',
+    checklist: {
+      eveningLabel: 'Show the evening before from',
+      eveningHint: 'Off: the list shows on the day only.',
+      saveError: 'Unable to save the packing list settings.',
+    },
+    items: {
+      title: 'Items',
+      empty: 'No items yet. Add one below.',
+      titlePlaceholder: 'Item',
+      addButton: 'Add item',
+      daysLabel: 'Days',
+      everyDay: 'Every day',
+    },
+    copy: {
+      button: 'Copy to…',
+      label: 'Copy to which child?',
+      done: 'Copied to {name}.',
+      error: 'Unable to copy this task template.',
+      cancel: 'Cancel',
+    },
+    suggestions: {
+      title: 'Suggested by {name}',
+      approve: 'Approve',
+      notNow: 'Not now',
+      addToList: 'Add to list',
+      cancel: 'Cancel',
+      error: 'Unable to resolve this suggestion.',
+    },
     form: {
       namePlaceholder: 'Template name',
       iconPlaceholder: 'Icon',
@@ -43,9 +77,11 @@ export const taskLibrary = {
       moveDown: 'Move down',
     },
   },
+  leaveBy: 'Leave by',
   picker: {
     noTemplate: 'No template',
     noMatches: 'No templates match.',
+    itemSummary: '{count} items',
     summary: '{count} steps, {duration}',
   },
 };

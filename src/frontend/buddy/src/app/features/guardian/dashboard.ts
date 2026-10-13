@@ -8,6 +8,7 @@ import { DosesToday } from './doses-today/doses-today';
 import { EventsToday } from './events-today/events-today';
 import { MealplanToday } from './mealplan-today/mealplan-today';
 import { OnboardingResumeCard } from './onboarding/resume-card/resume-card';
+import { PackingTomorrow } from './packing-tomorrow/packing-tomorrow';
 import { PickupToday } from './pickup-today/pickup-today';
 import { TasksToday } from './tasks-today/tasks-today';
 import { Page } from '../../shared/page/page';
@@ -22,6 +23,7 @@ import { Page } from '../../shared/page/page';
     EventsToday,
     DosesToday,
     PickupToday,
+    PackingTomorrow,
     RouterLink,
     TranslatePipe,
     Page,

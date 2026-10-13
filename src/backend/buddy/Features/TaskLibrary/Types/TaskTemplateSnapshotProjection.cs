@@ -38,4 +38,19 @@ public sealed class TaskTemplateSnapshotProjection : SingleStreamProjection<Task
 
     public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, TaskTemplateArchived archived) =>
         current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(archived)) };
+
+    public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, ChecklistOptionsChanged changed) =>
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(changed)) };
+
+    public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, ChecklistItemSuggested suggested) =>
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(suggested)) };
+
+    public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, ChecklistItemSuggestionApproved approved) =>
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(approved)) };
+
+    public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, ChecklistItemSuggestionDeclined declined) =>
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(declined)) };
+
+    public TaskTemplateSnapshot Apply(TaskTemplateSnapshot current, ChecklistItemSuggestionWithdrawn withdrawn) =>
+        current with { TaskTemplate = TaskTemplate.Advance(current.TaskTemplate, TaskTemplateEvent.FromPayload(withdrawn)) };
 }

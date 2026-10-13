@@ -1,0 +1,106 @@
+<div class="mt-3 space-y-2" data-testid="child-suggestions">
+  @if (pending().length > 0 || recentlyResolved().length > 0) {
+    <ul class="flex flex-wrap gap-2">
+      @for (suggestion of pending(); track suggestion.id) {
+        <li
+          class="flex items-center gap-2 rounded-full bg-amber-100 dark:bg-amber-500/15 px-3 py-1 text-sm font-semibold text-amber-900 dark:text-amber-100"
+        >
+          <span>{{ suggestion.title }} · {{ 'child.home.packing.waiting' | translate }}</span>
+          <button
+            type="button"
+            class="grid size-8 place-items-center rounded-full text-base hover:bg-amber-200 dark:hover:bg-amber-500/25 disabled:opacity-50"
+            [disabled]="saving.isBusy(suggestion.id)"
+            [attr.aria-label]="
+              'child.home.packing.withdrawLabel' | translate: { title: suggestion.title }
+            "
+            (click)="withdraw(suggestion.id)"
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </li>
+      }
+      @for (suggestion of recentlyResolved(); track suggestion.id) {
+        <li
+          class="rounded-full px-3 py-1 text-sm font-semibold"
+          [class.bg-emerald-100]="suggestion.status === 'Approved'"
+          [class.text-emerald-900]="suggestion.status === 'Approved'"
+          [class.dark:bg-emerald-500/15]="suggestion.status === 'Approved'"
+          [class.dark:text-emerald-100]="suggestion.status === 'Approved'"
+          [class.bg-slate-100]="suggestion.status !== 'Approved'"
+          [class.text-slate-700]="suggestion.status !== 'Approved'"
+          [class.dark:bg-slate-800]="suggestion.status !== 'Approved'"
+          [class.dark:text-slate-200]="suggestion.status !== 'Approved'"
+        >
+          {{ suggestion.title }} ·
+          {{
+            (suggestion.status === 'Approved'
+              ? 'child.home.packing.added'
+              : 'child.home.packing.notAdded'
+            ) | translate
+          }}
+        </li>
+      }
+    </ul>
+  }
+
+  @if (saving.state(); as state) {
+    @if (state.status === 'error') {
+      <p class="text-sm font-semibold text-red-600 dark:text-red-400" role="alert">
+        {{ state.message | translate }}
+      </p>
+    }
+  }
+
+  @if (open()) {
+    <form
+      class="space-y-3 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 p-4"
+      (submit)="$event.preventDefault(); send()"
+    >
+      <label class="block text-base font-semibold" for="suggestion-title-{{ template().id }}">
+        {{ 'child.home.packing.titleLabel' | translate }}
+      </label>
+      <input
+        #titleInput
+        id="suggestion-title-{{ template().id }}"
+        type="text"
+        maxlength="200"
+        class="w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 px-3 py-2 text-base focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-emerald-700"
+        [value]="title()"
+        (input)="title.set(titleInput.value)"
+      />
+      <p class="text-sm font-semibold text-slate-600 dark:text-slate-300" aria-hidden="true">
+        {{ 'child.home.packing.daysLabel' | translate }}
+      </p>
+      <app-weekday-picker
+        size="lg"
+        [value]="weekdays()"
+        [ariaLabel]="'child.home.packing.daysLabel' | translate"
+        (valueChange)="weekdays.set($event)"
+      />
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="submit"
+          class="min-h-11 rounded-xl bg-emerald-500 px-4 text-base font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+          [disabled]="saving.isBusy('suggest') || !title().trim()"
+        >
+          {{ 'child.home.packing.send' | translate }}
+        </button>
+        <button
+          type="button"
+          class="min-h-11 rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 text-base font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+          (click)="closeSheet()"
+        >
+          {{ 'child.home.packing.cancel' | translate }}
+        </button>
+      </div>
+    </form>
+  } @else {
+    <button
+      type="button"
+      class="min-h-11 rounded-xl border-2 border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-4 text-base font-semibold text-emerald-800 dark:text-emerald-300 transition hover:bg-emerald-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+      (click)="openSheet()"
+    >
+      {{ 'child.home.packing.suggest' | translate }}
+    </button>
+  }
+</div>

@@ -8,6 +8,7 @@ import { GuardiansService } from '../../core/guardians.service';
 import { MealplansService } from '../../core/mealplans.service';
 import { MedicinesService } from '../../core/medicines.service';
 import { PickupsService } from '../../core/pickups.service';
+import { TaskLibraryService } from '../../core/task-library.service';
 import { CurrentUser, UsersService } from '../../core/users.service';
 import { GuardianDashboard } from './dashboard';
 import { disableFeatures } from '../../../testing/features-fixture';
@@ -48,6 +49,7 @@ describe('GuardianDashboard', () => {
     };
     const calendarsStub: Partial<CalendarsService> = {
       listTodayOccurrences: vi.fn(async () => []),
+      listOccurrencesInRange: vi.fn(async () => []),
       listAssignableMembers: vi.fn(async () => []),
       setTaskCompletion: vi.fn(),
     };
@@ -68,6 +70,7 @@ describe('GuardianDashboard', () => {
         { provide: MealplansService, useValue: mealplansStub },
         { provide: MedicinesService, useValue: medicinesStub },
         { provide: PickupsService, useValue: pickupsStub },
+        { provide: TaskLibraryService, useValue: { fetchTaskTemplates: vi.fn(async () => []) } },
       ],
     }).compileComponents();
 
@@ -90,6 +93,7 @@ describe('GuardianDashboard', () => {
       'app-events-today',
       'app-doses-today',
       'app-pickup-today',
+      'app-packing-tomorrow',
     ];
     for (const selector of selectors) {
       expect(compiled.querySelector(selector)).toBeTruthy();
@@ -120,6 +124,7 @@ describe('GuardianDashboard', () => {
 
     expect([...columns.children].map((card) => card.tagName.toLowerCase())).toEqual([
       'app-mealplan-today',
+      'app-packing-tomorrow',
       'app-tasks-today',
       'app-events-today',
       'app-doses-today',
@@ -133,9 +138,14 @@ describe('GuardianDashboard', () => {
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const cards = [
+    const children = [
       ...(compiled.querySelector('app-tasks-today')?.parentElement as HTMLElement).children,
     ];
+    // The evening packing card is display: contents and carries these classes on its own card,
+    // which it only renders while something is left to pack (packing-tomorrow.spec.ts).
+    const packing = children.find((card) => card.tagName.toLowerCase() === 'app-packing-tomorrow');
+    expect(packing?.classList).toContain('contents');
+    const cards = children.filter((card) => card !== packing);
     for (const card of cards) {
       expect(card.classList).toContain('block');
       expect(card.classList).toContain('break-inside-avoid');

@@ -32,9 +32,14 @@ public static class CreateTaskTemplateHandler
         var templateId = TaskTemplateId.New();
         var now = DateTimeOffset.UtcNow;
 
-        var created = new TaskTemplateCreated(templateId, command.ChildId, userId, command.Name, command.Icon, command.Color, now);
+        var created = new TaskTemplateCreated(templateId, command.ChildId, userId, command.Name, command.Icon, command.Color, now, command.Kind);
+        var options = new ChecklistOptions(command.EveningBeforeFrom);
 
-        var events = await templates.CreateAsync(templateId, [created], cancellationToken);
+        TaskTemplateEvent[] newEvents = options == ChecklistOptions.None
+            ? [created]
+            : [created, new ChecklistOptionsChanged(templateId, ChecklistOptions.None, options, userId, now)];
+
+        var events = await templates.CreateAsync(templateId, newEvents, cancellationToken);
 
         return new Result<TaskTemplate>.Success(TaskTemplate.Replay(events));
     }

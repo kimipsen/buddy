@@ -42,10 +42,16 @@
             <span class="text-base leading-none">{{ template.icon }}</span>
             {{ template.name }}
             <span class="ml-auto shrink-0 text-xs text-slate-400">
-              {{
-                'taskLibrary.picker.summary'
-                  | translate: { count: template.subtasks.length, duration: summary(template) }
-              }}
+              @if (template.kind === 'Checklist') {
+                {{
+                  'taskLibrary.picker.itemSummary' | translate: { count: template.subtasks.length }
+                }}
+              } @else {
+                {{
+                  'taskLibrary.picker.summary'
+                    | translate: { count: template.subtasks.length, duration: summary(template) }
+                }}
+              }
             </span>
           </button>
         </li>

@@ -9,6 +9,11 @@ export const dashboard = {
     linkedBadge: 'Tilknyttet',
     starCount: '{count} stjerner',
     pendingRewards: 'Belønninger venter: {count}',
+    pendingSuggestions: 'Pakkeforslag: {count}',
+  },
+  packing: {
+    title: 'Pakning til i morgen',
+    row: '{name} har ikke pakket til i morgen: {packed} af {total} ting',
   },
   tasks: {
     title: 'Dagens opgaver',

@@ -105,6 +105,10 @@ export const help = {
             s4: 'Set the "Due date" and the "Due time" when the routine starts, and press "Add to calendar".',
           },
         },
+        packingLists: {
+          title: 'Packing lists',
+          body: 'Choose "Packing list" instead of "Routine" for a school bag or a sports bag. Its items have no minutes, and an item can apply on some days only, such as gym clothes on Tuesdays. With "Show the evening before from" on, your child sees tomorrow\'s list on their home page from that time and can pack the night before. A fully packed list earns one star. Your child can suggest items; you approve or decline them under the list ("Not now"). "Copy to…" copies a routine or a packing list to a sibling. When you schedule a packing list, its time reads "Leave by".',
+        },
         archive: {
           title: 'Rename or retire a routine',
           body: 'Use "Rename" to change a template\'s name, icon or colour. When a routine is no longer used, press "Archive". It stays in the list marked "Archived", but you can no longer put it on the calendar.',

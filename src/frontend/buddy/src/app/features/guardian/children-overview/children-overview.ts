@@ -6,6 +6,7 @@ import { ChildSummary, GuardiansService } from '../../../core/guardians.service'
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { mapWithConcurrency } from '../../../core/map-with-concurrency';
 import { ProgressService } from '../../../core/progress.service';
+import { TaskLibraryService } from '../../../core/task-library.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Card } from '../../../shared/card/card';
 
@@ -25,6 +26,7 @@ export class ChildrenOverview {
 
   private readonly guardians = inject(GuardiansService);
   private readonly progressService = inject(ProgressService);
+  private readonly taskLibrary = inject(TaskLibraryService);
 
   protected readonly children = resource({ loader: () => this.loadChildren() });
 
@@ -34,11 +36,19 @@ export class ChildrenOverview {
     Record<string, { totalStars: number; icon: string; pendingRewards: number }>
   >({});
 
+  // Pending packing-list suggestions per child (docs/backend/analysis/packing-checklists.md,
+  // Question 8): there are no notifications, so this pill is how a guardian notices them.
+  protected readonly pendingSuggestionsByChildId = signal<Record<string, number>>({});
+
   private async loadChildren(): Promise<ChildSummary[]> {
     const children = await this.guardians.listMyChildren();
 
     if (this.features.enabled('progress')) {
       void this.loadProgress(children);
+    }
+
+    if (this.features.enabled('taskLibrary')) {
+      void this.loadSuggestions(children);
     }
 
     return children;
@@ -63,6 +73,23 @@ export class ChildrenOverview {
         this.progressByChildId.update((current) => ({ ...current, [child.id]: entry }));
       } catch {
         // No badge for this child; the rest still load.
+      }
+    });
+  }
+
+  // Best-effort like loadProgress: one templates request per child, reading without touching the
+  // task library editor's shared state.
+  private async loadSuggestions(children: ChildSummary[]): Promise<void> {
+    await mapWithConcurrency(children, PROGRESS_REQUEST_CONCURRENCY, async (child) => {
+      try {
+        const templates = await this.taskLibrary.fetchTaskTemplates(child.id);
+        const pending = templates
+          .flatMap((template) => template.suggestions)
+          .filter((suggestion) => suggestion.status === 'Pending').length;
+
+        this.pendingSuggestionsByChildId.update((current) => ({ ...current, [child.id]: pending }));
+      } catch {
+        // No pill for this child; the rest still load.
       }
     });
   }

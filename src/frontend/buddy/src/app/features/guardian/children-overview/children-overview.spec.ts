@@ -4,6 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
 import { ProgressService, ProgressSummary } from '../../../core/progress.service';
+import {
+  ChecklistSuggestion,
+  TaskLibraryService,
+  TaskTemplate,
+} from '../../../core/task-library.service';
 import { ChildrenOverview, PROGRESS_REQUEST_CONCURRENCY } from './children-overview';
 import { disableFeatures } from '../../../../testing/features-fixture';
 
@@ -24,6 +29,7 @@ describe('ChildrenOverview', () => {
   interface Stubs {
     guardians?: Partial<GuardiansService>;
     progress?: Partial<ProgressService>;
+    taskLibrary?: Partial<TaskLibraryService>;
   }
 
   async function setup(stubs: Stubs = {}) {
@@ -47,18 +53,29 @@ describe('ChildrenOverview', () => {
       ...stubs.progress,
     };
 
+    const taskLibraryStub: Partial<TaskLibraryService> = {
+      fetchTaskTemplates: vi.fn(async () => []),
+      ...stubs.taskLibrary,
+    };
+
     await TestBed.configureTestingModule({
       imports: [ChildrenOverview],
       providers: [
         provideRouter([]),
         { provide: GuardiansService, useValue: guardiansStub },
         { provide: ProgressService, useValue: progressStub },
+        { provide: TaskLibraryService, useValue: taskLibraryStub },
       ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ChildrenOverview);
 
-    return { fixture, guardians: guardiansStub, progress: progressStub };
+    return {
+      fixture,
+      guardians: guardiansStub,
+      progress: progressStub,
+      taskLibrary: taskLibraryStub,
+    };
   }
 
   // loadChildren chains an await on the stubbed service call before the signals driving the
@@ -321,5 +338,84 @@ describe('ChildrenOverview', () => {
     await settle(fixture);
 
     expect((fixture.nativeElement as HTMLElement).querySelector('a')).toBeNull();
+  });
+
+  describe('packing suggestions', () => {
+    function suggestion(id: string, status: ChecklistSuggestion['status']): ChecklistSuggestion {
+      return {
+        id,
+        title: id,
+        weekdays: [],
+        suggestedBy: 'child-1',
+        status,
+        suggestedAt: '2026-10-12T15:00:00Z',
+        resolvedAt: null,
+        subtaskId: null,
+      };
+    }
+
+    function list(id: string, suggestions: ChecklistSuggestion[]): TaskTemplate {
+      return {
+        id,
+        name: id,
+        icon: '🎒',
+        color: '#6366f1',
+        subtasks: [],
+        totalDurationMinutes: 0,
+        isArchived: false,
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        kind: 'Checklist',
+        eveningBeforeFrom: null,
+        suggestions,
+      };
+    }
+
+    it("links to the child's task library with the pending count over all their lists", async () => {
+      const fetchTaskTemplates = vi.fn(async () => [
+        list('bag', [suggestion('a', 'Pending'), suggestion('b', 'Declined')]),
+        list('gym', [suggestion('c', 'Pending')]),
+      ]);
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child()]) },
+        taskLibrary: { fetchTaskTemplates },
+      });
+      await settle(fixture);
+
+      expect(fetchTaskTemplates).toHaveBeenCalledWith('child-1');
+      const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+        'a[href="/guardian/task-library?child=child-1"]',
+      );
+      expect(link?.textContent?.trim()).toBe('Packing suggestions: 2');
+    });
+
+    it('shows no pill when nothing is pending, or when loading fails', async () => {
+      const { fixture } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child(), child({ id: 'child-2' })]) },
+        taskLibrary: {
+          fetchTaskTemplates: vi.fn(async (childId: string) => {
+            if (childId === 'child-2') {
+              throw new Error('500');
+            }
+            return [list('bag', [suggestion('a', 'Approved')])];
+          }),
+        },
+      });
+      await settle(fixture);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('a[href^="/guardian/task-library"]'),
+      ).toBeNull();
+    });
+
+    it('asks for nothing while the task library is turned off', async () => {
+      disableFeatures('taskLibrary');
+      const { fixture, taskLibrary } = await setup({
+        guardians: { listMyChildren: vi.fn(async () => [child()]) },
+      });
+      await settle(fixture);
+
+      expect(taskLibrary.fetchTaskTemplates).not.toHaveBeenCalled();
+    });
   });
 });

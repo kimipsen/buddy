@@ -490,6 +490,62 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       }
     }
 
+    // A packing list (docs/backend/analysis/packing-checklists.md): Emil's school bag, every
+    // weekday at 07:45, shown the evening before from 17:00, with gym clothes on Tuesdays only.
+    // Today's lunchbox is packed, and Emil has suggested a recorder for Fridays, so the child
+    // card, the guardian's suggestion panel and the dashboard pill all have something to show.
+    // After 17:00 on a weekday evening the dashboard's "Packing for tomorrow" card shows too.
+    // Optional, like the subtask completions above.
+    try {
+      const schoolBag = await api.post<Named>(`/task-templates/children/${emil.id}`, {
+        name: 'School bag',
+        icon: '🎒',
+        color: '#0ea5e9',
+        kind: 'Checklist',
+        eveningBeforeFrom: '17:00:00',
+      });
+      let bagItems: Named[] = [];
+      for (const [title, weekdays] of [
+        ['Lunchbox', null],
+        ['Glasses', null],
+        ['Gym clothes', ['Tuesday']],
+      ] as const) {
+        ({ subtasks: bagItems } = await api.post<TaskTemplateDto>(
+          `/task-templates/${schoolBag.id}/subtasks`,
+          { title, weekdays },
+        ));
+      }
+      const bagItem = await api.post<Named>(`/calendars/${family.id}/items/from-template`, {
+        taskTemplateId: schoolBag.id,
+        startDate: mondayIso,
+        startTime: '07:45:00',
+        title: 'School bag',
+        color: '#0ea5e9',
+        icon: '🎒',
+        recurrence: {
+          ...daily,
+          weekdays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        },
+        assignedTo: emil.id,
+      });
+      await api
+        .patch(
+          `/calendars/${family.id}/items/${bagItem.id}/subtasks/${bagItems[0].id}/completion`,
+          {
+            date: todayIso,
+            isCompleted: true,
+          },
+        )
+        .catch(warn);
+      const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);
+      await emilApi.post(`/task-templates/${schoolBag.id}/suggestions`, {
+        title: 'Recorder',
+        weekdays: ['Friday'],
+      });
+    } catch (error) {
+      warn(error);
+    }
+
     await api.put(`/progress/children/${emil.id}/goals`, {
       goalPosts: [
         { threshold: 5, icon: '🍦', label: 'Ice cream' },

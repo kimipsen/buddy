@@ -1,0 +1,32 @@
+<div class="flex flex-wrap gap-1.5" role="group" [attr.aria-label]="ariaLabel()">
+  @for (entry of days; track entry.day) {
+    <button
+      type="button"
+      class="rounded-lg border font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [class.min-w-9]="size() === 'sm'"
+      [class.px-2]="size() === 'sm'"
+      [class.py-1]="size() === 'sm'"
+      [class.text-xs]="size() === 'sm'"
+      [class.min-h-11]="size() === 'lg'"
+      [class.min-w-11]="size() === 'lg'"
+      [class.px-3]="size() === 'lg'"
+      [class.text-base]="size() === 'lg'"
+      [class.border-emerald-600]="isOn(entry.day)"
+      [class.bg-emerald-600]="isOn(entry.day)"
+      [class.text-white]="isOn(entry.day)"
+      [class.dark:border-emerald-500]="isOn(entry.day)"
+      [class.dark:bg-emerald-600]="isOn(entry.day)"
+      [class.border-slate-300]="!isOn(entry.day)"
+      [class.bg-white]="!isOn(entry.day)"
+      [class.text-slate-700]="!isOn(entry.day)"
+      [class.dark:border-slate-600]="!isOn(entry.day)"
+      [class.dark:bg-slate-800]="!isOn(entry.day)"
+      [class.dark:text-slate-200]="!isOn(entry.day)"
+      [attr.aria-pressed]="isOn(entry.day)"
+      [attr.aria-label]="entry.nameKey | translate"
+      (click)="toggle(entry.day)"
+    >
+      {{ entry.shortKey | translate }}
+    </button>
+  }
+</div>
