@@ -203,6 +203,37 @@ export const help = {
         },
       },
     },
+    feelings: {
+      title: 'Feelings',
+      sections: {
+        childCheckIn: {
+          title: 'How your child checks in',
+          body: 'Your child’s home page has a "How are you feeling?" card with four buttons: a colour, a face and a word each. Blue is slow (tired, sad), green is ready (calm, okay), yellow is wound up (worried, restless) and red is too much (angry, overwhelmed). There is no right answer. Your child sees only their own check-ins for today, and the card says that you can see them. A mis-tap can be undone for 10 minutes.',
+          steps: {
+            s1: 'Your child taps the colour or face that fits.',
+            s2: 'If they like, they pick up to three words, such as "worried" or "school", or write a short note.',
+            s3: 'They press "Done". They can check in again at any time.',
+          },
+        },
+        trend: {
+          title: 'See the trend and log what you saw',
+          body: 'The 14-day view puts each day’s check-ins on a line from morning to evening, with the medicine your child took and how long they slept the night before. Filled marks are your child’s own check-ins; outlined marks are an adult’s observations. Choose a day to see its check-ins, edit or remove your observations, or remove a check-in your child didn’t mean (it can’t be edited). Under "Log an observation", record how your child seemed now or earlier. The 8-week view counts the colours per week.',
+        },
+        settings: {
+          title: 'Reminder times and faces only',
+          body: 'Under "Check-in settings", choose up to four reminder times. From each time, the card on your child’s home page lights up until they check in; a missed reminder simply closes when the next one comes. Turn on "Faces only" for a child who doesn’t read yet: the buttons then show only the faces, and nothing else changes.',
+        },
+        shareWithDoctor: {
+          title: 'Share the check-ins with a doctor',
+          body: 'A share link lets a doctor read 14 days of check-ins at a time, notes included, without a Buddy account, and print the page. Anyone with the link can read it, so press "Revoke" under "Active links" when it is no longer needed. The sleep diary has its own link if the doctor needs that too.',
+          steps: {
+            s1: 'Under "Share with a doctor", choose when the link expires, or "Never".',
+            s2: 'Press "Create link".',
+            s3: 'Copy the link right away, because it is only shown once, and send it to the doctor.',
+          },
+        },
+      },
+    },
     transitionWarnings: {
       title: 'Heads-up before changes',
       sections: {

@@ -68,6 +68,17 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     related: ['medicine'],
   },
   {
+    id: 'feelings',
+    feature: 'feelings',
+    sections: [
+      { id: 'childCheckIn', steps: 3 },
+      { id: 'trend' },
+      { id: 'settings' },
+      { id: 'shareWithDoctor', steps: 3 },
+    ],
+    related: ['sleepDiary', 'medicine'],
+  },
+  {
     id: 'houseRules',
     feature: 'houseRules',
     sections: [

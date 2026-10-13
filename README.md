@@ -72,8 +72,10 @@ in real time.
 - [x] Transition warnings before events, tasks and pickups: a countdown on the child's screen, off
       until a guardian turns it on per child — see
       [Transition warnings](docs/backend/analysis/transition-warnings.md)
-- [ ] Feelings check-ins with guardian trends and a doctor share link (proposed, not yet implemented —
-      see [Feelings check-in](docs/backend/analysis/feelings-check-in.md))
+- [x] Feelings check-ins: the child taps a colour and a face (faces only for a young child), a
+      guardian logs observations and sees a 14-day trend next to sleep and doses, with reminder
+      times and a doctor share link — see
+      [Feelings check-in](docs/backend/analysis/feelings-check-in.md)
 - [x] Weekday packing checklists on the day view, shown the evening before, one star per packed list,
       with guardian-approved child suggestions, copying a template to a sibling and an evening
       "Packing for tomorrow" dashboard card — see

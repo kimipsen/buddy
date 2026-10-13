@@ -15,6 +15,7 @@ export interface DemoFamily {
   groupInviteToken: string | null;
   guardianInviteToken: string | null;
   sleepDiaryShareToken: string | null;
+  feelingsShareToken: string | null;
   // The demo child (Emil) and the family group, for the house rules printouts.
   childId: string;
   groupId: string;
@@ -153,6 +154,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: '9 h 25 min',
   },
   {
+    name: 'guardian-feelings',
+    title: 'Feelings',
+    description:
+      'A child’s feelings check-ins over 14 days, each a colour, a face and a word on a morning-to-evening line, next to the medicine taken and the night before’s sleep; an 8-week summary, a day’s check-ins with edit and remove, logging an observation, reminder times, faces-only buttons and a read-only link for a doctor.',
+    as: 'guardian',
+    route: '/guardian/feelings',
+    waitFor: 'Check-in settings',
+  },
+  {
     name: 'guardian-transition-warnings',
     title: 'Heads-up before changes',
     description:
@@ -261,7 +271,7 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     name: 'child-home',
     title: 'Child: today',
     description:
-      "The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons. A packing list shows how much is packed and lets the child suggest something; in the evening tomorrow's list appears under “Pack for tomorrow”.",
+      "The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons. A packing list shows how much is packed and lets the child suggest something; in the evening tomorrow's list appears under “Pack for tomorrow”. The “How are you feeling?” card lights up at a reminder time until the child checks in.",
     as: 'child',
     route: '/child',
     clock: '07:10',
@@ -336,6 +346,17 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     path: (demo) =>
       demo.sleepDiaryShareToken ? `/shared/sleep-diary/${demo.sleepDiaryShareToken}` : null,
     waitFor: 'Sleep diary for Emil',
+  },
+  {
+    name: 'shared-feelings',
+    title: 'Shared feelings check-ins',
+    description:
+      'What a doctor sees from a feelings share link, with no login: the 14-day grid and a printable list of every check-in with its words and note.',
+    as: 'anonymous',
+    route: '/shared/feelings/:token',
+    path: (demo) =>
+      demo.feelingsShareToken ? `/shared/feelings/${demo.feelingsShareToken}` : null,
+    waitFor: 'Feelings check-ins for Emil',
   },
 ];
 

@@ -111,6 +111,7 @@ groups, calendars, privacy and onboarding are core and can't be turned off.**
 | `Printing` | `/print-templates` group | `/guardian/print*`, `/guardian/print/sheet/:templateId`, the print link on the dashboard |
 | `Progress` | `/progress` group | `/guardian/progress`, child progress views |
 | `TaskLibrary` | `/task-templates` group, plus `ScheduleTaskFromTemplate`, which lives in the `/calendars` group | `/guardian/task-library`, "schedule from library" in the calendar |
+| `Feelings` | `/feelings` group, including the anonymous shared view | `/guardian/feelings`, `/shared/feelings/:token`, its menu link and help topic, the check-in card on the child's home page and the dashboard's "Feelings today" card; the trend's sleep column and dose markers follow `SleepDiary` and `Medicines` |
 | `TransitionWarnings` | `/transition-warnings` group | `/guardian/transition-warnings`, its menu link and help topic, the countdown banner on the child pages, the On/Off line on `manage-children` and the onboarding hint |
 | `Help` | none (frontend only) | the `?` help panel in the guardian shell, `/guardian/help` |
 

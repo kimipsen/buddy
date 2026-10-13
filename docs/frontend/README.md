@@ -32,6 +32,7 @@ The top-level route setup is in [src/frontend/buddy/src/app/app.routes.ts](../..
 - `/login` for unauthenticated users
 - `/invite/:token` for viewing and accepting group invitations, including the logged-out preview path
 - `/shared/sleep-diary/:token` — the read-only, printable sleep diary a guardian shared with a doctor; no login, the token is the only credential
+- `/shared/feelings/:token` — the read-only, printable feelings check-ins (the 14-day grid and every check-in with its words and note) a guardian shared with a doctor; no login, the token is the only credential
 - `/verify-email/:token` for completing email verification, including the logged-out verification path
 - `/guardian` for guardian dashboard screens
 - `/child` for child-focused screens
@@ -109,6 +110,10 @@ The guardian routes currently include:
 - `/guardian/medicine` — medicine schedule management
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
+- `/guardian/feelings` — a child's feelings check-ins: the 14-day grid (`shared/feelings-trend`,
+  with the night before's sleep and taken doses, each left out when its feature is off) or the
+  8-week summary, a day's check-ins with edit/remove (a self-report can't be edited), logging an
+  observation now or earlier, reminder times and the faces-only switch, and doctor share links
 - `/guardian/transition-warnings` — per child (`?child=<id>` from the `manage-children` On/Off
   line), the "Warn … before changes" switch, then lead times, kinds, quiet hours and per-item
   exceptions; saved as one PUT, so nothing reaches the child until Save
@@ -226,6 +231,13 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
 - `ChildClockService` is the child's "today", tomorrow and time of day in their profile time zone
   (device zone until the user loads); every child page and `ChildTimerService` use it instead of
   the device's clock
+- `FeelingsService` checks the child in (`postIdempotent`), undoes, reads the child's own day,
+  logs/edits/removes/lists a guardian's view of a child's check-ins, sets prompt times and the
+  display mode, manages share links and reads a shared view anonymously; the zone/tag catalog,
+  `promptState` and `undoMsLeft` are the pure `core/feelings.ts`. The child's check-in card
+  (`features/child/home/feelings-check-in`, on the child home page) takes "today" and "now" from
+  `ChildClockService` and draws `shared/feeling-zone-buttons` and `shared/feeling-tag-chips`;
+  the dashboard's `FeelingsToday` shows each child's check-ins today
 - `SleepDiaryService` logs, clears, and lists sleep diary nights, saves the hygiene notes, manages
   share links, and reads a shared diary anonymously by token
 - `BabysittersService` manages the guardian's own babysitters and lists the babysitters a child's
@@ -409,6 +421,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Transition warnings](../backend/analysis/transition-warnings.md) — implemented countdown banner
   on every child page, guardian settings page with exceptions, the `manage-children` and onboarding
   reminders, and the child pages' "today" in the child's profile time zone
+- [Feelings check-in](../backend/analysis/feelings-check-in.md) — implemented child check-in card
+  (faces-only mode, undo, reminders), guardian page with the trend, settings and share links, the
+  dashboard card and the public shared view
 - [House rules](../backend/analysis/house-rules.md) — implemented guardian page, child page with
   a "rules to read" card on the child home, A4 printouts, and the shared markdown renderer and
   editor (see "Rendering markdown" below)

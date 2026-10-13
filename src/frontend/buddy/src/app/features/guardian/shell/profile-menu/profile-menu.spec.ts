@@ -288,6 +288,7 @@ describe('ProfileMenu', () => {
       'printing',
       'help',
       'transitionWarnings',
+      'feelings',
     );
     const { fixture, compiled } = await setup();
     fireClick(fixture, toggleButton(compiled));

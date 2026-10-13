@@ -148,6 +148,22 @@ classDiagram
         +ItemOverrides ItemOverrides
     }
 
+    class FeelingsJournal {
+        +FeelingsJournalId Id
+        +UserId ChildId
+        +CheckIns CheckIns
+        +PromptTimes PromptTimes
+        +FeelingsDisplayMode DisplayMode
+    }
+
+    class FeelingsShareToken {
+        +FeelingsShareTokenId Id
+        +UserId ChildId
+        +string TokenHash
+        +DateTimeOffset? ExpiresAt
+        +bool IsRevoked
+    }
+
     class SleepDiaryShareToken {
         +SleepDiaryShareTokenId Id
         +UserId ChildId
@@ -191,6 +207,8 @@ classDiagram
     SleepDiaryShareToken --> User : childId, createdBy
     TransitionWarningSettings --> User : childId
     TransitionWarningSettings ..> CalendarItem : itemOverrides
+    FeelingsJournal --> User : childId, check-ins' loggedBy
+    FeelingsShareToken --> User : childId, createdBy
     RuleBook --> User : scopeId (Child scope), acknowledgements
     RuleBook --> Group : scopeId (Group scope)
 ```

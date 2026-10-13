@@ -25,6 +25,7 @@ public sealed class FeatureOptions
     public bool Progress { get; set; } = true;
     public bool TaskLibrary { get; set; } = true;
     public bool TransitionWarnings { get; set; } = true;
+    public bool Feelings { get; set; } = true;
 
     // Frontend only (the help panel and /guardian/help); carried here so the operator has one place.
     public bool Help { get; set; } = true;
@@ -45,6 +46,7 @@ public sealed class FeatureOptions
         Progress,
         TaskLibrary,
         TransitionWarnings,
+        Feelings,
         Help);
 
     public IReadOnlyList<string> SubFlagsOverriddenByParent()
@@ -80,4 +82,5 @@ public sealed record InstallationFeatures(
     bool Progress,
     bool TaskLibrary,
     bool TransitionWarnings,
+    bool Feelings,
     bool Help);

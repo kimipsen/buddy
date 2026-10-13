@@ -1,0 +1,209 @@
+@let promptOpen = prompt().open !== null;
+
+<section
+  data-testid="feelings-check-in"
+  aria-labelledby="feelingsCheckInTitle"
+  class="rounded-3xl border-4 p-5 shadow-sm sm:p-8"
+  [class.border-amber-300]="promptOpen"
+  [class.dark:border-amber-700]="promptOpen"
+  [class.bg-amber-50]="promptOpen"
+  [class.dark:bg-amber-500/10]="promptOpen"
+  [class.border-emerald-200]="!promptOpen"
+  [class.dark:border-emerald-800]="!promptOpen"
+  [class.bg-white]="!promptOpen"
+  [class.dark:bg-slate-900]="!promptOpen"
+>
+  <h2 id="feelingsCheckInTitle" class="text-2xl font-bold tracking-normal">
+    {{ 'feelings.child.title' | translate }}
+  </h2>
+  @if (promptOpen) {
+    <p
+      class="mt-1 text-base font-semibold text-amber-900 dark:text-amber-200"
+      data-testid="feelings-prompt"
+    >
+      {{ 'feelings.child.promptOpen' | translate }}
+    </p>
+  }
+
+  @if (!today.hasValue() && today.isLoading()) {
+    <p class="mt-4 text-base text-slate-500 dark:text-slate-400">
+      {{ 'common.loading' | translate }}
+    </p>
+  } @else if (today.error()) {
+    <p class="mt-4 text-base font-semibold text-red-700 dark:text-red-400">
+      {{ 'feelings.child.loadError' | translate }}
+    </p>
+  } @else {
+    @switch (step()) {
+      @case ('pick') {
+        <p class="mt-2 text-base text-slate-600 dark:text-slate-300">
+          {{
+            (facesOnly() ? 'feelings.child.pickHintFaces' : 'feelings.child.pickHint') | translate
+          }}
+        </p>
+        <app-feeling-zone-buttons
+          class="mt-4 block"
+          size="child"
+          [displayMode]="displayMode()"
+          [groupLabel]="'feelings.child.title' | translate"
+          (picked)="pick($event)"
+        />
+      }
+      @case ('details') {
+        @if (zone(); as picked) {
+          <app-feeling-zone-buttons
+            class="mt-4 block"
+            size="child"
+            [selected]="picked"
+            [displayMode]="displayMode()"
+            [groupLabel]="'feelings.child.title' | translate"
+            (picked)="pick($event)"
+          />
+          <div class="mt-5">
+            <app-feeling-tag-chips
+              size="child"
+              [zone]="picked"
+              [selected]="tags()"
+              (toggled)="toggleTag($event)"
+            />
+          </div>
+
+          <div class="mt-4">
+            @if (noteOpen()) {
+              <label for="feelingsNote" class="block text-base font-semibold">
+                {{ 'feelings.child.noteLabel' | translate }}
+              </label>
+              <textarea
+                id="feelingsNote"
+                rows="2"
+                class="mt-2 w-full rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-base text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [maxlength]="maxNote"
+                [ngModel]="note()"
+                (ngModelChange)="note.set($event)"
+              ></textarea>
+            } @else {
+              <button
+                type="button"
+                class="text-base font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                (click)="noteOpen.set(true)"
+              >
+                {{ 'feelings.child.addNote' | translate }}
+              </button>
+            }
+          </div>
+
+          @if (saving.state(); as state) {
+            @if (state.status === 'error') {
+              <p class="mt-3 text-base font-semibold text-red-700 dark:text-red-400">
+                {{ state.message | translate }}
+              </p>
+            }
+          }
+
+          <div class="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              class="min-h-12 rounded-2xl bg-emerald-600 dark:bg-emerald-500 px-6 py-3 text-lg font-bold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:opacity-60"
+              [disabled]="saving.busy()"
+              (click)="done()"
+            >
+              {{ 'feelings.child.done' | translate }}
+            </button>
+            <button
+              type="button"
+              class="min-h-12 rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-6 py-3 text-lg font-semibold text-slate-700 dark:text-slate-200"
+              [disabled]="saving.busy()"
+              (click)="back()"
+            >
+              {{ 'feelings.child.back' | translate }}
+            </button>
+          </div>
+        }
+      }
+      @case ('saved') {
+        <p class="mt-3 text-xl font-bold" data-testid="feelings-thanks">
+          {{
+            givenName()
+              ? ('feelings.child.thanks' | translate: { name: givenName() })
+              : ('feelings.child.thanksNoName' | translate)
+          }}
+        </p>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            class="min-h-12 rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-5 py-2 text-base font-semibold text-slate-700 dark:text-slate-200 disabled:opacity-60"
+            [disabled]="undoing.busy()"
+            (click)="undo()"
+          >
+            {{ 'feelings.child.undo' | translate }}
+          </button>
+          <span class="text-sm text-slate-500 dark:text-slate-400">
+            {{ 'feelings.child.undoTimeLeft' | translate: { minutes: undoMinutesLeft() } }}
+          </span>
+          <button
+            type="button"
+            class="text-base font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+            (click)="checkInAgain()"
+          >
+            {{ 'feelings.child.again' | translate }}
+          </button>
+        </div>
+      }
+    }
+
+    <!-- Outside the steps: a "too late" undo returns to the buttons and still needs saying. -->
+    @if (undoing.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mt-3 text-base font-semibold text-red-700 dark:text-red-400">
+          {{ state.message | translate }}
+        </p>
+      }
+    }
+
+    @if (checkIns().length > 0) {
+      <div class="mt-5">
+        <h3 class="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {{ 'feelings.child.todayTitle' | translate }}
+        </h3>
+        <ul class="mt-2 flex flex-wrap gap-2" data-testid="feelings-today-chips">
+          @for (checkIn of checkIns(); track checkIn.id) {
+            @let info = zoneInfo(checkIn.zone);
+            <li
+              class="flex items-center gap-1 rounded-full border-2 px-3 py-1 text-sm font-semibold"
+              [class]="info.chipClass"
+            >
+              <span aria-hidden="true" class="text-lg leading-none">{{ info.face }}</span>
+              <span aria-hidden="true">{{ checkIn.time }}</span>
+              <span class="sr-only">{{ chipLabel(checkIn) }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (!facesOnly()) {
+      <details class="mt-5 text-base">
+        <summary
+          class="cursor-pointer font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+        >
+          {{ 'feelings.child.coloursTitle' | translate }}
+        </summary>
+        <ul class="mt-2 space-y-1 text-slate-600 dark:text-slate-300">
+          @for (z of zones; track z.zone) {
+            <li>
+              <span aria-hidden="true">{{ z.face }}</span>
+              <strong>{{ z.labelKey | translate }}</strong>
+              ({{ z.colourKey | translate }}): {{ z.meaningKey | translate }}
+            </li>
+          }
+        </ul>
+      </details>
+    }
+
+    <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'feelings.child.visibleToGrownUps' | translate }}
+    </p>
+  }
+
+  <p class="sr-only" role="status">{{ announcement() }}</p>
+</section>

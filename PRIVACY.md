@@ -1,6 +1,6 @@
 # Privacy and GDPR
 
-Buddy stores data about children: their medicines, their sleep, their days. In the EU that is
+Buddy stores data about children: their medicines, their sleep, how they feel, their days. In the EU that is
 special-category data under GDPR Article 9, about people who need extra protection. This page is
 for anyone who runs their own Buddy, and for anyone who wants to help get this right.
 
@@ -20,7 +20,8 @@ decides what the law requires of them. The design and the reasons behind it are 
   and usernames. Sign-in itself happens in Keycloak, which runs alongside Buddy.
 - **Family life:** calendars, tasks and progress, meal plans and ratings, pickups, babysitters,
   work locations and print templates.
-- **Health data:** medicine schedules and dose status, and the sleep diary.
+- **Health data:** medicine schedules and dose status, the sleep diary, and feelings check-ins
+  (a colour, up to three words and a short note, by the child or by a guardian about them).
 - **AI assistant:** the family's own provider API keys (encrypted), and each session's notes and
   chat.
 - **Logs:** user and child ids (never names, emails or health data) in audit logs. See
@@ -41,8 +42,9 @@ decides what the law requires of them. The design and the reasons behind it are 
   after the session ends.
 - **A guardian has to acknowledge the AI notice first.** No AI session starts until a guardian
   has read what is sent to the family's chosen provider and acknowledged it.
-- **Every read of health data is logged:** who read a child's medicines or sleep diary, and
-  through which route (as guardian, as the child, or through a group share).
+- **Every read of health data is logged:** who read a child's medicines, sleep diary or feelings
+  check-ins, and through which route (as guardian, as the child, or through a group share), and
+  every view through a doctor's share link.
 - **Secrets stay out of logs and storage:** tokens are kept out of telemetry, and stored AI keys
   and saved API responses are encrypted.
 
@@ -94,8 +96,8 @@ backup rotation script and templates for the record of processing, the DPIA and 
   when Emil's account is deleted. It's the family's shared plan, the other members can edit or
   delete it, and who wrote it is erased.
 - **No access log screen in the app.** Buddy is meant to be run by each family, and that family
-  has someone technical who can read the audit logs. Who has read a child's medicines or sleep
-  diary is in the logs (see "Decide where the logs go" above).
+  has someone technical who can read the audit logs. Who has read a child's medicines, sleep
+  diary or feelings check-ins is in the logs (see "Decide where the logs go" above).
 
 ## Still open
 

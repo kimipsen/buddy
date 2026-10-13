@@ -12,8 +12,8 @@ code (see "Remaining open questions"). See "Implementation notes" near the end.
 
 Buddy stores data about children with ADHD and the adults around them: names and email
 addresses, medicine schedules and every dose given or missed, nightly sleep entries with free-text
-remarks, rewards, calendars, and the contact details of babysitters and playdate hosts. Under the
-GDPR, medicines and sleep entries are special-category health data (Art. 9), the data subjects
+remarks, feelings check-ins with short notes, rewards, calendars, and the contact details of babysitters and playdate hosts. Under the
+GDPR, medicines, sleep entries and feelings check-ins are special-category health data (Art. 9), the data subjects
 include children (Art. 8), and every user has the right to get a copy of their data (Art. 15/20)
 and to have it erased (Art. 17).
 
@@ -147,7 +147,7 @@ cascades as described below. A background sweeper finishes any erasure that fail
 4. **Things that are only theirs.**
    - Invites they sent or received (any status) are revoked if pending, and their email and the
      child's first name masked.
-   - Sleep diary share links they created are revoked. iCal tokens stay: a feed belongs to the
+   - Sleep diary and feelings share links they created are revoked. iCal tokens stay: a feed belongs to the
      shared calendar, holds no personal data, and the other members can revoke it.
    - AI keys they added are removed (`ProviderApiKeyRemoved`), and the encrypted key is masked in
      the history. AI sessions they started are masked.
@@ -203,6 +203,7 @@ What is erased:
 | The child's user stream and `UserSnapshot`; the Keycloak account | mask + rebuild; admin API delete |
 | Medicine schedules and dose logs, and their group sharing | delete every stream found through `MedicineIndexDocument`/`MedicineSharingIndexDocument`, with snapshots and index documents |
 | Sleep diary (`SleepDiaryId.ForChild`) and share tokens | delete |
+| Feelings journal (`FeelingsJournalId.ForChild`): check-ins, notes, prompt times, display mode; and its share tokens | delete |
 | Progress (`ProgressId.ForChild`): stars, milestones, goal-post labels | delete |
 | Pickup schedule (playdate host names, addresses and contacts, notes) | delete |
 | Meal ratings by the child (`MealRated.Comment`) | mask the comment; the stars stay, keyed by a now-anonymous id |
@@ -315,6 +316,8 @@ form as the existing audit logs ([observability.md](../observability.md)).** New
 - `ListMedicineSchedules`, `ListTodaysDoses` and their group variants (new `MedicinesLog`, EventIds
   9001+);
 - `ListSleepDiaryEntries` (`SleepDiariesLog` 5004).
+- `ListFeelingCheckIns` and `GetMyFeelingsToday` (`FeelingsLog` 11004, added with
+  [feelings-check-in.md](feelings-check-in.md)); `GetSharedFeelings` logs every view (11003).
 
 Each logs the reader's `UserId`, the `ChildId` and the access path (guardian link, group share).
 `GetSharedSleepDiary` already logs every view (5003).
@@ -501,7 +504,7 @@ What shipped with steps 1-7, and where it differs from the design above:
   orchestrated by `PersonalDataExport` (`Features/Privacy`), log event 10006.
   - Sections: `account`, `children`, `groups`, `calendars`, `taskLibrary`, `medicines`,
     `mealplans`, `babysitters`, `pickups`, `workLocations`, `printTemplates`, `progress`,
-    `sleepDiary`. Each reuses the feature's response DTOs where they leave out secrets, so no
+    `sleepDiary`, `feelings`. Each reuses the feature's response DTOs where they leave out secrets, so no
     token hashes, iCal tokens, Keycloak subjects or encrypted AI keys (the last four characters
     only).
   - The document is `{ exportedAt, userId, sections }`, indented, enums by name: it is read by

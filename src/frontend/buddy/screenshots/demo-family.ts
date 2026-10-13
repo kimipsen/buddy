@@ -777,6 +777,58 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         return null;
       });
 
+    // Feelings check-ins (docs/backend/analysis/feelings-check-in.md) -----------------------------
+    // Two weeks of Sara's observations of Emil (green mornings, wound-up afternoons on school days,
+    // a red Thursday, tired evenings now and then), reminder times, and a share link for a doctor.
+    // Emil hasn't checked in himself today, so his home page (fixed at 07:10) shows the 07:00
+    // reminder open. Ida's buttons are faces only, and she has checked in herself today, so the
+    // dashboard shows both a child's own check-in and an observation.
+    const feelingsShare = await (async () => {
+      try {
+        for (let back = 13; back >= 1; back--) {
+          const date = inDays(-back);
+          const weekday = weekdayOf(date);
+          const schoolDay = weekday >= 1 && weekday <= 5;
+          const log = (zone: string, time: string, tags: string[] = [], note = '') =>
+            api.post(`/feelings/children/${emil.id}/check-ins`, { zone, tags, note, date, time });
+
+          await log('Green', schoolDay ? '07:40' : '09:15', back % 3 === 0 ? ['Calm'] : []);
+          if (schoolDay && weekday === 4) {
+            await log('Red', '16:10', ['Overwhelmed', 'School'], 'Meltdown after the bus home.');
+          } else if (schoolDay) {
+            await log(
+              'Yellow',
+              '15:30',
+              back % 2 === 0 ? ['Restless', 'School'] : ['Worried', 'Homework'],
+            );
+          }
+          if (back % 4 === 1) {
+            await log('Blue', '19:45', ['Tired', 'Bedtime']);
+          }
+        }
+        await api.post(`/feelings/children/${emil.id}/check-ins`, {
+          zone: 'Green',
+          tags: ['Calm'],
+          note: '',
+        });
+        await api.put(`/feelings/children/${emil.id}/prompt-times`, {
+          times: ['07:00', '15:00', '19:30'],
+        });
+
+        await api.put(`/feelings/children/${ida.id}/display-mode`, { displayMode: 'FacesOnly' });
+        await makeChildLoginUsable(DEMO_USERNAMES.sibling);
+        const idaApi = await Api.as(DEMO_USERNAMES.sibling, DEMO_PASSWORD);
+        await idaApi.post('/feelings/me/check-ins', { zone: 'Green', tags: ['Happy'] });
+
+        return await api.post<{ token: string }>(`/feelings/children/${emil.id}/share-links`, {
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+      } catch (error: unknown) {
+        warn(error);
+        return null;
+      }
+    })();
+
     // House rules ---------------------------------------------------------------------------
     // A household book for the family group and one personal rule for Emil. Ida has read every
     // household rule (Sara went through them with her); Emil read "Dinner" before it changed and
@@ -947,6 +999,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       groupInviteToken: await inviteTokenFromMail('demo.invitee@buddy.test', 'invite'),
       guardianInviteToken: await inviteTokenFromMail('demo.coparent@buddy.test', 'guardian-invite'),
       sleepDiaryShareToken: sleepShare?.token ?? null,
+      feelingsShareToken: feelingsShare?.token ?? null,
       childId: emil.id,
       groupId: group.id,
       morningRoutineItemId: morningItem.id,

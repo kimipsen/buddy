@@ -128,6 +128,16 @@ Log a night in the same fields as a sleep clinic’s form, review the last 14 ni
 
 <img src="mobile/guardian-sleep-diary.png" alt="Sleep diary on a phone" width="320">
 
+## Feelings
+
+A child’s feelings check-ins over 14 days, each a colour, a face and a word on a morning-to-evening line, next to the medicine taken and the night before’s sleep; an 8-week summary, a day’s check-ins with edit and remove, logging an observation, reminder times, faces-only buttons and a read-only link for a doctor.
+
+![Feelings](guardian-feelings.png)
+
+<img src="tablet/guardian-feelings.png" alt="Feelings on a tablet" width="384">
+
+<img src="mobile/guardian-feelings.png" alt="Feelings on a phone" width="320">
+
 ## Heads-up before changes
 
 Per child, a countdown on the child’s screen before events, tasks, routines, packing lists and pickups: off until a guardian turns it on, then 15, 5 and 1 minute before by default, with the kinds of item, quiet hours and exceptions for single items.
@@ -250,7 +260,7 @@ Every help topic on one page. The "?" button in the header opens the same help i
 
 ## Child: today
 
-The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons. A packing list shows how much is packed and lets the child suggest something; in the evening tomorrow's list appears under “Pack for tomorrow”.
+The child's own view of today's tasks and events. The routine under way shows how long is left of it and of the current step, with Start and Focus buttons. A packing list shows how much is packed and lets the child suggest something; in the evening tomorrow's list appears under “Pack for tomorrow”. The “How are you feeling?” card lights up at a reminder time until the child checks in.
 
 ![Child: today](child-home.png)
 
@@ -337,3 +347,13 @@ What a doctor sees from a share link, with no login: a printable 14-day table la
 <img src="tablet/shared-sleep-diary.png" alt="Shared sleep diary on a tablet" width="384">
 
 <img src="mobile/shared-sleep-diary.png" alt="Shared sleep diary on a phone" width="320">
+
+## Shared feelings check-ins
+
+What a doctor sees from a feelings share link, with no login: the 14-day grid and a printable list of every check-in with its words and note.
+
+![Shared feelings check-ins](shared-feelings.png)
+
+<img src="tablet/shared-feelings.png" alt="Shared feelings check-ins on a tablet" width="384">
+
+<img src="mobile/shared-feelings.png" alt="Shared feelings check-ins on a phone" width="320">

@@ -22,6 +22,12 @@ export class ChildClockService {
 
   readonly timeZone = computed(() => this.users.profileTimeZoneId() ?? browserTimeZoneId());
 
+  /** The current instant in ms. An instant has no zone; child pages read it here rather than from
+   * Date.now() so every "now" on them (the feelings undo window, too) has one source to fake. */
+  now(): number {
+    return Date.now();
+  }
+
   /** The child's date ("yyyy-MM-dd") at `nowMs`. */
   today(nowMs = Date.now()): string {
     return toIsoDateInTimeZone(new Date(nowMs), this.timeZone());

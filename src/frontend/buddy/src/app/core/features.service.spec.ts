@@ -27,6 +27,7 @@ describe('FeaturesService', () => {
     progress: true,
     taskLibrary: true,
     transitionWarnings: true,
+    feelings: true,
     help: true,
   };
 

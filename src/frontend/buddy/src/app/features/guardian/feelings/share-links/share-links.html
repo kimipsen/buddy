@@ -1,0 +1,111 @@
+@let revokeState = revoking().state();
+@let createState = creating.state();
+
+<app-card>
+  <h3 class="text-lg font-semibold tracking-normal">
+    {{ 'feelings.guardian.share.title' | translate }}
+  </h3>
+  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+    {{ 'feelings.guardian.share.help' | translate }}
+  </p>
+
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <span class="text-sm font-medium">{{ 'feelings.guardian.share.expiryLabel' | translate }}</span>
+    <app-segmented-control
+      [options]="expiryOptions()"
+      [selected]="expiryDays()"
+      [ariaLabel]="'feelings.guardian.share.expiryLabel' | translate"
+      (selectedChange)="expiryDays.set($event)"
+    />
+    <button
+      type="button"
+      class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+      [disabled]="creating.busy()"
+      (click)="create()"
+    >
+      {{ 'feelings.guardian.share.create' | translate }}
+    </button>
+  </div>
+
+  @if (createState.status === 'error') {
+    <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ createState.message | translate }}</p>
+  }
+
+  @if (newLinkUrl(); as url) {
+    <div
+      class="mt-4 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-500/10 p-3 text-sm leading-6 text-emerald-900 dark:text-emerald-200"
+    >
+      <p class="font-medium">{{ 'feelings.guardian.share.newLinkLabel' | translate }}</p>
+      <p class="text-xs">{{ 'feelings.guardian.share.newLinkHelp' | translate }}</p>
+      <p class="mt-1 flex flex-wrap items-center gap-2">
+        <span class="break-all font-mono text-xs">{{ url }}</span>
+        <button
+          type="button"
+          class="shrink-0 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300 transition hover:border-emerald-400 dark:hover:border-emerald-500 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+          (click)="copy(url)"
+        >
+          {{
+            (copied() ? 'feelings.guardian.share.copied' : 'feelings.guardian.share.copy')
+              | translate
+          }}
+        </button>
+      </p>
+    </div>
+  }
+
+  <h4 class="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    {{ 'feelings.guardian.share.activeTitle' | translate }}
+  </h4>
+
+  @if (links.isLoading()) {
+    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'common.loading' | translate }}
+    </p>
+  } @else if (links.error()) {
+    <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+      {{ 'feelings.guardian.share.loadError' | translate }}
+    </p>
+  } @else {
+    @if (revokeState.status === 'error') {
+      <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+        {{ revokeState.message | translate }}
+      </p>
+    }
+    @if (links.hasValue() && links.value().length > 0) {
+      <ul class="mt-2 space-y-2">
+        @for (link of links.value(); track link.id) {
+          <li
+            class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm"
+          >
+            <span class="text-slate-600 dark:text-slate-300">
+              {{
+                'feelings.guardian.share.created'
+                  | translate: { date: (link.createdAt | date: 'mediumDate') ?? '' }
+              }},
+              @if (link.expiresAt; as expiresAt) {
+                {{
+                  'feelings.guardian.share.expires'
+                    | translate: { date: (expiresAt | date: 'mediumDate') ?? '' }
+                }}
+              } @else {
+                {{ 'feelings.guardian.share.noExpiry' | translate }}
+              }
+            </span>
+            <button
+              type="button"
+              class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+              [disabled]="revoking().isBusy(link.id)"
+              (click)="revoke(link.id)"
+            >
+              {{ 'feelings.guardian.share.revoke' | translate }}
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'feelings.guardian.share.none' | translate }}
+      </p>
+    }
+  }
+</app-card>

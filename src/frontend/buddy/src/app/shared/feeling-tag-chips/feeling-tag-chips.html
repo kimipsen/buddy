@@ -1,0 +1,46 @@
+@for (group of [words(), situations]; track $index) {
+  <p
+    class="font-semibold text-slate-700 dark:text-slate-300"
+    [class.mt-4]="$index > 0"
+    [class.text-base]="size() === 'child'"
+    [class.text-sm]="size() === 'guardian'"
+  >
+    {{
+      ($index === 0 ? 'feelings.chips.wordsTitle' : 'feelings.chips.situationsTitle') | translate
+    }}
+  </p>
+  <div class="mt-2 flex flex-wrap gap-2">
+    @for (tag of group; track tag) {
+      <button
+        type="button"
+        class="rounded-full border-2 font-semibold transition disabled:opacity-40"
+        [class.px-4]="size() === 'child'"
+        [class.py-2]="size() === 'child'"
+        [class.text-base]="size() === 'child'"
+        [class.px-3]="size() === 'guardian'"
+        [class.py-1]="size() === 'guardian'"
+        [class.text-sm]="size() === 'guardian'"
+        [class.border-slate-900]="isSelected(tag)"
+        [class.bg-slate-900]="isSelected(tag)"
+        [class.text-white]="isSelected(tag)"
+        [class.dark:border-slate-100]="isSelected(tag)"
+        [class.dark:bg-slate-100]="isSelected(tag)"
+        [class.dark:text-slate-900]="isSelected(tag)"
+        [class.border-slate-300]="!isSelected(tag)"
+        [class.bg-white]="!isSelected(tag)"
+        [class.text-slate-700]="!isSelected(tag)"
+        [class.dark:border-slate-600]="!isSelected(tag)"
+        [class.dark:bg-slate-900]="!isSelected(tag)"
+        [class.dark:text-slate-200]="!isSelected(tag)"
+        [attr.aria-pressed]="isSelected(tag)"
+        [disabled]="full() && !isSelected(tag)"
+        (click)="toggled.emit(tag)"
+      >
+        {{ labelKeys[tag] | translate }}
+      </button>
+    }
+  </div>
+}
+<p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+  {{ 'feelings.chips.limit' | translate: { max: maxTags } }}
+</p>

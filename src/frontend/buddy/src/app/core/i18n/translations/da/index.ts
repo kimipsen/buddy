@@ -4,6 +4,7 @@ import { calendar } from './calendar';
 import { child } from './child';
 import { common } from './common';
 import { dashboard } from './dashboard';
+import { feelings } from './feelings';
 import { help } from './help';
 import { houseRules } from './house-rules';
 import { invite } from './invite';
@@ -29,6 +30,7 @@ export const da = {
   child,
   common,
   dashboard,
+  feelings,
   help,
   houseRules,
   invite,

@@ -116,6 +116,7 @@ message text.
 | 8001–8006 | `Common/CommonLog.cs` | Concurrency conflicts, unbindable requests, rate-limit rejections, idempotency cleanup, sub-flags following a disabled parent feature |
 | 9001–9002 | `Features/Medicines/MedicinesLog.cs` | Every read of a child's medicine schedules or doses, with the reader and the access path (`HealthDataAccessPath`: guardian, the child themself, or a group share and its id) |
 | 10001–10006 | `Features/Privacy/PrivacyLog.cs` | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep, a personal data export |
+| 11001–11004 | `Features/Feelings/FeelingsLog.cs` | Feelings share links created or revoked, every view of shared check-ins, and every read of a child's check-ins with the reader and the access path (guardian or the child themself) |
 
 Existing framework-adjacent logs: unbindable requests (`RequestBindingFailureMiddleware`),
 concurrency conflicts (`ConcurrencyConflictMiddleware`), rate-limit rejections

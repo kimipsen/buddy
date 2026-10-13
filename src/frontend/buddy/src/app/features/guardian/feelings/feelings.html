@@ -1,0 +1,138 @@
+<app-page backLink="/guardian" [backLabel]="'feelings.guardian.backLink' | translate">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p
+        class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+      >
+        {{ 'feelings.guardian.eyebrow' | translate }}
+      </p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+        {{ 'feelings.guardian.title' | translate }}
+      </h2>
+      <p class="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
+        {{ 'feelings.guardian.intro' | translate }}
+      </p>
+    </div>
+
+    @if (childList().length > 1) {
+      <div>
+        <label class="sr-only" for="feelingsChildId">{{
+          'common.selectChildLabel' | translate
+        }}</label>
+        <select
+          id="feelingsChildId"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="selectedChildId()"
+          (ngModelChange)="selectChild($event)"
+        >
+          @for (child of childList(); track child.id) {
+            <option [value]="child.id">{{ child.name.givenName }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  @if (children.isLoading()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'feelings.guardian.loading' | translate }}
+    </p>
+  } @else if (children.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'feelings.guardian.loadError' | translate }}
+    </p>
+  } @else if (selectedChildId(); as childId) {
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div class="min-w-0 space-y-6">
+        <app-card>
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <app-segmented-control
+              [options]="viewOptions()"
+              [selected]="view()"
+              [ariaLabel]="'feelings.guardian.viewLabel' | translate"
+              (selectedChange)="view.set($event)"
+            />
+            <div class="flex gap-3">
+              <button
+                type="button"
+                class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                (click)="shiftRange(-14)"
+              >
+                {{ 'feelings.guardian.range.previous' | translate }}
+              </button>
+              @if (canGoForward()) {
+                <button
+                  type="button"
+                  class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+                  (click)="shiftRange(14)"
+                >
+                  {{ 'feelings.guardian.range.next' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (journal.isLoading()) {
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              {{ 'feelings.guardian.loading' | translate }}
+            </p>
+          } @else if (journal.error()) {
+            <p class="text-sm text-red-600 dark:text-red-400">
+              {{ 'feelings.guardian.loadError' | translate }}
+            </p>
+          } @else if (view() === 'days') {
+            <app-feelings-trend
+              [days]="days()"
+              [checkIns]="gridCheckIns()"
+              [sleepByNight]="sleepByNight()"
+              [dosesByDate]="dosesByDate()"
+              [selectedDate]="selectedDate()"
+              (selectDate)="selectDate($event)"
+            />
+          } @else {
+            <app-feelings-weeks [end]="rangeEnd()" [checkIns]="checkIns()" />
+          }
+        </app-card>
+
+        @if (journal.hasValue()) {
+          <app-feelings-day-detail
+            class="block"
+            [childId]="childId"
+            [date]="selectedDate()"
+            [checkIns]="checkIns()"
+            (edit)="editing.set($event)"
+            (removed)="onRemoved($event)"
+          />
+        }
+      </div>
+
+      <div class="min-w-0 space-y-6">
+        <app-feelings-check-in-form
+          class="block"
+          [childId]="childId"
+          [defaultDate]="selectedDate()"
+          [editing]="editing()"
+          (saved)="onSaved($event)"
+          (cancelled)="editing.set(null)"
+        />
+        @if (loaded(); as settings) {
+          <app-feelings-check-in-settings
+            class="block"
+            [childId]="childId"
+            [childName]="selectedChildName()"
+            [promptTimes]="settings.promptTimes"
+            [displayMode]="settings.displayMode"
+            [locked]="journal.isLoading()"
+            (promptTimesSaved)="onPromptTimesSaved($event)"
+            (displayModeSaved)="onDisplayModeSaved($event)"
+          />
+        }
+        <app-feelings-share-links class="block" [childId]="childId" />
+      </div>
+    </div>
+  } @else {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'feelings.guardian.noChildren' | translate }}
+    </p>
+  }
+</app-page>

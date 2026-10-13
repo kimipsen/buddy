@@ -23,6 +23,7 @@ const ALL_ON: InstallationFeatures = {
   progress: true,
   taskLibrary: true,
   transitionWarnings: true,
+  feelings: true,
   help: true,
 };
 

@@ -40,6 +40,14 @@ export const routes: Routes = [
     canActivate: [featureGuard('sleepDiary')],
   },
   {
+    // Not behind authGuard either: a doctor's read-only view of a child's feelings check-ins
+    // (GetSharedFeelings on the backend).
+    path: 'shared/feelings/:token',
+    loadComponent: () =>
+      import('./features/shared-feelings/shared-feelings').then((m) => m.SharedFeelings),
+    canActivate: [featureGuard('feelings')],
+  },
+  {
     path: 'guardian',
     // canActivateChild too, so the session is checked on every navigation inside the tree, not
     // only when it's first entered (see auth.guard.ts).

@@ -1,0 +1,119 @@
+@buddy_HostAddress = http://localhost:5193
+
+### The child checks in (one zone; up to three tags; a note of at most 280 characters)
+
+POST {{buddy_HostAddress}}/feelings/me/check-ins
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "zone": "Yellow",
+  "tags": ["Worried", "School"],
+  "note": "Maths test tomorrow"
+}
+
+###
+
+# The child's own day: today's date on their clock, prompt times, display mode, own check-ins
+GET {{buddy_HostAddress}}/feelings/me/today
+Authorization: Bearer {{childToken}}
+
+###
+
+# The child undoes a mis-tap (within 10 minutes; 409 check_in_undo_window_closed after)
+DELETE {{buddy_HostAddress}}/feelings/me/check-ins/{{checkInId}}
+Authorization: Bearer {{childToken}}
+
+###
+
+# A guardian logs an observation; date and time are both or neither (neither = now)
+POST {{buddy_HostAddress}}/feelings/children/{{childId}}/check-ins
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "zone": "Red",
+  "tags": ["Overwhelmed"],
+  "note": "At pickup",
+  "date": "2026-10-12",
+  "time": "15:10"
+}
+
+###
+
+# A guardian's check-ins for a range (at most 92 days), with prompt times and display mode
+GET {{buddy_HostAddress}}/feelings/children/{{childId}}/check-ins?from=2026-09-30&to=2026-10-13
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Edit a guardian-logged check-in (full overwrite; a self-report answers 409 check_in_is_self_report)
+PUT {{buddy_HostAddress}}/feelings/children/{{childId}}/check-ins/{{checkInId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "zone": "Yellow",
+  "tags": ["Frustrated"],
+  "note": "",
+  "date": "2026-10-12",
+  "time": "15:10"
+}
+
+###
+
+# Remove any check-in, a self-report included
+DELETE {{buddy_HostAddress}}/feelings/children/{{childId}}/check-ins/{{checkInId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# 0-4 prompt times on the child's clock; [] turns the prompts off
+PUT {{buddy_HostAddress}}/feelings/children/{{childId}}/prompt-times
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "times": ["07:30", "15:00", "19:30"]
+}
+
+###
+
+# Faces-only buttons for a young child ("FacesAndWords" is the default)
+PUT {{buddy_HostAddress}}/feelings/children/{{childId}}/display-mode
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "displayMode": "FacesOnly"
+}
+
+###
+
+# A share link for a doctor; the plaintext token is returned once
+POST {{buddy_HostAddress}}/feelings/children/{{childId}}/share-links
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "expiresAt": "2026-11-12T00:00:00Z"
+}
+
+###
+
+# Live share links (not revoked, not expired)
+GET {{buddy_HostAddress}}/feelings/children/{{childId}}/share-links
+Authorization: Bearer {{guardianToken}}
+
+###
+
+DELETE {{buddy_HostAddress}}/feelings/children/{{childId}}/share-links/{{shareLinkId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Anonymous: the doctor's view (default the last 14 days on the child's clock, at most 92)
+GET {{buddy_HostAddress}}/feelings/shared/{{shareToken}}?from=2026-09-30&to=2026-10-13

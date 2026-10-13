@@ -7,6 +7,7 @@ using buddy.Features.Guardians;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Calendars;
+using buddy.IntegrationTests.Features.Feelings;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.HouseRules;
@@ -47,6 +48,8 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
 
         await SleepDiaryTestHelpers.LogAsync(fixture, token, child.Id, Night, SleepDiaryTestHelpers.FullNight($"nightmare{n}"));
         var shareLink = await SleepDiaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
+        await FeelingsTestHelpers.LogAsync(fixture, token, child.Id, new { Zone = "Yellow", Note = $"feeling{n}", Date = Night, Time = "15:10" });
+        var feelingsLink = await FeelingsTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
         await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id, new CreateMedicineScheduleOptions(Name: $"Medizor{n}"));
         await MealplanTestHelpers.CreateMealAsync(fixture, token, child.Id, new CreateMealOptions(Name: $"Meal{n}"));
         var babysitter = await BabysitterTestHelpers.AddAsync(fixture, token, $"Sitter{n}", $"sitter{n}@example.test");
@@ -80,7 +83,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
             .GetProperty("name").GetProperty("givenName").GetString());
 
         foreach (var value in (string[])[
-            $"nightmare{n}", $"Medizor{n}", $"Meal{n}", $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}",
+            $"nightmare{n}", $"feeling{n}", $"Medizor{n}", $"Meal{n}", $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}",
             $"Template{n}", $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Event{n}",
             $"PersonalRule{n}", $"HouseRule{n}"])
         {
@@ -95,6 +98,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
         Assert.DoesNotContain($"sk-ant-{n}", text, StringComparison.Ordinal);
         Assert.DoesNotContain(icalToken.Token, text, StringComparison.Ordinal);
         Assert.DoesNotContain(shareLink!.Token, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(feelingsLink!.Token, text, StringComparison.Ordinal);
         Assert.Empty(PropertyNames(json.RootElement).Intersect(SecretProperties, StringComparer.OrdinalIgnoreCase));
     }
 

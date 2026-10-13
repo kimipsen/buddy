@@ -22,6 +22,7 @@ describe('feature routes', () => {
 
   const cases: [string, Route[], string, FeatureName][] = [
     ['app', routes, 'shared/sleep-diary/:token', 'sleepDiary'],
+    ['app', routes, 'shared/feelings/:token', 'feelings'],
     ['guardian', GUARDIAN_ROUTES, 'print/sheet/:templateId', 'printing'],
     ['guardian', GUARDIAN_ROUTES, 'house-rules/print/children/:childId', 'houseRules'],
     ['guardian', GUARDIAN_ROUTES, 'house-rules/print/groups/:groupId', 'houseRules'],
@@ -30,6 +31,7 @@ describe('feature routes', () => {
     ['guardian', guardianChildren, 'mealplan/import', 'mealplanImport'],
     ['guardian', guardianChildren, 'medicine', 'medicines'],
     ['guardian', guardianChildren, 'sleep-diary', 'sleepDiary'],
+    ['guardian', guardianChildren, 'feelings', 'feelings'],
     ['guardian', guardianChildren, 'transition-warnings', 'transitionWarnings'],
     ['guardian', guardianChildren, 'house-rules', 'houseRules'],
     ['guardian', guardianChildren, 'progress', 'progress'],

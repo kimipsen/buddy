@@ -1,0 +1,102 @@
+@let editingCheckIn = editing();
+
+<app-card>
+  <h3 class="text-lg font-semibold tracking-normal">
+    {{
+      (editingCheckIn ? 'feelings.guardian.form.titleEdit' : 'feelings.guardian.form.titleNew')
+        | translate
+    }}
+  </h3>
+
+  <p class="mt-3 text-sm font-medium">{{ 'feelings.guardian.form.zoneLabel' | translate }}</p>
+  <app-feeling-zone-buttons
+    class="mt-2 block"
+    size="guardian"
+    [selected]="zone()"
+    [groupLabel]="'feelings.guardian.form.zoneLabel' | translate"
+    (picked)="pick($event)"
+  />
+
+  @if (zone(); as picked) {
+    <div class="mt-4">
+      <app-feeling-tag-chips
+        size="guardian"
+        [zone]="picked"
+        [selected]="tags()"
+        (toggled)="toggleTag($event)"
+      />
+    </div>
+  }
+
+  <label for="feelingsGuardianNote" class="mt-4 block text-sm font-medium">
+    {{ 'feelings.guardian.form.noteLabel' | translate }}
+  </label>
+  <textarea
+    id="feelingsGuardianNote"
+    rows="2"
+    class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+    [maxlength]="maxNote"
+    [ngModel]="note()"
+    (ngModelChange)="note.set($event)"
+  ></textarea>
+  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+    {{ 'feelings.guardian.form.noteHelp' | translate }}
+  </p>
+
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <span class="text-sm font-medium">{{ 'feelings.guardian.form.whenLabel' | translate }}</span>
+    @if (!editingCheckIn) {
+      <app-segmented-control
+        [options]="whenOptions()"
+        [selected]="when()"
+        [ariaLabel]="'feelings.guardian.form.whenLabel' | translate"
+        (selectedChange)="setWhen($event)"
+      />
+    }
+  </div>
+  @if (when() === 'earlier') {
+    <div class="mt-3 flex flex-wrap items-center gap-3">
+      <app-date-select
+        [value]="date()"
+        [ariaLabel]="'feelings.guardian.form.dateLabel' | translate"
+        (valueChange)="date.set($event)"
+      />
+      <app-time-select
+        [value]="time()"
+        [ariaLabel]="'feelings.guardian.form.timeLabel' | translate"
+        (valueChange)="time.set($event)"
+      />
+    </div>
+  }
+
+  @if (saving.state(); as state) {
+    @if (state.status === 'error') {
+      <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+    }
+  }
+
+  <div class="mt-5 flex flex-wrap items-center gap-3">
+    <button
+      type="button"
+      class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+      [disabled]="!canSave()"
+      (click)="save()"
+    >
+      {{ 'feelings.guardian.form.save' | translate }}
+    </button>
+    @if (editingCheckIn) {
+      <button
+        type="button"
+        class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100"
+        (click)="cancel()"
+      >
+        {{ 'feelings.guardian.form.cancel' | translate }}
+      </button>
+    }
+    @if (savedNotice()) {
+      <span class="text-sm text-emerald-700 dark:text-emerald-400" role="status">
+        {{ 'feelings.guardian.form.saved' | translate }}
+      </span>
+    }
+  </div>
+</app-card>

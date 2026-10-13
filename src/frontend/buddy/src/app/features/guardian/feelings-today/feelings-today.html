@@ -1,0 +1,52 @@
+<app-card>
+  <div class="mb-5 flex items-center justify-between">
+    <h3 class="text-lg font-semibold tracking-normal">
+      {{ 'feelings.dashboard.title' | translate }}
+    </h3>
+    <a
+      routerLink="/guardian/feelings"
+      class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+      >{{ 'feelings.dashboard.manageLink' | translate }}</a
+    >
+  </div>
+
+  @if (today.isLoading()) {
+    <app-loading-spinner [label]="'feelings.dashboard.loading' | translate" />
+  } @else if (today.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'feelings.dashboard.loadError' | translate }}
+    </p>
+  } @else if (today.hasValue()) {
+    @let loaded = today.value();
+
+    @if (!loaded.hasChildren) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'feelings.dashboard.noChildren' | translate }}
+      </p>
+    } @else {
+      <ul class="space-y-3" data-testid="feelings-today">
+        @for (child of loaded.children; track child.childId) {
+          <li class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span class="min-w-16 text-sm font-medium">{{ child.name }}</span>
+            @for (checkIn of child.checkIns; track checkIn.id) {
+              @let info = zoneInfo(checkIn.zone);
+              <span
+                class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold"
+                [class]="info.chipClass"
+                [class.border-dashed]="!checkIn.isSelfReport"
+              >
+                <span aria-hidden="true" class="text-base leading-none">{{ info.face }}</span>
+                <span class="tabular-nums">{{ checkIn.time }}</span>
+                <span class="sr-only">{{ info.labelKey | translate }}</span>
+              </span>
+            } @empty {
+              <span class="text-sm text-slate-500 dark:text-slate-400">{{
+                'feelings.dashboard.none' | translate
+              }}</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</app-card>

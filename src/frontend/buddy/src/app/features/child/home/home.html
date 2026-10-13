@@ -66,6 +66,10 @@
     </a>
   }
 
+  @if (features.enabled('feelings')) {
+    <app-feelings-check-in class="block" />
+  }
+
   @if (error(); as message) {
     <p
       class="rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400"

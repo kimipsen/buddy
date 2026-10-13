@@ -39,6 +39,9 @@
     @if (features.enabled('medicines')) {
       <app-doses-today class="mb-6 block break-inside-avoid" />
     }
+    @if (features.enabled('feelings')) {
+      <app-feelings-today class="mb-6 block break-inside-avoid" />
+    }
     @if (features.enabled('pickups')) {
       <app-pickup-today class="mb-6 block break-inside-avoid" />
     }

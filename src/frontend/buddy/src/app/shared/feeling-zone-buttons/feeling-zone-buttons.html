@@ -1,0 +1,39 @@
+<div
+  role="group"
+  [attr.aria-label]="groupLabel() || null"
+  class="grid grid-cols-2 gap-3 sm:grid-cols-4"
+>
+  @for (zone of zones; track zone.zone) {
+    <button
+      type="button"
+      class="flex flex-col items-center justify-center gap-1 rounded-2xl px-3 border-4 font-bold transition focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-500 disabled:opacity-60 motion-safe:hover:scale-[1.02]"
+      [class]="zone.buttonClass"
+      [class.min-h-16]="size() === 'child'"
+      [class.py-3]="size() === 'child'"
+      [class.py-2]="size() === 'guardian'"
+      [class.text-lg]="size() === 'child'"
+      [class.text-sm]="size() === 'guardian'"
+      [class.ring-4]="selected() === zone.zone"
+      [class.ring-slate-900]="selected() === zone.zone"
+      [class.dark:ring-white]="selected() === zone.zone"
+      [class.opacity-60]="selected() !== null && selected() !== zone.zone"
+      [attr.aria-pressed]="selected() === zone.zone"
+      [attr.aria-label]="accessibleName(zone)"
+      [attr.data-zone]="zone.zone"
+      [disabled]="disabled()"
+      (click)="picked.emit(zone.zone)"
+    >
+      <span
+        aria-hidden="true"
+        class="leading-none"
+        [class.text-4xl]="size() === 'child' && displayMode() === 'FacesAndWords'"
+        [class.text-6xl]="size() === 'child' && displayMode() === 'FacesOnly'"
+        [class.text-2xl]="size() === 'guardian'"
+        >{{ zone.face }}</span
+      >
+      @if (displayMode() === 'FacesAndWords') {
+        <span aria-hidden="true">{{ zone.labelKey | translate }}</span>
+      }
+    </button>
+  }
+</div>

@@ -1,0 +1,138 @@
+<main
+  class="min-h-dvh bg-slate-100 dark:bg-slate-950 text-slate-950 dark:text-slate-50 print:bg-white print:text-black"
+>
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 print:max-w-none print:p-0">
+    @if (shared.isLoading()) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'feelings.shared.loading' | translate }}
+      </p>
+    } @else if (notFound()) {
+      <p class="text-sm text-slate-600 dark:text-slate-300">
+        {{ 'feelings.shared.notFound' | translate }}
+      </p>
+    } @else if (shared.error()) {
+      <p class="text-sm text-red-600 dark:text-red-400">
+        {{ 'feelings.shared.loadError' | translate }}
+      </p>
+    } @else if (shared.hasValue()) {
+      @let view = shared.value();
+
+      <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p
+            class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400 print:text-black"
+          >
+            {{ 'feelings.shared.eyebrow' | translate }}
+          </p>
+          <h1 class="mt-2 text-3xl font-semibold tracking-normal">
+            {{
+              'feelings.shared.title'
+                | translate: { name: view.childGivenName + ' ' + view.childFamilyName }
+            }}
+          </h1>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-300 print:text-black">
+            {{ view.from | date: 'longDate' }} – {{ view.to | date: 'longDate' }}
+          </p>
+          @if (view.expiresAt; as expiresAt) {
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 print:hidden">
+              {{
+                'feelings.shared.expires'
+                  | translate: { date: (expiresAt | date: 'mediumDate') ?? '' }
+              }}
+            </p>
+          }
+        </div>
+
+        <div class="flex flex-wrap gap-3 print:hidden">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500"
+            (click)="previous()"
+          >
+            {{ 'feelings.shared.previous' | translate }}
+          </button>
+          @if (canGoForward()) {
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500"
+              (click)="next()"
+            >
+              {{ 'feelings.shared.next' | translate }}
+            </button>
+          }
+          <button
+            type="button"
+            class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400"
+            (click)="print()"
+          >
+            {{ 'feelings.shared.print' | translate }}
+          </button>
+        </div>
+      </header>
+
+      <p class="mb-4 max-w-3xl text-sm text-slate-600 dark:text-slate-300 print:text-black">
+        {{ 'feelings.shared.intro' | translate }}
+      </p>
+
+      <section
+        class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm sm:p-6 print:border-0 print:p-0 print:shadow-none"
+      >
+        <app-feelings-trend [days]="days()" [checkIns]="view.checkIns" [selectable]="false" />
+      </section>
+
+      <table
+        class="mt-6 w-full border-collapse rounded-lg bg-white dark:bg-slate-900 text-sm print:bg-white"
+        data-testid="shared-feelings-table"
+      >
+        <thead>
+          <tr
+            class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
+            <th scope="col" class="w-32 px-3 py-2">
+              {{ 'feelings.shared.columns.date' | translate }}
+            </th>
+            <th scope="col" class="px-3 py-2">
+              {{ 'feelings.shared.columns.checkIns' | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.date) {
+            <tr class="border-t border-slate-200 dark:border-slate-800 align-top">
+              <th scope="row" class="px-3 py-2 text-left font-medium">{{ row.label }}</th>
+              <td class="px-3 py-2">
+                @for (checkIn of row.checkIns; track checkIn.id) {
+                  @let info = zoneInfo(checkIn.zone);
+                  <p class="py-0.5">
+                    <span class="tabular-nums">{{ checkIn.time }}</span>
+                    <span aria-hidden="true"> {{ info.face }} </span>
+                    <strong>{{ info.labelKey | translate }}</strong>
+                    ({{ info.colourKey | translate }},
+                    {{
+                      (checkIn.isSelfReport
+                        ? 'feelings.shared.selfReport'
+                        : 'feelings.shared.observation'
+                      ) | translate
+                    }})
+                    @if (checkIn.tags.length > 0) {
+                      – {{ tagList(checkIn) }}
+                    }
+                    @if (checkIn.note) {
+                      <span class="text-slate-600 dark:text-slate-300 print:text-black">
+                        – “{{ checkIn.note }}”</span
+                      >
+                    }
+                  </p>
+                } @empty {
+                  <span class="text-slate-400 dark:text-slate-500">{{
+                    'feelings.shared.none' | translate
+                  }}</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</main>

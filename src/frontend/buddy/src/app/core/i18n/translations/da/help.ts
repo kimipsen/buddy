@@ -204,6 +204,37 @@ export const help = {
         },
       },
     },
+    feelings: {
+      title: 'Følelser',
+      sections: {
+        childCheckIn: {
+          title: 'Sådan mærker dit barn efter',
+          body: 'Dit barns startside har et kort, "Hvordan har du det?", med fire knapper: hver med en farve, et ansigt og et ord. Blå er langsom (træt, ked af det), grøn er klar (rolig, okay), gul er oppe at køre (bekymret, urolig), og rød er for meget (vred, overvældet). Der er ikke noget rigtigt svar. Dit barn ser kun sine egne registreringer fra i dag, og kortet fortæller, at du kan se dem. Et forkert tryk kan fortrydes i 10 minutter.',
+          steps: {
+            s1: 'Dit barn trykker på den farve eller det ansigt, der passer.',
+            s2: 'Hvis barnet vil, vælger det op til tre ord, fx "bekymret" eller "skolen", eller skriver en kort note.',
+            s3: 'Barnet trykker "Færdig". Det kan mærke efter igen når som helst.',
+          },
+        },
+        trend: {
+          title: 'Se udviklingen og registrér, hvad du så',
+          body: 'Visningen med 14 dage viser hver dags registreringer på en linje fra morgen til aften, sammen med den medicin, dit barn har taget, og hvor længe barnet sov natten før. Udfyldte mærker er dit barns egne registreringer; mærker med omrids er en voksens observationer. Vælg en dag for at se dens registreringer, redigere eller fjerne dine observationer eller fjerne en registrering, dit barn ikke mente (den kan ikke redigeres). Under "Registrér en observation" noterer du, hvordan dit barn virkede, nu eller tidligere. Visningen med 8 uger tæller farverne pr. uge.',
+        },
+        settings: {
+          title: 'Påmindelser og kun ansigter',
+          body: 'Under "Indstillinger" vælger du op til fire tidspunkter for påmindelser. Fra hvert tidspunkt lyser kortet på dit barns startside op, indtil barnet har mærket efter; en glemt påmindelse lukker bare, når den næste kommer. Slå "Kun ansigter" til for et barn, der ikke kan læse endnu: Knapperne viser så kun ansigterne, og intet andet ændres.',
+        },
+        shareWithDoctor: {
+          title: 'Del registreringerne med en læge',
+          body: 'Med et delingslink kan en læge læse 14 dages registreringer ad gangen, også noterne, uden en konto i Buddy, og udskrive siden. Alle med linket kan læse dem, så tryk "Tilbagekald" under "Aktive links", når I ikke har brug for det længere. Søvndagbogen har sit eget link, hvis lægen også skal se den.',
+          steps: {
+            s1: 'Vælg under "Del med en læge", hvornår linket udløber, eller "Aldrig".',
+            s2: 'Tryk "Opret link".',
+            s3: 'Kopiér linket med det samme, for det vises kun én gang, og send det til lægen.',
+          },
+        },
+      },
+    },
     transitionWarnings: {
       title: 'Varsel før skift',
       sections: {

@@ -6,6 +6,7 @@ using buddy.Features.Privacy;
 using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Calendars;
+using buddy.IntegrationTests.Features.Feelings;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.HouseRules;
@@ -43,6 +44,8 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
         await SleepDiaryTestHelpers.LogAsync(fixture, token, child.Id, Night, SleepDiaryTestHelpers.FullNight($"nightmare{n}"));
         await SleepDiaryTestHelpers.UpdateNotesAsync(fixture, token, child.Id, $"hygiene{n}");
         await SleepDiaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
+        await FeelingsTestHelpers.LogAsync(fixture, token, child.Id, new { Zone = "Red", Note = $"feeling{n}", Date = Night, Time = "15:10" });
+        await FeelingsTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
         await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id, new CreateMedicineScheduleOptions(Name: $"Medizor{n}", Dosage: $"dose{n}"));
         await BabysitterTestHelpers.AddAsync(fixture, token, $"Sitter{n}", $"sitter{n}@example.test");
         await WorkLocationTestHelpers.AddLocationAsync(fixture, token, $"Office{n}");
@@ -69,7 +72,7 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
             fixture,
             $"Gerda{n}", $"Gauss{n}", guardian.Email, guardian.Username,
             $"Cosmo{n}", $"Crane{n}", child.Username,
-            $"nightmare{n}", $"hygiene{n}", $"Medizor{n}", $"dose{n}",
+            $"nightmare{n}", $"hygiene{n}", $"feeling{n}", $"Medizor{n}", $"dose{n}",
             $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}", $"Template{n}", $"Meal{n}", $"recipe{n}",
             $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Task{n}",
             $"PersonalRule{n}", $"rulebody{n}", $"HouseRule{n}");
@@ -88,8 +91,15 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
         var n = Unique();
         var family = await WorkLocationTestHelpers.CreateCoGuardiansAsync(fixture);
         await SleepDiaryTestHelpers.LogAsync(fixture, family.FirstToken, family.Child.Id, Night, SleepDiaryTestHelpers.FullNight($"kept{n}"));
+        await FeelingsTestHelpers.LogAsync(fixture, family.FirstToken, family.Child.Id, new { Zone = "Blue", Note = $"keptfeeling{n}", Date = Night, Time = "07:00" });
+        var feelingsLink = await FeelingsTestHelpers.CreateShareLinkAsync(fixture, family.FirstToken, family.Child.Id);
 
         await DeleteAccountAsync(family.FirstToken, expectedStatus: 204);
+
+        // The check-in the erased guardian logged stays in the child's record; their share link doesn't.
+        var feelings = await FeelingsTestHelpers.ListAsync(fixture, family.SecondToken, family.Child.Id, Night, Night);
+        Assert.Equal($"keptfeeling{n}", Assert.Single(feelings!.CheckIns).Note);
+        await FeelingsTestHelpers.GetSharedAsync(fixture, feelingsLink!.Token, expectedStatus: 404);
 
         var diary = await SleepDiaryTestHelpers.ListAsync(fixture, family.SecondToken, family.Child.Id, Night, Night);
         Assert.Equal($"kept{n}", Assert.Single(diary!.Entries).Remarks);

@@ -4,6 +4,7 @@ using Alba;
 
 using buddy.Common.FeatureFlags;
 using buddy.IntegrationTests.Features.Calendars;
+using buddy.IntegrationTests.Features.Feelings;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Features.Medicines;
@@ -57,6 +58,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             ["Features:Progress"] = "false",
             ["Features:TaskLibrary"] = "false",
             ["Features:TransitionWarnings"] = "false",
+            ["Features:Feelings"] = "false",
             ["Features:Help"] = "false"
         });
 
@@ -73,7 +75,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(fixture.Host);
 
-        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
+        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
     }
 
     [Fact]
@@ -81,9 +83,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(await AllOffAsync());
 
-        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
+        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
         Assert.Equal(
-            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true, true, true),
             await GetFeaturesAsync(await MealplanExtrasOffAsync()));
     }
 
@@ -101,6 +103,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
         Assert.True(json.RootElement.GetProperty("sleepDiary").GetBoolean());
         Assert.True(json.RootElement.GetProperty("houseRules").GetBoolean());
         Assert.True(json.RootElement.GetProperty("transitionWarnings").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("feelings").GetBoolean());
     }
 
     [Fact]
@@ -123,7 +126,8 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             "/print-templates/",
             $"/progress/children/{child.Id}",
             $"/task-templates/children/{child.Id}",
-            $"/transition-warnings/children/{child.Id}"
+            $"/transition-warnings/children/{child.Id}",
+            $"/feelings/children/{child.Id}/share-links"
         ];
 
         foreach (var url in disabled)
@@ -143,8 +147,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
         var feed = await MealplanTestHelpers.CreateIcalTokenAsync(fixture, token, child.Id);
         var shareLink = await SleepDiaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
+        var feelingsLink = await FeelingsTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
 
-        string[] anonymous = [feed.SubscriptionPath, $"/sleep-diary/shared/{shareLink!.Token}"];
+        string[] anonymous = [feed.SubscriptionPath, $"/sleep-diary/shared/{shareLink!.Token}", $"/feelings/shared/{feelingsLink!.Token}"];
 
         foreach (var url in anonymous)
         {

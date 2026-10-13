@@ -9,6 +9,7 @@ import {
   TaskCompletion,
 } from '../../../core/calendars.service';
 import { addDaysIso, todayIsoDate } from '../../../core/date-utils';
+import { FeelingsService } from '../../../core/feelings.service';
 import { GuardianSummary, GuardiansService, SiblingSummary } from '../../../core/guardians.service';
 import { ChildRules, HouseRulesService } from '../../../core/house-rules.service';
 import { Meal, MealPlanEntry, MealplansService } from '../../../core/mealplans.service';
@@ -193,6 +194,15 @@ describe('ChildHome', () => {
       ...stubs.houseRules,
     };
 
+    const feelingsStub: Partial<FeelingsService> = {
+      getMyToday: vi.fn(async () => ({
+        date: todayIsoDate(),
+        promptTimes: [],
+        displayMode: 'FacesAndWords' as const,
+        checkIns: [],
+      })),
+    };
+
     await TestBed.configureTestingModule({
       imports: [ChildHome],
       providers: [
@@ -209,6 +219,7 @@ describe('ChildHome', () => {
           provide: TaskLibraryService,
           useValue: { fetchTaskTemplates: vi.fn(async () => []), ...stubs.taskLibrary },
         },
+        { provide: FeelingsService, useValue: feelingsStub },
       ],
     }).compileComponents();
 
@@ -224,6 +235,7 @@ describe('ChildHome', () => {
       calendars: calendarsStub,
       progress: progressStub,
       houseRules: houseRulesStub,
+      feelings: feelingsStub,
     };
   }
 
@@ -1399,6 +1411,23 @@ describe('ChildHome', () => {
     expect(compiled.querySelector('a[href="/child/calendar"]')).toBeTruthy();
     expect(compiled.textContent).toContain('Nothing to show yet');
     expect(compiled.textContent).not.toContain('Something went wrong');
+  });
+
+  it('shows the feelings check-in card', async () => {
+    const on = await setup();
+    await settle(on.fixture);
+
+    expect(on.feelings.getMyToday).toHaveBeenCalled();
+    expect(on.fixture.nativeElement.querySelector('app-feelings-check-in')).toBeTruthy();
+  });
+
+  it('neither loads nor shows the feelings card when feelings are off', async () => {
+    disableFeatures('feelings');
+    const off = await setup();
+    await settle(off.fixture);
+
+    expect(off.feelings.getMyToday).not.toHaveBeenCalled();
+    expect(off.fixture.nativeElement.querySelector('app-feelings-check-in')).toBeNull();
   });
 
   describe('visual time-left timer', () => {

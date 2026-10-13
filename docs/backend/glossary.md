@@ -339,6 +339,26 @@ A wall-clock window in the child's own time zone with no warnings at all; `From 
 ### Child clock
 The child's "today" and time of day in their profile time zone (`ChildClockService` in the frontend), which every child page uses instead of the device's clock.
 
+## Feelings domain
+
+### FeelingsJournal
+A child's feelings check-ins (`Features/Feelings`). Its `FeelingsJournalId` equals the child's `UserId`, like `SleepDiaryId`. Holds the check-ins keyed by `FeelingCheckInId`, the prompt times and the `FeelingsDisplayMode`. Started lazily by the first write.
+
+### Feelings check-in
+One `FeelingCheckIn`: a `FeelingZone` (`Blue` slow, `Green` ready, `Yellow` wound up, `Red` too much), 0-3 `FeelingTag`s from a fixed catalog (feeling words of that zone, or situations), an optional note of at most 280 characters, the child's local date and time it describes, `LoggedBy` and `RecordedAt`. Never called "Zones of Regulation".
+
+### Self-report / observation
+A check-in the child logged themself (`LoggedBy` is the child) versus one a guardian logged about them. Derived, never stored. The child sees only their own self-reports for today; a guardian may remove a self-report but never edit it. Drawn filled vs outlined.
+
+### Prompt time
+One of a child's 0-4 reminder times (wall clock, child's zone). From each, the child's check-in card is highlighted until the child checks in or the next prompt time comes.
+
+### Faces-only mode
+`FeelingsDisplayMode.FacesOnly`: the child's buttons show only the faces, without the zone words or colour names, for a child who can't read yet. The stored zones are the same.
+
+### FeelingsShareToken
+A hashed, revocable, optionally expiring link that lets a doctor read a child's check-ins without an account, a copy of `SleepDiaryShareToken`.
+
 ## Event-sourced concepts
 
 ### Event stream

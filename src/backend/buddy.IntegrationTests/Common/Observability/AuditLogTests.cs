@@ -4,6 +4,7 @@ using Alba;
 
 using buddy.Common.Observability;
 using buddy.Features.Guardians;
+using buddy.IntegrationTests.Features.Feelings;
 using buddy.IntegrationTests.Features.Medicines;
 using buddy.IntegrationTests.Features.SleepDiaries;
 using buddy.IntegrationTests.Features.Guardians;
@@ -183,6 +184,72 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
         Assert.Equal(night.AddDays(-6), read.Property("From"));
         Assert.Equal(night, read.Property("To"));
         Assert.DoesNotContain("Zorbitrex", read.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Every_read_of_a_childs_feelings_is_logged_with_the_reader_and_the_access_path()
+    {
+        var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Quillon", "Vexmoor");
+        var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+        var (_, strangerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        await FeelingsTestHelpers.CheckInAsync(_host, childToken, new { Zone = "Red", Note = "Zorbitrex at school" });
+        var day = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await GetAsync(guardianToken, $"/feelings/children/{child.Id}/check-ins?from={day.AddDays(-6):yyyy-MM-dd}&to={day:yyyy-MM-dd}");
+        await GetAsync(childToken, "/feelings/me/today");
+        await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {strangerToken}");
+            _.Get.Url($"/feelings/children/{child.Id}/check-ins?from={day:yyyy-MM-dd}&to={day:yyyy-MM-dd}");
+            _.StatusCodeShouldBe(404);
+        });
+
+        var reads = _logs.Entries.Where(e => e.EventId == 11004 && Equals(e.Property("ChildId"), child.Id)).ToArray();
+        Assert.Equal(2, reads.Length);
+        var guardianRead = Assert.Single(reads, e => Equals(e.Property("AccessPath"), HealthDataAccessPath.Guardian));
+        Assert.Equal(guardianId, guardianRead.Property("UserId"));
+        Assert.Equal(day.AddDays(-6), guardianRead.Property("From"));
+        Assert.Equal(child.Id, Assert.Single(reads, e => Equals(e.Property("AccessPath"), HealthDataAccessPath.Self)).Property("UserId"));
+        Assert.All(reads, r => Assert.DoesNotContain("Zorbitrex", r.Message, StringComparison.Ordinal));
+        Assert.All(reads, r => Assert.DoesNotContain("Red", r.Message, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Feelings_share_links_and_every_shared_view_are_logged_without_the_token()
+    {
+        var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Quillon", "Vexmoor");
+
+        var created = await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Post.Json(new { ExpiresAt = (DateTimeOffset?)null }).ToUrl($"/feelings/children/{child.Id}/share-links");
+            _.StatusCodeShouldBe(200);
+        });
+        var link = created.ReadAsJson<FeelingsShareLinkDto>()!;
+
+        await _host.Scenario(_ =>
+        {
+            _.Get.Url($"/feelings/shared/{link.Token}");
+            _.StatusCodeShouldBe(200);
+        });
+        await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Delete.Url($"/feelings/children/{child.Id}/share-links/{link.Id}");
+            _.StatusCodeShouldBe(204);
+        });
+        await _host.Scenario(_ =>
+        {
+            _.Get.Url($"/feelings/shared/{link.Token}");
+            _.StatusCodeShouldBe(404);
+        });
+
+        Assert.Equal(guardianId, Assert.Single(_logs.Entries, e => e.EventId == 11001 && Equals(e.Property("ShareLinkId"), link.Id)).Property("UserId"));
+        Assert.Equal(guardianId, Assert.Single(_logs.Entries, e => e.EventId == 11002 && Equals(e.Property("ShareLinkId"), link.Id)).Property("UserId"));
+        Assert.Equal(child.Id, Assert.Single(_logs.Entries, e => e.EventId == 11003 && Equals(e.Property("ShareLinkId"), link.Id)).Property("ChildId"));
+        Assert.DoesNotContain(_logs.Entries, e => e.Message.Contains(link.Token, StringComparison.Ordinal));
     }
 
     private static void AssertRead(LogEntry[] reads, int eventId, Guid userId, HealthDataAccessPath accessPath, Guid? groupId) =>

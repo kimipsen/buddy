@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CalendarsService } from '../../core/calendars.service';
+import { FeelingsService } from '../../core/feelings.service';
 import { GuardiansService } from '../../core/guardians.service';
 import { MealplansService } from '../../core/mealplans.service';
 import { MedicinesService } from '../../core/medicines.service';
@@ -71,6 +72,7 @@ describe('GuardianDashboard', () => {
         { provide: MedicinesService, useValue: medicinesStub },
         { provide: PickupsService, useValue: pickupsStub },
         { provide: TaskLibraryService, useValue: { fetchTaskTemplates: vi.fn(async () => []) } },
+        { provide: FeelingsService, useValue: { listCheckIns: vi.fn() } },
       ],
     }).compileComponents();
 
@@ -92,6 +94,7 @@ describe('GuardianDashboard', () => {
       'app-tasks-today',
       'app-events-today',
       'app-doses-today',
+      'app-feelings-today',
       'app-pickup-today',
       'app-packing-tomorrow',
     ];
@@ -128,6 +131,7 @@ describe('GuardianDashboard', () => {
       'app-tasks-today',
       'app-events-today',
       'app-doses-today',
+      'app-feelings-today',
       'app-pickup-today',
       'app-children-overview',
     ]);
@@ -169,12 +173,17 @@ describe('GuardianDashboard', () => {
   });
 
   it('leaves out the cards and the print link of features that are turned off', async () => {
-    disableFeatures('mealplans', 'medicines', 'pickups', 'printing');
+    disableFeatures('mealplans', 'medicines', 'pickups', 'printing', 'feelings');
     const { fixture } = await setup();
     await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    for (const selector of ['app-mealplan-today', 'app-doses-today', 'app-pickup-today']) {
+    for (const selector of [
+      'app-mealplan-today',
+      'app-doses-today',
+      'app-pickup-today',
+      'app-feelings-today',
+    ]) {
       expect(compiled.querySelector(selector)).toBeNull();
     }
     expect(compiled.querySelector('a[href="/guardian/print"]')).toBeNull();

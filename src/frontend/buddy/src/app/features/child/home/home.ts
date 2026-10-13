@@ -58,6 +58,7 @@ import { VisualTimer } from '../../../shared/visual-timer/visual-timer';
 import { ChildPage } from '../child-page/child-page';
 import { ChildMenu } from './child-menu/child-menu';
 import { ChildSuggestions } from './child-suggestions/child-suggestions';
+import { FeelingsCheckIn } from './feelings-check-in/feelings-check-in';
 
 const EVENT_KIND: CalendarItemKind = 'Event';
 const TASK_KIND: CalendarItemKind = 'Task';
@@ -151,6 +152,7 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
     ChildPage,
     VisualTimer,
     ChildSuggestions,
+    FeelingsCheckIn,
   ],
   templateUrl: './home.html',
 })

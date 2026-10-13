@@ -14,6 +14,7 @@ using buddy.Common.Versioning;
 using buddy.Email;
 using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
+using buddy.Features.Feelings;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.HouseRules;
@@ -123,6 +124,9 @@ builder.Services.AddPrintTemplatesFeature(builder.Configuration);
 builder.Services.AddProgressFeature(builder.Configuration);
 // After Users and Guardians: authorization reads IGuardianLinkEventStore, the shared view IUserEventStore.
 builder.Services.AddSleepDiariesFeature(builder.Configuration);
+// After Users and Guardians: authorization reads IGuardianLinkEventStore, the child's local clock and
+// the shared view's name IUserEventStore.
+builder.Services.AddFeelingsFeature(builder.Configuration);
 // After Users, Guardians and Groups: authorization reads IGuardianLinkEventStore and IGroupEventStore,
 // GetChildRules the child's name from IUserEventStore.
 builder.Services.AddHouseRulesFeature(builder.Configuration);
@@ -235,6 +239,11 @@ if (features.Progress)
 if (features.SleepDiary)
 {
     app.MapSleepDiariesFeature();
+}
+
+if (features.Feelings)
+{
+    app.MapFeelingsFeature();
 }
 
 if (features.HouseRules)

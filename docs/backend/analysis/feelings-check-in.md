@@ -1,6 +1,12 @@
 # Feelings Check-in
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `Features/Feelings` (schema `feelings`, flag `Features:Feelings`) with the
+`FeelingsJournal` and `FeelingsShareToken` aggregates, eight events and thirteen slices: the child's
+`CheckIn`, `UndoCheckIn` and `GetMyFeelingsToday`; a guardian's `LogFeelingCheckIn`,
+`EditFeelingCheckIn`, `RemoveFeelingCheckIn`, `ListFeelingCheckIns`, `SetCheckInPromptTimes`,
+`SetFeelingsDisplayMode` (faces only) and the share links; the anonymous `GetSharedFeelings`. GDPR
+eraser, exporter and audit logs 11001-11004. Frontend: the check-in card on the child home page,
+`/guardian/feelings`, the dashboard's "Feelings today", `/shared/feelings/:token` and a help topic.
 
 ## Context
 
@@ -51,10 +57,20 @@ What exists today (checked in the code):
 - **[mobile-app-and-notifications.md](mobile-app-and-notifications.md)** (proposed) designs push
   reminders as a per-minute scan of current state. Feelings prompts slot into it later as one more
   kind.
+- **[transition-warnings.md, Question 9](transition-warnings.md#question-9-whose-today-do-the-child-pages-use)**
+  (shipped after this doc was first written) added `ChildClockService`
+  ([child-clock.service.ts](../../../src/frontend/buddy/src/app/core/child-clock.service.ts)): every
+  child page takes "today" and the time of day from the child's profile time zone, not the device.
+  The check-in card does the same, for its prompt state and its undo countdown.
+- **[visual-time-left-timer.md](../../frontend/analysis/visual-time-left-timer.md)** (shipped) added
+  the first per-child display switch a guardian sets, `User.ShowVisualTimers`
+  ([UpdateChildVisualTimers](../../../src/backend/buddy/Features/Guardians/UpdateChildVisualTimers)).
+  It's the precedent Question 9 weighs for the faces-only mode.
 
-This document answers eight questions: does this need a new feature, which scale to store, how the
+This document answers nine questions: does this need a new feature, which scale to store, how the
 aggregate is shaped, how one check-in is modelled, who can log, see, change and remove a check-in,
-how prompts work, how the trend combines sleep and doses, and how sharing and GDPR work.
+how prompts work, how the trend combines sleep and doses, how sharing and GDPR work, and how a
+young child can use it without reading (faces-only).
 
 ## Question 1: extend `SleepDiaries`, or a new feature?
 
@@ -116,7 +132,8 @@ The trade-off is that zones have no natural order, so the trend is a distributio
 many check-ins in each zone, and when), not a line. See Question 7.
 
 "The Zones of Regulation" is a published curriculum and a trademark. Buddy uses only the generic
-idea of four colours, its own labels, and no material from the curriculum. See open questions.
+idea of four colours, its own labels, and no material from the curriculum, and never uses that
+name: the feature is "Feelings" / "Følelser" (settled by the user 2026-10-13).
 
 ## Question 3: aggregate shape and identity
 
@@ -129,7 +146,8 @@ FeelingsJournal(
     FeelingsJournalId Id,                                  // Id.Value == ChildId.Value
     UserId ChildId,
     ImmutableDictionary<FeelingCheckInId, FeelingCheckIn> CheckIns,
-    ImmutableList<TimeOnly> PromptTimes)                   // 0-4, the child's local wall clock; see Question 6
+    ImmutableList<TimeOnly> PromptTimes,                   // 0-4, the child's local wall clock; see Question 6
+    FeelingsDisplayMode DisplayMode)                       // FacesAndWords (default) or FacesOnly; see Question 9
 
 public sealed record FeelingsJournalId(Guid Value)
 {
@@ -161,8 +179,8 @@ public sealed record FeelingCheckInId(Guid Value)
 
 ```
 FeelingsJournalStarted(FeelingsJournalId Id, UserId ChildId, DateTimeOffset OccurredAt)
-    // Lazily, by the first CheckIn / LogFeelingCheckIn / SetCheckInPromptTimes for the child,
-    // in the same CreateAsync -- like SleepDiaryStarted.
+    // Lazily, by the first CheckIn / LogFeelingCheckIn / SetCheckInPromptTimes /
+    // SetFeelingsDisplayMode for the child, in the same CreateAsync -- like SleepDiaryStarted.
 
 FeelingCheckedIn(FeelingsJournalId Id, FeelingCheckIn CheckIn, DateTimeOffset OccurredAt)
     // CheckIn.LoggedBy == ChildId for a self-report.
@@ -177,6 +195,10 @@ FeelingCheckInRemoved(FeelingsJournalId Id, FeelingCheckIn Before, UserId Modifi
 
 CheckInPromptTimesSet(FeelingsJournalId Id, IReadOnlyList<TimeOnly> Before,
     IReadOnlyList<TimeOnly> After, UserId ModifiedBy, DateTimeOffset OccurredAt)
+
+FeelingsDisplayModeSet(FeelingsJournalId Id, FeelingsDisplayMode Before,
+    FeelingsDisplayMode After, UserId ModifiedBy, DateTimeOffset OccurredAt)
+    // Question 9. Like CheckInPromptTimesSet, it may start the journal.
 
 FeelingsShareTokenCreated(FeelingsShareTokenId Id, UserId ChildId, string TokenHash,
     UserId CreatedBy, DateTimeOffset? ExpiresAt, DateTimeOffset OccurredAt)
@@ -196,7 +218,8 @@ in `LogSleepEntryHandler`'s `HasSameContentAs` check
 
 `FeelingsJournal.Start` seeds an empty journal from `FeelingsJournalStarted`.
 `FeelingsJournal.Advance` sets `CheckIns[id]` on `FeelingCheckedIn`/`FeelingCheckInEdited`, removes
-it on `FeelingCheckInRemoved`, and replaces `PromptTimes` on `CheckInPromptTimesSet`. The started
+it on `FeelingCheckInRemoved`, replaces `PromptTimes` on `CheckInPromptTimesSet` and `DisplayMode` on
+`FeelingsDisplayModeSet`. The started
 event is `EventReplay.AlreadyStarted` in `Advance`, so CS8509 flags any new event the fold forgets,
 the same layout as [SleepDiary.cs](../../../src/backend/buddy/Features/SleepDiaries/Types/SleepDiary.cs).
 `FeelingsJournalSnapshotProjection` and `FeelingsShareTokenSnapshotProjection` delegate to
@@ -250,7 +273,9 @@ FeelingCheckIn(
   the same store `GetSharedSleepDiaryHandler` already reads
   ([GetSharedSleepDiary.Handler.cs](../../../src/backend/buddy/Features/SleepDiaries/GetSharedSleepDiary/GetSharedSleepDiary.Handler.cs)).
   `RecordedAt` keeps the real instant for the undo window. Unlike the sleep diary's open question,
-  the time zone is settled here.
+  the time zone is settled here. "Now" comes from an injected `TimeProvider` (registered as
+  `TimeProvider.System` by `AddFeelingsFeature`; it's the first handler in Buddy to take one), so
+  the undo-window tests run on a fake clock instead of sleeping.
 - **Self-report or observation is derived, not stored**: `LoggedBy == ChildId`. The trend and the
   share view draw the two differently (filled vs outlined). A doctor needs to know whether the child
   said "red" or a parent saw it.
@@ -271,8 +296,8 @@ enum FeelingsAccess { Allowed, NotFound, Forbidden }
 
 | Tier | Who | Actions |
 |---|---|---|
-| **Self** | The caller is the child: `callerId == childId` *and* the caller has at least one active guardian link (`IGuardianLinkEventStore.ListForChildAsync(...)` non-empty, as [ChildVisibility.cs](../../../src/backend/buddy/Features/Calendars/ChildVisibility.cs) checks) | Check in now; see today's own self-reports and the prompt times; undo an own check-in within 10 minutes |
-| **Manage** | An active guardian of the child (`FindActiveLinkAsync`) | Log on the child's behalf (any past moment); edit or remove guardian-logged check-ins; remove (not edit) a child's self-report; list any range; set prompt times; create, list and revoke share links |
+| **Self** | The caller is the child: `callerId == childId` *and* the caller has at least one active guardian link (`IGuardianLinkEventStore.ListForChildAsync(...)` non-empty, as [ChildVisibility.cs](../../../src/backend/buddy/Features/Calendars/ChildVisibility.cs) checks) | Check in now; see today's own self-reports, the prompt times and the display mode; undo an own check-in within 10 minutes |
+| **Manage** | An active guardian of the child (`FindActiveLinkAsync`) | Log on the child's behalf (any past moment); edit or remove guardian-logged check-ins; remove (not edit) a child's self-report; list any range; set prompt times and the display mode; create, list and revoke share links |
 
 `FeelingsAuthorization` has the shape of `MedicineAuthorization`, with `CheckSelf` and
 `CheckManage` over one private `ResolveTier`. The differences:
@@ -309,14 +334,15 @@ What the child sees: only their own self-reports, and only today's. They don't s
 observations about them (the sleep diary's argument that a parent's clinical note isn't written
 for the child), and no history or trend (a 9-year-old reviewing a week of red days isn't the
 point; the guardian has that conversation). The child UI says plainly, "Your grown-ups can see
-your check-ins." Today only, with no history, was settled by the user on 2026-10-11; whether the
-child sees guardian observations is still an open question.
+your check-ins." Today only, with no history, was settled by the user on 2026-10-11; not seeing
+guardian observations was settled by the user on 2026-10-13. `GetMyFeelingsToday` filters on
+`LoggedBy == ChildId`, so an observation never reaches the child's browser at all.
 
 ## Question 6: prompts and reminders
 
 **Decision: a guardian sets 0-4 prompt times per child (for example 07:30, 15:00, 19:30), stored
 on the journal. The child's home page shows a highlighted "How are you feeling?" card from each
-prompt time until the child (or a guardian) logs a check-in, or the next prompt time comes. Push
+prompt time until the child checks in, or the next prompt time comes. Push
 reminders reuse the same prompt times once
 [mobile-app-and-notifications.md](mobile-app-and-notifications.md) ships, and need no change to
 this feature.**
@@ -324,16 +350,21 @@ this feature.**
 - **Without prompt times**, the check-in card is still on the child's home page, just not
   highlighted. A child can check in any time. Prompts only make it stand out.
 - **The prompt state is computed in the browser**, from `GetMyFeelingsToday`'s `date`,
-  `promptTimes` and today's check-ins, with a pure function and its own spec. The server returns
+  `promptTimes` and today's check-ins, with a pure function and its own spec. "Now" is the child's
+  clock (`ChildClockService.minutesOfDay()`), and the page compares `date` with
+  `ChildClockService.today()`, refetching when the child's day has turned. The server returns
   data only, so the response stays deterministic for the same data, as the ETag middleware needs
   ([conditional-get-etags.md](conditional-get-etags.md)). A body with "prompt open" would change by
   the clock alone.
-- **A prompt is answered** by any check-in on that date with `LocalTime` at or after the prompt
-  time, self-report or guardian. A missed prompt simply closes when the next one opens, with no
+- **A prompt is answered** by the child's own check-in on that date with `LocalTime` at or after
+  the prompt time. A guardian's observation doesn't answer it: the child never receives
+  observations (Question 5), and leaking even their times to the child's browser would tell the
+  child "someone wrote about you at 15:10". A missed prompt simply closes when the next one opens, with no
   "overdue" state and no lost stars. A check-in tool that punishes the child for forgetting gets
   ignored.
 - **Stored on the journal**, not on a separate settings aggregate, because it's part of this
-  child's check-in routine and nothing else reads it. `SetCheckInPromptTimes` may create the
+  child's check-in routine and nothing else reads it (the display mode of Question 9 sits next to
+  it for the same reason). `SetCheckInPromptTimes` may create the
   journal, as `UpdateSleepHygieneNotes` may create the diary.
 - **Push, later.** The notifications design's scheduler
   ([Question 5 there](mobile-app-and-notifications.md#question-5-how-are-time-driven-reminders-scheduled))
@@ -415,6 +446,53 @@ APIs; there's no cross-feature backend endpoint.**
 | Minimization | No free-text tags; a 280-character note; no zone or note in logs, push payloads or URLs |
 | Retention | Kept until the child or the family deletes it, like the sleep diary. Automatic expiry of old check-ins is an open question |
 
+## Question 9: a faces-only display mode for young children
+
+**Decision: include it in v1 (settled by the user 2026-10-13; the doc's earlier lean was "not in
+v1"). A per-child guardian setting, `FeelingsDisplayMode { FacesAndWords, FacesOnly }`, stored on
+the child's `FeelingsJournal` next to the prompt times, default `FacesAndWords`. `FacesOnly` hides
+the zone words ("Ready", "Too much") on the child's four buttons and drops the colour and zone names
+from what a screen reader announces; the buttons keep their face and their colour. The stored data
+is unchanged: the same four zones, the same tags.**
+
+```
+enum FeelingsDisplayMode { FacesAndWords, FacesOnly }    // persisted and sent by name
+
+FeelingsDisplayModeSet(FeelingsJournalId Id, FeelingsDisplayMode Before,
+    FeelingsDisplayMode After, UserId ModifiedBy, DateTimeOffset OccurredAt)
+
+PUT /feelings/children/{childId}/display-mode   { "displayMode": "FacesOnly" }
+    200 { "displayMode": "FacesOnly" } | 400 (unknown value) | 403 (the child) | 404
+```
+
+- **Why a mode at all.** Some 5- and 6-year-olds can't read "Wound up" and don't yet think of a
+  colour as a state; for them a face is the whole question. Words on the button then become noise,
+  and a screen reader reading "Yellow, wound up" to a child who knows only faces is worse than
+  "Worried face".
+- **On the journal, not on `User`.** `User.ShowVisualTimers` is the one per-child display switch
+  that exists, and it lives on `User` because visual timers have no aggregate of their own. Feelings
+  does: the mode is read only by this feature's child card, travels with the feature flag (off
+  hides the setting with the rest), is erased and exported with the journal, and needs no change to
+  the Users feature or its events. The prompt times are on the journal for the same reasons.
+- **Its own slice and event**, not a field on `SetCheckInPromptTimes`. The two are set from
+  different controls on the guardian page, and one event per setting keeps the history readable
+  ("who switched Ida to faces only?"). `SetFeelingsDisplayMode` follows `SetCheckInPromptTimes`:
+  `Manage` tier, the same mode appends nothing, and it may start the journal.
+- **Who reads it.** `GetMyFeelingsToday` returns `displayMode` so the child's card can draw itself;
+  `ListFeelingCheckIns` returns it so the guardian's settings section shows the current value.
+  There's no separate GET.
+- **What changes in faces-only.** The child's four buttons show the face (larger) and the colour,
+  with no word; each button's accessible name is the face's description ("Tired face", "Smiling
+  face", "Worried face", "Angry face") instead of "Ready -- calm, focused, okay"; the saved
+  announcement says "Saved" with no zone name; the "What do the colours mean?" disclosure is hidden.
+  The feeling-word and situation chips after a tap stay (they're optional, and a guardian can read
+  them with the child). The guardian views, the trend and the shared page always show words: the
+  mode is about the child's own screen.
+- Rejected: **a global (per-installation) switch** (it's about one child's age, and siblings
+  differ); **storing a face instead of a zone in faces-only** (two scales in the data, the very
+  thing Question 2 rejected); **an age threshold from a birth date** (Buddy stores no birth date,
+  and readiness isn't age).
+
 ## Read models
 
 - **None for the journal.** `FeelingsJournalId.Value == ChildId.Value`, and reads go through the
@@ -432,69 +510,78 @@ APIs; there's no cross-feature backend endpoint.**
 |---|---|---|
 | `CheckIn` | Self | Zone, tags, note. The moment is now in the child's time zone. Creates the journal lazily. Emits `FeelingCheckedIn` |
 | `UndoCheckIn` | Self | Own self-report only, within 10 minutes of `RecordedAt`, else `409 check_in_undo_window_closed`. Already gone: `204`, no event. Emits `FeelingCheckInRemoved` |
-| `GetMyFeelingsToday` | Self | Today's date in the child's zone, the prompt times, and the child's own self-reports for today. Logs 11004 as `Self` |
-| `LogFeelingCheckIn` | Manage | Like `CheckIn`, plus an optional `date`/`time` (default now; not in the future). Emits `FeelingCheckedIn` with `LoggedBy` = the guardian |
+| `GetMyFeelingsToday` | Self | Today's date in the child's zone, the prompt times, the display mode, and the child's own self-reports for today. Logs 11004 as `Self` |
+| `LogFeelingCheckIn` | Manage | Like `CheckIn`, plus an optional `date`/`time` (both or neither; default now; not more than 5 minutes in the future). Emits `FeelingCheckedIn` with `LoggedBy` = the guardian |
 | `EditFeelingCheckIn` | Manage | Full overwrite of a guardian-logged check-in; a self-report is `409 check_in_is_self_report`. Identical content: no event. Emits `FeelingCheckInEdited` |
 | `RemoveFeelingCheckIn` | Manage | Any check-in of the child. Already gone: `204`, no event. Emits `FeelingCheckInRemoved` |
-| `ListFeelingCheckIns` | Manage | `[from, to]`, at most 92 days, with the prompt times. Logs 11004 as `Guardian` |
-| `SetCheckInPromptTimes` | Manage | 0-4 distinct times, stored sorted. Same list: no event. Emits `CheckInPromptTimesSet` |
+| `ListFeelingCheckIns` | Manage | `[from, to]`, at most 92 days, with the prompt times and the display mode. Logs 11004 as `Guardian` |
+| `SetCheckInPromptTimes` | Manage | 0-4 distinct whole-minute times, stored sorted. Same list: no event. Emits `CheckInPromptTimesSet` |
+| `SetFeelingsDisplayMode` | Manage | `FacesAndWords` or `FacesOnly` (Question 9). Same mode: no event. Emits `FeelingsDisplayModeSet` |
 | `CreateFeelingsShareLink` | Manage | Optional `expiresAt`. Returns the plaintext token once. Emits `FeelingsShareTokenCreated`; logs 11001 |
 | `ListFeelingsShareLinks` | Manage | Live links only (not revoked, not expired), as `ListSleepDiaryShareLinks` |
 | `RevokeFeelingsShareLink` | Manage | Emits `FeelingsShareTokenRevoked`; logs 11002 |
-| `GetSharedFeelings` | *(anonymous, token-gated)* | Unknown, revoked, expired or erased child: all `404`. Optional `from`/`to`, default the last 14 days, at most 92. Logs 11003 |
+| `GetSharedFeelings` | *(anonymous, token-gated)* | Unknown, revoked, expired or erased child: all `404`. Optional `from`/`to`; the default is the last 14 days ending today on the child's own clock (a missing end is 14 days from the other), at most 92. Logs 11003 |
 
-`CheckIn` and `UndoCheckIn` return feature-specific outcome unions (`CheckInOutcome`,
-`UndoCheckInOutcome`) for their `409`/cap cases rather than adding cases to `Result<T>`, the
-`RewardRequestOutcome` precedent
+`UndoCheckIn` and `EditFeelingCheckIn` return feature-specific outcome unions
+(`UndoCheckInOutcome`, `EditFeelingCheckInOutcome`) for their `409`s rather than adding cases to
+`Result<T>`, the `RewardRequestOutcome` precedent
 ([RewardRequestOutcome.cs](../../../src/backend/buddy/Features/Progress/Types/RewardRequestOutcome.cs)).
-`EditFeelingCheckIn` does the same for `check_in_is_self_report`.
+The daily cap is a plain `400 validation_error`, so `CheckIn` keeps `Result<T>`.
 
 ## Routes
 
 | Route | Method | Slice | Success | Other statuses |
 |---|---|---|---|---|
 | `/feelings/me/check-ins` | POST | `CheckIn` | `200` check-in | `400`, `404` (caller isn't a child with an active guardian) |
-| `/feelings/me/check-ins/{checkInId}` | DELETE | `UndoCheckIn` | `204` | `404` (not own / guardian-logged), `409 check_in_undo_window_closed` |
+| `/feelings/me/check-ins/{checkInId}` | DELETE | `UndoCheckIn` | `204` | `404` (not a child / guardian-logged), `409 check_in_undo_window_closed` |
 | `/feelings/me/today` | GET | `GetMyFeelingsToday` | `200` | `404` |
 | `/feelings/children/{childId}/check-ins` | POST | `LogFeelingCheckIn` | `200` check-in | `400`, `403` (the child), `404` |
 | `/feelings/children/{childId}/check-ins` | GET | `ListFeelingCheckIns` | `200` | `400`, `403`, `404` |
 | `/feelings/children/{childId}/check-ins/{checkInId}` | PUT | `EditFeelingCheckIn` | `200` check-in | `400`, `403`, `404`, `409 check_in_is_self_report` |
 | `/feelings/children/{childId}/check-ins/{checkInId}` | DELETE | `RemoveFeelingCheckIn` | `204` | `403`, `404` |
 | `/feelings/children/{childId}/prompt-times` | PUT | `SetCheckInPromptTimes` | `200` prompt times | `400`, `403`, `404` |
+| `/feelings/children/{childId}/display-mode` | PUT | `SetFeelingsDisplayMode` | `200` display mode | `400`, `403`, `404` |
 | `/feelings/children/{childId}/share-links` | POST | `CreateFeelingsShareLink` | `200` link + token | `400`, `403`, `404` |
 | `/feelings/children/{childId}/share-links` | GET | `ListFeelingsShareLinks` | `200` | `403`, `404` |
-| `/feelings/children/{childId}/share-links/{id}` | DELETE | `RevokeFeelingsShareLink` | `204` | `403`, `404` |
+| `/feelings/children/{childId}/share-links/{shareLinkId}` | DELETE | `RevokeFeelingsShareLink` | `204` | `403`, `404` |
 | `/feelings/shared/{token}` | GET | `GetSharedFeelings` | `200` | `400`, `404` (anonymous) |
 
 Notes, following [http-status-codes.md](../http-status-codes.md):
 
-- Creates answer `200` with the created resource, and both POSTs go through
+- Creates answer `200` with the created resource, and the POSTs go through
   `IdempotencyKeyMiddleware`, so a child double-tapping on a flaky connection logs one check-in
   (the frontend uses `postIdempotent`).
 - Every group ends with `.WithETag()`; the anonymous shared route has `.AllowAnonymous()`, as
-  `GetSharedSleepDiary`.
+  `GetSharedSleepDiary`, and sits on the global per-IP rate limit only (it's opened by a person,
+  not polled), listed in `RateLimitingCoverageTests`.
 - `404` on the guardian routes for a stranger, `403` for the child, per Question 5. The `/me`
-  routes can't reach another child at all.
+  routes can't reach another child at all: a sibling's check-in id is simply not in the caller's
+  journal, so undoing it is the "already gone" `204`.
 - Any command can also return `409 concurrency_conflict` (`ConcurrencyConflictMiddleware`), for
   example two guardians editing the same check-in at once.
 - New error codes: `check_in_undo_window_closed`, `check_in_is_self_report`. `task docs:openapi`
   regenerates `buddy.json` and `buddy-api.ts`.
 
-Request bodies (primitives, converted in the endpoint):
+Request bodies. Enums go over the wire by name and bind straight to the enum types, as
+`InviteGuardianRequest.Kind` does; an unknown name is the binding failure's `400`, and a number
+outside the enum fails the validator's `IsInEnum`:
 
 ```
-CheckInRequest(string Zone, IReadOnlyList<string>? Tags = null, string? Note = null)
-LogFeelingCheckInRequest(string Zone, IReadOnlyList<string>? Tags = null, string? Note = null,
+CheckInRequest(FeelingZone Zone, IReadOnlyList<FeelingTag>? Tags = null, string? Note = null)
+LogFeelingCheckInRequest(FeelingZone Zone, IReadOnlyList<FeelingTag>? Tags = null, string? Note = null,
     DateOnly? Date = null, TimeOnly? Time = null)       // both or neither
-EditFeelingCheckInRequest(string Zone, IReadOnlyList<string>? Tags, string? Note, DateOnly Date, TimeOnly Time)
+EditFeelingCheckInRequest(FeelingZone Zone, DateOnly Date, TimeOnly Time,
+    IReadOnlyList<FeelingTag>? Tags = null, string? Note = null)
 SetCheckInPromptTimesRequest(IReadOnlyList<TimeOnly> Times)
+SetFeelingsDisplayModeRequest(FeelingsDisplayMode DisplayMode)
 CreateFeelingsShareLinkRequest(DateTimeOffset? ExpiresAt = null)
 ```
 
 ## Wiring and feature flag
 
 - `AddFeelingsFeature` after `AddUsersFeature` and `AddGuardiansFeature` (it reads both stores),
-  with its own OpenAPI document `feelings`, Marten schema `feelings`, and the eraser and exporter.
+  with its own OpenAPI document `feelings`, Marten schema `feelings`, the eraser and exporter, and
+  `TimeProvider.System` (`TryAddSingleton`, so a test host can swap in a fake clock).
   `MapFeelingsFeature` inside `if (features.Feelings) { ... }` in
   [Program.cs](../../../src/backend/buddy/Program.cs), next to the `SleepDiary` block.
 - `FeatureOptions.Feelings` (default on), a `Feelings` argument in `Effective()` and a field on
@@ -502,54 +589,72 @@ CreateFeelingsShareLinkRequest(DateTimeOffset? ExpiresAt = null)
   and GDPR coverage stay ([feature-flags.md, Question 3](feature-flags.md#question-3-what-does-off-mean-for-data-and-wiring)).
 - Frontend: `feelings: true` in `ALL_ON` ([features.service.ts](../../../src/frontend/buddy/src/app/core/features.service.ts)),
   `featureGuard('feelings')` on `/guardian/feelings` and `/shared/feelings/:token`, the child-home
-  card and the dashboard card skip their load when off, and the help topic gets
+  card and the dashboard card aren't rendered (and so don't load) when off, and the help topic gets
   `feature: 'feelings'`. `feature-routes.spec.ts` gets both routes.
 - `MARTEN_SCHEMAS` in `taskfile.dist.yml` gains `feelings`; `Feelings.http` covers every route.
 
 ## Frontend
 
 - **Service.** `core/feelings.service.ts` with types from the generated OpenAPI schemas, and
-  `postIdempotent` for both POSTs. Strings in `core/i18n/translations/{en,da}/feelings.ts`
-  (Danish name: "Følelser"; zone labels, tag words, prompts, the "your grown-ups can see this"
-  line). Tag words get a native-speaker review, as the `i18n` skill asks; children's vocabulary is
-  easy to get wrong.
+  `postIdempotent` for the POSTs; it trims the API's "HH:mm:ss" times to "HH:mm". The zone and tag
+  catalog, `promptState` and `undoMsLeft` are pure functions in `core/feelings.ts`. Strings in
+  `core/i18n/translations/{en,da}/feelings.ts` (Danish name: "Følelser"; zone labels, tag words,
+  prompts, the "your grown-ups can see this" line). Tag words get a native-speaker review, as the
+  `i18n` skill asks; children's vocabulary is easy to get wrong.
+- **Shared controls.** `shared/feeling-zone-buttons` (the four buttons, `size="child"` or
+  `"guardian"`, faces-only aware), `shared/feeling-tag-chips` (the chosen zone's words and the
+  situations as `aria-pressed` chips, at most three) and `shared/feelings-trend` (the 14-day grid,
+  drawn by the guardian page and the shared page).
 - **Child: a check-in card on the home page** (`features/child/home/feelings-check-in/`), not a new
   route, because the home page *is* the child's day view and the prompt belongs there
   ([home.html](../../../src/frontend/buddy/src/app/features/child/home/home.html)).
   - Four large buttons in a 2x2 grid (one row on wide screens), each at least 64px tall, with the
-    face, the zone's colour and its word: real `<button>`s with `aria-pressed`, labelled "Ready --
-    calm, focused, okay". Colours checked for contrast in light and dark mode.
+    face, the zone's colour and its word: real `<button>`s with `aria-pressed`, labelled "Ready –
+    calm, focused, okay" (in faces-only mode: the face's name, Question 9).
   - After a tap: the zone's feeling words and the situation tags as toggle chips (up to three), a
     collapsed "Add a note", and "Done". "Done" with nothing chosen is fine: one tap plus Done is
     the whole flow.
-  - Saved state: "Thanks, Emil!" plus "Undo" for 10 minutes, then today's own check-ins as small
-    face chips. No stars: rewarding check-ins would reward checking in, not honesty.
-  - Prompt open: the card gets the amber "needs you" frame the "rules to read" card uses, and the
-    heading "How are you feeling?". A "What do the colours mean?" disclosure explains the zones in
-    a sentence each.
-  - Respects `prefers-reduced-motion`; no animation is needed to understand anything.
+  - Saved state: "Thanks, Emil!" plus "Undo" with the minutes left, for 10 minutes, then the four
+    buttons again; today's own check-ins as small face chips underneath. A `role="status"` line
+    announces "Saved: Wound up (yellow)." ("Saved." in faces-only mode). No stars: rewarding
+    check-ins would reward checking in, not honesty.
+  - "Today" and "now" come from `ChildClockService` (the child's profile time zone), re-read every
+    15 seconds: the undo countdown, the prompt state, and one reload when the child's day turns
+    over. The countdown runs from when the save came back on the device, not from the server's
+    `recordedAt`, so a device clock that is off neither hides Undo at once nor stretches it; if the
+    server's window closed first, its `409` reads "It's too late to undo that one".
+  - Prompt open: the card gets the amber "needs you" frame the "rules to read" card uses, and
+    "Time for a check-in!". A "What do the colours mean?" disclosure explains the zones in a
+    sentence each (hidden in faces-only mode).
+  - No animation is needed to understand anything (`motion-safe:` only on a hover scale).
 - **Guardian page `/guardian/feelings`** (`features/guardian/feelings/`), the child picker from
-  `GuardianSleepDiary` ([sleep-diary.ts](../../../src/frontend/buddy/src/app/features/guardian/sleep-diary/sleep-diary.ts)),
-  then one subfolder per capability:
-  - `feelings-trend/`: the 14-day grid with previous/next paging and the 8-week summary, switched
-    by `shared/segmented-control`.
-  - `check-in-form/`: log on the child's behalf, reusing the child's zone buttons at guardian size
-    plus `shared/date-select` and `shared/time-select`.
+  `GuardianSleepDiary` ([sleep-diary.ts](../../../src/frontend/buddy/src/app/features/guardian/sleep-diary/sleep-diary.ts)).
+  One feelings read covers eight weeks ending on the shown day; sleep and doses are read for the 14
+  days drawn only, each skipped when its feature is off. Then one subfolder per capability:
+  - the 14-day grid (`shared/feelings-trend`) with previous/next paging, or `feelings-weeks/` (zone
+    counts per week as a stacked bar with the counts written out), switched by
+    `shared/segmented-control`.
+  - `check-in-form/`: log on the child's behalf now or earlier, or edit an observation, with the
+    zone buttons at guardian size plus `shared/date-select` and `shared/time-select`.
   - `day-detail/`: a selected day's check-ins with edit and remove (edit hidden on self-reports).
-  - `prompt-times/`: up to four `app-time-select`s in `shared/repeatable-row`.
+  - `check-in-settings/`: up to four `app-time-select`s in `shared/repeatable-row`, and the
+    faces-only `app-toggle` (Question 9).
   - `share-links/`: a copy of the sleep diary's `share-links` component on `FeelingsService`.
 - **Dashboard card** `app-feelings-today` in
   [dashboard.html](../../../src/frontend/buddy/src/app/features/guardian/dashboard.html): each
-  child's check-ins today as face chips, linking to the page. Reading it is a logged health read,
-  like `app-doses-today`.
+  child's check-ins today as face chips (dashed for an observation), linking to the page. Reading
+  it is a logged health read, like `app-doses-today`.
 - **Shared page `/shared/feelings/:token`** (`features/shared-feelings/`), outside `authGuard`,
-  printable, modelled on `features/shared-sleep-diary/`.
+  printable, modelled on `features/shared-sleep-diary/`: the grid without sleep or doses, and a
+  table of every check-in with its words and note.
 - **Navigation and help.** A profile-menu link next to the sleep diary's, and a help topic in
   [help-topics.ts](../../../src/frontend/buddy/src/app/core/help/help-topics.ts).
 - **Screenshots.** `screenshots/pages.ts` gets `/guardian/feelings` and `/shared/feelings/:token`;
-  `demo-family.ts` seeds two weeks of check-ins for `demo.emil` (green mornings, yellow
-  afternoons on school days, a red Thursday) and a share token, so neither page is empty. The child
-  home screenshot shows the card with an open prompt.
+  `demo-family.ts` seeds two weeks of Sara's observations of `demo.emil` (green mornings, yellow
+  afternoons on school days, a red Thursday, tired evenings), reminder times and a share token, so
+  neither page is empty. Emil hasn't checked in himself today, so the child home screenshot (fixed
+  at 07:10) shows the card with the 07:00 prompt open. `demo.ida` is faces-only and has checked in
+  herself, so the dashboard card shows both kinds.
 
 ## Testing
 
@@ -559,28 +664,35 @@ and the `Self`/`Manage` matrix of the medicine tests:
 
 - every slice x child / guardian / co-guardian / stranger / unrelated child, with
   `[CoversEndpoint]` on each endpoint;
-- a guardian calling `POST /feelings/me/check-ins` gets `404` and no stream is created;
-- the child's local date and time come from `User.TimeZoneId` (a child in `Pacific/Auckland` at
-  23:30 UTC is on tomorrow's date);
-- undo at 9 and at 11 minutes (the handler takes a `TimeProvider`, as the notifications design
-  proposes, so the test needn't sleep), undo of a guardian-logged check-in is `404`;
-- editing a self-report is `409`; identical edits, repeated removes and identical prompt times
-  append nothing;
-- a feeling word from another zone, a fourth tag, a 281-character note, a future time and the 21st
-  check-in of a day are each `400`;
-- share links: expired, revoked, unknown and erased child are all `404`; the token never appears
-  in a log line or span;
-- `AuditLogTests`: 11004 with `Self` and `Guardian`, 11003 on a shared read, nothing on a denied
-  read;
-- erasure and export in `AccountErasureTests` / `ExportPersonalDataTests` (a note's text is found by
-  `PersonalDataScanner` before, not after);
-- golden files for the seven events, and `SnapshotTests` for both aggregates.
+- a guardian calling the `/me` routes gets `404` and no stream is created; a child whose last
+  guardian link is revoked gets `404`;
+- the child's local date comes from `User.TimeZoneId` (checked in two zones 23 hours apart, so one
+  of them is always on another date than UTC);
+- undo at 9 and at 11 minutes on a host with a fake `TimeProvider` (`UndoWindowTests`, the test
+  needn't sleep); undo of a guardian-logged check-in is `404`;
+- editing a self-report is `409`; identical edits, repeated removes, identical prompt times and the
+  same display mode append nothing;
+- a feeling word from another zone, a fourth tag, a duplicate tag, a 281-character note, an
+  unknown zone, a future time, a date without a time and the 21st check-in of a day are each `400`;
+- share links: expired, revoked and unknown are all `404`; a link survives its creator's guardian
+  link being revoked; the token never appears in a log line;
+- `AuditLogTests`: 11004 with `Self` and `Guardian`, nothing on a denied read, 11001-11003 without
+  the token, and no zone or note in a log line;
+- erasure and export in `AccountErasureTests` / `ExportPersonalDataTests` (a note's text is gone
+  after erasure, a co-guardian keeps the erased guardian's observation, the erased guardian's
+  link stops working);
+- golden files for the eight events, and `SnapshotTests` for both aggregates.
 
 Frontend: specs for the service (exact URLs and bodies), the prompt-state function (before the
-first prompt, answered, missed then next opens, guardian check-in answers it), the check-in card
-(keyboard-only flow, `aria-pressed`, undo countdown), the trend grid (D pairs with night D-1, flags
-off hide columns) and the flag cases. e2e: the child checks in yellow with "worried", the guardian
-sees it in today's row, creates a share link, and the anonymous page shows it.
+first prompt, answered, a check-in before the prompt doesn't answer it, missed then the next
+opens), the check-in card (one tap plus Done, chips, three-tag limit, note, `aria-pressed`, the undo
+countdown on a faked interval, faces-only labels and announcement, the day turning over), the trend
+grid (D pairs with night D-1, sleep and doses only when given, filled vs outlined), the 8-week
+summary, the day detail, the form, the settings, the page (windows, flags off, paging), the shared
+page, the dashboard card and the flag cases. e2e (`feelings-check-in.spec.ts`): the child checks in
+"Wound up" with "Worried", the guardian sees it in that day's row and detail, switches the child to
+faces only and creates a share link, an anonymous reader sees the check-in, and the child's buttons
+then show faces only.
 
 ## Failure and edge-case behavior
 
@@ -596,7 +708,9 @@ sees it in today's row, creates a share link, and the anonymous page shows it.
 | Guardian logs last week | Allowed; no lower bound, as the sleep diary |
 | 21st check-in on one local day | `400 validation_error` |
 | Child's time zone changes | Existing check-ins keep the local date and time they were saved with; new ones use the new zone |
-| Prompt times set before any check-in | Creates the journal (`FeelingsJournalStarted` + `CheckInPromptTimesSet`) |
+| Prompt times or the display mode set before any check-in | Creates the journal (`FeelingsJournalStarted` + the setting's event) |
+| A guardian logs an observation after a prompt time | The prompt stays open for the child: only the child's own check-in answers it |
+| Faces-only switched on | The child's next load shows faces only; stored check-ins and every guardian or doctor view are unchanged |
 | Two guardians edit the same check-in at once | One wins; the other gets `409 concurrency_conflict` and reloads. Both edits stay in history if both land in turn |
 | Guardian's `GuardianLink` is revoked | Drops to `NotFound` at once; the check-ins and share links stay |
 | Child's last guardian link revoked (but child not erased) | The child gets `404` on `/feelings/me`: no `Self` tier without a guardian, so nobody is writing into a journal no one can read |
@@ -609,9 +723,9 @@ sees it in today's row, creates a share link, and the anonymous page shows it.
 
 | | |
 |---|---|
-| Complexity | High -- a new feature and Marten schema with two aggregates and seven events, twelve slices over child `/me` and guardian routes with a two-tier authorization, time-zone-aware local dates, an undo window, GDPR erasure, export and audit logs, a feature flag, and five frontend pieces (child card, guardian page with five parts, dashboard card, shared page, help topic) plus en/da tag vocabulary |
-| Single developer | 11-15 days (backend and tests 5-6, child card 1-2, guardian page and trend 3-4, shared page, dashboard, i18n, e2e, screenshots and docs 2-3) |
-| AI agent | 7-10 hours, plus 3-4 hours of human time: the Danish children's vocabulary, the zone colours in both themes on a real iPad, the authorization matrix, and settling the open questions |
+| Complexity | High -- a new feature and Marten schema with two aggregates and eight events, thirteen slices over child `/me` and guardian routes with a two-tier authorization, time-zone-aware local dates, an undo window on an injected clock, GDPR erasure, export and audit logs, a feature flag, and six frontend pieces (child card with a faces-only mode, guardian page with five parts, dashboard card, shared page, shared zone/tag/trend controls, help topic) plus en/da tag vocabulary |
+| Single developer | 12-16 days (backend and tests 5-6, child card with faces-only 1.5-2, guardian page and trend 3-4, shared page, dashboard, i18n, e2e, screenshots and docs 2.5-3.5) |
+| AI agent | 8-11 hours, plus 3-4 hours of human time: the Danish children's vocabulary, the zone colours in both themes on a real iPad, whether faces-only fits a 5-year-old, and the authorization matrix |
 
 ## Decisions made
 
@@ -619,52 +733,36 @@ sees it in today's row, creates a share link, and the anonymous page shows it.
 |---|---|
 | New feature or extend the sleep diary | New `Features/Feelings`, schema `feelings`, flag `Features:Feelings`: different principals (the child writes), a different shape (many per day) and its own on/off choice |
 | Scale | Four zones stored; each zone shown with a face, colour and word. Five faces rejected: one axis, mixes "flat" with "wound up", invites the "right" answer |
-| Aggregate identity | `FeelingsJournalId.Value == ChildId.Value`, no index document, like `SleepDiary`/`ChildProgress`; check-ins keyed by UUIDv7 |
-| Tags | A fixed, translated catalog; feeling words tied to the chosen zone, situation tags for any zone; at most three |
+| Naming and the trademark | "Feelings" / "Følelser" and Buddy's own colour labels; never the "Zones of Regulation" name or its material (settled by the user 2026-10-13) |
+| Aggregate identity | `FeelingsJournalId.Value == ChildId.Value`, no index document, like `SleepDiary`/`ChildProgress`; check-ins keyed by UUIDv7; one stream per child, not split by year (settled by the user 2026-10-13) |
+| Tags | A fixed, translated catalog; feeling words tied to the chosen zone, situation tags for any zone; at most three. No custom per-family tags (settled by the user 2026-10-13) |
 | Note | `FreeText`, at most 280 characters |
-| Time | Local date and time in the child's `User.TimeZoneId`, plus `RecordedAt` |
+| Time | Local date and time in the child's `User.TimeZoneId`, plus `RecordedAt`; "now" from an injected `TimeProvider`. The child's card uses `ChildClockService` |
 | Who logs | The child (`Self`, now only) and any active guardian (`Manage`, now or backdated) |
 | Self-report vs observation | Derived from `LoggedBy == ChildId`, drawn differently everywhere |
-| Child's changes | Undo within 10 minutes, no edit, no later delete |
+| Child's changes | Undo within 10 minutes, no edit, no later delete (the 10 minutes settled by the user 2026-10-13) |
 | Guardian's changes | Edit and remove guardian-logged check-ins; remove but never edit a self-report, with `FeelingCheckInRemoved.ModifiedBy` recording which guardian removed it, because sibling and test taps are real (removing a self-report settled by the user 2026-10-11) |
-| Child's view | Today's own self-reports only, no history, with a visible "your grown-ups can see this" (no history settled by the user 2026-10-11) |
+| Child's view | Today's own self-reports only, no history, with a visible "your grown-ups can see this" (no history settled by the user 2026-10-11); never a guardian's observation about them (settled by the user 2026-10-13) |
+| Faces-only mode | Included in v1: a per-child `FeelingsDisplayMode` on the journal, set by a guardian through `SetFeelingsDisplayMode`; hides the words and colour names on the child's own buttons and announcements; the stored zones are unchanged (settled by the user 2026-10-13; Question 9) |
 | Group sharing | None; guardians only |
 | Guardian notification on red | None in v1; later, with push, an opt-in that is off by default, because a red push during school hours can do more harm than good (settled by the user 2026-10-11) |
-| Prompts | 0-4 guardian-set times per child on the journal; an in-app highlighted card, computed client-side; push later through the notifications scheduler, with no zone in the payload |
+| Sound | None (settled by the user 2026-10-11) |
+| Prompts | 0-4 guardian-set times per child on the journal; an in-app highlighted card, computed client-side and answered only by the child's own check-in; push later through the notifications scheduler, with no zone in the payload |
 | Trend | A 14-day grid with dose markers and the previous night's sleep, and an 8-week zone summary; composed in the frontend from three APIs, each logging its own read |
 | Charting | Plain HTML table and CSS, no chart library |
-| Doctor sharing | A copy of the sleep diary's share links (hashed, optional expiry up to 365 days, revocable, anonymous view); feelings only |
+| Doctor sharing | A copy of the sleep diary's share links (hashed, optional expiry up to 365 days, revocable, anonymous view); feelings only, no combined clinician packet (settled by the user 2026-10-13) |
+| Share-secret helper | A third local copy (`FeelingsShareSecret`); promoting the three to `Common` is not part of this build (settled by the user 2026-10-13) |
+| Retention | Check-ins are kept until the child or the family deletes them, like the sleep diary (settled by the user 2026-10-13) |
 | Audit logs | `FeelingsLog` 11001-11004, ids only, `HealthDataAccessPath` on every read |
+| Privacy notice | `PRIVACY.md` lists feelings check-ins as health data and their reads as logged, shipped with this build (settled by the user 2026-10-13) |
 | Daily cap | 20 check-ins per child per local day |
 
 ## Remaining open questions
 
-- **Naming and the trademark.** "The Zones of Regulation" is a published curriculum and a
-  trademark. Lean: never use that name or its material; call the feature "Feelings" / "Følelser"
-  and the colours by Buddy's own labels. If a family's school uses the curriculum, the colours line
-  up anyway.
-- **A faces-only display mode for young children.** Some 5-year-olds won't grasp colours as states.
-  Lean: not in v1; the face is already on every button. Later, a per-child display setting that
-  hides the colour words, storing the same four zones, is additive.
-- **Should the child see guardian observations about them?** Lean: no, for the sleep diary's
-  reason. Revisit with a family that tries it.
-- **Custom tags per family** ("football", "dad's weekend"). Lean: not in v1. They would be free
-  text, so they'd need erasure masking and export, and they couldn't be counted or translated like the fixed catalog.
-- **A combined clinician packet** (feelings + sleep + doses behind one link). Lean: not in v1.
-  It would need a share link that spans three features and a consent text that says so; the sleep
-  link can be sent alongside for now.
-- **Promote the share-secret helper to `Common`.** `IcalToken`, `SleepDiaryShareSecret` and now
-  `FeelingsShareSecret` are three copies. Lean: a separate small refactor after this ships
-  (`Common/Sharing/ShareSecret`, 3 type definitions and about 6 call sites), not part of this
-  feature.
-- **Retention of old check-ins.** Lean: keep until deleted, like the sleep diary. If a family or a
-  DPIA asks, a per-installation "forget check-ins older than N months" sweep is additive (a masking
-  job like `AiSessionRetention`).
-- **Stream growth.** About 1,500 events a year per child. Lean: fine; if a write's replay ever shows
-  up in traces, split the journal by year (`FeelingsJournalId` from child and year), which only
-  changes the event store and the id.
-- **Undo window length.** Lean: 10 minutes; long enough to notice a mis-tap, short enough that a
-  bad afternoon can't be erased at bedtime.
+None. Every question was settled by the user on 2026-10-11 or 2026-10-13 (see the table above).
+Later, additive ideas recorded in the decisions: a red-check-in notification once push ships,
+custom tags, a combined clinician packet, a shared share-secret helper, a retention sweep, and
+splitting the journal by year if a write's replay ever shows up in traces.
 
 ## Diagram
 
@@ -674,7 +772,7 @@ flowchart TB
         direction TB
 
         subgraph Aggregates["Event-sourced aggregates (schema feelings)"]
-            Journal["FeelingsJournal\nId.Value == ChildId.Value\nCheckIns: FeelingCheckInId -> FeelingCheckIn\nPromptTimes: 0-4 TimeOnly"]
+            Journal["FeelingsJournal\nId.Value == ChildId.Value\nCheckIns: FeelingCheckInId -> FeelingCheckIn\nPromptTimes: 0-4 TimeOnly\nDisplayMode: FacesAndWords | FacesOnly"]
             Token["FeelingsShareToken\nTokenHash, ExpiresAt?, IsRevoked"]
         end
 
@@ -698,7 +796,7 @@ flowchart TB
     end
 
     Child["Child (child home card)"] -- "CheckIn / UndoCheckIn / GetMyFeelingsToday\n/feelings/me/..." --> Resolver
-    Guardian["Guardian (/guardian/feelings)"] -- "Log / Edit / Remove / List / SetCheckInPromptTimes\nshare links (Manage)" --> Resolver
+    Guardian["Guardian (/guardian/feelings)"] -- "Log / Edit / Remove / List / SetCheckInPromptTimes\nSetFeelingsDisplayMode, share links (Manage)" --> Resolver
     Guardian -- "trend composes three reads" --> Sleep
     Guardian -- "trend composes three reads" --> Meds
     Doctor["Doctor (no account)"] -- "GET /feelings/shared/{token}" --> TokenIndex

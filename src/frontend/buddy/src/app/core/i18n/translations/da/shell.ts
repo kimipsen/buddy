@@ -17,6 +17,7 @@ export const shell = {
     taskLibrary: 'Opgavebibliotek',
     medicine: 'Medicin',
     sleepDiary: 'Søvndagbog',
+    feelings: 'Følelser',
     transitionWarnings: 'Varsel før skift',
     houseRules: 'Husregler',
     pickup: 'Afhentning & aflevering',
