@@ -111,7 +111,8 @@ The guardian routes currently include:
 - `/guardian/pickup` — rolling seven-day pickup and drop-off assignment planner
 - `/guardian/sleep-diary` — log a night, review 14 nights at a time, hygiene notes and share links
 - `/guardian/feelings` — a child's feelings check-ins: the 14-day grid (`shared/feelings-trend`,
-  with the night before's sleep and taken doses, each left out when its feature is off) or the
+  with the night before's sleep and taken doses, each left out when its feature is off; doses at
+  the same time share one marker: a guide line and a square per medicine in its own colour) or the
   8-week summary, a day's check-ins with edit/remove (a self-report can't be edited), logging an
   observation now or earlier, reminder times and the faces-only switch, and doctor share links
 - `/guardian/transition-warnings` — per child (`?child=<id>` from the `manage-children` On/Off
