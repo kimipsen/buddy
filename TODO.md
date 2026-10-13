@@ -615,15 +615,15 @@ Found along the way:
 
 ## Tools for families with ADHD and autism (2026-10-11)
 
-Ideas for new features beyond what Buddy already has. Start with the four marked **(start here)**:
+Ideas for new features beyond what Buddy already has. The four marked **(start here)** shipped on 2026-10-13:
 they reuse data the app already keeps. Each has a design doc.
 
 ### In-the-moment help for the child
 
-- [ ] **Visual time-left timer (start here).** A shrinking disc or bar on the child's current
+- [x] **Visual time-left timer (start here).** A shrinking disc or bar on the child's current
   task and subtask, counting down the durations the task library already stores. See
   [Visual time-left timer](docs/frontend/analysis/visual-time-left-timer.md).
-- [ ] **Transition warnings (start here).** A heads-up before calendar events and pickups ("10
+- [x] **Transition warnings (start here).** A heads-up before calendar events and pickups ("10
   minutes until we leave for football"), configurable per child. See
   [Transition warnings](docs/backend/analysis/transition-warnings.md).
 - [ ] **Now / Next / Later strip.** A reduced day view with three cards, for overwhelmed moments.
@@ -634,7 +634,7 @@ they reuse data the app already keeps. Each has a design doc.
 
 ### Regulation and emotions
 
-- [ ] **Feelings check-in (start here).** The child taps one of four colour zones (each with a
+- [x] **Feelings check-in (start here).** The child taps one of four colour zones (each with a
   face and a word) a few times a day; guardians see trends, with a doctor share link like the sleep diary's. See
   [Feelings check-in](docs/backend/analysis/feelings-check-in.md).
 - [ ] **Calm-down toolbox.** Strategies the guardian and child pick together, reachable in one tap
@@ -655,7 +655,7 @@ they reuse data the app already keeps. Each has a design doc.
 
 - [ ] **Home–school notebook.** A short daily message thread between home and school; the teacher
   reads and replies through a link, without an account.
-- [ ] **Packing checklists (start here).** Weekday-bound checklists ("Tuesday: gym clothes") on the
+- [x] **Packing checklists (start here).** Weekday-bound checklists ("Tuesday: gym clothes") on the
   child's day view. See [Packing checklists](docs/backend/analysis/packing-checklists.md).
 - [ ] **Caregiver handover card.** Routine, medicine, house rules, calm-down tips and contacts for
   one evening on a single share link, building on saved babysitters.
