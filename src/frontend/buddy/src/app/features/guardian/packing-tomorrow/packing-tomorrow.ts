@@ -50,9 +50,11 @@ export class PackingTomorrow implements OnInit, OnDestroy {
   private readonly guardians = inject(GuardiansService);
 
   private readonly now = signal(Date.now());
+  // A string, so the per-minute tick only changes it (and reloads) when the date rolls over.
+  private readonly tomorrowDate = computed(() => addDaysIso(toIsoDate(new Date(this.now())), 1));
   // Keyed on tomorrow's date, so a dashboard left open overnight loads the new tomorrow.
   private readonly tomorrow = resource({
-    params: () => ({ date: addDaysIso(toIsoDate(new Date(this.now())), 1) }),
+    params: () => ({ date: this.tomorrowDate() }),
     loader: ({ params }) => this.load(params.date),
   });
   private intervalId: ReturnType<typeof setInterval> | undefined;

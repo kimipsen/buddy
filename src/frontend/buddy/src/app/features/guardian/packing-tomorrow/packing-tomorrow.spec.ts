@@ -121,6 +121,16 @@ describe('PackingTomorrow', () => {
     expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2026-10-15', '2026-10-15');
   });
 
+  it('does not reload on the minute tick while tomorrow stays the same', async () => {
+    const { fixture, calendars } = await setup(evening, []);
+
+    vi.setSystemTime(evening.getTime() + 60_000);
+    fixture.componentInstance['now'].set(Date.now());
+    await settle(fixture);
+
+    expect(calendars.listOccurrencesInRange).toHaveBeenCalledTimes(1);
+  });
+
   it('is hidden before the evening time', async () => {
     const { compiled } = await setup(afternoon, [item('bag-emil', 'gym', 'emil')]);
 
