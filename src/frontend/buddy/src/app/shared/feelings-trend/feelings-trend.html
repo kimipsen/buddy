@@ -72,10 +72,10 @@
                   [style.left.%]="hour.left"
                 ></span>
               }
-              @for (dose of row.doses; track $index) {
+              @for (dose of row.doses; track dose.time) {
                 <span
                   aria-hidden="true"
-                  class="absolute inset-y-1 w-0.5 rounded bg-violet-500 dark:bg-violet-400"
+                  class="absolute inset-y-1 w-px bg-slate-400 dark:bg-slate-500"
                   [style.left.%]="dose.left"
                 ></span>
               }
@@ -89,6 +89,22 @@
                   >{{ mark.face }}</span
                 >
               }
+              @for (dose of row.doses; track dose.time) {
+                <span
+                  class="absolute bottom-0 flex -translate-x-1/2 gap-px"
+                  [style.left.%]="dose.left"
+                  [attr.title]="dose.label"
+                  [attr.data-dose-time]="dose.time"
+                  aria-hidden="true"
+                >
+                  @for (medicine of dose.medicines; track $index) {
+                    <span
+                      class="block size-2 rounded-[2px] ring-1 ring-white dark:ring-slate-900"
+                      [style.background-color]="medicine.color"
+                    ></span>
+                  }
+                </span>
+              }
             </div>
             <ul class="sr-only">
               @for (mark of row.marks; track mark.id) {
@@ -96,8 +112,8 @@
               } @empty {
                 <li>{{ 'feelings.guardian.trend.none' | translate }}</li>
               }
-              @for (dose of row.doses; track $index) {
-                <li>{{ 'feelings.guardian.trend.dose' | translate: { time: dose.time } }}</li>
+              @for (dose of row.doses; track dose.time) {
+                <li>{{ dose.label }}</li>
               }
             </ul>
           </td>
@@ -124,10 +140,10 @@
   </li>
   @if (dosesByDate() !== null) {
     <li class="flex items-center gap-1.5">
-      <span
-        aria-hidden="true"
-        class="inline-block h-3 w-0.5 bg-violet-500 dark:bg-violet-400"
-      ></span>
+      <span aria-hidden="true" class="flex gap-px">
+        <span class="block size-2 rounded-[2px] bg-violet-500"></span>
+        <span class="block size-2 rounded-[2px] bg-amber-500"></span>
+      </span>
       {{ 'feelings.guardian.trend.legendDose' | translate }}
     </li>
   }

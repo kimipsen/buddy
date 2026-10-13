@@ -694,7 +694,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       icon: '💊',
       color: '#0ea5e9',
       times: ['07:30:00', '12:00:00'],
-      startDate: mondayIso,
+      // Two weeks back, so the feelings trend has taken doses on the days it draws.
+      startDate: inDays(-13),
       endDate: null,
     });
     await api.post(`/medicines/children/${emil.id}/schedules`, {
@@ -706,11 +707,27 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       startDate: mondayIso,
       endDate: null,
     });
-    await api
-      .put(`/medicines/children/${emil.id}/doses/${ritalin.id}?date=${todayIso}&time=07:30:00`, {
-        status: 'Taken',
-      })
-      .catch(warn);
+    // A second morning medicine at the same time, so the feelings trend shows two doses grouped.
+    const vitaminD = await api.post<Named>(`/medicines/children/${emil.id}/schedules`, {
+      name: 'Vitamin D',
+      dosage: '1 tablet',
+      icon: '☀️',
+      color: '#f59e0b',
+      times: ['07:30:00'],
+      startDate: inDays(-13),
+      endDate: null,
+    });
+    // The morning doses for the past week, today included.
+    for (let day = -6; day <= 0; day++) {
+      for (const schedule of [ritalin, vitaminD]) {
+        await api
+          .put(
+            `/medicines/children/${emil.id}/doses/${schedule.id}?date=${inDays(day)}&time=07:30:00`,
+            { status: 'Taken' },
+          )
+          .catch(warn);
+      }
+    }
 
     // Sleep diary ---------------------------------------------------------------------------
     // Ten nights ending last night (the form opens on tonight, still blank), varied a little so

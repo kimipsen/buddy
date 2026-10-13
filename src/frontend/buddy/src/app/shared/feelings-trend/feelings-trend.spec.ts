@@ -79,13 +79,57 @@ describe('FeelingsTrend', () => {
   });
 
   it('marks taken doses only when doses are given', async () => {
-    const withDoses = await setup({ dosesByDate: { '2026-10-13': ['08:00'] } });
-    expect(row(withDoses.el, '2026-10-13').textContent).toContain('Medicine taken at 08:00');
-    expect(withDoses.el.textContent).toContain('Line: medicine taken');
+    const withDoses = await setup({
+      dosesByDate: {
+        '2026-10-13': [{ time: '08:00', name: 'Ritalin', dosage: '10 mg', color: '#2563eb' }],
+      },
+    });
+    expect(row(withDoses.el, '2026-10-13').textContent).toContain(
+      'Medicine taken at 08:00: Ritalin 10 mg',
+    );
+    expect(withDoses.el.textContent).toContain('Square: medicine taken, in its colour');
 
     TestBed.resetTestingModule();
     const without = await setup({});
     expect(without.el.textContent).not.toContain('medicine taken');
+  });
+
+  it('groups medicines taken at the same time into one marker, a square per medicine in its colour', async () => {
+    const { el } = await setup({
+      dosesByDate: {
+        '2026-10-13': [
+          { time: '19:30', name: 'Melatonin', dosage: '', color: '' },
+          // Out of name order, as the doses endpoint may return them.
+          { time: '08:00', name: 'Vitamin D', dosage: '1 tablet', color: '#f59e0b' },
+          { time: '08:00', name: 'Ritalin', dosage: '10 mg', color: '#2563eb' },
+        ],
+      },
+    });
+    const day = row(el, '2026-10-13');
+
+    const markers = Array.from(day.querySelectorAll<HTMLElement>('[data-dose-time]'));
+    expect(markers.map((marker) => marker.dataset['doseTime'])).toEqual(['08:00', '19:30']);
+    expect(markers[0].getAttribute('title')).toBe(
+      'Medicine taken at 08:00: Ritalin 10 mg, Vitamin D 1 tablet',
+    );
+
+    const squares = (marker: HTMLElement) =>
+      Array.from(marker.querySelectorAll<HTMLElement>('span')).map(
+        (square) => square.style.backgroundColor,
+      );
+    expect(squares(markers[0])).toEqual(['rgb(37, 99, 235)', 'rgb(245, 158, 11)']);
+    // A medicine without a colour (and without a dosage) still shows, in the fallback violet.
+    expect(squares(markers[1])).toEqual(['rgb(139, 92, 246)']);
+    expect(markers[1].getAttribute('title')).toBe('Medicine taken at 19:30: Melatonin');
+
+    // One screen-reader line per time, not one per dose.
+    const spoken = Array.from(day.querySelectorAll('ul.sr-only li')).map((li) =>
+      li.textContent!.trim(),
+    );
+    expect(spoken.filter((line) => line.startsWith('Medicine taken'))).toEqual([
+      'Medicine taken at 08:00: Ritalin 10 mg, Vitamin D 1 tablet',
+      'Medicine taken at 19:30: Melatonin',
+    ]);
   });
 
   it('selects a day, or shows plain dates when not selectable', async () => {

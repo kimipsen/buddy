@@ -69,8 +69,22 @@ describe('GuardianFeelings', () => {
     } as unknown as SleepDiaryService;
     const medicines = {
       listDoses: vi.fn(async () => [
-        { date: TODAY, time: '07:45:00', status: 'Taken' },
-        { date: TODAY, time: '19:00:00', status: 'Pending' },
+        {
+          date: TODAY,
+          time: '07:45:00',
+          status: 'Taken',
+          name: 'Ritalin',
+          dosage: '10 mg',
+          color: '#2563eb',
+        },
+        {
+          date: TODAY,
+          time: '19:00:00',
+          status: 'Pending',
+          name: 'Melatonin',
+          dosage: '3 mg',
+          color: '#7c3aed',
+        },
       ]),
     } as unknown as MedicinesService;
 
@@ -99,7 +113,7 @@ describe('GuardianFeelings', () => {
 
     const todayRow = el.querySelector(`tr[data-date="${TODAY}"]`) as HTMLElement;
     expect(todayRow.textContent).toContain('10 h 0 min');
-    expect(todayRow.textContent).toContain('Medicine taken at 07:45');
+    expect(todayRow.textContent).toContain('Medicine taken at 07:45: Ritalin 10 mg');
     expect(todayRow.textContent).not.toContain('19:00');
     expect(todayRow.textContent).toContain('Wound up (yellow): Worried');
     // The old check-in is in the 8-week summary only.

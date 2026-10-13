@@ -15,7 +15,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { MedicinesService } from '../../../core/medicines.service';
 import { SleepDiaryService } from '../../../core/sleep-diary.service';
 import { Card } from '../../../shared/card/card';
-import { FeelingsTrend } from '../../../shared/feelings-trend/feelings-trend';
+import { FeelingsTrend, TrendDose } from '../../../shared/feelings-trend/feelings-trend';
 import { Page } from '../../../shared/page/page';
 import {
   SegmentedControl,
@@ -136,10 +136,13 @@ export class GuardianFeelings {
     params: () => (this.features.enabled('medicines') ? this.gridWindow() : undefined),
     loader: async ({ params }) => {
       const doses = await this.medicines.listDoses(params.childId, params.from, params.to);
-      const byDate: Record<string, string[]> = {};
+      const byDate: Record<string, TrendDose[]> = {};
 
       for (const dose of doses.filter((d) => d.status === 'Taken')) {
-        byDate[dose.date] = [...(byDate[dose.date] ?? []), dose.time.slice(0, 5)];
+        byDate[dose.date] = [
+          ...(byDate[dose.date] ?? []),
+          { time: dose.time.slice(0, 5), name: dose.name, dosage: dose.dosage, color: dose.color },
+        ];
       }
 
       return byDate;
