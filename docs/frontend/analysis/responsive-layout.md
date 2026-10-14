@@ -300,6 +300,8 @@ overflow-y-auto`, `max-w-[calc(100vw-2rem)]`, and the missing Pickup link. Make 
   it. The user chose four tabs (Today, Calendar, Meals, Medicine) and no "More" tab, so the account
   menu keeps every link and the e2e specs that open it are unaffected. Pickup was considered as the
   fourth tab; Medicine won. The per-page "Back to dashboard" links stay for tablet and desktop.
+  _Changed 2026-10-14:_ the fourth tab is now Sleep (the sleep diary), which the guardian fills in
+  every night. Editing medicines is rare, so Medicine is reached from the account menu.
 
 ## Plan
 
@@ -470,7 +472,7 @@ Implemented, after checking the tablet and desktop screenshots for what actually
 | Touch targets           | At least 44px on `pointer-coarse:` for guardian pages; at least 44px always on child pages                                                               |
 | Regression guard        | Overflow assertion in the screenshot run, plus a tablet project                                                                                          |
 | Phase 0 rollout         | Landed first with a temporary `knownOverflow` list, removed again in Phase 1                                                                             |
-| Phone navigation        | Profile menu fitted to a phone, sticky header, and a four-tab bar (Today, Calendar, Meals, Medicine) with no More tab                                    |
+| Phone navigation        | Profile menu fitted to a phone, sticky header, and a four-tab bar (Today, Calendar, Meals, Sleep) with no More tab                                    |
 | Wide desktop            | Dashboard in CSS columns, three from `2xl` within `max-w-7xl` so it lines up with the header; help text at `max-w-prose`; print preview fills its column |
 
 ## Remaining open questions

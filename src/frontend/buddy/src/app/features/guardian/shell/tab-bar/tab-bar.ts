@@ -4,7 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureName, FeaturesService } from '../../../../core/features.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
-type TabIcon = 'today' | 'calendar' | 'meals' | 'medicine';
+type TabIcon = 'today' | 'calendar' | 'meals' | 'sleep';
 
 interface Tab {
   readonly link: string;
@@ -26,16 +26,17 @@ const TABS: readonly Tab[] = [
     feature: 'mealplans',
   },
   {
-    link: '/guardian/medicine',
-    label: 'shell.tabs.medicine',
-    icon: 'medicine',
+    link: '/guardian/sleep-diary',
+    label: 'shell.tabs.sleep',
+    icon: 'sleep',
     exact: false,
-    feature: 'medicines',
+    feature: 'sleepDiary',
   },
 ];
 
 // The guardian's phone navigation (docs/frontend/analysis/responsive-layout.md, Phase 5): the four
-// most used pages at the bottom of the screen. The account menu keeps every link, on every size.
+// most used pages at the bottom of the screen. Sleep is logged every night, so it has a tab and
+// Medicine does not. The account menu keeps every link, on every size.
 @Component({
   selector: 'app-tab-bar',
   imports: [RouterLink, RouterLinkActive, TranslatePipe],

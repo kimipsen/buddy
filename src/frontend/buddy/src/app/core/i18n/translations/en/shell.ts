@@ -9,7 +9,7 @@ export const shell = {
     today: 'Today',
     calendar: 'Calendar',
     meals: 'Meals',
-    medicine: 'Medicine',
+    sleep: 'Sleep',
   },
   menu: {
     openLabel: 'Open account menu',

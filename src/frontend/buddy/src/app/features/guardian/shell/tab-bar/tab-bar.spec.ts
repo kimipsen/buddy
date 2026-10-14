@@ -23,7 +23,7 @@ describe('TabBar', () => {
               { path: '', component: Host },
               { path: 'calendar', component: Host },
               { path: 'mealplan', component: Host },
-              { path: 'medicine', component: Host },
+              { path: 'sleep-diary', component: Host },
             ],
           },
         ]),
@@ -41,25 +41,25 @@ describe('TabBar', () => {
     return Array.from(root.querySelectorAll<HTMLAnchorElement>('nav a'));
   }
 
-  it('links to Today, Calendar, Meals and Medicine, in that order', async () => {
+  it('links to Today, Calendar, Meals and Sleep, in that order', async () => {
     const { root } = await setup();
 
     expect(links(root()).map((link) => link.getAttribute('href'))).toEqual([
       '/guardian',
       '/guardian/calendar',
       '/guardian/mealplan',
-      '/guardian/medicine',
+      '/guardian/sleep-diary',
     ]);
     expect(links(root()).map((link) => link.textContent?.trim())).toEqual([
       'Today',
       'Calendar',
       'Meals',
-      'Medicine',
+      'Sleep',
     ]);
   });
 
-  it('drops Meals and Medicine while their features are turned off', async () => {
-    disableFeatures('mealplans', 'medicines');
+  it('drops Meals and Sleep while their features are turned off', async () => {
+    disableFeatures('mealplans', 'sleepDiary');
     const { root } = await setup();
 
     expect(links(root()).map((link) => link.getAttribute('href'))).toEqual([
@@ -69,7 +69,7 @@ describe('TabBar', () => {
   });
 
   it('drops only the tab whose feature is off', async () => {
-    disableFeatures('medicines');
+    disableFeatures('sleepDiary');
     const { root } = await setup();
 
     expect(links(root()).map((link) => link.textContent?.trim())).toEqual([
@@ -112,11 +112,11 @@ describe('TabBar', () => {
   it('moves the current page along when the guardian navigates', async () => {
     const { harness, root } = await setup('/guardian/calendar');
 
-    await harness.navigateByUrl('/guardian/medicine');
+    await harness.navigateByUrl('/guardian/sleep-diary');
 
     const current = root().querySelectorAll('[aria-current="page"]');
     expect(current).toHaveLength(1);
-    expect(current[0].getAttribute('href')).toBe('/guardian/medicine');
+    expect(current[0].getAttribute('href')).toBe('/guardian/sleep-diary');
   });
 
   it('shows on phones only, sits at the bottom above the page, and is left off paper', async () => {
