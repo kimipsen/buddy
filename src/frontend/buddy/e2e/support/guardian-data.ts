@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import { type Page, expect } from '@playwright/test';
 
 import { trackCreatedCalendar, trackCreatedChild, trackCreatedGroup } from './created-data-cleanup';
@@ -17,9 +19,10 @@ export interface CreatedChild {
   username: string;
 }
 
-// Not cryptographically unique, just unique enough across parallel workers and repeated runs.
+// Unique across parallel workers and repeated runs. randomBytes rather than Math.random() because
+// the suffix ends up in usernames, which CodeQL treats as a security context.
 function uniqueSuffix(): string {
-  return `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+  return `${Date.now().toString(36)}${randomBytes(4).toString('hex')}`;
 }
 
 export function uniqueName(prefix: string): string {

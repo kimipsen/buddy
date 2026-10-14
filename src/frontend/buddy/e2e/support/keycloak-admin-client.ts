@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import { readRuntimeConfig } from './runtime-config';
 import { isSeededUsername } from './seeded-users';
 
@@ -64,7 +66,7 @@ async function getMasterAdminToken(authority: string): Promise<string> {
 // reach /guardian/admin's delete-account section.
 export async function createDisposableGuardian(prefix = 'e2edelete'): Promise<DisposableGuardian> {
   const { keycloak } = readRuntimeConfig();
-  const suffix = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+  const suffix = `${Date.now().toString(36)}${randomBytes(4).toString('hex')}`;
   const username = `${prefix}${suffix}`.toLowerCase();
   const password = `Pw-${suffix}-Aa1!`;
   const email = `${username}@buddy.test`;
@@ -197,7 +199,7 @@ export async function makeChildLoginUsable(
     throw new Error(`Keycloak user '${username}' not found.`);
   }
 
-  const password = `E2e-${Math.random().toString(36).slice(2)}-pw`;
+  const password = `E2e-${randomBytes(8).toString('hex')}-pw`;
   const reset = await fetch(`${users}/${userId}/reset-password`, {
     method: 'PUT',
     headers,
