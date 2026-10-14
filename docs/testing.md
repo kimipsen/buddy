@@ -182,7 +182,9 @@ verified scoping instructions and expected runtime characteristics.
 - `.github/workflows/codeql.yml` runs CodeQL's `security-and-quality` queries
   on the backend (C#, built with the SDK from `global.json`) and the frontend
   (TypeScript, no build) for changes under `src/`, and weekly. Findings appear
-  under the repository's Security → Code scanning alerts.
+  under the repository's Security → Code scanning alerts. Results in
+  source-generator output under `obj/` (Marten/JasperFx evolvers) are filtered
+  out of the SARIF with `jq` before it is uploaded.
 
 ### Code coverage
 
