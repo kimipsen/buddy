@@ -23,6 +23,9 @@ in real time.
 
 ### Guardian
 
+- [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
+      child for something new such as the dentist or a trip (proposed, not yet implemented — see
+      [Social stories](docs/backend/analysis/social-stories.md))
 - [x] Guided setup for guardians with no groups or children: one group, children, optional
       invitations, a shared calendar, a first routine and a meal plan, resumable and deferrable
       (see [Guardian onboarding](docs/frontend/analysis/guardian-onboarding.md))
