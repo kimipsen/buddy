@@ -15,7 +15,9 @@
 
 ### Toggle the meal plan in calendar views (2026-10-14)
 
-- [ ] Add a toggle to show or hide the meal plan in the calendar views (default: on).
+- [x] Add a toggle to show or hide the meal plan in the calendar views (default: on). It's a
+      "Meal plan" switch in the child calendar's filter bar, remembered per device. Only the
+      child calendar shows meals (2026-10-14).
 
 ### Tools for families with ADHD and autism (2026-10-11)
 

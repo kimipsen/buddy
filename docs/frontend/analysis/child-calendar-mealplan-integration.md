@@ -141,6 +141,17 @@ cases for:
 - Meal rows show the meal's icon/name/slot label and are not clickable (no
   completion affordance).
 
+## Follow-up: show/hide toggle (2026-10-14)
+
+The calendar's filter bar (titled "Show" / "Vis") has a "Meal plan" switch,
+on by default, whenever the `mealplans` feature is enabled. The bar now
+appears even with a single calendar. Turning the switch off drops meals from
+the agenda and from the empty-state check. The meals are still loaded, so
+switching back needs no reload. The choice is a per-device view preference
+in `localStorage` (`buddy_child_calendar_show_meals`, see
+`meal-visibility-storage.ts`), not synced to the profile, like the theme and
+the last print template.
+
 ## Explicitly out of scope for this phase
 
 - Rating a meal from the calendar view — stays on `/child/mealplan`.
