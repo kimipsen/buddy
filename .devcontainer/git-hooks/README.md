@@ -19,8 +19,8 @@ it for one commit with `git commit --no-verify` or `SKIP_PRE_COMMIT=1 git commit
 
 ## post-commit: documentation sync
 
-A `post-commit` hook that asks an AI coding agent to update `docs/` and
-`README.md` based on the diff of the commit that was just made, then commits
+A `post-commit` hook that asks an AI coding agent to update `docs/`,
+`README.md` and `TODO.md` based on the diff of the commit that was just made, then commits
 any resulting doc changes as a separate `docs: sync documentation (auto)`
 commit.
 
@@ -51,13 +51,13 @@ removes both settings and restores git's default hook behavior.
 2. Reads the configured agent from `hooks.doc-agent` and exits quietly if it
    isn't installed on `PATH`.
 3. Builds a prompt from the last commit's message and diff, restricted to
-   updating files under `docs/` and `README.md`.
+   updating files under `docs/`, `README.md` and `TODO.md`.
 4. Runs the agent non-interactively, restricted to read/edit-style tools (no
    arbitrary shell commands):
    - `claude -p ... --permission-mode acceptEdits --allowedTools Read,Edit,Glob,Grep`
    - `codex exec ... --sandbox workspace-write`
    - `copilot -p ... --allow-tool write --deny-tool shell`
-5. If the agent changed anything under `docs/` or `README.md`, commits only
+5. If the agent changed anything under `docs/`, `README.md` or `TODO.md`, commits only
    those changes as `docs: sync documentation (auto)`. The hook snapshots the
    docs before and after the agent runs and builds the commit in a temporary
    index from `HEAD`, so whatever you had staged, your uncommitted edits to
