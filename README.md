@@ -23,6 +23,9 @@ in real time.
 
 ### Guardian
 
+- [ ] Skip one occurrence of a repeating appointment or task on a single day, without changing
+      or ending the series, and restore it again (proposed, not yet implemented — see
+      [Skipping single occurrences](docs/backend/analysis/skip-occurrences.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))

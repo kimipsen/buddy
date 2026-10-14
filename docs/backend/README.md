@@ -71,6 +71,7 @@ model or permissions logic.
 - [Feelings check-in](analysis/feelings-check-in.md)
 - [Packing checklists](analysis/packing-checklists.md)
 - [Medicine effect and side-effect notes](analysis/medicine-effect-notes.md)
+- [Skipping single occurrences](analysis/skip-occurrences.md)
 
 ## Current focus areas
 
