@@ -83,7 +83,27 @@ jobs:
           dotnet restore src/backend/backend.slnx
           dotnet build src/backend/backend.slnx --no-restore --configuration Release
 
+      # Uploaded below, after the generated-code results are filtered out.
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
+          category: "/language:${{ matrix.language }}"
+          upload: failure-only
+          output: sarif-results
+
+      # A traced C# build ignores paths-ignore, so the source-generator output CodeQL writes under
+      # obj/ (Marten/JasperFx evolvers) is analysed too. Its results aren't ours to fix; drop them.
+      - name: Drop results in generated code
+        run: |
+          for f in sarif-results/*.sarif; do
+            jq '.runs[].results |= map(select(
+                  (.locations[0].physicalLocation.artifactLocation.uri // "") | test("(^|/)obj/") | not))' \
+              "$f" > "$f.tmp"
+            mv "$f.tmp" "$f"
+          done
+
+      - name: Upload results
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          sarif_file: sarif-results
           category: "/language:${{ matrix.language }}"
