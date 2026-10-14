@@ -72,6 +72,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'shell.nav.items.transitionWarnings',
         feature: 'transitionWarnings',
       },
+      { link: '/guardian/first-then', label: 'shell.nav.items.firstThen', feature: 'firstThen' },
       { link: '/guardian/progress', label: 'shell.nav.items.progress', feature: 'progress' },
     ],
   },

@@ -78,7 +78,13 @@ describe('NavMenu', () => {
       { heading: 'Health & well-being', links: ['Medicine', 'Sleep diary', 'Feelings'] },
       {
         heading: 'Routines',
-        links: ['Task library', 'House rules', 'Heads-up before changes', 'Progress goals'],
+        links: [
+          'Task library',
+          'House rules',
+          'Heads-up before changes',
+          'First – Then',
+          'Progress goals',
+        ],
       },
       {
         heading: 'Family & helpers',

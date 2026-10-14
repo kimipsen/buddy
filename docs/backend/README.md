@@ -19,6 +19,7 @@ Backend documentation for the Buddy API.
 - [Sleep diary flow](sleep-diary/flow.md)
 - [Transition warnings flow](transition-warnings/flow.md)
 - [Feelings flow](feelings/flow.md)
+- [First–Then flow](first-then/flow.md)
 - [House rules flow](house-rules/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)

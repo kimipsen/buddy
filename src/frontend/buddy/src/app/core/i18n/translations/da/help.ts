@@ -266,6 +266,29 @@ export const help = {
         },
       },
     },
+    firstThen: {
+      title: 'Først – Så',
+      sections: {
+        setBoard: {
+          title: 'Lav en tavle',
+          body: 'En Først – Så-tavle er to kort: først noget, dit barn synes er svært, så noget, de glæder sig til, fx "Først lektier, så iPad". Gør det første kort kort og konkret, og vælg et andet kort, som dit barn rigtig gerne vil. Dit barn ser én tavle ad gangen.',
+          steps: {
+            s1: 'Vælg barnet øverst på siden.',
+            s2: 'Under "Ny tavle" vælger du det første kort blandt kort, der er brugt før, dagens opgaver eller forslagene, eller du skriver en titel og en emoji.',
+            s3: 'Vælg det andet kort på samme måde og, hvis det er skærmtid, hvor længe det varer.',
+            s4: 'Tryk på "Vis til …". En ny tavle erstatter den nuværende.',
+          },
+        },
+        childSide: {
+          title: 'Det ser dit barn',
+          body: 'Et kort øverst på dit barns forside åbner tavlen. Dit barn trykker "Færdig!" på det første kort, og det andet kort åbner med det samme, med en nedtælling, når det har en længde, og visuelle timere er slået til for barnet. "Ikke færdig endnu" fortryder et fejltryk. At krydse det første kort af fuldfører ikke en opgave i kalenderen og giver ingen stjerner. Dit barns enhed kigger efter en ny tavle cirka én gang i minuttet.',
+        },
+        endBoard: {
+          title: 'Afslut en tavle',
+          body: 'Dit barn trykker "Helt færdig", når de er færdige, eller du trykker "Afslut tavlen". Når tiden er gået, viser tavlen "Tiden er gået" og venter på en voksen. En tavle fra i går er skjult for dit barn, og du kan afslutte den her.',
+        },
+      },
+    },
     houseRules: {
       title: 'Husregler',
       sections: {

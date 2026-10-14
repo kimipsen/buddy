@@ -112,6 +112,12 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     related: ['calendar', 'taskLibrary', 'pickup'],
   },
   {
+    id: 'firstThen',
+    feature: 'firstThen',
+    sections: [{ id: 'setBoard', steps: 4 }, { id: 'childSide' }, { id: 'endBoard' }],
+    related: ['taskLibrary', 'progress'],
+  },
+  {
     id: 'pickup',
     feature: 'pickups',
     sections: [

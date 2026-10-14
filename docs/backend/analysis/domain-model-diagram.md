@@ -162,6 +162,19 @@ classDiagram
         +FeelingsDisplayMode DisplayMode
     }
 
+    class FirstThenBoard {
+        +FirstThenBoardId Id
+        +UserId ChildId
+        +FirstThenState State
+        +int Revision
+        +FirstThenCard First
+        +FirstThenCard Then
+        +int? ThenMinutes
+        +DateTimeOffset? UnlockedAt
+        +RecentFirsts RecentFirsts
+        +RecentThens RecentThens
+    }
+
     class FeelingsShareToken {
         +FeelingsShareTokenId Id
         +UserId ChildId
@@ -217,6 +230,7 @@ classDiagram
     TransitionWarningSettings ..> CalendarItem : itemOverrides
     FeelingsJournal --> User : childId, check-ins' loggedBy
     FeelingsShareToken --> User : childId, createdBy
+    FirstThenBoard --> User : childId, lastModifiedBy
     RuleBook --> User : scopeId (Child scope), acknowledgements
     RuleBook --> Group : scopeId (Group scope)
 ```

@@ -23,6 +23,7 @@ import { GuardianProgress } from './progress/progress';
 import { GuardianShell } from './shell/guardian-shell';
 import { GuardianSleepDiary } from './sleep-diary/sleep-diary';
 import { GuardianFeelings } from './feelings/feelings';
+import { GuardianFirstThen } from './first-then/first-then';
 import { GuardianTransitionWarnings } from './transition-warnings/transition-warnings';
 import { GuardianTaskLibrary } from './task-library/task-library';
 import { GuardianWorkLocations } from './work-locations/work-locations';
@@ -109,6 +110,12 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [featureGuard('transitionWarnings')],
         component: GuardianTransitionWarnings,
         data: { helpTopic: 'transitionWarnings' },
+      },
+      {
+        path: 'first-then',
+        canActivate: [featureGuard('firstThen')],
+        component: GuardianFirstThen,
+        data: { helpTopic: 'firstThen' },
       },
       {
         path: 'house-rules',

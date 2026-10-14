@@ -61,6 +61,7 @@ import { ChildPage } from '../child-page/child-page';
 import { ChildMenu } from './child-menu/child-menu';
 import { ChildSuggestions } from './child-suggestions/child-suggestions';
 import { FeelingsCheckIn } from './feelings-check-in/feelings-check-in';
+import { FirstThenCard } from './first-then-card/first-then-card';
 
 const EVENT_KIND: CalendarItemKind = 'Event';
 const TASK_KIND: CalendarItemKind = 'Task';
@@ -155,6 +156,7 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
     VisualTimer,
     ChildSuggestions,
     FeelingsCheckIn,
+    FirstThenCard,
   ],
   templateUrl: './home.html',
 })

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { featureGuard } from '../../core/feature.guard';
 import { ChildCalendar } from './calendar/child-calendar';
+import { ChildFirstThen } from './first-then/child-first-then';
 import { ChildFocus } from './focus/child-focus';
 import { ChildHome } from './home/home';
 import { ChildHomework } from './homework/child-homework';
@@ -38,6 +39,11 @@ export const CHILD_ROUTES: Routes = [
     path: 'rules',
     component: ChildRules,
     canActivate: [featureGuard('houseRules')],
+  },
+  {
+    path: 'first-then',
+    component: ChildFirstThen,
+    canActivate: [featureGuard('firstThen')],
   },
   {
     // No feature flag of its own: without the task library there are no template runs to time.

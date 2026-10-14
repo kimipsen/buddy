@@ -1,6 +1,12 @@
 # First–Then Board
 
-Status: Proposed (not yet implemented)
+Status: Implemented. The `FirstThenBoard` aggregate (one stream per child in the `firstthen`
+schema, with its snapshot, GDPR eraser and exporter, and the `Features:FirstThen` flag), the
+`GetFirstThenBoard`, `SetFirstThenBoard`, `CompleteFirstThenFirst`, `ReopenFirstThenFirst`,
+`EndFirstThenBoard` and `GetMyFirstThenBoard` slices on the nine routes below, the guardian page
+`/guardian/first-then` with the board form and a dashboard card, and the child page
+`/child/first-then` with a card at the top of `/child`. See
+[first-then/flow.md](../first-then/flow.md).
 
 ## Context
 
@@ -242,7 +248,7 @@ enum FirstThenAccess { Allowed, NotFound, Forbidden }
   from options the guardian offers is a common variation; see the open questions.
 - **Stale ticks.** The child's `CompleteFirst`, `ReopenFirst` and `End` carry the `Revision` they
   were shown. If a guardian has set a new board since then, the request returns `409` with
-  `first_then_board_changed` and the current board, so a child ticking "homework" can't
+  `first_then_board_changed` (the client re-reads the current board), so a child ticking "homework" can't
   accidentally complete the "tidy your room" board a guardian just set. This is
   `AcknowledgeRule`'s `RevisionChanged` outcome, copied. The guardian's routes also carry the
   revision, for the same reason between two guardians. The central `concurrency_conflict` 409
@@ -486,7 +492,8 @@ for SleepDiaries, plus:
   guardian links on `/me` (`404`).
 - **Lifecycle**: every row of the state diagram, including the three idempotent no-ops (no event
   appended), complete/reopen on `None` (`404`), and set on `Unlocked` resetting to `Waiting`.
-- **Revision**: a stale child tick returns `409 first_then_board_changed` with the current board;
+- **Revision**: a stale child tick returns `409 first_then_board_changed` (the error envelope, as
+  `AcknowledgeRule`'s; the client re-reads the board);
   two guardians setting from the same revision, the second gets `409`.
 - **Validation**: empty or 61-character titles, missing icon, `thenMinutes` 4 and 121.
 - **GDPR**: erasure of the child deletes the stream; erasure of a guardian pseudonymises
@@ -505,7 +512,7 @@ page and form (pickers prefill, replace confirmation), and the dashboard card. O
 |---|---|
 | Child has no board yet (no stream) | `GET` returns `State = none, Revision = 0`; no `404` |
 | Guardian sets a board while one is current | The form asks to confirm; the new board replaces it (`Revision + 1`, `Waiting`) |
-| Child ticks a board a guardian has just replaced | `409 first_then_board_changed` with the current board; the page shows the new board and announces it |
+| Child ticks a board a guardian has just replaced | `409 first_then_board_changed`; the page re-reads, shows the new board and announces it |
 | Child taps *Done* by mistake | *Not done yet* reopens it (`FirstThenFirstReopened`) |
 | Complete/reopen when no board is current | `404` |
 | End when no board is current | `200`, no event (idempotent) |

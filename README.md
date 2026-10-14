@@ -23,10 +23,6 @@ in real time.
 
 ### Guardian
 
-- [ ] First–Then board: a guardian pairs a non-preferred task with a preferred activity
-      ("first homework, then iPad"), and the child ticks off the first card to unlock the second,
-      with an optional countdown (proposed, not yet implemented — see
-      [First–Then board](docs/backend/analysis/first-then-board.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -68,6 +64,9 @@ in real time.
       of side effects, linked to the dosage the child was on, with a by-dose-period summary for
       dose-adjustment conversations (see
       [Medicine effect and side-effect notes](docs/backend/analysis/medicine-effect-notes.md))
+- [x] First–Then board: a guardian pairs a non-preferred task with a preferred activity
+      ("first homework, then iPad"), and the child ticks off the first card to unlock the second,
+      with an optional countdown — see [First–Then board](docs/backend/analysis/first-then-board.md)
 
 ### Child
 

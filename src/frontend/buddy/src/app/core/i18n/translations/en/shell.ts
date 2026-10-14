@@ -31,6 +31,7 @@ export const shell = {
       taskLibrary: 'Task library',
       houseRules: 'House rules',
       transitionWarnings: 'Heads-up before changes',
+      firstThen: 'First – Then',
       progress: 'Progress goals',
       babysitters: 'Babysitters',
       workLocations: 'Work locations',

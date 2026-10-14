@@ -1,6 +1,11 @@
 <app-child-page [title]="'child.home.title' | translate">
   <app-child-menu childPageActions />
 
+  <!-- A current board is the most "now" thing on the page, so it goes first. -->
+  @if (features.enabled('firstThen')) {
+    <app-first-then-card />
+  }
+
   @if (features.enabled('progress')) {
     <app-progress-badge
       class="block"

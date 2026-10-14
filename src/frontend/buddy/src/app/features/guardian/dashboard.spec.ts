@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CalendarsService } from '../../core/calendars.service';
 import { FeelingsService } from '../../core/feelings.service';
+import { FirstThenService } from '../../core/first-then.service';
 import { GuardiansService } from '../../core/guardians.service';
 import { MealplansService } from '../../core/mealplans.service';
 import { MedicinesService } from '../../core/medicines.service';
@@ -75,6 +76,7 @@ describe('GuardianDashboard', () => {
         { provide: PickupsService, useValue: pickupsStub },
         { provide: TaskLibraryService, useValue: { fetchTaskTemplates: vi.fn(async () => []) } },
         { provide: FeelingsService, useValue: { listCheckIns: vi.fn() } },
+        { provide: FirstThenService, useValue: { getBoard: vi.fn() } },
       ],
     }).compileComponents();
 
@@ -99,6 +101,7 @@ describe('GuardianDashboard', () => {
       'app-feelings-today',
       'app-pickup-today',
       'app-packing-tomorrow',
+      'app-first-then-today',
     ];
     for (const selector of selectors) {
       expect(compiled.querySelector(selector)).toBeTruthy();
@@ -130,6 +133,7 @@ describe('GuardianDashboard', () => {
     expect([...columns.children].map((card) => card.tagName.toLowerCase())).toEqual([
       'app-mealplan-today',
       'app-packing-tomorrow',
+      'app-first-then-today',
       'app-tasks-today',
       'app-events-today',
       'app-doses-today',
@@ -147,11 +151,17 @@ describe('GuardianDashboard', () => {
     const children = [
       ...(compiled.querySelector('app-tasks-today')?.parentElement as HTMLElement).children,
     ];
-    // The evening packing card is display: contents and carries these classes on its own card,
-    // which it only renders while something is left to pack (packing-tomorrow.spec.ts).
-    const packing = children.find((card) => card.tagName.toLowerCase() === 'app-packing-tomorrow');
-    expect(packing?.classList).toContain('contents');
-    const cards = children.filter((card) => card !== packing);
+    // The evening packing card and the First – Then card are display: contents and carry these
+    // classes on their own card, which they only render while there is something to show
+    // (packing-tomorrow.spec.ts, first-then-today.spec.ts).
+    const selfShown = children.filter((card) =>
+      ['app-packing-tomorrow', 'app-first-then-today'].includes(card.tagName.toLowerCase()),
+    );
+    expect(selfShown).toHaveLength(2);
+    for (const card of selfShown) {
+      expect(card.classList).toContain('contents');
+    }
+    const cards = children.filter((card) => !selfShown.includes(card));
     for (const card of cards) {
       expect(card.classList).toContain('block');
       expect(card.classList).toContain('break-inside-avoid');
@@ -175,7 +185,7 @@ describe('GuardianDashboard', () => {
   });
 
   it('leaves out the cards and the print link of features that are turned off', async () => {
-    disableFeatures('mealplans', 'medicines', 'pickups', 'printing', 'feelings');
+    disableFeatures('mealplans', 'medicines', 'pickups', 'printing', 'feelings', 'firstThen');
     const { fixture } = await setup();
     await settle(fixture);
 
@@ -185,6 +195,7 @@ describe('GuardianDashboard', () => {
       'app-doses-today',
       'app-pickup-today',
       'app-feelings-today',
+      'app-first-then-today',
     ]) {
       expect(compiled.querySelector(selector)).toBeNull();
     }

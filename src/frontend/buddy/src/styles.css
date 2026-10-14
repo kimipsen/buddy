@@ -7,6 +7,23 @@
    be forced regardless of the OS setting. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* The First – Then board's one moment of movement: the Then card scales in once when it unlocks
+   (docs/backend/analysis/first-then-board.md, Question 7). Used only behind motion-safe:. */
+@theme {
+  --animate-scale-in: scale-in 300ms ease-out;
+
+  @keyframes scale-in {
+    from {
+      transform: scale(0.92);
+      opacity: 0.6;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
 /* Lets native widgets (checkboxes, date/color pickers, scrollbars) follow the active theme
    instead of always rendering with light OS chrome. */
 :root {

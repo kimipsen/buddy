@@ -1,0 +1,38 @@
+@if (board(); as board) {
+  @let unlocked = board.state === 'Unlocked';
+  <a
+    routerLink="/child/first-then"
+    data-testid="first-then-card"
+    class="mb-6 flex items-center gap-4 rounded-3xl border-4 px-5 py-4 text-lg font-bold transition"
+    [class.border-emerald-300]="!unlocked"
+    [class.dark:border-emerald-700]="!unlocked"
+    [class.bg-emerald-50]="!unlocked"
+    [class.dark:bg-emerald-950]="!unlocked"
+    [class.text-emerald-950]="!unlocked"
+    [class.dark:text-emerald-100]="!unlocked"
+    [class.border-amber-300]="unlocked"
+    [class.dark:border-amber-600]="unlocked"
+    [class.bg-amber-50]="unlocked"
+    [class.dark:bg-amber-950]="unlocked"
+    [class.text-amber-950]="unlocked"
+    [class.dark:text-amber-100]="unlocked"
+  >
+    <span aria-hidden="true" class="flex items-center gap-1 text-3xl leading-none">
+      <span [class.grayscale]="unlocked" [class.opacity-60]="unlocked">{{
+        board.first!.icon
+      }}</span>
+      <span class="text-xl text-slate-400 dark:text-slate-500">→</span>
+      <span>{{ board.then!.icon }}</span>
+    </span>
+    <span>
+      @if (unlocked) {
+        {{ 'firstThen.child.homeUnlocked' | translate: { then: board.then!.title } }}
+      } @else {
+        {{
+          'firstThen.child.homeWaiting'
+            | translate: { first: board.first!.title, then: board.then!.title }
+        }}
+      }
+    </span>
+  </a>
+}

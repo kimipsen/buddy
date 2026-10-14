@@ -43,6 +43,7 @@ flowchart TB
         TransitionWarningSettings["TransitionWarningSettings\nTransitionWarningSettingsId(Guid)"]
         FeelingsJournal["FeelingsJournal\nFeelingsJournalId(Guid)"]
         FeelingsShareToken["FeelingsShareToken\nFeelingsShareTokenId(Guid)"]
+        FirstThenBoard["FirstThenBoard\nFirstThenBoardId(Guid)"]
     end
 
     GuardianLink -- "guardianId, childId : UserId" --> User
@@ -83,6 +84,7 @@ flowchart TB
     TransitionWarningSettings -. "itemOverrides : CalendarItemId" .-> CalendarItem
     FeelingsJournal -- "childId (Id == ChildId, no index needed); check-ins' loggedBy" --> User
     FeelingsShareToken -- "childId, createdBy" --> User
+    FirstThenBoard -- "childId (Id == ChildId, no index needed); lastModifiedBy" --> User
 
     GuardianLink -. "family resolved at read time" .-> MealPlan
     GuardianLink -. "family resolved at read time" .-> Meal
@@ -132,6 +134,7 @@ flowchart TB
 | TransitionWarningSettings | `Features/TransitionWarnings/Types/TransitionWarningSettings.cs` | `TransitionWarningSettingsId(Guid)`, equal to the child's `UserId` | `childId` → User; `itemOverrides` (keys) → CalendarItem (checked at write time, never an access grant) |
 | FeelingsJournal | `Features/Feelings/Types/FeelingsJournal.cs` | `FeelingsJournalId(Guid)`, equal to the child's `UserId` | `childId` → User; check-ins' `loggedBy` → User (the child for a self-report, a guardian for an observation) |
 | FeelingsShareToken | `Features/Feelings/Types/FeelingsShareToken.cs` | `FeelingsShareTokenId(Guid)` | `childId` / `createdBy` → User; found by token hash through `FeelingsShareTokenDocument` |
+| FirstThenBoard | `Features/FirstThen/Types/FirstThenBoard.cs` | `FirstThenBoardId(Guid)`, equal to the child's `UserId` | `childId` → User; `lastModifiedBy` (and the events' `setBy` / `completedBy` / `reopenedBy` / `endedBy`) → User |
 | RuleBook | `Features/HouseRules/Types/RuleBook.cs` | `RuleBookId(Guid)`, equal to the scope's id (a child's `UserId` or a `GroupId`) | `scopeId` → User or Group (by `scopeKind`); rules' `lastEditedBy` and acknowledgements' child → User |
 
 `CalendarItem` also stores an optional `taskTemplateId` (a raw `Guid`, not `TaskLibrary`'s `TaskTemplateId` type) when it was scheduled from a template — see `Features/Calendars/Types/CalendarItem.cs`.

@@ -19,8 +19,6 @@ homework splitter have shipped; they are listed under Done.
       See [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md).
 - [ ] **Pictogram support.** An optional icon or photo on tasks, routine steps and meals, for
       younger or non-reading children.
-- [ ] **First–Then board.** Pair a non-preferred task with a preferred activity ("first homework,
-      then iPad"). See [First–Then board](docs/backend/analysis/first-then-board.md).
 
 #### Regulation and emotions
 
@@ -735,3 +733,10 @@ they reuse data the app already keeps. Each has a design doc.
 - [x] Let guardians/parents be identified by a calling name instead of only their first name,
       for example "Dad" / "Far" or "Mom" / "Mor". See
       [guardian-calling-names.md](docs/backend/analysis/guardian-calling-names.md).
+
+### Tools for families with ADHD and autism (2026-10-11)
+
+#### In-the-moment help for the child
+
+- [x] **First–Then board.** Pair a non-preferred task with a preferred activity ("first homework,
+      then iPad"). See [First–Then board](docs/backend/analysis/first-then-board.md) (2026-10-14).

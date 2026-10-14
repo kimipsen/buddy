@@ -117,6 +117,10 @@ The guardian routes currently include:
   the same time share one marker: a guide line and a square per medicine in its own colour) or the
   8-week summary, a day's check-ins with edit/remove (a self-report can't be edited), logging an
   observation now or earlier, reminder times and the faces-only switch, and doctor share links
+- `/guardian/first-then` — a child's First – Then board: the current board as the child sees it
+  with Mark done / Undo / End ("From yesterday" on a board left over), and a "New board" form
+  with card pickers (used before, today's open tasks for the First, starters, or typed), a Then
+  length and a replace confirmation; polls every minute; behind `featureGuard('firstThen')`
 - `/guardian/transition-warnings` — per child (`?child=<id>` from the `manage-children` On/Off
   line), the "Warn … before changes" switch, then lead times, kinds, quiet hours and per-item
   exceptions; saved as one PUT, so nothing reaches the child until Save
@@ -174,6 +178,11 @@ The child routes currently include:
 - `/child/rewards` — the child's spendable stars, the rewards a guardian set up with an "Ask for this" button on the affordable ones, requests waiting for a grown-up (withdrawable), and earlier answers; the child home links to it
 - `/child/rules` — the child's own and each household's rules, with "New"/"Changed" chips and an "I've read this" button; the child home links to it and shows a "N rules to read" card
 - `/child/homework` — the homework splitter: plan tonight's homework as parts with estimates, then work through focus chunks and breaks (lengths from the guardian, `homeworkChunks` on `GET /users/me`) with the shared time-left disc and a break idea per break, then "All done"; the session lives in `localStorage` (`core/homework-storage.ts`); behind `featureGuard('homework')`
+- `/child/first-then` — the child's First – Then board: two big cards, Done unlocks the Then
+  (with the shared time-left disc counting down from the server's `unlockedAt` when it has a
+  length and timers are on), Not done yet and All done; a board from before today counts as none;
+  polls every minute and on wake; behind `featureGuard('firstThen')`. The child home shows a card
+  for it at the top while a board is current
 - `/child/focus/:itemId` — one of today's routines one step at a time: a large time-left disc for the current step, the next step, and Done / Start / Pause; behind `featureGuard('taskLibrary')` and `visualTimersGuard` (timers off sends the child to `/child`)
 
 ### Login feature
@@ -242,6 +251,11 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   (`features/child/home/feelings-check-in`, on the child home page) takes "today" and "now" from
   `ChildClockService` and draws `shared/feeling-zone-buttons` and `shared/feeling-tag-chips`;
   the dashboard's `FeelingsToday` shows each child's check-ins today
+- `FirstThenService` reads, sets and acts on (complete / reopen / end, each with the revision the
+  caller saw) a child's board as a guardian, and the child's own board on `/first-then/me`; the
+  countdown, stale-board and today's-task suggestion rules are the pure `core/first-then.ts`, and
+  `core/visible-poll.ts` is the shared poll-and-refresh-on-wake helper. The dashboard's
+  `FirstThenToday` lists children with a current board
 - `SleepDiaryService` logs, clears, and lists sleep diary nights, saves the hygiene notes, manages
   share links, and reads a shared diary anonymously by token
 - `BabysittersService` manages the guardian's own babysitters and lists the babysitters a child's
@@ -438,6 +452,8 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Feelings check-in](../backend/analysis/feelings-check-in.md) — implemented child check-in card
   (faces-only mode, undo, reminders), guardian page with the trend, settings and share links, the
   dashboard card and the public shared view
+- [First–Then board](../backend/analysis/first-then-board.md) — implemented guardian page with
+  the board form, child page with the countdown, the child home card and the dashboard card
 - [House rules](../backend/analysis/house-rules.md) — implemented guardian page, child page with
   a "rules to read" card on the child home, A4 printouts, and the shared markdown renderer and
   editor (see "Rendering markdown" below)

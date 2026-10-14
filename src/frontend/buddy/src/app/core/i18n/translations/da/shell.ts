@@ -31,6 +31,7 @@ export const shell = {
       taskLibrary: 'Opgavebibliotek',
       houseRules: 'Husregler',
       transitionWarnings: 'Varsel før skift',
+      firstThen: 'Først – Så',
       progress: 'Mål',
       babysitters: 'Babysittere',
       workLocations: 'Arbejdssteder',

@@ -188,6 +188,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: 'Football practice',
   },
   {
+    name: 'guardian-first-then',
+    title: 'First – Then',
+    description:
+      'A two-card board for one child: first the task, then what comes after. The current board as the child sees it, with Mark done, Undo and End, and a form for a new board from cards used before, today’s tasks or suggestions, with an optional time limit for the Then.',
+    as: 'guardian',
+    route: '/guardian/first-then',
+    waitFor: 'Unlocked: time for iPad',
+  },
+  {
     name: 'guardian-house-rules',
     title: 'House rules',
     description:
@@ -355,6 +364,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     as: 'child',
     route: '/child/rules',
     waitFor: 'Just for you',
+  },
+  {
+    name: 'child-first-then',
+    title: 'Child: First – Then',
+    description:
+      'The child’s First – Then board: Homework is done, so the iPad card is open with a disc counting down its 20 minutes, Not done yet for a mis-tap and All done to end the board.',
+    as: 'child',
+    route: '/child/first-then',
+    waitFor: 'Now: iPad!',
   },
   {
     name: 'child-rewards',

@@ -899,6 +899,39 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       }
     })();
 
+    // First – Then board (docs/backend/analysis/first-then-board.md) -----------------------------
+    // Two earlier boards, so the guardian form has "Used before" cards, then today's
+    // "Homework → iPad, 20 min", which Emil has ticked: his page shows the Then unlocked with the
+    // countdown, and his home page and Sara's dashboard show the board.
+    await (async () => {
+      interface BoardDto {
+        revision: number;
+      }
+      const board = `/first-then/children/${emil.id}`;
+      let revision = 0;
+      const set = async (
+        first: { title: string; icon: string },
+        then: { title: string; icon: string },
+        thenMinutes: number | null,
+      ) => {
+        revision = (await api.put<BoardDto>(board, { revision, first, then, thenMinutes }))
+          .revision;
+      };
+      try {
+        await set({ title: 'Tidy your room', icon: '🧹' }, { title: 'Lego', icon: '🧱' }, null);
+        revision = (await api.post<BoardDto>(`${board}/end`, { revision })).revision;
+        await set({ title: 'Shower', icon: '🚿' }, { title: 'Read together', icon: '📖' }, 15);
+        revision = (await api.post<BoardDto>(`${board}/end`, { revision })).revision;
+        await set({ title: 'Homework', icon: '📚' }, { title: 'iPad', icon: '📱' }, 20);
+
+        const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);
+        await emilApi.post('/first-then/me/first/complete', { revision });
+        await emilApi.dispose();
+      } catch (error: unknown) {
+        warn(error);
+      }
+    })();
+
     // House rules ---------------------------------------------------------------------------
     // A household book for the family group and one personal rule for Emil. Ida has read every
     // household rule (Sara went through them with her); Emil read "Dinner" before it changed and

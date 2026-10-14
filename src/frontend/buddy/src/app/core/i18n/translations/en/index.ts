@@ -5,6 +5,7 @@ import { child } from './child';
 import { common } from './common';
 import { dashboard } from './dashboard';
 import { feelings } from './feelings';
+import { firstThen } from './first-then';
 import { help } from './help';
 import { homework } from './homework';
 import { houseRules } from './house-rules';
@@ -32,6 +33,7 @@ export const en = {
   common,
   dashboard,
   feelings,
+  firstThen,
   help,
   homework,
   houseRules,

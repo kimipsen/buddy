@@ -6,6 +6,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ChildrenOverview } from './children-overview/children-overview';
 import { DosesToday } from './doses-today/doses-today';
 import { FeelingsToday } from './feelings-today/feelings-today';
+import { FirstThenToday } from './first-then-today/first-then-today';
 import { EventsToday } from './events-today/events-today';
 import { MealplanToday } from './mealplan-today/mealplan-today';
 import { OnboardingResumeCard } from './onboarding/resume-card/resume-card';
@@ -26,6 +27,7 @@ import { Page } from '../../shared/page/page';
     FeelingsToday,
     PickupToday,
     PackingTomorrow,
+    FirstThenToday,
     RouterLink,
     TranslatePipe,
     Page,

@@ -8,6 +8,7 @@ using buddy.Features.Users;
 using buddy.IntegrationTests.Features.Babysitters;
 using buddy.IntegrationTests.Features.Calendars;
 using buddy.IntegrationTests.Features.Feelings;
+using buddy.IntegrationTests.Features.FirstThen;
 using buddy.IntegrationTests.Features.Groups;
 using buddy.IntegrationTests.Features.Guardians;
 using buddy.IntegrationTests.Features.HouseRules;
@@ -50,6 +51,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
         var shareLink = await SleepDiaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
         await FeelingsTestHelpers.LogAsync(fixture, token, child.Id, new { Zone = "Yellow", Note = $"feeling{n}", Date = Night, Time = "15:10" });
         var feelingsLink = await FeelingsTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
+        await FirstThenTestHelpers.SetAsync(fixture, token, child.Id, FirstThenTestHelpers.Board(0, first: $"Chore{n}", then: $"Treat{n}"));
         await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id, new CreateMedicineScheduleOptions(Name: $"Medizor{n}"));
         await MedicineEffectNoteTestHelpers.LogAsync(fixture, token, child.Id, Night, new { Note = $"effect{n}" });
         await MealplanTestHelpers.CreateMealAsync(fixture, token, child.Id, new CreateMealOptions(Name: $"Meal{n}"));
@@ -84,7 +86,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
             .GetProperty("name").GetProperty("givenName").GetString());
 
         foreach (var value in (string[])[
-            $"nightmare{n}", $"feeling{n}", $"Medizor{n}", $"effect{n}", $"Meal{n}", $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}",
+            $"nightmare{n}", $"feeling{n}", $"Chore{n}", $"Treat{n}", $"Medizor{n}", $"effect{n}", $"Meal{n}", $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}",
             $"Template{n}", $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Event{n}",
             $"PersonalRule{n}", $"HouseRule{n}"])
         {
