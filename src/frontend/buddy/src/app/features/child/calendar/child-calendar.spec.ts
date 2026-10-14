@@ -29,6 +29,7 @@ describe('ChildCalendar', () => {
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',
     name: { givenName: 'Ida', familyName: 'Kid' },
+    callingName: '',
     timeZoneId: 'UTC',
     language: 'en',
   };

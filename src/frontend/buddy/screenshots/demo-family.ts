@@ -305,6 +305,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
   try {
     const me = await api.get<{ id: string }>('/users/me');
     await api.patch('/users/me/name', { givenName: 'Sara', familyName: 'Holm' });
+    // What Emil and Ida call her: shown on their home pages and the printed week plan.
+    await api.patch('/users/me/calling-name', { callingName: 'Mom' });
     await api.patch('/users/me/timezone', { timeZoneId: TIME_ZONE });
     await api.patch('/users/me/language', { language: 'en' });
 
@@ -989,7 +991,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         }),
         row({ kind: 'Pickup', label: 'Pickup', childId: emil.id }),
         row({ kind: 'Meal', label: 'Dinner', childId: emil.id, mealSlot: 'Dinner' }),
-        row({ kind: 'WorkLocation', label: 'Sara works', guardianId: me.id }),
+        row({ kind: 'WorkLocation', label: 'Mom works', guardianId: me.id }),
         row({
           kind: 'TaskChecklist',
           label: 'Emil’s tasks',

@@ -41,6 +41,12 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
 
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token, $"Cosmo{n}", $"Crane{n}", $"child.{n}");
 
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { CallingName = $"Mor{n}" }).ToUrl("/users/me/calling-name");
+            _.StatusCodeShouldBeOk();
+        });
         await SleepDiaryTestHelpers.LogAsync(fixture, token, child.Id, Night, SleepDiaryTestHelpers.FullNight($"nightmare{n}"));
         await SleepDiaryTestHelpers.UpdateNotesAsync(fixture, token, child.Id, $"hygiene{n}");
         await SleepDiaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
@@ -70,7 +76,7 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
 
         var leftovers = await PersonalDataScanner.FindAsync(
             fixture,
-            $"Gerda{n}", $"Gauss{n}", guardian.Email, guardian.Username,
+            $"Gerda{n}", $"Gauss{n}", $"Mor{n}", guardian.Email, guardian.Username,
             $"Cosmo{n}", $"Crane{n}", child.Username,
             $"nightmare{n}", $"hygiene{n}", $"feeling{n}", $"Medizor{n}", $"dose{n}",
             $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}", $"Template{n}", $"Meal{n}", $"recipe{n}",

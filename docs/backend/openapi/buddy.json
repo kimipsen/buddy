@@ -273,6 +273,95 @@
         ]
       }
     },
+    "/users/me/calling-name": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateCurrentCallingName",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCallingNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/users/me/email": {
       "patch": {
         "tags": [
@@ -22871,6 +22960,7 @@
         "required": [
           "id",
           "name",
+          "callingName",
           "guardianLinkId",
           "kind"
         ],
@@ -22881,6 +22971,9 @@
           },
           "name": {
             "$ref": "#/components/schemas/Name"
+          },
+          "callingName": {
+            "type": "string"
           },
           "guardianLinkId": {
             "$ref": "#/components/schemas/GuardianLinkId"
@@ -26156,6 +26249,20 @@
           }
         }
       },
+      "UpdateCallingNameRequest": {
+        "required": [
+          "callingName"
+        ],
+        "type": "object",
+        "properties": {
+          "callingName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "UpdateChildHomeworkChunksRequest": {
         "required": [
           "focusMinutes",
@@ -26504,6 +26611,7 @@
           "email",
           "userName",
           "name",
+          "callingName",
           "timeZoneId",
           "language",
           "showVisualTimers",
@@ -26522,6 +26630,9 @@
           },
           "name": {
             "$ref": "#/components/schemas/Name"
+          },
+          "callingName": {
+            "type": "string"
           },
           "timeZoneId": {
             "$ref": "#/components/schemas/TimeZoneId"

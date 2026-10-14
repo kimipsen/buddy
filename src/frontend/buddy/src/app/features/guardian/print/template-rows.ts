@@ -1,7 +1,7 @@
 import { CalendarSummary } from '../../../core/calendars.service';
 import { FeatureName } from '../../../core/features.service';
 import { MealSlot } from '../../../core/mealplans.service';
-import { ChildSummary, GuardianSummary } from '../../../core/guardians.service';
+import { ChildSummary, GuardianSummary, childFacingName } from '../../../core/guardians.service';
 import {
   PRINT_ROW_KIND,
   PrintRowKind,
@@ -161,7 +161,7 @@ export function exampleRows(input: ExampleInputs): PrintTemplateRow[] {
       rows.push({
         ...emptyRow(
           PRINT_ROW_KIND.workLocation,
-          labels.atLocation(guardian.name.givenName, location.name),
+          labels.atLocation(childFacingName(guardian), location.name),
         ),
         guardianId: guardian.id,
         workLocationId: location.id,

@@ -19,6 +19,7 @@ describe('ChildHomework', () => {
     email: { value: 'emil@buddy.test', isVerified: true },
     userName: 'emil',
     name: { givenName: 'Emil', familyName: 'Kid' },
+    callingName: '',
     timeZoneId: 'UTC',
     language: 'en',
     showVisualTimers: true,

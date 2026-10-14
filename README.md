@@ -62,6 +62,8 @@ in real time.
 - [x] In-app help: a help panel on every guardian page and a help index, in English and Danish
 - [x] House rules for a household (group) and for each child, written in markdown, which
       children read and acknowledge, and which print on A4 for the fridge
+- [x] Calling names: a guardian can choose what their children call them ("Mom", "Far"), shown
+      instead of their first name on the child's home page and the printed week plan
 
 ### Child
 
@@ -211,6 +213,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Validation rules](docs/backend/analysis/validation-rules.md)
 - [Child accounts and guardian/parent roles](docs/backend/analysis/child-accounts-and-guardian-roles.md)
 - [Guardian-managed child language](docs/backend/analysis/child-language-settings.md)
+- [Calling names for guardians](docs/backend/analysis/guardian-calling-names.md)
 - [Guardian-managed child time zone](docs/backend/analysis/child-timezone-settings.md)
 - [Medicine schedules](docs/backend/analysis/medicine-schedules.md)
 - [Meal plans](docs/backend/analysis/mealplans.md)

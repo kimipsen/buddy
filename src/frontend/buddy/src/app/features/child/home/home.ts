@@ -21,7 +21,7 @@ import { ChildClockService } from '../../../core/child-clock.service';
 import { completeChildTask } from '../../../core/child-task-completion';
 import { ChildTimerService } from '../../../core/child-timer.service';
 import { FeaturesService } from '../../../core/features.service';
-import { GuardiansService } from '../../../core/guardians.service';
+import { GuardiansService, childFacingName } from '../../../core/guardians.service';
 import { currentStep } from '../../../core/homework-session';
 import { readHomeworkSession } from '../../../core/homework-storage';
 import { HouseRulesService } from '../../../core/house-rules.service';
@@ -478,11 +478,10 @@ export class ChildHome implements OnInit, OnDestroy {
     const { assignee } = occurrence;
 
     if (assignee.kind === GUARDIAN) {
-      return (
-        (this.guardianList.hasValue() ? this.guardianList.value() : []).find(
-          (guardian) => guardian.id === assignee.guardianId,
-        )?.name.givenName ?? null
+      const guardian = (this.guardianList.hasValue() ? this.guardianList.value() : []).find(
+        (candidate) => candidate.id === assignee.guardianId,
       );
+      return guardian ? childFacingName(guardian) : null;
     }
 
     if (assignee.kind === SIBLING) {

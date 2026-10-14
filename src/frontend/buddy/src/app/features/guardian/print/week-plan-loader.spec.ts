@@ -52,8 +52,8 @@ describe('WeekPlanLoader', () => {
         { id: 'signe', name: { givenName: 'Signe', familyName: 'X' } },
       ]),
       listChildGuardians: vi.fn(async () => [
-        { id: 'dad', name: { givenName: 'Far', familyName: 'X' } },
-        { id: 'mum', name: { givenName: 'Mor', familyName: 'X' } },
+        { id: 'dad', name: { givenName: 'Anders', familyName: 'X' }, callingName: 'Far' },
+        { id: 'mum', name: { givenName: 'Mette', familyName: 'X' }, callingName: '' },
       ]),
     };
 
@@ -122,7 +122,7 @@ describe('WeekPlanLoader', () => {
     expect(sources.occurrences.get('family')).toEqual([]);
   });
 
-  it('collects given names for children and their guardians', async () => {
+  it("collects children's given names and the names children use for their guardians", async () => {
     const { loader } = setup();
 
     const sources = await loader.load(template([]), '2026-10-04');
@@ -130,7 +130,7 @@ describe('WeekPlanLoader', () => {
     expect([...sources.names]).toEqual([
       ['signe', 'Signe'],
       ['dad', 'Far'],
-      ['mum', 'Mor'],
+      ['mum', 'Mette'],
     ]);
   });
 

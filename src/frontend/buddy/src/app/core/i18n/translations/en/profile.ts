@@ -9,6 +9,14 @@ export const profile = {
     saved: 'Name updated.',
     error: 'Unable to update your name.',
   },
+  callingName: {
+    label: 'What your children call you',
+    placeholder: 'For example Mom or Dad',
+    hint: 'Your children see this instead of your given name, for example on pickups and the printed week plan. Leave it empty to use your given name.',
+    save: 'Save calling name',
+    saved: 'Calling name updated.',
+    error: 'Unable to update your calling name.',
+  },
   email: {
     label: 'Email',
     save: 'Save email',

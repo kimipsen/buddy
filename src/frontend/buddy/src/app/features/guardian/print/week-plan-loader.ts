@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { CalendarsService } from '../../../core/calendars.service';
 import { addDaysIso } from '../../../core/date-utils';
 import { FeaturesService } from '../../../core/features.service';
-import { GuardiansService } from '../../../core/guardians.service';
+import { GuardiansService, childFacingName } from '../../../core/guardians.service';
 import {
   PER_ITEM_REQUEST_CONCURRENCY,
   mapWithConcurrency,
@@ -134,7 +134,7 @@ export class WeekPlanLoader {
         (child) => this.guardians.listChildGuardians(child.id).catch(() => []),
       );
       for (const guardian of guardianLists.flat()) {
-        names.set(guardian.id, guardian.name.givenName);
+        names.set(guardian.id, childFacingName(guardian));
       }
     } catch {
       // Names are decoration; the sheet still prints without them.

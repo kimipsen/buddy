@@ -13,7 +13,7 @@ internal sealed record ChildSummaryDto(Guid Id, NameDto Name, Guid GuardianLinkI
 
 internal sealed record HomeworkChunksDto(int FocusMinutes, int BreakMinutes);
 
-internal sealed record GuardianSummaryDto(Guid Id, NameDto Name, Guid GuardianLinkId, GuardianKind Kind);
+internal sealed record GuardianSummaryDto(Guid Id, NameDto Name, string CallingName, Guid GuardianLinkId, GuardianKind Kind);
 
 internal sealed record SiblingSummaryDto(Guid Id, NameDto Name);
 

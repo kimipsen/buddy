@@ -60,6 +60,45 @@
         }
       }
 
+      <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveCallingName()">
+        <label class="block">
+          <span
+            class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >{{ 'profile.callingName.label' | translate }}</span
+          >
+          <input
+            type="text"
+            name="callingName"
+            maxlength="50"
+            aria-describedby="calling-name-hint"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+            [placeholder]="'profile.callingName.placeholder' | translate"
+            [ngModel]="callingName()"
+            (ngModelChange)="callingName.set($event); callingNameSaved.set(false)"
+          />
+        </label>
+        <button
+          type="submit"
+          class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+          [disabled]="callingNameSave.busy() || callingName().trim() === current.callingName"
+        >
+          {{ 'profile.callingName.save' | translate }}
+        </button>
+        <p id="calling-name-hint" class="text-xs text-slate-500 dark:text-slate-400 sm:col-span-2">
+          {{ 'profile.callingName.hint' | translate }}
+        </p>
+      </form>
+
+      @if (callingNameSave.state(); as state) {
+        @if (state.status === 'error') {
+          <p class="text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+        } @else if (callingNameSaved()) {
+          <p class="text-sm text-emerald-700 dark:text-emerald-400">
+            {{ 'profile.callingName.saved' | translate }}
+          </p>
+        }
+      }
+
       <form class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end" (ngSubmit)="saveEmail()">
         <label class="block">
           <span

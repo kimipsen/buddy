@@ -78,4 +78,9 @@ public sealed class UserEventShapeTests
     public void HomeworkChunksUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new HomeworkChunksUpdated(FixedUserId, new HomeworkChunks(15, 5), new HomeworkChunks(10, 2), FixedInstant),
         "Users/HomeworkChunksUpdated.json");
+
+    [Fact]
+    public void CallingNameUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new CallingNameUpdated(FixedUserId, "", "Mor", FixedInstant),
+        "Users/CallingNameUpdated.json");
 }

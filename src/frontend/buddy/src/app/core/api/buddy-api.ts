@@ -68,6 +68,22 @@ export interface paths {
     patch: operations['UpdateCurrentName'];
     trace?: never;
   };
+  '/users/me/calling-name': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UpdateCurrentCallingName'];
+    trace?: never;
+  };
   '/users/me/email': {
     parameters: {
       query?: never;
@@ -3351,6 +3367,7 @@ export interface components {
     GuardianSummary: {
       id: components['schemas']['UserId'];
       name: components['schemas']['Name'];
+      callingName: string;
       guardianLinkId: components['schemas']['GuardianLinkId'];
       kind: components['schemas']['GuardianKind'];
     };
@@ -4277,6 +4294,9 @@ export interface components {
         [key: string]: components['schemas']['CalendarRole'];
       };
     };
+    UpdateCallingNameRequest: {
+      callingName: null | string;
+    };
     UpdateChildHomeworkChunksRequest: {
       /** Format: int32 */
       focusMinutes: number;
@@ -4374,6 +4394,7 @@ export interface components {
       email: components['schemas']['Email'];
       userName: string;
       name: components['schemas']['Name'];
+      callingName: string;
       timeZoneId: components['schemas']['TimeZoneId'];
       language: components['schemas']['Language'];
       showVisualTimers: boolean;
@@ -4625,6 +4646,68 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UpdateNameRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  UpdateCurrentCallingName: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateCallingNameRequest'];
       };
     };
     responses: {

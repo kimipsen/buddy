@@ -120,8 +120,8 @@ describe('exampleRows', () => {
   };
   const child = (id: string, givenName: string) =>
     ({ id, name: { givenName, familyName: 'X' } }) as never;
-  const guardian = (id: string, givenName: string) =>
-    ({ id, name: { givenName, familyName: 'X' } }) as never;
+  const guardian = (id: string, givenName: string, callingName = '') =>
+    ({ id, name: { givenName, familyName: 'X' }, callingName }) as never;
 
   it('mirrors the fridge sheet from the family’s own children, guardians and calendars', () => {
     const rows = exampleRows({
@@ -145,6 +145,20 @@ describe('exampleRows', () => {
     ]);
     expect(rows.every((r) => missingField(r) === null)).toBe(true);
     expect(rows[3]).toMatchObject({ calendarIds: ['family'], assignedToId: 'signe' });
+  });
+
+  it('labels a work-location row with the calling name the children use', () => {
+    const rows = exampleRows({
+      children: [],
+      guardians: [guardian('dad', 'Anders', 'Far')],
+      calendars: [],
+      workLocations: new Map([
+        ['dad', [{ id: 'stil', name: 'Stil', icon: '🏢', color: '#000', isArchived: false }]],
+      ]),
+      labels,
+    });
+
+    expect(rows.find((r) => r.kind === PRINT_ROW_KIND.workLocation)?.label).toBe('Far at Stil');
   });
 
   it('cuts labels built from long names to the backend limit', () => {

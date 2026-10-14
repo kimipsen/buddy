@@ -22,6 +22,7 @@ describe('GuardianAdmin', () => {
     email: { value: 'guardian@buddy.test', isVerified: true },
     userName: 'guardian',
     name: { givenName: 'Gina', familyName: 'G' },
+    callingName: '',
     timeZoneId: 'UTC',
     language: 'en',
   };

@@ -18,6 +18,11 @@ export type GuardianSummary = Schemas['GuardianSummary'];
 
 export type SiblingSummary = Schemas['SiblingSummary'];
 
+// What a child sees for a guardian: the calling name they set ("Mor"), else their given name.
+export function childFacingName(guardian: Pick<GuardianSummary, 'name' | 'callingName'>): string {
+  return guardian.callingName || guardian.name.givenName;
+}
+
 export type CreateChildResult = Schemas['ChildResponse'];
 
 export type ChildPasswordReset = Schemas['ChildPasswordResetResponse'];

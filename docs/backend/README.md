@@ -51,6 +51,7 @@ model or permissions logic.
 - [Rate limiting](analysis/rate-limiting.md)
 - [Pickup and drop-off schedules](analysis/pickup-schedules.md)
 - [Guardian-managed child language](analysis/child-language-settings.md)
+- [Calling names for guardians](analysis/guardian-calling-names.md)
 - [Guardian-managed child time zone](analysis/child-timezone-settings.md)
 - [Gamified progress](analysis/gamified-progress.md)
 - [Configurable goal posts for progress](analysis/configurable-goal-posts.md)

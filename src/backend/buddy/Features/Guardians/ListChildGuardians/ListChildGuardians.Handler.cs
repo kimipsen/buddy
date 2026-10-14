@@ -29,7 +29,7 @@ public static class ListChildGuardiansHandler
 
             if (User.Rehydrate(guardianEvents) is { IsDeleted: false } guardian)
             {
-                summaries.Add(new GuardianSummary(guardian.Id, guardian.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind));
+                summaries.Add(new GuardianSummary(guardian.Id, guardian.Name, guardian.CallingName, new GuardianLinkId(link.GuardianLinkId), link.Kind));
             }
         }
 

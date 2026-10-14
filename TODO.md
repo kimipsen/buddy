@@ -8,11 +8,6 @@
       occurrence of a repeating appointment or task on an individual day without changing or
       ending the series.
 
-### Calling names for guardians (2026-10-14)
-
-- [ ] Let guardians/parents be identified by a calling name instead of only their first name,
-      for example "Dad" / "Far" or "Mom" / "Mor".
-
 ### Tools for families with ADHD and autism (2026-10-11)
 
 Ideas for new features beyond what Buddy already has. The four marked **(start here)** and the
@@ -730,3 +725,9 @@ they reuse data the app already keeps. Each has a design doc.
 - [x] Add a toggle to show or hide the meal plan in the calendar views (default: on). It's a
       "Meal plan" switch in the child calendar's filter bar, remembered per device. Only the
       child calendar shows meals (2026-10-14).
+
+### Calling names for guardians (2026-10-14)
+
+- [x] Let guardians/parents be identified by a calling name instead of only their first name,
+      for example "Dad" / "Far" or "Mom" / "Mor". See
+      [guardian-calling-names.md](docs/backend/analysis/guardian-calling-names.md).

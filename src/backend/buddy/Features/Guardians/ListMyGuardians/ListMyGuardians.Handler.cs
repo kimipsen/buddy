@@ -18,7 +18,7 @@ public static class ListMyGuardiansHandler
 
             if (User.Rehydrate(guardianEvents) is { IsDeleted: false } guardian)
             {
-                summaries.Add(new GuardianSummary(guardian.Id, guardian.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind));
+                summaries.Add(new GuardianSummary(guardian.Id, guardian.Name, guardian.CallingName, new GuardianLinkId(link.GuardianLinkId), link.Kind));
             }
         }
 
@@ -26,4 +26,5 @@ public static class ListMyGuardiansHandler
     }
 }
 
-public sealed record GuardianSummary(UserId Id, Name Name, GuardianLinkId GuardianLinkId, GuardianKind Kind);
+// CallingName is what the child calls this guardian ("Mor"), "" when the guardian hasn't set one.
+public sealed record GuardianSummary(UserId Id, Name Name, string CallingName, GuardianLinkId GuardianLinkId, GuardianKind Kind);

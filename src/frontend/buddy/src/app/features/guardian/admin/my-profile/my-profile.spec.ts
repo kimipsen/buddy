@@ -15,6 +15,7 @@ describe('MyProfile', () => {
     email: { value: 'alice@buddy.test', isVerified: true },
     userName: 'alice',
     name: { givenName: 'Alice', familyName: 'Anderson' },
+    callingName: '',
     timeZoneId: 'UTC',
     language: 'en',
   };
@@ -40,6 +41,7 @@ describe('MyProfile', () => {
   interface UsersStub {
     ensureCurrentUser: ReturnType<typeof vi.fn>;
     updateName: ReturnType<typeof vi.fn>;
+    updateCallingName: ReturnType<typeof vi.fn>;
     updateEmail: ReturnType<typeof vi.fn>;
     updateTimeZone: ReturnType<typeof vi.fn>;
     updateLanguage: ReturnType<typeof vi.fn>;
@@ -50,6 +52,7 @@ describe('MyProfile', () => {
     const users: UsersStub = {
       ensureCurrentUser: vi.fn(() => options.user ?? Promise.resolve(currentUser)),
       updateName: vi.fn(),
+      updateCallingName: vi.fn(),
       updateEmail: vi.fn(),
       updateTimeZone: vi.fn(),
       updateLanguage: vi.fn(),
@@ -218,6 +221,7 @@ describe('MyProfile', () => {
       const { compiled } = await setup();
 
       expect(compiled.textContent).not.toContain('Name updated.');
+      expect(compiled.textContent).not.toContain('Calling name updated.');
       expect(compiled.textContent).not.toContain('Email updated.');
       expect(compiled.textContent).not.toContain('Time zone updated.');
       expect(compiled.textContent).not.toContain('Language updated.');
@@ -319,6 +323,94 @@ describe('MyProfile', () => {
       await submit(fixture, findSaveButton(compiled, 'name'));
 
       expect(users.updateName).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('calling name', () => {
+    function callingNameButton(compiled: HTMLElement): HTMLButtonElement {
+      return input(compiled, 'callingName')
+        .closest('form')!
+        .querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    }
+
+    it('starts from the stored calling name with the save button disabled', async () => {
+      const { compiled } = await setup({
+        user: Promise.resolve(withChanges({ callingName: 'Mor' })),
+      });
+
+      expect(input(compiled, 'callingName').value).toBe('Mor');
+      expect(callingNameButton(compiled).textContent).toContain('Save calling name');
+      expect(callingNameButton(compiled).disabled).toBe(true);
+    });
+
+    it('explains that children see it instead of the given name', async () => {
+      const { compiled } = await setup();
+
+      const hint = compiled.querySelector('#calling-name-hint');
+      expect(hint?.textContent).toContain('Your children see this instead of your given name');
+      expect(input(compiled, 'callingName').getAttribute('aria-describedby')).toBe(
+        'calling-name-hint',
+      );
+      expect(input(compiled, 'callingName').maxLength).toBe(50);
+    });
+
+    it('saves the trimmed calling name and treats it as the stored one', async () => {
+      const { fixture, compiled, users } = await setup();
+      users.updateCallingName.mockResolvedValue(withChanges({ callingName: 'Mor' }));
+
+      await type(fixture, input(compiled, 'callingName'), '  Mor  ');
+      expect(callingNameButton(compiled).disabled).toBe(false);
+      await submit(fixture, callingNameButton(compiled));
+
+      expect(users.updateCallingName).toHaveBeenCalledExactlyOnceWith('Mor');
+      expect(compiled.textContent).toContain('Calling name updated.');
+      expect(callingNameButton(compiled).disabled).toBe(true);
+    });
+
+    it('saves an empty value to clear the calling name', async () => {
+      const { fixture, compiled, users } = await setup({
+        user: Promise.resolve(withChanges({ callingName: 'Mor' })),
+      });
+      users.updateCallingName.mockResolvedValue(withChanges({ callingName: '' }));
+
+      await type(fixture, input(compiled, 'callingName'), '   ');
+      await submit(fixture, callingNameButton(compiled));
+
+      expect(users.updateCallingName).toHaveBeenCalledExactlyOnceWith('');
+      expect(compiled.textContent).toContain('Calling name updated.');
+    });
+
+    it('hides the confirmation again once the field is edited', async () => {
+      const { fixture, compiled, users } = await setup();
+      users.updateCallingName.mockResolvedValue(withChanges({ callingName: 'Mor' }));
+      await type(fixture, input(compiled, 'callingName'), 'Mor');
+      await submit(fixture, callingNameButton(compiled));
+
+      await type(fixture, input(compiled, 'callingName'), 'Mom');
+
+      expect(compiled.textContent).not.toContain('Calling name updated.');
+    });
+
+    it('shows the server message when the save is rejected', async () => {
+      const { fixture, compiled, users } = await setup();
+      users.updateCallingName.mockRejectedValue(apiError({ message: 'Too long.' }));
+
+      await type(fixture, input(compiled, 'callingName'), 'Mor');
+      await submit(fixture, callingNameButton(compiled));
+
+      expect(compiled.textContent).toContain('Too long.');
+      expect(callingNameButton(compiled).disabled).toBe(false);
+    });
+
+    it('falls back to the generic error when the failure has no message', async () => {
+      const { fixture, compiled, users } = await setup();
+      users.updateCallingName.mockRejectedValue(new Error('offline'));
+
+      await type(fixture, input(compiled, 'callingName'), 'Mor');
+      await submit(fixture, callingNameButton(compiled));
+
+      expect(compiled.textContent).toContain('Unable to update your calling name.');
+      expect(compiled.textContent).not.toContain('Calling name updated.');
     });
   });
 
