@@ -120,12 +120,12 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
 
             if (WeekHeader().Match(line) is { Success: true } weekMatch)
             {
-                if (_year is null)
+                if (_year is not { } year)
                 {
                     return ValidationProblem.Of($"Line {lineNumber}: a week comes before any year. Add a year line such as 'Madplan {DateTime.UtcNow.Year}' above it.");
                 }
 
-                StartWeek(lineNumber, int.Parse(weekMatch.Groups["week"].Value, CultureInfo.InvariantCulture));
+                StartWeek(lineNumber, year, int.Parse(weekMatch.Groups["week"].Value, CultureInfo.InvariantCulture));
                 return null;
             }
 
@@ -177,9 +177,9 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
             return new ParsedImport([.. _byDate.Values.OrderBy(l => l.Date).ThenBy(l => l.LineNumber)], _warnings, _emptyDays);
         }
 
-        private void StartWeek(int lineNumber, int number)
+        private void StartWeek(int lineNumber, int year, int number)
         {
-            var maxWeek = ISOWeek.GetWeeksInYear(_year!.Value);
+            var maxWeek = ISOWeek.GetWeeksInYear(year);
             var corrected = number;
 
             if (number < 1 || number > maxWeek || number <= _previousWeek)
@@ -193,8 +193,8 @@ public sealed partial class WeeklyNoteImportFormat : IMealPlanImportFormat
             {
                 // The week before week 1 is the previous year's last ISO week.
                 var (inferredYear, inferredWeek) = corrected > 1
-                    ? (_year.Value, corrected - 1)
-                    : (_year.Value - 1, ISOWeek.GetWeeksInYear(_year.Value - 1));
+                    ? (year, corrected - 1)
+                    : (year - 1, ISOWeek.GetWeeksInYear(year - 1));
                 _warnings.Add(new ImportWarning(_pending[0].LineNumber, ImportWarningCodes.WeekNumberInferred,
                     $"Line {_pending[0].LineNumber}: days with no week header above them were read as week {inferredWeek} of {inferredYear}."));
 
