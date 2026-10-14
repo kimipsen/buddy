@@ -278,6 +278,16 @@ The focus view of a routine: one big disc showing how long is left of the curren
 
 <img src="mobile/child-focus.png" alt="Child: one step at a time on a phone" width="320">
 
+## Child: homework
+
+The homework splitter: the child writes down tonight's homework and Buddy splits it into short focus chunks with breaks, using the lengths a guardian set. Here the child is four minutes into the second of three Maths chunks; a break with a break idea comes next.
+
+![Child: homework](child-homework.png)
+
+<img src="tablet/child-homework.png" alt="Child: homework on a tablet" width="384">
+
+<img src="mobile/child-homework.png" alt="Child: homework on a phone" width="320">
+
 ## Child: meal plan
 
 The child's view of the week's meals.
