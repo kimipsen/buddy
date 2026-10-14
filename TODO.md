@@ -20,7 +20,7 @@ homework splitter have shipped; they are listed under Done.
 - [ ] **Pictogram support.** An optional icon or photo on tasks, routine steps and meals, for
       younger or non-reading children.
 - [ ] **First–Then board.** Pair a non-preferred task with a preferred activity ("first homework,
-      then iPad").
+      then iPad"). See [First–Then board](docs/backend/analysis/first-then-board.md).
 
 #### Regulation and emotions
 
