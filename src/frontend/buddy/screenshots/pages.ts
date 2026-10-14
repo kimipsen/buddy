@@ -149,6 +149,15 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     waitFor: 'Methylphenidate',
   },
   {
+    name: 'guardian-medicine-effects',
+    title: 'Medicine effects',
+    description:
+      'Daily ratings of focus, calm, impulses, mood and side effects, with a summary by dose period for the doctor.',
+    as: 'guardian',
+    route: '/guardian/medicine/effects',
+    waitFor: 'Usually wore off around',
+  },
+  {
     name: 'guardian-sleep-diary',
     title: 'Sleep diary',
     description:

@@ -20,7 +20,8 @@ decides what the law requires of them. The design and the reasons behind it are 
   and usernames. Sign-in itself happens in Keycloak, which runs alongside Buddy.
 - **Family life:** calendars, tasks and progress, meal plans and ratings, pickups, babysitters,
   work locations and print templates.
-- **Health data:** medicine schedules and dose status, the sleep diary, and feelings check-ins
+- **Health data:** medicine schedules and dose status, medicine effect and side-effect notes
+  (guardians' daily ratings, kept with the dosage of that day), the sleep diary, and feelings check-ins
   (a colour, up to three words and a short note, by the child or by a guardian about them).
 - **AI assistant:** the family's own provider API keys (encrypted), and each session's notes and
   chat.

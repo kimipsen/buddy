@@ -1,0 +1,93 @@
+<app-card>
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">
+      {{ 'medicine.effects.days.title' | translate }}
+    </h3>
+    <ng-content />
+  </div>
+
+  <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+    @for (row of rows(); track row.date) {
+      <li
+        class="-mx-2 rounded-md px-2 py-2"
+        [class.bg-emerald-50]="row.date === selectedDate()"
+        [class.dark:bg-emerald-950]="row.date === selectedDate()"
+        [attr.aria-current]="row.date === selectedDate() ? 'date' : null"
+      >
+        <!-- On a phone the date and Open share the first line and the day's details go full width
+             below; from sm the details sit between them. -->
+        <div class="flex flex-wrap items-start gap-x-3 gap-y-1">
+          <h4 class="text-sm font-medium sm:w-28 sm:shrink-0">{{ row.label }}</h4>
+          <div class="order-last min-w-0 basis-full text-sm sm:order-none sm:flex-1 sm:basis-0">
+            @if (row.note; as note) {
+              <p class="text-slate-600 dark:text-slate-300">
+                @for (medicine of note.regimen; track medicine.medicineId) {
+                  <span class="mr-3"
+                    >{{ medicine.name }} {{ medicine.dosage }}
+                    @for (dose of medicine.doses; track dose.time) {
+                      <span
+                        class="ml-1"
+                        [class.text-emerald-700]="dose.status === 'Taken'"
+                        [class.dark:text-emerald-400]="dose.status === 'Taken'"
+                        [class.text-red-600]="dose.status === 'Skipped'"
+                        [class.dark:text-red-400]="dose.status === 'Skipped'"
+                        [attr.title]="'medicine.effects.doseStatus.' + dose.status | translate"
+                        >{{ dose.status === 'Taken' ? '✓' : dose.status === 'Skipped' ? '✗' : '·'
+                        }}<span class="sr-only"
+                          >{{ dose.time | timeOfDay }}
+                          {{ 'medicine.effects.doseStatus.' + dose.status | translate }}</span
+                        ></span
+                      >
+                    }
+                  </span>
+                } @empty {
+                  <span>{{ 'medicine.effects.days.baseline' | translate }}</span>
+                }
+              </p>
+              <div class="mt-1 flex flex-wrap gap-1">
+                @for (effect of note.effects; track effect.area) {
+                  <span
+                    class="rounded-full bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-300"
+                    >{{ 'medicine.effects.areas.' + effect.area | translate }}:
+                    {{ 'medicine.effects.levels.' + effect.level | translate }}</span
+                  >
+                }
+                @for (side of note.sideEffects; track side.kind) {
+                  <span
+                    class="rounded-full bg-amber-50 dark:bg-amber-950 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-300"
+                    >{{ 'medicine.effects.sideEffects.' + side.kind | translate }}:
+                    {{ 'medicine.effects.severities.' + side.severity | translate }}</span
+                  >
+                }
+                @if (note.woreOffAt) {
+                  <span
+                    class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300"
+                    >{{
+                      'medicine.effects.days.woreOff'
+                        | translate: { time: (note.woreOffAt | timeOfDay) }
+                    }}</span
+                  >
+                }
+              </div>
+              @if (note.note) {
+                <p class="mt-1 text-slate-600 dark:text-slate-300">{{ note.note }}</p>
+              }
+            } @else {
+              <span class="text-slate-400 dark:text-slate-500">{{
+                'medicine.effects.days.notLogged' | translate
+              }}</span>
+            }
+          </div>
+          <button
+            type="button"
+            class="ml-auto text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 print:hidden pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+            [attr.aria-label]="('medicine.effects.days.edit' | translate) + ' ' + row.label"
+            (click)="selectDate.emit(row.date)"
+          >
+            {{ 'medicine.effects.days.edit' | translate }}
+          </button>
+        </div>
+      </li>
+    }
+  </ul>
+</app-card>

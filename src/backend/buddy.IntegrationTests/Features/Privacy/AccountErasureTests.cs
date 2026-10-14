@@ -52,7 +52,8 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
         await SleepDiaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
         await FeelingsTestHelpers.LogAsync(fixture, token, child.Id, new { Zone = "Red", Note = $"feeling{n}", Date = Night, Time = "15:10" });
         await FeelingsTestHelpers.CreateShareLinkAsync(fixture, token, child.Id);
-        await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id, new CreateMedicineScheduleOptions(Name: $"Medizor{n}", Dosage: $"dose{n}"));
+        await MedicineTestHelpers.CreateMedicineScheduleAsync(fixture, token, child.Id, new CreateMedicineScheduleOptions(Name: $"Medizor{n}", Dosage: $"dose{n}", StartDate: Night));
+        await MedicineEffectNoteTestHelpers.LogAsync(fixture, token, child.Id, Night, new { Note = $"effect{n}" });
         await BabysitterTestHelpers.AddAsync(fixture, token, $"Sitter{n}", $"sitter{n}@example.test");
         await WorkLocationTestHelpers.AddLocationAsync(fixture, token, $"Office{n}");
         await PrintTemplateTestHelpers.CreateAsync(fixture, token, $"Template{n}");
@@ -78,7 +79,7 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
             fixture,
             $"Gerda{n}", $"Gauss{n}", $"Mor{n}", guardian.Email, guardian.Username,
             $"Cosmo{n}", $"Crane{n}", child.Username,
-            $"nightmare{n}", $"hygiene{n}", $"feeling{n}", $"Medizor{n}", $"dose{n}",
+            $"nightmare{n}", $"hygiene{n}", $"feeling{n}", $"Medizor{n}", $"dose{n}", $"effect{n}",
             $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}", $"Template{n}", $"Meal{n}", $"recipe{n}",
             $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Task{n}",
             $"PersonalRule{n}", $"rulebody{n}", $"HouseRule{n}");

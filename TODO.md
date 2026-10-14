@@ -33,8 +33,6 @@ homework splitter have shipped; they are listed under Done.
 
 - [ ] **Behaviour (ABC) log.** Antecedent, behaviour and consequence entries, correlated with
       sleep, doses and schedule changes to surface patterns.
-- [ ] **Medicine effect and side-effect notes.** Ratings ("focus good / appetite poor") linked to
-      doses, for dose-adjustment conversations.
 - [ ] **Doctor visit summary.** One printable, shareable report combining sleep, doses, feelings
       and the behaviour log for a chosen period, reusing the sleep diary's share link and print setup.
 
@@ -709,6 +707,12 @@ they reuse data the app already keeps. Each has a design doc.
 - [x] **Feelings check-in (start here).** The child taps one of four colour zones (each with a
       face and a word) a few times a day; guardians see trends, with a doctor share link like the sleep diary's. See
       [Feelings check-in](docs/backend/analysis/feelings-check-in.md).
+
+#### Insight for guardians and clinicians
+
+- [x] **Medicine effect and side-effect notes.** Ratings ("focus good / appetite poor") linked to
+      doses, for dose-adjustment conversations. Shipped 2026-10-14 as `/guardian/medicine/effects`.
+      See [Medicine effect and side-effect notes](docs/backend/analysis/medicine-effect-notes.md).
 
 #### School and other caregivers
 

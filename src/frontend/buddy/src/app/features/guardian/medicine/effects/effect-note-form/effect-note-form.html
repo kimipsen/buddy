@@ -1,0 +1,169 @@
+@let current = draft();
+@let state = action.state();
+
+<app-card>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold tracking-normal">
+      {{ 'medicine.effects.form.title' | translate }}
+    </h3>
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-slate-500 dark:text-slate-400">{{
+        'medicine.effects.form.dateLabel' | translate
+      }}</span>
+      <app-date-select
+        [value]="date()"
+        [max]="maxDate()"
+        [ariaLabel]="'medicine.effects.form.dateLabel' | translate"
+        (valueChange)="$event && dateChange.emit($event)"
+      />
+    </div>
+  </div>
+
+  <div
+    class="mb-5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
+  >
+    <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      {{ 'medicine.effects.form.regimen' | translate }}
+    </h4>
+    @if (regimen(); as medicines) {
+      @if (medicines.length === 0) {
+        <p class="mt-1 text-sm">{{ 'medicine.effects.form.baseline' | translate }}</p>
+      } @else {
+        <ul class="mt-1 space-y-1 text-sm">
+          @for (medicine of medicines; track medicine.medicineId) {
+            <li>
+              <span class="font-medium">{{ medicine.name }} {{ medicine.dosage }}</span>
+              @for (dose of medicine.doses; track dose.time) {
+                <span class="ml-2 text-slate-500 dark:text-slate-400"
+                  >{{ dose.time | timeOfDay }}
+                  {{ 'medicine.effects.doseStatus.' + dose.status | translate }}</span
+                >
+              }
+            </li>
+          }
+        </ul>
+      }
+    }
+    @if (!note()) {
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        {{ 'medicine.effects.form.regimenHint' | translate }}
+      </p>
+    }
+  </div>
+
+  <fieldset class="mb-5">
+    <legend class="text-sm font-semibold">{{ 'medicine.effects.form.effects' | translate }}</legend>
+    <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+      {{ 'medicine.effects.form.effectsHint' | translate }}
+    </p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      @for (area of areas; track area) {
+        @let label = 'medicine.effects.areas.' + area | translate;
+        <div>
+          <p class="mb-1 text-sm font-medium">{{ label }}</p>
+          <app-segmented-control
+            [options]="levelOptions()"
+            [selected]="current.effects[area] ?? null"
+            [ariaLabel]="label"
+            (selectedChange)="setEffect(area, $event)"
+          />
+        </div>
+      }
+    </div>
+  </fieldset>
+
+  <fieldset class="mb-5">
+    <legend class="text-sm font-semibold">
+      {{ 'medicine.effects.form.sideEffects' | translate }}
+    </legend>
+    <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+      {{ 'medicine.effects.form.sideEffectsHint' | translate }}
+    </p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      @for (kind of shownSideEffects(); track kind) {
+        @let label = 'medicine.effects.sideEffects.' + kind | translate;
+        <div>
+          <p class="mb-1 text-sm font-medium">{{ label }}</p>
+          <app-segmented-control
+            [options]="severityOptions()"
+            [selected]="current.sideEffects[kind] ?? null"
+            [ariaLabel]="label"
+            (selectedChange)="setSideEffect(kind, $event)"
+          />
+        </div>
+      }
+    </div>
+    <button
+      type="button"
+      class="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+      [attr.aria-expanded]="showAllSideEffects()"
+      (click)="toggleSideEffects()"
+    >
+      {{
+        (showAllSideEffects()
+          ? 'medicine.effects.form.fewerSideEffects'
+          : 'medicine.effects.form.moreSideEffects'
+        ) | translate
+      }}
+    </button>
+  </fieldset>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <p class="mb-1 text-sm font-medium">{{ 'medicine.effects.form.woreOff' | translate }}</p>
+      <app-time-select
+        [value]="current.woreOffAt"
+        [ariaLabel]="'medicine.effects.form.woreOff' | translate"
+        (valueChange)="setWoreOffAt($event)"
+      />
+    </div>
+
+    <div class="sm:col-span-2">
+      <label class="mb-1 block text-sm font-medium" for="effectNote">{{
+        'medicine.effects.form.note' | translate
+      }}</label>
+      <textarea
+        id="effectNote"
+        rows="2"
+        maxlength="500"
+        class="field-sizing-content min-h-16 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+        [placeholder]="'medicine.effects.form.notePlaceholder' | translate"
+        [ngModel]="current.note"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="setNote($event)"
+      ></textarea>
+    </div>
+  </div>
+
+  @if (state.status === 'error') {
+    <p class="mt-4 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ state.message | translate }}
+    </p>
+  }
+
+  <div class="mt-5 flex flex-wrap items-center gap-3">
+    <button
+      type="button"
+      class="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+      [disabled]="locked() || action.busy()"
+      (click)="save()"
+    >
+      {{ 'medicine.effects.form.save' | translate }}
+    </button>
+    @if (note()) {
+      <button
+        type="button"
+        class="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
+        [disabled]="locked() || action.busy()"
+        (click)="clear()"
+      >
+        {{ 'medicine.effects.form.clear' | translate }}
+      </button>
+    }
+    @if (justSaved()) {
+      <span class="text-sm text-emerald-700 dark:text-emerald-400" role="status">{{
+        'medicine.effects.form.saved' | translate
+      }}</span>
+    }
+  </div>
+</app-card>

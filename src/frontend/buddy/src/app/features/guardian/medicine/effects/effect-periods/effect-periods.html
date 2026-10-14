@@ -1,0 +1,74 @@
+<app-card>
+  <h3 class="text-lg font-semibold tracking-normal">
+    {{ 'medicine.effects.periods.title' | translate }}
+  </h3>
+  <p class="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">
+    {{ 'medicine.effects.periods.intro' | translate }}
+  </p>
+
+  @for (row of rows(); track row.period.from) {
+    <section class="border-t border-slate-100 dark:border-slate-800 py-4 break-inside-avoid">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h4 class="font-semibold">
+          @for (medicine of row.period.regimen; track $index; let last = $last) {
+            {{ medicine.name }} {{ medicine.dosage }}{{ last ? '' : ' + ' }}
+          } @empty {
+            {{ 'medicine.effects.periods.baseline' | translate }}
+          }
+        </h4>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ row.range }} ·
+          {{ 'medicine.effects.periods.days' | translate: { count: row.period.days } }}
+        </p>
+      </div>
+      @if (row.period.medianWoreOffAt; as woreOff) {
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          {{ 'medicine.effects.periods.woreOff' | translate: { time: (woreOff | timeOfDay) } }}
+        </p>
+      }
+
+      <dl class="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+        @for (item of row.effects; track item.key) {
+          <div>
+            <dt class="text-sm font-medium">{{ item.label }}</dt>
+            <dd>
+              <div
+                class="mt-1 flex h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                aria-hidden="true"
+              >
+                @for (segment of item.segments; track segment.value) {
+                  <div [class]="segment.colour" [style.width.%]="segment.percent"></div>
+                }
+              </div>
+              <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
+                {{ countsText(item.segments, 'levels') }}
+              </p>
+            </dd>
+          </div>
+        }
+        @for (item of row.sideEffects; track item.key) {
+          <div>
+            <dt class="text-sm font-medium">{{ item.label }}</dt>
+            <dd>
+              <div
+                class="mt-1 flex h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                aria-hidden="true"
+              >
+                @for (segment of item.segments; track segment.value) {
+                  <div [class]="segment.colour" [style.width.%]="segment.percent"></div>
+                }
+              </div>
+              <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
+                {{ countsText(item.segments, 'severities') }}
+              </p>
+            </dd>
+          </div>
+        }
+      </dl>
+    </section>
+  } @empty {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'medicine.effects.periods.empty' | translate }}
+    </p>
+  }
+</app-card>

@@ -5,4 +5,5 @@
   [ngModelOptions]="{ standalone: true }"
   (ngModelChange)="valueChange.emit($event)"
   aria-label="{{ ariaLabel() }}"
+  [attr.max]="max() || null"
 />

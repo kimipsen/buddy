@@ -1188,6 +1188,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/medicines/children/{childId}/effect-notes/{date}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['LogMedicineEffectNote'];
+    post?: never;
+    delete: operations['ClearMedicineEffectNote'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/medicines/children/{childId}/effect-notes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListMedicineEffectNotes'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/medicines/children/{childId}/group-share/{groupId}': {
     parameters: {
       query?: never;
@@ -3131,6 +3163,14 @@ export interface components {
       /** @default true */
       requireReacknowledgement: boolean;
     };
+    /** @enum {string} */
+    EffectArea: 'Focus' | 'Calm' | 'ImpulseControl' | 'Mood';
+    /** @enum {string} */
+    EffectLevel: 'Poor' | 'Okay' | 'Good';
+    EffectRating: {
+      area: components['schemas']['EffectArea'];
+      level: components['schemas']['EffectLevel'];
+    };
     Email: {
       value: string;
       isVerified: boolean;
@@ -3462,6 +3502,13 @@ export interface components {
       /** Format: time */
       time?: null | string;
     };
+    LogMedicineEffectNoteRequest: {
+      effects?: null | components['schemas']['EffectRating'][];
+      sideEffects?: null | components['schemas']['SideEffectRating'][];
+      /** Format: time */
+      woreOffAt?: null | string;
+      note?: null | string;
+    };
     LogSleepEntryRequest: {
       /** Format: time */
       routineStartTime?: null | string;
@@ -3634,6 +3681,21 @@ export interface components {
       /** Format: time */
       time: string;
       status: components['schemas']['DoseStatus'];
+    };
+    MedicineEffectNoteResponse: {
+      /** Format: date */
+      date: string;
+      effects: components['schemas']['EffectRating'][];
+      sideEffects: components['schemas']['SideEffectRating'][];
+      /** Format: time */
+      woreOffAt: null | string;
+      note: string;
+      regimen: components['schemas']['RegimenMedicineResponse'][];
+      /** Format: uuid */
+      loggedBy: string;
+    };
+    MedicineEffectNotesResponse: {
+      notes: components['schemas']['MedicineEffectNoteResponse'][];
     };
     /** Format: uuid */
     MedicineId: string;
@@ -3853,6 +3915,18 @@ export interface components {
       /** Format: date */
       until?: null | string;
       weekdays?: null | components['schemas']['DayOfWeek'][];
+    };
+    RegimenDoseResponse: {
+      /** Format: time */
+      time: string;
+      status: components['schemas']['DoseStatus'];
+    };
+    RegimenMedicineResponse: {
+      /** Format: uuid */
+      medicineId: string;
+      name: string;
+      dosage: string;
+      doses: components['schemas']['RegimenDoseResponse'][];
     };
     RenamePrintTemplateRequest: {
       name: string;
@@ -4088,6 +4162,23 @@ export interface components {
       id: components['schemas']['UserId'];
       name: components['schemas']['Name'];
     };
+    /** @enum {string} */
+    SideEffect:
+      | 'ReducedAppetite'
+      | 'TroubleFallingAsleep'
+      | 'Stomachache'
+      | 'Headache'
+      | 'Irritability'
+      | 'ReboundWhenWearingOff'
+      | 'Tics'
+      | 'FlatOrNotThemselves'
+      | 'Other';
+    SideEffectRating: {
+      kind: components['schemas']['SideEffect'];
+      severity: components['schemas']['SideEffectSeverity'];
+    };
+    /** @enum {string} */
+    SideEffectSeverity: 'None' | 'Mild' | 'Moderate' | 'Severe';
     SkippedImportEntry: {
       /** Format: date */
       date: string;
@@ -9569,6 +9660,183 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ErrorEnvelope'];
         };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  LogMedicineEffectNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        date: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LogMedicineEffectNoteRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MedicineEffectNoteResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ClearMedicineEffectNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        date: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ListMedicineEffectNotes: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MedicineEffectNotesResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       429: components['responses']['TooManyRequests'];
       500: components['responses']['InternalServerError'];

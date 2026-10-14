@@ -1,6 +1,11 @@
 # Medicine Effect and Side-Effect Notes
 
-Status: Proposed (not yet implemented)
+Status: Implemented. A `MedicineEffectLog` aggregate per child in `Features/Medicines` (events
+`MedicineEffectLogStarted`, `MedicineEffectNoteLogged`, `MedicineEffectNoteCleared`, inline snapshot),
+the `LogMedicineEffectNote`, `ClearMedicineEffectNote` and `ListMedicineEffectNotes` slices on
+`/medicines/children/{childId}/effect-notes`, audit event 9003, erasure and export, and the guardian
+page `/guardian/medicine/effects` (form, day-by-day list, printable dose-period summary) linked from
+the medicine page and the dashboard's "Today's medicine" card.
 
 ## Context
 
@@ -125,8 +130,9 @@ MedicineEffectLogStarted(MedicineEffectLogId Id, UserId ChildId, DateTimeOffset 
     // as SleepDiaryStarted.
 
 MedicineEffectNoteLogged(MedicineEffectLogId Id, DateOnly Date, MedicineEffectNote? Before,
-    MedicineEffectNote After, UserId LoggedBy, DateTimeOffset OccurredAt)
-    // Full overwrite. Identical content appends nothing (HasSameContentAs, as LogSleepEntryHandler).
+    MedicineEffectNote After, DateTimeOffset OccurredAt)
+    // Full overwrite; who logged it is After.LoggedBy. Identical content appends nothing
+    // (HasSameContentAs, as LogSleepEntryHandler).
 
 MedicineEffectNoteCleared(MedicineEffectLogId Id, DateOnly Date, MedicineEffectNote Before,
     UserId ModifiedBy, DateTimeOffset OccurredAt)
@@ -387,11 +393,14 @@ LogMedicineEffectNoteRequest(IReadOnlyList<EffectRating>? Effects = null,
 - **Page `/guardian/medicine/effects`** (`features/guardian/medicine/effects/`), `featureGuard('medicines')`,
   `helpTopic: 'medicine'`, with the child picker from `GuardianSleepDiary`
   ([sleep-diary.ts](../../../src/frontend/buddy/src/app/features/guardian/sleep-diary/sleep-diary.ts)):
-  - `effect-note-form/`: a date (`shared/date-select`, default today on the child's clock), the
-    resolved regimen shown read-only with today's dose statuses, one `shared/segmented-control`
-    per effect area (poor / okay / good, unselected by default) and per side effect (none / mild /
-    moderate / severe; the four most common shown, "More side effects" reveals the rest), a
-    "wore off around" `shared/time-select`, the note, Save and Clear day.
+  - `effect-note-form/`: a date (`shared/date-select`, default today in the browser, as the sleep
+    diary), the regimen shown read-only with that day's dose statuses (a rated day shows its stored
+    regimen; an unrated one previews it from `ListDoses` for the date), one
+    `shared/segmented-control` per effect area (not rated / poor / okay / good, "Not rated" by
+    default) and per side effect (not rated / none / mild / moderate / severe; less appetite, trouble
+    falling asleep, irritable and the wear-off crash shown, "More side effects" reveals the rest and
+    opens by itself when one of them is rated), a "wore off around" `shared/time-select`, the note,
+    Save and Clear day.
   - `effect-days/`: the last 14 days, one row per day with its regimen, dose ticks and the rated
     items as chips, paging back by 14; tapping a day opens it in the form.
   - `effect-periods/`: the dose-period summary of Question 6 over the last 92 days.
@@ -427,8 +436,9 @@ Backend, beside the existing medicine tests in `buddy.IntegrationTests/Features/
 Frontend: specs for the service (exact URLs and bodies), `groupByDosePeriod` (baseline, one change,
 change and back, gaps between notes), the form (unrated stays unrated, `None` vs unrated, clear,
 backdating hint), the day list and the period summary. e2e (`medicine-effect-notes.spec.ts`): a
-guardian with a 10 mg schedule rates today "focus good, appetite moderate", changes the dosage to
-15 mg, rates the next day, and sees two dose periods with the right counts.
+guardian with a 10 mg schedule starting yesterday rates yesterday "focus good, appetite moderate",
+then stops it and adds a 15 mg schedule (the UI has no dosage edit, and a future date can't be
+rated), rates today, and sees two dose periods with the right counts.
 
 ## Failure and edge-case behavior
 

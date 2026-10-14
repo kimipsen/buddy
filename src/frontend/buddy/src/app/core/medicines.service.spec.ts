@@ -3,7 +3,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { MedicineDoseOccurrence, MedicineSchedule, MedicinesService } from './medicines.service';
+import {
+  MedicineDoseOccurrence,
+  MedicineEffectNote,
+  MedicineSchedule,
+  MedicinesService,
+} from './medicines.service';
 import { RuntimeConfigService } from './runtime-config.service';
 
 describe('MedicinesService', () => {
@@ -341,6 +346,74 @@ describe('MedicinesService', () => {
       const promise = service.getSharedGroup(childId);
 
       const req = httpMock.expectOne(`${apiBaseUrl}/medicines/children/${childId}/group-share`);
+      req.flush(null, { status: 204, statusText: 'No Content' });
+
+      await expect(promise).resolves.toBeNull();
+    });
+  });
+
+  describe('effect notes', () => {
+    function apiNote(overrides: Partial<MedicineEffectNote> = {}): MedicineEffectNote {
+      return {
+        date: '2026-03-02',
+        effects: [{ area: 'Focus', level: 'Good' }],
+        sideEffects: [{ kind: 'ReducedAppetite', severity: 'Moderate' }],
+        woreOffAt: '15:30:00',
+        note: 'Skipped lunch',
+        regimen: [
+          {
+            medicineId: 'med-1',
+            name: 'Ritalin',
+            dosage: '10 mg',
+            doses: [{ time: '07:30:00', status: 'Taken' }],
+          },
+        ],
+        loggedBy: 'guardian-1',
+        ...overrides,
+      };
+    }
+
+    it('lists the notes in a range with times trimmed to HH:mm', async () => {
+      const promise = service.listEffectNotes(childId, '2026-03-01', '2026-03-14');
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${base()}/effect-notes` &&
+          r.params.toString() === 'from=2026-03-01&to=2026-03-14',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({ notes: [apiNote(), apiNote({ date: '2026-03-03', woreOffAt: null })] });
+
+      const notes = await promise;
+      expect(notes.map((n) => n.woreOffAt)).toEqual(['15:30', null]);
+      expect(notes[0].regimen[0].doses).toEqual([{ time: '07:30', status: 'Taken' }]);
+      expect(notes[0].regimen[0].dosage).toBe('10 mg');
+    });
+
+    it('PUTs one day as a full overwrite and returns the normalized note', async () => {
+      const request = {
+        effects: [{ area: 'Mood' as const, level: 'Okay' as const }],
+        sideEffects: [],
+        woreOffAt: '16:00',
+        note: '',
+      };
+
+      const promise = service.logEffectNote(childId, '2026-03-02', request);
+
+      const req = httpMock.expectOne(`${base()}/effect-notes/2026-03-02`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(request);
+      expect(req.request.headers.has('Idempotency-Key')).toBe(false);
+      req.flush(apiNote({ woreOffAt: '16:00:00' }));
+
+      expect((await promise).woreOffAt).toBe('16:00');
+    });
+
+    it('DELETEs one day', async () => {
+      const promise = service.clearEffectNote(childId, '2026-03-02');
+
+      const req = httpMock.expectOne(`${base()}/effect-notes/2026-03-02`);
+      expect(req.request.method).toBe('DELETE');
       req.flush(null, { status: 204, statusText: 'No Content' });
 
       await expect(promise).resolves.toBeNull();

@@ -54,7 +54,12 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'medicine',
     feature: 'medicines',
-    sections: [{ id: 'addSchedule', steps: 4 }, { id: 'doseTimes' }, { id: 'doseStatus' }],
+    sections: [
+      { id: 'addSchedule', steps: 4 },
+      { id: 'doseTimes' },
+      { id: 'doseStatus' },
+      { id: 'effectNotes', steps: 3 },
+    ],
     related: ['dashboard', 'groupsAndSharing'],
   },
   {

@@ -695,16 +695,62 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     await api.put(`/mealplans/children/${emil.id}/ai/data-sharing-acknowledgement`);
 
     // Medicine ------------------------------------------------------------------------------
+    // Effect notes record the regimen active when a day is first rated, so the order matters:
+    // baseline days before any schedule, three weeks on 10 mg, then the dosage goes up to 15 mg
+    // for the last week -- giving the effects page three dose periods. The other medicines are
+    // created afterwards so they don't split those periods.
+    const logEffectNote = (back: number, body: object) =>
+      api.put(`/medicines/children/${emil.id}/effect-notes/${inDays(-back)}`, body).catch(warn);
+    for (const back of [34, 33, 32, 31, 30]) {
+      await logEffectNote(back, {
+        effects: [
+          { area: 'Focus', level: back % 2 === 0 ? 'Poor' : 'Okay' },
+          { area: 'Calm', level: 'Poor' },
+        ],
+        note: back === 34 ? 'Before medication: a baseline week for the doctor.' : '',
+      });
+    }
+    const ritalinDetails = { name: 'Methylphenidate', icon: '💊', color: '#0ea5e9' };
     const ritalin = await api.post<Named>(`/medicines/children/${emil.id}/schedules`, {
-      name: 'Methylphenidate',
+      ...ritalinDetails,
       dosage: '10 mg',
-      icon: '💊',
-      color: '#0ea5e9',
       times: ['07:30:00', '12:00:00'],
-      // Two weeks back, so the feelings trend has taken doses on the days it draws.
-      startDate: inDays(-13),
+      // From before the 10 mg weeks, so the feelings trend also has taken doses on the days it draws.
+      startDate: inDays(-27),
       endDate: null,
     });
+    for (let back = 27; back >= 8; back--) {
+      if (back % 7 === 3 || back % 7 === 4) {
+        continue; // a few unrated days, as in real life
+      }
+      await logEffectNote(back, {
+        effects: [
+          { area: 'Focus', level: 'Okay' },
+          { area: 'Calm', level: back % 3 === 0 ? 'Good' : 'Okay' },
+        ],
+        sideEffects: [{ kind: 'ReducedAppetite', severity: back % 2 === 0 ? 'Mild' : 'Moderate' }],
+        woreOffAt: back % 2 === 0 ? '14:30:00' : '14:15:00',
+      });
+    }
+    await api.patch(`/medicines/children/${emil.id}/schedules/${ritalin.id}/details`, {
+      ...ritalinDetails,
+      dosage: '15 mg',
+    });
+    for (let back = 7; back >= 1; back--) {
+      await logEffectNote(back, {
+        effects: [
+          { area: 'Focus', level: 'Good' },
+          { area: 'Calm', level: 'Good' },
+          { area: 'Mood', level: back === 3 ? 'Okay' : 'Good' },
+        ],
+        sideEffects: [
+          { kind: 'ReducedAppetite', severity: 'Moderate' },
+          { kind: 'TroubleFallingAsleep', severity: back % 3 === 0 ? 'Mild' : 'None' },
+        ],
+        woreOffAt: '16:00:00',
+        note: back === 2 ? 'School said he was great in maths, but he didn’t eat lunch.' : '',
+      });
+    }
     await api.post(`/medicines/children/${emil.id}/schedules`, {
       name: 'Melatonin',
       dosage: '3 mg',

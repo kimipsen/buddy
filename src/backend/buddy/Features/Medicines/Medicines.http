@@ -40,3 +40,29 @@ Content-Type: application/json
 }
 
 ###
+
+# Log (or overwrite) one day's medicine effect note (guardian only)
+PUT {{buddy_HostAddress}}/medicines/children/{{childId}}/effect-notes/2025-06-01
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "Effects": [{ "Area": "Focus", "Level": "Good" }],
+  "SideEffects": [{ "Kind": "ReducedAppetite", "Severity": "Moderate" }],
+  "WoreOffAt": "15:30:00",
+  "Note": "Great in maths, skipped lunch"
+}
+
+###
+
+# List a child's medicine effect notes in a date range, at most 92 days (guardian only)
+GET {{buddy_HostAddress}}/medicines/children/{{childId}}/effect-notes?from=2025-06-01&to=2025-06-30
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# Clear one day's medicine effect note (guardian only)
+DELETE {{buddy_HostAddress}}/medicines/children/{{childId}}/effect-notes/2025-06-01
+Authorization: Bearer {{guardianToken}}
+
+###

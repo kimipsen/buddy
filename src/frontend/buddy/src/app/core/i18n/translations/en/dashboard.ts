@@ -48,6 +48,7 @@ export const dashboard = {
   doses: {
     title: 'Today’s medicine',
     manageLink: 'Manage medicine →',
+    effectsLink: 'How did it go? →',
     loading: 'Loading today’s doses…',
     loadError: 'Unable to load today’s medicine doses.',
     updateError: 'Unable to update this dose.',

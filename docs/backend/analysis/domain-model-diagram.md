@@ -90,6 +90,12 @@ classDiagram
         +GroupId SharedWithGroupId
     }
 
+    class MedicineEffectLog {
+        +MedicineEffectLogId Id
+        +UserId ChildId
+        +Notes Notes
+    }
+
     class PickupSchedule {
         +PickupScheduleId Id
         +UserId ChildId
@@ -194,6 +200,8 @@ classDiagram
     MedicineSchedule --> User : childId, createdBy
     MedicineSharing --> User : childId
     MedicineSharing --> Group : sharedWithGroupId
+    MedicineEffectLog --> User : childId
+    MedicineEffectLog ..> MedicineSchedule : regimen
     PickupSchedule --> User : childId, assignments
     WorkLocationSchedule --> User : guardianId
     BabysitterList --> User : guardianId

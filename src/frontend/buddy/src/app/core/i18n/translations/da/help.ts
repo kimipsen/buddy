@@ -175,6 +175,15 @@ export const help = {
           title: 'Marker en dosis som taget eller sprunget over',
           body: 'Dagens doser står på oversigten under "Dagens medicin". Tryk "Marker som taget", når dit barn har fået dosen, eller "Spring over", hvis den blev droppet. Trykkede du forkert? "Fortryd" sætter dosen tilbage. Dit barn kan også selv markere sine doser på sin startside.',
         },
+        effectNotes: {
+          title: 'Notér, hvordan medicinen virker',
+          body: 'Under "Hvordan gik det?" vurderer du én dag ad gangen: koncentration, ro, impulskontrol og humør samt eventuelle bivirkninger. Lad et område stå som "Ikke vurderet", hvis du ikke så det; "Ingen" betyder, at du holdt øje med en bivirkning, og at den ikke var der. Noten gemmer den medicin og dosis, dit barn fik den dag, så "Efter dosisperiode" kan vise, hvad der ændrede sig, da dosis gjorde. Kun forældre ser noterne. Brug "Udskriv" til at tage oversigten med til lægen.',
+          steps: {
+            s1: 'Åbn "Hvordan gik det? →" på medicinsiden eller under "Dagens medicin" på oversigten.',
+            s2: 'Vælg dagen, vurdér det, du så, og tilføj hvornår virkningen aftog og en note, hvis du vil.',
+            s3: 'Tryk "Gem dagen". Tryk "Åbn" ved en tidligere dag for at ændre den, eller "Ryd dagen" for at fjerne den.',
+          },
+        },
       },
     },
     sleepDiary: {

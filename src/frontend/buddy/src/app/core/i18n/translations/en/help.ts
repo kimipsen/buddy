@@ -174,6 +174,15 @@ export const help = {
           title: 'Mark a dose as taken or skipped',
           body: 'Today\'s doses appear on the dashboard under "Today\'s medicine". Press "Mark taken" when your child has had the dose, or "Skip" if it was left out. Pressed the wrong one? "Undo" sets the dose back to not done. Your child can also mark their own doses on their home page.',
         },
+        effectNotes: {
+          title: 'Note how the medicine works',
+          body: 'Under "How did it go?" you rate one day at a time: focus, calm, impulse control and mood, and any side effects. Leave an area as "Not rated" if you didn\'t see it; "None" means you watched for a side effect and it wasn\'t there. The note saves the medicine and dosage your child was on that day, so "By dose period" can show what changed when the dose did. Only guardians see these notes. Use "Print" to bring the summary to the doctor.',
+          steps: {
+            s1: 'Open "How did it go? →" on the medicine page or on "Today\'s medicine" on the dashboard.',
+            s2: 'Pick the day, rate what you saw, and add when it wore off and a note if you like.',
+            s3: 'Press "Save day". Press "Open" on an earlier day to change it, or "Clear day" to remove it.',
+          },
+        },
       },
     },
     sleepDiary: {

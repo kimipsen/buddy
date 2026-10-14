@@ -12,4 +12,6 @@ export class DateSelect {
   readonly value = input<string>('');
   readonly valueChange = output<string>();
   readonly ariaLabel = input('');
+  // Latest selectable "YYYY-MM-DD" (the native picker greys out later days); empty for no limit.
+  readonly max = input('');
 }

@@ -1,11 +1,20 @@
 <app-page backLink="/guardian" [backLabel]="'medicine.backLink' | translate">
-  <div class="mb-8">
-    <p
-      class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p
+        class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+      >
+        {{ 'medicine.eyebrow' | translate }}
+      </p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+        {{ 'medicine.title' | translate }}
+      </h2>
+    </div>
+    <a
+      routerLink="/guardian/medicine/effects"
+      class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
+      >{{ 'medicine.effectsLink' | translate }}</a
     >
-      {{ 'medicine.eyebrow' | translate }}
-    </p>
-    <h2 class="mt-2 text-3xl font-semibold tracking-normal">{{ 'medicine.title' | translate }}</h2>
   </div>
 
   <div class="space-y-6">

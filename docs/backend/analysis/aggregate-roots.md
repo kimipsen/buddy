@@ -30,6 +30,7 @@ flowchart TB
         Meal["Meal\nMealId(Guid)"]
         MedicineSchedule["MedicineSchedule\nMedicineId(Guid)"]
         MedicineSharing["MedicineSharing\nMedicineSharingId(Guid)"]
+        MedicineEffectLog["MedicineEffectLog\nMedicineEffectLogId(Guid)"]
         PickupSchedule["PickupSchedule\nPickupScheduleId(Guid)"]
         WorkLocationSchedule["WorkLocationSchedule\nWorkLocationScheduleId(Guid)"]
         BabysitterList["BabysitterList\nBabysitterListId(Guid)"]
@@ -62,6 +63,8 @@ flowchart TB
     MedicineSchedule -- "childId (stored), createdBy" --> User
     MedicineSharing -- "childId, sharedWithGroupId" --> User
     MedicineSharing -- "sharedWithGroupId" --> Group
+    MedicineEffectLog -- "childId" --> User
+    MedicineEffectLog -. "regimen medicineId" .-> MedicineSchedule
     PickupSchedule -- "childId (stored)" --> User
     PickupSchedule -- "assignments: guardianId / siblingChildId / assignedBy" --> User
     PickupSchedule -- "assignments: babysitterId (on guardianId's list)" --> BabysitterList
@@ -117,6 +120,7 @@ flowchart TB
 | Meal | `Features/Mealplans/Types/Meal.cs` | `MealId(Guid)` | `createdBy` / `lastModifiedBy` → User; `ratings` (keys) → User |
 | MedicineSchedule | `Features/Medicines/Types/MedicineSchedule.cs` | `MedicineId(Guid)` | `childId`, `createdBy` / `lastModifiedBy` → User |
 | MedicineSharing | `Features/Medicines/Types/MedicineSharing.cs` | `MedicineSharingId(Guid)` | `childId` → User; `sharedWithGroupId` → Group |
+| MedicineEffectLog | `Features/Medicines/Types/MedicineEffectLog.cs` | `MedicineEffectLogId(Guid)`, equal to the child's `UserId` | `childId` → User; notes' `loggedBy` → User; regimen `medicineId` → MedicineSchedule (a copied reference, kept after the schedule stops) |
 | PickupSchedule | `Features/Pickups/Types/PickupSchedule.cs` | `PickupScheduleId(Guid)` | `childId` → User; assignments' `guardianId` / `siblingChildId` / `assignedBy` → User; a babysitter assignment's `babysitterId` → a BabysitterList entry |
 | BabysitterList | `Features/Babysitters/Types/BabysitterList.cs` | `BabysitterListId(Guid)`, equal to the guardian's `UserId` | `guardianId` → User |
 | WorkLocationSchedule | `Features/WorkLocations/Types/WorkLocationSchedule.cs` | `WorkLocationScheduleId(Guid)`, equal to the guardian's `UserId` | `guardianId` → User |

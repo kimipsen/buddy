@@ -30,10 +30,6 @@ in real time.
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
-- [ ] Medicine effect and side-effect notes: daily ratings of focus, calm, impulses and mood and
-      of side effects, linked to the dosage the child was on, with a by-dose-period summary for
-      dose-adjustment conversations (proposed, not yet implemented — see
-      [Medicine effect and side-effect notes](docs/backend/analysis/medicine-effect-notes.md))
 - [x] Guided setup for guardians with no groups or children: one group, children, optional
       invitations, a shared calendar, a first routine and a meal plan, resumable and deferrable
       (see [Guardian onboarding](docs/frontend/analysis/guardian-onboarding.md))
@@ -68,6 +64,10 @@ in real time.
       children read and acknowledge, and which print on A4 for the fridge
 - [x] Calling names: a guardian can choose what their children call them ("Mom", "Far"), shown
       instead of their first name on the child's home page and the printed week plan
+- [x] Medicine effect and side-effect notes: daily ratings of focus, calm, impulses and mood and
+      of side effects, linked to the dosage the child was on, with a by-dose-period summary for
+      dose-adjustment conversations (see
+      [Medicine effect and side-effect notes](docs/backend/analysis/medicine-effect-notes.md))
 
 ### Child
 

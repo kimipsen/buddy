@@ -8387,6 +8387,312 @@
         ]
       }
     },
+    "/medicines/children/{childId}/effect-notes/{date}": {
+      "put": {
+        "tags": [
+          "Medicines"
+        ],
+        "operationId": "LogMedicineEffectNote",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogMedicineEffectNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicineEffectNoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Medicines"
+        ],
+        "operationId": "ClearMedicineEffectNote",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/medicines/children/{childId}/effect-notes": {
+      "get": {
+        "tags": [
+          "Medicines"
+        ],
+        "operationId": "ListMedicineEffectNotes",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "A strong validator: a hash of this body.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-cache (revalidate with If-None-Match before reuse).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicineEffectNotesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/medicines/children/{childId}/group-share/{groupId}": {
       "put": {
         "tags": [
@@ -22289,6 +22595,38 @@
           }
         }
       },
+      "EffectArea": {
+        "enum": [
+          "Focus",
+          "Calm",
+          "ImpulseControl",
+          "Mood"
+        ],
+        "type": "string"
+      },
+      "EffectLevel": {
+        "enum": [
+          "Poor",
+          "Okay",
+          "Good"
+        ],
+        "type": "string"
+      },
+      "EffectRating": {
+        "required": [
+          "area",
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "area": {
+            "$ref": "#/components/schemas/EffectArea"
+          },
+          "level": {
+            "$ref": "#/components/schemas/EffectLevel"
+          }
+        }
+      },
       "Email": {
         "required": [
           "value",
@@ -23319,6 +23657,42 @@
           }
         }
       },
+      "LogMedicineEffectNoteRequest": {
+        "type": "object",
+        "properties": {
+          "effects": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EffectRating"
+            }
+          },
+          "sideEffects": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SideEffectRating"
+            }
+          },
+          "woreOffAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "time"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "LogSleepEntryRequest": {
         "type": "object",
         "properties": {
@@ -23936,6 +24310,70 @@
           },
           "status": {
             "$ref": "#/components/schemas/DoseStatus"
+          }
+        }
+      },
+      "MedicineEffectNoteResponse": {
+        "required": [
+          "date",
+          "effects",
+          "sideEffects",
+          "woreOffAt",
+          "note",
+          "regimen",
+          "loggedBy"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EffectRating"
+            }
+          },
+          "sideEffects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SideEffectRating"
+            }
+          },
+          "woreOffAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "time"
+          },
+          "note": {
+            "type": "string"
+          },
+          "regimen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegimenMedicineResponse"
+            }
+          },
+          "loggedBy": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "MedicineEffectNotesResponse": {
+        "required": [
+          "notes"
+        ],
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MedicineEffectNoteResponse"
+            }
           }
         }
       },
@@ -24736,6 +25174,49 @@
             ],
             "items": {
               "$ref": "#/components/schemas/DayOfWeek"
+            }
+          }
+        }
+      },
+      "RegimenDoseResponse": {
+        "required": [
+          "time",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DoseStatus"
+          }
+        }
+      },
+      "RegimenMedicineResponse": {
+        "required": [
+          "medicineId",
+          "name",
+          "dosage",
+          "doses"
+        ],
+        "type": "object",
+        "properties": {
+          "medicineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dosage": {
+            "type": "string"
+          },
+          "doses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegimenDoseResponse"
             }
           }
         }
@@ -25567,6 +26048,44 @@
             "$ref": "#/components/schemas/Name"
           }
         }
+      },
+      "SideEffect": {
+        "enum": [
+          "ReducedAppetite",
+          "TroubleFallingAsleep",
+          "Stomachache",
+          "Headache",
+          "Irritability",
+          "ReboundWhenWearingOff",
+          "Tics",
+          "FlatOrNotThemselves",
+          "Other"
+        ],
+        "type": "string"
+      },
+      "SideEffectRating": {
+        "required": [
+          "kind",
+          "severity"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/SideEffect"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/SideEffectSeverity"
+          }
+        }
+      },
+      "SideEffectSeverity": {
+        "enum": [
+          "None",
+          "Mild",
+          "Moderate",
+          "Severe"
+        ],
+        "type": "string"
       },
       "SkippedImportEntry": {
         "required": [

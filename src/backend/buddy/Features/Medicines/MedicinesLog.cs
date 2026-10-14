@@ -11,4 +11,7 @@ internal static partial class MedicinesLog
 
     [LoggerMessage(EventId = 9002, Level = LogLevel.Information, Message = "Medicine doses of child {ChildId} from {From} to {To} read by {UserId} as {AccessPath}, group {GroupId} (empty: none)")]
     public static partial void MedicineDosesRead(this ILogger logger, Guid childId, DateOnly from, DateOnly to, Guid userId, HealthDataAccessPath accessPath, Guid? groupId);
+
+    [LoggerMessage(EventId = 9003, Level = LogLevel.Information, Message = "Medicine effect notes of child {ChildId} from {From} to {To} read by {UserId} as {AccessPath}")]
+    public static partial void MedicineEffectNotesRead(this ILogger logger, Guid childId, DateOnly from, DateOnly to, Guid userId, HealthDataAccessPath accessPath);
 }

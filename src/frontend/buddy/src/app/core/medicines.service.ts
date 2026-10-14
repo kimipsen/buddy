@@ -19,6 +19,32 @@ export type CreateMedicineScheduleRequest = Schemas['CreateMedicineScheduleReque
 
 export type RescheduleMedicineRequest = Schemas['RescheduleMedicineRequest'];
 
+export type EffectArea = Schemas['EffectArea'];
+export type EffectLevel = Schemas['EffectLevel'];
+export type SideEffect = Schemas['SideEffect'];
+export type SideEffectSeverity = Schemas['SideEffectSeverity'];
+export type EffectRating = Schemas['EffectRating'];
+export type SideEffectRating = Schemas['SideEffectRating'];
+
+// One day's note. Times are "HH:mm" here; the API answers "HH:mm:ss", which normalizeEffectNote
+// trims so they bind straight to app-time-select and the timeOfDay pipe.
+export type MedicineEffectNote = Schemas['MedicineEffectNoteResponse'];
+export type RegimenMedicine = Schemas['RegimenMedicineResponse'];
+
+// Every field optional; saving always overwrites the whole day, as the sleep diary does.
+export type MedicineEffectNoteRequest = Schemas['LogMedicineEffectNoteRequest'];
+
+function normalizeEffectNote(note: MedicineEffectNote): MedicineEffectNote {
+  return {
+    ...note,
+    woreOffAt: note.woreOffAt === null ? null : note.woreOffAt.slice(0, 5),
+    regimen: note.regimen.map((medicine) => ({
+      ...medicine,
+      doses: medicine.doses.map((dose) => ({ ...dose, time: dose.time.slice(0, 5) })),
+    })),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class MedicinesService {
   private readonly http = inject(HttpClient);
@@ -102,6 +128,41 @@ export class MedicinesService {
         `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/doses/${medicineId}`,
         { status },
         { params: { date, time } },
+      ),
+    );
+  }
+
+  async listEffectNotes(childId: string, from: string, to: string): Promise<MedicineEffectNote[]> {
+    const response = await firstValueFrom(
+      this.http.get<Schemas['MedicineEffectNotesResponse']>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/effect-notes`,
+        { params: { from, to } },
+      ),
+    );
+
+    return response.notes.map(normalizeEffectNote);
+  }
+
+  // A PUT on the date key is idempotent by itself, so no postIdempotent.
+  async logEffectNote(
+    childId: string,
+    date: string,
+    request: MedicineEffectNoteRequest,
+  ): Promise<MedicineEffectNote> {
+    const note = await firstValueFrom(
+      this.http.put<MedicineEffectNote>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/effect-notes/${date}`,
+        request,
+      ),
+    );
+
+    return normalizeEffectNote(note);
+  }
+
+  clearEffectNote(childId: string, date: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(
+        `${this.runtimeConfig.apiBaseUrl}/medicines/children/${childId}/effect-notes/${date}`,
       ),
     );
   }

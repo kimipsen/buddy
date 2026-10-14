@@ -13,6 +13,7 @@ import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
 import { MealplanImport } from './mealplan/import/mealplan-import';
 import { GuardianMealplan } from './mealplan/mealplan';
 import { GuardianMedicine } from './medicine/medicine';
+import { GuardianMedicineEffects } from './medicine/effects/effects';
 import { GuardianOnboarding } from './onboarding/onboarding';
 import { GuardianPickup } from './pickup/pickup';
 import { PrintTemplateEditor } from './print/editor/print-template-editor';
@@ -83,6 +84,12 @@ export const GUARDIAN_ROUTES: Routes = [
         path: 'medicine',
         canActivate: [featureGuard('medicines')],
         component: GuardianMedicine,
+        data: { helpTopic: 'medicine' },
+      },
+      {
+        path: 'medicine/effects',
+        canActivate: [featureGuard('medicines')],
+        component: GuardianMedicineEffects,
         data: { helpTopic: 'medicine' },
       },
       {
