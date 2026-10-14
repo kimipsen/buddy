@@ -158,6 +158,16 @@ Per child, a countdown on the child’s screen before events, tasks, routines, p
 
 <img src="mobile/guardian-transition-warnings.png" alt="Heads-up before changes on a phone" width="320">
 
+## First – Then
+
+A two-card board for one child: first the task, then what comes after. The current board as the child sees it, with Mark done, Undo and End, and a form for a new board from cards used before, today’s tasks or suggestions, with an optional time limit for the Then.
+
+![First – Then](guardian-first-then.png)
+
+<img src="tablet/guardian-first-then.png" alt="First – Then on a tablet" width="384">
+
+<img src="mobile/guardian-first-then.png" alt="First – Then on a phone" width="320">
+
 ## House rules
 
 The household’s rules in markdown, with who has read each one. A rule can be added, edited (a small fix keeps the children’s ticks), moved, removed, read together with a child, and printed.
@@ -327,6 +337,16 @@ The child’s own rules and each household’s, with “New” and “Changed”
 <img src="tablet/child-rules.png" alt="Child: our rules on a tablet" width="384">
 
 <img src="mobile/child-rules.png" alt="Child: our rules on a phone" width="320">
+
+## Child: First – Then
+
+The child’s First – Then board: Homework is done, so the iPad card is open with a disc counting down its 20 minutes, Not done yet for a mis-tap and All done to end the board.
+
+![Child: First – Then](child-first-then.png)
+
+<img src="tablet/child-first-then.png" alt="Child: First – Then on a tablet" width="384">
+
+<img src="mobile/child-first-then.png" alt="Child: First – Then on a phone" width="320">
 
 ## Child: rewards
 
