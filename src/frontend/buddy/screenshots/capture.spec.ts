@@ -54,6 +54,19 @@ for (const entry of SCREENSHOT_PAGES) {
       await page.clock.setFixedTime(fixedTime);
     }
 
+    if (entry.localStorage) {
+      const nowMs = (fixedTime ?? new Date()).getTime();
+      const today = new Intl.DateTimeFormat('sv-SE', { timeZone: TIME_ZONE }).format(nowMs);
+      await page.addInitScript(
+        (entries) => {
+          for (const [key, value] of Object.entries(entries)) {
+            window.localStorage.setItem(key, value);
+          }
+        },
+        entry.localStorage(nowMs, today),
+      );
+    }
+
     await page.goto(path!);
     await page.waitForLoadState('networkidle');
 

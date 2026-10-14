@@ -124,6 +124,25 @@ public sealed class GetCurrentUserTests(BuddyApiFixture fixture)
         Assert.False((await GetMeAsync(childToken)).ShowVisualTimers);
     }
 
+    [Fact]
+    public async Task A_child_sees_the_homework_lengths_its_guardian_chose()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await Guardians.GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var childToken = await Guardians.GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
+
+        Assert.Equal(new HomeworkChunksResponse(15, 5), (await GetMeAsync(childToken)).HomeworkChunks);
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { FocusMinutes = 10, BreakMinutes = 2 }).ToUrl($"/users/me/children/{child.Id}/homework-chunks");
+            _.StatusCodeShouldBeOk();
+        });
+
+        Assert.Equal(new HomeworkChunksResponse(10, 2), (await GetMeAsync(childToken)).HomeworkChunks);
+    }
+
     private async Task<UserProfileResponse> GetMeAsync(string token)
     {
         var response = await fixture.Host.Scenario(_ =>
@@ -136,7 +155,9 @@ public sealed class GetCurrentUserTests(BuddyApiFixture fixture)
         return response.ReadAsJson<UserProfileResponse>();
     }
 
-    private sealed record UserProfileResponse(Guid Id, EmailResponse Email, string UserName, NameResponse Name, string Language, string TimeZoneId, bool ShowVisualTimers = false);
+    private sealed record UserProfileResponse(Guid Id, EmailResponse Email, string UserName, NameResponse Name, string Language, string TimeZoneId, bool ShowVisualTimers = false, HomeworkChunksResponse? HomeworkChunks = null);
+
+    private sealed record HomeworkChunksResponse(int FocusMinutes, int BreakMinutes);
 
     private sealed record EmailResponse(string Value, bool IsVerified);
 

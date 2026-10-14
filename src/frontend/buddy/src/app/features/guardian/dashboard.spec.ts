@@ -21,6 +21,7 @@ import { disableFeatures } from '../../../testing/features-fixture';
 describe('GuardianDashboard', () => {
   const currentUser: CurrentUser = {
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
     id: 'guardian-1',
     email: { value: 'guardian@buddy.test', isVerified: true },
     userName: 'guardian',

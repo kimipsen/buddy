@@ -14,6 +14,7 @@ describe('PickupToday', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
     return {
       showVisualTimers: true,
+      homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
       id: 'child-1',
       name: { givenName: 'Charlie', familyName: 'C' },
       guardianLinkId: 'link-1',

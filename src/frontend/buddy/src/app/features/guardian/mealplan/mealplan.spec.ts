@@ -13,6 +13,7 @@ import { disableFeatures } from '../../../../testing/features-fixture';
 describe('GuardianMealplan', () => {
   const child: ChildSummary = {
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
     id: 'child-1',
     name: { givenName: 'Ida', familyName: 'Kid' },
     guardianLinkId: 'link-1',

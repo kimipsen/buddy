@@ -662,7 +662,8 @@ they reuse data the app already keeps. Each has a design doc.
 
 ### Smaller ideas
 
-- [ ] **Homework splitter.** Break an assignment into timed focus chunks with breaks.
+- [x] **Homework splitter.** Break an assignment into timed focus chunks with breaks. See
+  [Homework splitter](docs/frontend/analysis/homework-splitter.md).
 - [ ] **Social stories.** Short illustrated stories that prepare the child for new events, such as
   the dentist or a trip.
 - [ ] **Guardian well-being check-in.** A short private note for guardians themselves.

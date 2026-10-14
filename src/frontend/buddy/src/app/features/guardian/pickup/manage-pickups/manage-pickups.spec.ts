@@ -32,6 +32,7 @@ describe('ManagePickups', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
     return {
       showVisualTimers: true,
+      homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',

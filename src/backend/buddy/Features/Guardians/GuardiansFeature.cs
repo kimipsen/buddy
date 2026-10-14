@@ -1,5 +1,6 @@
 using buddy.Common.Configuration;
 using buddy.Common.Erasure;
+using buddy.Common.FeatureFlags;
 using buddy.Common.Http;
 using buddy.Common.OpenApi;
 
@@ -28,7 +29,7 @@ public static class GuardiansFeature
         return services;
     }
 
-    public static IEndpointRouteBuilder MapGuardiansFeature(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapGuardiansFeature(this IEndpointRouteBuilder endpoints, InstallationFeatures features)
     {
         var children = endpoints.MapGroup("/users/me/children")
             .WithTags(Tag)
@@ -45,6 +46,12 @@ public static class GuardiansFeature
         children.MapUpdateChildLanguage();
         children.MapUpdateChildTimeZone();
         children.MapUpdateChildVisualTimers();
+        // Belongs to the homework splitter: off with it (docs/backend/analysis/feature-flags.md).
+        if (features.Homework)
+        {
+            children.MapUpdateChildHomeworkChunks();
+        }
+
         children.MapInviteGuardian();
         children.MapListGuardianInvites();
         children.MapRevokeGuardianInvite();

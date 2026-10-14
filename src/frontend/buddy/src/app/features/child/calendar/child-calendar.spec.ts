@@ -20,6 +20,7 @@ describe('ChildCalendar', () => {
 
   const currentUser: CurrentUser = {
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
     id: 'child-1',
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',

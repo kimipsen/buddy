@@ -324,6 +324,22 @@ export interface paths {
     patch: operations['UpdateChildVisualTimers'];
     trace?: never;
   };
+  '/users/me/children/{childId}/homework-chunks': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UpdateChildHomeworkChunks'];
+    trace?: never;
+  };
   '/users/me/children/{childId}/guardian-invites': {
     parameters: {
       query?: never;
@@ -2950,6 +2966,7 @@ export interface components {
       language: components['schemas']['Language'];
       timeZoneId: components['schemas']['TimeZoneId'];
       showVisualTimers: boolean;
+      homeworkChunks: components['schemas']['HomeworkChunks'];
     };
     ChildTransitionWarningsResponse: {
       /** Format: uuid */
@@ -3337,6 +3354,12 @@ export interface components {
       guardianLinkId: components['schemas']['GuardianLinkId'];
       kind: components['schemas']['GuardianKind'];
     };
+    HomeworkChunks: {
+      /** Format: int32 */
+      focusMinutes: number;
+      /** Format: int32 */
+      breakMinutes: number;
+    };
     /** @enum {string} */
     HouseRulesAccessTier: 'None' | 'View' | 'Acknowledge' | 'Manage';
     IcalTokenResponse: {
@@ -3378,6 +3401,7 @@ export interface components {
       taskLibrary: boolean;
       transitionWarnings: boolean;
       feelings: boolean;
+      homework: boolean;
       help: boolean;
     };
     InviteGuardianRequest: {
@@ -4253,6 +4277,12 @@ export interface components {
         [key: string]: components['schemas']['CalendarRole'];
       };
     };
+    UpdateChildHomeworkChunksRequest: {
+      /** Format: int32 */
+      focusMinutes: number;
+      /** Format: int32 */
+      breakMinutes: number;
+    };
     UpdateChildLanguageRequest: {
       language: string;
     };
@@ -4347,6 +4377,7 @@ export interface components {
       timeZoneId: components['schemas']['TimeZoneId'];
       language: components['schemas']['Language'];
       showVisualTimers: boolean;
+      homeworkChunks: components['schemas']['HomeworkChunks'];
     };
     VerifyEmailRequest: {
       token: string;
@@ -5582,6 +5613,70 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UpdateChildVisualTimersRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChildSummary'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  UpdateChildHomeworkChunks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateChildHomeworkChunksRequest'];
       };
     };
     responses: {

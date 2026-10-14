@@ -492,6 +492,7 @@ describe('AssignMealplan', () => {
       const children: ChildSummary[] = [
         {
           showVisualTimers: true,
+          homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
           id: 'child-1',
           name: { givenName: 'Sam', familyName: 'Kid' },
           guardianLinkId: 'link-1',

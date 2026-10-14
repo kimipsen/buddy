@@ -1,0 +1,12 @@
+{
+  "UserId": "00000000-0000-0000-0000-000000000001",
+  "Before": {
+    "FocusMinutes": 15,
+    "BreakMinutes": 5
+  },
+  "After": {
+    "FocusMinutes": 10,
+    "BreakMinutes": 2
+  },
+  "OccurredAt": "2025-01-01T12:00:00+00:00"
+}

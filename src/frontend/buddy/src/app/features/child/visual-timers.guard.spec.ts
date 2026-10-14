@@ -20,6 +20,7 @@ describe('visualTimersGuard', () => {
     timeZoneId: 'UTC',
     language: 'en',
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
   };
 
   async function run(ensureCurrentUser: () => Promise<CurrentUser>) {

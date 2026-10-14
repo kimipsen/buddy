@@ -45,6 +45,7 @@ describe('feature routes', () => {
     ['child', CHILD_ROUTES, 'mealplan', 'mealplans'],
     ['child', CHILD_ROUTES, 'rewards', 'progress'],
     ['child', CHILD_ROUTES, 'rules', 'houseRules'],
+    ['child', CHILD_ROUTES, 'homework', 'homework'],
   ];
 
   function guard(list: Route[], path: string): CanActivateFn {

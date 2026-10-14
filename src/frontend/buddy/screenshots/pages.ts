@@ -44,6 +44,10 @@ export interface ScreenshotPage {
   // page that depends on the time (the visual timer) shows the same moment on every run. Only
   // applied once that time has passed today: a clock ahead of real time would expire the session.
   clock?: string;
+  // localStorage entries to put in place before the page loads, for state that lives only in the
+  // browser (a homework session). Called with the capture's "now" and today's date (yyyy-MM-dd)
+  // in the demo family's time zone.
+  localStorage?: (nowMs: number, today: string) => Record<string, string>;
 }
 
 export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
@@ -286,6 +290,39 @@ export const SCREENSHOT_PAGES: readonly ScreenshotPage[] = [
     path: (demo) => `/child/focus/${demo.morningRoutineItemId}`,
     waitFor: 'One step at a time',
     clock: '07:10',
+  },
+  {
+    name: 'child-homework',
+    title: 'Child: homework',
+    description:
+      "The homework splitter: the child writes down tonight's homework and Buddy splits it into short focus chunks with breaks, using the lengths a guardian set. Here the child is four minutes into the second of three Maths chunks; a break with a break idea comes next.",
+    as: 'child',
+    route: '/child/homework',
+    waitFor: 'Maths p. 12: 2 of 3',
+    localStorage: (nowMs, today) => ({
+      buddy_homework_session: JSON.stringify({
+        date: today,
+        parts: [
+          { id: 'maths', title: 'Maths p. 12', estimateMinutes: 30 },
+          { id: 'reading', title: 'Reading', estimateMinutes: 15 },
+        ],
+        chunks: { focusMinutes: 10, breakMinutes: 3 },
+        steps: [
+          { kind: 'focus', partId: 'maths', index: 1, of: 3, minutes: 10 },
+          { kind: 'break', minutes: 3 },
+          { kind: 'focus', partId: 'maths', index: 2, of: 3, minutes: 10 },
+          { kind: 'break', minutes: 3 },
+          { kind: 'focus', partId: 'maths', index: 3, of: 3, minutes: 10 },
+          { kind: 'break', minutes: 3 },
+          { kind: 'focus', partId: 'reading', index: 1, of: 2, minutes: 8 },
+          { kind: 'break', minutes: 3 },
+          { kind: 'focus', partId: 'reading', index: 2, of: 2, minutes: 7 },
+        ],
+        currentIndex: 2,
+        startedAtMs: nowMs - 4 * 60_000,
+        pausedAtMs: null,
+      }),
+    }),
   },
   {
     name: 'child-mealplan',

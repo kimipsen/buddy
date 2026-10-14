@@ -40,6 +40,16 @@
       </a>
     }
 
+    @if (features.enabled('homework')) {
+      <a
+        routerLink="/child/homework"
+        class="inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 px-5 py-3 text-base font-semibold text-emerald-700 dark:text-emerald-400 transition hover:border-emerald-300 dark:hover:border-emerald-700"
+      >
+        <span aria-hidden="true">📚</span>
+        {{ 'child.home.homeworkLink' | translate }}
+      </a>
+    }
+
     @if (features.enabled('progress')) {
       <a
         routerLink="/child/rewards"
@@ -50,6 +60,24 @@
       </a>
     }
   </div>
+
+  @if (features.enabled('homework')) {
+    @if (homeworkInProgress; as homework) {
+      <a
+        routerLink="/child/homework"
+        data-testid="homework-in-progress"
+        class="flex items-center gap-3 rounded-3xl border-4 border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 px-5 py-4 text-lg font-bold text-emerald-950 dark:text-emerald-100 transition hover:border-emerald-400 dark:hover:border-emerald-600"
+      >
+        <span aria-hidden="true" class="text-2xl">📚</span>
+        @let step =
+          homework.isBreak
+            ? ('homework.run.break' | translate)
+            : ('homework.run.chunk'
+              | translate: { title: homework.title, index: homework.index, of: homework.of });
+        {{ 'child.home.homeworkInProgress' | translate: { step } }}
+      </a>
+    }
+  }
 
   @if (pendingRules() > 0) {
     <a

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { sortByPersonName } from './array-utils';
+import type { HomeworkChunks } from './homework-plan';
 import { postIdempotent } from './http-idempotency';
 import type { Schemas } from './api/schemas';
 import { RuntimeConfigService } from './runtime-config.service';
@@ -127,6 +128,15 @@ export class GuardiansService {
       this.http.patch<ChildSummary>(
         `${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/visual-timers`,
         { showVisualTimers },
+      ),
+    );
+  }
+
+  updateChildHomeworkChunks(childId: string, chunks: HomeworkChunks): Promise<ChildSummary> {
+    return firstValueFrom(
+      this.http.patch<ChildSummary>(
+        `${this.runtimeConfig.apiBaseUrl}/users/me/children/${childId}/homework-chunks`,
+        chunks,
       ),
     );
   }

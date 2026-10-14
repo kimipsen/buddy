@@ -37,6 +37,7 @@ const NOT_STARTED: OnboardingProgress = {
 function child(id: string): ChildSummary {
   return {
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
     id,
     name: { givenName: id, familyName: 'Family' },
     guardianLinkId: `link-${id}`,

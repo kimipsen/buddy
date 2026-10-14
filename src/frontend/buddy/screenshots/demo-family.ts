@@ -326,6 +326,11 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     for (const child of [emil, ida]) {
       await api.patch(`/users/me/children/${child.id}/timezone`, { timeZoneId: TIME_ZONE });
     }
+    // Emil works in shorter homework chunks than the 15/5 default.
+    await api.patch(`/users/me/children/${emil.id}/homework-chunks`, {
+      focusMinutes: 10,
+      breakMinutes: 3,
+    });
 
     // Group and calendars ------------------------------------------------------------------
     const group = await api.post<Named>('/groups', { name: 'Holm family' });

@@ -125,6 +125,13 @@ export const admin = {
       hint: 'En skive, der bliver mindre, viser hvor lang tid der er tilbage af hvert trin i en rutine.',
       error: 'Kunne ikke opdatere barnets indstilling for nedtællingsure.',
     },
+    homework: {
+      focusLabel: 'Lektiefokus',
+      breakLabel: 'Pause',
+      minutes: '{count} min',
+      hint: 'Lektierne deles op i fokusbidder af denne længde med en pause imellem.',
+      error: 'Kunne ikke opdatere barnets lektielængder.',
+    },
     givenNamePlaceholder: 'Fornavn',
     familyNamePlaceholder: 'Efternavn',
     usernamePlaceholder: 'Login-brugernavn',

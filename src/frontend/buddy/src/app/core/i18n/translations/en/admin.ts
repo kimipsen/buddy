@@ -125,6 +125,13 @@ export const admin = {
       hint: 'A shrinking disc shows how long is left of each step in a routine.',
       error: "Unable to update this child's timer setting.",
     },
+    homework: {
+      focusLabel: 'Homework focus',
+      breakLabel: 'Break',
+      minutes: '{count} min',
+      hint: 'Homework is split into focus chunks of this length, with a break between them.',
+      error: "Unable to update this child's homework lengths.",
+    },
     givenNamePlaceholder: 'Given name',
     familyNamePlaceholder: 'Family name',
     usernamePlaceholder: 'Login username',

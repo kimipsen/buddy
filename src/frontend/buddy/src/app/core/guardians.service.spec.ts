@@ -43,6 +43,7 @@ describe('GuardiansService', () => {
     it('resolves the children sorted by full name', async () => {
       const child = (id: string, givenName: string): ChildSummary => ({
         showVisualTimers: true,
+        homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
         id,
         name: { givenName, familyName: 'Kid' },
         guardianLinkId: `link-${id}`,
@@ -63,6 +64,7 @@ describe('GuardiansService', () => {
       const children: ChildSummary[] = [
         {
           showVisualTimers: true,
+          homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
           id: 'child-1',
           name: { givenName: 'Sam', familyName: 'Kid' },
           guardianLinkId: 'link-1',
@@ -343,6 +345,7 @@ describe('GuardiansService', () => {
     it('PATCHes the language and resolves the updated child', async () => {
       const updated: ChildSummary = {
         showVisualTimers: true,
+        homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
@@ -375,6 +378,7 @@ describe('GuardiansService', () => {
     it('PATCHes the time zone and resolves the updated child', async () => {
       const updated: ChildSummary = {
         showVisualTimers: true,
+        homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
         id: 'child-1',
         name: { givenName: 'Sam', familyName: 'Kid' },
         guardianLinkId: 'link-1',
@@ -403,6 +407,33 @@ describe('GuardiansService', () => {
     });
   });
 
+  describe('updateChildHomeworkChunks', () => {
+    it('PATCHes the focus and break lengths and resolves the updated child', async () => {
+      const updated: ChildSummary = {
+        id: 'child-1',
+        name: { givenName: 'Sam', familyName: 'Kid' },
+        guardianLinkId: 'link-1',
+        kind: 'Parent',
+        language: 'en',
+        timeZoneId: 'UTC',
+        showVisualTimers: true,
+        homeworkChunks: { focusMinutes: 10, breakMinutes: 2 },
+      };
+
+      const promise = service.updateChildHomeworkChunks('child-1', {
+        focusMinutes: 10,
+        breakMinutes: 2,
+      });
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/children/child-1/homework-chunks`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ focusMinutes: 10, breakMinutes: 2 });
+      req.flush(updated);
+
+      await expect(promise).resolves.toEqual(updated);
+    });
+  });
+
   describe('updateChildVisualTimers', () => {
     it('PATCHes the visual timer switch and resolves the updated child', async () => {
       const updated: ChildSummary = {
@@ -413,6 +444,7 @@ describe('GuardiansService', () => {
         language: 'en',
         timeZoneId: 'UTC',
         showVisualTimers: false,
+        homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
       };
 
       const promise = service.updateChildVisualTimers('child-1', false);

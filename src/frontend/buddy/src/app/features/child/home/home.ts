@@ -22,6 +22,8 @@ import { completeChildTask } from '../../../core/child-task-completion';
 import { ChildTimerService } from '../../../core/child-timer.service';
 import { FeaturesService } from '../../../core/features.service';
 import { GuardiansService } from '../../../core/guardians.service';
+import { currentStep } from '../../../core/homework-session';
+import { readHomeworkSession } from '../../../core/homework-storage';
 import { HouseRulesService } from '../../../core/house-rules.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
@@ -171,6 +173,25 @@ export class ChildHome implements OnInit, OnDestroy {
   // "Today" is the child's own (profile time zone), not the device's: every date below comes from it.
   private readonly clock = inject(ChildClockService);
   private readonly taskLibrary = inject(TaskLibraryService);
+
+  // A homework session left in progress on this device: the home shows a way back to it
+  // (docs/frontend/analysis/homework-splitter.md, Question 5).
+  protected readonly homeworkInProgress = (() => {
+    const session = readHomeworkSession(this.clock.today());
+    const step = session ? currentStep(session) : null;
+    if (!session || !step) {
+      return null;
+    }
+
+    return step.kind === 'focus'
+      ? {
+          isBreak: false,
+          title: session.parts.find((part) => part.id === step.partId)?.title ?? '',
+          index: step.index,
+          of: step.of,
+        }
+      : { isBreak: true, title: '', index: 0, of: 0 };
+  })();
 
   protected readonly guardianKind = GUARDIAN;
   protected readonly selfEscortKind = SELF_ESCORT;

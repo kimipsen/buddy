@@ -29,6 +29,8 @@ export const child = {
     mealsTitle: 'Meals today',
     mealplanLink: 'See past meals & rate them',
     calendarLink: 'See your full calendar',
+    homeworkInProgress: 'Homework: {step}. Continue',
+    homeworkLink: 'Homework',
     rewardsLink: 'Spend your stars',
     medicineTitle: 'Medicine today',
     tasksTitle: 'Tasks today',

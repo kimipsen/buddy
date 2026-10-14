@@ -59,6 +59,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             ["Features:TaskLibrary"] = "false",
             ["Features:TransitionWarnings"] = "false",
             ["Features:Feelings"] = "false",
+            ["Features:Homework"] = "false",
             ["Features:Help"] = "false"
         });
 
@@ -75,7 +76,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(fixture.Host);
 
-        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
+        Assert.Equal(new InstallationFeatures(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true), flags);
     }
 
     [Fact]
@@ -83,9 +84,9 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var flags = await GetFeaturesAsync(await AllOffAsync());
 
-        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
+        Assert.Equal(new InstallationFeatures(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false), flags);
         Assert.Equal(
-            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true, true, true),
+            new InstallationFeatures(true, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true),
             await GetFeaturesAsync(await MealplanExtrasOffAsync()));
     }
 
@@ -104,6 +105,7 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
         Assert.True(json.RootElement.GetProperty("houseRules").GetBoolean());
         Assert.True(json.RootElement.GetProperty("transitionWarnings").GetBoolean());
         Assert.True(json.RootElement.GetProperty("feelings").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("homework").GetBoolean());
     }
 
     [Fact]
@@ -183,6 +185,27 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             // rejects the method before it checks the guid constraint. Either way, nothing runs.
             _.StatusCodeShouldBe(405);
         });
+    }
+
+    [Fact]
+    public async Task Setting_homework_lengths_is_unmapped_when_homework_is_off()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+
+        foreach (var (host, status) in new[] { (fixture.Host, 200), (await AllOffAsync(), 404) })
+        {
+            await host.Scenario(_ =>
+            {
+                _.WithRequestHeader("Authorization", $"Bearer {token}");
+                _.Patch.Json(new { FocusMinutes = 10, BreakMinutes = 2 }).ToUrl($"/users/me/children/{child.Id}/homework-chunks");
+                _.StatusCodeShouldBe(status);
+            });
+        }
+
+        // The lengths are data, so they stay on the child whatever the flag says (Question 6).
+        var children = await GetAsync(await AllOffAsync(), "/users/me/children/", token, 200);
+        Assert.Equal(new HomeworkChunksDto(10, 2), Assert.Single(children.ReadAsJson<ChildSummaryDto[]>()).HomeworkChunks);
     }
 
     [Fact]

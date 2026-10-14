@@ -9,6 +9,7 @@ import { MealplanToday } from './mealplan-today';
 describe('MealplanToday', () => {
   const child: ChildSummary = {
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
     id: 'child-1',
     name: { givenName: 'Sam', familyName: 'Kid' },
     guardianLinkId: 'link-1',

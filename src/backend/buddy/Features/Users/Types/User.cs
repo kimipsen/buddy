@@ -16,8 +16,14 @@ public sealed record User(
     bool IsErased = false,
     // Guardian-managed (UpdateChildVisualTimers); meaningful for children only. Snapshot rows written
     // before the field existed have no property and read as the default.
-    bool ShowVisualTimers = true)
+    bool ShowVisualTimers = true,
+    // Guardian-managed (UpdateChildHomeworkChunks); meaningful for children only.
+    HomeworkChunks? HomeworkChunks = null)
 {
+    // Snapshot rows written before homework chunks have no property; System.Text.Json then passes
+    // null. Read that as the default lengths.
+    public HomeworkChunks HomeworkChunks { get; init; } = HomeworkChunks ?? HomeworkChunks.Default;
+
     public static User? Rehydrate(IEnumerable<UserEvent> events) => EventReplay.Rehydrate(events, Start, Advance);
 
     public static User Replay(IEnumerable<UserEvent> events) => EventReplay.Replay(events, Start, Advance);
@@ -49,6 +55,7 @@ public sealed record User(
         TimeZoneUpdated timeZoneUpdated => user with { TimeZoneId = timeZoneUpdated.After },
         LanguageUpdated languageUpdated => user with { Language = languageUpdated.After },
         ShowVisualTimersUpdated visualTimersUpdated => user with { ShowVisualTimers = visualTimersUpdated.After },
+        HomeworkChunksUpdated homeworkChunksUpdated => user with { HomeworkChunks = homeworkChunksUpdated.After },
         // A new address is never covered by a verification of the old one, so any
         // pending verification for the old address is cleared here too.
         EmailUpdated emailUpdated => user with { Email = emailUpdated.After, EmailVerification = new EmailVerification.None() },

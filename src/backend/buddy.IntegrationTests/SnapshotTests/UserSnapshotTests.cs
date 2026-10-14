@@ -85,6 +85,60 @@ public sealed class UserSnapshotTests(BuddyApiFixture fixture)
         Assert.Equivalent(replayed, snapshot, strict: true);
     }
 
+    [Fact]
+    public async Task The_snapshot_matches_a_full_replay_after_a_guardian_changes_homework_lengths()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {guardianToken}");
+            _.Patch.Json(new { FocusMinutes = 10, BreakMinutes = 2 }).ToUrl($"/users/me/children/{child.Id}/homework-chunks");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var users = fixture.Host.Services.GetRequiredService<IUserEventStore>();
+        var id = new UserId(child.Id);
+
+        var replayed = User.Rehydrate(await users.ReadAsync(id, CancellationToken.None));
+        var snapshot = await users.FindSnapshotAsync(id, CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        Assert.Equal(new HomeworkChunks(10, 2), snapshot.HomeworkChunks);
+        Assert.Equivalent(replayed, snapshot, strict: true);
+    }
+
+    // A snapshot row written before homework chunks existed has no such property; the constructor
+    // gets null and the property reads it as the default lengths, without a rebuild.
+    [Fact]
+    public async Task A_snapshot_row_without_homework_chunks_reads_as_the_default()
+    {
+        var (_, _, userId) = await fixture.CreateAuthenticatedUserAsync();
+        var dataSource = fixture.Host.Services.GetRequiredService<NpgsqlDataSource>();
+
+        await using (var command = dataSource.CreateCommand(
+            "UPDATE snapshots.mt_doc_usersnapshot SET data = data #- '{User,HomeworkChunks}' #- '{User,homeworkChunks}' WHERE id = $1"))
+        {
+            command.Parameters.AddWithValue(userId);
+            Assert.Equal(1, await command.ExecuteNonQueryAsync());
+        }
+
+        await using (var check = dataSource.CreateCommand(
+            "SELECT data::text FROM snapshots.mt_doc_usersnapshot WHERE id = $1"))
+        {
+            check.Parameters.AddWithValue(userId);
+            var json = (string?)await check.ExecuteScalarAsync();
+            Assert.DoesNotContain("HomeworkChunks", json!, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var snapshot = await fixture.Host.Services.GetRequiredService<IUserEventStore>()
+            .FindSnapshotAsync(new UserId(userId), CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        Assert.Equal(HomeworkChunks.Default, snapshot.HomeworkChunks);
+    }
+
     // A snapshot row written before ShowVisualTimers existed has no such property; System.Text.Json
     // falls back to the constructor parameter's default, so it reads as true without a rebuild.
     [Fact]

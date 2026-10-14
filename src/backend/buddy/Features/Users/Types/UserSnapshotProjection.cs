@@ -35,6 +35,9 @@ public sealed class UserSnapshotProjection : SingleStreamProjection<UserSnapshot
     public UserSnapshot Apply(UserSnapshot current, ShowVisualTimersUpdated updated) =>
         current with { User = User.Advance(current.User, UserEvent.FromPayload(updated)) };
 
+    public UserSnapshot Apply(UserSnapshot current, HomeworkChunksUpdated updated) =>
+        current with { User = User.Advance(current.User, UserEvent.FromPayload(updated)) };
+
     public UserSnapshot Apply(UserSnapshot current, EmailUpdated updated) =>
         current with { User = User.Advance(current.User, UserEvent.FromPayload(updated)) };
 

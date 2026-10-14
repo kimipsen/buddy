@@ -73,4 +73,9 @@ public sealed class UserEventShapeTests
     public void ShowVisualTimersUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new ShowVisualTimersUpdated(FixedUserId, Before: true, After: false, FixedInstant),
         "Users/ShowVisualTimersUpdated.json");
+
+    [Fact]
+    public void HomeworkChunksUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new HomeworkChunksUpdated(FixedUserId, new HomeworkChunks(15, 5), new HomeworkChunks(10, 2), FixedInstant),
+        "Users/HomeworkChunksUpdated.json");
 }

@@ -80,6 +80,9 @@ in real time.
       with guardian-approved child suggestions, copying a template to a sibling and an evening
       "Packing for tomorrow" dashboard card — see
       [Packing checklists](docs/backend/analysis/packing-checklists.md)
+- [x] Homework splitter: the child splits tonight's homework into timed focus chunks with breaks
+      and break ideas, using focus and break lengths a guardian sets per child — see
+      [Homework splitter](docs/frontend/analysis/homework-splitter.md)
 
 ### Platform
 

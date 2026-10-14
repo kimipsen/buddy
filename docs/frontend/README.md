@@ -171,6 +171,7 @@ The child routes currently include:
 - `/child/calendar` — read-only seven-day agenda across accessible calendars
 - `/child/rewards` — the child's spendable stars, the rewards a guardian set up with an "Ask for this" button on the affordable ones, requests waiting for a grown-up (withdrawable), and earlier answers; the child home links to it
 - `/child/rules` — the child's own and each household's rules, with "New"/"Changed" chips and an "I've read this" button; the child home links to it and shows a "N rules to read" card
+- `/child/homework` — the homework splitter: plan tonight's homework as parts with estimates, then work through focus chunks and breaks (lengths from the guardian, `homeworkChunks` on `GET /users/me`) with the shared time-left disc and a break idea per break, then "All done"; the session lives in `localStorage` (`core/homework-storage.ts`); behind `featureGuard('homework')`
 - `/child/focus/:itemId` — one of today's routines one step at a time: a large time-left disc for the current step, the next step, and Done / Start / Pause; behind `featureGuard('taskLibrary')` and `visualTimersGuard` (timers off sends the child to `/child`)
 
 ### Login feature
@@ -431,6 +432,10 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Visual time-left timer](analysis/visual-time-left-timer.md) — implemented countdown
   disc and bar for the child's current routine and subtask on `/child`, plus a `/child/focus/:itemId`
   focus page, with a per-child guardian switch on `manage-children`
+- [Homework splitter](analysis/homework-splitter.md) — implemented child page `/child/homework`
+  that splits homework into timed focus chunks with breaks and break ideas (browser-only sessions in
+  `core/homework-session.ts`/`homework-storage.ts`), a "Homework" link and in-progress card on
+  `/child`, and per-child focus/break selects on `manage-children`
 
 ## Rendering markdown
 

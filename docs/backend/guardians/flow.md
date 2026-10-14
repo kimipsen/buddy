@@ -56,6 +56,7 @@ sequenceDiagram
 | `PATCH` | `/users/me/children/{childId}/language` | An active guardian updates the child's language. |
 | `PATCH` | `/users/me/children/{childId}/timezone` | An active guardian updates the child's time zone. |
 | `PATCH` | `/users/me/children/{childId}/visual-timers` | An active guardian turns the child's visual time-left timers on or off (`ShowVisualTimersUpdated` on the child's `User` stream; no event when unchanged). |
+| `PATCH` | `/users/me/children/{childId}/homework-chunks` | An active guardian sets the child's homework focus (5-45) and break (1-15) minutes (`HomeworkChunksUpdated` on the child's `User` stream; no event when unchanged). Unmapped when the `Homework` flag is off. |
 | `GET` | `/users/me/guardians` | Lists guardians linked to the current authenticated user. |
 | `GET` | `/users/me/siblings` | Lists the caller's siblings, resolved via shared guardians. |
 | `POST` | `/users/me/children/{childId}/guardian-invites` | An active guardian invites another adult, by email, to co-manage this child. Re-inviting the same email within a minute returns `409 resend_cooldown`. |

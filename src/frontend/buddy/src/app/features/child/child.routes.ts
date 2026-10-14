@@ -4,6 +4,7 @@ import { featureGuard } from '../../core/feature.guard';
 import { ChildCalendar } from './calendar/child-calendar';
 import { ChildFocus } from './focus/child-focus';
 import { ChildHome } from './home/home';
+import { ChildHomework } from './homework/child-homework';
 import { ChildMealplan } from './mealplan/child-mealplan';
 import { ChildRewards } from './rewards/child-rewards';
 import { ChildRules } from './rules/child-rules';
@@ -22,6 +23,11 @@ export const CHILD_ROUTES: Routes = [
   {
     path: 'calendar',
     component: ChildCalendar,
+  },
+  {
+    path: 'homework',
+    component: ChildHomework,
+    canActivate: [featureGuard('homework')],
   },
   {
     path: 'rewards',

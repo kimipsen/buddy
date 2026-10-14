@@ -21,10 +21,13 @@ import { CurrentUser, UsersService } from '../../../core/users.service';
 import { ChildHome } from './home';
 import { FlatOccurrence, nestOccurrence } from '../../../../testing/occurrence-fixture';
 import { disableFeatures } from '../../../../testing/features-fixture';
+import { createSession, next } from '../../../core/homework-session';
+import { clearHomeworkSession, writeHomeworkSession } from '../../../core/homework-storage';
 
 describe('ChildHome', () => {
   const currentUser: CurrentUser = {
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
     id: 'child-1',
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',
@@ -36,6 +39,8 @@ describe('ChildHome', () => {
   const today = todayIsoDate();
 
   afterEach(() => {
+    // The homework tests store a session; clear it even when one of them fails.
+    clearHomeworkSession();
     vi.restoreAllMocks();
   });
 
@@ -1411,6 +1416,64 @@ describe('ChildHome', () => {
     expect(compiled.querySelector('a[href="/child/calendar"]')).toBeTruthy();
     expect(compiled.textContent).toContain('Nothing to show yet');
     expect(compiled.textContent).not.toContain('Something went wrong');
+  });
+
+  it('links to homework, and back to a homework session left in progress', async () => {
+    const plain = await setup();
+    await settle(plain.fixture);
+    let compiled = plain.fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[href="/child/homework"]')?.textContent).toContain('Homework');
+    expect(compiled.querySelector('[data-testid="homework-in-progress"]')).toBeNull();
+
+    TestBed.resetTestingModule();
+    writeHomeworkSession(
+      next(
+        createSession(
+          [{ id: 'maths', title: 'Maths', estimateMinutes: 30 }],
+          { focusMinutes: 15, breakMinutes: 5 },
+          today,
+        ),
+        Date.now(),
+      ),
+    );
+    const resumed = await setup();
+    await settle(resumed.fixture);
+    compiled = resumed.fixture.nativeElement as HTMLElement;
+    expect(
+      compiled.querySelector('[data-testid="homework-in-progress"]')?.textContent?.trim(),
+    ).toBe('📚 Homework: Break. Continue');
+
+    TestBed.resetTestingModule();
+    writeHomeworkSession(
+      createSession(
+        [{ id: 'maths', title: 'Maths', estimateMinutes: 30 }],
+        { focusMinutes: 15, breakMinutes: 5 },
+        today,
+      ),
+    );
+    const focus = await setup();
+    await settle(focus.fixture);
+    compiled = focus.fixture.nativeElement as HTMLElement;
+    expect(
+      compiled.querySelector('[data-testid="homework-in-progress"]')?.textContent?.trim(),
+    ).toBe('📚 Homework: Maths: 1 of 2. Continue');
+  });
+
+  it('shows no homework link or card when homework is off', async () => {
+    writeHomeworkSession(
+      createSession(
+        [{ id: 'maths', title: 'Maths', estimateMinutes: 30 }],
+        { focusMinutes: 15, breakMinutes: 5 },
+        today,
+      ),
+    );
+    disableFeatures('homework');
+    const off = await setup();
+    await settle(off.fixture);
+
+    const compiled = off.fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[href="/child/homework"]')).toBeNull();
+    expect(compiled.querySelector('[data-testid="homework-in-progress"]')).toBeNull();
   });
 
   it('shows the feelings check-in card', async () => {

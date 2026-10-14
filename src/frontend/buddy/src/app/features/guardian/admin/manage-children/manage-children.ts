@@ -18,6 +18,11 @@ import {
   GuardianKind,
   GuardiansService,
 } from '../../../../core/guardians.service';
+import {
+  BREAK_MINUTES_RANGE,
+  FOCUS_MINUTES_RANGE,
+  HomeworkChunks,
+} from '../../../../core/homework-plan';
 import { TransitionWarningsService } from '../../../../core/transition-warnings.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
@@ -38,7 +43,7 @@ const KIND_LABELS: Record<GuardianKind, string> = {
 export class ManageChildren {
   private readonly guardians = inject(GuardiansService);
   private readonly transitionWarnings = inject(TransitionWarningsService);
-  private readonly features = inject(FeaturesService);
+  protected readonly features = inject(FeaturesService);
 
   protected readonly invitableKinds = INVITABLE_KINDS;
   protected readonly kindLabels = KIND_LABELS;
@@ -108,6 +113,11 @@ export class ManageChildren {
 
   protected readonly savingVisualTimersChildId = signal<string | null>(null);
   protected readonly visualTimersErrorByChildId = signal<Record<string, string>>({});
+
+  protected readonly savingHomeworkChildId = signal<string | null>(null);
+  protected readonly homeworkErrorByChildId = signal<Record<string, string>>({});
+  protected readonly focusMinuteOptions = minuteOptions(FOCUS_MINUTES_RANGE, 5);
+  protected readonly breakMinuteOptions = minuteOptions(BREAK_MINUTES_RANGE, 1);
 
   // Stryker disable next-line BooleanLiteral: the copy button only renders once lastCreatedChild is set, and addChild resets this to false at the same time
   protected readonly passwordCopied = signal(false);
@@ -277,6 +287,44 @@ export class ManageChildren {
     }
   }
 
+  protected homeworkErrorFor(childId: string): string | undefined {
+    return this.homeworkErrorByChildId()[childId];
+  }
+
+  protected async changeHomework(childId: string, chunks: HomeworkChunks): Promise<void> {
+    this.savingHomeworkChildId.set(childId);
+    this.homeworkErrorByChildId.update((byChildId) => withoutKey(byChildId, childId));
+
+    // Show the pick straight away and put the saved lengths back if it fails: with a one-way
+    // [ngModel], only a change of the bound value moves the select back, and the other select
+    // builds its request from these lengths.
+    const homeworkChunks = {
+      focusMinutes: Number(chunks.focusMinutes),
+      breakMinutes: Number(chunks.breakMinutes),
+    };
+    const previous = this.children.hasValue()
+      ? this.children.value().find((child) => child.id === childId)
+      : undefined;
+    if (previous) {
+      this.replaceChild(childId, { ...previous, homeworkChunks });
+    }
+
+    try {
+      const updated = await this.guardians.updateChildHomeworkChunks(childId, homeworkChunks);
+      this.replaceChild(childId, updated);
+    } catch {
+      if (previous) {
+        this.replaceChild(childId, previous);
+      }
+      this.homeworkErrorByChildId.update((byChildId) => ({
+        ...byChildId,
+        [childId]: 'admin.manageChildren.homework.error',
+      }));
+    } finally {
+      this.savingHomeworkChildId.set(null);
+    }
+  }
+
   protected visualTimersErrorFor(childId: string): string | undefined {
     return this.visualTimersErrorByChildId()[childId];
   }
@@ -363,4 +411,12 @@ export class ManageChildren {
 
 function withoutKey(byChildId: Record<string, string>, childId: string): Record<string, string> {
   return Object.fromEntries(Object.entries(byChildId).filter(([id]) => id !== childId));
+}
+
+// Every whole-minute choice in `range`, `step` apart (5, 10, ... 45 for focus; 1 ... 15 for breaks).
+function minuteOptions(range: { min: number; max: number }, step: number): number[] {
+  return Array.from(
+    { length: Math.floor((range.max - range.min) / step) + 1 },
+    (_, i) => range.min + i * step,
+  );
 }

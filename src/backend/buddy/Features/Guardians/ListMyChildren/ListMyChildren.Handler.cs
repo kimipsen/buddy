@@ -19,7 +19,7 @@ public static class ListMyChildrenHandler
 
             if (User.Rehydrate(childEvents) is { IsDeleted: false } child)
             {
-                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId, child.ShowVisualTimers));
+                summaries.Add(new ChildSummary(child.Id, child.Name, new GuardianLinkId(link.GuardianLinkId), link.Kind, child.Language, child.TimeZoneId, child.ShowVisualTimers, child.HomeworkChunks));
             }
         }
 
@@ -27,4 +27,4 @@ public static class ListMyChildrenHandler
     }
 }
 
-public sealed record ChildSummary(UserId Id, Name Name, GuardianLinkId GuardianLinkId, GuardianKind Kind, Language Language, TimeZoneId TimeZoneId, bool ShowVisualTimers);
+public sealed record ChildSummary(UserId Id, Name Name, GuardianLinkId GuardianLinkId, GuardianKind Kind, Language Language, TimeZoneId TimeZoneId, bool ShowVisualTimers, HomeworkChunks HomeworkChunks);

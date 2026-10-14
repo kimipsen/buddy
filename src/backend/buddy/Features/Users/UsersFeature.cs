@@ -40,6 +40,7 @@ public static class UsersFeature
         typeof(TimeZoneUpdated),
         typeof(LanguageUpdated),
         typeof(ShowVisualTimersUpdated),
+        typeof(HomeworkChunksUpdated),
         // GuardianLink's stream lives in this same store/schema so a child User and its first
         // GuardianLink can be created atomically -- see MartenGuardianLinkEventStore and
         // docs/backend/analysis/child-accounts-and-guardian-roles.md. A Marten store needs every

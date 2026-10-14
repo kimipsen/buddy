@@ -193,7 +193,7 @@ var features = app.GetFeatureFlags();
 app.MapFeatureFlags(features);
 
 app.MapUsersFeature();
-app.MapGuardiansFeature();
+app.MapGuardiansFeature(features);
 app.MapGroupsFeature();
 if (features.TaskLibrary)
 {

@@ -17,6 +17,7 @@ import { MealplanImport } from './mealplan-import';
 describe('MealplanImport', () => {
   const child: ChildSummary = {
     showVisualTimers: true,
+    homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
     id: 'child-1',
     name: { givenName: 'Alex', familyName: 'Doe' },
     guardianLinkId: 'link-1',

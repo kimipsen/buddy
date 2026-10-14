@@ -20,6 +20,7 @@ describe('ManageChildren', () => {
   function child(overrides: Partial<ChildSummary> = {}): ChildSummary {
     return {
       showVisualTimers: true,
+      homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
       id: 'child-1',
       name: { givenName: 'Sam', familyName: 'Kid' },
       guardianLinkId: 'link-1',
@@ -72,6 +73,10 @@ describe('ManageChildren', () => {
       ),
       updateChildVisualTimers: vi.fn(async (childId: string, showVisualTimers: boolean) =>
         child({ id: childId, showVisualTimers }),
+      ),
+      updateChildHomeworkChunks: vi.fn(
+        async (childId: string, homeworkChunks: { focusMinutes: number; breakMinutes: number }) =>
+          child({ id: childId, homeworkChunks }),
       ),
       listGuardianInvites: vi.fn(async () => []),
       inviteGuardian: vi.fn(async () => invite()),
@@ -1207,6 +1212,7 @@ describe('ManageChildren', () => {
             id: 'child-2',
             name: { givenName: 'Ada', familyName: 'Kid' },
             showVisualTimers: false,
+            homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
           }),
         ]),
       },
@@ -1233,6 +1239,136 @@ describe('ManageChildren', () => {
 
     expect(guardians.updateChildVisualTimers).toHaveBeenCalledWith('child-1', false);
     expect(timerSwitch(compiled, 'Sam Kid').getAttribute('aria-checked')).toBe('false');
+  });
+
+  function homeworkSelects(compiled: HTMLElement, fullName: string): HTMLSelectElement[] {
+    return Array.from(
+      childRow(compiled, fullName).querySelectorAll<HTMLSelectElement>(
+        '[data-testid="homework-lengths"] select',
+      ),
+    );
+  }
+
+  function choose(select: HTMLSelectElement, label: string): void {
+    select.selectedIndex = Array.from(select.options).findIndex(
+      (option) => option.textContent?.trim() === label,
+    );
+    select.dispatchEvent(new Event('change'));
+  }
+
+  it("shows each child's homework lengths and saves a change to either", async () => {
+    const { fixture, guardians } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [
+          child({ homeworkChunks: { focusMinutes: 20, breakMinutes: 3 } }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const [focus, pause] = homeworkSelects(compiled, 'Sam Kid');
+    expect(childRow(compiled, 'Sam Kid').textContent).toContain('Homework focus');
+    expect(focus.selectedOptions[0].textContent?.trim()).toBe('20 min');
+    expect(pause.selectedOptions[0].textContent?.trim()).toBe('3 min');
+    expect(Array.from(focus.options).map((o) => o.textContent?.trim())).toEqual(
+      ['5', '10', '15', '20', '25', '30', '35', '40', '45'].map((m) => `${m} min`),
+    );
+    expect(pause.options).toHaveLength(15);
+
+    choose(focus, '10 min');
+    await settle(fixture);
+    expect(guardians.updateChildHomeworkChunks).toHaveBeenLastCalledWith('child-1', {
+      focusMinutes: 10,
+      breakMinutes: 3,
+    });
+
+    choose(homeworkSelects(compiled, 'Sam Kid')[1], '2 min');
+    await settle(fixture);
+    expect(guardians.updateChildHomeworkChunks).toHaveBeenLastCalledWith('child-1', {
+      focusMinutes: 10,
+      breakMinutes: 2,
+    });
+  });
+
+  it('shows a per-child homework error, cleared by a successful retry', async () => {
+    const updateChildHomeworkChunks = vi
+      .fn<GuardiansService['updateChildHomeworkChunks']>()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockImplementation(async (childId, homeworkChunks) =>
+        child({ id: childId, homeworkChunks }),
+      );
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildHomeworkChunks },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const error = "Unable to update this child's homework lengths.";
+    choose(homeworkSelects(compiled, 'Sam Kid')[0], '10 min');
+    await settle(fixture);
+    expect(childRow(compiled, 'Sam Kid').textContent).toContain(error);
+
+    choose(homeworkSelects(compiled, 'Sam Kid')[0], '10 min');
+    await settle(fixture);
+    expect(childRow(compiled, 'Sam Kid').textContent).not.toContain(error);
+  });
+
+  it('puts a homework select back to the saved length when the change fails', async () => {
+    const updateChildHomeworkChunks = vi
+      .fn<GuardiansService['updateChildHomeworkChunks']>()
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockImplementation(async (childId, homeworkChunks) =>
+        child({ id: childId, homeworkChunks }),
+      );
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]), updateChildHomeworkChunks },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    choose(homeworkSelects(compiled, 'Sam Kid')[0], '10 min');
+    await settle(fixture);
+    const [focus] = homeworkSelects(compiled, 'Sam Kid');
+    expect(focus.selectedOptions[0]?.textContent?.trim()).toBe('15 min');
+
+    // The other select then sends the saved focus length, not the failed pick.
+    choose(homeworkSelects(compiled, 'Sam Kid')[1], '2 min');
+    await settle(fixture);
+    expect(updateChildHomeworkChunks).toHaveBeenLastCalledWith('child-1', {
+      focusMinutes: 15,
+      breakMinutes: 2,
+    });
+  });
+
+  it('disables the homework selects while a change is in flight', async () => {
+    const { promise, resolve } = deferred<ChildSummary>();
+    const { fixture } = await setup({
+      guardians: {
+        listMyChildren: vi.fn(async () => [child()]),
+        updateChildHomeworkChunks: vi.fn(() => promise),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    choose(homeworkSelects(compiled, 'Sam Kid')[0], '10 min');
+    fixture.detectChanges();
+    expect(homeworkSelects(compiled, 'Sam Kid').every((select) => select.disabled)).toBe(true);
+
+    resolve(child({ homeworkChunks: { focusMinutes: 10, breakMinutes: 5 } }));
+    await settle(fixture);
+    expect(homeworkSelects(compiled, 'Sam Kid').some((select) => select.disabled)).toBe(false);
+  });
+
+  it('hides the homework lengths when homework is off', async () => {
+    disableFeatures('homework');
+    const { fixture } = await setup({
+      guardians: { listMyChildren: vi.fn(async () => [child()]) },
+    });
+    await settle(fixture);
+
+    expect(homeworkSelects(fixture.nativeElement as HTMLElement, 'Sam Kid')).toHaveLength(0);
   });
 
   it('disables the visual timer switch while the change is in flight', async () => {

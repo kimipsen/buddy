@@ -6,6 +6,7 @@ import { common } from './common';
 import { dashboard } from './dashboard';
 import { feelings } from './feelings';
 import { help } from './help';
+import { homework } from './homework';
 import { houseRules } from './house-rules';
 import { invite } from './invite';
 import { login } from './login';
@@ -32,6 +33,7 @@ export const en = {
   dashboard,
   feelings,
   help,
+  homework,
   houseRules,
   invite,
   login,

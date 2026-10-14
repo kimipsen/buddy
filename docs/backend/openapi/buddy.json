@@ -1858,6 +1858,106 @@
         ]
       }
     },
+    "/users/me/children/{childId}/homework-chunks": {
+      "patch": {
+        "tags": [
+          "Guardians"
+        ],
+        "operationId": "UpdateChildHomeworkChunks",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChildHomeworkChunksRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/users/me/children/{childId}/guardian-invites": {
       "post": {
         "tags": [
@@ -21501,7 +21601,8 @@
           "kind",
           "language",
           "timeZoneId",
-          "showVisualTimers"
+          "showVisualTimers",
+          "homeworkChunks"
         ],
         "type": "object",
         "properties": {
@@ -21525,6 +21626,9 @@
           },
           "showVisualTimers": {
             "type": "boolean"
+          },
+          "homeworkChunks": {
+            "$ref": "#/components/schemas/HomeworkChunks"
           }
         }
       },
@@ -22786,6 +22890,23 @@
           }
         }
       },
+      "HomeworkChunks": {
+        "required": [
+          "focusMinutes",
+          "breakMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "focusMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "breakMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "HouseRulesAccessTier": {
         "enum": [
           "None",
@@ -22892,6 +23013,7 @@
           "taskLibrary",
           "transitionWarnings",
           "feelings",
+          "homework",
           "help"
         ],
         "type": "object",
@@ -22936,6 +23058,9 @@
             "type": "boolean"
           },
           "feelings": {
+            "type": "boolean"
+          },
+          "homework": {
             "type": "boolean"
           },
           "help": {
@@ -26031,6 +26156,23 @@
           }
         }
       },
+      "UpdateChildHomeworkChunksRequest": {
+        "required": [
+          "focusMinutes",
+          "breakMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "focusMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "breakMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "UpdateChildLanguageRequest": {
         "required": [
           "language"
@@ -26364,7 +26506,8 @@
           "name",
           "timeZoneId",
           "language",
-          "showVisualTimers"
+          "showVisualTimers",
+          "homeworkChunks"
         ],
         "type": "object",
         "properties": {
@@ -26388,6 +26531,9 @@
           },
           "showVisualTimers": {
             "type": "boolean"
+          },
+          "homeworkChunks": {
+            "$ref": "#/components/schemas/HomeworkChunks"
           }
         }
       },

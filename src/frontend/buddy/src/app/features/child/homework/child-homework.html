@@ -1,0 +1,317 @@
+<app-child-page [title]="'homework.title' | translate" [backLabel]="'homework.back' | translate">
+  <p class="sr-only" aria-live="polite" data-testid="homework-announcement">{{ announcement() }}</p>
+
+  @if (session() === null) {
+    <form
+      class="space-y-5 rounded-3xl border-4 border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-800 dark:bg-slate-900 sm:p-8"
+      (ngSubmit)="startSession()"
+    >
+      <p class="text-lg text-slate-700 dark:text-slate-200">
+        {{ 'homework.plan.intro' | translate }}
+      </p>
+
+      <ol class="space-y-4">
+        @for (part of parts(); track part.id; let i = $index) {
+          <li
+            class="space-y-3 rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
+            data-testid="homework-part"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-lg font-bold">
+                {{ 'homework.plan.partHeading' | translate: { number: i + 1 } }}
+              </h2>
+              @if (parts().length > 1) {
+                <button
+                  type="button"
+                  class="min-h-11 rounded-xl px-3 text-base font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-200 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus:ring-red-800"
+                  (click)="removePart(part.id)"
+                >
+                  {{ 'homework.plan.removePart' | translate: { number: i + 1 } }}
+                </button>
+              }
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div class="space-y-1">
+                <label
+                  class="block text-base font-semibold"
+                  [attr.for]="'homework-title-' + part.id"
+                >
+                  {{ 'homework.plan.titleLabel' | translate }}
+                </label>
+                <input
+                  type="text"
+                  class="min-h-12 w-full rounded-xl border-2 border-slate-300 bg-white px-3 text-lg focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-800"
+                  [id]="'homework-title-' + part.id"
+                  [name]="'title-' + part.id"
+                  [attr.maxlength]="maxTitleLength"
+                  [placeholder]="'homework.plan.titlePlaceholder' | translate"
+                  [ngModel]="part.title"
+                  (ngModelChange)="updateTitle(part.id, $event)"
+                />
+              </div>
+              <div class="space-y-1">
+                <label
+                  class="block text-base font-semibold"
+                  [attr.for]="'homework-estimate-' + part.id"
+                >
+                  {{ 'homework.plan.estimateLabel' | translate }}
+                </label>
+                <select
+                  class="min-h-12 w-full rounded-xl border-2 border-slate-300 bg-white px-3 text-lg focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-800"
+                  [id]="'homework-estimate-' + part.id"
+                  [name]="'estimate-' + part.id"
+                  [ngModel]="part.estimateMinutes"
+                  (ngModelChange)="updateEstimate(part.id, $event)"
+                >
+                  @for (minutes of estimateOptions; track minutes) {
+                    <option [ngValue]="minutes">
+                      {{ 'homework.plan.estimateOption' | translate: { count: minutes } }}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
+          </li>
+        }
+      </ol>
+
+      @if (parts().length < maxParts) {
+        <button
+          type="button"
+          class="min-h-12 rounded-2xl border-2 border-dashed border-emerald-300 px-5 text-lg font-semibold text-emerald-700 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-500/10 dark:focus:ring-emerald-800"
+          (click)="addPart()"
+        >
+          + {{ 'homework.plan.addPart' | translate }}
+        </button>
+      }
+
+      <div
+        class="space-y-1 rounded-2xl bg-emerald-50 px-4 py-3 text-base text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100"
+        data-testid="homework-preview"
+      >
+        <p class="font-semibold">
+          {{
+            'homework.plan.preview'
+              | translate
+                : { chunks: preview().chunks, breaks: preview().breaks, total: preview().total }
+          }}
+        </p>
+        <p>
+          {{
+            'homework.plan.lengths'
+              | translate: { focus: chunks().focusMinutes, break: chunks().breakMinutes }
+          }}
+        </p>
+      </div>
+
+      <button
+        type="submit"
+        class="min-h-14 w-full rounded-2xl bg-emerald-500 px-6 text-xl font-bold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:opacity-50 dark:focus:ring-emerald-700"
+        [disabled]="!canStart()"
+      >
+        {{ 'homework.plan.start' | translate }}
+      </button>
+    </form>
+  } @else if (finished()) {
+    <div
+      class="space-y-5 rounded-3xl border-4 border-emerald-200 bg-white p-6 text-center shadow-sm dark:border-emerald-800 dark:bg-slate-900 sm:p-8"
+    >
+      <p class="text-5xl" aria-hidden="true">🎉</p>
+      <p class="text-2xl font-bold">{{ 'homework.done.title' | translate }}</p>
+      <ul class="space-y-1 text-lg">
+        @for (part of session()!.parts; track part.id) {
+          <li><span aria-hidden="true">✓</span> {{ part.title }}</li>
+        }
+      </ul>
+      <div class="flex flex-wrap justify-center gap-3">
+        <a
+          routerLink="/child"
+          class="inline-flex min-h-11 items-center rounded-xl bg-emerald-500 px-5 text-lg font-semibold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+        >
+          {{ 'homework.back' | translate }}
+        </a>
+        <button
+          type="button"
+          class="min-h-11 rounded-xl border-2 border-slate-300 bg-white px-5 text-lg font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+          (click)="planAgain()"
+        >
+          {{ 'homework.done.again' | translate }}
+        </button>
+      </div>
+    </div>
+  } @else {
+    @if (step(); as step) {
+      @if (state(); as state) {
+        <div
+          class="flex flex-col items-center gap-5 rounded-3xl border-4 bg-white p-5 text-center shadow-sm dark:bg-slate-900 sm:p-8"
+          [class.border-emerald-200]="step.kind === 'focus'"
+          [class.dark:border-emerald-800]="step.kind === 'focus'"
+          [class.border-sky-200]="step.kind === 'break'"
+          [class.dark:border-sky-800]="step.kind === 'break'"
+          [attr.data-step]="step.kind"
+        >
+          <h2 class="text-3xl font-bold tracking-normal">
+            @if (step.kind === 'break') {
+              <span aria-hidden="true">☕</span>
+            } @else {
+              <span aria-hidden="true">📚</span>
+            }
+            {{ chunkTitle(step) }}
+          </h2>
+
+          @if (state.phase === 'timesUp') {
+            <p
+              class="text-xl font-semibold text-slate-700 dark:text-slate-200"
+              data-testid="times-up"
+            >
+              @if (step.kind === 'break') {
+                {{ 'homework.run.breakOver' | translate }}
+              } @else if (nextStep()) {
+                {{ 'homework.run.timeForBreak' | translate }}
+              } @else {
+                {{ 'homework.run.lastChunkUp' | translate }}
+              }
+            </p>
+          }
+
+          @if (showTimer()) {
+            <app-visual-timer
+              size="min(70vw, 50vh)"
+              [large]="true"
+              [state]="state"
+              [color]="timerColor()"
+              [announce]="false"
+            />
+          }
+
+          @if (step.kind === 'break') {
+            <p
+              class="rounded-2xl bg-sky-50 px-4 py-3 text-xl font-semibold text-sky-900 dark:bg-sky-500/10 dark:text-sky-100"
+              data-testid="break-idea"
+            >
+              {{ 'homework.run.breakIdea' | translate: { idea: (breakIdea() | translate) } }}
+            </p>
+          }
+
+          <p class="text-lg text-slate-600 dark:text-slate-300" data-testid="next-step">
+            @if (nextStep(); as upcoming) {
+              @if (upcoming.kind === 'break') {
+                {{ 'homework.run.nextBreak' | translate }}
+              } @else {
+                {{ 'homework.run.nextChunk' | translate: { title: chunkTitle(upcoming) } }}
+              }
+            } @else {
+              {{ 'homework.run.lastOne' | translate }}
+            }
+          </p>
+
+          <div class="flex flex-wrap justify-center gap-3">
+            @if (step.kind === 'break') {
+              <button
+                type="button"
+                class="min-h-14 min-w-14 rounded-2xl bg-emerald-500 px-6 text-xl font-bold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                (click)="next()"
+              >
+                {{ 'homework.run.backToWork' | translate }}
+              </button>
+            } @else {
+              <!-- A break is offered once the chunk's time is up; finishing is always possible. -->
+              @if (state.phase === 'timesUp' || !nextStep()) {
+                <button
+                  type="button"
+                  class="min-h-14 min-w-14 rounded-2xl bg-emerald-500 px-6 text-xl font-bold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                  (click)="next()"
+                >
+                  {{ (nextStep() ? 'homework.run.takeBreak' : 'homework.run.finish') | translate }}
+                </button>
+              }
+
+              @if (state.phase === 'timesUp') {
+                <button
+                  type="button"
+                  class="min-h-14 min-w-14 rounded-2xl border-2 border-slate-300 bg-white px-6 text-xl font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                  (click)="moreTime()"
+                >
+                  {{ 'homework.run.moreTime' | translate }}
+                </button>
+              } @else if (state.phase === 'paused') {
+                <button
+                  type="button"
+                  class="min-h-14 min-w-14 rounded-2xl border-2 border-slate-300 bg-white px-6 text-xl font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                  (click)="resume()"
+                >
+                  {{ 'homework.run.resume' | translate }}
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="min-h-14 min-w-14 rounded-2xl border-2 border-slate-300 bg-white px-6 text-xl font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                  (click)="pause()"
+                >
+                  {{ 'homework.run.pause' | translate }}
+                </button>
+              }
+
+              @if (canFinishPart()) {
+                <button
+                  type="button"
+                  class="min-h-14 min-w-14 rounded-2xl border-2 border-slate-300 bg-white px-6 text-xl font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                  (click)="finishPart()"
+                >
+                  {{ 'homework.run.finishPart' | translate: { title: titleOf(step.partId) } }}
+                </button>
+              }
+            }
+          </div>
+
+          @if (showTimer()) {
+            <div class="w-full">
+              <app-visual-timer
+                variant="bar"
+                [state]="state"
+                [color]="timerColor()"
+                [title]="'homework.run.barTitle' | translate"
+                [announce]="false"
+              />
+            </div>
+          }
+
+          @if (confirmingStop()) {
+            <div
+              class="flex flex-wrap items-center justify-center gap-3 rounded-2xl bg-slate-100 px-4 py-3 dark:bg-slate-800"
+              role="group"
+              aria-labelledby="homework-stop-confirm"
+            >
+              <p id="homework-stop-confirm" class="text-base font-semibold">
+                {{ 'homework.run.stopConfirm' | translate }}
+              </p>
+              <button
+                type="button"
+                class="min-h-11 rounded-xl bg-red-600 px-4 text-base font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800"
+                (click)="stop()"
+              >
+                {{ 'homework.run.stopYes' | translate }}
+              </button>
+              <button
+                type="button"
+                class="min-h-11 rounded-xl border-2 border-slate-300 bg-white px-4 text-base font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-emerald-700"
+                (click)="confirmingStop.set(false)"
+              >
+                {{ 'homework.run.stopNo' | translate }}
+              </button>
+            </div>
+          } @else {
+            <button
+              type="button"
+              class="min-h-11 rounded-xl px-4 text-base font-semibold text-slate-500 underline-offset-2 transition hover:underline focus:outline-none focus:ring-4 focus:ring-emerald-300 dark:text-slate-400 dark:focus:ring-emerald-700"
+              (click)="confirmingStop.set(true)"
+            >
+              {{ 'homework.run.stop' | translate }}
+            </button>
+          }
+        </div>
+      }
+    }
+  }
+</app-child-page>

@@ -47,7 +47,8 @@ public sealed record UserResponse(
     Name Name,
     TimeZoneId TimeZoneId,
     Language Language,
-    bool ShowVisualTimers)
+    bool ShowVisualTimers,
+    HomeworkChunks HomeworkChunks)
 {
     public static UserResponse FromUser(User user) => new(
         user.Id,
@@ -56,5 +57,6 @@ public sealed record UserResponse(
         user.Name,
         user.TimeZoneId,
         user.Language,
-        user.ShowVisualTimers);
+        user.ShowVisualTimers,
+        user.HomeworkChunks);
 };
