@@ -21,6 +21,7 @@ homework splitter have shipped; they are listed under Done.
 #### In-the-moment help for the child
 
 - [ ] **Now / Next / Later strip.** A reduced day view with three cards, for overwhelmed moments.
+      See [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md).
 - [ ] **Pictogram support.** An optional icon or photo on tasks, routine steps and meals, for
       younger or non-reading children.
 - [ ] **First–Then board.** Pair a non-preferred task with a preferred activity ("first homework,

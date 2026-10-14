@@ -446,6 +446,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
   that splits homework into timed focus chunks with breaks and break ideas (browser-only sessions in
   `core/homework-session.ts`/`homework-storage.ts`), a "Homework" link and in-progress card on
   `/child`, and per-child focus/break selects on `manage-children`
+- [Now / Next / Later strip](analysis/now-next-later.md) — proposed reduced child page `/child/now`
+  with three cards (the current routine or event, the next item, and the rest of the day), opened
+  from a "Just now" button on `/child`; frontend-only
 
 ## Rendering markdown
 

@@ -58,6 +58,9 @@ in real time.
 
 ### Child
 
+- [ ] Now / Next / Later strip: a reduced day view with three cards for overwhelmed moments
+      (proposed, not yet implemented — see
+      [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md))
 - [x] Personalized day view: meals and ratings, medicine doses,
       pickup/drop-off assignments, and tasks
 - [x] Read-only seven-day calendar agenda
