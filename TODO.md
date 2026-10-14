@@ -673,3 +673,9 @@ they reuse data the app already keeps. Each has a design doc.
 - [ ] **Social stories.** Short illustrated stories that prepare the child for new events, such as
   the dentist or a trip.
 - [ ] **Guardian well-being check-in.** A short private note for guardians themselves.
+
+## Skip single occurrences of repeating appointments and tasks (2026-10-14)
+
+- [ ] Add exclude/skip events for both appointments and tasks, so a guardian can skip one
+  occurrence of a repeating appointment or task on an individual day without changing or
+  ending the series.
