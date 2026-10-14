@@ -679,3 +679,8 @@ they reuse data the app already keeps. Each has a design doc.
 - [ ] Add exclude/skip events for both appointments and tasks, so a guardian can skip one
   occurrence of a repeating appointment or task on an individual day without changing or
   ending the series.
+
+## Calling names for guardians (2026-10-14)
+
+- [ ] Let guardians/parents be identified by a calling name instead of only their first name,
+  for example "Dad" / "Far" or "Mom" / "Mor".
