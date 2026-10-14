@@ -67,6 +67,7 @@ model or permissions logic.
 - [Transition warnings](analysis/transition-warnings.md)
 - [Feelings check-in](analysis/feelings-check-in.md)
 - [Packing checklists](analysis/packing-checklists.md)
+- [Medicine effect and side-effect notes](analysis/medicine-effect-notes.md)
 
 ## Current focus areas
 
