@@ -13,7 +13,8 @@ import { disableFeatures } from '../../../../testing/features-fixture';
 @Component({ template: '<p>page</p>' })
 class Page {}
 
-// The shell is the header (brand, profile menu, the current page's help button) plus the outlet.
+// The shell is the header (brand, page menu, profile menu, the current page's help button) plus
+// the outlet.
 // The help topic comes from the active page route's `data.helpTopic`.
 describe('GuardianShell', () => {
   // jsdom has no layout, so scrollIntoView doesn't exist; record which elements were scrolled to.
@@ -66,13 +67,17 @@ describe('GuardianShell', () => {
     return TestBed.inject(TranslationService).translate(`help.topics.${id}.title`);
   }
 
-  it('renders the brand header, the profile menu, and the page', async () => {
+  it('renders the brand header, the page menu before the profile menu, and the page', async () => {
     const { root } = await setup('/plain');
 
     expect(root().textContent).toContain('Buddy');
     expect(root().textContent).toContain('Guardian dashboard');
     expect(root().querySelector('a[href="/guardian"]')).toBeTruthy();
-    expect(root().querySelector('app-profile-menu')).toBeTruthy();
+    const menus = Array.from(root().querySelectorAll('app-nav-menu, app-profile-menu'));
+    expect(menus.map((menu) => menu.tagName.toLowerCase())).toEqual([
+      'app-nav-menu',
+      'app-profile-menu',
+    ]);
     expect(root().textContent).toContain('page');
   });
 

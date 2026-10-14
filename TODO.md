@@ -97,8 +97,14 @@
 
 ## Menu and settings cleanup
 
-- [ ] Clean up the menu and decide how and where things are configured, so
-  settings live in one predictable place instead of being spread across pages.
+- [x] Clean up the menu. Every guardian page is listed once in
+  `features/guardian/shell/nav-items.ts`, grouped as Every day, Health &
+  well-being, Routines and Family & helpers, and shown by the new **Menu** button
+  in the header (`shell/nav-menu/`) and, for the pages with a `tab`, the phone tab
+  bar. The profile menu keeps only account items: theme, Settings, Help, Sign out
+  and the version.
+- [ ] Decide how and where things are configured, so settings live in one
+  predictable place instead of being spread across pages.
 
 ## Remove the current user's events view — done
 

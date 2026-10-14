@@ -320,11 +320,21 @@ Two shared components hold the repeated spacing, so it is set in one place:
   the unnamed `<section>` it replaced; a card that should be a landmark adds `role="region"` and
   `aria-labelledby`.
 
+The guardian's pages are listed once, in
+[`shell/nav-items.ts`](../../src/frontend/buddy/src/app/features/guardian/shell/nav-items.ts),
+grouped as Every day, Health & well-being, Routines and Family & helpers, each with its feature
+flag. The **Menu** button in the sticky header
+([`shell/nav-menu`](../../src/frontend/buddy/src/app/features/guardian/shell/nav-menu/nav-menu.ts))
+shows those groups on all sizes, leaving out turned-off features and empty groups. The profile
+menu next to it holds only account items: theme, Settings, Help, Sign out and the version. A new
+guardian page gets an entry in `nav-items.ts`; `nav-items.spec.ts` fails for a top-level route
+without one.
+
 On phones the guardian shell adds a bottom tab bar
 ([`shell/tab-bar`](../../src/frontend/buddy/src/app/features/guardian/shell/tab-bar/tab-bar.ts))
-with Today, Calendar, Meals and Sleep (the last two follow their feature flags). It is hidden
-from `sm` up, when printing and on onboarding (`data: { hideTabBar: true }`); the account menu in
-the sticky header keeps every link on all sizes.
+with the `nav-items.ts` pages that have a `tab`: Today, Calendar, Meals and Sleep (the last two
+follow their feature flags). It is hidden from `sm` up, when printing and on onboarding
+(`data: { hideTabBar: true }`).
 
 The dashboard's "Packing for tomorrow" card (`packing-tomorrow/`, behind `taskLibrary`) only
 renders from a packing list's evening time until midnight while a child's list for tomorrow isn't

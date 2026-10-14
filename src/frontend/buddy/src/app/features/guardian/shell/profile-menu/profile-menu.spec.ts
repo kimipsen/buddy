@@ -80,23 +80,24 @@ describe('ProfileMenu', () => {
     const toggle = toggleButton(compiled);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(toggle.querySelector('.sr-only')?.textContent?.trim()).toBe('Open account menu');
-    expect(menuLink(compiled, '/guardian/mealplan')).toBeNull();
+    expect(menuLink(compiled, '/guardian/admin')).toBeNull();
     expect(signOutButton(compiled)).toBeNull();
   });
 
-  it('opens the menu with all links and the sign-out action when the toggle is clicked', async () => {
+  it('opens the menu with the account links and the sign-out action, and no page links', async () => {
     const { fixture, compiled } = await setup();
 
     fireClick(fixture, toggleButton(compiled));
 
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('true');
-    expect(menuLink(compiled, '/guardian/mealplan')?.textContent?.trim()).toBe('Meal planner');
-    expect(menuLink(compiled, '/guardian/medicine')?.textContent?.trim()).toBe('Medicine');
-    expect(menuLink(compiled, '/guardian/pickup')?.textContent?.trim()).toBe('Pickup & drop-off');
-    expect(menuLink(compiled, '/guardian/calendar')?.textContent?.trim()).toBe('Calendar');
-    expect(menuLink(compiled, '/guardian/babysitters')?.textContent?.trim()).toBe('Babysitters');
-    expect(menuLink(compiled, '/guardian/admin')?.textContent?.trim()).toBe('Settings');
-    expect(menuLink(compiled, '/guardian/help')?.textContent?.trim()).toBe('Help');
+    const hrefs = Array.from(compiled.querySelectorAll('a[href^="/guardian"]')).map((a) => [
+      a.getAttribute('href'),
+      a.textContent?.trim(),
+    ]);
+    expect(hrefs).toEqual([
+      ['/guardian/admin', 'Settings'],
+      ['/guardian/help', 'Help'],
+    ]);
     expect(signOutButton(compiled)).not.toBeNull();
   });
 
@@ -148,7 +149,7 @@ describe('ProfileMenu', () => {
     fireClick(fixture, toggleButton(compiled));
 
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
-    expect(menuLink(compiled, '/guardian/mealplan')).toBeNull();
+    expect(menuLink(compiled, '/guardian/admin')).toBeNull();
   });
 
   it('closes the menu when the backdrop is clicked', async () => {
@@ -167,12 +168,12 @@ describe('ProfileMenu', () => {
     const { fixture, compiled } = await setup();
 
     fireClick(fixture, toggleButton(compiled));
-    const mealPlanLink = menuLink(compiled, '/guardian/mealplan')!;
+    const settingsLink = menuLink(compiled, '/guardian/admin')!;
 
-    fireClick(fixture, mealPlanLink);
+    fireClick(fixture, settingsLink);
 
     expect(toggleButton(compiled).getAttribute('aria-expanded')).toBe('false');
-    expect(menuLink(compiled, '/guardian/mealplan')).toBeNull();
+    expect(menuLink(compiled, '/guardian/admin')).toBeNull();
   });
 
   it('logs out and closes the menu when sign out is clicked, without navigating away', async () => {
@@ -274,28 +275,14 @@ describe('ProfileMenu', () => {
     expect(document.activeElement).not.toBe(toggleButton(compiled));
   });
 
-  it('leaves out the links to features that are turned off', async () => {
-    disableFeatures(
-      'mealplans',
-      'taskLibrary',
-      'medicines',
-      'sleepDiary',
-      'houseRules',
-      'pickups',
-      'progress',
-      'workLocations',
-      'babysitters',
-      'printing',
-      'help',
-      'transitionWarnings',
-      'feelings',
-    );
+  it('leaves out Help while help is turned off', async () => {
+    disableFeatures('help');
     const { fixture, compiled } = await setup();
     fireClick(fixture, toggleButton(compiled));
 
     const hrefs = Array.from(compiled.querySelectorAll('a[href^="/guardian"]')).map((a) =>
       a.getAttribute('href'),
     );
-    expect(hrefs).toEqual(['/guardian/calendar', '/guardian/admin']);
+    expect(hrefs).toEqual(['/guardian/admin']);
   });
 });

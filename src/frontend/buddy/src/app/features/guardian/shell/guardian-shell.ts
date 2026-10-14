@@ -15,12 +15,13 @@ import { HelpTopic } from '../../../core/help/help-topic';
 import { findHelpTopic } from '../../../core/help/help-topics';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { HelpPanel } from './help-panel/help-panel';
+import { NavMenu } from './nav-menu/nav-menu';
 import { ProfileMenu } from './profile-menu/profile-menu';
 import { TabBar } from './tab-bar/tab-bar';
 
 @Component({
   selector: 'app-guardian-shell',
-  imports: [RouterOutlet, RouterLink, ProfileMenu, TranslatePipe, HelpPanel, TabBar],
+  imports: [RouterOutlet, RouterLink, NavMenu, ProfileMenu, TranslatePipe, HelpPanel, TabBar],
   templateUrl: './guardian-shell.html',
 })
 export class GuardianShell {

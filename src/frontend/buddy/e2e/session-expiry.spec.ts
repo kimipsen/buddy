@@ -28,7 +28,7 @@ test('an expired session sends in-app navigation to /login, and signing in retur
   await page.clock.fastForward('06:00');
 
   // An in-app (router) navigation, not a page load.
-  await page.getByRole('button', { name: 'Open account menu' }).click();
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
   await page.getByRole('link', { name: 'Calendar' }).click();
 
   await expect(page).toHaveURL(/\/login\?reason=session-expired$/);
