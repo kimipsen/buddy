@@ -31,6 +31,7 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 | Playwright e2e | `e2e-test` |
 | Run / screenshot the app | `run-buddy` |
 | Docs screenshots of every page (`task docs:screenshots`) | `doc-screenshots` |
+| Pictograms (SVG, drawn by Codex's `.agents/skills/pictogram`) | `codex-pictogram` |
 | Full feature from a design doc | `feature-from-analysis` |
 | Review a diff | `backend-aware-review` |
 | Mutation testing | `mutation-fix` (frontend), `mutation-fix-backend` |
@@ -38,7 +39,7 @@ Use the matching skill instead of improvising. Each one holds the verified conve
 | Commit and land work (rebase + fast-forward, no push), then remove the worktree | `rebase-commit` |
 | Production deploy (always confirm first) | `deploy` |
 
-`agents/` holds Codex/Copilot packages; Claude Code doesn't load them.
+`agents/` holds Codex/Copilot packages; Claude Code doesn't load them. `.agents/skills/` holds skills the Codex CLI loads (e.g. `pictogram`).
 
 After adding a skill or changing a skill's `description`, check that it still triggers, and doesn't steal prompts from its neighbours, with `skill-creator`'s description eval.
 
