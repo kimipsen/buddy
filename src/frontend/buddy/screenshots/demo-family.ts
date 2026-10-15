@@ -407,7 +407,24 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     } catch (error) {
       warn(error);
     }
-    await event(family.id, 'Dentist – Emil', '🦷', '#f43f5e', todayIso, '14:00:00', '14:45:00');
+    const dentist = await event(
+      family.id,
+      'Dentist – Emil',
+      '🦷',
+      '#f43f5e',
+      todayIso,
+      '14:00:00',
+      '14:45:00',
+    );
+    // Alarms for subscribed calendar apps (docs/backend/analysis/calendar-item-alarms.md), so the
+    // agenda row shows its bell. Optional, like the skip above.
+    try {
+      await api.patch(`/calendars/${family.id}/items/${dentist.id}/alarms`, {
+        alarms: [-1440, -120],
+      });
+    } catch (error) {
+      warn(error);
+    }
     await event(family.id, 'Grandma visits', '👵', '#f59e0b', inDays(2), '11:00:00', '15:00:00');
     await event(
       school.id,
