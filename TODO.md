@@ -50,8 +50,11 @@ homework splitter have shipped; they are listed under Done.
 
 - [ ] Build a mobile app for Buddy. Decide the approach first (installable PWA,
       a wrapper such as Capacitor around the Angular app, or native) and cover login
-      through Keycloak, push notifications and app-store distribution. Write a design
-      doc in `docs/frontend/analysis/` first.
+      through Keycloak, push notifications and app-store distribution. Design:
+      [Buddy as a mobile app](docs/frontend/analysis/mobile-app.md) (phases, sign-in,
+      stores) and
+      [Mobile app and push notifications](docs/backend/analysis/mobile-app-and-notifications.md)
+      (push).
 
 ### Security and privacy (best-practice gap review, 2026-10-06)
 

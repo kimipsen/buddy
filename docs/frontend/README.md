@@ -419,6 +419,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Mobile app and push notifications](../backend/analysis/mobile-app-and-notifications.md) —
   proposed installable PWA (manifest, service worker, update prompt, install guide) and Web Push
   notifications for reward requests, task completions, milestones, missed doses and reminders
+- [Buddy as a mobile app](analysis/mobile-app.md) — proposed: the phases (installable shell, push,
+  optional store builds), service-worker caching rules, staying signed in in standalone mode
+  (Keycloak "Remember me" and a silent sign-in), safe areas, install guidance and app-store options
 - [A single-day dashboard for the child home screen](analysis/child-day-dashboard.md) — layout
   options for today's meal plan, medicine, and tasks on the child home screen
 - [Historical meal plans and children's ratings](analysis/mealplan-history-and-ratings.md) — what's

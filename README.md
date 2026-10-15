@@ -116,7 +116,8 @@ in real time.
 - [x] Per-installation feature flags to turn optional features off
 - [ ] Installable mobile app (PWA) with push notifications for reward requests, completed tasks,
       milestones, missed doses and reminders (proposed, not yet implemented — see
-      [Mobile app and push notifications](docs/backend/analysis/mobile-app-and-notifications.md))
+      [Mobile app and push notifications](docs/backend/analysis/mobile-app-and-notifications.md)
+      and [Buddy as a mobile app](docs/frontend/analysis/mobile-app.md))
 
 ## Repository structure
 
