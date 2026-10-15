@@ -23,8 +23,6 @@ in real time.
 
 ### Guardian
 
-- [ ] Per-item alarms (VALARM) in the calendar iCal feed, for subscribing calendar apps
-      (proposed, not yet implemented — see [Calendar item alarms](docs/backend/analysis/calendar-item-alarms.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -58,6 +56,8 @@ in real time.
       exceptions
 - [x] Saved babysitters/nannies for pickup and drop-off
 - [x] In-app help: a help panel on every guardian page and a help index, in English and Danish
+- [x] Per-item alarms (VALARM) in the calendar iCal feed, for subscribing calendar apps
+      (see [Calendar item alarms](docs/backend/analysis/calendar-item-alarms.md))
 - [x] House rules for a household (group) and for each child, written in markdown, which
       children read and acknowledge, and which print on A4 for the fridge
 - [x] Calling names: a guardian can choose what their children call them ("Mom", "Far"), shown

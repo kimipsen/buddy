@@ -1,6 +1,6 @@
 # Calendar Item Alarms
 
-Status: Proposed (not yet implemented)
+Status: Implemented
 
 ## Context
 
