@@ -72,8 +72,6 @@ homework splitter have shipped; they are listed under Done.
   - [x] Health-data read audit logs.
   - [ ] Outside the code: privacy notice, record of processing, DPIA, DPAs with the hosting
         provider; set up 30-day backup rotation. Step-by-step guide: `docs/privacy-setup.md`.
-- [ ] **Security scanning in CI.** Add CodeQL, an `npm audit` / `dotnet list package --vulnerable`
-      gate and a container image scan (e.g. Trivy).
 
 ### Week plan printing (2026-10-02)
 
@@ -741,3 +739,12 @@ they reuse data the app already keeps. Each has a design doc.
       occurrence of a repeating appointment or task on an individual day without changing or
       ending the series. See
       [skip-occurrences.md](docs/backend/analysis/skip-occurrences.md) (2026-10-15).
+
+### Security and privacy (best-practice gap review, 2026-10-06)
+
+- [x] **Security scanning in CI.** CodeQL (`codeql.yml`) plus `security-scan.yml`: NuGet and npm
+      vulnerability gates and a Trivy scan of the API, web and Keycloak images, on changes and
+      daily. Getting it green pinned `System.Security.Cryptography.Pkcs` 10.0.13 (via MailKit), moved
+      .NET 11 from preview.7 to rc.2 (critical runtime CVEs), kept the theme tooling out of the
+      Keycloak image and baselined three upstream Go CVEs in `.trivyignore` until 2026-11-15
+      (2026-10-15).

@@ -1,0 +1,156 @@
+name: Security scan
+
+# Known vulnerabilities in the dependencies (NuGet, npm) and in the built container images (Trivy).
+# Static analysis of our own code is in codeql.yml.
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/backend/**"
+      - "src/frontend/**"
+      - "themes/**"
+      - "deploy/azure/keycloak/**"
+      - "global.json"
+      - ".trivyignore"
+      - ".github/workflows/security-scan.yml"
+  push:
+    branches: [master]
+    paths:
+      - "src/backend/**"
+      - "src/frontend/**"
+      - "themes/**"
+      - "deploy/azure/keycloak/**"
+      - "global.json"
+      - ".trivyignore"
+      - ".github/workflows/security-scan.yml"
+  # Daily, because new advisories are published against code that hasn't changed.
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+# Least privilege for the GITHUB_TOKEN; a job that needs more asks for it itself.
+permissions:
+  contents: read
+
+jobs:
+  nuget:
+    name: NuGet packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Same SDK as the devcontainer, pinned in global.json at the repo root.
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # With TreatWarningsAsErrors a vulnerable package already fails the restore (NU1901-NU1904).
+      # The audit is off here so the restore succeeds and the next step can list every finding.
+      - name: Restore
+        run: dotnet restore src/backend/backend.slnx -p:NuGetAudit=false
+
+      # Direct and transitive packages, any severity. Fix a transitive one with a pin in
+      # Directory.Packages.props ("Transitive security pins").
+      - name: Vulnerable packages
+        run: |
+          dotnet list src/backend/backend.slnx package --vulnerable --include-transitive
+          count=$(dotnet list src/backend/backend.slnx package --vulnerable --include-transitive --format json \
+            | jq '[.. | .vulnerabilities? // empty | .[]] | length')
+          if [ "$count" -gt 0 ]; then
+            echo "::error::$count vulnerable NuGet package advisories, listed above"
+            exit 1
+          fi
+
+  npm:
+    name: npm packages (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: frontend
+            directory: src/frontend/buddy
+          - name: keycloak theme
+            directory: themes/buddy/build
+    defaults:
+      run:
+        working-directory: ${{ matrix.directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: src/frontend/buddy/.nvmrc
+
+      # Reads package-lock.json, so nothing is installed. Dev dependencies count too: they run in
+      # CI and in the image builds. Low-severity advisories are listed but don't fail the job.
+      - name: npm audit
+        run: npm audit --audit-level=moderate
+
+  image:
+    name: Container image (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    # Uploads the results to the repository's code scanning alerts.
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Same contexts and build arguments as deploy/docker-compose.prod.yml; the URLs only end
+          # up in runtime-config.json and the Caddyfile's CSP, which the scan doesn't look at.
+          - name: api
+            context: src/backend
+            dockerfile: src/backend/buddy/Dockerfile
+            build-args: ""
+          - name: web
+            context: src/frontend/buddy
+            dockerfile: src/frontend/buddy/Dockerfile
+            build-args: >-
+              --build-arg API_BASE_URL=https://api.example.invalid
+              --build-arg KEYCLOAK_AUTHORITY=https://auth.example.invalid/realms/buddy
+          - name: keycloak
+            context: .
+            dockerfile: deploy/azure/keycloak/Dockerfile
+            build-args: --build-arg HEALTH_ENABLED=true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build image
+        run: >-
+          docker build --tag buddy-${{ matrix.name }}:scan
+          --file ${{ matrix.dockerfile }} ${{ matrix.build-args }} ${{ matrix.context }}
+
+      # Every severity goes to code scanning, so the Security tab shows the full picture.
+      - name: Scan for code scanning
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: buddy-${{ matrix.name }}:scan
+          scanners: vuln
+          format: sarif
+          output: trivy.sarif
+          trivyignores: .trivyignore
+
+      - name: Upload results
+        if: always() && hashFiles('trivy.sarif') != ''
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-${{ matrix.name }}
+
+      # The gate: high or critical findings that have a fixed version, i.e. a base-image digest
+      # bump (Dependabot) or a package update can resolve them. Accepted ones go in .trivyignore,
+      # each with a reason and an expiry date.
+      - name: Fail on fixable high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: buddy-${{ matrix.name }}:scan
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+          # Installed by the step above.
+          skip-setup-trivy: true

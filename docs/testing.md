@@ -185,6 +185,21 @@ verified scoping instructions and expected runtime characteristics.
   under the repository's Security → Code scanning alerts. Results in
   source-generator output under `obj/` (Marten/JasperFx evolvers) are filtered
   out of the SARIF with `jq` before it is uploaded.
+- `.github/workflows/security-scan.yml` checks for known vulnerabilities on
+  every backend, frontend, theme or Keycloak image change, and daily (new
+  advisories arrive for code that hasn't changed):
+  - **NuGet**: `dotnet list package --vulnerable --include-transitive` fails on
+    any advisory. A local restore already fails on one too, because NuGet
+    audit warnings (NU1901-NU1904) are errors under `TreatWarningsAsErrors`.
+    Lift a vulnerable transitive package with a pin in the "Transitive security
+    pins" group of `src/backend/Directory.Packages.props`.
+  - **npm**: `npm audit --audit-level=moderate` in `src/frontend/buddy` and
+    `themes/buddy/build`, dev dependencies included.
+  - **Container images**: builds the API, web and Keycloak images and scans
+    them with Trivy. Every finding is uploaded to Security → Code scanning
+    (category `trivy-<image>`); the job fails on high or critical ones that
+    have a fixed version. Accept one in `.trivyignore` with a reason and an
+    `exp:` date.
 
 ### Code coverage
 

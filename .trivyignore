@@ -1,0 +1,14 @@
+# Accepted container-image findings for the Trivy gate in .github/workflows/security-scan.yml.
+# One ID per line, with the image, the reason and an expiry, after which the finding fails the
+# build again, e.g.:
+#
+#   # keycloak: only reachable through the admin console, which isn't exposed. Recheck on 26.9.
+#   CVE-2026-12345 exp:2026-12-31
+
+# api (usr/bin/pebble, from the mcr.microsoft.com/dotnet/aspnet base image) and web (usr/bin/caddy,
+# from caddy:2-alpine): Go standard library DoS fixes (Go 1.26.9 / 1.27.2), not yet in either
+# upstream image. Neither binary is ours to rebuild; Dependabot's digest bumps bring the upstream
+# rebuilds. Recheck when this expires.
+CVE-2026-78667 exp:2026-11-15
+CVE-2026-78669 exp:2026-11-15
+CVE-2026-97031 exp:2026-11-15
