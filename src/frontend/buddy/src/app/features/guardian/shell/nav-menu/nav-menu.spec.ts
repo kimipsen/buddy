@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { NavMenu } from './nav-menu';
 import { disableFeatures } from '../../../../../testing/features-fixture';
@@ -196,7 +196,37 @@ describe('NavMenu', () => {
 
     const panel = root().querySelector('nav')!;
     expect(panel.classList).toContain('max-w-[calc(100vw-2rem)]');
-    expect(panel.classList).toContain('max-h-[calc(100dvh-5rem)]');
+    expect(panel.classList).toContain('max-h-[calc(100dvh-var(--nav-menu-top,5rem)-1rem)]');
+    expect(panel.classList).toContain(
+      'max-sm:max-h-[calc(100dvh-var(--nav-menu-top,5rem)-5rem-env(safe-area-inset-bottom))]',
+    );
     expect(panel.classList).toContain('overflow-y-auto');
+    expect(panel.classList).toContain('overscroll-contain');
+  });
+
+  it('caps the panel height from where it opens, so it ends above the phone tab bar', async () => {
+    const { harness, root, toggle, click } = await setup();
+
+    click(toggle());
+    await harness.fixture.whenStable();
+    const panel = root().querySelector('nav')!;
+
+    expect(panel.style.getPropertyValue('--nav-menu-top')).toBe(
+      `${Math.round(panel.getBoundingClientRect().top)}px`,
+    );
+  });
+
+  it('measures the panel again when the window is resized', async () => {
+    const { harness, root, toggle, click } = await setup();
+    click(toggle());
+    await harness.fixture.whenStable();
+    const panel = root().querySelector('nav')!;
+    panel.style.removeProperty('--nav-menu-top');
+    vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue({ top: 131.6 } as DOMRect);
+
+    window.dispatchEvent(new Event('resize'));
+    harness.fixture.detectChanges();
+
+    expect(panel.style.getPropertyValue('--nav-menu-top')).toBe('132px');
   });
 });

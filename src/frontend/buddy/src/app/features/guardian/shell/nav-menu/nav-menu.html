@@ -30,9 +30,13 @@
     <!-- Pointer-only dismiss target; keyboard users close with Escape (see onEscape). -->
     <div class="fixed inset-0 z-10" aria-hidden="true" (click)="dismiss()"></div>
 
+    <!-- Height: from the panel's measured top (the header grows when the title wraps) down to
+         the bottom of the screen, less the phone tab bar (fixed, about 57px) and the safe area,
+         so every item can be scrolled into view above the tab bar. -->
     <nav
       #panel
-      class="absolute right-0 z-20 mt-2 max-h-[calc(100dvh-5rem)] w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900"
+      class="absolute right-0 z-20 mt-2 max-h-[calc(100dvh-var(--nav-menu-top,5rem)-1rem)] w-64 max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain rounded-lg max-sm:max-h-[calc(100dvh-var(--nav-menu-top,5rem)-5rem-env(safe-area-inset-bottom))] border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900"
+      [style.--nav-menu-top]="panelTop()"
       [attr.aria-label]="'shell.nav.label' | translate"
     >
       @for (group of groups(); track group.label) {

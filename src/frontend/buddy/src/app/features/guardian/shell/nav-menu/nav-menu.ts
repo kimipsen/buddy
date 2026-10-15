@@ -31,14 +31,20 @@ export class NavMenu {
 
   protected readonly groups = computed(() => visibleNavGroups(this.features));
   protected readonly open = signal(false);
+  // The open panel's top edge in px (as a CSS length), which caps its height; null until measured.
+  protected readonly panelTop = signal<string | null>(null);
 
   protected toggle(): void {
     this.open.update((value) => !value);
 
     if (this.open()) {
-      afterNextRender(() => this.panel()?.nativeElement.querySelector('a')?.focus(), {
-        injector: this.injector,
-      });
+      afterNextRender(
+        () => {
+          this.measurePanelTop();
+          this.panel()?.nativeElement.querySelector('a')?.focus();
+        },
+        { injector: this.injector },
+      );
     }
   }
 
@@ -51,6 +57,15 @@ export class NavMenu {
   protected dismiss(): void {
     this.close();
     this.trigger().nativeElement.focus();
+  }
+
+  // Rotating the phone can rewrap the header title and move the panel.
+  @HostListener('window:resize')
+  protected measurePanelTop(): void {
+    const panel = this.panel()?.nativeElement;
+    if (panel) {
+      this.panelTop.set(`${Math.round(panel.getBoundingClientRect().top)}px`);
+    }
   }
 
   @HostListener('document:keydown.escape')
