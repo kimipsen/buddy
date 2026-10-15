@@ -57,6 +57,8 @@ describe('CalendarAgenda', () => {
       dueAt: null,
       isAllDay: false,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,
@@ -121,6 +123,11 @@ describe('CalendarAgenda', () => {
         isCompleted: true,
       })),
       deleteItem: vi.fn(async () => undefined),
+      setOccurrenceSkip: vi.fn(async () => ({
+        itemId: 'item-1',
+        occurrenceDate: today,
+        isSkipped: true,
+      })),
       updateItemDetails: vi.fn(async () => ({}) as never),
       rescheduleItem: vi.fn(async () => ({}) as never),
       createItem: vi.fn(async () => ({}) as never),
@@ -271,7 +278,7 @@ describe('CalendarAgenda', () => {
     const { fixture, calendars } = await setup();
     await settle(fixture);
 
-    expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith(today, addDays(today, 6));
+    expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith(today, addDays(today, 6), true);
   });
 
   // ----- Grouping and ordering -----
@@ -373,6 +380,7 @@ describe('CalendarAgenda', () => {
     expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
       addDays(today, -7),
       addDays(today, -1),
+      true,
     );
   });
 
@@ -386,6 +394,7 @@ describe('CalendarAgenda', () => {
     expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
       addDays(today, 7),
       addDays(today, 13),
+      true,
     );
   });
 
@@ -662,6 +671,180 @@ describe('CalendarAgenda', () => {
     compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Unable to delete this item.');
     expect(compiled.textContent).toContain('Dentist');
+  });
+
+  it('warns that deleting a repeating item deletes every day of it', async () => {
+    const item = occurrence({ itemId: 'item-1', isRepeating: true });
+    const { fixture } = await setup({
+      calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+    });
+    await settle(fixture);
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Delete')!.click();
+    await settle(fixture);
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Delete every day of this?',
+    );
+  });
+
+  // ----- Skip one day (docs/backend/analysis/skip-occurrences.md) -----
+
+  describe('skipping one day', () => {
+    it('offers Skip day only on an occurrence of a repeating item', async () => {
+      const { fixture } = await setup({
+        calendars: {
+          listOccurrencesInRange: vi.fn(async () => [
+            occurrence({ itemId: 'once', title: 'Dentist' }),
+            occurrence({ itemId: 'weekly', title: 'Football', isRepeating: true }),
+          ]),
+        },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(
+        Array.from(compiled.querySelectorAll('button')).filter(
+          (button) => button.textContent?.trim() === 'Skip day',
+        ),
+      ).toHaveLength(1);
+    });
+
+    it('asks for confirmation, and cancelling makes no service call', async () => {
+      const item = occurrence({ itemId: 'item-1', isRepeating: true });
+      const { fixture, calendars } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Skip day')!.click();
+      await settle(fixture);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Skip just this day?');
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Cancel')!.click();
+      await settle(fixture);
+
+      expect(calendars.setOccurrenceSkip).not.toHaveBeenCalled();
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+        'Skip just this day?',
+      );
+    });
+
+    it('skips the day with the exact ids and date, and shows it muted with Restore without reloading', async () => {
+      const item = occurrence({
+        itemId: 'item-1',
+        calendarId: 'cal-1',
+        title: 'Football',
+        isRepeating: true,
+      });
+      const { fixture, calendars } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Skip day')!.click();
+      await settle(fixture);
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Skip')!.click();
+      await settle(fixture);
+
+      expect(calendars.setOccurrenceSkip).toHaveBeenCalledWith('cal-1', 'item-1', today, true);
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Skipped');
+      expect(findButtonByText(compiled, 'Restore')).toBeTruthy();
+      expect(findButtonByText(compiled, 'Edit')).toBeFalsy();
+      expect(findButtonByText(compiled, 'Skip day')).toBeFalsy();
+      expect(calendars.listOccurrencesInRange).toHaveBeenCalledTimes(1);
+    });
+
+    it('restores a skipped day, hiding a skipped task’s completion toggle until then', async () => {
+      const item = occurrence({
+        itemId: 'item-1',
+        calendarId: 'cal-1',
+        kind: 'Task',
+        startsAt: null,
+        endsAt: null,
+        dueAt: `${today}T09:00:00Z`,
+        isRepeating: true,
+        isSkipped: true,
+      });
+      const { fixture, calendars } = await setup({
+        calendars: {
+          listOccurrencesInRange: vi.fn(async () => [item]),
+          setOccurrenceSkip: vi.fn(async () => ({
+            itemId: 'item-1',
+            occurrenceDate: today,
+            isSkipped: false,
+          })),
+        },
+      });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('button[aria-label="Mark as done"]')).toBeNull();
+
+      findButtonByText(compiled, 'Restore')!.click();
+      await settle(fixture);
+
+      expect(calendars.setOccurrenceSkip).toHaveBeenCalledWith('cal-1', 'item-1', today, false);
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).not.toContain('Skipped');
+      expect(compiled.querySelector('button[aria-label="Mark as done"]')).toBeTruthy();
+      expect(findButtonByText(compiled, 'Skip day')).toBeTruthy();
+    });
+
+    it('shows an error and keeps the day when skipping fails', async () => {
+      const item = occurrence({ itemId: 'item-1', isRepeating: true });
+      const { fixture } = await setup({
+        calendars: {
+          listOccurrencesInRange: vi.fn(async () => [item]),
+          setOccurrenceSkip: vi.fn(async () => Promise.reject(new Error('boom'))),
+        },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Skip day')!.click();
+      await settle(fixture);
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Skip')!.click();
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Unable to skip this day.');
+      expect(compiled.textContent).not.toContain('Restore');
+    });
+
+    it('skips a template-scheduled run as a whole, for the day it is shown under', async () => {
+      const subtasks = ['sub-1', 'sub-2'].map((subtaskId, index) =>
+        occurrence({
+          itemId: 'run-1',
+          calendarId: 'cal-1',
+          kind: 'Task',
+          parentTitle: 'Morning routine',
+          subtaskId,
+          title: `Step ${index + 1}`,
+          startsAt: `${today}T08:0${index}:00Z`,
+          isRepeating: true,
+        }),
+      );
+      const { fixture, calendars } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => subtasks) },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Skip day')!.click();
+      await settle(fixture);
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Skip')!.click();
+      await settle(fixture);
+
+      expect(calendars.setOccurrenceSkip).toHaveBeenCalledExactlyOnceWith(
+        'cal-1',
+        'run-1',
+        today,
+        true,
+      );
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelectorAll('button[aria-label="Mark as done"]')).toHaveLength(0);
+      expect(findButtonByText(compiled, 'Restore')).toBeTruthy();
+    });
   });
 
   // ----- Edit -----
@@ -1362,7 +1545,7 @@ describe('CalendarAgenda', () => {
     const { fixture, calendars } = await setup();
     await settle(fixture);
 
-    expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith(today, addDays(today, 6));
+    expect(calendars.listOccurrencesInRange).toHaveBeenCalledWith(today, addDays(today, 6), true);
   });
 
   it('switching to Day requests just the anchor date, and Previous/Next day shift by one day', async () => {
@@ -1371,18 +1554,19 @@ describe('CalendarAgenda', () => {
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Day')!.click();
     await settle(fixture);
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(today, today);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(today, today, true);
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Next day')!.click();
     await settle(fixture);
     expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
       addDays(today, 1),
       addDays(today, 1),
+      true,
     );
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Previous day')!.click();
     await settle(fixture);
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(today, today);
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(today, today, true);
   });
 
   it("switching to Work week requests Monday through Friday of the anchor's week", async () => {
@@ -1396,11 +1580,19 @@ describe('CalendarAgenda', () => {
     findButtonByText(fixture.nativeElement as HTMLElement, 'Work week')!.click();
     await settle(fixture);
 
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-17', '2024-06-21');
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+      '2024-06-17',
+      '2024-06-21',
+      true,
+    );
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Next week')!.click();
     await settle(fixture);
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-24', '2024-06-28');
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+      '2024-06-24',
+      '2024-06-28',
+      true,
+    );
 
     expect(thursday).toBe('2024-06-20');
   });
@@ -1414,12 +1606,20 @@ describe('CalendarAgenda', () => {
     findButtonByText(fixture.nativeElement as HTMLElement, 'Month')!.click();
     await settle(fixture);
 
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-05-27', '2024-06-30');
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+      '2024-05-27',
+      '2024-06-30',
+      true,
+    );
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Next month')!.click();
     await settle(fixture);
     // July 2024: 1st is a Monday, 31st a Wednesday -- grid still pads out to a full last week.
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-07-01', '2024-08-04');
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+      '2024-07-01',
+      '2024-08-04',
+      true,
+    );
   });
 
   it('renders the month grid instead of the day list while in Month view', async () => {
@@ -1445,11 +1645,19 @@ describe('CalendarAgenda', () => {
     await settle(fixture);
     findButtonByText(fixture.nativeElement as HTMLElement, 'Next day')!.click();
     await settle(fixture);
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-16', '2024-06-16');
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+      '2024-06-16',
+      '2024-06-16',
+      true,
+    );
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Today')!.click();
     await settle(fixture);
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-15', '2024-06-15');
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+      '2024-06-15',
+      '2024-06-15',
+      true,
+    );
   });
 
   it('selecting a day in the month grid switches to Day view for that date', async () => {
@@ -1469,7 +1677,11 @@ describe('CalendarAgenda', () => {
     // Back to a day-list render (no more app-month-grid), and the fetch range narrows to that day.
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-month-grid')).toBeNull();
-    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith('2024-06-10', '2024-06-10');
+    expect(calendars.listOccurrencesInRange).toHaveBeenLastCalledWith(
+      '2024-06-10',
+      '2024-06-10',
+      true,
+    );
   });
 
   it('shows no assignee text for a task assigned to a member the guardian cannot resolve', async () => {

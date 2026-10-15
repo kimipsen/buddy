@@ -32,9 +32,20 @@ export const calendar = {
     delete: {
       button: 'Slet',
       confirmPrompt: 'Slet denne?',
+      confirmSeriesPrompt: 'Slet alle dage af denne?',
       confirmButton: 'Bekræft',
       cancelButton: 'Annuller',
       error: 'Kunne ikke slette dette element.',
+    },
+    skip: {
+      button: 'Spring dag over',
+      confirmPrompt: 'Spring kun denne dag over?',
+      confirmButton: 'Spring over',
+      cancelButton: 'Annuller',
+      skippedLabel: 'Sprunget over',
+      restoreButton: 'Gendan',
+      error: 'Kunne ikke springe denne dag over.',
+      restoreError: 'Kunne ikke gendanne denne dag.',
     },
     edit: {
       button: 'Rediger',

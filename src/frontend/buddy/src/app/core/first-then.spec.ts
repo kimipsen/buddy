@@ -55,6 +55,8 @@ function occurrence(
     dueAt: '2026-10-14T16:00:00Z',
     isAllDay: false,
     isCompleted: false,
+    isSkipped: false,
+    isRepeating: false,
     createdBy: 'guardian-1',
     lastModifiedBy: 'guardian-1',
     assignedTo: 'child-1',

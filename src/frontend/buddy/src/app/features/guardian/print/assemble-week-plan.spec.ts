@@ -77,6 +77,8 @@ function occurrence(
     dueAt: null,
     isAllDay: false,
     isCompleted: false,
+    isSkipped: false,
+    isRepeating: false,
     createdBy: 'dad',
     lastModifiedBy: 'dad',
     assignedTo: null,

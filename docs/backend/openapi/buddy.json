@@ -6475,6 +6475,14 @@
             }
           },
           {
+            "name": "includeSkipped",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "If-None-Match",
             "in": "header",
             "description": "An ETag from an earlier 200; when it still matches, the answer is 304 with no body.",
@@ -7143,6 +7151,115 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaskCompletionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
+    "/calendars/{calendarId}/items/{itemId}/skip": {
+      "patch": {
+        "tags": [
+          "Calendars"
+        ],
+        "operationId": "SetOccurrenceSkip",
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOccurrenceSkipRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceSkipResponse"
                 }
               }
             }
@@ -22442,6 +22559,8 @@
           "timing",
           "isAllDay",
           "isCompleted",
+          "isSkipped",
+          "isRepeating",
           "createdBy",
           "lastModifiedBy",
           "assignedTo",
@@ -22478,6 +22597,12 @@
             "type": "boolean"
           },
           "isCompleted": {
+            "type": "boolean"
+          },
+          "isSkipped": {
+            "type": "boolean"
+          },
+          "isRepeating": {
             "type": "boolean"
           },
           "createdBy": {
@@ -25617,6 +25742,26 @@
           }
         }
       },
+      "OccurrenceSkipResponse": {
+        "required": [
+          "itemId",
+          "occurrenceDate",
+          "isSkipped"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "$ref": "#/components/schemas/CalendarItemId"
+          },
+          "occurrenceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "isSkipped": {
+            "type": "boolean"
+          }
+        }
+      },
       "OccurrenceTiming": {
         "oneOf": [
           {
@@ -26949,6 +27094,22 @@
         "properties": {
           "role": {
             "$ref": "#/components/schemas/CalendarRole"
+          }
+        }
+      },
+      "SetOccurrenceSkipRequest": {
+        "required": [
+          "date",
+          "isSkipped"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "isSkipped": {
+            "type": "boolean"
           }
         }
       },

@@ -1,5 +1,8 @@
+using System.Text.RegularExpressions;
+
 using Alba;
 
+using buddy.Features.Calendars;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
 
@@ -87,6 +90,32 @@ public sealed class GetIcalFeedTests(BuddyApiFixture fixture)
         Assert.Contains("SUMMARY:Feed Task", ics);
         Assert.Matches(@"DUE:\d{8}T\d{6}Z", ics);
         Assert.DoesNotContain("BEGIN:VEVENT", ics);
+    }
+
+    // docs/backend/analysis/skip-occurrences.md, Question 2: the feed writes one VTODO per
+    // occurrence, so a skipped day simply isn't written -- no EXDATE needed.
+    [Fact]
+    public async Task A_skipped_occurrence_is_left_out_of_the_feed()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+        var start = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var task = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, token, calendarId, "Daily Feed Task", start,
+            new RecurrenceRuleRequest(RecurrenceFrequency.Daily, 1, start.AddDays(2)));
+        var issued = await CalendarTestHelpers.CreateIcalTokenAsync(fixture, token, calendarId);
+
+        await CalendarTestHelpers.SetOccurrenceSkipAsync(fixture, token, calendarId, task!.Id, start.AddDays(1), isSkipped: true);
+
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.Get.Url($"/calendars/{calendarId}/ical/{issued.Token}");
+            _.StatusCodeShouldBeOk();
+        });
+
+        var ics = response.ReadAsText();
+        Assert.Equal(2, Regex.Count(ics, "BEGIN:VTODO"));
+        Assert.DoesNotContain($"DUE:{start.AddDays(1):yyyyMMdd}T", ics);
     }
 
     [Fact]

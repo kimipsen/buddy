@@ -23,9 +23,6 @@ in real time.
 
 ### Guardian
 
-- [ ] Skip one occurrence of a repeating appointment or task on a single day, without changing
-      or ending the series, and restore it again (proposed, not yet implemented — see
-      [Skipping single occurrences](docs/backend/analysis/skip-occurrences.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -70,6 +67,9 @@ in real time.
 - [x] First–Then board: a guardian pairs a non-preferred task with a preferred activity
       ("first homework, then iPad"), and the child ticks off the first card to unlock the second,
       with an optional countdown — see [First–Then board](docs/backend/analysis/first-then-board.md)
+- [x] Skip one occurrence of a repeating appointment or task on a single day, without changing
+      or ending the series, and restore it again — see
+      [Skipping single occurrences](docs/backend/analysis/skip-occurrences.md)
 
 ### Child
 

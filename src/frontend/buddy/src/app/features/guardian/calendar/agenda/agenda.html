@@ -64,6 +64,11 @@
         <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
       }
     }
+    @if (skipping.state(); as state) {
+      @if (state.status === 'error') {
+        <p class="mb-3 text-sm text-red-600 dark:text-red-400">{{ state.message | translate }}</p>
+      }
+    }
 
     @if (myCalendars().length > 1) {
       <div
@@ -89,7 +94,7 @@
       <app-month-grid
         [days]="days()"
         [weekdayLabels]="weekdayLabels()"
-        [occurrencesByDate]="occurrencesByDate()"
+        [occurrencesByDate]="happeningByDate()"
         [today]="today"
         (daySelected)="onMonthDaySelected($event)"
       />
@@ -111,8 +116,11 @@
                 @for (entry of groupedOccurrencesFor(day.date); track entry.itemId) {
                   @if (isRun(entry)) {
                     @let run = entry;
+                    @let runSkipped = run.subtasks[0].isSkipped;
+                    @let runSkipKey = skipKeyFor(run.itemId, day.date);
                     <li
                       class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm"
+                      [class.opacity-60]="runSkipped"
                     >
                       <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span
@@ -120,14 +128,55 @@
                           [style.background-color]="run.color"
                         ></span>
                         <span class="text-lg leading-none">{{ run.icon }}</span>
-                        <span class="font-semibold">{{ run.parentTitle }}</span>
+                        <span class="font-semibold" [class.line-through]="runSkipped">{{
+                          run.parentTitle
+                        }}</span>
                         <span class="text-xs text-slate-400">{{ run.calendarName }}</span>
 
                         <div class="ml-auto flex items-center gap-2">
-                          @if (confirmingDeleteItemId() === run.itemId) {
+                          @if (runSkipped) {
+                            <span
+                              class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400"
+                              >{{ 'calendar.agenda.skip.skippedLabel' | translate }}</span
+                            >
+                            <button
+                              type="button"
+                              class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                              [disabled]="skipping.isBusy(runSkipKey)"
+                              (click)="setSkipped(run, day.date, false)"
+                            >
+                              {{ 'calendar.agenda.skip.restoreButton' | translate }}
+                            </button>
+                          } @else if (confirmingSkipKey() === runSkipKey) {
                             <span
                               class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
-                              >{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span
+                              >{{ 'calendar.agenda.skip.confirmPrompt' | translate }}</span
+                            >
+                            <button
+                              type="button"
+                              class="rounded-lg bg-slate-700 dark:bg-slate-200 px-2.5 py-1 text-xs font-semibold text-white dark:text-slate-900 transition hover:bg-slate-600 dark:hover:bg-white disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                              [disabled]="skipping.isBusy(runSkipKey)"
+                              (click)="setSkipped(run, day.date, true)"
+                            >
+                              {{ 'calendar.agenda.skip.confirmButton' | translate }}
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                              [disabled]="skipping.isBusy(runSkipKey)"
+                              (click)="cancelSkip()"
+                            >
+                              {{ 'calendar.agenda.skip.cancelButton' | translate }}
+                            </button>
+                          } @else if (confirmingDeleteItemId() === run.itemId) {
+                            <span
+                              class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
+                              >{{
+                                (run.subtasks[0].isRepeating
+                                  ? 'calendar.agenda.delete.confirmSeriesPrompt'
+                                  : 'calendar.agenda.delete.confirmPrompt'
+                                ) | translate
+                              }}</span
                             >
                             <button
                               type="button"
@@ -146,6 +195,15 @@
                               {{ 'calendar.agenda.delete.cancelButton' | translate }}
                             </button>
                           } @else {
+                            @if (run.subtasks[0].isRepeating) {
+                              <button
+                                type="button"
+                                class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                                (click)="requestSkip(run.itemId, day.date)"
+                              >
+                                {{ 'calendar.agenda.skip.button' | translate }}
+                              </button>
+                            }
                             <button
                               type="button"
                               class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
@@ -161,17 +219,19 @@
                       >
                         @for (subtask of run.subtasks; track keyFor(subtask)) {
                           <li class="flex items-center gap-3">
-                            <app-toggle
-                              [checked]="subtask.isCompleted"
-                              [disabled]="
-                                savingTask.isBusy(keyFor(subtask)) ||
-                                (!subtask.isCompleted && !canCompleteTask(subtask))
-                              "
-                              [ariaLabel]="'calendar.agenda.completeTaskLabel' | translate"
-                              (checkedChange)="toggleTaskCompletion(subtask)"
-                            />
+                            @if (!runSkipped) {
+                              <app-toggle
+                                [checked]="subtask.isCompleted"
+                                [disabled]="
+                                  savingTask.isBusy(keyFor(subtask)) ||
+                                  (!subtask.isCompleted && !canCompleteTask(subtask))
+                                "
+                                [ariaLabel]="'calendar.agenda.completeTaskLabel' | translate"
+                                (checkedChange)="toggleTaskCompletion(subtask)"
+                              />
+                            }
                             <span class="text-sm leading-none">{{ subtask.icon }}</span>
-                            <span [class.line-through]="subtask.isCompleted">{{
+                            <span [class.line-through]="subtask.isCompleted || runSkipped">{{
                               subtask.title
                             }}</span>
                             @if (subtask.timing.kind === 0) {
@@ -188,8 +248,10 @@
                     </li>
                   } @else {
                     @let occurrence = entry;
+                    @let occurrenceSkipKey = skipKeyFor(occurrence.itemId, day.date);
                     <li
                       class="rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm"
+                      [class.opacity-60]="occurrence.isSkipped"
                     >
                       @if (editingItemId() === occurrence.itemId) {
                         <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
@@ -357,7 +419,7 @@
                           ></span>
                           <span class="text-lg leading-none">{{ occurrence.icon }}</span>
 
-                          @if (occurrence.kind === taskKind) {
+                          @if (occurrence.kind === taskKind && !occurrence.isSkipped) {
                             <app-toggle
                               [checked]="occurrence.isCompleted"
                               [disabled]="
@@ -372,7 +434,8 @@
                           <span
                             class="font-medium"
                             [class.line-through]="
-                              occurrence.kind === taskKind && occurrence.isCompleted
+                              occurrence.isSkipped ||
+                              (occurrence.kind === taskKind && occurrence.isCompleted)
                             "
                           >
                             {{ occurrence.title }}
@@ -386,10 +449,49 @@
                           }
 
                           <div class="ml-auto flex items-center gap-2">
-                            @if (confirmingDeleteItemId() === occurrence.itemId) {
+                            @if (occurrence.isSkipped) {
+                              <span
+                                class="whitespace-nowrap text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                >{{ 'calendar.agenda.skip.skippedLabel' | translate }}</span
+                              >
+                              <button
+                                type="button"
+                                class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                                [disabled]="skipping.isBusy(occurrenceSkipKey)"
+                                (click)="setSkipped(occurrence, day.date, false)"
+                              >
+                                {{ 'calendar.agenda.skip.restoreButton' | translate }}
+                              </button>
+                            } @else if (confirmingSkipKey() === occurrenceSkipKey) {
                               <span
                                 class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
-                                >{{ 'calendar.agenda.delete.confirmPrompt' | translate }}</span
+                                >{{ 'calendar.agenda.skip.confirmPrompt' | translate }}</span
+                              >
+                              <button
+                                type="button"
+                                class="rounded-lg bg-slate-700 dark:bg-slate-200 px-2.5 py-1 text-xs font-semibold text-white dark:text-slate-900 transition hover:bg-slate-600 dark:hover:bg-white disabled:opacity-50 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                                [disabled]="skipping.isBusy(occurrenceSkipKey)"
+                                (click)="setSkipped(occurrence, day.date, true)"
+                              >
+                                {{ 'calendar.agenda.skip.confirmButton' | translate }}
+                              </button>
+                              <button
+                                type="button"
+                                class="rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 transition hover:border-slate-400 dark:hover:border-slate-500 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                                [disabled]="skipping.isBusy(occurrenceSkipKey)"
+                                (click)="cancelSkip()"
+                              >
+                                {{ 'calendar.agenda.skip.cancelButton' | translate }}
+                              </button>
+                            } @else if (confirmingDeleteItemId() === occurrence.itemId) {
+                              <span
+                                class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
+                                >{{
+                                  (occurrence.isRepeating
+                                    ? 'calendar.agenda.delete.confirmSeriesPrompt'
+                                    : 'calendar.agenda.delete.confirmPrompt'
+                                  ) | translate
+                                }}</span
                               >
                               <button
                                 type="button"
@@ -435,6 +537,15 @@
                               >
                                 {{ 'calendar.agenda.edit.button' | translate }}
                               </button>
+                              @if (occurrence.isRepeating) {
+                                <button
+                                  type="button"
+                                  class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"
+                                  (click)="requestSkip(occurrence.itemId, day.date)"
+                                >
+                                  {{ 'calendar.agenda.skip.button' | translate }}
+                                </button>
+                              }
                               <button
                                 type="button"
                                 class="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400 pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5"

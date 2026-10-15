@@ -36,6 +36,8 @@ describe('ChildWarningFeed', () => {
     endsAt: '2026-10-13T15:30:00Z',
     isAllDay: false,
     isCompleted: false,
+    isSkipped: false,
+    isRepeating: false,
     createdBy: 'g',
     lastModifiedBy: 'g',
     assignedTo: null,

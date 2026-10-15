@@ -1,6 +1,11 @@
 # Skipping Single Occurrences
 
-Status: Proposed (not yet implemented)
+Status: Implemented. `OccurrenceSkipChanged` and `CalendarItem.SkippedDates`, the
+`SetOccurrenceSkip` slice (`PATCH /calendars/{calendarId}/items/{itemId}/skip`), skipped dates
+dropped in `CalendarOccurrenceExpansion` (so from every screen, the iCal feed and the meal plan
+assistant), `includeSkipped` plus `isSkipped`/`isRepeating` on `GET .../occurrences`, a refusal to
+complete a skipped occurrence, and "Skip day"/"Restore" in the guardian agenda. No deploy step
+is needed (see "Existing snapshots").
 
 ## Context
 
@@ -133,10 +138,15 @@ deserialize to `null`, and the next `OccurrenceSkipChanged` applied to that row 
 Today's read paths only touch the snapshot for the personal-data export (`IsDeleted`), but the
 inline projection runs on every append. So:
 
-- **Deploy step:** rebuild the calendar item snapshots once
+- **The fold treats a missing set as empty** (`item.SkippedDates ?? []` in the
+  `OccurrenceSkipChanged` arm), so the first skip on an old row works without any deploy step.
+  This was planned as a mandatory rebuild at deploy; review found that one missed manual step
+  would make every skip on an existing item a 500, so the code tolerates it instead
+  (`CalendarItemSnapshotTests` covers an old row).
+- **Optional:** rebuild the calendar item snapshots once
   (`task db:snapshots:rebuild STORE=marten://icalendarsstore/`, see
   [event-stream-snapshots.md, Backfilling existing streams](event-stream-snapshots.md#backfilling-existing-streams)),
-  with the API stopped.
+  with the API stopped, so no row carries a `null` set at all.
 - No upcaster is needed. No existing event changes shape, so existing golden files stay as they
   are. New golden file: `OccurrenceSkipChanged.json`.
 
@@ -225,6 +235,10 @@ repeating item.**
 - **`CalendarItemOccurrence` gains `bool IsSkipped`.** It is always `false` unless the caller
   opted in. That is one new field on the wire type and in `buddy-api.ts` (regenerated with
   `task docs:openapi`).
+- **And `bool IsRepeating`** (added during implementation). The agenda only offers "Skip day" on
+  an occurrence of a repeating item, and occurrences carried nothing that told it which ones
+  were. One flag from `item.Recurrence is Recurrence.Repeating` in the expansion was cheaper
+  than having the agenda load every item next to the occurrences.
 
 ## Command slices (`Features/Calendars/`, same vertical-slice shape as `SetTaskCompletion`)
 
@@ -253,16 +267,16 @@ on another calendar). Add a `Calendars.http` entry and a row to the endpoint tab
   `listOccurrences`/`listOccurrencesInRange`.
 - **Guardian agenda
   ([agenda.html](../../../src/frontend/buddy/src/app/features/guardian/calendar/agenda/agenda.html)):**
-  every occurrence (and task run) of a repeating item gets a "Skip this day" action next to
-  Delete, with the same inline confirm pattern (`confirmingDeleteItemId` becomes a sibling
-  `confirmingSkipKey` keyed by item and date). A skipped occurrence stays in its day, muted and
-  struck through, with a "Skipped" label and a "Restore" button. Its completion toggles and edit
-  form are hidden.
-  The Delete confirm on a repeating item says it deletes every occurrence and points to Skip.
+  every occurrence (and task run) of a repeating item (`isRepeating`) gets a "Skip day" action
+  next to Delete, with the same inline confirm pattern (a sibling `confirmingSkipKey` keyed by
+  item and agenda day). A skipped occurrence stays in its day, muted and struck through, with a
+  "Skipped" label and a "Restore" button; its completion toggles, Edit, Skip and Delete are
+  hidden. The month grid counts only occurrences that still happen (`happeningByDate`).
+  The Delete confirm on a repeating item asks "Delete every day of this?".
 - **Child screens:** no change. Skipped occurrences never reach them.
-- **i18n:** `calendar.agenda.skip.{button,confirmPrompt,confirmButton,cancelButton,skippedLabel,restoreButton}`
-  and a reworded `calendar.agenda.delete.confirmPrompt` for repeating items, in
-  `translations/{en,da}/calendar.ts` (Danish: "Spring over denne dag", "Sprunget over", "Gendan").
+- **i18n:** `calendar.agenda.skip.{button,confirmPrompt,confirmButton,cancelButton,skippedLabel,restoreButton,error,restoreError}`
+  and `calendar.agenda.delete.confirmSeriesPrompt`, in `translations/{en,da}/calendar.ts`
+  (Danish: "Spring dag over", "Sprunget over", "Gendan").
 - **Screenshots:** the agenda changes visibly. Seed one skipped occurrence in `demo-family.ts` so
   the agenda screenshot shows the muted row, and run `task docs:screenshots`.
 
@@ -276,13 +290,18 @@ on another calendar). Add a `Calendars.http` entry and a row to the endpoint tab
   `includeSkipped=true`. This covers an event, a plain task and a template-scheduled task (every
   subtask of the day is dropped). Restoring brings back an earlier completion.
 - `GetIcalFeedTests`: a skipped occurrence has no `VEVENT`/`VTODO`.
-- `RecurrenceRules`: an `until` check ignores skips.
+- `RecurrenceRules`: an `until` check ignores skips. No test of its own: the rule only sees the
+  `Recurrence`, never the item's `SkippedDates`.
+- `CalendarOccurrenceExpansionTests`: a skipped day drops every subtask of that day's run, and
+  only that day; with `includeSkipped` it comes back flagged.
 - Event shape golden file and `CalendarItemSnapshotTests` (skip then restore, equivalence with a
   full replay).
 - Frontend: service spec (URL, body, `includeSkipped` param), agenda spec (skip confirm flow,
   muted row, restore, no skip action on a one-off item).
-- e2e: a guardian creates a weekly item, skips one week, and the child's home screen no longer
-  shows it that day. The guardian then restores it.
+- e2e (`calendar-skip-occurrence.spec.ts`): a guardian creates a daily task, skips today in the
+  agenda, and the dashboard's tasks-today widget no longer shows it; restoring brings it back. A
+  child can't log in through the UI in e2e, so the dashboard stands in for the child's screens
+  (both list occurrences without `includeSkipped`).
 
 ## Failure and edge-case behavior
 
@@ -290,7 +309,7 @@ on another calendar). Add a `Calendars.http` entry and a row to the endpoint tab
 |---|---|
 | Skip an already skipped date / restore one that isn't skipped | Idempotent no-op (`Success`, no event) |
 | Skip a date the rule doesn't produce | `400`; restoring such a date is allowed |
-| Skip on a one-off item | `400`; use delete |
+| Skip on a one-off item | `400`; use delete (restoring is still allowed, see below) |
 | Rule edited so that a skipped date no longer occurs | The skip stays in the stream and matches nothing; it applies again if the rule produces the date again |
 | Item rescheduled to another time of day | Skips keep applying (keyed by date) |
 | Item rescheduled so the seed date moves (series shifts) | Old skips are orphaned; the guardian skips the new dates again. Called out in the open questions |
@@ -300,13 +319,14 @@ on another calendar). Add a `Calendars.http` entry and a row to the endpoint tab
 | Mark a skipped occurrence complete | `SetTaskCompletion` rejects it with `400` ("This occurrence is skipped."), the same as a packing-list item that isn't on that day. Un-completing stays allowed |
 | Item deleted | Skips go with it (`IsDeleted` filters the whole item) |
 | Concurrent skip and restore | Last write wins, both kept in history |
-| Existing snapshot rows without `SkippedDates` | Rebuild the calendar item snapshots once at deploy |
+| Existing snapshot rows without `SkippedDates` | The fold treats the missing set as empty; a rebuild is optional |
+| Restore after the item stopped repeating | Allowed: restoring skips both the repeating and the date check, so a skip can never hide a one-off item's only occurrence for good |
 
 ## Estimate
 
 | | |
 |---|---|
-| Complexity | Low to Medium -- one new event and aggregate field, one new route, a query flag through one shared expansion, one changed screen (agenda), a snapshot rebuild at deploy |
+| Complexity | Low to Medium -- one new event and aggregate field, one new route, a query flag through one shared expansion, one changed screen (agenda) |
 | Single developer | 2-3 days |
 | AI agent | 1.5-2.5 hours, plus about 45 minutes of human review |
 
@@ -324,19 +344,13 @@ on another calendar). Add a `Calendars.http` entry and a row to the endpoint tab
 | Undo | Same route with `isSkipped: false`; agenda shows skipped rows via `includeSkipped` |
 | Completion on a skipped day | Kept but hidden; marking complete is refused while skipped |
 | iCal | The occurrence is just omitted |
+| Which occurrences offer Skip | Those with `isRepeating` on the occurrence, added during implementation |
+| Stars for a completed occurrence later skipped | Kept; the skip is about the schedule, not the child. Revoking would be a `RecordStarChange` call from the skip handler, additive later (settled by the user 2026-10-15) |
+| Reason or note on a skip | Not in v1; an optional `Reason` on the event is additive (settled by the user 2026-10-15) |
+| What the child sees on a skipped day | Nothing, the occurrence disappears. A "cancelled" card on the child home would need only `includeSkipped` and frontend work (settled by the user 2026-10-15) |
 
 ## Remaining open questions
 
-- **Stars for a completed occurrence that is later skipped.** Lean: leave the star. It was
-  earned, and the skip is about the schedule, not the child. Revoking it would mean a
-  `RecordStarChange` call from the skip handler, which is additive later.
-- **Reason or note on a skip** ("training cancelled", "ill"). Lean: not in v1. A guardian sees the
-  muted row, and a note would want to reach the child too. An optional `Reason` on the event is
-  additive.
-- **Showing skips to the child** ("No football today") instead of letting the occurrence vanish.
-  For a child with ADHD a silent change can be as unsettling as a missing warning. Lean: not in
-  v1, but worth testing with families. It would use `includeSkipped` on the child home and a new
-  "cancelled" card, with no backend change.
 - **Moving one occurrence** (another time or day, "this one only"). Lean: a separate design. It
   would add an `OccurrenceOverrides` dictionary next to `SkippedDates` with the same date key, and
   the expansion would substitute the override.

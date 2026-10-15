@@ -343,6 +343,10 @@ export class CalendarAgenda {
   protected readonly confirmingDeleteItemId = signal<string | null>(null);
   // Keyed by itemId; its error shows above the agenda list.
   protected readonly deleting = createAction<string>();
+  // Skipping and restoring one day of a repeating item (docs/backend/analysis/skip-occurrences.md).
+  // Keyed by skipKeyFor (item and day); its error shows above the agenda list.
+  protected readonly confirmingSkipKey = signal<string | null>(null);
+  protected readonly skipping = createAction<string>();
 
   protected readonly editingItemId = signal<string | null>(null);
   protected readonly editTitle = signal('');
@@ -387,6 +391,18 @@ export class CalendarAgenda {
     }
 
     return byDate;
+  });
+
+  // The month grid is an overview of what happens, so a skipped day doesn't count there; the day
+  // and week lists keep skipped rows so they can be restored.
+  protected readonly happeningByDate = computed(() => {
+    const happening: Record<string, CalendarOccurrence[]> = {};
+
+    for (const [date, dayOccurrences] of Object.entries(this.occurrencesByDate())) {
+      happening[date] = dayOccurrences.filter((occurrence) => !occurrence.isSkipped);
+    }
+
+    return happening;
   });
 
   // Checked against the currently displayed `days()`, not every key `occurrencesByDate()` happens
@@ -726,7 +742,53 @@ export class CalendarAgenda {
   protected requestDeleteItem(itemId: string): void {
     this.clearListErrors();
     this.editingItemId.set(null);
+    this.confirmingSkipKey.set(null);
     this.confirmingDeleteItemId.set(itemId);
+  }
+
+  // One day of one item: a single occurrence, or a template-scheduled task's whole run that day.
+  protected skipKeyFor(itemId: string, date: string): string {
+    return `${itemId}|${date}`;
+  }
+
+  protected requestSkip(itemId: string, date: string): void {
+    this.clearListErrors();
+    this.editingItemId.set(null);
+    this.confirmingDeleteItemId.set(null);
+    this.confirmingSkipKey.set(this.skipKeyFor(itemId, date));
+  }
+
+  protected cancelSkip(): void {
+    this.confirmingSkipKey.set(null);
+  }
+
+  // `date` is the agenda day the row is shown under -- the same day a completion toggle sends.
+  protected async setSkipped(
+    entry: Pick<CalendarOccurrence, 'itemId' | 'calendarId'>,
+    date: string,
+    isSkipped: boolean,
+  ): Promise<void> {
+    this.clearListErrors();
+    const key = this.skipKeyFor(entry.itemId, date);
+    const range = this.range();
+    const timeZoneId = this.users.timeZoneId();
+
+    await this.skipping.run(
+      key,
+      async () => {
+        await this.calendars.setOccurrenceSkip(entry.calendarId, entry.itemId, date, isSkipped);
+        this.confirmingSkipKey.set(null);
+        this.patchOccurrences(range, (occurrences) =>
+          occurrences.map((existing) =>
+            existing.itemId === entry.itemId &&
+            toIsoDateInTimeZone(instantFor(existing), timeZoneId) === date
+              ? { ...existing, isSkipped }
+              : existing,
+          ),
+        );
+      },
+      isSkipped ? 'calendar.agenda.skip.error' : 'calendar.agenda.skip.restoreError',
+    );
   }
 
   protected cancelDeleteItem(): void {
@@ -758,6 +820,7 @@ export class CalendarAgenda {
   protected startEditItem(occurrence: CalendarOccurrence): void {
     this.clearListErrors();
     this.confirmingDeleteItemId.set(null);
+    this.confirmingSkipKey.set(null);
     this.savingEdit.clearError();
     this.editingItemId.set(occurrence.itemId);
     this.editingKind.set(occurrence.kind);
@@ -1020,6 +1083,7 @@ export class CalendarAgenda {
   private clearListErrors(): void {
     this.savingTask.clearError();
     this.deleting.clearError();
+    this.skipping.clearError();
   }
 
   // Applies a mutation's result to the shown occurrences, unless the visible range changed while
@@ -1054,7 +1118,8 @@ export class CalendarAgenda {
   private async loadWeek(from: string, to: string): Promise<LoadedWeek> {
     const [myCalendars, occurrences] = await Promise.all([
       this.calendars.listMyCalendars(),
-      this.calendars.listOccurrencesInRange(from, to),
+      // Skipped occurrences too, shown muted with a Restore action.
+      this.calendars.listOccurrencesInRange(from, to, true),
     ]);
 
     return { myCalendars, occurrences };

@@ -91,6 +91,18 @@ public sealed class CalendarItemSnapshotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
 
+        // Skip the first occurrence, then skip and restore the next one -- OccurrenceSkipChanged
+        // both ways (docs/backend/analysis/skip-occurrences.md).
+        foreach (var (date, isSkipped) in new[] { (day, true), (day.AddMonths(2), true), (day.AddMonths(2), false) })
+        {
+            await fixture.Host.Scenario(_ =>
+            {
+                _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+                _.Patch.Json(new { Date = date, IsSkipped = isSkipped }).ToUrl($"/calendars/{calendarId}/items/{task.Id}/skip");
+                _.StatusCodeShouldBeOk();
+            });
+        }
+
         await AssertSnapshotMatchesReplayAsync(task.Id);
 
         var snapshot = await fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>()
@@ -98,6 +110,7 @@ public sealed class CalendarItemSnapshotTests(BuddyApiFixture fixture)
         Assert.Equal(
             new Recurrence.Repeating(RecurrenceFrequency.Monthly, 2, new RecurrenceEnd.On(day.AddDays(90))),
             snapshot!.Recurrence);
+        Assert.Equal([day], snapshot.SkippedDates);
     }
 
     private async Task AssertSnapshotMatchesReplayAsync(Guid itemId)
@@ -111,5 +124,32 @@ public sealed class CalendarItemSnapshotTests(BuddyApiFixture fixture)
         Assert.NotNull(replayed);
         Assert.NotNull(snapshot);
         Assert.Equivalent(replayed, snapshot, strict: true);
+    }
+
+    // A snapshot row written before CalendarItem.SkippedDates existed has no such property and
+    // deserializes it as null. The first skip on that item must still fold onto the row instead of
+    // failing the append (docs/backend/analysis/skip-occurrences.md, "Existing snapshots").
+    [Fact]
+    public async Task A_skip_folds_onto_a_snapshot_row_written_before_skipped_dates_existed()
+    {
+        var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, ownerToken, "Snapshot Skip");
+        var day = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var task = await CalendarTestHelpers.CreateTaskAsync(
+            fixture, ownerToken, calendarId, "Football", day, new RecurrenceRuleRequest(RecurrenceFrequency.Weekly, 1));
+        var id = new CalendarItemId(task!.Id);
+        var items = fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>();
+
+        var current = await items.FindSnapshotAsync(id, CancellationToken.None);
+        await using (var session = fixture.Host.Services.GetRequiredService<ICalendarsStore>().LightweightSession())
+        {
+            session.Store(new CalendarItemSnapshot(task.Id, current! with { SkippedDates = null! }));
+            await session.SaveChangesAsync();
+        }
+
+        await CalendarTestHelpers.SetOccurrenceSkipAsync(fixture, ownerToken, calendarId, task.Id, day, isSkipped: true);
+
+        var snapshot = await items.FindSnapshotAsync(id, CancellationToken.None);
+        Assert.Equal([day], snapshot!.SkippedDates);
     }
 }

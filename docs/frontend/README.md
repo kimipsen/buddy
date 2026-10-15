@@ -135,7 +135,8 @@ The guardian routes currently include:
 - `/guardian/print/sheet/:templateId?start=` — the printable sheet, deliberately outside the
   guardian shell so no navigation ends up on paper
 - `/guardian/calendar` — day, work-week, rolling-week, and month views across every accessible
-  calendar, plus event/task creation
+  calendar, plus event/task creation; "Skip day" on a repeating item's occurrence skips just that
+  day (it stays in the list, muted, with Restore) while every other screen stops showing it
 - `/guardian/task-library` — per-child task template and subtask management: routines and packing
   lists (items with weekdays, the "show the evening before" switch), "Copy to…" a sibling, and the
   child's packing suggestions to approve or decline; `?child=<id>` preselects a child and opens

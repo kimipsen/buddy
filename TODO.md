@@ -2,12 +2,6 @@
 
 ## Open
 
-### Skip single occurrences of repeating appointments and tasks (2026-10-14)
-
-- [ ] Add exclude/skip events for both appointments and tasks, so a guardian can skip one
-      occurrence of a repeating appointment or task on an individual day without changing or
-      ending the series.
-
 ### Tools for families with ADHD and autism (2026-10-11)
 
 Ideas for new features beyond what Buddy already has. The four marked **(start here)** and the
@@ -740,3 +734,10 @@ they reuse data the app already keeps. Each has a design doc.
 
 - [x] **First–Then board.** Pair a non-preferred task with a preferred activity ("first homework,
       then iPad"). See [First–Then board](docs/backend/analysis/first-then-board.md) (2026-10-14).
+
+### Skip single occurrences of repeating appointments and tasks (2026-10-14)
+
+- [x] Add exclude/skip events for both appointments and tasks, so a guardian can skip one
+      occurrence of a repeating appointment or task on an individual day without changing or
+      ending the series. See
+      [skip-occurrences.md](docs/backend/analysis/skip-occurrences.md) (2026-10-15).

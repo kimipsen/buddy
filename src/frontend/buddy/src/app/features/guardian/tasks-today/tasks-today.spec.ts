@@ -43,6 +43,8 @@ describe('TasksToday', () => {
       dueAt: `${today}T00:00:00Z`,
       isAllDay: true,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,

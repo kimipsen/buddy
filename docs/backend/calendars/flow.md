@@ -65,12 +65,13 @@ sequenceDiagram
 | `POST` | `/calendars/{calendarId}/items` | Creates an event or task item. |
 | `POST` | `/calendars/{calendarId}/items/from-template` | Schedules a non-empty, active task template owned by the assignee at a specific time. |
 | `GET` | `/calendars/{calendarId}/items` | Lists items in a calendar. |
-| `GET` | `/calendars/{calendarId}/occurrences` | Recomputes occurrences for a date range; template tasks produce one timed occurrence per current subtask. |
+| `GET` | `/calendars/{calendarId}/occurrences` | Recomputes occurrences for a date range; template tasks produce one timed occurrence per current subtask. Skipped occurrences are left out unless `includeSkipped=true`, which returns them with `isSkipped: true` (the guardian agenda uses it to offer Restore). |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/details` | Updates an item's name, description, or visual metadata. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/schedule` | Reschedules an item or changes time/date placement. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/recurrence` | Updates recurrence settings; `recurrence: null` makes the item one-off again. `400` for an interval below 1, an `until` before the item's first date, or an invalid `weekdays` filter. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/completion` | Marks a plain task occurrence complete or incomplete. A template-scheduled task is rejected (400): it is completed one subtask at a time. Rejects marking a future occurrence complete. |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/subtasks/{subtaskId}/completion` | Marks one subtask of a template-scheduled task occurrence complete or incomplete; each subtask is tracked independently. A plain task is rejected (400); an unknown subtask is 404. Rejects marking a future occurrence complete. |
+| `PATCH` | `/calendars/{calendarId}/items/{itemId}/skip` | Skips (`isSkipped: true`) or restores one occurrence (`date`) of a repeating item without changing the series; a template-scheduled task skips the whole day's run. Contributor tier with no Viewer exception (`403`). `400` for a one-off item, or when skipping a date the rule doesn't produce; restoring any date is allowed. Idempotent. |
 | `DELETE` | `/calendars/{calendarId}/items/{itemId}` | Soft-deletes an item. |
 | `POST` | `/calendars/{calendarId}/ical-tokens` | Creates an iCal feed token. |
 | `GET` | `/calendars/{calendarId}/ical-tokens` | Lists active iCal token metadata. |
@@ -95,6 +96,8 @@ The read model for listing belongs to the calendar index: the API loads calendar
 
 An occurrence's `Timing` is `{ kind: 0, startsAt, endsAt }` for an event and for each subtask of a template-scheduled task, or `{ kind: 1, dueAt }` for a plain task; `SortAt` is the start or due instant, which is what lists sort and date occurrences by. A task-item occurrence expanded from a template carries a `Routine` (`SubtaskId`, `ParentTitle`, `ParentIcon`), so a client can group same-item, same-day subtask occurrences into one visual "task run" without a second lookup. The frontend does exactly this (`task-run.ts`), and keys each run by an `occurrenceKey`/`dateKeyOf` pair that includes the occurrence date, so completing one day's instance of a recurring task only toggles that day.
 
+A guardian can skip one occurrence of a repeating item: `OccurrenceSkipChanged` adds the date to the item's `SkippedDates`, and `CalendarOccurrenceExpansion` drops it for every reader (the agenda, the child's screens, print, transition warnings, the iCal feed and the meal plan assistant). The rule itself is untouched, so a skip survives a recurrence edit and can be restored. A skipped task occurrence can't be marked complete; an earlier completion is kept and shows again after a restore. See [Skipping single occurrences](../analysis/skip-occurrences.md).
+
 ## Authorization model
 
 Calendar access is resolved against the calendar's member list and, where relevant, group-owned calendar policies. In practice, this means the caller must be authorized for the specific calendar before they can create items, update recurrence, or delete calendar content. The feature keeps the permission decision central to the aggregate rather than each endpoint reimplementing the policy.
@@ -111,6 +114,7 @@ Calendar access is resolved against the calendar's member list and, where releva
 - `TaskItemCreated`
 - `TemplateTaskItemCreated`
 - `TaskCompletionChanged`
+- `OccurrenceSkipChanged`
 - `ItemDetailsUpdated`
 - `EventRescheduled`
 - `TaskRescheduled`

@@ -1028,6 +1028,22 @@ export interface paths {
     patch: operations['SetSubtaskCompletion'];
     trace?: never;
   };
+  '/calendars/{calendarId}/items/{itemId}/skip': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['SetOccurrenceSkip'];
+    trace?: never;
+  };
   '/calendars/{calendarId}/items/{itemId}': {
     parameters: {
       query?: never;
@@ -3016,6 +3032,8 @@ export interface components {
       timing: components['schemas']['OccurrenceTiming'];
       isAllDay: boolean;
       isCompleted: boolean;
+      isSkipped: boolean;
+      isRepeating: boolean;
       /** Format: uuid */
       createdBy: string;
       /** Format: uuid */
@@ -3898,6 +3916,12 @@ export interface components {
       givenName: string;
       familyName: string;
     };
+    OccurrenceSkipResponse: {
+      itemId: components['schemas']['CalendarItemId'];
+      /** Format: date */
+      occurrenceDate: string;
+      isSkipped: boolean;
+    };
     /** @description One of 2 cases, picked by the numeric "kind": 0 = Timed, 1 = Due. */
     OccurrenceTiming: components['schemas']['Timed'] | components['schemas']['Due'];
     Off: {
@@ -4268,6 +4292,11 @@ export interface components {
     };
     SetMemberRoleRequest: {
       role: components['schemas']['CalendarRole'];
+    };
+    SetOccurrenceSkipRequest: {
+      /** Format: date */
+      date: string;
+      isSkipped: boolean;
     };
     SetProviderApiKeyRequest: {
       apiKey: string;
@@ -8722,6 +8751,7 @@ export interface operations {
       query: {
         from: string;
         to: string;
+        includeSkipped?: boolean;
       };
       header?: {
         /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
@@ -9113,6 +9143,71 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['TaskCompletionResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SetOccurrenceSkip: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        calendarId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetOccurrenceSkipRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OccurrenceSkipResponse'];
         };
       };
       /** @description Bad Request. ErrorEnvelope code: `validation_error`. */

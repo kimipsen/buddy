@@ -19,9 +19,10 @@ public static class ListOccurrencesEndpoint
             DateOnly to,
             IMessageBus bus,
             HttpContext httpContext,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken,
+            bool includeSkipped = false) =>
         {
-            var query = ListOccurrences.FromClaims(principal, new CalendarId(calendarId), from, to);
+            var query = ListOccurrences.FromClaims(principal, new CalendarId(calendarId), from, to, includeSkipped);
             var result = await bus.InvokeAsync<Result<IReadOnlyCollection<CalendarItemOccurrence>>>(query, cancellationToken);
 
             return result switch

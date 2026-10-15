@@ -177,6 +177,11 @@ public sealed class CalendarEventShapeTests
         "Calendars/TaskCompletionChanged_ForSubtask.json");
 
     [Fact]
+    public void OccurrenceSkipChanged() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new OccurrenceSkipChanged(FixedItemId, new DateOnly(2025, 6, 1), false, true, FixedUserId, FixedInstant),
+        "Calendars/OccurrenceSkipChanged.json");
+
+    [Fact]
     public void ItemDeleted() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new ItemDeleted(FixedItemId, FixedUserId, FixedInstant),
         "Calendars/ItemDeleted.json");

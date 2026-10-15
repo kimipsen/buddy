@@ -23,6 +23,11 @@ public sealed record CalendarItemOccurrence(
     OccurrenceTiming Timing,
     bool IsAllDay,
     bool IsCompleted,
+    // Only ever true when the caller asked for skipped occurrences (ListOccurrences'
+    // includeSkipped, the guardian agenda); every other read leaves them out entirely.
+    bool IsSkipped,
+    // The item has a repeating rule, so this one occurrence can be skipped on its own.
+    bool IsRepeating,
     Guid CreatedBy,
     Guid LastModifiedBy,
     Guid? AssignedTo,

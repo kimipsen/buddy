@@ -54,6 +54,8 @@ internal sealed record IcalTokenSummaryDto(Guid TokenId, DateTimeOffset IssuedAt
 
 internal sealed record TaskCompletionResponseDto(Guid ItemId, DateOnly OccurrenceDate, bool IsCompleted);
 
+internal sealed record OccurrenceSkipResponseDto(Guid ItemId, DateOnly OccurrenceDate, bool IsSkipped);
+
 internal sealed record CalendarItemOccurrenceDto(
     Guid ItemId,
     CalendarItemKind Kind,
@@ -65,6 +67,8 @@ internal sealed record CalendarItemOccurrenceDto(
     DateTimeOffset SortAt,
     bool IsAllDay,
     bool IsCompleted,
+    bool IsSkipped,
+    bool IsRepeating,
     Guid CreatedBy,
     Guid LastModifiedBy,
     Guid? AssignedTo,

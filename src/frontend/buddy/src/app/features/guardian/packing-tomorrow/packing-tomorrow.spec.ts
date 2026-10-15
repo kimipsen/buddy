@@ -42,6 +42,8 @@ describe('PackingTomorrow', () => {
       color: '#000',
       isAllDay: false,
       isCompleted,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo,

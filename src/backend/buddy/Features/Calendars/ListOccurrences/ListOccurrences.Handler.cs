@@ -46,7 +46,7 @@ public static class ListOccurrencesHandler
             return access.ToDeniedResult<IReadOnlyCollection<CalendarItemOccurrence>>();
         }
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, calendar.Icon, query.From, query.To, items, templates, cancellationToken);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(query.CalendarId, calendar.TimeZoneId, calendar.Icon, query.From, query.To, items, templates, query.IncludeSkipped, cancellationToken);
 
         if (await ChildVisibility.IsChildAsync(userId, guardians, cancellationToken))
         {
