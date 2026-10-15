@@ -362,7 +362,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       end: string,
       recurrence: unknown = null,
     ) =>
-      api.post(`/calendars/${calendarId}/items`, {
+      api.post<Named>(`/calendars/${calendarId}/items`, {
         title,
         icon,
         color,
@@ -386,7 +386,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       '17:30:00',
       weekly,
     );
-    await event(
+    const swimming = await event(
       school.id,
       'Swimming',
       '🏊',
@@ -396,6 +396,17 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       '16:30:00',
       weekly,
     );
+
+    // This week's swimming is cancelled (docs/backend/analysis/skip-occurrences.md), so the agenda
+    // shows a muted "Skipped" row with Restore. Optional, like the extras below.
+    try {
+      await api.patch(`/calendars/${school.id}/items/${swimming.id}/skip`, {
+        date: nextWeekday(4),
+        isSkipped: true,
+      });
+    } catch (error) {
+      warn(error);
+    }
     await event(family.id, 'Dentist – Emil', '🦷', '#f43f5e', todayIso, '14:00:00', '14:45:00');
     await event(family.id, 'Grandma visits', '👵', '#f59e0b', inDays(2), '11:00:00', '15:00:00');
     await event(
