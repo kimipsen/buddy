@@ -23,6 +23,8 @@ in real time.
 
 ### Guardian
 
+- [ ] Per-item alarms (VALARM) in the calendar iCal feed, for subscribing calendar apps
+      (proposed, not yet implemented — see [Calendar item alarms](docs/backend/analysis/calendar-item-alarms.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
