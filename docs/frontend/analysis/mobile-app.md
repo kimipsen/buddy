@@ -383,37 +383,29 @@ and every store route ties the app to one domain and one signing identity:
 
 ## Decisions made
 
-| Question                   | Decision                                                                                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Approach                   | The existing Angular app as a PWA (user decision in the backend doc); Capacitor stays the iOS fallback                                          |
-| Order                      | Phase 1 installable shell, phase 2 push, phase 3 optional store builds; each ships alone                                                        |
-| Service worker             | `@angular/service-worker`, production builds only, app shell only, no data groups, runtime config never cached                                  |
-| Updates                    | Banner with a reload button; no automatic reload                                                                                                |
-| Offline                    | Shell and an offline banner only                                                                                                                |
-| Session in standalone mode | Tokens stay in `sessionStorage`; realm "Remember me" with 14 days idle / 60 days max; silent `prompt=none` sign-in on launch in standalone mode |
-| Safe areas                 | `viewport-fit=cover`, top inset on both shells; `theme-color` follows Buddy's theme                                                             |
-| Install guidance           | Help topic for every platform, "Install app" in the guardian menu where a prompt exists, nothing for the child, no banner                       |
-| App stores                 | None in phases 1-2; Android TWA on request; iOS only through Capacitor/TestFlight if Web Push fails                                             |
+| Question                                        | Decision                                                                                                                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Approach                                        | The existing Angular app as a PWA (user decision in the backend doc); Capacitor stays the iOS fallback                                                             |
+| Order                                           | Phase 1 installable shell, phase 2 push, phase 3 optional store builds; each ships alone                                                                           |
+| Service worker                                  | `@angular/service-worker`, production builds only, app shell only, no data groups, runtime config never cached                                                     |
+| Updates                                         | Banner with a reload button; no automatic reload                                                                                                                   |
+| Offline                                         | Shell and an offline banner only                                                                                                                                   |
+| Session in standalone mode                      | Tokens stay in `sessionStorage`; realm "Remember me" with 14 days idle / 60 days max; silent `prompt=none` sign-in on launch in standalone mode                    |
+| Safe areas                                      | `viewport-fit=cover`, top inset on both shells; `theme-color` follows Buddy's theme                                                                                |
+| Install guidance                                | Help topic for every platform, "Install app" in the guardian menu where a prompt exists, nothing for the child, no banner                                          |
+| App stores                                      | None in phases 1-2; Android TWA on request; iOS only through Capacitor/TestFlight if Web Push fails                                                                |
+| iOS session fallback (user, 2026-10-15)         | If the device test shows the Keycloak cookie doesn't survive, keep the refresh token in `localStorage` in standalone mode only; browser tabs keep `sessionStorage` |
+| Remembered-session lifetimes (user, 2026-10-15) | 14 days idle, 60 days max; a "sign out everywhere" button would be additive                                                                                        |
+| App icon (user, 2026-10-15)                     | Emerald tile with a white "B", as in the header, exported at each size; a designed logo can replace it without code changes                                        |
+| Production realm settings (user, 2026-10-15)    | Documented in step 5 of `deploy/README.md`; scripting the realm import is a separate change                                                                        |
+| Android TWA (user, 2026-10-15)                  | Only when a family asks for a Play Store listing; needs `assetlinks.json` and a Bubblewrap build, no app changes                                                   |
+| Install step in onboarding (user, 2026-10-15)   | Added to the onboarding checklist after phase 2, when push makes installing worth more                                                                             |
 
 ## Remaining open questions
 
-- **Does the Keycloak cookie survive in an iOS standalone app?** Needs a device test before phase
-  1 is called done (the backend doc lists the same question). If it doesn't, the fallback is a
-  refresh token in `localStorage` in standalone mode only, with the trade-off written up then.
-- **Remembered-session lifetimes.** Lean: 14 days idle, 60 days max. Shorter limits mean a child
-  re-enters a password more often; longer ones keep a lost iPad signed in longer. A guardian can
-  end a child's sessions in the Keycloak admin console today; a "sign out everywhere" button in
-  Buddy would be additive.
-- **App icon.** There's no logo asset, only the "B" tile drawn in CSS. Lean: an emerald tile with
-  a white "B", the same as the header, exported at each size. A designed logo can replace it
-  later without code changes.
-- **Should the production realm settings be scripted?** Today step 5 of `deploy/README.md` copies
-  the realm by hand. Lean: document the five settings in that step for now. A realm import at
-  deploy time is a separate change.
-- **Android TWA.** Lean: not built until a family asks for a Play Store listing. Adding it later
-  means a `assetlinks.json` and a Bubblewrap build, with no app changes.
-- **Install step in onboarding.** Lean: not in phase 1; add it to the onboarding checklist once
-  phase 2 makes installing worth more (push needs it on iOS).
+- **Does the Keycloak cookie survive in an iOS standalone app?** No longer a design question (the
+  fallback is decided above), but it needs a device test before phase 1 is called done. The
+  backend doc lists the same check.
 
 ## Diagram
 
