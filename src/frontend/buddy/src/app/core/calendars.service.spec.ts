@@ -466,6 +466,22 @@ describe('CalendarsService', () => {
 
       await expect(promise).resolves.toEqual(updated);
     });
+
+    it('invalidates the today-occurrences cache', async () => {
+      const firstToday = service.listTodayOccurrences();
+      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([]);
+      await firstToday;
+
+      const promise = service.updateItemAlarms('cal-1', 'event-1', { alarms: [] });
+      httpMock
+        .expectOne(`${apiBaseUrl}/calendars/cal-1/items/event-1/alarms`)
+        .flush({} as CalendarItemResponse);
+      await promise;
+
+      const afterUpdate = service.listTodayOccurrences();
+      httpMock.expectOne(`${apiBaseUrl}/calendars`).flush([]);
+      await expect(afterUpdate).resolves.toEqual([]);
+    });
   });
 
   describe('updateItemDetails', () => {

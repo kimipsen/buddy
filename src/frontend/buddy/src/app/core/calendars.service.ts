@@ -234,12 +234,15 @@ export class CalendarsService {
     itemId: string,
     request: UpdateItemAlarmsRequest,
   ): Promise<CalendarItemResponse> {
-    return firstValueFrom(
+    const updated = await firstValueFrom(
       this.http.patch<CalendarItemResponse>(
         `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/alarms`,
         request,
       ),
     );
+    // Cached today occurrences carry the alarms too.
+    this.todayCache = null;
+    return updated;
   }
 
   async rescheduleItem(

@@ -1,6 +1,11 @@
 # Calendar Item Alarms
 
-Status: Implemented
+Status: Implemented. `ItemAlarms` on `CalendarItem` (`Types/ItemAlarms.cs`, rules in
+`ItemAlarmRules.cs`), the `ItemAlarmsUpdated` event and the `UpdateItemAlarms` slice
+(`PATCH /calendars/{calendarId}/items/{itemId}/alarms`), an optional `Alarms` on `CreateItem`,
+`ScheduleTaskFromTemplate` and their three creation events, `alarms` on `CalendarItemResponse` and
+`CalendarItemOccurrence`, `VALARM`s in `IcalFeedWriter`, and the `alarm-picker` preset chips in
+the guardian agenda's create, edit and schedule-from-template forms with a bell on agenda rows.
 
 ## Context
 
@@ -157,10 +162,15 @@ foreach (var offset in occurrence.Alarms)
     {
         Action = AlarmAction.Display,
         Description = occurrence.Title, // required for DISPLAY by RFC 5545
-        Trigger = new Trigger(Duration.FromMinutes(offset)),
+        Trigger = new Trigger(ToDuration(offset)),
     });
 }
 ```
+
+As built, `ToDuration` splits the offset into nominal days, hours and minutes with the offset's
+sign (`new Duration(days:, hours:, minutes:)`), so `-1440` is written `-P1D`, `-2340` `-P1DT15H`
+and `+540` `PT9H`; Ical.Net writes a zero offset as `P0D`. `Duration.FromMinutes` compiled too,
+but writes everything in minutes (`PT540M`), which is valid but harder to read.
 
 ```
 BEGIN:VALARM
@@ -170,7 +180,8 @@ TRIGGER:-PT2H
 END:VALARM
 ```
 
-- `CalendarItemOccurrence` gains `ImmutableArray<int> Alarms` (empty when none), set in the three
+- `CalendarItemOccurrence` gains `ImmutableArray<int> Alarms` (empty when none; for a routine,
+  only the first subtask occurrence of each run carries them, see Question 4), set in the three
   `new CalendarItemOccurrence(...)` calls in
   [`CalendarOccurrenceExpansion.cs`](../../../src/backend/buddy/Features/Calendars/CalendarOccurrenceExpansion.cs)
   (lines 81, 97, 133) from `item.Alarms`. The feed, the agenda edit form and `ListOccurrences` all
@@ -199,10 +210,16 @@ occurrence isn't written, so it doesn't alert.
 them the alarm would fire one alert per subtask (a six-step morning routine = six alerts). Settled with the
 user; see the decisions table.
 
+As built, `CalendarOccurrenceExpansion` decides this, not the feed writer: the first subtask that
+applies on a run's date gets the item's alarms on its occurrence and the later ones get none. So
+`ListOccurrences` shows the same thing the feed writes, and the agenda puts the bell on the run's
+block.
+
 ## Question 5: who can set alarms, and who sees them?
 
 **Decision: the `Manage` tier on the item's calendar, the same as `UpdateItemRecurrence`
-(`CalendarAuthorization`).** `View` gets `403`. A missing item, or a calendar the user can't see,
+(`CalendarAuthorization`).** In the code that tier is `CalendarAuthorization.CheckContribute`
+(the calendar's Owner and Contributor roles). `View` gets `403`. A missing item, or a calendar the user can't see,
 gets `404`.
 
 - `CalendarItemResponse` gains `alarms: number[]`. `ListOccurrences` returns them on each

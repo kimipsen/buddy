@@ -56,8 +56,6 @@ in real time.
       exceptions
 - [x] Saved babysitters/nannies for pickup and drop-off
 - [x] In-app help: a help panel on every guardian page and a help index, in English and Danish
-- [x] Per-item alarms (VALARM) in the calendar iCal feed, for subscribing calendar apps
-      (see [Calendar item alarms](docs/backend/analysis/calendar-item-alarms.md))
 - [x] House rules for a household (group) and for each child, written in markdown, which
       children read and acknowledge, and which print on A4 for the fridge
 - [x] Calling names: a guardian can choose what their children call them ("Mom", "Far"), shown
@@ -72,6 +70,8 @@ in real time.
 - [x] Skip one occurrence of a repeating appointment or task on a single day, without changing
       or ending the series, and restore it again — see
       [Skipping single occurrences](docs/backend/analysis/skip-occurrences.md)
+- [x] Per-item alarms (VALARM) in the calendar iCal feed, for subscribing calendar apps
+      (see [Calendar item alarms](docs/backend/analysis/calendar-item-alarms.md))
 
 ### Child
 

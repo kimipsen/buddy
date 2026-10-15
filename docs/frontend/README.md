@@ -77,6 +77,9 @@ Current responsibilities:
   with a doctor through a revocable, optionally expiring link
 - browse day, work-week, rolling-week, and month calendar views and create events/tasks across
   every calendar they can contribute to, personal or group-owned
+- set up to three alarms per calendar item with preset chips (`alarm-picker` in the agenda's
+  create, edit and schedule-from-template forms); subscribed calendar apps get them as `VALARM`s,
+  and agenda rows with alarms show a bell
 - create, edit, and archive per-child task templates and their timed subtasks, and schedule them
   onto a calendar from the agenda's create-task form
 - manage calendars, groups, children, and the current profile from the admin area
@@ -220,7 +223,7 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   endpoints (list/set/remove provider keys, test a connection, acknowledge data
   sharing, start a session, send a chat message, apply or discard the draft)
 - `CalendarsService` lists accessible calendars and occurrences and manages
-  calendar items and task completion
+  calendar items (including their alarms, `updateItemAlarms`) and task completion
 - `GroupsService` manages group membership, invitations, sharing policies, and
   group deletion
 - `GuardiansService` calls the backend guardian endpoints, including deleting a child and the
@@ -434,6 +437,8 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
   seven-day child calendar
 - [Guardian calendar views](analysis/guardian-full-calendar-views.md) — implemented day,
   work-week, rolling-week, and month navigation
+- [Calendar item alarms](../backend/analysis/calendar-item-alarms.md) — implemented alarm preset
+  chips in the agenda forms, the agenda bell, and `VALARM`s in the iCal feed
 - [Child progress and rewards](analysis/child-progress-and-rewards.md) — implemented progress
   summary, guardian-configurable goal posts, and reward redemption (see
   [Reward redemption](../backend/analysis/reward-redemption.md))
