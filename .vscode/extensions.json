@@ -1,13 +1,15 @@
 {
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=827846
   "recommendations": [
-    "angular.ng-template",
     "openai.chatgpt",
     "Anthropic.claude-code",
     "GitHub.copilot-chat",
+    "angular.ng-template",
     "ms-playwright.playwright",
     "kimdim.kimdim-angular-test-explorer",
     "ms-vscode.vscode-typescript-next",
     "EditorConfig.EditorConfig",
+		"SonarSource.sonarlint-vscode",
+		"humao.rest-client"
   ]
 }

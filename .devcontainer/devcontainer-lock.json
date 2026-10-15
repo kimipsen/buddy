@@ -62,11 +62,6 @@
       "version": "1.1.0",
       "resolved": "ghcr.io/rosstaco/devcontainer-features/copilot-persistence@sha256:6dd5cd9b007544b542d8aa71c09e5076ac0b81cae293ba59a8fb78c26119a610",
       "integrity": "sha256:6dd5cd9b007544b542d8aa71c09e5076ac0b81cae293ba59a8fb78c26119a610"
-    },
-    "ghcr.io/sliekens/devcontainer-features/codex:1": {
-      "version": "1.1.3",
-      "resolved": "ghcr.io/sliekens/devcontainer-features/codex@sha256:7e2561aa5b65df74ca6b0f57a6094346167fc2aead75fdd7e4c6b7ca45da45d2",
-      "integrity": "sha256:7e2561aa5b65df74ca6b0f57a6094346167fc2aead75fdd7e4c6b7ca45da45d2"
     }
   }
 }

@@ -13,7 +13,6 @@
 		"ghcr.io/dotnet/aspire-devcontainer-feature/dotnetaspire:1": {},
 		"ghcr.io/devcontainers-extra/features/claude-code:2": {},
 		// "ghcr.io/devcontainer-config/features/dot-config:4": {},
-		"ghcr.io/sliekens/devcontainer-features/codex:1": {},
 		"ghcr.io/rosstaco/devcontainer-features/copilot-persistence:1": {},
 		"ghcr.io/devcontainers/features/node:2": {
 			"version": "lts",
@@ -26,12 +25,7 @@
 		"ghcr.io/devcontainers/features/azure-cli:1": {}
 	},
 	"customizations": {
-		"vscode": {
-			"extensions": [
-				"SonarSource.sonarlint-vscode",
-				"humao.rest-client"
-			]
-		}
+		"vscode": {}
 	},
 	"forwardPorts": [4300, 5193, 7076]
 	// Features to add to the dev container. More info: https://containers.dev/features.
