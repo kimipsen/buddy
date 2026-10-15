@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Shower</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 15 H65 Q73 15 73 23 V26" fill="#E5E7EB"/>
+    <path d="M65 29 Q73 20 81 29 V33 H65 Z" fill="#E5E7EB"/>
+    <path d="M67 40 L65 46 M75 40 L74 47 M82 40 L81 47 M66 54 L64 60 M79 55 L78 61" fill="none" stroke-width="3"/>
+    <path d="M40 45 Q32 46 31 55 L28 67 M51 45 Q58 49 59 59" fill="#F2C094"/>
+    <path d="M38 44 H51 L55 66 L50 68 V81 H42 V68 L36 66 Z" fill="#F2C094"/>
+    <circle cx="44" cy="31" r="13" fill="#F2C094"/>
+    <path d="M31 30 Q30 18 43 18 Q56 18 57 29 Q49 29 42 24 Q38 30 31 30 Z" fill="#7C4A2D"/>
+    <circle cx="41" cy="32" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="51" cy="32" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M43 38 Q46 41 50 38" fill="none" stroke-width="3"/>
+    <path d="M33 84 H60 M71 69 L69 76 M20 53 L19 60" fill="none" stroke-width="3"/>
+  </g>
+</svg>

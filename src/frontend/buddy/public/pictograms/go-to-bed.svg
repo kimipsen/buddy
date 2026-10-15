@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Go to bed</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="73" cy="24" r="10" fill="#93C5FD"/>
+    <path d="M76 15 Q67 23 77 30 Q66 33 64 24 Q63 17 70 15 Z" fill="#FACC15"/>
+    <rect x="14" y="52" width="68" height="24" rx="4" fill="#FFFFFF"/>
+    <rect x="18" y="53" width="29" height="20" rx="6" fill="#FFFFFF"/>
+    <g transform="rotate(-90 34 60)">
+    <circle cx="34" cy="60" r="13" fill="#F2C094"/>
+    <path d="M21 59 Q20 47 33 47 Q46 47 47 58 Q39 58 32 53 Q28 59 21 59 Z" fill="#7C4A2D"/>
+    <path d="M27 61 Q30 64 33 61 M37 61 Q40 64 43 61" fill="none" stroke-width="3"/>
+    <path d="M33 67 Q36 70 40 67" fill="none" stroke-width="3"/>
+    </g>
+    <path d="M48 51 Q62 48 80 54 V77 H47 Z" fill="#3B82F6"/>
+    <line x1="14" y1="48" x2="14" y2="82"/>
+    <line x1="82" y1="56" x2="82" y2="82"/>
+  </g>
+</svg>

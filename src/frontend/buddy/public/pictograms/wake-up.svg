@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Wake up</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="65" y="14" width="17" height="24" rx="4" fill="#93C5FD"/>
+    <circle cx="73.5" cy="23" r="5" fill="#FACC15"/>
+    <line x1="65" y1="30" x2="82" y2="30" stroke-width="3"/>
+    <path d="M35 49 L23 41 L19 33" fill="#F2C094"/>
+    <circle cx="19" cy="31" r="4" fill="#F2C094"/>
+    <path d="M57 49 L64 41 L65 35" fill="#F2C094"/>
+    <circle cx="65" cy="34" r="4" fill="#F2C094"/>
+    <path d="M42 44 Q34 44 33 53 L31 65 H61 L58 51 Q57 44 50 44 Z" fill="#3B82F6"/>
+    <circle cx="46" cy="31" r="13" fill="#F2C094"/>
+    <path d="M33 30 Q32 18 45 18 Q58 18 59 29 Q51 29 44 24 Q40 30 33 30 Z" fill="#7C4A2D"/>
+    <circle cx="43" cy="32" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="53" cy="32" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M45 38 Q48 41 52 38" fill="none" stroke-width="3"/>
+    <rect x="14" y="61" width="68" height="17" rx="4" fill="#FFFFFF"/>
+    <path d="M37 62 H82 V78 H37 Z" fill="#3B82F6"/>
+    <line x1="14" y1="55" x2="14" y2="82"/>
+    <line x1="82" y1="64" x2="82" y2="82"/>
+  </g>
+</svg>

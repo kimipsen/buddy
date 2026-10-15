@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Bath</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M34 45 Q47 38 60 45 L65 62 H29 Z" fill="#F2C094"/>
+    <circle cx="47" cy="31" r="13" fill="#F2C094"/>
+    <path d="M34 30 Q33 18 46 18 Q59 18 60 29 Q52 29 45 24 Q41 30 34 30 Z" fill="#7C4A2D"/>
+    <circle cx="44" cy="32" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="54" cy="32" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M46 38 Q49 41 53 38" fill="none" stroke-width="3"/>
+    <circle cx="29" cy="56" r="7" fill="#FFFFFF"/>
+    <circle cx="40" cy="55" r="8" fill="#FFFFFF"/>
+    <circle cx="54" cy="56" r="6" fill="#FFFFFF"/>
+    <circle cx="64" cy="53" r="8" fill="#FFFFFF"/>
+    <circle cx="72" cy="59" r="5" fill="#FFFFFF"/>
+    <path d="M17 62 H79 L75 73 Q72 80 64 80 H32 Q24 80 21 73 Z" fill="#FFFFFF"/>
+    <rect x="14" y="59" width="68" height="8" rx="4" fill="#93C5FD"/>
+    <line x1="29" y1="80" x2="27" y2="83"/>
+    <line x1="67" y1="80" x2="69" y2="83"/>
+    <circle cx="71" cy="39" r="4" fill="#FFFFFF"/>
+  </g>
+</svg>

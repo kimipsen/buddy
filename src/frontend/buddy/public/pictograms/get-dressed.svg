@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Get dressed</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M34 69 H62 V82 H51 V75 H45 V82 H34 Z" fill="#E5E7EB"/>
+    <rect x="35" y="50" width="26" height="22" rx="5" fill="#F2C094"/>
+    <path d="M35 37 L29 23 L18 28 L27 49 L34 46 V61 H62 V46 L69 49 L78 28 L67 23 L61 37 Z" fill="#3B82F6"/>
+    <path d="M35 38 Q35 30 48 30 Q61 30 61 38 Q61 47 48 47 Q35 47 35 38 Z" fill="#1F2937"/>
+    <circle cx="48" cy="29" r="13" fill="#F2C094"/>
+    <path d="M35 28 Q34 16 47 16 Q60 16 61 27 Q53 27 46 22 Q42 28 35 28 Z" fill="#7C4A2D"/>
+    <circle cx="45" cy="30" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="55" cy="30" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M35 30 Q48 37 61 30 L60 42 Q48 51 36 42 Z" fill="#3B82F6"/>
+    <circle cx="23" cy="20" r="5" fill="#F2C094"/>
+    <circle cx="73" cy="20" r="5" fill="#F2C094"/>
+    <path d="M20 29 L28 26 M68 26 L76 29 M39 55 Q48 58 57 55 M15 49 Q14 55 18 59 M81 49 Q82 55 78 59" fill="none" stroke-width="3"/>
+  </g>
+</svg>

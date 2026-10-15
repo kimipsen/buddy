@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Pack school bag</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M29 41 Q21 41 20 50 L18 76 H48 L45 48 Q44 41 37 41 Z" fill="#3B82F6"/>
+    <circle cx="33" cy="28" r="13" fill="#F2C094"/>
+    <path d="M20 27 Q19 15 32 15 Q45 15 46 26 Q38 26 31 21 Q27 27 20 27 Z" fill="#7C4A2D"/>
+    <circle cx="30" cy="29" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="40" cy="29" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M32 35 Q35 38 39 35" fill="none" stroke-width="3"/>
+    <path d="M24 72 V82 M42 73 V82" fill="none" stroke-width="3"/>
+    <path d="M58 55 V47 Q67 40 75 47 V55" fill="#3B82F6"/>
+    <rect x="51" y="53" width="30" height="29" rx="8" fill="#3B82F6"/>
+    <path d="M52 54 Q66 45 80 54 Q66 63 52 54 Z" fill="#1F2937"/>
+    <path d="M55 35 L73 39 L68 57 L51 53 Z" fill="#FFFFFF"/>
+    <line x1="58" y1="40" x2="69" y2="42" stroke-width="3"/>
+    <path d="M42 46 L51 42" fill="#F2C094"/>
+    <circle cx="52" cy="42" r="4" fill="#F2C094"/>
+    <rect x="59" y="65" width="14" height="10" rx="3" fill="#3B82F6"/>
+  </g>
+</svg>

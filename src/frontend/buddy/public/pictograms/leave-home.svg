@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Leave home</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 81 V15 H65 V81" fill="#FFFFFF"/>
+    <path d="M18 15 L34 23 V81 L18 81 Z" fill="#7C4A2D"/>
+    <circle cx="28" cy="52" r="2.5" fill="#1F2937"/>
+    <rect x="39" y="43" width="16" height="24" rx="6" fill="#3B82F6"/>
+    <path d="M51 66 L47 77 L39 81 M59 66 L68 75 L77 75" fill="#F2C094"/>
+    <path d="M54 41 Q46 41 45 50 L43 66 H73 L70 48 Q69 41 62 41 Z" fill="#3B82F6"/>
+    <circle cx="57" cy="28" r="13" fill="#F2C094"/>
+    <path d="M44 27 Q43 15 56 15 Q69 15 70 26 Q62 26 55 21 Q51 27 44 27 Z" fill="#7C4A2D"/>
+    <circle cx="54" cy="29" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="64" cy="29" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M56 35 Q59 38 63 35" fill="none" stroke-width="3"/>
+    <path d="M66 48 L74 55 L79 51" fill="#F2C094"/>
+    <circle cx="79" cy="51" r="4" fill="#F2C094"/>
+    <line x1="48" y1="44" x2="51" y2="60" stroke-width="3"/>
+    <line x1="12" y1="83" x2="84" y2="83"/>
+  </g>
+</svg>

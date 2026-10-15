@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Put pyjamas on</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M34 63 H61 L59 81 H49 V69 H46 V81 H36 Z" fill="#3B82F6"/>
+    <path d="M35 44 L27 51 L25 66 L32 68 L36 57 V66 H60 V57 L64 68 L71 66 L68 51 L59 44 Z" fill="#3B82F6"/>
+    <path d="M37 52 H58 M36 59 H59 M37 74 H44 M51 74 H58" fill="none" stroke-width="3"/>
+    <circle cx="28" cy="70" r="4" fill="#F2C094"/>
+    <circle cx="68" cy="70" r="4" fill="#F2C094"/>
+    <circle cx="47" cy="30" r="13" fill="#F2C094"/>
+    <path d="M34 29 Q33 17 46 17 Q59 17 60 28 Q52 28 45 23 Q41 29 34 29 Z" fill="#7C4A2D"/>
+    <circle cx="44" cy="31" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="54" cy="31" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M46 37 Q49 40 53 37" fill="none" stroke-width="3"/>
+  </g>
+</svg>

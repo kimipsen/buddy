@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Homework</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 40 Q32 40 31 49 L29 67 H59 L56 47 Q55 40 48 40 Z" fill="#3B82F6"/>
+    <circle cx="44" cy="27" r="13" fill="#F2C094"/>
+    <path d="M31 26 Q30 14 43 14 Q56 14 57 25 Q49 25 42 20 Q38 26 31 26 Z" fill="#7C4A2D"/>
+    <circle cx="41" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="51" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M43 34 Q46 37 50 34" fill="none" stroke-width="3"/>
+    <path d="M33 48 L25 58 L37 64" fill="#F2C094"/>
+    <path d="M56 48 L67 55 L61 63" fill="#F2C094"/>
+    <rect x="15" y="68" width="66" height="7" rx="4" fill="#7C4A2D"/>
+    <line x1="21" y1="75" x2="21" y2="82"/>
+    <line x1="75" y1="75" x2="75" y2="82"/>
+    <path d="M31 58 Q40 55 48 60 Q56 55 65 58 V69 Q56 66 48 70 Q40 66 31 69 Z" fill="#FFFFFF"/>
+    <line x1="48" y1="60" x2="48" y2="69" stroke-width="3"/>
+    <path d="M62 61 L70 47 L74 49 L66 63 L61 67 Z" fill="#FACC15"/>
+    <circle cx="66" cy="57" r="4" fill="#F2C094"/>
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Put on shoes</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="17" y="62" width="27" height="8" rx="4" fill="#7C4A2D"/>
+    <line x1="21" y1="70" x2="21" y2="82"/>
+    <line x1="40" y1="70" x2="40" y2="82"/>
+    <path d="M31 59 H46 L58 68 L68 65 L73 72 L57 77 L42 68 H31 Z" fill="#F2C094"/>
+    <path d="M29 40 Q21 40 20 49 L18 62 H48 L45 47 Q44 40 37 40 Z" fill="#3B82F6"/>
+    <circle cx="34" cy="27" r="13" fill="#F2C094"/>
+    <path d="M21 26 Q20 14 33 14 Q46 14 47 25 Q39 25 32 20 Q28 26 21 26 Z" fill="#7C4A2D"/>
+    <circle cx="31" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="41" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M33 34 Q36 37 40 34" fill="none" stroke-width="3"/>
+    <path d="M40 47 L51 55 L65 65" fill="#F2C094"/>
+    <path d="M30 49 L42 61 L62 70" fill="#F2C094"/>
+    <path d="M66 64 L75 64 L77 73 L81 76 Q83 81 77 81 H62 V72 Z" fill="#3B82F6"/>
+    <circle cx="65" cy="65" r="4" fill="#F2C094"/>
+    <circle cx="62" cy="71" r="4" fill="#F2C094"/>
+    <line x1="70" y1="71" x2="75" y2="71" stroke-width="3"/>
+  </g>
+</svg>

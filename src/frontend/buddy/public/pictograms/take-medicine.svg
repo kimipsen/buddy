@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Take medicine</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M43 41 Q35 41 34 50 L32 81 H62 L59 48 Q58 41 51 41 Z" fill="#3B82F6"/>
+    <circle cx="47" cy="27" r="13" fill="#F2C094"/>
+    <path d="M34 26 Q33 14 46 14 Q59 14 60 25 Q52 25 45 20 Q41 26 34 26 Z" fill="#7C4A2D"/>
+    <circle cx="44" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="54" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M46 34 Q49 37 53 34" fill="none" stroke-width="3"/>
+    <path d="M35 48 L25 57 L26 43 M59 48 L72 57 L74 45" fill="none"/>
+    <circle cx="26" cy="43" r="5" fill="#F2C094"/>
+    <rect x="15" y="28" width="26" height="13" rx="6.5" fill="#FFFFFF"/>
+    <path d="M28 28 H34.5 Q41 28 41 34.5 Q41 41 34.5 41 H28 Z" fill="#EF4444"/>
+    <path d="M65 31 H81 L79 56 H67 Z" fill="#93C5FD"/>
+    <path d="M66 41 H80" fill="none" stroke-width="3"/>
+    <circle cx="77" cy="49" r="4" fill="#F2C094"/>
+  </g>
+</svg>

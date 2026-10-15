@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Play with blocks</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M34 65 L23 75 L39 79 M59 65 L73 75 L58 79" fill="#F2C094"/>
+    <path d="M43 40 Q35 40 34 49 L32 67 H62 L59 47 Q58 40 51 40 Z" fill="#3B82F6"/>
+    <circle cx="47" cy="27" r="13" fill="#F2C094"/>
+    <path d="M34 26 Q33 14 46 14 Q59 14 60 25 Q52 25 45 20 Q41 26 34 26 Z" fill="#7C4A2D"/>
+    <circle cx="44" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="54" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M46 34 Q49 37 53 34" fill="none" stroke-width="3"/>
+    <path d="M35 48 L25 58 L31 68 M59 48 L68 56 L64 63" fill="#F2C094"/>
+    <circle cx="31" cy="68" r="4" fill="#F2C094"/>
+    <circle cx="64" cy="63" r="4" fill="#F2C094"/>
+    <rect x="39" y="68" width="16" height="13" rx="2" fill="#3B82F6"/>
+    <rect x="57" y="68" width="16" height="13" rx="2" fill="#FACC15"/>
+    <rect x="49" y="54" width="15" height="14" rx="2" fill="#EF4444"/>
+  </g>
+</svg>

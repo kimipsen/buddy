@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Lunch</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="18" y="17" width="60" height="28" rx="7" fill="#3B82F6"/>
+    <rect x="24" y="23" width="48" height="16" rx="3" fill="#93C5FD"/>
+    <rect x="15" y="44" width="66" height="36" rx="7" fill="#3B82F6"/>
+    <path d="M23 70 V53 Q28 46 34 51 Q40 46 46 53 V70 Z" fill="#7C4A2D"/>
+    <path d="M26 67 L43 54 V67 Z" fill="#FFFFFF"/>
+    <path d="M63 55 Q73 50 76 60 Q78 70 69 73 Q65 75 63 72 Q60 75 56 71 Q50 63 55 57 Q58 53 63 55 Z" fill="#EF4444"/>
+    <path d="M63 55 Q61 49 66 47" fill="none" stroke-width="3"/>
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-labelledby="title">
+  <title id="title">Eat breakfast</title>
+  <rect x="0" y="0" width="96" height="96" rx="20" fill="#F8FAFC"/>
+  <g stroke="#1F2937" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M42 40 Q34 40 33 49 L31 70 H61 L58 47 Q57 40 50 40 Z" fill="#3B82F6"/>
+    <circle cx="46" cy="27" r="13" fill="#F2C094"/>
+    <path d="M33 26 Q32 14 45 14 Q58 14 59 25 Q51 25 44 20 Q40 26 33 26 Z" fill="#7C4A2D"/>
+    <circle cx="43" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <circle cx="53" cy="28" r="2.5" fill="#1F2937" stroke="none"/>
+    <path d="M45 34 Q48 37 52 34" fill="none" stroke-width="3"/>
+    <path d="M35 48 L28 57 L42 59" fill="#F2C094"/>
+    <path d="M58 48 L68 48 L61 38" fill="#F2C094"/>
+    <circle cx="62" cy="39" r="4" fill="#F2C094"/>
+    <line x1="60" y1="39" x2="54" y2="34"/>
+    <path d="M50 32 Q54 29 57 32 Q58 36 54 37 Q50 36 50 32 Z" fill="#FFFFFF"/>
+    <rect x="15" y="67" width="66" height="8" rx="4" fill="#7C4A2D"/>
+    <line x1="22" y1="75" x2="22" y2="82"/>
+    <line x1="74" y1="75" x2="74" y2="82"/>
+    <path d="M34 57 H62 Q60 69 48 69 Q36 69 34 57 Z" fill="#FFFFFF"/>
+  </g>
+</svg>
