@@ -75,6 +75,9 @@ in real time.
 
 ### Child
 
+- [ ] Pictograms: in-house picture symbols on tasks, routine steps and First-Then boards for
+      children who don't read yet (proposed, not yet implemented — see
+      [Pictogram support](docs/frontend/analysis/pictograms.md))
 - [ ] Now / Next / Later strip: a reduced day view with three cards for overwhelmed moments
       (proposed, not yet implemented — see
       [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md))

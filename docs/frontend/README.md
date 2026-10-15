@@ -476,6 +476,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Now / Next / Later strip](analysis/now-next-later.md) — proposed reduced child page `/child/now`
   with three cards (the current routine or event, the next item, and the rest of the day), opened
   from a "Just now" button on `/child`; frontend-only
+- [Pictogram support](analysis/pictograms.md) — proposed in-house SVG pictograms on tasks, routine
+  steps and First-Then boards, stored as `pic:<slug>` in the existing `Icon` string, with a shared
+  `IconComponent` and `IconPicker`
 
 ## Rendering markdown
 
