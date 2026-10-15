@@ -1,0 +1,189 @@
+<app-page backLink="/guardian" [backLabel]="'firstThen.guardian.backLink' | translate">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p
+        class="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400"
+      >
+        {{ 'firstThen.guardian.eyebrow' | translate }}
+      </p>
+      <h2 class="mt-2 text-3xl font-semibold tracking-normal">
+        {{ 'firstThen.title' | translate }}
+      </h2>
+      <p class="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
+        {{ 'firstThen.guardian.intro' | translate }}
+      </p>
+    </div>
+
+    @if (childList().length > 1) {
+      <div>
+        <label class="sr-only" for="firstThenChildId">{{
+          'common.selectChildLabel' | translate
+        }}</label>
+        <select
+          id="firstThenChildId"
+          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [ngModel]="selectedChildId()"
+          (ngModelChange)="selectChild($event)"
+        >
+          @for (child of childList(); track child.id) {
+            <option [value]="child.id">{{ child.name.givenName }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  @if (children.isLoading()) {
+    <app-loading-spinner [label]="'firstThen.guardian.loading' | translate" />
+  } @else if (children.error()) {
+    <p class="text-sm text-red-600 dark:text-red-400">
+      {{ 'firstThen.guardian.loadError' | translate }}
+    </p>
+  } @else if (!selectedChildId()) {
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ 'firstThen.guardian.noChildren' | translate }}
+    </p>
+  } @else {
+    <div class="grid gap-6 lg:grid-cols-2">
+      <app-card>
+        <h3 class="mb-4 text-lg font-semibold tracking-normal">
+          {{ 'firstThen.guardian.current' | translate }}
+        </h3>
+
+        @if (changed()) {
+          <p
+            class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+            role="status"
+          >
+            {{ 'firstThen.guardian.changed' | translate }}
+          </p>
+        }
+
+        @if (error(); as message) {
+          <p class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+            {{ message | translate }}
+          </p>
+        }
+
+        @if (view.isLoading() && !shown()) {
+          <app-loading-spinner [label]="'firstThen.guardian.loading' | translate" />
+        } @else if (view.error() && !shown()) {
+          <p class="text-sm text-red-600 dark:text-red-400">
+            {{ 'firstThen.guardian.loadError' | translate }}
+          </p>
+        } @else if (board(); as board) {
+          @let unlocked = board.state === 'Unlocked';
+          <div class="grid grid-cols-2 gap-3" data-testid="guardian-first-then-board">
+            <div
+              class="flex flex-col items-center gap-1 rounded-lg border p-4 text-center"
+              [class.border-emerald-300]="!unlocked"
+              [class.dark:border-emerald-700]="!unlocked"
+              [class.border-slate-200]="unlocked"
+              [class.dark:border-slate-700]="unlocked"
+              [class.opacity-60]="unlocked"
+            >
+              <span
+                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >{{ 'firstThen.first' | translate }}</span
+              >
+              <span aria-hidden="true" class="text-4xl leading-none">{{ board.first!.icon }}</span>
+              <span class="font-semibold">{{ board.first!.title }}</span>
+            </div>
+            <div
+              class="flex flex-col items-center gap-1 rounded-lg border p-4 text-center"
+              [class.border-amber-300]="unlocked"
+              [class.dark:border-amber-600]="unlocked"
+              [class.bg-amber-50]="unlocked"
+              [class.dark:bg-amber-950]="unlocked"
+              [class.border-slate-200]="!unlocked"
+              [class.dark:border-slate-700]="!unlocked"
+            >
+              <span
+                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >{{ 'firstThen.then' | translate }}</span
+              >
+              <span aria-hidden="true" class="text-4xl leading-none">{{ board.then!.icon }}</span>
+              <span class="font-semibold">{{ board.then!.title }}</span>
+              @if (board.thenMinutes) {
+                <span class="text-xs text-slate-500 dark:text-slate-400">{{
+                  'firstThen.minutes' | translate: { count: board.thenMinutes }
+                }}</span>
+              }
+            </div>
+          </div>
+
+          <p class="mt-4 text-sm font-semibold" data-testid="guardian-first-then-state">
+            {{
+              unlocked
+                ? ('firstThen.guardian.unlocked' | translate: { then: board.then!.title })
+                : ('firstThen.guardian.waiting' | translate: { first: board.first!.title })
+            }}
+            @if (isFromYesterday()) {
+              <span
+                class="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                >{{ 'firstThen.guardian.fromYesterday' | translate }}</span
+              >
+            }
+          </p>
+          @if (board.lastModifiedByName) {
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {{ 'firstThen.guardian.lastChanged' | translate: { name: board.lastModifiedByName } }}
+            </p>
+          }
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            @if (unlocked) {
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:border-slate-500"
+                [disabled]="busy()"
+                (click)="undo()"
+              >
+                {{ 'firstThen.guardian.undo' | translate }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                [disabled]="busy()"
+                (click)="markDone()"
+              >
+                {{ 'firstThen.guardian.markDone' | translate }}
+              </button>
+            }
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:border-slate-500"
+              [disabled]="busy()"
+              (click)="end()"
+            >
+              {{ 'firstThen.guardian.end' | translate }}
+            </button>
+          </div>
+        } @else {
+          <p
+            class="text-sm text-slate-500 dark:text-slate-400"
+            data-testid="guardian-first-then-none"
+          >
+            {{ 'firstThen.guardian.noBoard' | translate }}
+          </p>
+        }
+      </app-card>
+
+      <app-card>
+        <h3 class="mb-4 text-lg font-semibold tracking-normal">
+          {{ 'firstThen.guardian.newBoard' | translate }}
+        </h3>
+        <app-first-then-board-form
+          [childName]="selectedChildName()"
+          [recentFirsts]="shown()?.recentFirsts ?? []"
+          [recentThens]="shown()?.recentThens ?? []"
+          [todaysTasks]="todaysTasks.hasValue() ? todaysTasks.value() : []"
+          [hasCurrentBoard]="board() !== null"
+          [busy]="busy()"
+          (submitted)="setBoard($event)"
+        />
+      </app-card>
+    </div>
+  }
+</app-page>

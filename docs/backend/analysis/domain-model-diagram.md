@@ -90,6 +90,12 @@ classDiagram
         +GroupId SharedWithGroupId
     }
 
+    class MedicineEffectLog {
+        +MedicineEffectLogId Id
+        +UserId ChildId
+        +Notes Notes
+    }
+
     class PickupSchedule {
         +PickupScheduleId Id
         +UserId ChildId
@@ -156,6 +162,19 @@ classDiagram
         +FeelingsDisplayMode DisplayMode
     }
 
+    class FirstThenBoard {
+        +FirstThenBoardId Id
+        +UserId ChildId
+        +FirstThenState State
+        +int Revision
+        +FirstThenCard First
+        +FirstThenCard Then
+        +int? ThenMinutes
+        +DateTimeOffset? UnlockedAt
+        +RecentFirsts RecentFirsts
+        +RecentThens RecentThens
+    }
+
     class FeelingsShareToken {
         +FeelingsShareTokenId Id
         +UserId ChildId
@@ -194,6 +213,8 @@ classDiagram
     MedicineSchedule --> User : childId, createdBy
     MedicineSharing --> User : childId
     MedicineSharing --> Group : sharedWithGroupId
+    MedicineEffectLog --> User : childId
+    MedicineEffectLog ..> MedicineSchedule : regimen
     PickupSchedule --> User : childId, assignments
     WorkLocationSchedule --> User : guardianId
     BabysitterList --> User : guardianId
@@ -209,6 +230,7 @@ classDiagram
     TransitionWarningSettings ..> CalendarItem : itemOverrides
     FeelingsJournal --> User : childId, check-ins' loggedBy
     FeelingsShareToken --> User : childId, createdBy
+    FirstThenBoard --> User : childId, lastModifiedBy
     RuleBook --> User : scopeId (Child scope), acknowledgements
     RuleBook --> Group : scopeId (Group scope)
 ```

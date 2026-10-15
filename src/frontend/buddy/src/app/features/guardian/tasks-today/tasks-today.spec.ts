@@ -23,6 +23,7 @@ describe('TasksToday', () => {
     email: { value: 'guardian@buddy.test', isVerified: true },
     userName: 'guardian',
     name: { givenName: 'Gina', familyName: 'G' },
+    callingName: '',
     timeZoneId: 'UTC',
     language: 'en',
   };
@@ -42,6 +43,8 @@ describe('TasksToday', () => {
       dueAt: `${today}T00:00:00Z`,
       isAllDay: true,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,

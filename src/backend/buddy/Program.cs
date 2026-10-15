@@ -15,6 +15,7 @@ using buddy.Email;
 using buddy.Features.Babysitters;
 using buddy.Features.Calendars;
 using buddy.Features.Feelings;
+using buddy.Features.FirstThen;
 using buddy.Features.Groups;
 using buddy.Features.Guardians;
 using buddy.Features.HouseRules;
@@ -133,6 +134,9 @@ builder.Services.AddHouseRulesFeature(builder.Configuration);
 // After Guardians, Groups and Calendars: authorization reads IGuardianLinkEventStore, the override
 // item check ICalendarItemEventStore, ICalendarEventStore and IGroupEventStore.
 builder.Services.AddTransitionWarningsFeature(builder.Configuration);
+// After Users and Guardians: authorization reads IGuardianLinkEventStore, the last modifier's name
+// IUserEventStore.
+builder.Services.AddFirstThenFeature(builder.Configuration);
 // Last: erasure orchestrates every feature's IPersonalDataEraser.
 builder.Services.AddPrivacyFeature();
 
@@ -254,6 +258,11 @@ if (features.HouseRules)
 if (features.TransitionWarnings)
 {
     app.MapTransitionWarningsFeature();
+}
+
+if (features.FirstThen)
+{
+    app.MapFirstThenFeature();
 }
 
 // JasperFx command line: no arguments runs the API as before; `projections --rebuild --store <name>`

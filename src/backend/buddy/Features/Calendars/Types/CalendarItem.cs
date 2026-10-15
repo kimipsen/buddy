@@ -20,6 +20,10 @@ public sealed record CalendarItem(
     Recurrence Recurrence,
     // Completed occurrences only -- "not completed" is the implicit default, so it is absence.
     ImmutableHashSet<CompletionKey> CompletionLog,
+    // Skipped occurrences only -- "not skipped" is the implicit default, so it is absence. Kept
+    // apart from Recurrence so editing the rule never drops a skip, and a skip never rewrites the
+    // rule (docs/backend/analysis/skip-occurrences.md, Question 1).
+    ImmutableHashSet<DateOnly> SkippedDates,
     UserId LastModifiedBy,
     bool IsDeleted)
 {
@@ -97,6 +101,16 @@ public sealed record CalendarItem(
                 : item.CompletionLog.Remove(new CompletionKey(completion.OccurrenceDate, completion.Target)),
             LastModifiedBy = completion.ModifiedBy
         },
+        // A snapshot row written before SkippedDates existed deserializes it as null; the inline
+        // projection folds the next event onto that row, so treat null as empty rather than
+        // depending on a snapshot rebuild at deploy (docs/backend/analysis/skip-occurrences.md).
+        OccurrenceSkipChanged skip => item with
+        {
+            SkippedDates = skip.After
+                ? (item.SkippedDates ?? []).Add(skip.OccurrenceDate)
+                : (item.SkippedDates ?? []).Remove(skip.OccurrenceDate),
+            LastModifiedBy = skip.ModifiedBy
+        },
         ItemDeleted deleted => item with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },
         EventItemCreated or TaskItemCreated or TemplateTaskItemCreated => throw EventReplay.AlreadyStarted(nameof(CalendarItem), @event.EventType)
     };
@@ -104,5 +118,5 @@ public sealed record CalendarItem(
     private static CalendarItem New(
         CalendarItemId id, CalendarId calendarId, UserId createdBy, string title, Icon? icon, Color color, ItemSchedule schedule, Recurrence recurrence) =>
         new(id, calendarId, createdBy, title, icon, color, schedule, recurrence,
-            ImmutableHashSet<CompletionKey>.Empty, createdBy, IsDeleted: false);
+            ImmutableHashSet<CompletionKey>.Empty, ImmutableHashSet<DateOnly>.Empty, createdBy, IsDeleted: false);
 }

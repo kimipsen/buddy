@@ -672,7 +672,13 @@ export class PrintTemplateEditor {
     const lists = await mapWithConcurrency(children, PER_ITEM_REQUEST_CONCURRENCY, (child) =>
       this.guardiansService.listChildGuardians(child.id).catch(() => [] as GuardianSummary[]),
     );
-    const self: GuardianSummary = { id: me.id, name: me.name, guardianLinkId: '', kind: 'Parent' };
+    const self: GuardianSummary = {
+      id: me.id,
+      name: me.name,
+      callingName: me.callingName,
+      guardianLinkId: '',
+      kind: 'Parent',
+    };
     const guardians = [...new Map([self, ...lists.flat()].map((g) => [g.id, g])).values()];
 
     const schedules = await mapWithConcurrency(

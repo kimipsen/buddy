@@ -62,6 +62,7 @@ export class MyProfile {
   // never show.
   protected readonly givenName = this.formField((profile) => profile?.name.givenName ?? '');
   protected readonly familyName = this.formField((profile) => profile?.name.familyName ?? '');
+  protected readonly callingName = this.formField((profile) => profile?.callingName ?? '');
   protected readonly email = this.formField((profile) => profile?.email.value ?? '');
   protected readonly timeZoneId = this.formField((profile) => profile?.timeZoneId ?? '');
   protected readonly language = this.formField<Language>(
@@ -70,6 +71,8 @@ export class MyProfile {
 
   protected readonly nameSave = createAction();
   protected readonly nameSaved = signal(false);
+  protected readonly callingNameSave = createAction();
+  protected readonly callingNameSaved = signal(false);
   protected readonly emailSave = createAction();
   protected readonly emailSaved = signal(false);
   protected readonly timeZoneSave = createAction();
@@ -94,6 +97,22 @@ export class MyProfile {
         this.nameSaved.set(true);
       },
       'profile.name.error',
+    );
+  }
+
+  // An empty calling name is a valid save: it clears it, and children see the given name again.
+  protected async saveCallingName(): Promise<void> {
+    const callingName = this.callingName().trim();
+
+    this.callingNameSaved.set(false);
+    await this.callingNameSave.run(
+      true,
+      async () => {
+        const updated = await this.users.updateCallingName(callingName);
+        this.patchProfile({ callingName: updated.callingName });
+        this.callingNameSaved.set(true);
+      },
+      (error) => this.apiErrorMessage(error, 'profile.callingName.error'),
     );
   }
 

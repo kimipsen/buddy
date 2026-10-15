@@ -101,6 +101,19 @@ internal static class CalendarTestHelpers
         return expectedStatus == 200 ? response.ReadAsJson<CalendarItemDto>() : null;
     }
 
+    public static async Task<OccurrenceSkipResponseDto?> SetOccurrenceSkipAsync(
+        BuddyApiFixture fixture, string token, Guid calendarId, Guid itemId, DateOnly date, bool isSkipped, int expectedStatus = 200)
+    {
+        var response = await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { Date = date, IsSkipped = isSkipped }).ToUrl($"/calendars/{calendarId}/items/{itemId}/skip");
+            _.StatusCodeShouldBe(expectedStatus);
+        });
+
+        return expectedStatus == 200 ? response.ReadAsJson<OccurrenceSkipResponseDto>() : null;
+    }
+
     public static async Task<CalendarItemDto?> ScheduleTaskFromTemplateAsync(
         BuddyApiFixture fixture, string token, Guid calendarId, Guid taskTemplateId, string title = "Morning routine",
         DateOnly? startDate = null, TimeOnly? startTime = null, RecurrenceRuleRequest? recurrence = null,

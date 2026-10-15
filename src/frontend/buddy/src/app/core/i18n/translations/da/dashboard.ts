@@ -48,6 +48,7 @@ export const dashboard = {
   doses: {
     title: 'Dagens medicin',
     manageLink: 'Administrer medicin →',
+    effectsLink: 'Hvordan gik det? →',
     loading: 'Indlæser dagens doser…',
     loadError: 'Kunne ikke indlæse dagens medicindoser.',
     updateError: 'Kunne ikke opdatere denne dosis.',

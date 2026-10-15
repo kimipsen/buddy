@@ -19,6 +19,7 @@ Backend documentation for the Buddy API.
 - [Sleep diary flow](sleep-diary/flow.md)
 - [Transition warnings flow](transition-warnings/flow.md)
 - [Feelings flow](feelings/flow.md)
+- [First–Then flow](first-then/flow.md)
 - [House rules flow](house-rules/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
@@ -51,6 +52,7 @@ model or permissions logic.
 - [Rate limiting](analysis/rate-limiting.md)
 - [Pickup and drop-off schedules](analysis/pickup-schedules.md)
 - [Guardian-managed child language](analysis/child-language-settings.md)
+- [Calling names for guardians](analysis/guardian-calling-names.md)
 - [Guardian-managed child time zone](analysis/child-timezone-settings.md)
 - [Gamified progress](analysis/gamified-progress.md)
 - [Configurable goal posts for progress](analysis/configurable-goal-posts.md)
@@ -61,11 +63,15 @@ model or permissions logic.
 - [Client-ready OpenAPI documents](analysis/openapi-client-contract.md)
 - [Feature flags](analysis/feature-flags.md)
 - [House rules](analysis/house-rules.md)
+- [Social stories](analysis/social-stories.md)
+- [First–Then board](analysis/first-then-board.md)
 - [Update check](analysis/update-check.md)
 - [Mobile app and push notifications](analysis/mobile-app-and-notifications.md)
 - [Transition warnings](analysis/transition-warnings.md)
 - [Feelings check-in](analysis/feelings-check-in.md)
 - [Packing checklists](analysis/packing-checklists.md)
+- [Medicine effect and side-effect notes](analysis/medicine-effect-notes.md)
+- [Skipping single occurrences](analysis/skip-occurrences.md)
 
 ## Current focus areas
 

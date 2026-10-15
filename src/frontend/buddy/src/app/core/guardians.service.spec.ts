@@ -11,8 +11,23 @@ import {
   GuardianSummary,
   GuardiansService,
   SiblingSummary,
+  childFacingName,
 } from './guardians.service';
 import { RuntimeConfigService } from './runtime-config.service';
+
+describe('childFacingName', () => {
+  it('prefers the calling name the guardian set', () => {
+    expect(
+      childFacingName({ name: { givenName: 'Sara', familyName: 'Holm' }, callingName: 'Mor' }),
+    ).toBe('Mor');
+  });
+
+  it('falls back to the given name when no calling name is set', () => {
+    expect(
+      childFacingName({ name: { givenName: 'Sara', familyName: 'Holm' }, callingName: '' }),
+    ).toBe('Sara');
+  });
+});
 
 describe('GuardiansService', () => {
   const apiBaseUrl = 'https://api.buddy.test';
@@ -107,6 +122,7 @@ describe('GuardiansService', () => {
       const guardian = (id: string, givenName: string): GuardianSummary => ({
         id,
         name: { givenName, familyName: 'G' },
+        callingName: '',
         guardianLinkId: `link-${id}`,
         kind: 'Parent',
       });
@@ -124,6 +140,7 @@ describe('GuardiansService', () => {
         {
           id: 'guardian-1',
           name: { givenName: 'Gina', familyName: 'G' },
+          callingName: '',
           guardianLinkId: 'link-1',
           kind: 'Parent',
         },
@@ -153,6 +170,7 @@ describe('GuardiansService', () => {
       const guardian = (id: string, givenName: string): GuardianSummary => ({
         id,
         name: { givenName, familyName: 'G' },
+        callingName: '',
         guardianLinkId: `link-${id}`,
         kind: 'Parent',
       });
@@ -170,6 +188,7 @@ describe('GuardiansService', () => {
         {
           id: 'guardian-2',
           name: { givenName: 'Pat', familyName: 'P' },
+          callingName: '',
           guardianLinkId: 'link-2',
           kind: 'Guardian',
         },

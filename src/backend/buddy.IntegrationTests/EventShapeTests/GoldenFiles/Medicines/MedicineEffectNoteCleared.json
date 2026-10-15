@@ -1,0 +1,35 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000003",
+  "Date": "2025-06-01",
+  "Before": {
+    "Date": "2025-06-01",
+    "Effects": [
+      {
+        "Area": "Focus",
+        "Level": "Good"
+      },
+      {
+        "Area": "Mood",
+        "Level": "Okay"
+      }
+    ],
+    "SideEffects": [
+      {
+        "Kind": "ReducedAppetite",
+        "Severity": "Moderate"
+      }
+    ],
+    "WoreOffAt": "15:30:00",
+    "Note": "Skipped lunch",
+    "Regimen": [
+      {
+        "MedicineId": "00000000-0000-0000-0000-000000000050",
+        "Name": "Ritalin",
+        "Dosage": "10 mg"
+      }
+    ],
+    "LoggedBy": "00000000-0000-0000-0000-000000000001"
+  },
+  "ModifiedBy": "00000000-0000-0000-0000-000000000001",
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+}

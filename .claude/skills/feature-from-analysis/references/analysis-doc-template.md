@@ -316,15 +316,18 @@ When a new doc is added:
   `docs/backend/README.md` (`- [Title](analysis/<file>.md)`).
 - Frontend analysis: add a bullet to "Design analysis" in `docs/frontend/README.md`
   (`- [Title](analysis/<file>.md) — <one-line summary with status, e.g. "implemented ...">`).
-- Product feature: add an unchecked item to the right group (Guardian / Child / Platform) under
-  "Features" in the root `README.md`:
+- Product feature: add an unchecked item at the top of the right group (Guardian / Child /
+  Platform) under "Features" in the root `README.md`, above the ticked items:
   `- [ ] <Feature> (proposed, not yet implemented — see [<Title>](docs/backend/analysis/<file>.md))`.
 
 When it ships:
 
 - Update the doc's `Status:` line (longer "Implemented. ..." form).
 - Root `README.md`: `- [ ]` becomes `- [x]`, and drop the "(proposed ... see ...)" parenthetical,
-  matching the other checked items.
+  matching the other checked items. Move the item to the end of its group, so open items stay on
+  top.
+- `TODO.md`: if it lists the feature, tick the item and move it, under its section heading, to the
+  bottom of `## Done`.
 - `docs/frontend/README.md`: add any new routes ("The guardian routes currently include"), services
   ("Shared services") and responsibilities, and update the analysis bullet's summary.
 - `docs/backend/README.md`: add the new `<feature>/flow.md` under "Start here" if one was written

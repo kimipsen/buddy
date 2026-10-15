@@ -55,6 +55,9 @@ sequenceDiagram
 | `PUT` | `/medicines/children/{childId}/doses/{medicineId}?date=...&time=...` | Marks a dose as `Taken`, `Skipped`, or `Pending`. |
 | `PUT` | `/medicines/children/{childId}/group-share/{groupId}` | Shares the child's medicine schedules with a group. |
 | `DELETE` | `/medicines/children/{childId}/group-share/{groupId}` | Unshares the child's medicine schedules from a group. |
+| `PUT` | `/medicines/children/{childId}/effect-notes/{date}` | Logs or overwrites one day's effect and side-effect note (guardians only). |
+| `DELETE` | `/medicines/children/{childId}/effect-notes/{date}` | Clears one day's note; a day without one is a no-op (guardians only). |
+| `GET` | `/medicines/children/{childId}/effect-notes` | Lists notes for a `from`/`to` range of at most 92 days, each with live dose statuses (guardians only). |
 | `GET` | `/medicines/children/{childId}/group-share` | Returns the group the child's medicine schedules are currently shared with, if any. |
 | `POST` | `/medicines/groups/{groupId}/children/{childId}/schedules` | Creates a medicine schedule for a shared child via group access. |
 | `GET` | `/medicines/groups/{groupId}/children/{childId}/schedules` | Lists a shared child's schedules via group access. |
@@ -73,6 +76,10 @@ A guardian can share a child's medicine schedules with a group, granting members
 A medicine schedule is an event-sourced aggregate with its own stream. The timeline starts with `MedicineScheduleCreated`, then uses events such as `MedicineDetailsUpdated`, `MedicineScheduleRescheduled`, `MedicineScheduleStopped`, and `DoseStatusChanged` to track changes. Unlike a generic calendar item, the medicine model deliberately carries domain state that is specific to dosing workflows.
 
 For listing and display, the backend does not persist a generated occurrence list forever. Instead, it recomputes dose occurrences from the aggregate and the dose log for the requested date range. This keeps the schedule state authoritative while allowing the user-facing dose listing to reflect the current schedule and statuses.
+
+## Effect notes
+
+A second per-child aggregate, `MedicineEffectLog` (stream id equal to the child's id, no index document), holds at most one `MedicineEffectNote` per local date: effect ratings, side-effect severities, a wear-off time, a free note, and the regimen (medicine name and dosage) resolved from the child's active schedules when the day is first logged. Edits keep that regimen; dose statuses are joined live from each schedule's dose log on every read. Only guardians can read or write notes; the child gets `403`. Every list is audit-logged (event 9003). See [Medicine effect and side-effect notes](../analysis/medicine-effect-notes.md).
 
 ## Authorization model
 

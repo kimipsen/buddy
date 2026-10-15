@@ -31,6 +31,7 @@ import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { Toggle } from '../../../shared/toggle/toggle';
 import { ChildPage } from '../child-page/child-page';
+import { readShowMeals, writeShowMeals } from './meal-visibility-storage';
 
 const TASK_KIND: CalendarItemKind = 'Task';
 const DAYS_AHEAD = 7;
@@ -154,13 +155,15 @@ export class ChildCalendar {
     computation: (next, previous) => next ?? previous?.value ?? [],
   });
   protected readonly hiddenCalendarIds = signal<Set<string>>(new Set());
+  protected readonly showMeals = signal(readShowMeals());
   protected readonly savingTask = createAction<string>();
 
   private readonly occurrences = computed(() =>
     this.week.hasValue() ? this.week.value().occurrences : [],
   );
+  // Hidden meals are still loaded, so switching them back on shows them without a reload.
   private readonly mealEntries = computed(() =>
-    this.week.hasValue() ? this.week.value().mealEntries : [],
+    this.showMeals() && this.week.hasValue() ? this.week.value().mealEntries : [],
   );
 
   protected readonly occurrencesByDate = computed(() => {
@@ -302,6 +305,15 @@ export class ChildCalendar {
 
       return next;
     });
+  }
+
+  protected mealplansEnabled(): boolean {
+    return this.features.enabled('mealplans');
+  }
+
+  protected setShowMeals(show: boolean): void {
+    this.showMeals.set(show);
+    writeShowMeals(show);
   }
 
   protected async toggleTask(occurrence: CalendarOccurrence): Promise<void> {

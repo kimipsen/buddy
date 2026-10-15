@@ -34,6 +34,10 @@
       <!-- Shows itself only in the evening, while a child's list for tomorrow isn't packed. -->
       <app-packing-tomorrow />
     }
+    @if (features.enabled('firstThen')) {
+      <!-- Shows itself only while a child has a current board. -->
+      <app-first-then-today />
+    }
     <app-tasks-today class="mb-6 block break-inside-avoid" />
     <app-events-today class="mb-6 block break-inside-avoid" />
     @if (features.enabled('medicines')) {

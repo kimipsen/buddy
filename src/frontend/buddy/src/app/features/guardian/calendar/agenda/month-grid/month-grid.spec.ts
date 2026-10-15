@@ -26,6 +26,8 @@ describe('MonthGrid', () => {
       dueAt: null,
       isAllDay: false,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,

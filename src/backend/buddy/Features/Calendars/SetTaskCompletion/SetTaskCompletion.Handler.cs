@@ -78,6 +78,14 @@ public static class SetTaskCompletionHandler
             return futureError;
         }
 
+        // A skipped occurrence isn't on anyone's list, so it can't be ticked; un-ticking stays
+        // allowed, like a packing-list item off its weekdays
+        // (docs/backend/analysis/skip-occurrences.md, edge cases).
+        if (command.IsCompleted && item.SkippedDates.Contains(command.OccurrenceDate))
+        {
+            return new Result<CalendarItem>.Validation(ValidationProblem.Of("This occurrence is skipped."));
+        }
+
         var before = item.CompletionLog.Contains(new CompletionKey(command.OccurrenceDate, command.Target));
 
         if (before == command.IsCompleted)

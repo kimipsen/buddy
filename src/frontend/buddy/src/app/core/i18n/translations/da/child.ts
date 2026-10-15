@@ -138,7 +138,8 @@ export const child = {
     loadError: 'Der gik noget galt med at indlæse din kalender. Prøv igen om lidt.',
     taskUpdateError: 'Der gik noget galt med at opdatere opgaven. Prøv igen om lidt.',
     emptyTitle: 'Intet planlagt denne uge',
-    filterTitle: 'Kalendere',
+    filterTitle: 'Vis',
+    showMeals: 'Madplan',
     allDay: 'Hele dagen',
     tasks: {
       markDone: 'Marker som klar',

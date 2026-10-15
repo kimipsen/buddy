@@ -35,6 +35,13 @@ public sealed class UserSnapshotTests(BuddyApiFixture fixture)
         await fixture.Host.Scenario(_ =>
         {
             _.WithRequestHeader("Authorization", $"Bearer {token}");
+            _.Patch.Json(new { CallingName = "Mor" }).ToUrl("/users/me/calling-name");
+            _.StatusCodeShouldBeOk();
+        });
+
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {token}");
             _.Patch.Json(new { TimeZoneId = "Europe/Copenhagen" }).ToUrl("/users/me/timezone");
             _.StatusCodeShouldBeOk();
         });

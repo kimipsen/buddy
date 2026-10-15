@@ -138,7 +138,8 @@ export const child = {
     loadError: 'Something went wrong loading your calendar. Try again in a bit.',
     taskUpdateError: 'Something went wrong updating that task. Try again in a bit.',
     emptyTitle: 'Nothing planned this week',
-    filterTitle: 'Calendars',
+    filterTitle: 'Show',
+    showMeals: 'Meal plan',
     allDay: 'All day',
     tasks: {
       markDone: 'Mark done',

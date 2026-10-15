@@ -35,6 +35,8 @@ describe('ChildFocus', () => {
       endsAt: `${today}T${end}:00Z`,
       isAllDay: false,
       isCompleted: overrides.isCompleted ?? false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'g',
       lastModifiedBy: 'g',
       assignedTo: 'child-1',

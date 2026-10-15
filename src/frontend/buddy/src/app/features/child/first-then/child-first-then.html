@@ -1,0 +1,173 @@
+<app-child-page
+  [title]="'firstThen.title' | translate"
+  [backLabel]="'firstThen.child.back' | translate"
+>
+  <span class="sr-only" aria-live="polite">{{ announcement() }}</span>
+
+  @if (loading()) {
+    <div
+      class="rounded-3xl border-4 border-emerald-200 bg-white p-5 text-center shadow-sm dark:border-emerald-800 dark:bg-slate-900 sm:p-8"
+    >
+      <app-loading-spinner [label]="'common.loading' | translate" />
+    </div>
+  } @else if (loadError()) {
+    <p
+      class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700 dark:border-red-800 dark:bg-red-500/10 dark:text-red-400"
+    >
+      {{ 'firstThen.child.loadError' | translate }}
+    </p>
+  } @else if (board(); as board) {
+    @if (changed()) {
+      <p
+        class="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-base font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-100"
+        data-testid="first-then-changed"
+      >
+        {{ 'firstThen.child.changed' | translate }}
+      </p>
+    }
+
+    @if (error(); as message) {
+      <p
+        class="rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-base font-semibold text-red-700 dark:border-red-800 dark:bg-red-500/10 dark:text-red-400"
+      >
+        {{ message | translate }}
+      </p>
+    }
+
+    @let unlocked = board.state === 'Unlocked';
+
+    <div class="grid gap-5 sm:grid-cols-2 landscape:grid-cols-2">
+      <!-- First -->
+      <section
+        class="flex flex-col items-center gap-4 rounded-3xl border-4 p-6 text-center shadow-sm sm:p-8"
+        [class.border-emerald-300]="!unlocked"
+        [class.dark:border-emerald-700]="!unlocked"
+        [class.bg-white]="!unlocked"
+        [class.dark:bg-slate-900]="!unlocked"
+        [class.border-slate-200]="unlocked"
+        [class.dark:border-slate-700]="unlocked"
+        [class.bg-slate-100]="unlocked"
+        [class.dark:bg-slate-800]="unlocked"
+        [class.opacity-70]="unlocked"
+        aria-labelledby="firstThenFirstHeading"
+        data-testid="first-then-first"
+      >
+        <h2
+          id="firstThenFirstHeading"
+          class="text-xl font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+        >
+          {{ 'firstThen.first' | translate }}
+        </h2>
+        <span aria-hidden="true" class="text-8xl leading-none" [class.grayscale]="unlocked">{{
+          board.first!.icon
+        }}</span>
+        <p class="text-2xl font-bold">{{ board.first!.title }}</p>
+
+        @if (unlocked) {
+          <p
+            class="flex items-center gap-2 text-xl font-bold text-emerald-700 dark:text-emerald-400"
+          >
+            <span aria-hidden="true">✅</span>
+            {{ 'firstThen.child.doneIcon' | translate }}
+          </p>
+          <button
+            type="button"
+            class="text-base font-semibold text-slate-600 underline hover:text-slate-800 disabled:opacity-50 dark:text-slate-300 dark:hover:text-slate-100"
+            [disabled]="busy()"
+            (click)="undo()"
+          >
+            {{ 'firstThen.child.undo' | translate }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="min-h-14 w-full rounded-2xl bg-emerald-600 px-6 py-4 text-2xl font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+            [disabled]="busy()"
+            (click)="done()"
+          >
+            {{ 'firstThen.child.done' | translate }}
+          </button>
+        }
+      </section>
+
+      <!-- Then -->
+      <section
+        class="flex flex-col items-center gap-4 rounded-3xl border-4 p-6 text-center shadow-sm sm:p-8"
+        [class.border-amber-300]="unlocked"
+        [class.dark:border-amber-600]="unlocked"
+        [class.bg-amber-50]="unlocked"
+        [class.dark:bg-amber-950]="unlocked"
+        [class.ring-4]="unlocked"
+        [class.ring-amber-200]="unlocked"
+        [class.dark:ring-amber-800]="unlocked"
+        [class.motion-safe:animate-scale-in]="justUnlocked()"
+        [class.border-slate-200]="!unlocked"
+        [class.dark:border-slate-700]="!unlocked"
+        [class.bg-white]="!unlocked"
+        [class.dark:bg-slate-900]="!unlocked"
+        aria-labelledby="firstThenThenHeading"
+        data-testid="first-then-then"
+      >
+        <h2
+          id="firstThenThenHeading"
+          class="text-xl font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+        >
+          {{ 'firstThen.then' | translate }}
+        </h2>
+        <span aria-hidden="true" class="text-8xl leading-none">{{ board.then!.icon }}</span>
+        <p class="text-2xl font-bold">{{ board.then!.title }}</p>
+
+        @if (unlocked) {
+          <p class="text-xl font-bold text-amber-800 dark:text-amber-200">
+            {{ 'firstThen.child.unlocked' | translate: { then: board.then!.title } }}
+          </p>
+
+          @if (timer(); as timer) {
+            <app-visual-timer
+              [state]="timer"
+              color="#fbbf24"
+              size="8rem"
+              [large]="true"
+              [announce]="false"
+            />
+          } @else if (timeUp()) {
+            <!-- Visual timers off: no disc and no minutes, but time's up still shows. -->
+            <p class="text-lg font-semibold text-slate-600 dark:text-slate-300">
+              {{ 'firstThen.child.timeUp' | translate }}
+            </p>
+          }
+
+          <button
+            type="button"
+            class="min-h-14 w-full rounded-2xl bg-amber-500 px-6 py-4 text-2xl font-bold text-amber-950 transition hover:bg-amber-400 disabled:opacity-50"
+            [disabled]="busy()"
+            (click)="allDone()"
+          >
+            {{ 'firstThen.child.allDone' | translate }}
+          </button>
+        } @else {
+          <p
+            class="flex items-center gap-2 text-lg font-semibold text-slate-500 dark:text-slate-400"
+          >
+            <span aria-hidden="true">🔒</span>
+            <span class="sr-only">{{ 'firstThen.child.lockedIcon' | translate }}</span>
+            {{ 'firstThen.child.locked' | translate: { first: board.first!.title } }}
+          </p>
+        }
+      </section>
+    </div>
+  } @else {
+    <div
+      class="rounded-3xl border-4 border-emerald-200 bg-white p-6 text-center shadow-sm dark:border-emerald-800 dark:bg-slate-900 sm:p-8"
+      data-testid="first-then-none"
+    >
+      <p class="text-2xl font-bold">{{ 'firstThen.child.none' | translate }}</p>
+      <a
+        routerLink="/child"
+        class="mt-4 inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-700 transition hover:border-emerald-300 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-400 dark:hover:border-emerald-700"
+      >
+        {{ 'firstThen.child.homeLink' | translate }}
+      </a>
+    </div>
+  }
+</app-child-page>

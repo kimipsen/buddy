@@ -13,7 +13,7 @@ export const sleepDiary = {
   },
   form: {
     title: 'Registrér en nat',
-    dateLabel: 'Natten til',
+    dateLabel: 'Natten efter',
     routineStart: 'Gøre klar',
     ritual: 'Sengeritual',
     ritualStart: 'Ritualet starter',

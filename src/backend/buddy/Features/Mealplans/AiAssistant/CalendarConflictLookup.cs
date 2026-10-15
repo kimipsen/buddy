@@ -50,7 +50,7 @@ public static class CalendarConflictLookup
 
             var isFamilyCalendar = await IsFamilyCalendarAsync(calendar, family, groups, cancellationToken);
             var expanded = await CalendarOccurrenceExpansion.ExpandAsync(
-                calendarId, calendar.TimeZoneId, calendar.Icon, from, to, items, templates, cancellationToken);
+                calendarId, calendar.TimeZoneId, calendar.Icon, from, to, items, templates, includeSkipped: false, cancellationToken);
 
             occurrences.AddRange(expanded.Select(o => (o, isFamilyCalendar)));
         }

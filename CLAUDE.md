@@ -57,6 +57,10 @@ Several features are developed at once, each in its own git worktree, so they do
 - Every page appears in the documentation screenshots (`docs/screenshots`). A new route or a visible change to a page means updating `src/frontend/buddy/screenshots/pages.ts` (plus demo data in `demo-family.ts`) and running `task docs:screenshots`. `src/app/screenshot-coverage.spec.ts` enforces the route list. See the `doc-screenshots` skill.
 - Plan before non-trivial changes. Design docs live in `docs/backend/analysis/` and `docs/frontend/analysis/`. Every analysis states its complexity, the estimated time for a single developer and the estimated time for an AI agent (an `## Estimate` section; see `feature-from-analysis`).
 - Change tests rather than production code when hardening specs; ask before changing production code for a bug a test uncovers.
+- Task checklists (`TODO.md` and the root `README.md` `## Features` list) keep open items on top:
+  - `TODO.md` has `## Open` first and `## Done` below it. Add a new task as a `### <Title> (YYYY-MM-DD)` section at the top of `## Open`. When you tick an item (`- [ ]` → `- [x]`), move it, under its section heading, to the bottom of `## Done`; open items of the same section stay in `## Open`. Never leave a ticked item in `## Open` or an unticked one in `## Done`.
+  - In each README Features group (Guardian / Child / Platform), unchecked items come first, a new one at the top of the group, and a ticked item moves to the end of its group.
+  - `TODO.md` follows Prettier: `cd src/frontend/buddy && node_modules/.bin/prettier --write ../../../TODO.md`.
 - Never commit secrets. `appsettings.*.json` and `.env` are git-ignored.
 - `task hooks:install` adds a pre-commit hook (Prettier/ESLint, i18n parity and C# whitespace on staged files; fix what it reports rather than using `--no-verify`) and a post-commit hook that may add a `docs: sync documentation (auto)` commit. Add `[skip-docs]` to the commit message to skip the latter.
 - Stop dev servers by port (`fuser -k -TERM 4300/tcp 5193/tcp 7076/tcp`), not with `pkill -f`, which can match your own shell.

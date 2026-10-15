@@ -19,6 +19,7 @@ describe('VerifyEmail', () => {
       email: { value: 'user@buddy.test', isVerified: true },
       userName: 'user',
       name: { givenName: 'Uma', familyName: 'User' },
+      callingName: '',
       timeZoneId: 'UTC',
       language: 'en',
       ...overrides,

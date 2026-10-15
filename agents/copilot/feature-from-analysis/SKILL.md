@@ -163,7 +163,10 @@ In short:
   built)`). Fix any part of the doc that the implementation contradicts. Settled open questions
   become `## Decisions made` rows.
 - In the root `README.md`, tick the Features checkbox (`- [ ]` → `- [x]`) and drop the
-  "(proposed, not yet implemented — see ...)" parenthetical, unless only part shipped.
+  "(proposed, not yet implemented — see ...)" parenthetical, unless only part shipped. Move the
+  ticked item to the end of its group, below the other ticked items.
+- If `TODO.md` lists the feature, tick it and move it to the bottom of `## Done`, under its section
+  heading. Leave items that didn't ship in `## Open`.
 - Update `docs/frontend/README.md` (routes, services, responsibilities, analysis bullet) and
   `docs/backend/README.md` (add a `docs/backend/<feature>/flow.md` under "Start here" if you
   wrote one, as every shipped feature has).
@@ -213,6 +216,6 @@ big to build without one.
    affected call sites, so the size of the change is visible (see "Show the size of a refactor"
    in the template).
 5. Register it as described under "When a new doc is added" in the template: the README index
-   bullet, plus an unchecked `- [ ]` item in the root `README.md` Features list for a product
-   feature.
+   bullet, plus an unchecked `- [ ]` item at the top of the right group in the root `README.md`
+   Features list for a product feature (open items stay above the ticked ones).
 6. Report the path and list the open questions so the user can settle them before building.

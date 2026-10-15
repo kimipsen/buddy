@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CalendarOccurrence,
@@ -18,6 +18,10 @@ import { disableFeatures } from '../../../../testing/features-fixture';
 describe('ChildCalendar', () => {
   const today = todayIsoDate();
 
+  // The meal-plan switch is remembered in localStorage; start every test from the default.
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
   const currentUser: CurrentUser = {
     showVisualTimers: true,
     homeworkChunks: { focusMinutes: 15, breakMinutes: 5 },
@@ -25,6 +29,7 @@ describe('ChildCalendar', () => {
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',
     name: { givenName: 'Ida', familyName: 'Kid' },
+    callingName: '',
     timeZoneId: 'UTC',
     language: 'en',
   };
@@ -55,6 +60,8 @@ describe('ChildCalendar', () => {
       dueAt: null,
       isAllDay: false,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,
@@ -476,12 +483,117 @@ describe('ChildCalendar', () => {
     expect(compiled.textContent).toContain('All day');
   });
 
-  it('shows no filter toggles when only one calendar is accessible', async () => {
+  it('shows only the meal-plan switch when one calendar is accessible', async () => {
     const { fixture } = await setup();
     await settle(fixture);
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('button[role="switch"]'),
-    ).toBeFalsy();
+
+    const labels = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button[role="switch"]'),
+    ).map((b) => b.getAttribute('aria-label'));
+    expect(labels).toEqual(['Meal plan']);
+  });
+
+  it('shows no filter when one calendar is accessible and meal plans are turned off', async () => {
+    disableFeatures('mealplans');
+    const { fixture } = await setup();
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('button[role="switch"]')).toBeFalsy();
+    expect(compiled.textContent).not.toContain('Show');
+  });
+
+  it('lists the meal-plan switch after the calendar switches, under the "Show" title', async () => {
+    const { fixture } = await setup({
+      calendars: {
+        listMyCalendars: vi.fn(async () => [
+          calendarSummary(),
+          calendarSummary({ id: 'cal-2', name: 'School' }),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(compiled.querySelectorAll('button[role="switch"]')).map((b) =>
+      b.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['Home', 'School', 'Meal plan']);
+    expect(compiled.textContent).toContain('Show');
+  });
+
+  it('shows meals by default, with the meal-plan switch on', async () => {
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByAriaLabel(compiled, 'Meal plan')?.getAttribute('aria-checked')).toBe('true');
+    expect(compiled.textContent).toContain('Pancakes');
+  });
+
+  it('hides meals but keeps events when the meal-plan switch is turned off, and remembers it', async () => {
+    const { fixture } = await setup({
+      calendars: { listOccurrencesInRange: vi.fn(async () => [occurrence()]) },
+      mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'Meal plan')?.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).not.toContain('Pancakes');
+    expect(compiled.textContent).toContain('Dentist');
+    expect(findButtonByAriaLabel(compiled, 'Meal plan')?.getAttribute('aria-checked')).toBe(
+      'false',
+    );
+    expect(localStorage.getItem('buddy_child_calendar_show_meals')).toBe('false');
+  });
+
+  it('shows the empty state when the only entries are hidden meals', async () => {
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'Meal plan')?.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Nothing planned this week');
+  });
+
+  it('shows hidden meals again without reloading when the switch is turned back on', async () => {
+    const { fixture, mealplans } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    findButtonByAriaLabel(compiled, 'Meal plan')?.click();
+    await settle(fixture);
+    findButtonByAriaLabel(compiled, 'Meal plan')?.click();
+    await settle(fixture);
+
+    expect(compiled.textContent).toContain('Pancakes');
+    expect(mealplans.listMealPlan).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem('buddy_child_calendar_show_meals')).toBe('true');
+  });
+
+  it('starts with meals hidden when they were hidden last time on this device', async () => {
+    localStorage.setItem('buddy_child_calendar_show_meals', 'false');
+    const { fixture } = await setup({
+      mealplans: { listMealPlan: vi.fn(async () => [mealEntry()]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(findButtonByAriaLabel(compiled, 'Meal plan')?.getAttribute('aria-checked')).toBe(
+      'false',
+    );
+    expect(compiled.textContent).not.toContain('Pancakes');
   });
 
   it('shows a per-calendar filter when more than one calendar is accessible', async () => {

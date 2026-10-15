@@ -68,6 +68,22 @@ export interface paths {
     patch: operations['UpdateCurrentName'];
     trace?: never;
   };
+  '/users/me/calling-name': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UpdateCurrentCallingName'];
+    trace?: never;
+  };
   '/users/me/email': {
     parameters: {
       query?: never;
@@ -1012,6 +1028,22 @@ export interface paths {
     patch: operations['SetSubtaskCompletion'];
     trace?: never;
   };
+  '/calendars/{calendarId}/items/{itemId}/skip': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['SetOccurrenceSkip'];
+    trace?: never;
+  };
   '/calendars/{calendarId}/items/{itemId}': {
     parameters: {
       query?: never;
@@ -1165,6 +1197,38 @@ export interface paths {
     };
     get?: never;
     put: operations['SetDoseStatus'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/medicines/children/{childId}/effect-notes/{date}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['LogMedicineEffectNote'];
+    post?: never;
+    delete: operations['ClearMedicineEffectNote'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/medicines/children/{childId}/effect-notes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ListMedicineEffectNotes'];
+    put?: never;
     post?: never;
     delete?: never;
     options?: never;
@@ -2676,6 +2740,134 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/first-then/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetMyFirstThenBoard'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/first-then/children/{childId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['GetFirstThenBoard'];
+    put: operations['SetFirstThenBoard'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/first-then/children/{childId}/first/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['CompleteFirstThenFirst'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/first-then/me/first/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['CompleteMyFirstThenFirst'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/first-then/children/{childId}/first/reopen': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ReopenFirstThenFirst'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/first-then/me/first/reopen': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ReopenMyFirstThenFirst'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/first-then/children/{childId}/end': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['EndFirstThenBoard'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/first-then/me/end': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['EndMyFirstThenBoard'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2840,6 +3032,8 @@ export interface components {
       timing: components['schemas']['OccurrenceTiming'];
       isAllDay: boolean;
       isCompleted: boolean;
+      isSkipped: boolean;
+      isRepeating: boolean;
       /** Format: uuid */
       createdBy: string;
       /** Format: uuid */
@@ -3115,6 +3309,14 @@ export interface components {
       /** @default true */
       requireReacknowledgement: boolean;
     };
+    /** @enum {string} */
+    EffectArea: 'Focus' | 'Calm' | 'ImpulseControl' | 'Mood';
+    /** @enum {string} */
+    EffectLevel: 'Poor' | 'Okay' | 'Good';
+    EffectRating: {
+      area: components['schemas']['EffectArea'];
+      level: components['schemas']['EffectLevel'];
+    };
     Email: {
       value: string;
       isVerified: boolean;
@@ -3238,6 +3440,34 @@ export interface components {
       | 'Body';
     /** @enum {string} */
     FeelingZone: 'Blue' | 'Green' | 'Yellow' | 'Red';
+    FirstThenBoardResponse: {
+      /** Format: int32 */
+      revision: number;
+      state: components['schemas']['FirstThenState'];
+      first: null | components['schemas']['FirstThenCardResponse'];
+      then: null | components['schemas']['FirstThenCardResponse'];
+      /** Format: int32 */
+      thenMinutes: null | number;
+      /** Format: date-time */
+      unlockedAt: null | string;
+      /** Format: date-time */
+      lastModifiedAt: null | string;
+      lastModifiedByName: null | string;
+    };
+    FirstThenCardRequest: {
+      title: string;
+      icon: string;
+    };
+    FirstThenCardResponse: {
+      title: string;
+      icon: string;
+    };
+    FirstThenRevisionRequest: {
+      /** Format: int32 */
+      revision: number;
+    };
+    /** @enum {string} */
+    FirstThenState: 'None' | 'Waiting' | 'Unlocked';
     FreeformTaskSourceResponse: {
       /**
        * Format: int32
@@ -3330,6 +3560,11 @@ export interface components {
       guardianId: string;
       color: string;
     };
+    GuardianFirstThenResponse: {
+      board: components['schemas']['FirstThenBoardResponse'];
+      recentFirsts: components['schemas']['FirstThenCardResponse'][];
+      recentThens: components['schemas']['FirstThenCardResponse'][];
+    };
     GuardianInvitePreviewResponse: {
       childGivenName: string;
       kind: components['schemas']['GuardianKind'];
@@ -3351,6 +3586,7 @@ export interface components {
     GuardianSummary: {
       id: components['schemas']['UserId'];
       name: components['schemas']['Name'];
+      callingName: string;
       guardianLinkId: components['schemas']['GuardianLinkId'];
       kind: components['schemas']['GuardianKind'];
     };
@@ -3401,6 +3637,7 @@ export interface components {
       taskLibrary: boolean;
       transitionWarnings: boolean;
       feelings: boolean;
+      firstThen: boolean;
       homework: boolean;
       help: boolean;
     };
@@ -3444,6 +3681,13 @@ export interface components {
       date?: null | string;
       /** Format: time */
       time?: null | string;
+    };
+    LogMedicineEffectNoteRequest: {
+      effects?: null | components['schemas']['EffectRating'][];
+      sideEffects?: null | components['schemas']['SideEffectRating'][];
+      /** Format: time */
+      woreOffAt?: null | string;
+      note?: null | string;
     };
     LogSleepEntryRequest: {
       /** Format: time */
@@ -3618,6 +3862,21 @@ export interface components {
       time: string;
       status: components['schemas']['DoseStatus'];
     };
+    MedicineEffectNoteResponse: {
+      /** Format: date */
+      date: string;
+      effects: components['schemas']['EffectRating'][];
+      sideEffects: components['schemas']['SideEffectRating'][];
+      /** Format: time */
+      woreOffAt: null | string;
+      note: string;
+      regimen: components['schemas']['RegimenMedicineResponse'][];
+      /** Format: uuid */
+      loggedBy: string;
+    };
+    MedicineEffectNotesResponse: {
+      notes: components['schemas']['MedicineEffectNoteResponse'][];
+    };
     /** Format: uuid */
     MedicineId: string;
     MedicineScheduleResponse: {
@@ -3656,6 +3915,12 @@ export interface components {
     Name: {
       givenName: string;
       familyName: string;
+    };
+    OccurrenceSkipResponse: {
+      itemId: components['schemas']['CalendarItemId'];
+      /** Format: date */
+      occurrenceDate: string;
+      isSkipped: boolean;
     };
     /** @description One of 2 cases, picked by the numeric "kind": 0 = Timed, 1 = Due. */
     OccurrenceTiming: components['schemas']['Timed'] | components['schemas']['Due'];
@@ -3837,6 +4102,18 @@ export interface components {
       until?: null | string;
       weekdays?: null | components['schemas']['DayOfWeek'][];
     };
+    RegimenDoseResponse: {
+      /** Format: time */
+      time: string;
+      status: components['schemas']['DoseStatus'];
+    };
+    RegimenMedicineResponse: {
+      /** Format: uuid */
+      medicineId: string;
+      name: string;
+      dosage: string;
+      doses: components['schemas']['RegimenDoseResponse'][];
+    };
     RenamePrintTemplateRequest: {
       name: string;
     };
@@ -3999,6 +4276,14 @@ export interface components {
     SetFeelingsDisplayModeRequest: {
       displayMode: components['schemas']['FeelingsDisplayMode'];
     };
+    SetFirstThenBoardRequest: {
+      /** Format: int32 */
+      revision: number;
+      first: components['schemas']['FirstThenCardRequest'];
+      then: components['schemas']['FirstThenCardRequest'];
+      /** Format: int32 */
+      thenMinutes?: null | number;
+    };
     SetGroupMemberRoleRequest: {
       role: components['schemas']['GroupRole'];
     };
@@ -4007,6 +4292,11 @@ export interface components {
     };
     SetMemberRoleRequest: {
       role: components['schemas']['CalendarRole'];
+    };
+    SetOccurrenceSkipRequest: {
+      /** Format: date */
+      date: string;
+      isSkipped: boolean;
     };
     SetProviderApiKeyRequest: {
       apiKey: string;
@@ -4071,6 +4361,23 @@ export interface components {
       id: components['schemas']['UserId'];
       name: components['schemas']['Name'];
     };
+    /** @enum {string} */
+    SideEffect:
+      | 'ReducedAppetite'
+      | 'TroubleFallingAsleep'
+      | 'Stomachache'
+      | 'Headache'
+      | 'Irritability'
+      | 'ReboundWhenWearingOff'
+      | 'Tics'
+      | 'FlatOrNotThemselves'
+      | 'Other';
+    SideEffectRating: {
+      kind: components['schemas']['SideEffect'];
+      severity: components['schemas']['SideEffectSeverity'];
+    };
+    /** @enum {string} */
+    SideEffectSeverity: 'None' | 'Mild' | 'Moderate' | 'Severe';
     SkippedImportEntry: {
       /** Format: date */
       date: string;
@@ -4277,6 +4584,9 @@ export interface components {
         [key: string]: components['schemas']['CalendarRole'];
       };
     };
+    UpdateCallingNameRequest: {
+      callingName: null | string;
+    };
     UpdateChildHomeworkChunksRequest: {
       /** Format: int32 */
       focusMinutes: number;
@@ -4374,6 +4684,7 @@ export interface components {
       email: components['schemas']['Email'];
       userName: string;
       name: components['schemas']['Name'];
+      callingName: string;
       timeZoneId: components['schemas']['TimeZoneId'];
       language: components['schemas']['Language'];
       showVisualTimers: boolean;
@@ -4625,6 +4936,68 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UpdateNameRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  UpdateCurrentCallingName: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateCallingNameRequest'];
       };
     };
     responses: {
@@ -8378,6 +8751,7 @@ export interface operations {
       query: {
         from: string;
         to: string;
+        includeSkipped?: boolean;
       };
       header?: {
         /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
@@ -8769,6 +9143,71 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['TaskCompletionResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SetOccurrenceSkip: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        calendarId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetOccurrenceSkipRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OccurrenceSkipResponse'];
         };
       };
       /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
@@ -9486,6 +9925,183 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ErrorEnvelope'];
         };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  LogMedicineEffectNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        date: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LogMedicineEffectNoteRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MedicineEffectNoteResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ClearMedicineEffectNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+        date: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ListMedicineEffectNotes: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MedicineEffectNotesResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       429: components['responses']['TooManyRequests'];
       500: components['responses']['InternalServerError'];
@@ -16774,6 +17390,564 @@ export interface operations {
         content?: never;
       };
       /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetMyFirstThenBoard: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  GetFirstThenBoard: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description An ETag from an earlier 200; when it still matches, the answer is 304 with no body. */
+        'If-None-Match'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description A strong validator: a hash of this body. */
+          ETag?: string;
+          /** @description private, no-cache (revalidate with If-None-Match before reuse). */
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GuardianFirstThenResponse'];
+        };
+      };
+      304: components['responses']['NotModified'];
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  SetFirstThenBoard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetFirstThenBoardRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `first_then_board_changed`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  CompleteFirstThenFirst: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FirstThenRevisionRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `first_then_board_changed`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  CompleteMyFirstThenFirst: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FirstThenRevisionRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `first_then_board_changed`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ReopenFirstThenFirst: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FirstThenRevisionRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `first_then_board_changed`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  ReopenMyFirstThenFirst: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FirstThenRevisionRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `first_then_board_changed`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  EndFirstThenBoard: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path: {
+        childId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FirstThenRevisionRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `first_then_board_changed`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  EndMyFirstThenBoard: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Optional client-generated key (1-200 characters). A retry with the same key and the same request replays the first response instead of running again. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FirstThenRevisionRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FirstThenBoardResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `invalid_idempotency_key`, `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`, `first_then_board_changed`, `idempotency_key_in_progress`, `idempotency_key_reused`, `idempotency_response_unavailable`. */
       409: {
         headers: {
           [name: string]: unknown;

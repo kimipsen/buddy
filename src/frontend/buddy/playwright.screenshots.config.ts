@@ -65,6 +65,14 @@ export default defineConfig({
       ignoreHTTPSErrors: true,
       reuseExistingServer: true,
       timeout: 180_000,
+      // The demo seed sends several hundred requests as Sara within seconds, past the per-user
+      // burst (200, then 5 a second; RateLimitingOptions.Authenticated), so it failed with a 429
+      // part-way through. Only the API this config starts gets the larger budget, as
+      // playwright.config.ts does for anonymous requests; a reused dev API keeps its limits.
+      env: {
+        RateLimiting__Authenticated__TokenLimit: '5000',
+        RateLimiting__Authenticated__TokensPerPeriod: '500',
+      },
     },
   ],
 });

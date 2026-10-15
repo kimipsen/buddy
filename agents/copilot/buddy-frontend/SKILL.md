@@ -42,7 +42,7 @@ App root: `src/frontend/buddy`. All paths below are relative to it unless they s
 5. **Route**: add to `guardian.routes.ts` / `child.routes.ts` (or place it on the dashboard/parent page), and a navigation link if needed.
 6. **i18n keys in both en and da** — follow the `i18n` skill (`.claude/skills/i18n/SKILL.md`) and run its parity check.
 7. **E2E**: for a new user-visible workflow, add or extend a Playwright spec in `e2e/` (use `loginAs(SEEDED_USERS.x)` from `e2e/support/auth-fixture.ts` and helpers in `e2e/support/guardian-data.ts`; see `e2e/medicine-dose-status.spec.ts`). If you change English copy, update e2e selectors that match it.
-8. **Docs**: tick/add the item in the root `README.md` `## Features` list, and update `docs/frontend/README.md` (routes, responsibilities, shared services) when routes or services change.
+8. **Docs**: tick/add the item in the root `README.md` `## Features` list (and in `TODO.md` if it's listed there), and update `docs/frontend/README.md` (routes, responsibilities, shared services) when routes or services change. Keep open items on top (see "Task checklists" in `CLAUDE.md`): in `TODO.md`, a new task goes at the top of `## Open` and a ticked one moves to the bottom of `## Done`; in each README Features group, unchecked items come first, a new one at the top, and a ticked one moves to the end of its group.
 9. **Screenshots**: a new route goes in `screenshots/pages.ts`, with demo data seeded in `screenshots/demo-family.ts`. Then run `task docs:screenshots` and look at the PNG (see the `doc-screenshots` skill). `src/app/screenshot-coverage.spec.ts` fails for a route without one. For a visible change to an existing page, re-run the screenshots too.
 10. Run the commands below.
 

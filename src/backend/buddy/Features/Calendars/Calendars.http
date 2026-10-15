@@ -22,3 +22,24 @@ Content-Type: application/x-www-form-urlencoded
 client_id={{keycloak_client_id}}&grant_type=password&username={{keycloak_username}}&password={{keycloak_password}}
 
 ###
+
+# Skip one occurrence of a repeating item; "isSkipped": false restores it.
+# Replace the ids with a calendar and a repeating item of your own.
+@calendarId = 00000000-0000-0000-0000-000000000000
+@itemId = 00000000-0000-0000-0000-000000000000
+PATCH {{buddy_HostAddress}}/calendars/{{calendarId}}/items/{{itemId}}/skip
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "date": "2026-10-20",
+  "isSkipped": true
+}
+
+###
+
+# Skipped occurrences come back, flagged isSkipped, only with includeSkipped=true.
+GET {{buddy_HostAddress}}/calendars/{{calendarId}}/occurrences?from=2026-10-19&to=2026-10-25&includeSkipped=true
+Authorization: Bearer {{login.response.body.access_token}}
+
+###

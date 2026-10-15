@@ -305,6 +305,8 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
   try {
     const me = await api.get<{ id: string }>('/users/me');
     await api.patch('/users/me/name', { givenName: 'Sara', familyName: 'Holm' });
+    // What Emil and Ida call her: shown on their home pages and the printed week plan.
+    await api.patch('/users/me/calling-name', { callingName: 'Mom' });
     await api.patch('/users/me/timezone', { timeZoneId: TIME_ZONE });
     await api.patch('/users/me/language', { language: 'en' });
 
@@ -360,7 +362,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       end: string,
       recurrence: unknown = null,
     ) =>
-      api.post(`/calendars/${calendarId}/items`, {
+      api.post<Named>(`/calendars/${calendarId}/items`, {
         title,
         icon,
         color,
@@ -384,7 +386,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       '17:30:00',
       weekly,
     );
-    await event(
+    const swimming = await event(
       school.id,
       'Swimming',
       '🏊',
@@ -394,6 +396,17 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       '16:30:00',
       weekly,
     );
+
+    // This week's swimming is cancelled (docs/backend/analysis/skip-occurrences.md), so the agenda
+    // shows a muted "Skipped" row with Restore. Optional, like the extras below.
+    try {
+      await api.patch(`/calendars/${school.id}/items/${swimming.id}/skip`, {
+        date: nextWeekday(4),
+        isSkipped: true,
+      });
+    } catch (error) {
+      warn(error);
+    }
     await event(family.id, 'Dentist – Emil', '🦷', '#f43f5e', todayIso, '14:00:00', '14:45:00');
     await event(family.id, 'Grandma visits', '👵', '#f59e0b', inDays(2), '11:00:00', '15:00:00');
     await event(
@@ -693,16 +706,62 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     await api.put(`/mealplans/children/${emil.id}/ai/data-sharing-acknowledgement`);
 
     // Medicine ------------------------------------------------------------------------------
+    // Effect notes record the regimen active when a day is first rated, so the order matters:
+    // baseline days before any schedule, three weeks on 10 mg, then the dosage goes up to 15 mg
+    // for the last week -- giving the effects page three dose periods. The other medicines are
+    // created afterwards so they don't split those periods.
+    const logEffectNote = (back: number, body: object) =>
+      api.put(`/medicines/children/${emil.id}/effect-notes/${inDays(-back)}`, body).catch(warn);
+    for (const back of [34, 33, 32, 31, 30]) {
+      await logEffectNote(back, {
+        effects: [
+          { area: 'Focus', level: back % 2 === 0 ? 'Poor' : 'Okay' },
+          { area: 'Calm', level: 'Poor' },
+        ],
+        note: back === 34 ? 'Before medication: a baseline week for the doctor.' : '',
+      });
+    }
+    const ritalinDetails = { name: 'Methylphenidate', icon: '💊', color: '#0ea5e9' };
     const ritalin = await api.post<Named>(`/medicines/children/${emil.id}/schedules`, {
-      name: 'Methylphenidate',
+      ...ritalinDetails,
       dosage: '10 mg',
-      icon: '💊',
-      color: '#0ea5e9',
       times: ['07:30:00', '12:00:00'],
-      // Two weeks back, so the feelings trend has taken doses on the days it draws.
-      startDate: inDays(-13),
+      // From before the 10 mg weeks, so the feelings trend also has taken doses on the days it draws.
+      startDate: inDays(-27),
       endDate: null,
     });
+    for (let back = 27; back >= 8; back--) {
+      if (back % 7 === 3 || back % 7 === 4) {
+        continue; // a few unrated days, as in real life
+      }
+      await logEffectNote(back, {
+        effects: [
+          { area: 'Focus', level: 'Okay' },
+          { area: 'Calm', level: back % 3 === 0 ? 'Good' : 'Okay' },
+        ],
+        sideEffects: [{ kind: 'ReducedAppetite', severity: back % 2 === 0 ? 'Mild' : 'Moderate' }],
+        woreOffAt: back % 2 === 0 ? '14:30:00' : '14:15:00',
+      });
+    }
+    await api.patch(`/medicines/children/${emil.id}/schedules/${ritalin.id}/details`, {
+      ...ritalinDetails,
+      dosage: '15 mg',
+    });
+    for (let back = 7; back >= 1; back--) {
+      await logEffectNote(back, {
+        effects: [
+          { area: 'Focus', level: 'Good' },
+          { area: 'Calm', level: 'Good' },
+          { area: 'Mood', level: back === 3 ? 'Okay' : 'Good' },
+        ],
+        sideEffects: [
+          { kind: 'ReducedAppetite', severity: 'Moderate' },
+          { kind: 'TroubleFallingAsleep', severity: back % 3 === 0 ? 'Mild' : 'None' },
+        ],
+        woreOffAt: '16:00:00',
+        note: back === 2 ? 'School said he was great in maths, but he didn’t eat lunch.' : '',
+      });
+    }
     await api.post(`/medicines/children/${emil.id}/schedules`, {
       name: 'Melatonin',
       dosage: '3 mg',
@@ -851,6 +910,39 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       }
     })();
 
+    // First – Then board (docs/backend/analysis/first-then-board.md) -----------------------------
+    // Two earlier boards, so the guardian form has "Used before" cards, then today's
+    // "Homework → iPad, 20 min", which Emil has ticked: his page shows the Then unlocked with the
+    // countdown, and his home page and Sara's dashboard show the board.
+    await (async () => {
+      interface BoardDto {
+        revision: number;
+      }
+      const board = `/first-then/children/${emil.id}`;
+      let revision = 0;
+      const set = async (
+        first: { title: string; icon: string },
+        then: { title: string; icon: string },
+        thenMinutes: number | null,
+      ) => {
+        revision = (await api.put<BoardDto>(board, { revision, first, then, thenMinutes }))
+          .revision;
+      };
+      try {
+        await set({ title: 'Tidy your room', icon: '🧹' }, { title: 'Lego', icon: '🧱' }, null);
+        revision = (await api.post<BoardDto>(`${board}/end`, { revision })).revision;
+        await set({ title: 'Shower', icon: '🚿' }, { title: 'Read together', icon: '📖' }, 15);
+        revision = (await api.post<BoardDto>(`${board}/end`, { revision })).revision;
+        await set({ title: 'Homework', icon: '📚' }, { title: 'iPad', icon: '📱' }, 20);
+
+        const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);
+        await emilApi.post('/first-then/me/first/complete', { revision });
+        await emilApi.dispose();
+      } catch (error: unknown) {
+        warn(error);
+      }
+    })();
+
     // House rules ---------------------------------------------------------------------------
     // A household book for the family group and one personal rule for Emil. Ida has read every
     // household rule (Sara went through them with her); Emil read "Dinner" before it changed and
@@ -989,7 +1081,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
         }),
         row({ kind: 'Pickup', label: 'Pickup', childId: emil.id }),
         row({ kind: 'Meal', label: 'Dinner', childId: emil.id, mealSlot: 'Dinner' }),
-        row({ kind: 'WorkLocation', label: 'Sara works', guardianId: me.id }),
+        row({ kind: 'WorkLocation', label: 'Mom works', guardianId: me.id }),
         row({
           kind: 'TaskChecklist',
           label: 'Emil’s tasks',

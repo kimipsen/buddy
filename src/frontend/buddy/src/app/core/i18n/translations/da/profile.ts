@@ -9,6 +9,14 @@ export const profile = {
     saved: 'Navn opdateret.',
     error: 'Kunne ikke opdatere dit navn.',
   },
+  callingName: {
+    label: 'Hvad dine børn kalder dig',
+    placeholder: 'For eksempel Mor eller Far',
+    hint: 'Dine børn ser dette i stedet for dit fornavn, for eksempel ved afhentninger og på den udskrevne ugeplan. Lad feltet stå tomt for at bruge dit fornavn.',
+    save: 'Gem kaldenavn',
+    saved: 'Kaldenavn opdateret.',
+    error: 'Kunne ikke opdatere dit kaldenavn.',
+  },
   email: {
     label: 'E-mail',
     save: 'Gem e-mail',

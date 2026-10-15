@@ -118,6 +118,16 @@ Medicine schedules and daily dose tracking.
 
 <img src="mobile/guardian-medicine.png" alt="Medicine on a phone" width="320">
 
+## Medicine effects
+
+Daily ratings of focus, calm, impulses, mood and side effects, with a summary by dose period for the doctor.
+
+![Medicine effects](guardian-medicine-effects.png)
+
+<img src="tablet/guardian-medicine-effects.png" alt="Medicine effects on a tablet" width="384">
+
+<img src="mobile/guardian-medicine-effects.png" alt="Medicine effects on a phone" width="320">
+
 ## Sleep diary
 
 Log a night in the same fields as a sleep clinic’s form, review the last 14 nights, keep the diary-wide sleep hygiene notes and share a read-only link with a doctor.
@@ -147,6 +157,16 @@ Per child, a countdown on the child’s screen before events, tasks, routines, p
 <img src="tablet/guardian-transition-warnings.png" alt="Heads-up before changes on a tablet" width="384">
 
 <img src="mobile/guardian-transition-warnings.png" alt="Heads-up before changes on a phone" width="320">
+
+## First – Then
+
+A two-card board for one child: first the task, then what comes after. The current board as the child sees it, with Mark done, Undo and End, and a form for a new board from cards used before, today’s tasks or suggestions, with an optional time limit for the Then.
+
+![First – Then](guardian-first-then.png)
+
+<img src="tablet/guardian-first-then.png" alt="First – Then on a tablet" width="384">
+
+<img src="mobile/guardian-first-then.png" alt="First – Then on a phone" width="320">
 
 ## House rules
 
@@ -317,6 +337,16 @@ The child’s own rules and each household’s, with “New” and “Changed”
 <img src="tablet/child-rules.png" alt="Child: our rules on a tablet" width="384">
 
 <img src="mobile/child-rules.png" alt="Child: our rules on a phone" width="320">
+
+## Child: First – Then
+
+The child’s First – Then board: Homework is done, so the iPad card is open with a disc counting down its 20 minutes, Not done yet for a mis-tap and All done to end the board.
+
+![Child: First – Then](child-first-then.png)
+
+<img src="tablet/child-first-then.png" alt="Child: First – Then on a tablet" width="384">
+
+<img src="mobile/child-first-then.png" alt="Child: First – Then on a phone" width="320">
 
 ## Child: rewards
 

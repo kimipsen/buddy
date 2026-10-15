@@ -3,8 +3,8 @@ using buddy.Features.Users;
 
 namespace buddy.Features.Medicines;
 
-// A child's medicine schedules, dose logs and group sharing are the child's alone: erasing the child
-// deletes them. See gdpr-data-protection.md.
+// A child's medicine schedules, dose logs, effect notes and group sharing are the child's alone:
+// erasing the child deletes them. See gdpr-data-protection.md.
 public sealed class MedicinesPersonalDataEraser(IMedicinesStore store, IMedicineEventStore medicines, IMedicineSharingEventStore sharing)
     : IPersonalDataEraser
 {
@@ -25,5 +25,9 @@ public sealed class MedicinesPersonalDataEraser(IMedicinesStore store, IMedicine
             await store.DeleteStreamAsync<MedicineSharingSnapshot>(
                 sharingId.Value, cancellationToken, s => s.Delete<MedicineSharingIndexDocument>(sharingId.Value));
         }
+
+        // No index document: the stream id is the child's id. Deleting a stream that was never
+        // started is a no-op.
+        await store.DeleteStreamAsync<MedicineEffectLogSnapshot>(MedicineEffectLogId.ForChild(child.UserId).Value, cancellationToken);
     }
 }

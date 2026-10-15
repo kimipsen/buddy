@@ -27,7 +27,10 @@ public static class MedicinesFeature
         typeof(MedicineScheduleStopped),
         typeof(DoseStatusChanged),
         typeof(MedicineSharedWithGroup),
-        typeof(MedicineUnsharedFromGroup)
+        typeof(MedicineUnsharedFromGroup),
+        typeof(MedicineEffectLogStarted),
+        typeof(MedicineEffectNoteLogged),
+        typeof(MedicineEffectNoteCleared)
     ];
 
     // Depends on IGuardianLinkEventStore for authorization, so AddGuardiansFeature must run first
@@ -78,11 +81,15 @@ public static class MedicinesFeature
             options.Projections.Register(new MedicineSharingSnapshotProjection(), ProjectionLifecycle.Inline);
             options.Schema.For<MedicineSharingSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
 
+            options.Projections.Register(new MedicineEffectLogSnapshotProjection(), ProjectionLifecycle.Inline);
+            options.Schema.For<MedicineEffectLogSnapshot>().DatabaseSchemaName(SnapshotSchema.Name);
+
             return options;
         });
 
         services.AddSingleton<IMedicineEventStore, MartenMedicineEventStore>();
         services.AddSingleton<IMedicineSharingEventStore, MartenMedicineSharingEventStore>();
+        services.AddSingleton<IMedicineEffectLogEventStore, MartenMedicineEffectLogEventStore>();
 
         return services;
     }
@@ -102,6 +109,10 @@ public static class MedicinesFeature
         medicines.MapListMedicineSchedules();
         medicines.MapListTodaysDoses();
         medicines.MapSetDoseStatus();
+
+        medicines.MapLogMedicineEffectNote();
+        medicines.MapClearMedicineEffectNote();
+        medicines.MapListMedicineEffectNotes();
 
         medicines.MapShareMedicineWithGroup();
         medicines.MapUnshareMedicineFromGroup();

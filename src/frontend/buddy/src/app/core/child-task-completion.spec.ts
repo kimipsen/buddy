@@ -14,6 +14,8 @@ describe('completeChildTask', () => {
     color: '#0f0',
     isAllDay: false,
     isCompleted: false,
+    isSkipped: false,
+    isRepeating: false,
     createdBy: 'g',
     lastModifiedBy: 'g',
     assignedTo: 'c',

@@ -26,6 +26,7 @@ public sealed class FeatureOptions
     public bool TaskLibrary { get; set; } = true;
     public bool TransitionWarnings { get; set; } = true;
     public bool Feelings { get; set; } = true;
+    public bool FirstThen { get; set; } = true;
 
     // Frontend-only sessions; the backend part is the per-child lengths route in Guardians.
     public bool Homework { get; set; } = true;
@@ -50,6 +51,7 @@ public sealed class FeatureOptions
         TaskLibrary,
         TransitionWarnings,
         Feelings,
+        FirstThen,
         Homework,
         Help);
 
@@ -87,5 +89,6 @@ public sealed record InstallationFeatures(
     bool TaskLibrary,
     bool TransitionWarnings,
     bool Feelings,
+    bool FirstThen,
     bool Homework,
     bool Help);

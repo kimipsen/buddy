@@ -69,6 +69,16 @@ export class UsersService {
     return updated;
   }
 
+  async updateCallingName(callingName: string): Promise<CurrentUser> {
+    const updated = await firstValueFrom(
+      this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/calling-name`, {
+        callingName,
+      }),
+    );
+    this.currentUserPromise = Promise.resolve(updated);
+    return updated;
+  }
+
   async updateEmail(email: string): Promise<CurrentUser> {
     const updated = await firstValueFrom(
       this.http.patch<CurrentUser>(`${this.runtimeConfig.apiBaseUrl}/users/me/email`, { email }),

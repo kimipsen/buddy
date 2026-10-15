@@ -40,7 +40,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), subtask1, subtask2);
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
 
         var ordered = occurrences.OrderBy(o => o.SortAt).ToArray();
         Assert.Equal(2, ordered.Length);
@@ -72,7 +72,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), subtask);
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
 
         var occurrence = Assert.Single(occurrences);
         Assert.Equal("toothbrush", occurrence.Icon);
@@ -87,7 +87,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10)));
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
 
         Assert.Equal(CalendarIcon.Value, Assert.Single(occurrences).Routine?.ParentIcon);
     }
@@ -102,14 +102,14 @@ public sealed class CalendarOccurrenceExpansionTests
         var added = new SubtaskAdded(FixedTemplateId, new Subtask(subtaskId, "Brush teeth", null, TimeSpan.FromMinutes(10)), 0, FixedUserId, DateTimeOffset.UtcNow);
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), added);
 
-        var before = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+        var before = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
         Assert.Equal(TimeSpan.FromMinutes(10), Duration(Assert.Single(before)));
 
         // No new CalendarItem event at all -- only the template changes.
         var updated = new SubtaskUpdated(FixedTemplateId, subtaskId, added.Subtask, added.Subtask with { Duration = TimeSpan.FromMinutes(20) }, FixedUserId, DateTimeOffset.UtcNow);
         templates.Add(FixedTemplateId, TemplateCreated(), added, updated);
 
-        var after = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+        var after = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
         var afterOccurrence = Assert.Single(after);
         Assert.Equal(TimeSpan.FromMinutes(20), Duration(afterOccurrence));
     }
@@ -123,7 +123,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var archived = new TaskTemplateArchived(FixedTemplateId, FixedUserId, DateTimeOffset.UtcNow);
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10)), archived);
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
 
         Assert.Single(occurrences);
     }
@@ -135,7 +135,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var items = new FakeCalendarItemEventStore().Add(FixedItemId, TaskCreated(due));
         var templates = new FakeTaskTemplateEventStore(); // no stream for FixedTemplateId at all
 
-        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
 
         Assert.Empty(occurrences);
     }
@@ -161,7 +161,7 @@ public sealed class CalendarOccurrenceExpansionTests
             SubtaskAdded("After the gap", TimeSpan.FromMinutes(30)));
 
         var occurrences = (await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None))
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None))
             .OrderBy(o => o.SortAt)
             .ToArray();
 
@@ -198,7 +198,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, ChecklistCreated(), options, ItemAdded("Lunchbox"), ItemAdded("Glasses"));
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None);
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None);
 
         Assert.Equal(2, occurrences.Count);
         var dueAt = new DateTimeOffset(2026, 6, 1, 5, 45, 0, TimeSpan.Zero);
@@ -215,7 +215,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(5)));
 
         var occurrence = Assert.Single(await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, CancellationToken.None));
+            FixedCalendarId, Copenhagen, CalendarIcon, due.Date, due.Date, items, templates, includeSkipped: false, CancellationToken.None));
 
         Assert.NotNull(occurrence.Routine);
         Assert.Null(occurrence.Routine.Checklist);
@@ -231,7 +231,7 @@ public sealed class CalendarOccurrenceExpansionTests
             FixedTemplateId, ChecklistCreated(), ItemAdded("Lunchbox"), ItemAdded("Gym clothes", Weekdays.Tuesday));
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(2), items, templates, CancellationToken.None);
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(2), items, templates, includeSkipped: false, CancellationToken.None);
 
         var gym = occurrences.Where(o => o.Title == "Gym clothes").ToArray();
         var gymDay = Assert.Single(gym);
@@ -248,7 +248,7 @@ public sealed class CalendarOccurrenceExpansionTests
         var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, ChecklistCreated(), ItemAdded("Swimming kit", Weekdays.Thursday));
 
         var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(2), items, templates, CancellationToken.None);
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(2), items, templates, includeSkipped: false, CancellationToken.None);
 
         Assert.Empty(occurrences);
     }
@@ -267,12 +267,54 @@ public sealed class CalendarOccurrenceExpansionTests
             SubtaskAdded("Get dressed", TimeSpan.FromMinutes(15)));
 
         var occurrences = (await CalendarOccurrenceExpansion.ExpandAsync(
-            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday, items, templates, CancellationToken.None))
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday, items, templates, includeSkipped: false, CancellationToken.None))
             .OrderBy(o => o.SortAt)
             .ToArray();
 
         Assert.Equal(["Brush teeth", "Get dressed"], occurrences.Select(o => o.Title));
         Assert.Equal(Timed(occurrences[0]).EndsAt, Timed(occurrences[1]).StartsAt);
+    }
+
+    // docs/backend/analysis/skip-occurrences.md, Question 2: a skip drops the whole day's run,
+    // every subtask, and only that day.
+    [Fact]
+    public async Task A_skipped_day_drops_every_subtask_of_that_days_run_and_only_that_day()
+    {
+        var monday = new DateOnly(2026, 6, 1);
+        var due = new DueDate(monday, new TimeOnly(7, 0), IsAllDay: false);
+        var items = new FakeCalendarItemEventStore().Add(
+            FixedItemId,
+            TaskCreated(due, new Recurrence.Repeating(RecurrenceFrequency.Daily, 1, new RecurrenceEnd.Never())),
+            new OccurrenceSkipChanged(FixedItemId, monday.AddDays(1), false, true, FixedUserId, DateTimeOffset.UtcNow));
+        var templates = new FakeTaskTemplateEventStore().Add(
+            FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10)), SubtaskAdded("Get dressed", TimeSpan.FromMinutes(15)));
+
+        var occurrences = await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(2), items, templates, includeSkipped: false, CancellationToken.None);
+
+        Assert.Equal(
+            [monday, monday, monday.AddDays(2), monday.AddDays(2)],
+            occurrences.Select(o => DateOnly.FromDateTime(Timed(o).StartsAt.Date)).Order());
+        Assert.All(occurrences, o => Assert.False(o.IsSkipped));
+    }
+
+    [Fact]
+    public async Task Including_skipped_occurrences_returns_them_flagged()
+    {
+        var monday = new DateOnly(2026, 6, 1);
+        var due = new DueDate(monday, new TimeOnly(7, 0), IsAllDay: false);
+        var items = new FakeCalendarItemEventStore().Add(
+            FixedItemId,
+            TaskCreated(due, new Recurrence.Repeating(RecurrenceFrequency.Daily, 1, new RecurrenceEnd.Never())),
+            new OccurrenceSkipChanged(FixedItemId, monday, false, true, FixedUserId, DateTimeOffset.UtcNow));
+        var templates = new FakeTaskTemplateEventStore().Add(FixedTemplateId, TemplateCreated(), SubtaskAdded("Brush teeth", TimeSpan.FromMinutes(10)));
+
+        var occurrences = (await CalendarOccurrenceExpansion.ExpandAsync(
+            FixedCalendarId, Copenhagen, CalendarIcon, monday, monday.AddDays(1), items, templates, includeSkipped: true, CancellationToken.None))
+            .OrderBy(o => o.SortAt)
+            .ToArray();
+
+        Assert.Equal([true, false], occurrences.Select(o => o.IsSkipped));
     }
 
     private static OccurrenceTiming.Timed Timed(CalendarItemOccurrence occurrence) =>

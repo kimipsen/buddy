@@ -22,6 +22,7 @@ describe('UsersService', () => {
       email: { value: 'user@buddy.test', isVerified: true },
       userName: 'user',
       name: { givenName: 'Uma', familyName: 'User' },
+      callingName: '',
       timeZoneId: 'UTC',
       language: 'en',
       ...overrides,
@@ -130,6 +131,31 @@ describe('UsersService', () => {
       const promise = service.updateName('New', 'Name');
 
       const req = httpMock.expectOne(`${apiBaseUrl}/users/me/name`);
+      req.flush('bad request', { status: 400, statusText: 'Bad Request' });
+
+      await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);
+    });
+  });
+
+  describe('updateCallingName', () => {
+    it('PATCHes the calling name and re-memoizes the current user', async () => {
+      const updated = currentUser({ callingName: 'Mor' });
+      const promise = service.updateCallingName('Mor');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/calling-name`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ callingName: 'Mor' });
+      req.flush(updated);
+
+      await expect(promise).resolves.toEqual(updated);
+      await expect(service.ensureCurrentUser()).resolves.toEqual(updated);
+      httpMock.expectNone(`${apiBaseUrl}/users/me`);
+    });
+
+    it('propagates an error response', async () => {
+      const promise = service.updateCallingName('x');
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/users/me/calling-name`);
       req.flush('bad request', { status: 400, statusText: 'Bad Request' });
 
       await expect(promise).rejects.toBeInstanceOf(HttpErrorResponse);

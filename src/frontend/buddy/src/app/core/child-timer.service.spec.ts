@@ -25,6 +25,8 @@ describe('ChildTimerService', () => {
       endsAt: `${today}T07:05:00Z`,
       isAllDay: false,
       isCompleted,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'g',
       lastModifiedBy: 'g',
       assignedTo: 'c',

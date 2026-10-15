@@ -67,4 +67,40 @@ public sealed class MedicineEventShapeTests
     public void MedicineUnsharedFromGroup() => EventShapeTestSupport.AssertMatchesGoldenFile(
         new MedicineUnsharedFromGroup(FixedSharingId, FixedGroupId, FixedGuardianId, FixedInstant),
         "Medicines/MedicineUnsharedFromGroup.json");
+
+    private static readonly MedicineEffectLogId FixedEffectLogId = MedicineEffectLogId.ForChild(FixedChildId);
+
+    private static readonly MedicineEffectNote FixedNote = new(
+        FixedStartDate,
+        [new EffectRating(EffectArea.Focus, EffectLevel.Good), new EffectRating(EffectArea.Mood, EffectLevel.Okay)],
+        [new SideEffectRating(SideEffect.ReducedAppetite, SideEffectSeverity.Moderate)],
+        new TimeOnly(15, 30),
+        "Skipped lunch",
+        [new RegimenMedicine(FixedMedicineId, "Ritalin", "10 mg")],
+        FixedGuardianId);
+
+    [Fact]
+    public void MedicineEffectLogStarted() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MedicineEffectLogStarted(FixedEffectLogId, FixedChildId, FixedInstant),
+        "Medicines/MedicineEffectLogStarted.json");
+
+    [Fact]
+    public void MedicineEffectNoteLogged() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MedicineEffectNoteLogged(FixedEffectLogId, FixedStartDate, null, FixedNote, FixedInstant),
+        "Medicines/MedicineEffectNoteLogged.json");
+
+    [Fact]
+    public void MedicineEffectNoteLogged_Overwrite() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MedicineEffectNoteLogged(
+            FixedEffectLogId,
+            FixedStartDate,
+            FixedNote,
+            FixedNote with { Effects = [], SideEffects = [], WoreOffAt = null, Regimen = [] },
+            FixedInstant),
+        "Medicines/MedicineEffectNoteLogged_Overwrite.json");
+
+    [Fact]
+    public void MedicineEffectNoteCleared() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new MedicineEffectNoteCleared(FixedEffectLogId, FixedStartDate, FixedNote, FixedGuardianId, FixedInstant),
+        "Medicines/MedicineEffectNoteCleared.json");
 }

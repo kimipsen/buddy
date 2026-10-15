@@ -29,6 +29,7 @@ describe('PickupToday', () => {
     return {
       id: 'guardian-1',
       name: { givenName: 'Gina', familyName: 'G' },
+      callingName: '',
       guardianLinkId: 'link-1',
       kind: 'Parent',
       ...overrides,

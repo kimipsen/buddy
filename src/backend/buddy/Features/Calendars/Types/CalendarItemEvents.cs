@@ -11,6 +11,7 @@ public union CalendarItemEvent(
     TaskRescheduled,
     RecurrenceUpdated,
     TaskCompletionChanged,
+    OccurrenceSkipChanged,
     ItemDeleted
 )
 {
@@ -24,6 +25,7 @@ public union CalendarItemEvent(
         TaskRescheduled e => e,
         RecurrenceUpdated e => e,
         TaskCompletionChanged e => e,
+        OccurrenceSkipChanged e => e,
         ItemDeleted e => e,
         _ => throw new ArgumentException($"Unknown calendar item event payload: {payload.GetType().Name}", nameof(payload)),
     };
@@ -38,6 +40,7 @@ public union CalendarItemEvent(
         TaskRescheduled => nameof(TaskRescheduled),
         RecurrenceUpdated => nameof(RecurrenceUpdated),
         TaskCompletionChanged => nameof(TaskCompletionChanged),
+        OccurrenceSkipChanged => nameof(OccurrenceSkipChanged),
         ItemDeleted => nameof(ItemDeleted),
     };
 }
@@ -94,5 +97,10 @@ public sealed record RecurrenceUpdated(CalendarItemId Id, Recurrence Before, Rec
 // must not mark every future occurrence complete too. Target says whether it was the whole plain
 // task or one subtask of a template-scheduled task's occurrence.
 public sealed record TaskCompletionChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt, CompletionTarget Target);
+
+// Skips (After = true) or restores one occurrence of a repeating item without touching the rule --
+// same per-date keying and Before/After shape as TaskCompletionChanged. A template-scheduled task
+// skips the whole day's run, so there is no Target (docs/backend/analysis/skip-occurrences.md).
+public sealed record OccurrenceSkipChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
 public sealed record ItemDeleted(CalendarItemId Id, UserId ModifiedBy, DateTimeOffset OccurredAt);

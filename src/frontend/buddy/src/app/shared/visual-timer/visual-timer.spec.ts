@@ -23,6 +23,8 @@ function subtask(subtaskId: string): CalendarOccurrence {
     endsAt: '2026-10-12T07:15:00Z',
     isAllDay: false,
     isCompleted: false,
+    isSkipped: false,
+    isRepeating: false,
     createdBy: 'g',
     lastModifiedBy: 'g',
     assignedTo: 'c',

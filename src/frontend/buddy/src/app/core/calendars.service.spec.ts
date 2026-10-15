@@ -16,6 +16,7 @@ import {
   IssuedIcalToken,
   RescheduleItemRequest,
   ScheduleTaskFromTemplateRequest,
+  OccurrenceSkip,
   TaskCompletion,
   UpdateItemDetailsRequest,
 } from './calendars.service';
@@ -54,6 +55,8 @@ describe('CalendarsService', () => {
       sortAt: '2026-08-26T00:00:00Z',
       isAllDay: true,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,
@@ -260,6 +263,25 @@ describe('CalendarsService', () => {
       req.flush(occurrences);
 
       await expect(promise).resolves.toEqual(occurrences);
+    });
+
+    it('only asks for skipped occurrences when includeSkipped is set', async () => {
+      const plain = service.listOccurrences('cal-1', '2026-08-01', '2026-08-31');
+      const plainReq = httpMock.expectOne(
+        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`,
+      );
+      expect(plainReq.request.params.has('includeSkipped')).toBe(false);
+      plainReq.flush([]);
+      await plain;
+
+      const withSkipped = service.listOccurrences('cal-1', '2026-08-01', '2026-08-31', true);
+      const skippedReq = httpMock.expectOne(
+        (r) => r.url === `${apiBaseUrl}/calendars/cal-1/occurrences`,
+      );
+      expect(skippedReq.request.params.get('includeSkipped')).toBe('true');
+      expect(skippedReq.request.params.get('from')).toBe('2026-08-01');
+      skippedReq.flush([]);
+      await withSkipped;
     });
 
     it('resolves with an empty array when there are no occurrences in range', async () => {
@@ -485,6 +507,35 @@ describe('CalendarsService', () => {
       req.flush(null);
 
       await expect(promise).resolves.toBeUndefined();
+    });
+  });
+
+  describe('setOccurrenceSkip', () => {
+    it('PATCHes the item skip endpoint with date and isSkipped, and resolves with the result', async () => {
+      const skip: OccurrenceSkip = {
+        itemId: 'task-1',
+        occurrenceDate: '2026-08-26',
+        isSkipped: true,
+      };
+
+      const promise = service.setOccurrenceSkip('cal-1', 'task-1', '2026-08-26', true);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/skip`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ date: '2026-08-26', isSkipped: true });
+      req.flush(skip);
+
+      await expect(promise).resolves.toEqual(skip);
+    });
+
+    it('sends isSkipped:false as-is to restore a day', async () => {
+      const promise = service.setOccurrenceSkip('cal-1', 'task-1', '2026-08-26', false);
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/task-1/skip`);
+      expect(req.request.body).toEqual({ date: '2026-08-26', isSkipped: false });
+      req.flush({ itemId: 'task-1', occurrenceDate: '2026-08-26', isSkipped: false });
+
+      await promise;
     });
   });
 

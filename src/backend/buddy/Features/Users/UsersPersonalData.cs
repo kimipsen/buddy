@@ -21,6 +21,7 @@ public static class UsersPersonalData
             Name = ErasedName,
         });
         options.Events.AddMaskingRuleForProtectedInformation<NameUpdated>(e => e with { Before = ErasedName, After = ErasedName });
+        options.Events.AddMaskingRuleForProtectedInformation<CallingNameUpdated>(e => e with { Before = Erased.Text, After = Erased.Text });
         options.Events.AddMaskingRuleForProtectedInformation<EmailUpdated>(e => e with
         {
             Before = e.Before with { Value = Erased.Text },

@@ -65,7 +65,11 @@ Same shape of argument as every prior feature doc
   for every other event/task.
 - Unlike `MedicineSchedule`, this isn't a *schedule* at all — there's no
   future occurrence to expand, no recurrence, no "due" state. It's a plain
-  observational log, one entry per past (or today's) date. That's a
+  observational log, one entry per past (or today's) date. An entry's date
+  is the evening the night starts ("Night of" / "Natten efter"); the
+  feelings overview relies on this to pair day D with the night of D-1. (The
+  Danish label once read "Natten til"; the one-off `shift-sleep-entry-dates`
+  command moves entries logged under it one day back.) That's a
   meaningfully simpler shape than every other per-child feature so far, not
   a variant of one of them.
 - The permission model (see "Authorization") is even narrower than

@@ -1,0 +1,80 @@
+@buddy_HostAddress = http://localhost:5193
+
+### A guardian sets a board (revision = the one they were shown; 0 for a child's first board)
+
+PUT {{buddy_HostAddress}}/first-then/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{
+  "revision": 0,
+  "first": { "title": "Homework", "icon": "📚" },
+  "then": { "title": "iPad", "icon": "📱" },
+  "thenMinutes": 20
+}
+
+###
+
+# The guardian's view: the board, who last changed it, and the recently used cards
+GET {{buddy_HostAddress}}/first-then/children/{{childId}}
+Authorization: Bearer {{guardianToken}}
+
+###
+
+# A guardian marks the First done (409 first_then_board_changed on a stale revision)
+POST {{buddy_HostAddress}}/first-then/children/{{childId}}/first/complete
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{ "revision": 1 }
+
+###
+
+# A guardian puts it back to Waiting
+POST {{buddy_HostAddress}}/first-then/children/{{childId}}/first/reopen
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{ "revision": 1 }
+
+###
+
+# A guardian ends the board
+POST {{buddy_HostAddress}}/first-then/children/{{childId}}/end
+Authorization: Bearer {{guardianToken}}
+Content-Type: application/json
+
+{ "revision": 1 }
+
+###
+
+# The child's own board (State "None" and revision 0 when there is none)
+GET {{buddy_HostAddress}}/first-then/me
+Authorization: Bearer {{childToken}}
+
+###
+
+# The child ticks the First
+POST {{buddy_HostAddress}}/first-then/me/first/complete
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+
+{ "revision": 1 }
+
+###
+
+# The child undoes a mis-tap
+POST {{buddy_HostAddress}}/first-then/me/first/reopen
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+
+{ "revision": 1 }
+
+###
+
+# The child ends the board ("All done")
+POST {{buddy_HostAddress}}/first-then/me/end
+Authorization: Bearer {{childToken}}
+Content-Type: application/json
+
+{ "revision": 1 }

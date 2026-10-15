@@ -13,6 +13,7 @@ import { MealplanAiAssistant } from './mealplan/ai-assistant/ai-assistant';
 import { MealplanImport } from './mealplan/import/mealplan-import';
 import { GuardianMealplan } from './mealplan/mealplan';
 import { GuardianMedicine } from './medicine/medicine';
+import { GuardianMedicineEffects } from './medicine/effects/effects';
 import { GuardianOnboarding } from './onboarding/onboarding';
 import { GuardianPickup } from './pickup/pickup';
 import { PrintTemplateEditor } from './print/editor/print-template-editor';
@@ -22,6 +23,7 @@ import { GuardianProgress } from './progress/progress';
 import { GuardianShell } from './shell/guardian-shell';
 import { GuardianSleepDiary } from './sleep-diary/sleep-diary';
 import { GuardianFeelings } from './feelings/feelings';
+import { GuardianFirstThen } from './first-then/first-then';
 import { GuardianTransitionWarnings } from './transition-warnings/transition-warnings';
 import { GuardianTaskLibrary } from './task-library/task-library';
 import { GuardianWorkLocations } from './work-locations/work-locations';
@@ -86,6 +88,12 @@ export const GUARDIAN_ROUTES: Routes = [
         data: { helpTopic: 'medicine' },
       },
       {
+        path: 'medicine/effects',
+        canActivate: [featureGuard('medicines')],
+        component: GuardianMedicineEffects,
+        data: { helpTopic: 'medicine' },
+      },
+      {
         path: 'sleep-diary',
         canActivate: [featureGuard('sleepDiary')],
         component: GuardianSleepDiary,
@@ -102,6 +110,12 @@ export const GUARDIAN_ROUTES: Routes = [
         canActivate: [featureGuard('transitionWarnings')],
         component: GuardianTransitionWarnings,
         data: { helpTopic: 'transitionWarnings' },
+      },
+      {
+        path: 'first-then',
+        canActivate: [featureGuard('firstThen')],
+        component: GuardianFirstThen,
+        data: { helpTopic: 'firstThen' },
       },
       {
         path: 'house-rules',

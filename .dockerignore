@@ -1,0 +1,6 @@
+# Only the Keycloak image (deploy/azure/keycloak/Dockerfile) builds from the repo root, and it only
+# needs the theme. The theme's Tailwind tooling (themes/buddy/build, with a local node_modules)
+# stays out: it isn't used at runtime, and the image scan would report its packages.
+*
+!themes/buddy
+themes/buddy/build

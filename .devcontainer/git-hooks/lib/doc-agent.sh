@@ -13,7 +13,8 @@ was just made in this repository.
 
 Documentation lives under docs/ (docs/backend/<domain>/flow.md,
 docs/backend/<domain>/analysis/*.md or docs/backend/analysis/*.md,
-docs/frontend/, docs/frontend/analysis/*.md) and the root README.md.
+docs/frontend/, docs/frontend/analysis/*.md), the root README.md and the
+task list in TODO.md.
 
 Review the diff below and update only the documentation files that describe
 behavior this commit changed: new/changed API endpoints, domain flows, UI
@@ -21,6 +22,12 @@ screens, config, or scripts. Do not touch source code. Match the existing
 structure and tone of nearby docs; only add a new doc file if the change
 clearly needs one and no existing file covers it. Keep edits minimal and
 factual.
+
+Task checklists keep open items on top. If the commit finishes a task in
+TODO.md, tick it (- [ ] -> - [x]) and move it, under its section heading, to
+the bottom of "## Done"; open items stay in "## Open", and a new task goes at
+the top of "## Open". In each README.md Features group, unchecked items come
+first and a ticked item moves to the end of its group.
 
 If nothing in the diff affects documented behavior, make no changes.
 
@@ -145,6 +152,7 @@ doc_agent_run() {
   local doc_paths=()
   [[ -e docs ]] && doc_paths+=(docs)
   [[ -e README.md ]] && doc_paths+=(README.md)
+  [[ -e TODO.md ]] && doc_paths+=(TODO.md)
   if [[ ${#doc_paths[@]} -eq 0 ]]; then
     return 0
   fi

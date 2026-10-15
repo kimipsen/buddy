@@ -32,6 +32,7 @@ describe('ChildHome', () => {
     email: { value: 'kid@buddy.test', isVerified: true },
     userName: 'kid',
     name: { givenName: 'Ida', familyName: 'Kid' },
+    callingName: '',
     timeZoneId: 'UTC',
     language: 'en',
   };
@@ -67,6 +68,8 @@ describe('ChildHome', () => {
       dueAt: `${today}T12:00:00Z`,
       isAllDay: false,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: 'child-1',
@@ -433,6 +436,8 @@ describe('ChildHome', () => {
       dueAt: `${today}T09:00:00Z`,
       isAllDay: false,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: 'child-1',
@@ -472,6 +477,8 @@ describe('ChildHome', () => {
         endsAt: `${today}T07:10:00Z`,
         isAllDay: false,
         isCompleted: false,
+        isSkipped: false,
+        isRepeating: false,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: 'child-1',
@@ -530,6 +537,8 @@ describe('ChildHome', () => {
         endsAt: `${today}T07:10:00Z`,
         isAllDay: false,
         isCompleted: false,
+        isSkipped: false,
+        isRepeating: false,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: 'child-1',
@@ -566,6 +575,8 @@ describe('ChildHome', () => {
       dueAt: null,
       isAllDay: false,
       isCompleted: false,
+      isSkipped: false,
+      isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
       assignedTo: null,
@@ -600,6 +611,7 @@ describe('ChildHome', () => {
       {
         id: 'guardian-1',
         name: { givenName: 'Gina', familyName: 'G' },
+        callingName: '',
         guardianLinkId: 'link-1',
         kind: 'Parent',
       },
@@ -622,6 +634,36 @@ describe('ChildHome', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Drop-off');
     expect(compiled.textContent).toContain('Gina');
+  });
+
+  it('shows the calling name a guardian set instead of their given name', async () => {
+    const guardianList: GuardianSummary[] = [
+      {
+        id: 'guardian-1',
+        name: { givenName: 'Gina', familyName: 'G' },
+        callingName: 'Mor',
+        guardianLinkId: 'link-1',
+        kind: 'Parent',
+      },
+    ];
+    const occurrence: PickupOccurrence = {
+      assignee: { kind: 0, guardianId: 'guardian-1' },
+      date: today,
+      slot: 'DropOff',
+      time: '08:00:00',
+      notes: '',
+      assignedBy: 'guardian-1',
+    };
+
+    const { fixture } = await setup({
+      guardians: { listMyGuardians: vi.fn(async () => guardianList) },
+      pickups: { listSchedule: vi.fn(async () => [occurrence]) },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Mor');
+    expect(compiled.textContent).not.toContain('Gina');
   });
 
   it('resolves the assignee name for a sibling pickup occurrence', async () => {
@@ -1284,12 +1326,14 @@ describe('ChildHome', () => {
       {
         id: 'guardian-1',
         name: { givenName: 'Gina', familyName: 'G' },
+        callingName: '',
         guardianLinkId: 'link-1',
         kind: 'Parent',
       },
       {
         id: 'guardian-2',
         name: { givenName: 'Gus', familyName: 'G' },
+        callingName: '',
         guardianLinkId: 'link-2',
         kind: 'Parent',
       },
@@ -1516,6 +1560,8 @@ describe('ChildHome', () => {
         endsAt: `${today}T${end}:00Z`,
         isAllDay: false,
         isCompleted,
+        isSkipped: false,
+        isRepeating: false,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
         assignedTo: 'child-1',

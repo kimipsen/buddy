@@ -23,6 +23,9 @@ in real time.
 
 ### Guardian
 
+- [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
+      child for something new such as the dentist or a trip (proposed, not yet implemented — see
+      [Social stories](docs/backend/analysis/social-stories.md))
 - [x] Guided setup for guardians with no groups or children: one group, children, optional
       invitations, a shared calendar, a first routine and a meal plan, resumable and deferrable
       (see [Guardian onboarding](docs/frontend/analysis/guardian-onboarding.md))
@@ -55,9 +58,24 @@ in real time.
 - [x] In-app help: a help panel on every guardian page and a help index, in English and Danish
 - [x] House rules for a household (group) and for each child, written in markdown, which
       children read and acknowledge, and which print on A4 for the fridge
+- [x] Calling names: a guardian can choose what their children call them ("Mom", "Far"), shown
+      instead of their first name on the child's home page and the printed week plan
+- [x] Medicine effect and side-effect notes: daily ratings of focus, calm, impulses and mood and
+      of side effects, linked to the dosage the child was on, with a by-dose-period summary for
+      dose-adjustment conversations (see
+      [Medicine effect and side-effect notes](docs/backend/analysis/medicine-effect-notes.md))
+- [x] First–Then board: a guardian pairs a non-preferred task with a preferred activity
+      ("first homework, then iPad"), and the child ticks off the first card to unlock the second,
+      with an optional countdown — see [First–Then board](docs/backend/analysis/first-then-board.md)
+- [x] Skip one occurrence of a repeating appointment or task on a single day, without changing
+      or ending the series, and restore it again — see
+      [Skipping single occurrences](docs/backend/analysis/skip-occurrences.md)
 
 ### Child
 
+- [ ] Now / Next / Later strip: a reduced day view with three cards for overwhelmed moments
+      (proposed, not yet implemented — see
+      [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md))
 - [x] Personalized day view: meals and ratings, medicine doses,
       pickup/drop-off assignments, and tasks
 - [x] Read-only seven-day calendar agenda
@@ -123,7 +141,7 @@ deploy/      Production Docker Compose and Caddy deployment
   environment setup, ports, and first-run Keycloak configuration.
 - [Git hooks](.devcontainer/git-hooks/README.md) — opt-in `pre-commit`
   format/lint checks and a `post-commit` hook that uses Claude, Codex, or
-  GitHub Copilot to keep `docs/` and this README in sync with commits.
+  GitHub Copilot to keep `docs/`, this README and `TODO.md` in sync with commits.
 - [Screenshots](docs/screenshots/README.md) — every page of the app with demo
   data; regenerate with `task docs:screenshots`.
 - [Testing](docs/testing.md) — commands for frontend, backend, and mutation
@@ -201,6 +219,7 @@ deploy/      Production Docker Compose and Caddy deployment
 - [Validation rules](docs/backend/analysis/validation-rules.md)
 - [Child accounts and guardian/parent roles](docs/backend/analysis/child-accounts-and-guardian-roles.md)
 - [Guardian-managed child language](docs/backend/analysis/child-language-settings.md)
+- [Calling names for guardians](docs/backend/analysis/guardian-calling-names.md)
 - [Guardian-managed child time zone](docs/backend/analysis/child-timezone-settings.md)
 - [Medicine schedules](docs/backend/analysis/medicine-schedules.md)
 - [Meal plans](docs/backend/analysis/mealplans.md)

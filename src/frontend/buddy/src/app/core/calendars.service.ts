@@ -75,6 +75,10 @@ export type Routine = Schemas['Routine'];
 
 export type TaskCompletion = Schemas['TaskCompletionResponse'];
 
+export type SetOccurrenceSkipRequest = Schemas['SetOccurrenceSkipRequest'];
+
+export type OccurrenceSkip = Schemas['OccurrenceSkipResponse'];
+
 export type CalendarOccurrence = CalendarItemOccurrence & {
   calendarId: string;
   calendarName: string;
@@ -168,12 +172,19 @@ export class CalendarsService {
     return `${this.runtimeConfig.apiBaseUrl}${subscriptionPath}`;
   }
 
-  listOccurrences(calendarId: string, from: string, to: string): Promise<CalendarItemOccurrence[]> {
+  // includeSkipped also returns occurrences a guardian skipped, flagged isSkipped -- only the
+  // guardian agenda asks for them (to offer Restore); every other screen never sees them.
+  listOccurrences(
+    calendarId: string,
+    from: string,
+    to: string,
+    includeSkipped = false,
+  ): Promise<CalendarItemOccurrence[]> {
     return firstValueFrom(
       this.http.get<CalendarItemOccurrence[]>(
         `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/occurrences`,
         {
-          params: { from, to },
+          params: includeSkipped ? { from, to, includeSkipped } : { from, to },
         },
       ),
     );
@@ -257,6 +268,24 @@ export class CalendarsService {
     return completion;
   }
 
+  // Skips (isSkipped true) or restores one occurrence of a repeating item without touching the
+  // series; a template-scheduled task skips the whole day's run.
+  async setOccurrenceSkip(
+    calendarId: string,
+    itemId: string,
+    date: string,
+    isSkipped: boolean,
+  ): Promise<OccurrenceSkip> {
+    const skip = await firstValueFrom(
+      this.http.patch<OccurrenceSkip>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/skip`,
+        { date, isSkipped } satisfies SetOccurrenceSkipRequest,
+      ),
+    );
+    this.todayCache = null;
+    return skip;
+  }
+
   // The calendar-item analog of createItem for a Task whose subtasks come from a TaskLibrary
   // template instead of being entered by hand -- see ScheduleTaskFromTemplate.Command.cs.
   async scheduleTaskFromTemplate(
@@ -300,7 +329,11 @@ export class CalendarsService {
    * `listTodayOccurrences`, this is called on demand for whatever range the caller is currently
    * viewing (e.g. an agenda's visible week), so a same-day cache doesn't apply here.
    */
-  async listOccurrencesInRange(from: string, to: string): Promise<CalendarOccurrence[]> {
+  async listOccurrencesInRange(
+    from: string,
+    to: string,
+    includeSkipped = false,
+  ): Promise<CalendarOccurrence[]> {
     const calendars = await this.listMyCalendars();
 
     // One request per calendar (no cross-calendar range endpoint), bounded so a guardian in many
@@ -309,7 +342,7 @@ export class CalendarsService {
       calendars,
       PER_ITEM_REQUEST_CONCURRENCY,
       async (calendar) => {
-        const occurrences = await this.listOccurrences(calendar.id, from, to);
+        const occurrences = await this.listOccurrences(calendar.id, from, to, includeSkipped);
         return occurrences.map((occurrence) => ({
           ...occurrence,
           calendarId: calendar.id,

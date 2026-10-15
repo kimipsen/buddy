@@ -28,7 +28,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
 {
     // The same Keycloak the app runs on (.devcontainer/docker-compose.yml, deploy/azure/keycloak/Dockerfile);
     // KeycloakParityTests fails when they drift apart.
-    public const string KeycloakImage = "quay.io/keycloak/keycloak:26.8.0";
+    public const string KeycloakImage = "quay.io/keycloak/keycloak:26.8.1";
 
     private const string RealmName = "buddy-test";
     private const string Audience = "buddy-api";

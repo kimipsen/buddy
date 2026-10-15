@@ -187,6 +187,36 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Every_read_of_a_childs_medicine_effect_notes_is_logged_with_the_reader_and_the_range()
+    {
+        var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Quillon", "Vexmoor");
+        var (_, strangerToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var day = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
+        await MedicineEffectNoteTestHelpers.LogAsync(fixture, guardianToken, child.Id, day, new
+        {
+            SideEffects = new[] { new { Kind = "Tics", Severity = "Severe" } },
+            Note = "Zorbitrex at school"
+        });
+
+        await GetAsync(guardianToken, $"/medicines/children/{child.Id}/effect-notes?from={day.AddDays(-6):yyyy-MM-dd}&to={day:yyyy-MM-dd}");
+        await _host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {strangerToken}");
+            _.Get.Url($"/medicines/children/{child.Id}/effect-notes?from={day:yyyy-MM-dd}&to={day:yyyy-MM-dd}");
+            _.StatusCodeShouldBe(404);
+        });
+
+        var read = Assert.Single(_logs.Entries, e => e.EventId == 9003 && Equals(e.Property("ChildId"), child.Id));
+        Assert.Equal(guardianId, read.Property("UserId"));
+        Assert.Equal(HealthDataAccessPath.Guardian, read.Property("AccessPath"));
+        Assert.Equal(day.AddDays(-6), read.Property("From"));
+        Assert.Equal(day, read.Property("To"));
+        Assert.DoesNotContain("Zorbitrex", read.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Tics", read.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Every_read_of_a_childs_feelings_is_logged_with_the_reader_and_the_access_path()
     {
         var (_, guardianToken, guardianId) = await fixture.CreateAuthenticatedUserAsync();

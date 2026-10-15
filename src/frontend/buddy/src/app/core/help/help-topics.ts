@@ -54,7 +54,12 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
   {
     id: 'medicine',
     feature: 'medicines',
-    sections: [{ id: 'addSchedule', steps: 4 }, { id: 'doseTimes' }, { id: 'doseStatus' }],
+    sections: [
+      { id: 'addSchedule', steps: 4 },
+      { id: 'doseTimes' },
+      { id: 'doseStatus' },
+      { id: 'effectNotes', steps: 3 },
+    ],
     related: ['dashboard', 'groupsAndSharing'],
   },
   {
@@ -105,6 +110,12 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     feature: 'transitionWarnings',
     sections: [{ id: 'turnOn', steps: 3 }, { id: 'exceptions' }, { id: 'quietHours' }],
     related: ['calendar', 'taskLibrary', 'pickup'],
+  },
+  {
+    id: 'firstThen',
+    feature: 'firstThen',
+    sections: [{ id: 'setBoard', steps: 4 }, { id: 'childSide' }, { id: 'endBoard' }],
+    related: ['taskLibrary', 'progress'],
   },
   {
     id: 'pickup',

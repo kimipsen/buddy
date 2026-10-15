@@ -41,6 +41,8 @@ function subtask(
     endsAt: `${DAY}T${end}:00Z`,
     isAllDay: false,
     isCompleted,
+    isSkipped: false,
+    isRepeating: false,
     createdBy: 'g',
     lastModifiedBy: 'g',
     assignedTo: 'c',

@@ -32,9 +32,20 @@ export const calendar = {
     delete: {
       button: 'Delete',
       confirmPrompt: 'Delete this?',
+      confirmSeriesPrompt: 'Delete every day of this?',
       confirmButton: 'Confirm',
       cancelButton: 'Cancel',
       error: 'Unable to delete this item.',
+    },
+    skip: {
+      button: 'Skip day',
+      confirmPrompt: 'Skip just this day?',
+      confirmButton: 'Skip',
+      cancelButton: 'Cancel',
+      skippedLabel: 'Skipped',
+      restoreButton: 'Restore',
+      error: 'Unable to skip this day.',
+      restoreError: 'Unable to restore this day.',
     },
     edit: {
       button: 'Edit',

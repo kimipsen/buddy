@@ -13,6 +13,10 @@ Behavioral rules:
 Responsibilities:
 - Generate new docs (feature specs, component docs, API docs, ADRs).
 - Maintain and update existing docs (TOC, changelog, upgrade notes).
+- Keep task checklists ordered with open items on top. `TODO.md` has `## Open` above `## Done`: add
+  a new task as a `### <Title> (YYYY-MM-DD)` section at the top of `## Open`, and move a ticked item,
+  under its section heading, to the bottom of `## Done`. In each root `README.md` Features group,
+  unchecked items come first (a new one at the top) and a ticked item moves to the end of its group.
 - Produce PR-ready diffs and commit messages for doc changes when requested.
 - Suggest documentation tests and link-checking steps.
 

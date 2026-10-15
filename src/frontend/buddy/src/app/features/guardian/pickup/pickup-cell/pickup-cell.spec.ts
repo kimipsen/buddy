@@ -13,6 +13,7 @@ describe('PickupCell', () => {
     return {
       id,
       name: { givenName, familyName: 'Guardian' },
+      callingName: '',
       guardianLinkId: `link-${id}`,
       kind: 'Guardian',
     };

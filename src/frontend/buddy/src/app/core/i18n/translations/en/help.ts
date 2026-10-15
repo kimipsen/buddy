@@ -174,6 +174,15 @@ export const help = {
           title: 'Mark a dose as taken or skipped',
           body: 'Today\'s doses appear on the dashboard under "Today\'s medicine". Press "Mark taken" when your child has had the dose, or "Skip" if it was left out. Pressed the wrong one? "Undo" sets the dose back to not done. Your child can also mark their own doses on their home page.',
         },
+        effectNotes: {
+          title: 'Note how the medicine works',
+          body: 'Under "How did it go?" you rate one day at a time: focus, calm, impulse control and mood, and any side effects. Leave an area as "Not rated" if you didn\'t see it; "None" means you watched for a side effect and it wasn\'t there. The note saves the medicine and dosage your child was on that day, so "By dose period" can show what changed when the dose did. Only guardians see these notes. Use "Print" to bring the summary to the doctor.',
+          steps: {
+            s1: 'Open "How did it go? →" on the medicine page or on "Today\'s medicine" on the dashboard.',
+            s2: 'Pick the day, rate what you saw, and add when it wore off and a note if you like.',
+            s3: 'Press "Save day". Press "Open" on an earlier day to change it, or "Clear day" to remove it.',
+          },
+        },
       },
     },
     sleepDiary: {
@@ -253,6 +262,29 @@ export const help = {
         quietHours: {
           title: 'Quiet hours and what the child sees',
           body: "No heads-ups show during quiet hours, and a heads-up that would have shown then isn't shown late. The countdown uses the child's own time zone. It only shows while Buddy is open on the child's device; there is no sound.",
+        },
+      },
+    },
+    firstThen: {
+      title: 'First – Then',
+      sections: {
+        setBoard: {
+          title: 'Set a board',
+          body: 'A First – Then board is two cards: first something your child finds hard, then something they look forward to, such as "First homework, then iPad". Keep the first card short and concrete, and pick a second card your child actually wants. Your child sees one board at a time.',
+          steps: {
+            s1: 'Choose the child at the top of the page.',
+            s2: 'Under "New board", pick the first card from the cards used before, today’s tasks or the suggestions, or type a title and an emoji.',
+            s3: 'Pick the second card the same way and, if it is screen time, how long it lasts.',
+            s4: 'Press "Show to …". A new board replaces the current one.',
+          },
+        },
+        childSide: {
+          title: 'What your child sees',
+          body: 'A card at the top of your child’s home page opens the board. Your child taps "Done!" on the first card, and the second card opens right away, with a countdown when it has a length and visual timers are on for the child. "Not done yet" undoes a mis-tap. Ticking the first card doesn’t complete a calendar task and earns no stars. Your child’s device checks for a new board about once a minute.',
+        },
+        endBoard: {
+          title: 'End a board',
+          body: 'Your child presses "All done" when they are finished, or you press "End board". When the time runs out, the board says "Time’s up" and waits for an adult. A board left over from yesterday is hidden from your child, and you can end it here.',
         },
       },
     },
