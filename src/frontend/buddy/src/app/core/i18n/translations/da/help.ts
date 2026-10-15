@@ -193,7 +193,7 @@ export const help = {
           title: 'Registrér en nat',
           body: 'Dagbogen har én række pr. nat med de samme felter som søvnklinikkens skema. Alle felter er valgfrie. Buddy foreslår, hvor længe dit barn har sovet i alt ud fra tiderne, og du kan rette det. Vil du ændre en nat, trykker du "Redigér" i listen over nætter, eller "Ryd denne nat" for at fjerne den.',
           steps: {
-            s1: 'Vælg datoen under "Natten til".',
+            s1: 'Vælg datoen under "Natten efter".',
             s2: 'Udfyld sengetid, hvornår dit barn faldt i søvn, opvågninger og lure.',
             s3: 'Tryk "Gem nat".',
           },
