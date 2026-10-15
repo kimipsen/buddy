@@ -996,6 +996,22 @@ export interface paths {
     patch: operations['UpdateCalendarItemRecurrence'];
     trace?: never;
   };
+  '/calendars/{calendarId}/items/{itemId}/alarms': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UpdateCalendarItemAlarms'];
+    trace?: never;
+  };
   '/calendars/{calendarId}/items/{itemId}/completion': {
     parameters: {
       query?: never;
@@ -3041,6 +3057,7 @@ export interface components {
       /** Format: uuid */
       assignedTo: null | string;
       routine: null | components['schemas']['Routine'];
+      alarms: number[];
       /** Format: date-time */
       readonly sortAt: string;
     };
@@ -3056,6 +3073,7 @@ export interface components {
       createdBy: string;
       /** Format: uuid */
       lastModifiedBy: string;
+      alarms: number[];
     };
     CalendarMemberResponse: {
       /** Format: uuid */
@@ -3229,6 +3247,7 @@ export interface components {
       schedule: components['schemas']['ItemScheduleRequest'];
       icon?: null | string;
       recurrence?: null | components['schemas']['RecurrenceRuleRequest'];
+      alarms?: null | number[];
     };
     CreateMealRequest: {
       name: string;
@@ -4240,6 +4259,7 @@ export interface components {
       /** Format: uuid */
       assignedTo?: null | string;
       icon?: null | string;
+      alarms?: null | number[];
     };
     SelfEscortAssigneeDto: {
       /**
@@ -4604,6 +4624,9 @@ export interface components {
     };
     UpdateEmailRequest: {
       email: string;
+    };
+    UpdateItemAlarmsRequest: {
+      alarms?: null | number[];
     };
     UpdateItemDetailsRequest: {
       title: string;
@@ -9002,6 +9025,71 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UpdateItemRecurrenceRequest'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalendarItemResponse'];
+        };
+      };
+      /** @description Bad Request. ErrorEnvelope code: `validation_error`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      /** @description Forbidden. ErrorEnvelope code: `user_not_provisioned`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Conflict. ErrorEnvelope code: `concurrency_conflict`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorEnvelope'];
+        };
+      };
+      429: components['responses']['TooManyRequests'];
+      500: components['responses']['InternalServerError'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  UpdateCalendarItemAlarms: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        calendarId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateItemAlarmsRequest'];
       };
     };
     responses: {

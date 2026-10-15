@@ -1,0 +1,36 @@
+<div role="group" [attr.aria-label]="'calendar.agenda.alarms.label' | translate">
+  <span
+    class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+    aria-hidden="true"
+  >
+    {{ 'calendar.agenda.alarms.label' | translate }}
+  </span>
+  <div class="flex flex-wrap gap-2">
+    @for (chip of chips(); track chip.offset) {
+      <button
+        type="button"
+        class="rounded-full border px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+        [class.border-emerald-600]="chip.selected"
+        [class.bg-emerald-600]="chip.selected"
+        [class.text-white]="chip.selected"
+        [class.dark:border-emerald-500]="chip.selected"
+        [class.dark:bg-emerald-600]="chip.selected"
+        [class.border-slate-300]="!chip.selected"
+        [class.bg-white]="!chip.selected"
+        [class.text-slate-700]="!chip.selected"
+        [class.dark:border-slate-600]="!chip.selected"
+        [class.dark:bg-slate-800]="!chip.selected"
+        [class.dark:text-slate-200]="!chip.selected"
+        [attr.aria-pressed]="chip.selected"
+        [disabled]="!chip.selected && isFull()"
+        (click)="toggle(chip.offset)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+    {{ 'calendar.agenda.alarms.limitHint' | translate: { max: max } }}
+    {{ 'calendar.agenda.alarms.clientHint' | translate }}
+  </p>
+</div>

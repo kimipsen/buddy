@@ -29,7 +29,8 @@ public static class CreateItemEndpoint
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
                 new Color(request.Color),
                 request.Schedule.ToSchedule(),
-                RecurrenceRuleRequest.ToRecurrence(request.Recurrence));
+                RecurrenceRuleRequest.ToRecurrence(request.Recurrence),
+                ItemAlarms.From(request.Alarms));
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
@@ -99,7 +100,9 @@ public sealed record CreateItemRequest(
     string Color,
     ItemScheduleRequest Schedule,
     string? Icon = null,
-    RecurrenceRuleRequest? Recurrence = null);
+    RecurrenceRuleRequest? Recurrence = null,
+    // Signed whole minutes from the start or due time (negative = before); omitted means none.
+    IReadOnlyList<int>? Alarms = null);
 
 // Icon is null when the item has no override -- it inherits the owning calendar's icon. This
 // mirrors CalendarItem.Icon exactly (no calendar lookup happens here); the resolved/effective
@@ -113,7 +116,9 @@ public sealed record CalendarItemResponse(
     ItemScheduleResponse Schedule,
     RecurrenceRuleRequest? Recurrence,
     Guid CreatedBy,
-    Guid LastModifiedBy)
+    Guid LastModifiedBy,
+    // Alarms for subscribed calendar apps, ascending; empty when the item has none.
+    IReadOnlyList<int> Alarms)
 {
     public static CalendarItemResponse FromItem(CalendarItem item) => new(
         item.Id,
@@ -124,5 +129,6 @@ public sealed record CalendarItemResponse(
         ItemScheduleResponse.From(item.Schedule),
         RecurrenceRuleRequest.From(item.Recurrence),
         item.CreatedBy.Value,
-        item.LastModifiedBy.Value);
+        item.LastModifiedBy.Value,
+        item.Alarms.OffsetMinutes);
 }

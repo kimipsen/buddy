@@ -56,6 +56,33 @@ export const calendar = {
     filter: {
       title: 'Calendars',
     },
+    alarms: {
+      label: 'Alarms',
+      limitHint: 'Up to {max} alarms.',
+      clientHint:
+        'Alarms only work in calendar apps subscribed to this calendar’s link. Some apps (Google Calendar) ignore them.',
+      hasAlarms: 'Has alarms',
+      presets: {
+        atStart: 'At start',
+        minutes5: '5 minutes before',
+        minutes15: '15 minutes before',
+        minutes30: '30 minutes before',
+        hour1: '1 hour before',
+        hours2: '2 hours before',
+        day1: '1 day before',
+        onDayAt9: 'On the day at 09:00',
+        dayBeforeAt18: 'The day before at 18:00',
+        dayBeforeAt9: 'The day before at 09:00',
+        twoDaysBeforeAt9: '2 days before at 09:00',
+      },
+      custom: {
+        before: '{duration} before',
+        after: '{duration} after',
+        days: '{count} d',
+        hours: '{count} h',
+        minutes: '{count} min',
+      },
+    },
     form: {
       title: 'Add an event or task',
       noEligibleCalendars:

@@ -12,7 +12,8 @@ public union CalendarItemEvent(
     RecurrenceUpdated,
     TaskCompletionChanged,
     OccurrenceSkipChanged,
-    ItemDeleted
+    ItemDeleted,
+    ItemAlarmsUpdated
 )
 {
     public static CalendarItemEvent FromPayload(object payload) => payload switch
@@ -27,6 +28,7 @@ public union CalendarItemEvent(
         TaskCompletionChanged e => e,
         OccurrenceSkipChanged e => e,
         ItemDeleted e => e,
+        ItemAlarmsUpdated e => e,
         _ => throw new ArgumentException($"Unknown calendar item event payload: {payload.GetType().Name}", nameof(payload)),
     };
 
@@ -42,6 +44,7 @@ public union CalendarItemEvent(
         TaskCompletionChanged => nameof(TaskCompletionChanged),
         OccurrenceSkipChanged => nameof(OccurrenceSkipChanged),
         ItemDeleted => nameof(ItemDeleted),
+        ItemAlarmsUpdated => nameof(ItemAlarmsUpdated),
     };
 }
 
@@ -54,7 +57,9 @@ public sealed record EventItemCreated(
     Color Color,
     Period Period,
     Recurrence Recurrence,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    // Null in history written before alarms existed: no alarms (calendar-item-alarms.md).
+    ItemAlarms? Alarms = null);
 
 public sealed record TaskItemCreated(
     CalendarItemId Id,
@@ -66,7 +71,8 @@ public sealed record TaskItemCreated(
     DueDate DueDate,
     Recurrence Recurrence,
     DateTimeOffset OccurredAt,
-    UserId? AssignedTo);
+    UserId? AssignedTo,
+    ItemAlarms? Alarms = null);
 
 // A task scheduled from a TaskLibrary template (ScheduleTaskFromTemplate) -- its own creation event,
 // the same split EventItemCreated/TaskItemCreated already make, so neither carries a field that only
@@ -82,7 +88,8 @@ public sealed record TemplateTaskItemCreated(
     Recurrence Recurrence,
     DateTimeOffset OccurredAt,
     UserId? AssignedTo,
-    Guid TaskTemplateId);
+    Guid TaskTemplateId,
+    ItemAlarms? Alarms = null);
 
 public sealed record ItemDetailsUpdated(CalendarItemId Id, ItemDetails Before, ItemDetails After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
@@ -102,5 +109,9 @@ public sealed record TaskCompletionChanged(CalendarItemId Id, DateOnly Occurrenc
 // same per-date keying and Before/After shape as TaskCompletionChanged. A template-scheduled task
 // skips the whole day's run, so there is no Target (docs/backend/analysis/skip-occurrences.md).
 public sealed record OccurrenceSkipChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After, UserId ModifiedBy, DateTimeOffset OccurredAt);
+
+// The item's alarms for subscribed calendar apps (VALARM), replaced as a whole -- same Before/After
+// shape as RecurrenceUpdated (docs/backend/analysis/calendar-item-alarms.md).
+public sealed record ItemAlarmsUpdated(CalendarItemId Id, ItemAlarms Before, ItemAlarms After, UserId ModifiedBy, DateTimeOffset OccurredAt);
 
 public sealed record ItemDeleted(CalendarItemId Id, UserId ModifiedBy, DateTimeOffset OccurredAt);

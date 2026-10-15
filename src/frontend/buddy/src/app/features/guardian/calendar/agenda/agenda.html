@@ -132,6 +132,14 @@
                           run.parentTitle
                         }}</span>
                         <span class="text-xs text-slate-400">{{ run.calendarName }}</span>
+                        @if (hasAlarms(run)) {
+                          <span
+                            class="text-xs leading-none"
+                            role="img"
+                            [attr.aria-label]="'calendar.agenda.alarms.hasAlarms' | translate"
+                            >🔔</span
+                          >
+                        }
 
                         <div class="ml-auto flex items-center gap-2">
                           @if (runSkipped) {
@@ -287,7 +295,7 @@
                           >
                             <app-toggle
                               [checked]="editIsAllDay()"
-                              (checkedChange)="editIsAllDay.set($event)"
+                              (checkedChange)="setEditIsAllDay($event)"
                               [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate"
                             />
                             {{ 'calendar.agenda.form.allDayLabel' | translate }}
@@ -385,6 +393,12 @@
                             </div>
                           }
 
+                          <app-alarm-picker
+                            [isAllDay]="editIsAllDay()"
+                            [value]="editAlarms()"
+                            (valueChange)="editAlarms.set($event)"
+                          />
+
                           <div class="flex items-center gap-2">
                             <button
                               type="submit"
@@ -441,6 +455,14 @@
                             {{ occurrence.title }}
                           </span>
                           <span class="text-xs text-slate-400">{{ occurrence.calendarName }}</span>
+                          @if (hasAlarms(occurrence)) {
+                            <span
+                              class="text-xs leading-none"
+                              role="img"
+                              [attr.aria-label]="'calendar.agenda.alarms.hasAlarms' | translate"
+                              >🔔</span
+                            >
+                          }
                           @if (
                             occurrence.kind === taskKind && assigneeNameFor(occurrence.assignedTo);
                             as assigneeName
@@ -682,7 +704,7 @@
         >
           <app-toggle
             [checked]="newIsAllDay()"
-            (checkedChange)="newIsAllDay.set($event)"
+            (checkedChange)="setNewIsAllDay($event)"
             [ariaLabel]="'calendar.agenda.form.allDayLabel' | translate"
           />
           {{ 'calendar.agenda.form.allDayLabel' | translate }}
@@ -918,6 +940,12 @@
           }
         </div>
       }
+
+      <app-alarm-picker
+        [isAllDay]="newIsAllDay()"
+        [value]="newAlarms()"
+        (valueChange)="newAlarms.set($event)"
+      />
 
       <button
         type="submit"

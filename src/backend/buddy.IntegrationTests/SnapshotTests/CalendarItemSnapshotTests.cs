@@ -46,6 +46,14 @@ public sealed class CalendarItemSnapshotTests(BuddyApiFixture fixture)
             _.StatusCodeShouldBeOk();
         });
 
+        // ItemAlarms holds an ImmutableArray, which must round-trip through the snapshot JSON.
+        await fixture.Host.Scenario(_ =>
+        {
+            _.WithRequestHeader("Authorization", $"Bearer {ownerToken}");
+            _.Patch.Json(new { Alarms = new[] { -1440, -60 } }).ToUrl($"/calendars/{calendarId}/items/{itemId}/alarms");
+            _.StatusCodeShouldBeOk();
+        });
+
         var items = fixture.Host.Services.GetRequiredService<ICalendarItemEventStore>();
         var id = new CalendarItemId(itemId);
 

@@ -31,7 +31,8 @@ public static class ScheduleTaskFromTemplateEndpoint
                 request.AssignedTo is { } assignedTo ? new UserId(assignedTo) : null,
                 request.Title,
                 request.Icon is { } icon && !string.IsNullOrWhiteSpace(icon) ? new Icon(icon) : null,
-                new Color(request.Color));
+                new Color(request.Color),
+                ItemAlarms.From(request.Alarms));
 
             var result = await bus.InvokeAsync<Result<CalendarItem>>(command, cancellationToken);
 
@@ -57,4 +58,6 @@ public sealed record ScheduleTaskFromTemplateRequest(
     string Color,
     RecurrenceRuleRequest? Recurrence = null,
     Guid? AssignedTo = null,
-    string? Icon = null);
+    string? Icon = null,
+    // Written on the first subtask of each run only, so a routine alerts once.
+    IReadOnlyList<int>? Alarms = null);

@@ -44,7 +44,7 @@ internal static class CalendarTestHelpers
 
     public static async Task<CalendarItemDto?> CreateEventAsync(
         BuddyApiFixture fixture, string token, Guid calendarId, string title = "Standup",
-        DateOnly? date = null, int expectedStatus = 200, bool isAllDay = false)
+        DateOnly? date = null, int expectedStatus = 200, bool isAllDay = false, int[]? alarms = null)
     {
         var day = date ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
         var endDay = isAllDay ? day.AddDays(1) : day;
@@ -63,7 +63,8 @@ internal static class CalendarTestHelpers
                     StartsAt = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 0) },
                     EndsAt = new { Date = endDay, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(9, 30) },
                     IsAllDay = isAllDay
-                }
+                },
+                Alarms = alarms
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(expectedStatus);
         });
@@ -74,7 +75,7 @@ internal static class CalendarTestHelpers
     public static async Task<CalendarItemDto?> CreateTaskAsync(
         BuddyApiFixture fixture, string token, Guid calendarId, string title = "File taxes",
         DateOnly? dueDate = null, RecurrenceRuleRequest? recurrence = null, int expectedStatus = 200, bool isAllDay = false,
-        Guid? assignedTo = null)
+        Guid? assignedTo = null, int[]? alarms = null)
     {
         var day = dueDate ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
 
@@ -93,7 +94,8 @@ internal static class CalendarTestHelpers
                     DueDate = new { Date = day, Time = isAllDay ? TimeOnly.MinValue : new TimeOnly(17, 0) },
                     IsAllDay = isAllDay,
                     AssignedTo = assignedTo
-                }
+                },
+                Alarms = alarms
             }).ToUrl($"/calendars/{calendarId}/items");
             _.StatusCodeShouldBe(expectedStatus);
         });
@@ -117,7 +119,7 @@ internal static class CalendarTestHelpers
     public static async Task<CalendarItemDto?> ScheduleTaskFromTemplateAsync(
         BuddyApiFixture fixture, string token, Guid calendarId, Guid taskTemplateId, string title = "Morning routine",
         DateOnly? startDate = null, TimeOnly? startTime = null, RecurrenceRuleRequest? recurrence = null,
-        Guid? assignedTo = null, int expectedStatus = 200)
+        Guid? assignedTo = null, int expectedStatus = 200, int[]? alarms = null)
     {
         var day = startDate ?? DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
         var time = startTime ?? new TimeOnly(7, 0);
@@ -134,7 +136,8 @@ internal static class CalendarTestHelpers
                 AssignedTo = assignedTo,
                 Title = title,
                 Icon = "task",
-                Color = "#ff0000"
+                Color = "#ff0000",
+                Alarms = alarms
             }).ToUrl($"/calendars/{calendarId}/items/from-template");
             _.StatusCodeShouldBe(expectedStatus);
         });

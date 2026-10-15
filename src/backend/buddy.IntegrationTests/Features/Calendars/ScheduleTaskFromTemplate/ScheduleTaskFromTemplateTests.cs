@@ -97,6 +97,20 @@ public sealed class ScheduleTaskFromTemplateTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task Scheduling_with_more_than_three_alarms_is_rejected()
+    {
+        var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, guardianToken, "Alex");
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, guardianToken, "Family");
+        var template = await TaskLibraryTestHelpers.CreateTaskTemplateAsync(fixture, guardianToken, child.Id);
+        Assert.NotNull(template);
+        await TaskLibraryTestHelpers.AddSubtaskAsync(fixture, guardianToken, template.Id);
+
+        await CalendarTestHelpers.ScheduleTaskFromTemplateAsync(
+            fixture, guardianToken, calendarId, template.Id, assignedTo: child.Id, alarms: [0, -5, -15, -30], expectedStatus: 400);
+    }
+
+    [Fact]
     public async Task Scheduling_from_an_archived_template_is_rejected()
     {
         var (_, guardianToken, _) = await fixture.CreateAuthenticatedUserAsync();

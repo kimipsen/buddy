@@ -81,7 +81,7 @@ public static class CalendarOccurrenceExpansion
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
                 new OccurrenceTiming.Timed(startsAt, endsAt), period.IsAllDay, IsCompleted: false, isSkipped, item.Recurrence is Recurrence.Repeating, item.CreatedBy.Value, item.LastModifiedBy.Value,
-                AssignedTo: null, Routine: null));
+                AssignedTo: null, Routine: null, item.Alarms.OffsetMinutes));
         }
     }
 
@@ -97,7 +97,7 @@ public static class CalendarOccurrenceExpansion
             occurrences.Add(new CalendarItemOccurrence(
                 item.Id, item.Kind, item.Title, item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
                 new OccurrenceTiming.Due(dueAt), due.IsAllDay, isCompleted, isSkipped, item.Recurrence is Recurrence.Repeating, item.CreatedBy.Value, item.LastModifiedBy.Value, task.AssignedTo?.Value,
-                Routine: null));
+                Routine: null, item.Alarms.OffsetMinutes));
         }
     }
 
@@ -118,6 +118,7 @@ public static class CalendarOccurrenceExpansion
         foreach (var (date, isSkipped) in OccurringDates(item, due.Date, from, to, includeSkipped))
         {
             var offset = TimeSpan.Zero;
+            var isFirstOfRun = true;
 
             foreach (var subtask in template.Subtasks.Where(s => s.AppliesOn(date)))
             {
@@ -133,7 +134,10 @@ public static class CalendarOccurrenceExpansion
                 occurrences.Add(new CalendarItemOccurrence(
                     item.Id, item.Kind, subtask.Title, subtask.Icon?.Value ?? item.Icon?.Value ?? calendarIcon.Value, item.Icon?.Value, item.Color.Value,
                     timing, due.IsAllDay, isCompleted, isSkipped, item.Recurrence is Recurrence.Repeating, item.CreatedBy.Value, item.LastModifiedBy.Value,
-                    task.AssignedTo?.Value, new Routine(subtask.Id.Value, item.Title, item.Icon?.Value ?? calendarIcon.Value, checklist)));
+                    task.AssignedTo?.Value, new Routine(subtask.Id.Value, item.Title, item.Icon?.Value ?? calendarIcon.Value, checklist),
+                    isFirstOfRun ? item.Alarms.OffsetMinutes : []));
+
+                isFirstOfRun = false;
 
                 // Zero for a checklist item.
                 offset += subtask.Duration;

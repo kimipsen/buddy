@@ -10,6 +10,8 @@ public sealed class ScheduleTaskFromTemplateValidator : AbstractValidator<Schedu
 
         RuleFor(x => x.TaskTemplateId).NotEmpty();
 
+        RuleFor(x => x.Alarms).ValidAlarms();
+
         // The same rules CreateItem and UpdateItemRecurrence apply; the seed is the start date.
         RuleFor(x => x.Recurrence).Custom((recurrence, context) =>
         {

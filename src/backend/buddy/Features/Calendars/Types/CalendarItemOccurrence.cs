@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 
@@ -33,7 +34,12 @@ public sealed record CalendarItemOccurrence(
     Guid? AssignedTo,
     // Set only when this occurrence is one subtask of a template-scheduled task; null for every
     // other occurrence, which is the normal case.
-    Routine? Routine)
+    Routine? Routine,
+    // The alarms the subscribed-calendar feed writes on this occurrence as VALARMs, ascending
+    // signed minutes from its start or due time; empty for none. A routine or packing list carries
+    // them on the first subtask of each run only, so it alerts once
+    // (docs/backend/analysis/calendar-item-alarms.md, Question 4).
+    ImmutableArray<int> Alarms)
 {
     // The instant an occurrence sorts and is dated by: an event's or a routine subtask's start, a
     // plain task's due instant.

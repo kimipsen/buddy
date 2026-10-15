@@ -54,6 +54,8 @@ export type AssignableMember = Schemas['AssignableMemberResponse'];
 export type UpdateItemDetailsRequest = Schemas['UpdateItemDetailsRequest'];
 
 // The timing must match the item's own kind -- an event is rescheduled with an event timing.
+export type UpdateItemAlarmsRequest = Schemas['UpdateItemAlarmsRequest'];
+
 export type RescheduleItemRequest = Schemas['RescheduleItemRequest'];
 
 // Matches ScheduleTaskFromTemplateRequest exactly. startDate/startTime are flat DateOnly/TimeOnly
@@ -223,6 +225,21 @@ export class CalendarsService {
     );
     this.todayCache = null;
     return updated;
+  }
+
+  // Replaces the item's alarms for subscribed calendar apps (signed minutes from its start or due
+  // time; [] clears them). A no-op server-side when unchanged.
+  async updateItemAlarms(
+    calendarId: string,
+    itemId: string,
+    request: UpdateItemAlarmsRequest,
+  ): Promise<CalendarItemResponse> {
+    return firstValueFrom(
+      this.http.patch<CalendarItemResponse>(
+        `${this.runtimeConfig.apiBaseUrl}/calendars/${calendarId}/items/${itemId}/alarms`,
+        request,
+      ),
+    );
   }
 
   async rescheduleItem(

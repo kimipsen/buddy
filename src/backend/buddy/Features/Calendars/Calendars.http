@@ -43,3 +43,15 @@ GET {{buddy_HostAddress}}/calendars/{{calendarId}}/occurrences?from=2026-10-19&t
 Authorization: Bearer {{login.response.body.access_token}}
 
 ###
+
+# Set an item's alarms for subscribed calendar apps: signed minutes from its start or due time
+# (negative = before; an all-day item is anchored at local midnight). At most 3; [] clears them.
+PATCH {{buddy_HostAddress}}/calendars/{{calendarId}}/items/{{itemId}}/alarms
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "alarms": [-120, -1440]
+}
+
+###

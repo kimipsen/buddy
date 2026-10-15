@@ -24,9 +24,15 @@ public sealed record CalendarItem(
     // apart from Recurrence so editing the rule never drops a skip, and a skip never rewrites the
     // rule (docs/backend/analysis/skip-occurrences.md, Question 1).
     ImmutableHashSet<DateOnly> SkippedDates,
+    // Alarms for subscribed calendar apps (docs/backend/analysis/calendar-item-alarms.md).
+    ItemAlarms Alarms,
     UserId LastModifiedBy,
     bool IsDeleted)
 {
+    // A snapshot row written before Alarms existed deserializes it as null; normalized here once so
+    // no reader has to remember it, and no snapshot rebuild is needed at deploy.
+    public ItemAlarms Alarms { get; init; } = Alarms ?? ItemAlarms.None;
+
     // Derived from Schedule (the wire still sends kind: 0|1), so kept out of the snapshot JSON.
     [JsonIgnore]
     public CalendarItemKind Kind => Schedule switch
@@ -67,11 +73,11 @@ public sealed record CalendarItem(
     public static CalendarItem Start(CalendarItemEvent @event) => @event switch
     {
         EventItemCreated created => New(created.Id, created.CalendarId, created.CreatedBy, created.Title, created.Icon, created.Color,
-            new ItemSchedule.Event(created.Period), created.Recurrence),
+            new ItemSchedule.Event(created.Period), created.Recurrence, created.Alarms),
         TaskItemCreated created => New(created.Id, created.CalendarId, created.CreatedBy, created.Title, created.Icon, created.Color,
-            new ItemSchedule.Task(created.DueDate, created.AssignedTo, new TaskSource.Freeform()), created.Recurrence),
+            new ItemSchedule.Task(created.DueDate, created.AssignedTo, new TaskSource.Freeform()), created.Recurrence, created.Alarms),
         TemplateTaskItemCreated created => New(created.Id, created.CalendarId, created.CreatedBy, created.Title, created.Icon, created.Color,
-            new ItemSchedule.Task(created.DueDate, created.AssignedTo, new TaskSource.FromTemplate(created.TaskTemplateId)), created.Recurrence),
+            new ItemSchedule.Task(created.DueDate, created.AssignedTo, new TaskSource.FromTemplate(created.TaskTemplateId)), created.Recurrence, created.Alarms),
         _ => throw EventReplay.NotAStartEvent(nameof(CalendarItem), @event.EventType)
     };
 
@@ -111,12 +117,14 @@ public sealed record CalendarItem(
                 : (item.SkippedDates ?? []).Remove(skip.OccurrenceDate),
             LastModifiedBy = skip.ModifiedBy
         },
+        ItemAlarmsUpdated alarms => item with { Alarms = alarms.After, LastModifiedBy = alarms.ModifiedBy },
         ItemDeleted deleted => item with { IsDeleted = true, LastModifiedBy = deleted.ModifiedBy },
         EventItemCreated or TaskItemCreated or TemplateTaskItemCreated => throw EventReplay.AlreadyStarted(nameof(CalendarItem), @event.EventType)
     };
 
     private static CalendarItem New(
-        CalendarItemId id, CalendarId calendarId, UserId createdBy, string title, Icon? icon, Color color, ItemSchedule schedule, Recurrence recurrence) =>
+        CalendarItemId id, CalendarId calendarId, UserId createdBy, string title, Icon? icon, Color color, ItemSchedule schedule, Recurrence recurrence,
+        ItemAlarms? alarms) =>
         new(id, calendarId, createdBy, title, icon, color, schedule, recurrence,
-            ImmutableHashSet<CompletionKey>.Empty, ImmutableHashSet<DateOnly>.Empty, createdBy, IsDeleted: false);
+            ImmutableHashSet<CompletionKey>.Empty, ImmutableHashSet<DateOnly>.Empty, alarms ?? ItemAlarms.None, createdBy, IsDeleted: false);
 }

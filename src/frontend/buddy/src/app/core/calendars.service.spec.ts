@@ -59,6 +59,7 @@ describe('CalendarsService', () => {
       isRepeating: false,
       createdBy: 'guardian-1',
       lastModifiedBy: 'guardian-1',
+      alarms: [],
       assignedTo: null,
       routine: null,
       ...overrides,
@@ -361,6 +362,7 @@ describe('CalendarsService', () => {
         color: '#000',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
+        alarms: [],
         schedule: {
           kind: 1,
           dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
@@ -410,6 +412,7 @@ describe('CalendarsService', () => {
         recurrence: null,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
+        alarms: [],
       } satisfies CalendarItemResponse);
       await createPromise;
 
@@ -432,6 +435,39 @@ describe('CalendarsService', () => {
     });
   });
 
+  describe('updateItemAlarms', () => {
+    it('PATCHes the item alarms endpoint with the offsets and resolves with the updated item', async () => {
+      const updated: CalendarItemResponse = {
+        id: 'event-1',
+        calendarId: 'cal-1',
+        title: 'Dentist',
+        icon: null,
+        color: '#111',
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        alarms: [-1440, -120],
+        schedule: {
+          kind: 0,
+          period: {
+            startsAt: { date: '2026-08-26', time: '10:00' },
+            endsAt: { date: '2026-08-26', time: '11:00' },
+            isAllDay: false,
+          },
+        },
+        recurrence: null,
+      };
+
+      const promise = service.updateItemAlarms('cal-1', 'event-1', { alarms: [-120, -1440] });
+
+      const req = httpMock.expectOne(`${apiBaseUrl}/calendars/cal-1/items/event-1/alarms`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ alarms: [-120, -1440] });
+      req.flush(updated);
+
+      await expect(promise).resolves.toEqual(updated);
+    });
+  });
+
   describe('updateItemDetails', () => {
     const request: UpdateItemDetailsRequest = { title: 'Tidy room', icon: null, color: '#111' };
 
@@ -444,6 +480,7 @@ describe('CalendarsService', () => {
         color: '#111',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
+        alarms: [],
         schedule: {
           kind: 1,
           dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
@@ -478,6 +515,7 @@ describe('CalendarsService', () => {
         color: '#000',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
+        alarms: [],
         schedule: {
           kind: 1,
           dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
@@ -614,6 +652,7 @@ describe('CalendarsService', () => {
         color: '#10b981',
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
+        alarms: [],
         schedule: {
           kind: 1,
           dueDate: { date: '2026-08-26', time: '00:00', isAllDay: true },
@@ -660,6 +699,7 @@ describe('CalendarsService', () => {
         recurrence: null,
         createdBy: 'guardian-1',
         lastModifiedBy: 'guardian-1',
+        alarms: [],
       } satisfies CalendarItemResponse);
       await schedulePromise;
 

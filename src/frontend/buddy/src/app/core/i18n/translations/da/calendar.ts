@@ -56,6 +56,33 @@ export const calendar = {
     filter: {
       title: 'Kalendere',
     },
+    alarms: {
+      label: 'Alarmer',
+      limitHint: 'Op til {max} alarmer.',
+      clientHint:
+        'Alarmer virker kun i kalenderapps, der abonnerer på denne kalenders link. Nogle apps (Google Kalender) ignorerer dem.',
+      hasAlarms: 'Har alarmer',
+      presets: {
+        atStart: 'Ved start',
+        minutes5: '5 minutter før',
+        minutes15: '15 minutter før',
+        minutes30: '30 minutter før',
+        hour1: '1 time før',
+        hours2: '2 timer før',
+        day1: '1 dag før',
+        onDayAt9: 'På dagen kl. 09:00',
+        dayBeforeAt18: 'Dagen før kl. 18:00',
+        dayBeforeAt9: 'Dagen før kl. 09:00',
+        twoDaysBeforeAt9: '2 dage før kl. 09:00',
+      },
+      custom: {
+        before: '{duration} før',
+        after: '{duration} efter',
+        days: '{count} d.',
+        hours: '{count} t.',
+        minutes: '{count} min.',
+      },
+    },
     form: {
       title: 'Tilføj en begivenhed eller opgave',
       noEligibleCalendars:

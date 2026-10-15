@@ -93,7 +93,7 @@ public static class ScheduleTaskFromTemplateHandler
 
         var created = new TemplateTaskItemCreated(
             itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, dueDate, command.Recurrence, now,
-            command.AssignedTo, command.TaskTemplateId);
+            command.AssignedTo, command.TaskTemplateId, command.Alarms);
 
         var events = await items.CreateAsync(itemId, [created], cancellationToken);
 

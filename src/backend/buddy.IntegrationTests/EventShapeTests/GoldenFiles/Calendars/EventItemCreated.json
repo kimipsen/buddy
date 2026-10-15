@@ -19,5 +19,6 @@
   "Recurrence": {
     "Kind": "OneOff"
   },
-  "OccurredAt": "2025-01-01T12:00:00\u002B00:00"
+  "OccurredAt": "2025-01-01T12:00:00\u002B00:00",
+  "Alarms": null
 }

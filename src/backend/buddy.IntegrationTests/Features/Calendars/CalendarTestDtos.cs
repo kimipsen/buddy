@@ -24,7 +24,8 @@ internal sealed record CalendarItemDto(
     ItemScheduleDto Schedule,
     RecurrenceRuleDto? Recurrence,
     Guid CreatedBy,
-    Guid LastModifiedBy)
+    Guid LastModifiedBy,
+    IReadOnlyList<int>? Alarms = null)
 {
     // Shortcuts into Schedule for the assertions -- the response itself nests them by kind.
     public CalendarItemKind Kind => Schedule.Kind;
@@ -72,7 +73,8 @@ internal sealed record CalendarItemOccurrenceDto(
     Guid CreatedBy,
     Guid LastModifiedBy,
     Guid? AssignedTo,
-    RoutineDto? Routine)
+    RoutineDto? Routine,
+    IReadOnlyList<int>? Alarms = null)
 {
     // Shortcuts into Timing and Routine for the assertions -- the response itself nests them.
     public DateTimeOffset? StartsAt => Timing.StartsAt;

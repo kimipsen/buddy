@@ -54,7 +54,7 @@ public static class CreateItemHandler
                     throw new UnreachableException("CreateItemValidator already guarantees this succeeds.");
                 }
 
-                created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, period, command.Recurrence, now);
+                created = new EventItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, period, command.Recurrence, now, command.Alarms);
                 break;
 
             case NewItemSchedule.Task task:
@@ -66,7 +66,7 @@ public static class CreateItemHandler
                     return new Result<CalendarItem>.Validation(ValidationProblem.Of("The assigned person doesn't have access to this calendar."));
                 }
 
-                created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, task.DueDate, command.Recurrence, now, task.AssignedTo);
+                created = new TaskItemCreated(itemId, command.CalendarId, userId, command.Title, command.Icon, command.Color, task.DueDate, command.Recurrence, now, task.AssignedTo, command.Alarms);
                 break;
 
             default:

@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
 using buddy.Features.Calendars;
 using buddy.Features.Groups;
 using buddy.Features.Users;
@@ -98,6 +101,61 @@ public sealed class CalendarEventShapeTests
             FixedItemId, FixedCalendarId, FixedUserId, "Morning routine", Icon.New("task"), Color.New("#ff0000"), FixedDueDate, new Recurrence.OneOff(), FixedInstant,
             AssignedTo: OtherUserId, TaskTemplateId: Guid.Parse("00000000-0000-0000-0000-000000000050")),
         "Calendars/TemplateTaskItemCreated.json");
+
+    [Fact]
+    public void EventItemCreated_WithAlarms() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new EventItemCreated(
+            FixedItemId, FixedCalendarId, FixedUserId, "Dentist", Icon.New("calendar"), Color.New("#00ff00"), FixedPeriod, new Recurrence.OneOff(), FixedInstant,
+            ItemAlarms.From([-1440, -120])),
+        "Calendars/EventItemCreated_WithAlarms.json");
+
+    [Fact]
+    public void TaskItemCreated_WithAlarms() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new TaskItemCreated(
+            FixedItemId, FixedCalendarId, FixedUserId, "Anniversary", Icon.New("task"), Color.New("#ff0000"), FixedAllDayDueDate, new Recurrence.OneOff(), FixedInstant,
+            AssignedTo: null, ItemAlarms.From([540, -360])),
+        "Calendars/TaskItemCreated_WithAlarms.json");
+
+    [Fact]
+    public void ItemAlarmsUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(
+        new ItemAlarmsUpdated(FixedItemId, ItemAlarms.None, ItemAlarms.From([-120, -1440]), FixedUserId, FixedInstant),
+        "Calendars/ItemAlarmsUpdated.json");
+
+    // History written before alarms existed has no "Alarms" on the creation event, and a snapshot
+    // row written then has none on the item: both read back as no alarms
+    // (docs/backend/analysis/calendar-item-alarms.md, Existing snapshots).
+    [Fact]
+    public void A_creation_event_written_before_alarms_existed_reads_back_with_no_alarms()
+    {
+        var options = EventShapeTestSupport.CreateEventSerializerOptions();
+        var json = JsonNode.Parse(JsonSerializer.Serialize(
+            new EventItemCreated(FixedItemId, FixedCalendarId, FixedUserId, "Standup", Icon.New("calendar"), Color.New("#00ff00"), FixedPeriod, new Recurrence.OneOff(), FixedInstant),
+            options))!.AsObject();
+        json.Remove("Alarms");
+
+        var created = JsonSerializer.Deserialize<EventItemCreated>(json.ToJsonString(), options)!;
+
+        Assert.Null(created.Alarms);
+        Assert.Equal(ItemAlarms.None, CalendarItem.Start(created).Alarms);
+    }
+
+    [Fact]
+    public void A_snapshot_written_before_alarms_existed_reads_back_with_no_alarms()
+    {
+        // The snapshot store's options: the event options plus ItemScheduleJsonConverter.
+        var options = EventShapeTestSupport.CreateEventSerializerOptions();
+        options.Converters.Add(new ItemScheduleJsonConverter());
+        var item = CalendarItem.Start(new EventItemCreated(
+            FixedItemId, FixedCalendarId, FixedUserId, "Standup", Icon.New("calendar"), Color.New("#00ff00"), FixedPeriod, new Recurrence.OneOff(), FixedInstant,
+            ItemAlarms.From([-60])));
+        var json = JsonNode.Parse(JsonSerializer.Serialize(item, options))!.AsObject();
+        Assert.True(json.Remove("Alarms"));
+
+        var read = JsonSerializer.Deserialize<CalendarItem>(json.ToJsonString(), options)!;
+
+        Assert.Equal(ItemAlarms.None, read.Alarms);
+        Assert.Equal(ItemAlarms.From([-30]), CalendarItem.Advance(read, new ItemAlarmsUpdated(FixedItemId, read.Alarms, ItemAlarms.From([-30]), FixedUserId, FixedInstant)).Alarms);
+    }
 
     [Fact]
     public void ItemDetailsUpdated() => EventShapeTestSupport.AssertMatchesGoldenFile(

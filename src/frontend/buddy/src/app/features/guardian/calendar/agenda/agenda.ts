@@ -58,6 +58,7 @@ import { Toggle } from '../../../../shared/toggle/toggle';
 import { MonthGrid } from './month-grid/month-grid';
 import { TaskPicker } from '../../task-library/task-picker/task-picker';
 import { Card } from '../../../../shared/card/card';
+import { AlarmPicker, keepAlarmPresets, sameAlarms } from './alarm-picker/alarm-picker';
 
 export type NewTaskSource = 'manual' | 'template';
 
@@ -205,6 +206,7 @@ function formatDuration(totalMinutes: number): string {
     MonthGrid,
     TaskPicker,
     Card,
+    AlarmPicker,
   ],
   templateUrl: './agenda.html',
 })
@@ -359,6 +361,7 @@ export class CalendarAgenda {
   protected readonly editDueDate = signal('');
   protected readonly editDueTime = signal('');
   protected readonly editIsAllDay = signal(false);
+  protected readonly editAlarms = signal<number[]>([]);
   protected readonly editingKind = signal<CalendarItemKind>(EVENT_KIND);
   protected readonly savingEdit = createAction<string>();
 
@@ -435,6 +438,7 @@ export class CalendarAgenda {
   protected readonly newDueDate = signal(todayIsoDate());
   protected readonly newDueTime = signal('09:00');
   protected readonly newIsAllDay = signal(false);
+  protected readonly newAlarms = signal<number[]>([]);
   protected readonly newRepeat = signal<RepeatChoice>('none');
   protected readonly newIntervalCount = signal(1);
   protected readonly newUntil = signal('');
@@ -828,6 +832,7 @@ export class CalendarAgenda {
     this.editIcon.set(occurrence.iconOverride ?? '');
     this.editColor.set(occurrence.color);
     this.editIsAllDay.set(occurrence.isAllDay);
+    this.editAlarms.set([...occurrence.alarms]);
 
     const timeZoneId = this.users.timeZoneId();
 
@@ -864,6 +869,24 @@ export class CalendarAgenda {
     this.editEndTime.set(end.time);
   }
 
+  // The alarm presets differ between timed and all-day items, so flipping the toggle drops any
+  // selected alarm that isn't a preset of the new mode (calendar-item-alarms.md, Question 6).
+  protected setEditIsAllDay(isAllDay: boolean): void {
+    this.editIsAllDay.set(isAllDay);
+    this.editAlarms.update((alarms) => keepAlarmPresets(alarms, isAllDay));
+  }
+
+  protected setNewIsAllDay(isAllDay: boolean): void {
+    this.newIsAllDay.set(isAllDay);
+    this.newAlarms.update((alarms) => keepAlarmPresets(alarms, isAllDay));
+  }
+
+  // A routine's alarms sit on its first subtask only (the feed alerts once per run).
+  protected hasAlarms(entry: AgendaEntry): boolean {
+    const occurrences = isTaskRun(entry) ? entry.subtasks : [entry];
+    return occurrences.some((occurrence) => occurrence.alarms.length > 0);
+  }
+
   protected cancelEditItem(): void {
     this.editingItemId.set(null);
   }
@@ -880,6 +903,7 @@ export class CalendarAgenda {
     const icon = this.editIcon().trim();
     const color = this.editColor().trim();
     const isAllDay = this.editIsAllDay();
+    const alarms = this.editAlarms();
 
     // The end date shown/entered is inclusive for an all-day event -- store it exclusive.
     const startTime = isAllDay ? '00:00' : this.editStartTime();
@@ -906,6 +930,12 @@ export class CalendarAgenda {
                 }
               : { kind: 1, dueDate: toDatePart(this.editDueDate(), dueTime), isAllDay },
         });
+        // Only when the selection changed, so an untouched edit appends no alarm event.
+        if (!sameAlarms(alarms, occurrence.alarms)) {
+          await this.calendars.updateItemAlarms(occurrence.calendarId, occurrence.itemId, {
+            alarms,
+          });
+        }
 
         this.editingItemId.set(null);
         this.reloadWeek();
@@ -925,7 +955,7 @@ export class CalendarAgenda {
     if (source === 'manual') {
       this.newTaskTemplateId.set('');
     } else {
-      this.newIsAllDay.set(false);
+      this.setNewIsAllDay(false);
     }
   }
 
@@ -990,6 +1020,7 @@ export class CalendarAgenda {
       title: this.newTitle().trim(),
       icon: this.newIcon().trim() || null,
       color: this.newColor().trim(),
+      alarms: this.newAlarms(),
     });
   }
 
@@ -1021,6 +1052,7 @@ export class CalendarAgenda {
               assignedTo: this.newAssignedTo() || null,
             },
       recurrence: this.buildRecurrence(),
+      alarms: this.newAlarms(),
     });
   }
 
@@ -1070,6 +1102,7 @@ export class CalendarAgenda {
     this.newDueDate.set(todayIsoDate());
     this.newDueTime.set('09:00');
     this.newIsAllDay.set(false);
+    this.newAlarms.set([]);
     this.newRepeat.set('none');
     this.newIntervalCount.set(1);
     this.newUntil.set('');

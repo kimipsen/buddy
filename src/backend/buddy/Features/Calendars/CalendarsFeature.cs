@@ -38,6 +38,7 @@ public static class CalendarsFeature
         typeof(TaskCompletionChanged),
         typeof(OccurrenceSkipChanged),
         typeof(ItemDeleted),
+        typeof(ItemAlarmsUpdated),
         typeof(IcalTokenIssued),
         typeof(IcalTokenRevoked)
     ];
@@ -136,6 +137,7 @@ public static class CalendarsFeature
         calendars.MapUpdateItemDetails();
         calendars.MapRescheduleItem();
         calendars.MapUpdateItemRecurrence();
+        calendars.MapUpdateItemAlarms();
         calendars.MapSetTaskCompletion();
         calendars.MapSetOccurrenceSkip();
         calendars.MapDeleteItem();

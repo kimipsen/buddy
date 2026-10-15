@@ -47,6 +47,9 @@ public sealed class CalendarItemSnapshotProjection : SingleStreamProjection<Cale
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, OccurrenceSkipChanged skip) =>
         current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(skip)) };
 
+    public CalendarItemSnapshot Apply(CalendarItemSnapshot current, ItemAlarmsUpdated updated) =>
+        current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(updated)) };
+
     public CalendarItemSnapshot Apply(CalendarItemSnapshot current, ItemDeleted deleted) =>
         current with { CalendarItem = CalendarItem.Advance(current.CalendarItem, CalendarItemEvent.FromPayload(deleted)) };
 }

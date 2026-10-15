@@ -8,6 +8,8 @@ public sealed class CreateItemValidator : AbstractValidator<CreateItem>
     {
         RuleFor(x => x.Title).MaximumLength(200);
 
+        RuleFor(x => x.Alarms).ValidAlarms();
+
         RuleFor(x => x.Recurrence).Custom((recurrence, context) =>
         {
             foreach (var (key, message) in RecurrenceRules.Problems(recurrence, SeedOf(context.InstanceToValidate.Schedule)))

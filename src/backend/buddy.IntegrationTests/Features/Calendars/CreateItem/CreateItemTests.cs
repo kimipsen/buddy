@@ -474,6 +474,40 @@ public sealed class CreateItemTests(BuddyApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_item_can_be_created_with_alarms_which_are_merged_and_sorted()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var @event = await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, "Dentist", alarms: [-60, -1440, -60]);
+        var task = await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, "Anniversary", isAllDay: true, alarms: [540]);
+
+        Assert.Equal([-1440, -60], @event!.Alarms);
+        Assert.Equal([540], task!.Alarms);
+    }
+
+    [Fact]
+    public async Task An_item_created_without_alarms_has_none()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        var item = await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId);
+
+        Assert.Equal([], item!.Alarms);
+    }
+
+    [Fact]
+    public async Task Creating_an_item_with_more_than_three_alarms_is_rejected()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var calendarId = await CalendarTestHelpers.CreateCalendarAsync(fixture, token, "Personal");
+
+        await CalendarTestHelpers.CreateEventAsync(fixture, token, calendarId, alarms: [0, -5, -15, -30], expectedStatus: 400);
+        await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, alarms: [ItemAlarms.MinOffset - 1], expectedStatus: 400);
+    }
+
+    [Fact]
     public async Task A_non_member_gets_not_found()
     {
         var (_, ownerToken, _) = await fixture.CreateAuthenticatedUserAsync();

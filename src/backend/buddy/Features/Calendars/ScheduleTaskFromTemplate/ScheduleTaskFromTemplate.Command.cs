@@ -19,7 +19,8 @@ public sealed record ScheduleTaskFromTemplate(
     UserId? AssignedTo,
     string Title,
     Icon? Icon,
-    Color Color)
+    Color Color,
+    ItemAlarms Alarms)
 {
     public static ScheduleTaskFromTemplate FromClaims(
         ClaimsPrincipal principal,
@@ -31,6 +32,7 @@ public sealed record ScheduleTaskFromTemplate(
         UserId? assignedTo,
         string title,
         Icon? icon,
-        Color color) =>
-        new(principal.GetRequiredUserId(), calendarId, taskTemplateId, startDate, startTime, recurrence, assignedTo, title, icon, color);
+        Color color,
+        ItemAlarms alarms) =>
+        new(principal.GetRequiredUserId(), calendarId, taskTemplateId, startDate, startTime, recurrence, assignedTo, title, icon, color, alarms);
 }

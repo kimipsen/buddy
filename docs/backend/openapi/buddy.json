@@ -6990,6 +6990,115 @@
         ]
       }
     },
+    "/calendars/{calendarId}/items/{itemId}/alarms": {
+      "patch": {
+        "tags": [
+          "Calendars"
+        ],
+        "operationId": "UpdateCalendarItemAlarms",
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemAlarmsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden. ErrorEnvelope code: \u0060user_not_provisioned\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "user_not_provisioned"
+            ]
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "concurrency_conflict"
+            ]
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "keycloak": []
+          }
+        ]
+      }
+    },
     "/calendars/{calendarId}/items/{itemId}/completion": {
       "patch": {
         "tags": [
@@ -22565,6 +22674,7 @@
           "lastModifiedBy",
           "assignedTo",
           "routine",
+          "alarms",
           "sortAt"
         ],
         "type": "object",
@@ -22630,6 +22740,13 @@
               }
             ]
           },
+          "alarms": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
           "sortAt": {
             "type": "string",
             "format": "date-time",
@@ -22647,7 +22764,8 @@
           "schedule",
           "recurrence",
           "createdBy",
-          "lastModifiedBy"
+          "lastModifiedBy",
+          "alarms"
         ],
         "type": "object",
         "properties": {
@@ -22689,6 +22807,13 @@
           "lastModifiedBy": {
             "type": "string",
             "format": "uuid"
+          },
+          "alarms": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -23371,6 +23496,16 @@
                 "$ref": "#/components/schemas/RecurrenceRuleRequest"
               }
             ]
+          },
+          "alarms": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -26917,6 +27052,16 @@
               "null",
               "string"
             ]
+          },
+          "alarms": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -28107,6 +28252,21 @@
         "properties": {
           "email": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateItemAlarmsRequest": {
+        "type": "object",
+        "properties": {
+          "alarms": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },

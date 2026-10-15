@@ -130,6 +130,7 @@ describe('CalendarAgenda', () => {
       })),
       updateItemDetails: vi.fn(async () => ({}) as never),
       rescheduleItem: vi.fn(async () => ({}) as never),
+      updateItemAlarms: vi.fn(async () => ({}) as never),
       createItem: vi.fn(async () => ({}) as never),
       scheduleTaskFromTemplate: vi.fn(async () => ({}) as never),
       ...stubs.calendars,
@@ -1086,6 +1087,7 @@ describe('CalendarAgenda', () => {
         isAllDay: false,
       },
       recurrence: null,
+      alarms: [],
     });
   });
 
@@ -1156,6 +1158,7 @@ describe('CalendarAgenda', () => {
         assignedTo: 'child-1',
       },
       recurrence: null,
+      alarms: [],
     });
   });
 
@@ -1187,10 +1190,11 @@ describe('CalendarAgenda', () => {
   });
 
   describe('weekday toggles', () => {
+    // The alarm chips are aria-pressed buttons in a group too.
     const weekdayButtons = (compiled: HTMLElement) =>
       Array.from(
         compiled.querySelectorAll<HTMLButtonElement>('[role="group"] button[aria-pressed]'),
-      );
+      ).filter((button) => !button.closest('app-alarm-picker'));
 
     async function chooseRepeat(
       fixture: Awaited<ReturnType<typeof setup>>['fixture'],
@@ -1937,6 +1941,7 @@ describe('CalendarAgenda', () => {
         title: 'Morning routine',
         icon: '🌅',
         color: '#0ea5e9',
+        alarms: [],
       });
       expect(calendars.createItem).not.toHaveBeenCalled();
     });
@@ -2090,5 +2095,291 @@ describe('CalendarAgenda', () => {
 
     expect(findButtonByText(compiled, 'From template')).toBeUndefined();
     expect(taskLibrary.listTaskTemplates).not.toHaveBeenCalled();
+  });
+
+  describe('alarms', () => {
+    function alarmChip(root: ParentNode, label: string): HTMLButtonElement | undefined {
+      return Array.from(
+        root.querySelectorAll<HTMLButtonElement>('app-alarm-picker button[aria-pressed]'),
+      ).find((button) => button.textContent?.trim() === label);
+    }
+
+    function alarmChipLabels(root: ParentNode): string[] {
+      return Array.from(
+        root.querySelectorAll<HTMLButtonElement>('app-alarm-picker button[aria-pressed]'),
+      ).map((button) => button.textContent!.trim());
+    }
+
+    function editForm(fixture: { nativeElement: unknown }): HTMLFormElement {
+      return (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLInputElement>('input[name="editTitle"]')!
+        .closest('form')!;
+    }
+
+    it('creates an event with the picked alarm and says alarms only reach subscribed calendar apps', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      const form = createForm(compiled);
+      expect(form.textContent).toContain('Up to 3 alarms.');
+      expect(form.textContent).toContain(
+        'Alarms only work in calendar apps subscribed to this calendar’s link. Some apps (Google Calendar) ignore them.',
+      );
+      setInputValue(
+        compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!,
+        'Dentist',
+      );
+      alarmChip(form, '2 hours before')!.click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(alarmChip(createForm(compiled), '2 hours before')!.getAttribute('aria-pressed')).toBe(
+        'true',
+      );
+      createForm(compiled).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({ title: 'Dentist', alarms: [-120] }),
+      );
+    });
+
+    it('offers the timed presets, swaps to the all-day presets and drops a timed pick when all-day is switched on', async () => {
+      const { fixture, calendars } = await setup();
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      expect(alarmChipLabels(createForm(compiled))).toEqual([
+        'At start',
+        '5 minutes before',
+        '15 minutes before',
+        '30 minutes before',
+        '1 hour before',
+        '2 hours before',
+        '1 day before',
+      ]);
+      setInputValue(compiled.querySelector<HTMLInputElement>('input[name="itemTitle"]')!, 'Trip');
+      alarmChip(createForm(compiled), '1 day before')!.click();
+      await settle(fixture);
+
+      findToggle(createForm(fixture.nativeElement as HTMLElement), 'All day').click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      expect(alarmChipLabels(createForm(compiled))).toEqual([
+        'On the day at 09:00',
+        'The day before at 18:00',
+        'The day before at 09:00',
+        '2 days before at 09:00',
+      ]);
+      alarmChip(createForm(compiled), 'On the day at 09:00')!.click();
+      await settle(fixture);
+
+      createForm(fixture.nativeElement as HTMLElement).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.createItem).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({ alarms: [540] }),
+      );
+    });
+
+    it('disables the remaining chips once three alarms are picked', async () => {
+      const { fixture } = await setup();
+      await settle(fixture);
+
+      for (const label of ['At start', '5 minutes before', '1 hour before']) {
+        alarmChip(createForm(fixture.nativeElement as HTMLElement), label)!.click();
+        await settle(fixture);
+      }
+
+      const form = createForm(fixture.nativeElement as HTMLElement);
+      expect(alarmChip(form, '15 minutes before')!.disabled).toBe(true);
+      expect(alarmChip(form, 'At start')!.disabled).toBe(false);
+
+      alarmChip(form, 'At start')!.click();
+      await settle(fixture);
+
+      expect(
+        alarmChip(createForm(fixture.nativeElement as HTMLElement), '15 minutes before')!.disabled,
+      ).toBe(false);
+    });
+
+    it('sends the picked alarm when scheduling from a template', async () => {
+      const { fixture, calendars } = await setup({ templates: [taskTemplate()] });
+      await settle(fixture);
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'Task')!.click();
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      findButtonByText(compiled, 'From template')!.click();
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      compiled
+        .querySelector<HTMLInputElement>('app-task-picker input')!
+        .dispatchEvent(new Event('focus'));
+      await settle(fixture);
+      compiled = fixture.nativeElement as HTMLElement;
+      Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-task-picker ul li button'))
+        .find((button) => button.textContent?.includes('Morning routine'))!
+        .click();
+      await settle(fixture);
+
+      compiled = fixture.nativeElement as HTMLElement;
+      alarmChip(createForm(compiled), '5 minutes before')!.click();
+      await settle(fixture);
+
+      createForm(fixture.nativeElement as HTMLElement).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.scheduleTaskFromTemplate).toHaveBeenCalledWith(
+        'cal-1',
+        expect.objectContaining({ alarms: [-5] }),
+      );
+    });
+
+    it('prefills the edit form with the stored alarms and does not PATCH them when unchanged', async () => {
+      const item = occurrence({ alarms: [-1440, -120] });
+      const { fixture, calendars } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Edit')!.click();
+      await settle(fixture);
+
+      const form = editForm(fixture);
+      expect(alarmChip(form, '2 hours before')!.getAttribute('aria-pressed')).toBe('true');
+      expect(alarmChip(form, '1 day before')!.getAttribute('aria-pressed')).toBe('true');
+      expect(alarmChip(form, 'At start')!.getAttribute('aria-pressed')).toBe('false');
+
+      form.dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.rescheduleItem).toHaveBeenCalled();
+      expect(calendars.updateItemAlarms).not.toHaveBeenCalled();
+    });
+
+    it('PATCHes the alarms after the details and schedule when the selection changed', async () => {
+      const item = occurrence({ itemId: 'item-9', calendarId: 'cal-1', alarms: [-120] });
+      const { fixture, calendars } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Edit')!.click();
+      await settle(fixture);
+
+      alarmChip(editForm(fixture), '2 hours before')!.click();
+      await settle(fixture);
+      alarmChip(editForm(fixture), '15 minutes before')!.click();
+      await settle(fixture);
+
+      editForm(fixture).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.updateItemAlarms).toHaveBeenCalledWith('cal-1', 'item-9', {
+        alarms: [-15],
+      });
+      const rescheduleOrder = vi.mocked(calendars.rescheduleItem!).mock.invocationCallOrder[0];
+      const alarmsOrder = vi.mocked(calendars.updateItemAlarms!).mock.invocationCallOrder[0];
+      expect(alarmsOrder).toBeGreaterThan(rescheduleOrder);
+    });
+
+    it('shows a stored non-preset alarm as an extra chip so editing keeps it', async () => {
+      const item = occurrence({ alarms: [-200] });
+      const { fixture, calendars } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Edit')!.click();
+      await settle(fixture);
+
+      expect(alarmChip(editForm(fixture), '3 h 20 min before')!.getAttribute('aria-pressed')).toBe(
+        'true',
+      );
+
+      editForm(fixture).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.updateItemAlarms).not.toHaveBeenCalled();
+    });
+
+    it('clears non-matching alarms when all-day is switched on in the edit form', async () => {
+      const item = occurrence({ itemId: 'item-2', alarms: [-60] });
+      const { fixture, calendars } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [item]) },
+      });
+      await settle(fixture);
+
+      findButtonByText(fixture.nativeElement as HTMLElement, 'Edit')!.click();
+      await settle(fixture);
+
+      findToggle(editForm(fixture), 'All day').click();
+      await settle(fixture);
+
+      expect(alarmChipLabels(editForm(fixture))).toEqual([
+        'On the day at 09:00',
+        'The day before at 18:00',
+        'The day before at 09:00',
+        '2 days before at 09:00',
+      ]);
+      editForm(fixture).dispatchEvent(new Event('submit'));
+      await settle(fixture);
+
+      expect(calendars.updateItemAlarms).toHaveBeenCalledWith('cal-1', 'item-2', { alarms: [] });
+    });
+
+    it('shows a bell on an occurrence with alarms and none on one without', async () => {
+      const withAlarm = occurrence({ itemId: 'item-1', title: 'Dentist', alarms: [-120] });
+      const without = occurrence({
+        itemId: 'item-2',
+        title: 'Football',
+        startsAt: `${today}T11:00:00Z`,
+        endsAt: `${today}T12:00:00Z`,
+      });
+      const { fixture } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [withAlarm, without]) },
+      });
+      await settle(fixture);
+
+      const rows = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('li'));
+      const dentist = rows.find((row) => row.textContent?.includes('Dentist'))!;
+      const football = rows.find((row) => row.textContent?.includes('Football'))!;
+      expect(dentist.querySelector('[aria-label="Has alarms"]')?.textContent?.trim()).toBe('🔔');
+      expect(football.querySelector('[aria-label="Has alarms"]')).toBeNull();
+    });
+
+    it('shows one bell on a routine run whose first subtask carries the alarms', async () => {
+      const first = occurrence({
+        itemId: 'routine-1',
+        kind: 'Task',
+        title: 'Brush teeth',
+        subtaskId: 'sub-1',
+        parentTitle: 'Morning routine',
+        alarms: [-5],
+      });
+      const second = occurrence({
+        itemId: 'routine-1',
+        kind: 'Task',
+        title: 'Get dressed',
+        subtaskId: 'sub-2',
+        parentTitle: 'Morning routine',
+        startsAt: `${today}T09:10:00Z`,
+        endsAt: `${today}T09:20:00Z`,
+      });
+      const { fixture } = await setup({
+        calendars: { listOccurrencesInRange: vi.fn(async () => [first, second]) },
+      });
+      await settle(fixture);
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.textContent).toContain('Morning routine');
+      expect(compiled.querySelectorAll('[aria-label="Has alarms"]')).toHaveLength(1);
+    });
   });
 });
