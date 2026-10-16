@@ -15,7 +15,8 @@ page records the implemented Angular behavior.
 by
 [`ManagePickups`](../../../src/frontend/buddy/src/app/features/guardian/pickup/manage-pickups/manage-pickups.ts).
 It loads the signed-in guardian's children, selects the first child by default,
-and displays today plus the next six days. Each day has `DropOff` and `PickUp`
+and displays today plus the next six days. Previous/next week buttons shift the
+window by seven days and reload the schedule. Each day has `DropOff` and `PickUp`
 columns.
 
 Changing the selected child loads two resources in parallel:
@@ -107,8 +108,9 @@ language, and times use the application's locale-aware display pipe.
 
 ## Current limitations
 
-- The planner always shows today plus six days; there is no previous/next week
-  navigation, recurring template, bulk assignment, or copy-day action.
+- The planner opens on today plus six days; previous/next week buttons move the
+  window seven days at a time. There is no recurring template, bulk assignment,
+  or copy-day action.
 - Concurrent edits are last-write-wins. The frontend has no version token or
   conflict UI.
 - The selected child is not encoded in the URL, and a page reload returns to the
