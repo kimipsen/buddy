@@ -17,13 +17,8 @@ public sealed class VisitSummariesPersonalDataExporter(IVisitSummaryEventStore s
 
         foreach (var childId in subject.Children)
         {
-            foreach (var document in await summaries.ListForChildAsync(childId, cancellationToken))
+            foreach (var summary in await summaries.ListSnapshotsForChildAsync(childId, cancellationToken))
             {
-                if (await summaries.FindSnapshotAsync(new VisitSummaryId(document.Id), cancellationToken) is not { } summary)
-                {
-                    continue;
-                }
-
                 var details = summary.Details;
                 exported.Add(new ExportedVisitSummary(
                     summary.Id.Value,

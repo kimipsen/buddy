@@ -8,6 +8,10 @@ public interface IVisitSummaryEventStore
 
     Task<VisitSummary?> FindSnapshotAsync(VisitSummaryId id, CancellationToken cancellationToken);
 
+    // Every summary of the child, deleted ones included (erasure and export need them), in two
+    // queries rather than one per summary.
+    Task<IReadOnlyCollection<VisitSummary>> ListSnapshotsForChildAsync(UserId childId, CancellationToken cancellationToken);
+
     Task CreateAsync(VisitSummaryId id, IReadOnlyCollection<VisitSummaryEvent> events, CancellationToken cancellationToken);
 
     Task AppendAsync(VisitSummaryId id, IReadOnlyCollection<VisitSummaryEvent> events, CancellationToken cancellationToken);

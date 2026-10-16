@@ -24,6 +24,19 @@ public sealed class MartenVisitSummaryEventStore(IVisitSummariesStore store) : I
         return snapshot?.VisitSummary;
     }
 
+    public async Task<IReadOnlyCollection<VisitSummary>> ListSnapshotsForChildAsync(UserId childId, CancellationToken cancellationToken)
+    {
+        await using var session = store.QuerySession();
+
+        var ids = await session.Query<VisitSummaryIndexDocument>()
+            .Where(d => d.ChildId == childId.Value)
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+        var snapshots = await session.LoadManyAsync<VisitSummarySnapshot>(cancellationToken, ids);
+
+        return [.. snapshots.Select(s => s.VisitSummary)];
+    }
+
     public async Task CreateAsync(VisitSummaryId id, IReadOnlyCollection<VisitSummaryEvent> events, CancellationToken cancellationToken)
     {
         var created = events.FirstOrDefault() switch

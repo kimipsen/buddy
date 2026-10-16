@@ -12,7 +12,7 @@ export const visitSummaries = {
     empty: 'Ingen besøgsoversigter endnu. Lav en før næste aftale.',
     period: '{from} – {to}',
     visit: 'Besøg {date}',
-    links: '{count} aktive links',
+    links: 'Aktive links: {count}',
   },
   editor: {
     newTitle: 'Ny besøgsoversigt',

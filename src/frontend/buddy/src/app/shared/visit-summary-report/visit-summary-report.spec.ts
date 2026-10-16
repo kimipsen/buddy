@@ -74,7 +74,17 @@ function report(overrides: Partial<Report> = {}): Report {
           status: 'Skipped',
         },
       ],
-      effectNotes: [],
+      effectNotes: [
+        {
+          date: '2026-03-02',
+          effects: [{ area: 'Focus', level: 'Good' }],
+          sideEffects: [],
+          woreOffAt: null,
+          note: '',
+          regimen: [{ medicineId: 'm1', name: 'Concerta', dosage: '18 mg', doses: [] }],
+          loggedBy: 'guardian-1',
+        },
+      ],
     },
     feelings: {
       from: '2026-03-02',
@@ -136,6 +146,8 @@ describe('VisitSummaryReport', () => {
     expect(medicineTable.textContent).toContain('Stopped');
     expect(medicineTable.textContent).toContain('1 of 2');
     expect(medicineTable.textContent).toContain('07:15');
+    expect(compiled.textContent).toContain('By dose period');
+    expect(compiled.textContent).not.toContain('The last 92 days');
   });
 
   it('summarises sleep and feelings', async () => {
@@ -148,6 +160,8 @@ describe('VisitSummaryReport', () => {
     expect(text).toContain('No screens after 19:00');
     expect(text).toContain('1 check-ins · 0 by the child, 1 by an adult');
     expect(text).toContain('Overwhelmed');
+    // Each part of the day writes its zone counts out, not only as coloured widths.
+    expect(text).toContain('Too much 1');
     expect(text).toContain('Meltdown after the bus');
   });
 

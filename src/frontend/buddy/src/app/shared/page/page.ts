@@ -30,6 +30,8 @@ export class Page {
   readonly backLink = input<string>();
   /** Translated text of the back link. */
   readonly backLabel = input('');
+  /** Query parameters of the back link, e.g. the child a list should open on. */
+  readonly backQueryParams = input<Record<string, string> | null>(null);
 
   protected readonly maxWidth = computed(() => MAX_WIDTH[this.width()]);
 }

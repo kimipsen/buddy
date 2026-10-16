@@ -19,21 +19,34 @@ public static class MedicineDoseExpansion
         DateOnly from,
         DateOnly to,
         IMedicineEventStore medicines,
-        CancellationToken cancellationToken,
-        bool includeStoppedHistory = false)
+        CancellationToken cancellationToken)
     {
         var medicineIds = await medicines.ListIdsForChildAsync(childId, cancellationToken);
-        var occurrences = new List<MedicineDoseOccurrence>();
+        var schedules = new List<MedicineSchedule>(medicineIds.Count);
 
         foreach (var medicineId in medicineIds)
         {
-            var events = await medicines.ReadAsync(medicineId, cancellationToken);
-
-            if (MedicineSchedule.Rehydrate(events) is not { } schedule)
+            if (MedicineSchedule.Rehydrate(await medicines.ReadAsync(medicineId, cancellationToken)) is { } schedule)
             {
-                continue;
+                schedules.Add(schedule);
             }
+        }
 
+        return Expand(schedules, from, to);
+    }
+
+    // For a caller that already holds the child's schedules (the doctor visit summary loads them
+    // once for both the doses and the effect notes).
+    public static IReadOnlyCollection<MedicineDoseOccurrence> Expand(
+        IEnumerable<MedicineSchedule> schedules,
+        DateOnly from,
+        DateOnly to,
+        bool includeStoppedHistory = false)
+    {
+        var occurrences = new List<MedicineDoseOccurrence>();
+
+        foreach (var schedule in schedules)
+        {
             if (schedule.IsStopped)
             {
                 if (includeStoppedHistory)

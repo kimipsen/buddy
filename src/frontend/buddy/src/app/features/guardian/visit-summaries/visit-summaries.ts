@@ -1,6 +1,6 @@
 import { Component, computed, inject, linkedSignal, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { parseIsoDate } from '../../../core/date-utils';
 import { ChildSummary, GuardiansService } from '../../../core/guardians.service';
@@ -27,7 +27,13 @@ export class GuardianVisitSummaries {
   protected readonly childList = computed((): ChildSummary[] =>
     this.children.hasValue() ? this.children.value() : [],
   );
-  protected readonly selectedChildId = linkedSignal(() => this.childList()[0]?.id);
+  private readonly requestedChildId =
+    inject(ActivatedRoute, { optional: true })?.snapshot.queryParamMap.get('child') ?? undefined;
+  protected readonly selectedChildId = linkedSignal(
+    () =>
+      this.childList().find((child) => child.id === this.requestedChildId)?.id ??
+      this.childList()[0]?.id,
+  );
 
   protected readonly summaries = resource({
     params: () => this.selectedChildId(),

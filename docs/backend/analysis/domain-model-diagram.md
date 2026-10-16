@@ -175,6 +175,15 @@ classDiagram
         +RecentThens RecentThens
     }
 
+    class VisitSummary {
+        +VisitSummaryId Id
+        +UserId ChildId
+        +VisitSummaryDetails Details
+        +ImmutableList~VisitSummaryShareLink~ ShareLinks
+        +UserId CreatedBy
+        +bool IsDeleted
+    }
+
     class FeelingsShareToken {
         +FeelingsShareTokenId Id
         +UserId ChildId
@@ -231,6 +240,7 @@ classDiagram
     FeelingsJournal --> User : childId, check-ins' loggedBy
     FeelingsShareToken --> User : childId, createdBy
     FirstThenBoard --> User : childId, lastModifiedBy
+    VisitSummary --> User : childId, createdBy
     RuleBook --> User : scopeId (Child scope), acknowledgements
     RuleBook --> Group : scopeId (Group scope)
 ```

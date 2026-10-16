@@ -1,10 +1,12 @@
 <app-card>
-  <h3 class="text-lg font-semibold tracking-normal">
+  <h3 class="text-lg font-semibold tracking-normal" [class.mb-4]="!showIntro()">
     {{ 'medicine.effects.periods.title' | translate }}
   </h3>
-  <p class="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">
-    {{ 'medicine.effects.periods.intro' | translate }}
-  </p>
+  @if (showIntro()) {
+    <p class="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">
+      {{ 'medicine.effects.periods.intro' | translate }}
+    </p>
+  }
 
   @for (row of rows(); track row.period.from) {
     <section class="border-t border-slate-100 dark:border-slate-800 py-4 break-inside-avoid">

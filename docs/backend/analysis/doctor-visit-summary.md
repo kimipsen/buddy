@@ -1,6 +1,13 @@
 # Doctor Visit Summary
 
-Status: Implemented (`Features/VisitSummaries`)
+Status: Implemented. `Features/VisitSummaries` (schema `visitsummaries`, flag
+`Features:VisitSummaries`) with the `VisitSummary` aggregate, five events and eight slices
+(create, update, delete, list, get with report, create and revoke share links, and the anonymous
+`GetSharedVisitSummary` behind the `visit-summary-share` rate limit), section sources in
+SleepDiaries, Medicines and Feelings, `Common/Security/ShareSecret`, GDPR eraser and exporter, and
+audit logs 12001-12004. Frontend: `/guardian/visit-summaries`, `/guardian/visit-summaries/:childId/:summaryId`,
+the A4 printout `/guardian/visit-summaries/print/:childId/:summaryId`, `/shared/visit-summary/:token`
+and a help topic. The behaviour log section waits for the behaviour log (Question 7).
 
 ## Context
 
@@ -188,16 +195,20 @@ aggregate does ([event-stream-snapshots.md](event-stream-snapshots.md)).
 
 **Decision: `VisitSummaries` defines one small port, `IVisitSummarySectionSource`, and each source
 feature implements it inside its own folder. The anonymous handler asks every registered source for
-its section; a feature that is switched off registers no source, so its section simply isn't
-there.**
+its section; a source whose feature is switched off says so (`IsOffered`), so its section simply
+isn't there.**
 
 ```csharp
 // Features/VisitSummaries/IVisitSummarySectionSource.cs
 public interface IVisitSummarySectionSource
 {
     VisitSummarySection Section { get; }
-    Task<object> ReadAsync(UserId childId, DateOnly from, DateOnly to, CancellationToken ct);
+    bool IsOffered(InstallationFeatures features);
+    Task<VisitSummarySectionContent> ReadAsync(UserId childId, DateOnly from, DateOnly to, CancellationToken ct);
 }
+
+// One case per section, each the owning feature's own response DTO.
+public union VisitSummarySectionContent(SleepDiaryEntriesResponse, VisitSummaryMedicineSection, FeelingCheckInsResponse);
 
 // Features/SleepDiaries/SleepDiaryVisitSummarySource.cs  -> SleepEntryResponse[] + hygiene notes
 // Features/Medicines/MedicineVisitSummarySource.cs        -> schedules, dose occurrences, effect notes
@@ -213,13 +224,16 @@ public interface IVisitSummarySectionSource
   data is read and which response DTO it exposes. `VisitSummaries` only knows the interface, and the
   source's DTOs are the same ones the authenticated endpoints already return, so the frontend reuses
   its types and its existing components.
-- **Feature flags for free.** `AddSleepDiariesFeature` registers its source only when
-  `Features:SleepDiary` is on. A summary that lists `Sleep` on an installation where it's off shows
+- **Feature flags at the source.** Every `Add*Feature` runs whatever its flag says (a disabled
+  feature only loses its routes, see [feature-flags.md](feature-flags.md)), so each source is
+  always registered and answers `IsOffered` from the effective flags; `VisitSummaryReports` skips
+  one that isn't. A summary that lists `Sleep` on an installation where it's off shows
   no sleep section and no error. The behaviour log adds a fourth source later and touches nothing
   here (Question 7).
 - **The backend returns data, the frontend summarizes.** Averages, adherence percentages and the
   dose-period grouping are computed in the browser from the same DTOs, with the existing
-  `groupByDosePeriod` and `feelings-trend`. A second, server-side copy of those rules would drift.
+  `groupByDosePeriod` and the `EffectPeriods` component (`core/visit-summary-stats.ts` holds the
+  sleep, adherence and feelings numbers). A second, server-side copy of those rules would drift.
   Rejected: **a `VisitSummaryReport` DTO of precomputed numbers**, for that reason.
 - **Range limits.** The summary's period is at most 92 days, the same as sleep, feelings and
   effect notes. The 31-day cap on `/medicines/.../doses` is the endpoint's validator, not
@@ -260,8 +274,9 @@ live link. Anything else is `NotFound`.**
 - **Child's own words.** A check-in note the child wrote (`IsSelfReport`) is never in the report,
   and there is no toggle to include it; only zones, words (tags) and guardian-logged notes are. The
   child wrote it for the family, not for the doctor.
-- The anonymous endpoint gets a named rate-limit policy, `"visit-summary-share"` (30 requests per
-  10 minutes per token hash, modelled on `"ical-feed"`), on top of the global anonymous bucket.
+- The anonymous endpoint gets a named rate-limit policy, `"visit-summary-share"` (a fixed window
+  of 30 requests per 10 minutes per token hash, `RateLimiting:VisitSummaryShare`, keyed like
+  `"ical-feed"`), on top of the global anonymous bucket.
   It does several stores' reads per request, more than the sleep and feelings links, and 30 per
   10 minutes still lets a doctor reopen the page through a visit.
 - Audit logs: `VisitSummariesLog`, EventIds 12001+: link created, link revoked, shared report read
@@ -290,17 +305,20 @@ if (MedicineSchedule.Rehydrate(events) is not { IsStopped: false } schedule)
 After:
 
 ```csharp
-public static async Task<IReadOnlyCollection<MedicineDoseOccurrence>> ExpandAsync(
-    UserId childId, DateOnly from, DateOnly to, IMedicineEventStore medicines,
-    CancellationToken cancellationToken, bool includeStoppedHistory = false)
+// ExpandAsync loads the child's schedules and calls this; the visit summary's medicine source
+// loads them once and calls it directly, so it reads each medicine stream only once.
+public static IReadOnlyCollection<MedicineDoseOccurrence> Expand(
+    IEnumerable<MedicineSchedule> schedules, DateOnly from, DateOnly to,
+    bool includeStoppedHistory = false)
 ...
-if (MedicineSchedule.Rehydrate(events) is not { } schedule) continue;
-if (schedule.IsStopped && !includeStoppedHistory) continue;
-// a stopped schedule yields only (date, time) pairs present in DoseLog
+if (schedule.IsStopped)
+{
+    // only (date, time) pairs present in DoseLog, and only with includeStoppedHistory
+}
 ```
 
-Blast radius: one method, two existing callers (`ListTodaysDoses`, `ListTodaysDosesForGroup`)
-unchanged by the default, one new caller. The effect notes' `Regimen` already includes stopped
+Blast radius: one method split in two, two existing callers (`ListTodaysDoses`,
+`ListTodaysDosesForGroup`) unchanged, one new caller. The effect notes' `Regimen` already includes stopped
 schedules ([medicine-effect-notes.md](medicine-effect-notes.md)), so the two agree.
 
 ## Question 7: the behaviour log doesn't exist yet
@@ -315,13 +333,16 @@ component. Waiting for the behaviour log would hold back the three sections that
 
 **Decision: A4 portrait, printed from both the guardian's report page and the shared page with
 the same `VisitSummaryReport` component. The `@page` injection moves out of `WeekPlanPrintPage`
-into a small `PrintPageStyle` helper in `core/` that both use.**
+into a small `injectPrintPageStyle` helper in `core/print-page-style.ts` that both use. The
+guardian prints from a chromeless route outside `GuardianShell`, as the house rules printouts do.**
 
 - Portrait, because the report is read top to bottom like a letter, not laid out like a week.
 - The sleep table and the overview strip use `break-inside: avoid` per week, so a week never
   splits over two pages; every section starts with its heading on the same page as its first row.
 - Black-and-white safe: zones print with their face and word as well as the colour, as the
   feelings trend already does for colour-blind readers.
+- The helper also takes the `dark` class off `<html>` between `beforeprint` and `afterprint`, so
+  the report's `dark:` utilities never reach paper.
 - `WeekPlanPrintPage.applyPageStyle` ([week-plan-print-page.ts:207](../../../src/frontend/buddy/src/app/features/guardian/print/sheet/week-plan-print-page.ts#L207))
   becomes `this.pageStyle.apply({ size: 'A4', orientation: 'portrait', margin: '12mm' })`. One
   call site, and its spec's `@page` assertion moves to the helper's spec.
@@ -329,13 +350,13 @@ into a small `PrintPageStyle` helper in `core/` that both use.**
 ## Read models
 
 ```text
-VisitSummaryIndexDocument(Guid Id, Guid ChildId, string Title, DateOnly? VisitDate,
-    DateOnly From, DateOnly To, DateTimeOffset LastModifiedAt, bool IsDeleted)
-VisitSummaryShareLinkDocument(string TokenHash, Guid LinkId, Guid SummaryId, Guid ChildId,
-    DateTimeOffset? ExpiresAt, bool IsRevoked)          // Id = TokenHash
+VisitSummaryIndexDocument(Guid Id, Guid ChildId, bool IsDeleted)    // indexed on ChildId
+VisitSummaryShareLinkDocument(Guid Id, Guid SummaryId, Guid ChildId, string TokenHash,
+    DateTimeOffset? ExpiresAt, bool IsRevoked)    // Id = the link id; unique index on TokenHash
 ```
 
-Both written in the same `SaveChangesAsync` as the event.
+Both written in the same `SaveChangesAsync` as the event. The list reads each summary's snapshot
+for its details, so the index carries only what finding and erasing need.
 
 ## Command slices (`Features/VisitSummaries/`, same vertical-slice shape as `HouseRules`)
 
@@ -363,17 +384,19 @@ DELETE /visit-summaries/children/{childId}/{summaryId}/share-links/{linkId}     
 GET    /visit-summaries/shared/{token}                                          GetSharedVisitSummary (anonymous)
 ```
 
-The report response (both `GetVisitSummary` and the shared read):
+The report (both `GetVisitSummary` and the shared read carry it):
 
 ```text
-VisitSummaryReportResponse(
+VisitSummaryReport(
     string ChildGivenName, string ChildFamilyName,
     string Title, DateOnly? VisitDate, DateOnly From, DateOnly To, string Note,
     string PreparedBy,                                    // guardian's display name
     SleepDiaryEntriesResponse? Sleep,                     // null: not chosen, or feature off
     VisitSummaryMedicineSection? Medicine,                // schedules, doses, effect notes
-    FeelingCheckInsResponse? Feelings,                    // self-report notes removed
-    DateTimeOffset? ExpiresAt)                            // shared read only
+    FeelingCheckInsResponse? Feelings)                    // self-report notes removed
+
+VisitSummaryWithReportResponse(VisitSummaryResponse Summary, VisitSummaryReport Report)   // GetVisitSummary
+SharedVisitSummaryResponse(VisitSummaryReport Report, DateTimeOffset? ExpiresAt)          // shared read
 ```
 
 ## Frontend
@@ -385,17 +408,19 @@ A mockup of the shared report (demo data, not a screenshot of built code):
 - `core/visit-summaries.service.ts`, with `postIdempotent` for create.
 - `features/guardian/visit-summaries/`: the list page `/guardian/visit-summaries` (cards per
   visit with period and link count), the editor (title, visit date, period presets "last 4
-  weeks" / "last 3 months" plus a custom range, section toggles, note), and the report page
-  `/guardian/visit-summaries/:id` with Print, Share and the live links (copy of the sleep diary's
-  `share-links` component, generalised to take a service).
-- `shared/visit-summary-report/`: the report itself, one sub-component per section, reusing
-  `feelings-trend` for the overview strip and `groupByDosePeriod` for the medicine section.
+  weeks" / "last 3 months" plus a custom range, section toggles, note), the report page
+  `/guardian/visit-summaries/:childId/:summaryId` with Edit, Print, Delete and the live links
+  (`VisitSummaryShareLinks`, the sleep diary's share flow for one summary), and the printout
+  `/guardian/visit-summaries/print/:childId/:summaryId` outside the shell.
+- `shared/visit-summary-report/`: the report itself. The overview is one row per week (a strip of
+  28 to 92 day columns would not fit a page), with each day's sleep, doses taken of those due and
+  feelings zones; the medicine section reuses `EffectPeriods` for the dose periods.
 - `features/shared-visit-summary/` at `/shared/visit-summary/:token`, outside `authGuard`, behind
   `featureGuard('visitSummaries')`, as the two existing shared pages.
-- Entry points: a "Prepare for a doctor's visit" link on the sleep diary, feelings and medicine
-  effects pages, and the guardian navigation under Health.
-- i18n in `translations/{en,da}/visit-summaries.ts`; the section components reuse the existing
-  sleep, feelings and medicine keys.
+- Entry point: "Doctor visits" in the guardian navigation under Health. Links from the sleep diary,
+  feelings and medicine effects pages are left for later.
+- i18n in `translations/{en,da}/visit-summaries.ts`; the report reuses the feelings zone and word
+  keys and the medicine effect keys (through `EffectPeriods`).
 - Language: the shared page renders in the reader's browser language (en/da), and a guardian's
   printout in the guardian's app language, through the existing `TranslationService`. Nothing is
   stored per summary.

@@ -16,8 +16,8 @@ public sealed class MedicineVisitSummarySource(IMedicineEventStore medicines, IM
 
     public async Task<VisitSummarySectionContent> ReadAsync(UserId childId, DateOnly from, DateOnly to, CancellationToken cancellationToken)
     {
-        var doses = await MedicineDoseExpansion.ExpandAsync(childId, from, to, medicines, cancellationToken, includeStoppedHistory: true);
         var schedules = await MedicineEffectNotes.LoadSchedulesAsync(childId, medicines, cancellationToken);
+        var doses = MedicineDoseExpansion.Expand(schedules.Values, from, to, includeStoppedHistory: true);
         var withDoses = doses.Select(d => d.MedicineId).ToHashSet();
 
         var log = await effectLogs.FindSnapshotAsync(MedicineEffectLogId.ForChild(childId), cancellationToken);

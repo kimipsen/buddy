@@ -2,6 +2,7 @@
 
 <app-page
   backLink="/guardian/visit-summaries"
+  [backQueryParams]="{ child: childId }"
   [backLabel]="'visitSummaries.page.backToList' | translate"
 >
   @if (loaded.isLoading() && !loaded.hasValue()) {
@@ -81,13 +82,18 @@
       />
     }
 
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+    <!-- grid-cols-1 (minmax(0, 1fr)) so the report's wide tables scroll instead of widening the
+         page. The share links reload the summary, so they're hidden while the editor is open:
+         its fields follow the loaded summary and would lose what the guardian typed. -->
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
       <app-visit-summary-report [report]="current.report" />
-      <app-visit-summary-share-links
-        class="block self-start"
-        [summary]="current.summary"
-        (changed)="reload()"
-      />
+      @if (!editing()) {
+        <app-visit-summary-share-links
+          class="block self-start"
+          [summary]="current.summary"
+          (changed)="reload()"
+        />
+      }
     </div>
   }
 </app-page>

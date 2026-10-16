@@ -23,15 +23,9 @@ public sealed class VisitSummariesPersonalDataEraser(
 
         foreach (var childId in links.Concat(revokedLinks).Select(l => new UserId(l.ChildId)).Distinct())
         {
-            foreach (var document in await summaries.ListForChildAsync(childId, cancellationToken))
+            foreach (var summary in await summaries.ListSnapshotsForChildAsync(childId, cancellationToken))
             {
-                var id = new VisitSummaryId(document.Id);
-
-                if (await summaries.FindSnapshotAsync(id, cancellationToken) is not { } summary)
-                {
-                    continue;
-                }
-
+                var id = summary.Id;
                 var now = time.GetUtcNow();
                 VisitSummaryEvent[] revocations =
                 [

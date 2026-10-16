@@ -12,7 +12,7 @@
     @if (loaded.hasValue()) {
       <button
         type="button"
-        class="ml-auto rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        class="ml-auto rounded-lg bg-emerald-600 dark:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 dark:hover:bg-emerald-400"
         (click)="print()"
       >
         {{ 'visitSummaries.page.print' | translate }}

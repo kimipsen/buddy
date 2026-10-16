@@ -21,16 +21,7 @@ public static class ListVisitSummariesHandler
         }
 
         var now = time.GetUtcNow();
-        var loaded = new List<VisitSummary>();
-
-        foreach (var document in await summaries.ListForChildAsync(query.ChildId, cancellationToken))
-        {
-            if (!document.IsDeleted
-                && await summaries.FindSnapshotAsync(new VisitSummaryId(document.Id), cancellationToken) is { IsDeleted: false } summary)
-            {
-                loaded.Add(summary);
-            }
-        }
+        var loaded = (await summaries.ListSnapshotsForChildAsync(query.ChildId, cancellationToken)).Where(s => !s.IsDeleted);
 
         // Newest visit first; a summary with no visit date sorts by its period's end.
         IReadOnlyList<VisitSummaryResponse> ordered =

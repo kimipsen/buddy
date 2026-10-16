@@ -70,7 +70,7 @@
       </p>
     </div>
 
-    <div class="mt-3 overflow-x-auto">
+    <div class="relative mt-3 overflow-x-auto">
       <table class="w-full min-w-[34rem] table-fixed border-separate border-spacing-1 text-xs">
         <thead>
           <tr>
@@ -82,7 +82,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (week of weeks(); track week[0].date) {
+          @for (week of weeks(); track $index) {
             <tr class="break-inside-avoid">
               @for (day of week; track day.date) {
                 <td
@@ -191,7 +191,7 @@
       </div>
 
       @if (medicine.adherence.length > 0) {
-        <div class="mt-2 overflow-x-auto">
+        <div class="relative mt-2 overflow-x-auto">
           <table class="w-full min-w-[30rem] text-left text-sm break-inside-avoid">
             <thead>
               <tr
@@ -260,7 +260,11 @@
       }
 
       @if (medicine.section.effectNotes.length > 0) {
-        <app-effect-periods class="mt-4 block" [notes]="medicine.section.effectNotes" />
+        <app-effect-periods
+          class="mt-4 block"
+          [notes]="medicine.section.effectNotes"
+          [showIntro]="false"
+        />
       }
     </section>
   }
@@ -397,26 +401,36 @@
         <div class="mt-3 grid gap-6 md:grid-cols-2">
           <dl class="space-y-2">
             @for (part of feelings.byDayPart; track part.part) {
-              <div class="grid grid-cols-[6rem_1fr_2rem] items-center gap-2 text-sm">
+              <div class="grid grid-cols-[6rem_1fr_2rem] items-center gap-x-2 text-sm">
                 <dt>{{ 'visitSummaries.report.feelings.parts.' + part.part | translate }}</dt>
+                <!-- The bar is a picture of the counts written out below it. -->
                 <dd
                   class="flex h-3 overflow-hidden rounded bg-slate-100 dark:bg-slate-800"
-                  [attr.aria-label]="part.total"
+                  aria-hidden="true"
                 >
                   @for (zone of part.zones; track zone.zone) {
                     @if (zone.count > 0) {
                       <span
                         [class]="zoneInfo(zone.zone).barClass"
                         [style.width.%]="percent(zone.count, part.total)"
-                        [attr.title]="
-                          (zoneInfo(zone.zone).labelKey | translate) + ': ' + zone.count
-                        "
                       ></span>
                     }
                   }
                 </dd>
                 <dd class="text-right tabular-nums text-xs text-slate-500 dark:text-slate-400">
                   {{ part.total }}
+                </dd>
+                <dd
+                  class="col-start-2 col-span-2 mt-0.5 text-xs text-slate-600 dark:text-slate-300"
+                >
+                  @for (zone of part.zones; track zone.zone) {
+                    @if (zone.count > 0) {
+                      <span class="mr-2 whitespace-nowrap"
+                        >{{ zoneInfo(zone.zone).face }}
+                        {{ zoneInfo(zone.zone).labelKey | translate }} {{ zone.count }}</span
+                      >
+                    }
+                  }
                 </dd>
               </div>
             }

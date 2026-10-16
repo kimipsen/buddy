@@ -15,6 +15,7 @@ using buddy.IntegrationTests.Features.Mealplans;
 using buddy.IntegrationTests.Features.Medicines;
 using buddy.IntegrationTests.Features.PrintTemplates;
 using buddy.IntegrationTests.Features.SleepDiaries;
+using buddy.IntegrationTests.Features.VisitSummaries;
 using buddy.IntegrationTests.Features.WorkLocations;
 using buddy.IntegrationTests.Fixtures;
 
@@ -74,6 +75,8 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
         await CalendarTestHelpers.CreateTaskAsync(fixture, token, calendarId, title: $"Task{n}", assignedTo: child.Id);
         await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.ChildRules(child.Id), $"PersonalRule{n}", $"rulebody{n}");
         await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.GroupRules(groupId), $"HouseRule{n}");
+        var summary = await VisitSummaryTestHelpers.CreateAsync(fixture, token, child.Id, VisitSummaryTestHelpers.Body(title: $"Visit{n}", note: $"question{n}"));
+        var summaryLink = await VisitSummaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id, summary.Id);
 
         await DeleteAccountAsync(token, expectedStatus: 204);
 
@@ -84,9 +87,10 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
             $"nightmare{n}", $"hygiene{n}", $"feeling{n}", $"Chore{n}", $"Treat{n}", $"Medizor{n}", $"dose{n}", $"effect{n}",
             $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}", $"Template{n}", $"Meal{n}", $"recipe{n}",
             $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Task{n}",
-            $"PersonalRule{n}", $"rulebody{n}", $"HouseRule{n}");
+            $"PersonalRule{n}", $"rulebody{n}", $"HouseRule{n}", $"Visit{n}", $"question{n}");
 
         Assert.True(leftovers.Count == 0, $"Personal data left after erasure:\n{string.Join("\n", leftovers)}");
+        await VisitSummaryTestHelpers.GetSharedAsync(fixture, summaryLink.Token, expectedStatus: 404);
         Assert.False(await fixture.KeycloakUserExistsAsync(guardian.Username));
         Assert.False(await fixture.KeycloakUserExistsAsync(child.Username));
 
@@ -103,8 +107,16 @@ public sealed class AccountErasureTests(BuddyApiFixture fixture)
         await FeelingsTestHelpers.LogAsync(fixture, family.FirstToken, family.Child.Id, new { Zone = "Blue", Note = $"keptfeeling{n}", Date = Night, Time = "07:00" });
         var feelingsLink = await FeelingsTestHelpers.CreateShareLinkAsync(fixture, family.FirstToken, family.Child.Id);
         await FirstThenTestHelpers.SetAsync(fixture, family.FirstToken, family.Child.Id, FirstThenTestHelpers.Board(0, first: $"keptboard{n}"));
+        var summary = await VisitSummaryTestHelpers.CreateAsync(fixture, family.FirstToken, family.Child.Id, VisitSummaryTestHelpers.Body(title: $"keptvisit{n}"));
+        var erasedLink = await VisitSummaryTestHelpers.CreateShareLinkAsync(fixture, family.FirstToken, family.Child.Id, summary.Id);
+        var keptLink = await VisitSummaryTestHelpers.CreateShareLinkAsync(fixture, family.SecondToken, family.Child.Id, summary.Id);
 
         await DeleteAccountAsync(family.FirstToken, expectedStatus: 204);
+
+        // The summary is the child's and stays; only the erased guardian's link stops working.
+        Assert.Equal($"keptvisit{n}", Assert.Single((await VisitSummaryTestHelpers.ListAsync(fixture, family.SecondToken, family.Child.Id))!).Title);
+        await VisitSummaryTestHelpers.GetSharedAsync(fixture, erasedLink.Token, expectedStatus: 404);
+        await VisitSummaryTestHelpers.GetSharedAsync(fixture, keptLink.Token);
 
         // The board is the child's: it stays, set by a guardian who is now a pseudonym.
         var board = await FirstThenTestHelpers.GetAsync(fixture, family.SecondToken, family.Child.Id);

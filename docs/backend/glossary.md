@@ -456,6 +456,20 @@ One of a child's 0-4 reminder times (wall clock, child's zone). From each, the c
 
 A hashed, revocable, optionally expiring link that lets a doctor read a child's check-ins without an account, a copy of `SleepDiaryShareToken`.
 
+## Visit summary domain
+
+### VisitSummary
+
+One prepared doctor's visit for a child (`Features/VisitSummaries`): a title, an optional visit date, a period of at most 92 days, the sections the report shows (`VisitSummarySection`: Medicine, Sleep, Feelings) and the guardian's questions, with its share links on the same stream. Many per child, so a UUIDv7 `VisitSummaryId` and an index document.
+
+### Visit summary report
+
+What a `VisitSummary` shows, built live from the sleep diary, medicines and feelings each time it is read, never stored. Each section comes from an `IVisitSummarySectionSource` in the feature that owns the data. A child's own check-in notes are left out.
+
+### Visit summary share link
+
+A hashed, revocable, optionally expiring link that lets a doctor read one summary's report without a Buddy account, for the summary's own period. At most 5 live per summary; deleting the summary revokes them all.
+
 ## Event-sourced concepts
 
 ### Event stream

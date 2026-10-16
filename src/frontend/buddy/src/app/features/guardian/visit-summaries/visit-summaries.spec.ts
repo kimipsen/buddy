@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GuardiansService } from '../../../core/guardians.service';
@@ -37,11 +37,19 @@ const children = [
 ];
 
 describe('GuardianVisitSummaries', () => {
-  async function setup(list: VisitSummariesService['list'], kids: unknown[] = children) {
+  async function setup(
+    list: VisitSummariesService['list'],
+    kids: unknown[] = children,
+    query: Record<string, string> = {},
+  ) {
     await TestBed.configureTestingModule({
       imports: [GuardianVisitSummaries],
       providers: [
         provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap(query) } },
+        },
         { provide: GuardiansService, useValue: { listMyChildren: vi.fn(async () => kids) } },
         {
           provide: VisitSummariesService,
@@ -69,9 +77,23 @@ describe('GuardianVisitSummaries', () => {
     expect(cards[0].textContent).toContain('Mar 2, 2026 – Mar 29, 2026');
     expect(cards[0].textContent).toContain('Visit Apr 2, 2026');
     expect(cards[0].textContent).toContain('Medicine');
-    expect(cards[0].textContent).toContain('1 active links');
+    expect(cards[0].textContent).toContain('Active links: 1');
     expect(cards[0].getAttribute('href')).toBe('/guardian/visit-summaries/child-1/a');
     expect(cards[1].textContent).not.toContain('Visit');
+  });
+
+  it('opens on the child named in the query, back from one of their summaries', async () => {
+    const list = vi.fn(async () => []);
+    await setup(list, children, { child: 'child-2' });
+
+    expect(list).toHaveBeenCalledWith('child-2');
+  });
+
+  it('falls back to the first child for an unknown child in the query', async () => {
+    const list = vi.fn(async () => []);
+    await setup(list, children, { child: 'someone-else' });
+
+    expect(list).toHaveBeenCalledWith('child-1');
   });
 
   it('switches child', async () => {

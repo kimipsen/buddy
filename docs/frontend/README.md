@@ -33,6 +33,7 @@ The top-level route setup is in [src/frontend/buddy/src/app/app.routes.ts](../..
 - `/invite/:token` for viewing and accepting group invitations, including the logged-out preview path
 - `/shared/sleep-diary/:token` — the read-only, printable sleep diary a guardian shared with a doctor; no login, the token is the only credential
 - `/shared/feelings/:token` — the read-only, printable feelings check-ins (the 14-day grid and every check-in with its words and note) a guardian shared with a doctor; no login, the token is the only credential
+- `/shared/visit-summary/:token` — the read-only doctor visit summary report for the period the guardian chose, printable on A4; no login, the token is the only credential
 - `/verify-email/:token` for completing email verification, including the logged-out verification path
 - `/guardian` for guardian dashboard screens
 - `/child` for child-focused screens
@@ -120,6 +121,10 @@ The guardian routes currently include:
   the same time share one marker: a guide line and a square per medicine in its own colour) or the
   8-week summary, a day's check-ins with edit/remove (a self-report can't be edited), logging an
   observation now or earlier, reminder times and the faces-only switch, and doctor share links
+- `/guardian/visit-summaries` — a child's prepared doctor's visits and the editor for a new one;
+  `/guardian/visit-summaries/:childId/:summaryId` shows the report (`shared/visit-summary-report`,
+  numbers from the pure `core/visit-summary-stats.ts`) with edit, delete and doctor share links, and
+  `/guardian/visit-summaries/print/:childId/:summaryId` is its A4 printout outside the shell
 - `/guardian/first-then` — a child's First – Then board: the current board as the child sees it
   with Mark done / Undo / End ("From yesterday" on a board left over), and a "New board" form
   with card pickers (used before, today's open tasks for the First, starters, or typed), a Then
@@ -255,6 +260,10 @@ Enums arrive as member names (`'Owner'`, `'Dinner'`); only `kind` discriminators
   (`features/child/home/feelings-check-in`, on the child home page) takes "today" and "now" from
   `ChildClockService` and draws `shared/feeling-zone-buttons` and `shared/feeling-tag-chips`;
   the dashboard's `FeelingsToday` shows each child's check-ins today
+- `VisitSummariesService` lists, gets (with the report), creates (`postIdempotent`), updates and
+  deletes a child's visit summaries, manages their share links and reads a shared report
+  anonymously. `core/print-page-style.ts` (`injectPrintPageStyle`) adds a print page's `@page`
+  rule and keeps the dark theme off paper, for the week plan sheet and the visit summary
 - `FirstThenService` reads, sets and acts on (complete / reopen / end, each with the revision the
   caller saw) a child's board as a guardian, and the child's own board on `/first-then/me`; the
   countdown, stale-board and today's-task suggestion rules are the pure `core/first-then.ts`, and
@@ -480,6 +489,8 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Feelings check-in](../backend/analysis/feelings-check-in.md) — implemented child check-in card
   (faces-only mode, undo, reminders), guardian page with the trend, settings and share links, the
   dashboard card and the public shared view
+- [Doctor visit summary](../backend/analysis/doctor-visit-summary.md) — implemented summaries
+  list and editor, the report page with share links, the A4 printout and the public shared view
 - [First–Then board](../backend/analysis/first-then-board.md) — implemented guardian page with
   the board form, child page with the countdown, the child home card and the dashboard card
 - [House rules](../backend/analysis/house-rules.md) — implemented guardian page, child page with

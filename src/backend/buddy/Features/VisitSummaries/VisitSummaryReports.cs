@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using buddy.Common.FeatureFlags;
 using buddy.Features.Feelings;
 using buddy.Features.Medicines;
@@ -39,18 +41,14 @@ public sealed class VisitSummaryReports(
 
         foreach (var source in _sources.Where(s => details.Sections.Contains(s.Section) && s.IsOffered(offered)))
         {
-            switch (await source.ReadAsync(summary.ChildId, details.From, details.To, cancellationToken))
+            // An expression, so a new section's union case can't be forgotten here (CS8509).
+            (sleep, medicine, feelings) = await source.ReadAsync(summary.ChildId, details.From, details.To, cancellationToken) switch
             {
-                case SleepDiaryEntriesResponse content:
-                    sleep = content;
-                    break;
-                case VisitSummaryMedicineSection content:
-                    medicine = content;
-                    break;
-                case FeelingCheckInsResponse content:
-                    feelings = content;
-                    break;
-            }
+                SleepDiaryEntriesResponse content => (content, medicine, feelings),
+                VisitSummaryMedicineSection content => (sleep, content, feelings),
+                FeelingCheckInsResponse content => (sleep, medicine, content),
+                null => throw new UnreachableException($"Section source {source.Section} returned no content."),
+            };
         }
 
         return new VisitSummaryReport(

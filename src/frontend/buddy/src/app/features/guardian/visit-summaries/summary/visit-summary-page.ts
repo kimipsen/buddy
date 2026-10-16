@@ -61,7 +61,9 @@ export class VisitSummaryPage {
       true,
       async () => {
         await this.visitSummaries.delete(this.childId, this.summaryId);
-        await this.router.navigate(['/guardian/visit-summaries']);
+        await this.router.navigate(['/guardian/visit-summaries'], {
+          queryParams: { child: this.childId },
+        });
       },
       'visitSummaries.page.deleteError',
     );

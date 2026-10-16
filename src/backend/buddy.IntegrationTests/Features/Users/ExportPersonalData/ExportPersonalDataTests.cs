@@ -17,6 +17,7 @@ using buddy.IntegrationTests.Features.Medicines;
 using buddy.IntegrationTests.Features.PrintTemplates;
 using buddy.IntegrationTests.Features.SleepDiaries;
 using buddy.IntegrationTests.Features.Users.Onboarding;
+using buddy.IntegrationTests.Features.VisitSummaries;
 using buddy.IntegrationTests.Features.WorkLocations;
 using buddy.IntegrationTests.Fixtures;
 using buddy.IntegrationTests.Meta;
@@ -69,6 +70,8 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
         await OnboardingTestHelpers.PutAsync(fixture, token, OnboardingStatus.Active, groupId, false, version: 0);
         await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.ChildRules(child.Id), $"PersonalRule{n}");
         await HouseRulesTestHelpers.AddRuleAsync(fixture, token, HouseRulesTestHelpers.GroupRules(groupId), $"HouseRule{n}");
+        var summary = await VisitSummaryTestHelpers.CreateAsync(fixture, token, child.Id, VisitSummaryTestHelpers.Body(title: $"Visit{n}", note: $"question{n}"));
+        var summaryLink = await VisitSummaryTestHelpers.CreateShareLinkAsync(fixture, token, child.Id, summary.Id);
 
         var response = await ExportAsync(token);
         var text = await response.ReadAsTextAsync();
@@ -88,7 +91,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
         foreach (var value in (string[])[
             $"nightmare{n}", $"feeling{n}", $"Chore{n}", $"Treat{n}", $"Medizor{n}", $"effect{n}", $"Meal{n}", $"Sitter{n}", $"sitter{n}@example.test", $"Office{n}",
             $"Template{n}", $"invitee{n}@example.test", $"Group{n}", $"Calendar{n}", $"Event{n}",
-            $"PersonalRule{n}", $"HouseRule{n}"])
+            $"PersonalRule{n}", $"HouseRule{n}", $"Visit{n}", $"question{n}"])
         {
             Assert.Contains(value, text, StringComparison.Ordinal);
         }
@@ -102,6 +105,7 @@ public sealed class ExportPersonalDataTests(BuddyApiFixture fixture)
         Assert.DoesNotContain(icalToken.Token, text, StringComparison.Ordinal);
         Assert.DoesNotContain(shareLink!.Token, text, StringComparison.Ordinal);
         Assert.DoesNotContain(feelingsLink!.Token, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(summaryLink.Token, text, StringComparison.Ordinal);
         Assert.Empty(PropertyNames(json.RootElement).Intersect(SecretProperties, StringComparer.OrdinalIgnoreCase));
     }
 

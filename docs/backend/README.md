@@ -21,6 +21,7 @@ Backend documentation for the Buddy API.
 - [Feelings flow](feelings/flow.md)
 - [First–Then flow](first-then/flow.md)
 - [House rules flow](house-rules/flow.md)
+- [Visit summaries flow](visit-summaries/flow.md)
 - [Glossary](glossary.md)
 - [HTTP status code semantics](http-status-codes.md)
 - [Health checks and observability](observability.md)

@@ -148,6 +148,36 @@ A child’s feelings check-ins over 14 days, each a colour, a face and a word on
 
 <img src="mobile/guardian-feelings.png" alt="Feelings on a phone" width="320">
 
+## Doctor visits
+
+Prepared doctor’s visits per child, newest first: each summary’s title, period, visit date, sections and how many share links are active.
+
+![Doctor visits](guardian-visit-summaries.png)
+
+<img src="tablet/guardian-visit-summaries.png" alt="Doctor visits on a tablet" width="384">
+
+<img src="mobile/guardian-visit-summaries.png" alt="Doctor visits on a phone" width="320">
+
+## Doctor visit summary
+
+One prepared visit: the report a doctor sees (the guardian’s questions, a week-by-week overview of sleep, doses and feelings, medicine adherence and effects by dose period, sleep averages and feelings by time of day), with edit, print, delete and share links.
+
+![Doctor visit summary](guardian-visit-summary.png)
+
+<img src="tablet/guardian-visit-summary.png" alt="Doctor visit summary on a tablet" width="384">
+
+<img src="mobile/guardian-visit-summary.png" alt="Doctor visit summary on a phone" width="320">
+
+## Doctor visit summary printout
+
+The visit summary on A4 portrait, without the app’s navigation.
+
+![Doctor visit summary printout](guardian-visit-summary-print.png)
+
+<img src="tablet/guardian-visit-summary-print.png" alt="Doctor visit summary printout on a tablet" width="384">
+
+<img src="mobile/guardian-visit-summary-print.png" alt="Doctor visit summary printout on a phone" width="320">
+
 ## Heads-up before changes
 
 Per child, a countdown on the child’s screen before events, tasks, routines, packing lists and pickups: off until a guardian turns it on, then 15, 5 and 1 minute before by default, with the kinds of item, quiet hours and exceptions for single items.
@@ -397,3 +427,13 @@ What a doctor sees from a feelings share link, with no login: the 14-day grid an
 <img src="tablet/shared-feelings.png" alt="Shared feelings check-ins on a tablet" width="384">
 
 <img src="mobile/shared-feelings.png" alt="Shared feelings check-ins on a phone" width="320">
+
+## Shared doctor visit summary
+
+What a doctor sees from a visit summary link, with no login: the report for the period the family chose, printable on A4.
+
+![Shared doctor visit summary](shared-visit-summary.png)
+
+<img src="tablet/shared-visit-summary.png" alt="Shared doctor visit summary on a tablet" width="384">
+
+<img src="mobile/shared-visit-summary.png" alt="Shared doctor visit summary on a phone" width="320">

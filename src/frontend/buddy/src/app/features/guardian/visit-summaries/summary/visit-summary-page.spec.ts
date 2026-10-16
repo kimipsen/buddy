@@ -86,6 +86,10 @@ describe('VisitSummaryPage', () => {
     expect(get).toHaveBeenCalledWith('child-1', 'summary-1');
     expect(el.querySelector('h1')?.textContent).toContain('Emil Holm: Follow-up');
     expect(el.textContent).toContain('Share with the doctor');
+    const back = Array.from(el.querySelectorAll('a')).find((a) =>
+      a.textContent?.includes('All visit summaries'),
+    );
+    expect(back?.getAttribute('href')).toBe('/guardian/visit-summaries?child=child-1');
     const print = Array.from(el.querySelectorAll('a')).find(
       (a) => a.textContent?.trim() === 'Print',
     );
@@ -100,6 +104,8 @@ describe('VisitSummaryPage', () => {
     button(el, 'Edit').click();
     await settle(fixture);
     expect(el.textContent).toContain('Edit visit summary');
+    // Creating a link reloads the summary, which would reset what the editor holds.
+    expect(el.querySelector('app-visit-summary-share-links')).toBeNull();
 
     button(el, 'Save summary').click();
     await settle(fixture);
@@ -130,7 +136,9 @@ describe('VisitSummaryPage', () => {
     await settle(fixture);
 
     expect(deleteSummary).toHaveBeenCalledWith('child-1', 'summary-1');
-    expect(navigate).toHaveBeenCalledWith(['/guardian/visit-summaries']);
+    expect(navigate).toHaveBeenCalledWith(['/guardian/visit-summaries'], {
+      queryParams: { child: 'child-1' },
+    });
   });
 
   it('shows a delete error', async () => {

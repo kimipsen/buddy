@@ -12,7 +12,7 @@ export const visitSummaries = {
     empty: 'No visit summaries yet. Create one before the next appointment.',
     period: '{from} – {to}',
     visit: 'Visit {date}',
-    links: '{count} active links',
+    links: 'Active links: {count}',
   },
   editor: {
     newTitle: 'New visit summary',
