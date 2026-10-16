@@ -42,6 +42,33 @@ guardian goal-post management; no ...)`.
   radius (call sites, specs or events affected, e.g. "4 handlers and 2 specs construct this
   record"). The reader should be able to tell a one-line tweak from a rewrite without opening the
   code. Brand-new code doesn't need this; its signature block is enough.
+- **Show new or changed UI with a mockup.** When the feature adds a page, dialog or widget, or
+  visibly changes an existing one, add a preview image of what it may look like, so the reader can
+  react to the layout before anything is built. Backend-only and refactor-only docs don't need one.
+  - Build it as a static, self-contained HTML page in the scratchpad (inline CSS, no app code),
+    styled after the real app: look at the nearest pages in `docs/screenshots/` (and
+    `docs/screenshots/mobile/` for child screens, which are used on phones) and the `@theme` tokens
+    in `src/frontend/buddy/src/styles.css`. Fill it with realistic demo data in the style of the
+    demo family (Sara Holm, Emil, Ida), in English, never real personal data.
+  - Render it to PNG with Playwright from `src/frontend/buddy` at device scale factor 2 (desktop:
+    960 CSS px wide, giving a 1920 px image; child/mobile screens: an iPhone 15 viewport), full
+    page. Look at the PNG before using it and fix anything clipped or overlapping.
+  - Save it next to the doc as `images/<doc-name>-mockup.png` (one per screen if there are several:
+    `<doc-name>-<screen>-mockup.png`), and keep each under about 500 KB.
+  - Embed it in the `## Frontend` section (shape A) or the frontend plan (shape B), with one line
+    saying it's a mockup, not the built UI:
+
+    ```markdown
+    A mockup of <the screen> (demo data, not a screenshot of built code):
+
+    ![<Feature> mockup](images/<doc-name>-mockup.png)
+    ```
+
+  - When the feature ships, the real page goes into `docs/screenshots` (see the `doc-screenshots`
+    skill); keep the mockup in the doc as the record of the proposal.
+
+  See `doctor-visit-summary.md` (`images/doctor-visit-summary-mockup.png`) for an example.
+
 - **Estimate the effort.** Every analysis ends its body with an `## Estimate` section (just before
   `## Decisions made` in a design analysis, before `## Verification` in an implementation plan):
 
@@ -176,6 +203,8 @@ GET    /<feature>/children/{childId}/<things>          <Slice>   (from, to as qu
 
 ## Frontend
 
+<A mockup image of each new or changed screen; see "Show new or changed UI with a mockup" above.>
+
 <Where it goes: `src/frontend/buddy/src/app/features/guardian/<feature>/` (overview page plus one
 subfolder per capability), `core/<feature>.service.ts`, i18n under
 `core/i18n/translations/{en,da}/<feature>.ts`, routes in `guardian.routes.ts` / `child.routes.ts`.
@@ -270,6 +299,9 @@ No changes required. Confirmed already sufficient:
 - `GET /<route>?from&to` (`<Service>.<method>(...)`, [`core/<x>.service.ts:110`](...)) -- <why it's enough>
 
 ## Frontend plan
+
+<A mockup image of the changed screen, if the change is visible; see "Show new or changed UI with a
+mockup" above.>
 
 ### 1. `<component>.ts`
 

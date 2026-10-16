@@ -221,6 +221,8 @@ big to build without one.
    Where the design refactors existing code, add before/after code samples and the number of
    affected call sites, so the size of the change is visible (see "Show the size of a refactor"
    in the template).
+   Where the feature adds a screen or visibly changes one, include a mockup image of what it may
+   look like (see "Show new or changed UI with a mockup" in the template).
 5. Register it as described under "When a new doc is added" in the template: the README index
    bullet, plus an unchecked `- [ ]` item at the top of the right group in the root `README.md`
    Features list for a product feature (open items stay above the ticked ones).
