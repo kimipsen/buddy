@@ -4110,7 +4110,8 @@ export interface components {
       | 'CalendarMarker'
       | 'CalendarEvents'
       | 'TaskChecklist'
-      | 'Blank';
+      | 'Blank'
+      | 'CalendarAgenda';
     PrintTemplateResponse: {
       /** Format: uuid */
       id: string;

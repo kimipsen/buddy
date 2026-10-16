@@ -654,6 +654,45 @@ describe('assembleWeekPlan', () => {
       });
     });
 
+    it('mixes tasks and appointments in an agenda row, timing only appointments', () => {
+      const model = assembleWeekPlan(
+        template([row(PRINT_ROW_KIND.calendarAgenda, { calendarIds: ['family'] })]),
+        sources({ occurrences }),
+        OPTIONS,
+      );
+
+      expect(model.rows[0].cells[3]).toEqual({
+        type: 'agenda',
+        items: [
+          { type: 'appointment', time: null, text: 'Lejrtur', subtasks: [] },
+          { type: 'appointment', time: '07:00', text: 'Skraldespand ud', subtasks: [] },
+          { type: 'task', time: null, text: 'Lektier', subtasks: [] },
+        ],
+        overflow: 0,
+      });
+    });
+
+    it('filters an agenda row by assignee, groups routines and caps at maxItems', () => {
+      const model = assembleWeekPlan(
+        template([
+          row(PRINT_ROW_KIND.calendarAgenda, {
+            calendarIds: ['family'],
+            assignedToId: 'viggo',
+            maxItems: 1,
+          }),
+        ]),
+        sources({ occurrences }),
+        { ...OPTIONS, includeSubtasks: true },
+      );
+
+      expect(model.rows[0].cells[0]).toEqual({
+        type: 'agenda',
+        items: [{ type: 'task', time: null, text: 'Morgenrutine', subtasks: ['Brush', 'Dress'] }],
+        overflow: 1,
+      });
+      expect(model.rows[0].cells[1]).toEqual({ type: 'blank' });
+    });
+
     it('counts an item once when two of the row’s calendars return it', () => {
       const model = assembleWeekPlan(
         template([row(PRINT_ROW_KIND.calendarEvents, { calendarIds: ['family', 'copy'] })]),

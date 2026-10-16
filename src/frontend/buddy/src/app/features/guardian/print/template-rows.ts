@@ -20,6 +20,7 @@ const CALENDAR_KINDS: readonly PrintRowKind[] = [
   PRINT_ROW_KIND.calendarMarker,
   PRINT_ROW_KIND.calendarEvents,
   PRINT_ROW_KIND.taskChecklist,
+  PRINT_ROW_KIND.calendarAgenda,
 ];
 
 export function usesCalendars(kind: PrintRowKind): boolean {
@@ -69,6 +70,7 @@ export function cleanRow(row: PrintTemplateRow): PrintTemplateRow {
         showAssignee: row.showAssignee,
       };
     case PRINT_ROW_KIND.taskChecklist:
+    case PRINT_ROW_KIND.calendarAgenda:
       return {
         ...clean,
         calendarIds: row.calendarIds,

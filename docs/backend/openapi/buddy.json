@@ -26948,7 +26948,8 @@
           "CalendarMarker",
           "CalendarEvents",
           "TaskChecklist",
-          "Blank"
+          "Blank",
+          "CalendarAgenda"
         ],
         "type": "string"
       },

@@ -48,12 +48,12 @@ configuration, so it isn't synced.
 A new `WeekPlanLoader` (in `features/guardian/print/`) turns a template and a
 start date into a `WeekPlanModel`. It only calls services that already exist:
 
-| Row kind                                            | Call                                                                                                                                   |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `Meal`                                              | `MealplansService.listMealPlan(scope, from, to)` with a `family` scope (`ChildId`) or `group` scope (`MealGroupId`)                    |
-| `Pickup`                                            | `PickupsService.listSchedule(childId, from, to)`, plus `GuardiansService.listChildGuardians(childId)` and `listMyChildren()` for names |
-| `WorkLocation`                                      | `WorkLocationsService.listWorkDays(guardianId, from, to)` (new, see [work-locations.md](../../backend/analysis/work-locations.md))     |
-| `CalendarMarker`, `CalendarEvents`, `TaskChecklist` | `CalendarsService.listOccurrences(calendarId, from, to)` for each calendar id                                                          |
+| Row kind                                                              | Call                                                                                                                                   |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `Meal`                                                                | `MealplansService.listMealPlan(scope, from, to)` with a `family` scope (`ChildId`) or `group` scope (`MealGroupId`)                    |
+| `Pickup`                                                              | `PickupsService.listSchedule(childId, from, to)`, plus `GuardiansService.listChildGuardians(childId)` and `listMyChildren()` for names |
+| `WorkLocation`                                                        | `WorkLocationsService.listWorkDays(guardianId, from, to)` (new, see [work-locations.md](../../backend/analysis/work-locations.md))     |
+| `CalendarMarker`, `CalendarEvents`, `TaskChecklist`, `CalendarAgenda` | `CalendarsService.listOccurrences(calendarId, from, to)` for each calendar id                                                          |
 
 - `from` is the start date and `to` is `addDaysIso(from, 6)`.
 - Requests are deduplicated by key (the same calendar named in three rows is
@@ -81,7 +81,9 @@ and are unit-tested in Vitest:
 - **Marker rows:** a day gets a mark if any occurrence on that day matches
   `titleFilter` (case-insensitive contains; no filter means any occurrence).
 - **Filtering:** `assignedToId` keeps only occurrences whose `assignedTo`
-  matches. `TaskChecklist` additionally keeps only `kind === 'Task'`. For
+  matches. `TaskChecklist` additionally keeps only `kind === 'Task'`. `CalendarAgenda` keeps
+  both kinds in one cell: a task gets an empty tick box, an event a clock plus its local start
+  time (none for all-day events or on the later days of a multi-day one). For
   routine tasks scheduled from a template, subtasks are grouped under
   `routine.parentTitle`, as the child agenda already does.
 - **Overflow:** a cell shows at most `maxItems` entries, then "+N".
@@ -244,7 +246,8 @@ the preview.
 Where the build settled details this design left open:
 
 - **Events rows list tasks too.** `CalendarEvents` shows every occurrence (events and tasks);
-  only `TaskChecklist` restricts to tasks.
+  only `TaskChecklist` restricts to tasks. `CalendarAgenda` (added later) shows both, telling
+  them apart on paper: a tick box for a task, a clock for an event.
 - **Unavailable calendar rows.** If any one of a row's calendars fails to load, the whole row
   prints as "not available" rather than a partial list that would look complete.
 - **A routine prints once.** In checklist and events rows alike, subtasks scheduled from a task

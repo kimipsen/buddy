@@ -494,7 +494,13 @@ describe('PrintTemplateEditor', () => {
     const kinds = Array.from(root.querySelectorAll<HTMLOptionElement>('#new-row-kind option')).map(
       (option) => option.textContent?.trim(),
     );
-    expect(kinds).toHaveLength(4);
+    expect(kinds).toEqual([
+      'Mark days',
+      'Events',
+      'Chores checklist',
+      'Tasks and appointments',
+      'Blank',
+    ]);
 
     button(root, 'Start from example').click();
     await settle(fixture);

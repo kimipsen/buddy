@@ -98,7 +98,7 @@ can't tell structurally similar union cases apart on deserialization
 The flat record is the established fix:
 
 ```csharp
-public enum PrintRowKind { Meal, Pickup, WorkLocation, CalendarMarker, CalendarEvents, TaskChecklist, Blank }
+public enum PrintRowKind { Meal, Pickup, WorkLocation, CalendarMarker, CalendarEvents, TaskChecklist, Blank, CalendarAgenda }
 
 PrintTemplateRow(
     PrintRowKind Kind,
@@ -109,10 +109,10 @@ PrintTemplateRow(
     MealSlot? MealSlot,                        // Meal
     UserId? GuardianId,                        // WorkLocation
     WorkLocationId? WorkLocationId,            // WorkLocation (optional: mark only this location)
-    IReadOnlyList<CalendarId>? CalendarIds,    // CalendarMarker, CalendarEvents, TaskChecklist
-    UserId? AssignedToId,                      // CalendarEvents, TaskChecklist (optional filter)
+    IReadOnlyList<CalendarId>? CalendarIds,    // CalendarMarker, CalendarEvents, TaskChecklist, CalendarAgenda
+    UserId? AssignedToId,                      // CalendarEvents, TaskChecklist, CalendarAgenda (optional filter)
     string? TitleFilter,                       // CalendarMarker, CalendarEvents (optional, case-insensitive contains)
-    int? MaxItems,                             // CalendarEvents, TaskChecklist; overflow shows "+N"
+    int? MaxItems,                             // CalendarEvents, TaskChecklist, CalendarAgenda; overflow shows "+N"
     bool ShowTime,                             // CalendarEvents
     bool ShowAssignee)                         // CalendarEvents
 ```
@@ -130,6 +130,7 @@ What each kind needs, enforced by the validator at write time (the same
 | `CalendarEvents` | `CalendarIds` (1+)                                   | `AssignedToId`, `TitleFilter`, `MaxItems`, `ShowTime`, `ShowAssignee` | a list of occurrences                                                                                                                                |
 | `TaskChecklist`  | `CalendarIds` (1+)                                   | `AssignedToId`, `MaxItems`                                            | tasks as empty tick boxes                                                                                                                            |
 | `Blank`          | —                                                    | —                                                                     | an empty cell for handwriting                                                                                                                        |
+| `CalendarAgenda` | `CalendarIds` (1+)                                   | `AssignedToId`, `MaxItems`                                            | tasks and events together: tasks with an empty tick box, events with a clock and their start time                                                    |
 
 Fields a kind doesn't use must be null/false/empty; the validator rejects
 stray values rather than silently dropping them, so stored rows always say

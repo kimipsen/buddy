@@ -50,7 +50,7 @@ sequenceDiagram
 | `DELETE` | `/print-templates/{templateId}`                   | Deletes it; it then reads as missing everywhere.                                                   |
 
 Row kinds travel as `PrintRowKind` names: `Meal`, `Pickup`, `WorkLocation`,
-`CalendarMarker`, `CalendarEvents`, `TaskChecklist`, `Blank`. A row only sets the fields its kind uses; see the table in the
+`CalendarMarker`, `CalendarEvents`, `TaskChecklist`, `Blank`, `CalendarAgenda`. A row only sets the fields its kind uses; see the table in the
 design doc's Question 3.
 
 ## Authorization model

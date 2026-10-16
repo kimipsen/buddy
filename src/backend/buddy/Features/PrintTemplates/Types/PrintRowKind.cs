@@ -12,5 +12,7 @@ public enum PrintRowKind
     CalendarMarker,
     CalendarEvents,
     TaskChecklist,
-    Blank
+    Blank,
+    // Tasks (tick boxes) and events (a clock) of the same calendars, together in one cell.
+    CalendarAgenda
 }

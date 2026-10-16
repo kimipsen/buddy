@@ -105,6 +105,7 @@ const KIND_LABELS: Record<PrintRowKind, string> = {
   CalendarMarker: 'print.editor.kinds.calendarMarker',
   CalendarEvents: 'print.editor.kinds.calendarEvents',
   TaskChecklist: 'print.editor.kinds.taskChecklist',
+  CalendarAgenda: 'print.editor.kinds.calendarAgenda',
   Blank: 'print.editor.kinds.blank',
 };
 

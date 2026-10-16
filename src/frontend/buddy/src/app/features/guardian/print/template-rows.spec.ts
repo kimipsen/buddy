@@ -69,6 +69,25 @@ describe('cleanRow', () => {
       showTime: false,
       titleFilter: null,
     });
+    expect(
+      cleanRow(
+        row(PRINT_ROW_KIND.calendarAgenda, {
+          calendarIds: ['a'],
+          assignedToId: 'signe',
+          maxItems: 4,
+          showTime: true,
+          showAssignee: true,
+          titleFilter: 'x',
+        }),
+      ),
+    ).toMatchObject({
+      calendarIds: ['a'],
+      assignedToId: 'signe',
+      maxItems: 4,
+      showTime: false,
+      showAssignee: false,
+      titleFilter: null,
+    });
     expect(cleanRow(row(PRINT_ROW_KIND.blank, { label: '', calendarIds: ['a'] }))).toEqual(
       emptyRow(PRINT_ROW_KIND.blank, ''),
     );
@@ -84,6 +103,7 @@ describe('missingField', () => {
     [row(PRINT_ROW_KIND.workLocation), 'print.editor.missing.guardian'],
     [row(PRINT_ROW_KIND.calendarMarker, { calendarIds: [] }), 'print.editor.missing.calendars'],
     [row(PRINT_ROW_KIND.taskChecklist), 'print.editor.missing.calendars'],
+    [row(PRINT_ROW_KIND.calendarAgenda), 'print.editor.missing.calendars'],
   ])('reports what a row still needs (%#)', (incomplete, key) => {
     expect(missingField(incomplete)).toBe(key);
   });

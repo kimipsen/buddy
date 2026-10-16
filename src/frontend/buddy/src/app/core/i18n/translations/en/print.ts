@@ -88,6 +88,7 @@ export const print = {
       calendarMarker: 'Mark days',
       calendarEvents: 'Events',
       taskChecklist: 'Chores checklist',
+      calendarAgenda: 'Tasks and appointments',
       blank: 'Blank',
     },
     mealSlots: {

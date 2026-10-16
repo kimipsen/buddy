@@ -33,12 +33,22 @@ export interface WeekPlanCheckItem {
   subtasks: string[];
 }
 
+// One entry of a row that mixes tasks and appointments: a task prints with a tick box, an
+// appointment with a clock (and its start time when it is timed and starts that day).
+export interface WeekPlanAgendaItem {
+  type: 'task' | 'appointment';
+  time: string | null;
+  text: string;
+  subtasks: string[];
+}
+
 export type WeekPlanCell =
   | { type: 'blank' }
   | { type: 'mark' }
   | { type: 'text'; value: WeekPlanText }
   | { type: 'list'; items: WeekPlanItem[]; overflow: number }
   | { type: 'checklist'; items: WeekPlanCheckItem[]; overflow: number }
+  | { type: 'agenda'; items: WeekPlanAgendaItem[]; overflow: number }
   | { type: 'pickup'; dropOff: WeekPlanText | null; pickUp: WeekPlanText | null };
 
 export interface WeekPlanRow {

@@ -13,14 +13,8 @@ import { PickupsService } from '../../../core/pickups.service';
 import { PRINT_ROW_KIND, PrintRowKind, PrintTemplate } from '../../../core/print-templates.service';
 import { WorkLocationsService } from '../../../core/work-locations.service';
 import { WEEK_PLAN_DAY_COUNT } from './assemble-week-plan';
-import { rowKindFeature } from './template-rows';
+import { rowKindFeature, usesCalendars } from './template-rows';
 import { WeekPlanSources, mealSourceKey } from './week-plan-model';
-
-const CALENDAR_KINDS: PrintRowKind[] = [
-  PRINT_ROW_KIND.calendarMarker,
-  PRINT_ROW_KIND.calendarEvents,
-  PRINT_ROW_KIND.taskChecklist,
-];
 
 // Fetches everything one week of a template needs, through the existing endpoints only -- each
 // runs its own authorization for the printing guardian. Every source is fetched once however
@@ -58,7 +52,7 @@ export class WeekPlanLoader {
       rows.filter((r) => r.kind === PRINT_ROW_KIND.workLocation).map((r) => r.guardianId),
     );
     const calendarIds = unique(
-      rows.filter((r) => CALENDAR_KINDS.includes(r.kind)).flatMap((r) => r.calendarIds ?? []),
+      rows.filter((r) => usesCalendars(r.kind)).flatMap((r) => r.calendarIds ?? []),
     );
 
     const result = {

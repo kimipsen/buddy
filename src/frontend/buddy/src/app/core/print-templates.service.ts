@@ -18,6 +18,7 @@ export const PRINT_ROW_KIND = {
   calendarEvents: 'CalendarEvents',
   taskChecklist: 'TaskChecklist',
   blank: 'Blank',
+  calendarAgenda: 'CalendarAgenda',
 } as const satisfies Record<string, Schemas['PrintRowKind']>;
 
 export type PrintRowKind = Schemas['PrintRowKind'];

@@ -52,6 +52,7 @@ internal static class PrintTemplateTestHelpers
     public const PrintRowKind CalendarEvents = PrintRowKind.CalendarEvents;
     public const PrintRowKind TaskChecklist = PrintRowKind.TaskChecklist;
     public const PrintRowKind Blank = PrintRowKind.Blank;
+    public const PrintRowKind CalendarAgenda = PrintRowKind.CalendarAgenda;
 
     public const MealSlot Dinner = MealSlot.Dinner;
 

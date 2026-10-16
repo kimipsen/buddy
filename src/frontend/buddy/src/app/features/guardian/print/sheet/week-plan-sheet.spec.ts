@@ -156,6 +156,43 @@ describe('WeekPlanSheet', () => {
     expect(nested.every((li) => li.querySelector('span[aria-hidden="true"]'))).toBe(true);
   });
 
+  it('prints agenda tasks with a tick box and appointments with a clock and their time', async () => {
+    const root = await render(
+      model({
+        rows: [
+          {
+            kind: 'CalendarAgenda',
+            label: 'Viggos uge',
+            heightWeight: 2,
+            unavailable: false,
+            cells: [
+              {
+                type: 'agenda',
+                items: [
+                  { type: 'appointment', time: '16:00', text: 'Tandlæge', subtasks: [] },
+                  { type: 'task', time: null, text: 'Lektier', subtasks: [] },
+                ],
+                overflow: 1,
+              },
+              ...Array(6).fill({ type: 'blank' }),
+            ],
+          },
+        ],
+      }),
+    );
+    const cell = root.querySelector('[role="cell"]')!;
+    const appointment = cell.querySelector('[data-agenda-item="appointment"]')!;
+    const task = cell.querySelector('[data-agenda-item="task"]')!;
+
+    expect(appointment.textContent?.replace(/\s+/g, ' ').trim()).toBe('16:00 Tandlæge');
+    expect(appointment.querySelector('svg circle')).not.toBeNull();
+    expect(appointment.querySelector('span[style*="border"]')).toBeNull();
+    expect(task.textContent?.trim()).toBe('Lektier');
+    expect(task.querySelector('span[style*="border"]')).not.toBeNull();
+    expect(task.querySelector('svg')).toBeNull();
+    expect(cell.textContent).toContain('+1');
+  });
+
   it('tells screen readers which pickup name is the drop-off and which the pick-up', async () => {
     const root = await render(model());
     const labels = Array.from(

@@ -99,6 +99,9 @@ Deferred until someone asks (each is additive; details are in the docs' open que
       inclusion on/off. Printing currently ignores subtasks and offers no toggle.
 - [x] Add an option to include a watermark QR code on the print preview. The
       QR code should take whoever scans it to the web application's login page.
+- [x] Add a "Tasks and appointments" row kind (`CalendarAgenda`) that prints a
+      calendar's tasks and appointments together: tasks with a tick box,
+      appointments with a clock and their start time.
 
 ### Pickup/drop-off options
 

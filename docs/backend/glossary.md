@@ -334,7 +334,7 @@ The saved layout of a printable week plan: name, paper size (A4 or A3, always la
 
 ### PrintTemplateRow
 
-One printed row. A flat record with a `PrintRowKind` (Meal, Pickup, WorkLocation, CalendarMarker, CalendarEvents, TaskChecklist, Blank) and only the fields that kind uses. Rows hold references, never data, and grant no access to what they reference.
+One printed row. A flat record with a `PrintRowKind` (Meal, Pickup, WorkLocation, CalendarMarker, CalendarEvents, TaskChecklist, Blank, CalendarAgenda) and only the fields that kind uses. Rows hold references, never data, and grant no access to what they reference.
 
 ### GuardianColor
 

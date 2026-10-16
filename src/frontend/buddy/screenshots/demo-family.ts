@@ -1148,6 +1148,12 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
           assignedToId: emil.id,
           heightWeight: 2,
         }),
+        row({
+          kind: 'CalendarAgenda',
+          label: 'Family week',
+          calendarIds: [family.id, school.id],
+          heightWeight: 2,
+        }),
       ],
     });
     await api.put(`/print-templates/${template.id}/babysitter-colors`, {

@@ -125,6 +125,60 @@
                 }
               </ul>
             }
+            @case ('agenda') {
+              <ul class="space-y-[0.2em]">
+                @for (item of cell.items; track $index) {
+                  <li [attr.data-agenda-item]="item.type">
+                    <div class="flex items-start gap-[0.35em]">
+                      @if (item.type === 'task') {
+                        <span
+                          class="mt-[0.15em] inline-block size-[0.9em] shrink-0"
+                          style="border: 0.25mm solid #475569"
+                          aria-hidden="true"
+                        ></span>
+                      } @else {
+                        <svg
+                          class="mt-[0.15em] size-[0.9em] shrink-0"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="#475569"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          aria-hidden="true"
+                        >
+                          <circle cx="8" cy="8" r="6.75" />
+                          <path d="M8 4v4l2.5 1.5" />
+                        </svg>
+                      }
+                      <span>
+                        @if (item.time) {
+                          <span class="font-semibold">{{ item.time }}</span>
+                        }
+                        {{ item.text }}
+                      </span>
+                    </div>
+                    @if (item.subtasks.length > 0) {
+                      <ul class="mt-[0.1em] space-y-[0.1em] pl-[1.25em] text-[0.9em]">
+                        @for (subtask of item.subtasks; track $index) {
+                          <!-- Only a routine (always a task) has subtasks. -->
+                          <li class="flex items-start gap-[0.35em]">
+                            <span
+                              class="mt-[0.2em] inline-block size-[0.75em] shrink-0"
+                              style="border: 0.25mm solid #475569"
+                              aria-hidden="true"
+                            ></span>
+                            <span>{{ subtask }}</span>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </li>
+                }
+                @if (cell.overflow > 0) {
+                  <li class="text-slate-500">+{{ cell.overflow }}</li>
+                }
+              </ul>
+            }
             @case ('pickup') {
               <svg
                 class="pointer-events-none absolute inset-0 size-full"

@@ -40,12 +40,13 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
             new { Kind = TaskChecklist, Label = "Viggos ansvar", HeightWeight = 2, CalendarIds = new[] { calendarId }, AssignedToId = child },
             new { Kind = CalendarMarker, Label = "Affald der tømmes", HeightWeight = 1, CalendarIds = new[] { calendarId }, TitleFilter = "Skrald" },
             new { Kind = Blank, Label = "Aftaler / Andet", HeightWeight = 3 },
+            new { Kind = CalendarAgenda, Label = "Viggos uge", HeightWeight = 2, CalendarIds = new[] { calendarId }, AssignedToId = child, MaxItems = 5 },
         ]);
 
         var read = await GetAsync(fixture, family.FirstToken, template.Id);
 
         Assert.Equal(
-            [Meal, Pickup, WorkLocation, WorkLocation, CalendarEvents, TaskChecklist, CalendarMarker, Blank],
+            [Meal, Pickup, WorkLocation, WorkLocation, CalendarEvents, TaskChecklist, CalendarMarker, Blank, CalendarAgenda],
             read.Rows.Select(r => r.Kind));
         Assert.Equal("Aftensmad", read.Rows[0].Label);
         Assert.Equal(Dinner, read.Rows[0].MealSlot);
@@ -53,6 +54,8 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
         Assert.Equal([calendarId], read.Rows[4].CalendarIds!);
         Assert.True(read.Rows[4].ShowTime);
         Assert.Equal(3, read.Rows[7].HeightWeight);
+        Assert.Equal(child, read.Rows[8].AssignedToId);
+        Assert.Equal(5, read.Rows[8].MaxItems);
     }
 
     [Fact]
@@ -88,6 +91,9 @@ public sealed class ReplacePrintTemplateRowsTests(BuddyApiFixture fixture)
         { "rows[0].calendarIds", [new { Kind = CalendarMarker, Label = "X", HeightWeight = 1, CalendarIds = new[] { Guid.Empty, Guid.Empty } }] },
         { "rows[0].calendarIds", [new { Kind = CalendarMarker, Label = "X", HeightWeight = 1, CalendarIds = new Guid?[] { null } }] },
         { "rows[0].maxItems", [new { Kind = TaskChecklist, Label = "X", HeightWeight = 1, CalendarIds = new[] { Guid.NewGuid() }, MaxItems = 9 }] },
+        { "rows[0].calendarIds", [new { Kind = CalendarAgenda, Label = "Uge", HeightWeight = 1 }] },
+        { "rows[0].kind", [new { Kind = CalendarAgenda, Label = "Uge", HeightWeight = 1, CalendarIds = new[] { Guid.NewGuid() }, ShowTime = true }] },
+        { "rows[0].kind", [new { Kind = CalendarAgenda, Label = "Uge", HeightWeight = 1, CalendarIds = new[] { Guid.NewGuid() }, TitleFilter = "x" }] },
         { "rows[0].kind", [new { Kind = Blank, Label = "", HeightWeight = 1, ShowTime = true }] },
         { "rows[0].kind", [new { Kind = Pickup, Label = "Hente", HeightWeight = 1, ChildId = Guid.NewGuid(), CalendarIds = new[] { Guid.NewGuid() } }] },
         { "rows[0].kind", [new { Kind = 42, Label = "?", HeightWeight = 1 }] },

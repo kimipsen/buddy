@@ -17,6 +17,7 @@ import {
 import { compareOccurrences } from '../../../core/task-run';
 import { workDayLocation } from '../../../core/work-locations.service';
 import {
+  WeekPlanAgendaItem,
   WeekPlanCell,
   WeekPlanCheckItem,
   WeekPlanDay,
@@ -116,6 +117,7 @@ function assembleCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell
     case PRINT_ROW_KIND.calendarMarker:
     case PRINT_ROW_KIND.calendarEvents:
     case PRINT_ROW_KIND.taskChecklist:
+    case PRINT_ROW_KIND.calendarAgenda:
       return calendarCells(row, context);
     default:
       return context.dates.map(() => BLANK);
@@ -272,11 +274,25 @@ function calendarCells(row: PrintTemplateRow, context: RowContext): WeekPlanCell
       return { type: 'checklist', ...limit(items, row.maxItems) };
     }
 
+    if (row.kind === PRINT_ROW_KIND.calendarAgenda) {
+      const items = entries.map(({ first: o, text, subtasks }): WeekPlanAgendaItem => {
+        const isTask = o.kind === TASK_KIND;
+        return {
+          type: isTask ? 'task' : 'appointment',
+          time:
+            !isTask && !o.isAllDay && startsOn(o, date, timeZone) ? startTime(o, timeZone) : null,
+          text,
+          subtasks,
+        };
+      });
+      return { type: 'agenda', ...limit(items, row.maxItems) };
+    }
+
     const items = entries.map(({ first: o, text, subtasks }): WeekPlanItem => {
       return {
         time:
           row.showTime && !o.isAllDay && startsOn(o, date, timeZone)
-            ? toTimeInTimeZone(new Date(o.sortAt), timeZone)
+            ? startTime(o, timeZone)
             : null,
         text,
         assignee:
@@ -338,6 +354,10 @@ function dedupe(occurrences: CalendarItemOccurrence[]): CalendarItemOccurrence[]
     seen.add(key);
     return true;
   });
+}
+
+function startTime(o: CalendarItemOccurrence, timeZone: string): string {
+  return toTimeInTimeZone(new Date(o.sortAt), timeZone);
 }
 
 function startsOn(o: CalendarItemOccurrence, date: string, timeZone: string): boolean {

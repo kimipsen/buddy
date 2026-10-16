@@ -29,7 +29,7 @@ internal static class PrintTemplateRules
 // are rejected rather than silently dropped, so a stored row always says exactly what it means.
 public sealed class PrintTemplateRowValidator : AbstractValidator<PrintTemplateRow>
 {
-    private static readonly PrintRowKind[] CalendarKinds = [PrintRowKind.CalendarMarker, PrintRowKind.CalendarEvents, PrintRowKind.TaskChecklist];
+    private static readonly PrintRowKind[] CalendarKinds = [PrintRowKind.CalendarMarker, PrintRowKind.CalendarEvents, PrintRowKind.TaskChecklist, PrintRowKind.CalendarAgenda];
 
     // Every rule names its field explicitly in camelCase, so error keys match the JSON field names
     // whether a rule targets one property or the whole row (rows[0].childId, never rows[0].ChildId).
@@ -108,6 +108,7 @@ public sealed class PrintTemplateRowValidator : AbstractValidator<PrintTemplateR
             PrintRowKind.CalendarMarker => ["calendarIds", "titleFilter"],
             PrintRowKind.CalendarEvents => ["calendarIds", "assignedToId", "titleFilter", "maxItems", "showTime", "showAssignee"],
             PrintRowKind.TaskChecklist => ["calendarIds", "assignedToId", "maxItems"],
+            PrintRowKind.CalendarAgenda => ["calendarIds", "assignedToId", "maxItems"],
             _ => [],
         };
 

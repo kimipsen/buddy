@@ -88,6 +88,7 @@ export const print = {
       calendarMarker: 'Markér dage',
       calendarEvents: 'Begivenheder',
       taskChecklist: 'Tjekliste med opgaver',
+      calendarAgenda: 'Opgaver og aftaler',
       blank: 'Tom',
     },
     mealSlots: {
