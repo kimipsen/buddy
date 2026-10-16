@@ -1,0 +1,28 @@
+// markdownlint for every markdown file in the repo, run by the pre-commit hook on staged files
+// and by hand with `task lint:markdown`. Prettier owns the layout (.prettierrc); these rules
+// catch what it doesn't, such as broken tables, bare URLs, a title that isn't a heading, and
+// code blocks without a language.
+{
+  "config": {
+    "default": true,
+    // Line breaks in prose are the author's (Prettier's proseWrap is "preserve"): some files wrap
+    // at 100, skill files keep one paragraph per line. Prettier's "always" wrapping can't be used
+    // to enforce a width: it moves code spans across lines in ways that change how they pair up.
+    "MD013": false,
+    // Inline HTML is deliberate: the screenshot README's images, <details>, HTML comments.
+    "MD033": false,
+    // The same heading may repeat in different sections.
+    "MD024": { "siblings_only": true },
+    // Numbered steps continue across code blocks and section headings (README, eliminate-nulls);
+    // GitHub renders the written numbers.
+    "MD029": false,
+    // Short bold labels such as **Pros** / **Cons** are deliberate, not missing headings.
+    "MD036": false,
+  },
+  "ignores": [
+    "**/node_modules/**",
+    // Fragments pasted into a PR body or a changelog, not documents of their own.
+    ".github/pull_request_template.md",
+    "agents/copilot/templates/CHANGELOG_ENTRY.md",
+  ],
+}

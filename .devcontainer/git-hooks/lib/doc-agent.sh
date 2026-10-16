@@ -103,6 +103,21 @@ doc_agent_commit_changes() {
   fi
 }
 
+# Runs Prettier over the markdown files the agent changed, so the doc-sync commit (made with
+# --no-verify) already passes the pre-commit markdown check the next person to touch them meets.
+doc_agent_format_markdown() {
+  local work_dir="$1" before="$2"
+  shift 2
+  local prettier="src/frontend/buddy/node_modules/.bin/prettier" now
+  local -a markdown
+  [[ -x "$prettier" ]] || return 0
+
+  now="$(doc_agent_snapshot_tree "$work_dir/format-index" "$@")" || return 0
+  mapfile -t markdown < <(git diff --name-only --no-renames --diff-filter=AM "$before" "$now" -- '*.md')
+  ((${#markdown[@]} > 0)) || return 0
+  "$prettier" --write --log-level warn "${markdown[@]}" || true
+}
+
 doc_agent_run() {
   local repo_root commit_msg agent diff work_dir prompt_file instruction before_tree after_tree
 
@@ -197,6 +212,8 @@ doc_agent_run() {
       return 0
       ;;
   esac
+
+  doc_agent_format_markdown "$work_dir" "$before_tree" "${doc_paths[@]}"
 
   after_tree="$(doc_agent_snapshot_tree "$work_dir/after-index" "${doc_paths[@]}")" || return 0
   if [[ "$before_tree" != "$after_tree" ]]; then

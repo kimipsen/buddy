@@ -84,6 +84,17 @@ tasks:
     cmds:
       - npm run screenshots
 
+  lint:markdown:
+    desc: >-
+      Check every tracked markdown file with Prettier (.prettierrc) and markdownlint
+      (.markdownlint-cli2.jsonc), as the pre-commit hook does for staged ones.
+      `task lint:markdown FIX=1` rewrites what the two tools can fix.
+    vars:
+      BIN: src/frontend/buddy/node_modules/.bin
+    cmds:
+      - git ls-files -z '*.md' | xargs -0 {{.BIN}}/prettier {{if .FIX}}--write{{else}}--check{{end}} --log-level warn
+      - git ls-files -z '*.md' | xargs -0 {{.BIN}}/markdownlint-cli2 {{if .FIX}}--fix{{end}} >/dev/null
+
   docs:openapi:
     desc: >-
       Regenerate the committed API contract, docs/backend/openapi/buddy.json,

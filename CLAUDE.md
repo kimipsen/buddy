@@ -15,6 +15,7 @@ Buddy is a family coordination app for guardians of children with ADHD; see [REA
 - One frontend spec: `cd src/frontend/buddy && npx ng test --watch=false --include src/app/path/foo.spec.ts`
 - One backend test: `dotnet test src/backend/backend.slnx --filter FullyQualifiedName~<Name>`
 - Translation parity: `node .claude/skills/i18n/check-parity.mjs`
+- Markdown (Prettier + markdownlint, every tracked `.md`): `task lint:markdown`; `FIX=1` to fix
 - API contract: `task docs:openapi` regenerates `docs/backend/openapi/buddy.json` and the frontend's generated types (`src/app/core/api/buddy-api.ts`) after an endpoint, DTO or error-code change
 - Inspect events: `task db:marten:streams SCHEMA=<schema>` (`SCHEMA` is required)
 
@@ -22,22 +23,22 @@ Buddy is a family coordination app for guardians of children with ADHD; see [REA
 
 Use the matching skill instead of improvising. Each one holds the verified conventions for its area.
 
-| Area | Skill |
-| --- | --- |
-| Backend conventions | `claude-backend` |
-| New endpoint / use case / aggregate | `backend-feature` |
-| Angular components, services, specs | `buddy-frontend` |
-| UI strings (en + da) | `i18n` |
-| Playwright e2e | `e2e-test` |
-| Run / screenshot the app | `run-buddy` |
-| Docs screenshots of every page (`task docs:screenshots`) | `doc-screenshots` |
-| Pictograms (SVG, drawn by Codex's `.agents/skills/pictogram`) | `codex-pictogram` |
-| Full feature from a design doc | `feature-from-analysis` |
-| Review a diff | `backend-aware-review` |
-| Mutation testing | `mutation-fix` (frontend), `mutation-fix-backend` |
-| SonarCloud findings | `sonar-triage` |
-| Commit and land work (rebase + fast-forward, no push), then remove the worktree | `rebase-commit` |
-| Production deploy (always confirm first) | `deploy` |
+| Area                                                                            | Skill                                             |
+| ------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Backend conventions                                                             | `claude-backend`                                  |
+| New endpoint / use case / aggregate                                             | `backend-feature`                                 |
+| Angular components, services, specs                                             | `buddy-frontend`                                  |
+| UI strings (en + da)                                                            | `i18n`                                            |
+| Playwright e2e                                                                  | `e2e-test`                                        |
+| Run / screenshot the app                                                        | `run-buddy`                                       |
+| Docs screenshots of every page (`task docs:screenshots`)                        | `doc-screenshots`                                 |
+| Pictograms (SVG, drawn by Codex's `.agents/skills/pictogram`)                   | `codex-pictogram`                                 |
+| Full feature from a design doc                                                  | `feature-from-analysis`                           |
+| Review a diff                                                                   | `backend-aware-review`                            |
+| Mutation testing                                                                | `mutation-fix` (frontend), `mutation-fix-backend` |
+| SonarCloud findings                                                             | `sonar-triage`                                    |
+| Commit and land work (rebase + fast-forward, no push), then remove the worktree | `rebase-commit`                                   |
+| Production deploy (always confirm first)                                        | `deploy`                                          |
 
 `agents/` holds Codex/Copilot packages; Claude Code doesn't load them. `.agents/skills/` holds skills the Codex CLI loads (e.g. `pictogram`).
 
@@ -61,7 +62,7 @@ Several features are developed at once, each in its own git worktree, so they do
 - Task checklists (`TODO.md` and the root `README.md` `## Features` list) keep open items on top:
   - `TODO.md` has `## Open` first and `## Done` below it. Add a new task as a `### <Title> (YYYY-MM-DD)` section at the top of `## Open`. When you tick an item (`- [ ]` → `- [x]`), move it, under its section heading, to the bottom of `## Done`; open items of the same section stay in `## Open`. Never leave a ticked item in `## Open` or an unticked one in `## Done`.
   - In each README Features group (Guardian / Child / Platform), unchecked items come first, a new one at the top of the group, and a ticked item moves to the end of its group.
-  - `TODO.md` follows Prettier: `cd src/frontend/buddy && node_modules/.bin/prettier --write ../../../TODO.md`.
+  - `TODO.md`, like every markdown file, follows Prettier and markdownlint: `task lint:markdown FIX=1`.
 - Never commit secrets. `appsettings.*.json` and `.env` are git-ignored.
-- `task hooks:install` adds a pre-commit hook (Prettier/ESLint, i18n parity and C# whitespace on staged files; fix what it reports rather than using `--no-verify`) and a post-commit hook that may add a `docs: sync documentation (auto)` commit. Add `[skip-docs]` to the commit message to skip the latter.
+- `task hooks:install` adds a pre-commit hook (Prettier/ESLint, Prettier/markdownlint for markdown, i18n parity and C# whitespace on staged files; fix what it reports rather than using `--no-verify`) and a post-commit hook that may add a `docs: sync documentation (auto)` commit. Add `[skip-docs]` to the commit message to skip the latter.
 - Stop dev servers by port (`fuser -k -TERM 4300/tcp 5193/tcp 7076/tcp`), not with `pkill -f`, which can match your own shell.

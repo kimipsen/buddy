@@ -12,6 +12,9 @@ Runs on the staged files only, and only the checks that apply to them:
 - Translation files under `src/app/core/i18n`: the en/da parity check.
 - C# files: `dotnet format whitespace --verify-no-changes`. Code style and analyzers that need the
   compiler run in the build, which fails on them.
+- Markdown files, anywhere in the repo: Prettier (the `.prettierrc` next to the file; code samples
+  inside fences are left as written) and markdownlint (`.markdownlint-cli2.jsonc`). Check or fix
+  the whole repo with `task lint:markdown` / `task lint:markdown FIX=1`.
 
 It takes a few seconds and fails the commit with the command that fixes each problem. Files are
 checked as they are on disk, so a partly staged file is checked with its unstaged changes. Skip
@@ -57,7 +60,9 @@ removes both settings and restores git's default hook behavior.
    - `claude -p ... --permission-mode acceptEdits --allowedTools Read,Edit,Glob,Grep`
    - `codex exec ... --sandbox workspace-write`
    - `copilot -p ... --allow-tool write --deny-tool shell`
-5. If the agent changed anything under `docs/`, `README.md` or `TODO.md`, commits only
+5. Runs Prettier over the markdown files the agent changed. The doc-sync commit skips the
+   pre-commit checks (`--no-verify`), so this keeps its files passing them.
+6. If the agent changed anything under `docs/`, `README.md` or `TODO.md`, commits only
    those changes as `docs: sync documentation (auto)`. The hook snapshots the
    docs before and after the agent runs and builds the commit in a temporary
    index from `HEAD`, so whatever you had staged, your uncommitted edits to
