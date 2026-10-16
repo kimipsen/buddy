@@ -30,9 +30,6 @@ homework splitter have shipped; they are listed under Done.
 
 - [ ] **Behaviour (ABC) log.** Antecedent, behaviour and consequence entries, correlated with
       sleep, doses and schedule changes to surface patterns.
-- [ ] **Doctor visit summary.** One printable, shareable report combining sleep, doses, feelings
-      and the behaviour log for a chosen period, reusing the sleep diary's share link and print setup.
-      See [Doctor visit summary](docs/backend/analysis/doctor-visit-summary.md).
 
 #### School and other caregivers
 
@@ -765,3 +762,11 @@ they reuse data the app already keeps. Each has a design doc.
 - [x] **Pictogram support.** Bundled pictograms as the icon of tasks, routine steps and First-Then
       cards, for younger or non-reading children. See
       [Pictogram support](docs/frontend/analysis/pictograms.md) (2026-10-16).
+
+### Tools for families with ADHD and autism (2026-10-11)
+
+#### Insight for guardians and clinicians
+
+- [x] **Doctor visit summary.** One printable, shareable report of sleep, doses, effect notes and
+      feelings for a chosen period of at most 92 days, with a revocable, expiring doctor link. See
+      [Doctor visit summary](docs/backend/analysis/doctor-visit-summary.md) (2026-10-16).

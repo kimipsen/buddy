@@ -23,9 +23,6 @@ in real time.
 
 ### Guardian
 
-- [ ] Doctor visit summary: one printable A4 report of sleep, doses, effect notes and feelings for
-      a chosen period, with a guardian's note and one revocable doctor share link (proposed, not yet
-      implemented — see [Doctor visit summary](docs/backend/analysis/doctor-visit-summary.md))
 - [ ] Social stories: short illustrated stories, linked to a calendar event, that prepare a
       child for something new such as the dentist or a trip (proposed, not yet implemented — see
       [Social stories](docs/backend/analysis/social-stories.md))
@@ -75,6 +72,9 @@ in real time.
       [Skipping single occurrences](docs/backend/analysis/skip-occurrences.md)
 - [x] Per-item alarms (VALARM) in the calendar iCal feed, for subscribing calendar apps
       (see [Calendar item alarms](docs/backend/analysis/calendar-item-alarms.md))
+- [x] Doctor visit summary: one printable A4 report of sleep, doses, effect notes and feelings for
+      a chosen period of at most 92 days, with one revocable, expiring doctor share link (see
+      [Doctor visit summary](docs/backend/analysis/doctor-visit-summary.md))
 
 ### Child
 

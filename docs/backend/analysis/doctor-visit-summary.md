@@ -1,6 +1,6 @@
 # Doctor Visit Summary
 
-Status: Proposed (not yet implemented)
+Status: Implemented (`Features/VisitSummaries`)
 
 ## Context
 
