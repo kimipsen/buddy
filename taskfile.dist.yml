@@ -106,6 +106,20 @@ tasks:
       - BUDDY_UPDATE_OPENAPI=1 dotnet test src/backend/backend.slnx --filter "FullyQualifiedName~OpenApiDocumentTests.The_combined_document_matches_the_committed_contract"
       - cd src/frontend/buddy && npm run api:types
 
+  codegen:backend:
+    desc: >-
+      Regenerate the committed Wolverine handler code in
+      src/backend/buddy/Internal/Generated, which the API loads instead of
+      compiling handlers at startup. Run it after adding, removing or changing
+      the signature of a handler, or changing a Wolverine policy or middleware.
+      CI fails when the committed code is stale.
+    dir: src/backend/buddy
+    cmds:
+      # Delete first: stale generated code may no longer compile against the changed handlers.
+      - rm -rf Internal/Generated
+      - dotnet build
+      - dotnet run --no-build --no-launch-profile -- codegen write
+
   db:marten:tables:
     desc: "List Marten tables in a schema. Usage: task db:marten:tables SCHEMA=groups"
     requires:

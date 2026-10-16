@@ -38,6 +38,18 @@ jobs:
       - name: Build
         run: dotnet build src/backend/backend.slnx --no-restore --configuration Release
 
+      # The API loads the Wolverine handlers pre-generated into src/backend/buddy/Internal/Generated
+      # (task codegen:backend). Regenerate them and fail when they differ from the committed ones.
+      - name: Check generated handler code
+        run: |
+          rm -rf src/backend/buddy/Internal/Generated
+          dotnet run --project src/backend/buddy --no-build --no-launch-profile --configuration Release -- codegen write > /dev/null
+          if [ -n "$(git status --porcelain -- src/backend/buddy/Internal/Generated)" ]; then
+            git status --short -- src/backend/buddy/Internal/Generated
+            echo "::error::src/backend/buddy/Internal/Generated is out of date. Run 'task codegen:backend' and commit the result."
+            exit 1
+          fi
+
       # Testcontainers needs a Docker daemon, which the ubuntu-latest runner provides natively.
       # coverage.runsettings: coverlet, Cobertura format, the API assembly only.
       - name: Test

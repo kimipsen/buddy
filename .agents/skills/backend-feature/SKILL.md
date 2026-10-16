@@ -116,6 +116,7 @@ task test:backend                                                               
 ## 5. Docs (when behavior or the contract changes)
 
 - `docs/backend/<domain>/flow.md`: add the row to the endpoint table, and extend the sequence diagram if the flow changed.
+- Run `task codegen:backend` and commit the regenerated `src/backend/buddy/Internal/Generated` (every new handler gets a pre-generated class there; the backend CI job fails when it's stale).
 - Run `task docs:openapi` and commit the regenerated `docs/backend/openapi/buddy.json` and `src/frontend/buddy/src/app/core/api/buddy-api.ts`. `Meta/OpenApiDocumentTests` fails until the contract is regenerated, and frontend CI fails if the generated types are stale. `docs/backend/http-status-codes.md` holds the rules, not per-endpoint tables; change it only when a rule changes.
 - `docs/backend/glossary.md` for new domain terms or ids. Update `docs/backend/analysis/<topic>.md` if the change implements or alters a recorded design decision.
 - The post-commit doc-sync hook (`.devcontainer/git-hooks`, opt-in via `task hooks:install AGENT=claude`) may also update docs in a follow-up `docs: sync documentation (auto)` commit. It is per-clone and optional, so don't rely on it.

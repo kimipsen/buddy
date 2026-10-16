@@ -17,6 +17,7 @@ Buddy is a family coordination app for guardians of children with ADHD; see [REA
 - Translation parity: `node .claude/skills/i18n/check-parity.mjs`
 - Markdown (Prettier + markdownlint, every tracked `.md`): `task lint:markdown`; `FIX=1` to fix
 - API contract: `task docs:openapi` regenerates `docs/backend/openapi/buddy.json` and the frontend's generated types (`src/app/core/api/buddy-api.ts`) after an endpoint, DTO or error-code change
+- Wolverine handler code: `task codegen:backend` regenerates the committed `src/backend/buddy/Internal/Generated` after adding, removing or re-signing a handler, or changing Wolverine middleware; CI fails when it's stale
 - Inspect events: `task db:marten:streams SCHEMA=<schema>` (`SCHEMA` is required)
 
 ## Project skills (`.claude/skills/`)

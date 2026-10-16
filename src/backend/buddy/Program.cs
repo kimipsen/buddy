@@ -36,6 +36,7 @@ using buddy.Serialization;
 using FluentValidation;
 
 using JasperFx;
+using JasperFx.CodeGeneration;
 
 using Wolverine;
 
@@ -61,6 +62,12 @@ builder.Host.UseWolverine(opts =>
     // Optimistic concurrency: every handler invocation tracks the stream versions its store
     // reads saw, so the matching appends are expected-version appends (see StreamVersionTracker).
     opts.Policies.AddMiddleware(typeof(StreamVersionScopeMiddleware));
+
+    // Load the handler code pre-generated into Internal/Generated (`task codegen:backend`) instead of
+    // compiling it with Roslyn at startup. Runtime compilation costs every host hundreds of MB that
+    // are never released, which ran the integration tests (one host per special configuration) out
+    // of memory. Auto still compiles a handler that has no pre-generated type yet.
+    opts.CodeGeneration.TypeLoadMode = TypeLoadMode.Auto;
 });
 
 // Add services to the container.
