@@ -15,13 +15,13 @@ Forgetting things is one of the most common daily ADHD struggles. The gym bag st
 on Tuesday, the swimming kit is missing on Thursday, and the glasses are on the bedside table
 every other day. Many families tape a list by the front door:
 
-| Day | Pack |
-|---|---|
+| Day              | Pack                                             |
+| ---------------- | ------------------------------------------------ |
 | Every school day | Lunchbox, water bottle, glasses, homework folder |
-| Tuesday | Gym clothes, indoor shoes |
-| Wednesday | Football boots, shin pads |
-| Thursday | Swimming kit, towel |
-| Friday | Library book |
+| Tuesday          | Gym clothes, indoor shoes                        |
+| Wednesday        | Football boots, shin pads                        |
+| Thursday         | Swimming kit, towel                              |
+| Friday           | Library book                                     |
 
 Guardians want that list in Buddy:
 
@@ -81,17 +81,17 @@ aggregate, schema, event store or snapshot.**
 
 Map each requirement onto the code that exists:
 
-| Requirement | Existing mechanism | Gap |
-|---|---|---|
-| Ordered list of items, guardian-edited | `TaskTemplate.Subtasks` + `AddSubtask`/`UpdateSubtask`/`RemoveSubtask`/`ReorderSubtasks` | Items have no duration; `AddSubtaskValidator` requires `Duration > 0` (Question 2) |
-| One list per child | `TaskTemplateIndexDocument(Id, ChildId)`, `TaskLibraryAuthorization` (guardian `Manage`, child `View`) | None |
-| "Every school day" | `Recurrence.Repeating(Daily, 1, ..., Weekdays: Mon--Fri)` on the scheduled item | None |
-| "Tuesday: gym clothes" | -- | Per-item weekday filter (Question 3) |
-| Child ticks items, per day | `CompletionLog` keyed by `(OccurrenceDate, Subtask(id))`, self-completion for the assignee | None for the morning of |
-| Shown and tickable the evening before | -- | `ValidateNotFuture` rejects tomorrow's occurrence; child home loads today only (Question 4) |
-| Stars | `RecordStarChange` per subtask | One star per item is inflation for a packing list (Question 5) |
-| Child home rendering | `groupTaskRuns()` | Render as a checklist rather than a timed run (Frontend) |
-| Fridge print | `TaskChecklist` row with `includeSubtasks` | None, once expansion filters items by weekday |
+| Requirement                            | Existing mechanism                                                                                     | Gap                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Ordered list of items, guardian-edited | `TaskTemplate.Subtasks` + `AddSubtask`/`UpdateSubtask`/`RemoveSubtask`/`ReorderSubtasks`               | Items have no duration; `AddSubtaskValidator` requires `Duration > 0` (Question 2)          |
+| One list per child                     | `TaskTemplateIndexDocument(Id, ChildId)`, `TaskLibraryAuthorization` (guardian `Manage`, child `View`) | None                                                                                        |
+| "Every school day"                     | `Recurrence.Repeating(Daily, 1, ..., Weekdays: Mon--Fri)` on the scheduled item                        | None                                                                                        |
+| "Tuesday: gym clothes"                 | --                                                                                                     | Per-item weekday filter (Question 3)                                                        |
+| Child ticks items, per day             | `CompletionLog` keyed by `(OccurrenceDate, Subtask(id))`, self-completion for the assignee             | None for the morning of                                                                     |
+| Shown and tickable the evening before  | --                                                                                                     | `ValidateNotFuture` rejects tomorrow's occurrence; child home loads today only (Question 4) |
+| Stars                                  | `RecordStarChange` per subtask                                                                         | One star per item is inflation for a packing list (Question 5)                              |
+| Child home rendering                   | `groupTaskRuns()`                                                                                      | Render as a checklist rather than a timed run (Frontend)                                    |
+| Fridge print                           | `TaskChecklist` row with `includeSubtasks`                                                             | None, once expansion filters items by weekday                                               |
 
 Every row in the right-hand column is a small change to code that exists. A new aggregate would
 re-create every row in the middle column instead:
@@ -113,8 +113,8 @@ re-create every row in the middle column instead:
 - **A new `TaskSource.Checklist` on `CalendarItem`** (items stored on the calendar item, like a
   freeform task with children). Rejected: the list would be edited from the calendar rather
   than the library, and two items scheduled from one list would drift apart. Keeping the items
-  on the template keeps the property the task library already has: *later edits to the
-  template affect every scheduled occurrence* ([task-library.md, Calendar integration](../../frontend/analysis/task-library.md#calendar-integration-scheduling-from-a-template)).
+  on the template keeps the property the task library already has: _later edits to the
+  template affect every scheduled occurrence_ ([task-library.md, Calendar integration](../../frontend/analysis/task-library.md#calendar-integration-scheduling-from-a-template)).
 
 This is the same "extend before you add" call [reward-redemption.md, Question 1](reward-redemption.md#question-1-a-new-aggregate-or-the-childprogress-stream)
 made for the progress stream, and the opposite of [house-rules.md, Question 1](house-rules.md#question-1-extend-an-existing-feature-or-a-new-feature),
@@ -132,7 +132,7 @@ laid out back to back from the scheduled start (`offset += subtask.Duration` in
 [`CalendarOccurrenceExpansion.AddTemplateTaskOccurrences`](../../../src/backend/buddy/Features/Calendars/CalendarOccurrenceExpansion.cs)),
 while a checklist's items are all due at the same moment -- the time the child leaves the house.
 
-```
+```csharp
 public enum TaskTemplateKind { Routine = 0, Checklist = 1 }
 
 public sealed record ChecklistOptions(TimeOnly? EveningBeforeFrom);   // Question 4
@@ -158,7 +158,7 @@ TaskTemplate(
 - **Why not a `Kind` on the scheduled `CalendarItem`.** The same list scheduled twice must
   behave the same way. The template is where the items live, so it is where their meaning lives.
 - **Backward compatibility.** `TaskTemplateCreated` gains `TaskTemplateKind Kind =
-  TaskTemplateKind.Routine` as its last positional parameter. Existing events have no `Kind`
+TaskTemplateKind.Routine` as its last positional parameter. Existing events have no `Kind`
   property and deserialize to `Routine`, the same "new trailing parameter with a default"
   approach `Recurrence.Repeating` used for `Weekdays = Weekdays.None`
   ([recurrence-weekdays.md, Persistence](recurrence-weekdays.md#persistence)). The golden files
@@ -296,7 +296,7 @@ new field is additive).
 ## Question 4: "the evening before" -- display and ticking
 
 **Decision: `ChecklistOptions.EveningBeforeFrom` (a local `TimeOnly`, e.g. `17:00`, or null) is
-set per checklist template. When it is set, the child home shows *tomorrow's* checklist
+set per checklist template. When it is set, the child home shows _tomorrow's_ checklist
 occurrence from that time today, and `SetTaskCompletion` accepts ticks on a checklist subtask
 for **today or tomorrow** (in the calendar's time zone). Today's occurrence is always shown on the
 day, as every task already is. The occurrence date stays the school day.**
@@ -409,7 +409,7 @@ guardian to approve (Question 8).**
 - **Siblings sharing a list.** The guardian copies a list to a sibling with `CopyTaskTemplate`
   (Question 9, settled by the user 2026-10-13); the copy is the sibling's own list from then on.
 - **Child adds items directly** ("I need my recorder on Friday"). Rejected: it would give the
-  child the `Manage` tier on a template the guardian owns. Instead the child *suggests* and a
+  child the `Manage` tier on a template the guardian owns. Instead the child _suggests_ and a
   guardian approves, the same request/approve shape as reward requests (Question 8, settled by
   the user 2026-10-11).
 - **A guardian ticking on the child's behalf** works today: a guardian is a calendar
@@ -421,7 +421,7 @@ guardian to approve (Question 8).**
 boots (Wed)"); an irregular activity gets its own one-off or recurring checklist scheduled
 alongside it.**
 
-A real link -- "show the football bag whenever a *Football* event occurs on the child's
+A real link -- "show the football bag whenever a _Football_ event occurs on the child's
 calendar" -- would be a new `TaskSource`/schedule kind whose occurrence dates come from another
 item's expansion rather than from its own `Recurrence`. That couples two `CalendarItem` streams
 inside `CalendarOccurrenceExpansion`, needs a rule for an event moved or deleted after items
@@ -452,7 +452,7 @@ No new stream, store, snapshot or index document.**
 [reward-redemption.md, Question 1](reward-redemption.md#question-1-a-new-aggregate-or-the-childprogress-stream)
 made this call for reward requests, and every reason it gives holds here:
 
-- **Approval must be atomic with the item it adds.** Approving appends `SubtaskAdded` *and*
+- **Approval must be atomic with the item it adds.** Approving appends `SubtaskAdded` _and_
   `ChecklistItemSuggestionApproved` in one `AppendAsync` on one stream. The handler decides on a
   `ReadAsync` of that stream, so `StreamVersionTracker`'s expected-version append
   ([MartenTaskTemplateEventStore.cs](../../../src/backend/buddy/Features/TaskLibrary/MartenTaskTemplateEventStore.cs),
@@ -491,7 +491,7 @@ task library. It is contained: suggestion events never change `Subtasks`, `Name`
 
 ### Aggregate shape
 
-```
+```text
 TaskTemplate(
     ...,                                              // as in Question 2
     ImmutableList<ChecklistSuggestion> Suggestions)   // new; oldest first; empty for routines
@@ -589,19 +589,20 @@ stateDiagram-v2
 
   Blast radius: one handler and its tests. Templates are never hard-deleted outside erasure (no
   delete slice exists), so archive and erasure are the only two ways a list disappears.
+
 - **Outcome type.** The three `409`s only happen here, so they go in a feature-specific union,
   `ChecklistSuggestionOutcome(Success(TaskTemplate), NotFound, Forbidden, Validation,
-  TooManyPending, ItemExists, AlreadyResolved)`, with a `ToHttpResult`, as
+TooManyPending, ItemExists, AlreadyResolved)`, with a `ToHttpResult`, as
   [RewardRequestOutcome.cs](../../../src/backend/buddy/Features/Progress/Types/RewardRequestOutcome.cs)
   does, not as new `Result<T>` cases. Each endpoint declares its codes with `.ProducesErrorCode`.
 
 ### Who can do what
 
-| Action | Allowed | Active guardian of the owner | Owning child | Anyone else (incl. a sibling) |
-|---|---|---|---|---|
-| Suggest, withdraw | the owning child | `403` | allowed | `404` |
-| Approve, decline | `Manage` (`TaskTemplateAccess.ResolveForManageAsync`) | allowed | `403` | `404` |
-| Read suggestions | `View` (`ListTaskTemplates`) | allowed | allowed | `404` |
+| Action            | Allowed                                               | Active guardian of the owner | Owning child | Anyone else (incl. a sibling) |
+| ----------------- | ----------------------------------------------------- | ---------------------------- | ------------ | ----------------------------- |
+| Suggest, withdraw | the owning child                                      | `403`                        | allowed      | `404`                         |
+| Approve, decline  | `Manage` (`TaskTemplateAccess.ResolveForManageAsync`) | allowed                      | `403`        | `404`                         |
+| Read suggestions  | `View` (`ListTaskTemplates`)                          | allowed                      | allowed      | `404`                         |
 
 This is the feature's existing matrix (relationship with the wrong tier is `403`, no
 relationship is `404`), turned around for the child-only actions. A new
@@ -657,7 +658,7 @@ resolved on the revoked guardian's behalf.
 
 - **Export.** Suggestions are the child's own text, so they belong in the "taskLibrary" section.
   The exporter currently emits `TaskTemplateResponse`, whose suggestion list is capped; it switches
-  to an `ExportedTaskTemplate` that carries *every* suggestion, the same split reward-redemption
+  to an `ExportedTaskTemplate` that carries _every_ suggestion, the same split reward-redemption
   made (`AllRewardRequests` in the export, a capped list in the summary).
 - **Erasure, no heir.** The template stream is deleted, suggestions with it; unchanged.
 - **Erasure, template passes to an heir.** The erased child's text must not stay in a stream a
@@ -718,14 +719,14 @@ await templates.CreateAsync(newId, events, cancellationToken);
 
 **Access and status codes**, the feature's existing matrix applied to both ends:
 
-| Case | Status |
-|---|---|
-| Guardian of both the source's owner and the target child | `200`, the new template |
-| Source missing or archived, or the caller has no relationship to its owner | `404` |
-| Caller is the source's owning child (`View` tier) | `403` |
-| Target child unknown, or the caller has no active `GuardianLink` to them | `404` |
-| Target is a user the caller relates to only at `View` (themself) | `403` |
-| `childId` missing or empty | `400` |
+| Case                                                                       | Status                  |
+| -------------------------------------------------------------------------- | ----------------------- |
+| Guardian of both the source's owner and the target child                   | `200`, the new template |
+| Source missing or archived, or the caller has no relationship to its owner | `404`                   |
+| Caller is the source's owning child (`View` tier)                          | `403`                   |
+| Target child unknown, or the caller has no active `GuardianLink` to them   | `404`                   |
+| Target is a user the caller relates to only at `View` (themself)           | `403`                   |
+| `childId` missing or empty                                                 | `400`                   |
 
 No `409`: the copy is a new stream (no expected-version append to lose), and the library allows two
 templates with the same name, so there is no conflict rule to break. A double tap is covered by
@@ -787,7 +788,7 @@ Display rules:
 
 ## Events
 
-```
+```text
 TaskTemplateCreated(..., TaskTemplateKind Kind = Routine)      // changed: trailing parameter
 ChecklistOptionsChanged(TaskTemplateId Id, ChecklistOptions Before, ChecklistOptions After,
     UserId ModifiedBy, DateTimeOffset OccurredAt)              // new; checklist templates only
@@ -831,7 +832,7 @@ None new. `TaskTemplateIndexDocument` is unchanged. The checklist information re
 through the template the expansion already loads, and through `Routine.Checklist` on
 `CalendarItemOccurrence`. Suggestions reach readers through `TaskTemplateResponse.Suggestions`:
 
-```
+```text
 ChecklistSuggestionResponse(Guid Id, string Title, IReadOnlyList<DayOfWeek> Weekdays,
     Guid SuggestedBy, string Status, DateTimeOffset SuggestedAt, DateTimeOffset? ResolvedAt,
     Guid? SubtaskId)
@@ -843,21 +844,21 @@ The cap keeps `ListTaskTemplates` bounded; the export uses the full aggregate.
 
 ## Command slices (`Features/TaskLibrary/` and `Features/Calendars/`)
 
-| Slice | Change | Tier |
-|---|---|---|
-| `CreateTaskTemplate` | Request gains `kind` (`routine` default) and, for a checklist, `eveningBeforeFrom`. A checklist created with options appends `TaskTemplateCreated` + `ChecklistOptionsChanged` | Manage |
-| `SetChecklistOptions` (new) | `PUT /task-templates/{templateId}/checklist-options` `{ eveningBeforeFrom }`. `400` on a routine template. Returns the template | Manage |
-| `AddSubtask` / `UpdateSubtask` | Optional `weekdays`; duration rule by kind (Question 2) | Manage |
-| `ListTaskTemplates` | Response gains `kind`, `checklist`, `weekdays` per subtask, and `suggestions` (Question 8) | View |
-| `ArchiveTaskTemplate` | Declines every pending suggestion in the same append (Question 8) | Manage |
-| `SuggestChecklistItem` (new) | `{ title, weekdays? }`. Emits `ChecklistItemSuggested`; `200` repeat on a pending duplicate; `400` routine / invalid title or weekdays; `409 too_many_pending_suggestions`, `409 checklist_item_exists`; covered by `Idempotency-Key` | Owning child (guardian `403`, other `404`) |
-| `WithdrawChecklistSuggestion` (new) | Emits `ChecklistItemSuggestionWithdrawn`; `200` repeat; `409 suggestion_resolved` | Owning child (guardian `403`, other `404`) |
-| `ApproveChecklistSuggestion` (new) | `{ title, weekdays?, position? }`. Emits `SubtaskAdded` + `ChecklistItemSuggestionApproved`; `200` repeat; `400` invalid title/weekdays; `409 suggestion_resolved` | Manage (child `403`, other `404`) |
-| `DeclineChecklistSuggestion` (new) | Emits `ChecklistItemSuggestionDeclined`; `200` repeat; `409 suggestion_resolved` | Manage (child `403`, other `404`) |
-| `CopyTaskTemplate` (new) | `{ childId }`. Creates a new stream: `TaskTemplateCreated` (+ `ChecklistOptionsChanged`) + one `SubtaskAdded` per item with fresh ids (Question 9); `400` empty `childId`; covered by `Idempotency-Key` | Manage on the source and on the target child |
-| `ScheduleTaskFromTemplate` | None. `startTime` is the "leave by" time for a checklist | Contribute |
-| `SetTaskCompletion` | Tomorrow allowed for checklists; weekday check; one star per completed list | Contribute / self |
-| `ListOccurrences` | `Due` timing and `routine.checklist` for checklist items; items filtered by weekday | View |
+| Slice                               | Change                                                                                                                                                                                                                                | Tier                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `CreateTaskTemplate`                | Request gains `kind` (`routine` default) and, for a checklist, `eveningBeforeFrom`. A checklist created with options appends `TaskTemplateCreated` + `ChecklistOptionsChanged`                                                        | Manage                                       |
+| `SetChecklistOptions` (new)         | `PUT /task-templates/{templateId}/checklist-options` `{ eveningBeforeFrom }`. `400` on a routine template. Returns the template                                                                                                       | Manage                                       |
+| `AddSubtask` / `UpdateSubtask`      | Optional `weekdays`; duration rule by kind (Question 2)                                                                                                                                                                               | Manage                                       |
+| `ListTaskTemplates`                 | Response gains `kind`, `checklist`, `weekdays` per subtask, and `suggestions` (Question 8)                                                                                                                                            | View                                         |
+| `ArchiveTaskTemplate`               | Declines every pending suggestion in the same append (Question 8)                                                                                                                                                                     | Manage                                       |
+| `SuggestChecklistItem` (new)        | `{ title, weekdays? }`. Emits `ChecklistItemSuggested`; `200` repeat on a pending duplicate; `400` routine / invalid title or weekdays; `409 too_many_pending_suggestions`, `409 checklist_item_exists`; covered by `Idempotency-Key` | Owning child (guardian `403`, other `404`)   |
+| `WithdrawChecklistSuggestion` (new) | Emits `ChecklistItemSuggestionWithdrawn`; `200` repeat; `409 suggestion_resolved`                                                                                                                                                     | Owning child (guardian `403`, other `404`)   |
+| `ApproveChecklistSuggestion` (new)  | `{ title, weekdays?, position? }`. Emits `SubtaskAdded` + `ChecklistItemSuggestionApproved`; `200` repeat; `400` invalid title/weekdays; `409 suggestion_resolved`                                                                    | Manage (child `403`, other `404`)            |
+| `DeclineChecklistSuggestion` (new)  | Emits `ChecklistItemSuggestionDeclined`; `200` repeat; `409 suggestion_resolved`                                                                                                                                                      | Manage (child `403`, other `404`)            |
+| `CopyTaskTemplate` (new)            | `{ childId }`. Creates a new stream: `TaskTemplateCreated` (+ `ChecklistOptionsChanged`) + one `SubtaskAdded` per item with fresh ids (Question 9); `400` empty `childId`; covered by `Idempotency-Key`                               | Manage on the source and on the target child |
+| `ScheduleTaskFromTemplate`          | None. `startTime` is the "leave by" time for a checklist                                                                                                                                                                              | Contribute                                   |
+| `SetTaskCompletion`                 | Tomorrow allowed for checklists; weekday check; one star per completed list                                                                                                                                                           | Contribute / self                            |
+| `ListOccurrences`                   | `Due` timing and `routine.checklist` for checklist items; items filtered by weekday                                                                                                                                                   | View                                         |
 
 The four suggestion slices return `200 TaskTemplateResponse` (the updated template, so the
 editor and the child card redraw from the response), map `ChecklistSuggestionOutcome` with its
@@ -868,7 +869,7 @@ editor and the child card redraw from the response), map `ChecklistSuggestionOut
 
 ## Routes
 
-```
+```text
 POST   /task-templates/children/{childId}                         CreateTaskTemplate   (+ kind, eveningBeforeFrom)
 PUT    /task-templates/{templateId}/checklist-options             SetChecklistOptions  (new)
 POST   /task-templates/{templateId}/subtasks                      AddSubtask           (+ weekdays, duration optional)
@@ -937,7 +938,7 @@ something" button and the dashboard pill sit behind the same `taskLibrary` front
   pending chips with a withdraw button, and the three-day "Added to your list" / "Not added this
   time" lines (Question 8). The home calls `TaskLibraryService.listTaskTemplates(selfId)` only
   when a checklist run is on screen, behind the `taskLibrary` feature flag. A `409
-  checklist_item_exists` shows "That's already on your list"; `409 too_many_pending_suggestions`
+checklist_item_exists` shows "That's already on your list"; `409 too_many_pending_suggestions`
   shows "Wait for a grown-up to look at your ideas first".
 - **`TaskLibraryService`** gains `suggestChecklistItem` (`postIdempotent`),
   `withdrawChecklistSuggestion`, `approveChecklistSuggestion`, `declineChecklistSuggestion`,
@@ -1056,94 +1057,94 @@ the new item on the list.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Checklist with no items | `ScheduleTaskFromTemplate` already refuses an empty template (`400`) |
-| Checklist with only weekday-filtered items, scheduled daily | Only the matching days show anything; other days produce no occurrences and no star |
-| Child ticks Tuesday's list on Monday evening | Allowed (`OccurrenceDate` = Tuesday, one day ahead); Tuesday morning shows it packed |
-| Child ticks Wednesday's list on Monday | `400`, same message as today |
-| Tick on an item whose weekdays exclude the date | `400` when marking complete; un-ticking always allowed |
-| Guardian narrows an item's weekdays after it was ticked | The tick stays in the log but the item no longer expands on that date; star state is not recomputed |
-| Guardian adds an item after the list was completed | New item shows unticked; the star already awarded stays |
-| Guardian removes the last unticked item | The list now reads complete but no star is awarded until a tick changes (stars are only recomputed on a tick); accepted for v1 |
-| Template archived | Already-scheduled checklists keep expanding (same as routines); can't be newly scheduled |
-| Routine template given `eveningBeforeFrom` | `400` from `SetChecklistOptions` |
-| Changing a template's kind | Not possible; no slice changes `Kind` |
-| Guardian's `GuardianLink` revoked | Library access drops to `NotFound` immediately, as today |
-| Child crosses midnight with the evening list open | The next refresh treats it as today's occurrence; the same `CompletionKey` |
-| `Features:TaskLibrary = false` | No creation or scheduling; existing scheduled checklists still show, as routines do |
-| `Features:Progress = false` | Ticking works; no star call, as for every task |
-| Child suggests on a routine template | `400` "Only packing lists take suggestions." |
-| Child suggests on a sibling's list, or a stranger on anyone's | `404` (no relationship) |
-| Guardian calls suggest or withdraw | `403`; the guardian adds the item with `AddSubtask` instead |
-| Child calls approve or decline | `403` |
-| Sixth pending suggestion on one list | `409 too_many_pending_suggestions` |
-| Same title as a pending suggestion | `200`, no new event; the first suggestion (and its weekdays) stands |
-| Same title as an existing item | `409 checklist_item_exists` |
-| Same title as a declined or withdrawn suggestion | Accepted as a new suggestion |
-| Approve, decline or withdraw repeated | `200`, idempotent, no new event |
-| Approve a declined/withdrawn suggestion (or vice versa) | `409 suggestion_resolved` |
-| Two guardians resolve the same suggestion at once | One wins; the other gets the existing `409 concurrency_conflict`, and a reload shows the outcome |
-| Child suggests while a guardian edits the list | One append gets `409 concurrency_conflict`; the client retries (suggest is idempotent by key and by duplicate title) |
-| Guardian approves with a title already on the list | Allowed; the guardian decides |
-| List archived with suggestions pending | `ArchiveTaskTemplate` declines them in the same append; afterwards every suggestion route is `404` |
-| List erased with the child, no heir | Stream deleted, suggestions with it |
-| List passes to an heir on the child's erasure | Pending suggestions withdrawn, suggestion titles masked; approved items stay |
-| Guardian's `GuardianLink` revoked with suggestions pending | Approve/decline `404` for that guardian immediately; suggestions stay pending for the others |
-| Child has no remaining active guardian | Suggestions stay pending; nothing expires them in v1 |
-| Approved item while today's list was already complete | Star stays (same rule as a guardian adding an item); the new item counts from the next tick |
-| Copy a template to a sibling | New stream for the sibling: same kind, options and items with fresh ids; no schedule, ticks or suggestions |
-| Copy an archived template | `404` |
-| Copy to a child the guardian isn't linked to | `404` |
-| Copy by the source's child | `403` |
-| Evening card before `eveningBeforeFrom`, or with every item ticked | The list doesn't appear; the card is hidden when no list does |
-| Evening card after midnight | Tomorrow's list is now today's; it leaves the card and shows under "tasks today" |
+| Case                                                               | Behavior                                                                                                                       |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Checklist with no items                                            | `ScheduleTaskFromTemplate` already refuses an empty template (`400`)                                                           |
+| Checklist with only weekday-filtered items, scheduled daily        | Only the matching days show anything; other days produce no occurrences and no star                                            |
+| Child ticks Tuesday's list on Monday evening                       | Allowed (`OccurrenceDate` = Tuesday, one day ahead); Tuesday morning shows it packed                                           |
+| Child ticks Wednesday's list on Monday                             | `400`, same message as today                                                                                                   |
+| Tick on an item whose weekdays exclude the date                    | `400` when marking complete; un-ticking always allowed                                                                         |
+| Guardian narrows an item's weekdays after it was ticked            | The tick stays in the log but the item no longer expands on that date; star state is not recomputed                            |
+| Guardian adds an item after the list was completed                 | New item shows unticked; the star already awarded stays                                                                        |
+| Guardian removes the last unticked item                            | The list now reads complete but no star is awarded until a tick changes (stars are only recomputed on a tick); accepted for v1 |
+| Template archived                                                  | Already-scheduled checklists keep expanding (same as routines); can't be newly scheduled                                       |
+| Routine template given `eveningBeforeFrom`                         | `400` from `SetChecklistOptions`                                                                                               |
+| Changing a template's kind                                         | Not possible; no slice changes `Kind`                                                                                          |
+| Guardian's `GuardianLink` revoked                                  | Library access drops to `NotFound` immediately, as today                                                                       |
+| Child crosses midnight with the evening list open                  | The next refresh treats it as today's occurrence; the same `CompletionKey`                                                     |
+| `Features:TaskLibrary = false`                                     | No creation or scheduling; existing scheduled checklists still show, as routines do                                            |
+| `Features:Progress = false`                                        | Ticking works; no star call, as for every task                                                                                 |
+| Child suggests on a routine template                               | `400` "Only packing lists take suggestions."                                                                                   |
+| Child suggests on a sibling's list, or a stranger on anyone's      | `404` (no relationship)                                                                                                        |
+| Guardian calls suggest or withdraw                                 | `403`; the guardian adds the item with `AddSubtask` instead                                                                    |
+| Child calls approve or decline                                     | `403`                                                                                                                          |
+| Sixth pending suggestion on one list                               | `409 too_many_pending_suggestions`                                                                                             |
+| Same title as a pending suggestion                                 | `200`, no new event; the first suggestion (and its weekdays) stands                                                            |
+| Same title as an existing item                                     | `409 checklist_item_exists`                                                                                                    |
+| Same title as a declined or withdrawn suggestion                   | Accepted as a new suggestion                                                                                                   |
+| Approve, decline or withdraw repeated                              | `200`, idempotent, no new event                                                                                                |
+| Approve a declined/withdrawn suggestion (or vice versa)            | `409 suggestion_resolved`                                                                                                      |
+| Two guardians resolve the same suggestion at once                  | One wins; the other gets the existing `409 concurrency_conflict`, and a reload shows the outcome                               |
+| Child suggests while a guardian edits the list                     | One append gets `409 concurrency_conflict`; the client retries (suggest is idempotent by key and by duplicate title)           |
+| Guardian approves with a title already on the list                 | Allowed; the guardian decides                                                                                                  |
+| List archived with suggestions pending                             | `ArchiveTaskTemplate` declines them in the same append; afterwards every suggestion route is `404`                             |
+| List erased with the child, no heir                                | Stream deleted, suggestions with it                                                                                            |
+| List passes to an heir on the child's erasure                      | Pending suggestions withdrawn, suggestion titles masked; approved items stay                                                   |
+| Guardian's `GuardianLink` revoked with suggestions pending         | Approve/decline `404` for that guardian immediately; suggestions stay pending for the others                                   |
+| Child has no remaining active guardian                             | Suggestions stay pending; nothing expires them in v1                                                                           |
+| Approved item while today's list was already complete              | Star stays (same rule as a guardian adding an item); the new item counts from the next tick                                    |
+| Copy a template to a sibling                                       | New stream for the sibling: same kind, options and items with fresh ids; no schedule, ticks or suggestions                     |
+| Copy an archived template                                          | `404`                                                                                                                          |
+| Copy to a child the guardian isn't linked to                       | `404`                                                                                                                          |
+| Copy by the source's child                                         | `403`                                                                                                                          |
+| Evening card before `eveningBeforeFrom`, or with every item ticked | The list doesn't appear; the card is hidden when no list does                                                                  |
+| Evening card after midnight                                        | Tomorrow's list is now today's; it leaves the card and shows under "tasks today"                                               |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | High -- no new aggregate or schema, but five new events and six new slices (one checklist-options slice, four suggestion slices with their own outcome union and three `409` codes, and a copy slice), additive fields on two events (`TaskTemplateCreated`, `Subtask`), behaviour changes in two shared hot paths (`CalendarOccurrenceExpansion`, `SetTaskCompletionHandler` incl. the star rule) plus `ArchiveTaskTemplate` and the TaskLibrary eraser/exporter (first masking rule in the store), a checklist mode, a suggestion panel and a copy action in the task library editor, an evening section and a suggestion sheet on the child home, a dashboard pill and an evening dashboard card |
-| Single developer | 11-15 days (6-9 for the checklist itself, 3-4 for suggestions, about the size of reward redemption's request/approve half, 1 for the copy slice and its picker, 1 for the evening card) |
-| AI agent | 6-9 hours, plus about 3.5 hours of human review (the expansion and completion changes touch every routine; the erasure path for an inherited list needs a careful read) |
+|                  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | High -- no new aggregate or schema, but five new events and six new slices (one checklist-options slice, four suggestion slices with their own outcome union and three `409` codes, and a copy slice), additive fields on two events (`TaskTemplateCreated`, `Subtask`), behaviour changes in two shared hot paths (`CalendarOccurrenceExpansion`, `SetTaskCompletionHandler` incl. the star rule) plus `ArchiveTaskTemplate` and the TaskLibrary eraser/exporter (first masking rule in the store), a checklist mode, a suggestion panel and a copy action in the task library editor, an evening section and a suggestion sheet on the child home, a dashboard pill and an evening dashboard card |
+| Single developer | 11-15 days (6-9 for the checklist itself, 3-4 for suggestions, about the size of reward redemption's request/approve half, 1 for the copy slice and its picker, 1 for the evening card)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| AI agent         | 6-9 hours, plus about 3.5 hours of human review (the expansion and completion changes touch every routine; the erasure path for an inherited list needs a careful read)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Reuse or new aggregate? | Reuse: a `Checklist` kind of `TaskTemplate`, scheduled and ticked with the existing calendar slices |
-| How is a checklist told apart? | Explicit `TaskTemplateKind`, fixed at creation, trailing default parameter on `TaskTemplateCreated` |
-| Item durations | Zero for checklist items, positive for routine steps; rule moves into the handlers |
-| Items on some weekdays | `Subtask.Weekdays` (reused `[Flags] Weekdays`), filtered at expansion; offered in the UI for checklists |
-| Timing of a checklist occurrence | All items `Due` at the scheduled "leave by" time |
-| Evening before | `ChecklistOptions.EveningBeforeFrom` on the template; client shows tomorrow's list from then; server allows ticks up to one day ahead for checklists only |
-| Tick-off state | Existing `CompletionLog` per `(date, subtask)`; no new storage |
-| Stars | One `WholeTask` star per fully packed occurrence, revoked on un-tick; no per-item stars (settled by the user 2026-10-11) |
-| Per-item stars as a per-template option? | No; one star per list (settled by the user 2026-10-11). A `ChecklistOptions.StarPerItem` would still be additive |
-| Who edits / ticks | Guardian manages (existing `Manage`); child reads and ticks their own; the child suggests, a guardian approves |
-| Can a child suggest items? | Yes, in v1: the child suggests, a guardian approves or declines, modelled on reward requests (settled by the user 2026-10-11) |
-| Where suggestions live | On the `TaskTemplate` stream as four events; approval appends `SubtaskAdded` + the approval atomically under the existing optimistic concurrency. A per-child stream, a per-suggestion stream and a plain document were rejected |
-| Suggestion routes and access | `POST /task-templates/{templateId}/suggestions[/{id}/withdraw\|approve\|decline]`; suggest/withdraw owning child only, approve/decline `Manage`; wrong tier `403`, no relationship `404`; no `/me` routes, because the template id already names the owner |
-| Suggestion limits | Title 1-200 chars like `AddSubtaskValidator`; optional weekdays; at most 5 pending per list (`409 too_many_pending_suggestions`); pending duplicate is an idempotent `200`; existing item is `409 checklist_item_exists` |
-| What approval does | Adds a zero-duration item with the guardian's confirmed title and weekdays (pre-filled from the child's proposal, no server fallback), icon inherited |
-| Resolutions | Repeat is idempotent `200`; a different one is `409 suggestion_resolved`; outcomes in a `ChecklistSuggestionOutcome` union |
-| Archive with suggestions pending | `ArchiveTaskTemplate` declines them in the same append |
-| Child's view | Pending chips with withdraw, then "Added to your list" / "Not added this time" for three days (client-side); no decline reason in v1 |
-| Guardian's view | "Packing suggestions: N" pill on the children overview, and a panel in the task library (`?child=` preselect) |
-| GDPR for suggestions | Exported in full under "taskLibrary"; deleted with the stream, or withdrawn and title-masked when the list passes to an heir |
-| Per child or shared | Per child (template ownership); scheduled item may sit on a group calendar |
-| Link to calendar events | Not in v1; weekday items cover fixed activities (settled by the user 2026-10-13) |
-| Printing | Existing `TaskChecklist` row with subtasks; no new row kind |
-| Feature flag | None new; under `Features:TaskLibrary` |
-| i18n | New en+da keys in `task-library.ts`, `child.ts` and `dashboard.ts`; item titles untranslated |
-| Copy a template to a sibling? | Yes, in this feature: `CopyTaskTemplate`, `POST /task-templates/{templateId}/copy` `{ childId }`, for routines and checklists; Manage on the source and the target child; copies title, kind, items and checklist options with fresh ids, not schedules, ticks or suggestions; no `409` (settled by the user 2026-10-13) |
-| Evening card on the guardian dashboard? | Yes: "Packing for tomorrow" from `EveningBeforeFrom` until midnight, per child, linking to the task library; computed in the frontend from `ListOccurrences` like "tasks today", no new query (settled by the user 2026-10-13) |
-| Reason on a declined suggestion? | No, not in v1; an optional `Note` on `ChecklistItemSuggestionDeclined` would be additive (settled by the user 2026-10-13) |
-| Per-step weekdays for routines in the UI? | Hidden for routines in v1; the backend accepts them for both kinds (settled by the user 2026-10-13) |
-| Title filter on the `TaskChecklist` print row? | Not in v1; add if a family asks (settled by the user 2026-10-13) |
-| Sub-flag for packing lists? | No; `Features:TaskLibrary` covers them (settled by the user 2026-10-13) |
-| Star when a guardian edit completes a list without a tick? | Accepted gap: stars are recomputed only on a tick (settled by the user 2026-10-13) |
-| Expiry for pending suggestions? | No; the cap of five bounds them (settled by the user 2026-10-13) |
+| Question                                                   | Decision                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Reuse or new aggregate?                                    | Reuse: a `Checklist` kind of `TaskTemplate`, scheduled and ticked with the existing calendar slices                                                                                                                                                                                                                      |
+| How is a checklist told apart?                             | Explicit `TaskTemplateKind`, fixed at creation, trailing default parameter on `TaskTemplateCreated`                                                                                                                                                                                                                      |
+| Item durations                                             | Zero for checklist items, positive for routine steps; rule moves into the handlers                                                                                                                                                                                                                                       |
+| Items on some weekdays                                     | `Subtask.Weekdays` (reused `[Flags] Weekdays`), filtered at expansion; offered in the UI for checklists                                                                                                                                                                                                                  |
+| Timing of a checklist occurrence                           | All items `Due` at the scheduled "leave by" time                                                                                                                                                                                                                                                                         |
+| Evening before                                             | `ChecklistOptions.EveningBeforeFrom` on the template; client shows tomorrow's list from then; server allows ticks up to one day ahead for checklists only                                                                                                                                                                |
+| Tick-off state                                             | Existing `CompletionLog` per `(date, subtask)`; no new storage                                                                                                                                                                                                                                                           |
+| Stars                                                      | One `WholeTask` star per fully packed occurrence, revoked on un-tick; no per-item stars (settled by the user 2026-10-11)                                                                                                                                                                                                 |
+| Per-item stars as a per-template option?                   | No; one star per list (settled by the user 2026-10-11). A `ChecklistOptions.StarPerItem` would still be additive                                                                                                                                                                                                         |
+| Who edits / ticks                                          | Guardian manages (existing `Manage`); child reads and ticks their own; the child suggests, a guardian approves                                                                                                                                                                                                           |
+| Can a child suggest items?                                 | Yes, in v1: the child suggests, a guardian approves or declines, modelled on reward requests (settled by the user 2026-10-11)                                                                                                                                                                                            |
+| Where suggestions live                                     | On the `TaskTemplate` stream as four events; approval appends `SubtaskAdded` + the approval atomically under the existing optimistic concurrency. A per-child stream, a per-suggestion stream and a plain document were rejected                                                                                         |
+| Suggestion routes and access                               | `POST /task-templates/{templateId}/suggestions[/{id}/withdraw\|approve\|decline]`; suggest/withdraw owning child only, approve/decline `Manage`; wrong tier `403`, no relationship `404`; no `/me` routes, because the template id already names the owner                                                               |
+| Suggestion limits                                          | Title 1-200 chars like `AddSubtaskValidator`; optional weekdays; at most 5 pending per list (`409 too_many_pending_suggestions`); pending duplicate is an idempotent `200`; existing item is `409 checklist_item_exists`                                                                                                 |
+| What approval does                                         | Adds a zero-duration item with the guardian's confirmed title and weekdays (pre-filled from the child's proposal, no server fallback), icon inherited                                                                                                                                                                    |
+| Resolutions                                                | Repeat is idempotent `200`; a different one is `409 suggestion_resolved`; outcomes in a `ChecklistSuggestionOutcome` union                                                                                                                                                                                               |
+| Archive with suggestions pending                           | `ArchiveTaskTemplate` declines them in the same append                                                                                                                                                                                                                                                                   |
+| Child's view                                               | Pending chips with withdraw, then "Added to your list" / "Not added this time" for three days (client-side); no decline reason in v1                                                                                                                                                                                     |
+| Guardian's view                                            | "Packing suggestions: N" pill on the children overview, and a panel in the task library (`?child=` preselect)                                                                                                                                                                                                            |
+| GDPR for suggestions                                       | Exported in full under "taskLibrary"; deleted with the stream, or withdrawn and title-masked when the list passes to an heir                                                                                                                                                                                             |
+| Per child or shared                                        | Per child (template ownership); scheduled item may sit on a group calendar                                                                                                                                                                                                                                               |
+| Link to calendar events                                    | Not in v1; weekday items cover fixed activities (settled by the user 2026-10-13)                                                                                                                                                                                                                                         |
+| Printing                                                   | Existing `TaskChecklist` row with subtasks; no new row kind                                                                                                                                                                                                                                                              |
+| Feature flag                                               | None new; under `Features:TaskLibrary`                                                                                                                                                                                                                                                                                   |
+| i18n                                                       | New en+da keys in `task-library.ts`, `child.ts` and `dashboard.ts`; item titles untranslated                                                                                                                                                                                                                             |
+| Copy a template to a sibling?                              | Yes, in this feature: `CopyTaskTemplate`, `POST /task-templates/{templateId}/copy` `{ childId }`, for routines and checklists; Manage on the source and the target child; copies title, kind, items and checklist options with fresh ids, not schedules, ticks or suggestions; no `409` (settled by the user 2026-10-13) |
+| Evening card on the guardian dashboard?                    | Yes: "Packing for tomorrow" from `EveningBeforeFrom` until midnight, per child, linking to the task library; computed in the frontend from `ListOccurrences` like "tasks today", no new query (settled by the user 2026-10-13)                                                                                           |
+| Reason on a declined suggestion?                           | No, not in v1; an optional `Note` on `ChecklistItemSuggestionDeclined` would be additive (settled by the user 2026-10-13)                                                                                                                                                                                                |
+| Per-step weekdays for routines in the UI?                  | Hidden for routines in v1; the backend accepts them for both kinds (settled by the user 2026-10-13)                                                                                                                                                                                                                      |
+| Title filter on the `TaskChecklist` print row?             | Not in v1; add if a family asks (settled by the user 2026-10-13)                                                                                                                                                                                                                                                         |
+| Sub-flag for packing lists?                                | No; `Features:TaskLibrary` covers them (settled by the user 2026-10-13)                                                                                                                                                                                                                                                  |
+| Star when a guardian edit completes a list without a tick? | Accepted gap: stars are recomputed only on a tick (settled by the user 2026-10-13)                                                                                                                                                                                                                                       |
+| Expiry for pending suggestions?                            | No; the cap of five bounds them (settled by the user 2026-10-13)                                                                                                                                                                                                                                                         |
 
 ## Remaining open questions
 

@@ -66,7 +66,7 @@ sequenceDiagram
     API-->>App: 200 OK
 ```
 
-### Reward redemption
+## Reward redemption
 
 ```mermaid
 sequenceDiagram
@@ -105,16 +105,16 @@ the child) follow the approve shape without the star check, and release the rese
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `GET` | `/progress/me` | Returns the caller's own star count, unlocked milestones, and resolved goal-post info. Self-only: it always resolves the child from the caller's own claims. |
-| `GET` | `/progress/children/{childId}` | Returns one named child's star count, unlocked milestones, and resolved goal-post info. Read-only guardian-facing view; see "Authorization model" below. |
-| `PUT` | `/progress/children/{childId}/goals` | Guardian-only. Replaces the child's full ordered list of goal posts (`Threshold`, `Icon`, optional `Label`). Full-replace, not a partial update; see "Authorization model" below. |
-| `PUT` | `/progress/children/{childId}/rewards` | Guardian-only. Replaces the child's reward catalog (`Name`, `Icon`, `Cost`, and the `Id` of a reward being kept). An unknown `Id` is `400`. |
-| `POST` | `/progress/me/reward-requests` | The caller asks for one of their own rewards. `409 insufficient_stars` past the spendable balance, `409 too_many_pending_requests` at 10 pending, `404` for a reward not in the catalog. |
-| `POST` | `/progress/me/reward-requests/{requestId}/cancel` | The caller withdraws their own pending request. |
-| `POST` | `/progress/children/{childId}/reward-requests/{requestId}/approve` | Guardian-only. Spends the request's cost; `409 insufficient_stars` if revoked stars left too few. |
-| `POST` | `/progress/children/{childId}/reward-requests/{requestId}/decline` | Guardian-only. Releases the reservation. |
+| Method | Route                                                              | Behavior                                                                                                                                                                                 |
+| ------ | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/progress/me`                                                     | Returns the caller's own star count, unlocked milestones, and resolved goal-post info. Self-only: it always resolves the child from the caller's own claims.                             |
+| `GET`  | `/progress/children/{childId}`                                     | Returns one named child's star count, unlocked milestones, and resolved goal-post info. Read-only guardian-facing view; see "Authorization model" below.                                 |
+| `PUT`  | `/progress/children/{childId}/goals`                               | Guardian-only. Replaces the child's full ordered list of goal posts (`Threshold`, `Icon`, optional `Label`). Full-replace, not a partial update; see "Authorization model" below.        |
+| `PUT`  | `/progress/children/{childId}/rewards`                             | Guardian-only. Replaces the child's reward catalog (`Name`, `Icon`, `Cost`, and the `Id` of a reward being kept). An unknown `Id` is `400`.                                              |
+| `POST` | `/progress/me/reward-requests`                                     | The caller asks for one of their own rewards. `409 insufficient_stars` past the spendable balance, `409 too_many_pending_requests` at 10 pending, `404` for a reward not in the catalog. |
+| `POST` | `/progress/me/reward-requests/{requestId}/cancel`                  | The caller withdraws their own pending request.                                                                                                                                          |
+| `POST` | `/progress/children/{childId}/reward-requests/{requestId}/approve` | Guardian-only. Spends the request's cost; `409 insufficient_stars` if revoked stars left too few.                                                                                        |
+| `POST` | `/progress/children/{childId}/reward-requests/{requestId}/decline` | Guardian-only. Releases the reservation.                                                                                                                                                 |
 
 Every route returns the updated `ProgressSummary`, which also carries `SpendableStars`, `SpentStars`,
 the catalog and the reward requests (pending first, then the 20 most recently resolved). Repeating the

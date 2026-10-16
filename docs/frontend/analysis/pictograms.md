@@ -98,7 +98,7 @@ Considered and rejected:
 aggregates, snapshots, DTOs and the OpenAPI wire type don't change. The backend validates the
 format, not the catalogue.**
 
-```
+```text
 Icon.Value
     "🪥"                 // emoji, as today
     "pictogram:brush-teeth"    // pictogram: prefix + kebab-case slug = file name without .svg
@@ -254,7 +254,7 @@ a _Pictures_ button beside it. The button opens a popover with a search box and 
 pictogram with its translated name. A chosen pictogram replaces the input with its picture, its
 name and a remove button. It replaces the plain icon inputs on the surfaces in Question 5.**
 
-```
+```text
 [ 🪥     ] [🖼️ Pictures]                    today's input, same name/label/placeholder
               ┌──────────────────────────┐
               │ [ search "teeth"       ] │ role="dialog", focus moves to the search

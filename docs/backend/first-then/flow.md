@@ -1,7 +1,7 @@
 # First–Then Flow
 
 A guardian pairs a task the child finds hard with something they look forward to ("first homework,
-then iPad"). The child sees both cards, taps *Done* on the first, and the second opens, with an
+then iPad"). The child sees both cards, taps _Done_ on the first, and the second opens, with an
 optional countdown. Design: [first-then-board.md](../analysis/first-then-board.md).
 
 One aggregate in the `firstthen` schema:
@@ -59,15 +59,15 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `GET` | `/first-then/children/{childId}` | The board plus the recent cards (`GuardianFirstThenResponse`); `State = None, Revision = 0` before the first set |
-| `PUT` | `/first-then/children/{childId}` | Set (or replace) the board; `400` on titles outside 1–60 characters, a missing emoji or `thenMinutes` outside 5–120 |
-| `POST` | `/first-then/children/{childId}/first/complete` | `Waiting` → `Unlocked`; no-op when already unlocked; `404` with no board |
-| `POST` | `/first-then/children/{childId}/first/reopen` | `Unlocked` → `Waiting`; no-op when waiting; `404` with no board |
-| `POST` | `/first-then/children/{childId}/end` | → `None`; no-op with no board |
-| `GET` | `/first-then/me` | The child's own board (no recent cards) |
-| `POST` | `/first-then/me/first/complete`, `/me/first/reopen`, `/me/end` | The same actions on the child's own board |
+| Method | Route                                                          | Behavior                                                                                                            |
+| ------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/first-then/children/{childId}`                               | The board plus the recent cards (`GuardianFirstThenResponse`); `State = None, Revision = 0` before the first set    |
+| `PUT`  | `/first-then/children/{childId}`                               | Set (or replace) the board; `400` on titles outside 1–60 characters, a missing emoji or `thenMinutes` outside 5–120 |
+| `POST` | `/first-then/children/{childId}/first/complete`                | `Waiting` → `Unlocked`; no-op when already unlocked; `404` with no board                                            |
+| `POST` | `/first-then/children/{childId}/first/reopen`                  | `Unlocked` → `Waiting`; no-op when waiting; `404` with no board                                                     |
+| `POST` | `/first-then/children/{childId}/end`                           | → `None`; no-op with no board                                                                                       |
+| `GET`  | `/first-then/me`                                               | The child's own board (no recent cards)                                                                             |
+| `POST` | `/first-then/me/first/complete`, `/me/first/reopen`, `/me/end` | The same actions on the child's own board                                                                           |
 
 The actions are idempotent by design, so they take no `Idempotency-Key`. All routes are mapped only
 when `Features:FirstThen` is on (`404` otherwise).

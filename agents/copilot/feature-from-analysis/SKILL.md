@@ -1,4 +1,3 @@
-
 # Feature from analysis doc
 
 Goal: take one analysis doc from a written design to a shipped, tested feature, with the docs
@@ -12,16 +11,16 @@ to stop after step 3.
 This skill coordinates other project skills and doesn't repeat their conventions. Consult the
 matching sibling skill doc when its step starts:
 
-| Skill | Used for |
-|---|---|
-| `agents/copilot/claude-backend/SKILL.md` | backend conventions (vertical slices, Marten event sourcing, Result<T>, ids) |
-| `agents/copilot/backend-feature/SKILL.md` | one backend vertical slice plus its integration tests |
-| `agents/copilot/buddy-frontend/SKILL.md` | Angular conventions: service in `core/`, standalone components, routes, specs |
-| `agents/copilot/i18n/SKILL.md` | en and da strings and the parity check |
-| `agents/copilot/e2e-test/SKILL.md` | Playwright specs in `src/frontend/buddy/e2e/` |
-| `agents/copilot/run-buddy/SKILL.md` | launch the app to look at the feature |
-| `agents/copilot/doc-screenshots/SKILL.md` | add the feature's pages to the documentation screenshots |
-| `agents/copilot/backend-aware-review/SKILL.md` | review the finished diff |
+| Skill                                          | Used for                                                                      |
+| ---------------------------------------------- | ----------------------------------------------------------------------------- |
+| `agents/copilot/claude-backend/SKILL.md`       | backend conventions (vertical slices, Marten event sourcing, Result<T>, ids)  |
+| `agents/copilot/backend-feature/SKILL.md`      | one backend vertical slice plus its integration tests                         |
+| `agents/copilot/buddy-frontend/SKILL.md`       | Angular conventions: service in `core/`, standalone components, routes, specs |
+| `agents/copilot/i18n/SKILL.md`                 | en and da strings and the parity check                                        |
+| `agents/copilot/e2e-test/SKILL.md`             | Playwright specs in `src/frontend/buddy/e2e/`                                 |
+| `agents/copilot/run-buddy/SKILL.md`            | launch the app to look at the feature                                         |
+| `agents/copilot/doc-screenshots/SKILL.md`      | add the feature's pages to the documentation screenshots                      |
+| `agents/copilot/backend-aware-review/SKILL.md` | review the finished diff                                                      |
 
 If one of those companion skill packages isn't available yet, follow the existing code next to where you're working and say
 in the final report that the package was missing.
@@ -58,7 +57,7 @@ Docs that are strategy rather than features (`integration-testing-strategy.md`,
 - Check the doc against the code. Docs go stale: confirm the types, routes and files it names
   still exist (`grep`/`Glob`), and note where they don't.
 
-## 2. Confirm open questions with the user. Don't skip this.
+## 2. Confirm open questions with the user. Don't skip this
 
 Collect, in one message:
 
@@ -159,8 +158,8 @@ Follow "When it ships" in [references/analysis-doc-template.md](references/analy
 In short:
 
 - Change the doc's `Status:` line to `Status: Implemented. <what shipped: types, commands, routes,
-  screens>`. If only part shipped, say which part (`Implemented (core logging; share links not yet
-  built)`). Fix any part of the doc that the implementation contradicts. Settled open questions
+screens>`. If only part shipped, say which part (`Implemented (core logging; share links not yet
+built)`). Fix any part of the doc that the implementation contradicts. Settled open questions
   become `## Decisions made` rows.
 - In the root `README.md`, tick the Features checkbox (`- [ ]` → `- [x]`) and drop the
   "(proposed, not yet implemented — see ...)" parenthetical, unless only part shipped. Move the

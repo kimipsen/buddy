@@ -3,7 +3,7 @@
 Status: Implemented
 
 Both tracks below were adopted together rather than Track A alone: the team
-chose to adopt FluentValidation for command validation *and* build the
+chose to adopt FluentValidation for command validation _and_ build the
 structured error envelope, combined into one coherent change (see the
 implementation plan this analysis fed into, summarized in the "Recommendation"
 section's Track A/Track B split — both were done).
@@ -100,14 +100,14 @@ feature needs it.
 
 ## Question 1: is a validation framework necessary?
 
-The rule *shapes* present (required, range, fixed-set lookup, cross-field,
+The rule _shapes_ present (required, range, fixed-set lookup, cross-field,
 async DB-relationship) are exactly what frameworks like FluentValidation are
 built for. But the current pain isn't "the mechanism is broken" — every
 validation failure already funnels through one consistent path
 (`Result<T>.Validation` → `BadRequest`). The concrete problems are narrower:
 
 1. Two real coverage gaps: no length limits, no email format check.
-2. Duplicated logic *within the same technical shape* across features
+2. Duplicated logic _within the same technical shape_ across features
    (date-range, resend cooldown, non-blank-name) — copy-paste, not a missing
    abstraction layer.
 3. An inconsistent line between endpoint-layer and handler-layer checks.
@@ -148,7 +148,7 @@ enum-conditional required fields.
    This codebase's own docs (`pickup-schedules.md`) explicitly reject that
    kind of cross-feature reuse for business rules, on purpose, to preserve
    vertical-slice boundaries. Most of what's actually duplicated here
-   (date-range, resend cooldown, non-blank-name) is generic *technical*
+   (date-range, resend cooldown, non-blank-name) is generic _technical_
    validation, not a domain concept — it doesn't need FluentValidation's
    cross-cutting machinery to be shared; a plain static helper is enough.
 4. **Single-message outcomes.** `Result<T>.Validation` and the per-feature
@@ -171,7 +171,7 @@ for the actual gaps.
 
 1. Add the two missing checks: max-length caps on free-text fields, and an
    email format check in `UpdateEmail`.
-2. Extract the duplicated *technical* (non-domain) checks into small shared
+2. Extract the duplicated _technical_ (non-domain) checks into small shared
    helpers — a `DateRange` check, a non-blank/max-length string check, a
    resend-cooldown check — likely under `Common/Validation/`. This is safe
    to centralize precisely because it isn't a domain concept (unlike the

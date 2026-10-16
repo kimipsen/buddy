@@ -104,7 +104,7 @@ This document answers seven questions:
 as a flat kind discriminator, and `RuleBookId.Value` equals the scope's id (`ChildId.Value` or
 `GroupId.Value`). There is no index document.**
 
-```
+```text
 RuleBook(
     RuleBookId Id,                  // Id.Value == ScopeId (ChildId.Value or GroupId.Value)
     RuleBookScopeKind ScopeKind,    // Child | Group
@@ -144,7 +144,7 @@ guardian" can't tell two homes apart. A child whose parents live apart has one f
 that rule but two households. `MealFamilyResolution` also stops at one hop deliberately, to
 avoid merging blended families. Household rules are exactly the case where that ambiguity
 matters, and `Group` already models "the people in this home, with roles". This makes it the
-first feature whose family-wide data is *owned* by a group instead of being *shared with*
+first feature whose family-wide data is _owned_ by a group instead of being _shared with_
 one (compare [group-owned-mealplans.md](group-owned-mealplans.md), where the plan stays
 family-owned).
 
@@ -163,7 +163,7 @@ access to the scope.
 **Decision: a rule is a short title plus a markdown body. It has a revision counter, and a
 separate revision number that records when acknowledgement was last required.**
 
-```
+```text
 Rule(
     RuleId Id,                       // UUIDv7, like SubtaskId
     string Title,                    // 1--100 chars, plain text, shown as the heading
@@ -210,16 +210,16 @@ keeping, so the renderer is designed around it.
 
 ### Supported markdown
 
-| Supported (rendered) | Not supported (shown as plain text) |
-|---|---|
-| Headings `###`--`######` (`#`/`##` drop to `###` so they don't compete with the rule title) | Raw HTML (`<b>`, `<script>`, `<img>`) |
-| Paragraphs, line breaks | Images `![...](...)`: no tracking pixels, and the CSP has `img-src 'self' data:` |
-| **bold**, *italic*, ~~strikethrough~~, `inline code` | Footnotes, math, embeds |
-| Bulleted and numbered lists, nested | Reference-style link definitions (still parsed, rendered as links) |
-| GFM task lists `- [ ]` / `- [x]`, rendered read-only | |
-| GFM tables, with column alignment | |
-| Block quotes, horizontal rules | |
-| Links, `http:`, `https:` and `mailto:` only, opened with `rel="noopener noreferrer"` and `target="_blank"` | |
+| Supported (rendered)                                                                                       | Not supported (shown as plain text)                                              |
+| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Headings `###`--`######` (`#`/`##` drop to `###` so they don't compete with the rule title)                | Raw HTML (`<b>`, `<script>`, `<img>`)                                            |
+| Paragraphs, line breaks                                                                                    | Images `![...](...)`: no tracking pixels, and the CSP has `img-src 'self' data:` |
+| **bold**, _italic_, ~~strikethrough~~, `inline code`                                                       | Footnotes, math, embeds                                                          |
+| Bulleted and numbered lists, nested                                                                        | Reference-style link definitions (still parsed, rendered as links)               |
+| GFM task lists `- [ ]` / `- [x]`, rendered read-only                                                       |                                                                                  |
+| GFM tables, with column alignment                                                                          |                                                                                  |
+| Block quotes, horizontal rules                                                                             |                                                                                  |
+| Links, `http:`, `https:` and `mailto:` only, opened with `rel="noopener noreferrer"` and `target="_blank"` |                                                                                  |
 
 A token type outside the allow list is rendered as its source text. This includes raw `html`
 tokens and links with any other scheme, such as `javascript:`. Rendering them as text is
@@ -268,18 +268,18 @@ export and the event store.
 **Decision: two scopes and three tiers, `Manage`, `View` and `Acknowledge`. Anyone else gets
 `NotFound`.**
 
-```
+```text
 enum HouseRulesAccessTier { None, View, Acknowledge, Manage }
 enum HouseRulesAccess { Allowed, NotFound, Forbidden }
 ```
 
-| Scope | Tier | Who | Actions |
-|---|---|---|---|
-| Child book | **Manage** | An active guardian of the child (`FindActiveLinkAsync`) | Add, edit, remove and reorder rules; see who acknowledged what |
-| Child book | **Acknowledge** | The child (`callerId == ChildId`) | Read; acknowledge a rule |
-| Group book | **Manage** | A group `Owner`/`Admin` (`GroupAuthorization.CheckManage`) who is not a child | Same as above |
-| Group book | **Acknowledge** | A child who is a group `Member` | Read; acknowledge a rule |
-| Group book | **View** | A non-child group `Member` (for example a grandparent or a co-parent without admin rights) | Read, including acknowledgement status |
+| Scope      | Tier            | Who                                                                                        | Actions                                                        |
+| ---------- | --------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Child book | **Manage**      | An active guardian of the child (`FindActiveLinkAsync`)                                    | Add, edit, remove and reorder rules; see who acknowledged what |
+| Child book | **Acknowledge** | The child (`callerId == ChildId`)                                                          | Read; acknowledge a rule                                       |
+| Group book | **Manage**      | A group `Owner`/`Admin` (`GroupAuthorization.CheckManage`) who is not a child              | Same as above                                                  |
+| Group book | **Acknowledge** | A child who is a group `Member`                                                            | Read; acknowledge a rule                                       |
+| Group book | **View**        | A non-child group `Member` (for example a grandparent or a co-parent without admin rights) | Read, including acknowledgement status                         |
 
 **Same structure as the existing authorization classes.** `HouseRulesAuthorization` mirrors
 [MedicineAuthorization.cs](../../../src/backend/buddy/Features/Medicines/MedicineAuthorization.cs):
@@ -316,7 +316,7 @@ questions).
 **Guardians of a child in a group they don't administer.** Suppose a co-parent is a plain
 `Member` of the other home's group. They can read that home's rules, which is the point of
 having two households. They can't edit them; only that home's admins can. A child's
-*personal* rule book is different: any active guardian of the child manages it, whichever
+_personal_ rule book is different: any active guardian of the child manages it, whichever
 home they live in. Separated parents therefore share one personal rule book for the child.
 That matches how `SleepDiary` and `MedicineSchedule` already treat every active guardian the
 same.
@@ -327,7 +327,7 @@ same.
 an event on the rule book's own stream. A rule is "agreed" by a child when their acknowledged
 revision is at least the rule's `AcknowledgementRevision`.**
 
-```
+```text
 Acknowledgements: ImmutableDictionary<(RuleId Rule, UserId Child), int AcknowledgedRevision>
 
 isUpToDate(rule, child) = Acknowledgements.TryGetValue((rule.Id, child), out var r)
@@ -367,7 +367,7 @@ isUpToDate(rule, child) = Acknowledgements.TryGetValue((rule.Id, child), out var
 personal rules plus the rules of every group they are a `Member` of, each section labelled
 with its group name. The child area and the print page both use it.**
 
-```
+```text
 GET /house-rules/children/{childId}
   -> ChildRulesView(
        ChildRuleSection Personal,
@@ -385,7 +385,7 @@ As built, the personal section's `Label` is the child's given name, and the resp
 carries `ChildId`. `ListRules` returns one book with the caller's tier and the children whose
 status it tracks:
 
-```
+```text
 RuleBookResponse(RuleBookScopeKind ScopeKind, Guid ScopeId, HouseRulesAccessTier Access,
                  IReadOnlyList<Guid> Children, IReadOnlyList<RuleResponse> Rules)
 RuleResponse(RuleId Id, string Title, string Body, int Revision, int AcknowledgementRevision,
@@ -418,7 +418,7 @@ RuleAcknowledgementResponse(Guid ChildId, int? AcknowledgedRevision, bool IsUpTo
 
 ### Events
 
-```
+```text
 RuleBookStarted(RuleBookId Id, RuleBookScopeKind ScopeKind, Guid ScopeId,
     UserId StartedBy, DateTimeOffset OccurredAt)
     // appended with the first RuleAdded for a scope, never on its own
@@ -470,19 +470,19 @@ The group route's endpoint name ends in `ForGroup` (`AddRuleForGroup`), as mealp
 `AddRule`, `EditRule` and `ReorderRules` return the whole book. `RemoveRule` and
 `AcknowledgeRule` return `204`.
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `AddRule` | Manage | Appends `RuleBookStarted` too on first use. Max 50 rules. `postIdempotent` from the client |
-| `EditRule` | Manage | `{ title, body, requireReacknowledgement }`. Identical content → no event |
-| `RemoveRule` | Manage | Idempotent: an unknown `ruleId` returns `Success` with no event |
-| `ReorderRules` | Manage | Body is the full ordered id list. A list that isn't a permutation → `400` |
-| `ListRules` | View | One book with per-child acknowledgement status. `View` and `Manage` see the status; a child gets a `View`-shaped result with only their own status |
-| `AcknowledgeRule` | Acknowledge (self) / Manage (on behalf) | `{ revision, childId? }`. A stale revision → `409 house_rule_revision_changed` |
-| `GetChildRules` | Acknowledge (self) / Manage (guardian) | The combined child view from Question 7 |
+| Slice             | Tier                                    | Notes                                                                                                                                              |
+| ----------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AddRule`         | Manage                                  | Appends `RuleBookStarted` too on first use. Max 50 rules. `postIdempotent` from the client                                                         |
+| `EditRule`        | Manage                                  | `{ title, body, requireReacknowledgement }`. Identical content → no event                                                                          |
+| `RemoveRule`      | Manage                                  | Idempotent: an unknown `ruleId` returns `Success` with no event                                                                                    |
+| `ReorderRules`    | Manage                                  | Body is the full ordered id list. A list that isn't a permutation → `400`                                                                          |
+| `ListRules`       | View                                    | One book with per-child acknowledgement status. `View` and `Manage` see the status; a child gets a `View`-shaped result with only their own status |
+| `AcknowledgeRule` | Acknowledge (self) / Manage (on behalf) | `{ revision, childId? }`. A stale revision → `409 house_rule_revision_changed`                                                                     |
+| `GetChildRules`   | Acknowledge (self) / Manage (guardian)  | The combined child view from Question 7                                                                                                            |
 
 ## Routes
 
-```
+```text
 POST   /house-rules/children/{childId}/rules                         AddRule
 POST   /house-rules/groups/{groupId}/rules                           AddRule
 PUT    /house-rules/{children/{childId}|groups/{groupId}}/rules/{ruleId}                   EditRule
@@ -500,7 +500,7 @@ cheaply.
 
 ## Privacy (GDPR)
 
-Rules are written *about* children, so they are personal data. `HouseRulesPersonalData`
+Rules are written _about_ children, so they are personal data. `HouseRulesPersonalData`
 registers an `IPersonalDataEraser` and an `IPersonalDataExporter`
 ([IPersonalDataEraser.cs](../../../src/backend/buddy/Common/Erasure/IPersonalDataEraser.cs)).
 The meta tests in `PersonalDataEraserCoverageTests` require both.
@@ -541,12 +541,12 @@ again.
 
 ### Backend
 
-| File | Change |
-|---|---|
+| File                                                                                  | Change                                                                                                                                            |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [FeatureOptions.cs](../../../src/backend/buddy/Common/FeatureFlags/FeatureOptions.cs) | `public bool HouseRules { get; set; } = true;`, a `HouseRules` argument in `Effective()`, and a `bool HouseRules` field on `InstallationFeatures` |
-| [Program.cs](../../../src/backend/buddy/Program.cs) | `if (features.HouseRules) { app.MapHouseRulesFeature(); }`, next to the `SleepDiary` block |
-| `FeatureFlagsTests` / `FeatureOptionsTests` | A disabled flag returns `404` for a `/house-rules` route; `GET /features` reports `houseRules` |
-| `task docs:openapi` | Regenerates `InstallationFeatures` in `buddy.json` and `buddy-api.ts`, so `FeatureName` gets `'houseRules'` |
+| [Program.cs](../../../src/backend/buddy/Program.cs)                                   | `if (features.HouseRules) { app.MapHouseRulesFeature(); }`, next to the `SleepDiary` block                                                        |
+| `FeatureFlagsTests` / `FeatureOptionsTests`                                           | A disabled flag returns `404` for a `/house-rules` route; `GET /features` reports `houseRules`                                                    |
+| `task docs:openapi`                                                                   | Regenerates `InstallationFeatures` in `buddy.json` and `buddy-api.ts`, so `FeatureName` gets `'houseRules'`                                       |
 
 `HouseRules` is a top-level flag, not a sub-flag. It has no parent, so
 `SubFlagsOverriddenByParent` doesn't change. The print pages don't depend on `Features:Printing`:
@@ -557,16 +557,16 @@ pages are read-only views of `GetChildRules`/`ListRules` and belong to this feat
 
 When `features.enabled('houseRules')` is false, nothing in the UI points at the feature:
 
-| Place | How it is hidden | Precedent |
-|---|---|---|
-| `ALL_ON` in [features.service.ts](../../../src/frontend/buddy/src/app/core/features.service.ts) | Add `houseRules: true` (the typed record fails to compile without it) | every flag |
-| `/guardian/house-rules` in `guardian.routes.ts` | `canActivate: [featureGuard('houseRules')]` | `sleep-diary` route |
-| Both print routes (`/guardian/house-rules/print/...`) | `featureGuard('houseRules')` | `sleep-diary` route |
-| `/child/rules` in `child.routes.ts` | `featureGuard('houseRules')` | `mealplan` child route |
-| Guardian navigation link in [profile-menu.html](../../../src/frontend/buddy/src/app/features/guardian/shell/profile-menu/profile-menu.html) | `@if (features.enabled('houseRules'))` | the `sleepDiary` menu item |
-| "Rules to read" card on child home ([home.ts](../../../src/frontend/buddy/src/app/features/child/home/home.ts)) | Don't call `GetChildRules` and don't render the card | the `medicines`/`pickups` sections, which skip their load when off |
-| Help topic in [help-topics.ts](../../../src/frontend/buddy/src/app/core/help/help-topics.ts) | `feature: 'houseRules'` on the topic, filtered by `FeaturesService.offers` | `medicine`, `stars`, `printWeek` |
-| Group page or dashboard shortcuts to the rules (if added) | `@if (features.enabled('houseRules'))` | `dashboard.html` cards |
+| Place                                                                                                                                       | How it is hidden                                                           | Precedent                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `ALL_ON` in [features.service.ts](../../../src/frontend/buddy/src/app/core/features.service.ts)                                             | Add `houseRules: true` (the typed record fails to compile without it)      | every flag                                                         |
+| `/guardian/house-rules` in `guardian.routes.ts`                                                                                             | `canActivate: [featureGuard('houseRules')]`                                | `sleep-diary` route                                                |
+| Both print routes (`/guardian/house-rules/print/...`)                                                                                       | `featureGuard('houseRules')`                                               | `sleep-diary` route                                                |
+| `/child/rules` in `child.routes.ts`                                                                                                         | `featureGuard('houseRules')`                                               | `mealplan` child route                                             |
+| Guardian navigation link in [profile-menu.html](../../../src/frontend/buddy/src/app/features/guardian/shell/profile-menu/profile-menu.html) | `@if (features.enabled('houseRules'))`                                     | the `sleepDiary` menu item                                         |
+| "Rules to read" card on child home ([home.ts](../../../src/frontend/buddy/src/app/features/child/home/home.ts))                             | Don't call `GetChildRules` and don't render the card                       | the `medicines`/`pickups` sections, which skip their load when off |
+| Help topic in [help-topics.ts](../../../src/frontend/buddy/src/app/core/help/help-topics.ts)                                                | `feature: 'houseRules'` on the topic, filtered by `FeaturesService.offers` | `medicine`, `stars`, `printWeek`                                   |
+| Group page or dashboard shortcuts to the rules (if added)                                                                                   | `@if (features.enabled('houseRules'))`                                     | `dashboard.html` cards                                             |
 
 Tests: add `['guardian', guardianChildren, 'house-rules', 'houseRules']` and the child and
 print routes to [feature-routes.spec.ts](../../../src/frontend/buddy/src/app/feature-routes.spec.ts).
@@ -624,53 +624,53 @@ Frontend:
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Guardian opens a scope with no rules yet | `ListRules` returns an empty list, not `NotFound`. No stream until the first `AddRule` |
-| Title-only rule (empty body) | Allowed. Body `""` |
-| Body contains raw HTML or a `javascript:` link | Stored as typed. Rendered as plain text by the allow list |
-| 51st rule | `400` (`validation_error`, like every other handler-level check) |
-| `EditRule` with unchanged content | `Success`, no event, revision unchanged |
-| `RemoveRule` for an already removed rule | `Success`, no event (idempotent) |
-| `ReorderRules` with missing or extra ids | `400` |
+| Case                                                                 | Behavior                                                                                                                      |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Guardian opens a scope with no rules yet                             | `ListRules` returns an empty list, not `NotFound`. No stream until the first `AddRule`                                        |
+| Title-only rule (empty body)                                         | Allowed. Body `""`                                                                                                            |
+| Body contains raw HTML or a `javascript:` link                       | Stored as typed. Rendered as plain text by the allow list                                                                     |
+| 51st rule                                                            | `400` (`validation_error`, like every other handler-level check)                                                              |
+| `EditRule` with unchanged content                                    | `Success`, no event, revision unchanged                                                                                       |
+| `RemoveRule` for an already removed rule                             | `Success`, no event (idempotent)                                                                                              |
+| `ReorderRules` with missing or extra ids                             | `400`                                                                                                                         |
 | Guardian edits while a child is reading, child taps "I've read this" | `409 house_rule_revision_changed`. Client reloads and shows the new text. After a minor edit, the acknowledgement is accepted |
-| Guardian acknowledges for their child without naming the child | `400` |
-| Household admin acknowledges for a child they aren't a guardian of | `403` |
-| Child acknowledges a rule in a group they've been removed from | `NotFound` |
-| Child calls `AddRule`/`EditRule` on their own book | `Forbidden` (they can see it, but can't write) |
-| Adult group `Member` calls `AddRule` | `Forbidden` |
-| Guardian's `GuardianLink` is revoked | The personal book drops to `NotFound` immediately. Group books still follow group membership |
-| Group deleted | Its book is `NotFound` for everyone, and its section disappears from `GetChildRules` |
-| Concurrent edits by two guardians | Last write wins. Both are kept in the event history (`Before`/`After`) |
-| `Features:HouseRules = false` | Routes not mapped. Data and GDPR coverage stay, as for every flag |
+| Guardian acknowledges for their child without naming the child       | `400`                                                                                                                         |
+| Household admin acknowledges for a child they aren't a guardian of   | `403`                                                                                                                         |
+| Child acknowledges a rule in a group they've been removed from       | `NotFound`                                                                                                                    |
+| Child calls `AddRule`/`EditRule` on their own book                   | `Forbidden` (they can see it, but can't write)                                                                                |
+| Adult group `Member` calls `AddRule`                                 | `Forbidden`                                                                                                                   |
+| Guardian's `GuardianLink` is revoked                                 | The personal book drops to `NotFound` immediately. Group books still follow group membership                                  |
+| Group deleted                                                        | Its book is `NotFound` for everyone, and its section disappears from `GetChildRules`                                          |
+| Concurrent edits by two guardians                                    | Last write wins. Both are kept in the event history (`Before`/`After`)                                                        |
+| `Features:HouseRules = false`                                        | Routes not mapped. Data and GDPR coverage stay, as for every flag                                                             |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | High -- a new aggregate and Marten schema with six events, seven slices on dual child/group routes, a three-tier authorization over two scopes, GDPR erasure and export, the app's first markdown renderer and editor, and four new pages (guardian, child, two print pages) |
-| Single developer | 12-18 days |
-| AI agent | 6-10 hours, plus 3-5 hours of human review (the markdown allow list and the authorization matrix deserve a careful read) and settling the open questions |
+|                  |                                                                                                                                                                                                                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | High -- a new aggregate and Marten schema with six events, seven slices on dual child/group routes, a three-tier authorization over two scopes, GDPR erasure and export, the app's first markdown renderer and editor, and four new pages (guardian, child, two print pages) |
+| Single developer | 12-18 days                                                                                                                                                                                                                                                                   |
+| AI agent         | 6-10 hours, plus 3-5 hours of human review (the markdown allow list and the authorization matrix deserve a careful read) and settling the open questions                                                                                                                     |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| New feature or extend? | New `Features/HouseRules` with a `RuleBook` aggregate and its own feature flag |
-| What is a household? | A `Group`. A child in two homes sees two labelled sections |
-| Stream shape | One book per scope, `Id.Value == ChildId/GroupId`, flat `ScopeKind` discriminator, no index |
-| Rule shape | Plain title plus markdown body (4000), ordered list, max 50 per book |
-| Markdown rendering | `marked` lexer to token tree, Angular templates over an allow list; no `innerHTML`, no sanitizer |
-| Markdown on the backend | Stored and validated as plain text, never parsed |
-| Who manages | Child book: any active guardian. Group book: non-child Owner/Admin |
-| Who reads | The child, plus adult group members (read-only) |
-| Acknowledgement | Per rule and per revision, `409` on a stale revision; minor edits can skip re-acknowledgement |
-| Acknowledging for a child | Allowed for a caller with `Manage` who is an active guardian of the named child; `RuleAcknowledged.RecordedBy` records who |
-| Guardians and the other home's rules | Through `GetChildRules`, a guardian sees every household their child is in, read-only |
-| App CSP | Enforced together with this feature (theme script moved to a file, `inlineCritical` off) |
-| Erasure | Personal book deleted with the child; household books stay; author and child ids are pseudonyms, not masked; books of groups deleted by erasure are deleted |
-| Printing | Dedicated portrait print pages, not a week-plan row kind |
-| Babysitters | Not in v1. They get the printout |
+| Question                             | Decision                                                                                                                                                    |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New feature or extend?               | New `Features/HouseRules` with a `RuleBook` aggregate and its own feature flag                                                                              |
+| What is a household?                 | A `Group`. A child in two homes sees two labelled sections                                                                                                  |
+| Stream shape                         | One book per scope, `Id.Value == ChildId/GroupId`, flat `ScopeKind` discriminator, no index                                                                 |
+| Rule shape                           | Plain title plus markdown body (4000), ordered list, max 50 per book                                                                                        |
+| Markdown rendering                   | `marked` lexer to token tree, Angular templates over an allow list; no `innerHTML`, no sanitizer                                                            |
+| Markdown on the backend              | Stored and validated as plain text, never parsed                                                                                                            |
+| Who manages                          | Child book: any active guardian. Group book: non-child Owner/Admin                                                                                          |
+| Who reads                            | The child, plus adult group members (read-only)                                                                                                             |
+| Acknowledgement                      | Per rule and per revision, `409` on a stale revision; minor edits can skip re-acknowledgement                                                               |
+| Acknowledging for a child            | Allowed for a caller with `Manage` who is an active guardian of the named child; `RuleAcknowledged.RecordedBy` records who                                  |
+| Guardians and the other home's rules | Through `GetChildRules`, a guardian sees every household their child is in, read-only                                                                       |
+| App CSP                              | Enforced together with this feature (theme script moved to a file, `inlineCritical` off)                                                                    |
+| Erasure                              | Personal book deleted with the child; household books stay; author and child ids are pseudonyms, not masked; books of groups deleted by erasure are deleted |
+| Printing                             | Dedicated portrait print pages, not a week-plan row kind                                                                                                    |
+| Babysitters                          | Not in v1. They get the printout                                                                                                                            |
 
 ## Remaining open questions
 

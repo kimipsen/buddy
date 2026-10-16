@@ -19,12 +19,12 @@ Deploy from the tagged commit to ship exactly that version.
 
 [MinVer](https://github.com/adamralph/minver) rules (tag prefix `v`):
 
-| HEAD | Version |
-| --- | --- |
-| tagged `v1.2.0` | `1.2.0` |
-| 3 commits after `v1.2.0` | `1.2.1-alpha.0.3` |
-| 2 commits after `v1.3.0-rc.1` | `1.3.0-rc.1.2` |
-| no `vX.Y.Z` tag yet | `0.0.0-alpha.0.<height>` |
+| HEAD                          | Version                  |
+| ----------------------------- | ------------------------ |
+| tagged `v1.2.0`               | `1.2.0`                  |
+| 3 commits after `v1.2.0`      | `1.2.1-alpha.0.3`        |
+| 2 commits after `v1.3.0-rc.1` | `1.3.0-rc.1.2`           |
+| no `vX.Y.Z` tag yet           | `0.0.0-alpha.0.<height>` |
 
 - **Backend**: the `MinVer` package (`src/backend/buddy/buddy.csproj`) sets the assembly version
   on every `dotnet build`. The SDK appends the commit SHA to the informational version.

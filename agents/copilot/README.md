@@ -1,8 +1,9 @@
-Copilot Documentation Skill
+# Copilot Documentation Skill
 
 This folder contains templates and guidance for documentation tasks performed by the Copilot agent.
 
 Files:
+
 - `SKILL.md` — behavior, output format, and responsibilities
 - `manifest.json` — metadata for the skill
 - `examples/` — example prompts for common documentation tasks

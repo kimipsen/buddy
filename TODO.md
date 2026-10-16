@@ -1,5 +1,9 @@
 # TODO
 
+<!-- A ticked item moves to the bottom of Done under its own section heading (CLAUDE.md), so the
+     same heading appears more than once there. -->
+<!-- markdownlint-disable MD024 -->
+
 ## Open
 
 ### Tools for families with ADHD and autism (2026-10-11)

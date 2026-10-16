@@ -98,8 +98,8 @@ written before the field existed read as "no calling name".
 
 ## Routes
 
-| Method | Route | Result |
-|---|---|---|
+| Method  | Route                    | Result                                                                                                |
+| ------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `PATCH` | `/users/me/calling-name` | `200` with `UserResponse`; `400 validation_error` over 50 characters; `404` when no local user exists |
 
 ## Personal data
@@ -132,31 +132,31 @@ an account is deleted. The personal data export already includes the full `User`
 
 ## Failure and edge-case behavior
 
-| Situation | Behavior |
-|---|---|
-| No calling name set | `callingName` is `""`; children see the given name |
-| Value with surrounding spaces | Trimmed before validation and storage |
-| Empty, whitespace-only or `null` | Clears the calling name |
-| Same value saved again | `200`, no event appended |
-| Over 50 characters (after trimming) | `400 validation_error` on `CallingName` |
-| Snapshot written before this feature | Reads as `""` |
-| Account erased | Calling name masked in the event stream |
+| Situation                            | Behavior                                           |
+| ------------------------------------ | -------------------------------------------------- |
+| No calling name set                  | `callingName` is `""`; children see the given name |
+| Value with surrounding spaces        | Trimmed before validation and storage              |
+| Empty, whitespace-only or `null`     | Clears the calling name                            |
+| Same value saved again               | `200`, no event appended                           |
+| Over 50 characters (after trimming)  | `400 validation_error` on `CallingName`            |
+| Snapshot written before this feature | Reads as `""`                                      |
+| Account erased                       | Calling name masked in the event stream            |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Low -- one event on an existing aggregate, one PATCH route, one form field, three child-facing read sites |
-| Single developer | 1-1.5 days |
-| AI agent | 1-2 hours, plus about 30 minutes of human review |
+|                  |                                                                                                           |
+| ---------------- | --------------------------------------------------------------------------------------------------------- |
+| Complexity       | Low -- one event on an existing aggregate, one PATCH route, one form field, three child-facing read sites |
+| Single developer | 1-1.5 days                                                                                                |
+| AI agent         | 1-2 hours, plus about 30 minutes of human review                                                          |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Where is it stored? | On the guardian's `User`, one per guardian, set in My profile |
-| Where is it shown? | Child-facing views only (child home pickups, printed week plan); guardian screens keep real names |
-| Free text or translated role? | Free text, trimmed, max 50 characters, not translated; `""` clears it |
+| Question                      | Decision                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| Where is it stored?           | On the guardian's `User`, one per guardian, set in My profile                                     |
+| Where is it shown?            | Child-facing views only (child home pickups, printed week plan); guardian screens keep real names |
+| Free text or translated role? | Free text, trimmed, max 50 characters, not translated; `""` clears it                             |
 
 ## Remaining open questions
 

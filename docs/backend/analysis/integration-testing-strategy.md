@@ -30,7 +30,7 @@ see the implicitly-generated `Program` class from the main project's top-level s
 
 Test files mirror the main project's feature-slice layout 1:1:
 
-```
+```text
 buddy.IntegrationTests/
   Fixtures/
     BuddyApiFixture.cs        # Testcontainers + WebApplicationFactory, see below
@@ -95,8 +95,8 @@ One `BuddyApiFixture : IAsyncLifetime`, shared across the whole run via
 per test class would dominate wall-clock time, so every test class shares one instance:
 
 1. Start a `PostgreSqlContainer` (Testcontainers.PostgreSql), one database, one connection
-  string handed to every feature's `PostgresOptions` (each feature uses its
-  own Marten schema within the shared database).
+   string handed to every feature's `PostgresOptions` (each feature uses its
+   own Marten schema within the shared database).
 2. Start the Keycloak container with `TestRealm.json` imported
    (`--import-realm`, file mounted at `/opt/keycloak/data/import/`). The realm defines a single
    `buddy-api` public client with the direct-grant (resource owner password) flow enabled and an
@@ -171,7 +171,7 @@ without noticing, add one mechanical guard rather than relying on convention alo
 **`Meta/EndpointCoverageTests.cs`** — a single test that:
 
 1. Reflects over the running `WebApplication`'s `EndpointDataSource` to list
-  every endpoint carrying `.WithName(...)` metadata.
+   every endpoint carrying `.WithName(...)` metadata.
 2. Reflects over the `buddy.IntegrationTests` assembly for test classes/methods carrying a
    matching marker (simplest option: a `[CoversEndpoint("CreateCalendar")]` attribute on the
    `[Fact]`, matched against the `.WithName("CreateCalendar")` already set on every endpoint in
@@ -195,19 +195,19 @@ Delivered in this order, matching the original plan:
 1. **Scaffold** — `buddy.IntegrationTests` added to `backend.slnx`, `BuddyApiFixture` with all
    three containers, `GetCurrentUserTests` as the first smoke test.
 2. **Users, Groups, and Calendars** — initial endpoint coverage, email
-  verification through Mailpit, calendar authorization matrices, and the iCal
-  feed round-trip.
+   verification through Mailpit, calendar authorization matrices, and the iCal
+   feed round-trip.
 3. **Guardians** — child provisioning, relationship and invitation lifecycles,
-  sibling discovery, and guardian-managed child language.
+   sibling discovery, and guardian-managed child language.
 4. **Medicines, Mealplans, and Pickups** — child/guardian authorization,
-  assignment/status lifecycles, validation, and group-sharing routes where
-  supported.
+   assignment/status lifecycles, validation, and group-sharing routes where
+   supported.
 5. **Event-shape tests** — golden-file checks expanded with every event-sourced
-  feature. The current source contains 54 event-shape facts.
+   feature. The current source contains 54 event-shape facts.
 6. **`EndpointCoverageTests`** — every named endpoint must have a matching
-  `[CoversEndpoint("...")]`, and every marker must still identify a mapped
-  endpoint. The current source contains 94 unique coverage markers; the test
-  enforces the invariant when that number changes.
+   `[CoversEndpoint("...")]`, and every marker must still identify a mapped
+   endpoint. The current source contains 94 unique coverage markers; the test
+   enforces the invariant when that number changes.
 
 ## Verification status
 

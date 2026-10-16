@@ -31,7 +31,7 @@ What exists today (checked in the code):
   [Features/Medicines](../../../src/backend/buddy/Features/Medicines). A `MedicineSchedule`
   ([MedicineSchedule.cs](../../../src/backend/buddy/Features/Medicines/Types/MedicineSchedule.cs))
   has a free-text `Dosage`, daily `Times`, a date window and a sparse `DoseLog` of
-  `(Date, Time) -> DoseStatus` (`Taken`/`Skipped`). Nothing records how a dose *worked*.
+  `(Date, Time) -> DoseStatus` (`Taken`/`Skipped`). Nothing records how a dose _worked_.
   Its own open question "Should a skip require a reason?" is the nearest thing to a note, and was
   left out.
 - **The aggregate keeps only the current dosage.** `MedicineDetailsUpdated` carries `Before`/`After`
@@ -88,7 +88,7 @@ No new feature flag.**
 ChildId.Value` and no index document, the `SleepDiary` trick. Notes are keyed by the child's local
 `DateOnly`: at most one note per child per day, overwritten in full.**
 
-```
+```text
 MedicineEffectLog(
     MedicineEffectLogId Id,                                // Id.Value == ChildId.Value
     UserId ChildId,
@@ -124,7 +124,7 @@ public sealed record MedicineEffectLogId(Guid Value)
 
 ### Events
 
-```
+```text
 MedicineEffectLogStarted(MedicineEffectLogId Id, UserId ChildId, DateTimeOffset OccurredAt)
     // Lazily, by the first LogMedicineEffectNote for the child, in the same CreateAsync,
     // as SleepDiaryStarted.
@@ -186,7 +186,7 @@ lines. No existing event, aggregate, handler or response changes shape.
 regimen of that day (Question 4). Only what the guardian rated is stored: an unrated area is
 "not observed", never "fine".**
 
-```
+```text
 MedicineEffectNote(
     DateOnly Date,                              // the child's local date (User.TimeZoneId)
     IReadOnlyList<EffectRating> Effects,        // 0-4, at most one per area
@@ -206,20 +206,20 @@ enum SideEffect { ReducedAppetite, TroubleFallingAsleep, Stomachache, Headache, 
 enum SideEffectSeverity { None, Mild, Moderate, Severe }
 ```
 
-| Area / kind | Guardian-facing label (en) | Why it's on the list |
-|---|---|---|
-| `Focus` | Focus | The core target of ADHD medication |
-| `Calm` | Calm body (restlessness) | Hyperactivity, the second core target |
-| `ImpulseControl` | Impulse control | The third core target |
-| `Mood` | Mood | Stimulants can lift or flatten it, so it's both an effect and a warning |
-| `ReducedAppetite` | Less appetite | The most common stimulant side effect; "appetite poor" in the TODO |
-| `TroubleFallingAsleep` | Trouble falling asleep | Common, and the main reason to move a dose earlier |
-| `Stomachache`, `Headache` | Stomach ache, Headache | Common early side effects that often fade |
-| `Irritability` | Irritable | Common, often at wear-off |
-| `ReboundWhenWearingOff` | Crash when it wears off | Drives the "afternoon top-up" decision; paired with `WoreOffAt` |
-| `Tics` | Tics | Rarer, but one a doctor always asks about |
-| `FlatOrNotThemselves` | Flat / not themselves | The "zombie" complaint, a sign the dose is too high |
-| `Other` | Something else (write in the note) | A severity for anything else, with the note saying what |
+| Area / kind               | Guardian-facing label (en)         | Why it's on the list                                                    |
+| ------------------------- | ---------------------------------- | ----------------------------------------------------------------------- |
+| `Focus`                   | Focus                              | The core target of ADHD medication                                      |
+| `Calm`                    | Calm body (restlessness)           | Hyperactivity, the second core target                                   |
+| `ImpulseControl`          | Impulse control                    | The third core target                                                   |
+| `Mood`                    | Mood                               | Stimulants can lift or flatten it, so it's both an effect and a warning |
+| `ReducedAppetite`         | Less appetite                      | The most common stimulant side effect; "appetite poor" in the TODO      |
+| `TroubleFallingAsleep`    | Trouble falling asleep             | Common, and the main reason to move a dose earlier                      |
+| `Stomachache`, `Headache` | Stomach ache, Headache             | Common early side effects that often fade                               |
+| `Irritability`            | Irritable                          | Common, often at wear-off                                               |
+| `ReboundWhenWearingOff`   | Crash when it wears off            | Drives the "afternoon top-up" decision; paired with `WoreOffAt`         |
+| `Tics`                    | Tics                               | Rarer, but one a doctor always asks about                               |
+| `FlatOrNotThemselves`     | Flat / not themselves              | The "zombie" complaint, a sign the dose is too high                     |
+| `Other`                   | Something else (write in the note) | A severity for anything else, with the note saying what                 |
 
 - **Why a fixed catalog, not free text** (the Feelings tags' argument): it translates (one enum on
   the wire, en/da in the frontend), it can be counted per dose period (Question 6), and the doctor
@@ -245,7 +245,7 @@ Dosage)`, resolved by the server from the child's active schedules when the date
 logged and kept unchanged by later edits. Taken/skipped status is not copied: the list response
 joins it live from each schedule's `DoseLog`.**
 
-```
+```text
 RegimenMedicine(MedicineId MedicineId, string Name, string Dosage)
 ```
 
@@ -255,7 +255,7 @@ RegimenMedicine(MedicineId MedicineId, string Name, string Dosage)
   dosage into the note at the time is the one place that knows what the child was on.
 - **Resolved by the server, not sent by the client.** The handler lists the child's schedules
   (`ListIdsForChildAsync` + `FindSnapshotAsync`) and keeps those with `StartDate <= date <=
-  EndDate` that aren't stopped, the same rule as `MedicineDoseExpansion`. The guardian can't type a
+EndDate` that aren't stopped, the same rule as `MedicineDoseExpansion`. The guardian can't type a
   dosage that never existed, and two guardians writing the same day get the same regimen.
 - **Kept on edits.** Re-logging an existing date reuses its stored `Regimen`, so correcting a typo in
   next week's note doesn't swap in a dosage changed in between. Clearing the day and logging again
@@ -267,7 +267,7 @@ RegimenMedicine(MedicineId MedicineId, string Name, string Dosage)
   or a late "she did take it at school"). `ListMedicineEffectNotes` reads each regimen schedule's
   `DoseLog` for the note dates (a lookup, not an expansion) and returns the statuses beside the
   note, so "focus poor" on a day the morning dose was skipped is visible.
-- **The known gap: backdating across a change.** A note logged today *for* a day before a dosage
+- **The known gap: backdating across a change.** A note logged today _for_ a day before a dosage
   change gets today's dosage, and one logged after a schedule was stopped misses that medicine,
   because the aggregate has no dosage history or stop date to ask. Most notes are written the same
   evening or the next day, so this is rare; the form shows the resolved regimen before saving and
@@ -336,15 +336,15 @@ shared.**
 
 ## Command slices (`Features/Medicines/`, same vertical-slice shape as `SetDoseStatus`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `LogMedicineEffectNote` | Manage | Full overwrite of one date. The date may not be after today on the child's clock (`User.TimeZoneId`); no lower bound. Resolves the regimen on first log (Question 4). Identical content: no event. Starts the log lazily. Emits `MedicineEffectNoteLogged` |
-| `ClearMedicineEffectNote` | Manage | No note on that date: `204`, no event. Emits `MedicineEffectNoteCleared` |
-| `ListMedicineEffectNotes` | Manage | `[from, to]`, at most 92 days (the sleep diary's limit); each note with the live statuses of its regimen's doses. Logs 9003 |
+| Slice                     | Tier   | Notes                                                                                                                                                                                                                                                      |
+| ------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LogMedicineEffectNote`   | Manage | Full overwrite of one date. The date may not be after today on the child's clock (`User.TimeZoneId`); no lower bound. Resolves the regimen on first log (Question 4). Identical content: no event. Starts the log lazily. Emits `MedicineEffectNoteLogged` |
+| `ClearMedicineEffectNote` | Manage | No note on that date: `204`, no event. Emits `MedicineEffectNoteCleared`                                                                                                                                                                                   |
+| `ListMedicineEffectNotes` | Manage | `[from, to]`, at most 92 days (the sleep diary's limit); each note with the live statuses of its regimen's doses. Logs 9003                                                                                                                                |
 
 Responses, from the handler's DTOs:
 
-```
+```text
 MedicineEffectNoteResponse(DateOnly Date, IReadOnlyList<EffectRating> Effects,
     IReadOnlyList<SideEffectRating> SideEffects, TimeOnly? WoreOffAt, string Note,
     IReadOnlyList<RegimenMedicineResponse> Regimen, Guid LoggedBy)
@@ -355,18 +355,18 @@ RegimenDoseResponse(TimeOnly Time, DoseStatus Status)
 
 ## Routes
 
-| Route | Method | Slice | Success | Other statuses |
-|---|---|---|---|---|
-| `/medicines/children/{childId}/effect-notes/{date}` | PUT | `LogMedicineEffectNote` | `200` note | `400`, `403` (the child), `404` |
-| `/medicines/children/{childId}/effect-notes/{date}` | DELETE | `ClearMedicineEffectNote` | `204` | `403`, `404` |
-| `/medicines/children/{childId}/effect-notes` | GET | `ListMedicineEffectNotes` | `200` | `400`, `403`, `404` |
+| Route                                               | Method | Slice                     | Success    | Other statuses                  |
+| --------------------------------------------------- | ------ | ------------------------- | ---------- | ------------------------------- |
+| `/medicines/children/{childId}/effect-notes/{date}` | PUT    | `LogMedicineEffectNote`   | `200` note | `400`, `403` (the child), `404` |
+| `/medicines/children/{childId}/effect-notes/{date}` | DELETE | `ClearMedicineEffectNote` | `204`      | `403`, `404`                    |
+| `/medicines/children/{childId}/effect-notes`        | GET    | `ListMedicineEffectNotes` | `200`      | `400`, `403`, `404`             |
 
 - `PUT` on a date key is idempotent by itself, as `LogSleepEntry`, so the frontend needs no
   `postIdempotent`. Any command can also return `409 concurrency_conflict`.
 - The group already ends with `.WithETag()` and the per-user rate limit; no new error codes.
   `task docs:openapi` regenerates the contract.
 
-```
+```text
 LogMedicineEffectNoteRequest(IReadOnlyList<EffectRating>? Effects = null,
     IReadOnlyList<SideEffectRating>? SideEffects = null, TimeOnly? WoreOffAt = null,
     string? Note = null)
@@ -374,15 +374,15 @@ LogMedicineEffectNoteRequest(IReadOnlyList<EffectRating>? Effects = null,
 
 ## GDPR and privacy
 
-| Duty | How |
-|---|---|
-| Lawful basis | Health data about a child (Art. 9 + Art. 8), already covered by the medicines bullet; [PRIVACY.md](../../../PRIVACY.md) names "medicine effect and side-effect notes" alongside dose tracking |
-| Erasure: child | `MedicinesPersonalDataEraser.EraseChildAsync` also deletes the `MedicineEffectLogId.ForChild` stream and its snapshot |
-| Erasure: guardian | Nothing to delete: the notes are about the child and stay with the child's record; `LoggedBy` becomes a pseudonym, as on the sleep diary |
-| Export | The `"medicines"` export section gains `effectNotes`, built from the response DTOs |
-| Read audit log | `MedicinesLog` 9003: effect notes of child read, with `From`, `To`, `UserId` and `HealthDataAccessPath.Guardian`. Ids only, never a rating or note; [observability.md](../observability.md) range becomes 9001-9003 |
-| Coverage tests | The existing eraser/exporter coverage tests already include `IMedicinesStore`; `AccountErasureTests`, `ExportPersonalDataTests` and `AuditLogTests` gain cases |
-| Minimization | Fixed catalog; a 500-character note; nothing in logs, URLs or (later) push payloads |
+| Duty              | How                                                                                                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lawful basis      | Health data about a child (Art. 9 + Art. 8), already covered by the medicines bullet; [PRIVACY.md](../../../PRIVACY.md) names "medicine effect and side-effect notes" alongside dose tracking                       |
+| Erasure: child    | `MedicinesPersonalDataEraser.EraseChildAsync` also deletes the `MedicineEffectLogId.ForChild` stream and its snapshot                                                                                               |
+| Erasure: guardian | Nothing to delete: the notes are about the child and stay with the child's record; `LoggedBy` becomes a pseudonym, as on the sleep diary                                                                            |
+| Export            | The `"medicines"` export section gains `effectNotes`, built from the response DTOs                                                                                                                                  |
+| Read audit log    | `MedicinesLog` 9003: effect notes of child read, with `From`, `To`, `UserId` and `HealthDataAccessPath.Guardian`. Ids only, never a rating or note; [observability.md](../observability.md) range becomes 9001-9003 |
+| Coverage tests    | The existing eraser/exporter coverage tests already include `IMedicinesStore`; `AccountErasureTests`, `ExportPersonalDataTests` and `AuditLogTests` gain cases                                                      |
+| Minimization      | Fixed catalog; a 500-character note; nothing in logs, URLs or (later) push payloads                                                                                                                                 |
 
 ## Frontend
 
@@ -442,53 +442,53 @@ rated), rates today, and sees two dose periods with the right counts.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Only a note, no ratings | Allowed; at least one of ratings, wear-off or note is required |
-| Nothing at all | `400 validation_error` |
-| Re-log the same date | Full overwrite, `Before`/`After` kept; regimen unchanged |
-| Re-log with identical content | `200`, no event |
-| Clear a date with no note | `204`, no event |
-| Date after today on the child's clock | `400`; no lower bound |
-| Day with no active medicine | Allowed, empty regimen ("baseline") |
-| Dosage changed, then an older day logged for the first time | Gets the current dosage; the form showed it before saving (Question 4's known gap) |
-| Schedule stopped, then an older day logged for the first time | That medicine is missing from the regimen (same gap) |
-| Schedule stopped after notes were written | Notes keep its name and dosage; its live dose statuses still come from its `DoseLog` |
-| Dose marked after the note was saved | The list shows the new status; the note is unchanged |
-| Two guardians save the same day at once | One wins, the other gets `409 concurrency_conflict` and reloads |
-| Guardian's `GuardianLink` revoked | `404` at once; the notes stay |
-| Child calls any effect-note route | `403` |
-| Child erased | The log stream and snapshot are deleted with the schedules |
-| `Features:Medicines = false` | Routes unmapped, page and links hidden; data and GDPR coverage stay |
+| Case                                                          | Behavior                                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Only a note, no ratings                                       | Allowed; at least one of ratings, wear-off or note is required                       |
+| Nothing at all                                                | `400 validation_error`                                                               |
+| Re-log the same date                                          | Full overwrite, `Before`/`After` kept; regimen unchanged                             |
+| Re-log with identical content                                 | `200`, no event                                                                      |
+| Clear a date with no note                                     | `204`, no event                                                                      |
+| Date after today on the child's clock                         | `400`; no lower bound                                                                |
+| Day with no active medicine                                   | Allowed, empty regimen ("baseline")                                                  |
+| Dosage changed, then an older day logged for the first time   | Gets the current dosage; the form showed it before saving (Question 4's known gap)   |
+| Schedule stopped, then an older day logged for the first time | That medicine is missing from the regimen (same gap)                                 |
+| Schedule stopped after notes were written                     | Notes keep its name and dosage; its live dose statuses still come from its `DoseLog` |
+| Dose marked after the note was saved                          | The list shows the new status; the note is unchanged                                 |
+| Two guardians save the same day at once                       | One wins, the other gets `409 concurrency_conflict` and reloads                      |
+| Guardian's `GuardianLink` revoked                             | `404` at once; the notes stay                                                        |
+| Child calls any effect-note route                             | `403`                                                                                |
+| Child erased                                                  | The log stream and snapshot are deleted with the schedules                           |
+| `Features:Medicines = false`                                  | Routes unmapped, page and links hidden; data and GDPR coverage stay                  |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Medium -- one new aggregate in an existing feature and schema, three events, three slices on the existing authorization, a regimen snapshot with live dose join, GDPR/audit additions, and one guardian page with three parts plus a translated catalog |
-| Single developer | 5-7 days (backend and tests 2-2.5, page with form, day list and period summary 2-2.5, i18n, help, e2e, screenshots and docs 1-2) |
-| AI agent | 4-6 hours, plus 1.5-2 hours of human time: the Danish side-effect wording and whether the period summary reads well to a doctor |
+|                  |                                                                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Medium -- one new aggregate in an existing feature and schema, three events, three slices on the existing authorization, a regimen snapshot with live dose join, GDPR/audit additions, and one guardian page with three parts plus a translated catalog |
+| Single developer | 5-7 days (backend and tests 2-2.5, page with form, day list and period summary 2-2.5, i18n, help, e2e, screenshots and docs 1-2)                                                                                                                        |
+| AI agent         | 4-6 hours, plus 1.5-2 hours of human time: the Danish side-effect wording and whether the period summary reads well to a doctor                                                                                                                         |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| New feature or extend `Medicines` | Inside `Features/Medicines`, schema `medicines`, behind the `Medicines` flag; no sub-flag, since nothing names a reason to switch it off alone |
-| Aggregate | `MedicineEffectLog`, one per child, `Id.Value == ChildId.Value`, no index document, like `SleepDiary` |
-| Granularity | One note per child per local date, full overwrite; not per medicine (combination regimens) and not per dose (effects are watched over a day) |
-| Content | Fixed catalog: 4 effect areas (poor/okay/good), 9 side effects (none/mild/moderate/severe), optional wear-off time, 500-character note; unrated is not `None` |
-| Link to doses | A server-resolved regimen snapshot (name + dosage) taken on first log and kept on edits; dose statuses joined live from `DoseLog` |
-| Baseline days | Allowed, with an empty regimen |
-| Who | Guardians (`Manage`) only; the child `403`; no group axis in v1 |
-| Reading it | `/guardian/medicine/effects` with a 14-day list and a dose-period summary computed in the browser; printable |
-| Sharing | No share link; left to the doctor visit summary |
-| Audit | `MedicinesLog` 9003 on every list |
-| Dosage history | Not in this build: notes copy the dosage on first save; effective-dated dosage and a stop date on `MedicineSchedule` get their own analysis, which the doctor visit summary will also use (settled by the user 2026-10-14) |
-| Group members | No access in v1; group routes can be added later without other changes (settled by the user 2026-10-14) |
-| Child's own side-effect report | None; Feelings check-ins (`Unwell`, `Tired`, `Body`) carry it, and a guardian turns it into a rating (settled by the user 2026-10-14) |
-| School or teacher source | Written in the note ("school said..."); no source field for now, the home-school notebook is the real channel (settled by the user 2026-10-14) |
-| Evening reminder | None in v1; with push, a guardian-only opt-in at a chosen time with no health data in the payload (settled by the user 2026-10-14) |
-| Custom side effects | None; a fixed catalog, with `Other` plus the note (settled by the user 2026-10-14) |
+| Question                          | Decision                                                                                                                                                                                                                   |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New feature or extend `Medicines` | Inside `Features/Medicines`, schema `medicines`, behind the `Medicines` flag; no sub-flag, since nothing names a reason to switch it off alone                                                                             |
+| Aggregate                         | `MedicineEffectLog`, one per child, `Id.Value == ChildId.Value`, no index document, like `SleepDiary`                                                                                                                      |
+| Granularity                       | One note per child per local date, full overwrite; not per medicine (combination regimens) and not per dose (effects are watched over a day)                                                                               |
+| Content                           | Fixed catalog: 4 effect areas (poor/okay/good), 9 side effects (none/mild/moderate/severe), optional wear-off time, 500-character note; unrated is not `None`                                                              |
+| Link to doses                     | A server-resolved regimen snapshot (name + dosage) taken on first log and kept on edits; dose statuses joined live from `DoseLog`                                                                                          |
+| Baseline days                     | Allowed, with an empty regimen                                                                                                                                                                                             |
+| Who                               | Guardians (`Manage`) only; the child `403`; no group axis in v1                                                                                                                                                            |
+| Reading it                        | `/guardian/medicine/effects` with a 14-day list and a dose-period summary computed in the browser; printable                                                                                                               |
+| Sharing                           | No share link; left to the doctor visit summary                                                                                                                                                                            |
+| Audit                             | `MedicinesLog` 9003 on every list                                                                                                                                                                                          |
+| Dosage history                    | Not in this build: notes copy the dosage on first save; effective-dated dosage and a stop date on `MedicineSchedule` get their own analysis, which the doctor visit summary will also use (settled by the user 2026-10-14) |
+| Group members                     | No access in v1; group routes can be added later without other changes (settled by the user 2026-10-14)                                                                                                                    |
+| Child's own side-effect report    | None; Feelings check-ins (`Unwell`, `Tired`, `Body`) carry it, and a guardian turns it into a rating (settled by the user 2026-10-14)                                                                                      |
+| School or teacher source          | Written in the note ("school said..."); no source field for now, the home-school notebook is the real channel (settled by the user 2026-10-14)                                                                             |
+| Evening reminder                  | None in v1; with push, a guardian-only opt-in at a chosen time with no health data in the payload (settled by the user 2026-10-14)                                                                                         |
+| Custom side effects               | None; a fixed catalog, with `Other` plus the note (settled by the user 2026-10-14)                                                                                                                                         |
 
 ## Remaining open questions
 

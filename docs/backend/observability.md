@@ -4,10 +4,10 @@ How to tell whether the API is up, and how to see what it's doing.
 
 ## Health checks
 
-| Endpoint | Kind | Checks | Answer |
-|---|---|---|---|
-| `GET /health` | Liveness | None | `200 Healthy` while the process serves requests |
-| `GET /health/ready` | Readiness | Postgres, Keycloak | See below |
+| Endpoint            | Kind      | Checks             | Answer                                          |
+| ------------------- | --------- | ------------------ | ----------------------------------------------- |
+| `GET /health`       | Liveness  | None               | `200 Healthy` while the process serves requests |
+| `GET /health/ready` | Readiness | Postgres, Keycloak | See below                                       |
 
 `/health/ready` answers with each check's status and nothing else, because it is anonymous:
 
@@ -38,11 +38,11 @@ Code: `src/backend/buddy/Common/Health/`. Tests: `buddy.IntegrationTests/Common/
 
 The API collects traces, metrics and logs with OpenTelemetry (`Common/Observability/ObservabilityFeature.cs`):
 
-| Signal | Sources |
-|---|---|
-| Traces | Incoming requests (ASP.NET Core), outgoing HTTP (Keycloak admin API, AI providers), every Postgres command (Npgsql, so all Marten reads and appends), Wolverine handlers |
-| Metrics | ASP.NET Core, HttpClient, .NET runtime (GC, thread pool), Npgsql (pool usage), Wolverine |
-| Logs | Every `ILogger` log, with scopes and the formatted message |
+| Signal  | Sources                                                                                                                                                                  |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Traces  | Incoming requests (ASP.NET Core), outgoing HTTP (Keycloak admin API, AI providers), every Postgres command (Npgsql, so all Marten reads and appends), Wolverine handlers |
+| Metrics | ASP.NET Core, HttpClient, .NET runtime (GC, thread pool), Npgsql (pool usage), Wolverine                                                                                 |
+| Logs    | Every `ILogger` log, with scopes and the formatted message                                                                                                               |
 
 Every signal carries the resource `service.name=buddy-api`, `service.version` (the build version
 from `/version`) and `service.instance.id` (the container's host name).
@@ -73,7 +73,7 @@ Monitor's OTLP ingestion. The SDK reads the other standard variables itself, for
 - In Development, console logs stay human-readable. Everywhere else, they are JSON lines with
   their scopes as fields, so a log shipper can index them.
 - Every log written during a request carries `TraceId` and `SpanId`, which lead to the trace.
-- An error response's `requestId` (`ErrorEnvelope`) *is* the trace id: `UseObservability` sets
+- An error response's `requestId` (`ErrorEnvelope`) _is_ the trace id: `UseObservability` sets
   `HttpContext.TraceIdentifier` to it at the start of every request. A user-reported error
   therefore leads straight to its log lines and its trace.
 - Logs exported over OTLP carry no scopes. ASP.NET Core's `RequestPath` scope holds the raw path,
@@ -104,19 +104,19 @@ Every audit-style entry below is a source-generated `[LoggerMessage]` method in 
 next to the feature, with a stable EventId, so logs can be filtered by event rather than by
 message text.
 
-| EventIds | File | What |
-|---|---|---|
-| 1001–1007 | `Features/Users/UsersLog.cs` | Account provisioned or deleted, email changed or verified, rejected verification attempts, calls before provisioning, a failed sync of a verified email to Keycloak |
-| 2001–2009 | `Features/Guardians/GuardiansLog.cs` | Child accounts created, deleted and their passwords reset; guardian invites sent, accepted, refused, revoked; guardian links given up; Keycloak admin API failures |
-| 3001–3007 | `Features/Groups/GroupsLog.cs` | Group invites sent, accepted, refused, revoked; members removed or given a role; groups deleted |
-| 4001–4006 | `Features/Calendars/CalendarsLog.cs` | Calendar members removed or given a role, calendars deleted, iCal tokens issued or revoked; a failed star-count update (swallowed on purpose, so it's logged) |
-| 5001–5004 | `Features/SleepDiaries/SleepDiariesLog.cs` | Share links created or revoked, every view of a shared diary, and every read of a child's diary entries |
-| 6001–6011 | `Features/Mealplans/MealplansLog.cs` | AI provider keys set or removed, active provider changed, provider failures, meal plan iCal tokens, AI conversations erased after 30 days (and a failed sweep), AI data sharing acknowledged |
-| 7001–7002 | `Email/EmailLog.cs` | Each email sent (by kind), or the SMTP failure |
-| 8001–8006 | `Common/CommonLog.cs` | Concurrency conflicts, unbindable requests, rate-limit rejections, idempotency cleanup, sub-flags following a disabled parent feature |
-| 9001–9003 | `Features/Medicines/MedicinesLog.cs` | Every read of a child's medicine schedules, doses or effect notes, with the reader and the access path (`HealthDataAccessPath`: guardian, the child themself, or a group share and its id) |
-| 10001–10006 | `Features/Privacy/PrivacyLog.cs` | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep, a personal data export |
-| 11001–11004 | `Features/Feelings/FeelingsLog.cs` | Feelings share links created or revoked, every view of shared check-ins, and every read of a child's check-ins with the reader and the access path (guardian or the child themself) |
+| EventIds    | File                                       | What                                                                                                                                                                                         |
+| ----------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1001–1007   | `Features/Users/UsersLog.cs`               | Account provisioned or deleted, email changed or verified, rejected verification attempts, calls before provisioning, a failed sync of a verified email to Keycloak                          |
+| 2001–2009   | `Features/Guardians/GuardiansLog.cs`       | Child accounts created, deleted and their passwords reset; guardian invites sent, accepted, refused, revoked; guardian links given up; Keycloak admin API failures                           |
+| 3001–3007   | `Features/Groups/GroupsLog.cs`             | Group invites sent, accepted, refused, revoked; members removed or given a role; groups deleted                                                                                              |
+| 4001–4006   | `Features/Calendars/CalendarsLog.cs`       | Calendar members removed or given a role, calendars deleted, iCal tokens issued or revoked; a failed star-count update (swallowed on purpose, so it's logged)                                |
+| 5001–5004   | `Features/SleepDiaries/SleepDiariesLog.cs` | Share links created or revoked, every view of a shared diary, and every read of a child's diary entries                                                                                      |
+| 6001–6011   | `Features/Mealplans/MealplansLog.cs`       | AI provider keys set or removed, active provider changed, provider failures, meal plan iCal tokens, AI conversations erased after 30 days (and a failed sweep), AI data sharing acknowledged |
+| 7001–7002   | `Email/EmailLog.cs`                        | Each email sent (by kind), or the SMTP failure                                                                                                                                               |
+| 8001–8006   | `Common/CommonLog.cs`                      | Concurrency conflicts, unbindable requests, rate-limit rejections, idempotency cleanup, sub-flags following a disabled parent feature                                                        |
+| 9001–9003   | `Features/Medicines/MedicinesLog.cs`       | Every read of a child's medicine schedules, doses or effect notes, with the reader and the access path (`HealthDataAccessPath`: guardian, the child themself, or a group share and its id)   |
+| 10001–10006 | `Features/Privacy/PrivacyLog.cs`           | Users erased, orphaned children erased, family data passed to a sibling, an erasure that stopped halfway, a failed sweep, a personal data export                                             |
+| 11001–11004 | `Features/Feelings/FeelingsLog.cs`         | Feelings share links created or revoked, every view of shared check-ins, and every read of a child's check-ins with the reader and the access path (guardian or the child themself)          |
 
 Existing framework-adjacent logs: unbindable requests (`RequestBindingFailureMiddleware`),
 concurrency conflicts (`ConcurrencyConflictMiddleware`), rate-limit rejections

@@ -83,11 +83,11 @@ clear action, matching the backend's read-only child access tier.
 [`PickupsService`](../../../src/frontend/buddy/src/app/core/pickups.service.ts)
 wraps the three backend routes with Promise-returning `HttpClient` calls:
 
-| Method         | Request                                                                       |
-| -------------- | ----------------------------------------------------------------------------- |
-| `listSchedule` | `GET /pickups/children/{childId}/schedule?from=YYYY-MM-DD&to=YYYY-MM-DD`      |
-| `assignPickup` | `PUT /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff    | PickUp}` |
-| `clearPickup`  | `DELETE /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff | PickUp}` |
+| Method         | Request                                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| `listSchedule` | `GET /pickups/children/{childId}/schedule?from=YYYY-MM-DD&to=YYYY-MM-DD`                  |
+| `assignPickup` | `PUT /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff \| PickUp}`    |
+| `clearPickup`  | `DELETE /pickups/children/{childId}/assignments?date=YYYY-MM-DD&slot={DropOff \| PickUp}` |
 
 Slots travel by name (`DropOff`, `PickUp`) since the API switched to string
 enums ([openapi-client-contract.md](../../backend/analysis/openapi-client-contract.md)).

@@ -23,7 +23,7 @@ Why this shape, vs. a 1:1 port of the docker-compose file:
 
 ## 1. Prerequisites
 
-```
+```bash
 az login
 az account set --subscription "<subscription name or id>"
 ```
@@ -34,7 +34,7 @@ Keycloak's Admin REST API directly (there's no `az` command for that).
 
 ## 2. Configure
 
-```
+```bash
 cd deploy/azure
 cp .env.example .env
 # fill in real values — pick globally-unique ACR_NAME / PG_SERVER_NAME,
@@ -61,7 +61,7 @@ kept, and the app hides its pages. See
 
 ## 3. Deploy
 
-```
+```bash
 ./deploy.sh
 ```
 
@@ -101,8 +101,8 @@ Same manual step as the Oracle deployment — the dev realm isn't ported
 automatically:
 
 1. Log into the printed Keycloak URL as `KEYCLOAK_ADMIN`.
-2. Export the realm from your working dev Keycloak (Realm settings > Action
-   > Partial export, include clients) and import it here, **or** recreate the
+2. Export the realm from your working dev Keycloak (Realm settings >
+   Action > Partial export, include clients) and import it here, **or** recreate the
    `buddy` realm and its clients (`buddy-frontend`, `buddy-admin-cli`) by
    hand.
 3. Update each client's **Valid redirect URIs** / **Web origins** to the
@@ -116,7 +116,8 @@ automatically:
    Credentials), then update the running API app with it. The commands below
    use `$RESOURCE_GROUP` etc. from `.env` — load them into your shell first
    (they're not exported just by `deploy.sh` having run earlier):
-   ```
+
+   ```bash
    cd deploy/azure
    set -a; source .env; set +a
 
@@ -155,12 +156,14 @@ about 500 mails a day from a personal `@gmail.com` address. Brevo's free plan
    `1a2b3c001@smtp-brevo.com`, not your account email) and generate an
    **SMTP key**. An API key (`xkeysib-…`) won't work for SMTP.
 4. In `.env`, set:
-   ```
+
+   ```bash
    BREVO_SMTP_LOGIN=1a2b3c001@smtp-brevo.com
    BREVO_SMTP_KEY=<the SMTP key>
    MAIL_FROM_ADDRESS=noreply@yourdomain.com
    MAIL_FROM_NAME=Buddy
    ```
+
 5. Run `./deploy.sh`. All of these are optional. If the login, key or from
    address is blank, the API and Keycloak deploy without outbound email and
    the script prints a warning. `MAIL_FROM_NAME` defaults to `Buddy`.
@@ -214,7 +217,7 @@ non-fatal problems (custom domain not bound yet, Keycloak SMTP skipped). Then
 check the running state (all read-only). Load `.env` first as in step 4, and
 use the URLs `deploy.sh` printed:
 
-```
+```bash
 az containerapp list -g "$RESOURCE_GROUP" \
   --query "[].{name:name, status:properties.runningStatus, revision:properties.latestRevisionName, ready:properties.latestReadyRevisionName}" -o table
 az containerapp revision list -n api -g "$RESOURCE_GROUP" \
@@ -227,8 +230,8 @@ curl -fsS  https://<keycloak host>/realms/buddy/.well-known/openid-configuration
 ```
 
 - `latestRevisionName` should equal `latestReadyRevisionName`; otherwise the
-  new revision is still provisioning or failed (`az containerapp logs show -n
-  api -g "$RESOURCE_GROUP" --tail 50`).
+  new revision is still provisioning or failed
+  (`az containerapp logs show -n api -g "$RESOURCE_GROUP" --tail 50`).
 - `/health/ready` checks that the API reaches Postgres (`"Unhealthy"` and a
   503 if not) and Keycloak's OIDC discovery (`"Degraded"`, still 200, if
   not). `/health` only confirms the process is serving. A real login in the
@@ -256,8 +259,8 @@ still the way to confirm the public URLs.
 ### How deploy.sh rolls out
 
 - No `--revisions-mode` is passed to `az containerapp create`, so all three
-  apps use the default **single** revision mode: each `az containerapp
-  update` creates a new revision, and once it's running it gets 100% of the
+  apps use the default **single** revision mode: each
+  `az containerapp update` creates a new revision, and once it's running it gets 100% of the
   traffic and the previous revision is deactivated (not deleted; inactive
   revisions are kept and listed).
 - Each image is pinned by **digest** (`buddy-api@sha256:...`), not by
@@ -271,7 +274,7 @@ still the way to confirm the public URLs.
 
 ### Roll an app back to its previous revision
 
-```
+```bash
 cd deploy/azure && set -a; source .env; set +a
 APP=api   # or keycloak / frontend
 
@@ -295,7 +298,7 @@ names are `buddy-api`, `buddy-keycloak` and `buddy-frontend`.)
 traffic follows the latest revision. To move traffic between two revisions
 without creating a new one, switch the app to multiple revision mode first:
 
-```
+```bash
 az containerapp revision set-mode -n "$APP" -g "$RESOURCE_GROUP" --mode multiple
 az containerapp revision activate -n "$APP" -g "$RESOURCE_GROUP" --revision <good-revision-name>
 az containerapp ingress traffic set -n "$APP" -g "$RESOURCE_GROUP" --revision-weight <good-revision-name>=100

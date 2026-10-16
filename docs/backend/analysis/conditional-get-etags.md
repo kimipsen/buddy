@@ -51,9 +51,9 @@ handler.
 
 The deciding argument is correctness. A body hash can't produce a false `304`: if a single byte of
 the output differs, the tag differs. A version-based tag is only correct if the handler lists
-*every* input of its output, and several endpoints have inputs that are not streams:
+_every_ input of its output, and several endpoints have inputs that are not streams:
 
-- both iCal feeds render a rolling window around *today*
+- both iCal feeds render a rolling window around _today_
   ([`GetMealPlanIcalFeedHandler`](../../../src/backend/buddy/Features/Mealplans/GetMealPlanIcalFeed/GetMealPlanIcalFeed.Handler.cs)
   uses 14 days back and 60 forward), so their output changes at midnight with no new event;
 - "today" endpoints (doses, group status, pickups) depend on the clock in the same way;
@@ -142,7 +142,7 @@ cache-busting today to prevent it.
 
 The same URL (`/users/me`, `/mealplans/children/{id}/plan`) returns different bodies for different
 callers. With `no-cache`, a cached entry from user A is always revalidated, with user B's token.
-The server renders B's response and compares *that* hash. A `304` therefore only happens when B's
+The server renders B's response and compares _that_ hash. A `304` therefore only happens when B's
 body is byte-identical to the stored one, in which case reusing it is correct. `Vary: Authorization`
 is not needed for correctness, and it would also defeat the cache across token refreshes, since
 every access token is different.
@@ -379,32 +379,32 @@ conditional requests itself.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Client never sends `If-None-Match` (some calendar apps) | Normal `200` every time, as today |
-| Data changed since the client's tag | Different hash, `200` with the new body |
-| Output depends on the clock (rolling window, "today") | Covered: the hash is of the actual output |
-| Response is `404` / `400` / `409` | Passed through, no `ETag`, never `304` |
-| Endpoint throws | Body stream restored, exception propagates to the existing error middleware unchanged |
-| Same URL, different user, one browser | Revalidated with the new user's token; `304` only if the bodies are identical |
-| Dictionary order differs between API instances/restarts (string hash randomization) | Different bytes, a spurious `200`: never a wrong `304` |
-| Very large response | Buffered in memory in full, as `IdempotencyKeyMiddleware` already does for POSTs. The largest today is the year-wide calendar feed |
-| Caddy in front of the API ([`deploy/Caddyfile`](../../../deploy/Caddyfile)) | Plain `reverse_proxy`, no `encode`, so the headers pass through unchanged |
+| Case                                                                                | Behavior                                                                                                                           |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Client never sends `If-None-Match` (some calendar apps)                             | Normal `200` every time, as today                                                                                                  |
+| Data changed since the client's tag                                                 | Different hash, `200` with the new body                                                                                            |
+| Output depends on the clock (rolling window, "today")                               | Covered: the hash is of the actual output                                                                                          |
+| Response is `404` / `400` / `409`                                                   | Passed through, no `ETag`, never `304`                                                                                             |
+| Endpoint throws                                                                     | Body stream restored, exception propagates to the existing error middleware unchanged                                              |
+| Same URL, different user, one browser                                               | Revalidated with the new user's token; `304` only if the bodies are identical                                                      |
+| Dictionary order differs between API instances/restarts (string hash randomization) | Different bytes, a spurious `200`: never a wrong `304`                                                                             |
+| Very large response                                                                 | Buffered in memory in full, as `IdempotencyKeyMiddleware` already does for POSTs. The largest today is the year-wide calendar feed |
+| Caddy in front of the API ([`deploy/Caddyfile`](../../../deploy/Caddyfile))         | Plain `reverse_proxy`, no `encode`, so the headers pass through unchanged                                                          |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| How is the ETag computed? | SHA-256 of the rendered `200` body in one middleware, because it can't go stale |
-| Version-based ETags? | Deferred; possible later per hot endpoint, on the meta test's exclusion list |
-| Which endpoints? | Every GET in the 18 feature route groups, opted in per group; a meta test forces a decision for new GETs |
-| Strong or weak? | Strong: the hashed bytes are the bytes sent |
-| Cache headers | `private, no-cache` unless the endpoint sets its own, so data is never stale and never in a shared cache |
-| Frontend changes | None; the browser cache handles `If-None-Match` for `XMLHttpRequest` |
-| iCal feeds | `DTSTAMP` = start of the UTC day, so unchanged feeds hash identically |
-| `If-Match` / `412` on writes? | Out of scope: needs version-based tags, and server-side conflicts already return `409 concurrency_conflict` |
-| Response compression? | None today; a comment in `ETagMiddleware` says it must run outside the middleware and the tags then become weak |
-| `HEAD`? | Not supported: minimal-API `MapGet` doesn't answer `HEAD` |
+| Question                      | Decision                                                                                                        |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| How is the ETag computed?     | SHA-256 of the rendered `200` body in one middleware, because it can't go stale                                 |
+| Version-based ETags?          | Deferred; possible later per hot endpoint, on the meta test's exclusion list                                    |
+| Which endpoints?              | Every GET in the 18 feature route groups, opted in per group; a meta test forces a decision for new GETs        |
+| Strong or weak?               | Strong: the hashed bytes are the bytes sent                                                                     |
+| Cache headers                 | `private, no-cache` unless the endpoint sets its own, so data is never stale and never in a shared cache        |
+| Frontend changes              | None; the browser cache handles `If-None-Match` for `XMLHttpRequest`                                            |
+| iCal feeds                    | `DTSTAMP` = start of the UTC day, so unchanged feeds hash identically                                           |
+| `If-Match` / `412` on writes? | Out of scope: needs version-based tags, and server-side conflicts already return `409 concurrency_conflict`     |
+| Response compression?         | None today; a comment in `ETagMiddleware` says it must run outside the middleware and the tags then become weak |
+| `HEAD`?                       | Not supported: minimal-API `MapGet` doesn't answer `HEAD`                                                       |
 
 ## Remaining open questions
 

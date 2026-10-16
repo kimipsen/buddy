@@ -11,16 +11,16 @@ Goal: get the real stack up, drive it in a browser, see the change working, then
 
 From inside the devcontainer, reach the sibling services **by Compose hostname**:
 
-| Service | From the devcontainer (use this) | From the host browser (forwarded) |
-| --- | --- | --- |
-| Postgres | `db:5432` (user/pass/db `postgres`) | - |
-| Keycloak | `http://keycloak:8080` | `http://localhost:9080` |
-| Mailpit UI/API | `http://mailpit:8025` | `http://localhost:9025` |
-| Mailpit SMTP | `mailpit:1025` | `localhost:2025` |
-| API | `https://localhost:7076`, `http://localhost:5193` | same (forwarded) |
-| Frontend | `http://localhost:4300` | same (forwarded) |
+| Service        | From the devcontainer (use this)                  | From the host browser (forwarded) |
+| -------------- | ------------------------------------------------- | --------------------------------- |
+| Postgres       | `db:5432` (user/pass/db `postgres`)               | -                                 |
+| Keycloak       | `http://keycloak:8080`                            | `http://localhost:9080`           |
+| Mailpit UI/API | `http://mailpit:8025`                             | `http://localhost:9025`           |
+| Mailpit SMTP   | `mailpit:1025`                                    | `localhost:2025`                  |
+| API            | `https://localhost:7076`, `http://localhost:5193` | same (forwarded)                  |
+| Frontend       | `http://localhost:4300`                           | same (forwarded)                  |
 
-**Don't trust `localhost:9080` / `localhost:9025` inside the container.** If anyone ran `docker compose up` inside the devcontainer's docker-in-docker, a *second* Keycloak/Mailpit stack answers there (check with `docker ps`). That Keycloak has different signing keys, so its tokens get `401 invalid_token "The signature key was not found"` from the API, and its Mailpit never sees the API's mail. The checked-in `src/frontend/buddy/public/config/runtime-config.json` uses `http://localhost:9080` (right for a host browser, wrong for a browser launched in the container); the screenshot helper (step 4) and `e2e/support/global-setup.ts` both swap it to `http://keycloak:8080`.
+**Don't trust `localhost:9080` / `localhost:9025` inside the container.** If anyone ran `docker compose up` inside the devcontainer's docker-in-docker, a _second_ Keycloak/Mailpit stack answers there (check with `docker ps`). That Keycloak has different signing keys, so its tokens get `401 invalid_token "The signature key was not found"` from the API, and its Mailpit never sees the API's mail. The checked-in `src/frontend/buddy/public/config/runtime-config.json` uses `http://localhost:9080` (right for a host browser, wrong for a browser launched in the container); the screenshot helper (step 4) and `e2e/support/global-setup.ts` both swap it to `http://keycloak:8080`.
 
 ## 1. Health-check the backing services
 

@@ -18,16 +18,16 @@ the "Mobile app" item in [TODO.md](../../../TODO.md)), a generated TypeScript cl
 frontend, or a family's own scripts against its instance. A check of the generated documents on
 2026-10-09 (170 operations) found that they don't describe the API well enough for that:
 
-| Area | What the documents say today |
-| --- | --- |
-| Error statuses | Only `400`, `404` and `409`, and only where an endpoint's `Results<...>` declares them. `403` appears nowhere, although 111 endpoints can return it. |
-| Middleware responses | `401`, `403 user_not_provisioned`, `409 concurrency_conflict`, the `Idempotency-Key` errors, `304`, `429`, `500` and `503` are missing everywhere. |
-| Schemas | 20 component schemas are empty (`{}`): all 14 single-value wrappers (`UserId`, `GroupId`, `Color`, `Language`, `TimeZoneId`, ...) and 6 `kind`-discriminated DTOs (`ItemScheduleRequest`, `ItemScheduleResponse`, `ItemTimingRequest`, `OccurrenceTiming`, `PickupAssigneeDto`, `WorkDayStatus`). `TaskSourceResponse` is missing entirely, because it is only reachable through an empty schema. |
-| Enums | 21 enums (`GroupRole`, `MealSlot`, `DoseStatus`, ...) are a bare `{"type": "integer"}` with no values. |
-| Success responses | Both iCal feeds list no `200`. |
-| Auth and headers | No security scheme; nothing about `Idempotency-Key`, `ETag`/`If-None-Match` or `Retry-After`. |
-| Version | The documents are OpenAPI `3.2.0`, which most client generators don't read yet. |
-| Availability | Development only, and never committed, so a change to the contract is invisible in a diff. |
+| Area                 | What the documents say today                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Error statuses       | Only `400`, `404` and `409`, and only where an endpoint's `Results<...>` declares them. `403` appears nowhere, although 111 endpoints can return it.                                                                                                                                                                                                                                              |
+| Middleware responses | `401`, `403 user_not_provisioned`, `409 concurrency_conflict`, the `Idempotency-Key` errors, `304`, `429`, `500` and `503` are missing everywhere.                                                                                                                                                                                                                                                |
+| Schemas              | 20 component schemas are empty (`{}`): all 14 single-value wrappers (`UserId`, `GroupId`, `Color`, `Language`, `TimeZoneId`, ...) and 6 `kind`-discriminated DTOs (`ItemScheduleRequest`, `ItemScheduleResponse`, `ItemTimingRequest`, `OccurrenceTiming`, `PickupAssigneeDto`, `WorkDayStatus`). `TaskSourceResponse` is missing entirely, because it is only reachable through an empty schema. |
+| Enums                | 21 enums (`GroupRole`, `MealSlot`, `DoseStatus`, ...) are a bare `{"type": "integer"}` with no values.                                                                                                                                                                                                                                                                                            |
+| Success responses    | Both iCal feeds list no `200`.                                                                                                                                                                                                                                                                                                                                                                    |
+| Auth and headers     | No security scheme; nothing about `Idempotency-Key`, `ETag`/`If-None-Match` or `Retry-After`.                                                                                                                                                                                                                                                                                                     |
+| Version              | The documents are OpenAPI `3.2.0`, which most client generators don't read yet.                                                                                                                                                                                                                                                                                                                   |
+| Availability         | Development only, and never committed, so a change to the contract is invisible in a diff.                                                                                                                                                                                                                                                                                                        |
 
 What's already good: every operation has an `operationId` (from `.WithName(...)`), request and
 response bodies are typed DTOs, and every validation failure, middleware rejection and server error
@@ -258,18 +258,18 @@ metadata that decides whether the middleware acts.** The transformer and the mid
 only disagree if one of them changes its condition, and the meta test (last decision) checks the
 conditions.
 
-| Response | Codes | Added when | Source |
-| --- | --- | --- | --- |
-| `401` | -- (`WWW-Authenticate` header) | the endpoint has `IAuthorizeData` and no `IAllowAnonymous` | `UseAuthorization` |
-| `403` | `user_not_provisioned` | as `401`, and no `AllowUnprovisionedUserMetadata` | [ProvisionedUserMiddleware](../../../src/backend/buddy/Features/Users/ProvisionedUserMiddleware.cs) |
-| `400` | `validation_error` | the operation has a request body, or a route/query parameter that can fail to bind | [RequestBindingFailureMiddleware](../../../src/backend/buddy/Common/Validation/RequestBindingFailureMiddleware.cs) |
-| `400` | `invalid_idempotency_key` | `POST` | [IdempotencyKeyMiddleware](../../../src/backend/buddy/Common/Idempotency/IdempotencyKeyMiddleware.cs) |
-| `409` | `idempotency_key_reused`, `idempotency_key_in_progress`, `idempotency_response_unavailable` | `POST` | same |
-| `409` | `concurrency_conflict` | any method other than `GET` | [ConcurrencyConflictMiddleware](../../../src/backend/buddy/Common/Concurrency/ConcurrencyConflictMiddleware.cs) |
-| `304` | -- (no body) | `GET` with `ETagMetadata` | [ETagMiddleware](../../../src/backend/buddy/Common/Http/ETagMiddleware.cs) |
-| `429` | `rate_limited` (`Retry-After` header) | no `DisableRateLimitingAttribute` | [RateLimitingFeature](../../../src/backend/buddy/Common/RateLimiting/RateLimitingFeature.cs) |
-| `500` | `internal_error` | always | [ExceptionHandlingFeature](../../../src/backend/buddy/Common/Errors/ExceptionHandlingFeature.cs) |
-| `503` | `dependency_unavailable` (`Retry-After` header) | always | same |
+| Response | Codes                                                                                       | Added when                                                                         | Source                                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `401`    | -- (`WWW-Authenticate` header)                                                              | the endpoint has `IAuthorizeData` and no `IAllowAnonymous`                         | `UseAuthorization`                                                                                                 |
+| `403`    | `user_not_provisioned`                                                                      | as `401`, and no `AllowUnprovisionedUserMetadata`                                  | [ProvisionedUserMiddleware](../../../src/backend/buddy/Features/Users/ProvisionedUserMiddleware.cs)                |
+| `400`    | `validation_error`                                                                          | the operation has a request body, or a route/query parameter that can fail to bind | [RequestBindingFailureMiddleware](../../../src/backend/buddy/Common/Validation/RequestBindingFailureMiddleware.cs) |
+| `400`    | `invalid_idempotency_key`                                                                   | `POST`                                                                             | [IdempotencyKeyMiddleware](../../../src/backend/buddy/Common/Idempotency/IdempotencyKeyMiddleware.cs)              |
+| `409`    | `idempotency_key_reused`, `idempotency_key_in_progress`, `idempotency_response_unavailable` | `POST`                                                                             | same                                                                                                               |
+| `409`    | `concurrency_conflict`                                                                      | any method other than `GET`                                                        | [ConcurrencyConflictMiddleware](../../../src/backend/buddy/Common/Concurrency/ConcurrencyConflictMiddleware.cs)    |
+| `304`    | -- (no body)                                                                                | `GET` with `ETagMetadata`                                                          | [ETagMiddleware](../../../src/backend/buddy/Common/Http/ETagMiddleware.cs)                                         |
+| `429`    | `rate_limited` (`Retry-After` header)                                                       | no `DisableRateLimitingAttribute`                                                  | [RateLimitingFeature](../../../src/backend/buddy/Common/RateLimiting/RateLimitingFeature.cs)                       |
+| `500`    | `internal_error`                                                                            | always                                                                             | [ExceptionHandlingFeature](../../../src/backend/buddy/Common/Errors/ExceptionHandlingFeature.cs)                   |
+| `503`    | `dependency_unavailable` (`Retry-After` header)                                             | always                                                                             | same                                                                                                               |
 
 When a response for the status already exists (a `409 resend_cooldown` declared by the endpoint
 and the generic `409 concurrency_conflict`), the transformer merges them: one response, the union
@@ -362,36 +362,36 @@ the real endpoints or document and fail with a list.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-| --- | --- |
-| A new endpoint with a new `Forbid` path | Documented automatically (return-type rule); the golden file diff shows it. |
-| A new middleware that answers with a new status | Not documented until a rule is added; the "every error response has a body" test doesn't catch a status that was never documented. Handled by review, like `http-status-codes.md` today. |
-| A new single-value wrapper or `kind`-discriminated DTO | Covered by the converter-driven transformers; "no empty schemas" fails if it isn't. |
-| A new enum | Covered automatically; "enums have values" fails if not. |
-| A new error code | Description and `x-error-codes` update through the constant; the golden file diff shows it. Existing generated clients keep working because `code` is not an `enum`. |
-| Same status from endpoint and middleware | Merged into one response with the union of codes. |
-| Anonymous endpoint (iCal feeds, invite previews, shared sleep diary, `/version`) | No `security`, no `401`/`403 user_not_provisioned`; still `429`, `500`, `503`. |
-| Contract change without regenerating `buddy.json` | `OpenApiDocumentTests` fails in `task test:backend` and CI. |
+| Case                                                                             | Behavior                                                                                                                                                                                 |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A new endpoint with a new `Forbid` path                                          | Documented automatically (return-type rule); the golden file diff shows it.                                                                                                              |
+| A new middleware that answers with a new status                                  | Not documented until a rule is added; the "every error response has a body" test doesn't catch a status that was never documented. Handled by review, like `http-status-codes.md` today. |
+| A new single-value wrapper or `kind`-discriminated DTO                           | Covered by the converter-driven transformers; "no empty schemas" fails if it isn't.                                                                                                      |
+| A new enum                                                                       | Covered automatically; "enums have values" fails if not.                                                                                                                                 |
+| A new error code                                                                 | Description and `x-error-codes` update through the constant; the golden file diff shows it. Existing generated clients keep working because `code` is not an `enum`.                     |
+| Same status from endpoint and middleware                                         | Merged into one response with the union of codes.                                                                                                                                        |
+| Anonymous endpoint (iCal feeds, invite previews, shared sleep diary, `/version`) | No `security`, no `401`/`403 user_not_provisioned`; still `429`, `500`, `503`.                                                                                                           |
+| Contract change without regenerating `buddy.json`                                | `OpenApiDocumentTests` fails in `task test:backend` and CI.                                                                                                                              |
 
 ## Decisions made
 
-| Question | Decision |
-| --- | --- |
-| Where the customization lives | `Common/OpenApi`, one `AddBuddyOpenApiDocument` used by all 14 registrations |
-| OpenAPI version | 3.1 (3.2 isn't read by most generators yet) |
-| Wrapper and `kind` schemas | Derived from the converters' own rules, so schema and serializer can't disagree |
-| Enums | Strings over HTTP (`JsonStringEnumConverter`); numbers still accepted on input |
-| `kind` discriminators | Stay numeric; `oneOf` cases with a single-value `enum` |
-| Response-only schemas | Every property required; computed properties `readOnly` |
-| Serve the documents in production | Yes, anonymous under the default rate limit |
-| Per-endpoint tables in `http-status-codes.md` | Replaced by a pointer to `buddy.json` |
-| Frontend types | Generated from `buddy.json` with openapi-typescript (`npm run api:types`); the services alias them |
-| `403` documentation | Read from the handler's `Results<...>` return type, not annotated per endpoint |
-| Error codes | Per response, in the description and `x-error-codes`; `code` itself stays an open string |
-| `CreateChild` `409` body | Becomes an `ErrorEnvelope` (`username_unavailable`), the one behavior change |
-| Middleware responses | Added by rule from the same metadata each middleware reads |
-| Auth | One `openIdConnect` scheme from the configured Keycloak Authority |
-| Published contract | A combined `buddy` document, committed as `docs/backend/openapi/buddy.json` and pinned by a golden-file test |
+| Question                                      | Decision                                                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Where the customization lives                 | `Common/OpenApi`, one `AddBuddyOpenApiDocument` used by all 14 registrations                                 |
+| OpenAPI version                               | 3.1 (3.2 isn't read by most generators yet)                                                                  |
+| Wrapper and `kind` schemas                    | Derived from the converters' own rules, so schema and serializer can't disagree                              |
+| Enums                                         | Strings over HTTP (`JsonStringEnumConverter`); numbers still accepted on input                               |
+| `kind` discriminators                         | Stay numeric; `oneOf` cases with a single-value `enum`                                                       |
+| Response-only schemas                         | Every property required; computed properties `readOnly`                                                      |
+| Serve the documents in production             | Yes, anonymous under the default rate limit                                                                  |
+| Per-endpoint tables in `http-status-codes.md` | Replaced by a pointer to `buddy.json`                                                                        |
+| Frontend types                                | Generated from `buddy.json` with openapi-typescript (`npm run api:types`); the services alias them           |
+| `403` documentation                           | Read from the handler's `Results<...>` return type, not annotated per endpoint                               |
+| Error codes                                   | Per response, in the description and `x-error-codes`; `code` itself stays an open string                     |
+| `CreateChild` `409` body                      | Becomes an `ErrorEnvelope` (`username_unavailable`), the one behavior change                                 |
+| Middleware responses                          | Added by rule from the same metadata each middleware reads                                                   |
+| Auth                                          | One `openIdConnect` scheme from the configured Keycloak Authority                                            |
+| Published contract                            | A combined `buddy` document, committed as `docs/backend/openapi/buddy.json` and pinned by a golden-file test |
 
 ## Remaining open questions
 

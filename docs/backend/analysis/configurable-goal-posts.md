@@ -5,7 +5,7 @@ Status: Implemented. `GoalPost`/`GoalPostsConfigured`/`GoalPostResolver` in
 (`PUT /progress/children/{childId}/goals`), and a guardian-facing "Manage
 progress goals" screen. Extends `Features/Progress/` (see
 [gamified-progress.md](gamified-progress.md) for the base feature this
-builds on) with the first guardian *write* action on Progress.
+builds on) with the first guardian _write_ action on Progress.
 
 ## Context
 
@@ -55,16 +55,16 @@ relationship doesn't need a second store or a lookup mechanism.
 **Decision: guardians configure an ordered, ascending list of
 `GoalPost(Threshold, Icon, Label?)` — typically 3-6 entries. Once a child's
 star count passes the last configured threshold, the system keeps
-generating goal posts automatically: it repeats the *step* between the last
+generating goal posts automatically: it repeats the _step_ between the last
 two configured thresholds, and cycles back through the configured icon
 list, appending a round indicator (e.g. `🌱 ×2`) so a second pass is
 visually distinct from the first.**
 
-Concretely, given posts sorted ascending by threshold, with `step = last.Threshold
-- secondToLast.Threshold` (guarded to be `> 0`; a single-post config uses
+Concretely, given posts sorted ascending by threshold, with
+`step = last.Threshold - secondToLast.Threshold` (guarded to be `> 0`; a single-post config uses
 that post's own threshold as the step):
 
-```
+```text
 round 0: guardian's own posts, thresholds T0 < T1 < ... < Tn, icons I0..In
 round k (k >= 1): threshold Tn + k * step, icon I(index % (n+1)), label suffixed " ×(k+1)" on the icon only
 ```
@@ -93,7 +93,7 @@ threshold was just crossed) and the read path (`GetChildProgress`/
 display).** Computing it twice (once in C#, once in TypeScript) would let
 the two drift; the frontend stays a thin renderer of whatever the backend
 resolves, consistent with how little business logic exists in the Angular
-layer today (`progress-badge.ts` currently *does* own this logic, which is
+layer today (`progress-badge.ts` currently _does_ own this logic, which is
 exactly the duplication this decision removes).
 
 ## Question 3: who can write goal posts?
@@ -120,14 +120,14 @@ separately.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Where does goal-post config live | Same `ChildProgress` aggregate/stream, new `GoalPostsConfigured` event, full-replace semantics |
-| Unconfigured child behavior | Falls back to the original hardcoded `[5,10,25,50,100]` + 4-icon scale — zero migration |
-| How progress stays visible past the configured range | Automatic extrapolation: repeat the last-two-posts' step, cycle icons, append a round indicator |
-| Where extrapolation is computed | Server-side, one shared resolver, used by both the write path (milestone crossing) and read path (display) |
-| Who can configure goal posts | Active guardians only, never the child |
-| Config scope | Per-child, not per-family |
+| Question                                             | Decision                                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Where does goal-post config live                     | Same `ChildProgress` aggregate/stream, new `GoalPostsConfigured` event, full-replace semantics             |
+| Unconfigured child behavior                          | Falls back to the original hardcoded `[5,10,25,50,100]` + 4-icon scale — zero migration                    |
+| How progress stays visible past the configured range | Automatic extrapolation: repeat the last-two-posts' step, cycle icons, append a round indicator            |
+| Where extrapolation is computed                      | Server-side, one shared resolver, used by both the write path (milestone crossing) and read path (display) |
+| Who can configure goal posts                         | Active guardians only, never the child                                                                     |
+| Config scope                                         | Per-child, not per-family                                                                                  |
 
 ## Open questions not settled here
 
@@ -141,7 +141,7 @@ separately.
   is an append-only fact about what already happened, and rewriting history
   on a config change would be surprising. Not settled.
 - Icon input remains a free-text emoji string, matching `Icon.cs` and every
-  other icon field in this codebase (no picker widget exists anywhere yet).
-  Whether a curated quick-pick palette is worth adding later is a UX
-  question, not a data-model one, and is deferred.
+other icon field in this codebase (no picker widget exists anywhere yet).
+Whether a curated quick-pick palette is worth adding later is a UX
+question, not a data-model one, and is deferred.
 </content>

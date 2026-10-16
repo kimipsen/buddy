@@ -57,7 +57,7 @@ child pages already load. No endpoint, event, field or feature flag.**
   the overwhelmed moments themselves, which the visual timer rejected for the same reason
   ([visual-time-left-timer.md, Question 1](visual-time-left-timer.md#question-1-frontend-only-or-new-backend-state)).
 - **No feature flag.** [feature-flags.md](../../backend/analysis/feature-flags.md) gives one flag
-  per optional *domain*. The strip is a view over domains that already have flags; each source
+  per optional _domain_. The strip is a view over domains that already have flags; each source
   respects its own (`medicines`, `pickups`; the calendar has none), as `ChildHome` does. The child
   calendar agenda, another view, has no flag either
   ([`child.routes.ts`](../../../src/frontend/buddy/src/app/features/child/child.routes.ts)).
@@ -70,16 +70,16 @@ ongoing events, plain tasks with a due time, routines and packing lists (one ite
 medicine doses, and timed pickups/drop-offs. Meals, all-day events, untimed pickups, finished
 tasks, taken or skipped doses and past events are left out.**
 
-| Source | Becomes an item | Starts at | Ends at | Drops out when |
-|---|---|---|---|---|
-| Event, `Timed` | yes | `startsAt` | `endsAt` | `endsAt` has passed |
-| Event, all-day | no | -- | -- | -- |
-| Plain task, `Due` | yes | `dueAt` | -- | completed |
-| Routine (`TaskRun`, not a checklist) | yes, one item | first subtask's `startsAt` | last subtask's `endsAt` | every subtask is completed, or `currentRun()`'s grace has passed |
-| Packing list (checklist `TaskRun`) | yes, one item | its "leave by" due time | -- | every item is packed |
-| Medicine dose | yes, when `Pending` | `time` on the child's clock | -- | `Taken` or `Skipped` |
-| Pickup / drop-off | yes, when it has a `time` | `time` on the child's clock | -- | 30 minutes after `time` |
-| Meal | no | -- | -- | -- |
+| Source                               | Becomes an item           | Starts at                   | Ends at                 | Drops out when                                                   |
+| ------------------------------------ | ------------------------- | --------------------------- | ----------------------- | ---------------------------------------------------------------- |
+| Event, `Timed`                       | yes                       | `startsAt`                  | `endsAt`                | `endsAt` has passed                                              |
+| Event, all-day                       | no                        | --                          | --                      | --                                                               |
+| Plain task, `Due`                    | yes                       | `dueAt`                     | --                      | completed                                                        |
+| Routine (`TaskRun`, not a checklist) | yes, one item             | first subtask's `startsAt`  | last subtask's `endsAt` | every subtask is completed, or `currentRun()`'s grace has passed |
+| Packing list (checklist `TaskRun`)   | yes, one item             | its "leave by" due time     | --                      | every item is packed                                             |
+| Medicine dose                        | yes, when `Pending`       | `time` on the child's clock | --                      | `Taken` or `Skipped`                                             |
+| Pickup / drop-off                    | yes, when it has a `time` | `time` on the child's clock | --                      | 30 minutes after `time`                                          |
+| Meal                                 | no                        | --                          | --                      | --                                                               |
 
 - **Times only.** The strip is about order in time, so anything that can't be placed at an instant
   stays on `/child`. Meals use named slots (breakfast, lunch, ...) with no time
@@ -199,25 +199,25 @@ else: no link row, badge, feelings card or menu.**
 ## Question 5: what does each card show, and what can the child do?
 
 **Decision: each card shows an icon, a title and a time phrase. Only the Now card has actions:
-*Done* for a task, packing list or dose, *Open* for a routine (the focus view) or packing list
+_Done_ for a task, packing list or dose, _Open_ for a routine (the focus view) or packing list
 (`/child`), with the visual-timer disc for a routine when timers are on. Next and Later are
 read-only.**
 
-| Card | Shows | Actions |
-|---|---|---|
-| Now -- routine | run icon and title, the current step ("Eat breakfast · step 2 of 4"), the `shared/visual-timer` disc when `showVisualTimers` is on | *Focus* → `/child/focus/:itemId`; *Done* ticks the current step |
-| Now -- task / dose | icon, title (a dose reads "Medicine: {name}"), "Now" | *Done* (task completion or dose `Taken`) |
-| Now -- packing list | icon, title, "{packed} of {total} packed" | *Open* → `/child` (packing happens there, with the suggestions) |
-| Now -- event / pickup | icon, title (a pickup reads "Dad picks you up"), "until 17:30" for an event | none |
-| Now -- empty | a calm icon, "Free time" | none |
-| Next | icon, title, "in 12 min" (under an hour) or "at 15:30" | none |
-| Later | icon, title, "at 15:30", "and 3 more later today" | the whole card links to `/child` |
+| Card                  | Shows                                                                                                                              | Actions                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Now -- routine        | run icon and title, the current step ("Eat breakfast · step 2 of 4"), the `shared/visual-timer` disc when `showVisualTimers` is on | _Focus_ → `/child/focus/:itemId`; _Done_ ticks the current step |
+| Now -- task / dose    | icon, title (a dose reads "Medicine: {name}"), "Now"                                                                               | _Done_ (task completion or dose `Taken`)                        |
+| Now -- packing list   | icon, title, "{packed} of {total} packed"                                                                                          | _Open_ → `/child` (packing happens there, with the suggestions) |
+| Now -- event / pickup | icon, title (a pickup reads "Dad picks you up"), "until 17:30" for an event                                                        | none                                                            |
+| Now -- empty          | a calm icon, "Free time"                                                                                                           | none                                                            |
+| Next                  | icon, title, "in 12 min" (under an hour) or "at 15:30"                                                                             | none                                                            |
+| Later                 | icon, title, "at 15:30", "and 3 more later today"                                                                                  | the whole card links to `/child`                                |
 
 - **Completion goes through the existing paths**, so stars work as before: tasks and routine steps
   through `completeChildTask()`
   ([`child-task-completion.ts`](../../../src/frontend/buddy/src/app/core/child-task-completion.ts),
   shared by `ChildHome` and `ChildFocus`), doses through `MedicinesService.setDoseStatus()`. There
-  is no *Skip* or *Undo*. Undoing belongs to `/child`, where the whole list is visible; a strip for
+  is no _Skip_ or _Undo_. Undoing belongs to `/child`, where the whole list is visible; a strip for
   overwhelmed moments should not offer a choice that can be made by mistake.
 - **Dose and pickup wording reuses `/child`'s labels.** `playdateHostName`/`babysitterName`
   already live in [`pickups.service.ts:21-26`](../../../src/frontend/buddy/src/app/core/pickups.service.ts).
@@ -238,6 +238,7 @@ read-only.**
 
   Blast radius: one method in `home.ts` (which keeps a one-line wrapper for its template) and its
   cases in `home.spec.ts`.
+
 - **Times are words a child can act on.** "in 12 min" rounds up, as `minutesUntil()` does for the
   warnings; past an hour, the clock time reads better than "in 94 min".
 - **Pictograms later.** The TODO's "Pictogram support" item would replace the emoji icon with a
@@ -246,7 +247,7 @@ read-only.**
 ## Question 6: look, motion and accessibility
 
 **Decision: three stacked cards on a phone, three side by side on a tablet in landscape, with Now
-visibly largest. Each card has a visible heading (*Now*, *Next*, *Later*) so position and colour
+visibly largest. Each card has a visible heading (_Now_, _Next_, _Later_) so position and colour
 never carry the meaning alone. The page recalculates every minute and at Now's deadline, and
 announces only a change of Now.**
 
@@ -261,10 +262,10 @@ announces only a change of Now.**
 - **Ticking.** The same pattern as `ChildFocus`: a `now` signal on a one-minute interval, plus a
   `setTimeout` at the earliest moment something changes (an event's end, a grace expiring, a
   routine's deadline), so the cards don't wait up to a minute to move on.
-- **Screen readers.** Each card is a `section` with an `h2` (*Now*, *Next*, *Later*). One visually
+- **Screen readers.** Each card is a `section` with an `h2` (_Now_, _Next_, _Later_). One visually
   hidden `aria-live="polite"` span announces "Now: {title}" when Now changes, and nothing else. The
   timer disc on the Now card is passed `announce: false`, so the page speaks once.
-- **Touch targets** for *Done*, *Focus*, *Open* and the Later card: at least 44x44px, with the
+- **Touch targets** for _Done_, _Focus_, _Open_ and the Later card: at least 44x44px, with the
   emerald focus ring.
 
 ## Question 7: does a guardian control it?
@@ -285,36 +286,36 @@ home. The `showVisualTimers` switch is respected: with timers off, the Now card 
 
 All paths are under `src/frontend/buddy/src/app/`.
 
-| File | Change |
-|---|---|
-| `core/now-next-later.ts` + spec | **New.** `DayItem`, `dayItems()`, `nowNextLater()`, `nextChangeAt()` (when the cards next move). Pure functions only |
-| `core/pickups.service.ts` + spec | `assigneeGivenName()` moved out of `ChildHome.assigneeName` (Question 5) |
-| `features/child/home/home.{ts,html}` + spec | `assigneeName` delegates to the moved function; add the "Just now" button at the top |
-| `features/child/now/child-now.{ts,html}` + spec | **New page** `ChildNowNextLater`: loads today's occurrences (cached), doses, pickups and the guardian/sibling names; computes the strip from `ChildClockService`; renders the three cards; *Done*/*Focus*/*Open* |
-| `features/child/child.routes.ts` | `{ path: 'now', component: ChildNowNextLater }`, no guard |
-| `core/i18n/translations/{en,da}/child.ts` | `child.now.*` keys (below) and `child.home.nowButton` |
-| `screenshots/pages.ts`, `screenshots/demo-family.ts` | A `child-now` entry with the fixed `clock: '07:10'` the `child-home` entry uses. The existing demo day then reads: Now = Morning routine on *Eat breakfast*, Next = Leave for school (07:20), Later = Medicine (07:30) with the count of the rest of the day. No new seed data needed |
-| `e2e/now-next-later.spec.ts` | **New.** Fixed clock inside a routine: the three cards show the routine, the next event and the dose. Tick the current step from the Now card; the step text moves on. Mark the dose done after moving the clock; Next becomes Now |
+| File                                                 | Change                                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/now-next-later.ts` + spec                      | **New.** `DayItem`, `dayItems()`, `nowNextLater()`, `nextChangeAt()` (when the cards next move). Pure functions only                                                                                                                                                                  |
+| `core/pickups.service.ts` + spec                     | `assigneeGivenName()` moved out of `ChildHome.assigneeName` (Question 5)                                                                                                                                                                                                              |
+| `features/child/home/home.{ts,html}` + spec          | `assigneeName` delegates to the moved function; add the "Just now" button at the top                                                                                                                                                                                                  |
+| `features/child/now/child-now.{ts,html}` + spec      | **New page** `ChildNowNextLater`: loads today's occurrences (cached), doses, pickups and the guardian/sibling names; computes the strip from `ChildClockService`; renders the three cards; _Done_/_Focus_/_Open_                                                                      |
+| `features/child/child.routes.ts`                     | `{ path: 'now', component: ChildNowNextLater }`, no guard                                                                                                                                                                                                                             |
+| `core/i18n/translations/{en,da}/child.ts`            | `child.now.*` keys (below) and `child.home.nowButton`                                                                                                                                                                                                                                 |
+| `screenshots/pages.ts`, `screenshots/demo-family.ts` | A `child-now` entry with the fixed `clock: '07:10'` the `child-home` entry uses. The existing demo day then reads: Now = Morning routine on _Eat breakfast_, Next = Leave for school (07:20), Later = Medicine (07:30) with the count of the rest of the day. No new seed data needed |
+| `e2e/now-next-later.spec.ts`                         | **New.** Fixed clock inside a routine: the three cards show the routine, the next event and the dose. Tick the current step from the Now card; the step text moves on. Mark the dose done after moving the clock; Next becomes Now                                                    |
 
 ### i18n
 
-| Key | en | da |
-|---|---|---|
-| `child.home.nowButton` | `Just now` | `Lige nu` |
-| `child.now.title` | `Now, next, later` | `Nu, så, senere` |
-| `child.now.now` / `next` / `later` | `Now` / `Next` / `Later` | `Nu` / `Så` / `Senere` |
-| `child.now.freeTime` | `Free time` | `Fritid` |
-| `child.now.allDone` | `That's all for today` | `Det var alt for i dag` |
-| `child.now.inMinutes` | `in {count} min` | `om {count} min` |
-| `child.now.at` | `at {time}` | `kl. {time}` |
-| `child.now.until` | `until {time}` | `indtil kl. {time}` |
-| `child.now.step` | `{title} · step {index} of {count}` | `{title} · trin {index} af {count}` |
-| `child.now.packed` | `{packed} of {total} packed` | `{packed} af {total} pakket` |
-| `child.now.more` | `and {count} more later today` | `og {count} mere senere i dag` |
-| `child.now.medicine` | `Medicine: {name}` | `Medicin: {name}` |
-| `child.now.done` / `focus` / `open` | `Done` / `Focus` / `Open` | `Færdig` / `Fokus` / `Åbn` |
-| `child.now.announce` | `Now: {title}` | `Nu: {title}` |
-| `child.now.back` | `Back to today` | `Tilbage til i dag` |
+| Key                                 | en                                  | da                                  |
+| ----------------------------------- | ----------------------------------- | ----------------------------------- |
+| `child.home.nowButton`              | `Just now`                          | `Lige nu`                           |
+| `child.now.title`                   | `Now, next, later`                  | `Nu, så, senere`                    |
+| `child.now.now` / `next` / `later`  | `Now` / `Next` / `Later`            | `Nu` / `Så` / `Senere`              |
+| `child.now.freeTime`                | `Free time`                         | `Fritid`                            |
+| `child.now.allDone`                 | `That's all for today`              | `Det var alt for i dag`             |
+| `child.now.inMinutes`               | `in {count} min`                    | `om {count} min`                    |
+| `child.now.at`                      | `at {time}`                         | `kl. {time}`                        |
+| `child.now.until`                   | `until {time}`                      | `indtil kl. {time}`                 |
+| `child.now.step`                    | `{title} · step {index} of {count}` | `{title} · trin {index} af {count}` |
+| `child.now.packed`                  | `{packed} of {total} packed`        | `{packed} af {total} pakket`        |
+| `child.now.more`                    | `and {count} more later today`      | `og {count} mere senere i dag`      |
+| `child.now.medicine`                | `Medicine: {name}`                  | `Medicin: {name}`                   |
+| `child.now.done` / `focus` / `open` | `Done` / `Focus` / `Open`           | `Færdig` / `Fokus` / `Åbn`          |
+| `child.now.announce`                | `Now: {title}`                      | `Nu: {title}`                       |
+| `child.now.back`                    | `Back to today`                     | `Tilbage til i dag`                 |
 
 Pickup labels reuse the existing `child.home` pickup keys. Check parity with
 `node .claude/skills/i18n/check-parity.mjs`.
@@ -331,7 +332,7 @@ Pickup labels reuse the existing `child.home` pickup keys. Check parity with
   - Later's count; an empty day; the end of the day;
   - ties ordered by title;
   - DST: a dose time on a spring-forward morning resolves through `instantInTimeZone`.
-- `child-now.spec.ts`: the three cards render from stubbed services; *Done* calls
+- `child-now.spec.ts`: the three cards render from stubbed services; _Done_ calls
   `completeChildTask()` or `setDoseStatus()` and the strip moves on; no disc when
   `showVisualTimers` is false; the medicines and pickups flags off leave those items out; a failed
   doses or pickups load leaves them out without an error (as on `/child`); the live region speaks
@@ -343,43 +344,43 @@ Pickup labels reuse the existing `child.home` pickup keys. Check parity with
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Nothing timed today | Now "Free time", Next "That's all for today", no Later card |
-| Doses or pickups fail to load | Left out, no error; the calendar items still show (same as `/child`) |
-| Calendar fails to load | The shared translated load error, as on `/child` |
-| Two events overlap | The earlier-starting one is Now; the other is Next |
-| Child ticks the Now task | It drops out, Next becomes Now at once |
-| Undone task 30 minutes after its time | Drops off the strip; still on `/child` |
-| Child-started routine timer | The routine stays Now until it is done, even past its grace |
-| Guardian moves or deletes an item | Seen on the next load of today's occurrences (the per-day cache is cleared by any calendar write in this browser; another device's change shows after a reload) |
-| App left open past midnight | `ChildClockService.today()` changes; the page reloads today's data on the next tick |
-| Device on another time zone than the child's profile | Times follow the child's profile zone, as on every child page |
-| `taskLibrary` flag off | No routines or packing lists; everything else works |
-| Timers switched off for the child | No disc on the Now card; everything else is unchanged |
+| Case                                                 | Behavior                                                                                                                                                        |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nothing timed today                                  | Now "Free time", Next "That's all for today", no Later card                                                                                                     |
+| Doses or pickups fail to load                        | Left out, no error; the calendar items still show (same as `/child`)                                                                                            |
+| Calendar fails to load                               | The shared translated load error, as on `/child`                                                                                                                |
+| Two events overlap                                   | The earlier-starting one is Now; the other is Next                                                                                                              |
+| Child ticks the Now task                             | It drops out, Next becomes Now at once                                                                                                                          |
+| Undone task 30 minutes after its time                | Drops off the strip; still on `/child`                                                                                                                          |
+| Child-started routine timer                          | The routine stays Now until it is done, even past its grace                                                                                                     |
+| Guardian moves or deletes an item                    | Seen on the next load of today's occurrences (the per-day cache is cleared by any calendar write in this browser; another device's change shows after a reload) |
+| App left open past midnight                          | `ChildClockService.today()` changes; the page reloads today's data on the next tick                                                                             |
+| Device on another time zone than the child's profile | Times follow the child's profile zone, as on every child page                                                                                                   |
+| `taskLibrary` flag off                               | No routines or packing lists; everything else works                                                                                                             |
+| Timers switched off for the child                    | No disc on the Now card; everything else is unchanged                                                                                                           |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Low-Medium -- frontend-only: one pure module (normaliser and selection), one new child page and route, a button on `/child`, a one-method extraction of the pickup assignee lookup out of `home.ts`, about 20 en+da keys, one screenshot entry on existing demo data and one e2e spec. No backend, contract or flag change |
-| Single developer | 2-3 days |
-| AI agent | 1.5-2.5 hours, plus about 1 hour of human review (look at it on a phone and an iPad in both themes, try it at a few fixed times of day) and settling the open questions |
+|                  |                                                                                                                                                                                                                                                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Low-Medium -- frontend-only: one pure module (normaliser and selection), one new child page and route, a button on `/child`, a one-method extraction of the pickup assignee lookup out of `home.ts`, about 20 en+da keys, one screenshot entry on existing demo data and one e2e spec. No backend, contract or flag change |
+| Single developer | 2-3 days                                                                                                                                                                                                                                                                                                                   |
+| AI agent         | 1.5-2.5 hours, plus about 1 hour of human review (look at it on a phone and an iPad in both themes, try it at a few fixed times of day) and settling the open questions                                                                                                                                                    |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Backend state | None; a pure view over today's occurrences, doses and pickups |
-| Feature flag | None; each source keeps its own flag |
-| Which items | Timed, not-done items: events, tasks, routines and packing lists (one item each), pending doses, timed pickups. No meals or all-day events |
-| Now | Current routine (`currentRun()`), else ongoing event, else an undone item within 30 minutes of its time, else "Free time" |
-| Next / Later | First item after Now (overlaps allowed); Later is one card with the following item and a count |
-| Where | New page `/child/now`, opened from a "Just now" button at the top of `/child` |
-| Actions | Only on Now: *Done*, *Focus* for a routine, *Open* for a packing list. No skip or undo |
-| Routine steps | Shown inside the Now card, never as separate cards |
-| Guardian control | None in v1; respects `showVisualTimers` |
-| Transition-warning banner | Stays (lean; see open questions) |
+| Question                  | Decision                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Backend state             | None; a pure view over today's occurrences, doses and pickups                                                                              |
+| Feature flag              | None; each source keeps its own flag                                                                                                       |
+| Which items               | Timed, not-done items: events, tasks, routines and packing lists (one item each), pending doses, timed pickups. No meals or all-day events |
+| Now                       | Current routine (`currentRun()`), else ongoing event, else an undone item within 30 minutes of its time, else "Free time"                  |
+| Next / Later              | First item after Now (overlaps allowed); Later is one card with the following item and a count                                             |
+| Where                     | New page `/child/now`, opened from a "Just now" button at the top of `/child`                                                              |
+| Actions                   | Only on Now: _Done_, _Focus_ for a routine, _Open_ for a packing list. No skip or undo                                                     |
+| Routine steps             | Shown inside the Now card, never as separate cards                                                                                         |
+| Guardian control          | None in v1; respects `showVisualTimers`                                                                                                    |
+| Transition-warning banner | Stays (lean; see open questions)                                                                                                           |
 
 ## Remaining open questions
 

@@ -3,12 +3,13 @@
 This document defines how Buddy backend endpoints should use HTTP status codes.
 
 Scope:
+
 - REST endpoints across the `users`, `guardians`, `groups`, `calendars`,
-   `medicines`, `mealplans`, `pickups`, `task-templates`, and `progress`
-   API groups
+  `medicines`, `mealplans`, `pickups`, `task-templates`, and `progress`
+  API groups
 - authenticated endpoints using bearer tokens
 - query and command operations, including create, update, delete, verify, and
-   resend
+  resend
 
 ## Principles
 
@@ -21,23 +22,29 @@ Scope:
 ## Status Code Classes
 
 ### 2xx Success
+
 Request was valid and processed.
 
 ### 3xx Redirection
+
 Rare for API responses. Avoid unless an endpoint is explicitly redirect-based.
 
 ### 4xx Client errors
+
 The client request is invalid, unauthorized, forbidden, or conflicts with current resource state.
 
 ### 5xx Server errors
+
 Unexpected server-side failures. Log and monitor these as defects or outages.
 
 ## Code-by-Code Guidance
 
 ### 200 OK
+
 Use when returning a representation in the response body.
 
 Typical Buddy use:
+
 - `GET /users/me`
 - `GET /calendars/{id}`
 - `GET /calendars/{id}/items`
@@ -47,9 +54,11 @@ child, meal, invite, iCal token, ...) returns `200` with the created resource in
 see [201 Created](#201-created).
 
 Do not use when:
+
 - the response intentionally has no body (use `204`)
 
 ### 201 Created
+
 Not used. Buddy's create endpoints return `200 OK` with the created resource in the body, and
 no endpoint uses `TypedResults.Created` or sets a `Location` header. The frontend and the
 integration tests depend on `200`, so a switch to `201` would be a deliberate API contract
@@ -57,52 +66,66 @@ change across every create endpoint, not a per-endpoint choice. New create endpo
 the `200` convention.
 
 ### 202 Accepted
+
 Use only when work is queued for asynchronous processing and not completed yet.
 
 Typical Buddy use:
+
 - none currently (most operations are synchronous)
 
 ### 204 No Content
+
 Use when the operation succeeded and no response body is needed.
 
 Typical Buddy use:
+
 - idempotent delete where repeating delete remains successful
 - resend verification accepted without payload
 - revoke token when successful
 
 ### 304 Not Modified
+
 Use with conditional requests (`ETag` or `If-Modified-Since`).
 
 Typical Buddy use:
+
 - any GET in a feature route group, when `If-None-Match` matches the current `ETag` (see [Conditional GET (ETag)](#conditional-get-etag))
 
 ### 400 Bad Request
+
 Use when request syntax or domain validation fails.
 
 Typical Buddy use:
+
 - invalid recurrence rule
 - invalid date range (`from > to`)
 - malformed verify token payload
 
 Return guidance:
+
 - include machine-readable error code
 - include field-level validation details when possible
 
 ### 401 Unauthorized
+
 Use when authentication is missing or invalid.
 
 Typical Buddy use:
+
 - missing bearer token
 - expired/invalid JWT
 
 Notes:
+
 - this is about authentication, not permissions
 - include authentication challenge headers where applicable
 
 ### 403 Forbidden
+
 Use when caller is authenticated but lacks required permission tier.
 
 Typical Buddy use:
+
 - viewer attempting contributor-only operation
 - contributor attempting owner-only operation
 
@@ -119,26 +142,33 @@ Typical Buddy use:
   invite sent to a different address is a plain `403` with no body.
 
 Security note:
+
 - if the route uses privacy-preserving existence hiding, you may intentionally return `404` instead of `403`
 
 ### 404 Not Found
+
 Use when resource does not exist, is deleted, or should be hidden from caller.
 
 Typical Buddy use:
+
 - unknown calendar id
 - deleted user
 - non-member access to private calendar (existence-hiding)
 
 ### 405 Method Not Allowed
+
 Use when resource exists but HTTP method is not supported by that route.
 
 Typical Buddy use:
+
 - framework-generated for unsupported verbs
 
 ### 409 Conflict
+
 Use when request is valid but conflicts with current resource state.
 
 Typical Buddy use:
+
 - a resend during the shared one-minute resend cooldown (`resend_cooldown`):
   `POST /users/me/email/verify/resend`, `POST /groups/{groupId}/invites` and
   `POST /users/me/children/{childId}/guardian-invites` all use
@@ -156,39 +186,50 @@ Typical Buddy use:
   `PUT /mealplans/children/{childId}/ai/data-sharing-acknowledgement`
 
 ### 410 Gone
+
 Use when resource used to exist but is permanently removed and this distinction is useful.
 
 Typical Buddy use:
+
 - usually not needed because deleted resources are treated as `404`
 
 ### 412 Precondition Failed
+
 Use when conditional headers are provided and preconditions fail.
 
 Typical Buddy use:
+
 - future support for `If-Match` concurrency control
 
 ### 415 Unsupported Media Type
+
 Use when request content type is unsupported.
 
 Typical Buddy use:
+
 - non-JSON payload on JSON endpoints
 
 ### 422 Unprocessable Content
+
 Use for semantically invalid payloads when syntax is correct.
 
 Typical Buddy use:
+
 - not used in this project
 
 Team rule (resolved):
+
 - `400` is used uniformly for all validation failures, structural and
   semantic alike — see the [validation rules analysis](analysis/validation-rules.md).
   `422` is not used anywhere; this keeps the status-code decision independent
-  of *why* a request was rejected.
+  of _why_ a request was rejected.
 
 ### 429 Too Many Requests
+
 Use when request rate exceeds limits.
 
 Typical Buddy use:
+
 - any endpoint, from the rate limiter (`Common/RateLimiting/RateLimitingFeature`):
   a caller over its per-user or per-IP bucket, an iCal feed link over its
   per-link bucket, or a user over the `ai-assistant` / `outbound-email` / `personal-data-export` policy.
@@ -197,19 +238,23 @@ Typical Buddy use:
   (`resend_cooldown`), see above
 
 Return guidance:
+
 - `Retry-After` in whole seconds, plus the `ErrorEnvelope` with code
   `rate_limited`
 - endpoints don't declare it in their `Results<...>`; the middleware renders it
   before any endpoint runs
 
 ### 500 Internal Server Error
+
 Use for unexpected application errors.
 
 Typical Buddy use:
+
 - unhandled exceptions
 - unexpected persistence/runtime failures
 
 Return guidance:
+
 - do not leak stack traces or secrets
 - include correlation/request id for support
 
@@ -219,9 +264,11 @@ other middleware handles becomes `500` with the `ErrorEnvelope`, code
 exception. The message never includes the exception's text or type.
 
 ### 502 Bad Gateway / 503 Service Unavailable / 504 Gateway Timeout
+
 Use when upstream dependencies fail or are unavailable.
 
 Typical Buddy use:
+
 - identity provider unavailable
 - SMTP provider outage or timeout
 - database temporarily unavailable
@@ -286,7 +333,7 @@ retries a transient failure (network error or `5xx`) with that same key instead 
   type, and body) is cached against the key.
 - A retry with the same key and the same request (method, path, query, and body): replays the
   cached response verbatim instead of re-executing -- no second resource, no second email, etc.
-- A retry with the same key but a *different* request: `409 idempotency_key_reused`.
+- A retry with the same key but a _different_ request: `409 idempotency_key_reused`.
 - A concurrent request still holding the same key: `409 idempotency_key_in_progress`.
 - Malformed key (empty, or over 200 characters): `400 invalid_idempotency_key`.
 

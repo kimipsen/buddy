@@ -42,13 +42,13 @@ authenticates against.
 
 Given that, a second realm buys nothing and costs real complexity:
 
-| Concern | Same realm | Second realm (e.g. `buddy-children`) |
-|---|---|---|
-| Guardian↔child relationship storage | App-side aggregate (needed either way) | Still needed — realms can't express cross-realm relationships |
-| Backend trust config | One `Authority`/`Audience` pair (already in [KeycloakOptions.cs](../../../src/backend/buddy/Features/Users/KeycloakOptions.cs)) | Two issuers to validate, two audiences, doubled `AddAuthentication` complexity in [UsersFeature.cs](../../../src/backend/buddy/Features/Users/UsersFeature.cs) |
-| Test infrastructure | One [TestRealm.json](../../../src/backend/buddy.IntegrationTests/Fixtures/TestRealm.json) | A second realm export to build and maintain, second container import step in [BuddyApiFixture.cs](../../../src/backend/buddy.IntegrationTests/Fixtures/BuddyApiFixture.cs) |
-| Cross-account admin actions (guardian creating a child account, or later "log in as your child") | One Admin REST endpoint/realm to call | Must pick the right realm per call, credentials/service account duplicated |
-| Benefit gained | — | None found — no requirement here needs realm-level isolation |
+| Concern                                                                                          | Same realm                                                                                                                      | Second realm (e.g. `buddy-children`)                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guardian↔child relationship storage                                                              | App-side aggregate (needed either way)                                                                                          | Still needed — realms can't express cross-realm relationships                                                                                                              |
+| Backend trust config                                                                             | One `Authority`/`Audience` pair (already in [KeycloakOptions.cs](../../../src/backend/buddy/Features/Users/KeycloakOptions.cs)) | Two issuers to validate, two audiences, doubled `AddAuthentication` complexity in [UsersFeature.cs](../../../src/backend/buddy/Features/Users/UsersFeature.cs)             |
+| Test infrastructure                                                                              | One [TestRealm.json](../../../src/backend/buddy.IntegrationTests/Fixtures/TestRealm.json)                                       | A second realm export to build and maintain, second container import step in [BuddyApiFixture.cs](../../../src/backend/buddy.IntegrationTests/Fixtures/BuddyApiFixture.cs) |
+| Cross-account admin actions (guardian creating a child account, or later "log in as your child") | One Admin REST endpoint/realm to call                                                                                           | Must pick the right realm per call, credentials/service account duplicated                                                                                                 |
+| Benefit gained                                                                                   | —                                                                                                                               | None found — no requirement here needs realm-level isolation                                                                                                               |
 
 The only thing a realm boundary is good for is isolating **unrelated**
 tenants (e.g. a completely separate customer). Guardians and their children
@@ -97,7 +97,7 @@ reacting to a token that already exists:
    "Cross-aggregate write ordering" below for why, and how to handle a
    partial failure between them.
 4. The guardian is given the child's temporary credential/login code out of
-   band (shown once in the UI, or emailed to the *guardian's* address, never
+   band (shown once in the UI, or emailed to the _guardian's_ address, never
    the child's, since a young child may not have one).
 
 ### A new privileged credential this requires (implemented)
@@ -117,7 +117,7 @@ local dev placeholder secret; production `ClientSecret` still needs real
 secret storage per deployment, and the blast-radius property below is
 unchanged now that the credential exists:
 
-- This credential can create, modify, and delete *any* user in the realm,
+- This credential can create, modify, and delete _any_ user in the realm,
   not just a calling guardian's own children, so `POST /users/me/children`'s
   own authorization logic is the only thing standing between "guardian adds
   their own child" and "guardian-scoped credential used to touch an
@@ -134,7 +134,7 @@ A `GuardianLink` aggregate would need its own store the same way, so step 3
 above is **two independent `SaveChangesAsync` calls against two different
 stores**, not one transaction — unlike the `Group`-deletion cascade in
 [group-owned-calendars-and-permissions.md](group-owned-calendars-and-permissions.md#aggregate-loading-and-performance--operational-contract),
-which stays atomic only because both events land in the *same* store's
+which stays atomic only because both events land in the _same_ store's
 session.
 
 Two ways to close that gap, and the recommended one:
@@ -181,7 +181,7 @@ Both options terminate in the same place: a `GuardianLinked` event.
 
 ### Inviting a co-guardian to an existing child (implemented)
 
-Neither option above covers a third, distinct case: an *existing* guardian
+Neither option above covers a third, distinct case: an _existing_ guardian
 wants to bring in a second adult (a co-parent, grandparent, etc.) to help
 manage a child they already guard. This has since shipped as
 `InviteGuardian`/`AcceptGuardianInvite`/`RevokeGuardianInvite`/
@@ -195,13 +195,13 @@ invite the way a `Group` pre-exists a member invite. The `GuardianKind`
 the resulting `GuardianLinked` event, unchanged from how `CreateChild`
 already produces one.
 
-Any *active* guardian of the child may invite or revoke — there is no
+Any _active_ guardian of the child may invite or revoke — there is no
 Owner/Admin-style split, because `GuardianKind` never gates access (see
 above). One consequence worth calling out explicitly rather than treating
 as a surprise: because `MealFamilyResolution` (and any future calendar
 equivalent) derives "family" transitively from the live `GuardianLink`
 graph with no separate registration step, accepting an invite immediately
-widens the new guardian's *other* children into this child's shared
+widens the new guardian's _other_ children into this child's shared
 meal-family too. This is the same authority model `CreateChild` already
 has — it just wasn't previously reachable via an invite from someone other
 than the child's own first guardian.
@@ -236,8 +236,8 @@ introduces no new requirement on `User`/`Email` at all.
 ## Question 3: how to represent "parent" vs. "guardian"
 
 **It is not a property of `User`.** Every role concept already in the
-codebase (`GroupRole`, `CalendarRole`) is scoped to a *relationship between
-two entities*, never a global attribute stamped on the `User` aggregate
+codebase (`GroupRole`, `CalendarRole`) is scoped to a _relationship between
+two entities_, never a global attribute stamped on the `User` aggregate
 itself — a person can be `GroupRole.Owner` of one group and `Member` of
 another, and the same should hold here: a person could be the legal
 `Guardian` of one child and the biological `Parent` of another (e.g. a
@@ -248,7 +248,7 @@ field on `User`.
 
 Following the same event-sourced shape as `Group` and `Calendar`:
 
-```
+```text
 GuardianLink(
     GuardianLinkId Id,
     UserId ChildId,
@@ -292,16 +292,16 @@ lowest-precedence step:
 
 #### This step needs a new read model — it is not "walked exactly like `Group`"
 
-The existing group step works cheaply because `Calendar.Owner` *already
-contains* the exact `GroupId` to fetch —
+The existing group step works cheaply because `Calendar.Owner` _already
+contains_ the exact `GroupId` to fetch —
 [CalendarAuthorization.cs](../../../src/backend/buddy/Features/Calendars/CalendarAuthorization.cs)
 does `Group.Rehydrate(await groups.ReadAsync(groupId, ...))` directly, no
 search involved. Step 3 has no equivalent ID to key off: `Calendar.Owner` for
 a user-owned calendar is just the child's `UserId` — there is no
 `GuardianLinkId` anywhere in scope, and no way to know in advance whether
-that owning `UserId` even *is* a child account. Answering "does `userId`
+that owning `UserId` even _is_ a child account. Answering "does `userId`
 have an active `GuardianLink` to this `UserId`" is a lookup keyed by a
-*pair* of foreign IDs (`ChildId`, `GuardianId`), the same class of problem
+_pair_ of foreign IDs (`ChildId`, `GuardianId`), the same class of problem
 `GroupMembershipDocument` was introduced to solve for list queries in
 [group-owned-calendars-and-permissions.md](group-owned-calendars-and-permissions.md#list-queries-are-the-one-place-a-new-read-model-is-required) —
 not something the event-sourced `GuardianLink` aggregate can answer without
@@ -337,9 +337,9 @@ introduced for groups, with `GuardianLinkDocument` playing the role
 
 `GroupRole.Owner | Admin | Member` is a generic collaboration-permission
 enum reused by any `Group`, not specific to families. Adding `Parent` /
-`Guardian` / `Child` values to it would conflate two different axes: *how
-much control does this member have over the group* (existing purpose) vs.
-*what is this person's real-world relationship to that specific member*
+`Guardian` / `Child` values to it would conflate two different axes: _how
+much control does this member have over the group_ (existing purpose) vs.
+_what is this person's real-world relationship to that specific member_
 (new need). Keeping `GuardianKind` on its own `GuardianLink` aggregate keeps
 `GroupRole` unchanged and lets a "family" still just be an ordinary `Group`
 if guardians want one (e.g. to share a household calendar), fully
@@ -348,29 +348,29 @@ members.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Child has no `GuardianLink` at all | Behaves exactly like today's user-owned calendar — only the child (and any explicit `Calendar.Members` grants) has access. |
-| `GuardianLink` revoked (`GuardianRevoked`) | Effective on the next check — `GuardianRevoked` updates `GuardianLinkDocument` in the same write, no stale row to serve. |
-| Two `GuardianLink`s to the same child (two parents) | Both guardians resolve to `CalendarRole.Owner` independently; no conflict, since it's a set membership check, not a single-slot field. |
-| Child also has explicit `Calendar.Members` grants (e.g. from a group) | Explicit grants still take precedence over the guardian default, same precedence rule as group-derived roles — a child's calendar could deliberately grant a guardian only `Contributor` by an explicit entry if that's ever desired. |
-| Guardian tries to link a child who is already an adult / already linked elsewhere | Out of scope for this document — needs a policy decision (age verification isn't modeled anywhere today) and is called out as an open question below. |
-| Child account has no email (Option A) | Reuses the existing `Email.Value == ""` convention already produced by `GetOrCreateUserHandler`'s `?? ""` fallback; the existing blank-email guard already skips `EmailVerificationRequested`. No new "child" flag. |
-| Child `User` created but the follow-up `GuardianLinked` write fails (two separate stores) | Child `User` exists with no guardian yet — a visible, recoverable state, not silent data loss. Caller/retry logic must re-append `GuardianLinked` until it succeeds (see "Cross-aggregate write ordering"). |
+| Case                                                                                      | Behavior                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Child has no `GuardianLink` at all                                                        | Behaves exactly like today's user-owned calendar — only the child (and any explicit `Calendar.Members` grants) has access.                                                                                                            |
+| `GuardianLink` revoked (`GuardianRevoked`)                                                | Effective on the next check — `GuardianRevoked` updates `GuardianLinkDocument` in the same write, no stale row to serve.                                                                                                              |
+| Two `GuardianLink`s to the same child (two parents)                                       | Both guardians resolve to `CalendarRole.Owner` independently; no conflict, since it's a set membership check, not a single-slot field.                                                                                                |
+| Child also has explicit `Calendar.Members` grants (e.g. from a group)                     | Explicit grants still take precedence over the guardian default, same precedence rule as group-derived roles — a child's calendar could deliberately grant a guardian only `Contributor` by an explicit entry if that's ever desired. |
+| Guardian tries to link a child who is already an adult / already linked elsewhere         | Out of scope for this document — needs a policy decision (age verification isn't modeled anywhere today) and is called out as an open question below.                                                                                 |
+| Child account has no email (Option A)                                                     | Reuses the existing `Email.Value == ""` convention already produced by `GetOrCreateUserHandler`'s `?? ""` fallback; the existing blank-email guard already skips `EmailVerificationRequested`. No new "child" flag.                   |
+| Child `User` created but the follow-up `GuardianLinked` write fails (two separate stores) | Child `User` exists with no guardian yet — a visible, recoverable state, not silent data loss. Caller/retry logic must re-append `GuardianLinked` until it succeeds (see "Cross-aggregate write ordering").                           |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Same Keycloak realm or a second one for children | Same realm — relationship data belongs in the app, not Keycloak, so a second realm adds cost with no benefit |
-| How a guardian adds a child (v1) | Guardian-initiated provisioning via the Keycloak Admin API, mirroring today's lazy-materialization pattern but backend-initiated |
-| Is "parent"/"guardian" a field on `User` | No — a scoped relationship (`GuardianLink`), same pattern as `GroupRole`/`CalendarRole` |
-| Does `GuardianKind` (`Parent`/`Guardian`) change permission level | No — record-keeping label only; both kinds grant the same default authority |
-| Guardian default calendar access on a child's calendar | `CalendarRole.Owner`, resolved via an indexed `GuardianLinkDocument(ChildId, GuardianId)` lookup, not configurable per child (safety property, unlike `CalendarPermissionPolicy`) |
-| Should `GroupRole` gain `Parent`/`Child` values | No — conflates permission level with real-world relationship; kept as a separate aggregate |
-| `Email` on `User` | No schema change — reuse the existing `?? ""` empty-string convention already produced by `GetOrCreateUserHandler` |
-| Where does `GuardianLink` live, for atomicity with child-user creation | In the Users schema/store, appended alongside `UserCreated` in the same session — not a separate store, so the two writes commit together |
-| How is a caller's `GuardianLink` to a calendar's owning user found | New `GuardianLinkDocument(ChildId, GuardianId, GuardianKind, IsRevoked)` read model — `Calendar.Owner` only carries a `UserId`, unlike the group case where `GroupId` is already in hand |
+| Question                                                                      | Decision                                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Same Keycloak realm or a second one for children                              | Same realm — relationship data belongs in the app, not Keycloak, so a second realm adds cost with no benefit                                                                                                               |
+| How a guardian adds a child (v1)                                              | Guardian-initiated provisioning via the Keycloak Admin API, mirroring today's lazy-materialization pattern but backend-initiated                                                                                           |
+| Is "parent"/"guardian" a field on `User`                                      | No — a scoped relationship (`GuardianLink`), same pattern as `GroupRole`/`CalendarRole`                                                                                                                                    |
+| Does `GuardianKind` (`Parent`/`Guardian`) change permission level             | No — record-keeping label only; both kinds grant the same default authority                                                                                                                                                |
+| Guardian default calendar access on a child's calendar                        | `CalendarRole.Owner`, resolved via an indexed `GuardianLinkDocument(ChildId, GuardianId)` lookup, not configurable per child (safety property, unlike `CalendarPermissionPolicy`)                                          |
+| Should `GroupRole` gain `Parent`/`Child` values                               | No — conflates permission level with real-world relationship; kept as a separate aggregate                                                                                                                                 |
+| `Email` on `User`                                                             | No schema change — reuse the existing `?? ""` empty-string convention already produced by `GetOrCreateUserHandler`                                                                                                         |
+| Where does `GuardianLink` live, for atomicity with child-user creation        | In the Users schema/store, appended alongside `UserCreated` in the same session — not a separate store, so the two writes commit together                                                                                  |
+| How is a caller's `GuardianLink` to a calendar's owning user found            | New `GuardianLinkDocument(ChildId, GuardianId, GuardianKind, IsRevoked)` read model — `Calendar.Owner` only carries a `UserId`, unlike the group case where `GroupId` is already in hand                                   |
 | What credential does the backend use to create a child in Keycloak (Option A) | A dedicated confidential client scoped to `manage-users` — implemented as `KeycloakAdminClient`/`KeycloakAdminOptions`; production secret storage/rotation still follows the deployment's normal secret-management process |
 
 ## Remaining open questions

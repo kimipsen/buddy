@@ -46,19 +46,19 @@ the tool allowlist, what an empty result does, and how the model and the UI lear
 
 ## Question 1: what do "rated" and "within N days" mean?
 
-**Decision: "within N days" means *served*: the meal has at least one assignment in the family
+**Decision: "within N days" means _served_: the meal has at least one assignment in the family
 `MealPlan` inside the window. "Rated" means at least one child has a rating of any star count.**
 
-- **Served, not rated-at.** `MealRating.RatedAt` holds only each child's *latest* rating (full
+- **Served, not rated-at.** `MealRating.RatedAt` holds only each child's _latest_ rating (full
   history lives only in `MealRated` events). A meal rated five stars four months ago and served
   every week since would drop out of a "rated in the last 60 days" window. Plan assignments
   record what the family actually eats, which is what this filter is for.
-  *Rejected:* filtering on `RatedAt`, for the reason above. *Rejected:* "served **or** rated within
+  _Rejected:_ filtering on `RatedAt`, for the reason above. _Rejected:_ "served **or** rated within
   the window", which adds a rule to explain in the UI and no real benefit, since rating a meal
   usually happens on a day it was served.
 - **Any star count.** Low ratings stay in the prompt on purpose. The model is already told to
   "favor meals the children have rated highly", and a 1-star rating with a comment
-  ("too spicy") is useful for that. *Rejected:* a minimum-stars threshold, which hides exactly
+  ("too spicy") is useful for that. _Rejected:_ a minimum-stars threshold, which hides exactly
   the signal that tells the model what to avoid. It can be added later as one more filter field.
 
 ## Question 2: where is the filter stored?
@@ -133,10 +133,10 @@ compile unchanged thanks to the defaults. The golden file
 file `AiSessionStarted_Filtered.json` pins the non-default shape (enum stored as a string, e.g.
 `"ServedWithin": "Last60Days"`).
 
-*Rejected:* a family-wide default on `AiProviderCredential`. That needs a new event, endpoint and
+_Rejected:_ a family-wide default on `AiProviderCredential`. That needs a new event, endpoint and
 settings UI, for a choice guardians may well change per session ("this week, only favorites").
 The start form remembers the last choice on the device instead (see Frontend).
-*Rejected:* a nested `AiMealFilter` record on the event. A record-typed parameter can't have a
+_Rejected:_ a nested `AiMealFilter` record on the event. A record-typed parameter can't have a
 non-null constant default, so it would need `AiMealFilter? = null`, against
 [eliminate-nulls.md](eliminate-nulls.md).
 
@@ -161,12 +161,12 @@ and not "the N days before today".**
 
 **Decision: AND. Both off (the default) is today's behavior.**
 
-| `RatedOnly` | `ServedWithin` | Meals sent |
-|---|---|---|
-| `false` | `Any` | every active meal (unchanged) |
-| `true` | `Any` | active meals with at least one rating |
-| `false` | `Last60Days` | active meals assigned in `[From-60, From-1]` |
-| `true` | `Last60Days` | active meals that are rated **and** were served in the window |
+| `RatedOnly` | `ServedWithin` | Meals sent                                                    |
+| ----------- | -------------- | ------------------------------------------------------------- |
+| `false`     | `Any`          | every active meal (unchanged)                                 |
+| `true`      | `Any`          | active meals with at least one rating                         |
+| `false`     | `Last60Days`   | active meals assigned in `[From-60, From-1]`                  |
+| `true`      | `Last60Days`   | active meals that are rated **and** were served in the window |
 
 Archived meals are dropped first, as today.
 
@@ -183,7 +183,7 @@ Archived meals are dropped first, as today.
   just accepts ids the model shouldn't have, such as one remembered from a tool result or guessed.
   Keeping the two sets identical keeps the existing invariant that "the server only accepts
   what it offered".
-  *Rejected:* keeping the full family set as the allowlist. Nothing is gained, and a
+  _Rejected:_ keeping the full family set as the allowlist. Nothing is gained, and a
   hallucinated-but-valid id would slip through.
 
 ### Shared helper
@@ -268,7 +268,7 @@ rejection ("No meals match this session's filter any more -- start a new session
 call the provider. It is rare, and calling the model with an empty list would only produce
 a confused reply that the guardian paid for.
 
-*Rejected:* falling back to the full library. It silently does the opposite of what the guardian
+_Rejected:_ falling back to the full library. It silently does the opposite of what the guardian
 asked for and sends more data than they agreed to share.
 
 ## Question 7: how do the model and the UI learn about the filter?
@@ -289,7 +289,7 @@ asked for and sends more data than they agreed to share.
 
 No new routes. Changed request/response shapes:
 
-```
+```text
 POST /mealplans/children/{childId}/ai/sessions         StartAiSession
      body += ratedOnly: bool (default false), servedWithin: 0|30|60|90 (default 0)
      400 when the filter matches no meals
@@ -317,6 +317,7 @@ response fields. Update `Mealplans.http` with a filtered start request.
   `localStorage` approach as
   [`last-template-storage.ts`](../../../src/frontend/buddy/src/app/features/guardian/print/last-template-storage.ts).
   It's a convenience, not configuration (see Question 2).
+
 - When `startSession` fails with `400`, show `mealplan.aiAssistant.start.noMatchingMeals`
   instead of the generic `startError`.
 - In the session panel, when a filter is active, show a one-line summary
@@ -349,35 +350,35 @@ response fields. Update `Mealplans.http` with a filtered start request.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Both filters off / fields omitted | Today's behavior: every active meal |
-| `servedWithin` not 0/30/60/90 | `400` from the validator (`IsInEnum`) |
-| Filter matches no meals at start | `400` keyed on `ServedWithin`; no session created, nothing sent |
-| Filter matches nothing on a later turn | `400` keyed on `ServedWithin`, "start a new session"; provider not called; message not recorded |
-| Family has no `MealPlan` yet, `ServedWithin != Any` | Served set is empty, so the start is rejected with `400` (unless must-include meals exist) |
-| Must-include meal fails the filter | Still offered and still accepted by `propose_assignment` |
-| Model proposes a family meal outside the filtered set | Tool error "not in the family's available meal library", as for an unknown id today |
-| Meal served in the window but since archived | Excluded (archived meals are never offered) |
-| Assignment exists on or after `From` | Doesn't count toward "served" (Question 3) |
-| `AiSessionStarted` written before this change | Deserializes with `RatedOnly = false`, `ServedWithin = Any`, i.e. unfiltered, as it ran |
-| Guardian's `GuardianLink` is revoked | Unchanged: `404` before any filtering runs |
+| Case                                                  | Behavior                                                                                        |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Both filters off / fields omitted                     | Today's behavior: every active meal                                                             |
+| `servedWithin` not 0/30/60/90                         | `400` from the validator (`IsInEnum`)                                                           |
+| Filter matches no meals at start                      | `400` keyed on `ServedWithin`; no session created, nothing sent                                 |
+| Filter matches nothing on a later turn                | `400` keyed on `ServedWithin`, "start a new session"; provider not called; message not recorded |
+| Family has no `MealPlan` yet, `ServedWithin != Any`   | Served set is empty, so the start is rejected with `400` (unless must-include meals exist)      |
+| Must-include meal fails the filter                    | Still offered and still accepted by `propose_assignment`                                        |
+| Model proposes a family meal outside the filtered set | Tool error "not in the family's available meal library", as for an unknown id today             |
+| Meal served in the window but since archived          | Excluded (archived meals are never offered)                                                     |
+| Assignment exists on or after `From`                  | Doesn't count toward "served" (Question 3)                                                      |
+| `AiSessionStarted` written before this change         | Deserializes with `RatedOnly = false`, `ServedWithin = Any`, i.e. unfiltered, as it ran         |
+| Guardian's `GuardianLink` is revoked                  | Unchanged: `404` before any filtering runs                                                      |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| What "within N days" measures | Served: an assignment in the family `MealPlan`, because `RatedAt` keeps only the latest rating |
-| What "rated" means | At least one rating, any star count, so low ratings still steer the model away |
-| Where the filter lives | Per session on `AiSessionStarted`, with "no filter" defaults; last choice remembered in `localStorage` |
-| Window dates | `[From - N, From - 1]`, stable across turns and free of time-zone questions |
-| Combining filters | AND; both off = today |
-| Must-include meals | Always offered, regardless of the filter |
-| Tool allowlist | Same filtered set as the prompt |
-| Empty result | `400` at start (and on a later turn); never fall back to the full library |
-| Telling the model / UI | One prompt line; `AiSessionView` echoes `RatedOnly` and `ServedWithin` |
-| Back-compat | Constructor defaults, no upcaster; old sessions expire within 30 days anyway |
-| GDPR doc | One line in the Question 6 minimization list noting the guardian can narrow the meals sent |
+| Question                      | Decision                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
+| What "within N days" measures | Served: an assignment in the family `MealPlan`, because `RatedAt` keeps only the latest rating         |
+| What "rated" means            | At least one rating, any star count, so low ratings still steer the model away                         |
+| Where the filter lives        | Per session on `AiSessionStarted`, with "no filter" defaults; last choice remembered in `localStorage` |
+| Window dates                  | `[From - N, From - 1]`, stable across turns and free of time-zone questions                            |
+| Combining filters             | AND; both off = today                                                                                  |
+| Must-include meals            | Always offered, regardless of the filter                                                               |
+| Tool allowlist                | Same filtered set as the prompt                                                                        |
+| Empty result                  | `400` at start (and on a later turn); never fall back to the full library                              |
+| Telling the model / UI        | One prompt line; `AiSessionView` echoes `RatedOnly` and `ServedWithin`                                 |
+| Back-compat                   | Constructor defaults, no upcaster; old sessions expire within 30 days anyway                           |
+| GDPR doc                      | One line in the Question 6 minimization list noting the guardian can narrow the meals sent             |
 
 ## Remaining open questions
 

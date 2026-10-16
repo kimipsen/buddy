@@ -50,7 +50,7 @@ shows the codebase is comfortable hand-rolling read models.
 
 Reasoning:
 
-- Marten projections are *definitionally* derived state — they're rebuilt
+- Marten projections are _definitionally_ derived state — they're rebuilt
   from the event stream by the same daemon/tooling regardless of how they
   got out of date, which is a stronger and more literal guarantee of "events
   stay authoritative" than a hand-written upsert call that a future author
@@ -73,7 +73,7 @@ each contributing one table (one per aggregate type) — not a
 `<module>_snapshots` schema per module.
 
 Reasoning: the event-sourcing schemas are already split per module because
-each module's *event* data is genuinely separate and a candidate for future
+each module's _event_ data is genuinely separate and a candidate for future
 microservice extraction. Snapshots are a cross-cutting concern layered on
 top for read performance, not a domain boundary — one schema keeps "where do
 I look for current-state lookups" a single, simple answer, and keeps
@@ -98,7 +98,7 @@ one row per group, upserted in the same transaction as every event append.
 ## Question 3: projection lifecycle — Inline or Async?
 
 **Decision (default to start): `Inline`.** The snapshot upsert happens in
-the *same* Marten session/transaction as `session.Events.Append(...)`,
+the _same_ Marten session/transaction as `session.Events.Append(...)`,
 matching the existing synchronous document-write pattern in
 `MartenGroupEventStore.AppendAsync` exactly — no eventual-consistency window,
 no need to stand up Marten's async-daemon hosted service.
@@ -131,7 +131,7 @@ One naming gotcha found while implementing this: the step function must
 **not** be named `Apply` or `Create` on the aggregate/document type itself.
 JasperFx's projection source generator scans any type used as a projection
 document (`Group` is, via `GroupSnapshotProjection`) for methods named
-`Apply`/`Create` as a *self-aggregation* convention, and misinterprets a
+`Apply`/`Create` as a _self-aggregation_ convention, and misinterprets a
 same-named static helper with the wrong signature — the resulting generated
 `Evolver` fails to compile (`cannot convert from 'object' to 'Group?'`).
 `Fold` avoids the collision; the projection class's own `Apply`/`Create`
@@ -162,7 +162,7 @@ subclass already pins both type parameters at compile time.
 identity unwrapping used for aggregate fetches) only recognizes a plain
 `Guid`/`string`/`int`/`long`, or a wrapper **struct** (`readonly record struct
 PaymentId(Guid Value)`), as a document's `Id`.** `GroupId` in this codebase
-is a `sealed record` — a *class*, not a struct — and `Group.Id : GroupId`
+is a `sealed record` — a _class_, not a struct — and `Group.Id : GroupId`
 made Marten's `DocumentMapping.CompileAndValidate()` fail with `Could not
 determine an 'id/Id' field or property for requested document type
 buddy.Features.Groups.Group`. Confirmed in isolation: the identical shape
@@ -199,7 +199,7 @@ wrapper exists purely at the snapshot-storage boundary, one per module.
 **5c. A second, unrelated serialization gap surfaced by actually persisting
 `Group` for the first time.** `Group.Members` is an
 `ImmutableDictionary<UserId, GroupRole>` — a strongly-typed id used as a
-*dictionary key*. Nothing before this had ever JSON-serialized `Group` (its
+_dictionary key_. Nothing before this had ever JSON-serialized `Group` (its
 state only ever existed as an in-memory `Rehydrate` result), so this path
 was never exercised. `StronglyTypedIdJsonConverterFactory`
 (`src/backend/buddy/Serialization/StronglyTypedIdJsonConverterFactory.cs`)
@@ -240,25 +240,26 @@ when calendars became group-owned only. The same fix lives on in
 `PrintTemplates/Types/PrintTemplateOwnerJsonConverter.cs`.) `Calendar.Owner` was `CalendarOwner`,
 a closed `union` with two cases, `User(UserId Value)` and `Group(GroupId Value)`. Both `UserId`
 and `GroupId` flatten to a bare `Guid` via `StronglyTypedIdJsonConverterFactory`, so both cases
-serialize to the *identical* JSON shape `{"Value": "<guid>"}` — the union's own type-classifier
+serialize to the _identical_ JSON shape `{"Value": "<guid>"}` — the union's own type-classifier
 deserialization can't tell them apart ("JSON value type 'Object' is ambiguous for union type").
 This was latent and undetected before snapshots: `Calendar` was never JSON-round-tripped
 anywhere (it's not part of any event payload, and no API response DTO exposes `Owner`), so it
 only surfaced once `CalendarSnapshot` made `Calendar` itself a Marten-stored, serialized
 document. Fixing it took two changes:
+
 - `StronglyTypedIdJsonConverterFactory` was accidentally also matching the union's nested case
   types (`CalendarOwner.User`/`.Group`, which have the same "single ctor param named `Value`"
   shape as a genuine id wrapper), stripping their object shape entirely. Fixed by excluding
   nested types (`type.DeclaringType is not null → not a match`) — every genuine strongly-typed
   id in this codebase is a top-level type, so this doesn't affect any of them.
-- Even with that fixed, the union's *default* shape-based classifier still can't disambiguate
+- Even with that fixed, the union's _default_ shape-based classifier still can't disambiguate
   two cases that happen to serialize identically. `Features/Pickups/Types/PickupAssigneeKind.cs`
   had already hit this exact class of problem and deliberately avoided a union over it. Since
   reshaping `CalendarOwner` itself would be a much larger, riskier change (touching
   `CalendarAuthorization` and every handler that pattern-matches it), the fix instead is a small,
   narrowly-scoped `CalendarOwnerJsonConverter` (an explicit `{"Kind":"User"|"Group","Id":"<guid>"}` shape), registered only on the `Calendars`
   module's `StoreOptions` — it doesn't touch `CalendarOwner`'s C# shape or any other module.
-  Worth checking for if any *other* module's union ever needs to be JSON-serialized directly in
+  Worth checking for if any _other_ module's union ever needs to be JSON-serialized directly in
   the future (none currently do outside their own event payloads, which don't hit this because
   individual event records don't share this kind of case-ambiguity).
 

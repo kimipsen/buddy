@@ -61,7 +61,7 @@ the list.
 **Decision: one `BabysitterList` stream per guardian, whose id equals the guardian's `UserId`,
 created lazily by the first write.**
 
-```
+```text
 BabysitterList(
     BabysitterListId Id,                  // == GuardianId.Value
     UserId GuardianId,
@@ -83,7 +83,7 @@ BabysitterList(
 
 **Decision: a name and optional free-text contact info. Removing a babysitter archives it.**
 
-```
+```text
 Babysitter(
     BabysitterId Id,        // Guid v7, assigned by AddBabysitter
     string Name,            // "Anna"; required
@@ -108,7 +108,7 @@ Babysitter(
 **Decision: a new case `PickupAssignee.Babysitter(UserId GuardianId, BabysitterId BabysitterId)`,
 wire `kind` 4. The name is resolved on every read, not copied into the event.**
 
-```
+```text
 PickupAssignee.Babysitter(UserId GuardianId, BabysitterId BabysitterId)
     // GuardianId: whose list the babysitter is on
 
@@ -145,11 +145,11 @@ PickupAssigneeDto, kind 4 = Babysitter:
 of the child, who sees the babysitters of all the child's active guardians. Children only ever
 see a babysitter's name, through the pickup schedule.**
 
-| Tier | Who | Actions |
-|---|---|---|
-| **Manage** | The guardian whose list it is (a child account gets `403`) | Add, update, archive; read own list including archived |
-| **Pick** | An active guardian of `childId` | Read the active babysitters of every active guardian of that child, with contact info |
-| — | Everyone else, including the child | `NotFound` on the child route |
+| Tier       | Who                                                        | Actions                                                                               |
+| ---------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Manage** | The guardian whose list it is (a child account gets `403`) | Add, update, archive; read own list including archived                                |
+| **Pick**   | An active guardian of `childId`                            | Read the active babysitters of every active guardian of that child, with contact info |
+| —          | Everyone else, including the child                         | `NotFound` on the child route                                                         |
 
 - **Write routes are `/me` routes,** like `WorkLocations`, so the handler never takes a guardian
   id to write to.
@@ -168,7 +168,7 @@ see a babysitter's name, through the pickup schedule.**
 
 ## Events
 
-```
+```text
 BabysitterListStarted(BabysitterListId Id, UserId GuardianId, DateTimeOffset OccurredAt)
     // appended lazily with the first BabysitterAdded, never on its own
 
@@ -197,32 +197,32 @@ writes the snapshot.
 
 No index documents: the deterministic id makes every lookup a direct snapshot load.
 
-```
+```text
 BabysitterSummary(Guid Id, string Name, string ContactInfo, bool IsArchived)
 ChildBabysitter(Guid GuardianId, Guid Id, string Name, string ContactInfo)
 ```
 
 ## Command slices (`Features/Babysitters/`, same vertical-slice shape as `WorkLocations`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `AddBabysitter` | Manage | Name, contact info. Starts the stream if needed. Emits `BabysitterAdded` |
-| `UpdateBabysitter` | Manage | Name, contact info. No-op when unchanged. An archived or unknown id is `NotFound` |
-| `ArchiveBabysitter` | Manage | Emits `BabysitterArchived`. Idempotent on an already-archived babysitter |
-| `ListMyBabysitters` | Manage | The caller's whole list, archived ones included and flagged |
-| `ListChildBabysitters` | Pick | Active babysitters of every active guardian of `childId`, sorted by name |
+| Slice                  | Tier   | Notes                                                                             |
+| ---------------------- | ------ | --------------------------------------------------------------------------------- |
+| `AddBabysitter`        | Manage | Name, contact info. Starts the stream if needed. Emits `BabysitterAdded`          |
+| `UpdateBabysitter`     | Manage | Name, contact info. No-op when unchanged. An archived or unknown id is `NotFound` |
+| `ArchiveBabysitter`    | Manage | Emits `BabysitterArchived`. Idempotent on an already-archived babysitter          |
+| `ListMyBabysitters`    | Manage | The caller's whole list, archived ones included and flagged                       |
+| `ListChildBabysitters` | Pick   | Active babysitters of every active guardian of `childId`, sorted by name          |
 
 ### Validation limits
 
-| Field | Rule |
-|---|---|
-| `Name` | required, trimmed, 1–80 characters; unique among the guardian's active babysitters, case-insensitive |
-| `ContactInfo` | optional, trimmed, at most 200 characters |
-| Active babysitters | at most 20 per guardian |
+| Field              | Rule                                                                                                 |
+| ------------------ | ---------------------------------------------------------------------------------------------------- |
+| `Name`             | required, trimmed, 1–80 characters; unique among the guardian's active babysitters, case-insensitive |
+| `ContactInfo`      | optional, trimmed, at most 200 characters                                                            |
+| Active babysitters | at most 20 per guardian                                                                              |
 
 ## Routes
 
-```
+```text
 GET    /babysitters/me                        ListMyBabysitters
 POST   /babysitters/me                        AddBabysitter
 PATCH  /babysitters/me/{babysitterId}         UpdateBabysitter
@@ -269,31 +269,31 @@ Plus `EventShapeTests` golden files and a `SnapshotTests` entry.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Guardian has never added a babysitter | No stream; `GET /babysitters/me` returns `[]` |
-| Babysitter archived while assigned to slots | Slots keep the id and still show the name |
-| Re-saving a slot whose babysitter is archived | `400`; the guardian picks someone else |
-| Babysitter renamed | Every slot shows the new name on the next read |
-| Owner's link to the child revoked | Their babysitters leave the child's picker; assigned slots keep the name |
-| Owner deletes their account | The list stays in place, so slots keep the name; the owner's link is gone, so their babysitters leave the picker |
-| Two babysitters with the same name | Rejected among active ones; an archived name can be reused |
-| Archive an already-archived babysitter | Idempotent `204`, no event |
-| Update with unchanged content | `200`, no event |
-| Child account calls a `/me` route | `403` |
+| Case                                          | Behavior                                                                                                         |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Guardian has never added a babysitter         | No stream; `GET /babysitters/me` returns `[]`                                                                    |
+| Babysitter archived while assigned to slots   | Slots keep the id and still show the name                                                                        |
+| Re-saving a slot whose babysitter is archived | `400`; the guardian picks someone else                                                                           |
+| Babysitter renamed                            | Every slot shows the new name on the next read                                                                   |
+| Owner's link to the child revoked             | Their babysitters leave the child's picker; assigned slots keep the name                                         |
+| Owner deletes their account                   | The list stays in place, so slots keep the name; the owner's link is gone, so their babysitters leave the picker |
+| Two babysitters with the same name            | Rejected among active ones; an archived name can be reused                                                       |
+| Archive an already-archived babysitter        | Idempotent `204`, no event                                                                                       |
+| Update with unchanged content                 | `200`, no event                                                                                                  |
+| Child account calls a `/me` route             | `403`                                                                                                            |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| New feature or inline | New feature `Features/Babysitters`; a saved entry outlives one slot |
-| Owner | Each guardian, per requirement 2; not group or child |
-| Identity | One stream per guardian, id equal to the guardian's `UserId`, created lazily |
-| Fields | Name and free-text contact info; archived, never deleted |
-| Pickup reference | `PickupAssignee.Babysitter(GuardianId, BabysitterId)`, wire `kind` 4 |
-| Name on the slot | Resolved on every read, so renames propagate; `""` when unresolvable |
-| Who picks | Any active guardian of the child, from all the child's active guardians' lists |
-| Child visibility | The name only, through the pickup schedule |
+| Question              | Decision                                                                       |
+| --------------------- | ------------------------------------------------------------------------------ |
+| New feature or inline | New feature `Features/Babysitters`; a saved entry outlives one slot            |
+| Owner                 | Each guardian, per requirement 2; not group or child                           |
+| Identity              | One stream per guardian, id equal to the guardian's `UserId`, created lazily   |
+| Fields                | Name and free-text contact info; archived, never deleted                       |
+| Pickup reference      | `PickupAssignee.Babysitter(GuardianId, BabysitterId)`, wire `kind` 4           |
+| Name on the slot      | Resolved on every read, so renames propagate; `""` when unresolvable           |
+| Who picks             | Any active guardian of the child, from all the child's active guardians' lists |
+| Child visibility      | The name only, through the pickup schedule                                     |
 
 ## Remaining open questions
 

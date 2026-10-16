@@ -16,16 +16,16 @@ to stop after step 3.
 This skill coordinates other project skills and doesn't repeat their conventions. Load each one
 (Skill tool) when its step starts:
 
-| Skill | Used for |
-|---|---|
-| `claude-backend` | backend conventions (vertical slices, Marten event sourcing, Result<T>, ids) |
-| `backend-feature` | one backend vertical slice plus its integration tests |
-| `buddy-frontend` | Angular conventions: service in `core/`, standalone components, routes, specs |
-| `i18n` | en and da strings and the parity check |
-| `e2e-test` | Playwright specs in `src/frontend/buddy/e2e/` |
-| `run-buddy` | launch the app to look at the feature |
-| `doc-screenshots` | add the feature's pages to the documentation screenshots |
-| `backend-aware-review` | review the finished diff |
+| Skill                  | Used for                                                                      |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `claude-backend`       | backend conventions (vertical slices, Marten event sourcing, Result<T>, ids)  |
+| `backend-feature`      | one backend vertical slice plus its integration tests                         |
+| `buddy-frontend`       | Angular conventions: service in `core/`, standalone components, routes, specs |
+| `i18n`                 | en and da strings and the parity check                                        |
+| `e2e-test`             | Playwright specs in `src/frontend/buddy/e2e/`                                 |
+| `run-buddy`            | launch the app to look at the feature                                         |
+| `doc-screenshots`      | add the feature's pages to the documentation screenshots                      |
+| `backend-aware-review` | review the finished diff                                                      |
 
 If one of them isn't installed yet, follow the existing code next to where you're working and say
 in the final report that the skill was missing.
@@ -62,7 +62,7 @@ Docs that are strategy rather than features (`integration-testing-strategy.md`,
 - Check the doc against the code. Docs go stale: confirm the types, routes and files it names
   still exist (`grep`/`Glob`), and note where they don't.
 
-## 2. Confirm open questions with the user. Don't skip this.
+## 2. Confirm open questions with the user. Don't skip this
 
 Collect, in one message:
 
@@ -163,8 +163,8 @@ Follow "When it ships" in [references/analysis-doc-template.md](references/analy
 In short:
 
 - Change the doc's `Status:` line to `Status: Implemented. <what shipped: types, commands, routes,
-  screens>`. If only part shipped, say which part (`Implemented (core logging; share links not yet
-  built)`). Fix any part of the doc that the implementation contradicts. Settled open questions
+screens>`. If only part shipped, say which part (`Implemented (core logging; share links not yet
+built)`). Fix any part of the doc that the implementation contradicts. Settled open questions
   become `## Decisions made` rows.
 - In the root `README.md`, tick the Features checkbox (`- [ ]` → `- [x]`) and drop the
   "(proposed, not yet implemented — see ...)" parenthetical, unless only part shipped. Move the

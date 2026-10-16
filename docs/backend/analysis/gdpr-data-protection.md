@@ -40,10 +40,11 @@ What exists today (all checked in the code):
   ([AiSessionPromptBuilder.cs](../../../src/backend/buddy/Features/Mealplans/AiAssistant/AiSessionPromptBuilder.cs),
   [AiSessionToolExecutor.cs](../../../src/backend/buddy/Features/Mealplans/AiAssistant/AiSessionToolExecutor.cs)):
   - the whole meal library, with every rating comment the children wrote, keyed by child `UserId`;
-  - for `get_calendar_conflicts`, the titles of items in *every* calendar the guardian can see,
+  - for `get_calendar_conflicts`, the titles of items in _every_ calendar the guardian can see,
     including calendars other families share through a group.
 
   Sessions are kept forever, and the UI never says that any of this leaves Buddy.
+
 - **Two smaller leaks.**
   - The secret iCal and share-link tokens are part of the URL path
     (`/calendars/{id}/ical/{token}`, `/sleep-diary/shared/{token}`), so they end up in traces as
@@ -104,7 +105,7 @@ await store.Advanced.RebuildSingleStreamAsync<UserSnapshot>(userId.Value, cancel
   deleted or rewritten in the same step.
 - **Ids are pseudonyms, not erased.** Other streams reference a person only by `UserId`. Once the
   user's own stream is masked and the Keycloak account is gone, a `UserId` no longer leads to a
-  person, so `CreatedBy`, `AssignedBy` and the like stay. Free text a person wrote in a *shared*
+  person, so `CreatedBy`, `AssignedBy` and the like stay. Free text a person wrote in a _shared_
   family space (a calendar item title, a meal plan note) stays too: it is the family's plan, not the
   author's personal record. That free text is erased with the child or group it belongs to, not with
   its author.
@@ -198,23 +199,23 @@ up their link first (`RevokeGuardianLink`), so no parent can erase what another 
 
 What is erased:
 
-| Data | How |
-|---|---|
-| The child's user stream and `UserSnapshot`; the Keycloak account | mask + rebuild; admin API delete |
-| Medicine schedules and dose logs, and their group sharing | delete every stream found through `MedicineIndexDocument`/`MedicineSharingIndexDocument`, with snapshots and index documents |
-| Sleep diary (`SleepDiaryId.ForChild`) and share tokens | delete |
-| Feelings journal (`FeelingsJournalId.ForChild`): check-ins, notes, prompt times, display mode; and its share tokens | delete |
-| Progress (`ProgressId.ForChild`): stars, milestones, goal-post labels | delete |
-| Pickup schedule (playdate host names, addresses and contacts, notes) | delete |
-| Meal ratings by the child (`MealRated.Comment`) | mask the comment; the stars stay, keyed by a now-anonymous id |
-| Calendar items assigned to the child | `ItemDeleted`, then mask the title |
-| Group memberships and calendar roles | revoke |
-| Guardian links to the child; guardian invites for the child (which hold `ChildGivenName`) | revoke; mask the invites |
+| Data                                                                                                                | How                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| The child's user stream and `UserSnapshot`; the Keycloak account                                                    | mask + rebuild; admin API delete                                                                                             |
+| Medicine schedules and dose logs, and their group sharing                                                           | delete every stream found through `MedicineIndexDocument`/`MedicineSharingIndexDocument`, with snapshots and index documents |
+| Sleep diary (`SleepDiaryId.ForChild`) and share tokens                                                              | delete                                                                                                                       |
+| Feelings journal (`FeelingsJournalId.ForChild`): check-ins, notes, prompt times, display mode; and its share tokens | delete                                                                                                                       |
+| Progress (`ProgressId.ForChild`): stars, milestones, goal-post labels                                               | delete                                                                                                                       |
+| Pickup schedule (playdate host names, addresses and contacts, notes)                                                | delete                                                                                                                       |
+| Meal ratings by the child (`MealRated.Comment`)                                                                     | mask the comment; the stars stay, keyed by a now-anonymous id                                                                |
+| Calendar items assigned to the child                                                                                | `ItemDeleted`, then mask the title                                                                                           |
+| Group memberships and calendar roles                                                                                | revoke                                                                                                                       |
+| Guardian links to the child; guardian invites for the child (which hold `ChildGivenName`)                           | revoke; mask the invites                                                                                                     |
 
 Family-level data -- meals, the meal plan, AI credentials and sessions, task templates -- is
 anchored to one child in its index documents (`MealIndexDocument.ChildId`, ...), and
 [MealFamilyResolution.cs](../../../src/backend/buddy/Features/Mealplans/MealFamilyResolution.cs)
-finds it through the *active* guardian links of the whole family. Once an erased child's links are
+finds it through the _active_ guardian links of the whole family. Once an erased child's links are
 revoked, what is anchored to that child would be unreachable for the siblings. So `UserErasure`
 picks an heir first: a sibling under the same guardians who isn't being erased. Each eraser
 re-anchors the child's index documents to the heir, and the events stay as they are. With no heir,
@@ -300,7 +301,7 @@ public interface IPersonalDataExporter
      comments, the notes, the chat, calendar times) and to whom (the provider of the family's own
      key).
    - The guardian's acknowledgement is recorded as `AiDataSharingAcknowledged(AiCredentialId,
-     UserId, OccurredAt)`, and `StartAiSession` refuses with `409 ai_data_sharing_not_acknowledged`
+UserId, OccurredAt)`, and `StartAiSession` refuses with `409 ai_data_sharing_not_acknowledged`
      until it exists.
    - The provider settings page gets the same text.
 
@@ -356,11 +357,12 @@ restore brings erased people back. Two measures:
 
   On start, `UserErasureService` re-erases everyone on the ledger whose data is back. The deploy
   READMEs get the steps.
+
 - **Rotation.** Backups older than 30 days are deleted. The privacy notice states it.
 
 ## Events
 
-```
+```text
 UserErased(UserId UserId, DateTimeOffset OccurredAt)
     // the end of an erasure; UserDeleted remains the start
 AiDataSharingAcknowledged(AiCredentialId Id, UserId AcknowledgedBy, DateTimeOffset OccurredAt)
@@ -371,13 +373,13 @@ events.
 
 ## Command slices
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `DeleteCurrentUser` (changed) | self, adults only | Lock out, then run `UserErasure`; `204`. A child gets `403` |
-| `DeleteChild` | Manage, sole guardian | `DELETE /users/me/children/{childId}`; `409 child_has_other_guardians` |
-| `GetAccountDeletionPreview` | self | `GET /users/me/deletion-preview`: children erased, groups handed over or deleted; the same rules as the erasure |
-| `ExportPersonalData` | self | `GET /users/me/export`; a JSON file (`Content-Disposition: attachment`, enums by name); rate-limit policy `personal-data-export` (1 per 10 minutes) |
-| `AcknowledgeAiDataSharing` | Manage | `PUT /mealplans/children/{childId}/ai/data-sharing-acknowledgement` |
+| Slice                         | Tier                  | Notes                                                                                                                                               |
+| ----------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DeleteCurrentUser` (changed) | self, adults only     | Lock out, then run `UserErasure`; `204`. A child gets `403`                                                                                         |
+| `DeleteChild`                 | Manage, sole guardian | `DELETE /users/me/children/{childId}`; `409 child_has_other_guardians`                                                                              |
+| `GetAccountDeletionPreview`   | self                  | `GET /users/me/deletion-preview`: children erased, groups handed over or deleted; the same rules as the erasure                                     |
+| `ExportPersonalData`          | self                  | `GET /users/me/export`; a JSON file (`Content-Disposition: attachment`, enums by name); rate-limit policy `personal-data-export` (1 per 10 minutes) |
+| `AcknowledgeAiDataSharing`    | Manage                | `PUT /mealplans/children/{childId}/ai/data-sharing-acknowledgement`                                                                                 |
 
 Background services: `UserErasureService` (finishes interrupted erasures) and
 `AiSessionRetentionService` (masks closed sessions after 30 days).
@@ -418,36 +420,36 @@ Background services: `UserErasureService` (finishes interrupted erasures) and
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Erasure fails halfway (Postgres or Keycloak down) | The user is already locked out; `UserErasureService` retries until `UserErased` |
-| `DELETE /users/me` repeated | `204`; each step is idempotent |
-| The deleted user's still-valid access token | `403 user_not_provisioned` from the next request on |
-| Sign-in again before Keycloak deletion completes | `GetOrCreateUser` sees `KeycloakIdentity.Deleted` and answers `404`; no new user is provisioned |
-| A child with two guardians; one deletes their account | That guardian's link is revoked; the child and its data stay |
-| `DeleteChild` with co-guardians | `409 child_has_other_guardians`; nothing changes |
-| A group owner deletes their account; nobody else is in the group | The group and its calendars are deleted and erased |
-| A database backup restored after an erasure | The restored data contains the erased user again; the restore procedure re-imports the erasure ledger and the sweeper re-erases everyone on it (see "Backups") |
-| A snapshot whose event stream is gone (events wiped or partially restored, snapshots kept) | The snapshot can't be rebuilt, so `StreamErasure` deletes it instead; for the user stream that finishes the erasure without a `UserErased` |
-| One user's erasure keeps failing | The sweep logs it (10004) and goes on with the other users; that user is retried on the next sweep |
-| An export while an erasure is running | The export reads whatever is masked so far; the caller is locked out anyway |
+| Case                                                                                       | Behavior                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Erasure fails halfway (Postgres or Keycloak down)                                          | The user is already locked out; `UserErasureService` retries until `UserErased`                                                                                |
+| `DELETE /users/me` repeated                                                                | `204`; each step is idempotent                                                                                                                                 |
+| The deleted user's still-valid access token                                                | `403 user_not_provisioned` from the next request on                                                                                                            |
+| Sign-in again before Keycloak deletion completes                                           | `GetOrCreateUser` sees `KeycloakIdentity.Deleted` and answers `404`; no new user is provisioned                                                                |
+| A child with two guardians; one deletes their account                                      | That guardian's link is revoked; the child and its data stay                                                                                                   |
+| `DeleteChild` with co-guardians                                                            | `409 child_has_other_guardians`; nothing changes                                                                                                               |
+| A group owner deletes their account; nobody else is in the group                           | The group and its calendars are deleted and erased                                                                                                             |
+| A database backup restored after an erasure                                                | The restored data contains the erased user again; the restore procedure re-imports the erasure ledger and the sweeper re-erases everyone on it (see "Backups") |
+| A snapshot whose event stream is gone (events wiped or partially restored, snapshots kept) | The snapshot can't be rebuilt, so `StreamErasure` deletes it instead; for the user stream that finishes the erasure without a `UserErased`                     |
+| One user's erasure keeps failing                                                           | The sweep logs it (10004) and goes on with the other users; that user is retried on the next sweep                                                             |
+| An export while an erasure is running                                                      | The export reads whatever is masked so far; the caller is locked out anyway                                                                                    |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Erasure technique | Delete streams that belong only to the erased person; mask the user stream and shared streams (Marten protected-information masking plus a snapshot rebuild); no crypto-shredding |
-| A child left without a guardian by an account deletion | Erased with the guardian (user's decision) |
-| Who may delete a child | Only its sole active guardian (user's decision) |
-| A group whose owner leaves | Passes to the longest-standing admin, else member; deleted only when empty (user's decision) |
-| AI session retention | Masked 30 days after closing (user's decision) |
-| Erasure execution | In the request, idempotent, with a background sweeper for failures |
-| Export | One JSON document; guardians include their children |
-| Health-data access audit | Structured audit logs only; no in-app access log. Each family runs its own Buddy and has someone technical who can read the logs (user's decision) |
-| Family data anchored to an erased child (meals, meal plan, AI keys and sessions, task templates) | Erased with the child only when no sibling under the same guardians remains (user's decision) |
-| AI calendar titles | Only items assigned to the session's child or to nobody, in the child's family calendars; the rest are sent as "busy" (user's decision) |
-| Backups | An erasure ledger plus 30-day backup rotation (user's decision); see below |
-| Free text in shared spaces that names an erased person | Stays. It is part of the family's shared plan, the other members can edit or delete it, and the author's identity is erased (user's decision) |
+| Question                                                                                         | Decision                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Erasure technique                                                                                | Delete streams that belong only to the erased person; mask the user stream and shared streams (Marten protected-information masking plus a snapshot rebuild); no crypto-shredding |
+| A child left without a guardian by an account deletion                                           | Erased with the guardian (user's decision)                                                                                                                                        |
+| Who may delete a child                                                                           | Only its sole active guardian (user's decision)                                                                                                                                   |
+| A group whose owner leaves                                                                       | Passes to the longest-standing admin, else member; deleted only when empty (user's decision)                                                                                      |
+| AI session retention                                                                             | Masked 30 days after closing (user's decision)                                                                                                                                    |
+| Erasure execution                                                                                | In the request, idempotent, with a background sweeper for failures                                                                                                                |
+| Export                                                                                           | One JSON document; guardians include their children                                                                                                                               |
+| Health-data access audit                                                                         | Structured audit logs only; no in-app access log. Each family runs its own Buddy and has someone technical who can read the logs (user's decision)                                |
+| Family data anchored to an erased child (meals, meal plan, AI keys and sessions, task templates) | Erased with the child only when no sibling under the same guardians remains (user's decision)                                                                                     |
+| AI calendar titles                                                                               | Only items assigned to the session's child or to nobody, in the child's family calendars; the rest are sent as "busy" (user's decision)                                           |
+| Backups                                                                                          | An erasure ledger plus 30-day backup rotation (user's decision); see below                                                                                                        |
+| Free text in shared spaces that names an erased person                                           | Stays. It is part of the family's shared plan, the other members can edit or delete it, and the author's identity is erased (user's decision)                                     |
 
 ## Remaining open questions
 
@@ -515,7 +517,7 @@ What shipped with steps 1-7, and where it differs from the design above:
 - **AI assistant (step 6).** All in `Features/Mealplans/AiAssistant`.
   - Minimization: `AiSessionPromptBuilder` numbers children by `UserId` order. `CalendarConflictLookup`
     keeps a title only for an item assigned to the session's child (`AiSessionStarted.ChildId`) or
-    to nobody, in a *family calendar*: one whose owning group's members and explicit calendar
+    to nobody, in a _family calendar_: one whose owning group's members and explicit calendar
     members are all family (the session child's family from `MealFamilyResolution` plus their
     active guardians). Everything else goes out as `"busy"` with its date and time.
   - Retention: `AiSessionRetention`, run by `AiSessionRetentionService` a minute after startup and

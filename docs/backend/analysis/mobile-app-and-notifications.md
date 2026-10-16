@@ -148,7 +148,7 @@ Preferences are an event-sourced `NotificationPreferences` aggregate, 1:1 with t
 (`Id.Value == UserId.Value`, like `ChildProgress`). Device subscriptions are plain documents,
 deleted outright, not event-sourced.**
 
-```
+```text
 NotificationPreferences(
     NotificationPreferencesId Id,      // Id.Value == UserId.Value -- 1:1, no index document
     UserId UserId,
@@ -181,22 +181,22 @@ PushSubscriptionDocument(
   ([MartenOnboardingProgressStore.cs](../../../src/backend/buddy/Features/Users/MartenOnboardingProgressStore.cs)).
   `IcalToken`'s hashed-token approach doesn't apply: the keys must be readable to encrypt.
 - **Delivery log.** `NotificationDeliveryDocument(Guid Id, Guid RecipientId, NotificationKind Kind,
-  DateTimeOffset SentAt)`, where `Id` is a deterministic hash of the notification's *dedup key*
+DateTimeOffset SentAt)`, where `Id` is a deterministic hash of the notification's _dedup key_
   (Question 5). Inserting it is how the scheduler claims a notification exactly once. Rows older
   than 7 days are deleted by the same `PeriodicTimer` pattern as `IdempotencyCleanupService`. It
   holds ids only; there is no screen for it (operators read logs, see
   [observability.md](../observability.md)).
 - **Kinds**:
 
-  | `NotificationKind` | Recipient | Default |
-  |---|---|---|
-  | `RewardRequested` | each active guardian of the child | on |
-  | `RewardRequestResolved` (approved / declined) | the child | on |
-  | `TaskCompleted` | each active guardian | on |
-  | `MilestoneUnlocked` | the child and each active guardian | on |
-  | `DoseNotTaken` | each active guardian | on |
-  | `TaskReminder` | the child | on |
-  | `DoseReminder` | the child | off (see Question 7) |
+  | `NotificationKind`                            | Recipient                          | Default              |
+  | --------------------------------------------- | ---------------------------------- | -------------------- |
+  | `RewardRequested`                             | each active guardian of the child  | on                   |
+  | `RewardRequestResolved` (approved / declined) | the child                          | on                   |
+  | `TaskCompleted`                               | each active guardian               | on                   |
+  | `MilestoneUnlocked`                           | the child and each active guardian | on                   |
+  | `DoseNotTaken`                                | each active guardian               | on                   |
+  | `TaskReminder`                                | the child                          | on                   |
+  | `DoseReminder`                                | the child                          | off (see Question 7) |
 
 ## Question 4: how do event-driven notifications get triggered?
 
@@ -228,12 +228,12 @@ the API restarts is lost. That is acceptable for this kind of message and avoids
 Call sites (each a single line after the existing append, plus the `IMessageBus` parameter where
 the handler doesn't take one yet):
 
-| Handler | Publishes | When |
-|---|---|---|
-| `RequestRewardHandler` (reward-redemption.md) | `RewardRequested` | after `RewardRequested` is appended; not on an idempotent repeat |
-| `ApproveRewardRequestHandler`, `DeclineRewardRequestHandler` | `RewardRequestResolved` | after the event; not on a repeat |
-| `SetTaskCompletionHandler` | `TaskCompleted` | `false -> true` only, task has `AssignedTo`, and the whole task is now done (a plain task, or the last open subtask of a template task) |
-| `RecordStarChangeHandler` | `MilestoneUnlocked` | for each `MilestoneUnlocked` it appends |
+| Handler                                                      | Publishes               | When                                                                                                                                    |
+| ------------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `RequestRewardHandler` (reward-redemption.md)                | `RewardRequested`       | after `RewardRequested` is appended; not on an idempotent repeat                                                                        |
+| `ApproveRewardRequestHandler`, `DeclineRewardRequestHandler` | `RewardRequestResolved` | after the event; not on a repeat                                                                                                        |
+| `SetTaskCompletionHandler`                                   | `TaskCompleted`         | `false -> true` only, task has `AssignedTo`, and the whole task is now done (a plain task, or the last open subtask of a template task) |
+| `RecordStarChangeHandler`                                    | `MilestoneUnlocked`     | for each `MilestoneUnlocked` it appends                                                                                                 |
 
 `SetTaskCompletionHandler` today, trimmed
 ([SetTaskCompletion.Handler.cs](../../../src/backend/buddy/Features/Calendars/SetTaskCompletion/SetTaskCompletion.Handler.cs)):
@@ -393,6 +393,7 @@ opens a deep link on tap.**
 
   Ids in the URL, never names. The target page loads the data itself, so a notification is never
   the only place something is visible.
+
 - **Logging** follows [observability.md](../observability.md#rules-for-new-log-lines): ids,
   kind and result only, never a title, a reward name or the endpoint URL (which identifies the
   device). A new `NotificationsLog` with `LoggerMessage` event ids, like `CalendarsLog`.
@@ -404,22 +405,22 @@ scheduler reuses `CalendarOccurrenceExpansion` and `MedicineDoseExpansion` uncha
 
 ## Command slices (`Features/Notifications/`, same vertical-slice shape as `Progress`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `GetVapidPublicKey` | Anonymous | The public key, or `404` when push isn't configured |
-| `RegisterPushSubscription` | Self | Upserts the caller's device; at most 10 per user (oldest dropped) |
-| `UnregisterPushSubscription` | Self | Deletes by subscription id; idempotent |
-| `ListMyPushSubscriptions` | Self | Device label, created, last success; no keys |
-| `SendTestNotification` | Self | Sends to the caller's devices; rate-limited to 5 a minute |
-| `GetMyNotificationPreferences` | Self | Defaults when the stream doesn't exist |
-| `UpdateMyNotificationPreferences` | Self (guardian) | Full replace; children get `403` |
-| `GetChildNotificationPreferences` | Manage | Active `GuardianLink`, else `404` |
-| `UpdateChildNotificationPreferences` | Manage | Full replace; emits `NotificationPreferencesUpdated` |
-| `Notify` (message, no route) | -- | Event-driven sends, Question 4 |
+| Slice                                | Tier            | Notes                                                             |
+| ------------------------------------ | --------------- | ----------------------------------------------------------------- |
+| `GetVapidPublicKey`                  | Anonymous       | The public key, or `404` when push isn't configured               |
+| `RegisterPushSubscription`           | Self            | Upserts the caller's device; at most 10 per user (oldest dropped) |
+| `UnregisterPushSubscription`         | Self            | Deletes by subscription id; idempotent                            |
+| `ListMyPushSubscriptions`            | Self            | Device label, created, last success; no keys                      |
+| `SendTestNotification`               | Self            | Sends to the caller's devices; rate-limited to 5 a minute         |
+| `GetMyNotificationPreferences`       | Self            | Defaults when the stream doesn't exist                            |
+| `UpdateMyNotificationPreferences`    | Self (guardian) | Full replace; children get `403`                                  |
+| `GetChildNotificationPreferences`    | Manage          | Active `GuardianLink`, else `404`                                 |
+| `UpdateChildNotificationPreferences` | Manage          | Full replace; emits `NotificationPreferencesUpdated`              |
+| `Notify` (message, no route)         | --              | Event-driven sends, Question 4                                    |
 
 ### Events
 
-```
+```text
 NotificationPreferencesStarted(NotificationPreferencesId Id, UserId UserId, DateTimeOffset OccurredAt)
     // lazily, by the first update; reads of a missing stream return the defaults
 NotificationPreferencesUpdated(NotificationPreferencesId Id, NotificationPreferences Before,
@@ -429,7 +430,7 @@ NotificationPreferencesUpdated(NotificationPreferencesId Id, NotificationPrefere
 
 ## Routes
 
-```
+```text
 GET    /notifications/vapid-public-key                          GetVapidPublicKey             (anonymous)
 POST   /notifications/subscriptions                             RegisterPushSubscription
 GET    /notifications/subscriptions                             ListMyPushSubscriptions
@@ -500,52 +501,52 @@ device before this is built (open question).
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| No VAPID keys configured | `GET /features` reports `notifications: false`; no UI; scheduler doesn't start |
-| Push service returns 404/410 | Subscription document deleted; logged |
-| Push service is down or slow | Logged and dropped; no retry; 10 s timeout per send |
-| iOS Safari, not installed to home screen | Settings page shows the install guide instead of a toggle |
-| Permission denied in the browser | Page explains how to re-enable it in system settings; nothing registered |
-| Same device registers twice | Upsert by endpoint hash; one document |
-| Same device used by a guardian, then a child (shared iPad) | Registering moves the document to the new user; the previous user stops getting notifications on it |
-| User signs out | The frontend unregisters the device first, so a signed-out device gets nothing |
-| Guardian's `GuardianLink` revoked | Next notification resolves recipients without them; their preferences for the child give `404` |
-| Child or guardian erased | `NotificationsPersonalData` eraser deletes the preferences stream, subscriptions and delivery rows; export includes preferences and device labels (not keys) |
-| Task moved or completed before its time | Scan reads current state: reminds at the new time, or not at all |
-| Dose marked `Skipped` | Not "not taken": a skipped dose was a decision |
-| API down when a reminder was due | Skipped if more than 5 minutes late |
-| Two API replicas | Delivery-document insert decides; one send |
-| Reward request flood | Capped at 10 pending by reward-redemption.md; notifications collapse on one tag |
-| `Notifications` flag off | Feature not mapped; `Notify` publishes are skipped (the handler checks the flag) |
-| A new deploy while the app is open | Update banner; the old shell keeps working until reloaded |
+| Case                                                       | Behavior                                                                                                                                                     |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| No VAPID keys configured                                   | `GET /features` reports `notifications: false`; no UI; scheduler doesn't start                                                                               |
+| Push service returns 404/410                               | Subscription document deleted; logged                                                                                                                        |
+| Push service is down or slow                               | Logged and dropped; no retry; 10 s timeout per send                                                                                                          |
+| iOS Safari, not installed to home screen                   | Settings page shows the install guide instead of a toggle                                                                                                    |
+| Permission denied in the browser                           | Page explains how to re-enable it in system settings; nothing registered                                                                                     |
+| Same device registers twice                                | Upsert by endpoint hash; one document                                                                                                                        |
+| Same device used by a guardian, then a child (shared iPad) | Registering moves the document to the new user; the previous user stops getting notifications on it                                                          |
+| User signs out                                             | The frontend unregisters the device first, so a signed-out device gets nothing                                                                               |
+| Guardian's `GuardianLink` revoked                          | Next notification resolves recipients without them; their preferences for the child give `404`                                                               |
+| Child or guardian erased                                   | `NotificationsPersonalData` eraser deletes the preferences stream, subscriptions and delivery rows; export includes preferences and device labels (not keys) |
+| Task moved or completed before its time                    | Scan reads current state: reminds at the new time, or not at all                                                                                             |
+| Dose marked `Skipped`                                      | Not "not taken": a skipped dose was a decision                                                                                                               |
+| API down when a reminder was due                           | Skipped if more than 5 minutes late                                                                                                                          |
+| Two API replicas                                           | Delivery-document insert decides; one send                                                                                                                   |
+| Reward request flood                                       | Capped at 10 pending by reward-redemption.md; notifications collapse on one tag                                                                              |
+| `Notifications` flag off                                   | Feature not mapped; `Notify` publishes are skipped (the handler checks the flag)                                                                             |
+| A new deploy while the app is open                         | Update banner; the old shell keeps working until reloaded                                                                                                    |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | High -- PWA shell and update flow, a new feature with 1 aggregate + 2 document types, 9 routes, Web Push encryption, a scheduler `BackgroundService`, 4 handler call sites, 2 new pages + 1 settings section, server-side en/da texts, and device testing that CI can't do |
-| Single developer | 12-17 days (PWA shell 2-3, push + subscriptions 3-4, event notifications 2, scheduler 2-3, settings UI 2-3, device testing and docs 1-2) |
-| AI agent | 8-12 hours, plus about 1 day of human time: VAPID setup, testing on a real iPhone and Android phone, the Keycloak session check and Danish review |
+|                  |                                                                                                                                                                                                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | High -- PWA shell and update flow, a new feature with 1 aggregate + 2 document types, 9 routes, Web Push encryption, a scheduler `BackgroundService`, 4 handler call sites, 2 new pages + 1 settings section, server-side en/da texts, and device testing that CI can't do |
+| Single developer | 12-17 days (PWA shell 2-3, push + subscriptions 3-4, event notifications 2, scheduler 2-3, settings UI 2-3, device testing and docs 1-2)                                                                                                                                   |
+| AI agent         | 8-12 hours, plus about 1 day of human time: VAPID setup, testing on a real iPhone and Android phone, the Keycloak session check and Danish review                                                                                                                          |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| What the mobile app is | The existing Angular app as an installable PWA (user decision); Capacitor is the fallback |
-| Delivery | Web Push with VAPID, behind `IPushSender`; no third-party service, no per-family store accounts |
-| Missing VAPID keys | Effective flag off, no startup failure |
-| Preferences | Event-sourced `NotificationPreferences`, 1:1 with the user, new `notifications` schema |
-| Device subscriptions | Plain documents, deleted outright, because they hold push secrets |
-| Event-driven sends | `PublishAsync` of a `Notify` message after the append; failures logged, never affect the command |
-| Reminders and overdue doses | A per-minute scan of current state with an insert-to-claim delivery log; no ahead-of-time scheduling |
-| v1 kinds | Reward requested/resolved, task completed, milestone, dose not taken, task and dose reminders (user decision) |
-| Who gets guardian notifications | Every active guardian of the child, resolved at send time |
-| Who sets a child's preferences | Guardians, like language and time zone |
-| Health data | No medicine name or dosage in a payload; dose reminders off by default |
-| Language | Server-side en/da texts by the recipient's language |
-| Offline | App shell only; no offline data or queued writes |
-| Session in standalone mode | Keycloak SSO cookie for silent re-login; tokens stay in `sessionStorage` |
+| Question                        | Decision                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| What the mobile app is          | The existing Angular app as an installable PWA (user decision); Capacitor is the fallback                     |
+| Delivery                        | Web Push with VAPID, behind `IPushSender`; no third-party service, no per-family store accounts               |
+| Missing VAPID keys              | Effective flag off, no startup failure                                                                        |
+| Preferences                     | Event-sourced `NotificationPreferences`, 1:1 with the user, new `notifications` schema                        |
+| Device subscriptions            | Plain documents, deleted outright, because they hold push secrets                                             |
+| Event-driven sends              | `PublishAsync` of a `Notify` message after the append; failures logged, never affect the command              |
+| Reminders and overdue doses     | A per-minute scan of current state with an insert-to-claim delivery log; no ahead-of-time scheduling          |
+| v1 kinds                        | Reward requested/resolved, task completed, milestone, dose not taken, task and dose reminders (user decision) |
+| Who gets guardian notifications | Every active guardian of the child, resolved at send time                                                     |
+| Who sets a child's preferences  | Guardians, like language and time zone                                                                        |
+| Health data                     | No medicine name or dosage in a payload; dose reminders off by default                                        |
+| Language                        | Server-side en/da texts by the recipient's language                                                           |
+| Offline                         | App shell only; no offline data or queued writes                                                              |
+| Session in standalone mode      | Keycloak SSO cookie for silent re-login; tokens stay in `sessionStorage`                                      |
 
 ## Remaining open questions
 

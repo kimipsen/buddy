@@ -35,7 +35,7 @@ Per template, the screen supports:
 - **Create**: name, icon, and color; the new template starts with no subtasks
   and expands automatically once created.
 - **Rename/recolor**: inline edit of name, icon, and color (`PATCH
-  /task-templates/{templateId}`). Disabled once a template is archived.
+/task-templates/{templateId}`). Disabled once a template is archived.
 - **Archive**: soft delete (`DELETE /task-templates/{templateId}`). Archived
   templates remain in the list, visually dimmed with an "archived" badge,
   rather than disappearing -- there is no un-archive, so the guardian can still
@@ -46,7 +46,7 @@ Per template, the screen supports:
   time.
 - **Reorder subtasks**: up/down buttons swap a subtask with its neighbor and
   submit the full resulting ID order via `PUT
-  /task-templates/{templateId}/subtasks/order` -- there is no drag-and-drop
+/task-templates/{templateId}/subtasks/order` -- there is no drag-and-drop
   precedent elsewhere in the app to reuse, so this is the simplest correct v1.
 
 Durations are edited and displayed as whole minutes

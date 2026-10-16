@@ -35,12 +35,12 @@ skip it.
 
 ## Run the tests
 
-| Command | What it runs |
-| --- | --- |
-| `task test` | Backend and frontend unit/integration tests |
-| `task test:backend` | xunit + Alba integration tests (needs Docker for Testcontainers) |
-| `task test:frontend` | Vitest specs |
-| `task test:e2e` | Playwright against the real API, Keycloak and Postgres |
+| Command              | What it runs                                                     |
+| -------------------- | ---------------------------------------------------------------- |
+| `task test`          | Backend and frontend unit/integration tests                      |
+| `task test:backend`  | xunit + Alba integration tests (needs Docker for Testcontainers) |
+| `task test:frontend` | Vitest specs                                                     |
+| `task test:e2e`      | Playwright against the real API, Keycloak and Postgres           |
 
 Run `task test` before opening a pull request. The [testing guide](docs/testing.md) covers
 running a single test and reading failures.

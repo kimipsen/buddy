@@ -13,12 +13,12 @@ Arguments (free text): domain, use case name, verb + route, who may call it. Ask
 
 ## 1. The slice: `Features/<Domain>/<UseCase>/`
 
-| File | Shape (reference) |
-| --- | --- |
-| `<UseCase>.Command.cs` | `public sealed record <UseCase>(UserId UserId, ...)` + `static FromClaims(ClaimsPrincipal principal, ...) => new(principal.GetRequiredUserId(), ...)` (never null: `ProvisionedUserMiddleware` rejects an unprovisioned caller with `403 user_not_provisioned` first). Queries use the same file name (`ListTodaysDoses.Command.cs`). Ref: `Medicines/SetDoseStatus/SetDoseStatus.Command.cs` |
+| File                     | Shape (reference)                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<UseCase>.Command.cs`   | `public sealed record <UseCase>(UserId UserId, ...)` + `static FromClaims(ClaimsPrincipal principal, ...) => new(principal.GetRequiredUserId(), ...)` (never null: `ProvisionedUserMiddleware` rejects an unprovisioned caller with `403 user_not_provisioned` first). Queries use the same file name (`ListTodaysDoses.Command.cs`). Ref: `Medicines/SetDoseStatus/SetDoseStatus.Command.cs` |
 | `<UseCase>.Validator.cs` | `sealed class <UseCase>Validator : AbstractValidator<<UseCase>>`, structural rules only. Shared date-range rule: `this.ValidDateRange(x => x.From, x => x.To, MaxRangeDays)` (`Common/Validation/DateRangeRules.cs`). Validators are registered automatically (`AddValidatorsFromAssemblyContaining<Program>()`). Ref: `Medicines/CreateMedicineSchedule/CreateMedicineSchedule.Validator.cs` |
-| `<UseCase>.Handler.cs` | `public static class <UseCase>Handler { public static async Task<Result<T>> Handle(<UseCase> command, IValidator<<UseCase>> validator, I<X>EventStore store, ..., CancellationToken ct) }`. Wolverine finds it by name. Dependencies are method parameters, not constructor parameters. |
-| `<UseCase>.Endpoint.cs` | `public static RouteGroupBuilder Map<UseCase>(this RouteGroupBuilder group)`, a lambda typed `Task<Results<...>>` that builds the command, calls `bus.InvokeAsync<Result<T>>(command, ct)` and switches over the result; `.WithName("<UseCase>")`. Request/response DTO records go at the bottom of this file. Ref: `Medicines/UpdateMedicineDetails/UpdateMedicineDetails.Endpoint.cs` |
+| `<UseCase>.Handler.cs`   | `public static class <UseCase>Handler { public static async Task<Result<T>> Handle(<UseCase> command, IValidator<<UseCase>> validator, I<X>EventStore store, ..., CancellationToken ct) }`. Wolverine finds it by name. Dependencies are method parameters, not constructor parameters.                                                                                                       |
+| `<UseCase>.Endpoint.cs`  | `public static RouteGroupBuilder Map<UseCase>(this RouteGroupBuilder group)`, a lambda typed `Task<Results<...>>` that builds the command, calls `bus.InvokeAsync<Result<T>>(command, ct)` and switches over the result; `.WithName("<UseCase>")`. Request/response DTO records go at the bottom of this file. Ref: `Medicines/UpdateMedicineDetails/UpdateMedicineDetails.Endpoint.cs`       |
 
 Handler order (every handler follows it, see `CreateMedicineSchedule.Handler.cs`, `AssignPickup.Handler.cs`):
 
@@ -31,12 +31,12 @@ Handler order (every handler follows it, see `CreateMedicineSchedule.Handler.cs`
 
 Result to HTTP mapping (`Common/Result.cs`, `Common/ErrorEnvelope.cs`, `docs/backend/http-status-codes.md`):
 
-| Result case | Endpoint arm | Status |
-| --- | --- | --- |
-| `Success(var v)` | `TypedResults.Ok(Response.From(v))` / `TypedResults.NoContent()` for `Result<Unit>` | 200 / 204 |
-| `Validation(var problem)` | `TypedResults.BadRequest(problem.ToEnvelope(httpContext))`, which needs an `HttpContext httpContext` parameter | 400 `validation_error` envelope |
-| `Forbidden` | `TypedResults.Forbid()` | 403 (caller is related but under-privileged) |
-| `NotFound` | `TypedResults.NotFound()` | 404 (no relationship counts as not found, so a stranger can't tell whether the resource exists) |
+| Result case               | Endpoint arm                                                                                                   | Status                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `Success(var v)`          | `TypedResults.Ok(Response.From(v))` / `TypedResults.NoContent()` for `Result<Unit>`                            | 200 / 204                                                                                       |
+| `Validation(var problem)` | `TypedResults.BadRequest(problem.ToEnvelope(httpContext))`, which needs an `HttpContext httpContext` parameter | 400 `validation_error` envelope                                                                 |
+| `Forbidden`               | `TypedResults.Forbid()`                                                                                        | 403 (caller is related but under-privileged)                                                    |
+| `NotFound`                | `TypedResults.NotFound()`                                                                                      | 404 (no relationship counts as not found, so a stranger can't tell whether the resource exists) |
 
 - The switch is exhaustive over the union, so don't add a `_ =>` arm. If the route never produces a case, map it to `NotFound` with a comment instead of widening `Results<...>` (`ListMedicineSchedules.Endpoint.cs`, `DeleteItem.Endpoint.cs`).
 - Declare in `Results<...>` exactly the statuses the route returns. OpenAPI is generated from that list, plus the middleware responses (`401`, `403 user_not_provisioned`, `409 concurrency_conflict`, `429`, `500`, `503`, ...) that `Common/OpenApi/ErrorResponsesOperationTransformer` adds by rule. An `ErrorEnvelope` code the endpoint returns itself gets `.ProducesErrorCode(status, Code)`; a result type without metadata (`ContentHttpResult`, `JsonHttpResult<T>`) gets `.Produces<T>(status, contentType)`. Enums go over the wire by name (`JsonStringEnumConverter`); a `kind` discriminator (`KindDiscriminatedJsonConverter`) stays numeric.
@@ -130,14 +130,14 @@ task test:backend                                                               
 
 Skeletons for a child-scoped PATCH on an existing aggregate, derived from `Medicines/UpdateMedicineDetails` and `SetDoseStatus`. They were verified by instantiating them as `Medicines/RenameMedicine` in a scratch copy: the build was clean and the slice tests, EventShapeTests, SnapshotTests and `EndpointCoverageTests` all passed. Copy each file to the path in its first `// ->` line, delete that line, and replace:
 
-| Placeholder | Example |
-| --- | --- |
-| `{{Domain}}` / `{{UseCase}}` | `Medicines` / `RenameMedicine` |
-| `{{Aggregate}}` / `{{AggregateId}}` / `{{EventStore}}` | `MedicineSchedule` / `MedicineId` / `IMedicineEventStore` |
-| `{{Authorization}}` / `{{Access}}` / `{{AccessCheck}}` | `MedicineAuthorization` / `MedicineAccess` / `CheckManage` |
-| `{{Event}}` | `MedicineRenamed` (add it per step 2) |
-| `{{routeGroup}}` / `{{route}}` | `medicines` / `/children/{childId:guid}/schedules/{id:guid}/name`. Rename `id` to match siblings (`medicineId`). |
-| `{{Response}}` / `{{ResponseFactory}}` | `MedicineScheduleResponse` / `FromSchedule` |
+| Placeholder                                                                               | Example                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{Domain}}` / `{{UseCase}}`                                                              | `Medicines` / `RenameMedicine`                                                                                                                              |
+| `{{Aggregate}}` / `{{AggregateId}}` / `{{EventStore}}`                                    | `MedicineSchedule` / `MedicineId` / `IMedicineEventStore`                                                                                                   |
+| `{{Authorization}}` / `{{Access}}` / `{{AccessCheck}}`                                    | `MedicineAuthorization` / `MedicineAccess` / `CheckManage`                                                                                                  |
+| `{{Event}}`                                                                               | `MedicineRenamed` (add it per step 2)                                                                                                                       |
+| `{{routeGroup}}` / `{{route}}`                                                            | `medicines` / `/children/{childId:guid}/schedules/{id:guid}/name`. Rename `id` to match siblings (`medicineId`).                                            |
+| `{{Response}}` / `{{ResponseFactory}}`                                                    | `MedicineScheduleResponse` / `FromSchedule`                                                                                                                 |
 | tests: `{{CreateAggregateAsync}}`, `{{ResponseDto}}`, `{{testUrl}}`, `{{snake_use_case}}` | `MedicineTestHelpers.CreateMedicineScheduleAsync`, `MedicineScheduleDto`, `/medicines/children/{child.Id}/schedules/{created.Id}/name`, `rename_a_medicine` |
 
 For Calendars/Groups, authorization takes the loaded aggregate (`CalendarAuthorization.CheckView(calendar, userId, groups, guardians, ct)`, `GroupAuthorization.CheckManage(group, userId)`), so load the aggregate before authorizing.

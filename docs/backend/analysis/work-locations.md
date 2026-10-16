@@ -75,7 +75,7 @@ untouched.
 **Decision: one `WorkLocationSchedule` stream per guardian, whose id equals
 the guardian's `UserId`, created lazily by the first write.**
 
-```
+```text
 WorkLocationSchedule(
     WorkLocationScheduleId Id,                                  // == GuardianId.Value, see below
     UserId GuardianId,
@@ -108,7 +108,7 @@ WorkLocationSchedule(
 **Decision: each guardian keeps their own list of locations (name, icon,
 color). Removing one archives it rather than deleting it.**
 
-```
+```text
 WorkLocation(
     WorkLocationId Id,       // Guid, assigned by AddWorkLocation
     string Name,             // "Stil", "Randers", "Hjemme"
@@ -147,7 +147,7 @@ WorkLocation(
 **Decision: a pattern is a cycle of 1–4 weeks, anchored to a specific Monday,
 stored as a flat list of `(week, weekday, location)` entries.**
 
-```
+```text
 WorkPattern(
     int CycleWeeks,                       // 1 = every week, 2 = A/B alternation, up to 4
     DateOnly AnchorMonday,                // the Monday that starts cycle week 0
@@ -188,7 +188,7 @@ location" every day.
 **Decision: a sparse per-date override map, where an override either names a
 location or says "no location that day". Overrides always beat the pattern.**
 
-```
+```text
 WorkDayOverride = AtLocation(WorkLocationId LocationId) | DayOff   // DayOff = day off, holiday, sick
 ```
 
@@ -214,11 +214,11 @@ The resolution order for a date is **override → pattern → nothing**.
 holds an active `GuardianLink` to at least one of the same children). Children
 and everyone else get `NotFound`.**
 
-| Tier | Who | Actions |
-|---|---|---|
-| **Manage** | The guardian whose schedule it is (not a child account: `403`) | Everything |
-| **View** | A co-guardian: the caller and the subject both have an active link to at least one common child | Read locations, pattern and resolved days |
-| — | Everyone else, including every child account | `NotFound` |
+| Tier       | Who                                                                                             | Actions                                   |
+| ---------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Manage** | The guardian whose schedule it is (not a child account: `403`)                                  | Everything                                |
+| **View**   | A co-guardian: the caller and the subject both have an active link to at least one common child | Read locations, pattern and resolved days |
+| —          | Everyone else, including every child account                                                    | `NotFound`                                |
 
 - **Co-guardian check.** Both guardians' links come from
   `IGuardianLinkEventStore.ListForGuardianAsync`
@@ -245,7 +245,7 @@ and everyone else get `NotFound`.**
 
 ## Events
 
-```
+```text
 WorkLocationScheduleStarted(WorkLocationScheduleId Id, UserId GuardianId, DateTimeOffset OccurredAt)
     // appended lazily with the first write, never on its own
 
@@ -300,7 +300,7 @@ every lookup a direct stream read.
 recomputed-on-every-call helper with the same contract as
 `PickupScheduleExpansion`. For each date it returns:
 
-```
+```text
 WorkDay(DateOnly Date, WorkDayStatus Status)
     // WorkDayStatus = Unplanned | Off | AtLocation(WorkLocationSummary Location, WorkDaySource Source)
     // WorkDaySource { Pattern, Override } -- see eliminate-nulls.md, Phase 5.7
@@ -312,16 +312,16 @@ exactly one call per guardian.
 
 ## Command slices (`Features/WorkLocations/`, same vertical-slice shape as `Pickups`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `AddWorkLocation` | Manage | Name, icon, color. Starts the stream if needed. Emits `WorkLocationAdded` |
-| `UpdateWorkLocation` | Manage | Name, icon, color. No-op when unchanged. Archived locations can't be edited (`NotFound`) |
-| `ArchiveWorkLocation` | Manage | Emits `WorkPatternReplaced` first if the pattern uses it, then `WorkLocationArchived`. Idempotent on an already-archived location |
-| `ReplaceWorkPattern` | Manage | Whole pattern. No-op when equal |
-| `SetWorkLocationOverrides` | Manage | `from`, `to`, `locationId` or null. One `WorkLocationOverridden` per date that changes |
-| `ClearWorkLocationOverrides` | Manage | `from`, `to`. One `WorkLocationOverrideCleared` per date that had an override; idempotent |
-| `GetWorkLocationSchedule` | View | Locations (archived included, flagged) and pattern. Used by the editor and the print template editor |
-| `ListWorkDays` | View | Resolved `WorkDay`s for `[from, to]` |
+| Slice                        | Tier   | Notes                                                                                                                             |
+| ---------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `AddWorkLocation`            | Manage | Name, icon, color. Starts the stream if needed. Emits `WorkLocationAdded`                                                         |
+| `UpdateWorkLocation`         | Manage | Name, icon, color. No-op when unchanged. Archived locations can't be edited (`NotFound`)                                          |
+| `ArchiveWorkLocation`        | Manage | Emits `WorkPatternReplaced` first if the pattern uses it, then `WorkLocationArchived`. Idempotent on an already-archived location |
+| `ReplaceWorkPattern`         | Manage | Whole pattern. No-op when equal                                                                                                   |
+| `SetWorkLocationOverrides`   | Manage | `from`, `to`, `locationId` or null. One `WorkLocationOverridden` per date that changes                                            |
+| `ClearWorkLocationOverrides` | Manage | `from`, `to`. One `WorkLocationOverrideCleared` per date that had an override; idempotent                                         |
+| `GetWorkLocationSchedule`    | View   | Locations (archived included, flagged) and pattern. Used by the editor and the print template editor                              |
+| `ListWorkDays`               | View   | Resolved `WorkDay`s for `[from, to]`                                                                                              |
 
 ### Validation limits
 
@@ -329,24 +329,24 @@ Structural rules live in each slice's validator; rules that need the aggregate (
 uniqueness, location limits, "an active location of this guardian") are handler checks, as
 [validation-rules.md](validation-rules.md) prescribes:
 
-| Field | Rule |
-|---|---|
-| `Name` | required, trimmed, 1–40 characters; unique among the guardian's active locations, case-insensitive |
-| `Icon` | required (`NotEmpty`, like `UpdateCalendarIconValidator`) |
-| `Color` | required |
-| Active locations | at most 12 per guardian |
-| `CycleWeeks` | 1–4 |
-| `AnchorMonday` | must be a Monday |
-| `Days` | no null entries (a null element is a `400`, not a server error) |
-| `Days[].Week` | 0 ≤ `Week` < `CycleWeeks`; at most one entry per (`Week`, `Day`) |
-| `Days[].LocationId` | an active location of this guardian |
-| Override `LocationId` | an active location of this guardian, or null |
-| Override and list ranges | `from ≤ to` and `to - from` ≤ 31, using the shared `ValidDateRange` rule (the same cap as `ListPickupSchedule`) |
-| Name, icon, color lengths | name ≤ 40, icon ≤ 16, color ≤ 32 characters |
+| Field                     | Rule                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `Name`                    | required, trimmed, 1–40 characters; unique among the guardian's active locations, case-insensitive              |
+| `Icon`                    | required (`NotEmpty`, like `UpdateCalendarIconValidator`)                                                       |
+| `Color`                   | required                                                                                                        |
+| Active locations          | at most 12 per guardian                                                                                         |
+| `CycleWeeks`              | 1–4                                                                                                             |
+| `AnchorMonday`            | must be a Monday                                                                                                |
+| `Days`                    | no null entries (a null element is a `400`, not a server error)                                                 |
+| `Days[].Week`             | 0 ≤ `Week` < `CycleWeeks`; at most one entry per (`Week`, `Day`)                                                |
+| `Days[].LocationId`       | an active location of this guardian                                                                             |
+| Override `LocationId`     | an active location of this guardian, or null                                                                    |
+| Override and list ranges  | `from ≤ to` and `to - from` ≤ 31, using the shared `ValidDateRange` rule (the same cap as `ListPickupSchedule`) |
+| Name, icon, color lengths | name ≤ 40, icon ≤ 16, color ≤ 32 characters                                                                     |
 
 ## Routes
 
-```
+```text
 POST   /work-locations/me/locations                     AddWorkLocation
 PATCH  /work-locations/me/locations/{locationId}        UpdateWorkLocation
 DELETE /work-locations/me/locations/{locationId}        ArchiveWorkLocation
@@ -369,8 +369,8 @@ caller's tier (it can't tell "not a co-guardian" from "no such user"), and
 kind, `PrintRowKind.WorkLocation`, with two new optional fields on
 `PrintTemplateRow`:
 
-| Kind | Required | Optional | Renders as |
-|---|---|---|---|
+| Kind           | Required     | Optional         | Renders as                                                                                                                                                         |
+| -------------- | ------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `WorkLocation` | `GuardianId` | `WorkLocationId` | With `WorkLocationId`: a ✕ on each day resolved to that location ("Mor i Randers"). Without it: the day's location icon and name, in the guardian's template color |
 
 The template's write-time checks extend naturally. `GuardianId` must be the
@@ -416,37 +416,37 @@ Plus `EventShapeTests` golden files and a `SnapshotTests` entry.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Guardian has never used the feature | No stream; reads return no locations and `Unplanned` for every day |
-| Pattern references a location that gets archived | Removed from the pattern in the same append as `WorkLocationArchived` |
-| Override references an archived location | Kept; resolves with `IsArchived = true` and still prints |
-| Print template references an archived location | Still prints its marks; the template editor flags the row |
-| Pattern is changed | Applies to every date, past ones included (no effective-from in v1) |
-| Override to the value it already has | No-op, no event |
-| Clear a range with no overrides | Idempotent no-op (`Success`, no event) |
-| Two locations with the same name | Rejected among active ones; an archived name can be reused |
-| Co-guardian's `GuardianLink` is revoked | Their next read is `NotFound`; print rows for that guardian show "not available" |
-| Guardian deletes their account | The stream becomes unreachable, like user-owned calendars; co-guardians' print rows show "not available" |
-| Week 53 years | No effect; cycle weeks count from the anchor, not ISO parity |
+| Case                                             | Behavior                                                                                                 |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Guardian has never used the feature              | No stream; reads return no locations and `Unplanned` for every day                                       |
+| Pattern references a location that gets archived | Removed from the pattern in the same append as `WorkLocationArchived`                                    |
+| Override references an archived location         | Kept; resolves with `IsArchived = true` and still prints                                                 |
+| Print template references an archived location   | Still prints its marks; the template editor flags the row                                                |
+| Pattern is changed                               | Applies to every date, past ones included (no effective-from in v1)                                      |
+| Override to the value it already has             | No-op, no event                                                                                          |
+| Clear a range with no overrides                  | Idempotent no-op (`Success`, no event)                                                                   |
+| Two locations with the same name                 | Rejected among active ones; an archived name can be reused                                               |
+| Co-guardian's `GuardianLink` is revoked          | Their next read is `NotFound`; print rows for that guardian show "not available"                         |
+| Guardian deletes their account                   | The stream becomes unreachable, like user-owned calendars; co-guardians' print rows show "not available" |
+| Week 53 years                                    | No effect; cycle weeks count from the anchor, not ISO parity                                             |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Calendar items or new feature | New feature `Features/WorkLocations`, because calendar recurrence has no weekday lists or exceptions |
-| Identity | One stream per guardian, id equal to the guardian's `UserId`, created lazily |
-| Granularity | Whole days, one location per day |
-| Locations | Per guardian, customizable name + icon + color; archived, never deleted |
-| Recurrence | 1–4 week cycle from an anchor Monday, not ISO parity |
-| Exceptions | Sparse per-date overrides, to a location or `DayOff` (`locationId: null` on the wire); override → pattern → nothing |
-| Who sees it | The guardian (Manage) and co-guardians (View); never children |
-| Calendar or iCal exposure | None |
-| Main consumer | The `WorkLocation` row kind in week plan print templates |
-| Child accounts | Writes are `403` (every write is a `/me` route, so the caller is known); reads of any schedule are `404` |
-| Concurrent edits | Expected-version appends via `StreamVersionTracker`; a true race is `409 concurrency_conflict` |
-| Range cap | `to - from` ≤ 31 days for overrides and day lists, the same shared rule as `ListPickupSchedule` |
-| Computed snapshot properties | `[JsonIgnore]` (`WorkLocation.Details`, `ActiveLocations`), so the snapshot stores only folded state |
+| Question                      | Decision                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Calendar items or new feature | New feature `Features/WorkLocations`, because calendar recurrence has no weekday lists or exceptions                |
+| Identity                      | One stream per guardian, id equal to the guardian's `UserId`, created lazily                                        |
+| Granularity                   | Whole days, one location per day                                                                                    |
+| Locations                     | Per guardian, customizable name + icon + color; archived, never deleted                                             |
+| Recurrence                    | 1–4 week cycle from an anchor Monday, not ISO parity                                                                |
+| Exceptions                    | Sparse per-date overrides, to a location or `DayOff` (`locationId: null` on the wire); override → pattern → nothing |
+| Who sees it                   | The guardian (Manage) and co-guardians (View); never children                                                       |
+| Calendar or iCal exposure     | None                                                                                                                |
+| Main consumer                 | The `WorkLocation` row kind in week plan print templates                                                            |
+| Child accounts                | Writes are `403` (every write is a `/me` route, so the caller is known); reads of any schedule are `404`            |
+| Concurrent edits              | Expected-version appends via `StreamVersionTracker`; a true race is `409 concurrency_conflict`                      |
+| Range cap                     | `to - from` ≤ 31 days for overrides and day lists, the same shared rule as `ListPickupSchedule`                     |
+| Computed snapshot properties  | `[JsonIgnore]` (`WorkLocation.Details`, `ActiveLocations`), so the snapshot stores only folded state                |
 
 ## Remaining open questions
 

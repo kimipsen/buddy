@@ -97,24 +97,24 @@ Rejected:
 **Decision: one flag per optional domain, plus two sub-flags inside meal plans. Users, guardians,
 groups, calendars, privacy and onboarding are core and can't be turned off.**
 
-| Flag | Backend scope | Frontend scope |
-|---|---|---|
-| `Mealplans` | `/mealplans` group, including the meal plan iCal feed | `/guardian/mealplan*`, `/child/mealplan`, dashboard `mealplan-today`, child home meals, onboarding meal step |
-| `MealplanAiAssistant` | The 11 AI endpoints in [`MapMealplansFeature`](../../../src/backend/buddy/Features/Mealplans/MealplansFeature.cs) (`MapListProviders` … `MapDiscardAiSession`) | `/guardian/mealplan/ai-assistant`, its link on the meal plan page, the AI provider section on `/guardian/admin` |
-| `MealplanImport` | The 8 `*MealPlanImport*` endpoints | `/guardian/mealplan/import` and its link |
-| `Medicines` | `/medicines` group | `/guardian/medicine`, `doses-today` card, child home doses |
-| `SleepDiary` | `/sleep-diary` group, including the anonymous shared view | `/guardian/sleep-diary`, `/shared/sleep-diary/:token` |
-| `HouseRules` | `/house-rules` group | `/guardian/house-rules` and its print pages, `/child/rules`, the child home "rules to read" card |
-| `Pickups` | `/pickups` group | `/guardian/pickup`, `pickup-today` card, child home pickups |
-| `Babysitters` | `/babysitters` group | `/guardian/babysitters`, babysitter links and assignee options in pickups |
-| `WorkLocations` | `/work-locations` group | `/guardian/work-locations` |
-| `Printing` | `/print-templates` group | `/guardian/print*`, `/guardian/print/sheet/:templateId`, the print link on the dashboard |
-| `Progress` | `/progress` group | `/guardian/progress`, child progress views |
-| `TaskLibrary` | `/task-templates` group, plus `ScheduleTaskFromTemplate`, which lives in the `/calendars` group | `/guardian/task-library`, "schedule from library" in the calendar |
-| `Feelings` | `/feelings` group, including the anonymous shared view | `/guardian/feelings`, `/shared/feelings/:token`, its menu link and help topic, the check-in card on the child's home page and the dashboard's "Feelings today" card; the trend's sleep column and dose markers follow `SleepDiary` and `Medicines` |
-| `Homework` | `PATCH /users/me/children/{childId}/homework-chunks` (in the Guardians group) | `/child/homework`, its link and in-progress card on the child's home page, and the focus/break selects on `manage-children`; `homeworkChunks` stays on `UserResponse`/`ChildSummary` ([homework-splitter.md](../../frontend/analysis/homework-splitter.md)) |
-| `TransitionWarnings` | `/transition-warnings` group | `/guardian/transition-warnings`, its menu link and help topic, the countdown banner on the child pages, the On/Off line on `manage-children` and the onboarding hint |
-| `Help` | none (frontend only) | the `?` help panel in the guardian shell, `/guardian/help` |
+| Flag                  | Backend scope                                                                                                                                                  | Frontend scope                                                                                                                                                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Mealplans`           | `/mealplans` group, including the meal plan iCal feed                                                                                                          | `/guardian/mealplan*`, `/child/mealplan`, dashboard `mealplan-today`, child home meals, onboarding meal step                                                                                                                                                |
+| `MealplanAiAssistant` | The 11 AI endpoints in [`MapMealplansFeature`](../../../src/backend/buddy/Features/Mealplans/MealplansFeature.cs) (`MapListProviders` … `MapDiscardAiSession`) | `/guardian/mealplan/ai-assistant`, its link on the meal plan page, the AI provider section on `/guardian/admin`                                                                                                                                             |
+| `MealplanImport`      | The 8 `*MealPlanImport*` endpoints                                                                                                                             | `/guardian/mealplan/import` and its link                                                                                                                                                                                                                    |
+| `Medicines`           | `/medicines` group                                                                                                                                             | `/guardian/medicine`, `doses-today` card, child home doses                                                                                                                                                                                                  |
+| `SleepDiary`          | `/sleep-diary` group, including the anonymous shared view                                                                                                      | `/guardian/sleep-diary`, `/shared/sleep-diary/:token`                                                                                                                                                                                                       |
+| `HouseRules`          | `/house-rules` group                                                                                                                                           | `/guardian/house-rules` and its print pages, `/child/rules`, the child home "rules to read" card                                                                                                                                                            |
+| `Pickups`             | `/pickups` group                                                                                                                                               | `/guardian/pickup`, `pickup-today` card, child home pickups                                                                                                                                                                                                 |
+| `Babysitters`         | `/babysitters` group                                                                                                                                           | `/guardian/babysitters`, babysitter links and assignee options in pickups                                                                                                                                                                                   |
+| `WorkLocations`       | `/work-locations` group                                                                                                                                        | `/guardian/work-locations`                                                                                                                                                                                                                                  |
+| `Printing`            | `/print-templates` group                                                                                                                                       | `/guardian/print*`, `/guardian/print/sheet/:templateId`, the print link on the dashboard                                                                                                                                                                    |
+| `Progress`            | `/progress` group                                                                                                                                              | `/guardian/progress`, child progress views                                                                                                                                                                                                                  |
+| `TaskLibrary`         | `/task-templates` group, plus `ScheduleTaskFromTemplate`, which lives in the `/calendars` group                                                                | `/guardian/task-library`, "schedule from library" in the calendar                                                                                                                                                                                           |
+| `Feelings`            | `/feelings` group, including the anonymous shared view                                                                                                         | `/guardian/feelings`, `/shared/feelings/:token`, its menu link and help topic, the check-in card on the child's home page and the dashboard's "Feelings today" card; the trend's sleep column and dose markers follow `SleepDiary` and `Medicines`          |
+| `Homework`            | `PATCH /users/me/children/{childId}/homework-chunks` (in the Guardians group)                                                                                  | `/child/homework`, its link and in-progress card on the child's home page, and the focus/break selects on `manage-children`; `homeworkChunks` stays on `UserResponse`/`ChildSummary` ([homework-splitter.md](../../frontend/analysis/homework-splitter.md)) |
+| `TransitionWarnings`  | `/transition-warnings` group                                                                                                                                   | `/guardian/transition-warnings`, its menu link and help topic, the countdown banner on the child pages, the On/Off line on `manage-children` and the onboarding hint                                                                                        |
+| `Help`                | none (frontend only)                                                                                                                                           | the `?` help panel in the guardian shell, `/guardian/help`                                                                                                                                                                                                  |
 
 - **Sub-flags only where the TODO names a reason.** The AI assistant sends family data to a
   third-party LLM, which is the sharpest reason a family has to switch something off
@@ -223,7 +223,7 @@ handler, command or endpoint file changes.
   configuration (all on), so `buddy.json` and `buddy-api.ts` keep every endpoint. On an installation
   with a feature off, its OpenAPI document simply lists fewer operations.
 - **`ScheduleTaskFromTemplate` answers `405`, not `404`.** Its `POST
-  /calendars/{calendarId}/items/from-template` path also matches the template of
+/calendars/{calendarId}/items/from-template` path also matches the template of
   `DELETE /calendars/{calendarId}/items/{itemId:guid}`, and routing rejects the method before it
   checks the guid constraint. Nothing runs either way, and no caller tells the two apart.
 - **Disabled iCal feeds return 404.** A calendar app subscribed to the meal plan feed reports the
@@ -247,7 +247,7 @@ Rejected:
 loads it in an app initializer after the runtime config. A functional `featureGuard` protects routes,
 and templates hide links, cards and sections with `@if (features.enabled('medicines'))`.**
 
-```
+```text
 GET /features   (anonymous, like /version)
 200 { "mealplans": true, "mealplanAiAssistant": false, "mealplanImport": true,
       "medicines": false, "sleepDiary": true, ... , "help": true }
@@ -314,14 +314,14 @@ page couldn't use it. It is also per user, while flags are per installation.
 **Decision: sub-flags follow their parent, and cross-feature data degrades to "not shown".
 Dependencies never fail startup and never force another flag on.**
 
-| Combination | Behavior |
-|---|---|
-| `Mealplans=false`, `MealplanAiAssistant` / `MealplanImport` left `true` | Effective `false`. The AI and import endpoints live inside the `/mealplans` group, which isn't mapped. `GET /features` reports both as `false`. Startup logs one information line naming the overridden sub-flags. |
-| `Babysitters=false`, `Pickups=true` | Pickups works. The assignee picker offers guardians, siblings and self-escort only. Existing pickups assigned to a babysitter still show the babysitter's name, because `ListPickupSchedule` reads `IBabysitterListEventStore` directly, and those registrations stay (Question 3). |
-| `Printing=true` with `Mealplans`, `Pickups` or `WorkLocations` off | The template editor doesn't offer `Meal`, `Pickup` or `WorkLocation` rows ([`PrintRowKind`](../../../src/backend/buddy/Features/PrintTemplates/Types/PrintRowKind.cs)). Existing templates keep such rows, and the sheet renders them empty. `week-plan-loader.ts` skips the service call for a disabled feature instead of failing on its 404. The backend still accepts those row kinds, so a template saved earlier stays valid. |
-| `TaskLibrary=false` | Tasks already scheduled onto calendars stay ordinary calendar tasks and can still be completed. Only the library page and "schedule from library" go away. |
-| `Progress=false` | Task completion still records completions (`SetTaskCompletion` keeps calling into Progress), so progress is up to date if the flag returns. Only the progress pages and endpoints are hidden. |
-| `Medicines=false` / `Pickups=false` / `Mealplans=false` and the child day view | The child home omits the matching section. The dashboard omits the matching card. |
+| Combination                                                                    | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Mealplans=false`, `MealplanAiAssistant` / `MealplanImport` left `true`        | Effective `false`. The AI and import endpoints live inside the `/mealplans` group, which isn't mapped. `GET /features` reports both as `false`. Startup logs one information line naming the overridden sub-flags.                                                                                                                                                                                                                  |
+| `Babysitters=false`, `Pickups=true`                                            | Pickups works. The assignee picker offers guardians, siblings and self-escort only. Existing pickups assigned to a babysitter still show the babysitter's name, because `ListPickupSchedule` reads `IBabysitterListEventStore` directly, and those registrations stay (Question 3).                                                                                                                                                 |
+| `Printing=true` with `Mealplans`, `Pickups` or `WorkLocations` off             | The template editor doesn't offer `Meal`, `Pickup` or `WorkLocation` rows ([`PrintRowKind`](../../../src/backend/buddy/Features/PrintTemplates/Types/PrintRowKind.cs)). Existing templates keep such rows, and the sheet renders them empty. `week-plan-loader.ts` skips the service call for a disabled feature instead of failing on its 404. The backend still accepts those row kinds, so a template saved earlier stays valid. |
+| `TaskLibrary=false`                                                            | Tasks already scheduled onto calendars stay ordinary calendar tasks and can still be completed. Only the library page and "schedule from library" go away.                                                                                                                                                                                                                                                                          |
+| `Progress=false`                                                               | Task completion still records completions (`SetTaskCompletion` keeps calling into Progress), so progress is up to date if the flag returns. Only the progress pages and endpoints are hidden.                                                                                                                                                                                                                                       |
+| `Medicines=false` / `Pickups=false` / `Mealplans=false` and the child day view | The child home omits the matching section. The dashboard omits the matching card.                                                                                                                                                                                                                                                                                                                                                   |
 
 Rejected: **failing startup on an inconsistent combination** (as `RateLimitingOptions.IsValid`
 does). Every flag defaults to `true`, so turning off `Mealplans` would also force the operator to
@@ -334,7 +334,7 @@ added.
 
 ## Routes
 
-```
+```text
 GET /features   GetFeatures   anonymous, global anonymous rate-limit partition
 ```
 
@@ -381,32 +381,32 @@ that only use the global limit and on the `ETagCoverageTests` exclusion list.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| No `Features` section at all | Every feature on, same as today |
-| Misspelt key (`Features__Medecines`) | Host fails at startup and names the key |
-| Non-boolean value (`Features__Medicines=no`) | Host fails at startup (binder conversion error) |
-| Feature turned off with data in it | Data kept, hidden. Still in GDPR export and erasure. Back as it was when turned on again. |
+| Case                                                  | Behavior                                                                                                            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| No `Features` section at all                          | Every feature on, same as today                                                                                     |
+| Misspelt key (`Features__Medecines`)                  | Host fails at startup and names the key                                                                             |
+| Non-boolean value (`Features__Medicines=no`)          | Host fails at startup (binder conversion error)                                                                     |
+| Feature turned off with data in it                    | Data kept, hidden. Still in GDPR export and erasure. Back as it was when turned on again.                           |
 | Feature turned off while a guardian has its page open | Next API call answers `404`. The page shows its normal load error. A reload sends them home through `featureGuard`. |
-| Bookmark or deep link to a disabled page | `featureGuard` redirects to `/`, and `roleRedirectGuard` on to the role's home |
-| `GET /features` fails at app start | Frontend treats every feature as on and logs a warning. The backend still enforces. |
-| Calendar app polling a disabled meal plan iCal feed | `404`. The same token works again once the feature is back. |
-| AI assistant off with an active AI session | Session endpoints `404`. `AiSessionRetentionService` still deletes the session after 30 days. |
-| Sub-flag on while its parent is off | Effective `false`, logged once at startup |
+| Bookmark or deep link to a disabled page              | `featureGuard` redirects to `/`, and `roleRedirectGuard` on to the role's home                                      |
+| `GET /features` fails at app start                    | Frontend treats every feature as on and logs a warning. The backend still enforces.                                 |
+| Calendar app polling a disabled meal plan iCal feed   | `404`. The same token works again once the feature is back.                                                         |
+| AI assistant off with an active AI session            | Session endpoints `404`. `AiSessionRetentionService` still deletes the session after 30 days.                       |
+| Sub-flag on while its parent is off                   | Effective `false`, logged once at startup                                                                           |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Where flags live | `Features` configuration section, set by the operator via env vars, validated on start, no admin screen, because each family has an operator and Buddy has no installation-admin role |
-| Default | Every flag `true`, so upgrades change nothing |
-| Which features | Mealplans (+ AI assistant, import), medicines, sleep diary, house rules, pickups, babysitters, work locations, printing, progress, task library, help. Calendars, users, guardians, groups and privacy are core. |
-| What off means | Hide the HTTP surface and UI. Keep registrations, data, GDPR coverage and background services. |
-| Backend enforcement | Don't map the disabled endpoints. Routing answers `404`. |
-| Frontend source | Anonymous `GET /features`, so the flags have a single source and one image serves every installation |
-| Frontend enforcement | `featureGuard` on routes, `@if` on links, cards and sections |
-| Dependencies | Sub-flags follow their parent. Cross-feature data degrades to not shown. No startup failure. |
-| Azure | One optional `FEATURES` list of `Name=true\|false` pairs in `deploy/azure/.env`, shape-checked by `deploy.sh`, rather than 12 separate keys. Docker Compose reads `Features__*` lines from `deploy/.env` through `env_file`. |
+| Question             | Decision                                                                                                                                                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where flags live     | `Features` configuration section, set by the operator via env vars, validated on start, no admin screen, because each family has an operator and Buddy has no installation-admin role                                        |
+| Default              | Every flag `true`, so upgrades change nothing                                                                                                                                                                                |
+| Which features       | Mealplans (+ AI assistant, import), medicines, sleep diary, house rules, pickups, babysitters, work locations, printing, progress, task library, help. Calendars, users, guardians, groups and privacy are core.             |
+| What off means       | Hide the HTTP surface and UI. Keep registrations, data, GDPR coverage and background services.                                                                                                                               |
+| Backend enforcement  | Don't map the disabled endpoints. Routing answers `404`.                                                                                                                                                                     |
+| Frontend source      | Anonymous `GET /features`, so the flags have a single source and one image serves every installation                                                                                                                         |
+| Frontend enforcement | `featureGuard` on routes, `@if` on links, cards and sections                                                                                                                                                                 |
+| Dependencies         | Sub-flags follow their parent. Cross-feature data degrades to not shown. No startup failure.                                                                                                                                 |
+| Azure                | One optional `FEATURES` list of `Name=true\|false` pairs in `deploy/azure/.env`, shape-checked by `deploy.sh`, rather than 12 separate keys. Docker Compose reads `Features__*` lines from `deploy/.env` through `env_file`. |
 
 ## Remaining open questions
 

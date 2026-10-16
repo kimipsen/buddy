@@ -22,10 +22,10 @@ not a ticket number.
   - `Status: analysis only — nothing here is implemented yet.` for research or options docs.
   - `Status: Sketch implemented for <scope> (...)` for a partial build.
   - `Status: Implemented` alone, or `Status: Implemented. <one or two sentences naming the types,
-    commands, routes and screens that shipped, and which doc it extends>`. Prefer the longer form;
+commands, routes and screens that shipped, and which doc it extends>`. Prefer the longer form;
     see `configurable-goal-posts.md`.
   - When an implementation leaves pieces out, say which: `Status: Implemented (badge + service +
-    guardian goal-post management; no ...)`.
+guardian goal-post management; no ...)`.
 - **Ground every claim in the code.** Link real files with repo-relative paths from the doc's
   location, e.g. `[IcalToken.cs](../../../src/backend/buddy/Features/Calendars/Types/IcalToken.cs)`,
   and use `file.ts:110` line anchors in implementation plans. Link sibling analysis docs by section

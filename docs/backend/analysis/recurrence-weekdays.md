@@ -59,12 +59,12 @@ and Buddy never writes an `RRULE`, so it doesn't need that behaviour.
 `RecurrenceRules` (shared by `CreateItemValidator`, `ScheduleTaskFromTemplateValidator` and
 `UpdateItemRecurrenceHandler`) adds these rules, keyed `Recurrence.Weekdays` unless noted:
 
-| Rule | Why |
-| --- | --- |
-| At least one valid weekday (an empty list or a day outside 0-6 is a 400, not "no filter") | An empty filter never occurs. |
-| Only for `Daily` and `Weekly` | Monthly/yearly "on weekdays" ("first Monday of the month") is a different rule shape. |
-| Daily: `IntervalCount` must be 1 (`Recurrence.IntervalCount`) | "Every 2 days, weekdays only" is legal in RFC 5545 but confusing, and an interval of 7 with the seed's weekday unselected would never occur. Weekly keeps its interval. |
-| An `Until` must leave at least one occurrence | Seed Saturday, until Sunday, Monday to Friday only gives an item with no dates. Checked only when `Until` is within one cycle of the seed (7 days, or `IntervalCount` weeks), which is the only case where it can happen. |
+| Rule                                                                                      | Why                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| At least one valid weekday (an empty list or a day outside 0-6 is a 400, not "no filter") | An empty filter never occurs.                                                                                                                                                                                             |
+| Only for `Daily` and `Weekly`                                                             | Monthly/yearly "on weekdays" ("first Monday of the month") is a different rule shape.                                                                                                                                     |
+| Daily: `IntervalCount` must be 1 (`Recurrence.IntervalCount`)                             | "Every 2 days, weekdays only" is legal in RFC 5545 but confusing, and an interval of 7 with the seed's weekday unselected would never occur. Weekly keeps its interval.                                                   |
+| An `Until` must leave at least one occurrence                                             | Seed Saturday, until Sunday, Monday to Friday only gives an item with no dates. Checked only when `Until` is within one cycle of the seed (7 days, or `IntervalCount` weeks), which is the only case where it can happen. |
 
 ## Persistence
 
@@ -92,11 +92,11 @@ The agenda create form shows seven weekday toggles under Repeat for Daily and We
 
 ## Decisions made
 
-| Question | Decision |
-| --- | --- |
-| Model | `[Flags] Weekdays` on `Repeating`, default `None` (no filter) |
-| Seed on an unselected day | Not an occurrence |
-| Frequencies | Daily and Weekly |
-| Daily interval with a filter | Must be 1 |
-| Weekly week start | Monday |
-| Stored JSON | Omitted when `None`; string array of day names otherwise |
+| Question                     | Decision                                                      |
+| ---------------------------- | ------------------------------------------------------------- |
+| Model                        | `[Flags] Weekdays` on `Repeating`, default `None` (no filter) |
+| Seed on an unselected day    | Not an occurrence                                             |
+| Frequencies                  | Daily and Weekly                                              |
+| Daily interval with a filter | Must be 1                                                     |
+| Weekly week start            | Monday                                                        |
+| Stored JSON                  | Omitted when `None`; string array of day names otherwise      |

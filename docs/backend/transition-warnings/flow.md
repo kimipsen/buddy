@@ -52,13 +52,13 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `GET` | `/transition-warnings/me` | The caller's own settings, or the initial (off) ones. Overrides as `{ itemId, leadMinutes }`. |
-| `GET` | `/transition-warnings/children/{childId}` | Guardian only. The settings plus each exception's item title, icon and kind; deleted items and items the guardian can't see are left out. |
-| `PUT` | `/transition-warnings/children/{childId}` | Guardian only. Full replace of `enabled`, `leadMinutes` (1-3 of 1-120), `kinds` and optional `quietHours`. An identical save appends nothing; switching off keeps everything else. |
-| `PUT` | `/transition-warnings/children/{childId}/items/{itemId}` | Guardian only. The item's own `leadMinutes`, or `[]` for "never". `404` for an item the guardian can't see, `409 too_many_warning_overrides` at 100. |
-| `DELETE` | `/transition-warnings/children/{childId}/items/{itemId}` | Guardian only. Removes an exception. Idempotent: `204` when there was none. |
+| Method   | Route                                                    | Behavior                                                                                                                                                                           |
+| -------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`    | `/transition-warnings/me`                                | The caller's own settings, or the initial (off) ones. Overrides as `{ itemId, leadMinutes }`.                                                                                      |
+| `GET`    | `/transition-warnings/children/{childId}`                | Guardian only. The settings plus each exception's item title, icon and kind; deleted items and items the guardian can't see are left out.                                          |
+| `PUT`    | `/transition-warnings/children/{childId}`                | Guardian only. Full replace of `enabled`, `leadMinutes` (1-3 of 1-120), `kinds` and optional `quietHours`. An identical save appends nothing; switching off keeps everything else. |
+| `PUT`    | `/transition-warnings/children/{childId}/items/{itemId}` | Guardian only. The item's own `leadMinutes`, or `[]` for "never". `404` for an item the guardian can't see, `409 too_many_warning_overrides` at 100.                               |
+| `DELETE` | `/transition-warnings/children/{childId}/items/{itemId}` | Guardian only. Removes an exception. Idempotent: `204` when there was none.                                                                                                        |
 
 All routes are mapped only while `Features:TransitionWarnings` is on. Erasing a child deletes the
 stream; a guardian's export lists each child's settings.

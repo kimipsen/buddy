@@ -79,7 +79,7 @@ and feature flag `Features:Feelings`.**
 
 - **Different principals.** A sleep diary is the guardian's clinical observation; the child has no
   access ([SleepDiaryAuthorization.cs](../../../src/backend/buddy/Features/SleepDiaries/SleepDiaryAuthorization.cs)).
-  A feelings check-in is first of all the *child's* self-report. Adding a child tier to
+  A feelings check-in is first of all the _child's_ self-report. Adding a child tier to
   `SleepDiaryAuthorization` would loosen a decision the sleep diary made deliberately
   ([sleep-diary.md, Question 4](sleep-diary.md#question-4-who-can-see-and-log-entries)).
 - **Different shape.** A sleep entry is one per date, overwritten in full. Check-ins are several
@@ -97,16 +97,16 @@ the same erasure and export shape, copied rather than referenced, as vertical sl
 with a face, its colour and a word, so a child who can't read or doesn't know the zones model
 still picks a face. There is no separate face scale in the data.**
 
-```
+```text
 enum FeelingZone { Blue, Green, Yellow, Red }   // persisted as strings (EnumStorage.AsString)
 ```
 
-| Zone | Face (display only) | Child-facing label (en / da) | Meaning |
-|---|---|---|---|
-| `Blue` | 😔 | "Slow" / "Langsom" | low energy: tired, sad, bored, unwell |
-| `Green` | 🙂 | "Ready" / "Klar" | calm, focused, okay |
-| `Yellow` | 😬 | "Wound up" / "Oppe at køre" | worried, frustrated, silly, restless |
-| `Red` | 😡 | "Too much" / "For meget" | angry, scared, overwhelmed |
+| Zone     | Face (display only) | Child-facing label (en / da) | Meaning                               |
+| -------- | ------------------- | ---------------------------- | ------------------------------------- |
+| `Blue`   | 😔                  | "Slow" / "Langsom"           | low energy: tired, sad, bored, unwell |
+| `Green`  | 🙂                  | "Ready" / "Klar"             | calm, focused, okay                   |
+| `Yellow` | 😬                  | "Wound up" / "Oppe at køre"  | worried, frustrated, silly, restless  |
+| `Red`    | 😡                  | "Too much" / "For meget"     | angry, scared, overwhelmed            |
 
 Why zones over a five-face valence scale:
 
@@ -122,7 +122,7 @@ Why zones over a five-face valence scale:
   four colours, so the child and the doctor read the same language.
 - **One tap.** Storing both a face and a zone would mean two taps, or a mapping that loses
   information in one direction (five faces don't map onto four zones without guessing). Showing
-  the face *on* the zone button gives the face's accessibility without a second dimension.
+  the face _on_ the zone button gives the face's accessibility without a second dimension.
 
 Rejected: a five-face ordinal scale (one axis, see above); storing both a face and a zone
 (double the friction, and the two could contradict each other); a 0-10 slider (too abstract for a
@@ -141,7 +141,7 @@ name: the feature is "Feelings" / "Følelser" (settled by the user 2026-10-13).
 ChildId.Value` and no index document, exactly as `SleepDiary` and `ChildProgress` do. Check-ins
 live in it keyed by a UUIDv7 `FeelingCheckInId`.**
 
-```
+```text
 FeelingsJournal(
     FeelingsJournalId Id,                                  // Id.Value == ChildId.Value
     UserId ChildId,
@@ -177,7 +177,7 @@ public sealed record FeelingCheckInId(Guid Value)
 
 ### Events
 
-```
+```text
 FeelingsJournalStarted(FeelingsJournalId Id, UserId ChildId, DateTimeOffset OccurredAt)
     // Lazily, by the first CheckIn / LogFeelingCheckIn / SetCheckInPromptTimes /
     // SetFeelingsDisplayMode for the child, in the same CreateAsync -- like SleepDiaryStarted.
@@ -232,7 +232,7 @@ does. `FeelingsShareToken` is a copy of `SleepDiaryShareToken` with its own id t
 **Decision: a flat record: zone, up to three tags from a fixed catalog, an optional short note, the
 moment it describes in the child's local time, who logged it and when it was saved.**
 
-```
+```text
 FeelingCheckIn(
     FeelingCheckInId Id,
     FeelingZone Zone,
@@ -247,12 +247,12 @@ FeelingCheckIn(
 - **Tags are a fixed, translated catalog, not free text.** Feeling words belong to one zone, and
   situation tags fit any zone:
 
-  | Group | Tags |
-  |---|---|
-  | `Blue` words | `Tired`, `Sad`, `Bored`, `Unwell`, `Lonely` |
-  | `Green` words | `Happy`, `Calm`, `Focused`, `Proud`, `Okay` |
-  | `Yellow` words | `Worried`, `Frustrated`, `Silly`, `Excited`, `Restless` |
-  | `Red` words | `Angry`, `Scared`, `Overwhelmed` |
+  | Group                 | Tags                                                                          |
+  | --------------------- | ----------------------------------------------------------------------------- |
+  | `Blue` words          | `Tired`, `Sad`, `Bored`, `Unwell`, `Lonely`                                   |
+  | `Green` words         | `Happy`, `Calm`, `Focused`, `Proud`, `Okay`                                   |
+  | `Yellow` words        | `Worried`, `Frustrated`, `Silly`, `Excited`, `Restless`                       |
+  | `Red` words           | `Angry`, `Scared`, `Overwhelmed`                                              |
   | Situations (any zone) | `School`, `Home`, `Friends`, `Homework`, `Screens`, `Food`, `Bedtime`, `Body` |
 
   A fixed list is translatable (en/da in the frontend, one enum on the wire), countable in the
@@ -260,6 +260,7 @@ FeelingCheckIn(
   validator rejects a feeling word from another zone than the one picked. That's a teaching
   choice: a child who taps yellow sees the yellow words. Custom per-family tags are an open
   question.
+
 - **The tag list is a plain list of an enum**, not a union, so it round-trips through
   System.Text.Json the way `MedicineSchedule.Times` does (the failure mode
   [pickup-schedules.md, Question 3](pickup-schedules.md#question-3-modeling-who--a-flat-kind-discriminator-not-a-union)
@@ -289,15 +290,15 @@ FeelingCheckIn(
 own self-reports for today and undo one within 10 minutes. `Manage`: an active guardian, on
 `/feelings/children/{childId}/...`, who can do everything else. Anyone else gets `NotFound`.**
 
-```
+```text
 enum FeelingsAccessTier { None, Self, Manage }
 enum FeelingsAccess { Allowed, NotFound, Forbidden }
 ```
 
-| Tier | Who | Actions |
-|---|---|---|
-| **Self** | The caller is the child: `callerId == childId` *and* the caller has at least one active guardian link (`IGuardianLinkEventStore.ListForChildAsync(...)` non-empty, as [ChildVisibility.cs](../../../src/backend/buddy/Features/Calendars/ChildVisibility.cs) checks) | Check in now; see today's own self-reports, the prompt times and the display mode; undo an own check-in within 10 minutes |
-| **Manage** | An active guardian of the child (`FindActiveLinkAsync`) | Log on the child's behalf (any past moment); edit or remove guardian-logged check-ins; remove (not edit) a child's self-report; list any range; set prompt times and the display mode; create, list and revoke share links |
+| Tier       | Who                                                                                                                                                                                                                                                                  | Actions                                                                                                                                                                                                                    |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Self**   | The caller is the child: `callerId == childId` _and_ the caller has at least one active guardian link (`IGuardianLinkEventStore.ListForChildAsync(...)` non-empty, as [ChildVisibility.cs](../../../src/backend/buddy/Features/Calendars/ChildVisibility.cs) checks) | Check in now; see today's own self-reports, the prompt times and the display mode; undo an own check-in within 10 minutes                                                                                                  |
+| **Manage** | An active guardian of the child (`FindActiveLinkAsync`)                                                                                                                                                                                                              | Log on the child's behalf (any past moment); edit or remove guardian-logged check-ins; remove (not edit) a child's self-report; list any range; set prompt times and the display mode; create, list and revoke share links |
 
 `FeelingsAuthorization` has the shape of `MedicineAuthorization`, with `CheckSelf` and
 `CheckManage` over one private `ResolveTier`. The differences:
@@ -317,7 +318,7 @@ Change and removal rules:
   point is a truthful record, and a child embarrassed by a red day is a conversation for the
   guardian, not a delete button. A new check-in is always possible ("I'm green now").
 - **A guardian can't edit a child's self-report**: `409 check_in_is_self_report`. The child's words
-  stay the child's. A guardian *can* remove one (a sibling grabbed the iPad, a test tap), and
+  stay the child's. A guardian _can_ remove one (a sibling grabbed the iPad, a test tap), and
   `FeelingCheckInRemoved.ModifiedBy` records which guardian did (settled by the user 2026-10-11).
 - **Guardian-logged check-ins** can be edited (full overwrite, `Before`/`After`, as
   `SleepEntryLogged`) and removed by any active guardian, the sleep diary's rule that either
@@ -435,16 +436,16 @@ APIs; there's no cross-feature backend endpoint.**
 
 ### GDPR and privacy
 
-| Duty | How |
-|---|---|
-| Lawful basis | Health data about a child (Art. 9 + Art. 8). The operator's privacy notice must list it. When this ships, [PRIVACY.md](../../../PRIVACY.md)'s "Health data" bullet and "Every read of health data is logged" line gain "feelings check-ins" |
-| Erasure: child erased | `FeelingsPersonalDataEraser.EraseChildAsync` deletes the journal stream (`FeelingsJournalId.ForChild`) with its snapshot, and every share-token stream with its document, as [SleepDiariesPersonalData.cs](../../../src/backend/buddy/Features/SleepDiaries/SleepDiariesPersonalData.cs) does |
-| Erasure: guardian erased | Revokes the share links that guardian created for children who stay with a co-guardian (same as the sleep diary). Their check-ins stay with the child's journal; `LoggedBy` is a pseudonym once the user is erased, as `AddedBy` on house rules ([house-rules.md, Privacy](house-rules.md#privacy-gdpr)). Notes they wrote stay: they are about the child and belong to the child's record |
-| Export | `FeelingsPersonalDataExporter`, section `"feelings"`: every check-in of each child (newest last), the prompt times and share links (id, created, expiry, revoked; never the hash), built from the response DTOs. A child account exports only `account`, as for every feature ([gdpr-data-protection.md, Question 5](gdpr-data-protection.md#question-5-what-does-an-export-contain)) |
-| Coverage tests | `PersonalDataEraserCoverageTests` and `PersonalDataExporterCoverageTests` fail until both exist; `PostgresDataSourceHostTests` gets `IFeelingsStore` |
-| Read audit logs | `FeelingsLog`, EventIds 11001+ (the next free thousand, [observability.md](../observability.md)): 11001 share link created, 11002 revoked, 11003 shared view read (child, link id), 11004 check-ins read (`ChildId`, `From`, `To`, `UserId`, `HealthDataAccessPath.Guardian` or `Self`). Written after a successful read only, ids only, never a zone, tag or note. `AuditLogTests` gains the cases |
-| Minimization | No free-text tags; a 280-character note; no zone or note in logs, push payloads or URLs |
-| Retention | Kept until the child or the family deletes it, like the sleep diary. Automatic expiry of old check-ins is an open question |
+| Duty                     | How                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lawful basis             | Health data about a child (Art. 9 + Art. 8). The operator's privacy notice must list it. When this ships, [PRIVACY.md](../../../PRIVACY.md)'s "Health data" bullet and "Every read of health data is logged" line gain "feelings check-ins"                                                                                                                                                         |
+| Erasure: child erased    | `FeelingsPersonalDataEraser.EraseChildAsync` deletes the journal stream (`FeelingsJournalId.ForChild`) with its snapshot, and every share-token stream with its document, as [SleepDiariesPersonalData.cs](../../../src/backend/buddy/Features/SleepDiaries/SleepDiariesPersonalData.cs) does                                                                                                       |
+| Erasure: guardian erased | Revokes the share links that guardian created for children who stay with a co-guardian (same as the sleep diary). Their check-ins stay with the child's journal; `LoggedBy` is a pseudonym once the user is erased, as `AddedBy` on house rules ([house-rules.md, Privacy](house-rules.md#privacy-gdpr)). Notes they wrote stay: they are about the child and belong to the child's record          |
+| Export                   | `FeelingsPersonalDataExporter`, section `"feelings"`: every check-in of each child (newest last), the prompt times and share links (id, created, expiry, revoked; never the hash), built from the response DTOs. A child account exports only `account`, as for every feature ([gdpr-data-protection.md, Question 5](gdpr-data-protection.md#question-5-what-does-an-export-contain))               |
+| Coverage tests           | `PersonalDataEraserCoverageTests` and `PersonalDataExporterCoverageTests` fail until both exist; `PostgresDataSourceHostTests` gets `IFeelingsStore`                                                                                                                                                                                                                                                |
+| Read audit logs          | `FeelingsLog`, EventIds 11001+ (the next free thousand, [observability.md](../observability.md)): 11001 share link created, 11002 revoked, 11003 shared view read (child, link id), 11004 check-ins read (`ChildId`, `From`, `To`, `UserId`, `HealthDataAccessPath.Guardian` or `Self`). Written after a successful read only, ids only, never a zone, tag or note. `AuditLogTests` gains the cases |
+| Minimization             | No free-text tags; a 280-character note; no zone or note in logs, push payloads or URLs                                                                                                                                                                                                                                                                                                             |
+| Retention                | Kept until the child or the family deletes it, like the sleep diary. Automatic expiry of old check-ins is an open question                                                                                                                                                                                                                                                                          |
 
 ## Question 9: a faces-only display mode for young children
 
@@ -455,7 +456,7 @@ the zone words ("Ready", "Too much") on the child's four buttons and drops the c
 from what a screen reader announces; the buttons keep their face and their colour. The stored data
 is unchanged: the same four zones, the same tags.**
 
-```
+```text
 enum FeelingsDisplayMode { FacesAndWords, FacesOnly }    // persisted and sent by name
 
 FeelingsDisplayModeSet(FeelingsJournalId Id, FeelingsDisplayMode Before,
@@ -498,7 +499,7 @@ PUT /feelings/children/{childId}/display-mode   { "displayMode": "FacesOnly" }
 - **None for the journal.** `FeelingsJournalId.Value == ChildId.Value`, and reads go through the
   inline snapshot (`FindSnapshotAsync`), as `ListSleepDiaryEntriesHandler` does.
 - **`FeelingsShareTokenDocument(Guid Id, Guid ChildId, string TokenHash, DateTimeOffset? ExpiresAt,
-  bool IsRevoked, DateTimeOffset CreatedAt)`**, written in the same `SaveChangesAsync` as the token
+bool IsRevoked, DateTimeOffset CreatedAt)`**, written in the same `SaveChangesAsync` as the token
   events, looked up by hash for the shared view and by child for the list and erasure, as
   `SleepDiaryShareTokenDocument`.
 - **No expansion helper.** There's no schedule to expand: a range read filters `CheckIns` by
@@ -506,21 +507,21 @@ PUT /feelings/children/{childId}/display-mode   { "displayMode": "FacesOnly" }
 
 ## Command slices (`Features/Feelings/`, same vertical-slice shape as `SleepDiaries`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `CheckIn` | Self | Zone, tags, note. The moment is now in the child's time zone. Creates the journal lazily. Emits `FeelingCheckedIn` |
-| `UndoCheckIn` | Self | Own self-report only, within 10 minutes of `RecordedAt`, else `409 check_in_undo_window_closed`. Already gone: `204`, no event. Emits `FeelingCheckInRemoved` |
-| `GetMyFeelingsToday` | Self | Today's date in the child's zone, the prompt times, the display mode, and the child's own self-reports for today. Logs 11004 as `Self` |
-| `LogFeelingCheckIn` | Manage | Like `CheckIn`, plus an optional `date`/`time` (both or neither; default now; not more than 5 minutes in the future). Emits `FeelingCheckedIn` with `LoggedBy` = the guardian |
-| `EditFeelingCheckIn` | Manage | Full overwrite of a guardian-logged check-in; a self-report is `409 check_in_is_self_report`. Identical content: no event. Emits `FeelingCheckInEdited` |
-| `RemoveFeelingCheckIn` | Manage | Any check-in of the child. Already gone: `204`, no event. Emits `FeelingCheckInRemoved` |
-| `ListFeelingCheckIns` | Manage | `[from, to]`, at most 92 days, with the prompt times and the display mode. Logs 11004 as `Guardian` |
-| `SetCheckInPromptTimes` | Manage | 0-4 distinct whole-minute times, stored sorted. Same list: no event. Emits `CheckInPromptTimesSet` |
-| `SetFeelingsDisplayMode` | Manage | `FacesAndWords` or `FacesOnly` (Question 9). Same mode: no event. Emits `FeelingsDisplayModeSet` |
-| `CreateFeelingsShareLink` | Manage | Optional `expiresAt`. Returns the plaintext token once. Emits `FeelingsShareTokenCreated`; logs 11001 |
-| `ListFeelingsShareLinks` | Manage | Live links only (not revoked, not expired), as `ListSleepDiaryShareLinks` |
-| `RevokeFeelingsShareLink` | Manage | Emits `FeelingsShareTokenRevoked`; logs 11002 |
-| `GetSharedFeelings` | *(anonymous, token-gated)* | Unknown, revoked, expired or erased child: all `404`. Optional `from`/`to`; the default is the last 14 days ending today on the child's own clock (a missing end is 14 days from the other), at most 92. Logs 11003 |
+| Slice                     | Tier                       | Notes                                                                                                                                                                                                               |
+| ------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CheckIn`                 | Self                       | Zone, tags, note. The moment is now in the child's time zone. Creates the journal lazily. Emits `FeelingCheckedIn`                                                                                                  |
+| `UndoCheckIn`             | Self                       | Own self-report only, within 10 minutes of `RecordedAt`, else `409 check_in_undo_window_closed`. Already gone: `204`, no event. Emits `FeelingCheckInRemoved`                                                       |
+| `GetMyFeelingsToday`      | Self                       | Today's date in the child's zone, the prompt times, the display mode, and the child's own self-reports for today. Logs 11004 as `Self`                                                                              |
+| `LogFeelingCheckIn`       | Manage                     | Like `CheckIn`, plus an optional `date`/`time` (both or neither; default now; not more than 5 minutes in the future). Emits `FeelingCheckedIn` with `LoggedBy` = the guardian                                       |
+| `EditFeelingCheckIn`      | Manage                     | Full overwrite of a guardian-logged check-in; a self-report is `409 check_in_is_self_report`. Identical content: no event. Emits `FeelingCheckInEdited`                                                             |
+| `RemoveFeelingCheckIn`    | Manage                     | Any check-in of the child. Already gone: `204`, no event. Emits `FeelingCheckInRemoved`                                                                                                                             |
+| `ListFeelingCheckIns`     | Manage                     | `[from, to]`, at most 92 days, with the prompt times and the display mode. Logs 11004 as `Guardian`                                                                                                                 |
+| `SetCheckInPromptTimes`   | Manage                     | 0-4 distinct whole-minute times, stored sorted. Same list: no event. Emits `CheckInPromptTimesSet`                                                                                                                  |
+| `SetFeelingsDisplayMode`  | Manage                     | `FacesAndWords` or `FacesOnly` (Question 9). Same mode: no event. Emits `FeelingsDisplayModeSet`                                                                                                                    |
+| `CreateFeelingsShareLink` | Manage                     | Optional `expiresAt`. Returns the plaintext token once. Emits `FeelingsShareTokenCreated`; logs 11001                                                                                                               |
+| `ListFeelingsShareLinks`  | Manage                     | Live links only (not revoked, not expired), as `ListSleepDiaryShareLinks`                                                                                                                                           |
+| `RevokeFeelingsShareLink` | Manage                     | Emits `FeelingsShareTokenRevoked`; logs 11002                                                                                                                                                                       |
+| `GetSharedFeelings`       | _(anonymous, token-gated)_ | Unknown, revoked, expired or erased child: all `404`. Optional `from`/`to`; the default is the last 14 days ending today on the child's own clock (a missing end is 14 days from the other), at most 92. Logs 11003 |
 
 `UndoCheckIn` and `EditFeelingCheckIn` return feature-specific outcome unions
 (`UndoCheckInOutcome`, `EditFeelingCheckInOutcome`) for their `409`s rather than adding cases to
@@ -530,21 +531,21 @@ The daily cap is a plain `400 validation_error`, so `CheckIn` keeps `Result<T>`.
 
 ## Routes
 
-| Route | Method | Slice | Success | Other statuses |
-|---|---|---|---|---|
-| `/feelings/me/check-ins` | POST | `CheckIn` | `200` check-in | `400`, `404` (caller isn't a child with an active guardian) |
-| `/feelings/me/check-ins/{checkInId}` | DELETE | `UndoCheckIn` | `204` | `404` (not a child / guardian-logged), `409 check_in_undo_window_closed` |
-| `/feelings/me/today` | GET | `GetMyFeelingsToday` | `200` | `404` |
-| `/feelings/children/{childId}/check-ins` | POST | `LogFeelingCheckIn` | `200` check-in | `400`, `403` (the child), `404` |
-| `/feelings/children/{childId}/check-ins` | GET | `ListFeelingCheckIns` | `200` | `400`, `403`, `404` |
-| `/feelings/children/{childId}/check-ins/{checkInId}` | PUT | `EditFeelingCheckIn` | `200` check-in | `400`, `403`, `404`, `409 check_in_is_self_report` |
-| `/feelings/children/{childId}/check-ins/{checkInId}` | DELETE | `RemoveFeelingCheckIn` | `204` | `403`, `404` |
-| `/feelings/children/{childId}/prompt-times` | PUT | `SetCheckInPromptTimes` | `200` prompt times | `400`, `403`, `404` |
-| `/feelings/children/{childId}/display-mode` | PUT | `SetFeelingsDisplayMode` | `200` display mode | `400`, `403`, `404` |
-| `/feelings/children/{childId}/share-links` | POST | `CreateFeelingsShareLink` | `200` link + token | `400`, `403`, `404` |
-| `/feelings/children/{childId}/share-links` | GET | `ListFeelingsShareLinks` | `200` | `403`, `404` |
-| `/feelings/children/{childId}/share-links/{shareLinkId}` | DELETE | `RevokeFeelingsShareLink` | `204` | `403`, `404` |
-| `/feelings/shared/{token}` | GET | `GetSharedFeelings` | `200` | `400`, `404` (anonymous) |
+| Route                                                    | Method | Slice                     | Success            | Other statuses                                                           |
+| -------------------------------------------------------- | ------ | ------------------------- | ------------------ | ------------------------------------------------------------------------ |
+| `/feelings/me/check-ins`                                 | POST   | `CheckIn`                 | `200` check-in     | `400`, `404` (caller isn't a child with an active guardian)              |
+| `/feelings/me/check-ins/{checkInId}`                     | DELETE | `UndoCheckIn`             | `204`              | `404` (not a child / guardian-logged), `409 check_in_undo_window_closed` |
+| `/feelings/me/today`                                     | GET    | `GetMyFeelingsToday`      | `200`              | `404`                                                                    |
+| `/feelings/children/{childId}/check-ins`                 | POST   | `LogFeelingCheckIn`       | `200` check-in     | `400`, `403` (the child), `404`                                          |
+| `/feelings/children/{childId}/check-ins`                 | GET    | `ListFeelingCheckIns`     | `200`              | `400`, `403`, `404`                                                      |
+| `/feelings/children/{childId}/check-ins/{checkInId}`     | PUT    | `EditFeelingCheckIn`      | `200` check-in     | `400`, `403`, `404`, `409 check_in_is_self_report`                       |
+| `/feelings/children/{childId}/check-ins/{checkInId}`     | DELETE | `RemoveFeelingCheckIn`    | `204`              | `403`, `404`                                                             |
+| `/feelings/children/{childId}/prompt-times`              | PUT    | `SetCheckInPromptTimes`   | `200` prompt times | `400`, `403`, `404`                                                      |
+| `/feelings/children/{childId}/display-mode`              | PUT    | `SetFeelingsDisplayMode`  | `200` display mode | `400`, `403`, `404`                                                      |
+| `/feelings/children/{childId}/share-links`               | POST   | `CreateFeelingsShareLink` | `200` link + token | `400`, `403`, `404`                                                      |
+| `/feelings/children/{childId}/share-links`               | GET    | `ListFeelingsShareLinks`  | `200`              | `403`, `404`                                                             |
+| `/feelings/children/{childId}/share-links/{shareLinkId}` | DELETE | `RevokeFeelingsShareLink` | `204`              | `403`, `404`                                                             |
+| `/feelings/shared/{token}`                               | GET    | `GetSharedFeelings`       | `200`              | `400`, `404` (anonymous)                                                 |
 
 Notes, following [http-status-codes.md](../http-status-codes.md):
 
@@ -566,7 +567,7 @@ Request bodies. Enums go over the wire by name and bind straight to the enum typ
 `InviteGuardianRequest.Kind` does; an unknown name is the binding failure's `400`, and a number
 outside the enum fails the validator's `IsInEnum`:
 
-```
+```text
 CheckInRequest(FeelingZone Zone, IReadOnlyList<FeelingTag>? Tags = null, string? Note = null)
 LogFeelingCheckInRequest(FeelingZone Zone, IReadOnlyList<FeelingTag>? Tags = null, string? Note = null,
     DateOnly? Date = null, TimeOnly? Time = null)       // both or neither
@@ -606,7 +607,7 @@ CreateFeelingsShareLinkRequest(DateTimeOffset? ExpiresAt = null)
   situations as `aria-pressed` chips, at most three) and `shared/feelings-trend` (the 14-day grid,
   drawn by the guardian page and the shared page).
 - **Child: a check-in card on the home page** (`features/child/home/feelings-check-in/`), not a new
-  route, because the home page *is* the child's day view and the prompt belongs there
+  route, because the home page _is_ the child's day view and the prompt belongs there
   ([home.html](../../../src/frontend/buddy/src/app/features/child/home/home.html)).
   - Four large buttons in a 2x2 grid (one row on wide screens), each at least 64px tall, with the
     face, the zone's colour and its word: real `<button>`s with `aria-pressed`, labelled "Ready –
@@ -696,66 +697,66 @@ then show faces only.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Child taps a zone and Done with no tags or note | Allowed: zone is the only required field |
-| Child double-taps on a slow connection | One check-in: the same `Idempotency-Key` replays the first response |
-| Child undoes after 10 minutes | `409 check_in_undo_window_closed`; the UI already hid Undo, so this is only a race |
-| Child undoes a check-in that's already gone | `204`, no event |
-| Child tries to undo a guardian's check-in | `404`: the `/me` routes only see the child's own self-reports |
-| Guardian edits a child's self-report | `409 check_in_is_self_report`; removing it is allowed |
-| Guardian logs a moment in the future | `400` (5 minutes of clock slack) |
-| Guardian logs last week | Allowed; no lower bound, as the sleep diary |
-| 21st check-in on one local day | `400 validation_error` |
-| Child's time zone changes | Existing check-ins keep the local date and time they were saved with; new ones use the new zone |
-| Prompt times or the display mode set before any check-in | Creates the journal (`FeelingsJournalStarted` + the setting's event) |
-| A guardian logs an observation after a prompt time | The prompt stays open for the child: only the child's own check-in answers it |
-| Faces-only switched on | The child's next load shows faces only; stored check-ins and every guardian or doctor view are unchanged |
-| Two guardians edit the same check-in at once | One wins; the other gets `409 concurrency_conflict` and reloads. Both edits stay in history if both land in turn |
-| Guardian's `GuardianLink` is revoked | Drops to `NotFound` at once; the check-ins and share links stay |
+| Case                                                      | Behavior                                                                                                                       |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Child taps a zone and Done with no tags or note           | Allowed: zone is the only required field                                                                                       |
+| Child double-taps on a slow connection                    | One check-in: the same `Idempotency-Key` replays the first response                                                            |
+| Child undoes after 10 minutes                             | `409 check_in_undo_window_closed`; the UI already hid Undo, so this is only a race                                             |
+| Child undoes a check-in that's already gone               | `204`, no event                                                                                                                |
+| Child tries to undo a guardian's check-in                 | `404`: the `/me` routes only see the child's own self-reports                                                                  |
+| Guardian edits a child's self-report                      | `409 check_in_is_self_report`; removing it is allowed                                                                          |
+| Guardian logs a moment in the future                      | `400` (5 minutes of clock slack)                                                                                               |
+| Guardian logs last week                                   | Allowed; no lower bound, as the sleep diary                                                                                    |
+| 21st check-in on one local day                            | `400 validation_error`                                                                                                         |
+| Child's time zone changes                                 | Existing check-ins keep the local date and time they were saved with; new ones use the new zone                                |
+| Prompt times or the display mode set before any check-in  | Creates the journal (`FeelingsJournalStarted` + the setting's event)                                                           |
+| A guardian logs an observation after a prompt time        | The prompt stays open for the child: only the child's own check-in answers it                                                  |
+| Faces-only switched on                                    | The child's next load shows faces only; stored check-ins and every guardian or doctor view are unchanged                       |
+| Two guardians edit the same check-in at once              | One wins; the other gets `409 concurrency_conflict` and reloads. Both edits stay in history if both land in turn               |
+| Guardian's `GuardianLink` is revoked                      | Drops to `NotFound` at once; the check-ins and share links stay                                                                |
 | Child's last guardian link revoked (but child not erased) | The child gets `404` on `/feelings/me`: no `Self` tier without a guardian, so nobody is writing into a journal no one can read |
-| Share link used after revoke or expiry | `404`, indistinguishable from an unknown token |
-| New check-ins after a link was shared | Shown: the shared view reads current data on every request |
-| `Features:Feelings = false` | Routes unmapped (`404`), card and page hidden; data and GDPR coverage stay |
-| `Features:SleepDiary` or `Medicines` off | The trend just omits the sleep column or dose markers |
+| Share link used after revoke or expiry                    | `404`, indistinguishable from an unknown token                                                                                 |
+| New check-ins after a link was shared                     | Shown: the shared view reads current data on every request                                                                     |
+| `Features:Feelings = false`                               | Routes unmapped (`404`), card and page hidden; data and GDPR coverage stay                                                     |
+| `Features:SleepDiary` or `Medicines` off                  | The trend just omits the sleep column or dose markers                                                                          |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | High -- a new feature and Marten schema with two aggregates and eight events, thirteen slices over child `/me` and guardian routes with a two-tier authorization, time-zone-aware local dates, an undo window on an injected clock, GDPR erasure, export and audit logs, a feature flag, and six frontend pieces (child card with a faces-only mode, guardian page with five parts, dashboard card, shared page, shared zone/tag/trend controls, help topic) plus en/da tag vocabulary |
-| Single developer | 12-16 days (backend and tests 5-6, child card with faces-only 1.5-2, guardian page and trend 3-4, shared page, dashboard, i18n, e2e, screenshots and docs 2.5-3.5) |
-| AI agent | 8-11 hours, plus 3-4 hours of human time: the Danish children's vocabulary, the zone colours in both themes on a real iPad, whether faces-only fits a 5-year-old, and the authorization matrix |
+|                  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | High -- a new feature and Marten schema with two aggregates and eight events, thirteen slices over child `/me` and guardian routes with a two-tier authorization, time-zone-aware local dates, an undo window on an injected clock, GDPR erasure, export and audit logs, a feature flag, and six frontend pieces (child card with a faces-only mode, guardian page with five parts, dashboard card, shared page, shared zone/tag/trend controls, help topic) plus en/da tag vocabulary |
+| Single developer | 12-16 days (backend and tests 5-6, child card with faces-only 1.5-2, guardian page and trend 3-4, shared page, dashboard, i18n, e2e, screenshots and docs 2.5-3.5)                                                                                                                                                                                                                                                                                                                     |
+| AI agent         | 8-11 hours, plus 3-4 hours of human time: the Danish children's vocabulary, the zone colours in both themes on a real iPad, whether faces-only fits a 5-year-old, and the authorization matrix                                                                                                                                                                                                                                                                                         |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| New feature or extend the sleep diary | New `Features/Feelings`, schema `feelings`, flag `Features:Feelings`: different principals (the child writes), a different shape (many per day) and its own on/off choice |
-| Scale | Four zones stored; each zone shown with a face, colour and word. Five faces rejected: one axis, mixes "flat" with "wound up", invites the "right" answer |
-| Naming and the trademark | "Feelings" / "Følelser" and Buddy's own colour labels; never the "Zones of Regulation" name or its material (settled by the user 2026-10-13) |
-| Aggregate identity | `FeelingsJournalId.Value == ChildId.Value`, no index document, like `SleepDiary`/`ChildProgress`; check-ins keyed by UUIDv7; one stream per child, not split by year (settled by the user 2026-10-13) |
-| Tags | A fixed, translated catalog; feeling words tied to the chosen zone, situation tags for any zone; at most three. No custom per-family tags (settled by the user 2026-10-13) |
-| Note | `FreeText`, at most 280 characters |
-| Time | Local date and time in the child's `User.TimeZoneId`, plus `RecordedAt`; "now" from an injected `TimeProvider`. The child's card uses `ChildClockService` |
-| Who logs | The child (`Self`, now only) and any active guardian (`Manage`, now or backdated) |
-| Self-report vs observation | Derived from `LoggedBy == ChildId`, drawn differently everywhere |
-| Child's changes | Undo within 10 minutes, no edit, no later delete (the 10 minutes settled by the user 2026-10-13) |
-| Guardian's changes | Edit and remove guardian-logged check-ins; remove but never edit a self-report, with `FeelingCheckInRemoved.ModifiedBy` recording which guardian removed it, because sibling and test taps are real (removing a self-report settled by the user 2026-10-11) |
-| Child's view | Today's own self-reports only, no history, with a visible "your grown-ups can see this" (no history settled by the user 2026-10-11); never a guardian's observation about them (settled by the user 2026-10-13) |
-| Faces-only mode | Included in v1: a per-child `FeelingsDisplayMode` on the journal, set by a guardian through `SetFeelingsDisplayMode`; hides the words and colour names on the child's own buttons and announcements; the stored zones are unchanged (settled by the user 2026-10-13; Question 9) |
-| Group sharing | None; guardians only |
-| Guardian notification on red | None in v1; later, with push, an opt-in that is off by default, because a red push during school hours can do more harm than good (settled by the user 2026-10-11) |
-| Sound | None (settled by the user 2026-10-11) |
-| Prompts | 0-4 guardian-set times per child on the journal; an in-app highlighted card, computed client-side and answered only by the child's own check-in; push later through the notifications scheduler, with no zone in the payload |
-| Trend | A 14-day grid with dose markers and the previous night's sleep, and an 8-week zone summary; composed in the frontend from three APIs, each logging its own read |
-| Charting | Plain HTML table and CSS, no chart library |
-| Doctor sharing | A copy of the sleep diary's share links (hashed, optional expiry up to 365 days, revocable, anonymous view); feelings only, no combined clinician packet (settled by the user 2026-10-13) |
-| Share-secret helper | A third local copy (`FeelingsShareSecret`); promoting the three to `Common` is not part of this build (settled by the user 2026-10-13) |
-| Retention | Check-ins are kept until the child or the family deletes them, like the sleep diary (settled by the user 2026-10-13) |
-| Audit logs | `FeelingsLog` 11001-11004, ids only, `HealthDataAccessPath` on every read |
-| Privacy notice | `PRIVACY.md` lists feelings check-ins as health data and their reads as logged, shipped with this build (settled by the user 2026-10-13) |
-| Daily cap | 20 check-ins per child per local day |
+| Question                              | Decision                                                                                                                                                                                                                                                                         |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New feature or extend the sleep diary | New `Features/Feelings`, schema `feelings`, flag `Features:Feelings`: different principals (the child writes), a different shape (many per day) and its own on/off choice                                                                                                        |
+| Scale                                 | Four zones stored; each zone shown with a face, colour and word. Five faces rejected: one axis, mixes "flat" with "wound up", invites the "right" answer                                                                                                                         |
+| Naming and the trademark              | "Feelings" / "Følelser" and Buddy's own colour labels; never the "Zones of Regulation" name or its material (settled by the user 2026-10-13)                                                                                                                                     |
+| Aggregate identity                    | `FeelingsJournalId.Value == ChildId.Value`, no index document, like `SleepDiary`/`ChildProgress`; check-ins keyed by UUIDv7; one stream per child, not split by year (settled by the user 2026-10-13)                                                                            |
+| Tags                                  | A fixed, translated catalog; feeling words tied to the chosen zone, situation tags for any zone; at most three. No custom per-family tags (settled by the user 2026-10-13)                                                                                                       |
+| Note                                  | `FreeText`, at most 280 characters                                                                                                                                                                                                                                               |
+| Time                                  | Local date and time in the child's `User.TimeZoneId`, plus `RecordedAt`; "now" from an injected `TimeProvider`. The child's card uses `ChildClockService`                                                                                                                        |
+| Who logs                              | The child (`Self`, now only) and any active guardian (`Manage`, now or backdated)                                                                                                                                                                                                |
+| Self-report vs observation            | Derived from `LoggedBy == ChildId`, drawn differently everywhere                                                                                                                                                                                                                 |
+| Child's changes                       | Undo within 10 minutes, no edit, no later delete (the 10 minutes settled by the user 2026-10-13)                                                                                                                                                                                 |
+| Guardian's changes                    | Edit and remove guardian-logged check-ins; remove but never edit a self-report, with `FeelingCheckInRemoved.ModifiedBy` recording which guardian removed it, because sibling and test taps are real (removing a self-report settled by the user 2026-10-11)                      |
+| Child's view                          | Today's own self-reports only, no history, with a visible "your grown-ups can see this" (no history settled by the user 2026-10-11); never a guardian's observation about them (settled by the user 2026-10-13)                                                                  |
+| Faces-only mode                       | Included in v1: a per-child `FeelingsDisplayMode` on the journal, set by a guardian through `SetFeelingsDisplayMode`; hides the words and colour names on the child's own buttons and announcements; the stored zones are unchanged (settled by the user 2026-10-13; Question 9) |
+| Group sharing                         | None; guardians only                                                                                                                                                                                                                                                             |
+| Guardian notification on red          | None in v1; later, with push, an opt-in that is off by default, because a red push during school hours can do more harm than good (settled by the user 2026-10-11)                                                                                                               |
+| Sound                                 | None (settled by the user 2026-10-11)                                                                                                                                                                                                                                            |
+| Prompts                               | 0-4 guardian-set times per child on the journal; an in-app highlighted card, computed client-side and answered only by the child's own check-in; push later through the notifications scheduler, with no zone in the payload                                                     |
+| Trend                                 | A 14-day grid with dose markers and the previous night's sleep, and an 8-week zone summary; composed in the frontend from three APIs, each logging its own read                                                                                                                  |
+| Charting                              | Plain HTML table and CSS, no chart library                                                                                                                                                                                                                                       |
+| Doctor sharing                        | A copy of the sleep diary's share links (hashed, optional expiry up to 365 days, revocable, anonymous view); feelings only, no combined clinician packet (settled by the user 2026-10-13)                                                                                        |
+| Share-secret helper                   | A third local copy (`FeelingsShareSecret`); promoting the three to `Common` is not part of this build (settled by the user 2026-10-13)                                                                                                                                           |
+| Retention                             | Check-ins are kept until the child or the family deletes them, like the sleep diary (settled by the user 2026-10-13)                                                                                                                                                             |
+| Audit logs                            | `FeelingsLog` 11001-11004, ids only, `HealthDataAccessPath` on every read                                                                                                                                                                                                        |
+| Privacy notice                        | `PRIVACY.md` lists feelings check-ins as health data and their reads as logged, shipped with this build (settled by the user 2026-10-13)                                                                                                                                         |
+| Daily cap                             | 20 check-ins per child per local day                                                                                                                                                                                                                                             |
 
 ## Remaining open questions
 

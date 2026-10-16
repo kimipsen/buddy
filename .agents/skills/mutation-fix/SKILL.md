@@ -35,7 +35,7 @@ Every 5 minutes it prints one line with the elapsed time, the batch (`Running ba
 - If the output says `All N files have been covered`, stop and tell the user (and notify, see step 6); they can start over with `task test:mutation:frontend:batch -- --reset`.
 - If Stryker fails before testing mutants (initial test run failed, TypeScript errors), stop, report the error and notify (step 6) — don't try to fix unrelated breakage silently.
 
-**Never re-run the batch task to retry.** The script appends the batch to `.mutation-batch-progress` after each run, so a second invocation moves on to the *next* files. Re-runs use Stryker directly (step 4).
+**Never re-run the batch task to retry.** The script appends the batch to `.mutation-batch-progress` after each run, so a second invocation moves on to the _next_ files. Re-runs use Stryker directly (step 4).
 
 ## 2. List the survivors for the batch
 
@@ -52,9 +52,11 @@ Read the source file and its colocated spec (`foo.ts` → `foo.spec.ts`) before 
 **Relevant — kill it with a test.** The mutation changes observable behaviour: a branch, a comparison boundary, a returned value, an emitted value, a request URL/body/params, a signal update, error handling, a route guard result, rendered output. Most findings are here.
 
 **Equivalent — suppress with a reason.** No test could ever tell the difference (e.g. an `ArrayDeclaration` on a value that's immediately overwritten, a `<` vs `<=` where the equal case can't occur, an optional-chaining removal on a value that's never nullish by type). Add directly above the line:
+
 ```ts
 // Stryker disable next-line <MutatorName>: <why it's equivalent>
 ```
+
 Only do this when you can state concretely why it's equivalent. "Hard to test" is not equivalent, and code that can never run is dead code, not an equivalent mutant (see the fixing rules below).
 
 A disable comment applies to the next line's nodes only: list every mutator that survives on that line (`// Stryker disable next-line StringLiteral,CallExpression: ...`), and don't put one above `} catch {` / `} finally {` — it gets attached to the `try` block and has no effect on the catch/finally body.
@@ -90,6 +92,7 @@ Run it in the background as in step 1, with its own log and exit file (`> <scrat
 Then go back to step 2 with the same file list.
 
 Stop looping when any of these is true:
+
 - no relevant survivors remain (only suppressed-equivalent or reported "not worth it" ones);
 - a round killed nothing new — you're stuck; report what's left and why instead of retrying the same approach;
 - `MAX_ROUNDS` (default 4) re-runs have been done.

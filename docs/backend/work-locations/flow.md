@@ -45,16 +45,16 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `POST` | `/work-locations/me/locations` | Adds a location (name, icon, color). Names are unique among active locations, case-insensitive; at most 12 active. |
-| `PATCH` | `/work-locations/me/locations/{locationId}` | Changes name, icon and color together. Unchanged details append nothing. |
-| `DELETE` | `/work-locations/me/locations/{locationId}` | Archives the location and removes it from the pattern in the same append. Overrides that use it keep resolving with `isArchived: true`. |
-| `PUT` | `/work-locations/me/pattern` | Replaces the whole pattern: `cycleWeeks` (1–4), `anchorMonday`, and `days` of `{week, day, locationId}`. Stored sorted by week and weekday. |
-| `PUT` | `/work-locations/me/overrides` | Sets `[from, to]` to one location, or to "off" with `locationId: null`. Returns the resolved days. |
-| `DELETE` | `/work-locations/me/overrides?from=...&to=...` | Clears overrides in the range so those days follow the pattern again. Idempotent. |
-| `GET` | `/work-locations/guardians/{guardianId}` | Locations (archived included) and the pattern. No stream yet reads as an empty one-week pattern. |
-| `GET` | `/work-locations/guardians/{guardianId}/days?from=...&to=...` | One `WorkDay` per date with a `status`: `{ kind: 0 }` unplanned, `{ kind: 1 }` off (an override), or `{ kind: 2, location, source }` with the location inlined and `source` `0` pattern or `1` override. |
+| Method   | Route                                                         | Behavior                                                                                                                                                                                                 |
+| -------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/work-locations/me/locations`                                | Adds a location (name, icon, color). Names are unique among active locations, case-insensitive; at most 12 active.                                                                                       |
+| `PATCH`  | `/work-locations/me/locations/{locationId}`                   | Changes name, icon and color together. Unchanged details append nothing.                                                                                                                                 |
+| `DELETE` | `/work-locations/me/locations/{locationId}`                   | Archives the location and removes it from the pattern in the same append. Overrides that use it keep resolving with `isArchived: true`.                                                                  |
+| `PUT`    | `/work-locations/me/pattern`                                  | Replaces the whole pattern: `cycleWeeks` (1–4), `anchorMonday`, and `days` of `{week, day, locationId}`. Stored sorted by week and weekday.                                                              |
+| `PUT`    | `/work-locations/me/overrides`                                | Sets `[from, to]` to one location, or to "off" with `locationId: null`. Returns the resolved days.                                                                                                       |
+| `DELETE` | `/work-locations/me/overrides?from=...&to=...`                | Clears overrides in the range so those days follow the pattern again. Idempotent.                                                                                                                        |
+| `GET`    | `/work-locations/guardians/{guardianId}`                      | Locations (archived included) and the pattern. No stream yet reads as an empty one-week pattern.                                                                                                         |
+| `GET`    | `/work-locations/guardians/{guardianId}/days?from=...&to=...` | One `WorkDay` per date with a `status`: `{ kind: 0 }` unplanned, `{ kind: 1 }` off (an override), or `{ kind: 2, location, source }` with the location inlined and `source` `0` pattern or `1` override. |
 
 Ranges are inclusive and limited to `to - from` ≤ 31 days.
 

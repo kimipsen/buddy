@@ -78,12 +78,12 @@ none and doesn't need one here):
 list and the fetch range — `loadWeek` reads `days()[0].date` /
 `days().at(-1).date`) becomes a `computed()` that branches on `viewMode()`:
 
-| Mode | `days()` source | Fetch range this implies |
-|---|---|---|
-| Day | `buildDateRangeIso(anchor, 1)` | the single day |
-| Work week | `buildDateRangeIso(startOfWeekIso(anchor), 5)` | Mon–Fri |
-| Week | `buildDays(anchor, locale)` (unchanged) | today’s existing rolling 7 days |
-| Month | `buildMonthGridIso(anchor)` | the full grid, including padding days |
+| Mode      | `days()` source                                | Fetch range this implies              |
+| --------- | ---------------------------------------------- | ------------------------------------- |
+| Day       | `buildDateRangeIso(anchor, 1)`                 | the single day                        |
+| Work week | `buildDateRangeIso(startOfWeekIso(anchor), 5)` | Mon–Fri                               |
+| Week      | `buildDays(anchor, locale)` (unchanged)        | today’s existing rolling 7 days       |
+| Month     | `buildMonthGridIso(anchor)`                    | the full grid, including padding days |
 
 Because the occurrence-fetch range is still just "first day to last day of
 `days()`", **no branching is needed in `loadWeek`/`loadOccurrences` itself** —

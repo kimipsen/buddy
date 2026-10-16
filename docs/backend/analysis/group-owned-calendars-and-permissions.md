@@ -40,7 +40,7 @@ Optional realm roles may still be used for coarse, rare, app-wide capabilities
 
 ### `Group` (new aggregate, same shape as `Calendar`)
 
-```
+```text
 Group(
     GroupId Id,
     string Name,
@@ -70,20 +70,20 @@ Events: `GroupCreated`, `GroupMemberRoleGranted` (role always `Admin` or
 
 ### `Calendar` — owner becomes a union
 
-```
+```text
 CalendarOwner = User(UserId) | Group(GroupId)
 ```
 
 `CalendarOwner` is the **owning principal** — a fixed fact about the
 calendar, set once at creation, never transferred (same invariant as today).
-It is a distinct concept from the *effective permission* a given user has on
+It is a distinct concept from the _effective permission_ a given user has on
 the calendar (see next section) — a group-owned calendar has no single "the
 owner user" in `Calendar.Members`; ownership is anchored to the group as a
 whole, and per-user rights are derived.
 
 There is **no separate "shared with a group" concept**: owning a calendar and
 being "shared with" it are the same mechanism (`CalendarOwner.Group(groupId)`
-either way). Group membership is just one *source* of a role on a calendar;
+either way). Group membership is just one _source_ of a role on a calendar;
 `Calendar.Members` explicit grants remain a fully independent, per-calendar
 override mechanism that works the same regardless of who owns the calendar.
 `Calendar.Members` keeps its current behavior unchanged: explicit, per-user,
@@ -99,7 +99,7 @@ Two distinct concepts, kept strictly separate:
   A fixed fact set at creation, never transferred. For a group-owned
   calendar the principal is the group as a whole, not any one member.
 - **Effective owner (permission)** — `IsOwner(userId)` is true when a
-  user's *resolved* `CalendarRole` is `Owner`. Per-user, computed, unrelated
+  user's _resolved_ `CalendarRole` is `Owner`. Per-user, computed, unrelated
   to who created the group.
 
 **Rule: `CalendarPermissionPolicy` is the only source of a group member's
@@ -114,10 +114,10 @@ including its own Owner's.
 
 Management rights and calendar rights are two independent axes:
 
-| Axis | Governs | Gate |
-|---|---|---|
-| `GroupRole` | Manage members/roles, edit `CalendarPermissionPolicy`, delete the group | `GroupRole` directly — `Owner`/`Admin` for the first two, `Owner` only for delete |
-| Resolved `CalendarRole` | View/contribute/owner-gated actions on the group's calendars | `CalendarAuthorization`, via the policy above |
+| Axis                    | Governs                                                                 | Gate                                                                              |
+| ----------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `GroupRole`             | Manage members/roles, edit `CalendarPermissionPolicy`, delete the group | `GroupRole` directly — `Owner`/`Admin` for the first two, `Owner` only for delete |
+| Resolved `CalendarRole` | View/contribute/owner-gated actions on the group's calendars            | `CalendarAuthorization`, via the policy above                                     |
 
 Consequence: a `GroupRole.Admin` who manages membership does not thereby
 gain calendar rights beyond what the policy grants. A `GroupRole.Owner`
@@ -139,12 +139,12 @@ access never reduces group control.
 3. Otherwise: no access (`CalendarAccess.NotFound`, same "can't distinguish
    private from missing" behavior as today).
 
-| Situation | Result |
-|---|---|
-| User has an explicit `Calendar.Members` role | That role, unconditionally — regardless of relative privilege |
+| Situation                                                     | Result                                                            |
+| ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| User has an explicit `Calendar.Members` role                  | That role, unconditionally — regardless of relative privilege     |
 | Calendar owned by Group; user has a `GroupRole` in that group | `CalendarPermissionPolicy[role]` (uniform for Owner/Admin/Member) |
-| Calendar owned by Group; user has no group role | No access |
-| Calendar owned by User | Unchanged — today's behavior |
+| Calendar owned by Group; user has no group role               | No access                                                         |
+| Calendar owned by User                                        | Unchanged — today's behavior                                      |
 
 ### Who can do what on a group-owned calendar
 
@@ -152,16 +152,16 @@ Every existing handler already goes through one of three checks in
 [CalendarAuthorization.cs](../../../src/backend/buddy/Features/Calendars/CalendarAuthorization.cs);
 none of them need to change shape, only what feeds their resolution:
 
-| Action | Handler | Check | Gate |
-|---|---|---|---|
-| View calendar / list items / occurrences | `GetCalendar`, `ListItems`, `ListOccurrences` | `CheckView` | Any resolved role |
-| Create/update/delete/reschedule items | `CreateItem`, `UpdateItemDetails`, `UpdateItemRecurrence`, `DeleteItem`, `RescheduleItem` | `CheckContribute` | `Owner` or `Contributor` |
-| Delete calendar | `DeleteCalendar` | `CheckOwner` | `Owner` |
-| Add/remove explicit calendar members | `SetMemberRole`, `RemoveMember` | `CheckOwner` | `Owner` |
-| Manage iCal tokens | `CreateIcalToken`, `ListIcalTokens`, `RevokeIcalToken` | `CheckOwner` | `Owner` |
-| Manage group membership / roles | *(new, group-scoped)* | — | `GroupRole.Owner` or `Admin` |
-| Edit `CalendarPermissionPolicy` | *(new, group-scoped)* | — | `GroupRole.Owner` or `Admin` |
-| Delete the group | *(new, group-scoped)* | — | `GroupRole.Owner` only |
+| Action                                   | Handler                                                                                   | Check             | Gate                         |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------- | ---------------------------- |
+| View calendar / list items / occurrences | `GetCalendar`, `ListItems`, `ListOccurrences`                                             | `CheckView`       | Any resolved role            |
+| Create/update/delete/reschedule items    | `CreateItem`, `UpdateItemDetails`, `UpdateItemRecurrence`, `DeleteItem`, `RescheduleItem` | `CheckContribute` | `Owner` or `Contributor`     |
+| Delete calendar                          | `DeleteCalendar`                                                                          | `CheckOwner`      | `Owner`                      |
+| Add/remove explicit calendar members     | `SetMemberRole`, `RemoveMember`                                                           | `CheckOwner`      | `Owner`                      |
+| Manage iCal tokens                       | `CreateIcalToken`, `ListIcalTokens`, `RevokeIcalToken`                                    | `CheckOwner`      | `Owner`                      |
+| Manage group membership / roles          | _(new, group-scoped)_                                                                     | —                 | `GroupRole.Owner` or `Admin` |
+| Edit `CalendarPermissionPolicy`          | _(new, group-scoped)_                                                                     | —                 | `GroupRole.Owner` or `Admin` |
+| Delete the group                         | _(new, group-scoped)_                                                                     | —                 | `GroupRole.Owner` only       |
 
 So "who can delete a group-owned calendar" is whoever resolves to
 `CalendarRole.Owner` — not automatically the Group Owner; whoever the
@@ -170,15 +170,15 @@ the default policy says so).
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Group deleted | Cascade-delete (mechanics under "Aggregate loading and performance" below): `GroupDeleted` and a `CalendarDeleted` for every calendar the group owns commit in one transaction. No window where a live calendar points at a dead group. |
-| Calendar's `GroupId` unresolvable (should not occur given the cascade — defense in depth only) | No group role found for anyone → falls through to no access, same collapsing behavior as a deleted/missing calendar today. |
-| User has no `GroupRole` in the owning group | No access via group. An explicit `Calendar.Members` entry, if present, still applies independently. |
-| User's `GroupRole` revoked (`GroupMemberRoleRevoked`) | Effective on the very next check — `Group` is rehydrated live, no cache to invalidate, no stale grant window. |
-| Group's `CalendarPermissionPolicy` changed after a request already checked access | No retroactive effect on a decision already made. Each check loads `Group` once and reads the policy as committed at that instant — never a mix of two policy versions within one decision. Read-committed consistency, same model `Calendar.Members` changes already have today. |
-| User has both an explicit `Calendar.Members` role and a group-derived role | Explicit wins, unconditionally — even when it's lower privilege than the group-derived role would give. No "highest wins" merge. |
-| `GroupRole` missing an entry in `CalendarPermissionPolicy` (should not happen given the seeded default) | Fails closed: treated as no calendar role from the group. Never fails open to a guessed/default role. |
+| Case                                                                                                    | Behavior                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Group deleted                                                                                           | Cascade-delete (mechanics under "Aggregate loading and performance" below): `GroupDeleted` and a `CalendarDeleted` for every calendar the group owns commit in one transaction. No window where a live calendar points at a dead group.                                           |
+| Calendar's `GroupId` unresolvable (should not occur given the cascade — defense in depth only)          | No group role found for anyone → falls through to no access, same collapsing behavior as a deleted/missing calendar today.                                                                                                                                                        |
+| User has no `GroupRole` in the owning group                                                             | No access via group. An explicit `Calendar.Members` entry, if present, still applies independently.                                                                                                                                                                               |
+| User's `GroupRole` revoked (`GroupMemberRoleRevoked`)                                                   | Effective on the very next check — `Group` is rehydrated live, no cache to invalidate, no stale grant window.                                                                                                                                                                     |
+| Group's `CalendarPermissionPolicy` changed after a request already checked access                       | No retroactive effect on a decision already made. Each check loads `Group` once and reads the policy as committed at that instant — never a mix of two policy versions within one decision. Read-committed consistency, same model `Calendar.Members` changes already have today. |
+| User has both an explicit `Calendar.Members` role and a group-derived role                              | Explicit wins, unconditionally — even when it's lower privilege than the group-derived role would give. No "highest wins" merge.                                                                                                                                                  |
+| `GroupRole` missing an entry in `CalendarPermissionPolicy` (should not happen given the seeded default) | Fails closed: treated as no calendar role from the group. Never fails open to a guessed/default role.                                                                                                                                                                             |
 
 ## Aggregate loading and performance — operational contract
 
@@ -280,7 +280,7 @@ consumed in exactly two places: [Calendar.cs Rehydrate](../../../src/backend/bud
 exactly as they are today, with no upcasting and no reinterpretation.**
 Group ownership is carried by a second, new event instead:
 
-```
+```text
 CalendarCreatedForGroup(CalendarId, GroupId OwnerId, string Name, TimeZoneId TimeZoneId, DateTimeOffset OccurredAt)
 ```
 
@@ -289,28 +289,28 @@ alongside `UserId`. That forces a rule for what `GroupId: null` means on
 every historical row. A second event type needs no such rule — old events
 are unambiguously user-owned by virtue of which event type they are.
 
-| Concern | Answer |
-|---|---|
-| Old streams | Read byte-for-byte as stored, unchanged, forever |
+| Concern              | Answer                                                                                                                                                                                                                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Old streams          | Read byte-for-byte as stored, unchanged, forever                                                                                                                                                                                                                                        |
 | Read-time conversion | None — two direct `Calendar.Rehydrate` cases, no upcast function: `CalendarCreated` → `Owner = User(OwnerId)`, `Members = {OwnerId: Owner}` (unchanged). `CalendarCreatedForGroup` → `Owner = Group(OwnerId)`, `Members = {}` (rights come from policy resolution, not a `Members` row) |
-| Write path | `MartenCalendarEventStore.CreateAsync` branches on the first event's type: `CalendarCreated` keeps writing `CalendarMembershipDocument`; `CalendarCreatedForGroup` writes `GroupOwnedCalendarDocument` instead |
-| Other handlers | Untouched — `SetMemberRole`, `RemoveMember`, `DeleteCalendar`, all item handlers operate on the rehydrated `Calendar`/`CalendarAuthorization`, never the raw creation event |
-| `CreateCalendar` | Gains a group-owned variant (or optional group-id param) emitting `CalendarCreatedForGroup`, gated on the caller having `GroupRole.Owner` or `Admin` in the target group |
-| Backfill / replay | None. Nothing is rewritten or reprocessed; the new event type only appears on newly created group calendars going forward. No downtime, no migration window |
+| Write path           | `MartenCalendarEventStore.CreateAsync` branches on the first event's type: `CalendarCreated` keeps writing `CalendarMembershipDocument`; `CalendarCreatedForGroup` writes `GroupOwnedCalendarDocument` instead                                                                          |
+| Other handlers       | Untouched — `SetMemberRole`, `RemoveMember`, `DeleteCalendar`, all item handlers operate on the rehydrated `Calendar`/`CalendarAuthorization`, never the raw creation event                                                                                                             |
+| `CreateCalendar`     | Gains a group-owned variant (or optional group-id param) emitting `CalendarCreatedForGroup`, gated on the caller having `GroupRole.Owner` or `Admin` in the target group                                                                                                                |
+| Backfill / replay    | None. Nothing is rewritten or reprocessed; the new event type only appears on newly created group calendars going forward. No downtime, no migration window                                                                                                                             |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| GroupRole -> CalendarRole mapping | Configurable per group, not a fixed system-wide table |
-| Explicit deny on `Calendar.Members` | No — grant-only, as today |
-| Group role granularity | `Owner / Admin / Member` |
-| Personal-owned vs. group-owned calendars | Same mechanism — `CalendarOwner` is just `User` or `Group` |
-| Does any `GroupRole` automatically get calendar rights outside the policy | No — uniform rule, `CalendarPermissionPolicy` is the only source, including for `Owner` |
-| Precedence: explicit `Calendar.Members` vs. group-derived role | Explicit always wins, unconditionally, regardless of relative privilege |
-| Migration approach for `CalendarCreated` | Additive new event type (`CalendarCreatedForGroup`), no upcasting, no backfill |
-| Group deletion vs. its owned calendars | Cascade-delete — orphaning would leave data with no permission path to manage/delete it |
-| Default `CalendarPermissionPolicy` on `GroupCreated` | `Owner -> Owner, Admin -> Contributor, Member -> Viewer` (editable afterward, no exceptions to the mechanism) |
+| Question                                                                  | Decision                                                                                                      |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| GroupRole -> CalendarRole mapping                                         | Configurable per group, not a fixed system-wide table                                                         |
+| Explicit deny on `Calendar.Members`                                       | No — grant-only, as today                                                                                     |
+| Group role granularity                                                    | `Owner / Admin / Member`                                                                                      |
+| Personal-owned vs. group-owned calendars                                  | Same mechanism — `CalendarOwner` is just `User` or `Group`                                                    |
+| Does any `GroupRole` automatically get calendar rights outside the policy | No — uniform rule, `CalendarPermissionPolicy` is the only source, including for `Owner`                       |
+| Precedence: explicit `Calendar.Members` vs. group-derived role            | Explicit always wins, unconditionally, regardless of relative privilege                                       |
+| Migration approach for `CalendarCreated`                                  | Additive new event type (`CalendarCreatedForGroup`), no upcasting, no backfill                                |
+| Group deletion vs. its owned calendars                                    | Cascade-delete — orphaning would leave data with no permission path to manage/delete it                       |
+| Default `CalendarPermissionPolicy` on `GroupCreated`                      | `Owner -> Owner, Admin -> Contributor, Member -> Viewer` (editable afterward, no exceptions to the mechanism) |
 
 ## Remaining open questions
 
@@ -319,7 +319,7 @@ are unambiguously user-owned by virtue of which event type they are.
   into a group-owned one later~~ -- resolved: `CreateCalendar` now requires
   a group at creation (there is no personal-calendar path for new
   calendars at all), and `TransferCalendarToGroup` (`Features/Calendars/
-  TransferCalendarToGroup/`) covers the "move it later" case for any
+TransferCalendarToGroup/`) covers the "move it later" case for any
   calendar, personal or group-owned. This is the one deliberate exception
   to "ownership is fixed at creation" elsewhere in this doc: gated by
   `CheckOwner` on the calendar plus `GroupAuthorization.CheckManage` on the

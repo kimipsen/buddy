@@ -5,9 +5,10 @@ description: Buddy .NET 11 backend conventions - vertical-slice features, event 
 
 # Buddy Backend (.NET 11, Marten, Wolverine)
 
-Scope: `src/backend/` - `buddy/` (the API), `buddy.IntegrationTests/` (all backend tests), `backend.slnx`. There is no EF Core and no `DbContext` in Buddy; persistence is Marten on Postgres. EF Core guidance for *other* services lives in `references/efcore.md` - don't apply it here.
+Scope: `src/backend/` - `buddy/` (the API), `buddy.IntegrationTests/` (all backend tests), `backend.slnx`. There is no EF Core and no `DbContext` in Buddy; persistence is Marten on Postgres. EF Core guidance for _other_ services lives in `references/efcore.md` - don't apply it here.
 
 Read before designing anything non-trivial:
+
 - `docs/backend/analysis/event-stream-snapshots.md` - snapshot projections and the Marten gotchas behind the patterns below.
 - `docs/backend/http-status-codes.md` - status code rules, error envelope, `Idempotency-Key`. The per-endpoint statuses live in the contract, `docs/backend/openapi/buddy.json`.
 - `docs/backend/glossary.md` - domain vocabulary; use these names.
@@ -18,7 +19,7 @@ Start in planning mode: for anything beyond a one-file change, give a short plan
 
 ## 1. Layout - vertical slices, domain first
 
-```
+```text
 src/backend/buddy/
   Program.cs                      # Add<Domain>Feature(...) / Map<Domain>Feature() per domain
   Common/                         # Result.cs, Unit.cs, ErrorEnvelope.cs, Idempotency/, RateLimiting/, Validation/
@@ -48,13 +49,16 @@ Reference slice: `src/backend/buddy/Features/Pickups/` (`AssignPickup/`, `Pickup
 ## 2. Types
 
 - **IDs**: one `sealed record` per ID wrapping a `Guid`, with a UUIDv7 factory - see `Features/Pickups/Types/PickupScheduleId.cs`:
+
   ```csharp
   public sealed record PickupScheduleId(Guid Value)
   {
       public static PickupScheduleId New() => new(Guid.CreateVersion7());
   }
   ```
+
   Always `Guid.CreateVersion7()`, never `Guid.NewGuid()` for domain IDs. Keep the single `Value` ctor parameter and make the ID a top-level type - `StronglyTypedIdJsonConverterFactory` serializes it as the bare value only under those conditions. Don't switch existing IDs to `readonly record struct`: they are persisted inside event JSON and the codebase is consistent on `sealed record`.
+
 - Other domain concepts get small types too (`Features/Users/Types/Email.cs`, `Name.cs`, `Language.cs`) instead of raw `string`.
 - Aggregates: immutable `sealed record`s, collections as `ImmutableDictionary`/`ImmutableList`.
 
@@ -73,7 +77,7 @@ public sealed record PickupScheduleCreated(PickupScheduleId Id, UserId ChildId, 
 ```
 
 - Cases are top-level `sealed record`s next to the union; every event carries `OccurredAt`.
-- A union is closed and `switch` *expressions* over it are exhaustiveness-checked (CS8509). `src/backend/Directory.Build.props` sets `TreatWarningsAsErrors`, so a missing case fails the build. Switch *statements* are not checked - prefer expressions over unions. In a new project without global warnings-as-errors, add `<WarningsAsErrors>$(WarningsAsErrors);CS8509</WarningsAsErrors>`.
+- A union is closed and `switch` _expressions_ over it are exhaustiveness-checked (CS8509). `src/backend/Directory.Build.props` sets `TreatWarningsAsErrors`, so a missing case fails the build. Switch _statements_ are not checked - prefer expressions over unions. In a new project without global warnings-as-errors, add `<WarningsAsErrors>$(WarningsAsErrors);CS8509</WarningsAsErrors>`.
 - A union is a value type: `GetType().Name` on a boxed union is always the union's name. Use `EventType` for discriminators and `e.Value` (the case record) for persistence.
 - Requires `net11.0` + `<LangVersion>preview</LangVersion>` (already in `Directory.Build.props`).
 - Adding a new event: add the case to the union, `FromPayload`, `EventType`, the aggregate fold, the snapshot projection (`Apply`), the feature's `EventTypes` array in `<Domain>Feature.cs`, and an event-shape golden test (section 8).
@@ -109,11 +113,14 @@ Pattern: `Features/Pickups/Types/PickupScheduleSnapshotProjection.cs`.
 - Document is a wrapper `sealed record <Agg>Snapshot(Guid Id, <Agg> <Agg>)` - Marten can't use a `sealed record` ID class as a document Id.
 - Projection: `SingleStreamProjection<<Agg>Snapshot, Guid>` with `Create(<FirstEvent>)` and one `Apply(current, <Event>)` per later event, delegating to `<Agg>.Start` / `<Agg>.Advance` (no `!`).
 - Register in `<Domain>Feature.cs`:
+
   ```csharp
   options.Projections.Register(new PickupScheduleSnapshotProjection(), ProjectionLifecycle.Inline);
   options.Schema.For<PickupScheduleSnapshot>().DatabaseSchemaName("snapshots");
   ```
+
   `Register(...)`, not `Projections.Snapshot<T>()` (throws for these document types). Always `Inline`, always schema `snapshots`. Snapshots are derived, rebuildable state - events remain the source of truth.
+
 - Every snapshot gets a `SnapshotTests/<Agg>SnapshotTests.cs` asserting snapshot == full replay.
 
 ### `Reverse()` gotcha
@@ -137,9 +144,11 @@ A read-backward query (`OrderByDescending(e => e.Version).Take(n).ToListAsync()`
 ## 7. Result pattern and endpoints
 
 `Common/Result.cs`:
+
 ```csharp
 public union Result<T>(Result<T>.Success, Result<T>.NotFound, Result<T>.Forbidden, Result<T>.Validation) { ... }
 ```
+
 - Expected outcomes (validation, not found, forbidden, business-rule rejection) are `Result<T>` values, not exceptions. No success payload -> `Result<Unit>`.
 - Throw only for programmer errors, corrupt/unmapped data (`FromPayload` default arm, `UnreachableException` in `ToDeniedResult` for `Allowed`) and infrastructure failures.
 - Outcomes that don't fit the four cases get a feature-specific union (`CreateChildOutcome` with `UsernameUnavailable`, `CreateCalendarOutcome`) - don't add cases to `Result<T>`; every switch over it would need the arm.
@@ -147,6 +156,7 @@ public union Result<T>(Result<T>.Success, Result<T>.NotFound, Result<T>.Forbidde
 - No access relationship at all -> `NotFound` (don't reveal existence); relationship but insufficient tier -> `Forbidden`.
 
 Endpoint (`AssignPickup.Endpoint.cs`, `ClearPickup.Endpoint.cs`):
+
 - `public static class <UseCase>Endpoint` with `MapX(this RouteGroupBuilder group)`; the group in `<Domain>Feature.Map<Domain>Feature` adds `.WithTags`, `.RequireAuthorization()`, `.WithGroupName(OpenApiDocumentName)`.
 - Conditional GET: every route group ends with `.WithETag()` (`Common/Http/ETagMiddleware.cs`). The middleware hashes each `200` GET body into a strong `ETag`, answers a matching `If-None-Match` with `304`, and sets `Cache-Control: private, no-cache` unless the endpoint set its own. Endpoints don't change; their output must be deterministic for the same data (no `UtcNow` stamped into a body -- the iCal writers stamp `DTSTAMP` per day for this reason). `Meta/ETagCoverageTests` fails on a GET without the marker that isn't on its exclusion list. See `docs/backend/analysis/conditional-get-etags.md`.
 - Lambda returns `Task<Results<Ok<T>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>>`, builds the command, calls `bus.InvokeAsync<Result<T>>(command, ct)`, and maps with an exhaustive `switch` expression. Validation -> `TypedResults.BadRequest(problem.ToEnvelope(httpContext))`.

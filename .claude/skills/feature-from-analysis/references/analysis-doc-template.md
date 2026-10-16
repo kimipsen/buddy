@@ -22,10 +22,10 @@ not a ticket number.
   - `Status: analysis only — nothing here is implemented yet.` for research or options docs.
   - `Status: Sketch implemented for <scope> (...)` for a partial build.
   - `Status: Implemented` alone, or `Status: Implemented. <one or two sentences naming the types,
-    commands, routes and screens that shipped, and which doc it extends>`. Prefer the longer form;
+commands, routes and screens that shipped, and which doc it extends>`. Prefer the longer form;
     see `configurable-goal-posts.md`.
   - When an implementation leaves pieces out, say which: `Status: Implemented (badge + service +
-    guardian goal-post management; no ...)`.
+guardian goal-post management; no ...)`.
 - **Ground every claim in the code.** Link real files with repo-relative paths from the doc's
   location, e.g. `[IcalToken.cs](../../../src/backend/buddy/Features/Calendars/Types/IcalToken.cs)`,
   and use `file.ts:110` line anchors in implementation plans. Link sibling analysis docs by section
@@ -60,6 +60,7 @@ not a ticket number.
   frontend, en+da i18n, e2e, doc screenshots and doc updates. The AI agent estimate is wall-clock
   time for a `feature-from-analysis` run, plus the human review and open-question time it still
   needs. Give ranges, not single numbers, and derive them from the slice/screen counts in the doc.
+
 - **Name the rejected alternatives.** Each one gets a "considered and rejected, because ..."
   sentence or a bullet.
 - **Domain vocabulary** comes from `docs/backend/glossary.md`: `Manage`/`View` tiers,

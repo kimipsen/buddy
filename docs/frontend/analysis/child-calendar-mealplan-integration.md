@@ -33,12 +33,12 @@ the calendar already sorts lexicographically as ISO instants. A
 `MealPlanEntry`
 ([`core/mealplans.service.ts:35-46`](../../../src/frontend/buddy/src/app/core/mealplans.service.ts))
 only carries a `date` + a `MealSlot` enum (Breakfast/Lunch/Dinner/Snack, in
-that *declaration* order, ordinals 0-3) — no real clock time. The backend has
+that _declaration_ order, ordinals 0-3) — no real clock time. The backend has
 a per-slot fallback time used only for its iCal export
 ([`MealSlotDefaultTimes.cs`](../../../src/backend/buddy/Features/Mealplans/MealSlotDefaultTimes.cs):
 Breakfast 07:00, Lunch 12:00, Dinner 18:00, Snack 15:00), but doesn't expose
 it via the API. To interleave meals chronologically with tasks/events, the
-frontend needs its own copy of that same mapping (note slot *chronological*
+frontend needs its own copy of that same mapping (note slot _chronological_
 order is Breakfast, Lunch, Snack, Dinner — not the enum's declaration order)
 purely to compute a sort position; meals still display their slot name
 ("Breakfast"), never a fabricated clock time.
@@ -68,18 +68,22 @@ No changes required. Confirmed already sufficient:
   `Promise.all([...])` alongside `listMyCalendars()`/`listOccurrencesInRange()`.
 - Add a local mapping, commented as mirroring `MealSlotDefaultTimes.cs` so it
   doesn't silently drift from the backend fallback:
+
   ```ts
   const MEAL_SLOT_SORT_TIME: Record<MealSlot, string> = { 0: '07:00', 1: '12:00', 2: '18:00', 3: '15:00' };
   ```
+
 - Add a small local row type so meals sit alongside the existing
   `AgendaEntry` union (`CalendarOccurrence | TaskRun`,
   [`core/task-run.ts`](../../../src/frontend/buddy/src/app/core/task-run.ts))
   without touching that shared file (it's also used by the guardian agenda):
+
   ```ts
   interface MealRow { meal: MealPlanEntry; }
   type ChildAgendaRow = AgendaEntry | MealRow;
   function isMealRow(row: ChildAgendaRow): row is MealRow { return 'meal' in row; }
   ```
+
 - Replace `groupedOccurrencesFor(date)` with a version that merges
   `groupTaskRuns(occurrencesFor(date))` with that day's `mealEntries()`, then
   sorts the combined list by an "HH:mm" sort key: for occurrence/run rows,

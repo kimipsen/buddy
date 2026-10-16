@@ -56,14 +56,14 @@ own Marten schema `socialstories` and its own flag `Features:SocialStories`.**
 
 - **House rules.** A rule is a standing agreement that the child acknowledges per revision. A
   story is read for an upcoming event and then shelved. Its pages, pictures, calendar link and
-  read history have no counterpart on `RuleBook`, and rules are owned by a child *or* a group,
+  read history have no counterpart on `RuleBook`, and rules are owned by a child _or_ a group,
   which stories don't need (Question 7).
 - **TaskLibrary.** A `TaskTemplate` has the right shape (per child, ordered items, an icon,
-  archive, copy), but every one of its items is something to *do*, with a duration, weekdays and
+  archive, copy), but every one of its items is something to _do_, with a duration, weekdays and
   completion state that a calendar item schedules. A story page has none of these. Adding a
   `TaskTemplateKind.Story` would make every TaskLibrary handler and the scheduling code skip a
   kind that never schedules. Packing checklists could ride on TaskLibrary because a checklist
-  *is* a list of things to do ([packing-checklists.md, Question 1](packing-checklists.md#question-1-reuse-the-task-library-or-a-new-aggregate)).
+  _is_ a list of things to do ([packing-checklists.md, Question 1](packing-checklists.md#question-1-reuse-the-task-library-or-a-new-aggregate)).
   A story isn't.
 - **Feature flag.** The feature gets its own top-level flag, wired like `Features:HouseRules`
   ([feature-flags.md](feature-flags.md), [house-rules.md, Feature flag](house-rules.md#feature-flag)).
@@ -74,7 +74,7 @@ own Marten schema `socialstories` and its own flag `Features:SocialStories`.**
 `SocialStoryIndexDocument(Guid Id, Guid ChildId)` lists a child's stories, written in the same
 `SaveChangesAsync` as the creation event, exactly like `TaskTemplateIndexDocument`.**
 
-```
+```text
 SocialStory(
     SocialStoryId Id,                 // UUIDv7, like TaskTemplateId
     UserId ChildId,                   // the one child the story is for
@@ -97,7 +97,7 @@ pages each. One shelf stream would grow without bound and make two guardians edi
 different stories conflict. That is the reason `TaskTemplate` and `MedicineSchedule` are a
 stream per item with a per-child index document, and stories follow them.
 
-**Why owned by one child, not a group.** A story is written *for* one child's worries, in their
+**Why owned by one child, not a group.** A story is written _for_ one child's worries, in their
 words ("I can hold Bamse"). Siblings going to the same dentist get a copy (Question 7), the way
 packing lists do. A group-owned story would bring house rules' two scopes, dual routes and
 three-tier group authorization for a case that copying covers.
@@ -112,7 +112,7 @@ story is useful again next year. `SocialStoryRestored` therefore exists from v1.
 story at once, so pages have no slices of their own: `UpdateStory` replaces the page list, and
 the event carries `Before`/`After`.**
 
-```
+```text
 StoryPage(
     StoryPageId Id,          // UUIDv7, so the frontend can track pages across edits
     string Text,             // 1--300 chars, plain text, line breaks kept
@@ -144,7 +144,7 @@ StoryPage(
 photos can be added later without changing existing events. Photo upload waits for a shared
 "pictures" design that the Pictogram support item in `TODO.md` also needs.**
 
-```
+```text
 StoryPicture(StoryPictureKind Kind, string Emoji)
     // v1: Kind = Emoji, Emoji 1--32 chars (the reward-icon limit, ConfigureRewards.Validator.cs:21)
     // later: Kind = Photo, plus a PictureId field added as a trailing parameter
@@ -225,7 +225,7 @@ Thursday" card on their home page from three days before the item's next occurre
 occurrence has passed. The link is set and cleared by its own slices, which check that the
 guardian can see the item.**
 
-```
+```text
 StoryEventLink(StoryLinkKind Kind, CalendarItemId ItemId)
 enum StoryLinkKind { None, CalendarItem }
     // Kind = None with ItemId = default, following eliminate-nulls.md instead of a nullable id
@@ -233,7 +233,7 @@ enum StoryLinkKind { None, CalendarItem }
 
 - **Preparing for an event is the point of the feature**, so the link is in v1, unlike packing
   checklists' calendar link ([packing-checklists.md, Question 7](packing-checklists.md#question-7-linking-items-to-calendar-events-football-swimming)).
-  That one was deferred because the link would have *generated* occurrences for another stream.
+  That one was deferred because the link would have _generated_ occurrences for another stream.
   Here it only reads the linked item's dates and never changes what the calendar shows.
 - **Which occurrence.** For a one-off item, the item itself. For a recurring item (weekly
   swimming), the next occurrence from today, through `RecurrenceExpansion.ExpandDates`
@@ -279,15 +279,15 @@ Proposed: the same method, moved unchanged to
 themself. Everyone else gets `NotFound`, and a child calling a write gets `Forbidden`, except
 recording their own read.**
 
-```
+```text
 enum SocialStoryAccessTier { None, Read, Manage }
 enum SocialStoryAccess { Allowed, NotFound, Forbidden }
 ```
 
-| Tier | Who | Actions |
-|---|---|---|
+| Tier       | Who                                                     | Actions                                                                             |
+| ---------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | **Manage** | An active guardian of the child (`FindActiveLinkAsync`) | Create, edit, link, archive, restore, copy; see read history; list archived stories |
-| **Read** | The child (`callerId == ChildId`) | List and read non-archived stories; record a read |
+| **Read**   | The child (`callerId == ChildId`)                       | List and read non-archived stories; record a read                                   |
 
 - **Structure.** `SocialStoriesAuthorization` mirrors
   [TaskLibraryAuthorization.cs](../../../src/backend/buddy/Features/TaskLibrary/TaskLibraryAuthorization.cs)
@@ -335,7 +335,7 @@ synthesis. Reaching the last page records a read, at most once per story per day
 
 ### Events
 
-```
+```text
 SocialStoryCreated(SocialStoryId Id, UserId ChildId, string Title, Icon Icon,
     ImmutableList<StoryPage> Pages, UserId CreatedBy, DateTimeOffset OccurredAt)
     // also used by CopyStory; a starter story arrives here as ordinary pages
@@ -381,21 +381,21 @@ time.
 
 ## Command slices (`Features/SocialStories/`, same vertical-slice shape as `TaskLibrary`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `CreateStory` | Manage | `{ title, icon, pages[] }`. Writes the index document. `postIdempotent` from the client. Returns the story |
-| `UpdateStory` | Manage | `{ title, icon, pages[] }`, full overwrite. Archived → `404`. Returns the story |
-| `LinkStoryToEvent` | Manage | `{ itemId }`. Item not visible to the guardian → `404` |
-| `ClearStoryLink` | Manage | Idempotent |
-| `ArchiveStory` / `RestoreStory` | Manage | Idempotent |
-| `CopyStory` | Manage (both children) | `{ childId }`. The `CopyTaskTemplate` matrix |
-| `ListStories` | Read / Manage | Per child. Each entry has `upcomingOn` and the linked item's title for `Manage`. `?includeArchived=true` for `Manage` only; the child never sees archived stories or read history |
-| `GetStory` | Read / Manage | Full pages; reads and link details for `Manage` |
-| `RecordStoryRead` | Read (self) / Manage | Idempotent per local date. A date more than a day away from the server's date in the child's time zone → `400` |
+| Slice                           | Tier                   | Notes                                                                                                                                                                             |
+| ------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CreateStory`                   | Manage                 | `{ title, icon, pages[] }`. Writes the index document. `postIdempotent` from the client. Returns the story                                                                        |
+| `UpdateStory`                   | Manage                 | `{ title, icon, pages[] }`, full overwrite. Archived → `404`. Returns the story                                                                                                   |
+| `LinkStoryToEvent`              | Manage                 | `{ itemId }`. Item not visible to the guardian → `404`                                                                                                                            |
+| `ClearStoryLink`                | Manage                 | Idempotent                                                                                                                                                                        |
+| `ArchiveStory` / `RestoreStory` | Manage                 | Idempotent                                                                                                                                                                        |
+| `CopyStory`                     | Manage (both children) | `{ childId }`. The `CopyTaskTemplate` matrix                                                                                                                                      |
+| `ListStories`                   | Read / Manage          | Per child. Each entry has `upcomingOn` and the linked item's title for `Manage`. `?includeArchived=true` for `Manage` only; the child never sees archived stories or read history |
+| `GetStory`                      | Read / Manage          | Full pages; reads and link details for `Manage`                                                                                                                                   |
+| `RecordStoryRead`               | Read (self) / Manage   | Idempotent per local date. A date more than a day away from the server's date in the child's time zone → `400`                                                                    |
 
 ## Routes
 
-```
+```text
 POST   /social-stories/children/{childId}/stories          CreateStory
 GET    /social-stories/children/{childId}/stories          ListStories   (?includeArchived)
 GET    /social-stories/stories/{storyId}                   GetStory
@@ -492,47 +492,47 @@ sees the card, reads to the end, and the guardian sees "read 1×".
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Story with no pages | `400`; at least one page |
-| Page with an emoji but no text, or text but no emoji | `400` for both in v1; every page has words and a picture |
-| `UpdateStory` with unchanged content | `Success`, no event |
-| Editing an archived story | `404`; restore first |
-| Archive an archived story, restore an active one | `Success`, no event |
+| Case                                                                   | Behavior                                                                                  |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Story with no pages                                                    | `400`; at least one page                                                                  |
+| Page with an emoji but no text, or text but no emoji                   | `400` for both in v1; every page has words and a picture                                  |
+| `UpdateStory` with unchanged content                                   | `Success`, no event                                                                       |
+| Editing an archived story                                              | `404`; restore first                                                                      |
+| Archive an archived story, restore an active one                       | `Success`, no event                                                                       |
 | Linked item deleted, or its calendar no longer visible to the guardian | Link kept but dormant: no card, no `upcomingOn`, guardian sees "linked event was removed" |
-| Linked item moved to another date | The card follows the new date |
-| Recurring linked item | The card shows before each occurrence |
-| Child opens an archived story's old URL | `404`, the reader shows "This story isn't available" |
-| Child records the same read twice in a day | `Success`, one event |
-| No speech voice for the child's language | The "read it to me" button is hidden |
-| Guardian's `GuardianLink` is revoked | `NotFound` on all of that child's stories immediately |
-| Two guardians edit the same story | Last write wins; both versions are in the events (`Before`/`After`) |
-| `Features:SocialStories = false` | Routes not mapped; data and GDPR coverage stay |
+| Linked item moved to another date                                      | The card follows the new date                                                             |
+| Recurring linked item                                                  | The card shows before each occurrence                                                     |
+| Child opens an archived story's old URL                                | `404`, the reader shows "This story isn't available"                                      |
+| Child records the same read twice in a day                             | `Success`, one event                                                                      |
+| No speech voice for the child's language                               | The "read it to me" button is hidden                                                      |
+| Guardian's `GuardianLink` is revoked                                   | `NotFound` on all of that child's stories immediately                                     |
+| Two guardians edit the same story                                      | Last write wins; both versions are in the events (`Before`/`After`)                       |
+| `Features:SocialStories = false`                                       | Routes not mapped; data and GDPR coverage stay                                            |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | High -- a new aggregate, schema and index document with eight events, ten slices, a calendar link that expands recurrences, GDPR erasure and export, a small refactor of the visible-item check, the app's first speech synthesis, eight bilingual starter stories, and six new pages (guardian list, editor, print, child shelf, child reader) plus a home card and a calendar badge |
-| Single developer | 10-15 days, plus 1-2 days to write and review the starter stories in both languages |
-| AI agent | 5-8 hours, plus 3-4 hours of human review (the starters' wording deserves a careful read by someone who knows social stories) and settling the open questions |
+|                  |                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | High -- a new aggregate, schema and index document with eight events, ten slices, a calendar link that expands recurrences, GDPR erasure and export, a small refactor of the visible-item check, the app's first speech synthesis, eight bilingual starter stories, and six new pages (guardian list, editor, print, child shelf, child reader) plus a home card and a calendar badge |
+| Single developer | 10-15 days, plus 1-2 days to write and review the starter stories in both languages                                                                                                                                                                                                                                                                                                   |
+| AI agent         | 5-8 hours, plus 3-4 hours of human review (the starters' wording deserves a careful read by someone who knows social stories) and settling the open questions                                                                                                                                                                                                                         |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
+| Question               | Decision                                                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | New feature or extend? | New `Features/SocialStories` with a `SocialStory` aggregate, schema `socialstories` and flag `Features:SocialStories` |
-| Stream shape | One stream per story, UUIDv7 id, `SocialStoryIndexDocument` per child, like `TaskTemplate` |
-| Owner | One child; siblings get a copy, no group scope |
-| Page | Plain text (1--300) plus one picture; 1--12 pages; whole-list overwrite with `Before`/`After` |
-| Pictures | Emoji in v1 behind a `StoryPictureKind` discriminator; photos wait for a shared pictures design (lean, to confirm) |
-| Starters | Frontend i18n files, copied into an ordinary story; no backend catalog |
-| Calendar link | One optional linked item; card from three days before its next occurrence; dormant when the item disappears |
-| Visible-item check | Moved from TransitionWarnings to `Features/Calendars/CalendarItemVisibility` |
-| Who | Active guardians manage; the child reads and records reads; others `NotFound` |
-| Archive | Archive and restore, both idempotent; archived stories are invisible to the child |
-| Reading | Page-per-screen reader, browser speech synthesis when a voice exists, one recorded read per day |
-| Printing | A5 booklet on A4 portrait, outside the shell |
+| Stream shape           | One stream per story, UUIDv7 id, `SocialStoryIndexDocument` per child, like `TaskTemplate`                            |
+| Owner                  | One child; siblings get a copy, no group scope                                                                        |
+| Page                   | Plain text (1--300) plus one picture; 1--12 pages; whole-list overwrite with `Before`/`After`                         |
+| Pictures               | Emoji in v1 behind a `StoryPictureKind` discriminator; photos wait for a shared pictures design (lean, to confirm)    |
+| Starters               | Frontend i18n files, copied into an ordinary story; no backend catalog                                                |
+| Calendar link          | One optional linked item; card from three days before its next occurrence; dormant when the item disappears           |
+| Visible-item check     | Moved from TransitionWarnings to `Features/Calendars/CalendarItemVisibility`                                          |
+| Who                    | Active guardians manage; the child reads and records reads; others `NotFound`                                         |
+| Archive                | Archive and restore, both idempotent; archived stories are invisible to the child                                     |
+| Reading                | Page-per-screen reader, browser speech synthesis when a voice exists, one recorded read per day                       |
+| Printing               | A5 booklet on A4 portrait, outside the shell                                                                          |
 
 ## Remaining open questions
 

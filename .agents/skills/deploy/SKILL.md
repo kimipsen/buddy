@@ -19,13 +19,13 @@ targets), `deploy/azure/.env.example`, and the `deploy` / `deploy:azure` tasks i
 
 ## 1. Pick the target
 
-| | Oracle VM (`task deploy`) | Azure Container Apps (`task deploy:azure`) |
-|---|---|---|
-| What it runs | `deploy/preflight.sh`, then `BUDDY_IMAGE_TAG=<sha>[-dirty] docker compose -f docker-compose.prod.yml up -d --build --wait` in `deploy/`, then tags the images `:latest` | `deploy/azure/deploy.sh` |
+|               | Oracle VM (`task deploy`)                                                                                                                                                                                             | Azure Container Apps (`task deploy:azure`)                                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| What it runs  | `deploy/preflight.sh`, then `BUDDY_IMAGE_TAG=<sha>[-dirty] docker compose -f docker-compose.prod.yml up -d --build --wait` in `deploy/`, then tags the images `:latest`                                               | `deploy/azure/deploy.sh`                                                                                                                    |
 | Where it acts | **The Docker daemon of the machine you're on.** No SSH or remote host. `preflight.sh` refuses inside a container (devcontainer/Codespaces/`/.dockerenv`) and unless `DEPLOY_HOST` in `deploy/.env` equals `hostname`. | Azure resources in `RESOURCE_GROUP` for the logged-in `az` account. Images are built in ACR (`az acr build`), so no local Docker is needed. |
-| Config | `deploy/.env` | `deploy/azure/.env` |
-| Services | caddy (edge TLS, 80/443), frontend, api, db (postgres:18), keycloak 21.1.1 (built from `deploy/azure/keycloak/Dockerfile`); healthchecks on db/keycloak/api | ACR, Postgres Flexible Server (`APP_DB_NAME` + `keycloak` DBs), Container Apps env, apps `keycloak`, `api`, `frontend` |
-| Public URLs | `https://$API_DOMAIN`, `https://$AUTH_DOMAIN`, `https://$APP_DOMAIN` | `https://{api,keycloak,frontend}.<env default domain>`, or `*_CUSTOM_DOMAIN` when set |
+| Config        | `deploy/.env`                                                                                                                                                                                                         | `deploy/azure/.env`                                                                                                                         |
+| Services      | caddy (edge TLS, 80/443), frontend, api, db (postgres:18), keycloak 21.1.1 (built from `deploy/azure/keycloak/Dockerfile`); healthchecks on db/keycloak/api                                                           | ACR, Postgres Flexible Server (`APP_DB_NAME` + `keycloak` DBs), Container Apps env, apps `keycloak`, `api`, `frontend`                      |
+| Public URLs   | `https://$API_DOMAIN`, `https://$AUTH_DOMAIN`, `https://$APP_DOMAIN`                                                                                                                                                  | `https://{api,keycloak,frontend}.<env default domain>`, or `*_CUSTOM_DOMAIN` when set                                                       |
 
 If the user doesn't say which one, ask. Don't infer it from which `.env` exists.
 
@@ -66,7 +66,7 @@ time (`grep -E '^RESOURCE_GROUP=' deploy/azure/.env | cut -d= -f2-`). Things to 
   preflight warns too): the realm and its `buddy-admin-cli` secret haven't been set up (Oracle
   README step 5, Azure README step 4). The API deploys, but its Keycloak admin calls (creating
   child accounts) won't work. The checker can't tell whether a non-placeholder value is the
-  *current* secret.
+  _current_ secret.
 - Azure, blank `BREVO_SMTP_*` or `MAIL_FROM_ADDRESS`: the deploy works but sends no email (verification, invites,
   Keycloak password resets).
 
@@ -75,12 +75,12 @@ time (`grep -E '^RESOURCE_GROUP=' deploy/azure/.env | cut -d= -f2-`). Things to 
 - Oracle: `docker version` and `docker compose version` succeed, and the user can talk to the
   daemon.
 - Azure: `az version`, `jq --version`, `curl --version`. Then `az account show --query
-  "{subscription:name, id:id, user:user.name}" -o table`. If not logged in, ask the user to run
+"{subscription:name, id:id, user:user.name}" -o table`. If not logged in, ask the user to run
   `az login` (and `az account set --subscription ...`) themselves. Show which subscription is
   active; deploying to the wrong one is the easiest mistake to make here.
 - Azure, read-only look at what exists (helps explain step 3):
   `az group show -n "$RESOURCE_GROUP" -o none` and `az containerapp list -g "$RESOURCE_GROUP"
-  --query "[].{name:name, revision:properties.latestRevisionName}" -o table`.
+--query "[].{name:name, revision:properties.latestRevisionName}" -o table`.
 
 **Code.** `git status --short` and `git log -1 --oneline`. Both targets build from the working
 tree, uncommitted changes included. Tell the user what will ship. If the working tree is dirty,
@@ -197,18 +197,18 @@ user and get their go-ahead before running it, same as a deploy.
 
 - **Oracle**: `task deploy` tags images `buddy-{api,frontend,keycloak}:<git sha>[-dirty]` and
   retags `:latest` after a successful `--wait`. Rollback without rebuild: `BUDDY_IMAGE_TAG=<sha>
-  docker compose -f docker-compose.prod.yml up -d --no-build --wait` from `deploy/`, then retag
+docker compose -f docker-compose.prod.yml up -d --no-build --wait` from `deploy/`, then retag
   `:latest`. List candidates with `docker image ls | grep '^buddy-'` (read-only). If the image is
   gone (pruned, or deployed before tagging existed): check out the good commit and `task deploy`
   again (full deploy, steps 2 to 5).
 - **Oracle backups**: `pg_dump -Fc` of `$POSTGRES_DB` and `keycloak` via `docker compose exec -T
-  db`, written to `~/buddy-backups/` on the VM (README step 7, which also has the restore:
+db`, written to `~/buddy-backups/` on the VM (README step 7, which also has the restore:
   stop api+keycloak, drop/recreate DB, `pg_restore`). Offer one before every deploy. The volume is
   `deploy_postgres-data`; don't tar it while `db` runs.
 - **Azure**: single revision mode (deploy.sh passes no `--revisions-mode`), images pinned by
   digest. Rollback = `az containerapp revision copy --from-revision <good>` or `az containerapp
-  update --image <acr>/buddy-<app>@<old digest>`; find them with `az containerapp revision list
-  --all` (read-only). Secrets are app-level and don't roll back with a revision. Multiple mode +
+update --image <acr>/buddy-<app>@<old digest>`; find them with `az containerapp revision list
+--all` (read-only). Secrets are app-level and don't roll back with a revision. Multiple mode +
   `ingress traffic set` is documented as an alternative, with the caveat that deploy.sh then
   won't shift traffic to new revisions. Database: point-in-time restore to a new server.
 

@@ -1,4 +1,4 @@
-EF Core mapping notes (PostgreSQL, schema-per-domain)
+# EF Core mapping notes (PostgreSQL, schema-per-domain)
 
 - Use `modelBuilder.HasDefaultSchema("orders")` to place the `Order` read models into the `orders` schema.
 - Map ID value types with `HasConversion` (store Guid or string in DB):
@@ -23,13 +23,13 @@ CREATE TABLE event_store.events (
 ```
 
 - Consider adding a composite index on `stream_name, id` for read performance.
+
 ```sql
 CREATE INDEX idx_event_store_stream ON event_store.events (stream_name, id);
 ```
 
 - Use JSONB for payloads to allow flexible event schemas and indexing.
+
 ```sql
 ALTER TABLE event_store.events ALTER COLUMN event_payload SET DATA TYPE jsonb USING event_payload::jsonb;
 ```
-``` 
-*** End Patch

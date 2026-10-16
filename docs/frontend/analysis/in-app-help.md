@@ -242,17 +242,17 @@ screenshots complete.
 
 ## Frontend plan
 
-| File | Change |
-|---|---|
-| `core/help/help-topic.ts`, `help-topics.ts` | New: `HelpTopic`, the key helpers (`helpTopicKeys(topic)` yields every key, for the coverage spec), `HELP_TOPICS` and `findHelpTopic` |
-| `shared/help-content/help-content.{ts,html,spec.ts}` | New: renders one topic's sections (heading at the host's `headingLevel` + `p` + optional `ol`) and its `link`. The panel and the index both use it |
+| File                                                              | Change                                                                                                                                                         |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/help/help-topic.ts`, `help-topics.ts`                       | New: `HelpTopic`, the key helpers (`helpTopicKeys(topic)` yields every key, for the coverage spec), `HELP_TOPICS` and `findHelpTopic`                          |
+| `shared/help-content/help-content.{ts,html,spec.ts}`              | New: renders one topic's sections (heading at the host's `headingLevel` + `p` + optional `ol`) and its `link`. The panel and the index both use it             |
 | `features/guardian/shell/help-panel/help-panel.{ts,html,spec.ts}` | New: the inline panel (emerald card styling, like `OnboardingResumeCard`), its close button, "See also" links to related topics and the "All help topics" link |
-| `features/guardian/shell/guardian-shell.{ts,html,spec.ts}` | Header "?" disclosure button next to `<app-profile-menu />`; `helpTopic`/`helpOpen` signals; closes on navigation |
-| `features/guardian/help/help-page.{ts,html,spec.ts}` | New `/guardian/help`: table of contents, all topics, and `?topic=` scroll via `afterNextRender` |
-| `features/guardian/guardian.routes.ts` | `data.helpTopic` on 15 routes; new `help` route |
-| `features/guardian/shell/profile-menu/profile-menu.html` | "Help" link |
-| `core/i18n/translations/{en,da}/help.ts` + `index.ts` | New area (`panelTitle`, `close`, `related`, `allTopics`, `page.*`, `topics.*`); `shell.help.toggle` and `shell.menu.help` keys in `shell.ts` |
-| `src/app/help-coverage.spec.ts` | New, see Decision 6 |
+| `features/guardian/shell/guardian-shell.{ts,html,spec.ts}`        | Header "?" disclosure button next to `<app-profile-menu />`; `helpTopic`/`helpOpen` signals; closes on navigation                                              |
+| `features/guardian/help/help-page.{ts,html,spec.ts}`              | New `/guardian/help`: table of contents, all topics, and `?topic=` scroll via `afterNextRender`                                                                |
+| `features/guardian/guardian.routes.ts`                            | `data.helpTopic` on 15 routes; new `help` route                                                                                                                |
+| `features/guardian/shell/profile-menu/profile-menu.html`          | "Help" link                                                                                                                                                    |
+| `core/i18n/translations/{en,da}/help.ts` + `index.ts`             | New area (`panelTitle`, `close`, `related`, `allTopics`, `page.*`, `topics.*`); `shell.help.toggle` and `shell.menu.help` keys in `shell.ts`                   |
+| `src/app/help-coverage.spec.ts`                                   | New, see Decision 6                                                                                                                                            |
 
 Use the `buddy-frontend` skill for component and spec conventions, and the `i18n` skill for the new
 area and parity.
@@ -270,7 +270,7 @@ Facts the content had to get right, found while checking it against the code:
 - Every calendar belongs to a group; there are no personal calendars.
   [docs/backend/calendars/flow.md](../../backend/calendars/flow.md) still says `POST /calendars`
   creates one "for the current user or for an owned group", which is out of date.
-- Meal plans and medicine belong to the family and are *shared* with a group, not group-owned.
+- Meal plans and medicine belong to the family and are _shared_ with a group, not group-owned.
 - Doses are marked taken or skipped on the dashboard (and by the child), not on `/guardian/medicine`.
 - Work locations only feed the printable week plan.
 
@@ -312,18 +312,18 @@ Facts the content had to get right, found while checking it against the code:
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Form | Inline per-page panel toggled from the shell header, plus `/guardian/help`; no modal or drawer, following the no-overlay convention |
-| Audience | Guardians only; child screens are for pre-readers |
-| Content storage | Typed `help.ts` dictionaries plus a TS registry for order, so en/da parity is enforced at build time |
-| Page to topic mapping | `data.helpTopic` on routes, read by `GuardianShell`; one shell change instead of 15 page edits |
-| Backend | None; help opens only on demand |
-| Completeness | `help-coverage.spec.ts`, modelled on `screenshot-coverage.spec.ts` |
-| Contact line on the help page | "Something not working? Ask whoever runs Buddy for your family", plus the `runtimeConfig.repositoryUrl` link; a feedback form would need a backend and a recipient (2026-10-09) |
-| Guided setup from help | The dashboard topic's `link` opens `/guardian/onboarding`, labelled "Continue the guided setup, if you haven't finished it": for a completed guide that page goes straight back to the dashboard, so the label sets that expectation (2026-10-09) |
-| Meal-plan sub-pages | One `mealPlans` topic for all three routes, with a section each for planning, the AI assistant, import and the iCal link (2026-10-09) |
-| How the shell learns the topic | `<router-outlet (activate)>`, not router events, so the component needs no subscription |
+| Question                       | Decision                                                                                                                                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Form                           | Inline per-page panel toggled from the shell header, plus `/guardian/help`; no modal or drawer, following the no-overlay convention                                                                                                               |
+| Audience                       | Guardians only; child screens are for pre-readers                                                                                                                                                                                                 |
+| Content storage                | Typed `help.ts` dictionaries plus a TS registry for order, so en/da parity is enforced at build time                                                                                                                                              |
+| Page to topic mapping          | `data.helpTopic` on routes, read by `GuardianShell`; one shell change instead of 15 page edits                                                                                                                                                    |
+| Backend                        | None; help opens only on demand                                                                                                                                                                                                                   |
+| Completeness                   | `help-coverage.spec.ts`, modelled on `screenshot-coverage.spec.ts`                                                                                                                                                                                |
+| Contact line on the help page  | "Something not working? Ask whoever runs Buddy for your family", plus the `runtimeConfig.repositoryUrl` link; a feedback form would need a backend and a recipient (2026-10-09)                                                                   |
+| Guided setup from help         | The dashboard topic's `link` opens `/guardian/onboarding`, labelled "Continue the guided setup, if you haven't finished it": for a completed guide that page goes straight back to the dashboard, so the label sets that expectation (2026-10-09) |
+| Meal-plan sub-pages            | One `mealPlans` topic for all three routes, with a section each for planning, the AI assistant, import and the iCal link (2026-10-09)                                                                                                             |
+| How the shell learns the topic | `<router-outlet (activate)>`, not router events, so the component needs no subscription                                                                                                                                                           |
 
 ## Remaining open questions
 

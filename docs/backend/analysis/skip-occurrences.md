@@ -77,7 +77,7 @@ one new event, `OccurrenceSkipChanged`. No new aggregate or feature.**
   Editing the rule could also silently drop them. Buddy never writes an `RRULE` to the iCal feed,
   so it gains nothing from the RFC shape either.
 
-```
+```text
 CalendarItem(
     ...
     ImmutableHashSet<CompletionKey> CompletionLog,
@@ -105,7 +105,7 @@ field without changes.
 
 ### Events
 
-```
+```text
 OccurrenceSkipChanged(CalendarItemId Id, DateOnly OccurrenceDate, bool Before, bool After,
     UserId ModifiedBy, DateTimeOffset OccurredAt)
 ```
@@ -196,12 +196,12 @@ Blast radius: three loops in one file, plus `ExpandAsync` and its three callers,
 **Decision: any date that the item's current rule actually produces, for both events and tasks.
 That includes past dates. One-off items and dates outside the rule are rejected.**
 
-| Rule | Why |
-| --- | --- |
-| The item must be `Recurrence.Repeating` (400 otherwise) | Skipping the only occurrence of a one-off item means deleting it, and `DeleteItem` already does that. |
+| Rule                                                                                                                              | Why                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The item must be `Recurrence.Repeating` (400 otherwise)                                                                           | Skipping the only occurrence of a one-off item means deleting it, and `DeleteItem` already does that.                                                                                                                                                                                                                                        |
 | `OccurrenceDate` must be a date that the rule expands to: `ExpandDates(seed, recurrence, date, date)` isn't empty (400 otherwise) | It stops a stale client from storing a skip for a day the item doesn't run. Restoring is exempt: un-skipping a date the rule no longer produces is allowed, so an orphaned skip can always be cleared. This is the same asymmetry as `SetTaskCompletion`'s "can't tick an item that isn't on the packing list that day, can always un-tick". |
-| Past dates are allowed | A guardian tidying up yesterday ("we didn't go") should not be left with an open, uncompletable task. Completion refuses future dates because something can't have been done yet; skipping has no such constraint. |
-| A completed occurrence can be skipped | The completion entry stays in `CompletionLog` and comes back if the skip is restored. Stars are not touched, see the open questions. |
+| Past dates are allowed                                                                                                            | A guardian tidying up yesterday ("we didn't go") should not be left with an open, uncompletable task. Completion refuses future dates because something can't have been done yet; skipping has no such constraint.                                                                                                                           |
+| A completed occurrence can be skipped                                                                                             | The completion entry stays in `CompletionLog` and comes back if the skip is restored. Stars are not touched, see the open questions.                                                                                                                                                                                                         |
 
 A skip is keyed by the date the rule produced, not the current time. Rescheduling the item to a
 different time of day keeps every skip. Changing the rule so that a date is no longer produced
@@ -242,14 +242,14 @@ repeating item.**
 
 ## Command slices (`Features/Calendars/`, same vertical-slice shape as `SetTaskCompletion`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `SetOccurrenceSkip` | Contribute | Skips or restores one date of a repeating item. Emits `OccurrenceSkipChanged`, or nothing if the date is already in the requested state |
-| `ListOccurrences` (changed) | View | New `includeSkipped` query parameter; occurrences carry `isSkipped` |
+| Slice                       | Tier       | Notes                                                                                                                                   |
+| --------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `SetOccurrenceSkip`         | Contribute | Skips or restores one date of a repeating item. Emits `OccurrenceSkipChanged`, or nothing if the date is already in the requested state |
+| `ListOccurrences` (changed) | View       | New `includeSkipped` query parameter; occurrences carry `isSkipped`                                                                     |
 
 ## Routes
 
-```
+```text
 PATCH  /calendars/{calendarId}/items/{itemId}/skip          SetOccurrenceSkip   { date, isSkipped }
 GET    /calendars/{calendarId}/occurrences?from&to&includeSkipped=true          (changed)
 ```
@@ -305,49 +305,49 @@ on another calendar). Add a `Calendars.http` entry and a row to the endpoint tab
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Skip an already skipped date / restore one that isn't skipped | Idempotent no-op (`Success`, no event) |
-| Skip a date the rule doesn't produce | `400`; restoring such a date is allowed |
-| Skip on a one-off item | `400`; use delete (restoring is still allowed, see below) |
-| Rule edited so that a skipped date no longer occurs | The skip stays in the stream and matches nothing; it applies again if the rule produces the date again |
-| Item rescheduled to another time of day | Skips keep applying (keyed by date) |
-| Item rescheduled so the seed date moves (series shifts) | Old skips are orphaned; the guardian skips the new dates again. Called out in the open questions |
-| `until` validation | Ignores skips: a rule whose only occurrences are all skipped is still valid |
-| Skipping every occurrence in a window | Allowed; the agenda shows only muted rows |
-| Skip a completed task occurrence | Allowed; completion kept and visible again after a restore; stars unchanged |
-| Mark a skipped occurrence complete | `SetTaskCompletion` rejects it with `400` ("This occurrence is skipped."), the same as a packing-list item that isn't on that day. Un-completing stays allowed |
-| Item deleted | Skips go with it (`IsDeleted` filters the whole item) |
-| Concurrent skip and restore | Last write wins, both kept in history |
-| Existing snapshot rows without `SkippedDates` | The fold treats the missing set as empty; a rebuild is optional |
-| Restore after the item stopped repeating | Allowed: restoring skips both the repeating and the date check, so a skip can never hide a one-off item's only occurrence for good |
+| Case                                                          | Behavior                                                                                                                                                       |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Skip an already skipped date / restore one that isn't skipped | Idempotent no-op (`Success`, no event)                                                                                                                         |
+| Skip a date the rule doesn't produce                          | `400`; restoring such a date is allowed                                                                                                                        |
+| Skip on a one-off item                                        | `400`; use delete (restoring is still allowed, see below)                                                                                                      |
+| Rule edited so that a skipped date no longer occurs           | The skip stays in the stream and matches nothing; it applies again if the rule produces the date again                                                         |
+| Item rescheduled to another time of day                       | Skips keep applying (keyed by date)                                                                                                                            |
+| Item rescheduled so the seed date moves (series shifts)       | Old skips are orphaned; the guardian skips the new dates again. Called out in the open questions                                                               |
+| `until` validation                                            | Ignores skips: a rule whose only occurrences are all skipped is still valid                                                                                    |
+| Skipping every occurrence in a window                         | Allowed; the agenda shows only muted rows                                                                                                                      |
+| Skip a completed task occurrence                              | Allowed; completion kept and visible again after a restore; stars unchanged                                                                                    |
+| Mark a skipped occurrence complete                            | `SetTaskCompletion` rejects it with `400` ("This occurrence is skipped."), the same as a packing-list item that isn't on that day. Un-completing stays allowed |
+| Item deleted                                                  | Skips go with it (`IsDeleted` filters the whole item)                                                                                                          |
+| Concurrent skip and restore                                   | Last write wins, both kept in history                                                                                                                          |
+| Existing snapshot rows without `SkippedDates`                 | The fold treats the missing set as empty; a rebuild is optional                                                                                                |
+| Restore after the item stopped repeating                      | Allowed: restoring skips both the repeating and the date check, so a skip can never hide a one-off item's only occurrence for good                             |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Low to Medium -- one new event and aggregate field, one new route, a query flag through one shared expansion, one changed screen (agenda) |
-| Single developer | 2-3 days |
-| AI agent | 1.5-2.5 hours, plus about 45 minutes of human review |
+|                  |                                                                                                                                           |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Low to Medium -- one new event and aggregate field, one new route, a query flag through one shared expansion, one changed screen (agenda) |
+| Single developer | 2-3 days                                                                                                                                  |
+| AI agent         | 1.5-2.5 hours, plus about 45 minutes of human review                                                                                      |
 
 ## Decisions made
 
-| Question | Decision |
-| --- | --- |
-| Where a skip lives | `SkippedDates` on `CalendarItem`, sparse, like `CompletionLog` |
-| Event | One `OccurrenceSkipChanged(Before, After)`, like `TaskCompletionChanged` |
-| Recurrence `EXDATE` | Rejected: it would tie every skip to `RecurrenceUpdated` |
-| Where it's applied | `CalendarOccurrenceExpansion`, not `RecurrenceExpansion.ExpandDates` |
-| What can be skipped | Any date the current rule produces, past or future, events and tasks; not one-off items |
-| Template-scheduled tasks | The whole day's run; no per-subtask skip |
-| Who | Contribute tier; no Viewer self-skip |
-| Undo | Same route with `isSkipped: false`; agenda shows skipped rows via `includeSkipped` |
-| Completion on a skipped day | Kept but hidden; marking complete is refused while skipped |
-| iCal | The occurrence is just omitted |
-| Which occurrences offer Skip | Those with `isRepeating` on the occurrence, added during implementation |
+| Question                                       | Decision                                                                                                                                                                |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where a skip lives                             | `SkippedDates` on `CalendarItem`, sparse, like `CompletionLog`                                                                                                          |
+| Event                                          | One `OccurrenceSkipChanged(Before, After)`, like `TaskCompletionChanged`                                                                                                |
+| Recurrence `EXDATE`                            | Rejected: it would tie every skip to `RecurrenceUpdated`                                                                                                                |
+| Where it's applied                             | `CalendarOccurrenceExpansion`, not `RecurrenceExpansion.ExpandDates`                                                                                                    |
+| What can be skipped                            | Any date the current rule produces, past or future, events and tasks; not one-off items                                                                                 |
+| Template-scheduled tasks                       | The whole day's run; no per-subtask skip                                                                                                                                |
+| Who                                            | Contribute tier; no Viewer self-skip                                                                                                                                    |
+| Undo                                           | Same route with `isSkipped: false`; agenda shows skipped rows via `includeSkipped`                                                                                      |
+| Completion on a skipped day                    | Kept but hidden; marking complete is refused while skipped                                                                                                              |
+| iCal                                           | The occurrence is just omitted                                                                                                                                          |
+| Which occurrences offer Skip                   | Those with `isRepeating` on the occurrence, added during implementation                                                                                                 |
 | Stars for a completed occurrence later skipped | Kept; the skip is about the schedule, not the child. Revoking would be a `RecordStarChange` call from the skip handler, additive later (settled by the user 2026-10-15) |
-| Reason or note on a skip | Not in v1; an optional `Reason` on the event is additive (settled by the user 2026-10-15) |
-| What the child sees on a skipped day | Nothing, the occurrence disappears. A "cancelled" card on the child home would need only `includeSkipped` and frontend work (settled by the user 2026-10-15) |
+| Reason or note on a skip                       | Not in v1; an optional `Reason` on the event is additive (settled by the user 2026-10-15)                                                                               |
+| What the child sees on a skipped day           | Nothing, the occurrence disappears. A "cancelled" card on the child home would need only `includeSkipped` and frontend work (settled by the user 2026-10-15)            |
 
 ## Remaining open questions
 

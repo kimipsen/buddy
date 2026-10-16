@@ -41,12 +41,12 @@ The closest precedents are:
 
 This decides how much the feature can promise:
 
-| Client | `VALARM` in a subscribed (URL) feed |
-|---|---|
-| Apple Calendar (iOS/macOS) | Honoured, unless the subscription's "Remove alerts" option is on. It is **on by default** when subscribing. |
-| Google Calendar | Ignored. Google drops alarms from subscribed calendars and applies the user's default notifications for that calendar. |
-| Outlook (desktop/web) | Varies by version; Outlook on the web generally ignores them. |
-| Thunderbird, DAVx5-based Android apps | Honoured. |
+| Client                                | `VALARM` in a subscribed (URL) feed                                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Apple Calendar (iOS/macOS)            | Honoured, unless the subscription's "Remove alerts" option is on. It is **on by default** when subscribing.            |
+| Google Calendar                       | Ignored. Google drops alarms from subscribed calendars and applies the user's default notifications for that calendar. |
+| Outlook (desktop/web)                 | Varies by version; Outlook on the web generally ignores them.                                                          |
+| Thunderbird, DAVx5-based Android apps | Honoured.                                                                                                              |
 
 So alarms are best effort. The UI says so in one line (Question 6), and nothing else in Buddy
 depends on them.
@@ -172,7 +172,7 @@ sign (`new Duration(days:, hours:, minutes:)`), so `-1440` is written `-P1D`, `-
 and `+540` `PT9H`; Ical.Net writes a zero offset as `P0D`. `Duration.FromMinutes` compiled too,
 but writes everything in minutes (`PT540M`), which is valid but harder to read.
 
-```
+```text
 BEGIN:VALARM
 ACTION:DISPLAY
 DESCRIPTION:Dentist
@@ -237,12 +237,12 @@ gets `404`.
 ([`agenda.html`](../../../src/frontend/buddy/src/app/features/guardian/calendar/agenda/agenda.html)),
 as preset chips, up to 3 selected. The presets depend on whether the item is all-day.**
 
-| Timed item | Offset | All-day item | Offset |
-|---|---|---|---|
-| At start | `0` | On the day at 09:00 | `+540` |
-| 5 / 15 / 30 minutes before | `-5` / `-15` / `-30` | The day before at 18:00 | `-360` |
-| 1 / 2 hours before | `-60` / `-120` | The day before at 09:00 | `-900` |
-| 1 day before | `-1440` | 2 days before at 09:00 | `-2340` |
+| Timed item                 | Offset               | All-day item            | Offset  |
+| -------------------------- | -------------------- | ----------------------- | ------- |
+| At start                   | `0`                  | On the day at 09:00     | `+540`  |
+| 5 / 15 / 30 minutes before | `-5` / `-15` / `-30` | The day before at 18:00 | `-360`  |
+| 1 / 2 hours before         | `-60` / `-120`       | The day before at 09:00 | `-900`  |
+| 1 day before               | `-1440`              | 2 days before at 09:00  | `-2340` |
 
 - If the all-day toggle flips, any selected alarm that isn't a preset of the new mode is cleared, so
   the form never sends an offset the user can't see.
@@ -261,18 +261,18 @@ as preset chips, up to 3 selected. The presets depend on whether the item is all
 
 ## Command slices (`Features/Calendars/`)
 
-| Slice | Change |
-|---|---|
-| `UpdateItemAlarms` (new) | Command, validator, handler, endpoint. Appends `ItemAlarmsUpdated`. **No-op when unchanged**: no event, `200` with the current item, as `UpdateItemRecurrence` does. |
-| `CreateItem` | `CreateItemRequest.Alarms` (`int[]?`, default empty), validated, carried on `EventItemCreated`/`TaskItemCreated`. |
-| `ScheduleTaskFromTemplate` | Same, on `TemplateTaskItemCreated`. |
-| `GetIcalFeed` | No slice change. `IcalFeedWriter` writes `VALARM`s (Question 3). |
-| `ListOccurrences` / `ListItems` | No slice change. The DTOs gain `alarms`. |
+| Slice                           | Change                                                                                                                                                               |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UpdateItemAlarms` (new)        | Command, validator, handler, endpoint. Appends `ItemAlarmsUpdated`. **No-op when unchanged**: no event, `200` with the current item, as `UpdateItemRecurrence` does. |
+| `CreateItem`                    | `CreateItemRequest.Alarms` (`int[]?`, default empty), validated, carried on `EventItemCreated`/`TaskItemCreated`.                                                    |
+| `ScheduleTaskFromTemplate`      | Same, on `TemplateTaskItemCreated`.                                                                                                                                  |
+| `GetIcalFeed`                   | No slice change. `IcalFeedWriter` writes `VALARM`s (Question 3).                                                                                                     |
+| `ListOccurrences` / `ListItems` | No slice change. The DTOs gain `alarms`.                                                                                                                             |
 
 ## Routes
 
-| Method | Route | Tier | Responses |
-|---|---|---|---|
+| Method  | Route                                                                              | Tier   | Responses                                  |
+| ------- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------------ |
 | `PATCH` | `/calendars/{calendarId}/items/{itemId}/alarms` body `{ "alarms": [-120, -1440] }` | Manage | `200` item, `400` validation, `403`, `404` |
 
 Run `task docs:openapi` after the endpoint and DTO changes. Add the request to `Calendars.http`.
@@ -298,40 +298,40 @@ Run `task docs:openapi` after the endpoint and DTO changes. Add the request to `
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Item rescheduled | Alarms kept, re-anchored on the new start or due time. |
+| Case                                          | Behavior                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| Item rescheduled                              | Alarms kept, re-anchored on the new start or due time.                   |
 | Item switched timed ↔ all-day through the API | Alarms kept as stored. The UI clears non-matching presets before saving. |
-| Occurrence skipped | Not in the feed, so no alarm. |
-| Item deleted | Not in the feed. |
-| Same offset sent twice | Merged; stored once. |
-| `alarms` omitted on create | No alarms. |
-| Subscriber's client ignores `VALARM` | Nothing Buddy can detect. The UI hint covers it. |
-| Alarm in the past when the feed refreshes | The client decides (most skip it). |
+| Occurrence skipped                            | Not in the feed, so no alarm.                                            |
+| Item deleted                                  | Not in the feed.                                                         |
+| Same offset sent twice                        | Merged; stored once.                                                     |
+| `alarms` omitted on create                    | No alarms.                                                               |
+| Subscriber's client ignores `VALARM`          | Nothing Buddy can detect. The UI hint covers it.                         |
+| Alarm in the past when the feed refreshes     | The client decides (most skip it).                                       |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Low to Medium -- one new event and slice, an optional field on three creation events, the feed writer, and a picker in two forms. No new aggregate, schema or route group. |
-| Single developer | 2-3 days |
-| AI agent | 1.5-2.5 hours, plus about 45 minutes of human review |
+|                  |                                                                                                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Low to Medium -- one new event and slice, an optional field on three creation events, the feed writer, and a picker in two forms. No new aggregate, schema or route group. |
+| Single developer | 2-3 days                                                                                                                                                                   |
+| AI agent         | 1.5-2.5 hours, plus about 45 minutes of human review                                                                                                                       |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Where alarms live | `CalendarItem.Alarms`, own event `ItemAlarmsUpdated`, own slice `PATCH .../alarms`; optional on the three creation events |
-| Relation to transition warnings | None. Separate concept, separate data |
-| Alarm shape | Signed whole-minute offset from start/due (all-day: local midnight), max 3, distinct, `-40320..+1440` |
-| Feed output | One `VALARM` (`DISPLAY`, title as description) per offset; none when the item has none |
-| Repeating items | Every occurrence carries the alarms |
-| Who can set them | `Manage` tier on the calendar |
-| UI | Preset chips in agenda create/edit and schedule-from-template, a bell on the agenda row, a one-line client-support hint |
-| Routines and packing lists | Alarms only on the first subtask's `VTODO` of each run, so a routine alerts once |
-| Custom offsets | Presets only in v1; the API accepts any offset in range, so a custom input needs no backend change later |
-| Per-calendar default alarm | Not in v1 |
-| Bell on agenda rows | Shown, with `aria-label` "Has alarms"; doc screenshots re-run |
+| Question                        | Decision                                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Where alarms live               | `CalendarItem.Alarms`, own event `ItemAlarmsUpdated`, own slice `PATCH .../alarms`; optional on the three creation events |
+| Relation to transition warnings | None. Separate concept, separate data                                                                                     |
+| Alarm shape                     | Signed whole-minute offset from start/due (all-day: local midnight), max 3, distinct, `-40320..+1440`                     |
+| Feed output                     | One `VALARM` (`DISPLAY`, title as description) per offset; none when the item has none                                    |
+| Repeating items                 | Every occurrence carries the alarms                                                                                       |
+| Who can set them                | `Manage` tier on the calendar                                                                                             |
+| UI                              | Preset chips in agenda create/edit and schedule-from-template, a bell on the agenda row, a one-line client-support hint   |
+| Routines and packing lists      | Alarms only on the first subtask's `VTODO` of each run, so a routine alerts once                                          |
+| Custom offsets                  | Presets only in v1; the API accepts any offset in range, so a custom input needs no backend change later                  |
+| Per-calendar default alarm      | Not in v1                                                                                                                 |
+| Bell on agenda rows             | Shown, with `aria-label` "Has alarms"; doc screenshots re-run                                                             |
 
 ## Remaining open questions
 

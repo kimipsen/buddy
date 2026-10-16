@@ -65,28 +65,28 @@ backup rotation script and templates for the record of processing, the DPIA and 
   - how to use their rights. Deleting the account and "Download my data" are in the app; say how
     to reach you for anything else.
 - [ ] **Record of processing activities** (Article 30): what you process, why, for whom, where,
-  and for how long.
+      and for how long.
 - [ ] **Data protection impact assessment (DPIA)** (Article 35). Children's health data processed
-  at scale, plus AI, will almost certainly need one.
+      at scale, plus AI, will almost certainly need one.
 - [ ] **Data processing agreements** (Article 28) with everyone who handles the data for you:
   - your hosting provider (Oracle Cloud for the Docker setup, or Azure);
   - your email provider (the deploy scripts use Brevo);
   - any log or monitoring service you add.
 - [ ] **Back up for no more than 30 days.** Backups still contain people who have since deleted
-  their account.
+      their account.
   - **Docker:** [deploy/README.md](deploy/README.md), section 7, has the dump commands and the
     restore steps. The restore steps put the erasure ledger back so erased people are erased
     again.
   - **Azure:** the managed database keeps its own point-in-time backups. Check their retention.
     The ledger steps for an Azure restore aren't written yet (see below).
 - [ ] **Decide where the logs go, and for how long.** The health-data audit logs only help if they
-  are kept somewhere. Set `OTEL_EXPORTER_OTLP_ENDPOINT` to a log backend
-  ([observability.md](docs/backend/observability.md)). Then decide who can read the logs and when
-  they are deleted, and put that in your notice. Without a backend the logs stay wherever your
-  container logs go.
+      are kept somewhere. Set `OTEL_EXPORTER_OTLP_ENDPOINT` to a log backend
+      ([observability.md](docs/backend/observability.md)). Then decide who can read the logs and when
+      they are deleted, and put that in your notice. Without a backend the logs stay wherever your
+      container logs go.
 - [ ] **Check the AI notice against your privacy notice.** The text guardians acknowledge is a
-  starting point. It lives in `src/frontend/buddy/src/app/core/i18n/translations/*/mealplan.ts`,
-  under `aiAssistant.dataSharing`.
+      starting point. It lives in `src/frontend/buddy/src/app/core/i18n/translations/*/mealplan.ts`,
+      under `aiAssistant.dataSharing`.
   - Families bring their own key, so the AI provider is their choice. Buddy still assembles the
     data and sends it there.
   - If the provider is outside the EU/EEA, that is a transfer your notice should cover.

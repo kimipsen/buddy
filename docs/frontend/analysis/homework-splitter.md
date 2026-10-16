@@ -78,7 +78,7 @@ set by a guardian through a new Guardians slice, `UpdateChildHomeworkChunks`, wi
 as `UpdateChildVisualTimers`. It is returned on `ChildSummary` (guardian side) and `UserResponse`
 (`GET /users/me`, child side). Focus is 5--45 minutes, break 1--15 minutes.**
 
-```
+```text
 HomeworkChunks(int FocusMinutes, int BreakMinutes)   // Features/Users/Types
     static Default = new(15, 5)
 
@@ -174,11 +174,11 @@ export function planHomework(parts: HomeworkPart[], chunks: HomeworkChunks): Hom
 
 Example with focus 15 / break 5:
 
-| Part | Estimate | Chunks |
-|---|---|---|
-| Maths p. 12 | 40 min | 14 + 13 + 13 |
-| Reading | 20 min | 10 + 10 |
-| Spelling | 10 min | 10 |
+| Part        | Estimate | Chunks       |
+| ----------- | -------- | ------------ |
+| Maths p. 12 | 40 min   | 14 + 13 + 13 |
+| Reading     | 20 min   | 10 + 10      |
+| Spelling    | 10 min   | 10           |
 
 The steps are Maths 1/3, break, Maths 2/3, break, Maths 3/3, break, Reading 1/2, break, Reading
 2/2, break, Spelling 1/1: six focus chunks and five breaks, 70 minutes of work plus 25 minutes
@@ -201,9 +201,9 @@ of breaks.
 ## Question 4: how does a session run?
 
 **Decision: always child-started, step by step. A focus chunk counts down on the big disc. When
-it reaches zero, the child taps *Take a break*. When the break ends, they tap *Back to work*.
-Nothing advances by itself. During a focus chunk the child can tap *Pause*, *Done with this part*
-(skip the rest of the part's chunks) or, when the time is up, *I need more time* (one more
+it reaches zero, the child taps _Take a break_. When the break ends, they tap _Back to work_.
+Nothing advances by itself. During a focus chunk the child can tap _Pause_, _Done with this part_
+(skip the rest of the part's chunks) or, when the time is up, _I need more time_ (one more
 chunk of this part, started at once). A session is finished when the last focus step is done.**
 
 A session is pure state plus pure transitions in `core/homework-session.ts`, next to
@@ -236,10 +236,10 @@ export function homeworkTimerState(session, nowMs): TimerState; // feeds <app-vi
   timer does ([visual-time-left-timer.md, Question 5](visual-time-left-timer.md)). It also means a
   child who walked away doesn't come back to find three chunks "used up".
 - **Time's up isn't failure.** At zero the disc is empty and the page says "Time for a break!",
-  with *Take a break*, *I need more time* and *Done with this part*. No red, no sound, nothing
+  with _Take a break_, _I need more time_ and _Done with this part_. No red, no sound, nothing
   counted against the child, following the "progress never punishes" principle of
   [gamified-progress.md](../../backend/analysis/gamified-progress.md).
-- **A break can be ended early** (*Back to work*), and a break that has run out simply waits.
+- **A break can be ended early** (_Back to work_), and a break that has run out simply waits.
 - **Each break shows one idea** from a fixed, translated list (`homework.breakIdeas`, about eight:
   "Drink some water", "Jump 10 times", "Stretch up high" ...), the next one in turn, chosen by
   the break's position in the session so a reload shows the same idea. Guardians can't edit the
@@ -248,7 +248,7 @@ export function homeworkTimerState(session, nowMs): TimerState; // feeds <app-vi
   then moves on to the break before the next part, or finishes the session if this was the last
   part. Finishing faster than estimated is the best outcome and should feel like it.
 - **`next` starts the step it moves to at the moment of the tap**, so only the very first step
-  waits for *Start*.
+  waits for _Start_.
 - **`addChunk` inserts one more `FocusMinutes` chunk right after the current step and starts it at
   once, with no break in between**, and renumbers the part's "n of m". (The first draft of this doc
   put a break before the extra chunk; while building it, a child who has just said "I need more
@@ -263,21 +263,21 @@ export function homeworkTimerState(session, nowMs): TimerState; // feeds <app-vi
 
 ## Question 5: where does it appear?
 
-**Decision: one new child page, `/child/homework`, with three states: *plan* (enter parts),
-*run* (the focus view for the current step) and *done*. A "Homework" link joins the row of links
+**Decision: one new child page, `/child/homework`, with three states: _plan_ (enter parts),
+_run_ (the focus view for the current step) and _done_. A "Homework" link joins the row of links
 on the child home. There is no guardian page. A guardian helps on the child's screen, and only
 sets the lengths on `manage-children`.**
 
 - **Plan.** A list of parts (title + estimate in a `segmented-control`-style picker of 5-minute
   steps, add/remove a part), then a live preview of the split ("3 chunks · 2 chunks · 1 chunk --
-  about 1 h 35 min with breaks"), using the child's lengths from `GET /users/me`. *Start* begins
+  about 1 h 35 min with breaks"), using the child's lengths from `GET /users/me`. _Start_ begins
   the first focus chunk.
 - **Run.** It is laid out like the existing focus view
   ([`child-focus.html`](../../../src/frontend/buddy/src/app/features/child/focus/child-focus.html)):
   one large disc, the step's title ("Maths p. 12 -- 2 of 3", or "Break"), the next step underneath,
   a slim bar for the whole session, and the buttons from Question 4. The page has no navigation
-  other than *Stop homework* (with a confirm), which clears the session.
-- **Done.** "All done!" with the parts ticked, and a *Back home* link. Opening the page again
+  other than _Stop homework_ (with a confirm), which clears the session.
+- **Done.** "All done!" with the parts ticked, and a _Back home_ link. Opening the page again
   starts a new plan.
 - **The child home** shows "Homework" in the link row. While a session is in progress, it shows a
   slim card instead ("Homework: Maths 2 of 3 -- continue"), so a child who went back home can find
@@ -326,12 +326,12 @@ thrown away. Stopping or finishing a session clears it.**
 
 ## API surface
 
-| Route | Method | Auth | Purpose |
-|---|---|---|---|
-| `/users/me/children/{childId}/homework-chunks` | PATCH | guardian with an active `GuardianLink` (else `404`) | `UpdateChildHomeworkChunks`: body `{ focusMinutes, breakMinutes }`, returns `ChildSummary`; `400` outside the ranges |
-| `/users/me` | GET | any user | `UserResponse` gains `homeworkChunks` |
-| `/users/me/children` | GET | guardian | `ChildSummary` gains `homeworkChunks` |
-| `/features` | GET | anonymous | `InstallationFeatures` gains `homework` |
+| Route                                          | Method | Auth                                                | Purpose                                                                                                              |
+| ---------------------------------------------- | ------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `/users/me/children/{childId}/homework-chunks` | PATCH  | guardian with an active `GuardianLink` (else `404`) | `UpdateChildHomeworkChunks`: body `{ focusMinutes, breakMinutes }`, returns `ChildSummary`; `400` outside the ranges |
+| `/users/me`                                    | GET    | any user                                            | `UserResponse` gains `homeworkChunks`                                                                                |
+| `/users/me/children`                           | GET    | guardian                                            | `ChildSummary` gains `homeworkChunks`                                                                                |
+| `/features`                                    | GET    | anonymous                                           | `InstallationFeatures` gains `homework`                                                                              |
 
 `task docs:openapi` regenerates the contract and `buddy-api.ts`.
 
@@ -369,41 +369,41 @@ thrown away. Stopping or finishing a session clears it.**
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
+| Case                                      | Behavior                                                                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Guardian changes lengths during a session | The running session keeps the lengths it was started with (copied into `HomeworkSession.chunks`); the next session uses the new ones |
-| Estimate shorter than the focus length | One chunk of the estimate's length |
-| Child reloads mid-chunk | The chunk continues from the stored `startedAtMs`; a chunk whose time ran out while closed shows "Time for a break!" |
-| Session from yesterday in storage | Thrown away; the plan state opens |
-| Same child signs in on a second device | That device has no session (accepted, Question 1) |
-| `ShowVisualTimers` off | Steps and buttons, no disc or minutes (Question 6) |
-| `Features:Homework=false` | Page, link and selects hidden; `PATCH` unmapped (`404`); the field stays in responses |
-| PATCH with an unchanged value | `200`, no event, the same idempotence as `UpdateChildVisualTimers` |
-| Guardian's `GuardianLink` revoked | `404` on the PATCH, the "can't tell missing from not yours" collapse |
-| Old snapshot without `HomeworkChunks` | Reads as 15/5 |
+| Estimate shorter than the focus length    | One chunk of the estimate's length                                                                                                   |
+| Child reloads mid-chunk                   | The chunk continues from the stored `startedAtMs`; a chunk whose time ran out while closed shows "Time for a break!"                 |
+| Session from yesterday in storage         | Thrown away; the plan state opens                                                                                                    |
+| Same child signs in on a second device    | That device has no session (accepted, Question 1)                                                                                    |
+| `ShowVisualTimers` off                    | Steps and buttons, no disc or minutes (Question 6)                                                                                   |
+| `Features:Homework=false`                 | Page, link and selects hidden; `PATCH` unmapped (`404`); the field stays in responses                                                |
+| PATCH with an unchanged value             | `200`, no event, the same idempotence as `UpdateChildVisualTimers`                                                                   |
+| Guardian's `GuardianLink` revoked         | `404` on the PATCH, the "can't tell missing from not yours" collapse                                                                 |
+| Old snapshot without `HomeworkChunks`     | Reads as 15/5                                                                                                                        |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Medium -- one event and one slice on the existing `User` stream (five `ChildSummary` call sites), one feature flag, three pure frontend modules, one new three-state child page, two controls on manage-children |
-| Single developer | 4-6 days |
-| AI agent | 3-4 hours, plus about 1 hour of human review |
+|                  |                                                                                                                                                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Medium -- one event and one slice on the existing `User` stream (five `ChildSummary` call sites), one feature flag, three pure frontend modules, one new three-state child page, two controls on manage-children |
+| Single developer | 4-6 days                                                                                                                                                                                                         |
+| AI agent         | 3-4 hours, plus about 1 hour of human review                                                                                                                                                                     |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Who sets up a session | The child on `/child/homework`; a guardian helps on the same screen (user, 2026-10-14) |
-| Where a session lives | The child's browser only, no history (user, 2026-10-14) |
-| Focus/break lengths | Guardian-set per child, `User.HomeworkChunks`, default 15/5, focus 5--45, break 1--15 (user, 2026-10-14) |
-| Stars | None in v1 (user, 2026-10-14) |
-| Splitting | `ceil(estimate / focus)` near-equal chunks per part, larger first, breaks between every two focus chunks |
-| Advancing | Always a tap; nothing auto-advances; time's up is never failure |
-| Early finish / overrun | *Done with this part* drops its remaining chunks; *I need more time* adds one chunk, started at once |
-| Flag | New `Homework` installation flag |
-| Timers switch off | Feature stays, without disc or minutes |
-| Break ideas | A fixed, translated list of short ideas ("Drink some water", "Jump 10 times"); each break shows the next one in turn (user, 2026-10-14) |
+| Question               | Decision                                                                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Who sets up a session  | The child on `/child/homework`; a guardian helps on the same screen (user, 2026-10-14)                                                  |
+| Where a session lives  | The child's browser only, no history (user, 2026-10-14)                                                                                 |
+| Focus/break lengths    | Guardian-set per child, `User.HomeworkChunks`, default 15/5, focus 5--45, break 1--15 (user, 2026-10-14)                                |
+| Stars                  | None in v1 (user, 2026-10-14)                                                                                                           |
+| Splitting              | `ceil(estimate / focus)` near-equal chunks per part, larger first, breaks between every two focus chunks                                |
+| Advancing              | Always a tap; nothing auto-advances; time's up is never failure                                                                         |
+| Early finish / overrun | _Done with this part_ drops its remaining chunks; _I need more time_ adds one chunk, started at once                                    |
+| Flag                   | New `Homework` installation flag                                                                                                        |
+| Timers switch off      | Feature stays, without disc or minutes                                                                                                  |
+| Break ideas            | A fixed, translated list of short ideas ("Drink some water", "Jump 10 times"); each break shows the next one in turn (user, 2026-10-14) |
 
 ## Remaining open questions
 
@@ -411,11 +411,12 @@ thrown away. Stopping or finishing a session clears it.**
   `LongBreakMinutes` to `HomeworkChunks`, which is additive (a new event field defaulting to "off").
 - **Stars for finished homework.** Lean: later, as one star per finished session through
   `RecordStarChange`, with a once-per-day cap, since sessions are child-created and unverified.
-  That needs a small backend endpoint and makes the session's *finish* (not its progress) visible
+  That needs a small backend endpoint and makes the session's _finish_ (not its progress) visible
   to the server.
 - **History for guardians.** Lean: no. If families ask, a `HomeworkLog` aggregate recording
   finished sessions (parts and planned minutes, never per-chunk timing) can be added without
   changing anything here.
+
 ## Diagram
 
 ```mermaid

@@ -178,13 +178,13 @@ imported file is a one-time copy that never updates.
 
 ## API surface
 
-| Route | Method | Auth | Purpose |
-|---|---|---|---|
-| `/mealplans/children/{childId}/slot-times` | `PUT` | Guardian (`CheckManage`) | Set/override one or more slot default times |
-| `/mealplans/children/{childId}/ical-tokens` | `POST` | Guardian (`CheckManage`) | Mint a subscription token; returns the plaintext token once and a ready-to-use `SubscriptionPath` |
-| `/mealplans/children/{childId}/ical-tokens` | `GET` | Guardian (`CheckManage`) | List issued tokens (hash-free) |
-| `/mealplans/children/{childId}/ical-tokens/{tokenId}` | `DELETE` | Guardian (`CheckManage`) | Revoke a token |
-| `/mealplans/{mealPlanId}/ical/{token}` | `GET` | Anonymous, token-in-URL | The `.ics` feed itself |
+| Route                                                 | Method   | Auth                     | Purpose                                                                                           |
+| ----------------------------------------------------- | -------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| `/mealplans/children/{childId}/slot-times`            | `PUT`    | Guardian (`CheckManage`) | Set/override one or more slot default times                                                       |
+| `/mealplans/children/{childId}/ical-tokens`           | `POST`   | Guardian (`CheckManage`) | Mint a subscription token; returns the plaintext token once and a ready-to-use `SubscriptionPath` |
+| `/mealplans/children/{childId}/ical-tokens`           | `GET`    | Guardian (`CheckManage`) | List issued tokens (hash-free)                                                                    |
+| `/mealplans/children/{childId}/ical-tokens/{tokenId}` | `DELETE` | Guardian (`CheckManage`) | Revoke a token                                                                                    |
+| `/mealplans/{mealPlanId}/ical/{token}`                | `GET`    | Anonymous, token-in-URL  | The `.ics` feed itself                                                                            |
 
 No group-keyed sibling route for slot-times or token management — both are plan-wide settings, not
 a per-request action like `AssignMealToSlotForGroup`, so there's nothing for a group-scoped variant
@@ -201,15 +201,15 @@ built-in default rather than being omitted.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Where does a meal's time-of-day come from | A configurable default per `MealSlot`, stored on `MealPlan`, not per-assignment |
-| Does `Snack` need special-casing | No — same configurable-default mechanism as the other three slots |
+| Question                                           | Decision                                                                                                                        |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Where does a meal's time-of-day come from          | A configurable default per `MealSlot`, stored on `MealPlan`, not per-assignment                                                 |
+| Does `Snack` need special-casing                   | No — same configurable-default mechanism as the other three slots                                                               |
 | Shared `IcalToken` type across Calendars/Mealplans | No — duplicated per feature, matching the existing `EmailVerificationToken`/`GroupInviteToken`/`GuardianInviteToken` convention |
-| Feed route keyed by `childId` or `MealPlanId` | `MealPlanId` — the feed is anonymous and has no caller identity to resolve `childId` from |
-| Timezone handling in the feed | Floating local time — no per-family timezone field exists or is being added for this |
-| Feed lookback/lookahead window | 14 days behind / 60 days ahead — narrower than Calendars' 90/365, since meal plans are filled in closer to the day |
-| Event duration | Fixed 30 minutes, not configurable |
+| Feed route keyed by `childId` or `MealPlanId`      | `MealPlanId` — the feed is anonymous and has no caller identity to resolve `childId` from                                       |
+| Timezone handling in the feed                      | Floating local time — no per-family timezone field exists or is being added for this                                            |
+| Feed lookback/lookahead window                     | 14 days behind / 60 days ahead — narrower than Calendars' 90/365, since meal plans are filled in closer to the day              |
+| Event duration                                     | Fixed 30 minutes, not configurable                                                                                              |
 
 ## Open questions
 

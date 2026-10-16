@@ -93,8 +93,8 @@ designs it; nothing in Questions 2-8 depends on it beyond "show no timer when it
 ## Question 2: what drives the countdown -- the schedule, or the child?
 
 **Decision: both, in two modes over the same pure calculation. By default the timer is
-*schedule-anchored* and needs no interaction. The child can tap *Start* on the current subtask to
-switch the run to a *child-started* timer. That timer gives each subtask its full duration from
+_schedule-anchored_ and needs no interaction. The child can tap _Start_ on the current subtask to
+switch the run to a _child-started_ timer. That timer gives each subtask its full duration from
 the moment the child begins, and only that mode can pause and resume.**
 
 The schedule alone isn't enough. Routines rarely start on the minute. If the morning routine is
@@ -106,14 +106,14 @@ who hasn't noticed the routine has started.
 
 So:
 
-| Mode | Anchor | Shown when | Pause |
-|---|---|---|---|
-| Schedule-anchored (default) | the subtask occurrence's own `startsAt`/`endsAt` | always, for the current run (Question 3) | no -- the clock can't be paused |
-| Child-started | the instant the child tapped *Start* (or *Resume*) | after a tap, until the run is complete or the child taps *Stop* | yes |
+| Mode                        | Anchor                                             | Shown when                                                      | Pause                           |
+| --------------------------- | -------------------------------------------------- | --------------------------------------------------------------- | ------------------------------- |
+| Schedule-anchored (default) | the subtask occurrence's own `startsAt`/`endsAt`   | always, for the current run (Question 3)                        | no -- the clock can't be paused |
+| Child-started               | the instant the child tapped _Start_ (or _Resume_) | after a tap, until the run is complete or the child taps _Stop_ | yes                             |
 
 In child-started mode, the current subtask's budget is `endsAt - startsAt` of its occurrence,
 counted from the tap. When the child marks that subtask done, the next incomplete subtask starts
-its own full budget immediately (an auto-chain). They don't have to tap *Start* again on every
+its own full budget immediately (an auto-chain). They don't have to tap _Start_ again on every
 step, which matches how the expansion chains subtasks one after another on the server.
 
 Both modes are one pure function in a new `core/visual-timer.ts`, next to `task-run.ts`:
@@ -163,7 +163,7 @@ Rejected alternatives:
 **Decision: the current run is the earliest run of today that has started (`now >=` its first
 subtask's `startsAt`), still has an incomplete subtask, and whose last subtask ended no more than
 30 minutes ago. If no run qualifies, the next run starting within 15 minutes counts, in the
-`upcoming` phase. The current subtask is the first *incomplete* subtask in run order, not the
+`upcoming` phase. The current subtask is the first _incomplete_ subtask in run order, not the
 subtask whose window contains `now`.**
 
 - Completion drives which subtask is current, not the clock. The checkbox is something the child
@@ -172,14 +172,14 @@ subtask whose window contains `now`.**
   doesn't move (`upcoming`, with "Starts at 07:05"). In child-started mode it starts at once.
 - Falling behind the schedule never skips a step. If 07:12 is inside "Eat breakfast"'s window
   but "Get dressed" isn't ticked, the current subtask is still "Get dressed". Its disc is empty
-  (`timesUp`, Question 5) until the child ticks it or taps *Start* to get a fresh budget.
+  (`timesUp`, Question 5) until the child ticks it or taps _Start_ to get a fresh budget.
 - The 30-minute grace window keeps an unfinished morning routine from staying "current" all day.
   15 minutes of look-ahead lets a child see that the bedtime routine is coming. Both are constants
   in `visual-timer.ts` (`CURRENT_RUN_GRACE_MS`, `CURRENT_RUN_LOOK_AHEAD_MS`). The user settled
   on 2026-10-11 to keep these values.
 - A run the child started a timer for stays current until it is finished, even past the grace
   window, so a timer the child is using never disappears under them (`currentRun(runs, now,
-  anchoredItemId)`).
+anchoredItemId)`).
 - Only template-scheduled runs get a timer. A plain hand-entered task is `OccurrenceTiming.Due`:
   one instant with no duration
   ([`CalendarItemOccurrence.cs`](../../../src/backend/buddy/Features/Calendars/Types/CalendarItemOccurrence.cs)),
@@ -195,7 +195,7 @@ subtask whose window contains `now`.**
 **Decision: in two places. (a) Inline on `/child`: a slim bar for the whole run under the
 current run's header, and a small disc on the current subtask's row. (b) A focus view at
 `/child/focus/:itemId` with one large disc, the current subtask's icon and title, the next step,
-the *Done*/*Start*/*Pause* controls, and nothing else.**
+the _Done_/_Start_/_Pause_ controls, and nothing else.**
 
 - **Inline** adds no new navigation. The child sees the timer where they already tick subtasks
   off ([`home.html:277-322`](../../../src/frontend/buddy/src/app/features/child/home/home.html)).
@@ -205,7 +205,7 @@ the *Done*/*Start*/*Pause* controls, and nothing else.**
   is busy, and it is the opposite of what a child with ADHD needs mid-routine. The focus view is
   the "time timer on the table" version: the disc fills most of a tablet screen, which suits
   families who leave an iPad on the counter
-  ([ipad-installation.md](ipad-installation.md)). A *Focus* button on the current run's header
+  ([ipad-installation.md](ipad-installation.md)). A _Focus_ button on the current run's header
   opens it.
   - It is a real route rather than an overlay inside `ChildHome`. The back button closes it, a
     guardian can bookmark it on the kitchen iPad, and it gets a screenshot like every other page
@@ -221,7 +221,7 @@ the *Done*/*Start*/*Pause* controls, and nothing else.**
     user on 2026-10-11**; Guided Access and the iPad's own Auto-Lock setting cover the dedicated
     device, and the Screen Wake Lock API can come later as progressive enhancement.
 - **Neither place shows anything when the guardian has turned timers off for this child**
-  (Question 9). The inline bar, the disc and the *Start*/*Pause*/*Focus* buttons are not rendered,
+  (Question 9). The inline bar, the disc and the _Start_/_Pause_/_Focus_ buttons are not rendered,
   and the subtask rows look exactly as they do today. `/child/focus/:itemId` redirects to `/child`.
 - **Not on `/child/calendar`.** The agenda is for browsing days, not for doing them
   ([child-calendar-agenda-plan.md](child-calendar-agenda-plan.md)). **Not on guardian screens
@@ -239,9 +239,9 @@ overtime counter. Nothing is completed, skipped or moved forward on the child's 
 - There is no audio anywhere in the app today. A sound would need assets, a settings toggle and
   the browser's autoplay rules (iOS blocks audio that isn't started by a gesture). **No sound in
   v1 was settled by the user on 2026-10-11.** If a chime is added later, it is opt-in and off by
-  default, started from the *Start* tap (so iOS allows it), with one short, gentle sound.
+  default, started from the _Start_ tap (so iOS allows it), with one short, gentle sound.
 - "Not red" follows [visual-specification.md](visual-specification.md): colour is never the only
-  signal, and red means *error* in the rest of Buddy. Running out of time isn't an error.
+  signal, and red means _error_ in the rest of Buddy. Running out of time isn't an error.
 - **No overtime counter** (`+3 min`). Counting how late you are is the punishing streak mechanic
   [gamified-progress.md](../../backend/analysis/gamified-progress.md) deliberately avoids. **Settled
   by the user on 2026-10-11**: the disc empties to grey with "Time's up. Finish when you're ready."
@@ -259,7 +259,7 @@ or a `div` with a width (bar). The remaining time is filled with the run's own c
 slate track. A text label ("4 min left") always sits next to it. Under `prefers-reduced-motion` the
 disc moves in whole-minute steps.**
 
-- **Shape before colour.** The remaining time is readable from the *size of the wedge* and from
+- **Shape before colour.** The remaining time is readable from the _size of the wedge_ and from
   the text. The colour only identifies which run this is. That makes the timer safe for
   colour-blind children, as [visual-specification.md](visual-specification.md) requires ("Color
   never carries meaning alone"). There is no green/amber/red scale, because the most common
@@ -284,7 +284,7 @@ disc moves in whole-minute steps.**
   `path` can't be transitioned portably, unlike the `stroke-dashoffset` first planned here).
   Nothing flashes or pulses in either mode, and that includes `timesUp`.
 - **Text and screen readers.**
-  - The visible label rounds *up* to whole minutes ("4 min left", "Less than a minute left").
+  - The visible label rounds _up_ to whole minutes ("4 min left", "Less than a minute left").
     Children don't need seconds, and a seconds counter adds pressure.
   - The disc's SVG is `aria-hidden`. The label is the accessible name.
   - The wrapper is `role="timer"`, which is not live by default. A separate visually hidden
@@ -294,8 +294,8 @@ disc moves in whole-minute steps.**
     re-created in the next row when a step is ticked and would lose "Next step"; in the focus view
     it is the one big disc.
 - **Sizes.** The inline disc is 28px and sits at the end of the subtask row. It isn't a control, so
-  the 44x44px touch-target rule doesn't apply to it. *Start*, *Pause*, *Resume*, *Stop* and
-  *Focus* are buttons of at least 44x44px with visible emerald focus rings, per
+  the 44x44px touch-target rule doesn't apply to it. _Start_, _Pause_, _Resume_, _Stop_ and
+  _Focus_ are buttons of at least 44x44px with visible emerald focus rings, per
   [visual-specification.md](visual-specification.md). The focus view's disc is
   `min(70vw, 60vh)`, so it fits a phone and an iPad in landscape alike.
 
@@ -312,7 +312,7 @@ or revokes that subtask's star. Finishing within the time earns no bonus.**
   Each subtask already earns its own star
   ([gamified-progress.md](../../backend/analysis/gamified-progress.md), "Revoking a star").
 - **Rejected: a "beat the timer" bonus star.** It needs exactly the backend timing state that
-  Question 1 rejects. The server can't verify it (the browser could lie about when *Start* was
+  Question 1 rejects. The server can't verify it (the browser could lie about when _Start_ was
   tapped). And it rewards speed over doing the routine, which penalises the slowest children, who
   need the support most.
 - Un-ticking a subtask brings it back as the current one (it is the first incomplete again). In
@@ -349,7 +349,7 @@ and [`last-template-storage.ts`](../../../src/frontend/buddy/src/app/features/gu
 - A child bumping the tablet, a token refresh or a trip between `/child` and the focus view
   should keep the timer going. Signals in one component don't survive that. A paused timer has to
   stay paused across navigation too.
-- The precedent says *device conveniences* belong in local storage: the AI meal filter is "a
+- The precedent says _device conveniences_ belong in local storage: the AI meal filter is "a
   convenience, not configuration ... so it isn't synced", and the theme mode is kept the same way
   ([`theme.service.ts`](../../../src/frontend/buddy/src/app/core/theme.service.ts)). A running
   timer is that kind of state.
@@ -361,7 +361,7 @@ and [`last-template-storage.ts`](../../../src/frontend/buddy/src/app/features/gu
   schedule-anchored timer on the phone. That is fine, and Question 1 explains why syncing it
   would cost more than it gives.
 - When timers are off for the child (Question 9), the stored anchor is cleared and never read, so
-  turning timers back on later starts from schedule mode rather than a stale *Start*.
+  turning timers back on later starts from schedule mode rather than a stale _Start_.
 
 ## Question 9: can a guardian turn timers off for a child?
 
@@ -385,7 +385,7 @@ for decision:
   slice goes in `Features/Guardians/UpdateChildVisualTimers/`, next to `UpdateChildLanguage` and
   `UpdateChildTimeZone`, because all guardian-acts-on-a-child authorization lives there.
 - **Default: on.** Every existing user and every new child starts with timers shown, so the
-  feature is visible without setup. Guardians opt a child *out*.
+  feature is visible without setup. Guardians opt a child _out_.
 - **Not on `TaskTemplate` or `CalendarItem`.** The need comes from the child, not from one routine.
   A per-template switch would make the guardian repeat the choice for every routine, and a new
   routine would still show a timer to a child who can't cope with one. Considered and rejected.
@@ -400,7 +400,7 @@ for decision:
 A new event, following the `Before`/`After` shape of `LanguageUpdated`
 ([`UserEvents.cs`](../../../src/backend/buddy/Features/Users/Types/UserEvents.cs)):
 
-```
+```text
 ShowVisualTimersUpdated(UserId UserId, bool Before, bool After, DateTimeOffset OccurredAt)
     // appended to the child's own User stream by UpdateChildVisualTimersHandler;
     // no event when the value doesn't change (idempotent no-op, like UpdateChildLanguage)
@@ -474,7 +474,7 @@ There is no `Validator.cs`: a boolean has no invalid value. A missing body, a mi
 renders it as the usual `ErrorEnvelope` 400 (`RespectRequiredConstructorParameters` and
 `RespectNullableAnnotations` in `Program.cs`).
 
-```
+```text
 PATCH /users/me/children/{childId:guid}/visual-timers   UpdateChildVisualTimers
       body { "showVisualTimers": false }
       200 ChildSummary | 400 ErrorEnvelope (unbindable body) | 401 | 404 (no active link, or child deleted)
@@ -549,40 +549,40 @@ once. A second, device-local switch would let the two disagree silently.
 
 Only the per-child switch from Question 9. Code paths are under `src/backend/buddy/Features/`; the last two rows are docs.
 
-| File | Change |
-|---|---|
-| `Users/Types/UserEvents.cs` | **New case** `ShowVisualTimersUpdated(UserId, bool Before, bool After, DateTimeOffset OccurredAt)` in the `UserEvent` union, `FromPayload` and `EventType` |
-| `Users/Types/User.cs` | `bool ShowVisualTimers = true` parameter; one `Advance` arm |
-| `Users/Types/UserSnapshotProjection.cs` | `Apply(UserSnapshot, ShowVisualTimersUpdated)` |
-| `Users/UsersFeature.cs` | Register the event type in `EventTypes` |
-| `Users/GetCurrentUser/GetCurrentUser.Endpoint.cs` | `UserResponse` gains `ShowVisualTimers` (also reaches the GDPR "account" export) |
-| `Guardians/UpdateChildVisualTimers/UpdateChildVisualTimers.{Command,Endpoint,Handler}.cs` | **New slice**: `PATCH /users/me/children/{childId:guid}/visual-timers`, 200/400/401/404 |
-| `Guardians/GuardiansFeature.cs` | `children.MapUpdateChildVisualTimers()` |
-| `Guardians/ListMyChildren/ListMyChildren.Handler.cs` | `ChildSummary` gains `ShowVisualTimers`; the three constructor call sites pass it |
-| `Users/Users.http` | The new `PATCH` request |
-| `docs/backend/openapi/buddy.json` | Regenerated by `task docs:openapi` |
-| `docs/backend/guardians/flow.md` | The new route next to the language and time zone ones |
+| File                                                                                      | Change                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Users/Types/UserEvents.cs`                                                               | **New case** `ShowVisualTimersUpdated(UserId, bool Before, bool After, DateTimeOffset OccurredAt)` in the `UserEvent` union, `FromPayload` and `EventType` |
+| `Users/Types/User.cs`                                                                     | `bool ShowVisualTimers = true` parameter; one `Advance` arm                                                                                                |
+| `Users/Types/UserSnapshotProjection.cs`                                                   | `Apply(UserSnapshot, ShowVisualTimersUpdated)`                                                                                                             |
+| `Users/UsersFeature.cs`                                                                   | Register the event type in `EventTypes`                                                                                                                    |
+| `Users/GetCurrentUser/GetCurrentUser.Endpoint.cs`                                         | `UserResponse` gains `ShowVisualTimers` (also reaches the GDPR "account" export)                                                                           |
+| `Guardians/UpdateChildVisualTimers/UpdateChildVisualTimers.{Command,Endpoint,Handler}.cs` | **New slice**: `PATCH /users/me/children/{childId:guid}/visual-timers`, 200/400/401/404                                                                    |
+| `Guardians/GuardiansFeature.cs`                                                           | `children.MapUpdateChildVisualTimers()`                                                                                                                    |
+| `Guardians/ListMyChildren/ListMyChildren.Handler.cs`                                      | `ChildSummary` gains `ShowVisualTimers`; the three constructor call sites pass it                                                                          |
+| `Users/Users.http`                                                                        | The new `PATCH` request                                                                                                                                    |
+| `docs/backend/openapi/buddy.json`                                                         | Regenerated by `task docs:openapi`                                                                                                                         |
+| `docs/backend/guardians/flow.md`                                                          | The new route next to the language and time zone ones                                                                                                      |
 
 ## Frontend plan
 
-| File | Change |
-|---|---|
-| `core/api/buddy-api.ts` | Regenerated: `UserResponse.showVisualTimers`, `ChildSummary.showVisualTimers` |
-| `core/guardians.service.ts` + spec | `updateChildVisualTimers(childId, show)` → `PATCH .../visual-timers`, like `updateChildLanguage` |
-| `features/guardian/admin/manage-children/manage-children.{ts,html}` + spec | Per-child "Show time-left timers" checkbox with saving/error signals (Question 9) |
-| `features/child/visual-timers.guard.ts` + spec | **New.** Resolves `ensureCurrentUser()`; `showVisualTimers === false` ⇒ `UrlTree` to `/child` |
-| `core/visual-timer.ts` + spec | **New.** `TimerAnchor`, `TimerState`, `timerState()`, `currentRun(runs, nowMs)`, the grace and look-ahead constants. Pure functions only. |
-| `core/child-timer-storage.ts` + spec | **New.** `readTimerAnchor(date)` (returns `{ itemId, anchor }`), `writeTimerAnchor(itemId, date, anchor)`, `clearTimerAnchor()`, guarded like `ai-meal-filter-storage.ts`. |
-| `core/child-timer.service.ts` + spec | **New.** Root service over the storage helper: `stored` signal, `anchorFor(itemId)`, `start`, `pause`, `resume`, `afterCompletionChange(run)`, `stop`. Shared by the home page and the focus view. |
-| `core/child-task-completion.ts` + spec | **New.** The completion helper from Question 7. |
-| `shared/visual-timer/visual-timer.{ts,html}` + spec | **New.** Presentational. Inputs `state: TimerState`, `color`, `variant: 'disc' \| 'bar'`, `size` (a CSS length), `large` (the focus view), `title` (the bar's label) and `announce` (whether it owns the live region). Owns the one-second tick (only while running), `role="timer"`, the live region and the reduced-motion handling. |
-| `features/child/home/home.{ts,html}` + spec | Compute `currentRun`/`timerState` from `groupedTasks()`. Render the bar under the current run's header and the disc on its current subtask. Add *Start*/*Pause*/*Focus* buttons. `toggleTask` delegates to the helper. Render none of it, and clear the stored anchor, when the current user's `showVisualTimers` is `false`. |
-| `features/child/focus/child-focus.{ts,html}` + spec | **New page** `ChildFocus`: a large disc, current and next subtask, controls, an "All done" card, a back link. Only reachable when timers are on (the guard). |
-| `features/child/child.routes.ts` | `{ path: 'focus/:itemId', component: ChildFocus, canActivate: [featureGuard('taskLibrary'), visualTimersGuard] }`, the same guard style as `rewards`/`rules` ([`child.routes.ts`](../../../src/frontend/buddy/src/app/features/child/child.routes.ts)). No new feature flag: without the task library there are no template runs. |
-| `core/i18n/translations/{en,da}/child.ts`, `{en,da}/admin.ts` | `child.home.timer.*`, `child.focus.*` and `admin.manageChildren.visualTimers.*` (below). |
-| `screenshots/pages.ts`, `screenshots/capture.spec.ts` | A `child-focus` page entry. The capture runner gets an optional fixed clock (`clock: '07:10'`, applied with `page.clock.setFixedTime`, the API family that [`session-expiry.spec.ts`](../../../src/frontend/buddy/e2e/session-expiry.spec.ts) already uses), so `child-home` and `child-focus` show the morning routine mid-way instead of whatever the time is when the screenshots run. It is only applied once 07:10 has passed in the demo time zone: a browser clock ahead of real time would make the 5-minute access token look expired. `demo-family.ts` seeds that routine at 07:00 daily (`Get dressed` 5 min, `Eat breakfast` 15, `Brush teeth` 3, `Pack school bag` 5) and now ticks only `Get dressed` today, so the timer sits on `Eat breakfast`. |
-| `screenshots/pages.ts` (`/guardian/admin`) | No new entry, but the admin screenshot changes because `manage-children` gains the checkbox; rerun `task docs:screenshots`. The demo children keep the default (on) |
-| `e2e/visual-timer.spec.ts` | **New.** Fixed clock inside a run. The disc and "min left" are visible. Tick the current subtask and the timer moves to the next. *Start* → *Pause* → reload → still paused. A guardian unticks "Show time-left timers" on `/guardian/admin`; the child, after a reload, sees no timer and `/child/focus/:itemId` lands on `/child`. |
+| File                                                                       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/api/buddy-api.ts`                                                    | Regenerated: `UserResponse.showVisualTimers`, `ChildSummary.showVisualTimers`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `core/guardians.service.ts` + spec                                         | `updateChildVisualTimers(childId, show)` → `PATCH .../visual-timers`, like `updateChildLanguage`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `features/guardian/admin/manage-children/manage-children.{ts,html}` + spec | Per-child "Show time-left timers" checkbox with saving/error signals (Question 9)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `features/child/visual-timers.guard.ts` + spec                             | **New.** Resolves `ensureCurrentUser()`; `showVisualTimers === false` ⇒ `UrlTree` to `/child`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `core/visual-timer.ts` + spec                                              | **New.** `TimerAnchor`, `TimerState`, `timerState()`, `currentRun(runs, nowMs)`, the grace and look-ahead constants. Pure functions only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `core/child-timer-storage.ts` + spec                                       | **New.** `readTimerAnchor(date)` (returns `{ itemId, anchor }`), `writeTimerAnchor(itemId, date, anchor)`, `clearTimerAnchor()`, guarded like `ai-meal-filter-storage.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `core/child-timer.service.ts` + spec                                       | **New.** Root service over the storage helper: `stored` signal, `anchorFor(itemId)`, `start`, `pause`, `resume`, `afterCompletionChange(run)`, `stop`. Shared by the home page and the focus view.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `core/child-task-completion.ts` + spec                                     | **New.** The completion helper from Question 7.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `shared/visual-timer/visual-timer.{ts,html}` + spec                        | **New.** Presentational. Inputs `state: TimerState`, `color`, `variant: 'disc' \| 'bar'`, `size` (a CSS length), `large` (the focus view), `title` (the bar's label) and `announce` (whether it owns the live region). Owns the one-second tick (only while running), `role="timer"`, the live region and the reduced-motion handling.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `features/child/home/home.{ts,html}` + spec                                | Compute `currentRun`/`timerState` from `groupedTasks()`. Render the bar under the current run's header and the disc on its current subtask. Add _Start_/_Pause_/_Focus_ buttons. `toggleTask` delegates to the helper. Render none of it, and clear the stored anchor, when the current user's `showVisualTimers` is `false`.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `features/child/focus/child-focus.{ts,html}` + spec                        | **New page** `ChildFocus`: a large disc, current and next subtask, controls, an "All done" card, a back link. Only reachable when timers are on (the guard).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `features/child/child.routes.ts`                                           | `{ path: 'focus/:itemId', component: ChildFocus, canActivate: [featureGuard('taskLibrary'), visualTimersGuard] }`, the same guard style as `rewards`/`rules` ([`child.routes.ts`](../../../src/frontend/buddy/src/app/features/child/child.routes.ts)). No new feature flag: without the task library there are no template runs.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `core/i18n/translations/{en,da}/child.ts`, `{en,da}/admin.ts`              | `child.home.timer.*`, `child.focus.*` and `admin.manageChildren.visualTimers.*` (below).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `screenshots/pages.ts`, `screenshots/capture.spec.ts`                      | A `child-focus` page entry. The capture runner gets an optional fixed clock (`clock: '07:10'`, applied with `page.clock.setFixedTime`, the API family that [`session-expiry.spec.ts`](../../../src/frontend/buddy/e2e/session-expiry.spec.ts) already uses), so `child-home` and `child-focus` show the morning routine mid-way instead of whatever the time is when the screenshots run. It is only applied once 07:10 has passed in the demo time zone: a browser clock ahead of real time would make the 5-minute access token look expired. `demo-family.ts` seeds that routine at 07:00 daily (`Get dressed` 5 min, `Eat breakfast` 15, `Brush teeth` 3, `Pack school bag` 5) and now ticks only `Get dressed` today, so the timer sits on `Eat breakfast`. |
+| `screenshots/pages.ts` (`/guardian/admin`)                                 | No new entry, but the admin screenshot changes because `manage-children` gains the checkbox; rerun `task docs:screenshots`. The demo children keep the default (on)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `e2e/visual-timer.spec.ts`                                                 | **New.** Fixed clock inside a run. The disc and "min left" are visible. Tick the current subtask and the timer moves to the next. _Start_ → _Pause_ → reload → still paused. A guardian unticks "Show time-left timers" on `/guardian/admin`; the child, after a reload, sees no timer and `/child/focus/:itemId` lands on `/child`.                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 The backend part is the one slice in the Backend plan, followed by a `task docs:openapi` run.
 
@@ -590,25 +590,25 @@ The backend part is the one slice in the Backend plan, followed by a `task docs:
 
 Danish alongside English, checked with `node .claude/skills/i18n/check-parity.mjs`:
 
-| Key | en | da |
-|---|---|---|
-| `child.home.timer.minutesLeft` | `{count} min left` | `{count} min tilbage` |
-| `child.home.timer.underAMinute` | `Less than a minute left` | `Under et minut tilbage` |
-| `child.home.timer.runLeft` | `{count} min left of {title}` | `{count} min tilbage af {title}` |
-| `child.home.timer.startsAt` | `Starts at {time}` | `Starter kl. {time}` |
-| `child.home.timer.timesUp` | `Time's up. Finish when you're ready.` | `Tiden er gået. Gør det færdigt i dit eget tempo.` |
-| `child.home.timer.paused` | `Paused` | `På pause` |
-| `child.home.timer.start` / `pause` / `resume` / `stop` | `Start` / `Pause` / `Keep going` / `Stop timer` | `Start` / `Pause` / `Fortsæt` / `Stop uret` |
-| `child.home.timer.focus` | `Focus` | `Fokus` |
-| `child.focus.title` | `One step at a time` | `Et trin ad gangen` |
-| `child.focus.next` | `Next: {title}` | `Bagefter: {title}` |
-| `child.focus.done` | `I'm done` | `Jeg er færdig` |
-| `child.focus.allDone` | `All done! Great job.` | `Færdig! Godt gået.` |
-| `child.focus.back` | `Back to today` | `Tilbage til i dag` |
-| `child.home.timer.announce.*` | live-region phrasing for started / paused / time's up / next step | same |
-| `admin.manageChildren.visualTimers.label` | `Show time-left timers` | `Vis nedtællingsure` |
-| `admin.manageChildren.visualTimers.hint` | `A shrinking disc shows how long is left of each step in a routine.` | `En skive, der bliver mindre, viser hvor lang tid der er tilbage af hvert trin i en rutine.` |
-| `admin.manageChildren.visualTimers.error` | `Unable to update this child's timer setting.` | `Kunne ikke opdatere barnets indstilling for nedtællingsure.` |
+| Key                                                    | en                                                                   | da                                                                                           |
+| ------------------------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `child.home.timer.minutesLeft`                         | `{count} min left`                                                   | `{count} min tilbage`                                                                        |
+| `child.home.timer.underAMinute`                        | `Less than a minute left`                                            | `Under et minut tilbage`                                                                     |
+| `child.home.timer.runLeft`                             | `{count} min left of {title}`                                        | `{count} min tilbage af {title}`                                                             |
+| `child.home.timer.startsAt`                            | `Starts at {time}`                                                   | `Starter kl. {time}`                                                                         |
+| `child.home.timer.timesUp`                             | `Time's up. Finish when you're ready.`                               | `Tiden er gået. Gør det færdigt i dit eget tempo.`                                           |
+| `child.home.timer.paused`                              | `Paused`                                                             | `På pause`                                                                                   |
+| `child.home.timer.start` / `pause` / `resume` / `stop` | `Start` / `Pause` / `Keep going` / `Stop timer`                      | `Start` / `Pause` / `Fortsæt` / `Stop uret`                                                  |
+| `child.home.timer.focus`                               | `Focus`                                                              | `Fokus`                                                                                      |
+| `child.focus.title`                                    | `One step at a time`                                                 | `Et trin ad gangen`                                                                          |
+| `child.focus.next`                                     | `Next: {title}`                                                      | `Bagefter: {title}`                                                                          |
+| `child.focus.done`                                     | `I'm done`                                                           | `Jeg er færdig`                                                                              |
+| `child.focus.allDone`                                  | `All done! Great job.`                                               | `Færdig! Godt gået.`                                                                         |
+| `child.focus.back`                                     | `Back to today`                                                      | `Tilbage til i dag`                                                                          |
+| `child.home.timer.announce.*`                          | live-region phrasing for started / paused / time's up / next step    | same                                                                                         |
+| `admin.manageChildren.visualTimers.label`              | `Show time-left timers`                                              | `Vis nedtællingsure`                                                                         |
+| `admin.manageChildren.visualTimers.hint`               | `A shrinking disc shows how long is left of each step in a routine.` | `En skive, der bliver mindre, viser hvor lang tid der er tilbage af hvert trin i en rutine.` |
+| `admin.manageChildren.visualTimers.error`              | `Unable to update this child's timer setting.`                       | `Kunne ikke opdatere barnets indstilling for nedtællingsure.`                                |
 
 The translation files have no plural forms (they use flat `{count}` strings, as in
 `progress.ts`), so "min" is used for both singular and plural.
@@ -665,57 +665,57 @@ Frontend:
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Child opens `/child` after the routine's scheduled end | Current for 30 more minutes, shown as time's up on the first unticked subtask. *Start* gives a fresh budget. After that it is no longer current, and the rows look as they do today |
-| Child finishes a subtask before its window opens | Schedule mode: the next subtask shows `upcoming` with a full disc and "Starts at ...". Child-started mode: it starts at once |
-| All subtasks ticked | `done`: the timer disappears from `/child`, and the focus view shows "All done" |
-| Guardian edits the template mid-routine | The next load of today's occurrences reflects it (the backend re-expands from the current template, [task-library flow](../../backend/task-library/flow.md#core-lifecycle)). A stored anchor whose `subtaskKey` no longer exists falls back to schedule mode |
-| Guardian deletes or reschedules the item while the focus view is open | The next load no longer has the run, so the page shows "All done" with a link back. No error |
-| Subtask window crosses a DST change | The budget is `endsAt - startsAt` in real time, so a 60-minute step across spring-forward shows 0 or 120 minutes. This only affects routines scheduled at night during a DST change. Accepted for v1 by the user (2026-10-11) |
-| Child taps Pause just after the step's time ran out | Both pages also recalculate at the step's `deadlineMs`, so Pause disappears when the disc empties; an anchor paused after its budget is used up still reads as time's up, not paused |
-| App left open past midnight with a started timer | `ChildTimerService` checks the stored date on every read, so yesterday's timer (recurring routines reuse their `itemId`) is ignored the next morning |
-| Tab in the background or device asleep | Timer state is always recomputed from `Date.now()` and the anchor, never from ticks counted, so the disc is correct as soon as the page wakes up |
-| Device clock is wrong | The disc is wrong by the same amount. The schedule-anchored timer has no way around that, and the event fill has the same limitation today |
-| `localStorage` unavailable | Child-started mode works until the page reloads. After the reload the timer goes back to schedule mode |
-| `taskLibrary` feature off | No template runs, so no timer. `/child/focus/*` is blocked by `featureGuard` |
-| Guardian turns timers off while the child's app is open | The child keeps seeing the timer until the next reload or sign-in (`ensureCurrentUser()` caches the user), the same as a language change today. Then it disappears and the stored anchor is cleared |
-| Guardian turns timers off while the child is on `/child/focus/:itemId` | The page stays until the next navigation or reload; then `visualTimersGuard` sends the child to `/child` |
-| Two guardians disagree | Last write wins; both `ShowVisualTimersUpdated` events stay in the child's stream |
-| Guardian sets the value the child already has | `200` with the summary, no event (idempotent, like `UpdateChildLanguage`) |
-| Guardian's `GuardianLink` is revoked, or the child is deleted | `404` from the `PATCH`, the same collapse as the other child settings |
-| Snapshot row written before this change | No `showVisualTimers` property; System.Text.Json uses the parameter default, so it reads as `true` without a rebuild |
-| Child bookmarks `/child/focus/:itemId` with timers off | The guard redirects to `/child` |
-| Two children on one shared iPad | Each child signs in separately. The anchor key includes `itemId`, and one child's items aren't in another child's list, so a stale anchor is ignored |
+| Case                                                                   | Behavior                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Child opens `/child` after the routine's scheduled end                 | Current for 30 more minutes, shown as time's up on the first unticked subtask. _Start_ gives a fresh budget. After that it is no longer current, and the rows look as they do today                                                                          |
+| Child finishes a subtask before its window opens                       | Schedule mode: the next subtask shows `upcoming` with a full disc and "Starts at ...". Child-started mode: it starts at once                                                                                                                                 |
+| All subtasks ticked                                                    | `done`: the timer disappears from `/child`, and the focus view shows "All done"                                                                                                                                                                              |
+| Guardian edits the template mid-routine                                | The next load of today's occurrences reflects it (the backend re-expands from the current template, [task-library flow](../../backend/task-library/flow.md#core-lifecycle)). A stored anchor whose `subtaskKey` no longer exists falls back to schedule mode |
+| Guardian deletes or reschedules the item while the focus view is open  | The next load no longer has the run, so the page shows "All done" with a link back. No error                                                                                                                                                                 |
+| Subtask window crosses a DST change                                    | The budget is `endsAt - startsAt` in real time, so a 60-minute step across spring-forward shows 0 or 120 minutes. This only affects routines scheduled at night during a DST change. Accepted for v1 by the user (2026-10-11)                                |
+| Child taps Pause just after the step's time ran out                    | Both pages also recalculate at the step's `deadlineMs`, so Pause disappears when the disc empties; an anchor paused after its budget is used up still reads as time's up, not paused                                                                         |
+| App left open past midnight with a started timer                       | `ChildTimerService` checks the stored date on every read, so yesterday's timer (recurring routines reuse their `itemId`) is ignored the next morning                                                                                                         |
+| Tab in the background or device asleep                                 | Timer state is always recomputed from `Date.now()` and the anchor, never from ticks counted, so the disc is correct as soon as the page wakes up                                                                                                             |
+| Device clock is wrong                                                  | The disc is wrong by the same amount. The schedule-anchored timer has no way around that, and the event fill has the same limitation today                                                                                                                   |
+| `localStorage` unavailable                                             | Child-started mode works until the page reloads. After the reload the timer goes back to schedule mode                                                                                                                                                       |
+| `taskLibrary` feature off                                              | No template runs, so no timer. `/child/focus/*` is blocked by `featureGuard`                                                                                                                                                                                 |
+| Guardian turns timers off while the child's app is open                | The child keeps seeing the timer until the next reload or sign-in (`ensureCurrentUser()` caches the user), the same as a language change today. Then it disappears and the stored anchor is cleared                                                          |
+| Guardian turns timers off while the child is on `/child/focus/:itemId` | The page stays until the next navigation or reload; then `visualTimersGuard` sends the child to `/child`                                                                                                                                                     |
+| Two guardians disagree                                                 | Last write wins; both `ShowVisualTimersUpdated` events stay in the child's stream                                                                                                                                                                            |
+| Guardian sets the value the child already has                          | `200` with the summary, no event (idempotent, like `UpdateChildLanguage`)                                                                                                                                                                                    |
+| Guardian's `GuardianLink` is revoked, or the child is deleted          | `404` from the `PATCH`, the same collapse as the other child settings                                                                                                                                                                                        |
+| Snapshot row written before this change                                | No `showVisualTimers` property; System.Text.Json uses the parameter default, so it reads as `true` without a rebuild                                                                                                                                         |
+| Child bookmarks `/child/focus/:itemId` with timers off                 | The guard redirects to `/child`                                                                                                                                                                                                                              |
+| Two children on one shared iPad                                        | Each child signs in separately. The anchor key includes `itemId`, and one child's items aren't in another child's list, so a stale anchor is ignored                                                                                                         |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Medium -- mostly frontend: one pure timer module, one storage helper, one shared SVG component (the first reduced-motion handling in the app), one new child page, route and guard, a small extraction from `ChildHome.toggleTask`, about 18 en+da keys, a fixed clock in the screenshot runner and one e2e spec. The backend part is small and follows an existing template exactly: one new event on `User`, one new field with a default, one Guardians slice (`PATCH .../visual-timers`), two response DTOs gaining a field, a contract regeneration and about 10 integration tests |
-| Single developer | 4-6 days (about 1 day of it for the backend switch, its tests and the `manage-children` checkbox) |
-| AI agent | 3-5 hours, plus about 1.5-2 hours of human review (look at the disc in light and dark mode, with reduced motion, and on a real iPad; try the switch as a guardian and as the child) and settling the remaining open questions |
+|                  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Medium -- mostly frontend: one pure timer module, one storage helper, one shared SVG component (the first reduced-motion handling in the app), one new child page, route and guard, a small extraction from `ChildHome.toggleTask`, about 18 en+da keys, a fixed clock in the screenshot runner and one e2e spec. The backend part is small and follows an existing template exactly: one new event on `User`, one new field with a default, one Guardians slice (`PATCH .../visual-timers`), two response DTOs gaining a field, a contract regeneration and about 10 integration tests |
+| Single developer | 4-6 days (about 1 day of it for the backend switch, its tests and the `manage-children` checkbox)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| AI agent         | 3-5 hours, plus about 1.5-2 hours of human review (look at the disc in light and dark mode, with reduced motion, and on a real iPad; try the switch as a guardian and as the child) and settling the remaining open questions                                                                                                                                                                                                                                                                                                                                                           |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Backend state | None for the timer or its progress. Subtask windows are already `Timed` occurrences, and persisting timer behaviour would add tracking with no reader. The only backend change is the per-child switch below |
-| What drives it | Schedule-anchored by default, child-started on *Start*, with pause and resume only when child-started |
-| Current task/subtask | The earliest started, unfinished run within a 30-minute grace window (15-minute look-ahead). The current subtask is the first incomplete one, not the one whose clock window contains now |
-| Where | Inline bar and disc on `/child` for the current run only, plus a `/child/focus/:itemId` page |
-| Time runs out | The disc empties to neutral with a calm line. No vibration, red, overtime or auto-complete |
-| Sound | No sound in v1; a later chime would be opt-in and off by default, started from the *Start* tap -- settled by the user 2026-10-11 |
-| Look and accessibility | Shape plus text, never colour alone. Run colour on a slate track with an outline. Dark-mode track. Minute steps under reduced motion. Live region on phase changes only |
-| Stars | Unchanged. The timer never writes completion, and there is no speed bonus |
-| Reload survival | `localStorage` anchor per device, dropped on a date change, not synced. Cleared when timers are off |
+| Question                                   | Decision                                                                                                                                                                                                                                                                                |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend state                              | None for the timer or its progress. Subtask windows are already `Timed` occurrences, and persisting timer behaviour would add tracking with no reader. The only backend change is the per-child switch below                                                                            |
+| What drives it                             | Schedule-anchored by default, child-started on _Start_, with pause and resume only when child-started                                                                                                                                                                                   |
+| Current task/subtask                       | The earliest started, unfinished run within a 30-minute grace window (15-minute look-ahead). The current subtask is the first incomplete one, not the one whose clock window contains now                                                                                               |
+| Where                                      | Inline bar and disc on `/child` for the current run only, plus a `/child/focus/:itemId` page                                                                                                                                                                                            |
+| Time runs out                              | The disc empties to neutral with a calm line. No vibration, red, overtime or auto-complete                                                                                                                                                                                              |
+| Sound                                      | No sound in v1; a later chime would be opt-in and off by default, started from the _Start_ tap -- settled by the user 2026-10-11                                                                                                                                                        |
+| Look and accessibility                     | Shape plus text, never colour alone. Run colour on a slate track with an outline. Dark-mode track. Minute steps under reduced motion. Live region on phase changes only                                                                                                                 |
+| Stars                                      | Unchanged. The timer never writes completion, and there is no speed bonus                                                                                                                                                                                                               |
+| Reload survival                            | `localStorage` anchor per device, dropped on a date change, not synced. Cleared when timers are off                                                                                                                                                                                     |
 | Can a guardian turn timers off for a child | Yes, per child, in v1: `User.ShowVisualTimers` (default on), `ShowVisualTimersUpdated` event, `PATCH /users/me/children/{childId}/visual-timers` by any active guardian, read via `GET /users/me` and `ChildSummary`, a checkbox on `manage-children` -- settled by the user 2026-10-11 |
-| Child-side "hide timers" toggle | No; the guardian setting covers it -- settled by the user 2026-10-11 |
-| Overtime display | None: the disc empties to grey with "Time's up. Finish when you're ready." -- settled by the user 2026-10-11 |
-| Grace and look-ahead | Keep 30 minutes of grace and 15 minutes of look-ahead as constants in `visual-timer.ts` -- settled by the user 2026-10-11 |
-| Fullscreen and wake lock | Not in v1; Guided Access and Auto-Lock cover the kitchen iPad -- settled by the user 2026-10-11 |
-| DST-crossing subtask budgets | Accept the rare wrong budget; no `duration` on `Routine` -- settled by the user 2026-10-11 |
-| Run bar and subtask disc on `/child` | Both, checked at phone width -- settled by the user 2026-10-11 |
+| Child-side "hide timers" toggle            | No; the guardian setting covers it -- settled by the user 2026-10-11                                                                                                                                                                                                                    |
+| Overtime display                           | None: the disc empties to grey with "Time's up. Finish when you're ready." -- settled by the user 2026-10-11                                                                                                                                                                            |
+| Grace and look-ahead                       | Keep 30 minutes of grace and 15 minutes of look-ahead as constants in `visual-timer.ts` -- settled by the user 2026-10-11                                                                                                                                                               |
+| Fullscreen and wake lock                   | Not in v1; Guided Access and Auto-Lock cover the kitchen iPad -- settled by the user 2026-10-11                                                                                                                                                                                         |
+| DST-crossing subtask budgets               | Accept the rare wrong budget; no `duration` on `Routine` -- settled by the user 2026-10-11                                                                                                                                                                                              |
+| Run bar and subtask disc on `/child`       | Both, checked at phone width -- settled by the user 2026-10-11                                                                                                                                                                                                                          |
 
 ## Remaining open questions
 

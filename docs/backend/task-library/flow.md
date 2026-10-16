@@ -61,23 +61,23 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `POST` | `/task-templates/children/{childId}` | Creates a template owned by the child: a `Routine` (default) or a `Checklist` (packing list), optionally with `eveningBeforeFrom`. |
-| `GET` | `/task-templates/children/{childId}` | Lists the child's own templates by name, including archived templates and their subtasks. |
-| `PATCH` | `/task-templates/{templateId}` | Updates a template's name, icon, and color. |
-| `DELETE` | `/task-templates/{templateId}` | Archives a template and blocks new scheduling. |
-| `POST` | `/task-templates/{templateId}/subtasks` | Adds a timed subtask, optionally at a requested position. |
-| `PATCH` | `/task-templates/{templateId}/subtasks/{subtaskId}` | Updates a subtask's title, optional icon, and duration. |
-| `DELETE` | `/task-templates/{templateId}/subtasks/{subtaskId}` | Removes a subtask. |
-| `PUT` | `/task-templates/{templateId}/subtasks/order` | Reorders subtasks; the new order must contain each current subtask ID exactly once. |
-| `PUT` | `/task-templates/{templateId}/checklist-options` | Sets a packing list's "show the evening before from" time (or null); `400` on a routine. |
-| `POST` | `/task-templates/{templateId}/copy` | Copies a template (kind, options, items with fresh ids) into another child's library; Manage on both children. Schedules, ticks and suggestions are not copied. |
-| `POST` | `/task-templates/{templateId}/suggestions` | The owning child suggests an item for their packing list (`409 too_many_pending_suggestions` past five pending, `409 checklist_item_exists` for an item already on the list; a pending duplicate is an idempotent `200`). |
-| `POST` | `/task-templates/{templateId}/suggestions/{suggestionId}/withdraw` | The owning child takes back a pending suggestion. |
-| `POST` | `/task-templates/{templateId}/suggestions/{suggestionId}/approve` | A guardian approves with a final title and weekdays; adds a zero-duration item. |
-| `POST` | `/task-templates/{templateId}/suggestions/{suggestionId}/decline` | A guardian declines. A repeated resolution is `200`; a different one `409 suggestion_resolved`. |
-| `POST` | `/calendars/{calendarId}/items/from-template` | Schedules a non-empty, active template owned by the assignee as a specific-time calendar task. |
+| Method   | Route                                                              | Behavior                                                                                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/task-templates/children/{childId}`                               | Creates a template owned by the child: a `Routine` (default) or a `Checklist` (packing list), optionally with `eveningBeforeFrom`.                                                                                        |
+| `GET`    | `/task-templates/children/{childId}`                               | Lists the child's own templates by name, including archived templates and their subtasks.                                                                                                                                 |
+| `PATCH`  | `/task-templates/{templateId}`                                     | Updates a template's name, icon, and color.                                                                                                                                                                               |
+| `DELETE` | `/task-templates/{templateId}`                                     | Archives a template and blocks new scheduling.                                                                                                                                                                            |
+| `POST`   | `/task-templates/{templateId}/subtasks`                            | Adds a timed subtask, optionally at a requested position.                                                                                                                                                                 |
+| `PATCH`  | `/task-templates/{templateId}/subtasks/{subtaskId}`                | Updates a subtask's title, optional icon, and duration.                                                                                                                                                                   |
+| `DELETE` | `/task-templates/{templateId}/subtasks/{subtaskId}`                | Removes a subtask.                                                                                                                                                                                                        |
+| `PUT`    | `/task-templates/{templateId}/subtasks/order`                      | Reorders subtasks; the new order must contain each current subtask ID exactly once.                                                                                                                                       |
+| `PUT`    | `/task-templates/{templateId}/checklist-options`                   | Sets a packing list's "show the evening before from" time (or null); `400` on a routine.                                                                                                                                  |
+| `POST`   | `/task-templates/{templateId}/copy`                                | Copies a template (kind, options, items with fresh ids) into another child's library; Manage on both children. Schedules, ticks and suggestions are not copied.                                                           |
+| `POST`   | `/task-templates/{templateId}/suggestions`                         | The owning child suggests an item for their packing list (`409 too_many_pending_suggestions` past five pending, `409 checklist_item_exists` for an item already on the list; a pending duplicate is an idempotent `200`). |
+| `POST`   | `/task-templates/{templateId}/suggestions/{suggestionId}/withdraw` | The owning child takes back a pending suggestion.                                                                                                                                                                         |
+| `POST`   | `/task-templates/{templateId}/suggestions/{suggestionId}/approve`  | A guardian approves with a final title and weekdays; adds a zero-duration item.                                                                                                                                           |
+| `POST`   | `/task-templates/{templateId}/suggestions/{suggestionId}/decline`  | A guardian declines. A repeated resolution is `200`; a different one `409 suggestion_resolved`.                                                                                                                           |
+| `POST`   | `/calendars/{calendarId}/items/from-template`                      | Schedules a non-empty, active template owned by the assignee as a specific-time calendar task.                                                                                                                            |
 
 Template and subtask names must be non-empty and at most 200 characters.
 A routine step's duration must be positive; a packing-list item has none. An

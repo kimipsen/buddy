@@ -39,7 +39,7 @@ Stryker from. This does mean mutation runs pay the same cost the integration sui
   `union` `Result<T>`, and its compile-error rollback crashes (`ArgumentOutOfRangeException` in
   `CSharpRollbackProcess`).
 - `concurrency: 8` — raised from the previous `1`. `BuddyApiFixture` starts one
-  Postgres/Keycloak/mailpit trio and shares it across the whole test run *within one process*
+  Postgres/Keycloak/mailpit trio and shares it across the whole test run _within one process_
   (see the integration test doc); Stryker's concurrency setting spawns that many independent test
   host processes in parallel, each starting its own trio of containers. Adjust based on the
   Docker headroom available in the environment running mutation testing.
@@ -126,8 +126,8 @@ mutants on it took three changes, all verified on 2026-10-01:
    (`Microsoft.CodeAnalysis.CSharp` 5.9.0). That version can't compile this codebase's C#
    preview `union` `Result<T>`, so instrumenting the mutants produces thousands of follow-on errors
    (`Result<>` not found, and so on). Stryker's Safe Mode rollback then gives up with `Failed to restore
-   the project to a buildable state ... Stryker can not proceed further` / `FTL Compilation
-   failed`, and still prints `The final mutation score is 0.00 %` and exits 0. The SDK ships
+the project to a buildable state ... Stryker can not proceed further` / `FTL Compilation
+failed`, and still prints `The final mutation score is 0.00 %` and exits 0. The SDK ships
    Roslyn 5.10 (`sdk/<version>/Roslyn/bincore`). `run-stryker.sh` copies the restored tool (from
    `~/.nuget/packages/dotnet-stryker/<version>/tools/net10.0/any`) to a temp folder, overwrites
    `Microsoft.CodeAnalysis.dll` and `Microsoft.CodeAnalysis.CSharp.dll` with the SDK's, and runs
@@ -164,10 +164,10 @@ All of them fail the guard, and the successful runs pass it.
   `CalendarOccurrenceExpansion.ExpandAsync`) currently get no mutation coverage. Look for
   `Safe Mode! Stryker will remove all mutations in <Method>` in the log.
 - Stryker logs `Failed to load analyzer 'Microsoft.CodeAnalysis.Razor.Compiler' ... references a
-  newer version (5.10.0.0) of the compiler`. That's harmless here: the backend has no Razor.
+newer version (5.10.0.0) of the compiler`. That's harmless here: the backend has no Razor.
 - Running two Stryker or `dotnet build`/`dotnet test` processes against the same checkout at
   once corrupts `bin/`. One run then failed its initial test run with `Could not load file or
-  assembly 'Microsoft.AspNetCore.Mvc.Testing'`. Run one at a time per checkout.
+assembly 'Microsoft.AspNetCore.Mvc.Testing'`. Run one at a time per checkout.
 
 ## Verification status
 
@@ -185,7 +185,7 @@ This environment has Docker available. History:
   name or username. An earlier identical run reported the `Username` one as `Timeout` instead,
   so expect some timing-dependent `Timeout`/`Survived` flips on this suite. The JSON report's
   shape (absolute file keys, `projectRoot`, string ids, `mutatorName` like `"Statement
-  mutation"`, 1-based `location`, `statusReason`) matches what the skill's `survivors.mjs`
+mutation"`, 1-based `location`, `statusReason`) matches what the skill's `survivors.mjs`
   reads, and its score matched Stryker's.
 
 A full, unscoped run hasn't been executed on 5.0.0. It's still multiple hours, so it's left

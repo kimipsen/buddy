@@ -36,7 +36,7 @@ A browser reload already ends up on `/login`. In-app navigation does not:
    the user to `/login`. That's why reload "works".
 
 A related gap: `authGuard` and `roleRedirectGuard` test `auth.isAuthenticated()`, which only checks
-that a token set *exists* ([auth.service.ts:24](../../../src/frontend/buddy/src/app/core/auth.service.ts)).
+that a token set _exists_ ([auth.service.ts:24](../../../src/frontend/buddy/src/app/core/auth.service.ts)).
 A reload with stale-but-present tokens (no failed call cleared them yet) passes the guard and
 renders the error page once. The guard change below closes that case too.
 
@@ -51,7 +51,7 @@ because the Keycloak SSO cookie session is gone as well. Under 30 minutes, the e
 ([deploy/README.md](../../../deploy/README.md), section 5), so its lifetimes are whatever its admin
 console says, most likely the same defaults.
 
-So the frontend fix is to *detect* the ended session and send the user to log in. Making sessions
+So the frontend fix is to _detect_ the ended session and send the user to log in. Making sessions
 last longer is a separate Keycloak setting (see [Remaining open questions](#remaining-open-questions)).
 
 ## Scope decision
@@ -75,14 +75,14 @@ rejects a token the app sent. It turns false again on a new token set. Rejected:
 When `getAccessToken()` returns `null` and `sessionExpired()` is true, there's no point making the
 call: it can only 401. The interceptor navigates to `/login?reason=session-expired` and errors the
 request with a synthetic 401 `HttpErrorResponse`, so every caller's existing error path still runs
-(no hung promises, no `EmptyError` from `firstValueFrom`). A real 401 on a request that *did*
+(no hung promises, no `EmptyError` from `firstValueFrom`). A real 401 on a request that _did_
 carry a token gets the same treatment, after calling `auth.expireSession()`. The redirect is
 skipped when the router is already on `/login`, so a page firing six parallel calls navigates once.
 
 **Decision: guards check token freshness and also run on child navigation.**
 
 `authGuard` and `roleRedirectGuard` await `auth.getAccessToken()` instead of reading
-`isAuthenticated()`. A dead session then lands on `/login` *before* the page renders, so the user
+`isAuthenticated()`. A dead session then lands on `/login` _before_ the page renders, so the user
 never sees the error flash. `authGuard` is also added as `canActivateChild` on `guardian` and
 `child`, so it runs on every navigation inside those trees. That's cheap: `getAccessToken()` returns
 the cached token without a network call while it's fresh, `completeLoginRedirect()` returns at once
@@ -96,7 +96,7 @@ loading.
 **Decision: go to Buddy's `/login` page with a notice, not straight to Keycloak.**
 
 Calling `auth.login()` directly would save a click, since Keycloak shows its form either way. But
-the user wouldn't learn *why* they were logged out, and a child on an iPad would find themselves
+the user wouldn't learn _why_ they were logged out, and a child on an iPad would find themselves
 on an unfamiliar Keycloak page. `/login` reads `reason=session-expired` from the query string and
 shows one line above the sign-in button.
 
@@ -262,8 +262,8 @@ it's `'session-expired'`, show a notice above the sign-in button, styled like th
 
 One new key in `translations/{en,da}/login.ts`:
 
-| Key | en | da |
-|---|---|---|
+| Key                    | en                                                 | da                                                       |
+| ---------------------- | -------------------------------------------------- | -------------------------------------------------------- |
 | `login.sessionExpired` | `Your session expired. Sign in again to continue.` | `Din session er udløbet. Log ind igen for at fortsætte.` |
 
 Run `node .claude/skills/i18n/check-parity.mjs`.
@@ -297,17 +297,17 @@ The `/login` route is already captured. Add a second entry in
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Idle < 30 min, then navigate | Unchanged: `getAccessToken` refreshes silently |
-| Idle > 30 min, then navigate | `canActivateChild` guard refresh fails -> `/login?reason=session-expired` before the page renders |
-| Idle > 30 min, then an in-page action (save, toggle) | Interceptor redirects. Any unsaved form input is lost (see open questions) |
-| Reload with stale tokens still stored | Guard refresh fails -> `/login` with the notice (today: error page once) |
-| Anonymous share/invite page | No token and not expired -> request goes out as today |
-| Several parallel calls fail together | One shared refresh (`refreshInFlight`), one navigation (skipped once on `/login`) |
-| API 401 despite a token the app considered valid (key rotation, clock skew) | Treated as an expired session |
-| Deliberate logout | Keycloak logout as today, no "expired" notice |
-| API down (status 0 / 5xx) | Not a session problem: no redirect, pages show their load error as today |
+| Case                                                                        | Behavior                                                                                          |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Idle < 30 min, then navigate                                                | Unchanged: `getAccessToken` refreshes silently                                                    |
+| Idle > 30 min, then navigate                                                | `canActivateChild` guard refresh fails -> `/login?reason=session-expired` before the page renders |
+| Idle > 30 min, then an in-page action (save, toggle)                        | Interceptor redirects. Any unsaved form input is lost (see open questions)                        |
+| Reload with stale tokens still stored                                       | Guard refresh fails -> `/login` with the notice (today: error page once)                          |
+| Anonymous share/invite page                                                 | No token and not expired -> request goes out as today                                             |
+| Several parallel calls fail together                                        | One shared refresh (`refreshInFlight`), one navigation (skipped once on `/login`)                 |
+| API 401 despite a token the app considered valid (key rotation, clock skew) | Treated as an expired session                                                                     |
+| Deliberate logout                                                           | Keycloak logout as today, no "expired" notice                                                     |
+| API down (status 0 / 5xx)                                                   | Not a session problem: no redirect, pages show their load error as today                          |
 
 ## Explicitly out of scope for this phase
 
@@ -317,15 +317,15 @@ The `/login` route is already captured. Add a second entry in
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| When does the frontend redirect? | Only when a session existed and ended (`sessionExpired`), so anonymous pages keep working |
-| Send the doomed request anyway? | No: error it locally with a synthetic 401 and redirect |
-| Where is the check? | Guards (`getAccessToken`, plus `canActivateChild`) before render, interceptor as the backstop for in-page actions |
-| `/login` or straight to Keycloak? | `/login` with a "session expired" notice |
+| Question                                    | Decision                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| When does the frontend redirect?            | Only when a session existed and ended (`sessionExpired`), so anonymous pages keep working                                                                                                                                                                                                                                                                                      |
+| Send the doomed request anyway?             | No: error it locally with a synthetic 401 and redirect                                                                                                                                                                                                                                                                                                                         |
+| Where is the check?                         | Guards (`getAccessToken`, plus `canActivateChild`) before render, interceptor as the backstop for in-page actions                                                                                                                                                                                                                                                              |
+| `/login` or straight to Keycloak?           | `/login` with a "session expired" notice                                                                                                                                                                                                                                                                                                                                       |
 | Return to the interrupted page after login? | Yes, via `pending-return-url.ts`. Stored by the interceptor (`router.url`) and `authGuard` (the target `state.url`) only for an expired session. `roleRedirectGuard` takes it before the invite checks, so a winning invite still clears it, and honours it only inside the user's own role tree (whole path segments, so `/guardian-invite/...` doesn't count as `/guardian`) |
-| Raise Keycloak's SSO Session Idle? | No, kept at the 30-minute default for now |
-| Silent re-login? | Not possible after the idle timeout: the refresh token and SSO cookie expire together |
+| Raise Keycloak's SSO Session Idle?          | No, kept at the 30-minute default for now                                                                                                                                                                                                                                                                                                                                      |
+| Silent re-login?                            | Not possible after the idle timeout: the refresh token and SSO cookie expire together                                                                                                                                                                                                                                                                                          |
 
 ## Remaining open questions
 

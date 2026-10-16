@@ -27,11 +27,11 @@ publishes templates and guidance in Danish.
 GDPR doesn't cover processing "in the course of a purely personal or household activity" (Article
 2(2)(c)). How much of this guide you need depends on who uses your instance:
 
-| Who uses your Buddy | What that likely means |
-|---|---|
-| Only your own household: you, a co-parent and your children | Probably the household exemption. Still do steps 2, 4 and 5. They protect your own children's data, and they cost little |
-| Also other families, such as a group shared with another household, babysitters, or grandparents outside the home | The exemption gets doubtful. Do the whole guide |
-| Families who aren't yours: you run Buddy for friends, a school or an association | GDPR applies in full. Do the whole guide |
+| Who uses your Buddy                                                                                               | What that likely means                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Only your own household: you, a co-parent and your children                                                       | Probably the household exemption. Still do steps 2, 4 and 5. They protect your own children's data, and they cost little |
+| Also other families, such as a group shared with another household, babysitters, or grandparents outside the home | The exemption gets doubtful. Do the whole guide                                                                          |
+| Families who aren't yours: you run Buddy for friends, a school or an association                                  | GDPR applies in full. Do the whole guide                                                                                 |
 
 If in doubt, do the whole guide. Health data about children is the kind of data where regulators
 expect care.
@@ -44,15 +44,14 @@ or delete. Before you write anything else, turn off the features this family won
 
 The features that matter most for privacy:
 
-| Flag | What turning it off removes |
-|---|---|
-| `Features__Medicines=false` | Medicine schedules and dose status (health data) |
-| `Features__SleepDiary=false` | The sleep diary (health data) |
+| Flag                                  | What turning it off removes                               |
+| ------------------------------------- | --------------------------------------------------------- |
+| `Features__Medicines=false`           | Medicine schedules and dose status (health data)          |
+| `Features__SleepDiary=false`          | The sleep diary (health data)                             |
 | `Features__MealplanAiAssistant=false` | Everything sent to an AI provider, and the stored AI keys |
-| `Features__WorkLocations=false` | Guardians' work locations |
+| `Features__WorkLocations=false`       | Guardians' work locations                                 |
 
-If you turn off both `Medicines` and `SleepDiary`, Buddy holds no health data and the DPIA (step
-7) gets much smaller. If you turn off the AI assistant, no data leaves your instance for an AI
+If you turn off both `Medicines` and `SleepDiary`, Buddy holds no health data and the DPIA (step 7) gets much smaller. If you turn off the AI assistant, no data leaves your instance for an AI
 provider, and you can leave AI out of steps 3, 6, 7 and 8.
 
 Note that turning a feature off hides it but keeps any data it already has. To get rid of that
@@ -65,14 +64,14 @@ Anyone who stores or handles the data for you is a processor and needs a data pr
 (DPA, Article 28). For the large providers, the DPA is usually part of the terms you accepted when
 you created the account. Your job is to find it, check it, and keep a copy or a link.
 
-| Processor | When | What to check |
-|---|---|---|
-| **Oracle Cloud** | The Docker setup ([deploy/README.md](../deploy/README.md)) | The Oracle Services DPA, which the Oracle Cloud Services agreement includes. Check that your home region is in the EU/EEA |
-| **Microsoft Azure** | The Azure setup ([deploy/README-azure.md](../deploy/README-azure.md)) | The Microsoft Products and Services DPA, which the Product Terms include. The deploy script defaults to `LOCATION=swedencentral` (EU) |
-| **Brevo** | If you send email through Brevo, as the Azure setup does | Brevo's DPA in its terms. It receives guardians' email addresses and the invitation and verification emails |
-| **A log or monitoring service** | If you set `OTEL_EXPORTER_OTLP_ENDPOINT` (step 5) | Its DPA and where it stores data |
-| **Off-site backup storage** | If you copy backups off the VM (step 4) | The storage provider's DPA and region |
-| **Your DNS or CDN provider** | If it proxies traffic, as Cloudflare's proxy mode does | Whether it sees request contents. Plain DNS doesn't need a DPA |
+| Processor                       | When                                                                  | What to check                                                                                                                         |
+| ------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **Oracle Cloud**                | The Docker setup ([deploy/README.md](../deploy/README.md))            | The Oracle Services DPA, which the Oracle Cloud Services agreement includes. Check that your home region is in the EU/EEA             |
+| **Microsoft Azure**             | The Azure setup ([deploy/README-azure.md](../deploy/README-azure.md)) | The Microsoft Products and Services DPA, which the Product Terms include. The deploy script defaults to `LOCATION=swedencentral` (EU) |
+| **Brevo**                       | If you send email through Brevo, as the Azure setup does              | Brevo's DPA in its terms. It receives guardians' email addresses and the invitation and verification emails                           |
+| **A log or monitoring service** | If you set `OTEL_EXPORTER_OTLP_ENDPOINT` (step 5)                     | Its DPA and where it stores data                                                                                                      |
+| **Off-site backup storage**     | If you copy backups off the VM (step 4)                               | The storage provider's DPA and region                                                                                                 |
+| **Your DNS or CDN provider**    | If it proxies traffic, as Cloudflare's proxy mode does                | Whether it sees request contents. Plain DNS doesn't need a DPA                                                                        |
 
 **AI providers** (Anthropic, OpenAI, Google Gemini) are a special case. Each family enters its
 own API key, so the agreement is between that family and the provider. Your part is to tell the
@@ -185,16 +184,16 @@ The record of processing activities (Article 30) is an internal document. Nobody
 unless a regulator asks. One page is enough for a Buddy instance. Use your authority's template if
 it has one (Datatilsynet does), or fill in this table:
 
-| Field | For Buddy |
-|---|---|
-| Controller | Your name and contact details |
-| Purpose | Coordinating the daily life of the families who use the instance: calendars, tasks, meals, pickups, and, if turned on, medicines, sleep and an AI meal planner |
-| Categories of people | Guardians, children, babysitters, and members of shared groups |
-| Categories of data | The list under "What Buddy holds" in [PRIVACY.md](../PRIVACY.md#what-buddy-holds), minus what you turned off in step 2. Mark medicines and sleep as health data (Article 9) |
-| Recipients | The processors from step 3 |
-| Transfers outside the EU/EEA | Any processor or AI provider outside the EU/EEA, and the safeguard it relies on (for example the EU-US Data Privacy Framework or standard contractual clauses) |
-| Retention | Account data: until the account is deleted. AI sessions: 30 days after they end. Backups: 30 days (step 4). Logs: your choice from step 5 |
-| Security measures | Sign-in through Keycloak; HTTPS only; database not reachable from the internet; stored AI keys and saved API responses encrypted; health-data reads logged; backups rotated after 30 days |
+| Field                        | For Buddy                                                                                                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Controller                   | Your name and contact details                                                                                                                                                             |
+| Purpose                      | Coordinating the daily life of the families who use the instance: calendars, tasks, meals, pickups, and, if turned on, medicines, sleep and an AI meal planner                            |
+| Categories of people         | Guardians, children, babysitters, and members of shared groups                                                                                                                            |
+| Categories of data           | The list under "What Buddy holds" in [PRIVACY.md](../PRIVACY.md#what-buddy-holds), minus what you turned off in step 2. Mark medicines and sleep as health data (Article 9)               |
+| Recipients                   | The processors from step 3                                                                                                                                                                |
+| Transfers outside the EU/EEA | Any processor or AI provider outside the EU/EEA, and the safeguard it relies on (for example the EU-US Data Privacy Framework or standard contractual clauses)                            |
+| Retention                    | Account data: until the account is deleted. AI sessions: 30 days after they end. Backups: 30 days (step 4). Logs: your choice from step 5                                                 |
+| Security measures            | Sign-in through Keycloak; HTTPS only; database not reachable from the internet; stored AI keys and saved API responses encrypted; health-data reads logged; backups rotated after 30 days |
 
 ## 7. Do a DPIA
 

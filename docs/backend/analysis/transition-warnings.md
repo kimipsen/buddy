@@ -13,7 +13,7 @@ profile time zone through `ChildClockService` (Question 9).
 ## Context
 
 Sudden transitions are one of the most reliable triggers for children with ADHD or autism. "We're
-leaving for football *now*" lands as an interruption; "10 minutes until we leave for football",
+leaving for football _now_" lands as an interruption; "10 minutes until we leave for football",
 then "5 minutes", then "1 minute" gives the child time to finish what they're doing, put it down
 and switch. Occupational therapists and parents do this by hand with kitchen timers and shouted
 countdowns. A guardian wants Buddy to do it for them: a heads-up on the child's screen before the
@@ -44,7 +44,7 @@ What exists today:
   runs a `now` signal on a 60-second interval
   ([home.ts:114](../../../src/frontend/buddy/src/app/features/child/home/home.ts),
   [home.ts:284](../../../src/frontend/buddy/src/app/features/child/home/home.ts)) to fill in the
-  progress of an ongoing event. It shows what is happening, but not what is *about to* happen.
+  progress of an ongoing event. It shows what is happening, but not what is _about to_ happen.
 - **Occurrences are resolved instants.** [`CalendarItemOccurrence`](../../../src/backend/buddy/Features/Calendars/Types/CalendarItemOccurrence.cs)
   carries `OccurrenceTiming.Timed(StartsAt, EndsAt)` or `OccurrenceTiming.Due(DueAt)` as
   `DateTimeOffset`s, resolved through the calendar's `TimeZoneId` by `CalendarOccurrenceExpansion`.
@@ -59,7 +59,7 @@ What exists today:
   gives a child every event in their calendars but only the tasks assigned to them.
 - **No notification infrastructure.** [mobile-app-and-notifications.md](mobile-app-and-notifications.md)
   proposes a PWA, Web Push, a `NotificationPreferences` aggregate and a per-minute
-  `NotificationSchedulerService` that sends a `TaskReminder` *at* a task's due time. Its last open
+  `NotificationSchedulerService` that sends a `TaskReminder` _at_ a task's due time. Its last open
   question is exactly this feature's core: "Reminder lead time (5 or 15 minutes before a task
   instead of at its time) ... a per-child `ReminderLeadMinutes` is an additive preference." None
   of it is built.
@@ -81,7 +81,7 @@ the settings, and whose "today" the child pages use.
 
 - **Not `Calendars`.** Warnings cover pickups too, which live in their own feature
   ([pickup-schedules.md, Question 1](pickup-schedules.md#question-1-extend-calendars-or-a-new-feature)).
-  And a warning preference belongs to a *child*, while a calendar item belongs to a calendar that
+  And a warning preference belongs to a _child_, while a calendar item belongs to a calendar that
   several children (and adults) share. Football in the family calendar needs 30 minutes' notice for
   Emil and none for his sister. That is a per-child fact about an item, not a fact about the item.
 - **Not fields on `User`.** Language and time zone are on `User` because every page reads them.
@@ -90,8 +90,8 @@ the settings, and whose "today" the child pages use.
   makes for keeping `NotificationPreferences` off `User`.
 - **Not `NotificationPreferences`.** That aggregate doesn't exist yet, and making it a prerequisite
   would tie a frontend-mostly feature to the whole PWA/Web Push project (12-17 developer days by
-  its own estimate). The two are also different things: notification preferences say *which
-  channels* a user hears on; transition warnings say *what a child is warned about and when*,
+  its own estimate). The two are also different things: notification preferences say _which
+  channels_ a user hears on; transition warnings say _what a child is warned about and when_,
   which holds whether the warning shows in the app or as a push. Question 6 has how push reads
   these settings later.
 - **Its own flag**, for the same reason every optional domain has one
@@ -114,7 +114,7 @@ and the proposed `NotificationPreferences`. "Find this child's settings" is a di
 `mealplans.md`'s argument against deterministic ids (it needed an index anyway) doesn't apply: there
 is no sharing axis and no "which one" to resolve.
 
-```
+```text
 TransitionWarningSettings(
     TransitionWarningSettingsId Id,     // Id.Value == ChildId.Value -- 1:1, no index document
     UserId ChildId,
@@ -140,7 +140,7 @@ case and golden-file `EventShapeTests` for the new events.
 times (15/5/1 suggested), a set of item kinds, optional quiet hours -- replaced as a whole on every
 save.**
 
-```
+```text
 WarningDefaults(
     bool Enabled,                                  // master switch for this child; default false
     ImmutableArray<int> LeadMinutes,               // 1..120, 1-3 distinct values, largest first; default [15, 5, 1]
@@ -168,7 +168,7 @@ QuietHours(TimeOnly From, TimeOnly To)             // in the child's TimeZoneId;
   ongoing-event fill already shows.
 - **Routines count as `Task`.** A template-scheduled routine is a task whose subtasks each have a
   window ([`Routine`](../../../src/backend/buddy/Features/Calendars/Types/CalendarItemOccurrence.cs)).
-  The transition is *into* the routine, so only its first subtask warns ("10 minutes until: Go to
+  The transition is _into_ the routine, so only its first subtask warns ("10 minutes until: Go to
   bed"), not each of "brush teeth", "pyjamas", "story". Moving from one subtask to the next is the
   routine itself, not a transition.
 - **Packing lists count as `Task` too, and warn before their "leave by" time** (decided while
@@ -178,7 +178,7 @@ QuietHours(TimeOnly From, TimeOnly To)             // in the child's TimeZoneId;
   warns exactly like a routine: once per list (not per item), titled by the list ("5 minutes until
   Football bag"), counting down to the "leave by" time, under the `Task` kind and any override on its
   item. A list whose items are all packed no longer warns, as a completed task doesn't. Its
-  "evening before" option is about *showing* tomorrow's list, not a transition, so it never warns:
+  "evening before" option is about _showing_ tomorrow's list, not a transition, so it never warns:
   the leave-by time tomorrow is tomorrow's warning. Considered: a separate `Leaving` kind, rejected
   because the guardian already chose the time and an override covers a list that needs more notice.
 - **`DropOff` and `PickUp` separately**, mirroring [`PickupSlot`](../../../src/backend/buddy/Features/Pickups/Types/PickupSlot.cs).
@@ -203,7 +203,7 @@ optional `LeadMinutesByKind` map.
 `CalendarItem`. An override is either "no warnings for this item" or its own lead times. Pickups
 get no per-assignment override in v1; the `DropOff`/`PickUp` kinds cover them.**
 
-```
+```text
 ItemWarningOverride
     | Off                                   // never warn for this item
     | LeadTimes(ImmutableArray<int>)        // same rules as WarningDefaults.LeadMinutes
@@ -294,7 +294,7 @@ Why the client:
   Vitest with a fixed `now` -- easier than the first `TimeProvider` the server would need
   (the notifications doc notes none exists yet).
 
-When push arrives, the server *does* need the same rule, because a push has to fire with the app
+When push arrives, the server _does_ need the same rule, because a push has to fire with the app
 closed. The scheduler then implements it in C# (Question 6). To keep the two implementations from
 drifting, the cases live in one JSON fixture (`docs/backend/transition-warnings/cases.json` or
 similar: inputs, `now`, expected warnings) that both the Vitest spec and an xunit test load. That
@@ -377,7 +377,7 @@ When that design is built:
   15 minutes" for the assigned guardian) are a separate guardian kind, `TransitionHeadsUp`, whose
   on/off lives in each guardian's own `NotificationPreferences` -- a guardian chooses what they
   hear about, the same split as every other guardian kind there. The child's settings decide
-  *when*; the guardian's preferences decide *whether that guardian hears too*.
+  _when_; the guardian's preferences decide _whether that guardian hears too_.
 - **Quiet hours.** This doc's per-child quiet hours apply to `TransitionWarning`. The notifications
   doc exempts reminders from its quiet hours because they are "timed by the guardian's own plan";
   transition warnings keep their own, because a child-facing push during school is exactly what
@@ -409,7 +409,7 @@ as `UsersService.timeZoneId()`.**
 - **Pickups**: `Time` is a wall-clock `TimeOnly` meaning the child's local time
   ([pickup-schedules.md](pickup-schedules.md)). `computeTransitionWarnings` resolves
   `date + time` in the child's `TimeZoneId` to an instant. A small `instantInTimeZone(date, time,
-  zone)` helper goes next to `toIsoDateInTimeZone`/`toTimeInTimeZone` in
+zone)` helper goes next to `toIsoDateInTimeZone`/`toTimeInTimeZone` in
   [date-utils.ts](../../../src/frontend/buddy/src/app/core/date-utils.ts). On the DST changeover
   day, a nonexistent or ambiguous time (02:30) is rare for a pickup; the helper documents whatever
   `Intl`-based resolution it uses, as
@@ -434,7 +434,7 @@ child writing gets `Forbidden`. A `TransitionWarningsAuthorization` with the sam
 
 - **The child can't change them**, for the same reason the notifications doc gives for task
   reminders and child-language-settings gives for language: a child switching off the warnings
-  defeats their purpose. The child's view only *uses* the settings.
+  defeats their purpose. The child's view only _uses_ the settings.
 - **Any guardian**, regardless of `GuardianKind`, like language and time zone. Two guardians who
   disagree see each other's change, and `Before`/`After` on the events keeps the history.
 - **Group members and babysitters** have no access. They don't manage the child, and babysitters
@@ -446,7 +446,7 @@ child writing gets `Forbidden`. A `TransitionWarningsAuthorization` with the sam
 
 ### Events
 
-```
+```text
 TransitionWarningsStarted(TransitionWarningSettingsId Id, UserId ChildId, DateTimeOffset OccurredAt)
     // appended together with the first write; reads of a missing stream return Initial(...)
 TransitionWarningDefaultsConfigured(TransitionWarningSettingsId Id, WarningDefaults Before,
@@ -539,13 +539,13 @@ index).
 
 ## Command slices (`Features/TransitionWarnings/`, same vertical-slice shape as `Progress`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `GetMyTransitionWarnings` | View (self) | The caller's settings, or the defaults when the stream doesn't exist. Overrides as `{ itemId, leadMinutes }` (empty: never warn), no titles (the child's client already has the occurrences) |
-| `GetChildTransitionWarnings` | Manage | Defaults plus overrides with the item's title, effective icon and kind; deleted items, and items the guardian can no longer see, left out |
-| `ConfigureTransitionWarnings` | Manage | Full replace of `WarningDefaults`. Emits `TransitionWarningDefaultsConfigured` (plus `TransitionWarningsStarted` on first write) |
-| `SetItemWarningOverride` | Manage | Body `{ leadMinutes }`, an empty list meaning `Off`. Item must exist and be visible to the guardian, else `NotFound`; `409` (`too_many_warning_overrides`) at 100. Emits `ItemWarningOverrideSet` |
-| `ClearItemWarningOverride` | Manage | Idempotent. Emits `ItemWarningOverrideCleared` |
+| Slice                         | Tier        | Notes                                                                                                                                                                                             |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GetMyTransitionWarnings`     | View (self) | The caller's settings, or the defaults when the stream doesn't exist. Overrides as `{ itemId, leadMinutes }` (empty: never warn), no titles (the child's client already has the occurrences)      |
+| `GetChildTransitionWarnings`  | Manage      | Defaults plus overrides with the item's title, effective icon and kind; deleted items, and items the guardian can no longer see, left out                                                         |
+| `ConfigureTransitionWarnings` | Manage      | Full replace of `WarningDefaults`. Emits `TransitionWarningDefaultsConfigured` (plus `TransitionWarningsStarted` on first write)                                                                  |
+| `SetItemWarningOverride`      | Manage      | Body `{ leadMinutes }`, an empty list meaning `Off`. Item must exist and be visible to the guardian, else `NotFound`; `409` (`too_many_warning_overrides`) at 100. Emits `ItemWarningOverrideSet` |
+| `ClearItemWarningOverride`    | Manage      | Idempotent. Emits `ItemWarningOverrideCleared`                                                                                                                                                    |
 
 Validators: `LeadMinutes` 1-120, 1-3 distinct values (an empty set is "use `Enabled = false`"
 instead, so the form has one way to say "off"; on an override, empty means `Off`); `Kinds` non-empty
@@ -554,7 +554,7 @@ when `Enabled`, each a known kind; quiet hours `From != To`. On the wire the ove
 
 ## Routes
 
-```
+```text
 GET    /transition-warnings/me                                    GetMyTransitionWarnings
 GET    /transition-warnings/children/{childId}                    GetChildTransitionWarnings
 PUT    /transition-warnings/children/{childId}                    ConfigureTransitionWarnings
@@ -629,6 +629,7 @@ installation might -- one more reason it has its own flag.
 
   Considered and rejected: a dashboard card nagging until every child is configured. A guardian
   who decided a child shouldn't have warnings would have to dismiss it, and the dashboard is busy.
+
 - i18n: `translations/{en,da}/transition-warnings.ts` with the banner strings
   ("{{minutes}} minutes until {{title}}" / "Om {{minutes}} minutter: {{title}}", "1 minute until
   ..." / "Om 1 minut: ...", pickup lines such as "Dad picks you up in 5 minutes" / "Far henter dig
@@ -679,70 +680,70 @@ installation might -- one more reason it has its own flag.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| No settings stream yet | Defaults: off (`Enabled = false`), with 15/5/1, all kinds and no quiet hours pre-filled for when a guardian turns them on. No banner, no tick, day view unchanged |
-| Guardian turns warnings off | No warnings, overrides included; lead times, kinds, quiet hours and overrides are kept for when they are turned back on |
-| Guardian turns warnings on while the child's iPad is open | Picked up by the 10-minute settings refetch or on wake |
-| Settings fail to load on the child's device | No banner; the day view itself is unaffected (supplementary, like progress) |
-| Item moved while the iPad sits open | Picked up by the 10-minute refetch or on wake; a stage may show up to 10 minutes late or early in between |
-| Task completed before its time | No further warnings (completed tasks are skipped) |
-| Pickup without a `Time` | No warning; there is nothing to count down to |
-| All-day event | Never warns |
-| Routine | Only its first subtask warns |
-| Packing list | Warns once before its "leave by" time; not once every item is packed |
-| Device zone differs from the child's profile zone | "Today", pickup times and quiet hours follow the profile zone (Question 9) |
-| Two items within the same window | Soonest shown, "+1 more" |
-| Lead time longer than the gap since the previous item | Shown anyway; overlapping warnings are expected (football right after school pickup) |
-| Device asleep through a stage | On wake, the current stage is computed fresh; skipped stages aren't replayed |
-| Now in quiet hours | Dropped, not delayed |
-| Override for a deleted item | Ignored; left out of the guardian list |
-| Item visible to the guardian but not the child (a sibling's task) | Override can be stored, never matches, harmless |
-| Guardian's `GuardianLink` revoked | `NotFound` immediately |
-| Child changes time zone | Pickup times and quiet hours follow the new zone on next load; no migration |
-| Concurrent saves by two guardians | Last write wins; both in the event history |
-| `Features:TransitionWarnings = false` | Routes not mapped, no banner, data and GDPR coverage stay |
-| `Features:Pickups = false` | No pickup warnings; the `DropOff`/`PickUp` checkboxes are hidden |
+| Case                                                              | Behavior                                                                                                                                                          |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No settings stream yet                                            | Defaults: off (`Enabled = false`), with 15/5/1, all kinds and no quiet hours pre-filled for when a guardian turns them on. No banner, no tick, day view unchanged |
+| Guardian turns warnings off                                       | No warnings, overrides included; lead times, kinds, quiet hours and overrides are kept for when they are turned back on                                           |
+| Guardian turns warnings on while the child's iPad is open         | Picked up by the 10-minute settings refetch or on wake                                                                                                            |
+| Settings fail to load on the child's device                       | No banner; the day view itself is unaffected (supplementary, like progress)                                                                                       |
+| Item moved while the iPad sits open                               | Picked up by the 10-minute refetch or on wake; a stage may show up to 10 minutes late or early in between                                                         |
+| Task completed before its time                                    | No further warnings (completed tasks are skipped)                                                                                                                 |
+| Pickup without a `Time`                                           | No warning; there is nothing to count down to                                                                                                                     |
+| All-day event                                                     | Never warns                                                                                                                                                       |
+| Routine                                                           | Only its first subtask warns                                                                                                                                      |
+| Packing list                                                      | Warns once before its "leave by" time; not once every item is packed                                                                                              |
+| Device zone differs from the child's profile zone                 | "Today", pickup times and quiet hours follow the profile zone (Question 9)                                                                                        |
+| Two items within the same window                                  | Soonest shown, "+1 more"                                                                                                                                          |
+| Lead time longer than the gap since the previous item             | Shown anyway; overlapping warnings are expected (football right after school pickup)                                                                              |
+| Device asleep through a stage                                     | On wake, the current stage is computed fresh; skipped stages aren't replayed                                                                                      |
+| Now in quiet hours                                                | Dropped, not delayed                                                                                                                                              |
+| Override for a deleted item                                       | Ignored; left out of the guardian list                                                                                                                            |
+| Item visible to the guardian but not the child (a sibling's task) | Override can be stored, never matches, harmless                                                                                                                   |
+| Guardian's `GuardianLink` revoked                                 | `NotFound` immediately                                                                                                                                            |
+| Child changes time zone                                           | Pickup times and quiet hours follow the new zone on next load; no migration                                                                                       |
+| Concurrent saves by two guardians                                 | Last write wins; both in the event history                                                                                                                        |
+| `Features:TransitionWarnings = false`                             | Routes not mapped, no banner, data and GDPR coverage stay                                                                                                         |
+| `Features:Pickups = false`                                        | No pickup warnings; the `DropOff`/`PickUp` checkboxes are hidden                                                                                                  |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Medium -- a new 1:1 aggregate and schema with 4 events, 5 routes, a cross-feature item check, GDPR eraser/exporter, a feature flag, a pure warning function with time-zone edge cases, a banner in the shared child frame, one guardian settings page with an off state, small hints on `manage-children` and the onboarding summary, en+da strings, clock-controlled e2e and screenshots, and the child pages' "today" moved to the profile zone (17 call sites in 5 files, Question 9). Push integration is not included |
-| Single developer | 8-11 days (backend 2-3, warning function and banner 2-3, settings page 1-2, the today fix 1, e2e, screenshots and docs 1-2) |
-| AI agent | 5-7 hours (the today fix about 1 of them), plus 2-3 hours of human time for the Danish wording and trying the banner on a real iPad with a child |
+|                  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Medium -- a new 1:1 aggregate and schema with 4 events, 5 routes, a cross-feature item check, GDPR eraser/exporter, a feature flag, a pure warning function with time-zone edge cases, a banner in the shared child frame, one guardian settings page with an off state, small hints on `manage-children` and the onboarding summary, en+da strings, clock-controlled e2e and screenshots, and the child pages' "today" moved to the profile zone (17 call sites in 5 files, Question 9). Push integration is not included |
+| Single developer | 8-11 days (backend 2-3, warning function and banner 2-3, settings page 1-2, the today fix 1, e2e, screenshots and docs 1-2)                                                                                                                                                                                                                                                                                                                                                                                                |
+| AI agent         | 5-7 hours (the today fix about 1 of them), plus 2-3 hours of human time for the Danish wording and trying the banner on a real iPad with a child                                                                                                                                                                                                                                                                                                                                                                           |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| New feature or extend? | New `Features/TransitionWarnings`, schema `transitionwarnings`, flag `Features:TransitionWarnings` |
-| Settings aggregate | `TransitionWarningSettings`, 1:1 with the child (`Id.Value == ChildId.Value`), lazily started, defaults when missing |
-| Settings shape | Master switch, 1-3 lead times (suggested 15/5/1), kinds Event/Task/DropOff/PickUp, optional quiet hours; full replace |
-| Default for a child with no settings | Off; a guardian must enable warnings per child. 15/5/1 and all kinds are pre-filled when they do, and kept when switched off again. Surfaced through the settings page, a status line per child on `manage-children`, a hint in the onboarding summary and the help topic (settled by the user 2026-10-11) |
-| Per-item overrides | In the child's settings, keyed by `CalendarItemId`, `Off` or own lead times; `Calendars` unchanged; max 100 |
-| Pickup overrides | None per assignment; the `DropOff`/`PickUp` kinds cover them |
-| Routines | Only the first subtask warns |
-| Where warnings are computed | Client-side pure function over data the day view already loads; server stores settings only |
-| Delivery now | In-app banner with countdown in `ChildPage`, on every child page, only for children whose warnings are enabled |
-| Sound or vibration | None in v1: no vibration on iOS, and a chime in a classroom is worse than silence; an opt-in sound is additive (settled by the user 2026-10-11) |
-| Relation to push | Ship in-app first, no dependency; push later adds `TransitionWarning` (replacing `TaskReminder`) and a guardian `TransitionHeadsUp` kind, reading these settings |
-| Guardian warnings | None in-app; via push and the guardian's own notification preferences later |
-| Time zones | Calendar instants need none; pickup times and quiet hours in the child's `TimeZoneId` |
-| Quiet hours | Drop, don't delay |
-| Who changes settings | Any active guardian; the child reads only |
-| Dismissal | "Got it" per stage, in memory only |
-| Packing lists (shipped after this doc) | Warn like a task: once per list, before its "leave by" time, under the `Task` kind; not once fully packed; the "evening before" option never warns (decided while building 2026-10-13, as the user leaned) |
-| Finding the feature | All three reminders: an On/Off line per child on `manage-children` linking to the settings page, one line in onboarding's summary, a note in the help topic; no dashboard nag card (settled by the user 2026-10-13) |
-| Override a single occurrence | Not in v1; a `(CalendarItemId, DateOnly)` key is additive (settled by the user 2026-10-13) |
-| Template-level defaults in the task library | None; the override on the scheduled item covers it (settled by the user 2026-10-13) |
-| Per-kind lead times | None; per-item overrides cover the known case, `LeadMinutesByKind` is additive (settled by the user 2026-10-13) |
-| Guardian "is being warned" line | None in-app (settled by the user 2026-10-13) |
-| Recording "Got it" taps | Not recorded (settled by the user 2026-10-13) |
-| Sharing the rule between browser and server | Deferred to when push is built; the shared JSON fixture is the lean (settled by the user 2026-10-13) |
-| "Today" on the child pages | The child's profile time zone through `ChildClockService`, device zone until the user loads; fixed in this build (settled by the user 2026-10-13, Question 9) |
-| An override and the kinds | An item's override wins even when its kind is switched off (decided while building) |
-| The child on `/children/{own id}` | `Forbidden`, reads included; the child reads through `/me` (decided while building) |
+| Question                                    | Decision                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New feature or extend?                      | New `Features/TransitionWarnings`, schema `transitionwarnings`, flag `Features:TransitionWarnings`                                                                                                                                                                                                         |
+| Settings aggregate                          | `TransitionWarningSettings`, 1:1 with the child (`Id.Value == ChildId.Value`), lazily started, defaults when missing                                                                                                                                                                                       |
+| Settings shape                              | Master switch, 1-3 lead times (suggested 15/5/1), kinds Event/Task/DropOff/PickUp, optional quiet hours; full replace                                                                                                                                                                                      |
+| Default for a child with no settings        | Off; a guardian must enable warnings per child. 15/5/1 and all kinds are pre-filled when they do, and kept when switched off again. Surfaced through the settings page, a status line per child on `manage-children`, a hint in the onboarding summary and the help topic (settled by the user 2026-10-11) |
+| Per-item overrides                          | In the child's settings, keyed by `CalendarItemId`, `Off` or own lead times; `Calendars` unchanged; max 100                                                                                                                                                                                                |
+| Pickup overrides                            | None per assignment; the `DropOff`/`PickUp` kinds cover them                                                                                                                                                                                                                                               |
+| Routines                                    | Only the first subtask warns                                                                                                                                                                                                                                                                               |
+| Where warnings are computed                 | Client-side pure function over data the day view already loads; server stores settings only                                                                                                                                                                                                                |
+| Delivery now                                | In-app banner with countdown in `ChildPage`, on every child page, only for children whose warnings are enabled                                                                                                                                                                                             |
+| Sound or vibration                          | None in v1: no vibration on iOS, and a chime in a classroom is worse than silence; an opt-in sound is additive (settled by the user 2026-10-11)                                                                                                                                                            |
+| Relation to push                            | Ship in-app first, no dependency; push later adds `TransitionWarning` (replacing `TaskReminder`) and a guardian `TransitionHeadsUp` kind, reading these settings                                                                                                                                           |
+| Guardian warnings                           | None in-app; via push and the guardian's own notification preferences later                                                                                                                                                                                                                                |
+| Time zones                                  | Calendar instants need none; pickup times and quiet hours in the child's `TimeZoneId`                                                                                                                                                                                                                      |
+| Quiet hours                                 | Drop, don't delay                                                                                                                                                                                                                                                                                          |
+| Who changes settings                        | Any active guardian; the child reads only                                                                                                                                                                                                                                                                  |
+| Dismissal                                   | "Got it" per stage, in memory only                                                                                                                                                                                                                                                                         |
+| Packing lists (shipped after this doc)      | Warn like a task: once per list, before its "leave by" time, under the `Task` kind; not once fully packed; the "evening before" option never warns (decided while building 2026-10-13, as the user leaned)                                                                                                 |
+| Finding the feature                         | All three reminders: an On/Off line per child on `manage-children` linking to the settings page, one line in onboarding's summary, a note in the help topic; no dashboard nag card (settled by the user 2026-10-13)                                                                                        |
+| Override a single occurrence                | Not in v1; a `(CalendarItemId, DateOnly)` key is additive (settled by the user 2026-10-13)                                                                                                                                                                                                                 |
+| Template-level defaults in the task library | None; the override on the scheduled item covers it (settled by the user 2026-10-13)                                                                                                                                                                                                                        |
+| Per-kind lead times                         | None; per-item overrides cover the known case, `LeadMinutesByKind` is additive (settled by the user 2026-10-13)                                                                                                                                                                                            |
+| Guardian "is being warned" line             | None in-app (settled by the user 2026-10-13)                                                                                                                                                                                                                                                               |
+| Recording "Got it" taps                     | Not recorded (settled by the user 2026-10-13)                                                                                                                                                                                                                                                              |
+| Sharing the rule between browser and server | Deferred to when push is built; the shared JSON fixture is the lean (settled by the user 2026-10-13)                                                                                                                                                                                                       |
+| "Today" on the child pages                  | The child's profile time zone through `ChildClockService`, device zone until the user loads; fixed in this build (settled by the user 2026-10-13, Question 9)                                                                                                                                              |
+| An override and the kinds                   | An item's override wins even when its kind is switched off (decided while building)                                                                                                                                                                                                                        |
+| The child on `/children/{own id}`           | `Forbidden`, reads included; the child reads through `/me` (decided while building)                                                                                                                                                                                                                        |
 
 ## Remaining open questions
 

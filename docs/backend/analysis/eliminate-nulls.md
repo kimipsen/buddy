@@ -18,15 +18,15 @@ and snapshot tests, not migrating data.
 
 ### Where things stand
 
-| Area | Count | Root cause |
-|---|---|---|
-| Caller id `UserId?` on commands/queries | 127 of 133 `*.Command.cs`/`*.Query.cs`, 112 handler guards, 10 `command.UserId!` | Authenticated but not provisioned, handled four different ways (404, 401, 200 `[]`, silent no-op) |
-| Aggregate `Fold(T?, e)` / `Rehydrate` | 30 nullable signatures, ~120 `!` | Every fold starts from `null`, so every case does `x! with {...}` |
-| Kind-correlated nullable fields | Pickups (5), `CalendarItem` (4), `CalendarItemOccurrence` (6), `User` email verification (3), `IdempotencyRecord` (3) | A flat record with nullable columns instead of a union |
-| Free text (`Description`, `Comment`, `Notes`, `Label`, `AiChatMessage.Text`) | ~8 types | `null` and `""` both mean "none" |
-| `Before?` on events | `MealRated`, `MealAssignedToSlot`, `PickupAssigned`, `WorkLocationOverridden` | No reader uses it |
-| Back-compat defaults | ~15 | Written for data that doesn't exist |
-| Frontend | 298 `\| null`, 158 `signal<T \| null>(null)`, 19 `$any`, 7 `!` | `strict` is **off** in [tsconfig.json](../../../src/frontend/buddy/tsconfig.json), so none of it is checked. 26 components hand-roll loading/error/data triads |
+| Area                                                                         | Count                                                                                                                 | Root cause                                                                                                                                                     |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Caller id `UserId?` on commands/queries                                      | 127 of 133 `*.Command.cs`/`*.Query.cs`, 112 handler guards, 10 `command.UserId!`                                      | Authenticated but not provisioned, handled four different ways (404, 401, 200 `[]`, silent no-op)                                                              |
+| Aggregate `Fold(T?, e)` / `Rehydrate`                                        | 30 nullable signatures, ~120 `!`                                                                                      | Every fold starts from `null`, so every case does `x! with {...}`                                                                                              |
+| Kind-correlated nullable fields                                              | Pickups (5), `CalendarItem` (4), `CalendarItemOccurrence` (6), `User` email verification (3), `IdempotencyRecord` (3) | A flat record with nullable columns instead of a union                                                                                                         |
+| Free text (`Description`, `Comment`, `Notes`, `Label`, `AiChatMessage.Text`) | ~8 types                                                                                                              | `null` and `""` both mean "none"                                                                                                                               |
+| `Before?` on events                                                          | `MealRated`, `MealAssignedToSlot`, `PickupAssigned`, `WorkLocationOverridden`                                         | No reader uses it                                                                                                                                              |
+| Back-compat defaults                                                         | ~15                                                                                                                   | Written for data that doesn't exist                                                                                                                            |
+| Frontend                                                                     | 298 `\| null`, 158 `signal<T \| null>(null)`, 19 `$any`, 7 `!`                                                        | `strict` is **off** in [tsconfig.json](../../../src/frontend/buddy/tsconfig.json), so none of it is checked. 26 components hand-roll loading/error/data triads |
 
 The backend compiler is already strict:
 [Directory.Build.props](../../../src/backend/Directory.Build.props) sets `<Nullable>enable</Nullable>`
@@ -178,13 +178,13 @@ Today [Claims.GetUserId](../../../src/backend/buddy/Features/Users/Claims.cs) re
 found no `KeycloakIdentity` document, that is, before the first `GET /users/me`. Handlers react
 inconsistently:
 
-| Behavior | Where |
-|---|---|
-| `Result<T>.NotFound` (404) | Most of the 112 handlers that guard with `if (command.UserId is not { } userId)` |
-| 401, via a custom `Unauthenticated` outcome | `CreateCalendar`, `CreateGroup`, `CreateChild` |
-| 200 with `[]` | `ListGroups`, `ListCalendars`, `ListMyChildren`, `ListMyGuardians`, `ListMySiblings`, `ListEvents` |
-| Silent no-op | `DeleteCurrentUser` |
-| `command.UserId!` after a nullable access helper | 10 `*ForGroup` handlers, via `MealplanGroupAccess` / `MedicineGroupAccess` |
+| Behavior                                         | Where                                                                                              |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `Result<T>.NotFound` (404)                       | Most of the 112 handlers that guard with `if (command.UserId is not { } userId)`                   |
+| 401, via a custom `Unauthenticated` outcome      | `CreateCalendar`, `CreateGroup`, `CreateChild`                                                     |
+| 200 with `[]`                                    | `ListGroups`, `ListCalendars`, `ListMyChildren`, `ListMyGuardians`, `ListMySiblings`, `ListEvents` |
+| Silent no-op                                     | `DeleteCurrentUser`                                                                                |
+| `command.UserId!` after a nullable access helper | 10 `*ForGroup` handlers, via `MealplanGroupAccess` / `MedicineGroupAccess`                         |
 
 `403` was chosen over keeping `404` because the caller is known (the token is valid) and refused
 for a reason about themselves, not about a resource. `404` was rejected because it would
@@ -314,19 +314,19 @@ preserved behavior.
 
 **Decision: delete every default and fallback whose only justification is pre-existing data.**
 
-| Item | Change |
-|---|---|
-| `TaskItemCreated.AssignedTo = null`, `TaskTemplateId = null` | Remove the defaults (types are reshaped in Phase 5) |
-| `TaskCompletionChanged`, `StarAwarded`, `StarRevoked`, `RecordStarChange` `SubtaskId = null` | Remove the defaults (Phase 5 replaces the field) |
-| `RecurrenceRule.Until = null`, `CalendarItem` / `CalendarItemOccurrence` `= null` defaults, `CalendarItemResponse.TaskTemplateId = null` | Remove the defaults |
-| `Period.IsAllDay = false`, `DueDate.IsAllDay = false` | Remove the defaults |
-| `MealPlan.SharedWithGroupId = null` | Remove the default; the `MealPlanCreated` fold passes `null` explicitly |
-| `CalendarMembershipDocument.Icon`, `GroupOwnedCalendarDocument.Icon` (`string?`) | Make them `string`, and delete the `?? Calendar.DefaultIcon.Value` fallbacks in `ListCalendars.Endpoint.cs` and `MartenCalendarEventStore.cs` (2) |
-| `GuardianLinkDocument.CreatedAt = null` | Make it a required `DateTimeOffset`, set from `GuardianLinked.OccurredAt`, not `UtcNow`. Delete the "nulls sort last" comment |
-| Legacy `CalendarCreated` / `CalendarOwner.User` path ("only for calendars created before this change") | Delete it |
-| `CreateCalendar` command `Icon?`, plus the create-time `CalendarIconChanged` | Put `Icon` on `CalendarCreatedForGroup`. The endpoint resolves blank to `Calendar.DefaultIcon`, so the command takes a required `Icon`. Drop the extra event and the `DefaultIcon` fold seed |
-| `ResolvedGoalPost.Label`, `Round` | Never read; delete them |
-| Frontend `calendars.service.ts` comment saying the backend doesn't serialize `taskTemplateId` | Stale; make it `taskTemplateId: string \| null` (non-optional) |
+| Item                                                                                                                                     | Change                                                                                                                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TaskItemCreated.AssignedTo = null`, `TaskTemplateId = null`                                                                             | Remove the defaults (types are reshaped in Phase 5)                                                                                                                                          |
+| `TaskCompletionChanged`, `StarAwarded`, `StarRevoked`, `RecordStarChange` `SubtaskId = null`                                             | Remove the defaults (Phase 5 replaces the field)                                                                                                                                             |
+| `RecurrenceRule.Until = null`, `CalendarItem` / `CalendarItemOccurrence` `= null` defaults, `CalendarItemResponse.TaskTemplateId = null` | Remove the defaults                                                                                                                                                                          |
+| `Period.IsAllDay = false`, `DueDate.IsAllDay = false`                                                                                    | Remove the defaults                                                                                                                                                                          |
+| `MealPlan.SharedWithGroupId = null`                                                                                                      | Remove the default; the `MealPlanCreated` fold passes `null` explicitly                                                                                                                      |
+| `CalendarMembershipDocument.Icon`, `GroupOwnedCalendarDocument.Icon` (`string?`)                                                         | Make them `string`, and delete the `?? Calendar.DefaultIcon.Value` fallbacks in `ListCalendars.Endpoint.cs` and `MartenCalendarEventStore.cs` (2)                                            |
+| `GuardianLinkDocument.CreatedAt = null`                                                                                                  | Make it a required `DateTimeOffset`, set from `GuardianLinked.OccurredAt`, not `UtcNow`. Delete the "nulls sort last" comment                                                                |
+| Legacy `CalendarCreated` / `CalendarOwner.User` path ("only for calendars created before this change")                                   | Delete it                                                                                                                                                                                    |
+| `CreateCalendar` command `Icon?`, plus the create-time `CalendarIconChanged`                                                             | Put `Icon` on `CalendarCreatedForGroup`. The endpoint resolves blank to `Calendar.DefaultIcon`, so the command takes a required `Icon`. Drop the extra event and the `DefaultIcon` fold seed |
+| `ResolvedGoalPost.Label`, `Round`                                                                                                        | Never read; delete them                                                                                                                                                                      |
+| Frontend `calendars.service.ts` comment saying the backend doesn't serialize `taskTemplateId`                                            | Stale; make it `taskTemplateId: string \| null` (non-optional)                                                                                                                               |
 
 Golden files affected: `CalendarCreatedForGroup`, `CalendarIconChanged` (create-time case
 removed), plus any whose JSON changes because a default disappeared.
@@ -361,6 +361,7 @@ Golden files: `CalendarCreated.json` is deleted. `CalendarCreatedForGroup.json` 
 null or whitespace to `""` once.**
 
 This applies to:
+
 - `Meal.Description` (`MealCreated`, `MealDetails`, create and update requests)
 - `MealRating.Comment` and `MealPlanEntryRating.Comment` (`MealRated`, `RateMealRequest`)
 - `MealPlanAssignment.Notes` (`MealAssignedToSlot`, `AssignMealToSlotRequest`)
@@ -438,7 +439,7 @@ The work is ordered by value, one PR per domain.
 
 ### 5.1 Pickups: `PickupAssignee`
 
-```
+```text
 PickupAssignee = Guardian(UserId GuardianId)
                | SelfEscort
                | Sibling(UserId SiblingChildId)
@@ -456,6 +457,7 @@ PickupAssignment(PickupAssignee Assignee, TimeOnly? Time, UserId AssignedBy, str
     3 `|| null`.
 
 **As built (5.1):**
+
 - **Domain.** `PickupAssignee` is a C# `union` of `Guardian(UserId)`, `SelfEscort`,
   `Sibling(UserId)` and `Playdate(HostName, Location, ContactInfo)`. Marten reads and writes it
   through `PickupAssigneeJsonConverter`, with an explicit `Kind`. `PickupAssignment` is
@@ -478,7 +480,7 @@ PickupAssignment(PickupAssignee Assignee, TimeOnly? Time, UserId AssignedBy, str
 
 ### 5.2 Calendar item schedule
 
-```
+```text
 ItemSchedule = Event(Period Period)
              | Task(DueDate DueDate, UserId? AssignedTo, TaskSource Source)
 TaskSource   = Freeform | FromTemplate(Guid TaskTemplateId)
@@ -496,6 +498,7 @@ TaskSource   = Freeform | FromTemplate(Guid TaskTemplateId)
   event, mirroring the existing Event/Task split. Plain `TaskItemCreated` loses `TaskTemplateId`.
 
 **As built (5.2):**
+
 - **Domain.** `CalendarItem` holds `ItemSchedule Schedule`: `Event(Period)` or
   `Task(DueDate, UserId? AssignedTo, TaskSource)`, where `TaskSource` is `Freeform` or
   `FromTemplate(Guid)`. `Kind` and `ScheduleKey` are computed (`[JsonIgnore]`).
@@ -528,7 +531,7 @@ TaskSource   = Freeform | FromTemplate(Guid TaskTemplateId)
 
 ### 5.3 `CompletionTarget`, shared by Calendars and Progress
 
-```
+```text
 CompletionTarget = WholeTask | Subtask(Guid SubtaskId)
 CompletionKey(DateOnly Date, CompletionTarget Target)
 OccurrenceKey(CalendarItemId ItemId, DateOnly Date, CompletionTarget Target)
@@ -565,7 +568,7 @@ OccurrenceKey(CalendarItemId ItemId, DateOnly Date, CompletionTarget Target)
 
 ### 5.4 `CalendarItemOccurrence`
 
-```
+```text
 OccurrenceTiming = Timed(DateTimeOffset StartsAt, DateTimeOffset EndsAt) | Due(DateTimeOffset DueAt)
 CalendarItemOccurrence(..., OccurrenceTiming Timing, DateTimeOffset SortAt, Routine? Routine, ...)
 Routine(Guid SubtaskId, string ParentTitle, string ParentIcon)
@@ -575,16 +578,16 @@ Routine(Guid SubtaskId, string ParentTitle, string ParentIcon)
 - It removes the `!` in `IcalFeedWriter` and the `startsAt ?? dueAt ?? ''` chains in `agenda.ts`,
   `child-calendar.ts`, `tasks-today.ts`, `events-today.ts` and `task-run.ts`.
 - `Routine?` stays nullable, because "not a routine subtask" is the normal case.
-- Check while doing this: for subtask occurrences, `IconOverride` carries the *parent's* override.
+- Check while doing this: for subtask occurrences, `IconOverride` carries the _parent's_ override.
 
 #### As built (5.4)
 
 - **Shape.** `OccurrenceTiming` is an abstract record pair (`Timed`, `Due`) with
   `OccurrenceTimingJsonConverter` (`KindDiscriminatedJsonConverter`): wire `{ kind: 0, startsAt,
-  endsAt }` or `{ kind: 1, dueAt }`. It is a DTO-style hierarchy rather than a C# union because the
+endsAt }` or `{ kind: 1, dueAt }`. It is a DTO-style hierarchy rather than a C# union because the
   occurrence is a response type, never persisted. `SortAt` is a computed property, serialized as
   `sortAt`. `Routine(SubtaskId, ParentTitle, ParentIcon)` replaces the three nullable fields.
-- **Behaviour change.** A routine subtask used to carry `StartsAt`, `EndsAt` *and* `DueAt` (= its
+- **Behaviour change.** A routine subtask used to carry `StartsAt`, `EndsAt` _and_ `DueAt` (= its
   start). It is now `Timed` only. The frontend reads `sortAt` where it read that `dueAt`
   (tasks-today overdue rollup, child home task order), so it orders and flags overdue the same way.
 - **Checked.** For a subtask occurrence, `IconOverride` is indeed the parent item's override; the
@@ -606,7 +609,7 @@ Routine(Guid SubtaskId, string ParentTitle, string ParentIcon)
 
 ### 5.5 Recurrence
 
-```
+```text
 Recurrence     = OneOff | Repeating(RecurrenceFrequency Frequency, int IntervalCount, RecurrenceEnd End)
 RecurrenceEnd  = Never | On(DateOnly Until)
 ```
@@ -621,7 +624,7 @@ RecurrenceEnd  = Never | On(DateOnly Until)
 
 - **Types.** `RecurrenceRule.cs` became `Types/Recurrence.cs` (`Recurrence`, `RecurrenceEnd`).
   `RecurrenceJsonConverter` persists `{"Kind":"OneOff"}` or `{"Kind":"Repeating","Frequency",
-  "IntervalCount","End":{"Kind":"Never"}|{"Kind":"On","Until"}}` in the events and snapshot,
+"IntervalCount","End":{"Kind":"Never"}|{"Kind":"On","Until"}}` in the events and snapshot,
   registered in `CalendarsFeature` and `EventShapeTestSupport`. Six golden files changed, plus a new
   `RecurrenceUpdated_ToAnEndDate.json` with a read-back test.
 - **Wire unchanged.** `RecurrenceRuleRequest.ToRecurrence` / `.From` map at the endpoints, and
@@ -680,7 +683,7 @@ RecurrenceEnd  = Never | On(DateOnly Until)
 
 ### 5.7 WorkLocations
 
-```
+```text
 WorkDayOverride = AtLocation(WorkLocationId LocationId) | DayOff
 WorkDayStatus   = Unplanned | Off | AtLocation(WorkLocationSummary Location, WorkDaySource Source)
 ```
@@ -716,21 +719,21 @@ WorkDayStatus   = Unplanned | Off | AtLocation(WorkLocationSummary Location, Wor
 
 ### 5.8 Smaller unions
 
-| Item | Change |
-|---|---|
-| `ActiveProviderChanged(AiProvider? Provider)` | Split into `ActiveProviderChanged(AiProvider)` + `ActiveProviderCleared`. Removes the `DateTimeOffset? ActivatedAt` handling in `MealFamilyResolution`. Golden file `ActiveProviderChanged_ToNone` becomes `ActiveProviderCleared` |
-| `TestProviderConnectionResult(bool, string?)` | `Succeeded \| Failed(string Message)` |
-| `TestProviderConnectionRequest.ApiKey` | Stays nullable on the wire (absent = use the stored key) |
-| `IdempotencyRecord` `ResponseStatusCode?`/`ResponseContentType?`/`ResponseBody?` | `CompletedResponse? Response(int StatusCode, string? ContentType, byte[] Body)`. Null only while in progress. `ContentType` stays nullable because a 204 has none. Delete the `?? 200` fallback |
-| `SharedGroupResponse` / `SharedMedicineGroupResponse(Guid?, string?)`, `Result<Shared…?>` | `200 {groupId, groupName}` or `204`. Not 404, which already means "child not found or forbidden". The handlers return a `NotShared \| Shared(...)` union |
-| `UpdateForChildAsync` / `RescheduleForChildAsync` returning `Task<MedicineSchedule?>` | Return `Result<MedicineSchedule>`, like the sibling helpers |
-| `ListEvents` `long? AfterVersion` / `BeforeVersion` | One `DecodedCursor Position` |
-| `AiSessionToolExecutor.ExecutionOutcome.DraftEvent?` | `IReadOnlyList<MealplanAiSessionEvent> DraftEvents` |
-| `ProgressSummary.CurrentIcon?` | Non-null `DisplayIcon` computed on the server. Removes `currentIcon ?? nextGoalIcon` in `progress-badge.ts` and `children-overview.ts` |
-| `AssignPickup.Handler.ValidateRelationshipAsync` returning `Task<string?>` | Return `ValidationProblem?`, the house idiom |
-| `StreamVersionTracker.BeginScope()` returning `IDisposable?` | Return a no-op disposable singleton |
-| `AiSessionHistoryBuilder` `List<>?` lazy init | `[]` |
-| Subtask endpoints: `request.Icon is null ? null : new Icon(...)` | Normalize blank to inherit, as Calendars does. `""` currently becomes `Icon("")`. Also add a blank-icon rule to the TaskTemplate validators |
+| Item                                                                                      | Change                                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ActiveProviderChanged(AiProvider? Provider)`                                             | Split into `ActiveProviderChanged(AiProvider)` + `ActiveProviderCleared`. Removes the `DateTimeOffset? ActivatedAt` handling in `MealFamilyResolution`. Golden file `ActiveProviderChanged_ToNone` becomes `ActiveProviderCleared` |
+| `TestProviderConnectionResult(bool, string?)`                                             | `Succeeded \| Failed(string Message)`                                                                                                                                                                                              |
+| `TestProviderConnectionRequest.ApiKey`                                                    | Stays nullable on the wire (absent = use the stored key)                                                                                                                                                                           |
+| `IdempotencyRecord` `ResponseStatusCode?`/`ResponseContentType?`/`ResponseBody?`          | `CompletedResponse? Response(int StatusCode, string? ContentType, byte[] Body)`. Null only while in progress. `ContentType` stays nullable because a 204 has none. Delete the `?? 200` fallback                                    |
+| `SharedGroupResponse` / `SharedMedicineGroupResponse(Guid?, string?)`, `Result<Shared…?>` | `200 {groupId, groupName}` or `204`. Not 404, which already means "child not found or forbidden". The handlers return a `NotShared \| Shared(...)` union                                                                           |
+| `UpdateForChildAsync` / `RescheduleForChildAsync` returning `Task<MedicineSchedule?>`     | Return `Result<MedicineSchedule>`, like the sibling helpers                                                                                                                                                                        |
+| `ListEvents` `long? AfterVersion` / `BeforeVersion`                                       | One `DecodedCursor Position`                                                                                                                                                                                                       |
+| `AiSessionToolExecutor.ExecutionOutcome.DraftEvent?`                                      | `IReadOnlyList<MealplanAiSessionEvent> DraftEvents`                                                                                                                                                                                |
+| `ProgressSummary.CurrentIcon?`                                                            | Non-null `DisplayIcon` computed on the server. Removes `currentIcon ?? nextGoalIcon` in `progress-badge.ts` and `children-overview.ts`                                                                                             |
+| `AssignPickup.Handler.ValidateRelationshipAsync` returning `Task<string?>`                | Return `ValidationProblem?`, the house idiom                                                                                                                                                                                       |
+| `StreamVersionTracker.BeginScope()` returning `IDisposable?`                              | Return a no-op disposable singleton                                                                                                                                                                                                |
+| `AiSessionHistoryBuilder` `List<>?` lazy init                                             | `[]`                                                                                                                                                                                                                               |
+| Subtask endpoints: `request.Icon is null ? null : new Icon(...)`                          | Normalize blank to inherit, as Calendars does. `""` currently becomes `Icon("")`. Also add a blank-icon rule to the TaskTemplate validators                                                                                        |
 
 #### As built (5.8)
 
@@ -779,7 +782,7 @@ so any audit view can rebuild it by folding.
 Splitting into first-set and changed events (`MealRated` + `MealRatingChanged`, and so on) was
 considered and rejected. It doubles the event types and fold cases to keep data nobody reads.
 
-Not in scope: events whose `Before` is non-null and *is* part of the event's meaning
+Not in scope: events whose `Before` is non-null and _is_ part of the event's meaning
 (`TaskCompletionChanged`, `TimeZoneUpdated`, `LanguageUpdated`). `RecurrenceUpdated` becomes
 non-null on both sides in Phase 5.5.
 
@@ -812,12 +815,15 @@ even forgets to reset `loading` on retry.
      fields, which drops its 3 nulls and the 6 "overwritten before render" `''` placeholders.
    - Invite pages lose their template `?? ''`, because the value only exists in the loaded branch.
 2. **Mutations → `createAction()` / `ActionState<Id>`** in `src/app/shared`:
+
    ```ts
    type ActionState<Id> = { status: 'idle' } | { status: 'busy'; id: Id } | { status: 'error'; id: Id; key: TranslationKey };
    ```
+
    This merges the 32 busy-id signals with their paired error signals, across about 15 components.
    The heaviest users are `manage-groups`, `manage-children`, `manage-calendars`, `manage-tasks`,
    `agenda` and `ai-provider-settings`.
+
 3. Smaller frontend fixes:
    - `selectedChildId` becomes `linkedSignal(() => children()[0]?.id)` inside the loaded branch, in
      `manage-pickups`, `manage-medicines`, `manage-tasks` and `manage-progress-goals`.
@@ -894,17 +900,17 @@ even forgets to reset `loading` on retry.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
+| Question                                              | Decision                                                                                |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | Status for an authenticated caller with no Buddy user | `403` + `ErrorEnvelope("user_not_provisioned")` from one endpoint filter; tests updated |
-| `Before?` on events | Dropped; nothing reads it and the stream has the history |
-| `Icon?` meaning "inherit" | Kept as `Icon?`; an `ItemIcon` union adds churn without safety |
-| Optional free text | Non-null `string`, `""` = none, normalized at the endpoint |
-| Kind-correlated fields | Closed hierarchies with an explicit `kind` discriminator (`[JsonPolymorphic]`) |
-| Back-compat defaults | Deleted; nothing has been deployed |
-| Aggregate folds | Non-null create plus apply; `Rehydrate` is `T?` only for an empty stream |
-| Frontend async state | `resource()` for loads, a shared `ActionState` for mutations |
-| Order | Phases 0 → 7 as listed; Phase 5 one PR per domain |
+| `Before?` on events                                   | Dropped; nothing reads it and the stream has the history                                |
+| `Icon?` meaning "inherit"                             | Kept as `Icon?`; an `ItemIcon` union adds churn without safety                          |
+| Optional free text                                    | Non-null `string`, `""` = none, normalized at the endpoint                              |
+| Kind-correlated fields                                | Closed hierarchies with an explicit `kind` discriminator (`[JsonPolymorphic]`)          |
+| Back-compat defaults                                  | Deleted; nothing has been deployed                                                      |
+| Aggregate folds                                       | Non-null create plus apply; `Rehydrate` is `T?` only for an empty stream                |
+| Frontend async state                                  | `resource()` for loads, a shared `ActionState` for mutations                            |
+| Order                                                 | Phases 0 → 7 as listed; Phase 5 one PR per domain                                       |
 
 ## Remaining open questions
 

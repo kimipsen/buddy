@@ -18,7 +18,8 @@ served as plain static files by its own small Caddy container.
    `22` (SSH), `80`, `443`. Everything else (5432, keycloak's admin port,
    etc.) should stay closed to the internet — only Caddy is public.
 4. SSH in and install Docker + the compose plugin:
-   ```
+
+   ```bash
    curl -fsSL https://get.docker.com | sh
    sudo usermod -aG docker $USER
    sudo apt-get install -y docker-compose-plugin
@@ -31,7 +32,7 @@ Point three A records at the VM's public IP:
 
 ## 3. Configure secrets
 
-```
+```bash
 git clone <this repo> && cd buddy/deploy
 cp .env.example .env
 # fill in real values, especially POSTGRES_PASSWORD and KEYCLOAK_ADMIN_PASSWORD
@@ -72,13 +73,13 @@ from starting, and the log names it. See
 
 From the repo root on the VM (needs [Task](https://taskfile.dev)):
 
-```
+```bash
 task deploy
 ```
 
 That runs the preflight above, then, in `deploy/`:
 
-```
+```bash
 BUDDY_IMAGE_TAG=<git short SHA>[-dirty] docker compose -f docker-compose.prod.yml up -d --build --wait --wait-timeout 600
 ```
 
@@ -113,7 +114,7 @@ the first `task deploy` with the custom image recreates the container and
 starts on the (possibly empty) `keycloak` Postgres database. Before that
 deploy, check which one is in use:
 
-```
+```bash
 docker compose -f docker-compose.prod.yml logs keycloak | grep -iE 'dev-file|h2|database'
 docker compose -f docker-compose.prod.yml exec -T db \
   sh -c 'psql -U "$POSTGRES_USER" -d keycloak -c "\dt" | tail -n 3'
@@ -146,9 +147,11 @@ The dev realm isn't automatically ported over. Easiest path:
    once.
 4. Generate a new secret for `buddy-admin-cli` (Clients > buddy-admin-cli >
    Credentials), put it in `.env` as `KEYCLOAK_ADMIN_CLI_SECRET`, then:
-   ```
+
+   ```bash
    docker compose -f docker-compose.prod.yml up -d --no-build api
    ```
+
    (`:latest` is the image of the last successful `task deploy`; `--no-build`
    makes sure compose doesn't rebuild from the current tree instead.)
 
@@ -156,14 +159,14 @@ The dev realm isn't automatically ported over. Easiest path:
 
 On the VM, from `deploy/`:
 
-```
+```bash
 docker compose -f docker-compose.prod.yml ps   # db, keycloak, api "healthy"; caddy, frontend "running"
 docker compose -f docker-compose.prod.yml logs --tail=80 api keycloak caddy
 ```
 
 From anywhere:
 
-```
+```bash
 curl -fsS  https://api.yourdomain.com/health          # -> Healthy
 curl -fsS  https://api.yourdomain.com/version         # -> {"version":"1.2.0","commit":"..."}
 curl -fsSI https://app.yourdomain.com/ | head -1       # -> HTTP/2 200
@@ -195,7 +198,7 @@ Don't tar the volume while `db` is running: that copies files mid-write and
 may not restore. Dump with `pg_dump` through the running container instead
 (consistent snapshot, no downtime). From `deploy/`:
 
-```
+```bash
 mkdir -p ~/buddy-backups
 ts=$(date +%Y%m%d-%H%M%S)
 docker compose -f docker-compose.prod.yml exec -T db \
@@ -216,7 +219,7 @@ their accounts (see the privacy notice and
 **Restore** (replaces the current data in that database; take a fresh dump
 first if you might want it back):
 
-```
+```bash
 # 0. save the erasure ledger: who has been erased since the backup was taken
 docker compose -f docker-compose.prod.yml exec -T db \
   sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -c "copy (select id, data from erasure.mt_doc_erasureledgerentry) to stdout"' \
@@ -268,18 +271,18 @@ commit (`buddy-api:<sha>`, `buddy-frontend:<sha>`, `buddy-keycloak:<sha>`,
 with a `-dirty` suffix if the tree had uncommitted changes), so earlier builds
 stay on the VM until you delete them:
 
-```
+```bash
 docker image ls --format '{{.Repository}}:{{.Tag}}  {{.CreatedSince}}' | grep '^buddy-'
 ```
 
 **Roll back to an earlier build without rebuilding** (from `deploy/`):
 
-```
+```bash
 BUDDY_IMAGE_TAG=<good sha> docker compose -f docker-compose.prod.yml up -d --no-build --wait
 for svc in api frontend keycloak; do docker tag "buddy-$svc:<good sha>" "buddy-$svc:latest"; done
 ```
 
-`--no-build` matters: without it compose would build the *current* tree
+`--no-build` matters: without it compose would build the _current_ tree
 under the old tag. Run it from a checkout whose `docker-compose.prod.yml` and
 `.env` match that build (env vars and compose settings are not part of the
 image). The `docker tag` keeps `:latest` (used by the manual commands in this
@@ -288,7 +291,7 @@ guide) pointing at what's running.
 **If the image is gone** (pruned, or deployed before tagging existed): check
 out the last good commit and deploy it again, which rebuilds it:
 
-```
+```bash
 git checkout <good commit>
 task deploy
 ```

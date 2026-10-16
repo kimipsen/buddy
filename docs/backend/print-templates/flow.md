@@ -37,17 +37,17 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `POST` | `/print-templates` | Creates a template owned by the caller, or by `groupId` when given. |
-| `GET` | `/print-templates` | Lists the caller's own and their groups' templates, ordered by name. |
-| `GET` | `/print-templates/{templateId}` | The full template. |
-| `PATCH` | `/print-templates/{templateId}/name` | Renames it (also updates the list index). |
-| `PATCH` | `/print-templates/{templateId}/layout` | `paperSize` (`0` A4, `1` A3), `defaultStartWeekday` (`0` Sunday … `6` Saturday), `showWeekNumber`. |
-| `PUT` | `/print-templates/{templateId}/rows` | Replaces the whole ordered row list (1–12 rows). |
-| `PUT` | `/print-templates/{templateId}/colors` | Replaces the guardian name colors. |
-| `PUT` | `/print-templates/{templateId}/babysitter-colors` | Replaces the babysitter name colors (`guardianId` + `babysitterId` per entry). |
-| `DELETE` | `/print-templates/{templateId}` | Deletes it; it then reads as missing everywhere. |
+| Method   | Route                                             | Behavior                                                                                           |
+| -------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `POST`   | `/print-templates`                                | Creates a template owned by the caller, or by `groupId` when given.                                |
+| `GET`    | `/print-templates`                                | Lists the caller's own and their groups' templates, ordered by name.                               |
+| `GET`    | `/print-templates/{templateId}`                   | The full template.                                                                                 |
+| `PATCH`  | `/print-templates/{templateId}/name`              | Renames it (also updates the list index).                                                          |
+| `PATCH`  | `/print-templates/{templateId}/layout`            | `paperSize` (`0` A4, `1` A3), `defaultStartWeekday` (`0` Sunday … `6` Saturday), `showWeekNumber`. |
+| `PUT`    | `/print-templates/{templateId}/rows`              | Replaces the whole ordered row list (1–12 rows).                                                   |
+| `PUT`    | `/print-templates/{templateId}/colors`            | Replaces the guardian name colors.                                                                 |
+| `PUT`    | `/print-templates/{templateId}/babysitter-colors` | Replaces the babysitter name colors (`guardianId` + `babysitterId` per entry).                     |
+| `DELETE` | `/print-templates/{templateId}`                   | Deletes it; it then reads as missing everywhere.                                                   |
 
 Row kinds travel as `PrintRowKind` names: `Meal`, `Pickup`, `WorkLocation`,
 `CalendarMarker`, `CalendarEvents`, `TaskChecklist`, `Blank`. A row only sets the fields its kind uses; see the table in the

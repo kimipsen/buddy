@@ -10,11 +10,11 @@ that way, and what each option costs. Status: analysis only — nothing here is 
 All three end with an icon on the home screen. They differ in what it takes to get there and
 what you're signed up for afterward.
 
-| Option | Cost | Build effort | Updates | Push notifications | Feel |
-|---|---|---|---|---|---|
-| Installed web app (PWA) | $0 | 1–2 days | Instant, on refresh | Yes — iOS 16.4+ | Standalone, no browser chrome |
-| Capacitor-wrapped native | $99/yr | 3–5 days | Re-upload build (TestFlight) | Yes — full APNs | True native app |
-| Full native rewrite | $99/yr | Weeks–months | Re-upload build (TestFlight) | Yes — full APNs | True native app |
+| Option                   | Cost   | Build effort | Updates                      | Push notifications | Feel                          |
+| ------------------------ | ------ | ------------ | ---------------------------- | ------------------ | ----------------------------- |
+| Installed web app (PWA)  | $0     | 1–2 days     | Instant, on refresh          | Yes — iOS 16.4+    | Standalone, no browser chrome |
+| Capacitor-wrapped native | $99/yr | 3–5 days     | Re-upload build (TestFlight) | Yes — full APNs    | True native app               |
+| Full native rewrite      | $99/yr | Weeks–months | Re-upload build (TestFlight) | Yes — full APNs    | True native app               |
 
 ### 1. Installed web app (PWA) — recommended
 
@@ -74,15 +74,15 @@ where native polish is the entire point — not for a family tool.
 The web app route uses infrastructure Buddy already runs. Everything native routes through the
 same Apple fee, no matter how the native app is built.
 
-| Item | Needed for | Cost |
-|---|---|---|
-| Hosting Buddy's web build | Installed web app | $0 — existing Caddy/Docker deploy |
-| Apple Developer Program (Individual) | TestFlight and/or the App Store | $99/year |
-| Free "Personal Team" Xcode signing | Testing a native build without paying | $0, but the app stops opening after 7 days unless reinstalled from a Mac |
-| TestFlight distribution | Private install to your own family's iPad | Included in the $99/year membership |
-| Public App Store listing | Only if distributing beyond your own family | Included in membership, plus Apple's review and, for a public "Kids" listing, COPPA/Kids Category compliance |
-| Capacitor tooling | Wrapping the existing Angular app | $0 — open source |
-| A Mac with Xcode | Building or signing anything for iOS | $0 if you already have one; otherwise the price of a Mac |
+| Item                                 | Needed for                                  | Cost                                                                                                         |
+| ------------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Hosting Buddy's web build            | Installed web app                           | $0 — existing Caddy/Docker deploy                                                                            |
+| Apple Developer Program (Individual) | TestFlight and/or the App Store             | $99/year                                                                                                     |
+| Free "Personal Team" Xcode signing   | Testing a native build without paying       | $0, but the app stops opening after 7 days unless reinstalled from a Mac                                     |
+| TestFlight distribution              | Private install to your own family's iPad   | Included in the $99/year membership                                                                          |
+| Public App Store listing             | Only if distributing beyond your own family | Included in membership, plus Apple's review and, for a public "Kids" listing, COPPA/Kids Category compliance |
+| Capacitor tooling                    | Wrapping the existing Angular app           | $0 — open source                                                                                             |
+| A Mac with Xcode                     | Building or signing anything for iOS        | $0 if you already have one; otherwise the price of a Mac                                                     |
 
 ## Locking it down for a kid
 

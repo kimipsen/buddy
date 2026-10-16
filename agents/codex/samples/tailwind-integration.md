@@ -1,4 +1,4 @@
-TailwindCSS integration notes for Angular v22
+# TailwindCSS integration notes for Angular v22
 
 1. Install Tailwind and peer deps:
 
@@ -30,5 +30,6 @@ module.exports = {
 5. Use Tailwind utility classes in component templates (examples provided in `items-list.component.html`).
 
 Notes:
+
 - Prefer utility classes for layout; keep component CSS minimal.
 - For production builds, enable `purge` (content) in `tailwind.config.js` to remove unused styles.

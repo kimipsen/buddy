@@ -18,13 +18,13 @@ allow-listed subset through Angular templates (`shared/markdown-view`), never th
 
 ## Access
 
-| Scope | Tier | Who |
-| --- | --- | --- |
-| Child book | Manage | An active guardian of the child |
-| Child book | Acknowledge | The child |
-| Group book | Manage | A group Owner/Admin who is not a child |
-| Group book | Acknowledge | A child who is a group member |
-| Group book | View | Any other group member |
+| Scope      | Tier        | Who                                    |
+| ---------- | ----------- | -------------------------------------- |
+| Child book | Manage      | An active guardian of the child        |
+| Child book | Acknowledge | The child                              |
+| Group book | Manage      | A group Owner/Admin who is not a child |
+| Group book | Acknowledge | A child who is a group member          |
+| Group book | View        | Any other group member                 |
 
 Anyone else gets `404`. A caller who can see the book but tries to write gets `403`.
 
@@ -66,15 +66,15 @@ sequenceDiagram
 Every book-scoped route exists twice, once under `children/{childId}` and once under
 `groups/{groupId}`. The group routes' operation ids end in `ForGroup` (`AddRuleForGroup`).
 
-| Method | Route | Tier | Behavior |
-| --- | --- | --- | --- |
-| `POST` | `.../rules` | Manage | Adds a rule at the end. `{ title, body }`: title 1-100 characters, body 0-4000. The 51st rule is `400`. Returns the book. |
-| `PUT` | `.../rules/{ruleId}` | Manage | Edits a rule. `{ title, body, requireReacknowledgement = true }`. Identical content appends nothing. `false` keeps the children's acknowledgements (a small fix). Returns the book. |
-| `DELETE` | `.../rules/{ruleId}` | Manage | Removes a rule and its acknowledgements. Idempotent: `204` for a rule that's already gone. |
-| `PUT` | `.../rules/order` | Manage | `{ newOrder }`: exactly the book's current rule ids, each once, or `400`. The same order appends nothing. Returns the book. |
-| `GET` | `.../rules` | any | The book: `access` (the caller's tier), `children` and each rule with every child's status. A child sees only their own status. A scope with no rules is an empty list. |
-| `PUT` | `.../rules/{ruleId}/acknowledgement` | Acknowledge, or Manage on behalf | `{ revision, childId? }`. See below. `204`. |
-| `GET` | `/house-rules/children/{childId}` | the child, or an active guardian | Everything the child is asked to keep: the personal section (labelled with the child's given name), one section per household group the child is a member of (labelled with the group name, ordered by name), and `pendingAcknowledgements`. A guardian sees households whose group they don't belong to, read-only. |
+| Method   | Route                                | Tier                             | Behavior                                                                                                                                                                                                                                                                                                             |
+| -------- | ------------------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `.../rules`                          | Manage                           | Adds a rule at the end. `{ title, body }`: title 1-100 characters, body 0-4000. The 51st rule is `400`. Returns the book.                                                                                                                                                                                            |
+| `PUT`    | `.../rules/{ruleId}`                 | Manage                           | Edits a rule. `{ title, body, requireReacknowledgement = true }`. Identical content appends nothing. `false` keeps the children's acknowledgements (a small fix). Returns the book.                                                                                                                                  |
+| `DELETE` | `.../rules/{ruleId}`                 | Manage                           | Removes a rule and its acknowledgements. Idempotent: `204` for a rule that's already gone.                                                                                                                                                                                                                           |
+| `PUT`    | `.../rules/order`                    | Manage                           | `{ newOrder }`: exactly the book's current rule ids, each once, or `400`. The same order appends nothing. Returns the book.                                                                                                                                                                                          |
+| `GET`    | `.../rules`                          | any                              | The book: `access` (the caller's tier), `children` and each rule with every child's status. A child sees only their own status. A scope with no rules is an empty list.                                                                                                                                              |
+| `PUT`    | `.../rules/{ruleId}/acknowledgement` | Acknowledge, or Manage on behalf | `{ revision, childId? }`. See below. `204`.                                                                                                                                                                                                                                                                          |
+| `GET`    | `/house-rules/children/{childId}`    | the child, or an active guardian | Everything the child is asked to keep: the personal section (labelled with the child's given name), one section per household group the child is a member of (labelled with the group name, ordered by name), and `pendingAcknowledgements`. A guardian sees households whose group they don't belong to, read-only. |
 
 `...` is `/house-rules/children/{childId}` or `/house-rules/groups/{groupId}`.
 
@@ -84,12 +84,12 @@ A rule has a `revision` (`+1` on every content edit) and an `acknowledgementRevi
 revision that asked children to read it again). A child is up to date when their acknowledged
 revision is at least the rule's `acknowledgementRevision`.
 
-| Request | Result |
-| --- | --- |
-| `revision` greater than the rule's current revision | `400` |
+| Request                                                                                     | Result                                                                              |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `revision` greater than the rule's current revision                                         | `400`                                                                               |
 | `revision` below `acknowledgementRevision` (a normal edit happened since the child read it) | `409 house_rule_revision_changed`. The client reloads and shows the new text first. |
-| The child already acknowledged this revision or a later one | `204`, nothing appended |
-| Otherwise | `RuleAcknowledged` is appended, `204` |
+| The child already acknowledged this revision or a later one                                 | `204`, nothing appended                                                             |
+| Otherwise                                                                                   | `RuleAcknowledged` is appended, `204`                                               |
 
 Who records it:
 

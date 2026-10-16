@@ -35,7 +35,7 @@ and should be settled (even briefly, with the requester) before writing code:
    holding `Contributor`/`Owner` on a calendar, so item creation is not
    blocked technically — but whether a child should be able to create events
    is a product call, not an engineering one. Default recommendation: **view
-   + task completion only**, matching what the dashboard already allows.
+   - task completion only**, matching what the dashboard already allows.
 2. **Single merged agenda, or per-calendar view?** Recommendation: mirror the
    guardian agenda — merge all accessible calendars into one view with a
    show/hide filter per calendar, since that's already a proven, tested

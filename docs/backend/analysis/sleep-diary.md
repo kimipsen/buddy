@@ -63,7 +63,7 @@ Same shape of argument as every prior feature doc
   ritual window, multiple timestamped wake-ups, tiredness, naps, total
   sleep) that mean nothing on a generic `CalendarItem` and would pollute it
   for every other event/task.
-- Unlike `MedicineSchedule`, this isn't a *schedule* at all — there's no
+- Unlike `MedicineSchedule`, this isn't a _schedule_ at all — there's no
   future occurrence to expand, no recurrence, no "due" state. It's a plain
   observational log, one entry per past (or today's) date. An entry's date
   is the evening the night starts ("Night of" / "Natten efter"); the
@@ -100,13 +100,13 @@ rejected a deterministic id for `MealPlanIndexDocument`, on the grounds that
 a one-off deterministic-id special case would be a surprising
 inconsistency." That reasoning doesn't transfer here, for the same reason
 it didn't block `ChildProgress`: `MealPlan` needed an index anyway, because
-resolving *which* child's stream to read requires walking family sharing
+resolving _which_ child's stream to read requires walking family sharing
 first ([mealplans.md, Question 3](mealplans.md#question-3-sharing-a-mealmealplan-across-siblings)) —
 the deterministic id would have saved nothing. `SleepDiary`, like
 `ChildProgress`, has no family-sharing axis and no "which one" ambiguity to
 resolve, so the simplification actually pays for itself here.
 
-```
+```text
 SleepDiary(
     SleepDiaryId Id,              // Id.Value == ChildId.Value
     UserId ChildId,
@@ -130,7 +130,7 @@ already makes for `DoseStatus.Pending` and `PickupSlot`'s implicit
 who logged it, with `NightWakeUps`/`Naps` as plain lists of one shared
 `SleepInterval` shape.**
 
-```
+```text
 SleepEntry(
     TimeOnly? RoutineStartTime,     // "gøre klar" -- getting ready for bed
     TimeOnly? RitualStartTime,      // "sengeritual" start
@@ -153,7 +153,7 @@ A few decisions bundled into that shape:
 - **Every field but `LoggedBy`/`IsTired` is optional.** The paper form is
   filled in live, overnight, by a tired parent — a guardian logging "woke at
   03:30 for about 30 min" the next morning may not remember the exact
-  bedtime-ritual window, and shouldn't be blocked from saving what they *do*
+  bedtime-ritual window, and shouldn't be blocked from saving what they _do_
   remember. This also means a day can start as a partial entry and be filled
   in further later — see "Failure and edge-case behavior."
 - **`IsTired` is a plain `bool`, defaulting `false`, not `bool?`.** The
@@ -180,7 +180,7 @@ A few decisions bundled into that shape:
   precisely. Computing it from `FellAsleepTime`/`MorningWakeTime`/
   `NightWakeUps` would produce a falsely precise number that can
   legitimately disagree with what the guardian actually observed. The
-  frontend can still *suggest* a computed value as a starting point — that's
+  frontend can still _suggest_ a computed value as a starting point — that's
   a client-side convenience, not a backend rule — but the stored value is
   whatever the guardian confirms.
 
@@ -189,13 +189,13 @@ A few decisions bundled into that shape:
 **Decision: guardian-only. No `View` tier for the child, unlike
 `PickupSchedule`/`MedicineSchedule`.**
 
-```
+```text
 enum SleepDiaryAccessTier { None, Manage }
 enum SleepDiaryAccess { Allowed, NotFound, Forbidden }
 ```
 
-| Tier | Who | Actions |
-|---|---|---|
+| Tier       | Who                                  | Actions                                                                                                          |
+| ---------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | **Manage** | An active guardian of `ChildId` only | Log/update/clear a day's entry, edit the diary's sleep-hygiene notes, view the diary, create/revoke a share link |
 
 Mirrors `MedicineAuthorization`'s exact shape
@@ -243,7 +243,7 @@ guardian-issued token that grants a read-only, no-login view — rather than
 inventing a new sharing primitive.** Unlike `IcalToken`, add an explicit
 optional expiry.
 
-```
+```text
 SleepDiaryShareToken(
     SleepDiaryShareTokenId Id,
     UserId ChildId,
@@ -285,7 +285,7 @@ SleepDiaryShareToken(
 
 ### Events
 
-```
+```text
 SleepDiaryStarted(SleepDiaryId, UserId ChildId, DateTimeOffset OccurredAt)
     // Lazily appended by the first LogSleepEntry call for a child with no stream yet,
     // exactly as MealPlanCreated/PickupScheduleCreated are -- not provisioned at child creation.
@@ -328,10 +328,10 @@ specific day's entry.
 
 Because `SleepDiaryId.Value == ChildId.Value`, "find this child's diary"
 needs no index document — same zero-lookup property `ChildProgress` already
-has. A `SleepDiaryShareToken`, however, is looked up by *token hash* at
+has. A `SleepDiaryShareToken`, however, is looked up by _token hash_ at
 share-view time, not by `ChildId`, so it needs one:
 
-```
+```text
 SleepDiaryShareTokenDocument(Guid Id, Guid ChildId, string TokenHash, DateTimeOffset? ExpiresAt, bool IsRevoked)
 ```
 
@@ -352,20 +352,20 @@ convention `MealPlanExpansion` and `PickupScheduleExpansion` already use.
 
 ## Command slices (`Features/SleepDiary/`, same vertical-slice shape as `Medicines`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `LogSleepEntry` | Manage | Upserts one date's full `SleepEntry`. Creates the stream lazily if the child has none yet. Emits `SleepEntryLogged` |
-| `ClearSleepEntry` | Manage | Removes a date's entry entirely (correcting a mistaken log) — idempotent no-op if nothing is logged for that date. Emits `SleepEntryCleared` |
-| `UpdateSleepHygieneNotes` | Manage | The diary-level free-text field. Emits `SleepHygieneNotesUpdated` |
-| `ListSleepDiaryEntries` | Manage | `[from, to]` date range → the guardian's own review view |
-| `CreateSleepDiaryShareLink` | Manage | Optional `ExpiresAt`. Returns the plaintext token once (never retrievable again, same convention as any other one-time secret in this codebase); emits `SleepDiaryShareTokenCreated` |
-| `RevokeSleepDiaryShareLink` | Manage | Emits `SleepDiaryShareTokenRevoked` |
-| `ListSleepDiaryShareLinks` | Manage | Lists still-live share links (not revoked, not expired) so a guardian can find one to revoke — the plaintext token is only ever shown once, at creation |
-| `GetSharedSleepDiary` | *(unauthenticated, token-gated)* | Resolves `SleepDiaryShareTokenDocument` by hash, checks `!IsRevoked && (ExpiresAt is null || ExpiresAt > now)`, then reads the same data `ListSleepDiaryEntries` would, rendered for an external reader |
+| Slice                       | Tier                             | Notes                                                                                                                                                                                                     |
+| --------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LogSleepEntry`             | Manage                           | Upserts one date's full `SleepEntry`. Creates the stream lazily if the child has none yet. Emits `SleepEntryLogged`                                                                                       |
+| `ClearSleepEntry`           | Manage                           | Removes a date's entry entirely (correcting a mistaken log) — idempotent no-op if nothing is logged for that date. Emits `SleepEntryCleared`                                                              |
+| `UpdateSleepHygieneNotes`   | Manage                           | The diary-level free-text field. Emits `SleepHygieneNotesUpdated`                                                                                                                                         |
+| `ListSleepDiaryEntries`     | Manage                           | `[from, to]` date range → the guardian's own review view                                                                                                                                                  |
+| `CreateSleepDiaryShareLink` | Manage                           | Optional `ExpiresAt`. Returns the plaintext token once (never retrievable again, same convention as any other one-time secret in this codebase); emits `SleepDiaryShareTokenCreated`                      |
+| `RevokeSleepDiaryShareLink` | Manage                           | Emits `SleepDiaryShareTokenRevoked`                                                                                                                                                                       |
+| `ListSleepDiaryShareLinks`  | Manage                           | Lists still-live share links (not revoked, not expired) so a guardian can find one to revoke — the plaintext token is only ever shown once, at creation                                                   |
+| `GetSharedSleepDiary`       | _(unauthenticated, token-gated)_ | Resolves `SleepDiaryShareTokenDocument` by hash, checks `!IsRevoked && (ExpiresAt is null \|\| ExpiresAt > now)`, then reads the same data `ListSleepDiaryEntries` would, rendered for an external reader |
 
 ## Routes
 
-```
+```text
 PUT    /sleep-diary/children/{childId}/entries/{date}      LogSleepEntry
 DELETE /sleep-diary/children/{childId}/entries/{date}      ClearSleepEntry
 PUT    /sleep-diary/children/{childId}/hygiene-notes        UpdateSleepHygieneNotes
@@ -395,40 +395,40 @@ not the API route.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Guardian logs only some fields for a day (e.g. just bedtime and morning wake-up) | Allowed — every field but `LoggedBy` is optional; the rest render as blank in review, matching the paper form's own blank cells |
-| Guardian re-logs a day that already has an entry | Full overwrite (`Before`/`After` on `SleepEntryLogged`) — a guardian adding detail the next morning is the expected common case, not an exceptional "conflict" |
-| Guardian logs a date more than 14 days in the past, or a date in the future | Allowed — no time-based gate, matching `MedicineSchedule`'s "child marks a future/past dose" stance; a diary is explicitly meant to be filled in retroactively (the paper form is written up the next morning) |
-| `TotalSleepDuration` doesn't match what the other fields would compute to | Allowed — see Question 3; the guardian's number is authoritative, not a derived value the server would reject a mismatch on |
-| Clearing a date with no entry | Idempotent no-op (`Success`, no event), same rule `ClearMealSlot`/`ClearPickup` use |
-| Guardian's `GuardianLink` is revoked | Immediately drops to `NotFound`, same as every other per-child feature; existing entries and any live share tokens are untouched |
-| Two guardians log the same date at nearly the same time | Both `SleepEntryLogged` events append in order; the last one wins for current state, neither write is lost from history — same event-sourcing benefit as everywhere else |
-| A share link is used after being revoked or past `ExpiresAt` | `GetSharedSleepDiary` returns not-found — same "can't distinguish private from missing" collapse used for authenticated access elsewhere |
-| A share link is created, then new entries are logged afterward | The shared view always reflects current data on each request (not a snapshot taken at share-creation time) — a guardian filling in more nights before the appointment doesn't need to regenerate the link |
-| Child has no guardian at all | Cannot happen for `SleepDiary` creation (`Manage` tier requires a `GuardianLink`), so a diary is never created without a guardian |
+| Case                                                                             | Behavior                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guardian logs only some fields for a day (e.g. just bedtime and morning wake-up) | Allowed — every field but `LoggedBy` is optional; the rest render as blank in review, matching the paper form's own blank cells                                                                                |
+| Guardian re-logs a day that already has an entry                                 | Full overwrite (`Before`/`After` on `SleepEntryLogged`) — a guardian adding detail the next morning is the expected common case, not an exceptional "conflict"                                                 |
+| Guardian logs a date more than 14 days in the past, or a date in the future      | Allowed — no time-based gate, matching `MedicineSchedule`'s "child marks a future/past dose" stance; a diary is explicitly meant to be filled in retroactively (the paper form is written up the next morning) |
+| `TotalSleepDuration` doesn't match what the other fields would compute to        | Allowed — see Question 3; the guardian's number is authoritative, not a derived value the server would reject a mismatch on                                                                                    |
+| Clearing a date with no entry                                                    | Idempotent no-op (`Success`, no event), same rule `ClearMealSlot`/`ClearPickup` use                                                                                                                            |
+| Guardian's `GuardianLink` is revoked                                             | Immediately drops to `NotFound`, same as every other per-child feature; existing entries and any live share tokens are untouched                                                                               |
+| Two guardians log the same date at nearly the same time                          | Both `SleepEntryLogged` events append in order; the last one wins for current state, neither write is lost from history — same event-sourcing benefit as everywhere else                                       |
+| A share link is used after being revoked or past `ExpiresAt`                     | `GetSharedSleepDiary` returns not-found — same "can't distinguish private from missing" collapse used for authenticated access elsewhere                                                                       |
+| A share link is created, then new entries are logged afterward                   | The shared view always reflects current data on each request (not a snapshot taken at share-creation time) — a guardian filling in more nights before the appointment doesn't need to regenerate the link      |
+| Child has no guardian at all                                                     | Cannot happen for `SleepDiary` creation (`Manage` tier requires a `GuardianLink`), so a diary is never created without a guardian                                                                              |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Extend `Calendars`/`Medicines`, or new feature | New feature, `Features/SleepDiary` — the field set and the "no schedule/no recurrence" shape don't fit either existing feature |
-| Aggregate identity | `SleepDiaryId.Value == ChildId.Value`, no index document — a genuine 1:1 like `ChildProgress`, unlike the many-per-child `MedicineSchedule`/`Meal` case |
-| One entry per day, how modeled | A single flat `SleepEntry` record, every field optional except `LoggedBy` |
-| `IsTired` type | Plain `bool`, defaulting `false` — it's a UI toggle, and every flip already produces an explicit event, so there's no "unset" state worth preserving |
-| Repeated night-wake-ups/naps | Plain `IReadOnlyList<SleepInterval>` (start time + duration), not a discriminated union — no multi-case union risk like `PickupAssignment` hit |
-| `TotalSleepDuration` | Guardian-entered, not computed from other timestamps — matches how the paper form is actually filled in (estimates, not arithmetic) |
-| Sleep-hygiene notes | One free-text field on the `SleepDiary` aggregate itself, not per-entry — matches the paper form's single footnote box for the whole period |
-| Who can log/view | Guardian (`Manage` tier) only — no tier for the child at all, unlike every prior per-child feature |
-| Sharing with someone outside the app | A hashed, revocable token reusing `IcalToken`'s generation/hashing, with an added optional `ExpiresAt` (unlike `IcalToken`, which is deliberately indefinite) |
-| Does a sleep diary show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface, matching every prior per-child feature's stance |
-| Recurrence / auto-generated future entries | None — every entry is explicit, for a specific past-or-today date; there is no "occurrence" concept here at all |
-| v1 scope | Everything, share links and the public view included (settled with the product owner at implementation time) |
-| Where `IcalToken`'s generate/hash helper lives | Duplicated as `SleepDiaryShareSecret` in `Features/SleepDiaries/Types/SleepDiaryShareToken.cs`, keeping the slice free of a dependency on `Calendars` |
+| Question                                                                                  | Decision                                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extend `Calendars`/`Medicines`, or new feature                                            | New feature, `Features/SleepDiary` — the field set and the "no schedule/no recurrence" shape don't fit either existing feature                                                                                |
+| Aggregate identity                                                                        | `SleepDiaryId.Value == ChildId.Value`, no index document — a genuine 1:1 like `ChildProgress`, unlike the many-per-child `MedicineSchedule`/`Meal` case                                                       |
+| One entry per day, how modeled                                                            | A single flat `SleepEntry` record, every field optional except `LoggedBy`                                                                                                                                     |
+| `IsTired` type                                                                            | Plain `bool`, defaulting `false` — it's a UI toggle, and every flip already produces an explicit event, so there's no "unset" state worth preserving                                                          |
+| Repeated night-wake-ups/naps                                                              | Plain `IReadOnlyList<SleepInterval>` (start time + duration), not a discriminated union — no multi-case union risk like `PickupAssignment` hit                                                                |
+| `TotalSleepDuration`                                                                      | Guardian-entered, not computed from other timestamps — matches how the paper form is actually filled in (estimates, not arithmetic)                                                                           |
+| Sleep-hygiene notes                                                                       | One free-text field on the `SleepDiary` aggregate itself, not per-entry — matches the paper form's single footnote box for the whole period                                                                   |
+| Who can log/view                                                                          | Guardian (`Manage` tier) only — no tier for the child at all, unlike every prior per-child feature                                                                                                            |
+| Sharing with someone outside the app                                                      | A hashed, revocable token reusing `IcalToken`'s generation/hashing, with an added optional `ExpiresAt` (unlike `IcalToken`, which is deliberately indefinite)                                                 |
+| Does a sleep diary show up in `Calendar`/`ListOccurrences`                                | No — a fully separate read surface, matching every prior per-child feature's stance                                                                                                                           |
+| Recurrence / auto-generated future entries                                                | None — every entry is explicit, for a specific past-or-today date; there is no "occurrence" concept here at all                                                                                               |
+| v1 scope                                                                                  | Everything, share links and the public view included (settled with the product owner at implementation time)                                                                                                  |
+| Where `IcalToken`'s generate/hash helper lives                                            | Duplicated as `SleepDiaryShareSecret` in `Features/SleepDiaries/Types/SleepDiaryShareToken.cs`, keeping the slice free of a dependency on `Calendars`                                                         |
 | `TotalSleepDuration` in the UI (this doc vs. the visual specification's "read-only pill") | This doc wins: an editable field the form prefills with a suggestion (fell asleep, or else lies down, to morning wake, minus the wake-ups) until the guardian types their own; "Use suggestion" switches back |
-| Bedtime-ritual input | A new shared `app-time-range` control (two `app-time-select`s joined by an arrow) |
-| Shared view: PDF or printable page | A printable HTML page laid out like the paper form, with a Print button; no generated PDF |
-| Shared view date range | The reader pages by 14 days; without `from`/`to` the server shows the last 14 days ending today. At most 92 days per request, same limit as `ListSleepDiaryEntries` |
+| Bedtime-ritual input                                                                      | A new shared `app-time-range` control (two `app-time-select`s joined by an arrow)                                                                                                                             |
+| Shared view: PDF or printable page                                                        | A printable HTML page laid out like the paper form, with a Print button; no generated PDF                                                                                                                     |
+| Shared view date range                                                                    | The reader pages by 14 days; without `from`/`to` the server shows the last 14 days ending today. At most 92 days per request, same limit as `ListSleepDiaryEntries`                                           |
 
 ## Remaining open questions
 
@@ -437,7 +437,7 @@ not the API route.
   history; if that's requested, it's an additive `View` tier the same shape
   `PickupSchedule` already has, not a redesign.
 - **Actual PDF export, formatted like the attached clinical form.** This
-  document specifies the data and a shareable read-only *view*; whether that
+  document specifies the data and a shareable read-only _view_; whether that
   view is an HTML page styled for printing or a generated PDF file is a
   frontend/rendering decision deferred here. If a clinic specifically wants
   the exact 14-day grid layout from the attached form, that's a rendering

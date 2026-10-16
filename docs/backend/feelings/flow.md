@@ -56,21 +56,21 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `POST` | `/feelings/me/check-ins` | The child checks in now: `zone`, optional `tags` (0-3, feeling words only from that zone) and `note` (at most 280). `404` for a caller who isn't a child with an active guardian; `400` on the 21st check-in of the child's day. |
-| `DELETE` | `/feelings/me/check-ins/{checkInId}` | The child's undo, within 10 minutes of `recordedAt`, else `409 check_in_undo_window_closed`. A guardian's observation is `404`; an id already gone is `204`. |
-| `GET` | `/feelings/me/today` | Today's date on the child's clock, the prompt times, the display mode and the child's own self-reports for today (never a guardian's observation). |
-| `POST` | `/feelings/children/{childId}/check-ins` | A guardian's observation; optional `date` and `time` (both or neither; neither is now), not more than 5 minutes in the future. |
-| `GET` | `/feelings/children/{childId}/check-ins?from&to` | A range of at most 92 days, sorted by moment, with the prompt times and display mode. |
-| `PUT` | `/feelings/children/{childId}/check-ins/{checkInId}` | Full overwrite of a guardian's observation. A child's self-report is `409 check_in_is_self_report`. An identical edit appends nothing. |
-| `DELETE` | `/feelings/children/{childId}/check-ins/{checkInId}` | Removes any check-in, a self-report included; the event records which guardian. Idempotent. |
-| `PUT` | `/feelings/children/{childId}/prompt-times` | 0-4 distinct whole-minute times, stored sorted. The same times append nothing. |
-| `PUT` | `/feelings/children/{childId}/display-mode` | `FacesAndWords` or `FacesOnly`. The same mode appends nothing. |
-| `POST` | `/feelings/children/{childId}/share-links` | Optional `expiresAt` (future, at most 365 days). Returns the plaintext token once. |
-| `GET` | `/feelings/children/{childId}/share-links` | Live links only. |
-| `DELETE` | `/feelings/children/{childId}/share-links/{shareLinkId}` | Revokes a link. Idempotent. |
-| `GET` | `/feelings/shared/{token}?from&to` | Anonymous. The child's name and check-ins; default the last 14 days on the child's clock, at most 92. Unknown, revoked, expired or erased: `404`. |
+| Method   | Route                                                    | Behavior                                                                                                                                                                                                                         |
+| -------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/feelings/me/check-ins`                                 | The child checks in now: `zone`, optional `tags` (0-3, feeling words only from that zone) and `note` (at most 280). `404` for a caller who isn't a child with an active guardian; `400` on the 21st check-in of the child's day. |
+| `DELETE` | `/feelings/me/check-ins/{checkInId}`                     | The child's undo, within 10 minutes of `recordedAt`, else `409 check_in_undo_window_closed`. A guardian's observation is `404`; an id already gone is `204`.                                                                     |
+| `GET`    | `/feelings/me/today`                                     | Today's date on the child's clock, the prompt times, the display mode and the child's own self-reports for today (never a guardian's observation).                                                                               |
+| `POST`   | `/feelings/children/{childId}/check-ins`                 | A guardian's observation; optional `date` and `time` (both or neither; neither is now), not more than 5 minutes in the future.                                                                                                   |
+| `GET`    | `/feelings/children/{childId}/check-ins?from&to`         | A range of at most 92 days, sorted by moment, with the prompt times and display mode.                                                                                                                                            |
+| `PUT`    | `/feelings/children/{childId}/check-ins/{checkInId}`     | Full overwrite of a guardian's observation. A child's self-report is `409 check_in_is_self_report`. An identical edit appends nothing.                                                                                           |
+| `DELETE` | `/feelings/children/{childId}/check-ins/{checkInId}`     | Removes any check-in, a self-report included; the event records which guardian. Idempotent.                                                                                                                                      |
+| `PUT`    | `/feelings/children/{childId}/prompt-times`              | 0-4 distinct whole-minute times, stored sorted. The same times append nothing.                                                                                                                                                   |
+| `PUT`    | `/feelings/children/{childId}/display-mode`              | `FacesAndWords` or `FacesOnly`. The same mode appends nothing.                                                                                                                                                                   |
+| `POST`   | `/feelings/children/{childId}/share-links`               | Optional `expiresAt` (future, at most 365 days). Returns the plaintext token once.                                                                                                                                               |
+| `GET`    | `/feelings/children/{childId}/share-links`               | Live links only.                                                                                                                                                                                                                 |
+| `DELETE` | `/feelings/children/{childId}/share-links/{shareLinkId}` | Revokes a link. Idempotent.                                                                                                                                                                                                      |
+| `GET`    | `/feelings/shared/{token}?from&to`                       | Anonymous. The child's name and check-ins; default the last 14 days on the child's clock, at most 92. Unknown, revoked, expired or erased: `404`.                                                                                |
 
 All routes are mapped only while `Features:Feelings` is on. Erasing a child deletes the journal and
 the share links; erasing a guardian revokes the links they created (their observations stay with

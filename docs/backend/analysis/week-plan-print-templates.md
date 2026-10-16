@@ -26,15 +26,15 @@ What was asked for specifically:
 
 Almost every row on such a sheet maps onto an existing read surface:
 
-| Paper row | Existing source |
-|---|---|
-| Dinner | `ListMealPlan` / `ListMealPlanForGroup`, `MealSlot.Dinner` |
-| Drop-off / pick-up | `ListPickupSchedule`, `PickupSlot.DropOff` / `PickUp` |
+| Paper row                             | Existing source                                                                                                       |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Dinner                                | `ListMealPlan` / `ListMealPlanForGroup`, `MealSlot.Dinner`                                                            |
+| Drop-off / pick-up                    | `ListPickupSchedule`, `PickupSlot.DropOff` / `PickUp`                                                                 |
 | "Dad at the office", "Mum in Randers" | `ListWorkDays` from the new guardian work locations feature ([work-locations.md](work-locations.md)), shown as a mark |
-| A child's activities | `ListOccurrences`, filtered by `AssignedTo` |
-| A child's chores | `ListOccurrences`, `Kind = Task`, filtered by `AssignedTo` |
-| Appointments / other | `ListOccurrences` on one or more calendars |
-| Bins | A recurring calendar item, or left blank for handwriting |
+| A child's activities                  | `ListOccurrences`, filtered by `AssignedTo`                                                                           |
+| A child's chores                      | `ListOccurrences`, `Kind = Task`, filtered by `AssignedTo`                                                            |
+| Appointments / other                  | `ListOccurrences` on one or more calendars                                                                            |
+| Bins                                  | A recurring calendar item, or left blank for handwriting                                                              |
 
 Apart from work locations, which get their own feature in
 [work-locations.md](work-locations.md), the only genuinely new data is the
@@ -73,7 +73,7 @@ editable by more than the guardian who created it. `Calendar` already solves
 folded into the aggregate-only `CalendarOwner` union. `PrintTemplate` follows
 exactly that shape:
 
-```
+```text
 PrintTemplateCreated(PrintTemplateId, UserId OwnerId, string Name, UserId CreatedBy, DateTimeOffset OccurredAt)
 PrintTemplateCreatedForGroup(PrintTemplateId, GroupId OwnerId, string Name, UserId CreatedBy, DateTimeOffset OccurredAt)
 ```
@@ -97,7 +97,7 @@ can't tell structurally similar union cases apart on deserialization
 ([pickup-schedules.md, Question 3](pickup-schedules.md#question-3-modeling-who--a-flat-kind-discriminator-not-a-union)).
 The flat record is the established fix:
 
-```
+```csharp
 public enum PrintRowKind { Meal, Pickup, WorkLocation, CalendarMarker, CalendarEvents, TaskChecklist, Blank }
 
 PrintTemplateRow(
@@ -121,15 +121,15 @@ What each kind needs, enforced by the validator at write time (the same
 "validate the fields this kind needs" rule `AssignPickupValidator` applies with
 `.When(x => x.Kind == …)`):
 
-| Kind | Required | Optional | Renders as |
-|---|---|---|---|
-| `Meal` | exactly one of `ChildId` / `MealGroupId`; `MealSlot` | — | the meal name |
-| `Pickup` | `ChildId` | — | a diagonally split cell, drop-off above, pick-up below |
-| `WorkLocation` | `GuardianId` | `WorkLocationId` | with `WorkLocationId`, a mark (✕) on each day the guardian is at that location; without it, the day's location icon and name in the guardian's color |
-| `CalendarMarker` | `CalendarIds` (1+) | `TitleFilter` | a mark (✕) on any day with a matching occurrence |
-| `CalendarEvents` | `CalendarIds` (1+) | `AssignedToId`, `TitleFilter`, `MaxItems`, `ShowTime`, `ShowAssignee` | a list of occurrences |
-| `TaskChecklist` | `CalendarIds` (1+) | `AssignedToId`, `MaxItems` | tasks as empty tick boxes |
-| `Blank` | — | — | an empty cell for handwriting |
+| Kind             | Required                                             | Optional                                                              | Renders as                                                                                                                                           |
+| ---------------- | ---------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Meal`           | exactly one of `ChildId` / `MealGroupId`; `MealSlot` | —                                                                     | the meal name                                                                                                                                        |
+| `Pickup`         | `ChildId`                                            | —                                                                     | a diagonally split cell, drop-off above, pick-up below                                                                                               |
+| `WorkLocation`   | `GuardianId`                                         | `WorkLocationId`                                                      | with `WorkLocationId`, a mark (✕) on each day the guardian is at that location; without it, the day's location icon and name in the guardian's color |
+| `CalendarMarker` | `CalendarIds` (1+)                                   | `TitleFilter`                                                         | a mark (✕) on any day with a matching occurrence                                                                                                     |
+| `CalendarEvents` | `CalendarIds` (1+)                                   | `AssignedToId`, `TitleFilter`, `MaxItems`, `ShowTime`, `ShowAssignee` | a list of occurrences                                                                                                                                |
+| `TaskChecklist`  | `CalendarIds` (1+)                                   | `AssignedToId`, `MaxItems`                                            | tasks as empty tick boxes                                                                                                                            |
+| `Blank`          | —                                                    | —                                                                     | an empty cell for handwriting                                                                                                                        |
 
 Fields a kind doesn't use must be null/false/empty; the validator rejects
 stray values rather than silently dropping them, so stored rows always say
@@ -139,7 +139,7 @@ exactly what they mean.
 
 ### `PrintTemplate` (new aggregate, one stream per template)
 
-```
+```text
 PrintTemplate(
     PrintTemplateId Id,
     PrintTemplateOwner Owner,                  // aggregate-only union, see Question 2
@@ -163,7 +163,7 @@ BabysitterColor(UserId GuardianId, BabysitterId BabysitterId, Color Color)
 - **Orientation is not a field.** Landscape is a product rule, not a choice;
   storing it would invite a value nobody can set.
 - **The start date is not stored.** A template is reusable precisely because
-  it holds everything *except* the date. `DefaultStartWeekday` only decides
+  it holds everything _except_ the date. `DefaultStartWeekday` only decides
   what the date picker suggests.
 - **Day count is fixed at 7 in v1.** A week plan is a week; a configurable
   span is deferred (see open questions) in line with this codebase's
@@ -186,7 +186,7 @@ BabysitterColor(UserId GuardianId, BabysitterId BabysitterId, Color Color)
 
 Following the existing `Before`/`After` convention for mutations:
 
-```
+```text
 PrintTemplateCreated(PrintTemplateId, UserId OwnerId, string Name, UserId CreatedBy, DateTimeOffset OccurredAt)
 PrintTemplateCreatedForGroup(PrintTemplateId, GroupId OwnerId, string Name, UserId CreatedBy, DateTimeOffset OccurredAt)
 
@@ -236,7 +236,7 @@ missing by every handler.
 Listing "templates I can use" needs an index, since Marten streams are
 addressed by aggregate id:
 
-```
+```text
 PrintTemplateIndexDocument(Guid Id, Guid? OwnerUserId, Guid? OwnerGroupId, string Name, bool IsDeleted)
 ```
 
@@ -248,10 +248,10 @@ by every other feature (`PickupScheduleIndexDocument`,
 
 ## Authorization
 
-| Tier | Who | Actions |
-|---|---|---|
+| Tier       | Who                                                                             | Actions            |
+| ---------- | ------------------------------------------------------------------------------- | ------------------ |
 | **Manage** | User-owned: the owner. Group-owned: any group member who is not a child account | View, edit, delete |
-| — | Everyone else, including children in the owning group | `NotFound` |
+| —          | Everyone else, including children in the owning group                           | `NotFound`         |
 
 - Children can be group members (`AddChildToGroup`), so group membership alone
   is not enough. The existing `ChildVisibility.IsChildAsync` check excludes
@@ -291,17 +291,17 @@ surfaces as a "not available" row at print time and a warning in the editor.
 
 ## Command slices (`Features/PrintTemplates/`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `CreatePrintTemplate` | — | `Name`, optional `GroupId`. With a group, the caller must be a non-child member. Emits `PrintTemplateCreated` or `PrintTemplateCreatedForGroup` and writes the index row |
-| `ListPrintTemplates` | — | Index query: the caller's own templates plus their groups' templates, `IsDeleted == false` |
-| `GetPrintTemplate` | Manage | Full template |
-| `RenamePrintTemplate` | Manage | Emits `PrintTemplateRenamed`; updates the index |
-| `UpdatePrintTemplateLayout` | Manage | `PaperSize`, `DefaultStartWeekday`, `ShowWeekNumber`. No-op when unchanged (`Success`, no event) |
-| `ReplacePrintTemplateRows` | Manage | Full ordered row list; validated per Question 3 plus the write-time checks above. No-op when equal |
-| `ReplacePrintTemplateGuardianColors` | Manage | Full list; one entry per guardian at most |
-| `ReplacePrintTemplateBabysitterColors` | Manage | Full list; one entry per babysitter at most. A new entry must be an active babysitter on the list of the caller or a co-guardian |
-| `DeletePrintTemplate` | Manage | Emits `PrintTemplateDeleted`; marks the index row deleted |
+| Slice                                  | Tier   | Notes                                                                                                                                                                    |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CreatePrintTemplate`                  | —      | `Name`, optional `GroupId`. With a group, the caller must be a non-child member. Emits `PrintTemplateCreated` or `PrintTemplateCreatedForGroup` and writes the index row |
+| `ListPrintTemplates`                   | —      | Index query: the caller's own templates plus their groups' templates, `IsDeleted == false`                                                                               |
+| `GetPrintTemplate`                     | Manage | Full template                                                                                                                                                            |
+| `RenamePrintTemplate`                  | Manage | Emits `PrintTemplateRenamed`; updates the index                                                                                                                          |
+| `UpdatePrintTemplateLayout`            | Manage | `PaperSize`, `DefaultStartWeekday`, `ShowWeekNumber`. No-op when unchanged (`Success`, no event)                                                                         |
+| `ReplacePrintTemplateRows`             | Manage | Full ordered row list; validated per Question 3 plus the write-time checks above. No-op when equal                                                                       |
+| `ReplacePrintTemplateGuardianColors`   | Manage | Full list; one entry per guardian at most                                                                                                                                |
+| `ReplacePrintTemplateBabysitterColors` | Manage | Full list; one entry per babysitter at most. A new entry must be an active babysitter on the list of the caller or a co-guardian                                         |
+| `DeletePrintTemplate`                  | Manage | Emits `PrintTemplateDeleted`; marks the index row deleted                                                                                                                |
 
 There is no "render" or "print" slice. Rendering is read-only composition over
 existing endpoints and lives in the frontend.
@@ -313,25 +313,25 @@ Structural rules live in each slice's validator (`PrintTemplateRules`,
 run in the handler (`PrintTemplateReferenceChecks`), as
 [validation-rules.md](validation-rules.md) prescribes:
 
-| Field | Rule |
-|---|---|
-| `Name` | required, trimmed, 1–80 characters |
-| `Rows` | 1–12 rows |
-| `Row.Label` | trimmed, 0–40 characters (empty is allowed for `Blank`) |
-| `Row.HeightWeight` | 1–5 |
-| `Row.CalendarIds` | 1–10 distinct ids where required |
-| `Row.TitleFilter` | 1–60 characters when present |
-| `Row.MaxItems` | 1–8 when present |
-| `GuardianColors` | at most one entry per guardian, at most 12 entries, each color trimmed, 1–32 characters |
-| `BabysitterColors` | at most one entry per `(GuardianId, BabysitterId)`, at most 24 entries, each color trimmed, 1–32 characters |
-| `Row.CalendarIds` entries | a null id is rejected with `400`, not stored |
+| Field                     | Rule                                                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `Name`                    | required, trimmed, 1–80 characters                                                                          |
+| `Rows`                    | 1–12 rows                                                                                                   |
+| `Row.Label`               | trimmed, 0–40 characters (empty is allowed for `Blank`)                                                     |
+| `Row.HeightWeight`        | 1–5                                                                                                         |
+| `Row.CalendarIds`         | 1–10 distinct ids where required                                                                            |
+| `Row.TitleFilter`         | 1–60 characters when present                                                                                |
+| `Row.MaxItems`            | 1–8 when present                                                                                            |
+| `GuardianColors`          | at most one entry per guardian, at most 12 entries, each color trimmed, 1–32 characters                     |
+| `BabysitterColors`        | at most one entry per `(GuardianId, BabysitterId)`, at most 24 entries, each color trimmed, 1–32 characters |
+| `Row.CalendarIds` entries | a null id is rejected with `400`, not stored                                                                |
 
 Validation error keys use the camelCase JSON path (`rows[2].calendarIds`), so the editor can
 map them to fields. A `Blank` row may omit `label` entirely; the endpoint stores it as `""`.
 
 ## Routes
 
-```
+```text
 POST   /print-templates                          CreatePrintTemplate
 GET    /print-templates                          ListPrintTemplates
 GET    /print-templates/{templateId}             GetPrintTemplate
@@ -351,41 +351,41 @@ Status codes follow [http-status-codes.md](../http-status-codes.md):
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| A referenced calendar is deleted | The template keeps the id. At print time the row shows "not available"; the editor flags the row so a guardian can fix it |
-| The printing guardian can't view a referenced calendar (e.g. a co-guardian's private calendar) | That row shows "not available" for this guardian only; other rows print normally |
-| A referenced child's guardian link is revoked for the printing guardian | Same as above — the pickup/meal endpoints return `NotFound`, the row degrades |
-| A referenced work location is archived | The row keeps printing its marks (archived locations still resolve); the editor flags the row |
-| A guardian named in `GuardianColors` is no longer linked | The entry is harmless and unused; the editor hides it |
-| A babysitter named in `BabysitterColors` is archived, or its guardian is no longer linked | The entry stays and doesn't block later saves (only new entries are checked); the editor hides it. Pickups already assigned to an archived babysitter keep printing in its color |
-| Two guardians edit rows at nearly the same time | Each write is an expected-version append (`StreamVersionTracker`), so a true race gives the second writer `409 concurrency_conflict` and nothing is lost; saves that don't overlap simply replace each other in order |
-| A template is deleted twice | The second delete is `404`: a deleted template is treated as missing, the same rule `DeleteCalendar` follows |
-| A child account | Can't create (`403`), lists nothing (an empty list, even for its group's templates) and gets `404` for any template |
-| A user who owns templates deletes their account | User-owned templates become unreachable with the account, as user-owned calendars do. Group-owned templates are unaffected |
-| A group is deleted | Its templates become unreachable; the index rows are filtered out by group membership |
-| The start week crosses a DST change | No effect on the template. Occurrences already arrive resolved by each calendar's `TimeZoneId` |
+| Case                                                                                           | Behavior                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A referenced calendar is deleted                                                               | The template keeps the id. At print time the row shows "not available"; the editor flags the row so a guardian can fix it                                                                                             |
+| The printing guardian can't view a referenced calendar (e.g. a co-guardian's private calendar) | That row shows "not available" for this guardian only; other rows print normally                                                                                                                                      |
+| A referenced child's guardian link is revoked for the printing guardian                        | Same as above — the pickup/meal endpoints return `NotFound`, the row degrades                                                                                                                                         |
+| A referenced work location is archived                                                         | The row keeps printing its marks (archived locations still resolve); the editor flags the row                                                                                                                         |
+| A guardian named in `GuardianColors` is no longer linked                                       | The entry is harmless and unused; the editor hides it                                                                                                                                                                 |
+| A babysitter named in `BabysitterColors` is archived, or its guardian is no longer linked      | The entry stays and doesn't block later saves (only new entries are checked); the editor hides it. Pickups already assigned to an archived babysitter keep printing in its color                                      |
+| Two guardians edit rows at nearly the same time                                                | Each write is an expected-version append (`StreamVersionTracker`), so a true race gives the second writer `409 concurrency_conflict` and nothing is lost; saves that don't overlap simply replace each other in order |
+| A template is deleted twice                                                                    | The second delete is `404`: a deleted template is treated as missing, the same rule `DeleteCalendar` follows                                                                                                          |
+| A child account                                                                                | Can't create (`403`), lists nothing (an empty list, even for its group's templates) and gets `404` for any template                                                                                                   |
+| A user who owns templates deletes their account                                                | User-owned templates become unreachable with the account, as user-owned calendars do. Group-owned templates are unaffected                                                                                            |
+| A group is deleted                                                                             | Its templates become unreachable; the index rows are filtered out by group membership                                                                                                                                 |
+| The start week crosses a DST change                                                            | No effect on the template. Occurrences already arrive resolved by each calendar's `TimeZoneId`                                                                                                                        |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| New feature or extend an existing one | New feature, `Features/PrintTemplates` |
-| Ownership | User-owned or group-owned, via two sibling creation events, mirroring `Calendar` |
-| Row modelling | Flat `PrintTemplateRow` with a `PrintRowKind` enum — no union inside persisted events |
-| Paper | `PaperSize { A4, A3 }`; landscape always, not stored |
-| Start date | Not stored; chosen per print. `DefaultStartWeekday` only pre-fills the picker |
-| Day count | Fixed at 7 in v1 |
-| Row edits | Whole-list replacement in one event |
-| Who can edit | The owner, or any non-child member of the owning group |
-| Does a template grant data access | No — every row is fetched through existing, separately authorized endpoints |
-| Server-side rendering endpoint | None in v1; composition happens in the frontend |
-| `MealGroupId` write-time check | The caller must be a non-child member of that group (added during implementation, alongside the checks listed under Authorization) |
-| `AssignedToId` write-time check | None: a wrong assignee only filters a row down to nothing, and print-time authorization already covers access |
-| Write-time reference checks | Only over references that are new in the save, so co-editing a group template and keeping a stale row don't block later saves |
-| Wire format for enums | Member names (`PaperSize`, `PrintRowKind`, `DayOfWeek`), since the API switched to string enums ([openapi-client-contract.md](openapi-client-contract.md)); numeric ordinals until then |
-| Concurrent edits | Expected-version appends; a true race is `409 concurrency_conflict`, not last-write-wins |
-| Guardian "away"/office rows | A dedicated `WorkLocation` row kind over [work-locations.md](work-locations.md), not a `CalendarMarker` with a title filter |
+| Question                              | Decision                                                                                                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New feature or extend an existing one | New feature, `Features/PrintTemplates`                                                                                                                                                  |
+| Ownership                             | User-owned or group-owned, via two sibling creation events, mirroring `Calendar`                                                                                                        |
+| Row modelling                         | Flat `PrintTemplateRow` with a `PrintRowKind` enum — no union inside persisted events                                                                                                   |
+| Paper                                 | `PaperSize { A4, A3 }`; landscape always, not stored                                                                                                                                    |
+| Start date                            | Not stored; chosen per print. `DefaultStartWeekday` only pre-fills the picker                                                                                                           |
+| Day count                             | Fixed at 7 in v1                                                                                                                                                                        |
+| Row edits                             | Whole-list replacement in one event                                                                                                                                                     |
+| Who can edit                          | The owner, or any non-child member of the owning group                                                                                                                                  |
+| Does a template grant data access     | No — every row is fetched through existing, separately authorized endpoints                                                                                                             |
+| Server-side rendering endpoint        | None in v1; composition happens in the frontend                                                                                                                                         |
+| `MealGroupId` write-time check        | The caller must be a non-child member of that group (added during implementation, alongside the checks listed under Authorization)                                                      |
+| `AssignedToId` write-time check       | None: a wrong assignee only filters a row down to nothing, and print-time authorization already covers access                                                                           |
+| Write-time reference checks           | Only over references that are new in the save, so co-editing a group template and keeping a stale row don't block later saves                                                           |
+| Wire format for enums                 | Member names (`PaperSize`, `PrintRowKind`, `DayOfWeek`), since the API switched to string enums ([openapi-client-contract.md](openapi-client-contract.md)); numeric ordinals until then |
+| Concurrent edits                      | Expected-version appends; a true race is `409 concurrency_conflict`, not last-write-wins                                                                                                |
+| Guardian "away"/office rows           | A dedicated `WorkLocation` row kind over [work-locations.md](work-locations.md), not a `CalendarMarker` with a title filter                                                             |
 
 ## Remaining open questions
 

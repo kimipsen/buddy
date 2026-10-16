@@ -65,7 +65,7 @@ Reasoning:
 
 ### `MedicineSchedule` (new aggregate, same event-sourced shape as `CalendarItem`)
 
-```
+```text
 MedicineSchedule(
     MedicineId Id,
     UserId ChildId,
@@ -99,7 +99,7 @@ MedicineSchedule(
 
 ### `DoseStatus`
 
-```
+```text
 enum DoseStatus { Pending, Taken, Skipped }
 ```
 
@@ -115,7 +115,7 @@ Following the existing `Before`/`After` convention for mutations
 `GuardianKindChanged` — see [CalendarItemEvents.cs](../../../src/backend/buddy/Features/Calendars/Types/CalendarItemEvents.cs),
 [GuardianEvents.cs](../../../src/backend/buddy/Features/Guardians/Types/GuardianEvents.cs)):
 
-```
+```text
 MedicineScheduleCreated(MedicineId, UserId ChildId, UserId CreatedBy, string Name, string Dosage,
     Icon, Color, IReadOnlyList<TimeOnly> Times, DateOnly StartDate, DateOnly? EndDate, DateTimeOffset OccurredAt)
 
@@ -161,7 +161,7 @@ given a `ChildId` and a `[from, to]` date range, for every non-stopped
 `[max(StartDate, from), min(EndDate ?? to, to)]`, for every `Time` in
 `Times`, emit one:
 
-```
+```text
 MedicineDoseOccurrence(MedicineId, string Name, string Dosage, string Icon, string Color,
     DateOnly Date, TimeOnly Time, DoseStatus Status)
 ```
@@ -193,7 +193,7 @@ maintained index — the exact problem `CalendarItemIndexDocument`
 ([CalendarItemIndexDocument.cs](../../../src/backend/buddy/Features/Calendars/Types/CalendarItemIndexDocument.cs))
 already solves for listing a calendar's items:
 
-```
+```text
 MedicineIndexDocument(Guid Id, Guid ChildId, bool IsStopped)
 ```
 
@@ -217,10 +217,10 @@ and is queried the same way `CalendarAuthorization` already does via
 
 Two access tiers, not the three `CalendarRole` has:
 
-| Tier | Who | Actions |
-|---|---|---|
-| **Manage** | An active guardian of `ChildId` only | Create, edit details/schedule, stop a `MedicineSchedule`; also mark/unmark any dose |
-| **Mark** | The child (`ChildId` itself) **or** an active guardian | View today's doses; set a dose's status (`Taken`/`Skipped`/back to `Pending`) |
+| Tier       | Who                                                    | Actions                                                                             |
+| ---------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **Manage** | An active guardian of `ChildId` only                   | Create, edit details/schedule, stop a `MedicineSchedule`; also mark/unmark any dose |
+| **Mark**   | The child (`ChildId` itself) **or** an active guardian | View today's doses; set a dose's status (`Taken`/`Skipped`/back to `Pending`)       |
 
 The child is deliberately **not** in the Manage tier — a medicine schedule is
 a safety-relevant instruction a guardian gives, not something a child
@@ -230,7 +230,7 @@ a guardian's authority over a child's calendar is "intentionally not
 configurable per child... a safety/parental-control property"
 ([child-accounts-and-guardian-roles.md](child-accounts-and-guardian-roles.md#how-this-feeds-calendargroup-permissions)).
 
-```
+```text
 enum MedicineAccess { Allowed, NotFound, Forbidden }
 ```
 
@@ -268,41 +268,41 @@ never resolves "the" child from the group alone.
 
 ## Command slices (`Features/Medicines/`, same vertical-slice shape as `Calendars`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `CreateMedicineSchedule` | Manage | `Name`, `Dosage`, `Icon`, `Color`, `Times`, `StartDate`, `EndDate?` |
-| `UpdateMedicineDetails` | Manage | Name/Dosage/Icon/Color only — emits `MedicineDetailsUpdated` |
-| `RescheduleMedicine` | Manage | Times/StartDate/EndDate — emits `MedicineScheduleRescheduled` |
-| `StopMedicineSchedule` | Manage | Soft-delete — emits `MedicineScheduleStopped` |
-| `ListMedicineSchedules` | Manage | Guardian's view of one child's schedules, via `MedicineIndexDocument` |
-| `ListTodaysDoses` | Mark | The child home screen's data source — `MedicineDoseExpansion` for `[today, today]` (or a small window, e.g. to also show "earlier today, missed") |
-| `SetDoseStatus` | Mark | `Taken` / `Skipped` / `Pending` — emits `DoseStatusChanged` |
+| Slice                    | Tier   | Notes                                                                                                                                             |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CreateMedicineSchedule` | Manage | `Name`, `Dosage`, `Icon`, `Color`, `Times`, `StartDate`, `EndDate?`                                                                               |
+| `UpdateMedicineDetails`  | Manage | Name/Dosage/Icon/Color only — emits `MedicineDetailsUpdated`                                                                                      |
+| `RescheduleMedicine`     | Manage | Times/StartDate/EndDate — emits `MedicineScheduleRescheduled`                                                                                     |
+| `StopMedicineSchedule`   | Manage | Soft-delete — emits `MedicineScheduleStopped`                                                                                                     |
+| `ListMedicineSchedules`  | Manage | Guardian's view of one child's schedules, via `MedicineIndexDocument`                                                                             |
+| `ListTodaysDoses`        | Mark   | The child home screen's data source — `MedicineDoseExpansion` for `[today, today]` (or a small window, e.g. to also show "earlier today, missed") |
+| `SetDoseStatus`          | Mark   | `Taken` / `Skipped` / `Pending` — emits `DoseStatusChanged`                                                                                       |
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Guardian's `GuardianLink` revoked after creating a schedule | Immediately drops to `NotFound` for that guardian, same as calendar access today — schedule and its history are untouched; the child keeps their own Mark-tier access regardless. |
-| Two guardians mark the same dose at nearly the same time | Both `DoseStatusChanged` events append to the stream (Marten's normal per-stream ordering); the *last* one wins for current status, but neither write is lost — both remain in history. Same benefit event sourcing already gives `CalendarItem`. |
-| Child marks a future dose (before its scheduled time) or re-marks a past one | Allowed — no time-based gate in v1. Keeps the model simple and avoids client/server clock-skew edge cases; a mistaken tap is correctable via the same `SetDoseStatus` call (`After: Pending`). |
-| `MedicineSchedule` stopped mid-course | `ListTodaysDoses`/expansion stops producing new occurrences from `IsStopped`'s effective date forward; already-recorded `DoseLog` history is untouched and still visible via `ListMedicineSchedules`. |
-| `EndDate` in the past | Expansion naturally yields no occurrences past it; the schedule still appears (as inactive/completed) in `ListMedicineSchedules`. |
-| Child has no guardian at all | Cannot happen for `MedicineSchedule` creation (Manage tier requires a `GuardianLink`), so every schedule has at least one guardian by construction. |
+| Case                                                                         | Behavior                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guardian's `GuardianLink` revoked after creating a schedule                  | Immediately drops to `NotFound` for that guardian, same as calendar access today — schedule and its history are untouched; the child keeps their own Mark-tier access regardless.                                                                 |
+| Two guardians mark the same dose at nearly the same time                     | Both `DoseStatusChanged` events append to the stream (Marten's normal per-stream ordering); the _last_ one wins for current status, but neither write is lost — both remain in history. Same benefit event sourcing already gives `CalendarItem`. |
+| Child marks a future dose (before its scheduled time) or re-marks a past one | Allowed — no time-based gate in v1. Keeps the model simple and avoids client/server clock-skew edge cases; a mistaken tap is correctable via the same `SetDoseStatus` call (`After: Pending`).                                                    |
+| `MedicineSchedule` stopped mid-course                                        | `ListTodaysDoses`/expansion stops producing new occurrences from `IsStopped`'s effective date forward; already-recorded `DoseLog` history is untouched and still visible via `ListMedicineSchedules`.                                             |
+| `EndDate` in the past                                                        | Expansion naturally yields no occurrences past it; the schedule still appears (as inactive/completed) in `ListMedicineSchedules`.                                                                                                                 |
+| Child has no guardian at all                                                 | Cannot happen for `MedicineSchedule` creation (Manage tier requires a `GuardianLink`), so every schedule has at least one guardian by construction.                                                                                               |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Extend `CalendarItem`/`RecurrenceRule`, or new feature | New feature, `Features/Medicines`, own aggregate — avoids widening a shipped generic primitive for a need only medicine schedules have |
-| Multiple doses/day | `Times: IReadOnlyList<TimeOnly>` on the schedule itself, not N separate items |
-| Persisted taken state | Yes — `DoseStatus { Pending, Taken, Skipped }`, both non-default states are first-class and distinguished |
-| Where dose status lives | On the `MedicineSchedule` stream itself (`DoseLog`), not a separate per-occurrence aggregate — avoids fanning out one stream per dose |
-| Who can create/edit/stop a schedule | Guardian (Manage tier) only — not the child, mirroring the existing "guardian authority over a child is not child-configurable" rule |
-| Who can mark a dose | Child (self) or guardian (Mark tier) |
-| New read model needed for authorization | No — reuses the existing `GuardianLinkDocument`/`FindActiveLinkAsync` already built for calendar access |
-| New read model needed for listing schedules | Yes — `MedicineIndexDocument(Id, ChildId, IsStopped)`, same pattern as `CalendarItemIndexDocument` |
-| Time zone handling | None in v1 — times are the child's local wall-clock, no `TimeZoneId` involved (flagged as an open question, since `User` has no time zone field to hang one off today) |
-| Does a medicine schedule show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface (`ListTodaysDoses`), not merged into `CalendarItemOccurrence` |
+| Question                                                         | Decision                                                                                                                                                               |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extend `CalendarItem`/`RecurrenceRule`, or new feature           | New feature, `Features/Medicines`, own aggregate — avoids widening a shipped generic primitive for a need only medicine schedules have                                 |
+| Multiple doses/day                                               | `Times: IReadOnlyList<TimeOnly>` on the schedule itself, not N separate items                                                                                          |
+| Persisted taken state                                            | Yes — `DoseStatus { Pending, Taken, Skipped }`, both non-default states are first-class and distinguished                                                              |
+| Where dose status lives                                          | On the `MedicineSchedule` stream itself (`DoseLog`), not a separate per-occurrence aggregate — avoids fanning out one stream per dose                                  |
+| Who can create/edit/stop a schedule                              | Guardian (Manage tier) only — not the child, mirroring the existing "guardian authority over a child is not child-configurable" rule                                   |
+| Who can mark a dose                                              | Child (self) or guardian (Mark tier)                                                                                                                                   |
+| New read model needed for authorization                          | No — reuses the existing `GuardianLinkDocument`/`FindActiveLinkAsync` already built for calendar access                                                                |
+| New read model needed for listing schedules                      | Yes — `MedicineIndexDocument(Id, ChildId, IsStopped)`, same pattern as `CalendarItemIndexDocument`                                                                     |
+| Time zone handling                                               | None in v1 — times are the child's local wall-clock, no `TimeZoneId` involved (flagged as an open question, since `User` has no time zone field to hang one off today) |
+| Does a medicine schedule show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface (`ListTodaysDoses`), not merged into `CalendarItemOccurrence`                                                                       |
 
 ## Remaining open questions
 

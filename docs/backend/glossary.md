@@ -5,103 +5,132 @@ This glossary reflects the vocabulary used in the Buddy backend, especially the 
 ## Core identities
 
 ### UserId
+
 A stable identity for a user, derived from the authenticated Keycloak subject. The users feature uses the subject as the local user identity and stores the user as an event-sourced aggregate.
 
 ### CalendarId
+
 The unique identifier for a calendar. A calendar is always owned by a group, can have members, and is stored as an event-sourced aggregate.
 
 ### CalendarItemId
+
 The unique identifier for an item that belongs to a calendar. A calendar item is either an event or a task.
 
 ### TaskTemplateId
+
 The unique identifier for a reusable task template in a child's task library.
 
 ### SubtaskId
+
 The unique identifier for a subtask within a task template. It is also used to identify which subtask occurrence is being marked complete after the template is scheduled.
 
 ### IcalTokenId
+
 The unique identifier for an iCalendar subscription token issued for a calendar. The token is used to access the calendar feed without requiring a user session.
 
 ## User domain
 
 ### User
+
 The local user aggregate created from a Keycloak identity. A user has a stable identity, profile data, email state, and optional verification metadata. The aggregate is rebuilt from its event stream when requests arrive.
 
 ### KeycloakSubject
+
 The subject claim from Keycloak used as the stable external identity for a local user. This is the value that links a user session to the correct user aggregate.
 
 ### Email
+
 The user’s email address and verification state.
 
 Properties:
+
 - Value: the email address itself
 - IsVerified: whether the current address has been verified
 
 The project uses a separate verification flow and clears pending verification state whenever the email changes.
 
 ### Name
+
 The user’s profile name, consisting of:
+
 - GivenName
 - FamilyName
 
 ### UserCreated
+
 The event that creates the local user record from the Keycloak claims and the initial profile data.
 
 ### UserDeleted
+
 The event that marks the user as deleted. It is stored together with the `KeycloakIdentity`'s `Deleted` flag, which locks the user out of the API. The user aggregate remains in the stream and is treated as deleted when rehydrated; erasing its personal data is described in [gdpr-data-protection.md](analysis/gdpr-data-protection.md).
 
 ### UserErased
+
 The event that ends an erasure: the user's personal data across Buddy is deleted or masked, their Keycloak account is gone, and the user stream's own personal fields are masked (`[erased]`). The user stays `IsDeleted` and becomes `IsErased`. See [gdpr-data-protection.md](analysis/gdpr-data-protection.md).
 
 ### NameUpdated
+
 The event that changes the user’s name.
 
 ### EmailUpdated
+
 The event that changes the user’s email address.
 
 ### EmailVerificationRequested
+
 The event that stores a hash of the verification token plus its expiry time. The plaintext token is sent by email and never kept in the event stream.
 
 ### EmailVerified
+
 The event that marks the email address as verified and clears the pending verification state.
 
 ### OnboardingProgress
+
 How far a guardian got through the guided first-login setup: status (NotStarted, Active, Deferred, Completed), the setup group, and whether the optional invitations were skipped. A version-checked document in the Users store, not an event stream; every other step's completion is derived from current data. See [guardian-onboarding.md](../frontend/analysis/guardian-onboarding.md).
 
 ## Guardian domain
 
 ### GuardianLink
+
 The event-sourced relationship record between a guardian and a child, both plain `User`s. There is no separate `Child` type — a `User` is a child solely because a `GuardianLink` points `guardianId -> childId`. Multiple guardians can link to the same child, and one guardian can link to many children.
 
 Properties:
+
 - ChildId / GuardianId: the two `User`s the link connects
 - Kind: the `GuardianKind` label
 - IsRevoked: whether the relationship is still active
 
 ### GuardianKind
+
 A descriptive, record-keeping label on a `GuardianLink`.
 
 Values:
+
 - Parent
 - Guardian
 
 Unlike `GroupRole` or `CalendarRole`, `GuardianKind` never gates permission level — a `Parent` and a `Guardian` have the same default authority over the child's account.
 
 ### GuardianInvite
+
 An event-sourced invite that brings a second adult into an existing child's guardianship, mirroring the Groups invite/accept/revoke triad. It lives on its own dedicated stream rather than the child's `User` stream, since neither the `User` nor a `GuardianLink` pre-exists the invite. Accepting it appends a new `GuardianLinked` event. Like a group invite, it can only be accepted by an account whose verified email address matches the invited one.
 
 ### ChildSummary
+
 A read-model shape returned by guardian-facing child-listing endpoints: the child's `UserId`, name, the `GuardianLinkId` and `GuardianKind` connecting them to the caller, language, and time zone, without requiring a full `User` aggregate rehydration per child.
 
 ### GuardianSummary
+
 A read-model shape for a single guardian entry: the guardian's `UserId`, name, and the `GuardianLinkId`/`GuardianKind` connecting them to the child, returned when listing the guardians linked to a child or to the current user.
 
 ## Calendar domain
 
 ### Calendar
+
 A Calendar represents a named scheduling container with a time zone and a set of members. Each calendar has an owner (always a group) and can also grant roles to other users directly, which override the group's role-derived defaults.
 
 The aggregate stores:
+
 - the calendar name
 - its time zone
 - member roles
@@ -109,9 +138,11 @@ The aggregate stores:
 - whether it was deleted
 
 ### CalendarRole
+
 A role attached to a user in a calendar.
 
 Values:
+
 - Owner: full control, granted through the owning group's calendar permission policy (by default to the group's owners).
 - Contributor: can create and modify calendar items.
 - Viewer: can read calendar content but cannot change it.
@@ -119,9 +150,11 @@ Values:
 The project treats ownership as fixed and never transfers through member-role events.
 
 ### CalendarAccess
+
 The outcome of a permission check for a specific user and calendar operation.
 
 Values:
+
 - Allowed: the user may perform the action.
 - NotFound: the calendar is missing, deleted, or the user is not a member.
 - Forbidden: the user can view the calendar but is not allowed to do the requested action.
@@ -129,36 +162,46 @@ Values:
 ## Calendar items
 
 ### CalendarItem
+
 A single scheduled thing inside a calendar. The application distinguishes between two kinds of items:
+
 - Event
 - Task
 
 A calendar item has a title, icon, color, and either a period (for events) or a due date (for tasks). It also tracks who created it, who last modified it, and whether it has been deleted.
 
 ### CalendarItemKind
+
 The concrete type of a calendar item.
 
 Values:
+
 - Event: an item with a start and end period.
 - Task: an item with a due date.
 
 ### ItemDetails
+
 A lightweight summary of the editable metadata on a calendar item: title, icon, and color.
 
 ### Period
+
 An event-time range defined by a start time and end time. A valid period always has a start that is strictly before its end.
 
 ### StartsAt / EndsAt
+
 The start and end timestamps for a period. These values are stored as calendar-local date and time values and are validated before persisting.
 
 ### DueDate
+
 The date and time due for a task item.
 
 ### Recurrence
+
 Defines whether and how an event or task repeats: `OneOff` (only on its first date), or
 `Repeating`.
 
 Repeating properties:
+
 - Frequency: Daily, Weekly, Monthly, or Yearly
 - IntervalCount: how often the recurrence repeats (at least 1)
 - End: `Never`, or `On(Until)`, an inclusive end date no earlier than the item's first date
@@ -166,86 +209,109 @@ Repeating properties:
 On the wire a one-off item has `recurrence: null`, and a never-ending one has `until: null`.
 
 ### RecurrenceFrequency
+
 The recurrence pattern used by a repeating item.
 
 Values:
+
 - Daily
 - Weekly
 - Monthly
 - Yearly
 
 ### Icon / Color
+
 The visual metadata for an item.
+
 - Icon is a string token representing the item’s icon.
 - Color is a string token representing the item’s color.
 
 ## Event and task concepts
 
 ### Event item
+
 A calendar item whose schedule is represented by a `Period`. It can be repeated using a `Recurrence`.
 
 ### Task item
+
 A calendar item whose schedule is represented by a `DueDate`. It can also repeat using a `Recurrence`.
 
 A task can be assigned to a calendar member. A task scheduled from a task template also retains the template identifier used to expand the task into its subtasks.
 
 ### Template-scheduled task
+
 A calendar task created from a `TaskTemplate`. It has a specific start date and time, can recur, and expands into one occurrence per subtask in template order. Each subtask starts after the durations of the preceding subtasks have elapsed.
 
 The calendar item keeps a reference to the template rather than copying its subtasks. Current template details are therefore used whenever occurrences are expanded. Archiving the template prevents new tasks from being scheduled from it but does not stop existing scheduled tasks from expanding.
 
 ### Task completion
+
 Completion state is recorded per occurrence date. A plain task has one completion state for each date; a template-scheduled task has a separate completion state for each subtask and date.
 
 A calendar contributor can change task completion. A viewer can also change completion for a task assigned to them. Future occurrences cannot be marked complete.
 
 ### Item deleted
+
 A calendar item can be soft-deleted by appending an `ItemDeleted` event. The aggregate remains in the stream, but the item is marked as deleted when rehydrated.
 
 ## Task library domain
 
 ### Task library
+
 A child-specific collection of reusable task templates. A child can view their own library, while an active guardian can create, edit, reorder, and archive its templates and subtasks.
 
 ### TaskTemplate
+
 An event-sourced reusable routine made up of an ordered list of subtasks. A template has a name, icon, color, creator, last modifier, and archived state. It is indexed under the child it was created for, and that ownership never changes -- there is no sharing across siblings.
 
 ### TaskTemplateDetails
+
 The editable top-level metadata of a task template: name, icon, and color.
 
 ### Subtask
+
 One ordered step in a task template. A subtask has a title, an optional icon, and a duration. When its icon is omitted, a scheduled occurrence falls back to the calendar item's icon and then to the calendar's icon.
 
 ### TaskTemplateKind
+
 Whether a task template is a `Routine` (timed steps laid out back to back) or a `Checklist` (a packing list whose items have no duration and are all due at the scheduled "leave by" time). Fixed at creation.
 
 ### ChecklistOptions
+
 A packing list's display options: `EveningBeforeFrom`, the local time from which the child home shows tomorrow's list (null: on the day only).
 
 ### Subtask weekdays
+
 The days a subtask applies on (`Weekdays`, empty for "whenever the template occurs"). Expansion leaves the subtask out on other days. Offered for packing-list items.
 
 ### ChecklistSuggestion
+
 An item a child suggested for their own packing list, with the child's title and proposed weekdays, and a status of Pending, Approved (with the `SubtaskId` it created), Declined or Withdrawn. At most five are pending per list.
 
 ### TotalDuration
+
 The sum of all subtask durations in a task template.
 
 ### Archived task template
+
 A task template that remains visible in the task library but cannot be used to schedule a new calendar task. Archiving is a soft-delete operation; existing scheduled tasks continue to use the template.
 
 ### TaskLibraryAccessTier
+
 The level of task-library access resolved for a caller.
 
 Values:
+
 - None: the caller has no relationship to the child.
 - View: the caller is the child and can view their own task library.
 - Manage: the caller is an active guardian and can view and modify the child's task library.
 
 ### TaskLibraryAccess
+
 The outcome of a task-library permission check.
 
 Values:
+
 - Allowed: the caller has the required access tier.
 - NotFound: the caller has no relationship to the child.
 - Forbidden: the caller has some access but not the tier required for the requested action.
@@ -253,136 +319,175 @@ Values:
 ## Subscription and feed terms
 
 ### IcalToken
+
 A generated subscription token used to access a calendar in iCalendar format. The plaintext token is never kept in the event stream; only a SHA-256 hash is persisted for validation.
 
 ### iCalendar feed
+
 The exported calendar feed generated from a calendar and its recurring items. This is used for external calendar clients.
 
 ## Print template domain
 
 ### PrintTemplate
+
 The saved layout of a printable week plan: name, paper size (A4 or A3, always landscape), default start weekday, whether the week number shows, an ordered list of rows and guardian name colors. Owned by one guardian or by a group; the start date is chosen per print and never stored.
 
 ### PrintTemplateRow
+
 One printed row. A flat record with a `PrintRowKind` (Meal, Pickup, WorkLocation, CalendarMarker, CalendarEvents, TaskChecklist, Blank) and only the fields that kind uses. Rows hold references, never data, and grant no access to what they reference.
 
 ### GuardianColor
+
 The color a guardian's name prints in on a template (the paper sheet's blue and red).
 
 ## Work location domain
 
 ### WorkLocationSchedule
+
 A guardian's own record of where they work on each day, used to fill the "Dad at the office" / "Mum in Randers" rows of a printed week plan. One per guardian; its id equals the guardian's `UserId`. Never visible to children and never shown in calendars or iCal feeds.
 
 ### WorkLocation
+
 A guardian-defined place with a name, icon and color. Removing one archives it so existing references keep resolving.
 
 ### WorkPattern
+
 A repeating cycle of 1–4 weeks counted from an anchor Monday (cycle week 0), assigning at most one work location per weekday per cycle week. Anchored rather than ISO-week-parity based, so it doesn't drift across 53-week years.
 
 ### WorkDayOverride
+
 A one-off exception for a single date: a different location, or no location at all (a day off). Overrides beat the pattern.
 
 ### Co-guardian
+
 Another guardian who holds an active `GuardianLink` to at least one of the same children. Co-guardians can view each other's work locations.
 
 ## Babysitter domain
 
 ### BabysitterList
+
 A guardian's saved babysitters and nannies. One per guardian; its id equals the guardian's `UserId`. Any active guardian of a child can pick from the lists of all that child's active guardians when planning a pickup or drop-off.
 
 ### Babysitter
+
 A saved entry on a `BabysitterList`: a name and optional free-text contact info. Removing one archives it so pickup slots that refer to it keep their name. A pickup slot refers to one as `PickupAssignee.Babysitter(GuardianId, BabysitterId)` and the name is resolved on every read.
 
 ## Sleep diary domain
 
 ### SleepDiary
+
 A child's one, open-ended sleep log (`Features/SleepDiaries`), modelled on a sleep clinic's paper registration form. Its `SleepDiaryId` equals the child's `UserId`, like `ProgressId`. Holds a sparse `DateOnly -> SleepEntry` map and the diary-wide `SleepHygieneNotes`. Guardian-only: the child has no access at all.
 
 ### SleepEntry
+
 One night: routine start, bedtime-ritual window, lies-down and fell-asleep times, night wake-ups, morning wake time, whether the child seemed tired, daytime naps, the guardian's estimate of total sleep and remarks. Every field is optional; logging a night always overwrites the whole day.
 
 ### SleepInterval
+
 A night wake-up or a daytime nap: a start time plus a duration.
 
 ### SleepDiaryShareToken
+
 A hashed, revocable link with an optional expiry that lets someone outside the app (a doctor) read one child's diary without a Buddy account. Modelled on `IcalToken`, which never expires.
 
 ## House rules domain
 
 ### RuleBook
+
 The house rules for one scope (`Features/HouseRules`): a child's personal rules, or a household group's rules. Its `RuleBookId` equals the scope's id (the child's `UserId` or the `GroupId`), and a flat `RuleBookScopeKind` (`Child` | `Group`) says which. It holds an ordered list of at most 50 `Rule`s and which revision of each rule each child has acknowledged.
 
 ### Rule
+
 One house rule: a plain-text title (1-100 characters) and a markdown body (0-4000 characters, `""` for none). `Revision` goes up on every content edit. `AcknowledgementRevision` is the last revision that asked children to read the rule again; a minor edit leaves it where it was.
 
 ### Acknowledgement
+
 A child's "I've read this" for one rule at one revision (`RuleAcknowledged`), recorded by the child or by a guardian on their behalf (`RecordedBy`). A child is up to date on a rule when their acknowledged revision is at least the rule's `AcknowledgementRevision`. It is a family tool, not consent in any legal sense.
 
 ### Household
+
 A `Group` whose rules apply to every child member. A child whose parents live apart can be in two households and sees both rule books, each labelled with the group's name.
 
 ## Transition warnings domain
 
 ### TransitionWarningSettings
+
 A child's settings for the heads-up they see before a transition (`Features/TransitionWarnings`). Its `TransitionWarningSettingsId` equals the child's `UserId`, like `ProgressId`. Holds the `WarningDefaults` and per-item `ItemWarningOverride`s. Off until a guardian turns it on; any active guardian manages it, the child only reads it.
 
 ### WarningDefaults
+
 The master switch, one to three lead times (15/5/1 suggested), the `WarningKind`s that warn (`Event`, `Task`, `DropOff`, `PickUp`; routines and packing lists count as `Task`) and optional `QuietHours`. Replaced whole on every save.
 
 ### ItemWarningOverride
+
 One calendar item's exception for one child: its own lead times, or `Off` (never warn). Keyed by `CalendarItemId`, at most 100 per child.
 
 ### QuietHours
+
 A wall-clock window in the child's own time zone with no warnings at all; `From > To` wraps midnight. A warning that would fall in it is dropped, not delayed.
 
 ### Child clock
+
 The child's "today" and time of day in their profile time zone (`ChildClockService` in the frontend), which every child page uses instead of the device's clock.
 
 ## Feelings domain
 
 ### FeelingsJournal
+
 A child's feelings check-ins (`Features/Feelings`). Its `FeelingsJournalId` equals the child's `UserId`, like `SleepDiaryId`. Holds the check-ins keyed by `FeelingCheckInId`, the prompt times and the `FeelingsDisplayMode`. Started lazily by the first write.
 
 ### Feelings check-in
+
 One `FeelingCheckIn`: a `FeelingZone` (`Blue` slow, `Green` ready, `Yellow` wound up, `Red` too much), 0-3 `FeelingTag`s from a fixed catalog (feeling words of that zone, or situations), an optional note of at most 280 characters, the child's local date and time it describes, `LoggedBy` and `RecordedAt`. Never called "Zones of Regulation".
 
 ### Self-report / observation
+
 A check-in the child logged themself (`LoggedBy` is the child) versus one a guardian logged about them. Derived, never stored. The child sees only their own self-reports for today; a guardian may remove a self-report but never edit it. Drawn filled vs outlined.
 
 ### Prompt time
+
 One of a child's 0-4 reminder times (wall clock, child's zone). From each, the child's check-in card is highlighted until the child checks in or the next prompt time comes.
 
 ### Faces-only mode
+
 `FeelingsDisplayMode.FacesOnly`: the child's buttons show only the faces, without the zone words or colour names, for a child who can't read yet. The stored zones are the same.
 
 ### FeelingsShareToken
+
 A hashed, revocable, optionally expiring link that lets a doctor read a child's check-ins without an account, a copy of `SleepDiaryShareToken`.
 
 ## Event-sourced concepts
 
 ### Event stream
+
 An append-only sequence of domain events that represents the current state of an aggregate. The project stores calendar, task-template, and user state by rehydrating from events.
 
 ### Aggregate
+
 A domain object rebuilt from its event stream, such as a user, calendar, calendar item, or task template.
 
 ### Event
+
 An immutable message describing a state change. The project names events such as `CalendarCreatedForGroup`, `MemberRoleGranted`, `ItemDetailsUpdated`, `TaskRescheduled`, and `SubtaskAdded`.
 
 ### Rehydration
+
 The process of rebuilding the latest aggregate state by replaying all relevant events in order.
 
 ## Common terms in the project
 
 ### Owner
+
 The group that owns the calendar. A group's Owner (the guardian who created it) resolves to `CalendarRole.Owner` by default through `CalendarPermissionPolicy`. Calendars created before group-only ownership was introduced can still be owned directly by a user, seeded as `CalendarRole.Owner` in `Members`. Ownership can be changed afterward via `TransferCalendarToGroup` -- the one exception to it otherwise being fixed at creation.
 
 ### Member
+
 Any user with a role in a calendar, such as owner, contributor, or viewer.
 
 ### Deleted calendar / deleted item
+
 A calendar or item is considered deleted when the aggregate is rehydrated from an event that marks it as deleted. Access checks treat deleted records as unavailable.
 
 ### Authentication subject
+
 The subject claim from Keycloak used to identify the current user. This is the stable identity that the Buddy app uses for local user creation and lookup.

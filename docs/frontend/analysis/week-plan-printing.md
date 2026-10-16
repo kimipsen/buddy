@@ -16,11 +16,11 @@ the template editor.
 
 ## Routes
 
-| Route | Component | Shell |
-|---|---|---|
-| `/guardian/print` | `GuardianPrint` — template list and quick print | Inside `GuardianShell` |
-| `/guardian/print/templates/:templateId` | `PrintTemplateEditor` | Inside `GuardianShell` |
-| `/guardian/print/sheet/:templateId?start=YYYY-MM-DD` | `WeekPlanPrintPage` | **Outside** `GuardianShell` |
+| Route                                                | Component                                       | Shell                       |
+| ---------------------------------------------------- | ----------------------------------------------- | --------------------------- |
+| `/guardian/print`                                    | `GuardianPrint` — template list and quick print | Inside `GuardianShell`      |
+| `/guardian/print/templates/:templateId`              | `PrintTemplateEditor`                           | Inside `GuardianShell`      |
+| `/guardian/print/sheet/:templateId?start=YYYY-MM-DD` | `WeekPlanPrintPage`                             | **Outside** `GuardianShell` |
 
 The sheet route is a sibling of the shell route in `GUARDIAN_ROUTES`, not a
 child of it, so no navigation, header, or padding ends up on paper. It still
@@ -48,12 +48,12 @@ configuration, so it isn't synced.
 A new `WeekPlanLoader` (in `features/guardian/print/`) turns a template and a
 start date into a `WeekPlanModel`. It only calls services that already exist:
 
-| Row kind | Call |
-|---|---|
-| `Meal` | `MealplansService.listMealPlan(scope, from, to)` with a `family` scope (`ChildId`) or `group` scope (`MealGroupId`) |
-| `Pickup` | `PickupsService.listSchedule(childId, from, to)`, plus `GuardiansService.listChildGuardians(childId)` and `listMyChildren()` for names |
-| `WorkLocation` | `WorkLocationsService.listWorkDays(guardianId, from, to)` (new, see [work-locations.md](../../backend/analysis/work-locations.md)) |
-| `CalendarMarker`, `CalendarEvents`, `TaskChecklist` | `CalendarsService.listOccurrences(calendarId, from, to)` for each calendar id |
+| Row kind                                            | Call                                                                                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `Meal`                                              | `MealplansService.listMealPlan(scope, from, to)` with a `family` scope (`ChildId`) or `group` scope (`MealGroupId`)                    |
+| `Pickup`                                            | `PickupsService.listSchedule(childId, from, to)`, plus `GuardiansService.listChildGuardians(childId)` and `listMyChildren()` for names |
+| `WorkLocation`                                      | `WorkLocationsService.listWorkDays(guardianId, from, to)` (new, see [work-locations.md](../../backend/analysis/work-locations.md))     |
+| `CalendarMarker`, `CalendarEvents`, `TaskChecklist` | `CalendarsService.listOccurrences(calendarId, from, to)` for each calendar id                                                          |
 
 - `from` is the start date and `to` is `addDaysIso(from, 6)`.
 - Requests are deduplicated by key (the same calendar named in three rows is
@@ -115,10 +115,10 @@ removes it on destroy:
 
 The sheet's own box is sized in millimetres from the same choice:
 
-| Paper | Page | Printable area (8 mm margins) |
-|---|---|---|
-| A4 landscape | 297 × 210 mm | 281 × 194 mm |
-| A3 landscape | 420 × 297 mm | 404 × 281 mm |
+| Paper        | Page         | Printable area (8 mm margins) |
+| ------------ | ------------ | ----------------------------- |
+| A4 landscape | 297 × 210 mm | 281 × 194 mm                  |
+| A3 landscape | 420 × 297 mm | 404 × 281 mm                  |
 
 A3 uses the same layout with font sizes and line widths scaled by √2
 (≈ 1.414), the ratio between the two formats, so a template looks the same on
@@ -196,18 +196,18 @@ calendars and only saved when they press save.
 
 ## Services and files
 
-| File | Purpose |
-|---|---|
-| `core/print-templates.service.ts` | CRUD over `/print-templates`, following `pickups.service.ts` |
-| `core/work-locations.service.ts` | Comes with the work locations feature; the loader only uses `listWorkDays` and the editor `getSchedule` |
-| `core/date-utils.ts` | add `isoWeekNumber` and `nextWeekdayOnOrAfter` |
-| `features/guardian/print/print.ts` | `GuardianPrint` — list and quick print |
-| `features/guardian/print/editor/` | `PrintTemplateEditor` |
-| `features/guardian/print/sheet/week-plan-sheet.ts` | presentational sheet |
-| `features/guardian/print/sheet/week-plan-print-page.ts` | route component: loads, injects `@page`, toolbar |
-| `features/guardian/print/week-plan-loader.ts` | fetches sources |
-| `features/guardian/print/assemble-week-plan.ts` | pure assembly function |
-| `core/i18n/translations/{en,da}/print.ts` | UI strings |
+| File                                                    | Purpose                                                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `core/print-templates.service.ts`                       | CRUD over `/print-templates`, following `pickups.service.ts`                                            |
+| `core/work-locations.service.ts`                        | Comes with the work locations feature; the loader only uses `listWorkDays` and the editor `getSchedule` |
+| `core/date-utils.ts`                                    | add `isoWeekNumber` and `nextWeekdayOnOrAfter`                                                          |
+| `features/guardian/print/print.ts`                      | `GuardianPrint` — list and quick print                                                                  |
+| `features/guardian/print/editor/`                       | `PrintTemplateEditor`                                                                                   |
+| `features/guardian/print/sheet/week-plan-sheet.ts`      | presentational sheet                                                                                    |
+| `features/guardian/print/sheet/week-plan-print-page.ts` | route component: loads, injects `@page`, toolbar                                                        |
+| `features/guardian/print/week-plan-loader.ts`           | fetches sources                                                                                         |
+| `features/guardian/print/assemble-week-plan.ts`         | pure assembly function                                                                                  |
+| `core/i18n/translations/{en,da}/print.ts`               | UI strings                                                                                              |
 
 A "Print week plan" entry is added to the guardian shell navigation and the
 dashboard.

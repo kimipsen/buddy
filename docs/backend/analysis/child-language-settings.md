@@ -127,13 +127,13 @@ account uses.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Which guardians can set a child's language | Any active `GuardianLink`, regardless of `GuardianKind` — consistent with every other guardian-on-behalf-of-child action in the codebase |
-| Where the endpoint/handler lives | Guardians feature (`/users/me/children/{childId}/language`), not an extension of the Users feature's self-service endpoint |
-| New event type needed | No — reuses the existing `LanguageUpdated` event verbatim |
-| Where the UI lives | Inline on the existing `manage-children` screen, not a new per-child settings page |
-| Does `ChildSummary` need a `Language` field | Yes — added so the guardian UI can show/edit the current value without an extra request |
+| Question                                    | Decision                                                                                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Which guardians can set a child's language  | Any active `GuardianLink`, regardless of `GuardianKind` — consistent with every other guardian-on-behalf-of-child action in the codebase |
+| Where the endpoint/handler lives            | Guardians feature (`/users/me/children/{childId}/language`), not an extension of the Users feature's self-service endpoint               |
+| New event type needed                       | No — reuses the existing `LanguageUpdated` event verbatim                                                                                |
+| Where the UI lives                          | Inline on the existing `manage-children` screen, not a new per-child settings page                                                       |
+| Does `ChildSummary` need a `Language` field | Yes — added so the guardian UI can show/edit the current value without an extra request                                                  |
 
 ## Remaining open questions
 

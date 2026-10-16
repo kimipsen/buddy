@@ -23,7 +23,7 @@ The script calls `api/issues/search` (open issues only, 500 per page) after chec
 
 For C# (`csharpsquid:*`) findings, read **`.agents/skills/claude-backend/references/sonar-known-issues.md`** first. It is the canonical list of known false positives in this repo, and also lists the rules that look like noise but are real bugs. Don't work from memory or from older copies elsewhere: the file is maintained, and older copies drift.
 
-A match on rule ID is only a *candidate* verdict. Every known-issue entry has a condition (the file declares a `union`; nullable is enabled project-wide; the method is a handler or endpoint; the empty record is a union case). Confirm the condition holds before you apply the verdict.
+A match on rule ID is only a _candidate_ verdict. Every known-issue entry has a condition (the file declares a `union`; nullable is enabled project-wide; the method is a handler or endpoint; the empty record is a union case). Confirm the condition holds before you apply the verdict.
 
 For frontend findings (`typescript:*`, `javascript:*`, `css:*`, `Web:*`) there is no known-issues list. Use general judgement against the code and the repo's conventions (Angular standalone/zoneless with signals, Vitest specs). Load the relevant frontend skill if one is listed. Rules that are commonly noise in an Angular codebase include decorator-metadata or DI-constructor complaints and "nested template literals" in test fixtures. Even these need a look at the code, not a reflex dismissal.
 
@@ -49,11 +49,11 @@ If you can't tell from the code, say so and mark it **needs-decision**. Don't gu
 
 Produce one table, ordered by verdict (real first), then by file:
 
-| Rule | File:line | Verdict | Action |
-|---|---|---|---|
-| `csharpsquid:S2201` | `src/backend/buddy/.../MartenFooEventStore.cs:88` | real | Fixed: use the result of `Reverse()`. Added an ordering test |
-| `csharpsquid:S3903` | `src/backend/buddy/Features/Foo/FooEvent.cs:5` | false-positive | Mark False Positive in SonarCloud (file declares a `union`) |
-| `csharpsquid:S107` | `src/backend/buddy/Features/Foo/Foo.Handler.cs:14` | won't-fix | Mark Accepted/Won't Fix (handler DI parameters) |
+| Rule                | File:line                                          | Verdict        | Action                                                       |
+| ------------------- | -------------------------------------------------- | -------------- | ------------------------------------------------------------ |
+| `csharpsquid:S2201` | `src/backend/buddy/.../MartenFooEventStore.cs:88`  | real           | Fixed: use the result of `Reverse()`. Added an ordering test |
+| `csharpsquid:S3903` | `src/backend/buddy/Features/Foo/FooEvent.cs:5`     | false-positive | Mark False Positive in SonarCloud (file declares a `union`)  |
+| `csharpsquid:S107`  | `src/backend/buddy/Features/Foo/Foo.Handler.cs:14` | won't-fix      | Mark Accepted/Won't Fix (handler DI parameters)              |
 
 Keep each Action specific: what you changed, or what the user should do in SonarCloud and why. After the table:
 

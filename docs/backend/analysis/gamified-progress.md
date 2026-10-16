@@ -35,15 +35,15 @@ narrows the design space more than a generic "add gamification" brief would:
 This document answers three questions: where does progress state live
 relative to the existing event-sourced features, how does it learn about
 completions without inventing infrastructure the codebase doesn't have, and
-what should *not* be modeled yet.
+what should _not_ be modeled yet.
 
 ## Question 1: does progress live inside `CalendarItem`/`MedicineSchedule`, or as its own feature?
 
 **Decision: its own feature, `Features/Progress/`, with a `ChildProgress`
 aggregate keyed by the child, not the task.**
 
-`CalendarItem` and `MedicineSchedule` are aggregates about a *scheduled
-thing*; progress is a fact about a *child*, aggregated across every task and
+`CalendarItem` and `MedicineSchedule` are aggregates about a _scheduled
+thing_; progress is a fact about a _child_, aggregated across every task and
 (later, if ever) dose they complete, across every calendar and group they
 belong to. Folding a point counter into `CalendarItem` would mean reading
 and rehydrating every task a child has ever had just to answer "how many
@@ -106,7 +106,7 @@ milestone thresholds have been unlocked.** No levels, no in-app currency, no
 redemption catalog, no dose points yet — those are later phases, not this
 sketch.
 
-```
+```text
 ChildProgress(
     ProgressId Id,               // ProgressId.Value == ChildId.Value -- see below
     UserId ChildId,
@@ -145,7 +145,7 @@ therefore earn and revoke its own star independently. A `false→true`
 transition awards a star only if that key isn't already in the set; a
 `true→false` transition (the child un-checking a task, whether by misclick or
 genuine backtrack) revokes it by removing the key and decrementing
-`TotalStars`. This is *not* framed as a penalty in the data model — it's the
+`TotalStars`. This is _not_ framed as a penalty in the data model — it's the
 same correction semantics as any other toggle in this codebase (e.g.
 `DoseStatusChanged`'s `After: Pending` "undo," per its own comment) — but it
 does mean a child could watch a star count go down if they toggle a task off
@@ -165,16 +165,16 @@ before reward redemption (Phase 3) is designed.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Where does progress state live | New `Features/Progress/` feature, own Marten store/schema, `ChildProgress` aggregate keyed by child |
-| How does Progress learn about a completion | Explicit synchronous call from `SetTaskCompletionHandler` after its own append succeeds — not an async projection/subscription, which doesn't exist anywhere in this codebase today |
-| What happens if that second call fails | Task completion still succeeds; progress is stale until the next successful, idempotent call — a visible, recoverable gap, same reasoning as the `GuardianLink` doc's two-write case |
-| Stream ID for `ChildProgress` | `ProgressId.Value == ChildId.Value` — no index document needed, since it's a genuine 1:1 relationship unlike `MedicineId → ChildId` |
-| Does un-completing a task claw back a star | Yes, mirroring `TaskCompletionChanged`'s existing `Before`/`After` toggle semantics — flagged as a UX question, not settled |
-| Are dose completions gamified in v1 | No — excluded pending the open question below, to avoid conflating a health record with a reward economy |
-| Are sibling comparisons/leaderboards in scope | No — progress is strictly per-child, never surfaced across children in a `Group` |
-| Redemption / reward catalog | Not modeled in this sketch — Phase 3, since built: [reward-redemption.md](reward-redemption.md) |
+| Question                                      | Decision                                                                                                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Where does progress state live                | New `Features/Progress/` feature, own Marten store/schema, `ChildProgress` aggregate keyed by child                                                                                  |
+| How does Progress learn about a completion    | Explicit synchronous call from `SetTaskCompletionHandler` after its own append succeeds — not an async projection/subscription, which doesn't exist anywhere in this codebase today  |
+| What happens if that second call fails        | Task completion still succeeds; progress is stale until the next successful, idempotent call — a visible, recoverable gap, same reasoning as the `GuardianLink` doc's two-write case |
+| Stream ID for `ChildProgress`                 | `ProgressId.Value == ChildId.Value` — no index document needed, since it's a genuine 1:1 relationship unlike `MedicineId → ChildId`                                                  |
+| Does un-completing a task claw back a star    | Yes, mirroring `TaskCompletionChanged`'s existing `Before`/`After` toggle semantics — flagged as a UX question, not settled                                                          |
+| Are dose completions gamified in v1           | No — excluded pending the open question below, to avoid conflating a health record with a reward economy                                                                             |
+| Are sibling comparisons/leaderboards in scope | No — progress is strictly per-child, never surfaced across children in a `Group`                                                                                                     |
+| Redemption / reward catalog                   | Not modeled in this sketch — Phase 3, since built: [reward-redemption.md](reward-redemption.md)                                                                                      |
 
 ## Remaining open questions
 

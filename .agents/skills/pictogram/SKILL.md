@@ -61,24 +61,24 @@ Only create or change the requested `.svg` files. Don't edit other repo files an
 
 ### Palette (the only allowed colours)
 
-| Use | Hex |
-| --- | --- |
-| Outline and detail | `#1F2937` |
-| Tile | `#F8FAFC` |
+| Use                                           | Hex       |
+| --------------------------------------------- | --------- |
+| Outline and detail                            | `#1F2937` |
+| Tile                                          | `#F8FAFC` |
 | White (teeth, paper, plates, eyes of animals) | `#FFFFFF` |
-| Skin | `#F2C094` |
-| Hair | `#7C4A2D` |
-| Red (stop, hot, apple) | `#EF4444` |
-| Orange | `#F59E0B` |
-| Yellow (sun, light, star) | `#FACC15` |
-| Green (go, plants, done) | `#22C55E` |
-| Blue (water, clothing default) | `#3B82F6` |
-| Light blue (sky, glass, cold) | `#93C5FD` |
-| Purple | `#A855F7` |
-| Pink | `#F472B6` |
-| Brown (wood, bread, dirt) | `#A16207` |
-| Grey (metal, stone, tech) | `#9CA3AF` |
-| Light grey (secondary surfaces) | `#E5E7EB` |
+| Skin                                          | `#F2C094` |
+| Hair                                          | `#7C4A2D` |
+| Red (stop, hot, apple)                        | `#EF4444` |
+| Orange                                        | `#F59E0B` |
+| Yellow (sun, light, star)                     | `#FACC15` |
+| Green (go, plants, done)                      | `#22C55E` |
+| Blue (water, clothing default)                | `#3B82F6` |
+| Light blue (sky, glass, cold)                 | `#93C5FD` |
+| Purple                                        | `#A855F7` |
+| Pink                                          | `#F472B6` |
+| Brown (wood, bread, dirt)                     | `#A16207` |
+| Grey (metal, stone, tech)                     | `#9CA3AF` |
+| Light grey (secondary surfaces)               | `#E5E7EB` |
 
 Flat fills only: no gradients, opacity, shadows, filters, patterns or masks. Use at most four fill
 colours besides skin, white and the tile, so the main subject stands out.

@@ -18,7 +18,7 @@ Two changes made this matter:
   are anonymous and gated only by the token in the URL. Every request rehydrates the calendar,
   expands every occurrence from 90 days back to 365 days ahead, and renders the `.ics`
   ([`GetIcalFeedHandler`](../../../src/backend/buddy/Features/Calendars/GetIcalFeed/GetIcalFeed.Handler.cs)).
-  [conditional-get-etags.md](conditional-get-etags.md) made each poll cheaper to *transfer*, but the
+  [conditional-get-etags.md](conditional-get-etags.md) made each poll cheaper to _transfer_, but the
   body is still rendered before it is hashed. A misbehaving client, or a feed URL pasted somewhere
   public, can request it as fast as it likes.
 - **The API is public on two hosts.** Caddy forwards everything on `API_DOMAIN`
@@ -71,7 +71,7 @@ Rejected:
   path, cost money, and can't see who the user is. Both deployments would also need separate
   configuration.
 - **Extending `ResendCooldown`.** It is a state rule about a target, decided in the handler after a
-  store read. A rate limit is about the caller and must reject the request *before* any store read.
+  store read. A rate limit is about the caller and must reject the request _before_ any store read.
   `ResendCooldown` stays as it is. The two answer different questions and return different
   statuses: `409` means "this conflicts with what already happened", `429` means "you are asking too
   often".
@@ -82,10 +82,10 @@ Rejected:
 Keycloak subject, and anonymous requests by client IP.** Every endpoint is therefore covered
 without being touched, including endpoints added later. Only exemptions are explicit.
 
-| Partition | Key | Limiter | Proposed default |
-|---|---|---|---|
-| Authenticated caller | `user:<sub>`, the JWT subject, as read by `ClaimsPrincipalExtensions.GetKeycloakSubject` ([`Claims.cs`](../../../src/backend/buddy/Features/Users/Claims.cs)) | Token bucket | 200 burst, refills 5/s (300/min sustained) |
-| Anonymous caller | `ip:<address>`, the client IP after forwarded headers (see below); IPv6 by its `/64`, since one connection is normally handed a whole `/64` and could otherwise rotate addresses | Token bucket | 60 burst, refills 1/s |
+| Partition            | Key                                                                                                                                                                              | Limiter      | Proposed default                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ |
+| Authenticated caller | `user:<sub>`, the JWT subject, as read by `ClaimsPrincipalExtensions.GetKeycloakSubject` ([`Claims.cs`](../../../src/backend/buddy/Features/Users/Claims.cs))                    | Token bucket | 200 burst, refills 5/s (300/min sustained) |
+| Anonymous caller     | `ip:<address>`, the client IP after forwarded headers (see below); IPv6 by its `/64`, since one connection is normally handed a whole `/64` and could otherwise rotate addresses | Token bucket | 60 burst, refills 1/s                      |
 
 - **The Keycloak subject is used rather than the Buddy `UserId`.** The subject is present for every
   valid token, including an unprovisioned caller's, who doesn't have a `buddy:user_id` claim yet.
@@ -114,13 +114,13 @@ list.
 ## Decision: tighter policies stacked on the endpoints that cost the most
 
 **Decision: three named policies, attached with `.RequireRateLimiting("<policy>")`.** When an
-endpoint has a named policy, ASP.NET Core applies the global limiter *and* the endpoint's policy,
+endpoint has a named policy, ASP.NET Core applies the global limiter _and_ the endpoint's policy,
 so a request needs a permit from both.
 
 ### `ical-feed`: per feed, keyed by feed id and token hash
 
-| Endpoint | Partition key |
-|---|---|
+| Endpoint                                                       | Partition key                                |
+| -------------------------------------------------------------- | -------------------------------------------- |
 | `GetCalendarIcalFeed` (`/calendars/{calendarId}/ical/{token}`) | `ical:calendar:<calendarId>:<sha256(token)>` |
 | `GetMealPlanIcalFeed` (`/mealplans/{mealPlanId}/ical/{token}`) | `ical:mealplan:<mealPlanId>:<sha256(token)>` |
 
@@ -130,7 +130,7 @@ Token bucket, 10 burst, refills 1 every 5 minutes (12/hour sustained).
   pools, not from the user's device. One Google egress address carries the polls of every family
   subscribed through Google. If those families shared an IP bucket, a few busy calendars would
   throttle every other family's sync.
-- **By feed id *and* token hash, not by feed id alone.** If the bucket were keyed only by
+- **By feed id _and_ token hash, not by feed id alone.** If the bucket were keyed only by
   `calendarId`, which isn't secret, anyone could drain a family's bucket with wrong tokens, and that
   family's real subscription would stop syncing. With the token in the key, only someone who holds
   the link can use up its bucket. The token is hashed with SHA-256, as `IcalToken.Hash` already does
@@ -149,7 +149,7 @@ Token bucket, 10 burst, refills 1 every 5 minutes (12/hour sustained).
 `StartAiSession`, `SendAiSessionMessage` and `TestProviderConnection`. Partition `ai:<sub>`, fixed
 window of 20 requests per minute.
 
-Each request makes an outbound call to the family's configured provider on *their* API key
+Each request makes an outbound call to the family's configured provider on _their_ API key
 (`Features/Mealplans/AiAssistant/Providers`). A runaway client would spend the family's money and
 could get their key throttled by the provider. A chat turn takes several seconds, so 20 a minute
 is never reached by a person typing. `ApplyAiSessionDraft` and `DiscardAiSession` don't call the
@@ -160,7 +160,7 @@ provider and stay on the global limit only.
 `InviteGuardian`, `InviteToGroup`, `ResendCurrentUserEmailVerification` and `UpdateCurrentEmail`.
 Partition `email:<sub>`, fixed window of 20 per hour.
 
-`ResendCooldown` stops repeat sends to *one* address. It doesn't stop one account from inviting a
+`ResendCooldown` stops repeat sends to _one_ address. It doesn't stop one account from inviting a
 new address on every request, which would turn Buddy's SMTP relay (Brevo) into a spam source and
 put its sender reputation at risk. 20 an hour is far above what onboarding a family needs.
 `GetCurrentUser` also sends a verification email, but only once, on first provisioning, so it's not
@@ -212,7 +212,7 @@ addresses for the first time.
 
 ## Decision: the limiter runs after authentication, before anything that reads a store
 
-```
+```text
 UseForwardedHeaders     (new)  real client IP
 UseHttpsRedirection            (non-Development)
 UseCors
@@ -242,7 +242,7 @@ UseETags
 is an `IClaimsTransformation`, so it runs inside `UseAuthentication` and resolves `buddy:user_id`
 through `IUserEventStore`, even for a request that is about to be throttled. It's one indexed
 lookup, against the handler work (and pool pressure) the limiter saves. Moving the limiter before
-authentication would mean partitioning on an *unvalidated* token, which anyone could forge. See
+authentication would mean partitioning on an _unvalidated_ token, which anyone could forge. See
 Remaining open questions for caching the lookup.
 
 Before/after in `Program.cs` (one service registration, two middleware lines, one exemption):
@@ -417,38 +417,38 @@ as the example:
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Dashboard burst for a large family | Within the 200-token burst. `mapWithConcurrency` already caps concurrency at 4 |
-| Many families subscribed via Google Calendar (shared Google IPs) | Feeds are limited per link, not per IP. The global anonymous IP bucket still applies (see open questions) |
-| Feed URL leaked and hammered | That link gets `429` after 10 rapid fetches. Other links to the same calendar are unaffected. The guardian can revoke the token |
-| Wrong-token flood against a known `calendarId` | Each guess has its own feed bucket. The global IP bucket caps the flood. The real link's bucket is untouched |
-| Expired access token | Anonymous for the limiter (IP bucket), then `401` from authorization as today. The frontend refreshes and retries |
-| Unprovisioned caller | Partitioned by subject like everyone else. `403 user_not_provisioned` comes after the limiter |
-| Throttled `POST` with `Idempotency-Key` | `429` before `IdempotencyKeyMiddleware`; the key is not reserved, and a retry later succeeds |
-| Request served by another Azure replica | Separate counters; effective limit up to 3× |
-| API restart / deploy | Counters reset. Acceptable for flood protection |
-| Forwarded headers misconfigured (unknown proxy range) | Every anonymous request shares the proxy's bucket and gets throttled together. Authenticated users are unaffected. Visible immediately as `429`s on `/version` |
-| Same user on several devices | One bucket per user across devices. 200 burst covers it |
-| Limiter memory | One small limiter per active partition; idle partitions are released by `PartitionedRateLimiter` |
-| Request rejected by a named policy | Also costs **two** tokens from the caller's global bucket: `RateLimitingMiddleware` tries a non-waiting acquire on both limiters, then a waiting one, before rejecting. Harmless at the default sizes |
+| Case                                                             | Behavior                                                                                                                                                                                              |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard burst for a large family                               | Within the 200-token burst. `mapWithConcurrency` already caps concurrency at 4                                                                                                                        |
+| Many families subscribed via Google Calendar (shared Google IPs) | Feeds are limited per link, not per IP. The global anonymous IP bucket still applies (see open questions)                                                                                             |
+| Feed URL leaked and hammered                                     | That link gets `429` after 10 rapid fetches. Other links to the same calendar are unaffected. The guardian can revoke the token                                                                       |
+| Wrong-token flood against a known `calendarId`                   | Each guess has its own feed bucket. The global IP bucket caps the flood. The real link's bucket is untouched                                                                                          |
+| Expired access token                                             | Anonymous for the limiter (IP bucket), then `401` from authorization as today. The frontend refreshes and retries                                                                                     |
+| Unprovisioned caller                                             | Partitioned by subject like everyone else. `403 user_not_provisioned` comes after the limiter                                                                                                         |
+| Throttled `POST` with `Idempotency-Key`                          | `429` before `IdempotencyKeyMiddleware`; the key is not reserved, and a retry later succeeds                                                                                                          |
+| Request served by another Azure replica                          | Separate counters; effective limit up to 3×                                                                                                                                                           |
+| API restart / deploy                                             | Counters reset. Acceptable for flood protection                                                                                                                                                       |
+| Forwarded headers misconfigured (unknown proxy range)            | Every anonymous request shares the proxy's bucket and gets throttled together. Authenticated users are unaffected. Visible immediately as `429`s on `/version`                                        |
+| Same user on several devices                                     | One bucket per user across devices. 200 burst covers it                                                                                                                                               |
+| Limiter memory                                                   | One small limiter per active partition; idle partitions are released by `PartitionedRateLimiter`                                                                                                      |
+| Request rejected by a named policy                               | Also costs **two** tokens from the caller's global bucket: `RateLimitingMiddleware` tries a non-waiting acquire on both limiters, then a waiting one, before rejecting. Harmless at the default sizes |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Mechanism | ASP.NET Core's built-in rate limiter, in memory per replica; no package, no new infrastructure |
-| Which endpoints? | All of them, through a global limiter. The `/health` and `/health/ready` probes are the only exemptions |
-| Partition for authenticated callers | Keycloak subject (per user), not IP: NAT would merge users |
-| Partition for anonymous callers | Client IP, after `UseForwardedHeaders` from known proxy networks only |
-| iCal feeds | Extra `ical-feed` policy keyed by feed id + token hash, not IP: Google polls from shared IPs |
-| Costly endpoints | `ai-assistant` (3 endpoints, 20/min) `outbound-email` (4 endpoints, 20/hour) and `personal-data-export` (1 endpoint, 1 per 10 min) per user |
-| Pipeline position | After `UseCors` and `UseAuthentication`, before authorization and any store read |
-| Response | `429`, `Retry-After`, `rate_limited` `ErrorEnvelope` |
-| `ResendCooldown` | Unchanged: a per-target state rule (`409`), not a caller rate |
-| Configuration | `RateLimiting:*` options with code defaults, validated on startup |
-| Tests | A separate low-limit Alba host; the shared fixture raises its limits; a meta test polices exemptions |
-| Frontend | No change in v1 |
+| Question                            | Decision                                                                                                                                    |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mechanism                           | ASP.NET Core's built-in rate limiter, in memory per replica; no package, no new infrastructure                                              |
+| Which endpoints?                    | All of them, through a global limiter. The `/health` and `/health/ready` probes are the only exemptions                                     |
+| Partition for authenticated callers | Keycloak subject (per user), not IP: NAT would merge users                                                                                  |
+| Partition for anonymous callers     | Client IP, after `UseForwardedHeaders` from known proxy networks only                                                                       |
+| iCal feeds                          | Extra `ical-feed` policy keyed by feed id + token hash, not IP: Google polls from shared IPs                                                |
+| Costly endpoints                    | `ai-assistant` (3 endpoints, 20/min) `outbound-email` (4 endpoints, 20/hour) and `personal-data-export` (1 endpoint, 1 per 10 min) per user |
+| Pipeline position                   | After `UseCors` and `UseAuthentication`, before authorization and any store read                                                            |
+| Response                            | `429`, `Retry-After`, `rate_limited` `ErrorEnvelope`                                                                                        |
+| `ResendCooldown`                    | Unchanged: a per-target state rule (`409`), not a caller rate                                                                               |
+| Configuration                       | `RateLimiting:*` options with code defaults, validated on startup                                                                           |
+| Tests                               | A separate low-limit Alba host; the shared fixture raises its limits; a meta test polices exemptions                                        |
+| Frontend                            | No change in v1                                                                                                                             |
 
 ## Remaining open questions
 

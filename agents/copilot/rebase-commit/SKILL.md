@@ -1,10 +1,9 @@
-
 # Rebase and fast-forward commit
 
 The user's standing preference: when an agent finishes a task, it commits the work and lands it
 on the target branch **without asking first**, using rebase + fast-forward:
 
-```
+```bash
 git rebase <target>          # on the work branch: replay each commit as a new non-merge commit
 git merge --ff-only <branch> # on the target: move it forward, never create a merge commit
 ```
@@ -37,7 +36,7 @@ git branch --show-current
 - **On the target itself** (e.g. `master` in the main checkout): create a branch from where you
   are; uncommitted changes come along: `git switch -c agent/<short-topic>`.
 
-Look at what's in the working tree. Stage only the files that belong to *your* task, by path
+Look at what's in the working tree. Stage only the files that belong to _your_ task, by path
 (`git add path/a path/b`), never `git add -A` when there are changes you didn't make; mention
 the ones you left alone. Never stage `.env` or `appsettings.*.json`.
 

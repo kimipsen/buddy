@@ -73,7 +73,7 @@ all, where the check runs, who sees the result, and how versions are compared.
   copies tags into a fork, but not Releases). Each host needs its own API, and parsing the URL is
   brittle.
 - **Version comparison has awkward cases.** `deploy/version.sh` gives untagged builds versions such as
-  `1.2.1-alpha.0.3`. In SemVer that sorts *below* `1.2.1` but above `1.2.0`, which is right, but a
+  `1.2.1-alpha.0.3`. In SemVer that sorts _below_ `1.2.1` but above `1.2.0`, which is right, but a
   fork's own tags (`1.2.0-family.1`) or the bare-build `0.0.0-dev` need rules of their own. A wrong
   answer ("you're behind" on a build that is ahead) erodes trust in the notice.
 - **It can fail in ways that need handling.** Unauthenticated GitHub API calls are limited to 60 an
@@ -151,39 +151,39 @@ to the existing version text. No banner.**
 
 ## Question 4: how are versions compared?
 
-**Decision (proposed): SemVer 2.0 precedence on the running version against the latest *non-prerelease*
+**Decision (proposed): SemVer 2.0 precedence on the running version against the latest _non-prerelease_
 GitHub Release. Say nothing when either side can't be parsed or the running version is `0.0.0-dev`.**
 
-| Running | Latest release | Shown |
-|---|---|---|
-| `1.2.0` | `1.2.0` | nothing |
-| `1.1.0` | `1.2.0` | "1.2.0 available" |
-| `1.2.1-alpha.0.3` (untagged build after 1.2.0) | `1.2.0` | nothing (ahead) |
-| `1.3.0-rc.1` | `1.2.0` | nothing (ahead) |
-| `0.0.0-dev` (bare `docker build`) | any | nothing |
-| any | fetch failed, rate limited or no Releases | nothing, plus a debug log line |
+| Running                                        | Latest release                            | Shown                          |
+| ---------------------------------------------- | ----------------------------------------- | ------------------------------ |
+| `1.2.0`                                        | `1.2.0`                                   | nothing                        |
+| `1.1.0`                                        | `1.2.0`                                   | "1.2.0 available"              |
+| `1.2.1-alpha.0.3` (untagged build after 1.2.0) | `1.2.0`                                   | nothing (ahead)                |
+| `1.3.0-rc.1`                                   | `1.2.0`                                   | nothing (ahead)                |
+| `0.0.0-dev` (bare `docker build`)              | any                                       | nothing                        |
+| any                                            | fetch failed, rate limited or no Releases | nothing, plus a debug log line |
 
 The rule "say nothing when unsure" matters more than coverage: a false "you're behind" is worse than a
 missed one.
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Low -- one cached background fetch, one setting, one feature flag, an extra field on `GET /version`, one profile-menu line; no aggregate or events |
-| Single developer | 1-2 days for the server-side check (plus half a day for the preflight warning and the README paragraph) |
-| AI agent | 1-2 hours, plus about 30 minutes of human review |
+|                  |                                                                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Low -- one cached background fetch, one setting, one feature flag, an extra field on `GET /version`, one profile-menu line; no aggregate or events |
+| Single developer | 1-2 days for the server-side check (plus half a day for the preflight warning and the README paragraph)                                            |
+| AI agent         | 1-2 hours, plus about 30 minutes of human review                                                                                                   |
 
 The zero-code options in Question 1 are under an hour together.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Build it at all? | No in-app check for now. Operators watch GitHub releases, and both deploy paths run `release-check.sh` (decided 2026-10-10) |
-| Where does the deploy-time check get its data? | `git fetch --tags` from the default remote, falling back to local tags; no GitHub API, so it works for any git host and for forks |
-| What counts as "behind"? | The newest non-prerelease `vX.Y.Z` tag isn't an ancestor of `HEAD`. An ancestry check rather than a version comparison, so a fork's own commits on top of a release are never "behind" |
-| Does it block a deploy? | No, warn only; a deliberate rollback deploys an old tag on purpose |
+| Question                                       | Decision                                                                                                                                                                               |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build it at all?                               | No in-app check for now. Operators watch GitHub releases, and both deploy paths run `release-check.sh` (decided 2026-10-10)                                                            |
+| Where does the deploy-time check get its data? | `git fetch --tags` from the default remote, falling back to local tags; no GitHub API, so it works for any git host and for forks                                                      |
+| What counts as "behind"?                       | The newest non-prerelease `vX.Y.Z` tag isn't an ancestor of `HEAD`. An ancestry check rather than a version comparison, so a fork's own commits on top of a release are never "behind" |
+| Does it block a deploy?                        | No, warn only; a deliberate rollback deploys an old tag on purpose                                                                                                                     |
 
 If the in-app check is ever built, Questions 2-4 hold the proposed design: in the API, daily and
 cached, behind a feature flag that is off by default; shown to the operator through logs and at most

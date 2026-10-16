@@ -1,10 +1,11 @@
-Claude Backend Skill
+# Claude Backend Skill
 
 Conventions for the Buddy .NET 11 backend in `src/backend/`: vertical-slice features under `src/backend/buddy/Features/<Domain>/<UseCase>/`, event sourcing on Marten (per-domain event schemas, inline snapshot projections in a shared `snapshots` schema), WolverineFx handlers, FluentValidation, minimal-API endpoints, the `Result<T>` union, and Alba + Testcontainers integration tests. Domain events are native C# `union`s (preview language feature, `<LangVersion>preview</LangVersion>`). Buddy has no EF Core.
 
 It lives at `.claude/skills/claude-backend/`, where Claude Code discovers project skills. It loads automatically when a task matches the `description` in `SKILL.md`'s frontmatter; invoke it explicitly with `/claude-backend`.
 
 Files:
+
 - `SKILL.md` - frontmatter plus the conventions, each with a real example path in `src/backend/buddy`.
 - `manifest.json` - skill metadata.
 - `references/sonar-known-issues.md` - SonarCloud false positives and the one real finding (`S2201` on `Reverse()`).

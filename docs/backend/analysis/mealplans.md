@@ -117,7 +117,7 @@ Reasoning:
 
 `MealFamilyResolution.ResolveFamilyAsync` walks one level: child C's
 guardians, and every other child of each of those guardians. It does not
-transitively expand further (e.g. it won't pull in a guardian's *other*
+transitively expand further (e.g. it won't pull in a guardian's _other_
 co-parent's unrelated children two hops away) — deliberately, to avoid a
 blended-family edge case silently merging unrelated households' meal plans.
 
@@ -125,7 +125,7 @@ blended-family edge case silently merging unrelated households' meal plans.
 
 ### `Meal` (new aggregate, shared by every child in its family)
 
-```
+```text
 Meal(
     MealId Id,
     UserId CreatedBy,
@@ -152,14 +152,14 @@ Meal(
 
 ### `MealRating`
 
-```
+```text
 MealRating(int Stars, string? Comment, DateTimeOffset RatedAt)
 ```
 
 `Stars` is a 1–5 rating. `Meal.Ratings` holds at most one `MealRating` per
-*child*, keyed by that child's `UserId` — each sibling has their own opinion
+_child_, keyed by that child's `UserId` — each sibling has their own opinion
 of a shared dish, so Alice loving Tacos and Bob hating them are both
-first-class, simultaneously. Each entry is still the child's *current*
+first-class, simultaneously. Each entry is still the child's _current_
 opinion, not a history of every time they were asked; full history exists in
 the event stream (`MealRated` events per child).
 
@@ -169,7 +169,7 @@ Following the existing `Before`/`After` convention for edits
 ([CalendarItemEvents.cs](../../../src/backend/buddy/Features/Calendars/Types/CalendarItemEvents.cs),
 [medicine-schedules.md](medicine-schedules.md#events)):
 
-```
+```text
 MealCreated(MealId, UserId ChildId, UserId CreatedBy, string Name, string? Description,
     Icon, Color, DateTimeOffset OccurredAt)
     // ChildId records which child the creating guardian was acting through -- needed to
@@ -193,7 +193,7 @@ re-rating simply appends another `MealRated` with the new `Rating`, same as
 
 ### `MealPlan` (new aggregate, one singleton stream per family)
 
-```
+```text
 MealPlan(
     MealPlanId Id,
     ImmutableDictionary<(DateOnly Date, MealSlot Slot), MealPlanAssignment> Assignments)
@@ -214,7 +214,7 @@ slot anywhere in the model.
 
 ### `MealPlan` events
 
-```
+```text
 MealPlanCreated(MealPlanId, UserId ChildId, DateTimeOffset OccurredAt)
     // ChildId records which child the creating guardian was acting through -- needed to
     // seed the plan's first MealPlanIndexDocument row, but not projected onto MealPlan.
@@ -248,7 +248,7 @@ Marten streams are addressed by their own aggregate ID, so two lookups need
 maintained index documents, same pattern as `MedicineIndexDocument`
 ([MedicineIndexDocument.cs](../../../src/backend/buddy/Features/Medicines/Types/MedicineIndexDocument.cs)):
 
-```
+```text
 MealIndexDocument(Guid Id, Guid ChildId)
     // "which Meal streams belong to child X" -- for the meal picker / library list.
     // Carries no "archived" flag, for the same reason MedicineIndexDocument carries
@@ -318,13 +318,13 @@ no group ownership, exactly two principals — reusing the existing
 with no new authorization document needed. Both `Meal` and `MealPlan` share
 one resolver, since access is always checked against the specific `ChildId`
 in the URL — sharing a `Meal`/`MealPlan` across siblings (see "Question 3")
-changes which *data* a request can see, not who's allowed to call the
+changes which _data_ a request can see, not who's allowed to call the
 endpoint for a given child.
 
-| Tier | Who | Actions |
-|---|---|---|
+| Tier       | Who                                  | Actions                                                                                     |
+| ---------- | ------------------------------------ | ------------------------------------------------------------------------------------------- |
 | **Manage** | An active guardian of `ChildId` only | Create/edit/archive a `Meal`; assign/clear a `MealPlan` slot; view meals, plan, and ratings |
-| **Rate** | The child (`ChildId` itself) only | View meals, plan, and ratings; rate a `Meal` |
+| **Rate**   | The child (`ChildId` itself) only    | View meals, plan, and ratings; rate a `Meal`                                                |
 
 Unlike `MedicineSchedule`'s Mark tier, the child does **not** get to assign
 or clear plan slots — you were explicit that only guardians write the plan.
@@ -333,10 +333,10 @@ their behalf: a guardian entering a rating would defeat the point of asking
 the child. A Manage-tier action attempted by the child (e.g. assigning a
 slot) collapses to `Forbidden`, matching how `MedicineAccess.Forbidden` is
 used for "can see, can't do this"; a Rate-tier action attempted by anyone
-else collapses to `Forbidden` too — guardians can *read* ratings, not write
+else collapses to `Forbidden` too — guardians can _read_ ratings, not write
 them.
 
-```
+```text
 enum MealplanAccess { Allowed, NotFound, Forbidden }
 ```
 
@@ -349,53 +349,53 @@ Resolution:
 
 ## Command slices (`Features/Mealplans/`, same vertical-slice shape as `Medicines`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `CreateMeal` | Manage | `Name`, `Description?`, `Icon`, `Color` — indexed under the URL's `ChildId`, visible to their whole family on the next read |
-| `UpdateMealDetails` | Manage | Name/Description/Icon/Color — emits `MealDetailsUpdated`; `MealId` must resolve within the URL child's family (`ResolveFamilyMealIdsAsync`) |
-| `ArchiveMeal` | Manage | Soft-delete — emits `MealArchived`; same family-membership check |
-| `ListMeals` | Manage or Rate | The whole family's meal library via `ResolveFamilyMealIdsAsync`, each with every sibling's `Ratings` entry |
-| `RateMeal` | Rate | `Stars` (1–5), `Comment?` — emits `MealRated` keyed by the calling child; same family-membership check |
-| `AssignMealToSlot` | Manage | `Date`, `Slot`, `MealId` (must not be archived, must resolve within the family), `Notes?` — emits `MealAssignedToSlot` on the family's one shared `MealPlan` |
-| `ClearMealSlot` | Manage | `Date`, `Slot` — emits `MealSlotCleared` on the family's shared `MealPlan` |
-| `ListMealPlan` | Manage or Rate | `[from, to]` date range → the family's shared assignments joined with meal name/icon/color and the *viewing* child's own rating — the child-facing read surface, analogous to `ListTodaysDoses` |
+| Slice               | Tier           | Notes                                                                                                                                                                                           |
+| ------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CreateMeal`        | Manage         | `Name`, `Description?`, `Icon`, `Color` — indexed under the URL's `ChildId`, visible to their whole family on the next read                                                                     |
+| `UpdateMealDetails` | Manage         | Name/Description/Icon/Color — emits `MealDetailsUpdated`; `MealId` must resolve within the URL child's family (`ResolveFamilyMealIdsAsync`)                                                     |
+| `ArchiveMeal`       | Manage         | Soft-delete — emits `MealArchived`; same family-membership check                                                                                                                                |
+| `ListMeals`         | Manage or Rate | The whole family's meal library via `ResolveFamilyMealIdsAsync`, each with every sibling's `Ratings` entry                                                                                      |
+| `RateMeal`          | Rate           | `Stars` (1–5), `Comment?` — emits `MealRated` keyed by the calling child; same family-membership check                                                                                          |
+| `AssignMealToSlot`  | Manage         | `Date`, `Slot`, `MealId` (must not be archived, must resolve within the family), `Notes?` — emits `MealAssignedToSlot` on the family's one shared `MealPlan`                                    |
+| `ClearMealSlot`     | Manage         | `Date`, `Slot` — emits `MealSlotCleared` on the family's shared `MealPlan`                                                                                                                      |
+| `ListMealPlan`      | Manage or Rate | `[from, to]` date range → the family's shared assignments joined with meal name/icon/color and the _viewing_ child's own rating — the child-facing read surface, analogous to `ListTodaysDoses` |
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Assigning an archived `Meal` to a slot | `Validation` — archived meals are read-only history, not choosable going forward |
-| Clearing a slot that has no assignment | Idempotent no-op (`Success`, no event appended) — a guardian double-tapping "clear" shouldn't produce an error |
-| Assigning a slot that already has a meal | Always overwrites (`MealAssignedToSlot` carries only the new assignment) — no confirmation step server-side; "are you sure you want to replace Tacos?" is a client UX concern |
-| Guardian's `GuardianLink` revoked | Immediately drops to `NotFound` for that guardian, same as `Calendar`/`Medicines` today; the child's own Rate-tier access is unaffected |
-| Two guardians assign the same slot at nearly the same time | Both events append to the `MealPlan` stream in order; the last one wins for current state, neither write is lost from history — same benefit event sourcing already gives elsewhere |
-| Child rates an archived `Meal` | Allowed — an opinion of the dish doesn't depend on whether it's still in active rotation |
-| `Meal` referenced by a plan assignment is later archived | Existing assignments still resolve and display fine; only new assignments are blocked |
-| Child has no guardian at all | Cannot happen for `Meal`/`MealPlan` creation (Manage tier requires a `GuardianLink`), so both always have at least one guardian by construction |
-| A child's guardian creates a meal/plan entry, then a sibling is added later | The new sibling sees the shared library/plan immediately on their next request — `MealFamilyResolution` recomputes the family fresh every call, no backfill step needed |
-| Two children share a guardian but not the *same* meal (e.g. only one has ever eaten it) | Still shared — sharing is family-wide once a `Meal` exists, not opt-in per sibling; each child's own `Ratings` entry (or lack of one) reflects whether they've actually tried it |
-| A child whose only guardian is unrelated to another family | Never sees that family's meals/plan — `ResolveFamilyAsync` only widens through *shared* active guardians, confirmed by `MealFamilySharingTests` |
+| Case                                                                                    | Behavior                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Assigning an archived `Meal` to a slot                                                  | `Validation` — archived meals are read-only history, not choosable going forward                                                                                                    |
+| Clearing a slot that has no assignment                                                  | Idempotent no-op (`Success`, no event appended) — a guardian double-tapping "clear" shouldn't produce an error                                                                      |
+| Assigning a slot that already has a meal                                                | Always overwrites (`MealAssignedToSlot` carries only the new assignment) — no confirmation step server-side; "are you sure you want to replace Tacos?" is a client UX concern       |
+| Guardian's `GuardianLink` revoked                                                       | Immediately drops to `NotFound` for that guardian, same as `Calendar`/`Medicines` today; the child's own Rate-tier access is unaffected                                             |
+| Two guardians assign the same slot at nearly the same time                              | Both events append to the `MealPlan` stream in order; the last one wins for current state, neither write is lost from history — same benefit event sourcing already gives elsewhere |
+| Child rates an archived `Meal`                                                          | Allowed — an opinion of the dish doesn't depend on whether it's still in active rotation                                                                                            |
+| `Meal` referenced by a plan assignment is later archived                                | Existing assignments still resolve and display fine; only new assignments are blocked                                                                                               |
+| Child has no guardian at all                                                            | Cannot happen for `Meal`/`MealPlan` creation (Manage tier requires a `GuardianLink`), so both always have at least one guardian by construction                                     |
+| A child's guardian creates a meal/plan entry, then a sibling is added later             | The new sibling sees the shared library/plan immediately on their next request — `MealFamilyResolution` recomputes the family fresh every call, no backfill step needed             |
+| Two children share a guardian but not the _same_ meal (e.g. only one has ever eaten it) | Still shared — sharing is family-wide once a `Meal` exists, not opt-in per sibling; each child's own `Ratings` entry (or lack of one) reflects whether they've actually tried it    |
+| A child whose only guardian is unrelated to another family                              | Never sees that family's meals/plan — `ResolveFamilyAsync` only widens through _shared_ active guardians, confirmed by `MealFamilySharingTests`                                     |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Extend `CalendarItem`, or new feature | New feature, `Features/Mealplans` — mirrors the `Medicines` precedent for the same reasons |
-| One aggregate or two | Two — `Meal` (reusable, rated) and `MealPlan` (per-child dated slot assignments) — different edit lifetimes and authors |
-| Meal/plan scope | Family-wide, not per-child — no `Family` aggregate exists, so sharing is resolved at read time from the `GuardianLink` graph via `MealFamilyResolution`, one level (shared active guardians), not transitively |
-| Slot model | `MealSlot { Breakfast, Lunch, Dinner, Snack }`, sparse dictionary on `MealPlan` — no slot is required, which is what makes "usually just dinner" work with no special-casing |
-| Recurrence | None — every assignment is explicit; no auto-repeating template in v1 (see open questions) |
-| Who can write meals/plan | Guardian (Manage tier) only, never the child |
-| Who can rate | Child (Rate tier) only, never a guardian — including on the child's behalf |
-| Where the rating lives | On `Meal` itself, one entry per child (current opinion), not per plan occurrence — full history still exists via `MealRated` events |
-| `MealPlan` provisioning | Lazy: first `AssignMealToSlot` creates the stream if it doesn't exist yet; not hooked into `CreateChild` |
-| New read models needed | `MealIndexDocument` (list a child's meals) and `MealPlanIndexDocument` (resolve a child's `MealPlanId`) — same maintained-inline-projection pattern used everywhere else |
-| Does a meal plan show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface (`ListMealPlan`), not merged into `CalendarItemOccurrence`, matching the `Medicines` precedent |
+| Question                                                 | Decision                                                                                                                                                                                                       |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extend `CalendarItem`, or new feature                    | New feature, `Features/Mealplans` — mirrors the `Medicines` precedent for the same reasons                                                                                                                     |
+| One aggregate or two                                     | Two — `Meal` (reusable, rated) and `MealPlan` (per-child dated slot assignments) — different edit lifetimes and authors                                                                                        |
+| Meal/plan scope                                          | Family-wide, not per-child — no `Family` aggregate exists, so sharing is resolved at read time from the `GuardianLink` graph via `MealFamilyResolution`, one level (shared active guardians), not transitively |
+| Slot model                                               | `MealSlot { Breakfast, Lunch, Dinner, Snack }`, sparse dictionary on `MealPlan` — no slot is required, which is what makes "usually just dinner" work with no special-casing                                   |
+| Recurrence                                               | None — every assignment is explicit; no auto-repeating template in v1 (see open questions)                                                                                                                     |
+| Who can write meals/plan                                 | Guardian (Manage tier) only, never the child                                                                                                                                                                   |
+| Who can rate                                             | Child (Rate tier) only, never a guardian — including on the child's behalf                                                                                                                                     |
+| Where the rating lives                                   | On `Meal` itself, one entry per child (current opinion), not per plan occurrence — full history still exists via `MealRated` events                                                                            |
+| `MealPlan` provisioning                                  | Lazy: first `AssignMealToSlot` creates the stream if it doesn't exist yet; not hooked into `CreateChild`                                                                                                       |
+| New read models needed                                   | `MealIndexDocument` (list a child's meals) and `MealPlanIndexDocument` (resolve a child's `MealPlanId`) — same maintained-inline-projection pattern used everywhere else                                       |
+| Does a meal plan show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface (`ListMealPlan`), not merged into `CalendarItemOccurrence`, matching the `Medicines` precedent                                                                              |
 
 ## Remaining open questions
 
 - **Blended families / half-siblings.** `MealFamilyResolution` widens through
-  any *shared* active guardian, one level deep. Two children who each share
+  any _shared_ active guardian, one level deep. Two children who each share
   exactly one guardian with a third child, but not with each other, are not
   currently merged into one family (deliberately — see "Question 3") — but a
   guardian who co-parents children from two different partners will see

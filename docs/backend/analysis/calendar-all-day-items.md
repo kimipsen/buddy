@@ -38,7 +38,7 @@ already branches on kind for every other field.
 
 ## Domain model changes
 
-```
+```text
 Period(StartsAt, EndsAt, bool IsAllDay)
 DueDate(DateOnly Date, TimeOnly Time, bool IsAllDay = false)
 ```
@@ -79,14 +79,14 @@ computes a duration as `EndsAt - StartsAt` — both already assume `EndsAt` is a
 strictly after `StartsAt`, not an inclusive calendar day.
 
 **Decision:** keep `EndsAt` exclusive at the domain/storage layer (same as today — this needs no
-handler change), but let the *UI* collect an **inclusive** end date and convert it at the boundary:
+handler change), but let the _UI_ collect an **inclusive** end date and convert it at the boundary:
 
-| Layer | "Jun 1 to Jun 3" (3-day trip) means |
-|---|---|
-| User-facing (`app-date-select`, both create and edit forms) | Start date `Jun 1`, end date `Jun 3` — the last day of the trip, as a person would say it |
+| Layer                                                       | "Jun 1 to Jun 3" (3-day trip) means                                                        |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| User-facing (`app-date-select`, both create and edit forms) | Start date `Jun 1`, end date `Jun 3` — the last day of the trip, as a person would say it  |
 | `RescheduleItemRequest`/`CreateItemRequest` sent to the API | `startsAt = {Jun 1, 00:00}`, `endsAt = {Jun 4, 00:00}` — one day past the last all-day day |
-| `Period.TryCreate` validation | `EndsAt (Jun 4 00:00) > StartsAt (Jun 1 00:00)` — holds structurally, same rule as today |
-| Occurrence duration (`AddEventOccurrences`) | `3 days` exactly, unchanged formula |
+| `Period.TryCreate` validation                               | `EndsAt (Jun 4 00:00) > StartsAt (Jun 1 00:00)` — holds structurally, same rule as today   |
+| Occurrence duration (`AddEventOccurrences`)                 | `3 days` exactly, unchanged formula                                                        |
 
 This mirrors RFC 5545's own convention for a `DATE`-valued `DTEND` (exclusive), so it also lines up
 with what the iCal feed needs to emit (see below) instead of fighting it.
@@ -157,12 +157,12 @@ component — `date-select`/`time-select` are reused as-is, just conditionally s
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Which item kinds get all-day | Both Event and Task |
-| How is "all-day" represented | Explicit `IsAllDay` flag on `Period`/`DueDate`, not inferred from a sentinel time |
-| Backward compatibility for existing events | Constructor-default `IsAllDay = false`, no upcasting or backfill needed |
-| Multi-day all-day event UI | Inclusive end date in the UI, converted to the existing exclusive `EndsAt` at the API boundary |
+| Question                                          | Decision                                                                                                         |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Which item kinds get all-day                      | Both Event and Task                                                                                              |
+| How is "all-day" represented                      | Explicit `IsAllDay` flag on `Period`/`DueDate`, not inferred from a sentinel time                                |
+| Backward compatibility for existing events        | Constructor-default `IsAllDay = false`, no upcasting or backfill needed                                          |
+| Multi-day all-day event UI                        | Inclusive end date in the UI, converted to the existing exclusive `EndsAt` at the API boundary                   |
 | Where duration/occurrence-expansion logic changes | Nowhere — the exclusive-end convention keeps `AddEventOccurrences`'s existing duration formula correct unchanged |
 
 ## Resolved during implementation

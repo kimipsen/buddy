@@ -45,11 +45,11 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `PUT` | `/pickups/children/{childId}/assignments?date=...&slot=...` | Assigns or replaces one `DropOff` or `PickUp` slot and returns the resulting occurrence. |
-| `DELETE` | `/pickups/children/{childId}/assignments?date=...&slot=...` | Clears one slot. Repeating the operation is an idempotent success with `204 No Content`. |
-| `GET` | `/pickups/children/{childId}/schedule?from=...&to=...` | Returns assigned occurrences in an inclusive date range of at most 31 days, sorted by date and slot. |
+| Method   | Route                                                       | Behavior                                                                                             |
+| -------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `PUT`    | `/pickups/children/{childId}/assignments?date=...&slot=...` | Assigns or replaces one `DropOff` or `PickUp` slot and returns the resulting occurrence.             |
+| `DELETE` | `/pickups/children/{childId}/assignments?date=...&slot=...` | Clears one slot. Repeating the operation is an idempotent success with `204 No Content`.             |
+| `GET`    | `/pickups/children/{childId}/schedule?from=...&to=...`      | Returns assigned occurrences in an inclusive date range of at most 31 days, sorted by date and slot. |
 
 The list response is sparse: it contains no placeholder for an unassigned
 slot. Clients construct their week or day grid and treat a missing
@@ -61,13 +61,13 @@ slot. Clients construct their week or day grid and treat a missing
 carrying only that case's fields (the domain's `PickupAssignee` union, on the wire
 `PickupAssigneeDto`):
 
-| `kind` | Case | Fields | Validation |
-| --- | --- | --- | --- |
-| `0` | `Guardian` | `guardianId` | Must identify an active guardian of the child. |
-| `1` | `SelfEscort` | None | Records that the child goes without an escort. |
-| `2` | `Sibling` | `siblingChildId` | Must be a different child who shares at least one active guardian with the scheduled child. |
-| `3` | `Playdate` | `hostName`, `location`, `contactInfo` | Host name is required; location and contact information are optional free text (`""` when not given). |
-| `4` | `Babysitter` | `guardianId`, `babysitterId`, `name` | `guardianId` must be an active guardian of the child and `babysitterId` an active babysitter on that guardian's list ([babysitters flow](../babysitters/flow.md)). `name` is output only: ignored on `PUT`, resolved from the list on every response (`""` when it no longer resolves). |
+| `kind` | Case         | Fields                                | Validation                                                                                                                                                                                                                                                                              |
+| ------ | ------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`    | `Guardian`   | `guardianId`                          | Must identify an active guardian of the child.                                                                                                                                                                                                                                          |
+| `1`    | `SelfEscort` | None                                  | Records that the child goes without an escort.                                                                                                                                                                                                                                          |
+| `2`    | `Sibling`    | `siblingChildId`                      | Must be a different child who shares at least one active guardian with the scheduled child.                                                                                                                                                                                             |
+| `3`    | `Playdate`   | `hostName`, `location`, `contactInfo` | Host name is required; location and contact information are optional free text (`""` when not given).                                                                                                                                                                                   |
+| `4`    | `Babysitter` | `guardianId`, `babysitterId`, `name`  | `guardianId` must be an active guardian of the child and `babysitterId` an active babysitter on that guardian's list ([babysitters flow](../babysitters/flow.md)). `name` is output only: ignored on `PUT`, resolved from the list on every response (`""` when it no longer resolves). |
 
 A missing or unknown `kind`, or a case without its required field, is a
 `400 validation_error`. Every assignment can also carry an optional local

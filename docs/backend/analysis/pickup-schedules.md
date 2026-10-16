@@ -25,7 +25,7 @@ solve for dinner. Four things were asked for specifically:
 Nothing resembling this exists today. `Calendar`/`CalendarItem`
 ([glossary.md](../glossary.md)) has no concept of "who is responsible for
 this occurrence" beyond `createdBy`/`lastModifiedBy` — there is no notion of
-assigning a *principal* (a specific guardian, the child, a sibling, or a
+assigning a _principal_ (a specific guardian, the child, a sibling, or a
 third party) to a scheduled slot. Neither does anything else in the
 codebase; a grep for "pickup"/"dropoff"/"escort" returns nothing.
 
@@ -62,7 +62,7 @@ scope `MedicineSchedule` uses, not `MealPlan`'s family-wide singleton.**
 the whole household ([mealplans.md, Question 3](mealplans.md#question-3-sharing-a-mealmealplan-across-siblings)).
 A pickup schedule is not that: siblings routinely attend different
 schools/activities at different times, and even for the same school run, who
-does *Alice's* Tuesday pickup and who does *Bob's* are independent decisions
+does _Alice's_ Tuesday pickup and who does _Bob's_ are independent decisions
 a guardian makes separately — there is no single fact "the family's Tuesday
 pickup" the way there is a single fact "the family's Tuesday dinner." The
 `Sibling` assignee (see below) already captures the one genuinely cross-child
@@ -101,7 +101,7 @@ never hit this because it's never embedded in an event; it's aggregate-only
 state, folded fresh from plain-`UserId`/`GroupId` event fields on every
 `Rehydrate`.
 
-```
+```csharp
 public enum PickupAssigneeKind { Guardian, SelfEscort, Sibling, Playdate }
 
 PickupAssignment(
@@ -131,7 +131,7 @@ handlers in this codebase validate their commands' fields:
   `IGuardianLinkEventStore.FindActiveLinkAsync`
   ([IGuardianLinkEventStore.cs](../../../src/backend/buddy/Features/Guardians/IGuardianLinkEventStore.cs)) —
   the same check `MedicineAuthorization`/`MealplanAuthorization` already run
-  for the *caller*, reused here to validate the *target*.
+  for the _caller_, reused here to validate the _target_.
 - **`SelfEscort`** — the child goes by themself. No other field is set; its
   presence as an explicit assignment (rather than the slot simply being
   unassigned) is the point — it lets a guardian record "I've deliberately
@@ -167,7 +167,7 @@ that's a UI default rather than a domain rule.
 
 ### `PickupSchedule` (new aggregate, one stream per child)
 
-```
+```text
 PickupSchedule(
     PickupScheduleId Id,
     UserId ChildId,
@@ -199,7 +199,7 @@ Following the existing event conventions for mutations
 ([MealPlan events](mealplans.md#mealplan-events),
 [medicine-schedules.md](medicine-schedules.md#events)):
 
-```
+```text
 PickupScheduleCreated(PickupScheduleId, UserId ChildId, DateTimeOffset OccurredAt)
     // Lazily appended by the first AssignPickup call for a child with no stream yet,
     // exactly as MealPlanCreated is -- not provisioned as part of CreateChild.
@@ -231,7 +231,7 @@ maintained index every other per-child feature uses
 ([MedicineIndexDocument.cs](../../../src/backend/buddy/Features/Medicines/Types/MedicineIndexDocument.cs),
 [MealPlanIndexDocument.cs](../../../src/backend/buddy/Features/Mealplans/Types/MealPlanIndexDocument.cs)):
 
-```
+```text
 PickupScheduleIndexDocument(Guid Id, Guid ChildId)
 ```
 
@@ -249,7 +249,7 @@ in range — `PickupAssignment` plus the `Date`/`Slot` it's keyed by, with its
 `UserId?` fields unwrapped to raw `Guid?` the same way
 `MedicineScheduleResponse` unwraps `Icon`/`Color`:
 
-```
+```text
 PickupOccurrence(DateOnly Date, PickupSlot Slot, PickupAssigneeKind Kind, Guid? GuardianId,
     Guid? SiblingChildId, string? PlaydateHostName, string? PlaydateLocation, string? PlaydateContactInfo,
     TimeOnly? Time, string? Notes, Guid AssignedBy)
@@ -259,7 +259,7 @@ Only assigned slots are represented — a date/slot absent from a
 `ListPickupSchedule` response is unplanned, the same sparse read convention
 `MealPlanExpansion` already uses (it only emits filled `(Date, Slot)` pairs,
 never a placeholder for an empty one). This still gets a guardian's UI "not
-yet planned" for free: `SelfEscort` is a *present* entry with
+yet planned" for free: `SelfEscort` is a _present_ entry with
 `Kind: SelfEscort`, distinct from a date/slot missing from the response
 entirely. Nothing here is persisted or cached; it's recomputed from current
 aggregate state on every call, the same explicit, already-accepted tradeoff
@@ -284,10 +284,10 @@ members, no group ownership, exactly two principals — reusing the existing
 ([CalendarAuthorization.cs](../../../src/backend/buddy/Features/Calendars/CalendarAuthorization.cs)-style)
 with no new authorization document needed:
 
-| Tier | Who | Actions |
-|---|---|---|
+| Tier       | Who                                  | Actions                                                                            |
+| ---------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
 | **Manage** | An active guardian of `ChildId` only | Assign/clear a slot for any date, with any `PickupAssigneeKind`; view the schedule |
-| **View** | The child (`ChildId` itself) only | View the schedule — who's picking them up and when |
+| **View**   | The child (`ChildId` itself) only    | View the schedule — who's picking them up and when                                 |
 
 Unlike `MedicineSchedule`'s Mark tier, the child has no write action here at
 all — nothing here is something a child self-reports (there's no equivalent
@@ -297,7 +297,7 @@ attempting to assign a slot for a child they aren't an active guardian of
 gets `NotFound`, matching the calendar/medicine precedent for "can't
 distinguish private from missing."
 
-```
+```text
 enum PickupAccess { Allowed, NotFound, Forbidden }
 ```
 
@@ -315,11 +315,11 @@ can see the schedule, they just can't change it, matching how
 
 ## Command slices (`Features/Pickups/`, same vertical-slice shape as `Medicines`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `AssignPickup` | Manage | `Date`, `Slot`, `Kind` plus that kind's fields (`GuardianId`, `SiblingChildId`, or `PlaydateHostName`/`PlaydateLocation`/`PlaydateContactInfo`), `Time?`, `Notes?`. Creates the stream lazily if the child has none yet (same lazy-creation contract `AssignMealToSlot` has). Validates the fields the request's `Kind` needs are present, then the relationship: `GuardianId` must be an active guardian of `ChildId`; `SiblingChildId` must share an active guardian with `ChildId`; `SelfEscort`/`Playdate` need no relationship check. Emits `PickupAssigned` |
-| `ClearPickup` | Manage | `Date`, `Slot` — idempotent no-op if the slot has no assignment (`Success`, no event), same rule `ClearMealSlot` uses. Emits `PickupCleared` |
-| `ListPickupSchedule` | Manage or View | `[from, to]` date range → `PickupScheduleExpansion.ExpandAsync`, the read surface for both the guardian's weekly planning grid and the child's own "who's picking me up" view |
+| Slice                | Tier           | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AssignPickup`       | Manage         | `Date`, `Slot`, `Kind` plus that kind's fields (`GuardianId`, `SiblingChildId`, or `PlaydateHostName`/`PlaydateLocation`/`PlaydateContactInfo`), `Time?`, `Notes?`. Creates the stream lazily if the child has none yet (same lazy-creation contract `AssignMealToSlot` has). Validates the fields the request's `Kind` needs are present, then the relationship: `GuardianId` must be an active guardian of `ChildId`; `SiblingChildId` must share an active guardian with `ChildId`; `SelfEscort`/`Playdate` need no relationship check. Emits `PickupAssigned` |
+| `ClearPickup`        | Manage         | `Date`, `Slot` — idempotent no-op if the slot has no assignment (`Success`, no event), same rule `ClearMealSlot` uses. Emits `PickupCleared`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `ListPickupSchedule` | Manage or View | `[from, to]` date range → `PickupScheduleExpansion.ExpandAsync`, the read surface for both the guardian's weekly planning grid and the child's own "who's picking me up" view                                                                                                                                                                                                                                                                                                                                                                                     |
 
 No slice needs to enumerate "who can this child's schedule name as an
 assignee" — the guardian and sibling pickers reuse the existing
@@ -328,7 +328,7 @@ assignee" — the guardian and sibling pickers reuse the existing
 
 ## Routes
 
-```
+```text
 PUT    /pickups/children/{childId}/assignments        AssignPickup   (date, slot as query params)
 DELETE /pickups/children/{childId}/assignments        ClearPickup    (date, slot as query params)
 GET    /pickups/children/{childId}/schedule           ListPickupSchedule
@@ -345,33 +345,33 @@ and `/mealplans/children/{childId}/plan`
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Slot has no assignment yet | No `PickupOccurrence` is returned for that `(Date, Slot)` — distinct from `Kind: SelfEscort`, which is a present entry. The frontend should render these differently ("not planned" vs. "goes alone") |
-| Guardian assigns a `Playdate` to `DropOff` | Allowed — nothing in the domain restricts any `PickupAssigneeKind` to a particular slot. `PickUp`-for-playdates is the expected common case (collected from school by a friend's parent), but "dropped off directly at a playdate instead of home" is a real, if rarer, use of `DropOff`; special-casing it away would add a rule nobody asked for |
-| `Guardian` assignee's `GuardianId` is later revoked (`GuardianRevoked`) | The existing assignment is left as-is — event-sourced history isn't rewritten — but the revoked guardian can no longer manage the schedule at all (drops to `NotFound`), and a guardian re-editing that slot will see the stale name/relationship when resolving display data, same as any other stale reference in this codebase |
-| `Sibling` assignee's `SiblingChildId` stops sharing an active guardian with `ChildId` (e.g. a `GuardianLink` is revoked) | Existing assignments referencing them are untouched (history isn't rewritten); a *new* assignment naming that child as `Sibling` would fail validation from that point on |
-| Clearing a slot that has no assignment | Idempotent no-op (`Success`, no event appended), same as `ClearMealSlot` |
-| Two guardians assign the same slot at nearly the same time | Both `PickupAssigned` events append to the stream in order; the last one wins for current state, neither write is lost from history — the same benefit event sourcing already gives `MealPlan`/`MedicineSchedule` |
-| Guardian's own `GuardianLink` to the child is revoked | Immediately drops to `NotFound` for that guardian, same as `Calendar`/`Medicines`/`Mealplans` today; the child's own `View`-tier access is unaffected |
-| Child has no guardian at all | Cannot happen for `PickupSchedule` creation (`Manage` tier requires a `GuardianLink`), so every schedule has at least one guardian by construction |
+| Case                                                                                                                     | Behavior                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Slot has no assignment yet                                                                                               | No `PickupOccurrence` is returned for that `(Date, Slot)` — distinct from `Kind: SelfEscort`, which is a present entry. The frontend should render these differently ("not planned" vs. "goes alone")                                                                                                                                              |
+| Guardian assigns a `Playdate` to `DropOff`                                                                               | Allowed — nothing in the domain restricts any `PickupAssigneeKind` to a particular slot. `PickUp`-for-playdates is the expected common case (collected from school by a friend's parent), but "dropped off directly at a playdate instead of home" is a real, if rarer, use of `DropOff`; special-casing it away would add a rule nobody asked for |
+| `Guardian` assignee's `GuardianId` is later revoked (`GuardianRevoked`)                                                  | The existing assignment is left as-is — event-sourced history isn't rewritten — but the revoked guardian can no longer manage the schedule at all (drops to `NotFound`), and a guardian re-editing that slot will see the stale name/relationship when resolving display data, same as any other stale reference in this codebase                  |
+| `Sibling` assignee's `SiblingChildId` stops sharing an active guardian with `ChildId` (e.g. a `GuardianLink` is revoked) | Existing assignments referencing them are untouched (history isn't rewritten); a _new_ assignment naming that child as `Sibling` would fail validation from that point on                                                                                                                                                                          |
+| Clearing a slot that has no assignment                                                                                   | Idempotent no-op (`Success`, no event appended), same as `ClearMealSlot`                                                                                                                                                                                                                                                                           |
+| Two guardians assign the same slot at nearly the same time                                                               | Both `PickupAssigned` events append to the stream in order; the last one wins for current state, neither write is lost from history — the same benefit event sourcing already gives `MealPlan`/`MedicineSchedule`                                                                                                                                  |
+| Guardian's own `GuardianLink` to the child is revoked                                                                    | Immediately drops to `NotFound` for that guardian, same as `Calendar`/`Medicines`/`Mealplans` today; the child's own `View`-tier access is unaffected                                                                                                                                                                                              |
+| Child has no guardian at all                                                                                             | Cannot happen for `PickupSchedule` creation (`Manage` tier requires a `GuardianLink`), so every schedule has at least one guardian by construction                                                                                                                                                                                                 |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Extend `CalendarItem`, or new feature | New feature, `Features/Pickups` — mirrors the `Medicines`/`Mealplans` precedent |
-| Scope: per-child or family-wide | Per child, like `MedicineSchedule` — pickup arrangements vary independently per child even within one family; the `Sibling` assignee covers the one genuinely cross-child case without needing a family-wide aggregate |
-| How "who" is modeled | A flat `PickupAssigneeKind` enum (`Guardian`, `SelfEscort`, `Sibling`, `Playdate`) plus per-case optional fields on `PickupAssignment` — a closed union was tried first and reverted after failing to round-trip through JSON once embedded in a persisted event (see Question 3) |
-| Slot model | Fixed two-value `PickupSlot { DropOff, PickUp }`, mirroring `MealSlot`'s fixed-slot approach — covers the twice-daily school run; more slots per day is a v2 gap (see open questions) |
-| Recurrence | None — every assignment is explicit, per date, same v1 stance `MealPlan` takes; no auto-repeating weekly template |
-| Validating a `Sibling` assignee | A small local check against `IGuardianLinkEventStore` inside `Pickups`, not a dependency on `Mealplans.MealFamilyResolution` — keeps the vertical slice boundary intact |
-| Who can write the schedule | Guardian (`Manage` tier) only, never the child |
-| Who can view it | The child (`View` tier, read-only) and any active guardian (`Manage`, which subsumes read) |
-| Does a child have any write action | No — unlike `MedicineSchedule`'s Mark tier, there's nothing here for the child to self-report |
-| New read models needed | `PickupScheduleIndexDocument(Id, ChildId)` — same maintained-inline-projection pattern used everywhere else |
-| Does a pickup schedule show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface (`ListPickupSchedule`), matching the `Medicines`/`Mealplans` precedent |
-| Group sharing (e.g. with a babysitter-pool group) | Not built now — not part of what was asked. If needed later, `MedicineSharing`'s per-child singleton pattern ([medicine-schedules.md](medicine-schedules.md#group-sharing-added-later-additive)) is the template to follow, the same way it was added to `Medicines` after the fact |
+| Question                                                       | Decision                                                                                                                                                                                                                                                                            |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extend `CalendarItem`, or new feature                          | New feature, `Features/Pickups` — mirrors the `Medicines`/`Mealplans` precedent                                                                                                                                                                                                     |
+| Scope: per-child or family-wide                                | Per child, like `MedicineSchedule` — pickup arrangements vary independently per child even within one family; the `Sibling` assignee covers the one genuinely cross-child case without needing a family-wide aggregate                                                              |
+| How "who" is modeled                                           | A flat `PickupAssigneeKind` enum (`Guardian`, `SelfEscort`, `Sibling`, `Playdate`) plus per-case optional fields on `PickupAssignment` — a closed union was tried first and reverted after failing to round-trip through JSON once embedded in a persisted event (see Question 3)   |
+| Slot model                                                     | Fixed two-value `PickupSlot { DropOff, PickUp }`, mirroring `MealSlot`'s fixed-slot approach — covers the twice-daily school run; more slots per day is a v2 gap (see open questions)                                                                                               |
+| Recurrence                                                     | None — every assignment is explicit, per date, same v1 stance `MealPlan` takes; no auto-repeating weekly template                                                                                                                                                                   |
+| Validating a `Sibling` assignee                                | A small local check against `IGuardianLinkEventStore` inside `Pickups`, not a dependency on `Mealplans.MealFamilyResolution` — keeps the vertical slice boundary intact                                                                                                             |
+| Who can write the schedule                                     | Guardian (`Manage` tier) only, never the child                                                                                                                                                                                                                                      |
+| Who can view it                                                | The child (`View` tier, read-only) and any active guardian (`Manage`, which subsumes read)                                                                                                                                                                                          |
+| Does a child have any write action                             | No — unlike `MedicineSchedule`'s Mark tier, there's nothing here for the child to self-report                                                                                                                                                                                       |
+| New read models needed                                         | `PickupScheduleIndexDocument(Id, ChildId)` — same maintained-inline-projection pattern used everywhere else                                                                                                                                                                         |
+| Does a pickup schedule show up in `Calendar`/`ListOccurrences` | No — a fully separate read surface (`ListPickupSchedule`), matching the `Medicines`/`Mealplans` precedent                                                                                                                                                                           |
+| Group sharing (e.g. with a babysitter-pool group)              | Not built now — not part of what was asked. If needed later, `MedicineSharing`'s per-child singleton pattern ([medicine-schedules.md](medicine-schedules.md#group-sharing-added-later-additive)) is the template to follow, the same way it was added to `Medicines` after the fact |
 
 ## Remaining open questions
 

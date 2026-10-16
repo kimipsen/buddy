@@ -1,4 +1,4 @@
-1. # Guardian-Managed Child Time Zone
+# Guardian-Managed Child Time Zone
 
 > Since [eliminate-nulls.md](eliminate-nulls.md) Phase 5.6, `User.TimeZoneId` is required and `ResolvedTimeZoneId` is gone; read the field directly.
 
@@ -68,10 +68,10 @@ they are not repeated here.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Which guardians can set a child's time zone | Any active `GuardianLink`, regardless of `GuardianKind` — same rule as child language |
-| Where the endpoint/handler lives | Guardians feature (`/users/me/children/{childId}/timezone`), not an extension of the Users feature's self-service endpoint |
-| New event type needed | No — reuses the existing `TimeZoneUpdated` event verbatim |
-| Where the UI lives | Inline on the existing `manage-children` screen, next to the language select |
-| Does `ChildSummary` need a `TimeZoneId` field | Yes — added so the guardian UI can show/edit the current value without an extra request |
+| Question                                      | Decision                                                                                                                   |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Which guardians can set a child's time zone   | Any active `GuardianLink`, regardless of `GuardianKind` — same rule as child language                                      |
+| Where the endpoint/handler lives              | Guardians feature (`/users/me/children/{childId}/timezone`), not an extension of the Users feature's self-service endpoint |
+| New event type needed                         | No — reuses the existing `TimeZoneUpdated` event verbatim                                                                  |
+| Where the UI lives                            | Inline on the existing `manage-children` screen, next to the language select                                               |
+| Does `ChildSummary` need a `TimeZoneId` field | Yes — added so the guardian UI can show/edit the current value without an extra request                                    |

@@ -52,7 +52,7 @@ Every new route needs this. The coverage spec fails `task test` until it's done.
 - Each run calls `resetDemoFamily()` first, which deletes Sara's groups (and their calendars), unlinks the children, deletes her backend account, and deletes the `demo.*` Keycloak users. The demo accounts are fixed usernames, separate from alice/bob/carol, so the e2e specs are unaffected. Never seed screenshot data onto the seeded e2e users.
 - The demo child gets a permanent password through the Keycloak admin API (a newly created child has a temporary one that direct grant can't use). Everything is local-dev-only: the Keycloak master admin is `admin/admin` and the demo password is `demo-screenshots-pw`.
 - Optional extras (completed subtasks, a taken dose, invites) log `[demo seed] …` warnings instead of failing. Read those warnings when a page looks emptier than expected.
-- After a run the demo family stays in place. To explore it by hand, sign in at http://localhost:4300 as `demo.sara` / `demo-screenshots-pw` (or as `demo.emil`).
+- After a run the demo family stays in place. To explore it by hand, sign in at <http://localhost:4300> as `demo.sara` / `demo-screenshots-pw` (or as `demo.emil`).
 
 ## Troubleshooting
 

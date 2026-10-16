@@ -8,9 +8,11 @@
 - EF Core for read models only; the event stream stays the source of truth.
 - Target .NET 11 with the Npgsql EF Core provider.
 - Map ID value types with a value converter:
+
   ```csharp
   b.Property(x => x.Id).HasConversion(v => v.Value, v => new OrderId(v));
   ```
+
 - Provide an `IDesignTimeDbContextFactory<T>` so `dotnet ef` works without running the app.
 - Read the connection string from configuration or an environment variable, never a literal.
 

@@ -44,28 +44,28 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `POST` | `/medicines/children/{childId}/schedules` | Creates a medicine schedule for the child. |
-| `GET` | `/medicines/children/{childId}/schedules` | Lists active or stopped schedules for the child. |
-| `PATCH` | `/medicines/children/{childId}/schedules/{medicineId}/details` | Updates medicine details such as name, dosage, icon, or color. |
-| `PATCH` | `/medicines/children/{childId}/schedules/{medicineId}/schedule` | Reschedules the windows or time list for a medicine. |
-| `DELETE` | `/medicines/children/{childId}/schedules/{medicineId}` | Stops a medicine schedule. |
-| `GET` | `/medicines/children/{childId}/doses` | Lists dose occurrences for a `from`/`to` date range. |
-| `PUT` | `/medicines/children/{childId}/doses/{medicineId}?date=...&time=...` | Marks a dose as `Taken`, `Skipped`, or `Pending`. |
-| `PUT` | `/medicines/children/{childId}/group-share/{groupId}` | Shares the child's medicine schedules with a group. |
-| `DELETE` | `/medicines/children/{childId}/group-share/{groupId}` | Unshares the child's medicine schedules from a group. |
-| `PUT` | `/medicines/children/{childId}/effect-notes/{date}` | Logs or overwrites one day's effect and side-effect note (guardians only). |
-| `DELETE` | `/medicines/children/{childId}/effect-notes/{date}` | Clears one day's note; a day without one is a no-op (guardians only). |
-| `GET` | `/medicines/children/{childId}/effect-notes` | Lists notes for a `from`/`to` range of at most 92 days, each with live dose statuses (guardians only). |
-| `GET` | `/medicines/children/{childId}/group-share` | Returns the group the child's medicine schedules are currently shared with, if any. |
-| `POST` | `/medicines/groups/{groupId}/children/{childId}/schedules` | Creates a medicine schedule for a shared child via group access. |
-| `GET` | `/medicines/groups/{groupId}/children/{childId}/schedules` | Lists a shared child's schedules via group access. |
-| `PATCH` | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/details` | Updates schedule details via group access. |
-| `PATCH` | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/schedule` | Reschedules via group access. |
-| `DELETE` | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}` | Stops a schedule via group access. |
-| `GET` | `/medicines/groups/{groupId}/children/{childId}/doses` | Lists dose occurrences via group access. |
-| `PUT` | `/medicines/groups/{groupId}/children/{childId}/doses/{medicineId}` | Sets dose status via group access. |
+| Method   | Route                                                                            | Behavior                                                                                               |
+| -------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `POST`   | `/medicines/children/{childId}/schedules`                                        | Creates a medicine schedule for the child.                                                             |
+| `GET`    | `/medicines/children/{childId}/schedules`                                        | Lists active or stopped schedules for the child.                                                       |
+| `PATCH`  | `/medicines/children/{childId}/schedules/{medicineId}/details`                   | Updates medicine details such as name, dosage, icon, or color.                                         |
+| `PATCH`  | `/medicines/children/{childId}/schedules/{medicineId}/schedule`                  | Reschedules the windows or time list for a medicine.                                                   |
+| `DELETE` | `/medicines/children/{childId}/schedules/{medicineId}`                           | Stops a medicine schedule.                                                                             |
+| `GET`    | `/medicines/children/{childId}/doses`                                            | Lists dose occurrences for a `from`/`to` date range.                                                   |
+| `PUT`    | `/medicines/children/{childId}/doses/{medicineId}?date=...&time=...`             | Marks a dose as `Taken`, `Skipped`, or `Pending`.                                                      |
+| `PUT`    | `/medicines/children/{childId}/group-share/{groupId}`                            | Shares the child's medicine schedules with a group.                                                    |
+| `DELETE` | `/medicines/children/{childId}/group-share/{groupId}`                            | Unshares the child's medicine schedules from a group.                                                  |
+| `PUT`    | `/medicines/children/{childId}/effect-notes/{date}`                              | Logs or overwrites one day's effect and side-effect note (guardians only).                             |
+| `DELETE` | `/medicines/children/{childId}/effect-notes/{date}`                              | Clears one day's note; a day without one is a no-op (guardians only).                                  |
+| `GET`    | `/medicines/children/{childId}/effect-notes`                                     | Lists notes for a `from`/`to` range of at most 92 days, each with live dose statuses (guardians only). |
+| `GET`    | `/medicines/children/{childId}/group-share`                                      | Returns the group the child's medicine schedules are currently shared with, if any.                    |
+| `POST`   | `/medicines/groups/{groupId}/children/{childId}/schedules`                       | Creates a medicine schedule for a shared child via group access.                                       |
+| `GET`    | `/medicines/groups/{groupId}/children/{childId}/schedules`                       | Lists a shared child's schedules via group access.                                                     |
+| `PATCH`  | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/details`  | Updates schedule details via group access.                                                             |
+| `PATCH`  | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}/schedule` | Reschedules via group access.                                                                          |
+| `DELETE` | `/medicines/groups/{groupId}/children/{childId}/schedules/{medicineId}`          | Stops a schedule via group access.                                                                     |
+| `GET`    | `/medicines/groups/{groupId}/children/{childId}/doses`                           | Lists dose occurrences via group access.                                                               |
+| `PUT`    | `/medicines/groups/{groupId}/children/{childId}/doses/{medicineId}`              | Sets dose status via group access.                                                                     |
 
 ## Group sharing
 

@@ -1,4 +1,3 @@
-
 # Backend-Aware Review
 
 Purpose: review a diff for correctness bugs and reuse/simplification/efficiency cleanups the same way a general code-review pass would — but for any `.NET`/backend file in the diff, ground the review in `agents/copilot/claude-backend/SKILL.md` and, when installed, the `dotnet-skills` plugin, instead of relying on generic judgment.

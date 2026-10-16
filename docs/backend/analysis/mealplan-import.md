@@ -13,7 +13,7 @@ and the AI assistant has no record of what the family actually eats.
 The first real source is a phone note that covers January 2024 to the current week. It holds
 roughly 130 weeks and 750 filled days:
 
-```
+```text
 Madplan 2026
 U2
 Sø: Fiskefrikadeller m salat og havreris
@@ -30,20 +30,20 @@ U1
 
 What a parser has to handle, measured on that note with a throwaway prototype:
 
-| Observation | Example | Count |
-|---|---|---|
-| Year sections in **reverse** order, weeks ascending inside each | `Madplan 2026`, then `2025`, then `2024` | 3 sections |
-| Weeks are `U<ISO week>` and run **Sunday to Saturday** | `U2` then `Sø:` ... `Lø:` | ~130 weeks |
-| Day prefixes are abbreviated, sometimes in full, sometimes lower-case | `Sø:`, `Søndag:`, `on:` | 897 day lines |
-| Empty days | `Lø:` | 142 |
-| Typos in week headers | `U66` between `U5` and `U7`, `U42:` | 2 |
-| A week with no header | first week of 2024 (it comes just before `U3`) | 1 |
-| A week whose lines have no day prefix (order only) | 2025 `U42` | 6 lines |
-| Not a meal: away, guests, holidays | `- Sommerhus`, `Ingen hjemme`, `Bedstefar`, `i Silkeborg`, `Juleaften` | ~36 |
-| Leftovers | `rester`, `Lasagne rester` | ~16 |
-| Alternatives | `Sushi / McD 🍱 🍟` | ~16 |
-| Notes mixed into the meal text | `(Mor ikke hjemme)`, `+ GS`, emojis | many |
-| Weeks missing altogether | no `U9` in 2026, no `U27`-`U32` in 2025 | normal |
+| Observation                                                           | Example                                                                | Count         |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------- |
+| Year sections in **reverse** order, weeks ascending inside each       | `Madplan 2026`, then `2025`, then `2024`                               | 3 sections    |
+| Weeks are `U<ISO week>` and run **Sunday to Saturday**                | `U2` then `Sø:` ... `Lø:`                                              | ~130 weeks    |
+| Day prefixes are abbreviated, sometimes in full, sometimes lower-case | `Sø:`, `Søndag:`, `on:`                                                | 897 day lines |
+| Empty days                                                            | `Lø:`                                                                  | 142           |
+| Typos in week headers                                                 | `U66` between `U5` and `U7`, `U42:`                                    | 2             |
+| A week with no header                                                 | first week of 2024 (it comes just before `U3`)                         | 1             |
+| A week whose lines have no day prefix (order only)                    | 2025 `U42`                                                             | 6 lines       |
+| Not a meal: away, guests, holidays                                    | `- Sommerhus`, `Ingen hjemme`, `Bedstefar`, `i Silkeborg`, `Juleaften` | ~36           |
+| Leftovers                                                             | `rester`, `Lasagne rester`                                             | ~16           |
+| Alternatives                                                          | `Sushi / McD 🍱 🍟`                                                    | ~16           |
+| Notes mixed into the meal text                                        | `(Mor ikke hjemme)`, `+ GS`, emojis                                    | many          |
+| Weeks missing altogether                                              | no `U9` in 2026, no `U27`-`U32` in 2025                                | normal        |
 
 After stripping emojis and parentheses, lower-casing, and treating `m`/`m.`/`med` as the same word,
 the 683 meal lines still produce **446 distinct names**. Many of them are the same dish spelled
@@ -170,12 +170,12 @@ whitespace collapsed, trailing punctuation trimmed.
 
 For each distinct key, the preview proposes one **resolution**:
 
-| Resolution | When proposed | What commit does |
-|---|---|---|
-| `Existing(mealId)` | the key equals the key of an existing meal (an active one wins over an archived one) | assigns that meal |
-| `New(name)` | no match | creates the meal once, then assigns it |
-| `MergeInto(otherKey)` | never proposed; the guardian picks it | uses the other group's resolution |
-| `Skip` | `Away` / `Empty` lines (Question 4) | writes nothing for those days |
+| Resolution            | When proposed                                                                        | What commit does                       |
+| --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------- |
+| `Existing(mealId)`    | the key equals the key of an existing meal (an active one wins over an archived one) | assigns that meal                      |
+| `New(name)`           | no match                                                                             | creates the meal once, then assigns it |
+| `MergeInto(otherKey)` | never proposed; the guardian picks it                                                | uses the other group's resolution      |
+| `Skip`                | `Away` / `Empty` lines (Question 4)                                                  | writes nothing for those days          |
 
 Fuzzy matching (token-set similarity above a threshold, and singular/plural) only fills a
 **"Did you mean …?"** suggestion. `hotdogs` → `hotdog` is suggested, never applied, because
@@ -203,12 +203,12 @@ only once"), checked by default.
 import by default. The guardian can change a group's resolution.** A day with nothing after its
 prefix (or only emojis and parentheses) produces no line at all and is counted in `EmptyDays`.
 
-| Kind | Detected by | Default |
-|---|---|---|
-| `Away` | starts with `-`; or contains `ingen hjemme`, `sommerhus`, `bedstefar`, `juleaften` and similar; or starts with `ikke hjemme` / `spise(r) hos`; or is `i <Place>` | skipped, listed in the review |
-| `Leftovers` | key starts with `rester`, or is `<meal> rester` | skipped. "Map all leftovers to one meal 'Rester'" is offered as one click |
-| `Alternatives` | ` / ` between two names | the **first** name becomes the meal; the full text goes into `Notes` |
-| `Meal` | everything else | imported |
+| Kind           | Detected by                                                                                                                                                      | Default                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `Away`         | starts with `-`; or contains `ingen hjemme`, `sommerhus`, `bedstefar`, `juleaften` and similar; or starts with `ikke hjemme` / `spise(r) hos`; or is `i <Place>` | skipped, listed in the review                                             |
+| `Leftovers`    | key starts with `rester`, or is `<meal> rester`                                                                                                                  | skipped. "Map all leftovers to one meal 'Rester'" is offered as one click |
+| `Alternatives` | `/` between two names                                                                                                                                            | the **first** name becomes the meal; the full text goes into `Notes`      |
+| `Meal`         | everything else                                                                                                                                                  | imported                                                                  |
 
 Text in parentheses (`(Mor ikke hjemme)`, `(Viggos filmaften)`) and a trailing `+ GS` are moved
 from the name into `MealPlanAssignment.Notes`, which already exists and holds up to 2,000 chars
@@ -242,7 +242,7 @@ events (starting the plan stream with `MealPlanCreated` when the family has none
 `SaveChangesAsync`. A meal archived by the single-use rule is created as `[MealCreated, MealArchived]`
 in its own stream; it never goes through the "cannot assign an archived meal" check.
 
-```
+```text
 MealPlanEntriesImported(
     MealPlanId Id,
     MealPlanImportId ImportId,              // UUIDv7, returned to the client
@@ -334,25 +334,25 @@ They only see the resulting history in their week view.
 ## Question 7: dates in a week-numbered note
 
 **Decision: `U<n>` is the ISO week `n` of the section's year. The note's weeks run Sunday to
-Saturday, so `Sø` is the Sunday *before* ISO week `n`'s Monday, and `Ma`-`Lø` are that ISO
+Saturday, so `Sø` is the Sunday _before_ ISO week `n`'s Monday, and `Ma`-`Lø` are that ISO
 week's Monday to Saturday. Every import is a Dinner.** Week start and slot are options with these
 defaults, so a Monday-first note, or a lunch-box list, needs no new parser.
 
-```
+```text
 date(year, n, day) = ISO-Monday(year, n) + offset(day)      // Sø = -1, Ma = 0, ..., Lø = +5
 U2 2026, Sø  ->  2026-01-04          U1 2025, Sø  ->  2024-12-29   (crosses the year, correctly)
 ```
 
 Recovery rules, each reported as a warning with its line number, never silently:
 
-| Problem | Rule | Warning |
-|---|---|---|
-| Week number > 53, or not greater than the previous week in its section (`U66` after `U5`) | previous week + 1 | `week_number_corrected` |
-| Day lines before any week header (first week of 2024) | the next header's week − 1; above `U1`, the previous year's last ISO week | `week_number_inferred` |
-| Day line without a day prefix (2025 `U42`) | the next day after the previous line, starting with the week's first day | `day_inferred_from_position` |
-| Two lines for the same day in one week | the last one wins | `duplicate_day` |
-| A year header missing above the first week | the import is rejected: `400`, "Add a year line such as 'Madplan 2026'" | -- |
-| Dates in the future | allowed; the note's current week is a normal part of the plan | -- |
+| Problem                                                                                   | Rule                                                                      | Warning                      |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------- |
+| Week number > 53, or not greater than the previous week in its section (`U66` after `U5`) | previous week + 1                                                         | `week_number_corrected`      |
+| Day lines before any week header (first week of 2024)                                     | the next header's week − 1; above `U1`, the previous year's last ISO week | `week_number_inferred`       |
+| Day line without a day prefix (2025 `U42`)                                                | the next day after the previous line, starting with the week's first day  | `day_inferred_from_position` |
+| Two lines for the same day in one week                                                    | the last one wins                                                         | `duplicate_day`              |
+| A year header missing above the first week                                                | the import is rejected: `400`, "Add a year line such as 'Madplan 2026'"   | --                           |
+| Dates in the future                                                                       | allowed; the note's current week is a normal part of the plan             | --                           |
 
 The review lists every warning next to the parsed result, so the guardian can check that U42's six
 dishes ended up on the right days. They can fix the text and preview again, or move a row in the
@@ -360,16 +360,16 @@ review.
 
 ## Command slices (`Features/Mealplans/Import/`, same shape as `AiAssistant/`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `PreviewMealPlanImport` (+`ForGroup`) | Manage | Body: `{ text, format?: "auto" \| "weekly-note" \| "csv", weekStart?, slot? }`. Text up to 256 KB. Parses, matches against `MealFamilyResolution`'s library, flags occupied slots. Writes nothing. Returns `{ format, lines[], groups[], warnings[], conflicts[] }` |
-| `CommitMealPlanImport` (+`ForGroup`) | Manage | Body: `{ format, entries: [{ date, slot, mealId? \| newMealName?, notes }], archiveSingleUse }`, at most 5,000 entries. Entries whose `newMealName` normalizes to the same key share one new meal, so a merge in the review is just "send the same name". Creates the new meals, appends one `MealPlanEntriesImported` (creating the `MealPlan` stream when it's missing, as `AssignForChildAsync` does), archives the single-use meals. Returns `{ importId, imported, createdMeals, archivedMeals, skipped[] }` |
-| `RevertMealPlanImport` (+`ForGroup`) | Manage | Clears the slots this import was the last to write, and archives the meals that import created and that nothing else uses, in one transaction. Idempotent |
-| `ListMealPlanImports` | Manage | Folded from the stream: `importId`, format, date range, entry count, who imported it and when. Feeds the "Undo import" list |
+| Slice                                 | Tier   | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PreviewMealPlanImport` (+`ForGroup`) | Manage | Body: `{ text, format?: "auto" \| "weekly-note" \| "csv", weekStart?, slot? }`. Text up to 256 KB. Parses, matches against `MealFamilyResolution`'s library, flags occupied slots. Writes nothing. Returns `{ format, lines[], groups[], warnings[], conflicts[] }`                                                                                                                                                                                                                                               |
+| `CommitMealPlanImport` (+`ForGroup`)  | Manage | Body: `{ format, entries: [{ date, slot, mealId? \| newMealName?, notes }], archiveSingleUse }`, at most 5,000 entries. Entries whose `newMealName` normalizes to the same key share one new meal, so a merge in the review is just "send the same name". Creates the new meals, appends one `MealPlanEntriesImported` (creating the `MealPlan` stream when it's missing, as `AssignForChildAsync` does), archives the single-use meals. Returns `{ importId, imported, createdMeals, archivedMeals, skipped[] }` |
+| `RevertMealPlanImport` (+`ForGroup`)  | Manage | Clears the slots this import was the last to write, and archives the meals that import created and that nothing else uses, in one transaction. Idempotent                                                                                                                                                                                                                                                                                                                                                         |
+| `ListMealPlanImports`                 | Manage | Folded from the stream: `importId`, format, date range, entry count, who imported it and when. Feeds the "Undo import" list                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ## Routes
 
-```
+```text
 POST   /mealplans/children/{childId}/imports/preview            PreviewMealPlanImport
 POST   /mealplans/children/{childId}/imports                    CommitMealPlanImport   (Idempotency-Key)
 GET    /mealplans/children/{childId}/imports                    ListMealPlanImports
@@ -437,41 +437,41 @@ Other pieces:
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Format can't be detected | `400 validation_error` with "Choose the format explicitly"; the UI shows it under the preview button |
-| Nothing importable after parsing | Preview succeeds with zero entries; commit is disabled |
-| A slot already holds a meal | Skipped, never overwritten; listed as `occupied` in preview and in the commit result |
-| The same import committed twice | The second time, every slot is occupied, so nothing is written. With the same `Idempotency-Key`, the first response is replayed |
-| `mealId` is archived by commit time | Allowed: imports may point at archived meals, which is how one-off dishes stay out of the picker |
-| `mealId` is not in the family's library | `400` for the whole commit; nothing is written |
-| A meal name over 200 chars | The parser truncates it at a word boundary and puts the full text in `Notes`; a commit with a longer `newMealName` gets `400` |
-| A guardian edits an imported slot, then reverts the import | That slot keeps the guardian's edit; only untouched slots are cleared |
-| Two guardians import into a family with no `MealPlan` stream yet | Same race as the first `AssignMealToSlot` (`MealPlanEvents.cs:43-53`); accepted for v1 |
-| The `GuardianLink` is revoked mid-review | Commit returns `NotFound` |
+| Case                                                             | Behavior                                                                                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Format can't be detected                                         | `400 validation_error` with "Choose the format explicitly"; the UI shows it under the preview button                            |
+| Nothing importable after parsing                                 | Preview succeeds with zero entries; commit is disabled                                                                          |
+| A slot already holds a meal                                      | Skipped, never overwritten; listed as `occupied` in preview and in the commit result                                            |
+| The same import committed twice                                  | The second time, every slot is occupied, so nothing is written. With the same `Idempotency-Key`, the first response is replayed |
+| `mealId` is archived by commit time                              | Allowed: imports may point at archived meals, which is how one-off dishes stay out of the picker                                |
+| `mealId` is not in the family's library                          | `400` for the whole commit; nothing is written                                                                                  |
+| A meal name over 200 chars                                       | The parser truncates it at a word boundary and puts the full text in `Notes`; a commit with a longer `newMealName` gets `400`   |
+| A guardian edits an imported slot, then reverts the import       | That slot keeps the guardian's edit; only untouched slots are cleared                                                           |
+| Two guardians import into a family with no `MealPlan` stream yet | Same race as the first `AssignMealToSlot` (`MealPlanEvents.cs:43-53`); accepted for v1                                          |
+| The `GuardianLink` is revoked mid-review                         | Commit returns `NotFound`                                                                                                       |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Where parsing runs | Backend, deterministic `IMealPlanImportFormat` per format; AI-assisted parsing comes later as one more format |
-| v1 formats | `weekly-note` (this note, plus `Uge`/`W`/English variants) and `csv` (the way in from any other system) |
-| Staging | Stateless preview, then a commit of the reviewed draft; no import aggregate |
-| Meal matching | Exact normalized key automatic; fuzzy matches suggested only; review grouped per distinct name |
-| Non-meal lines | Classified (`Away`, `Leftovers`, `Alternatives`, `Empty`); away and empty days skipped; side notes moved to `Notes` |
-| Write model | One `MealPlanEntriesImported` event per commit on the family's existing stream; never overwrites occupied slots |
-| Undo | `RevertMealPlanImport` clears the slots this import was the last to write, in one transaction with archiving its unused meals |
-| Authorization | `Manage`, family and group routes, the same as `AssignMealToSlot` |
-| Dates | `U<n>` = ISO week; `Sø` is the day before that week's Monday (confirmed by the note's author); slot Dinner; both configurable |
-| One-off meals | Archived by default when used fewer than 2 times and not in the last 90 days; a toggle turns it off |
-| Leftovers | Skipped by default; one click imports them all as one meal "Rester" |
-| v1 scope | `weekly-note` + `csv`, preview/commit/list/undo, family and group routes; no AI format |
+| Question           | Decision                                                                                                                      |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Where parsing runs | Backend, deterministic `IMealPlanImportFormat` per format; AI-assisted parsing comes later as one more format                 |
+| v1 formats         | `weekly-note` (this note, plus `Uge`/`W`/English variants) and `csv` (the way in from any other system)                       |
+| Staging            | Stateless preview, then a commit of the reviewed draft; no import aggregate                                                   |
+| Meal matching      | Exact normalized key automatic; fuzzy matches suggested only; review grouped per distinct name                                |
+| Non-meal lines     | Classified (`Away`, `Leftovers`, `Alternatives`, `Empty`); away and empty days skipped; side notes moved to `Notes`           |
+| Write model        | One `MealPlanEntriesImported` event per commit on the family's existing stream; never overwrites occupied slots               |
+| Undo               | `RevertMealPlanImport` clears the slots this import was the last to write, in one transaction with archiving its unused meals |
+| Authorization      | `Manage`, family and group routes, the same as `AssignMealToSlot`                                                             |
+| Dates              | `U<n>` = ISO week; `Sø` is the day before that week's Monday (confirmed by the note's author); slot Dinner; both configurable |
+| One-off meals      | Archived by default when used fewer than 2 times and not in the last 90 days; a toggle turns it off                           |
+| Leftovers          | Skipped by default; one click imports them all as one meal "Rester"                                                           |
+| v1 scope           | `weekly-note` + `csv`, preview/commit/list/undo, family and group routes; no AI format                                        |
 
 ## Remaining open questions
 
 - **AI-assisted format (phase 2).** Lean: an `ai` format that sends the text in chunks of about 60
   lines to the family's configured provider, with one tool, `propose_import_line(line_number, date,
-  slot, meal_name, kind, notes)`. Its output feeds the same review. It is additive (one more
+slot, meal_name, kind, notes)`. Its output feeds the same review. It is additive (one more
   `IMealPlanImportFormat`) and only worth building once a format arrives that `csv` can't
   reasonably cover.
 - **Ratings in old notes.** Some systems store stars or "kids liked it". `MealRated` can only be

@@ -74,13 +74,13 @@ Open `http://localhost:4300`.
 
 ## Local services
 
-| Service | Address | Current role |
-| --- | --- | --- |
-| Frontend | `http://localhost:4300` | Angular development server |
-| Buddy API | `https://localhost:7076` or `http://localhost:5193` | ASP.NET API |
-| Keycloak | `http://localhost:9080` | Authentication and child-account provisioning |
-| PostgreSQL | `db:5432` inside Compose | Marten event and document storage; Keycloak storage |
-| Mailpit | `http://localhost:9025` (`mailpit:1025` SMTP) | Development email capture |
+| Service    | Address                                             | Current role                                        |
+| ---------- | --------------------------------------------------- | --------------------------------------------------- |
+| Frontend   | `http://localhost:4300`                             | Angular development server                          |
+| Buddy API  | `https://localhost:7076` or `http://localhost:5193` | ASP.NET API                                         |
+| Keycloak   | `http://localhost:9080`                             | Authentication and child-account provisioning       |
+| PostgreSQL | `db:5432` inside Compose                            | Marten event and document storage; Keycloak storage |
+| Mailpit    | `http://localhost:9025` (`mailpit:1025` SMTP)       | Development email capture                           |
 
 The `localhost:9080`/`9025`/`2025` addresses are the ports Compose forwards to
 your **host** browser. From **inside** the devcontainer (terminal, `dotnet run`,
@@ -88,7 +88,7 @@ Playwright, scripts), use the Compose hostnames instead: `http://keycloak:8080`,
 `http://mailpit:8025` (SMTP `mailpit:1025`) and `db:5432`.
 
 Inside the container, `localhost:9080`/`9025`/`2025` may not be this stack at
-all. If anyone has run `docker compose up` from *within* the devcontainer
+all. If anyone has run `docker compose up` from _within_ the devcontainer
 (docker-in-docker), a second, nested stack (`devcontainer-keycloak-1`,
 `devcontainer-db-1`, `devcontainer-mailpit-1` in `docker ps`) publishes those
 same ports there. That nested Keycloak has its **own signing keys**, so tokens
@@ -150,7 +150,7 @@ work, requirements, and how to skip them for a single commit.
   `postgres-data` was initialized before `postgres/init-keycloak-db.sh` was
   added. Run the `CREATE DATABASE keycloak;` statement manually against the
   `db` service (`docker compose -f .devcontainer/docker-compose.yml exec db
-  psql -U postgres -d postgres -c 'CREATE DATABASE keycloak;'`) and restart
+psql -U postgres -d postgres -c 'CREATE DATABASE keycloak;'`) and restart
   Keycloak, or remove the `postgres-data` volume to reinitialize from
   scratch.
 - **Login redirects are rejected:** verify the `buddy-frontend` redirect URI,

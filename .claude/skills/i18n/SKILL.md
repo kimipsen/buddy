@@ -11,7 +11,7 @@ All paths below are relative to `src/frontend/buddy/src/app/core/i18n/` unless t
 
 - `translations/{en,da}/<area>.ts` — one file per feature area, each a plain object literal: `export const dashboard = { doses: { title: 'Today’s medicine', ... } }`. Areas: admin, calendar, child, common, dashboard, events, invite, login, mealplan, medicine, pickup, profile, progress, shell, taskLibrary (`task-library.ts`), verifyEmail (`verify-email.ts`).
 - `translations/{en,da}/index.ts` — imports every area and merges them as `export const en = { admin, calendar, ... }`. A new area file must be added to **both** index files.
-- `translations/index.ts` — exports `en` (bundled: the default and the fallback) and `loadDictionary(language)`, which fetches every other language as a lazy chunk (`da` is only an `import type` there, so it stays out of the initial bundle). `TranslationService.setLanguage` is async: it switches only once the dictionary has loaded, and the app initializer awaits the browser language's dictionary (`ready()`), so specs that switch to Danish must `await translation.setLanguage('da')`. The file also holds a type-level exact check (`TranslationKeyParity`) that compares every dotted key path of `en` and `da`. A key **missing in da** *or* **extra in da**, at any depth, fails `npx tsc --noEmit -p tsconfig.app.json` / `ng build` with `TS2344: Type '{ missingInDa: ...; extraInDa: "common.foo"; }' does not satisfy the constraint 'true'` — the message names the offending keys. (Typing `da` as the dictionary type alone would miss extra keys, since `da` is a variable, not a fresh literal.) The parity script still runs in CI (`.github/workflows/frontend-tests.yml`) for `{placeholder}` mismatches and identical-text warnings, which the type check can't see.
+- `translations/index.ts` — exports `en` (bundled: the default and the fallback) and `loadDictionary(language)`, which fetches every other language as a lazy chunk (`da` is only an `import type` there, so it stays out of the initial bundle). `TranslationService.setLanguage` is async: it switches only once the dictionary has loaded, and the app initializer awaits the browser language's dictionary (`ready()`), so specs that switch to Danish must `await translation.setLanguage('da')`. The file also holds a type-level exact check (`TranslationKeyParity`) that compares every dotted key path of `en` and `da`. A key **missing in da** _or_ **extra in da**, at any depth, fails `npx tsc --noEmit -p tsconfig.app.json` / `ng build` with `TS2344: Type '{ missingInDa: ...; extraInDa: "common.foo"; }' does not satisfy the constraint 'true'` — the message names the offending keys. (Typing `da` as the dictionary type alone would miss extra keys, since `da` is a variable, not a fresh literal.) The parity script still runs in CI (`.github/workflows/frontend-tests.yml`) for `{placeholder}` mismatches and identical-text warnings, which the type check can't see.
 - A key is the dotted path: `dashboard.doses.title`. `TranslationService.translate(key, params)` walks the path; an unknown key or a key that points at an object renders **the raw key** at runtime — no error.
 - Placeholders are single braces, not `{{ }}`: `starCount: '{count} stars'` → `{{ 'dashboard.children.starCount' | translate: { count: starCount } }}`; in TS, `translation.translate('calendar.agenda.dayTitle', { date: ... })`.
 - `language.ts` — `SUPPORTED_LANGUAGES = ['en', 'da']`, `DEFAULT_LANGUAGE = 'en'`; browser language seeds it pre-auth, then the user's saved language from `GET /users/me` replaces it.
@@ -34,16 +34,21 @@ All paths below are relative to `src/frontend/buddy/src/app/core/i18n/` unless t
 5. **Use it** via the pipe in templates (add `TranslatePipe` to the component's `imports`) or `TranslationService.translate` in TS. No hardcoded user-facing text in templates or `aria-label`s, including `sr-only` labels.
 6. **Renaming or removing a key**: grep for the old key across `src/frontend/buddy/src` and `src/frontend/buddy/e2e` first, and update all usages in the same change.
 7. **Run the parity check** (from any directory):
+
    ```bash
    node .claude/skills/i18n/check-parity.mjs            # from repo root
    node ../../../.claude/skills/i18n/check-parity.mjs   # from src/frontend/buddy
    ```
+
    Exit 1 = keys missing in en or da, or `{placeholder}` mismatch — fix before finishing. Identical-value entries are warnings: confirm each is intentional. Add `--unused` to list keys no source file references (warnings only; keys reachable only via a `'prefix.' + x` concatenation are listed separately as "possibly unused" — check those by hand). `--json` for machine output, `--no-identical` to hide the identical-value list.
+
 8. **Run the type check and affected specs** (from `src/frontend/buddy`):
+
    ```bash
    npx tsc --noEmit -p tsconfig.app.json
    npx ng test --watch=false --include src/app/path/to/component.spec.ts
    ```
+
    Specs render the **English** strings (jsdom's browser language is `en-US`, and `TranslatePipe`/`TranslationService` are used unstubbed), and assert on them — e.g. `textContent` contains `'Danger zone'`. Changing English copy can break unit specs **and** Playwright e2e specs (`e2e/*.spec.ts` select by visible English text, e.g. `getByRole('button', { name: 'Add schedule' })`). Grep for the old English text in `src/**/*.spec.ts` and `e2e/` and update them.
 
 ## Gotchas

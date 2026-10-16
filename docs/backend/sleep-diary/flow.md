@@ -50,27 +50,27 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `PUT` | `/sleep-diary/children/{childId}/entries/{date}` | Logs one night. Always overwrites the whole day; every field is optional. Saving identical content appends nothing. |
-| `DELETE` | `/sleep-diary/children/{childId}/entries/{date}` | Clears one night. Idempotent: `204` when nothing was logged. |
-| `PUT` | `/sleep-diary/children/{childId}/hygiene-notes` | Sets the diary-wide sleep hygiene notes (`""` clears them). |
-| `GET` | `/sleep-diary/children/{childId}/entries?from=...&to=...` | The hygiene notes plus the nights logged in an inclusive range of at most 92 days, sorted by date. Sparse: a night not logged is absent. |
-| `POST` | `/sleep-diary/children/{childId}/share-links` | Creates a share link with an optional `expiresAt` (future, at most 365 days away). Returns the plaintext token once. |
-| `GET` | `/sleep-diary/children/{childId}/share-links` | The live links (not revoked, not expired), newest first. Never the tokens. |
-| `DELETE` | `/sleep-diary/children/{childId}/share-links/{shareLinkId}` | Revokes a link. Idempotent. A link of another child is `404`. |
-| `GET` | `/sleep-diary/shared/{token}?from=...&to=...` | Anonymous. The child's name, the range, the link's expiry, the hygiene notes and the logged nights. Without `from`/`to`, the last 14 days ending today. |
+| Method   | Route                                                       | Behavior                                                                                                                                                |
+| -------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUT`    | `/sleep-diary/children/{childId}/entries/{date}`            | Logs one night. Always overwrites the whole day; every field is optional. Saving identical content appends nothing.                                     |
+| `DELETE` | `/sleep-diary/children/{childId}/entries/{date}`            | Clears one night. Idempotent: `204` when nothing was logged.                                                                                            |
+| `PUT`    | `/sleep-diary/children/{childId}/hygiene-notes`             | Sets the diary-wide sleep hygiene notes (`""` clears them).                                                                                             |
+| `GET`    | `/sleep-diary/children/{childId}/entries?from=...&to=...`   | The hygiene notes plus the nights logged in an inclusive range of at most 92 days, sorted by date. Sparse: a night not logged is absent.                |
+| `POST`   | `/sleep-diary/children/{childId}/share-links`               | Creates a share link with an optional `expiresAt` (future, at most 365 days away). Returns the plaintext token once.                                    |
+| `GET`    | `/sleep-diary/children/{childId}/share-links`               | The live links (not revoked, not expired), newest first. Never the tokens.                                                                              |
+| `DELETE` | `/sleep-diary/children/{childId}/share-links/{shareLinkId}` | Revokes a link. Idempotent. A link of another child is `404`.                                                                                           |
+| `GET`    | `/sleep-diary/shared/{token}?from=...&to=...`               | Anonymous. The child's name, the range, the link's expiry, the hygiene notes and the logged nights. Without `from`/`to`, the last 14 days ending today. |
 
 ## Entry shape
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `routineStartTime`, `ritualStartTime`, `ritualEndTime`, `bedTime`, `fellAsleepTime`, `morningWakeTime` | `TimeOnly?` | Wall-clock times; no ordering is enforced (a night crosses midnight). |
-| `nightWakeUps`, `naps` | `{ startTime, durationMinutes }[]` | At most 20 each; a duration is 1-720 minutes. Stored as `TimeSpan`. |
-| `isTired` | `bool` | Defaults to `false`. |
-| `totalSleepMinutes` | `int?` | 0-1440. Entered by the guardian (the app suggests one); never checked against the times. |
-| `remarks` | `string` | At most 2000 characters; `""` for none. |
-| `isWeekend`, `loggedBy`, `date` | response only | `isWeekend` is derived from the date, never stored. |
+| Field                                                                                                  | Type                               | Notes                                                                                    |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| `routineStartTime`, `ritualStartTime`, `ritualEndTime`, `bedTime`, `fellAsleepTime`, `morningWakeTime` | `TimeOnly?`                        | Wall-clock times; no ordering is enforced (a night crosses midnight).                    |
+| `nightWakeUps`, `naps`                                                                                 | `{ startTime, durationMinutes }[]` | At most 20 each; a duration is 1-720 minutes. Stored as `TimeSpan`.                      |
+| `isTired`                                                                                              | `bool`                             | Defaults to `false`.                                                                     |
+| `totalSleepMinutes`                                                                                    | `int?`                             | 0-1440. Entered by the guardian (the app suggests one); never checked against the times. |
+| `remarks`                                                                                              | `string`                           | At most 2000 characters; `""` for none.                                                  |
+| `isWeekend`, `loggedBy`, `date`                                                                        | response only                      | `isWeekend` is derived from the date, never stored.                                      |
 
 ## Events
 

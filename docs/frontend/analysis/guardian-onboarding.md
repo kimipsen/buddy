@@ -1,4 +1,5 @@
 # Guardian onboarding -- implementation plan
+
 Status: Implemented (2026-10-08). `GET`/`PUT /users/me/onboarding` (`OnboardingProgressDocument`
 in the Users store, Marten numeric revisions), `onboardingEntryGuard` on the guardian home,
 `OnboardingService`, the `/guardian/onboarding` page with one component per step, a "Resume setup"
@@ -57,16 +58,16 @@ Evaluate `GroupsService.listMyGroups()` and
 `GuardiansService.listMyChildren()` only after authentication and successful
 user provisioning. Both reads must succeed. An error is not an empty result.
 
-| Account state | Destination |
-|---|---|
-| Unauthenticated | Existing login flow |
-| Pending group invite, guardian invite, or email verification | Existing token route first |
-| Resolved child role | Existing child home |
-| Guardian, no progress record, both lists empty | Onboarding |
-| Guardian, no progress record, either list non-empty | Existing guardian home |
-| Guardian, active guide (a group was chosen in it) | Resume first incomplete step |
-| Guardian, completed or explicitly deferred guide | Guardian home, with a resume entry for a deferred guide |
-| Provisioning, role, eligibility, or progress lookup fails | Retryable error; do not create resources or infer eligibility |
+| Account state                                                | Destination                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------- |
+| Unauthenticated                                              | Existing login flow                                           |
+| Pending group invite, guardian invite, or email verification | Existing token route first                                    |
+| Resolved child role                                          | Existing child home                                           |
+| Guardian, no progress record, both lists empty               | Onboarding                                                    |
+| Guardian, no progress record, either list non-empty          | Existing guardian home                                        |
+| Guardian, active guide (a group was chosen in it)            | Resume first incomplete step                                  |
+| Guardian, completed or explicitly deferred guide             | Guardian home, with a resume entry for a deferred guide       |
+| Provisioning, role, eligibility, or progress lookup fails    | Retryable error; do not create resources or infer eligibility |
 
 The `/guardian/onboarding` route sits in the guardian route tree. Entry is checked by
 `onboardingEntryGuard` on the guardian home route (`/guardian`), which the post-login redirect
@@ -93,15 +94,15 @@ Show a compact progress indicator and preserve entered values when moving
 back. Do not preload real sample resources or silently send invitations.
 Success means persisted domain data, not just a visited screen.
 
-| Step | Form and action | Completion condition |
-|---|---|---|
-| 1. Group | Enter a group name and call `createGroup`. Keep this group selected for the rest of setup. | One group created and its ID saved |
-| 2. Children | Enter the existing child-account fields (given name, family name, username), call `createChild`, then `addChildToGroup`. Offer "Add another child". | At least one child in the group. A child of the guardian outside the group (a failed membership, or one in another family's group) is listed with an "Add to group" retry but doesn't block |
-| 3. Other adults (optional) | Enter email and Parent/Guardian kind, select children, and explicitly send guardian invitations for those children plus a group invitation. Offer Skip and invite-another. | Chosen invitations sent, or explicit skip; acceptance is not required |
-| 4. Calendar | Enter a name, icon, and time zone; call `createCalendar` with the setup group ID. Display the group's sharing policy before confirming. | Group-owned calendar created and readable by the intended child members |
-| 5. Task and subtasks | Select one setup child; create a task template with a title, icon, color, and at least two ordered subtasks with positive whole-minute durations. Choose a date and start time, then schedule it on the setup calendar for that child. | Template and all subtasks saved, and the template scheduled once |
-| 6. Meal plan | Create at least one meal, select a date and slot, and assign it using the first setup child's family scope. Offer additional assignments for the week. | At least one saved meal assignment |
-| 7. Summary | Show the group, children, pending invitations, calendar, scheduled task, and meal assignments. Finish opens the guardian dashboard. | Required steps confirmed against current data and progress marked completed |
+| Step                       | Form and action                                                                                                                                                                                                                        | Completion condition                                                                                                                                                                        |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Group                   | Enter a group name and call `createGroup`. Keep this group selected for the rest of setup.                                                                                                                                             | One group created and its ID saved                                                                                                                                                          |
+| 2. Children                | Enter the existing child-account fields (given name, family name, username), call `createChild`, then `addChildToGroup`. Offer "Add another child".                                                                                    | At least one child in the group. A child of the guardian outside the group (a failed membership, or one in another family's group) is listed with an "Add to group" retry but doesn't block |
+| 3. Other adults (optional) | Enter email and Parent/Guardian kind, select children, and explicitly send guardian invitations for those children plus a group invitation. Offer Skip and invite-another.                                                             | Chosen invitations sent, or explicit skip; acceptance is not required                                                                                                                       |
+| 4. Calendar                | Enter a name, icon, and time zone; call `createCalendar` with the setup group ID. Display the group's sharing policy before confirming.                                                                                                | Group-owned calendar created and readable by the intended child members                                                                                                                     |
+| 5. Task and subtasks       | Select one setup child; create a task template with a title, icon, color, and at least two ordered subtasks with positive whole-minute durations. Choose a date and start time, then schedule it on the setup calendar for that child. | Template and all subtasks saved, and the template scheduled once                                                                                                                            |
+| 6. Meal plan               | Create at least one meal, select a date and slot, and assign it using the first setup child's family scope. Offer additional assignments for the week.                                                                                 | At least one saved meal assignment                                                                                                                                                          |
+| 7. Summary                 | Show the group, children, pending invitations, calendar, scheduled task, and meal assignments. Finish opens the guardian dashboard.                                                                                                    | Required steps confirmed against current data and progress marked completed                                                                                                                 |
 
 ### Sharing and permissions
 
@@ -179,19 +180,19 @@ After an interrupted reload, reconcile existing resources and ask the guardian
 to select the intended one where needed; do not automatically repeat a create
 request or guess from matching names.
 
-| Failure or edge case | Behavior |
-|---|---|
-| Child creation succeeds but group membership fails | Keep the child ID and retry membership only |
-| Child credentials returned | Show the one-time username/password result using the existing child-account pattern; never put the password in progress, logs, URLs, or browser storage |
-| Reload after child creation | Resume with the existing child; do not recreate the account to retrieve its password; offer the child-password reset (see "Child password reset") |
-| One of several invitations fails | Keep successful sends and retry only the failed requested invitation |
-| Some subtasks save but a later one fails | Resume the saved template and missing subtasks, not a new template |
-| Scheduling fails | Keep the completed template and retry scheduling only |
-| Resource disappears or access is revoked | Block dependent steps and offer deliberate repair or exit; never silently create replacements |
-| Another tab changes progress or adds a resource | Refetch and reconcile on conflict; do not overwrite newer progress |
-| User finishes later | Mark Deferred, keep existing resources, expose Resume setup on the guardian home |
-| Completed user later loses all groups/children | Do not automatically restart a completed guide |
-| User signs out or switches accounts | Clear in-memory guide state and all credentials |
+| Failure or edge case                               | Behavior                                                                                                                                                |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Child creation succeeds but group membership fails | Keep the child ID and retry membership only                                                                                                             |
+| Child credentials returned                         | Show the one-time username/password result using the existing child-account pattern; never put the password in progress, logs, URLs, or browser storage |
+| Reload after child creation                        | Resume with the existing child; do not recreate the account to retrieve its password; offer the child-password reset (see "Child password reset")       |
+| One of several invitations fails                   | Keep successful sends and retry only the failed requested invitation                                                                                    |
+| Some subtasks save but a later one fails           | Resume the saved template and missing subtasks, not a new template                                                                                      |
+| Scheduling fails                                   | Keep the completed template and retry scheduling only                                                                                                   |
+| Resource disappears or access is revoked           | Block dependent steps and offer deliberate repair or exit; never silently create replacements                                                           |
+| Another tab changes progress or adds a resource    | Refetch and reconcile on conflict; do not overwrite newer progress                                                                                      |
+| User finishes later                                | Mark Deferred, keep existing resources, expose Resume setup on the guardian home                                                                        |
+| Completed user later loses all groups/children     | Do not automatically restart a completed guide                                                                                                          |
+| User signs out or switches accounts                | Clear in-memory guide state and all credentials                                                                                                         |
 
 ### Child password reset
 
@@ -283,27 +284,27 @@ All steps done 2026-10-08.
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Automatic audience | Guardians with neither groups nor linked children |
-| Scope | One group, at least one child, optional adult invitations, shared calendar, multi-subtask scheduled task, meal plan |
-| Resume | User-scoped persisted progress; eligibility alone is insufficient |
-| Progress storage | Small version-checked document in the Users store (status, setup group, invite skip); step completion derived from current data (2026-10-08) |
-| Invitation semantics | Separate group membership and child guardianship; acceptance does not block |
-| Invited adult's role | Explicit choice in the form, no preselected default, effect of each role explained (2026-10-08) |
-| Calendar sharing | Existing group ownership and permission policy |
-| Tasks | One per-child template with at least two timed subtasks, scheduled once |
-| Meals | Existing family scope; at least one assignment; group sharing opt-in, off by default (2026-10-08) |
-| Leaving early | "Finish later" marks the guide Deferred; resume entry on the guardian home; created resources kept (2026-10-08) |
-| Lost child credentials | New guardian-only child-password reset slice, built first (2026-10-08) |
-| Version transport | `version` in the PUT body; a stale one is the existing `409 concurrency_conflict` (`ConcurrencyConflictMiddleware`), not `If-Match`/`412` (2026-10-08) |
-| Calendar policy fix | The step shows the group's actual policy; when Members are above Viewer it offers an explicit "Make children view-only" (Member → Viewer). Every role always has a calendar role, so children can always see a group calendar (2026-10-08) |
-| Deriving the calendar step | `GET /calendars/{id}` now returns the owning `groupId` (additive), so the guide finds the setup group's calendars without storing their ids (2026-10-08) |
-| Activation | Opening the page writes nothing; choosing the setup group makes the guide Active; resuming a deferred guide keeps it Deferred (2026-10-08) |
-| Routine and meal detection | A routine counts once a template-scheduled task occurs on a setup calendar between 30 days back and 180 days ahead; a meal once the family plan has an entry between 7 days back and 23 ahead (the APIs' range limits). The steps only accept dates from today to those look-aheads, so a saved step is always found again (2026-10-08) |
-| Children outside the setup group | Don't block the children step; only at least one child in the group is required (2026-10-08) |
-| Other adults | The adults step counts adults in the group other than the signed-in guardian, so choosing an existing group where they are Admin doesn't fake an invitation (2026-10-08) |
-| e2e and seeded users | `newGuardian()` and the seeded alice/bob/carol get a deferred guide through the API (`e2e/support/onboarding-api.ts`) so feature specs still start on the dashboard; `newGuardian({ inGuide: true })` keeps the guide (2026-10-08) |
+| Question                         | Decision                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Automatic audience               | Guardians with neither groups nor linked children                                                                                                                                                                                                                                                                                       |
+| Scope                            | One group, at least one child, optional adult invitations, shared calendar, multi-subtask scheduled task, meal plan                                                                                                                                                                                                                     |
+| Resume                           | User-scoped persisted progress; eligibility alone is insufficient                                                                                                                                                                                                                                                                       |
+| Progress storage                 | Small version-checked document in the Users store (status, setup group, invite skip); step completion derived from current data (2026-10-08)                                                                                                                                                                                            |
+| Invitation semantics             | Separate group membership and child guardianship; acceptance does not block                                                                                                                                                                                                                                                             |
+| Invited adult's role             | Explicit choice in the form, no preselected default, effect of each role explained (2026-10-08)                                                                                                                                                                                                                                         |
+| Calendar sharing                 | Existing group ownership and permission policy                                                                                                                                                                                                                                                                                          |
+| Tasks                            | One per-child template with at least two timed subtasks, scheduled once                                                                                                                                                                                                                                                                 |
+| Meals                            | Existing family scope; at least one assignment; group sharing opt-in, off by default (2026-10-08)                                                                                                                                                                                                                                       |
+| Leaving early                    | "Finish later" marks the guide Deferred; resume entry on the guardian home; created resources kept (2026-10-08)                                                                                                                                                                                                                         |
+| Lost child credentials           | New guardian-only child-password reset slice, built first (2026-10-08)                                                                                                                                                                                                                                                                  |
+| Version transport                | `version` in the PUT body; a stale one is the existing `409 concurrency_conflict` (`ConcurrencyConflictMiddleware`), not `If-Match`/`412` (2026-10-08)                                                                                                                                                                                  |
+| Calendar policy fix              | The step shows the group's actual policy; when Members are above Viewer it offers an explicit "Make children view-only" (Member → Viewer). Every role always has a calendar role, so children can always see a group calendar (2026-10-08)                                                                                              |
+| Deriving the calendar step       | `GET /calendars/{id}` now returns the owning `groupId` (additive), so the guide finds the setup group's calendars without storing their ids (2026-10-08)                                                                                                                                                                                |
+| Activation                       | Opening the page writes nothing; choosing the setup group makes the guide Active; resuming a deferred guide keeps it Deferred (2026-10-08)                                                                                                                                                                                              |
+| Routine and meal detection       | A routine counts once a template-scheduled task occurs on a setup calendar between 30 days back and 180 days ahead; a meal once the family plan has an entry between 7 days back and 23 ahead (the APIs' range limits). The steps only accept dates from today to those look-aheads, so a saved step is always found again (2026-10-08) |
+| Children outside the setup group | Don't block the children step; only at least one child in the group is required (2026-10-08)                                                                                                                                                                                                                                            |
+| Other adults                     | The adults step counts adults in the group other than the signed-in guardian, so choosing an existing group where they are Admin doesn't fake an invitation (2026-10-08)                                                                                                                                                                |
+| e2e and seeded users             | `newGuardian()` and the seeded alice/bob/carol get a deferred guide through the API (`e2e/support/onboarding-api.ts`) so feature specs still start on the dashboard; `newGuardian({ inGuide: true })` keeps the guide (2026-10-08)                                                                                                      |
 
 No open questions remain.
 

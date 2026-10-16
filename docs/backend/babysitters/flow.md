@@ -41,13 +41,13 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Route | Behavior |
-| --- | --- | --- |
-| `GET` | `/babysitters/me` | The caller's own list in the order added, archived babysitters included and flagged. |
-| `POST` | `/babysitters/me` | Adds a babysitter (name required, contact info optional). Starts the stream on first use. |
-| `PATCH` | `/babysitters/me/{babysitterId}` | Replaces name and contact info. No event when unchanged. |
-| `DELETE` | `/babysitters/me/{babysitterId}` | Archives the babysitter. Idempotent `204`. |
-| `GET` | `/babysitters/children/{childId}` | Active babysitters of every active guardian of the child, sorted by name, each with its owning `guardianId`. |
+| Method   | Route                             | Behavior                                                                                                     |
+| -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `GET`    | `/babysitters/me`                 | The caller's own list in the order added, archived babysitters included and flagged.                         |
+| `POST`   | `/babysitters/me`                 | Adds a babysitter (name required, contact info optional). Starts the stream on first use.                    |
+| `PATCH`  | `/babysitters/me/{babysitterId}`  | Replaces name and contact info. No event when unchanged.                                                     |
+| `DELETE` | `/babysitters/me/{babysitterId}`  | Archives the babysitter. Idempotent `204`.                                                                   |
+| `GET`    | `/babysitters/children/{childId}` | Active babysitters of every active guardian of the child, sorted by name, each with its owning `guardianId`. |
 
 Validation: name 1–80 characters, unique (case-insensitive) among the guardian's active
 babysitters; contact info at most 200 characters; at most 20 active babysitters per guardian.

@@ -3,8 +3,8 @@
 Buddy is a family coordination tool for parents and guardians of children with
 ADHD. It provides shared calendars, medication tracking with dose status, and
 family meal and pickup planning, all designed around the core insight that kids
-with ADHD often struggle less with knowing *what* to do than with keeping track
-of *when* and *what's next*. Guardians can plan structure and daily routines,
+with ADHD often struggle less with knowing _what_ to do than with keeping track
+of _when_ and _what's next_. Guardians can plan structure and daily routines,
 while children see a personalized day view that helps them stay on track.
 
 ## Why Buddy
@@ -125,7 +125,7 @@ in real time.
 
 ## Repository structure
 
-```
+```text
 src/
   backend/   .NET API with event-sourced aggregates, Marten/PostgreSQL storage,
              and Keycloak-backed authentication
@@ -244,15 +244,15 @@ service network expected by the checked-in development configuration.
 
 1. Create the local environment file before opening the container:
 
-  ```bash
-  cp .devcontainer/.env.example .devcontainer/.env
-  ```
+```bash
+cp .devcontainer/.env.example .devcontainer/.env
+```
 
 2. Open the repository in VS Code and run **Dev Containers: Reopen in
-  Container**. On a first run, complete the PostgreSQL and Keycloak setup in
-  the [development container guide](.devcontainer/README.md); the current
-  Compose file does not create the `keycloak` database or import the `buddy`
-  realm automatically.
+   Container**. On a first run, complete the PostgreSQL and Keycloak setup in
+   the [development container guide](.devcontainer/README.md); the current
+   Compose file does not create the `keycloak` database or import the `buddy`
+   realm automatically.
 
 3. Start the backend:
 
@@ -261,8 +261,8 @@ cd src/backend/buddy
 dotnet run
 ```
 
-  See the [backend app guide](src/backend/buddy/README.md) for configuration
-  details and project layout.
+See the [backend app guide](src/backend/buddy/README.md) for configuration
+details and project layout.
 
 4. In another terminal, install dependencies and start the frontend:
 

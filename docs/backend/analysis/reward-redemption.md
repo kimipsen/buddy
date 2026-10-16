@@ -64,7 +64,7 @@ an index document to answer "this child's pending requests".
 plus a `SpentStars` counter and a request list on `ChildProgress`. The spendable balance is
 derived, never stored.**
 
-```
+```text
 ChildProgress(
     ProgressId Id,
     UserId ChildId,
@@ -140,7 +140,7 @@ stateDiagram-v2
 
 ### Events
 
-```
+```text
 RewardsConfigured(ProgressId Id, ImmutableArray<Reward> Rewards, UserId ConfiguredBy, DateTimeOffset OccurredAt)
     // full replace, like GoalPostsConfigured; creates the stream with ProgressStarted if needed
 RewardRequested(ProgressId Id, RewardRequestId RequestId, RewardId RewardId,
@@ -159,12 +159,12 @@ per event, the same shape as the existing five. Each event gets a golden file in
 **Decision: the existing `ProgressAuthorization` tiers, plus a "self only" check for the child's
 own actions.**
 
-| Action | Who | Otherwise |
-|---|---|---|
-| Configure the catalog | `Manage` (active `GuardianLink`) | child: `403`, stranger: `404` |
-| Request a reward, cancel own request | the child themself (`/progress/me/...`) | n/a, the route is the caller's own stream |
-| Approve / decline | `Manage` | child: `403`, stranger: `404` |
-| Read catalog, balance, requests | `View` (self or guardian), via the existing summary | `404` |
+| Action                               | Who                                                 | Otherwise                                 |
+| ------------------------------------ | --------------------------------------------------- | ----------------------------------------- |
+| Configure the catalog                | `Manage` (active `GuardianLink`)                    | child: `403`, stranger: `404`             |
+| Request a reward, cancel own request | the child themself (`/progress/me/...`)             | n/a, the route is the caller's own stream |
+| Approve / decline                    | `Manage`                                            | child: `403`, stranger: `404`             |
+| Read catalog, balance, requests      | `View` (self or guardian), via the existing summary | `404`                                     |
 
 - The child-side routes hang off `/progress/me`, like `GET /progress/me`, so no `childId` is
   accepted from the child at all.
@@ -178,7 +178,7 @@ own actions.**
 `SpendableStars`, `SpentStars`, `Rewards` and `RewardRequests`, and add a child rewards page plus
 two sections on `/guardian/progress`.**
 
-```
+```text
 ProgressSummary(
     ... existing fields ...,
     int SpendableStars,
@@ -213,7 +213,7 @@ includes every request.
 
 ## Routes
 
-```
+```text
 PUT  /progress/children/{childId}/rewards                               ConfigureRewards        (Manage)
 POST /progress/me/reward-requests                                       RequestReward           (self)
 POST /progress/me/reward-requests/{requestId}/cancel                    CancelRewardRequest     (self)
@@ -235,49 +235,49 @@ enough tasks, requests it, the guardian approves it, and the child sees the lowe
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| Child requests a reward costing more than the spendable balance | `409 insufficient_stars`, no event |
-| Child has 10 pending requests | `409 too_many_pending_requests` |
-| Requested `rewardId` isn't in the catalog (removed meanwhile) | `404` |
-| Guardian edits or removes a reward with a pending request | Allowed; the request keeps its copied name, icon and cost |
-| Star revoked after a request, so the balance no longer covers it | Approve is `409 insufficient_stars`; decline still works |
-| Approve twice, decline twice, cancel twice | `200`, idempotent, no new event |
-| Approve a declined/cancelled request (or vice versa) | `409 reward_request_resolved` |
-| Child cancels someone else's request | Impossible: `/progress/me` only reaches the caller's own stream; unknown id is `404` |
-| Two guardians resolve the same request at once | One wins; the other gets the existing concurrency `409` and a reload shows the outcome |
-| Catalog save with an unknown `id` | `400` keyed on `Rewards[i].Id` |
-| Catalog rules | At most 30 rewards; name 1-100 chars; icon 1-32 chars; cost 1-10000; a `null` row is `400` |
-| Guardian's `GuardianLink` is revoked | Immediately `404` on every guardian route, as for goal posts |
-| Child is erased | The whole progress stream is deleted by `ProgressPersonalDataEraser`; unchanged |
+| Case                                                             | Behavior                                                                                   |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Child requests a reward costing more than the spendable balance  | `409 insufficient_stars`, no event                                                         |
+| Child has 10 pending requests                                    | `409 too_many_pending_requests`                                                            |
+| Requested `rewardId` isn't in the catalog (removed meanwhile)    | `404`                                                                                      |
+| Guardian edits or removes a reward with a pending request        | Allowed; the request keeps its copied name, icon and cost                                  |
+| Star revoked after a request, so the balance no longer covers it | Approve is `409 insufficient_stars`; decline still works                                   |
+| Approve twice, decline twice, cancel twice                       | `200`, idempotent, no new event                                                            |
+| Approve a declined/cancelled request (or vice versa)             | `409 reward_request_resolved`                                                              |
+| Child cancels someone else's request                             | Impossible: `/progress/me` only reaches the caller's own stream; unknown id is `404`       |
+| Two guardians resolve the same request at once                   | One wins; the other gets the existing concurrency `409` and a reload shows the outcome     |
+| Catalog save with an unknown `id`                                | `400` keyed on `Rewards[i].Id`                                                             |
+| Catalog rules                                                    | At most 30 rewards; name 1-100 chars; icon 1-32 chars; cost 1-10000; a `null` row is `400` |
+| Guardian's `GuardianLink` is revoked                             | Immediately `404` on every guardian route, as for goal posts                               |
+| Child is erased                                                  | The whole progress stream is deleted by `ProgressPersonalDataEraser`; unchanged            |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Medium -- 5 new events on an existing aggregate, 5 routes, a new outcome type, 1 new child page, 2 guardian sections and a dashboard hint |
-| Single developer | 4-6 days |
-| AI agent | 3-5 hours, plus about 1 hour of human review |
+|                  |                                                                                                                                           |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Medium -- 5 new events on an existing aggregate, 5 routes, a new outcome type, 1 new child page, 2 guardian sections and a dashboard hint |
+| Single developer | 4-6 days                                                                                                                                  |
+| AI agent         | 3-5 hours, plus about 1 hour of human review                                                                                              |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| Spending model | Separate spendable balance; lifetime `TotalStars` never drops on a redemption (user decision) |
-| Flow | Child requests, guardian approves or declines (user decision) |
-| Catalog scope | Per child, managed on `/guardian/progress` (user decision) |
-| Where it lives | Same `ChildProgress` stream, five new events; one stream keeps the balance check consistent |
-| Catalog writes | Full replace with stable `RewardId`s, like `GoalPostsConfigured` |
-| Pending requests | Reserve their cost, so approving several can't overspend |
-| Request contents | Name, icon and cost copied at request time |
-| Approval with too few stars | `409 insufficient_stars`, never a negative balance |
-| Repeated resolutions | Same resolution is idempotent `200`; a different one is `409 reward_request_resolved` |
-| Read model | Extend `ProgressSummary`; resolved history capped at 20 |
-| Guardian awareness | Pending count on the children overview pill; no notifications |
-| Guardian saves before the catalog loaded | Impossible: the editor only renders once the child's progress has loaded, so a failed load can't save an empty list over the real one |
-| Repeatable rewards | Yes, no per-reward limit; a "once only" flag would be additive (user decision) |
-| Old snapshots | `ChildProgress` reads missing `Rewards`/`RewardRequests` as empty, so snapshots stored before this feature load unchanged (`RewardHistoryTests`) |
-| Export | Lists every request (`AllRewardRequests`), not the summary's capped history |
+| Question                                 | Decision                                                                                                                                         |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Spending model                           | Separate spendable balance; lifetime `TotalStars` never drops on a redemption (user decision)                                                    |
+| Flow                                     | Child requests, guardian approves or declines (user decision)                                                                                    |
+| Catalog scope                            | Per child, managed on `/guardian/progress` (user decision)                                                                                       |
+| Where it lives                           | Same `ChildProgress` stream, five new events; one stream keeps the balance check consistent                                                      |
+| Catalog writes                           | Full replace with stable `RewardId`s, like `GoalPostsConfigured`                                                                                 |
+| Pending requests                         | Reserve their cost, so approving several can't overspend                                                                                         |
+| Request contents                         | Name, icon and cost copied at request time                                                                                                       |
+| Approval with too few stars              | `409 insufficient_stars`, never a negative balance                                                                                               |
+| Repeated resolutions                     | Same resolution is idempotent `200`; a different one is `409 reward_request_resolved`                                                            |
+| Read model                               | Extend `ProgressSummary`; resolved history capped at 20                                                                                          |
+| Guardian awareness                       | Pending count on the children overview pill; no notifications                                                                                    |
+| Guardian saves before the catalog loaded | Impossible: the editor only renders once the child's progress has loaded, so a failed load can't save an empty list over the real one            |
+| Repeatable rewards                       | Yes, no per-reward limit; a "once only" flag would be additive (user decision)                                                                   |
+| Old snapshots                            | `ChildProgress` reads missing `Rewards`/`RewardRequests` as empty, so snapshots stored before this feature load unchanged (`RewardHistoryTests`) |
+| Export                                   | Lists every request (`AllRewardRequests`), not the summary's capped history                                                                      |
 
 ## Remaining open questions
 

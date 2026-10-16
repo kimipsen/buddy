@@ -71,9 +71,11 @@ Before deciding, read the source file and the tests that exercise it. Tests live
 **Relevant: kill it with a test.** The mutation changes observable behaviour: a validation rule or its limit, an authorization check, a Result → HTTP status mapping, a response body field, an appended domain event or its payload, a comparison boundary, a branch in a handler, a LINQ filter or ordering in a read model or projection. Most findings belong here. `NoCoverage` means no test runs that code at all. That usually points to a missing test for an endpoint path or error branch.
 
 **Equivalent: suppress with a reason.** Use this only when no test could ever tell the difference. Examples: a `Statement` removal of a call whose effect is immediately overwritten, a `<` vs `<=` where the equal case can't occur, a `NullCoalescing` mutation on a value that's never null by type. Stryker.NET's comment syntax is a `//` comment placed on the line directly above the statement:
+
 ```csharp
 // Stryker disable once Equality,Boolean : <why it's equivalent>
 ```
+
 `once` limits it to the next statement/syntax node. Without `once`, it applies until a matching `// Stryker restore <Mutator>` (or `restore all`). The mutator list takes the names printed as `disable as:`, comma-separated, or `all`. A `:` and a reason are required by house rule here, even though Stryker treats the reason as optional. Suppressed mutants show up as `Ignored` in the next report. Check that they did: a misspelled mutator name or a misplaced comment is silently ignored, and the mutant stays `Survived`. Only suppress when you can state concretely why the mutant is equivalent. "Hard to test" is not a reason, and unreachable code is dead code, not an equivalent mutant (see below). Logger calls and `ToString` are already excluded by `ignore-methods` in the config.
 
 **Not worth killing: leave it and report it.** These are mutants where a test would only pin incidental detail: log or exception message text nobody reads, OpenAPI metadata (`.WithSummary(...)`, `.WithTags(...)`, `.WithName(...)` strings), DI or registration boilerplate where a test would only restate the config. Don't suppress them. List them in the final report so the user can decide. When unsure between "relevant" and "not worth it", treat the mutant as relevant.
@@ -99,6 +101,7 @@ Fix any failing test before you move on. Then run the whole suite once (`dotnet 
 Regenerate the scoped config with only the files that still have relevant survivors. Then run step 1's `./run-stryker.sh -f ... -O StrykerOutput/mutation-fix` command again in the background, with `STRYKER_LOG` set to `stryker-round-N.log` and the exit code written to `stryker-round-N.log.exit`, and start the 5-minute status updates on that log. Stryker.NET has no incremental cache in this setup (the baseline is disabled), so each run retests every mutant in scope. That is why the scope should shrink each round. Then go back to step 2 with the same file list. A file you dropped from scope will show as "not in report", which is expected. Take its final numbers from the round where it was last run.
 
 Stop looping when any of these is true:
+
 - no relevant survivors remain (only suppressed equivalent mutants or reported "not worth it" ones);
 - a round killed nothing new, which means you're stuck. Report what's left and why instead of retrying the same approach;
 - `MAX_ROUNDS` (default 3) re-runs have been done.
