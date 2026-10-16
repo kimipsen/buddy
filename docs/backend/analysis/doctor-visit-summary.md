@@ -18,15 +18,15 @@ The request (from [TODO.md](../../../TODO.md), "Insight for guardians and clinic
 
 What a report holds, in the order a clinician reads it:
 
-| Section | From | Content |
-|---|---|---|
-| Header | `User` | Child's name, period, "prepared by" guardian, the date printed |
-| Questions and notes | new | The guardian's free text: what changed, what to ask about |
-| Overview | all three | One row per day: sleep minutes, doses taken/skipped, feelings zones (the feelings trend strip) |
-| Medicine | `MedicineSchedule`, `MedicineEffectLog` | Regimen in the period (incl. stopped medicines), adherence per medicine, effects and side effects grouped by dose period |
-| Sleep | `SleepDiary` | Averages (total sleep, time to fall asleep, night wake-ups, tired mornings), weekday vs weekend, a nightly table |
-| Feelings | `FeelingsJournal` | Zone counts by part of day, most used words, guardian-logged notes |
-| Behaviour | `BehaviourLog` (not built yet) | Added when the ABC log ships (Question 7) |
+| Section             | From                                    | Content                                                                                                                  |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Header              | `User`                                  | Child's name, period, "prepared by" guardian, the date printed                                                           |
+| Questions and notes | new                                     | The guardian's free text: what changed, what to ask about                                                                |
+| Overview            | all three                               | One row per day: sleep minutes, doses taken/skipped, feelings zones (the feelings trend strip)                           |
+| Medicine            | `MedicineSchedule`, `MedicineEffectLog` | Regimen in the period (incl. stopped medicines), adherence per medicine, effects and side effects grouped by dose period |
+| Sleep               | `SleepDiary`                            | Averages (total sleep, time to fall asleep, night wake-ups, tired mornings), weekday vs weekend, a nightly table         |
+| Feelings            | `FeelingsJournal`                       | Zone counts by part of day, most used words, guardian-logged notes                                                       |
+| Behaviour           | `BehaviourLog` (not built yet)          | Added when the ABC log ships (Question 7)                                                                                |
 
 What exists today (checked in the code):
 
@@ -84,7 +84,7 @@ whole report.**
 for listing by child), holding the period, the sections, the guardian's note and its share links.
 The report content itself is never stored (Question 4).**
 
-```
+```text
 VisitSummary(
     VisitSummaryId Id,                     // UUIDv7, many per child
     UserId ChildId,
@@ -118,7 +118,7 @@ VisitSummaryShareLink(
   link its own aggregate. There, a link belongs to the child's whole log and outlives any one
   read; here, a link belongs to one summary, and deleting the summary must revoke every link in
   the same event. A `VisitSummaryShareLinkDocument(TokenHash, SummaryId, ChildId, ExpiresAt,
-  IsRevoked)` keeps the anonymous lookup by hash a single indexed read, written in the same
+IsRevoked)` keeps the anonymous lookup by hash a single indexed read, written in the same
   `SaveChangesAsync` as the event, as `SleepDiaryShareTokenDocument` is.
 - **Live links per summary: at most 5.** The sleep diary has no cap; one doctor visit needs one or
   two (the clinic, a second opinion). A cap keeps a forgotten summary from collecting links.
@@ -159,7 +159,7 @@ land as its own commit before the feature.
 
 ### Events
 
-```
+```text
 VisitSummaryCreated(VisitSummaryId Id, UserId ChildId, string Title, DateOnly? VisitDate,
     DateOnly From, DateOnly To, IReadOnlyList<VisitSummarySection> Sections, string Note,
     UserId CreatedBy, DateTimeOffset OccurredAt)
@@ -248,10 +248,10 @@ not chosen by the reader.**
 read, print and share. The child has no access. The anonymous reader sees one summary through a
 live link. Anything else is `NotFound`.**
 
-| Tier | Who | Can |
-|---|---|---|
-| **Manage** | An active guardian of the child (`FindActiveLinkAsync`) | Everything, including summaries a co-guardian created |
-| **Anonymous** | Holder of a live link (not revoked, not expired, summary not deleted) | Read that summary's report |
+| Tier          | Who                                                                   | Can                                                   |
+| ------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
+| **Manage**    | An active guardian of the child (`FindActiveLinkAsync`)               | Everything, including summaries a co-guardian created |
+| **Anonymous** | Holder of a live link (not revoked, not expired, summary not deleted) | Read that summary's report                            |
 
 - Same as the sleep diary and effect notes, which are guardian-only. A child reading the
   doctor's report about them is a conversation for the family, not a screen.
@@ -328,7 +328,7 @@ into a small `PrintPageStyle` helper in `core/` that both use.**
 
 ## Read models
 
-```
+```text
 VisitSummaryIndexDocument(Guid Id, Guid ChildId, string Title, DateOnly? VisitDate,
     DateOnly From, DateOnly To, DateTimeOffset LastModifiedAt, bool IsDeleted)
 VisitSummaryShareLinkDocument(string TokenHash, Guid LinkId, Guid SummaryId, Guid ChildId,
@@ -339,20 +339,20 @@ Both written in the same `SaveChangesAsync` as the event.
 
 ## Command slices (`Features/VisitSummaries/`, same vertical-slice shape as `HouseRules`)
 
-| Slice | Tier | Notes |
-|---|---|---|
-| `CreateVisitSummary` | Manage | Title, visit date, period, sections, note. Emits `VisitSummaryCreated` |
-| `UpdateVisitSummary` | Manage | Full overwrite. Emits `VisitSummaryUpdated` |
-| `DeleteVisitSummary` | Manage | Soft delete, revokes links. Emits `VisitSummaryDeleted` |
-| `ListVisitSummaries` | Manage | Newest visit first, from the index |
-| `GetVisitSummary` | Manage | The summary plus the report sections (what the doctor would see), and the live links |
-| `CreateVisitSummaryShareLink` | Manage | Returns the token once. Max 5 live |
-| `RevokeVisitSummaryShareLink` | Manage | Idempotent |
-| `GetSharedVisitSummary` | Anonymous | Unknown, revoked, expired or deleted: `404` |
+| Slice                         | Tier      | Notes                                                                                |
+| ----------------------------- | --------- | ------------------------------------------------------------------------------------ |
+| `CreateVisitSummary`          | Manage    | Title, visit date, period, sections, note. Emits `VisitSummaryCreated`               |
+| `UpdateVisitSummary`          | Manage    | Full overwrite. Emits `VisitSummaryUpdated`                                          |
+| `DeleteVisitSummary`          | Manage    | Soft delete, revokes links. Emits `VisitSummaryDeleted`                              |
+| `ListVisitSummaries`          | Manage    | Newest visit first, from the index                                                   |
+| `GetVisitSummary`             | Manage    | The summary plus the report sections (what the doctor would see), and the live links |
+| `CreateVisitSummaryShareLink` | Manage    | Returns the token once. Max 5 live                                                   |
+| `RevokeVisitSummaryShareLink` | Manage    | Idempotent                                                                           |
+| `GetSharedVisitSummary`       | Anonymous | Unknown, revoked, expired or deleted: `404`                                          |
 
 ## Routes
 
-```
+```text
 POST   /visit-summaries/children/{childId}                                      CreateVisitSummary
 GET    /visit-summaries/children/{childId}                                      ListVisitSummaries
 GET    /visit-summaries/children/{childId}/{summaryId}                          GetVisitSummary
@@ -365,7 +365,7 @@ GET    /visit-summaries/shared/{token}                                          
 
 The report response (both `GetVisitSummary` and the shared read):
 
-```
+```text
 VisitSummaryReportResponse(
     string ChildGivenName, string ChildFamilyName,
     string Title, DateOnly? VisitDate, DateOnly From, DateOnly To, string Note,
@@ -425,44 +425,44 @@ sees the child's name, a sleep row and a medicine.
 
 ## Failure and edge-case behavior
 
-| Case | Behavior |
-|---|---|
-| A section with no data in the period | Shown with "No entries in this period", not hidden: absence is information for the doctor |
-| A feature switched off after the summary was made | Its section is `null` and not rendered; the summary keeps the value, so switching it back on restores it |
-| Period edited after sharing | The link shows the new period: it points at the summary, not at a frozen copy |
-| Summary deleted | Every link revoked in the same event; shared read `404` |
-| Guardian who created a link is erased | Their links are revoked, the summary stays for a co-guardian (sleep diary precedent) |
-| Child erased | Summaries and link documents deleted with the child's other streams |
-| Export | `VisitSummariesPersonalDataExporter`, section `"visitSummaries"`: summaries and link metadata (never the hash) |
-| Two guardians edit at once | Last write wins on `UpdateVisitSummary`, `Before` kept in the stream |
-| Child's time zone | Periods are the child's local dates, as every source already stores them |
+| Case                                              | Behavior                                                                                                       |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| A section with no data in the period              | Shown with "No entries in this period", not hidden: absence is information for the doctor                      |
+| A feature switched off after the summary was made | Its section is `null` and not rendered; the summary keeps the value, so switching it back on restores it       |
+| Period edited after sharing                       | The link shows the new period: it points at the summary, not at a frozen copy                                  |
+| Summary deleted                                   | Every link revoked in the same event; shared read `404`                                                        |
+| Guardian who created a link is erased             | Their links are revoked, the summary stays for a co-guardian (sleep diary precedent)                           |
+| Child erased                                      | Summaries and link documents deleted with the child's other streams                                            |
+| Export                                            | `VisitSummariesPersonalDataExporter`, section `"visitSummaries"`: summaries and link metadata (never the hash) |
+| Two guardians edit at once                        | Last write wins on `UpdateVisitSummary`, `Before` kept in the stream                                           |
+| Child's time zone                                 | Periods are the child's local dates, as every source already stores them                                       |
 
 ## Estimate
 
-| | |
-|---|---|
-| Complexity | Medium -- one new aggregate with 5 events and 8 slices, a port with 3 implementations across features, two small refactors (`ShareSecret`, dose expansion), 3 new screens plus one shared report component and print |
-| Single developer | 7-10 days |
-| AI agent | 4-6 hours, plus about 1.5 hours of human review and open-question time |
+|                  |                                                                                                                                                                                                                      |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | Medium -- one new aggregate with 5 events and 8 slices, a port with 3 implementations across features, two small refactors (`ShareSecret`, dose expansion), 3 new screens plus one shared report component and print |
+| Single developer | 7-10 days                                                                                                                                                                                                            |
+| AI agent         | 4-6 hours, plus about 1.5 hours of human review and open-question time                                                                                                                                               |
 
 ## Decisions made
 
-| Question | Decision |
-|---|---|
-| New feature or bundle of links? | New `Features/VisitSummaries`, one link per report; medicines have no anonymous read to bundle |
-| What is stored | A `VisitSummary` per visit (period, sections, note) with its share links on the same stream |
-| Token helper | Promote the four copies to `Common/Security/ShareSecret`, same bytes |
-| Reading across features | `IVisitSummarySectionSource` port, implemented by each source feature, registered only when its flag is on |
-| Live or snapshot | Live data, fixed period chosen by the guardian |
-| Access | Guardians only; anonymous link for one summary; no child, no group |
-| Child's own check-in notes | Left out of the report |
-| Stopped medicines | Recorded doses included, labelled stopped, no invented pending doses |
-| Behaviour log | Added later as a fourth source, additively |
-| Print | A4 portrait from one shared report component; `@page` helper extracted from the week plan print |
-| Report language | The reader's: the browser language on the shared page, the guardian's app language when printed; no per-summary setting |
-| PDF | The browser's "Save as PDF"; no server-side PDF rendering |
-| Period presets | "Last 4 weeks" and "last 3 months" plus a custom range; no "since last visit" preset and no link between summaries |
-| Rate limit | Named policy `"visit-summary-share"`, 30 reads per 10 minutes per token hash, on top of the global anonymous bucket |
+| Question                        | Decision                                                                                                                |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| New feature or bundle of links? | New `Features/VisitSummaries`, one link per report; medicines have no anonymous read to bundle                          |
+| What is stored                  | A `VisitSummary` per visit (period, sections, note) with its share links on the same stream                             |
+| Token helper                    | Promote the four copies to `Common/Security/ShareSecret`, same bytes                                                    |
+| Reading across features         | `IVisitSummarySectionSource` port, implemented by each source feature, registered only when its flag is on              |
+| Live or snapshot                | Live data, fixed period chosen by the guardian                                                                          |
+| Access                          | Guardians only; anonymous link for one summary; no child, no group                                                      |
+| Child's own check-in notes      | Left out of the report                                                                                                  |
+| Stopped medicines               | Recorded doses included, labelled stopped, no invented pending doses                                                    |
+| Behaviour log                   | Added later as a fourth source, additively                                                                              |
+| Print                           | A4 portrait from one shared report component; `@page` helper extracted from the week plan print                         |
+| Report language                 | The reader's: the browser language on the shared page, the guardian's app language when printed; no per-summary setting |
+| PDF                             | The browser's "Save as PDF"; no server-side PDF rendering                                                               |
+| Period presets                  | "Last 4 weeks" and "last 3 months" plus a custom range; no "since last visit" preset and no link between summaries      |
+| Rate limit                      | Named policy `"visit-summary-share"`, 30 reads per 10 minutes per token hash, on top of the global anonymous bucket     |
 
 ## Remaining open questions
 
