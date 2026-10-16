@@ -32,6 +32,7 @@ homework splitter have shipped; they are listed under Done.
       sleep, doses and schedule changes to surface patterns.
 - [ ] **Doctor visit summary.** One printable, shareable report combining sleep, doses, feelings
       and the behaviour log for a chosen period, reusing the sleep diary's share link and print setup.
+      See [Doctor visit summary](docs/backend/analysis/doctor-visit-summary.md).
 
 #### School and other caregivers
 
