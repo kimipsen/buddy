@@ -109,7 +109,7 @@
                           *cdkDragPreview
                           class="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm shadow-lg"
                         >
-                          <span class="text-base leading-none">{{ entry.icon }}</span>
+                          <app-icon class="text-base leading-none" [value]="entry.icon" />
                           {{ entry.mealName }}
                         </div>
                       </div>

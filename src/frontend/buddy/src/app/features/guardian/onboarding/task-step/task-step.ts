@@ -28,6 +28,8 @@ import { DateSelect } from '../../../../shared/date-select/date-select';
 import { RepeatableRow } from '../../../../shared/repeatable-row/repeatable-row';
 import { Stepper } from '../../../../shared/stepper/stepper';
 import { TimeSelect } from '../../../../shared/time-select/time-select';
+import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
+import { IconPicker } from '../../../../shared/icon-picker/icon-picker';
 
 // A routine needs at least two steps to show as one on the calendar.
 export const MIN_SUBTASKS = 2;
@@ -52,6 +54,8 @@ function blankRows(count: number): SubtaskRow[] {
 @Component({
   selector: 'app-onboarding-task-step',
   imports: [
+    IconPicker,
+    IconTextPipe,
     FormsModule,
     TranslatePipe,
     ColorSwatchPicker,

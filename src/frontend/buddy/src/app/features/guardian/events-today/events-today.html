@@ -22,7 +22,7 @@
             event.isOngoing ? eventProgressBackground(event.progressPercent) : null
           "
         >
-          <span class="text-lg leading-none">{{ event.icon }}</span>
+          <app-icon class="text-lg leading-none" [value]="event.icon" />
           <span
             class="font-medium"
             [class.line-through]="event.isPast"

@@ -59,6 +59,8 @@ import { MonthGrid } from './month-grid/month-grid';
 import { TaskPicker } from '../../task-library/task-picker/task-picker';
 import { Card } from '../../../../shared/card/card';
 import { AlarmPicker, keepAlarmPresets, sameAlarms } from './alarm-picker/alarm-picker';
+import { Icon } from '../../../../shared/icon/icon';
+import { IconPicker } from '../../../../shared/icon-picker/icon-picker';
 
 export type NewTaskSource = 'manual' | 'template';
 
@@ -194,6 +196,8 @@ function formatDuration(totalMinutes: number): string {
 @Component({
   selector: 'app-calendar-agenda',
   imports: [
+    IconPicker,
+    Icon,
     FormsModule,
     TranslatePipe,
     UserDatePipe,

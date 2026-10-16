@@ -32,6 +32,7 @@ import { createAction } from '../../../shared/action-state/action-state';
 import { Toggle } from '../../../shared/toggle/toggle';
 import { ChildPage } from '../child-page/child-page';
 import { readShowMeals, writeShowMeals } from './meal-visibility-storage';
+import { Icon } from '../../../shared/icon/icon';
 
 const TASK_KIND: CalendarItemKind = 'Task';
 const DAYS_AHEAD = 7;
@@ -123,7 +124,7 @@ function nameFor(row: ChildAgendaRow): string {
 // docs/frontend/analysis/child-calendar-agenda-plan.md for why those are deliberately absent here.
 @Component({
   selector: 'app-child-calendar',
-  imports: [ChildPage, TranslatePipe, UserDatePipe, Toggle],
+  imports: [Icon, ChildPage, TranslatePipe, UserDatePipe, Toggle],
   templateUrl: './child-calendar.html',
 })
 export class ChildCalendar {

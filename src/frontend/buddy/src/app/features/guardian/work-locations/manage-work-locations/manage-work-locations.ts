@@ -13,6 +13,7 @@ import {
 } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
+import { Icon } from '../../../../shared/icon/icon';
 
 const DEFAULT_ICON = '🏢';
 
@@ -20,7 +21,7 @@ const DEFAULT_ICON = '🏢';
 // here; they only stay on the server so old exceptions keep resolving.
 @Component({
   selector: 'app-manage-work-locations',
-  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Card],
+  imports: [Icon, FormsModule, TranslatePipe, ColorSwatchPicker, Card],
   templateUrl: './manage-work-locations.html',
 })
 export class ManageWorkLocations {

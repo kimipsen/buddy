@@ -7,6 +7,7 @@ import { FirstThenBoard, FirstThenService } from '../../../../core/first-then.se
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { pollWhileOpen } from '../../../../core/visible-poll';
 import { FIRST_THEN_POLL_MS } from '../../first-then/child-first-then';
+import { Icon } from '../../../../shared/icon/icon';
 
 /**
  * The large card at the top of the child home while a First – Then board is current
@@ -16,7 +17,7 @@ import { FIRST_THEN_POLL_MS } from '../../first-then/child-first-then';
  */
 @Component({
   selector: 'app-first-then-card',
-  imports: [RouterLink, TranslatePipe],
+  imports: [Icon, RouterLink, TranslatePipe],
   templateUrl: './first-then-card.html',
   host: { class: 'contents' },
 })

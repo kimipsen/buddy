@@ -1,0 +1,77 @@
+@if (pictogramNameKey(); as nameKey) {
+  <span
+    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 py-0.5 pl-1 pr-0.5 text-sm text-slate-800 dark:text-slate-100"
+  >
+    <app-icon class="text-2xl" [value]="value()" />
+    <span>{{ nameKey | translate }}</span>
+    <button
+      type="button"
+      class="rounded px-1.5 py-0.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [attr.aria-label]="'pictograms.picker.clear' | translate"
+      (click)="clear()"
+    >
+      <span aria-hidden="true">✕</span>
+    </button>
+  </span>
+} @else {
+  <input
+    type="text"
+    [attr.id]="inputId()"
+    [attr.name]="name()"
+    [attr.aria-label]="inputId() ? null : label()"
+    [placeholder]="placeholder()"
+    [class]="inputClass()"
+    [value]="value()"
+    (input)="onInput($event)"
+  />
+}
+<button
+  #trigger
+  type="button"
+  class="inline-flex items-center gap-1 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="panelId"
+  (click)="toggle()"
+>
+  <span aria-hidden="true">🖼️</span>
+  <span>{{ 'pictograms.picker.open' | translate }}</span>
+</button>
+@if (open()) {
+  <div class="fixed inset-0 z-30" aria-hidden="true" (click)="close(false)"></div>
+  <div
+    [id]="panelId"
+    role="dialog"
+    [attr.aria-label]="'pictograms.picker.title' | translate"
+    class="absolute left-0 top-full z-40 mt-1 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 shadow-lg"
+  >
+    <input
+      #search
+      type="search"
+      class="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+      [attr.aria-label]="'pictograms.picker.search' | translate"
+      [placeholder]="'pictograms.picker.search' | translate"
+      [value]="query()"
+      (input)="onSearch($event)"
+    />
+    <div class="mt-2 grid max-h-72 grid-cols-3 gap-1 overflow-y-auto sm:grid-cols-4">
+      @for (option of matches(); track option.slug) {
+        <button
+          type="button"
+          class="flex flex-col items-center gap-1 rounded-lg border p-1 text-center text-xs leading-tight text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          [class.border-emerald-500]="value() === option.value"
+          [class.dark:border-emerald-400]="value() === option.value"
+          [class.border-transparent]="value() !== option.value"
+          [attr.aria-pressed]="value() === option.value"
+          (click)="pick(option)"
+        >
+          <app-icon size="tile" [value]="option.value" />
+          <span>{{ option.name }}</span>
+        </button>
+      } @empty {
+        <p class="col-span-full py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+          {{ 'pictograms.picker.noMatches' | translate }}
+        </p>
+      }
+    </div>
+  </div>
+}

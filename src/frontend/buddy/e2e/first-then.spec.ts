@@ -18,7 +18,8 @@ test('a guardian sets a board, the child unlocks the Then, the guardian ends it'
   await loginAs(guardian);
   const child = await createChild(page);
 
-  // The guardian sets the board from the starter suggestions.
+  // The guardian sets the board from the starter suggestions, whose icons are pictograms
+  // (docs/frontend/analysis/pictograms.md, Question 5).
   await page.goto('/guardian/first-then');
   await expect(page.getByRole('heading', { name: 'First – Then', level: 2 })).toBeVisible();
   await expect(page.getByTestId('guardian-first-then-none')).toBeVisible();
@@ -27,6 +28,9 @@ test('a guardian sets a board, the child unlocks the Then, the guardian ends it'
   await page.getByLabel('How long?').selectOption({ label: '20 min' });
   await page.getByRole('button', { name: `Show to ${child.givenName}` }).click();
   await expect(page.getByTestId('guardian-first-then-state')).toContainText('Waiting for Homework');
+  // The pictures are decorative next to the titles (alt=""), so they have no accessible role or
+  // name to select by; the file is what identifies the pictogram.
+  await expect(page.locator('img[src="/pictograms/homework.svg"]').first()).toBeVisible();
 
   // The child sees it at the top of /child and opens it.
   const childLogin = await makeChildLoginUsable(child.username);
@@ -36,6 +40,10 @@ test('a guardian sets a board, the child unlocks the Then, the guardian ends it'
   await expect(card).toContainText('First Homework, then iPad');
   await card.click();
   await expect(page).toHaveURL(/\/child\/first-then$/);
+  await expect(
+    page.getByTestId('first-then-first').locator('img[src="/pictograms/homework.svg"]'),
+  ).toBeVisible();
+  await expect(page.locator('img[src="/pictograms/screen-time.svg"]')).toBeVisible();
 
   // Done unlocks the Then.
   await expect(page.getByTestId('first-then-then')).toContainText('After Homework');

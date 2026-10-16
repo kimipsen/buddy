@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 
 import { FirstThenCard } from '../../../../core/first-then.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { Icon } from '../../../../shared/icon/icon';
+import { IconPicker } from '../../../../shared/icon-picker/icon-picker';
 
 export interface CardSuggestions {
   // i18n key of the group's heading ("Used before", "From today", "Suggestions").
@@ -16,7 +18,7 @@ export interface CardSuggestions {
  */
 @Component({
   selector: 'app-first-then-card-picker',
-  imports: [FormsModule, TranslatePipe],
+  imports: [IconPicker, Icon, FormsModule, TranslatePipe],
   templateUrl: './card-picker.html',
   // Block, so the form's space-y gap applies between the two pickers.
   host: { class: 'block' },

@@ -35,7 +35,7 @@
             >
             @if (loaded.entriesBySlot[slot]; as entry) {
               <span class="flex items-center gap-2 text-sm font-medium">
-                <span class="text-lg leading-none">{{ entry.icon }}</span>
+                <app-icon class="text-lg leading-none" [value]="entry.icon" />
                 {{ entry.mealName }}
               </span>
             } @else {

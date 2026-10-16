@@ -14,6 +14,8 @@ import {
 } from '../../../../core/transition-warnings.service';
 import { Toggle } from '../../../../shared/toggle/toggle';
 import { LeadChips } from '../lead-chips/lead-chips';
+import { Icon } from '../../../../shared/icon/icon';
+import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
 
 // How far ahead "Add exception" looks for the child's items.
 export const EXCEPTION_LOOKAHEAD_DAYS = 14;
@@ -30,7 +32,7 @@ export interface ExceptionCandidate {
  */
 @Component({
   selector: 'app-warning-exceptions',
-  imports: [FormsModule, TranslatePipe, Toggle, LeadChips],
+  imports: [IconTextPipe, Icon, FormsModule, TranslatePipe, Toggle, LeadChips],
   templateUrl: './warning-exceptions.html',
 })
 export class WarningExceptions {

@@ -17,7 +17,7 @@
     <ul class="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
       @for (override of overrides(); track override.itemId) {
         <li class="flex flex-wrap items-center gap-3 py-2">
-          <span aria-hidden="true">{{ override.icon }}</span>
+          <app-icon [value]="override.icon" />
           <span class="min-w-0 flex-1 font-medium">{{ override.title }}</span>
           <span class="text-sm text-slate-600 dark:text-slate-300">{{ leadText(override) }}</span>
           <button
@@ -61,7 +61,7 @@
               {{ 'transitionWarnings.exceptions.itemPlaceholder' | translate }}
             </option>
             @for (item of candidates(); track item.itemId) {
-              <option [value]="item.itemId">{{ item.icon }} {{ item.title }}</option>
+              <option [value]="item.itemId">{{ item.icon | iconText }} {{ item.title }}</option>
             }
           </select>
         }

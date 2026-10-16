@@ -11,6 +11,7 @@ import {
   mapWithConcurrency,
 } from '../../../core/map-with-concurrency';
 import { Card } from '../../../shared/card/card';
+import { Icon } from '../../../shared/icon/icon';
 
 export interface ChildBoard {
   childId: string;
@@ -25,7 +26,7 @@ export interface ChildBoard {
  */
 @Component({
   selector: 'app-first-then-today',
-  imports: [Card, RouterLink, TranslatePipe],
+  imports: [Icon, Card, RouterLink, TranslatePipe],
   templateUrl: './first-then-today.html',
   host: { class: 'contents' },
 })

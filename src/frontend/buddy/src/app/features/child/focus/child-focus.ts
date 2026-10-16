@@ -27,6 +27,7 @@ import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { VisualTimer } from '../../../shared/visual-timer/visual-timer';
 import { ChildPage } from '../child-page/child-page';
+import { Icon } from '../../../shared/icon/icon';
 
 // Same cadence as the child home: the timer component counts the seconds itself, this only moves
 // the phase on (e.g. from upcoming to running).
@@ -37,7 +38,7 @@ const NOW_REFRESH_INTERVAL_MS = 60_000;
 // else. See docs/frontend/analysis/visual-time-left-timer.md, Question 4.
 @Component({
   selector: 'app-child-focus',
-  imports: [TranslatePipe, RouterLink, ChildPage, LoadingSpinner, VisualTimer],
+  imports: [Icon, TranslatePipe, RouterLink, ChildPage, LoadingSpinner, VisualTimer],
   templateUrl: './child-focus.html',
 })
 export class ChildFocus implements OnInit, OnDestroy {

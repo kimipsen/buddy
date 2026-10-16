@@ -127,7 +127,7 @@
                           class="inline-block size-3 shrink-0 rounded-full"
                           [style.background-color]="run.color"
                         ></span>
-                        <span class="text-lg leading-none">{{ run.icon }}</span>
+                        <app-icon class="text-lg leading-none" [value]="run.icon" />
                         <span class="font-semibold" [class.line-through]="runSkipped">{{
                           run.parentTitle
                         }}</span>
@@ -238,7 +238,7 @@
                                 (checkedChange)="toggleTaskCompletion(subtask)"
                               />
                             }
-                            <span class="text-sm leading-none">{{ subtask.icon }}</span>
+                            <app-icon class="text-sm leading-none" [value]="subtask.icon" />
                             <span [class.line-through]="subtask.isCompleted || runSkipped">{{
                               subtask.title
                             }}</span>
@@ -263,7 +263,7 @@
                     >
                       @if (editingItemId() === occurrence.itemId) {
                         <form class="space-y-3" (ngSubmit)="saveEditItem(occurrence)">
-                          <div class="grid gap-3 sm:grid-cols-[1fr_5rem]">
+                          <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
                             <input
                               type="text"
                               name="editTitle"
@@ -273,14 +273,12 @@
                               (ngModelChange)="editTitle.set($event)"
                               aria-label="{{ 'calendar.agenda.form.titlePlaceholder' | translate }}"
                             />
-                            <input
-                              type="text"
+                            <app-icon-picker
                               name="editIcon"
                               [placeholder]="calendarIconFor(occurrence.calendarId)"
-                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                              [ngModel]="editIcon()"
-                              (ngModelChange)="editIcon.set($event)"
-                              aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
+                              [label]="'calendar.agenda.form.iconPlaceholder' | translate"
+                              inputClass="w-16 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                              [(value)]="editIcon"
                             />
                           </div>
 
@@ -431,7 +429,7 @@
                             class="inline-block size-3 shrink-0 rounded-full"
                             [style.background-color]="occurrence.color"
                           ></span>
-                          <span class="text-lg leading-none">{{ occurrence.icon }}</span>
+                          <app-icon class="text-lg leading-none" [value]="occurrence.icon" />
 
                           @if (occurrence.kind === taskKind && !occurrence.isSkipped) {
                             <app-toggle
@@ -601,7 +599,7 @@
     >
       <h4 class="text-sm font-semibold">{{ 'calendar.agenda.form.title' | translate }}</h4>
 
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_8rem_1fr_5rem]">
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_8rem_1fr_auto]">
         <label class="sr-only" for="itemCalendar">{{
           'calendar.agenda.form.calendarLabel' | translate
         }}</label>
@@ -631,18 +629,16 @@
           (ngModelChange)="newTitle.set($event)"
           aria-label="{{ 'calendar.agenda.form.titlePlaceholder' | translate }}"
         />
-        <input
-          type="text"
+        <app-icon-picker
           name="itemIcon"
           [placeholder]="
             newCalendarId()
               ? calendarIconFor(newCalendarId())
               : ('calendar.agenda.form.iconPlaceholder' | translate)
           "
-          class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-          [ngModel]="newIcon()"
-          (ngModelChange)="newIcon.set($event)"
-          aria-label="{{ 'calendar.agenda.form.iconPlaceholder' | translate }}"
+          [label]="'calendar.agenda.form.iconPlaceholder' | translate"
+          inputClass="w-16 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+          [(value)]="newIcon"
         />
       </div>
 

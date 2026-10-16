@@ -4,12 +4,13 @@ import { RouterLink } from '@angular/router';
 import { FeaturesService } from '../../../../core/features.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { OnboardingSetup } from '../../../../core/onboarding.service';
+import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
 
 // Step 7: what the setup created, read from current data, and a pointer to heads-ups (off for
 // every child until a guardian turns them on). Finishing is the page's job.
 @Component({
   selector: 'app-onboarding-summary-step',
-  imports: [RouterLink, TranslatePipe],
+  imports: [IconTextPipe, RouterLink, TranslatePipe],
   templateUrl: './summary-step.html',
 })
 export class SummaryStep {

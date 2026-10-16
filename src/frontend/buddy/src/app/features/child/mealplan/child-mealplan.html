@@ -57,7 +57,7 @@
                     >{{ slotLabels[entry.slot] | translate }}</span
                   >
                   <span class="flex items-center gap-2 text-lg font-semibold">
-                    <span aria-hidden="true">{{ entry.icon }}</span>
+                    <app-icon [value]="entry.icon" />
                     {{ entry.mealName }}
                   </span>
                 </div>

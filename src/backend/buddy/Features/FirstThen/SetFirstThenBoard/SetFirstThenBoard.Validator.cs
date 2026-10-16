@@ -1,3 +1,5 @@
+using buddy.Features.Calendars;
+
 using FluentValidation;
 
 namespace buddy.Features.FirstThen;
@@ -6,9 +8,6 @@ namespace buddy.Features.FirstThen;
 public sealed class SetFirstThenBoardValidator : AbstractValidator<SetFirstThenBoard>
 {
     public const int MaxTitleLength = 60;
-
-    // One emoji, possibly with skin-tone and ZWJ modifiers.
-    public const int MaxIconLength = 16;
 
     public const int MinThenMinutes = 5;
     public const int MaxThenMinutes = 120;
@@ -31,7 +30,12 @@ public sealed class SetFirstThenBoardValidator : AbstractValidator<SetFirstThenB
             RuleFor(c => c.Title).NotEmpty().MaximumLength(MaxTitleLength).OverridePropertyName($"{card}.title");
             // Required: a First-Then board is a visual support, and many children who need one
             // don't read yet.
-            RuleFor(c => c.Icon.Value).NotEmpty().MaximumLength(MaxIconLength).OverridePropertyName($"{card}.icon");
+            RuleFor(c => c.Icon.Value).NotEmpty().ValidIcon().OverridePropertyName($"{card}.icon");
+            // A pictogram name may be longer than an emoji (docs/frontend/analysis/pictograms.md).
+            RuleFor(c => c.Icon.Value)
+                .MaximumLength(Icon.MaxEmojiLength)
+                .When(c => !c.Icon.IsPictogram)
+                .OverridePropertyName($"{card}.icon");
         }
     }
 }

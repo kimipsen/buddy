@@ -378,6 +378,25 @@ Undo) get a 44px tap area from a transparent `::after` that doesn't move the lay
 `pointer-coarse:after:-inset-y-3.5`). Keep at least `gap-2` between such actions (`gap-y-4` on touch
 where they wrap). Child-facing buttons are at least 44px (`size-11`) on every device.
 
+## Icons and pictograms
+
+An icon value is an emoji (`🪥`) or a bundled pictogram (`pictogram:brush-teeth`, the SVG
+`public/pictograms/brush-teeth.svg`); see [pictograms.md](analysis/pictograms.md).
+
+- Show an icon with **`app-icon`** ([`shared/icon`](../../src/frontend/buddy/src/app/shared/icon/icon.ts)),
+  never `{{ x.icon }}`, which would print `pictogram:…` as text. It is decorative next to a title;
+  `size="tile"` shows a pictogram at 48px on child task rows, and a failed image falls back to 🖼️.
+- Where only text fits (an `<option>`, a label joined in TS) use the `iconText` pipe or function
+  from `core/pictograms.ts`: the emoji, or nothing for a pictogram.
+- Let a guardian choose one with **`app-icon-picker`**
+  ([`shared/icon-picker`](../../src/frontend/buddy/src/app/shared/icon-picker/icon-picker.ts)):
+  the emoji input plus a _Pictures_ popover. Bind `[(value)]` to a signal and pass the field's
+  `name`, translated `label` (or `inputId` for a `<label for>`) and `inputClass`.
+- A new pictogram (drawn with the `codex-pictogram` skill) needs an entry in `PICTOGRAMS` and its
+  slug-to-key map in `core/pictograms.ts`, and a name in `translations/{en,da}/pictograms.ts`.
+  `core/pictograms.spec.ts` fails when the list and the folder differ. A slug is stored in events,
+  so it is never renamed or removed.
+
 ## Theming
 
 The app supports light, dark, and system (OS-following) themes, chosen from the theme switcher in
@@ -476,9 +495,9 @@ full calendar timeline. Theme selection (light/dark/system) is persisted per bro
 - [Now / Next / Later strip](analysis/now-next-later.md) — proposed reduced child page `/child/now`
   with three cards (the current routine or event, the next item, and the rest of the day), opened
   from a "Just now" button on `/child`; frontend-only
-- [Pictogram support](analysis/pictograms.md) — proposed in-house SVG pictograms on tasks, routine
-  steps and First-Then boards, stored as `pic:<slug>` in the existing `Icon` string, with a shared
-  `IconComponent` and `IconPicker`
+- [Pictogram support](analysis/pictograms.md) — implemented in-house SVG pictograms on tasks,
+  routine steps and First-Then boards, stored as `pictogram:<slug>` in the existing `Icon` string,
+  rendered everywhere by `app-icon` and chosen with `app-icon-picker`
 
 ## Rendering markdown
 

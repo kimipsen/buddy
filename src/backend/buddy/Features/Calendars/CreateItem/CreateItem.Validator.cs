@@ -8,6 +8,8 @@ public sealed class CreateItemValidator : AbstractValidator<CreateItem>
     {
         RuleFor(x => x.Title).MaximumLength(200);
 
+        RuleFor(x => x.Icon!.Value).ValidIcon().OverridePropertyName("Icon").When(x => x.Icon is not null);
+
         RuleFor(x => x.Alarms).ValidAlarms();
 
         RuleFor(x => x.Recurrence).Custom((recurrence, context) =>

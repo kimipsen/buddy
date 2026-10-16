@@ -12,7 +12,8 @@ public static class UpdateItemDetailsEndpoint
 {
     public static RouteGroupBuilder MapUpdateItemDetails(this RouteGroupBuilder calendars)
     {
-        calendars.MapPatch("/{calendarId:guid}/items/{itemId:guid}/details", async Task<Results<Ok<CalendarItemResponse>, NotFound, ForbidHttpResult>> (
+        calendars.MapPatch("/{calendarId:guid}/items/{itemId:guid}/details", async Task<Results<Ok<CalendarItemResponse>, NotFound, ForbidHttpResult, BadRequest<ErrorEnvelope>>> (
+            HttpContext httpContext,
             ClaimsPrincipal principal,
             Guid calendarId,
             Guid itemId,
@@ -35,9 +36,7 @@ public static class UpdateItemDetailsEndpoint
                 Result<CalendarItem>.Success(var item) => TypedResults.Ok(CalendarItemResponse.FromItem(item)),
                 Result<CalendarItem>.Forbidden => TypedResults.Forbid(),
                 Result<CalendarItem>.NotFound => TypedResults.NotFound(),
-                // UpdateItemDetailsHandler never produces Validation -- there's no BadRequest in
-                // this route's declared results, so this collapses to NotFound like the others.
-                Result<CalendarItem>.Validation => TypedResults.NotFound(),
+                Result<CalendarItem>.Validation(var problem) => TypedResults.BadRequest(problem.ToEnvelope(httpContext)),
             };
         })
         .WithName("UpdateCalendarItemDetails");

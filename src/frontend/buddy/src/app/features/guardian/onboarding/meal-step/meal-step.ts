@@ -30,6 +30,7 @@ import {
   SegmentedControlOption,
 } from '../../../../shared/segmented-control/segmented-control';
 import { Toggle } from '../../../../shared/toggle/toggle';
+import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
 
 const NEW_MEAL = 'new';
 const DEFAULT_ICON = '🍽️';
@@ -54,7 +55,15 @@ interface PlannedMeal {
 // until the guardian turns it on.
 @Component({
   selector: 'app-onboarding-meal-step',
-  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, DateSelect, SegmentedControl, Toggle],
+  imports: [
+    IconTextPipe,
+    FormsModule,
+    TranslatePipe,
+    ColorSwatchPicker,
+    DateSelect,
+    SegmentedControl,
+    Toggle,
+  ],
   templateUrl: './meal-step.html',
 })
 export class MealStep {

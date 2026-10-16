@@ -38,7 +38,7 @@
   </dt>
   <dd>
     @for (calendar of setup().calendars; track calendar.id; let last = $last) {
-      {{ calendar.icon }} {{ calendar.name }}{{ last ? '' : ', ' }}
+      {{ calendar.icon | iconText }} {{ calendar.name }}{{ last ? '' : ', ' }}
     } @empty {
       {{ 'onboarding.summary.none' | translate }}
     }

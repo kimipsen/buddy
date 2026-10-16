@@ -13,6 +13,8 @@ import {
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TaskTemplate } from '../../../../core/task-library.service';
 import { DropdownSize, dropdownPosition } from '../../../../core/dropdown-position';
+import { iconText } from '../../../../core/pictograms';
+import { Icon } from '../../../../shared/icon/icon';
 
 // The list's height (max-h-56) and narrowest width, in px; see dropdownPosition.
 const LIST_SIZE: DropdownSize = { maxHeight: 224, minWidth: 256 };
@@ -38,7 +40,7 @@ function formatDuration(totalMinutes: number): string {
 // nested, sizeable subtask collection worth surfacing before picking it.
 @Component({
   selector: 'app-task-picker',
-  imports: [TranslatePipe],
+  imports: [Icon, TranslatePipe],
   templateUrl: './task-picker.html',
 })
 export class TaskPicker {
@@ -67,7 +69,7 @@ export class TaskPicker {
     }
 
     const template = this.selectedTemplate();
-    return template ? `${template.icon} ${template.name}` : '';
+    return template ? [iconText(template.icon), template.name].filter(Boolean).join(' ') : '';
   });
 
   protected readonly filteredTemplates = computed((): TaskTemplate[] => {

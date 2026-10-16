@@ -10,6 +10,7 @@ import { compareOccurrences } from '../../../core/task-run';
 import { UserDatePipe } from '../../../core/user-date.pipe';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Card } from '../../../shared/card/card';
+import { Icon } from '../../../shared/icon/icon';
 
 const EVENT_KIND = 'Event' satisfies CalendarItemKind;
 
@@ -25,7 +26,7 @@ export interface EventView extends CalendarOccurrence {
 
 @Component({
   selector: 'app-events-today',
-  imports: [UserDatePipe, TranslatePipe, LoadingSpinner, Card],
+  imports: [Icon, UserDatePipe, TranslatePipe, LoadingSpinner, Card],
   templateUrl: './events-today.html',
 })
 export class EventsToday implements OnInit, OnDestroy {

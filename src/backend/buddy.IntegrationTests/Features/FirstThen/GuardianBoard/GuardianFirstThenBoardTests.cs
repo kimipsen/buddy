@@ -121,12 +121,28 @@ public sealed class GuardianFirstThenBoardTests(BuddyApiFixture fixture)
     [InlineData("Homework", "📚📚📚📚📚📚📚📚📚", 20)]
     [InlineData("Homework", "📚", 4)]
     [InlineData("Homework", "📚", 121)]
+    [InlineData("Homework", "pictogram:", 20)]
+    [InlineData("Homework", "pictogram:Homework", 20)]
     public async Task An_invalid_board_is_rejected(string firstTitle, string firstIcon, int thenMinutes)
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
 
         await SetAsync(fixture, token, child.Id, Board(0, first: firstTitle, firstIcon: firstIcon, thenMinutes: thenMinutes), expectedStatus: 400);
+    }
+
+    [Fact]
+    public async Task A_pictogram_longer_than_the_emoji_limit_is_accepted_on_a_card()
+    {
+        var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
+        var child = await GuardianTestHelpers.CreateChildAsync(fixture, token);
+
+        // 25 characters: past the 16-character emoji limit, inside the pictogram limit.
+        var board = await SetAsync(
+            fixture, token, child.Id, Board(0, firstIcon: "pictogram:wash-face-hands", thenIcon: "pictogram:screen-time"));
+
+        Assert.Equal("pictogram:wash-face-hands", board!.First!.Icon);
+        Assert.Equal("pictogram:screen-time", board.Then!.Icon);
     }
 
     [Fact]

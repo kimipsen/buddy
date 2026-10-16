@@ -53,7 +53,7 @@
               [ariaLabel]="calendar.name"
               (checkedChange)="toggleCalendarVisibility(calendar.id)"
             />
-            <span aria-hidden="true">{{ calendar.icon }}</span>
+            <app-icon [value]="calendar.icon" />
             {{ calendar.name }}
           </div>
         }
@@ -96,7 +96,7 @@
                     [style.background-color]="meal.color"
                   ></span>
                   <span class="flex min-w-0 flex-1 items-center gap-2 text-lg font-semibold">
-                    <span aria-hidden="true">{{ meal.icon }}</span>
+                    <app-icon [value]="meal.icon" />
                     {{ meal.mealName }}
                   </span>
                   <span
@@ -114,7 +114,7 @@
                       class="inline-block size-3 shrink-0 rounded-full"
                       [style.background-color]="run.color"
                     ></span>
-                    <span class="text-xl" aria-hidden="true">{{ run.icon }}</span>
+                    <app-icon class="text-xl" size="tile" [value]="run.icon" />
                     <span class="text-lg font-bold tracking-normal">{{ run.parentTitle }}</span>
                     <span class="text-sm font-normal text-slate-400">{{ run.calendarName }}</span>
                   </div>
@@ -150,7 +150,7 @@
                           [class.line-through]="subtask.isCompleted"
                           [class.text-slate-400]="subtask.isCompleted"
                         >
-                          <span aria-hidden="true">{{ subtask.icon }}</span>
+                          <app-icon size="tile" [value]="subtask.icon" />
                           {{ subtask.title }}
                         </span>
                         @if (subtask.timing.kind === 0) {
@@ -207,7 +207,7 @@
                     [class.line-through]="occurrence.kind === taskKind && occurrence.isCompleted"
                     [class.text-slate-400]="occurrence.kind === taskKind && occurrence.isCompleted"
                   >
-                    <span aria-hidden="true">{{ occurrence.icon }}</span>
+                    <app-icon size="tile" [value]="occurrence.icon" />
                     {{ occurrence.title }}
                     <span class="text-sm font-normal text-slate-400">{{
                       occurrence.calendarName

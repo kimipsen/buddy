@@ -1,5 +1,8 @@
 using buddy.Common;
+using buddy.Common.Validation;
 using buddy.Features.Groups;
+
+using FluentValidation;
 
 namespace buddy.Features.Calendars;
 
@@ -7,11 +10,17 @@ public static class UpdateItemDetailsHandler
 {
     public static async Task<Result<CalendarItem>> Handle(
         UpdateItemDetails command,
+        IValidator<UpdateItemDetails> validator,
         ICalendarEventStore calendars,
         ICalendarItemEventStore items,
         IGroupEventStore groups,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateCommandAsync(command, cancellationToken) is { } problem)
+        {
+            return new Result<CalendarItem>.Validation(problem);
+        }
+
         var userId = command.UserId;
 
         var calendarEvents = await calendars.ReadAsync(command.CalendarId, cancellationToken);

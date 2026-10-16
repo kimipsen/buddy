@@ -15,6 +15,7 @@ import { mealplan } from './mealplan';
 import { onboarding } from './onboarding';
 import { medicine } from './medicine';
 import { pickup } from './pickup';
+import { pictograms } from './pictograms';
 import { print } from './print';
 import { profile } from './profile';
 import { progress } from './progress';
@@ -43,6 +44,7 @@ export const en = {
   onboarding,
   medicine,
   pickup,
+  pictograms,
   print,
   profile,
   progress,

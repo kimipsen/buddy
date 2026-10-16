@@ -11,8 +11,8 @@ homework splitter have shipped; they are listed under Done.
 
 - [ ] **Now / Next / Later strip.** A reduced day view with three cards, for overwhelmed moments.
       See [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md).
-- [ ] **Pictogram support.** An optional icon or photo on tasks, routine steps and meals, for
-      younger or non-reading children. See
+- [ ] **Pictures on meals, and photos.** The pictogram picker on meals (needs food pictograms)
+      and guardian-uploaded photos (needs a shared file-storage design). See the open questions in
       [Pictogram support](docs/frontend/analysis/pictograms.md).
 
 #### Regulation and emotions
@@ -752,3 +752,11 @@ they reuse data the app already keeps. Each has a design doc.
       .NET 11 from preview.7 to rc.2 (critical runtime CVEs), kept the theme tooling out of the
       Keycloak image and baselined three upstream Go CVEs in `.trivyignore` until 2026-11-15
       (2026-10-15).
+
+### Tools for families with ADHD and autism (2026-10-11)
+
+#### In-the-moment help for the child
+
+- [x] **Pictogram support.** Bundled pictograms as the icon of tasks, routine steps and First-Then
+      cards, for younger or non-reading children. See
+      [Pictogram support](docs/frontend/analysis/pictograms.md) (2026-10-16).

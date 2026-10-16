@@ -562,6 +562,53 @@ describe('ChildHome', () => {
     expect(text).toContain('Put on pajamas');
   });
 
+  it('shows routine steps with pictograms as 48px pictures, never as text', async () => {
+    function step(subtaskId: string, title: string, icon: string): CalendarOccurrence {
+      return nestOccurrence<CalendarOccurrence>({
+        itemId: 'run-1',
+        kind: 'Task',
+        title,
+        icon,
+        iconOverride: 'pictogram:wake-up',
+        color: '#000',
+        startsAt: `${today}T07:00:00Z`,
+        endsAt: `${today}T07:10:00Z`,
+        isAllDay: false,
+        isCompleted: false,
+        isSkipped: false,
+        isRepeating: false,
+        createdBy: 'guardian-1',
+        lastModifiedBy: 'guardian-1',
+        assignedTo: 'child-1',
+        calendarId: 'cal-1',
+        calendarName: 'Home',
+        parentTitle: 'Morning',
+        parentIcon: 'pictogram:wake-up',
+        subtaskId,
+      });
+    }
+
+    const { fixture } = await setup({
+      calendars: {
+        listTodayOccurrences: vi.fn(async () => [
+          step('sub-1', 'Brush teeth', 'pictogram:brush-teeth'),
+          step('sub-2', 'Get dressed', 'pictogram:get-dressed'),
+        ]),
+      },
+    });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const teeth = compiled.querySelector<HTMLImageElement>(
+      'img[src="/pictograms/brush-teeth.svg"]',
+    );
+    expect(teeth).not.toBeNull();
+    expect(teeth!.className).toBe('h-12 w-12');
+    expect(teeth!.alt).toBe('');
+    expect(compiled.querySelector('img[src="/pictograms/get-dressed.svg"]')).not.toBeNull();
+    expect(compiled.textContent).not.toContain('pictogram:');
+  });
+
   it("shows today's events including their time", async () => {
     const event = nestOccurrence<CalendarOccurrence>({
       itemId: 'event-1',

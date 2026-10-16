@@ -2,6 +2,7 @@ import { Component, computed, inject, input, resource, signal } from '@angular/c
 import { FormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { iconText } from '../../../../core/pictograms';
 import {
   Meal,
   MealplanAccessTier,
@@ -11,6 +12,7 @@ import {
 import { createAction } from '../../../../shared/action-state/action-state';
 import { ColorSwatchPicker } from '../../../../shared/color-swatch-picker/color-swatch-picker';
 import { Card } from '../../../../shared/card/card';
+import { Icon } from '../../../../shared/icon/icon';
 
 const DEFAULT_COLOR = '#10b981';
 const PAGE_SIZE = 5;
@@ -18,7 +20,7 @@ const MANAGE: MealplanAccessTier = 'Manage';
 
 @Component({
   selector: 'app-manage-meals',
-  imports: [FormsModule, TranslatePipe, ColorSwatchPicker, Card],
+  imports: [Icon, FormsModule, TranslatePipe, ColorSwatchPicker, Card],
   templateUrl: './manage-meals.html',
 })
 export class ManageMeals {
@@ -86,7 +88,7 @@ export class ManageMeals {
 
   protected readonly similarMealsLabel = computed(() =>
     this.similarMeals()
-      .map((meal) => `${meal.icon} ${meal.name}`)
+      .map((meal) => [iconText(meal.icon), meal.name].filter(Boolean).join(' '))
       .join(', '),
   );
 

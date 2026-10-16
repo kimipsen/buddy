@@ -25,6 +25,7 @@ import {
 import { ActionState, createAction } from '../../../../shared/action-state/action-state';
 import { MealPicker } from '../meal-picker/meal-picker';
 import { Card } from '../../../../shared/card/card';
+import { Icon } from '../../../../shared/icon/icon';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   Breakfast: 'mealplan.slots.breakfast',
@@ -81,6 +82,7 @@ function buildDays(anchorIsoDate: string, locale: string): PlannerDay[] {
 @Component({
   selector: 'app-assign-mealplan',
   imports: [
+    Icon,
     MealPicker,
     NgTemplateOutlet,
     TranslatePipe,

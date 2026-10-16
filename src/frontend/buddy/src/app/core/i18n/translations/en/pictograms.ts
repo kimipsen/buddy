@@ -1,0 +1,38 @@
+export const pictograms = {
+  // The name of each bundled pictogram (core/pictograms.ts), read out and shown in the picker.
+  names: {
+    bath: 'Bath',
+    brushTeeth: 'Brush teeth',
+    dinner: 'Dinner',
+    drinkWater: 'Drink water',
+    eatBreakfast: 'Eat breakfast',
+    getDressed: 'Get dressed',
+    goToBed: 'Go to bed',
+    homework: 'Homework',
+    leaveHome: 'Leave home',
+    lunch: 'Lunch',
+    packSchoolBag: 'Pack school bag',
+    play: 'Play',
+    putOnShoes: 'Put on shoes',
+    pyjamasOn: 'Put pyjamas on',
+    readStory: 'Read a story',
+    school: 'School',
+    screenTime: 'Screen time',
+    shower: 'Shower',
+    snack: 'Snack',
+    takeMedicine: 'Take medicine',
+    tidyRoom: 'Tidy room',
+    useToilet: 'Use the toilet',
+    wakeUp: 'Wake up',
+    washFaceHands: 'Wash face and hands',
+  },
+  // A pictogram this version of the app doesn't have.
+  unknown: 'Picture',
+  picker: {
+    open: 'Pictures',
+    title: 'Choose a picture',
+    search: 'Search pictures',
+    noMatches: 'No pictures match.',
+    clear: 'Remove picture',
+  },
+};

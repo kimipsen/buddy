@@ -22,6 +22,8 @@ import { Toggle } from '../../../../shared/toggle/toggle';
 import { WeekdayPicker, weekdayShortKey } from '../../../../shared/weekday-picker/weekday-picker';
 import { Card } from '../../../../shared/card/card';
 import { SuggestionPanel } from './suggestion-panel/suggestion-panel';
+import { Icon } from '../../../../shared/icon/icon';
+import { IconPicker } from '../../../../shared/icon-picker/icon-picker';
 
 const DEFAULT_COLOR = '#6366f1';
 const DEFAULT_ICON = '📋';
@@ -49,6 +51,8 @@ function formatDuration(totalMinutes: number): string {
 @Component({
   selector: 'app-manage-tasks',
   imports: [
+    IconPicker,
+    Icon,
     FormsModule,
     TranslatePipe,
     ColorSwatchPicker,

@@ -1,6 +1,14 @@
 # Pictogram support
 
-Status: Proposed (not yet implemented)
+Status: Implemented. The 24 bundled SVGs in `public/pictograms/` can be chosen as the icon of a
+task, routine step, task template or First-Then card, stored as `pictogram:<slug>` in the existing
+`Icon` string (no event changes). Backend: `Icon.PictogramPrefix`/`IsPictogram` and the shared
+`IconRules.ValidIcon()` rule in eight validators (`UpdateItemDetails` gained its first validator
+and a `400`). Frontend: `core/pictograms.ts` (catalogue, `parseIcon`, `iconText`), the shared
+`app-icon` component at every icon render site, the `iconText` pipe for `<option>`s, and the
+`app-icon-picker` (emoji input plus a searchable _Pictures_ grid) on the task library, onboarding,
+calendar item and First-Then forms; the First-Then starters use pictograms. See "Implementation
+notes" for where the code differs from the design below.
 
 ## Context
 
@@ -86,18 +94,18 @@ Considered and rejected:
 
 ## Question 2: how is a chosen pictogram stored?
 
-**Decision: in the existing `Icon` string, as `pic:<slug>` (for example `pic:brush-teeth`). Events,
+**Decision: in the existing `Icon` string, as `pictogram:<slug>` (for example `pictogram:brush-teeth`). Events,
 aggregates, snapshots, DTOs and the OpenAPI wire type don't change. The backend validates the
 format, not the catalogue.**
 
 ```
 Icon.Value
     "🪥"                 // emoji, as today
-    "pic:brush-teeth"    // pictogram: prefix + kebab-case slug = file name without .svg
+    "pictogram:brush-teeth"    // pictogram: prefix + kebab-case slug = file name without .svg
 ```
 
 - **No event migration.** Every existing event already holds a valid emoji `Icon`, and a new event
-  holding `pic:...` replays with the same code. A separate field would have to be added to 17
+  holding `pictogram:...` replays with the same code. A separate field would have to be added to 17
   events, their records (`ItemDetails`, `Subtask`, `TaskTemplateDetails`, `FirstThenCard`, ...),
   20 request DTOs and the golden files, with a "which one wins" rule. The prefixed string touches
   none of these.
@@ -109,7 +117,7 @@ Icon.Value
   emoji vs photo. A prefix is the same discriminator in a type that is already a plain string on
   the wire. If photos arrive later, `photo:<id>` is a third prefix, and nothing changes for
   existing values.
-- **The slug is the file name.** `pic:brush-teeth` maps to `/pictograms/brush-teeth.svg`. Slugs are
+- **The slug is the file name.** `pictogram:brush-teeth` maps to `/pictograms/brush-teeth.svg`. Slugs are
   English kebab-case, as the pictogram skill already names them.
 
 The backend checks the shape and doesn't keep the list. The files live in the frontend image, so a
@@ -118,29 +126,27 @@ renders a fallback (Question 3), which the frontend needs anyway for a pictogram
 future release. The rule:
 
 ```csharp
-// Features/Calendars/Types/Icon.cs (proposed)
+// Features/Calendars/Types/Icon.cs
 public sealed record Icon(string Value)
 {
-    public const string PictogramPrefix = "pic:";
+    public const string PictogramPrefix = "pictogram:";
     public const int MaxEmojiLength = 16;      // one emoji with skin-tone/ZWJ modifiers
-    public const int MaxPictogramLength = 64;
+    public const int MaxLength = 64;
 
     public static Icon New(string value) => new(value);
 
     public bool IsPictogram => Value.StartsWith(PictogramPrefix, StringComparison.Ordinal);
 }
 
-// Features/Calendars/Types/IconValidation.cs (new)
+// Features/Calendars/IconRules.cs (next to ItemAlarmRules)
 public static IRuleBuilderOptions<T, string> ValidIcon<T>(this IRuleBuilder<T, string> rule) =>
-    rule.Must(v => !v.StartsWith(Icon.PictogramPrefix, StringComparison.Ordinal)
-                   || SlugPattern().IsMatch(v[Icon.PictogramPrefix.Length..]))
-        .WithMessage("A pictogram icon must be 'pic:' followed by a kebab-case name.")
-        .MaximumLength(Icon.MaxPictogramLength);
-// SlugPattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+    rule.MaximumLength(Icon.MaxLength)
+        .Must(IsEmojiOrPictogram)   // not prefixed, or prefix + ^[a-z0-9]+(-[a-z0-9]+)*\z
+        .WithMessage("A pictogram icon must be 'pictogram:' followed by a lowercase, hyphenated name.");
 ```
 
 The First-Then validator is the one place where the new value is rejected today:
-`pic:wash-face-hands` is 19 characters.
+`pictogram:wash-face-hands` is 25 characters.
 
 ```csharp
 // Before: SetFirstThenBoard.Validator.cs:34
@@ -154,8 +160,10 @@ RuleFor(c => c.Icon.Value).NotEmpty().ValidIcon()
 
 Blast radius: `SetFirstThenBoard` plus the seven slices that offer pictograms (`CreateItem`,
 `UpdateItemDetails`, `ScheduleTaskFromTemplate`, `CreateTaskTemplate`, `UpdateTaskTemplate`,
-`AddSubtask`, `UpdateSubtask`) get one `ValidIcon()` line each. Today four of those have no icon
-rule at all. `SetFirstThenBoardValidator.MaxIconLength` moves to `Icon.MaxEmojiLength`.
+`AddSubtask`, `UpdateSubtask`) get one `ValidIcon()` line each. Four of those had no icon
+rule at all, and `UpdateItemDetails` had no validator, so it gained one, and its endpoint now
+returns `400 validation_error` instead of collapsing `Validation` to `404`.
+`SetFirstThenBoardValidator.MaxIconLength` moved to `Icon.MaxEmojiLength`.
 
 Considered and rejected:
 
@@ -169,12 +177,14 @@ Considered and rejected:
 
 ## Question 3: how is it rendered?
 
-**Decision: one shared `IconComponent` (`shared/icon/`) renders any icon value: an emoji as text,
-or a pictogram as `<img>`. All ~71 icon render sites switch to it, not only the surfaces that
-offer the picker.**
+**Decision: one shared `Icon` component (`shared/icon/`, `<app-icon>`) renders any icon value: an emoji as text,
+or a pictogram as `<img>`. Every icon render site switches to it (53 sites in 31 templates), not
+only the surfaces that offer the picker. Where only text fits (an `<option>`, a joined label), the
+`iconText` pipe/function shows the emoji and nothing for a pictogram (11 template sites, 3 labels
+built in TS).**
 
 ```html
-<!-- Before: features/child/home/home.html:138 (one of ~71 sites) -->
+<!-- Before: features/child/home/home.html:138 (one of 53 sites) -->
 <span aria-hidden="true">{{ entry.icon }}</span>
 
 <!-- After -->
@@ -183,7 +193,7 @@ offer the picker.**
 
 ```ts
 // core/pictograms.ts (new)
-export const PICTOGRAM_PREFIX = "pic:";
+export const PICTOGRAM_PREFIX = "pictogram:";
 export const PICTOGRAMS = ["bath", "brush-teeth", /* ... */ "wash-face-hands"] as const;
 export type PictogramSlug = (typeof PICTOGRAMS)[number];
 
@@ -196,19 +206,21 @@ export function parseIcon(value: string | null | undefined): ParsedIcon | null;
   child calendar, the focus page, the transition-warning banner, the guardian agenda, "tasks
   today", warning exceptions, the task picker and the printed week plan through
   `CalendarItemOccurrence.Icon`. A site that still prints `{{ icon }}` would show the text
-  `pic:brush-teeth`. Switching every site removes that risk once. It also means a later meals
+  `pictogram:brush-teeth`. Switching every site removes that risk once. It also means a later meals
   or rewards picker is a form change only. Each switch is a one-line template edit.
 - **Size follows the text.** In its default `inline` size the image is `1.25em` square, so it
   takes the place of the emoji it replaces without per-site styling. Child surfaces where the
   picture _is_ the cue pass `size="tile"` (3rem, 48px, the size the style guide is designed for):
-  child home task and routine rows, child calendar task rows, the focus page, the First-Then card
-  and board, and the transition-warning banner.
+  child home task and routine rows, child calendar task rows and the focus page. The First-Then
+  board and the transition-warning banner already render their icon at `text-4xl`--`text-8xl`, so
+  the `inline` size (relative to that text) is already larger than a tile there.
 - **Accessibility follows the
   [visual specification](visual-specification.md#accessibility-baseline).** Next to a visible
   title the icon is decorative: `alt=""` for an image, `aria-hidden="true"` for an emoji, as
-  today. Where it stands alone (an icon-only First-Then card face, the picker grid), it takes a
-  `label` input, and the image gets the translated pictogram name as `alt`. The SVG's own English
-  `<title>` is ignored inside `<img>`, so Danish users never hear English.
+  today. For a use where it stands alone it takes a `label` input, which becomes the image's `alt`
+  (no v1 site needs it: every site shows a title, and each picker tile shows the translated name
+  as its button text). The SVG's own English `<title>` is ignored inside `<img>`, so Danish users
+  never hear English.
 - **Fallback.** An unknown slug (bad data, or a pictogram removed in a later release) fires the
   `<img>` `error` event, and the component shows 🖼️ instead of a broken image.
   `loading="lazy"` and explicit width/height keep layouts stable while it loads.
@@ -220,7 +232,7 @@ export function parseIcon(value: string | null | undefined): ParsedIcon | null;
   meal-plan feed writes `"{slot}: {meal}"`
   ([MealPlanIcalFeedWriter.cs](../../../src/backend/buddy/Features/Mealplans/MealPlanIcalFeedWriter.cs)).
   So a task with a pictogram shows up in a subscriber's calendar app exactly as it does with an
-  emoji: by its title, with no `pic:` text.
+  emoji: by its title, with no `pictogram:` text.
 
 Considered and rejected:
 
@@ -236,29 +248,40 @@ Considered and rejected:
 
 ## Question 4: how does a guardian pick one?
 
-**Decision: a shared `IconPicker` (`shared/icon-picker/`) with two modes, _Emoji_ (today's text
-input) and _Pictures_ (a grid of every pictogram with its translated name and a search box). It
-replaces the plain icon inputs on the surfaces in Question 5.**
+**Decision (picker shape settled by the user, 2026-10-16): a shared `IconPicker`
+(`shared/icon-picker/`, `<app-icon-picker>`) that keeps today's emoji text input in place and adds
+a _Pictures_ button beside it. The button opens a popover with a search box and a grid of every
+pictogram with its translated name. A chosen pictogram replaces the input with its picture, its
+name and a remove button. It replaces the plain icon inputs on the surfaces in Question 5.**
 
 ```
-[ Emoji | Pictures ]                       segmented-control (shared/segmented-control)
-  Emoji:    [ 🪥        ]                  today's text input, unchanged
-  Pictures: [ search "teeth"       ]
-            [img] [img] [img] [img] ...    48px buttons, aria-pressed, aria-label = name
-            Brush teeth  Bath  ...
+[ 🪥     ] [🖼️ Pictures]                    today's input, same name/label/placeholder
+              ┌──────────────────────────┐
+              │ [ search "teeth"       ] │ role="dialog", focus moves to the search
+              │ [img] [img] [img] [img]  │ 48px tiles, aria-pressed on the chosen one
+              │ Bath  Brush teeth  ...   │ sorted by translated name
+              └──────────────────────────┘
+chosen:  [img Brush teeth ✕] [🖼️ Pictures]
 ```
 
-- **Two-way bound like `card-picker`**: `model<string>()` for the value. The mode opens on
-  _Pictures_ when the current value is a pictogram.
-- **Names are translated** in `core/i18n/translations/{en,da}/pictograms.ts`, keyed by slug
-  (`pictograms.brush-teeth: 'Brush teeth' / 'Børste tænder'`). The search matches the name in the
-  current language and the slug.
+- **The emoji input stays where it was.** The icon fields sit in tight inline rows (template
+  name + icon, step title + icon + duration), so an inline segmented control and grid would have
+  pushed those rows apart. The input keeps the caller's `name`, label, placeholder and classes,
+  so the existing specs and e2e selectors still find it. Grid tracks that were sized for the old
+  4--5rem input became `auto`.
+- **Two-way bound like `card-picker`**: `model<string>()` for the value (`[(value)]="signal"`).
+  Escape and a backdrop click close the popover; Escape and picking return focus to the button.
+- **Names are translated** in `core/i18n/translations/{en,da}/pictograms.ts`
+  (`pictograms.names.brushTeeth: 'Brush teeth' / 'Børste tænder'`), reached through a literal
+  slug-to-key map in `core/pictograms.ts` so the i18n unused-key check sees them. The search
+  matches the name in the current language and the slug.
 - **The catalogue is a TS constant** (`PICTOGRAMS` in `core/pictograms.ts`), not a runtime fetch
   of the folder: Angular can't list `public/` at runtime, and a constant gives the slug type. A
   spec reads `public/pictograms/` with `node:fs` and fails when the constant and the folder
   differ, as `screenshot-coverage.spec.ts` does for routes.
 
-Considered and rejected: **a full emoji picker grid** as part of this work. The visual
+Considered and rejected: **an inline _Emoji | Pictures_ segmented control with the grid under the
+field** (the original proposal), for the layout reason above; **a full emoji picker grid** as part of this work. The visual
 specification mentions one, but it's a separate improvement, and the text input works on every
 platform's emoji keyboard.
 
@@ -301,68 +324,84 @@ never renamed or deleted.**
   pack sports bag, feed the pet, set the table, swimming. They're additive and need no design
   work.
 
-## Frontend plan
+## Frontend (as built)
 
-- `core/pictograms.ts`: prefix, catalogue, `parseIcon`, `pictogramIcon(slug)`. Spec for parsing
-  (emoji, pictogram, unknown slug, empty, `null`) and the folder parity spec.
-- `shared/icon/`: `IconComponent` (`value`, `size: 'inline' | 'tile'`, optional `label`), with a
-  spec for emoji vs image, decorative vs labelled, and the `error` fallback.
-- `shared/icon-picker/`: `IconPicker`, with a spec for mode switching, search in en and da,
-  selecting a pictogram (`pic:<slug>`) and typing an emoji.
-- Switch the ~71 render sites to `<app-icon>`. Update the specs that assert icon text (for example
-  `child-first-then.spec.ts`), keeping emoji fixtures and adding one pictogram case per
-  child-facing screen.
-- Switch the eight inputs in Question 5 to `IconPicker`, and update the First-Then starters.
-- i18n: `translations/{en,da}/pictograms.ts` (24 names) and the picker labels (_Emoji_,
-  _Pictures_, _Search pictures_, _No pictures match_), checked with
-  `node .claude/skills/i18n/check-parity.mjs`.
-- Screenshots: give the demo family's morning routine and First-Then board pictograms in
-  `screenshots/demo-family.ts`, then run `task docs:screenshots`. No new route, so `pages.ts`
-  is unchanged.
+- `core/pictograms.ts`: `PICTOGRAM_PREFIX`, the `PICTOGRAMS` catalogue, `parseIcon`,
+  `pictogramIcon(slug)`, `pictogramSrc`, `pictogramNameKey` and `iconText`. Its spec covers
+  parsing (emoji, pictogram, unknown slug, empty, `null`), the names, and reads
+  `public/pictograms/` with `node:fs` to fail when the constant and the folder differ.
+- `shared/icon/`: `Icon` (`<app-icon>`: `value`, `size: 'inline' | 'tile'`, optional `label`)
+  and `IconTextPipe` (`iconText`). The spec covers emoji vs image, decorative vs labelled, tile
+  size and the `error` fallback, which resets when the value changes.
+- `shared/icon-picker/`: `IconPicker` (`<app-icon-picker>`). The spec covers typing an emoji,
+  opening the grid with focus in the search, search in en and da, picking (`pictogram:<slug>`),
+  `aria-pressed`, removing a pictogram, and closing by Escape, backdrop and the button.
+- 53 render sites in 31 templates switched to `<app-icon>`; 11 `<option>`/plain-text sites use
+  `| iconText`, and the task-picker and meal labels built in TS use `iconText()`.
+- The eight inputs in Question 5 switched to `<app-icon-picker>`, and the First-Then starters use
+  `pictogramIcon(...)`. `board-form.ts` mirrored the API's 16-character icon limit and now applies
+  it to emoji only.
+- i18n: `translations/{en,da}/pictograms.ts` (24 names, `unknown`, the picker's labels).
+- Screenshots: the demo family's routine steps, Emil's "Tidy your room" task and the First-Then
+  boards use pictograms (`screenshots/demo-family.ts`). No new route.
 
-## Backend
+## Backend (as built)
 
-- `Icon`: `PictogramPrefix`, `MaxEmojiLength`, `MaxPictogramLength`, `IsPictogram`.
-- `IconValidation.ValidIcon()`, applied in the eight validators listed in Question 2.
-- Optional: a description on the `Icon` schema in `WireSchemaTransformer` ("an emoji, or
-  `pic:<slug>`"), then `task docs:openapi`. The wire type stays `string`.
-- No new events, aggregates, routes, schemas or exporters. The golden event files don't change.
+- `Icon`: `PictogramPrefix`, `MaxEmojiLength`, `MaxLength`, `IsPictogram`.
+- `IconRules.ValidIcon()` (`Features/Calendars/IconRules.cs`), applied in the eight validators
+  listed in Question 2. `UpdateItemDetails` gained a validator and a `400` response.
+- No new events, aggregates, routes, schemas or exporters. The golden event files didn't change.
+  The OpenAPI contract only reordered `UpdateCalendarItemDetails`'s existing `400`.
 
-## Testing
+## Testing (as built)
 
-- **Backend** (alongside the existing validator cases in each slice's integration tests):
-  `pic:brush-teeth` is accepted on create and update of an item, template and subtask, and on a
-  First-Then card. `pic:` alone, `pic:Brush Teeth` and `pic:../x` return `400`. A 19-character
-  pictogram passes First-Then while a 17-character emoji string still fails. A template with a
-  pictogram and a subtask with a `null` icon yields an occurrence whose `Icon` is the
-  pictogram.
-- **Frontend**: the specs in the frontend plan.
-- **e2e**: a guardian gives a routine step the _Brush teeth_ pictogram in the task library and
-  schedules the routine for today. The child home then shows an `img` named "Brush teeth" in that
-  row (`getByRole('img', { name: 'Brush teeth' })` on the labelled tile, or the row's image).
-  Second journey: a First-Then board built from pictogram starters shows both pictures on
-  `/child/first-then`.
+- **Backend**: `Features/Calendars/PictogramIconTests.cs` (create and update an item with a
+  pictogram; eight malformed values rejected on create and update; an unknown name accepted; a
+  routine step without an icon inherits the scheduled routine's pictogram, and `ParentIcon` carries
+  it), `Features/TaskLibrary/PictogramIconTests.cs` (template and step writes accept a pictogram
+  and reject a malformed one), and `GuardianFirstThenBoardTests` (a 25-character pictogram is
+  accepted on a card; malformed ones are rejected; the 16-character emoji limit still holds).
+- **Frontend**: the specs above, plus a pictogram case on the child home (48px decorative tiles,
+  no `pictogram:` text) and the child First-Then page, and the board-form starter cases updated
+  for pictograms.
+- **e2e**: `e2e/task-library-pictogram.spec.ts` (a guardian picks _Brush teeth_ from the grid for
+  a routine step, the request carries `pictogram:brush-teeth`, the row shows the picture, and it
+  persists after a reload) and `e2e/first-then.spec.ts` (the pictogram starters show as pictures
+  for the guardian and on the child's board).
 
 ## Failure and edge-case behavior
 
-| Case                                                             | Behavior                                                                                                                                    |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Existing emoji icons                                             | Unchanged. No migration, and they render as before through `IconComponent`                                                                  |
-| Unknown slug (`pic:unicorn`)                                     | Accepted by the backend (format is valid), rendered as 🖼️ fallback                                                                          |
-| Malformed pictogram (`pic:`, upper case, spaces, `/`, `..`)      | `400` from `ValidIcon()`                                                                                                                    |
-| Guardian types `pic:brush-teeth` by hand in a meal's emoji input | Not offered, but stored and rendered as the pictogram, because meals have no icon rule and every render site uses `IconComponent`. Harmless |
-| Subtask with no icon under a pictogram template                  | Inherits the pictogram, as with emoji                                                                                                       |
-| Pictogram on a calendar item, seen in the iCal feed              | Not visible. The feed doesn't write icons                                                                                                   |
-| Print                                                            | Rendered as SVG, sharp at any scale                                                                                                         |
-| Dark mode                                                        | The pictogram keeps its light tile, which is intended (style guide)                                                                         |
-| Image fails to load (offline)                                    | Fallback emoji. There is no service worker, so this matches how the rest of the app behaves offline                                         |
-| GDPR export                                                      | The `pic:<slug>` string appears where the emoji did. It's not personal data, and erasure is unaffected                                      |
+| Case                                                                   | Behavior                                                                                                                                 |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Existing emoji icons                                                   | Unchanged. No migration, and they render as before through `<app-icon>`                                                                  |
+| Unknown slug (`pictogram:unicorn`)                                     | Accepted by the backend (format is valid), rendered as 🖼️ fallback                                                                       |
+| Malformed pictogram (`pictogram:`, upper case, spaces, `/`, `..`)      | `400` from `ValidIcon()`                                                                                                                 |
+| Guardian types `pictogram:brush-teeth` by hand in a meal's emoji input | Not offered, but stored and rendered as the pictogram, because meals have no icon rule and every render site uses `<app-icon>`. Harmless |
+| Subtask with no icon under a pictogram template                        | Inherits the pictogram, as with emoji                                                                                                    |
+| Pictogram on a calendar item, seen in the iCal feed                    | Not visible. The feed doesn't write icons                                                                                                |
+| Print                                                                  | Rendered as SVG, sharp at any scale                                                                                                      |
+| Dark mode                                                              | The pictogram keeps its light tile, which is intended (style guide)                                                                      |
+| Image fails to load (offline)                                          | Fallback emoji. There is no service worker, so this matches how the rest of the app behaves offline                                      |
+| GDPR export                                                            | The `pictogram:<slug>` string appears where the emoji did. It's not personal data, and erasure is unaffected                             |
+
+## Implementation notes
+
+Where the code differs from the proposal above (the sections have been updated to match):
+
+- The prefix is `pictogram:`, not `pic:` (user, 2026-10-16).
+- The picker keeps the emoji input in place and opens the grid in a popover, instead of an
+  _Emoji | Pictures_ segmented control (user, 2026-10-16).
+- The `tile` size is used on child task and routine rows and the focus page. The First-Then board
+  and the transition-warning banner already show icons at 4xl--8xl, so they keep `inline`.
+- The progress badge's "Next: {icon} at {threshold}" text and the reward/goal-post icons still
+  take their icon as text. Neither offers the picker, so a pictogram only reaches them if a
+  guardian types `pictogram:...` by hand into those fields.
 
 ## Estimate
 
 |                  |                                                                                                                                                                                        |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Complexity       | Medium -- no new backend state, but a shared component replaces ~71 render sites and 8 inputs, plus a new picker, 24 translated names, and screenshots of every page that shows a task |
+| Complexity       | Medium -- no new backend state, but a shared component replaces ~65 render sites and 8 inputs, plus a new picker, 24 translated names, and screenshots of every page that shows a task |
 | Single developer | 4-6 days                                                                                                                                                                               |
 | AI agent         | 3-5 hours, plus about 1-2 hours of human review (mostly checking child screens and the regenerated screenshots)                                                                        |
 
@@ -371,12 +410,14 @@ never renamed or deleted.**
 | Question                | Decision                                                                                                                     |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Source of pictures      | The in-house SVG set in `public/pictograms/`, with no licence and one style. Photos and third-party sets are rejected for v1 |
-| Storage                 | `Icon.Value = "pic:<slug>"`, so there are no event, DTO or wire changes and inheritance keeps working                        |
+| Storage                 | `Icon.Value = "pictogram:<slug>"`, so there are no event, DTO or wire changes and inheritance keeps working                  |
 | Backend validation      | Format only (`ValidIcon()`), not the catalogue, because the frontend owns the files                                          |
-| Rendering               | Shared `IconComponent` at every render site, so `pic:` text can't leak anywhere                                              |
-| Size                    | `1.25em` inline by default, 48px `tile` on child task, routine and First-Then surfaces                                       |
+| Rendering               | Shared `<app-icon>` at every render site, so `pictogram:` text can't leak anywhere                                           |
+| Size                    | `1.25em` inline by default, 48px `tile` on child task and routine rows and the focus page                                    |
 | Accessibility           | Decorative next to a title. Translated `alt` where it stands alone. The SVG's English `<title>` is not used                  |
-| Picker                  | Shared `IconPicker` with Emoji and Pictures modes, searchable by translated name                                             |
+| Prefix                  | `pictogram:` rather than the proposed `pic:`, for readable events (user, 2026-10-16)                                         |
+| Picker                  | The emoji input stays; a _Pictures_ popover beside it offers the searchable grid (user, 2026-10-16)                          |
+| Text-only sites         | `iconText`: the emoji, or nothing for a pictogram, in `<option>`s and joined labels                                          |
 | Surfaces in v1          | Tasks, routine steps and First-Then boards, including the starters (user, 2026-10-15)                                        |
 | Picture-only child mode | Not in v1 (user, 2026-10-15)                                                                                                 |
 | Growing the set         | `codex-pictogram`, a catalogue entry and names. Slugs are permanent                                                          |
@@ -407,10 +448,10 @@ flowchart TB
         Files["public/pictograms/*.svg\n(served at /pictograms/slug.svg)"]
         Catalog["core/pictograms.ts\nPICTOGRAMS + parseIcon"]
         Names["i18n pictograms.ts\nen + da names"]
-        Picker["IconPicker\nEmoji | Pictures"]
-        IconC["IconComponent\nemoji text or img + fallback"]
+        Picker["IconPicker\nemoji input + Pictures popover"]
+        IconC["app-icon\nemoji text or img + fallback"]
         Forms["Task library, agenda item,\nonboarding, First-Then card"]
-        Screens["~71 render sites:\nchild home, focus, First-Then,\nagenda, print, ..."]
+        Screens["53 render sites:\nchild home, focus, First-Then,\nagenda, print, ..."]
         Catalog --> Picker
         Names --> Picker
         Catalog --> IconC
@@ -421,8 +462,8 @@ flowchart TB
     end
     subgraph Backend["Buddy backend (no new state)"]
         direction TB
-        Validators["8 validators\n+ ValidIcon(): emoji or pic:slug"]
-        Events["Existing events\nIcon = '🪥' or 'pic:brush-teeth'"]
+        Validators["8 validators\n+ ValidIcon(): emoji or pictogram:slug"]
+        Events["Existing events\nIcon = '🪥' or 'pictogram:brush-teeth'"]
         Occ["CalendarItemOccurrence.Icon\n(inheritance unchanged)"]
         Validators --> Events --> Occ
     end

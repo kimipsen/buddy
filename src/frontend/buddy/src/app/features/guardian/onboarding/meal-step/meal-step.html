@@ -47,7 +47,7 @@
         <option value="" disabled>{{ 'onboarding.meal.mealLabel' | translate }}</option>
       }
       @for (meal of liveMeals(); track meal.id) {
-        <option [value]="meal.id">{{ meal.icon }} {{ meal.name }}</option>
+        <option [value]="meal.id">{{ meal.icon | iconText }} {{ meal.name }}</option>
       }
       <option [value]="newMeal">{{ 'onboarding.meal.newMeal' | translate }}</option>
     </select>

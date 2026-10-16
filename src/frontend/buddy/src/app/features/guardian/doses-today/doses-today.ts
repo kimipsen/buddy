@@ -16,6 +16,7 @@ import {
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Card } from '../../../shared/card/card';
+import { Icon } from '../../../shared/icon/icon';
 
 const PENDING: DoseStatus = 'Pending';
 const TAKEN: DoseStatus = 'Taken';
@@ -32,7 +33,7 @@ interface LoadedDoses {
 
 @Component({
   selector: 'app-doses-today',
-  imports: [RouterLink, TranslatePipe, LoadingSpinner, Card],
+  imports: [Icon, RouterLink, TranslatePipe, LoadingSpinner, Card],
   templateUrl: './doses-today.html',
 })
 export class DosesToday {

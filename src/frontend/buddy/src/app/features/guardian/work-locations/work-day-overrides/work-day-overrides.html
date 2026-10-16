@@ -54,7 +54,7 @@
               <p class="mt-1 min-h-5 truncate text-sm font-medium">
                 @if (locationOf(day); as location) {
                   <span [style.color]="location.color" aria-hidden="true">●</span>
-                  {{ location.icon }} {{ location.name }}
+                  {{ location.icon | iconText }} {{ location.name }}
                 } @else if (day.status.kind === 1) {
                   {{ 'workLocations.overrides.off' | translate }}
                 }
@@ -78,7 +78,9 @@
                 </option>
                 <option [value]="off">{{ 'workLocations.overrides.off' | translate }}</option>
                 @for (location of optionsFor(day); track location.id) {
-                  <option [value]="location.id">{{ location.icon }} {{ location.name }}</option>
+                  <option [value]="location.id">
+                    {{ location.icon | iconText }} {{ location.name }}
+                  </option>
                 }
               </select>
             </li>
@@ -128,7 +130,9 @@
             {{ 'workLocations.overrides.followPattern' | translate }}
           </option>
           @for (location of active(); track location.id) {
-            <option [value]="location.id">{{ location.icon }} {{ location.name }}</option>
+            <option [value]="location.id">
+              {{ location.icon | iconText }} {{ location.name }}
+            </option>
           }
         </select>
       </div>

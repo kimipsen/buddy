@@ -29,6 +29,7 @@ import { pollWhileOpen } from '../../../core/visible-poll';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { VisualTimer } from '../../../shared/visual-timer/visual-timer';
 import { ChildPage } from '../child-page/child-page';
+import { Icon } from '../../../shared/icon/icon';
 
 export const FIRST_THEN_POLL_MS = 60_000;
 // Often enough for "Time's up" to appear on time when no disc is shown (visual timers off).
@@ -42,7 +43,7 @@ export const THEN_TICK_MS = 15_000;
  */
 @Component({
   selector: 'app-child-first-then',
-  imports: [ChildPage, LoadingSpinner, RouterLink, TranslatePipe, VisualTimer],
+  imports: [Icon, ChildPage, LoadingSpinner, RouterLink, TranslatePipe, VisualTimer],
   templateUrl: './child-first-then.html',
 })
 export class ChildFirstThen implements OnInit, OnDestroy {

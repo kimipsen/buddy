@@ -13,13 +13,15 @@ import {
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { Meal } from '../../../../core/mealplans.service';
 import { DropdownSize, dropdownPosition } from '../../../../core/dropdown-position';
+import { iconText } from '../../../../core/pictograms';
+import { Icon } from '../../../../shared/icon/icon';
 
 // The list's height (max-h-56) and narrowest width, in px; see dropdownPosition.
 const LIST_SIZE: DropdownSize = { maxHeight: 224, minWidth: 192 };
 
 @Component({
   selector: 'app-meal-picker',
-  imports: [TranslatePipe],
+  imports: [Icon, TranslatePipe],
   templateUrl: './meal-picker.html',
 })
 export class MealPicker {
@@ -48,7 +50,7 @@ export class MealPicker {
     }
 
     const meal = this.selectedMeal();
-    return meal ? `${meal.icon} ${meal.name}` : '';
+    return meal ? [iconText(meal.icon), meal.name].filter(Boolean).join(' ') : '';
   });
 
   protected readonly filteredMeals = computed((): Meal[] => {

@@ -47,7 +47,7 @@
                 class="inline-block size-3 rounded-full"
                 [style.background-color]="meal.color"
               ></span>
-              <span class="text-lg leading-none">{{ meal.icon }}</span>
+              <app-icon class="text-lg leading-none" [value]="meal.icon" />
               {{ meal.name }}
             </span>
             @if (!readOnly()) {

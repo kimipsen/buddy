@@ -293,7 +293,7 @@
                             </option>
                             @for (location of locationsFor(draft.row); track location.id) {
                               <option [ngValue]="location.id">
-                                {{ location.icon }} {{ location.name }}
+                                {{ location.icon | iconText }} {{ location.name }}
                               </option>
                             }
                           </select>
@@ -319,7 +319,7 @@
                                   toggleCalendar(draft.key, draft.row, calendar.id, $event)
                                 "
                               />
-                              <span aria-hidden="true">{{ calendar.icon }}</span>
+                              <app-icon [value]="calendar.icon" />
                               {{ calendar.name }}
                             </span>
                           }

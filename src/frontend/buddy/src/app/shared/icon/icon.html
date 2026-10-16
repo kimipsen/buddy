@@ -1,0 +1,19 @@
+@if (icon(); as icon) {
+  @if (icon.kind === 'pictogram') {
+    <img
+      [src]="icon.src"
+      [alt]="label() ?? ''"
+      [attr.aria-hidden]="label() ? null : 'true'"
+      width="96"
+      height="96"
+      loading="lazy"
+      decoding="async"
+      [class]="imageClass()"
+      (error)="onError()"
+    />
+  } @else if (label(); as label) {
+    <span role="img" [attr.aria-label]="label">{{ icon.text }}</span>
+  } @else {
+    <span aria-hidden="true">{{ icon.text }}</span>
+  }
+}

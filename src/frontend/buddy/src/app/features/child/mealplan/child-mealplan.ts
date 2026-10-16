@@ -17,6 +17,7 @@ import { MealPlanEntry, MealSlot, MealplansService } from '../../../core/mealpla
 import { UsersService } from '../../../core/users.service';
 import { createAction } from '../../../shared/action-state/action-state';
 import { ChildPage } from '../child-page/child-page';
+import { Icon } from '../../../shared/icon/icon';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
   Breakfast: 'dashboard.mealplan.slots.breakfast',
@@ -65,7 +66,7 @@ function defaultAnchor(todayIsoDate: string): string {
 
 @Component({
   selector: 'app-child-mealplan',
-  imports: [ChildPage, TranslatePipe],
+  imports: [Icon, ChildPage, TranslatePipe],
   templateUrl: './child-mealplan.html',
 })
 export class ChildMealplan {

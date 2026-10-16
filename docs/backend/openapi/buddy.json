@@ -6710,6 +6710,19 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "x-error-codes": [
+              "validation_error"
+            ]
+          },
           "404": {
             "description": "Not Found"
           },
@@ -6728,19 +6741,6 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
-          },
-          "400": {
-            "description": "Bad Request. ErrorEnvelope code: \u0060validation_error\u0060.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "x-error-codes": [
-              "validation_error"
-            ]
           },
           "409": {
             "description": "Conflict. ErrorEnvelope code: \u0060concurrency_conflict\u0060.",

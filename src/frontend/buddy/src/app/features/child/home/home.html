@@ -135,7 +135,7 @@
                   >{{ mealSlotLabels[entry.slot] | translate }}</span
                 >
                 <span class="flex items-center gap-2 text-lg font-semibold">
-                  <span aria-hidden="true">{{ entry.icon }}</span>
+                  <app-icon [value]="entry.icon" />
                   {{ entry.mealName }}
                 </span>
               </div>
@@ -239,7 +239,7 @@
                   class="inline-block size-3 rounded-full"
                   [style.background-color]="dose.color"
                 ></span>
-                <span aria-hidden="true">{{ dose.icon }}</span>
+                <app-icon [value]="dose.icon" />
                 {{ dose.name }}
                 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">{{
                   dose.time.slice(0, 5)
@@ -317,7 +317,7 @@
               class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
             >
               <div class="mb-3 flex flex-wrap items-center gap-2 text-lg font-semibold">
-                <span aria-hidden="true">{{ run.icon }}</span>
+                <app-icon size="tile" [value]="run.icon" />
                 {{ run.parentTitle }}
                 <span class="text-sm font-semibold text-sky-700 dark:text-sky-300">
                   {{
@@ -355,7 +355,7 @@
                       [class.line-through]="subtask.isCompleted"
                       [class.text-slate-400]="subtask.isCompleted"
                     >
-                      <span aria-hidden="true">{{ subtask.icon }}</span>
+                      <app-icon size="tile" [value]="subtask.icon" />
                       {{ subtask.title }}
                     </span>
                   </li>
@@ -390,7 +390,7 @@
                 class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-3"
               >
                 <div class="mb-3 flex flex-wrap items-center gap-2 text-lg font-semibold">
-                  <span aria-hidden="true">{{ run.icon }}</span>
+                  <app-icon size="tile" [value]="run.icon" />
                   {{ run.parentTitle }}
                   @if (isChecklistRun(run)) {
                     <span class="text-sm font-semibold text-sky-700 dark:text-sky-300">
@@ -482,7 +482,7 @@
                         [class.line-through]="subtask.isCompleted"
                         [class.text-slate-400]="subtask.isCompleted"
                       >
-                        <span aria-hidden="true">{{ subtask.icon }}</span>
+                        <app-icon size="tile" [value]="subtask.icon" />
                         {{ subtask.title }}
                       </span>
                       @if (timer(); as state) {
@@ -541,7 +541,7 @@
                   [class.line-through]="task.isCompleted"
                   [class.text-slate-400]="task.isCompleted"
                 >
-                  <span aria-hidden="true">{{ task.icon }}</span>
+                  <app-icon size="tile" [value]="task.icon" />
                   {{ task.title }}
                 </span>
               </li>
@@ -576,7 +576,7 @@
                   class="inline-block size-3 rounded-full"
                   [style.background-color]="event.color"
                 ></span>
-                <span aria-hidden="true">{{ event.icon }}</span>
+                <app-icon [value]="event.icon" />
                 {{ event.title }}
                 @if (event.isPast) {
                   <span aria-hidden="true">✓</span>

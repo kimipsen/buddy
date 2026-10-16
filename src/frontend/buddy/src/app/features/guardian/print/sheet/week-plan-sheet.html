@@ -62,7 +62,7 @@
             @case ('text') {
               <span [style.color]="cell.value.color">
                 @if (cell.value.icon) {
-                  <span aria-hidden="true">{{ cell.value.icon }}</span>
+                  <app-icon [value]="cell.value.icon" />
                 }
                 {{ cell.value.text }}
               </span>

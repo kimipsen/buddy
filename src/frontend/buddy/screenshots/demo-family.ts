@@ -478,12 +478,14 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       icon: '🌅',
       color: '#f97316',
     });
+    // The routine steps use the bundled pictograms (docs/frontend/analysis/pictograms.md); the
+    // templates keep their emoji, so the screenshots show both kinds of icon.
     let morningSubtasks: Named[] = [];
     for (const [title, icon, duration] of [
-      ['Get dressed', '👕', '00:05:00'],
-      ['Eat breakfast', '🥣', '00:15:00'],
-      ['Brush teeth', '🪥', '00:03:00'],
-      ['Pack school bag', '🎒', '00:05:00'],
+      ['Get dressed', 'pictogram:get-dressed', '00:05:00'],
+      ['Eat breakfast', 'pictogram:eat-breakfast', '00:15:00'],
+      ['Brush teeth', 'pictogram:brush-teeth', '00:03:00'],
+      ['Pack school bag', 'pictogram:pack-school-bag', '00:05:00'],
     ]) {
       ({ subtasks: morningSubtasks } = await api.post<TaskTemplateDto>(
         `/task-templates/${morning.id}/subtasks`,
@@ -497,9 +499,9 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
       color: '#6366f1',
     });
     for (const [title, icon, duration] of [
-      ['Bath', '🛁', '00:15:00'],
-      ['Pyjamas on', '🩳', '00:05:00'],
-      ['Read a story', '📖', '00:15:00'],
+      ['Bath', 'pictogram:bath', '00:15:00'],
+      ['Pyjamas on', 'pictogram:pyjamas-on', '00:05:00'],
+      ['Read a story', 'pictogram:read-story', '00:15:00'],
     ]) {
       await api.post(`/task-templates/${bedtime.id}/subtasks`, { title, icon, duration });
     }
@@ -528,7 +530,7 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
     });
     await api.post(`/calendars/${family.id}/items`, {
       title: 'Tidy your room',
-      icon: '🧸',
+      icon: 'pictogram:tidy-room',
       color: '#84cc16',
       schedule: {
         kind: 1,
@@ -946,11 +948,23 @@ export async function seedDemoFamily(): Promise<DemoFamily> {
           .revision;
       };
       try {
-        await set({ title: 'Tidy your room', icon: '🧹' }, { title: 'Lego', icon: '🧱' }, null);
+        await set(
+          { title: 'Tidy your room', icon: 'pictogram:tidy-room' },
+          { title: 'Lego', icon: 'pictogram:play' },
+          null,
+        );
         revision = (await api.post<BoardDto>(`${board}/end`, { revision })).revision;
-        await set({ title: 'Shower', icon: '🚿' }, { title: 'Read together', icon: '📖' }, 15);
+        await set(
+          { title: 'Shower', icon: 'pictogram:shower' },
+          { title: 'Read together', icon: 'pictogram:read-story' },
+          15,
+        );
         revision = (await api.post<BoardDto>(`${board}/end`, { revision })).revision;
-        await set({ title: 'Homework', icon: '📚' }, { title: 'iPad', icon: '📱' }, 20);
+        await set(
+          { title: 'Homework', icon: 'pictogram:homework' },
+          { title: 'iPad', icon: 'pictogram:screen-time' },
+          20,
+        );
 
         const emilApi = await Api.as(DEMO_USERNAMES.child, DEMO_PASSWORD);
         await emilApi.post('/first-then/me/first/complete', { revision });

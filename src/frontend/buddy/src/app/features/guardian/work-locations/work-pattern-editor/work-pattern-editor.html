@@ -70,7 +70,9 @@
                 >
                   <option value="">{{ 'workLocations.pattern.none' | translate }}</option>
                   @for (location of active(); track location.id) {
-                    <option [value]="location.id">{{ location.icon }} {{ location.name }}</option>
+                    <option [value]="location.id">
+                      {{ location.icon | iconText }} {{ location.name }}
+                    </option>
                   }
                 </select>
               </li>
@@ -116,7 +118,9 @@
                   >
                     <option value="">{{ 'workLocations.pattern.none' | translate }}</option>
                     @for (location of active(); track location.id) {
-                      <option [value]="location.id">{{ location.icon }} {{ location.name }}</option>
+                      <option [value]="location.id">
+                        {{ location.icon | iconText }} {{ location.name }}
+                      </option>
                     }
                   </select>
                 </td>

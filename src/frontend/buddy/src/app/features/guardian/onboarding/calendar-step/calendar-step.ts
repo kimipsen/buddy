@@ -7,6 +7,7 @@ import { GroupsService } from '../../../../core/groups.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { OnboardingSetup } from '../../../../core/onboarding.service';
 import { createAction } from '../../../../shared/action-state/action-state';
+import { Icon } from '../../../../shared/icon/icon';
 
 const ROLE_LABELS: Record<CalendarRole, string> = {
   Owner: 'onboarding.calendar.roles.owner',
@@ -29,7 +30,7 @@ function defaultTimeZoneId(candidates: readonly string[]): string {
 // read as it is rather than assumed; making children view-only is an explicit choice.
 @Component({
   selector: 'app-onboarding-calendar-step',
-  imports: [FormsModule, TranslatePipe],
+  imports: [Icon, FormsModule, TranslatePipe],
   templateUrl: './calendar-step.html',
 })
 export class CalendarStep {

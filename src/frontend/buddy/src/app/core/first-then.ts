@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { CalendarOccurrence } from './calendars.service';
 import { toIsoDateInTimeZone } from './date-utils';
 import { FIRST_THEN_BOARD_CHANGED, FirstThenBoard, FirstThenCard } from './first-then.service';
+import { pictogramIcon } from './pictograms';
 import { groupTaskRuns, isTaskRun } from './task-run';
 import { TimerState } from './visual-timer';
 
@@ -97,25 +98,26 @@ export interface StarterCard {
   readonly icon: string;
 }
 
-// The built-in suggestions (Question 3). Once picked, the translated title is plain text on the
-// board, in the guardian's language.
+// The built-in suggestions (Question 3), as pictograms where the set has one
+// (docs/frontend/analysis/pictograms.md, Question 5). Once picked, the translated title is
+// plain text on the board, in the guardian's language.
 export const STARTER_FIRSTS: readonly StarterCard[] = [
-  { titleKey: 'firstThen.starters.first.homework', icon: '📚' },
-  { titleKey: 'firstThen.starters.first.tidyRoom', icon: '🧹' },
-  { titleKey: 'firstThen.starters.first.shower', icon: '🚿' },
-  { titleKey: 'firstThen.starters.first.brushTeeth', icon: '🪥' },
-  { titleKey: 'firstThen.starters.first.getDressed', icon: '👕' },
-  { titleKey: 'firstThen.starters.first.shoesOn', icon: '👟' },
-  { titleKey: 'firstThen.starters.first.eatDinner', icon: '🍽️' },
+  { titleKey: 'firstThen.starters.first.homework', icon: pictogramIcon('homework') },
+  { titleKey: 'firstThen.starters.first.tidyRoom', icon: pictogramIcon('tidy-room') },
+  { titleKey: 'firstThen.starters.first.shower', icon: pictogramIcon('shower') },
+  { titleKey: 'firstThen.starters.first.brushTeeth', icon: pictogramIcon('brush-teeth') },
+  { titleKey: 'firstThen.starters.first.getDressed', icon: pictogramIcon('get-dressed') },
+  { titleKey: 'firstThen.starters.first.shoesOn', icon: pictogramIcon('put-on-shoes') },
+  { titleKey: 'firstThen.starters.first.eatDinner', icon: pictogramIcon('dinner') },
 ];
 
 export const STARTER_THENS: readonly StarterCard[] = [
-  { titleKey: 'firstThen.starters.then.ipad', icon: '📱' },
-  { titleKey: 'firstThen.starters.then.tv', icon: '📺' },
+  { titleKey: 'firstThen.starters.then.ipad', icon: pictogramIcon('screen-time') },
+  { titleKey: 'firstThen.starters.then.tv', icon: pictogramIcon('screen-time') },
   { titleKey: 'firstThen.starters.then.playOutside', icon: '⚽' },
-  { titleKey: 'firstThen.starters.then.lego', icon: '🧱' },
-  { titleKey: 'firstThen.starters.then.snack', icon: '🍎' },
-  { titleKey: 'firstThen.starters.then.readTogether', icon: '📖' },
+  { titleKey: 'firstThen.starters.then.lego', icon: pictogramIcon('play') },
+  { titleKey: 'firstThen.starters.then.snack', icon: pictogramIcon('snack') },
+  { titleKey: 'firstThen.starters.then.readTogether', icon: pictogramIcon('read-story') },
   { titleKey: 'firstThen.starters.then.game', icon: '🎮' },
 ];
 

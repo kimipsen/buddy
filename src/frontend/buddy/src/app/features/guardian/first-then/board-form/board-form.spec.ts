@@ -82,7 +82,7 @@ describe('FirstThenBoardForm', () => {
     expect(groupLabels(compiled, 0)).toEqual(['Suggestions']);
   });
 
-  it('prefills a card from a chip and marks it pressed', async () => {
+  it('prefills a card from a chip, with the starter pictogram, and marks it pressed', async () => {
     const { fixture, compiled } = await setup();
 
     chip(compiled, 0, 'Homework')!.click();
@@ -91,7 +91,9 @@ describe('FirstThenBoardForm', () => {
     expect(compiled.querySelector<HTMLInputElement>('#firstThenFirstTitle')!.value).toBe(
       'Homework',
     );
-    expect(compiled.querySelector<HTMLInputElement>('#firstThenFirstIcon')!.value).toBe('📚');
+    // A pictogram replaces the emoji input with its picture.
+    expect(compiled.querySelector('#firstThenFirstIcon')).toBeNull();
+    expect(compiled.querySelector('img[src="/pictograms/homework.svg"]')).not.toBeNull();
     expect(chip(compiled, 0, 'Homework')!.getAttribute('aria-pressed')).toBe('true');
     expect(chip(compiled, 0, 'Shower')!.getAttribute('aria-pressed')).toBe('false');
   });
@@ -133,7 +135,7 @@ describe('FirstThenBoardForm', () => {
     expect(submitted).toEqual([
       {
         first: { title: 'Homework', icon: '📚' },
-        then: { title: 'iPad', icon: '📱' },
+        then: { title: 'iPad', icon: 'pictogram:screen-time' },
         thenMinutes: 20,
       },
     ]);

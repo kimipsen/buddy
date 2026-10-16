@@ -9,6 +9,7 @@ import { ProgressService } from '../../../core/progress.service';
 import { TaskLibraryService } from '../../../core/task-library.service';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Card } from '../../../shared/card/card';
+import { Icon } from '../../../shared/icon/icon';
 
 // How many /progress/children/{id} requests this widget keeps in flight at once. There is no
 // batch progress endpoint, so it still costs one request per child, but a guardian with dozens of
@@ -18,7 +19,7 @@ export const PROGRESS_REQUEST_CONCURRENCY = 4;
 
 @Component({
   selector: 'app-children-overview',
-  imports: [RouterLink, TranslatePipe, LoadingSpinner, Card],
+  imports: [Icon, RouterLink, TranslatePipe, LoadingSpinner, Card],
   templateUrl: './children-overview.html',
 })
 export class ChildrenOverview {

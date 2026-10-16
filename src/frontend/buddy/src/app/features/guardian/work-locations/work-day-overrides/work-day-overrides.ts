@@ -20,6 +20,7 @@ import {
 import { createAction } from '../../../../shared/action-state/action-state';
 import { DateSelect } from '../../../../shared/date-select/date-select';
 import { Card } from '../../../../shared/card/card';
+import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
 
 const WEEKS_SHOWN = 4;
 const FOLLOW_PATTERN = 'pattern';
@@ -30,7 +31,7 @@ const OFF = 'off';
 // hands it a new schedule (a pattern or location change also changes how days resolve).
 @Component({
   selector: 'app-work-day-overrides',
-  imports: [FormsModule, TranslatePipe, DateSelect, Card],
+  imports: [IconTextPipe, FormsModule, TranslatePipe, DateSelect, Card],
   templateUrl: './work-day-overrides.html',
 })
 export class WorkDayOverrides {

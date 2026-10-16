@@ -39,7 +39,7 @@
             class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
             (click)="selectTemplate(template)"
           >
-            <span class="text-base leading-none">{{ template.icon }}</span>
+            <app-icon class="text-base leading-none" [value]="template.icon" />
             {{ template.name }}
             <span class="ml-auto shrink-0 text-xs text-slate-400">
               @if (template.kind === 'Checklist') {

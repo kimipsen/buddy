@@ -60,7 +60,7 @@
                 dropped edits silently. A native input listener has no such registration delay.
               -->
               <form class="space-y-2 px-4 py-3" (ngSubmit)="saveTemplate(template.id)">
-                <div class="grid gap-2 sm:grid-cols-[1fr_4rem]">
+                <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <input
                     type="text"
                     name="editTemplateName"
@@ -70,14 +70,11 @@
                     [value]="editTemplateName()"
                     (input)="editTemplateName.set(templateNameInput.value)"
                   />
-                  <input
-                    type="text"
+                  <app-icon-picker
                     name="editTemplateIcon"
-                    aria-label="{{ 'taskLibrary.manageTasks.form.iconPlaceholder' | translate }}"
-                    class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                    #templateIconInput
-                    [value]="editTemplateIcon()"
-                    (input)="editTemplateIcon.set(templateIconInput.value)"
+                    [label]="'taskLibrary.manageTasks.form.iconPlaceholder' | translate"
+                    inputClass="w-16 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                    [(value)]="editTemplateIcon"
                   />
                 </div>
 
@@ -128,7 +125,7 @@
                     class="inline-block size-3 shrink-0 rounded-full"
                     [style.background-color]="template.color"
                   ></span>
-                  <span class="text-lg leading-none">{{ template.icon }}</span>
+                  <app-icon class="text-lg leading-none" [value]="template.icon" />
                   <span>{{ template.name }}</span>
                   @if (isChecklist(template)) {
                     <span
@@ -332,7 +329,7 @@
                       >
                         @if (editingSubtaskId() === subtask.id) {
                           <div
-                            class="grid gap-2 sm:grid-cols-[1fr_4rem_8rem_auto_auto] sm:items-center"
+                            class="grid gap-2 sm:grid-cols-[1fr_auto_8rem_auto_auto] sm:items-center"
                           >
                             <input
                               type="text"
@@ -344,15 +341,13 @@
                               [ngModel]="editSubtaskTitle()"
                               (ngModelChange)="editSubtaskTitle.set($event)"
                             />
-                            <input
-                              type="text"
-                              [attr.name]="'editSubtaskIcon-' + subtask.id"
-                              aria-label="{{
+                            <app-icon-picker
+                              [name]="'editSubtaskIcon-' + subtask.id"
+                              [label]="
                                 'taskLibrary.manageTasks.subtasks.iconPlaceholder' | translate
-                              }}"
-                              class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                              [ngModel]="editSubtaskIcon()"
-                              (ngModelChange)="editSubtaskIcon.set($event)"
+                              "
+                              inputClass="w-16 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                              [(value)]="editSubtaskIcon"
                             />
                             @if (isChecklist(template)) {
                               <app-weekday-picker
@@ -393,7 +388,7 @@
                           <div class="flex items-center justify-between gap-3">
                             <span class="flex items-center gap-2 text-sm">
                               @if (subtask.icon) {
-                                <span class="text-base leading-none">{{ subtask.icon }}</span>
+                                <app-icon class="text-base leading-none" [value]="subtask.icon" />
                               }
                               {{ subtask.title }}
                               @if (isChecklist(template)) {
@@ -466,7 +461,7 @@
                 }
 
                 <form
-                  class="grid gap-2 sm:grid-cols-[1fr_4rem_8rem_auto] sm:items-center"
+                  class="grid gap-2 sm:grid-cols-[1fr_auto_8rem_auto] sm:items-center"
                   (ngSubmit)="addSubtask(template)"
                 >
                   <input
@@ -488,16 +483,12 @@
                     [ngModel]="newSubtaskTitle()"
                     (ngModelChange)="newSubtaskTitle.set($event)"
                   />
-                  <input
-                    type="text"
+                  <app-icon-picker
                     name="newSubtaskIcon"
+                    [label]="'taskLibrary.manageTasks.subtasks.iconPlaceholder' | translate"
                     [placeholder]="'taskLibrary.manageTasks.subtasks.iconPlaceholder' | translate"
-                    aria-label="{{
-                      'taskLibrary.manageTasks.subtasks.iconPlaceholder' | translate
-                    }}"
-                    class="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-                    [ngModel]="newSubtaskIcon()"
-                    (ngModelChange)="newSubtaskIcon.set($event)"
+                    inputClass="w-16 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+                    [(value)]="newSubtaskIcon"
                   />
                   @if (!isChecklist(template)) {
                     <app-stepper
@@ -547,7 +538,7 @@
     }
 
     <form
-      class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_5rem_auto]"
+      class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto]"
       (ngSubmit)="createTemplate()"
     >
       <div class="sm:col-span-2 lg:col-span-full">
@@ -567,14 +558,12 @@
         [ngModel]="newTemplateName()"
         (ngModelChange)="newTemplateName.set($event)"
       />
-      <input
-        type="text"
+      <app-icon-picker
         name="templateIcon"
+        [label]="'taskLibrary.manageTasks.form.iconPlaceholder' | translate"
         [placeholder]="'taskLibrary.manageTasks.form.iconPlaceholder' | translate"
-        aria-label="{{ 'taskLibrary.manageTasks.form.iconPlaceholder' | translate }}"
-        class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
-        [ngModel]="newTemplateIcon()"
-        (ngModelChange)="newTemplateIcon.set($event)"
+        inputClass="w-16 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100"
+        [(value)]="newTemplateIcon"
       />
       <div class="sm:col-span-2 lg:col-span-full lg:row-start-3">
         <app-color-swatch-picker

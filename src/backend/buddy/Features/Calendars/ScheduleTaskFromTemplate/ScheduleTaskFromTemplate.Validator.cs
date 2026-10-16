@@ -8,6 +8,8 @@ public sealed class ScheduleTaskFromTemplateValidator : AbstractValidator<Schedu
     {
         RuleFor(x => x.Title).MaximumLength(200);
 
+        RuleFor(x => x.Icon!.Value).ValidIcon().OverridePropertyName("Icon").When(x => x.Icon is not null);
+
         RuleFor(x => x.TaskTemplateId).NotEmpty();
 
         RuleFor(x => x.Alarms).ValidAlarms();

@@ -7,6 +7,7 @@ import {
   minutesUntil,
   remainingFraction,
 } from '../../../core/transition-warnings';
+import { Icon } from '../../../shared/icon/icon';
 
 // Fine enough for a 1-minute stage; the home page's 60-second tick isn't.
 export const WARNING_TICK_MS = 15_000;
@@ -26,7 +27,7 @@ const PICKUP_LABELS = {
  */
 @Component({
   selector: 'app-transition-warning-banner',
-  imports: [TranslatePipe],
+  imports: [Icon, TranslatePipe],
   templateUrl: './transition-warning-banner.html',
   host: { class: 'block' },
 })

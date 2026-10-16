@@ -42,7 +42,7 @@
                       (checkedChange)="toggleTask(rollup)"
                     />
                   }
-                  <span class="text-lg leading-none">{{ rollup.icon }}</span>
+                  <app-icon class="text-lg leading-none" [value]="rollup.icon" />
                   <span
                     [class.line-through]="
                       rollup.totalCount === 1 && rollup.occurrences[0].isCompleted
@@ -87,7 +87,7 @@
                       (checkedChange)="toggleTask(rollup)"
                     />
                   }
-                  <span class="text-lg leading-none">{{ rollup.icon }}</span>
+                  <app-icon class="text-lg leading-none" [value]="rollup.icon" />
                   <span
                     [class.line-through]="
                       rollup.totalCount === 1 && rollup.occurrences[0].isCompleted

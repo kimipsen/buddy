@@ -1,3 +1,5 @@
+using buddy.Features.Calendars;
+
 using FluentValidation;
 
 namespace buddy.Features.TaskLibrary;
@@ -10,6 +12,7 @@ public sealed class CreateTaskTemplateValidator : AbstractValidator<CreateTaskTe
 
         // A template always has its own icon (its subtasks may inherit it), so blank is rejected.
         RuleFor(x => x.Icon.Value).NotEmpty().WithMessage("Icon must not be empty.");
+        RuleFor(x => x.Icon.Value).ValidIcon().OverridePropertyName("Icon");
 
         RuleFor(x => x.Kind).IsInEnum();
 

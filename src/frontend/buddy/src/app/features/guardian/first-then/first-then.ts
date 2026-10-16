@@ -32,6 +32,7 @@ import { Card } from '../../../shared/card/card';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { Page } from '../../../shared/page/page';
 import { BoardDraft, FirstThenBoardForm } from './board-form/board-form';
+import { Icon } from '../../../shared/icon/icon';
 
 export const GUARDIAN_FIRST_THEN_POLL_MS = 60_000;
 
@@ -42,7 +43,7 @@ export const GUARDIAN_FIRST_THEN_POLL_MS = 60_000;
  */
 @Component({
   selector: 'app-guardian-first-then',
-  imports: [Card, FirstThenBoardForm, FormsModule, LoadingSpinner, Page, TranslatePipe],
+  imports: [Icon, Card, FirstThenBoardForm, FormsModule, LoadingSpinner, Page, TranslatePipe],
   templateUrl: './first-then.html',
 })
 export class GuardianFirstThen implements OnInit, OnDestroy {

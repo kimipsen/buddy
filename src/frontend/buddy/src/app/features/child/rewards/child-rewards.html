@@ -51,7 +51,7 @@
             [attr.data-reward-id]="reward.id"
           >
             <div class="flex items-center gap-3">
-              <span class="text-4xl" aria-hidden="true">{{ reward.icon }}</span>
+              <app-icon class="text-4xl" [value]="reward.icon" />
               <div class="flex flex-col">
                 <h2 class="text-lg font-bold">{{ reward.name }}</h2>
                 <span class="text-base font-semibold text-slate-600 dark:text-slate-300">{{
@@ -97,7 +97,7 @@
               class="flex flex-wrap items-center gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-500/10"
               [attr.data-request-id]="request.id"
             >
-              <span class="text-2xl" aria-hidden="true">{{ request.icon }}</span>
+              <app-icon class="text-2xl" [value]="request.icon" />
               <span class="flex-1 text-base font-semibold">{{ request.name }}</span>
               <button
                 type="button"
@@ -123,7 +123,7 @@
             <li
               class="flex flex-wrap items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900"
             >
-              <span class="text-2xl" aria-hidden="true">{{ request.icon }}</span>
+              <app-icon class="text-2xl" [value]="request.icon" />
               <span class="flex-1 text-base font-semibold">{{ request.name }}</span>
               <span
                 class="text-base font-bold"

@@ -13,6 +13,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { IcalSubscribeLinks } from '../../../../shared/ical-subscribe-links/ical-subscribe-links';
 import { Card } from '../../../../shared/card/card';
+import { Icon } from '../../../../shared/icon/icon';
 
 const ROLE_LABELS: Record<CalendarRole, string> = {
   Owner: 'admin.manageCalendars.roles.owner',
@@ -35,7 +36,7 @@ function resolveDefaultTimeZoneId(candidates: readonly string[]): string {
 
 @Component({
   selector: 'app-manage-calendars',
-  imports: [FormsModule, DatePipe, TranslatePipe, IcalSubscribeLinks, Card],
+  imports: [Icon, FormsModule, DatePipe, TranslatePipe, IcalSubscribeLinks, Card],
   templateUrl: './manage-calendars.html',
 })
 export class ManageCalendars {

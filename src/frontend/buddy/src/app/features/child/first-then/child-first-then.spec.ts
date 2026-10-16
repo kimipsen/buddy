@@ -111,6 +111,20 @@ describe('ChildFirstThen', () => {
     return compiled.querySelector('[aria-live="polite"]')?.textContent?.trim() ?? '';
   }
 
+  it('shows pictogram cards as their pictures, next to the titles', async () => {
+    const { compiled } = await setup({
+      myBoard: board({
+        first: { title: 'Homework', icon: 'pictogram:homework' },
+        then: { title: 'iPad', icon: 'pictogram:screen-time' },
+      }),
+    });
+
+    const first = compiled.querySelector('[data-testid="first-then-first"]')!;
+    expect(first.querySelector('img')!.getAttribute('src')).toBe('/pictograms/homework.svg');
+    expect(first.textContent).not.toContain('pictogram:');
+    expect(compiled.querySelector('img[src="/pictograms/screen-time.svg"]')).not.toBeNull();
+  });
+
   it('shows a waiting board: the First with Done, the Then locked after it', async () => {
     const { compiled } = await setup();
 

@@ -17,6 +17,7 @@ import {
 } from '../../../../core/progress.service';
 import { createAction } from '../../../../shared/action-state/action-state';
 import { Card } from '../../../../shared/card/card';
+import { Icon } from '../../../../shared/icon/icon';
 
 interface RewardRow {
   // Undefined for a row added in this draft; the server assigns its id on save.
@@ -44,7 +45,7 @@ const STATUS_KEYS: Record<Exclude<RewardRequestStatus, 'Pending'>, string> = {
 // See docs/backend/analysis/reward-redemption.md.
 @Component({
   selector: 'app-manage-rewards',
-  imports: [FormsModule, TranslatePipe, Card],
+  imports: [Icon, FormsModule, TranslatePipe, Card],
   templateUrl: './manage-rewards.html',
 })
 export class ManageRewards {

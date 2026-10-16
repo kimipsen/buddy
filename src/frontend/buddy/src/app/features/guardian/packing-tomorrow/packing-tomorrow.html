@@ -11,7 +11,7 @@
             [queryParams]="{ child: list.childId }"
             class="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100 transition hover:border-amber-300 dark:hover:border-amber-700"
           >
-            <span class="text-lg leading-none" aria-hidden="true">{{ list.icon }}</span>
+            <app-icon class="text-lg leading-none" [value]="list.icon" />
             <span>
               {{
                 'dashboard.packing.row'

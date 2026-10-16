@@ -16,9 +16,9 @@
         <li class="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span class="min-w-16 text-sm font-medium">{{ child.name }}</span>
           <span aria-hidden="true" class="text-xl leading-none">
-            <span [class.opacity-50]="board.state === 'Unlocked'">{{ board.first!.icon }}</span>
+            <app-icon [class.opacity-50]="board.state === 'Unlocked'" [value]="board.first!.icon" />
             →
-            {{ board.then!.icon }}
+            <app-icon [value]="board.then!.icon" />
           </span>
           <span class="text-sm text-slate-600 dark:text-slate-300">
             {{

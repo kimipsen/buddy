@@ -10,6 +10,7 @@ import {
 import { FirstThenCard } from '../../../../core/first-then.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
+import { parseIcon } from '../../../../core/pictograms';
 import { CardSuggestions, FirstThenCardPicker } from '../card-picker/card-picker';
 
 export interface BoardDraft {
@@ -18,14 +19,16 @@ export interface BoardDraft {
   thenMinutes: number | null;
 }
 
-// The API's bounds (SetFirstThenBoardValidator).
+// The API's bounds (SetFirstThenBoardValidator). The emoji limit doesn't apply to a pictogram,
+// which only the picker sets.
 const MAX_TITLE = 60;
-const MAX_ICON = 16;
+const MAX_EMOJI = 16;
 
 function isValidCard(title: string, icon: string): boolean {
   const t = title.trim();
   const i = icon.trim();
-  return t.length > 0 && t.length <= MAX_TITLE && i.length > 0 && i.length <= MAX_ICON;
+  const iconFits = parseIcon(i)?.kind === 'pictogram' || i.length <= MAX_EMOJI;
+  return t.length > 0 && t.length <= MAX_TITLE && i.length > 0 && iconFits;
 }
 
 /**

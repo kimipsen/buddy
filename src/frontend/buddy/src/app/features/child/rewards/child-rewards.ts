@@ -14,6 +14,7 @@ import {
 import { createAction } from '../../../shared/action-state/action-state';
 import { LoadingSpinner } from '../../../shared/loading-spinner/loading-spinner';
 import { ChildPage } from '../child-page/child-page';
+import { Icon } from '../../../shared/icon/icon';
 
 const STATUS_KEYS: Record<Exclude<RewardRequestStatus, 'Pending'>, string> = {
   Approved: 'child.rewards.status.Approved',
@@ -25,7 +26,7 @@ const STATUS_KEYS: Record<Exclude<RewardRequestStatus, 'Pending'>, string> = {
 // waiting for a grown-up, and how earlier ones went (docs/backend/analysis/reward-redemption.md).
 @Component({
   selector: 'app-child-rewards',
-  imports: [ChildPage, LoadingSpinner, TranslatePipe],
+  imports: [Icon, ChildPage, LoadingSpinner, TranslatePipe],
   templateUrl: './child-rewards.html',
 })
 export class ChildRewards {

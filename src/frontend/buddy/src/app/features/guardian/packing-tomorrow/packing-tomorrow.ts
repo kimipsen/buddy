@@ -7,6 +7,7 @@ import { ChildSummary, GuardiansService } from '../../../core/guardians.service'
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { groupTaskRuns, isTaskRun } from '../../../core/task-run';
 import { Card } from '../../../shared/card/card';
+import { Icon } from '../../../shared/icon/icon';
 
 // One packing list a child hasn't finished packing for tomorrow.
 export interface UnpackedList {
@@ -41,7 +42,7 @@ function minutesOf(time: string): number {
 // Hidden entirely when nothing is left to pack.
 @Component({
   selector: 'app-packing-tomorrow',
-  imports: [RouterLink, TranslatePipe, Card],
+  imports: [Icon, RouterLink, TranslatePipe, Card],
   templateUrl: './packing-tomorrow.html',
   host: { class: 'contents' },
 })

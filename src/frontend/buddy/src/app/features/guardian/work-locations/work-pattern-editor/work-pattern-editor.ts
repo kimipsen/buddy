@@ -24,6 +24,7 @@ import {
   weekName,
 } from '../work-pattern';
 import { Card } from '../../../../shared/card/card';
+import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
 
 // Sunday 2026-10-04 + n days walks Sunday..Saturday, matching Date.getDay().
 const A_SUNDAY = new Date(2026, 9, 4);
@@ -41,7 +42,7 @@ function dayName(day: Weekday, locale: string, weekday: 'short' | 'long' = 'shor
 // resets whenever the page reloads the schedule; nothing is sent until Save.
 @Component({
   selector: 'app-work-pattern-editor',
-  imports: [FormsModule, TranslatePipe, SegmentedControl, Card],
+  imports: [IconTextPipe, FormsModule, TranslatePipe, SegmentedControl, Card],
   templateUrl: './work-pattern-editor.html',
 })
 export class WorkPatternEditor {

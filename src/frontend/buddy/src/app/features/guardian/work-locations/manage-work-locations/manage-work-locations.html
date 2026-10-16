@@ -79,7 +79,7 @@
                 [style.background-color]="location.color"
                 aria-hidden="true"
               ></span>
-              <span class="text-lg leading-none" aria-hidden="true">{{ location.icon }}</span>
+              <app-icon class="text-lg leading-none" [value]="location.icon" />
               <span class="flex-1 text-sm font-medium">{{ location.name }}</span>
               <button
                 type="button"

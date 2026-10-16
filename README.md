@@ -75,9 +75,6 @@ in real time.
 
 ### Child
 
-- [ ] Pictograms: in-house picture symbols on tasks, routine steps and First-Then boards for
-      children who don't read yet (proposed, not yet implemented — see
-      [Pictogram support](docs/frontend/analysis/pictograms.md))
 - [ ] Now / Next / Later strip: a reduced day view with three cards for overwhelmed moments
       (proposed, not yet implemented — see
       [Now / Next / Later strip](docs/frontend/analysis/now-next-later.md))
@@ -106,6 +103,8 @@ in real time.
 - [x] Homework splitter: the child splits tonight's homework into timed focus chunks with breaks
       and break ideas, using focus and break lengths a guardian sets per child — see
       [Homework splitter](docs/frontend/analysis/homework-splitter.md)
+- [x] Pictograms: in-house picture symbols on tasks, routine steps and First-Then boards for
+      children who don't read yet (see [Pictogram support](docs/frontend/analysis/pictograms.md))
 
 ### Platform
 

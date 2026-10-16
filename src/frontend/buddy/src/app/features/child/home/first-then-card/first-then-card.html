@@ -18,11 +18,13 @@
     [class.dark:text-amber-100]="unlocked"
   >
     <span aria-hidden="true" class="flex items-center gap-1 text-3xl leading-none">
-      <span [class.grayscale]="unlocked" [class.opacity-60]="unlocked">{{
-        board.first!.icon
-      }}</span>
+      <app-icon
+        [class.grayscale]="unlocked"
+        [class.opacity-60]="unlocked"
+        [value]="board.first!.icon"
+      />
       <span class="text-xl text-slate-400 dark:text-slate-500">→</span>
-      <span>{{ board.then!.icon }}</span>
+      <app-icon [value]="board.then!.icon" />
     </span>
     <span>
       @if (unlocked) {

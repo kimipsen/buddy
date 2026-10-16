@@ -3,6 +3,7 @@ import { encode } from 'uqr';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { WeekPlanModel } from '../week-plan-model';
+import { Icon } from '../../../../shared/icon/icon';
 
 // Printable area inside 8 mm margins on landscape paper.
 export const PAPER_MM = {
@@ -29,7 +30,7 @@ const QR_BORDER_MODULES = 2;
 // light with its own colors (never theme tokens): paper is white whatever the app theme is.
 @Component({
   selector: 'app-week-plan-sheet',
-  imports: [TranslatePipe],
+  imports: [Icon, TranslatePipe],
   templateUrl: './week-plan-sheet.html',
 })
 export class WeekPlanSheet {

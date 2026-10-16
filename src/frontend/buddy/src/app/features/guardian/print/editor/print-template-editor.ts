@@ -72,6 +72,8 @@ import { WeekPlanLoader } from '../week-plan-loader';
 import { WeekPlanSources } from '../week-plan-model';
 import { Card } from '../../../../shared/card/card';
 import { Page } from '../../../../shared/page/page';
+import { Icon } from '../../../../shared/icon/icon';
+import { IconTextPipe } from '../../../../shared/icon/icon-text.pipe';
 
 const MAX_ROWS = 12;
 const MAX_HEIGHT = 5;
@@ -151,6 +153,8 @@ const EMPTY_SOURCES: WeekPlanSources = {
 @Component({
   selector: 'app-print-template-editor',
   imports: [
+    IconTextPipe,
+    Icon,
     FormsModule,
     TranslatePipe,
     ColorSwatchPicker,
