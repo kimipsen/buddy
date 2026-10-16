@@ -22,18 +22,23 @@ namespace buddy.IntegrationTests.Common.Observability;
 [Collection(BuddyApiCollection.Name)]
 public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
 {
-    private readonly CapturingLoggerProvider _logs = new();
+    // Static because the host is shared by every test in this class (BuddyApiFixture.SharedHostAsync);
+    // InitializeAsync empties it before each test.
+    private static readonly CapturingLoggerProvider Logs = new();
 
     private IAlbaHost _host = null!;
 
     public async Task InitializeAsync()
     {
-        _host = await fixture.CreateHostAsync(
+        Logs.Clear();
+
+        _host = await fixture.SharedHostAsync(
+            nameof(AuditLogTests),
             new Dictionary<string, string?>(),
-            services => services.AddSingleton<ILoggerProvider>(_logs));
+            services => services.AddSingleton<ILoggerProvider>(Logs));
     }
 
-    public async Task DisposeAsync() => await _host.DisposeAsync();
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task A_first_sign_in_is_logged_and_a_call_before_it_is_rejected_with_a_log()
@@ -48,7 +53,7 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
             _.StatusCodeShouldBe(403);
         });
 
-        Assert.Contains(_logs.Entries, e => e.EventId == 1006 && Equals(e.Property("Path"), "/users/me/children"));
+        Assert.Contains(Logs.Entries, e => e.EventId == 1006 && Equals(e.Property("Path"), "/users/me/children"));
 
         await _host.Scenario(_ =>
         {
@@ -58,7 +63,7 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
         });
 
         var userId = await fixture.GetUserIdAsync(token);
-        Assert.Single(_logs.Entries, e => e.EventId == 1001 && Equals(e.Property("UserId"), userId));
+        Assert.Single(Logs.Entries, e => e.EventId == 1001 && Equals(e.Property("UserId"), userId));
     }
 
     [Fact]
@@ -75,10 +80,10 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
         });
         var reset = response.ReadAsJson<ChildPasswordResetDto>();
 
-        Assert.Contains(_logs.Entries, e => e.EventId == 2009
+        Assert.Contains(Logs.Entries, e => e.EventId == 2009
             && Equals(e.Property("ChildId"), child.Id)
             && Equals(e.Property("GuardianId"), guardianId));
-        Assert.DoesNotContain(_logs.Entries, e => e.Message.Contains(reset.TemporaryPassword, StringComparison.Ordinal));
+        Assert.DoesNotContain(Logs.Entries, e => e.Message.Contains(reset.TemporaryPassword, StringComparison.Ordinal));
     }
 
     [Fact]
@@ -105,19 +110,19 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
         });
         var invite = inviteResponse.ReadAsJson<GuardianInviteResponseDto>();
 
-        Assert.Contains(_logs.Entries, e => e.EventId == 2001
+        Assert.Contains(Logs.Entries, e => e.EventId == 2001
             && Equals(e.Property("ChildId"), child.Id)
             && Equals(e.Property("GuardianId"), guardianId));
 
-        Assert.Contains(_logs.Entries, e => e.EventId == 2002
+        Assert.Contains(Logs.Entries, e => e.EventId == 2002
             && Equals(e.Property("InviteId"), invite.Id)
             && Equals(e.Property("ChildId"), child.Id)
             && Equals(e.Property("UserId"), guardianId));
 
-        Assert.Contains(_logs.Entries, e => e.EventId == 7001 && Equals(e.Property("EmailKind"), "guardian-invite"));
+        Assert.Contains(Logs.Entries, e => e.EventId == 7001 && Equals(e.Property("EmailKind"), "guardian-invite"));
 
         string[] personalData = [invitee.Email, user.Email, "Quillon", "Vexmoor", child.Username, child.TemporaryPassword];
-        var leaks = _logs.Entries
+        var leaks = Logs.Entries
             .Where(e => personalData.Any(value => e.Message.Contains(value, StringComparison.OrdinalIgnoreCase)))
             .Select(e => $"{e.Category}[{e.EventId}]: {e.Message}")
             .ToArray();
@@ -142,7 +147,7 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
         await GetAsync(childToken, $"/medicines/children/{childId}/doses?{days}");
         await GetAsync(guardianToken, $"/medicines/groups/{groupId}/children/{childId}/doses?{days}");
 
-        var reads = _logs.Entries.Where(e => Equals(e.Property("ChildId"), childId)).ToArray();
+        var reads = Logs.Entries.Where(e => Equals(e.Property("ChildId"), childId)).ToArray();
         AssertRead(reads, 9001, guardianId, HealthDataAccessPath.Guardian, null);
         AssertRead(reads, 9001, guardianId, HealthDataAccessPath.Group, groupId);
         AssertRead(reads, 9002, guardianId, HealthDataAccessPath.Guardian, null);
@@ -165,7 +170,7 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
             _.StatusCodeShouldBe(404);
         });
 
-        Assert.DoesNotContain(_logs.Entries, e => e.EventId == 9001 && Equals(e.Property("ChildId"), child.Id));
+        Assert.DoesNotContain(Logs.Entries, e => e.EventId == 9001 && Equals(e.Property("ChildId"), child.Id));
     }
 
     [Fact]
@@ -178,7 +183,7 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
 
         await GetAsync(guardianToken, $"/sleep-diary/children/{child.Id}/entries?from={night.AddDays(-6):yyyy-MM-dd}&to={night:yyyy-MM-dd}");
 
-        var read = Assert.Single(_logs.Entries, e => e.EventId == 5004 && Equals(e.Property("ChildId"), child.Id));
+        var read = Assert.Single(Logs.Entries, e => e.EventId == 5004 && Equals(e.Property("ChildId"), child.Id));
         Assert.Equal(guardianId, read.Property("UserId"));
         Assert.Equal(HealthDataAccessPath.Guardian, read.Property("AccessPath"));
         Assert.Equal(night.AddDays(-6), read.Property("From"));
@@ -207,7 +212,7 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
             _.StatusCodeShouldBe(404);
         });
 
-        var read = Assert.Single(_logs.Entries, e => e.EventId == 9003 && Equals(e.Property("ChildId"), child.Id));
+        var read = Assert.Single(Logs.Entries, e => e.EventId == 9003 && Equals(e.Property("ChildId"), child.Id));
         Assert.Equal(guardianId, read.Property("UserId"));
         Assert.Equal(HealthDataAccessPath.Guardian, read.Property("AccessPath"));
         Assert.Equal(day.AddDays(-6), read.Property("From"));
@@ -235,7 +240,7 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
             _.StatusCodeShouldBe(404);
         });
 
-        var reads = _logs.Entries.Where(e => e.EventId == 11004 && Equals(e.Property("ChildId"), child.Id)).ToArray();
+        var reads = Logs.Entries.Where(e => e.EventId == 11004 && Equals(e.Property("ChildId"), child.Id)).ToArray();
         Assert.Equal(2, reads.Length);
         var guardianRead = Assert.Single(reads, e => Equals(e.Property("AccessPath"), HealthDataAccessPath.Guardian));
         Assert.Equal(guardianId, guardianRead.Property("UserId"));
@@ -276,10 +281,10 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
             _.StatusCodeShouldBe(404);
         });
 
-        Assert.Equal(guardianId, Assert.Single(_logs.Entries, e => e.EventId == 11001 && Equals(e.Property("ShareLinkId"), link.Id)).Property("UserId"));
-        Assert.Equal(guardianId, Assert.Single(_logs.Entries, e => e.EventId == 11002 && Equals(e.Property("ShareLinkId"), link.Id)).Property("UserId"));
-        Assert.Equal(child.Id, Assert.Single(_logs.Entries, e => e.EventId == 11003 && Equals(e.Property("ShareLinkId"), link.Id)).Property("ChildId"));
-        Assert.DoesNotContain(_logs.Entries, e => e.Message.Contains(link.Token, StringComparison.Ordinal));
+        Assert.Equal(guardianId, Assert.Single(Logs.Entries, e => e.EventId == 11001 && Equals(e.Property("ShareLinkId"), link.Id)).Property("UserId"));
+        Assert.Equal(guardianId, Assert.Single(Logs.Entries, e => e.EventId == 11002 && Equals(e.Property("ShareLinkId"), link.Id)).Property("UserId"));
+        Assert.Equal(child.Id, Assert.Single(Logs.Entries, e => e.EventId == 11003 && Equals(e.Property("ShareLinkId"), link.Id)).Property("ChildId"));
+        Assert.DoesNotContain(Logs.Entries, e => e.Message.Contains(link.Token, StringComparison.Ordinal));
     }
 
     private static void AssertRead(LogEntry[] reads, int eventId, Guid userId, HealthDataAccessPath accessPath, Guid? groupId) =>
@@ -318,6 +323,8 @@ public sealed class AuditLogTests(BuddyApiFixture fixture) : IAsyncLifetime
         private readonly ConcurrentQueue<LogEntry> _entries = new();
 
         public LogEntry[] Entries => [.. _entries];
+
+        public void Clear() => _entries.Clear();
 
         public ILogger CreateLogger(string categoryName) => new CapturingLogger(categoryName, _entries);
 

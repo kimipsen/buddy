@@ -1,6 +1,8 @@
 # Backend unit tests as the primary test source
 
-Status: Proposed (not yet implemented)
+Status: Phase 0 implemented (2026-10-16): pre-generated Wolverine handler code, shared extra test
+hosts and a Keycloak memory cap; a full backend run now peaks under 1 GB in the test process. Phases
+1-5 (the unit test project) are proposed, not yet implemented.
 
 ## Context
 
@@ -20,19 +22,14 @@ What a run starts today:
   the devcontainer's own Postgres, Keycloak and Mailpit (`.devcontainer/docker-compose.yml`), so
   two Keycloak JVMs run at once.
 - **One shared Alba host,** which 237 test classes share through `[Collection(BuddyApiCollection.Name)]`.
-  The host registers 20 Marten stores (`AddMartenStore<...>`). Marten and Wolverine are left on
-  their default runtime code generation: no `GeneratedCodeMode` or `TypeLoadMode` is set
-  anywhere in `src/backend/buddy`. So each store and each handler chain is compiled with Roslyn
-  in memory when the host starts or first uses it.
-- **About 15 extra hosts** from `fixture.CreateHostAsync(...)`, each a full second copy of the app
-  with its own Marten stores and generated code.
-  - Some are scoped to one test and disposed (`await using`, in HealthChecks and DataProtection).
-  - Others live for a whole test class: [FeatureFlagsTests](../../../src/backend/buddy.IntegrationTests/Common/FeatureFlags/FeatureFlagsTests.cs)
-    caches two (`_allOff`, `_mealplanExtrasOff`), and RateLimiting, Observability, AuditLog,
-    ExceptionHandling and UndoWindow each keep one.
-  - Some are hosts that are expected to fail at startup (`A_misspelt_flag_fails_the_host_at_startup`,
-    `A_non_positive_limit_fails_the_host_at_startup`). Their partly built service providers may
-    never be disposed.
+  Wolverine was left on its default runtime code generation, so every host compiled its 228
+  handler classes with Roslyn. Marten no longer generates code at runtime.
+- **About 55 extra host starts** from `fixture.CreateHostAsync(...)`, each a full second copy of
+  the app. xunit creates a test class per test, so the classes that start a host in
+  `InitializeAsync` (RateLimiting, Observability, AuditLog, ExceptionHandling, UndoWindow) started
+  one for every test and theory row, and disposed it afterwards. FeatureFlags, HealthChecks,
+  DataProtection and VisitSummaryReport add a few more, some of them hosts that fail at startup on
+  purpose.
 
 About 25 files in the project are already plain unit tests: they never touch the fixture. They
 include all of `EventShapeTests/`, [RecurrenceExpansionTests](../../../src/backend/buddy.IntegrationTests/Features/Calendars/RecurrenceExpansionTests.cs),
@@ -58,39 +55,58 @@ run.
 
 ## Question 1: is the number of tests the cause of the out-of-memory errors?
 
-**Decision: no, most likely not. The memory goes on containers and extra app hosts. Fix those
-first (phase 0 below), independently of the unit-test work, and measure before and after.**
+**Decision: no. Each API host compiled its Wolverine handlers at runtime, and that cost several
+hundred MB of native memory per host that was never released. Load pre-generated handler code
+instead, share the extra test hosts, and cap Keycloak (phase 0, implemented).**
 
-The likely causes, with the largest first:
+Measured in the devcontainer (15.8 GB, Docker-in-Docker, so the test containers share that memory)
+with a 5-second sampler of the test process's RSS and `docker stats`, and a watchdog that killed
+the test process below 1.2 GB available:
 
-1. Extra hosts that live for a whole class, plus failed-startup hosts that may not be disposed.
-   Each holds 20 Marten stores and its generated assemblies, and collectible Roslyn assemblies are
-   not freed until the host's load context is released.
-2. Runtime code generation for Marten and Wolverine in every host.
-3. A second Keycloak JVM with no heap cap (the container's default is a share of the VM's RAM),
-   next to the devcontainer's own Keycloak.
-4. The test host process keeping every test class's fixture state for the whole run, because all
-   237 classes share one collection.
+| Run                               | Test process peak | Keycloak peak | Result                         |
+| --------------------------------- | ----------------- | ------------- | ------------------------------ |
+| Before                            | 7.7 GB+           | ~0.9 GB       | Killed after 793 tests (3m20s) |
+| Extra hosts shared per class      | 7.6 GB            | --            | All passed, killed at teardown |
+| + pre-generated handler code      | 895 MB            | 2.7 GB        | 1,679 passed in 6 minutes      |
+| + Keycloak heap and container cap | 891 MB            | 811 MB        | 1,679 passed in 6 minutes      |
 
-Phase 0 fixes:
+What the measurements showed:
 
-- **Measure first.** Run `docker stats` and `dotnet-counters monitor --process-id <testhost>
-System.Runtime` during one full run, and record the peak of each in this doc.
-- **Dispose every extra host.**
-  - Hosts cached in a field get an `IAsyncLifetime.DisposeAsync`.
-  - Startup-failure tests wrap `CreateHostAsync` so that a host that throws is still disposed.
-  - Move every test that calls `CreateHostAsync` into a second collection,
-    `IsolatedHostCollection`, so those hosts never coexist with each other's state.
-- **Turn off runtime code generation for tests.** Use `TypeLoadMode.Auto` with pre-generated code
-  (`dotnet run -- codegen write`, the standard Wolverine and Marten command), or at least set
-  `GeneratedCodeMode` so code is generated once per type rather than once per host. Production
-  startup time benefits as well.
-- **Cap Keycloak's heap** in the fixture (`JAVA_OPTS_KC_HEAP="-Xms128m -Xmx512m"`) and give each
-  container a memory limit through `WithCreateParameterModifier`.
+- **It was native memory, not the managed heap.** A `dotnet-gcdump` at 7.7 GB found only 618 MB
+  of managed objects (115 MB live in a later run), and the RSS kept rising after the dump's forced
+  GC. `/proc/<pid>/smaps` put 2.7 of 3 GB in anonymous memory, not mapped files.
+- **It grew in steps, one per host start.** Lining up timestamped test output with the samples
+  showed jumps of 400-600 MB whenever a class started an extra host (ExceptionHandling,
+  FeatureFlags, HealthChecks, Observability, AuditLog), even though every host was disposed.
+  The heap dump held about 57 DI containers and 54 Wolverine runtimes, plus Roslyn
+  (`Microsoft.CodeAnalysis`) state.
+- **Sharing hosts alone was not enough.** Cutting about 55 host starts to about 15 let the suite
+  finish but left the peak at 7.6 GB. Removing runtime compilation took it to under 1 GB.
 
-Considered and rejected: running the integration suite in several smaller processes. That splits
-the memory over time but starts the containers several times, so a run gets slower and the peak
-barely changes.
+Phase 0 changes:
+
+- **Pre-generated handler code.** `Program.cs` sets
+  `opts.CodeGeneration.TypeLoadMode = TypeLoadMode.Auto`, and the generated code is committed in
+  `src/backend/buddy/Internal/Generated` (228 files). `task codegen:backend` deletes and rewrites
+  it; the backend CI job regenerates it and fails when it differs from the committed files. The
+  output is deterministic (identical in Debug and Release, Development and Production). Auto still
+  compiles a handler that has no pre-generated type yet, so a missing regeneration costs memory, not
+  correctness. Production startup no longer compiles handlers either.
+- **Shared extra hosts.** `BuddyApiFixture.SharedHostAsync(key, overrides, configureServices)`
+  starts a host once per key and disposes it with the fixture. The classes above use it; what they
+  capture (logs, spans, a clock, the exception to throw) moved to static fields reset in
+  `InitializeAsync`, which is safe because the whole suite is one serial collection.
+  `CreateHostAsync` stays for tests that need a brand-new host (startup failures, data protection
+  keys, the health checks' broken dependencies).
+- **Keycloak capped** at a 512 MB heap (`JAVA_OPTS_KC_HEAP`) inside a 1 GB container. Without a cap
+  the JVM sized its heap from the whole machine and reached 2.7 GB.
+
+Considered and rejected:
+
+- **Running the integration suite in several smaller processes.** That splits the memory over time
+  but starts the containers several times, so a run gets slower, and the per-host leak remains.
+- **Generating the code before each test run without committing it.** It keeps generated files out
+  of the repository, but every run builds twice, and production would still compile at startup.
 
 ## Question 2: a new project, or traits in the existing one?
 
@@ -292,14 +308,14 @@ persistence and HTTP wiring, and CI has the resources to run them.
 
 | Phase                            | Work                                                                                                                                                            | Done when                                                                      |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 0. Stop the out-of-memory errors | Measure; dispose every extra host; `IsolatedHostCollection`; pre-generated code; Keycloak heap cap and container limits                                         | A full integration run completes in the devcontainer, with peaks recorded here |
+| 0. Stop the out-of-memory errors | Done: measured; pre-generated handler code with a CI check; extra hosts shared per class; Keycloak heap and container cap                                       | A full integration run completes in the devcontainer, with peaks recorded here |
 | 1. Split the projects            | `buddy.UnitTests`; move the ~25 pure files and golden files; `InternalsVisibleTo`; task, CI and CLAUDE.md changes                                               | `task test:backend` runs without Docker                                        |
 | 2. Test infrastructure           | Generic in-memory store core, 27 fakes, store contract tests in both projects, event builders, recording fakes for Keycloak/mail/AI                             | Contract tests pass against fakes and Marten                                   |
 | 3. Validators and pure domain    | 93 validator test classes; `Rehydrate` for each aggregate; authorization helpers                                                                                | Every validator rule has a passing and a failing case                          |
 | 4. Handlers, domain by domain    | `TimeProvider` in that domain's handlers; one test class per handler covering each `Result<T>` branch and the events written; trim duplicated integration tests | All 19 feature folders covered                                                 |
 | 5. Tooling                       | Stryker on the unit project; update `backend-feature`, `claude-backend`, `mutation-fix-backend`, `feature-from-analysis` and their description evals            | A Stryker run on one slice takes minutes, not a quarter of an hour             |
 
-Phase 0 is independent of everything else and should land first. Phase 4 can run in parallel,
+Phase 0 has landed (see Question 1). Phase 4 can run in parallel,
 one worktree per domain, once phase 2 has landed.
 
 ## Failure and edge-case behavior
@@ -315,32 +331,27 @@ one worktree per domain, once phase 2 has landed.
 
 ## Estimate
 
-|                  |                                                                                                                                                                                                     |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Complexity       | High -- 223 handlers and 93 validators to cover, 27 store fakes with contract tests, a 128-file `TimeProvider` refactor, and changes to tasks, CI, Stryker and four skills                          |
-| Single developer | Phase 0: 1-2 days. Phases 1-3: 4-6 days. Phase 4: 3-4 weeks. Phase 5: 1 day. About 5-6 weeks in all                                                                                                 |
-| AI agent         | Phase 0: 2-4 hours. Phases 1-3: about 1 day. Phase 4: 1-2 hours per domain across 19 domains in parallel worktrees, about 3-5 days of wall-clock time. Plus about 1 hour of human review per domain |
+|                  |                                                                                                                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complexity       | High -- 223 handlers and 93 validators to cover, 27 store fakes with contract tests, a 128-file `TimeProvider` refactor, and changes to tasks, CI, Stryker and four skills                                                      |
+| Single developer | Phase 0: done. Phases 1-3: 4-6 days. Phase 4: 3-4 weeks. Phase 5: 1 day. About 5-6 weeks in all                                                                                                                                 |
+| AI agent         | Phase 0: done (about 1 hour, mostly measuring). Phases 1-3: about 1 day. Phase 4: 1-2 hours per domain across 19 domains in parallel worktrees, about 3-5 days of wall-clock time. Plus about 1 hour of human review per domain |
 
 ## Decisions made
 
-| Question                      | Decision                                                                                         |
-| ----------------------------- | ------------------------------------------------------------------------------------------------ |
-| Cause of out-of-memory errors | Extra hosts, runtime code generation and Keycloak, not the test count; fix those first (phase 0) |
-| Where unit tests live         | A new `buddy.UnitTests` project with no Docker dependency, so the compiler enforces the boundary |
-| What a unit test fakes        | Hand-written in-memory event stores kept honest by contract tests; no mocking library            |
-| The clock                     | `TimeProvider`, injected one domain at a time, following Feelings and VisitSummaries             |
-| What stays integration        | One happy path per endpoint, auth, persistence, HTTP concerns, email and the meta coverage tests |
-| How suites run                | `task test:backend` = unit; `task test:backend:integration` on demand; CI runs both              |
+| Question                      | Decision                                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Cause of out-of-memory errors | Runtime handler compilation in every API host, not the test count; pre-generated code is committed (phase 0) |
+| Where unit tests live         | A new `buddy.UnitTests` project with no Docker dependency, so the compiler enforces the boundary             |
+| What a unit test fakes        | Hand-written in-memory event stores kept honest by contract tests; no mocking library                        |
+| The clock                     | `TimeProvider`, injected one domain at a time, following Feelings and VisitSummaries                         |
+| What stays integration        | One happy path per endpoint, auth, persistence, HTTP concerns, email and the meta coverage tests             |
+| How suites run                | `task test:backend` = unit; `task test:backend:integration` on demand; CI runs both                          |
 
 ## Remaining open questions
 
 - **May handlers be changed to take `TimeProvider`?** It's a production-code change across 128
   files, with no change in behaviour. Lean: yes, one domain at a time in phase 4.
-- **Should pre-generated Wolverine and Marten code be committed?** Committing the generated code
-  (`Internal/Generated/`) makes startup fast in tests and production, but it must be regenerated
-  whenever a handler or document changes. `TypeLoadMode.Auto` regenerates missing code at
-  runtime. Lean: `Auto` in Development and tests, `Static` in production, with a CI check that the
-  committed code is current.
 - **Should the pre-commit hook run the backend unit tests?** They should take seconds once moved.
   Lean: run them only when staged files include `src/backend/**`.
 - **Coverage gate.** The integration suite has no coverage threshold today. Lean: none until phase

@@ -28,25 +28,31 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
     private const string SecretDetail = "connection string Password=hunter2";
     private const string MiddlewareCategory = "Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware";
 
-    private readonly ConcurrentQueue<(string Category, LogLevel Level, Exception? Exception)> _logs = new();
+    // Static because the host is shared by every test in this class (BuddyApiFixture.SharedHostAsync);
+    // InitializeAsync resets both before each test.
+    private static readonly ConcurrentQueue<(string Category, LogLevel Level, Exception? Exception)> Logs = new();
+    private static readonly IGuardianLinkEventStore ThrowingStore = DispatchProxy.Create<IGuardianLinkEventStore, ThrowingProxy>();
 
     private IAlbaHost _host = null!;
-    private Exception _nextException = new InvalidOperationException(SecretDetail);
+
+    private static ThrowingProxy Throwing => (ThrowingProxy)(object)ThrowingStore;
 
     public async Task InitializeAsync()
     {
-        _host = await fixture.CreateHostAsync(
+        Logs.Clear();
+        Throwing.Next = () => new InvalidOperationException(SecretDetail);
+
+        _host = await fixture.SharedHostAsync(
+            nameof(ExceptionHandlingTests),
             new Dictionary<string, string?> { ["Cors:AllowedOrigins:0"] = AllowedOrigin },
             services =>
             {
-                var store = DispatchProxy.Create<IGuardianLinkEventStore, ThrowingProxy>();
-                ((ThrowingProxy)(object)store).Next = () => _nextException;
-                services.Replace(ServiceDescriptor.Singleton(store));
-                services.AddSingleton<ILoggerProvider>(new CapturingLoggerProvider(_logs));
+                services.Replace(ServiceDescriptor.Singleton(ThrowingStore));
+                services.AddSingleton<ILoggerProvider>(new CapturingLoggerProvider(Logs));
             });
     }
 
-    public async Task DisposeAsync() => await _host.DisposeAsync();
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task An_unexpected_exception_is_a_500_envelope_without_internals()
@@ -76,7 +82,7 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
         var thrown = new InvalidOperationException("logged once");
-        _nextException = thrown;
+        Throwing.Next = () => thrown;
 
         await _host.Scenario(_ =>
         {
@@ -95,7 +101,7 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
     public async Task An_unreachable_database_is_a_503_with_retry_after()
     {
         var (_, token, _) = await fixture.CreateAuthenticatedUserAsync();
-        _nextException = new NpgsqlException("Failed to connect", new SocketException((int)SocketError.ConnectionRefused));
+        Throwing.Next = () => new NpgsqlException("Failed to connect", new SocketException((int)SocketError.ConnectionRefused));
 
         var response = await _host.Scenario(_ =>
         {
@@ -144,12 +150,12 @@ public sealed class ExceptionHandlingTests(BuddyApiFixture fixture) : IAsyncLife
         Assert.Equal(expected, ExceptionHandlingFeature.IsDependencyUnavailable(exception));
     }
 
-    private async Task<(string Category, LogLevel Level, Exception? Exception)> WaitForAsync(
+    private static async Task<(string Category, LogLevel Level, Exception? Exception)> WaitForAsync(
         Func<(string Category, LogLevel Level, Exception? Exception), bool> predicate)
     {
         for (var attempt = 0; attempt < 50; attempt++)
         {
-            if (_logs.Where(predicate).ToArray() is [var entry])
+            if (Logs.Where(predicate).ToArray() is [var entry])
             {
                 return entry;
             }

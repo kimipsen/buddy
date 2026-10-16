@@ -40,6 +40,7 @@ public sealed class BuddyApiFixture : IAsyncLifetime
     private IContainer _mailpit = null!;
     private HttpClient _mailpitClient = null!;
     private readonly Dictionary<string, string> _tokenCache = [];
+    private readonly Dictionary<string, Task<IAlbaHost>> _sharedHosts = [];
     private Dictionary<string, string?> _configOverrides = [];
 
     public IAlbaHost Host { get; private set; } = null!;
@@ -55,6 +56,15 @@ public sealed class BuddyApiFixture : IAsyncLifetime
             .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
             .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
             .WithCommand("start-dev", "--import-realm")
+            // Without a cap the JVM sizes its heap from the whole machine's RAM and grew past 2.5 GB
+            // in a full run, next to the devcontainer's own Keycloak. The container limit is a
+            // backstop for the JVM's non-heap memory.
+            .WithEnvironment("JAVA_OPTS_KC_HEAP", "-Xms64m -Xmx512m")
+            .WithCreateParameterModifier(parameters =>
+            {
+                parameters.HostConfig ??= new Docker.DotNet.Models.HostConfig();
+                parameters.HostConfig.Memory = 1024L * 1024 * 1024;
+            })
             // WithResourceMapping treats the target as a directory and keeps the source file's own
             // name (TestRealm.json) -- it does not rename to a target basename. Point it at the
             // import directory itself; Keycloak's dir importer picks up any *.json file inside.
@@ -143,6 +153,30 @@ public sealed class BuddyApiFixture : IAsyncLifetime
         return AlbaHost.For<global::Program>(
             builder => builder.ConfigureTestServices(services => configureServices?.Invoke(services)),
             ConfigurationOverride.Create(merged));
+    }
+
+    // A CreateHostAsync host started once per key and shared by every test that asks for it; the
+    // fixture disposes it at the end of the run. Prefer this over a host per test: each host compiles
+    // its own Wolverine handlers and Marten stores at runtime, and that generated code stays in
+    // memory after the host is disposed, so a host per test grew the test process past 7 GB. The
+    // whole suite is one serial collection, so a test that captures something through
+    // configureServices (logs, spans, a clock) can keep it in a static field and reset it in
+    // InitializeAsync.
+    public Task<IAlbaHost> SharedHostAsync(
+        string key,
+        IReadOnlyDictionary<string, string?> overrides,
+        Action<IServiceCollection>? configureServices = null)
+    {
+        lock (_sharedHosts)
+        {
+            if (!_sharedHosts.TryGetValue(key, out var host))
+            {
+                host = CreateHostAsync(overrides, configureServices);
+                _sharedHosts[key] = host;
+            }
+
+            return host;
+        }
     }
 
     // Real access token for one of the seeded test users (see Fixtures/TestRealm.json), obtained
@@ -437,6 +471,11 @@ public sealed class BuddyApiFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         _mailpitClient.Dispose();
+
+        foreach (var host in _sharedHosts.Values.Where(host => host.IsCompletedSuccessfully))
+        {
+            await host.Result.DisposeAsync();
+        }
 
         if (Host is not null)
         {

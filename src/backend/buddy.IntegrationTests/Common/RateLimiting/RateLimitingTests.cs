@@ -12,8 +12,9 @@ using Xunit;
 namespace buddy.IntegrationTests.Common.RateLimiting;
 
 // Runs against its own API host with tiny limits (the shared host's are raised out of reach, see
-// BuddyApiFixture). Buckets never refill during a test (one-hour periods), and every test uses a
-// fresh user, feed id or client IP so the tests can't drain each other's partitions.
+// BuddyApiFixture), shared by every test in this class. Buckets never refill during a run (one-hour
+// periods), and every test uses a fresh user, feed id or client IP so the tests can't drain each
+// other's partitions.
 // See docs/backend/analysis/rate-limiting.md.
 [Collection(BuddyApiCollection.Name)]
 public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
@@ -29,7 +30,7 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _host = await fixture.CreateHostAsync(new Dictionary<string, string?>
+        _host = await fixture.SharedHostAsync(nameof(RateLimitingTests), new Dictionary<string, string?>
         {
             ["RateLimiting:Authenticated:TokenLimit"] = $"{UserBurst}",
             ["RateLimiting:Authenticated:TokensPerPeriod"] = "1",
@@ -53,7 +54,7 @@ public sealed class RateLimitingTests(BuddyApiFixture fixture) : IAsyncLifetime
         });
     }
 
-    public async Task DisposeAsync() => await _host.DisposeAsync();
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task A_user_over_their_burst_gets_429_with_retry_after_and_the_rate_limited_envelope()

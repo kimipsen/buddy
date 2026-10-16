@@ -23,30 +23,13 @@ namespace buddy.IntegrationTests.Common.FeatureFlags;
 // shared host first, so the 404 on the other host can only come from the route not being mapped,
 // never from a handler's NotFound.
 [Collection(BuddyApiCollection.Name)]
-public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
+public sealed class FeatureFlagsTests(BuddyApiFixture fixture)
 {
-    private IAlbaHost? _allOff;
-    private IAlbaHost? _mealplanExtrasOff;
-
-    public Task InitializeAsync() => Task.CompletedTask;
-
-    public async Task DisposeAsync()
-    {
-        if (_allOff is not null)
-        {
-            await _allOff.DisposeAsync();
-        }
-
-        if (_mealplanExtrasOff is not null)
-        {
-            await _mealplanExtrasOff.DisposeAsync();
-        }
-    }
-
-    // xunit creates the class per test, so each host starts lazily, only for the tests that use it.
+    // Each host starts on first use and is shared by every test in this class
+    // (BuddyApiFixture.SharedHostAsync).
     // Mealplans off, its sub-flags left at their default (on): they follow the parent.
-    private async Task<IAlbaHost> AllOffAsync() =>
-        _allOff ??= await fixture.CreateHostAsync(new Dictionary<string, string?>
+    private Task<IAlbaHost> AllOffAsync() =>
+        fixture.SharedHostAsync($"{nameof(FeatureFlagsTests)}.AllOff", new Dictionary<string, string?>
         {
             ["Features:Mealplans"] = "false",
             ["Features:Medicines"] = "false",
@@ -66,8 +49,8 @@ public sealed class FeatureFlagsTests(BuddyApiFixture fixture) : IAsyncLifetime
             ["Features:Help"] = "false"
         });
 
-    private async Task<IAlbaHost> MealplanExtrasOffAsync() =>
-        _mealplanExtrasOff ??= await fixture.CreateHostAsync(new Dictionary<string, string?>
+    private Task<IAlbaHost> MealplanExtrasOffAsync() =>
+        fixture.SharedHostAsync($"{nameof(FeatureFlagsTests)}.MealplanExtrasOff", new Dictionary<string, string?>
         {
             ["Features:MealplanAiAssistant"] = "false",
             ["Features:MealplanImport"] = "false"

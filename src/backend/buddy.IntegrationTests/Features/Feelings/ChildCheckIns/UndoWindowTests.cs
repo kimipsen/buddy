@@ -20,25 +20,31 @@ namespace buddy.IntegrationTests.Features.Feelings.ChildCheckIns;
 [Collection(BuddyApiCollection.Name)]
 public sealed class UndoWindowTests(BuddyApiFixture fixture) : IAsyncLifetime
 {
-    // Half an hour behind the real clock: the host's other TimeProvider users (token lifetime checks)
-    // then never see a Keycloak token as expired, however far a test moves the clock.
-    private readonly ManualTimeProvider _clock = new(DateTimeOffset.UtcNow.AddMinutes(-30));
+    // Static because the host is shared by every test in this class (BuddyApiFixture.SharedHostAsync).
+    private static readonly ManualTimeProvider Clock = new();
 
     private IAlbaHost _host = null!;
 
-    public async Task InitializeAsync() =>
-        _host = await fixture.CreateHostAsync(
-            new Dictionary<string, string?>(),
-            services => services.Replace(ServiceDescriptor.Singleton<TimeProvider>(_clock)));
+    public async Task InitializeAsync()
+    {
+        // Half an hour behind the real clock: the host's other TimeProvider users (token lifetime
+        // checks) then never see a Keycloak token as expired, however far a test moves the clock.
+        Clock.Set(DateTimeOffset.UtcNow.AddMinutes(-30));
 
-    public async Task DisposeAsync() => await _host.DisposeAsync();
+        _host = await fixture.SharedHostAsync(
+            nameof(UndoWindowTests),
+            new Dictionary<string, string?>(),
+            services => services.Replace(ServiceDescriptor.Singleton<TimeProvider>(Clock)));
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task Undo_works_at_nine_minutes()
     {
         var (childToken, checkInId) = await CheckInNowAsync();
 
-        _clock.Advance(TimeSpan.FromMinutes(9));
+        Clock.Advance(TimeSpan.FromMinutes(9));
 
         await UndoAsync(_host, childToken, checkInId);
     }
@@ -48,7 +54,7 @@ public sealed class UndoWindowTests(BuddyApiFixture fixture) : IAsyncLifetime
     {
         var (childToken, checkInId) = await CheckInNowAsync();
 
-        _clock.Advance(TimeSpan.FromMinutes(11));
+        Clock.Advance(TimeSpan.FromMinutes(11));
 
         var response = await UndoAsync(_host, childToken, checkInId, expectedStatus: 409);
 
@@ -66,16 +72,18 @@ public sealed class UndoWindowTests(BuddyApiFixture fixture) : IAsyncLifetime
         var childToken = await GuardianTestHelpers.CompleteChildLoginAsync(fixture, child);
         var checkIn = await CheckInAsync(_host, childToken, new { Zone = "Red" });
 
-        Assert.Equal(_clock.GetUtcNow(), checkIn!.RecordedAt);
+        Assert.Equal(Clock.GetUtcNow(), checkIn!.RecordedAt);
 
         return (childToken, checkIn.Id);
     }
 
-    private sealed class ManualTimeProvider(DateTimeOffset start) : TimeProvider
+    private sealed class ManualTimeProvider : TimeProvider
     {
-        private DateTimeOffset _now = start;
+        private DateTimeOffset _now;
 
         public override DateTimeOffset GetUtcNow() => _now;
+
+        public void Set(DateTimeOffset now) => _now = now;
 
         public void Advance(TimeSpan by) => _now += by;
     }

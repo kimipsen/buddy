@@ -16,18 +16,23 @@ namespace buddy.IntegrationTests.Common.Observability;
 [Collection(BuddyApiCollection.Name)]
 public sealed class ObservabilityTests(BuddyApiFixture fixture) : IAsyncLifetime
 {
-    private readonly ConcurrentQueue<Activity> _exported = new();
+    // Static because the host is shared by every test in this class (BuddyApiFixture.SharedHostAsync);
+    // InitializeAsync empties it before each test.
+    private static readonly ConcurrentQueue<Activity> ExportedSpans = new();
 
     private IAlbaHost _host = null!;
 
     public async Task InitializeAsync()
     {
-        _host = await fixture.CreateHostAsync(
+        ExportedSpans.Clear();
+
+        _host = await fixture.SharedHostAsync(
+            nameof(ObservabilityTests),
             new Dictionary<string, string?>(),
-            services => services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new CollectingProcessor(_exported))));
+            services => services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new CollectingProcessor(ExportedSpans))));
     }
 
-    public async Task DisposeAsync() => await _host.DisposeAsync();
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task A_request_is_traced_down_to_its_database_queries()
@@ -104,10 +109,10 @@ public sealed class ObservabilityTests(BuddyApiFixture fixture) : IAsyncLifetime
         Assert.Equal("POST", server.GetTagItem("http.request.method"));
     }
 
-    private Activity[] Exported() => [.. _exported];
+    private static Activity[] Exported() => [.. ExportedSpans];
 
     // A server span is exported when it stops, which can be just after the response reaches the test.
-    private async Task<Activity> WaitForAsync(Func<Activity, bool> predicate)
+    private static async Task<Activity> WaitForAsync(Func<Activity, bool> predicate)
     {
         for (var attempt = 0; attempt < 50; attempt++)
         {

@@ -8,13 +8,10 @@
 
 ### Backend unit tests as the primary test source (2026-10-16)
 
-Running the backend suite often makes the devcontainer run out of memory. Plan in
+Make backend unit tests the primary test source, with integration tests on demand. Plan in
 [Backend unit tests](docs/backend/analysis/backend-unit-tests.md); settle its open questions
-(`TimeProvider` in handlers, committed generated code) before phase 4.
+(`TimeProvider` in handlers) before phase 4.
 
-- [ ] **Phase 0: stop the out-of-memory errors.** Measure one run; dispose every
-      `CreateHostAsync` host (including failed-startup ones); move them to their own collection;
-      pre-generate Marten/Wolverine code; cap Keycloak's heap and container memory.
 - [ ] **Phase 1: split the projects.** Add `buddy.UnitTests` (no Docker), move the ~25 pure test
       files and golden files, make `task test:backend` unit-only and add
       `task test:backend:integration`; update CI and CLAUDE.md.
@@ -794,3 +791,10 @@ they reuse data the app already keeps. Each has a design doc.
 - [x] **Doctor visit summary.** One printable, shareable report of sleep, doses, effect notes and
       feelings for a chosen period of at most 92 days, with a revocable, expiring doctor link. See
       [Doctor visit summary](docs/backend/analysis/doctor-visit-summary.md) (2026-10-16).
+
+### Backend unit tests as the primary test source (2026-10-16)
+
+- [x] **Phase 0: stop the out-of-memory errors.** Wolverine handler code is pre-generated and
+      committed (`task codegen:backend`, checked in CI), extra test hosts are shared per class
+      (`BuddyApiFixture.SharedHostAsync`) and Keycloak is capped. A full run peaks at about 0.9 GB
+      in the test process instead of 7.7 GB+ (2026-10-16).
