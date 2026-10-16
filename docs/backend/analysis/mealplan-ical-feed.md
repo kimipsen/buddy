@@ -89,7 +89,7 @@ anonymous feed request can't learn anything from timing.
 ## Token issuance/management: a fourth, feature-local token type
 
 `IcalToken`/`IcalTokenId`/`IcalTokenInfo`
-([`Features/Calendars/Types/`](../../../src/backend/buddy/Features/Calendars/Types/IcalToken.cs))
+([`Features/Calendars/Types/`](../../../src/backend/buddy/Features/Calendars/Types/))
 are duplicated into `Features/Mealplans/Types/` under the same names, rather than extracted into a
 shared type both features reference. This isn't an oversight — it follows a convention this codebase
 already has three times over: `EmailVerificationToken`

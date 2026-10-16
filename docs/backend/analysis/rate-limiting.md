@@ -133,8 +133,8 @@ Token bucket, 10 burst, refills 1 every 5 minutes (12/hour sustained).
 - **By feed id _and_ token hash, not by feed id alone.** If the bucket were keyed only by
   `calendarId`, which isn't secret, anyone could drain a family's bucket with wrong tokens, and that
   family's real subscription would stop syncing. With the token in the key, only someone who holds
-  the link can use up its bucket. The token is hashed with SHA-256, as `IcalToken.Hash` already does
-  ([`IcalToken.cs`](../../../src/backend/buddy/Features/Calendars/Types/IcalToken.cs)), so raw
+  the link can use up its bucket. The token is hashed with SHA-256, as `ShareSecret.Hash` already does
+  ([`ShareSecret.cs`](../../../src/backend/buddy/Common/Security/ShareSecret.cs)), so raw
   tokens never sit in limiter memory.
 - **What the numbers allow.** The feeds advertise `REFRESH-INTERVAL: PT1H`
   ([`IcalSubscription.cs`](../../../src/backend/buddy/Common/Ical/IcalSubscription.cs)). Five

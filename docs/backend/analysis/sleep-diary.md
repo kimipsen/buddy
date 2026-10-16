@@ -41,7 +41,7 @@ record about a child, event-sourced, with a sparse per-date log) and
 [gamified-progress.md](gamified-progress.md)'s `ChildProgress` (a true 1:1
 per-child aggregate). Nothing resembling "share a record with someone
 outside the app" exists except `Calendar`'s `IcalToken`
-([IcalToken.cs](../../../src/backend/buddy/Features/Calendars/Types/IcalToken.cs)) —
+([ShareSecret.cs](../../../src/backend/buddy/Common/Security/ShareSecret.cs), formerly `IcalToken.cs`) —
 a hashed, revocable token that lets an external party read one calendar's
 feed with no Buddy login. That mechanism, not anything new, is the natural
 template for "share with a medical professional" below.
@@ -260,7 +260,7 @@ SleepDiaryShareToken(
   "let a stranger read one thing with a link, no account" problem.
 - **Expiry is the one deliberate difference from `IcalToken`.** An `.ics`
   feed subscription is meant to stay live indefinitely
-  ([IcalToken.cs](../../../src/backend/buddy/Features/Calendars/Types/IcalToken.cs)'s
+  ([ShareSecret.cs](../../../src/backend/buddy/Common/Security/ShareSecret.cs)'s
   own comment: "no expiry... meant to stay valid indefinitely until the
   owner explicitly revokes it"). A sleep diary handed to a clinician is
   usually for one specific consultation; an indefinitely-live link to a
